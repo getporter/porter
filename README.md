@@ -43,8 +43,8 @@ dependencies:
       - source: bundle.dependencies.mysql.outputs.host
         destination: bundle.credentials.dbhost
 install:
-  - name: "Install Wordpress Helm Chart"
-    helm: 
+  - description: "Install Wordpress Helm Chart"
+    helm:
       name:
         source: bundle.name
       chart: stable/wordpress
@@ -58,7 +58,7 @@ install:
         externalDatabase.password:
           source: bundle.credentials.dbpassword
 uninstall:
-  - name: "Uninstall Wordpress Helm Chart"
+  - description: "Uninstall Wordpress Helm Chart"
     helm:
       name:
         source: bundle.name
