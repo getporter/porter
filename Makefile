@@ -8,11 +8,13 @@ XBUILD = CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
 
 build:
 	$(XBUILD) -o bin/porter ./cmd/porter
+	cp -R templates bin/
 
 test: build
 	go test ./...
 	./bin/porter version
 	./bin/porter help
+	./bin/porter init
 
 .PHONY: docs
 docs:
