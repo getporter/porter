@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/deislabs/porter/pkg/porter"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,12 +16,18 @@ func main() {
 }
 
 func buildRootCommand() *cobra.Command {
+	p := &porter.Porter{}
 	cmd := &cobra.Command{
 		Use:  "porter",
 		Long: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// Enable swapping out stdout/stderr for testing
+			p.Out = cmd.OutOrStdout()
+		},
 	}
 
-	cmd.AddCommand(buildVersionCommand())
+	cmd.AddCommand(buildVersionCommand(p))
+	cmd.AddCommand(buildInitCommand(p))
 
 	return cmd
 }

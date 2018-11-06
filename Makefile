@@ -10,6 +10,7 @@ build:
 	$(XBUILD) -o bin/porter ./cmd/porter
 
 test: build
+	go test ./...
 	./bin/porter version
 	./bin/porter help
 
