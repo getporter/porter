@@ -1,0 +1,24 @@
+# This is the configuration for Porter
+# You must define steps for each action, but the rest is optional
+# Uncomment out the sections below to take full advantage of what Porter can do!
+
+# mixins:
+#  - helm
+#  - azure
+
+#dependencies:
+#  - name: mysql
+#    parameters:
+#      database-name: wordpress
+#    outputs:
+#      - source: bundle.dependencies.mysql.outputs.host
+#        destination: bundle.credentials.dbhost
+
+install:
+- description: "Install Hello World"
+  exec:
+    command: bash -c "Hello World!"
+uninstall:
+- description: "Uninstall Hello World"
+  exec:
+    command: bash -c "Goodbye World!"
