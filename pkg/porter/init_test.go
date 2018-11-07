@@ -20,4 +20,8 @@ func TestInit(t *testing.T) {
 	configFileExists, err := p.FileSystem.Exists(config.Name)
 	require.NoError(t, err)
 	assert.True(t, configFileExists)
+
+	runScriptExists, err := p.FileSystem.Exists(config.RunScript)
+	require.NoError(t, err)
+	assert.True(t, runScriptExists)
 }

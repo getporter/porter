@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/config"
@@ -30,16 +31,23 @@ func InitializePorterHome(t *testing.T, p *Porter) {
 	err = p.FileSystem.Mkdir(tmplDir, os.ModePerm)
 	require.NoError(t, err)
 
-	// Setup the pwd
-	pwd, err := filepath.Abs(".")
-	require.NoError(t, err)
-	err = p.FileSystem.MkdirAll(pwd, os.ModePerm)
-	require.NoError(t, err)
-
 	// Copy templates
-	tmpl, err := ioutil.ReadFile("testdata/porter.yaml")
-	require.NoError(t, err)
+	srcDir := "../../templates"
+	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
 
-	err = p.FileSystem.WriteFile(filepath.Join(tmplDir, config.Name), tmpl, os.ModePerm)
+		tmpl, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		destPath := filepath.Join(tmplDir, strings.TrimPrefix(path, srcDir))
+		return p.FileSystem.WriteFile(destPath, tmpl, os.ModePerm)
+	})
 	require.NoError(t, err)
 }

@@ -12,7 +12,12 @@ import (
 
 const (
 	// Name is the file name of the porter configuration file.
-	Name    = "porter.yaml"
+	Name = "porter.yaml"
+
+	// RunScript is the path to the CNAB run script.
+	RunScript = "cnab/app/run"
+
+	// EnvHOME is the name of the environment variable containing the porter home directory path.
 	EnvHOME = "PORTER_HOME"
 )
 
@@ -74,5 +79,16 @@ func (c Config) GetPorterConfigTemplate() ([]byte, error) {
 	}
 
 	tmplPath := filepath.Join(tmplDir, Name)
+	return c.FileSystem.ReadFile(tmplPath)
+}
+
+// GetRunScriptTemplate reads templates/run from the porter home directory.
+func (c Config) GetRunScriptTemplate() ([]byte, error) {
+	tmplDir, err := c.GetTemplatesDir()
+	if err != nil {
+		return nil, err
+	}
+
+	tmplPath := filepath.Join(tmplDir, filepath.Base(RunScript))
 	return c.FileSystem.ReadFile(tmplPath)
 }
