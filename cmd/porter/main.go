@@ -16,7 +16,7 @@ func main() {
 }
 
 func buildRootCommand() *cobra.Command {
-	p := &porter.Porter{}
+	p := porter.New()
 	cmd := &cobra.Command{
 		Use:  "porter",
 		Long: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",

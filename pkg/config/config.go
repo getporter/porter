@@ -1,11 +1,13 @@
 package config
 
 import (
-	"io/ioutil"
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -14,8 +16,32 @@ const (
 	EnvHOME = "PORTER_HOME"
 )
 
+type Config struct {
+	FileSystem *afero.Afero
+	Out        io.Writer
+}
+
+// New Config initializes a default porter configuration.
+func New() Config {
+	return Config{
+		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
+		Out:        os.Stdout,
+	}
+}
+
+// NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
+func NewTestConfig() (Config, *bytes.Buffer) {
+	output := &bytes.Buffer{}
+	c := Config{
+		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
+		Out:        output,
+	}
+
+	return c, output
+}
+
 // GetHomeDir determines the path to the porter home directory.
-func GetHomeDir() (string, error) {
+func (c Config) GetHomeDir() (string, error) {
 	home, ok := os.LookupEnv(EnvHOME)
 	if ok {
 		return home, nil
@@ -32,8 +58,8 @@ func GetHomeDir() (string, error) {
 }
 
 // GetTemplatesDir determines the path to the templates directory.
-func GetTemplatesDir() (string, error) {
-	home, err := GetHomeDir()
+func (c Config) GetTemplatesDir() (string, error) {
+	home, err := c.GetHomeDir()
 	if err != nil {
 		return "", err
 	}
@@ -41,12 +67,12 @@ func GetTemplatesDir() (string, error) {
 }
 
 // GetPorterConfigTemplate reads templates/porter.yaml from the porter home directory.
-func GetPorterConfigTemplate() ([]byte, error) {
-	tmplDir, err := GetTemplatesDir()
+func (c Config) GetPorterConfigTemplate() ([]byte, error) {
+	tmplDir, err := c.GetTemplatesDir()
 	if err != nil {
 		return nil, err
 	}
 
 	tmplPath := filepath.Join(tmplDir, Name)
-	return ioutil.ReadFile(tmplPath)
+	return c.FileSystem.ReadFile(tmplPath)
 }

@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -9,11 +8,10 @@ import (
 )
 
 func TestPrintVersion(t *testing.T) {
-	output := &bytes.Buffer{}
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
 
-	p := &Porter{Out: output}
+	p, output := NewTestPorter(t)
 
 	p.PrintVersion()
 

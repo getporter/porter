@@ -1,0 +1,4 @@
+install:
+- description: "Install Hello World"
+  exec:
+    command: bash -c 'Hello World!'

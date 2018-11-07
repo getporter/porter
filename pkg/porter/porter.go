@@ -1,10 +1,17 @@
 package porter
 
 import (
-	"io"
+	"github.com/deislabs/porter/pkg/config"
 )
 
 // Porter is the logic behind the porter client.
 type Porter struct {
-	Out io.Writer
+	config.Config
+}
+
+// New porter client, initialized with useful defaults.
+func New() *Porter {
+	return &Porter{
+		Config: config.New(),
+	}
 }
