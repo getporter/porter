@@ -13,8 +13,8 @@ func TestLoadManifest(t *testing.T) {
 
 	CopyFile(t, c, "testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
-	require.NoError(t, err)
+	require.NoError(t, c.LoadManifest(Name))
+	require.NoError(t, c.Manifest.Validate())
 
 	assert.NotNil(t, c.Manifest)
 	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
@@ -23,12 +23,10 @@ func TestLoadManifest(t *testing.T) {
 	installStep := c.Manifest.Install[0]
 	assert.NotNil(t, installStep.Description)
 
-	mixin, err := installStep.GetMixinType()
-	require.NoError(t, err)
+	mixin := installStep.GetMixinType()
 	assert.Equal(t, "exec", mixin)
 
-	data, err := installStep.GetMixinData()
-	require.NoError(t, err)
+	data := installStep.GetMixinData()
 	wantData := `arguments:
 - -c
 - Hello World!
@@ -58,5 +56,5 @@ func TestAction_Validate(t *testing.T) {
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)
 
-	assert.NoError(t, c.Manifest.Install.Validate())
+	assert.NoError(t, c.Manifest.Install.Validate(c.Manifest))
 }

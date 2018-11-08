@@ -14,7 +14,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 		Short: "Execute runtime bundle instructions",
 		Long:  "Execute the runtime bundle instructions contained in a porter configuration file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Run(opts.file)
+			return p.Run(opts.file, porter.ActionInstall)
 		},
 	}
 
