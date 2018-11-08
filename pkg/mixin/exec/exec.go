@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
-	//"strconv"
-	"strings"
 )
 
 // Exec is the logic behind the exec mixin
@@ -22,11 +20,7 @@ type Instruction struct {
 }
 
 func (e *Exec) Execute(instruction Instruction) error {
-	for i, arg := range instruction.Arguments {
-		instruction.Arguments[i] = strings.Replace(arg, "\\", "", -1)
-	}
-	command := strings.Replace(instruction.Command, "\\", "", -1)
-	cmd := exec.Command(command, instruction.Arguments...)
+	cmd := exec.Command(instruction.Command, instruction.Arguments...)
 	stderr, err := cmd.StderrPipe()
 	if stderr == nil || err != nil {
 		return fmt.Errorf("couldnt get stderr pipe")

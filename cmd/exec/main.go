@@ -30,7 +30,7 @@ func buildRootCommand() *cobra.Command {
 	e := &exec.Exec{}
 	cmd := &cobra.Command{
 		Use:  "exec",
-		Long: "exec is a porter 👩🏽‍✈️ mixin that you can use to execute bash commands",
+		Long: "exec is a porter 👩🏽‍✈️ mixin that you can you can use to execute arbitrary commands",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Enable swapping out stdout/stderr for testing
 			e.Out = cmd.OutOrStdout()
