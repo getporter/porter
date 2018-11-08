@@ -24,6 +24,7 @@ const (
 type Config struct {
 	FileSystem *afero.Afero
 	Out        io.Writer
+	Manifest   *Manifest
 }
 
 // New Config initializes a default porter configuration.
