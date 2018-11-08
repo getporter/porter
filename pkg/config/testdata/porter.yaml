@@ -1,0 +1,10 @@
+mixins:
+  - exec
+
+install:
+  - description: "Install Hello World"
+    exec:
+      command: bash
+      arguments:
+      - "-c"
+      - "Hello World!"

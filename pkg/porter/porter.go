@@ -6,7 +6,7 @@ import (
 
 // Porter is the logic behind the porter client.
 type Porter struct {
-	config.Config
+	*config.Config
 }
 
 // New porter client, initialized with useful defaults.
