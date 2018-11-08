@@ -21,7 +21,6 @@ func TestLoadManifest(t *testing.T) {
 	assert.Len(t, c.Manifest.Install, 1)
 
 	installStep := c.Manifest.Install[0]
-	assert.NoError(t, installStep.Validate())
 	assert.NotNil(t, installStep.Description)
 
 	mixin, err := installStep.GetMixinType()
@@ -36,4 +35,28 @@ func TestLoadManifest(t *testing.T) {
 command: bash
 `
 	assert.Equal(t, wantData, data)
+}
+
+func TestManifest_Validate(t *testing.T) {
+	c, _ := NewTestConfig()
+	SetupPorterHome(t, c)
+
+	CopyFile(t, c, "testdata/porter.yaml", Name)
+
+	err := c.LoadManifest(Name)
+	require.NoError(t, err)
+
+	assert.NoError(t, c.Manifest.Validate())
+}
+
+func TestAction_Validate(t *testing.T) {
+	c, _ := NewTestConfig()
+	SetupPorterHome(t, c)
+
+	CopyFile(t, c, "testdata/porter.yaml", Name)
+
+	err := c.LoadManifest(Name)
+	require.NoError(t, err)
+
+	assert.NoError(t, c.Manifest.Install.Validate())
 }
