@@ -9,16 +9,6 @@ import (
 )
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			if err, ok := r.(error); ok {
-				if err != nil {
-					fmt.Printf("panic, err: %s\n", err)
-					os.Exit(1)
-				}
-			}
-		}
-	}()
 	cmd := buildRootCommand()
 	if err := cmd.Execute(); err != nil {
 		fmt.Printf("err: %s\n", err)
