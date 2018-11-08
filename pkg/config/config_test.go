@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,69 +28,30 @@ func TestConfig_GetHomeDir(t *testing.T) {
 
 func TestConfig_GetHomeDir_HomeSet(t *testing.T) {
 	c, _ := NewTestConfig()
-
-	// Set up a test porter home
-	testHome := "/root/.porter"
-	err := c.FileSystem.MkdirAll(testHome, os.ModePerm)
-	require.NoError(t, err)
-	os.Setenv(EnvHOME, testHome)
+	SetupPorterHome(t, c)
 
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
 
-	assert.Equal(t, testHome, home)
+	assert.Equal(t, "/root/.porter", home)
 }
 
 func TestConfig_GetPorterConfigTemplate(t *testing.T) {
 	c, _ := NewTestConfig()
-
-	// Set up a test porter home
-	testHome := "/root/.porter"
-	err := c.FileSystem.MkdirAll(testHome, os.ModePerm)
-	require.NoError(t, err)
-	os.Setenv(EnvHOME, testHome)
-
-	// Setup a templates directory
-	templatesDir, err := c.GetTemplatesDir()
-	require.NoError(t, err)
-	err = c.FileSystem.Mkdir(templatesDir, os.ModePerm)
-	require.NoError(t, err)
-
-	// Add a template porter.yaml
-	tmpl, err := ioutil.ReadFile("../../templates/porter.yaml")
-	require.NoError(t, err)
-	err = c.FileSystem.WriteFile(filepath.Join(templatesDir, Name), tmpl, os.ModePerm)
-	require.NoError(t, err)
+	templates := SetupPorterHome(t, c)
 
 	gotTmpl, err := c.GetPorterConfigTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, tmpl, gotTmpl)
+	assert.Equal(t, templates["porter.yaml"], gotTmpl)
 }
 
 func TestConfig_GetRunScriptTemplate(t *testing.T) {
 	c, _ := NewTestConfig()
-
-	// Set up a test porter home
-	testHome := "/root/.porter"
-	err := c.FileSystem.MkdirAll(testHome, os.ModePerm)
-	require.NoError(t, err)
-	os.Setenv(EnvHOME, testHome)
-
-	// Setup a templates directory
-	templatesDir, err := c.GetTemplatesDir()
-	require.NoError(t, err)
-	err = c.FileSystem.Mkdir(templatesDir, os.ModePerm)
-	require.NoError(t, err)
-
-	// Add a template run script
-	tmpl, err := ioutil.ReadFile(filepath.Join("../../templates/run"))
-	require.NoError(t, err)
-	err = c.FileSystem.WriteFile(filepath.Join(templatesDir, "run"), tmpl, os.ModePerm)
-	require.NoError(t, err)
+	templates := SetupPorterHome(t, c)
 
 	gotTmpl, err := c.GetRunScriptTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, tmpl, gotTmpl)
+	assert.Equal(t, templates["run"], gotTmpl)
 }

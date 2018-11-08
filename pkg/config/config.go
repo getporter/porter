@@ -27,17 +27,17 @@ type Config struct {
 }
 
 // New Config initializes a default porter configuration.
-func New() Config {
-	return Config{
+func New() *Config {
+	return &Config{
 		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
 		Out:        os.Stdout,
 	}
 }
 
 // NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
-func NewTestConfig() (Config, *bytes.Buffer) {
+func NewTestConfig() (*Config, *bytes.Buffer) {
 	output := &bytes.Buffer{}
-	c := Config{
+	c := &Config{
 		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
 		Out:        output,
 	}
@@ -46,7 +46,7 @@ func NewTestConfig() (Config, *bytes.Buffer) {
 }
 
 // GetHomeDir determines the path to the porter home directory.
-func (c Config) GetHomeDir() (string, error) {
+func (c *Config) GetHomeDir() (string, error) {
 	home, ok := os.LookupEnv(EnvHOME)
 	if ok {
 		return home, nil
@@ -63,7 +63,7 @@ func (c Config) GetHomeDir() (string, error) {
 }
 
 // GetTemplatesDir determines the path to the templates directory.
-func (c Config) GetTemplatesDir() (string, error) {
+func (c *Config) GetTemplatesDir() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
 		return "", err
@@ -72,7 +72,7 @@ func (c Config) GetTemplatesDir() (string, error) {
 }
 
 // GetPorterConfigTemplate reads templates/porter.yaml from the porter home directory.
-func (c Config) GetPorterConfigTemplate() ([]byte, error) {
+func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
 	tmplDir, err := c.GetTemplatesDir()
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (c Config) GetPorterConfigTemplate() ([]byte, error) {
 }
 
 // GetRunScriptTemplate reads templates/run from the porter home directory.
-func (c Config) GetRunScriptTemplate() ([]byte, error) {
+func (c *Config) GetRunScriptTemplate() ([]byte, error) {
 	tmplDir, err := c.GetTemplatesDir()
 	if err != nil {
 		return nil, err
