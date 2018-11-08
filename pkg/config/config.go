@@ -1,21 +1,52 @@
 package config
 
 import (
-	"io/ioutil"
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 )
 
 const (
 	// Name is the file name of the porter configuration file.
-	Name    = "porter.yaml"
+	Name = "porter.yaml"
+
+	// RunScript is the path to the CNAB run script.
+	RunScript = "cnab/app/run"
+
+	// EnvHOME is the name of the environment variable containing the porter home directory path.
 	EnvHOME = "PORTER_HOME"
 )
 
+type Config struct {
+	FileSystem *afero.Afero
+	Out        io.Writer
+}
+
+// New Config initializes a default porter configuration.
+func New() Config {
+	return Config{
+		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
+		Out:        os.Stdout,
+	}
+}
+
+// NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
+func NewTestConfig() (Config, *bytes.Buffer) {
+	output := &bytes.Buffer{}
+	c := Config{
+		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
+		Out:        output,
+	}
+
+	return c, output
+}
+
 // GetHomeDir determines the path to the porter home directory.
-func GetHomeDir() (string, error) {
+func (c Config) GetHomeDir() (string, error) {
 	home, ok := os.LookupEnv(EnvHOME)
 	if ok {
 		return home, nil
@@ -32,8 +63,8 @@ func GetHomeDir() (string, error) {
 }
 
 // GetTemplatesDir determines the path to the templates directory.
-func GetTemplatesDir() (string, error) {
-	home, err := GetHomeDir()
+func (c Config) GetTemplatesDir() (string, error) {
+	home, err := c.GetHomeDir()
 	if err != nil {
 		return "", err
 	}
@@ -41,12 +72,23 @@ func GetTemplatesDir() (string, error) {
 }
 
 // GetPorterConfigTemplate reads templates/porter.yaml from the porter home directory.
-func GetPorterConfigTemplate() ([]byte, error) {
-	tmplDir, err := GetTemplatesDir()
+func (c Config) GetPorterConfigTemplate() ([]byte, error) {
+	tmplDir, err := c.GetTemplatesDir()
 	if err != nil {
 		return nil, err
 	}
 
 	tmplPath := filepath.Join(tmplDir, Name)
-	return ioutil.ReadFile(tmplPath)
+	return c.FileSystem.ReadFile(tmplPath)
+}
+
+// GetRunScriptTemplate reads templates/run from the porter home directory.
+func (c Config) GetRunScriptTemplate() ([]byte, error) {
+	tmplDir, err := c.GetTemplatesDir()
+	if err != nil {
+		return nil, err
+	}
+
+	tmplPath := filepath.Join(tmplDir, filepath.Base(RunScript))
+	return c.FileSystem.ReadFile(tmplPath)
 }

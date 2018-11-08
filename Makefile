@@ -14,7 +14,6 @@ test: build
 	go test ./...
 	./bin/porter version
 	./bin/porter help
-	./bin/porter init
 
 .PHONY: docs
 docs:
