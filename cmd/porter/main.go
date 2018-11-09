@@ -23,6 +23,7 @@ func buildRootCommand() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Enable swapping out stdout/stderr for testing
 			p.Out = cmd.OutOrStdout()
+			p.Err = cmd.OutOrStderr()
 		},
 	}
 
