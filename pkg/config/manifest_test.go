@@ -23,7 +23,7 @@ func TestLoadManifest(t *testing.T) {
 	installStep := c.Manifest.Install[0]
 	assert.NotNil(t, installStep.Description)
 
-	mixin := installStep.GetMixinType()
+	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
 
 	data := installStep.GetMixinData()

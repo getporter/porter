@@ -2,12 +2,11 @@ package config
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
-	"github.com/spf13/afero"
 )
 
 const (
@@ -22,27 +21,23 @@ const (
 )
 
 type Config struct {
-	FileSystem *afero.Afero
-	Out        io.Writer
-	Manifest   *Manifest
+	context.Context
+	Manifest *Manifest
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
-		Out:        os.Stdout,
+		Context: context.New(),
 	}
 }
 
 // NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
 func NewTestConfig() (*Config, *bytes.Buffer) {
-	output := &bytes.Buffer{}
+	cxt, output := context.NewTestContext()
 	c := &Config{
-		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
-		Out:        output,
+		Context: cxt,
 	}
-
 	return c, output
 }
 
@@ -92,4 +87,12 @@ func (c *Config) GetRunScriptTemplate() ([]byte, error) {
 
 	tmplPath := filepath.Join(tmplDir, filepath.Base(RunScript))
 	return c.FileSystem.ReadFile(tmplPath)
+}
+
+func (c *Config) GetMixinsDir() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "mixins"), nil
 }
