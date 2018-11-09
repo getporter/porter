@@ -6,12 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_GetHomeDir(t *testing.T) {
-	c, _ := NewTestConfig()
+	c := NewTestConfig(t)
 
 	// Set up a test porter home
 	testEntrypoint, err := os.Executable()
@@ -27,8 +26,8 @@ func TestConfig_GetHomeDir(t *testing.T) {
 }
 
 func TestConfig_GetHomeDir_HomeSet(t *testing.T) {
-	c, _ := NewTestConfig()
-	SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
@@ -37,21 +36,21 @@ func TestConfig_GetHomeDir_HomeSet(t *testing.T) {
 }
 
 func TestConfig_GetPorterConfigTemplate(t *testing.T) {
-	c, _ := NewTestConfig()
-	templates := SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
 	gotTmpl, err := c.GetPorterConfigTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, templates["porter.yaml"], gotTmpl)
+	assert.Equal(t, c.Templates["porter.yaml"], gotTmpl)
 }
 
 func TestConfig_GetRunScriptTemplate(t *testing.T) {
-	c, _ := NewTestConfig()
-	templates := SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
 	gotTmpl, err := c.GetRunScriptTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, templates["run"], gotTmpl)
+	assert.Equal(t, c.Templates["run"], gotTmpl)
 }
