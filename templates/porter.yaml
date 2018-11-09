@@ -2,9 +2,8 @@
 # You must define steps for each action, but the rest is optional
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
-# mixins:
-#  - helm
-#  - azure
+mixins:
+  - exec
 
 #dependencies:
 #  - name: mysql
@@ -17,8 +16,14 @@
 install:
 - description: "Install Hello World"
   exec:
-    command: bash -c "Hello World!"
+    command: bash
+    arguments:
+    - -c
+    - echo Hello World
 uninstall:
 - description: "Uninstall Hello World"
   exec:
-    command: bash -c "Goodbye World!"
+    command: bash
+    arguments:
+    - -c
+    - echo Goodbye World

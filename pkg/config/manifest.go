@@ -1,13 +1,14 @@
 package config
 
 import (
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
-	Mixins  []string `yaml:"mixins,omitempty"`
-	Install Action   `yaml:"install"`
+	Mixins  []string `yaml:"mixins"`
+	Install Steps    `yaml:"install"`
 }
 
 func (c *Config) LoadManifest(file string) error {
@@ -27,16 +28,33 @@ func (c *Config) LoadManifest(file string) error {
 }
 
 func (m *Manifest) Validate() error {
+	if len(m.Mixins) == 0 {
+		return errors.New("no mixins declared")
+	}
 	if m.Install == nil {
 		return errors.New("no install action defined")
 	}
 	return m.Install.Validate(m)
 }
 
-type Action []MixinStep
+func (m *Manifest) GetSteps(action Action) (Steps, error) {
+	var steps Steps
+	switch action {
+	case ActionInstall:
+		steps = m.Install
+	}
 
-func (a Action) Validate(m *Manifest) error {
-	for _, step := range a {
+	if len(steps) == 0 {
+		return nil, errors.Errorf("unsupported action: %q", action)
+	}
+
+	return steps, nil
+}
+
+type Steps []*Step
+
+func (s Steps) Validate(m *Manifest) error {
+	for _, step := range s {
 		err := step.Validate(m)
 		if err != nil {
 			return err
@@ -45,12 +63,14 @@ func (a Action) Validate(m *Manifest) error {
 	return nil
 }
 
-type MixinStep struct {
+type Step struct {
 	Description string                 `yaml:"description"`
 	Data        map[string]interface{} `yaml:",inline"`
+
+	runner *mixin.Runner
 }
 
-func (s MixinStep) Validate(m *Manifest) error {
+func (s *Step) Validate(m *Manifest) error {
 	if len(s.Data) == 0 {
 		return errors.New("no mixin specified")
 	}
@@ -59,7 +79,7 @@ func (s MixinStep) Validate(m *Manifest) error {
 	}
 
 	mixinDeclared := false
-	mixinType := s.GetMixinType()
+	mixinType := s.GetMixinName()
 	for _, mixin := range m.Mixins {
 		if mixin == mixinType {
 			mixinDeclared = true
@@ -73,7 +93,7 @@ func (s MixinStep) Validate(m *Manifest) error {
 	return nil
 }
 
-func (s MixinStep) GetMixinType() string {
+func (s *Step) GetMixinName() string {
 	var mixinName string
 	for k := range s.Data {
 		mixinName = k
@@ -81,7 +101,7 @@ func (s MixinStep) GetMixinType() string {
 	return mixinName
 }
 
-func (s MixinStep) GetMixinData() string {
+func (s *Step) GetMixinData() string {
 	var mixinData []byte
 	for _, data := range s.Data {
 		mixinData, _ = yaml.Marshal(data)

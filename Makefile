@@ -6,14 +6,21 @@ PKG = github.com/deislabs/porter
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 XBUILD = CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
 
-build:
-	$(XBUILD) -o bin/porter ./cmd/porter
+build: porter exec
 	cp -R templates bin/
+
+porter:
+	$(XBUILD) -o bin/porter ./cmd/porter
+
+exec:
+	mkdir -p bin/mixins/exec
+	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
 
 test: build
 	go test ./...
 	./bin/porter version
 	./bin/porter help
+	./bin/porter run --action install --file templates/porter.yaml
 
 .PHONY: docs
 docs:
