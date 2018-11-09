@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
 
@@ -18,10 +17,13 @@ const (
 
 	// EnvHOME is the name of the environment variable containing the porter home directory path.
 	EnvHOME = "PORTER_HOME"
+
+	// EnvACTION is the request
+	EnvACTION = "CNAB_ACTION"
 )
 
 type Config struct {
-	context.Context
+	*context.Context
 	Manifest *Manifest
 }
 
@@ -30,15 +32,6 @@ func New() *Config {
 	return &Config{
 		Context: context.New(),
 	}
-}
-
-// NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
-func NewTestConfig() (*Config, *bytes.Buffer) {
-	cxt, output := context.NewTestContext()
-	c := &Config{
-		Context: cxt,
-	}
-	return c, output
 }
 
 // GetHomeDir determines the path to the porter home directory.

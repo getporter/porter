@@ -8,10 +8,10 @@ import (
 )
 
 func TestLoadManifest(t *testing.T) {
-	c, _ := NewTestConfig()
-	SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
-	CopyFile(t, c, "testdata/porter.yaml", Name)
+	c.TestContext.AddFile("testdata/porter.yaml", Name)
 
 	require.NoError(t, c.LoadManifest(Name))
 	require.NoError(t, c.Manifest.Validate())
@@ -36,10 +36,10 @@ command: bash
 }
 
 func TestManifest_Validate(t *testing.T) {
-	c, _ := NewTestConfig()
-	SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
-	CopyFile(t, c, "testdata/porter.yaml", Name)
+	c.TestContext.AddFile("testdata/porter.yaml", Name)
 
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)
@@ -48,10 +48,10 @@ func TestManifest_Validate(t *testing.T) {
 }
 
 func TestAction_Validate(t *testing.T) {
-	c, _ := NewTestConfig()
-	SetupPorterHome(t, c)
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
 
-	CopyFile(t, c, "testdata/porter.yaml", Name)
+	c.TestContext.AddFile("testdata/porter.yaml", Name)
 
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)

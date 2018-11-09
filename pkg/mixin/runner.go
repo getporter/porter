@@ -12,7 +12,7 @@ import (
 )
 
 type Runner struct {
-	context.Context
+	*context.Context
 	// dir is the absolute path to the directory containing the mixin
 	dir string
 

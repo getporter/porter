@@ -21,9 +21,9 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Execute the runtime bundle instructions contained in a porter configuration file",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if opts.rawAction == "" {
-				opts.rawAction = os.Getenv("CNAB_ACTION")
+				opts.rawAction = os.Getenv(config.EnvACTION)
 				if p.Debug {
-					fmt.Fprintf(p.Out, "DEBUG: defaulting action to CNAB_ACTION (%s)\n", opts.rawAction)
+					fmt.Fprintf(p.Out, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, opts.rawAction)
 				}
 			}
 
@@ -34,7 +34,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 			}
 
 			if exists, _ := p.FileSystem.Exists(opts.file); !exists {
-				return fmt.Errorf("invalid --file: the specified porter configuration file %q doesn't exist", opts.file)
+				return fmt.Errorf("invalid --file: the specified porter configuration file %q doesn't exist\n", opts.file)
 			}
 
 			return nil
