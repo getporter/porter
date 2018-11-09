@@ -24,6 +24,7 @@ func NewTestContext(t *testing.T) *TestContext {
 		Context: &Context{
 			FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
 			Out:        output,
+			Err:        output,
 		},
 		output: output,
 		T:      t,

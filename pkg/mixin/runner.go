@@ -6,61 +6,77 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/pkg/errors"
 )
 
 type Runner struct {
 	*context.Context
-	// dir is the absolute path to the directory containing the mixin
-	dir string
+	// mixinDir is the absolute path to the directory containing the mixin
+	mixinDir string
 
 	Mixin   string
 	Command string
 	Data    string
+	File    string
 }
 
-func NewRunner(mixin, command, data, dir string) *Runner {
+func NewRunner(mixin, mixinDir string) *Runner {
 	return &Runner{
-		Context: context.New(),
-		dir:     dir,
-		Mixin:   mixin,
-		Command: command,
-		Data:    data,
+		Context:  context.New(),
+		Mixin:    mixin,
+		mixinDir: mixinDir,
 	}
 }
 
 func (r *Runner) Validate() error {
+	if r.Mixin == "" {
+		return errors.New("mixin not specified")
+	}
+
 	mixinPath := r.getMixinPath()
 	exists, err := r.FileSystem.Exists(mixinPath)
-	if !exists {
-		return errors.Wrapf(err, "mixin not found (%s)", mixinPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to stat mixin (%s)", mixinPath)
 	}
+	if !exists {
+		return errors.Errorf("mixin not found (%s)", mixinPath)
+	}
+
 	return nil
 }
 
 func (r *Runner) Run() error {
 	if r.Debug {
-		fmt.Fprintf(r.Out, "DEBUG cwd:   %s\n", r.dir)
-		fmt.Fprintf(r.Out, "DEBUG mixin: %s\n", r.Mixin)
+		fmt.Fprintf(r.Out, "DEBUG mixin:    %s\n", r.Mixin)
+		fmt.Fprintf(r.Out, "DEBUG mixinDir: %s\n", r.mixinDir)
+		fmt.Fprintf(r.Out, "DEBUG file:     %s\n", r.File)
 		fmt.Fprintf(r.Out, "DEBUG stdin:\n%s\n", r.Data)
 	}
 
 	mixinPath := r.getMixinPath()
 	cmd := exec.Command(mixinPath, r.Command)
-	cmd.Dir = r.dir
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
+
+	// Pipe the output from the mixin to porter
+	cmd.Stdout = r.Context.Out
+	cmd.Stderr = r.Context.Err
+
+	if r.File != "" {
+		cmd.Args = append(cmd.Args, "-f", r.File)
 	}
 
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, r.Data)
-	}()
+	if r.Data != "" {
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return err
+		}
+		go func() {
+			defer stdin.Close()
+			io.WriteString(stdin, r.Data)
+		}()
+	}
 
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		return errors.Wrapf(err, "could not run mixin command %v", cmd)
 	}
@@ -69,5 +85,5 @@ func (r *Runner) Run() error {
 }
 
 func (r *Runner) getMixinPath() string {
-	return filepath.Join(r.dir, r.Mixin)
+	return filepath.Join(r.mixinDir, r.Mixin)
 }

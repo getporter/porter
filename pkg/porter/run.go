@@ -53,12 +53,13 @@ func (p *Porter) Run(file string, action config.Action) error {
 }
 
 func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir string) *mixin.Runner {
-	mixinCmd := string(action)
 	name := s.GetMixinName()
-	data := s.GetMixinData()
 	mixinDir := filepath.Join(mixinsDir, name)
 
-	r := mixin.NewRunner(name, mixinCmd, data, mixinDir)
+	r := mixin.NewRunner(name, mixinDir)
+	r.Command = string(action)
+	r.Data = s.GetMixinData()
 	r.Context = p.Context
+
 	return r
 }

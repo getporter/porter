@@ -1,0 +1,4 @@
+command: bash
+arguments:
+- -c
+- echo Hello World
