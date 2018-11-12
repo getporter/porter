@@ -7,7 +7,10 @@ import (
 )
 
 type Manifest struct {
-	Mixins  []string `yaml:"mixins"`
+	Name    string   `yaml:"image,omitempty"`
+	Version string   `yaml:"version,omitempty"`
+	Image   string   `yaml:"invocationImage,omitempty"`
+	Mixins  []string `yaml:"mixins,omitempty"`
 	Install Steps    `yaml:"install"`
 }
 

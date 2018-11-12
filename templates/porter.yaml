@@ -12,7 +12,9 @@ mixins:
 #    outputs:
 #      - source: bundle.dependencies.mysql.outputs.host
 #        destination: bundle.credentials.dbhost
-
+name: HELLO
+version: 0.1.0
+invocationImage: porter:latest
 install:
 - description: "Install Hello World"
   exec:
