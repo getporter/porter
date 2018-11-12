@@ -2,6 +2,14 @@
   name = "github.com/spf13/cobra"
   version = "0.0.3"
 
+[[constraint]]
+  name = "github.com/docker/docker"
+  branch = "master"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  branch = "master"
+
 [prune]
   go-tests = true
   unused-packages = true
