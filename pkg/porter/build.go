@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
@@ -26,7 +27,11 @@ func (p *Porter) Build() error {
 	if err != nil {
 		return fmt.Errorf("unable to build CNAB invocation image: %s", err)
 	}
-	return p.buildBundle(p.Config.Manifest.Image, digest)
+	taggedImage, err := p.rewriteImageWithDigest(p.Config.Manifest.Image, digest)
+	if err != nil {
+		return fmt.Errorf("unable to regenerate tag: %s", err)
+	}
+	return p.buildBundle(taggedImage, digest)
 }
 
 func (p *Porter) generateDockerFile() error {
@@ -67,9 +72,15 @@ func (p *Porter) addMixins(w io.Writer) error {
 	homedir, _ := p.GetHomeDir()
 	mixinDir := fmt.Sprintf("%s/mixins", homedir)
 	porterPath := fmt.Sprintf("%s/%s", mixinDir, "porter")
-	porterMixin, _ := p.Config.FileSystem.Open(porterPath)
+	porterMixin, err := p.Config.FileSystem.Open(porterPath)
+	if err != nil {
+		return fmt.Errorf("couldn't open porter for container build: %s", err)
+	}
 	defer porterMixin.Close()
-	f, _ := p.Config.FileSystem.OpenFile("porter", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	f, err := p.Config.FileSystem.OpenFile("porter", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("couldn't open porter in build path for container build: %s", err)
+	}
 	defer f.Close()
 	io.Copy(porterMixin, f)
 	if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, "porter", "porter")); err != nil {
@@ -77,9 +88,15 @@ func (p *Porter) addMixins(w io.Writer) error {
 	}
 
 	execPath := fmt.Sprintf("%s/%s", mixinDir, "exec")
-	execMixin, _ := p.Config.FileSystem.Open(execPath)
+	execMixin, err := p.Config.FileSystem.Open(execPath)
+	if err != nil {
+		return fmt.Errorf("couldn't open exec for container build: %s", err)
+	}
 	defer execMixin.Close()
-	f, _ = p.Config.FileSystem.OpenFile("exec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	f, err = p.Config.FileSystem.OpenFile("exec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("couldn't open exec in build path container build: %s", err)
+	}
 	defer f.Close()
 	io.Copy(execMixin, f)
 	if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, "exec", "mixins/exec")); err != nil {
@@ -87,9 +104,15 @@ func (p *Porter) addMixins(w io.Writer) error {
 	}
 
 	for _, mixin := range p.Manifest.Mixins {
-		mixinExec, _ := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
+		mixinExec, err := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
+		if err != nil {
+			return fmt.Errorf("couldn't open mixin for container build: %s", err)
+		}
 		defer execMixin.Close()
-		f, _ = p.Config.FileSystem.OpenFile(mixin, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		f, err = p.Config.FileSystem.OpenFile(mixin, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			return fmt.Errorf("couldn't open mixin in build path container build: %s", err)
+		}
 		defer f.Close()
 		io.Copy(mixinExec, f)
 		if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, mixin, "mixins/"+mixin)); err != nil {
@@ -171,8 +194,20 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	return string(dist.Descriptor.Digest), nil
 }
 
+func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
+	ref, err := reference.Parse(InvocationImage)
+	if err != nil {
+		return "", fmt.Errorf("unable to parse docker image: %s", err)
+	}
+	named, ok := ref.(reference.Named)
+	if !ok {
+		return "", fmt.Errorf("had an issue with the docker image")
+	}
+	return fmt.Sprintf("%s@%s", named.Name(), digest), nil
+}
+
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	fmt.Printf("\nGenerating Bundle File =======> \n")
+	fmt.Printf("\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
 	bundle := Bundle{
 		Name:    p.Config.Manifest.Name,
 		Version: p.Config.Manifest.Version,
