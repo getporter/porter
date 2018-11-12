@@ -30,6 +30,7 @@ func (p *Porter) Build() error {
 }
 
 func (p *Porter) generateDockerFile() error {
+	fmt.Printf("\nGenerating Dockerfile =======>\n")
 	f, err := p.Config.FileSystem.OpenFile("Dockerfile", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("couldn't open Dockerfile: %s", err)
@@ -106,12 +107,11 @@ func (p *Porter) addRun(w io.Writer) error {
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
-	fmt.Printf("Starting Invocation Image Build")
+	fmt.Printf("\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
 		return "", fmt.Errorf("error %s", err)
 	}
-	fmt.Println(path)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
 		PullParent:     false,
@@ -148,7 +148,7 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	}
 	encodedJSON, err := json.Marshal(authConfig)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("unable to build Docker auth:%s", err)
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
@@ -172,6 +172,7 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
+	fmt.Printf("\nGenerating Bundle File =======> \n")
 	bundle := Bundle{
 		Name:    p.Config.Manifest.Name,
 		Version: p.Config.Manifest.Version,
