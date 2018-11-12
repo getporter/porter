@@ -45,6 +45,7 @@ func (p *Porter) generateDockerFile() error {
 
 	err = p.addDockerBaseImage(w)
 	err = p.addCNAB(w)
+	err = p.addPorterYAML(w)
 	err = p.addMixins(w)
 	err = p.addRun(w)
 
@@ -59,6 +60,13 @@ func (p *Porter) addDockerBaseImage(w io.Writer) error {
 	return nil
 }
 
+func (p *Porter) addPorterYAML(w io.Writer) error {
+	if _, err := fmt.Fprintf(w, "COPY porter.yaml cnab/app/porter.yaml\n"); err != nil {
+		return fmt.Errorf("couldn't write porter.yaml: %s", err)
+	}
+	return nil
+}
+
 func (p *Porter) addCNAB(w io.Writer) error {
 	if _, err := fmt.Fprintf(w, "ADD cnab/ cnab/\n"); err != nil {
 		return fmt.Errorf("couldn't write docker base image: %s", err)
@@ -67,8 +75,8 @@ func (p *Porter) addCNAB(w io.Writer) error {
 }
 
 func (p *Porter) addMixins(w io.Writer) error {
-	copyTemplate := "COPY %s cnab/app/%s\n"
-	// Always copy the porter and exec "mixins"
+
+	// Always copy in porter
 	homedir, _ := p.GetHomeDir()
 	mixinDir := fmt.Sprintf("%s/mixins", homedir)
 	porterPath := fmt.Sprintf("%s/%s", mixinDir, "porter")
@@ -77,46 +85,51 @@ func (p *Porter) addMixins(w io.Writer) error {
 		return fmt.Errorf("couldn't open porter for container build: %s", err)
 	}
 	defer porterMixin.Close()
-	f, err := p.Config.FileSystem.OpenFile("porter", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	f, err := p.Config.FileSystem.OpenFile("cnab/app/porter", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return fmt.Errorf("couldn't open porter in build path for container build: %s", err)
 	}
 	defer f.Close()
-	io.Copy(porterMixin, f)
-	if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, "porter", "porter")); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
+	_, err = io.Copy(f, porterMixin)
+	if err != nil {
+		return fmt.Errorf("couldn't write mixin: %s", err)
 	}
 
-	execPath := fmt.Sprintf("%s/%s", mixinDir, "exec")
-	execMixin, err := p.Config.FileSystem.Open(execPath)
+	cnabMixins := "cnab/app/mixins"
+	mixinDirTemplate := "cnab/app/mixins/%s"
+	mixinExecTemplate := "cnab/app/mixins/%s/%s"
+	mixinsDirExists, err := p.Config.FileSystem.DirExists(cnabMixins)
 	if err != nil {
-		return fmt.Errorf("couldn't open exec for container build: %s", err)
+		return fmt.Errorf("couldn't verify mixins directory: %s", err)
 	}
-	defer execMixin.Close()
-	f, err = p.Config.FileSystem.OpenFile("exec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return fmt.Errorf("couldn't open exec in build path container build: %s", err)
+	if !mixinsDirExists {
+		p.Config.FileSystem.Mkdir(cnabMixins, 0755)
 	}
-	defer f.Close()
-	io.Copy(execMixin, f)
-	if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, "exec", "mixins/exec")); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
-	}
-
+	fmt.Printf("Processing mixins ===> \n")
 	for _, mixin := range p.Manifest.Mixins {
+		fmt.Printf("Processing mixin %s ===> \n", mixin)
+		fmt.Printf("Reading: %s\n", fmt.Sprintf("%s/%s", mixinDir, mixin))
+		fmt.Printf("Writing: %s\n", fmt.Sprintf(mixinExecTemplate, mixin, mixin))
+		mixinsDirExists, err := p.Config.FileSystem.DirExists(fmt.Sprintf(mixinDirTemplate, mixin))
+		if err != nil {
+			return fmt.Errorf("couldn't verify mixins directory: %s", err)
+		}
+		if !mixinsDirExists {
+			p.Config.FileSystem.Mkdir(fmt.Sprintf(mixinDirTemplate, mixin), 0755)
+		}
 		mixinExec, err := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
 		if err != nil {
 			return fmt.Errorf("couldn't open mixin for container build: %s", err)
 		}
-		defer execMixin.Close()
-		f, err = p.Config.FileSystem.OpenFile(mixin, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		defer mixinExec.Close()
+		f, err := p.Config.FileSystem.OpenFile(fmt.Sprintf(mixinExecTemplate, mixin, mixin), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return fmt.Errorf("couldn't open mixin in build path container build: %s", err)
 		}
 		defer f.Close()
-		io.Copy(mixinExec, f)
-		if _, err := fmt.Fprintf(w, fmt.Sprintf(copyTemplate, mixin, "mixins/"+mixin)); err != nil {
-			return fmt.Errorf("couldn't write docker base image: %s", err)
+		_, err = io.Copy(f, mixinExec)
+		if err != nil {
+			return fmt.Errorf("couldn't write mixin: %s", err)
 		}
 	}
 	return nil
