@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -231,6 +232,39 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	}
 	image.Digest = digest
 	bundle.InvocationImages = []InvocationImage{image}
+	bundle.Parameters = p.generateBundleParameters()
 	return p.WriteFile(bundle, 0644)
 
+}
+
+func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
+	params := map[string]ParameterDefinition{}
+	for _, param := range p.Manifest.Parameters {
+		fmt.Printf("Generating parameter definition %s ====>\n", param.Name)
+		p := ParameterDefinition{
+			DataType:      param.DataType,
+			DefaultValue:  param.DefaultValue,
+			AllowedValues: param.AllowedValues,
+			Required:      param.Required,
+			MinValue:      param.MinValue,
+			MaxValue:      param.MaxValue,
+			MinLength:     param.MinLength,
+			MaxLength:     param.MaxLength,
+		}
+		if param.Metadata.Description != "" {
+			p.Metadata = ParameterMetadata{Description: param.Metadata.Description}
+		}
+		if param.Destination != nil {
+			p.Destination = &Location{
+				EnvironmentVariable: param.Destination.EnvironmentVariable,
+				Path:                param.Destination.Path,
+			}
+		} else {
+			p.Destination = &Location{
+				EnvironmentVariable: strings.ToUpper(param.Name),
+			}
+		}
+		params[param.Name] = p
+	}
+	return params
 }

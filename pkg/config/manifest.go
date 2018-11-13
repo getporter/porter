@@ -1,17 +1,44 @@
 package config
 
 import (
+	"fmt"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
-	Name    string   `yaml:"image,omitempty"`
-	Version string   `yaml:"version,omitempty"`
-	Image   string   `yaml:"invocationImage,omitempty"`
-	Mixins  []string `yaml:"mixins,omitempty"`
-	Install Steps    `yaml:"install"`
+	Name       string                `yaml:"image,omitempty"`
+	Version    string                `yaml:"version,omitempty"`
+	Image      string                `yaml:"invocationImage,omitempty"`
+	Mixins     []string              `yaml:"mixins,omitempty"`
+	Install    Steps                 `yaml:"install"`
+	Parameters []ParameterDefinition `yaml:"parameters,omitempty"`
+}
+
+// ParameterDefinition defines a single parameter for a CNAB bundle
+type ParameterDefinition struct {
+	Name          string            `yaml:"name"`
+	DataType      string            `yaml:"type"`
+	DefaultValue  interface{}       `yaml:"default,omitempty"`
+	AllowedValues []interface{}     `yaml:"allowed,omitempty"`
+	Required      bool              `yaml:"required"`
+	MinValue      *int              `yaml:"minValue,omitempty"`
+	MaxValue      *int              `yaml:"maxValue,omitempty"`
+	MinLength     *int              `yaml:"minLength,omitempty"`
+	MaxLength     *int              `yaml:"maxLength,omitempty"`
+	Metadata      ParameterMetadata `yaml:"metadata,omitempty"`
+	Destination   *Location         `yaml:"destination,omitempty"`
+}
+
+type Location struct {
+	Path                string `yaml:"path"`
+	EnvironmentVariable string `yaml:"env"`
+}
+
+// ParameterMetadata contains metadata for a parameter definition.
+type ParameterMetadata struct {
+	Description string `yaml:"description,omitempty"`
 }
 
 func (c *Config) LoadManifest(file string) error {
@@ -25,7 +52,6 @@ func (c *Config) LoadManifest(file string) error {
 	if err != nil {
 		return errors.Wrapf(err, "could not parse manifest yaml in %q", file)
 	}
-
 	c.Manifest = m
 	return nil
 }
