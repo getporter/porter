@@ -30,6 +30,10 @@ func (p *Porter) Build() error {
 		return nil
 	}
 
+	if err := p.copyMixins(); err != nil {
+		return fmt.Errorf("unable to copy mixins: %s", err)
+	}
+
 	if err := p.generateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
