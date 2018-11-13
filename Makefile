@@ -16,8 +16,12 @@ exec:
 	mkdir -p bin/mixins/exec
 	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
 
-test: build
+test: test-unit test-cli
+
+test-unit: build
 	go test ./...
+
+test-cli: build
 	./bin/porter version
 	./bin/porter help
 	./bin/porter run --action install --file templates/porter.yaml

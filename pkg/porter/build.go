@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -18,6 +17,11 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+)
+
+const (
+	mixinDirTemplate  = "cnab/app/mixins/%s"
+	mixinExecTemplate = "cnab/app/mixins/%s/%s"
 )
 
 func (p *Porter) Build() error {
@@ -44,69 +48,86 @@ func (p *Porter) Build() error {
 }
 
 func (p *Porter) generateDockerFile() error {
-	fmt.Printf("\nGenerating Dockerfile =======>\n")
-	f, err := p.Config.FileSystem.OpenFile("Dockerfile", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	lines, err := p.buildDockerFile()
 	if err != nil {
-		return fmt.Errorf("couldn't open Dockerfile: %s", err)
+		return errors.Wrap(err, "error generating the Dockerfile")
 	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
 
-	err = p.addDockerBaseImage(w)
-	err = p.addCNAB(w)
-	err = p.addPorterYAML(w)
-	err = p.addMixins(w)
-	err = p.addRun(w)
-
-	defer w.Flush()
-	return err
+	fmt.Printf("\nWriting Dockerfile =======>\n")
+	contents := strings.Join(lines, "\n")
+	err = p.Config.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
+	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
-func (p *Porter) addDockerBaseImage(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "FROM ubuntu:latest\n"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
+func (p *Porter) buildDockerFile() ([]string, error) {
+	fmt.Printf("\nGenerating Dockerfile =======>\n")
+
+	lines := make([]string, 0, 10)
+
+	lines = append(lines, p.buildFromSection())
+	lines = append(lines, p.buildCNABSection()...)
+	lines = append(lines, p.buildPorterSection()...)
+	lines = append(lines, p.buildCMDSection())
+
+	mixinLines, err := p.buildMixinsSection()
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
 	}
-	return nil
+
+	lines = append(lines, mixinLines...)
+
+	return lines, nil
 }
 
-func (p *Porter) addPorterYAML(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "COPY porter.yaml cnab/app/porter.yaml\n"); err != nil {
-		return fmt.Errorf("couldn't write porter.yaml: %s", err)
-	}
-	return nil
+func (p *Porter) buildFromSection() string {
+	return `FROM ubuntu:latest`
 }
 
-func (p *Porter) addCNAB(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "ADD cnab/ cnab/\n"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
+func (p *Porter) buildPorterSection() []string {
+	return []string{
+		`COPY porter.yaml /cnab/app/porter.yaml`,
 	}
-	return nil
 }
 
-func (p *Porter) addMixins(w io.Writer) error {
+func (p *Porter) buildCNABSection() []string {
+	return []string{
+		`COPY cnab/ /cnab/`,
+	}
+}
+
+func (p *Porter) buildCMDSection() string {
+	return `CMD [/cnab/app/run]`
+}
+
+func (p *Porter) buildMixinsSection() ([]string, error) {
+	return nil, nil
+}
+
+func (p *Porter) copyMixins() error {
 
 	// Always copy in porter
-	homedir, _ := p.GetHomeDir()
-	mixinDir := fmt.Sprintf("%s/mixins", homedir)
+	mixinDir, _ := p.GetMixinsDir()
 	porterPath := fmt.Sprintf("%s/%s", mixinDir, "porter")
 	porterMixin, err := p.Config.FileSystem.Open(porterPath)
 	if err != nil {
-		return fmt.Errorf("couldn't open porter for container build: %s", err)
+		return errors.Wrapf(err, "couldn't open porter for container build")
 	}
 	defer porterMixin.Close()
+
 	f, err := p.Config.FileSystem.OpenFile("cnab/app/porter", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return fmt.Errorf("couldn't open porter in build path for container build: %s", err)
 	}
+
 	defer f.Close()
+
 	_, err = io.Copy(f, porterMixin)
 	if err != nil {
 		return fmt.Errorf("couldn't write mixin: %s", err)
 	}
 
 	cnabMixins := "cnab/app/mixins"
-	mixinDirTemplate := "cnab/app/mixins/%s"
-	mixinExecTemplate := "cnab/app/mixins/%s/%s"
+
 	mixinsDirExists, err := p.Config.FileSystem.DirExists(cnabMixins)
 	if err != nil {
 		return fmt.Errorf("couldn't verify mixins directory: %s", err)
@@ -116,35 +137,7 @@ func (p *Porter) addMixins(w io.Writer) error {
 	}
 	fmt.Printf("Processing mixins ===> \n")
 	for _, mixin := range p.Manifest.Mixins {
-		err := func() error {
-			fmt.Printf("Processing mixin %s ===> \n", mixin)
-			fmt.Printf("Reading: %s\n", fmt.Sprintf("%s/%s", mixinDir, mixin))
-			fmt.Printf("Writing: %s\n", fmt.Sprintf(mixinExecTemplate, mixin, mixin))
-
-			mixinsDirExists, err := p.Config.FileSystem.DirExists(fmt.Sprintf(mixinDirTemplate, mixin))
-			if err != nil {
-				return fmt.Errorf("couldn't verify mixins directory: %s", err)
-			}
-
-			if !mixinsDirExists {
-				p.Config.FileSystem.Mkdir(fmt.Sprintf(mixinDirTemplate, mixin), 0755)
-			}
-
-			mixinExec, err := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
-			if err != nil {
-				return fmt.Errorf("couldn't open mixin for container build: %s", err)
-			}
-			defer mixinExec.Close()
-
-			f, err := p.Config.FileSystem.OpenFile(fmt.Sprintf(mixinExecTemplate, mixin, mixin), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-			if err != nil {
-				return fmt.Errorf("couldn't open mixin in build path container build: %s", err)
-			}
-			defer f.Close()
-
-			_, err = io.Copy(f, mixinExec)
-			return errors.Wrapf(err, "couldn't write mixin %q", mixin)
-		}()
+		err := p.copyMixin(mixin)
 		if err != nil {
 			return err
 		}
@@ -152,11 +145,36 @@ func (p *Porter) addMixins(w io.Writer) error {
 	return nil
 }
 
-func (p *Porter) addRun(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "CMD [\"/cnab/app/run\"]"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
+func (p *Porter) copyMixin(mixin string) error {
+	mixinDir, _ := p.GetMixinsDir()
+
+	fmt.Printf("Processing mixin %s ===> \n", mixin)
+	fmt.Printf("Reading: %s\n", fmt.Sprintf("%s/%s", mixinDir, mixin))
+	fmt.Printf("Writing: %s\n", fmt.Sprintf(mixinExecTemplate, mixin, mixin))
+
+	mixinsDirExists, err := p.Config.FileSystem.DirExists(fmt.Sprintf(mixinDirTemplate, mixin))
+	if err != nil {
+		return fmt.Errorf("couldn't verify mixins directory: %s", err)
 	}
-	return nil
+
+	if !mixinsDirExists {
+		p.Config.FileSystem.Mkdir(fmt.Sprintf(mixinDirTemplate, mixin), 0755)
+	}
+
+	mixinExec, err := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
+	if err != nil {
+		return fmt.Errorf("couldn't open mixin for container build: %s", err)
+	}
+	defer mixinExec.Close()
+
+	f, err := p.Config.FileSystem.OpenFile(fmt.Sprintf(mixinExecTemplate, mixin, mixin), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("couldn't open mixin in build path container build: %s", err)
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, mixinExec)
+	return errors.Wrapf(err, "couldn't write mixin %q", mixin)
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
