@@ -11,6 +11,8 @@ build: porter exec
 
 porter:
 	$(XBUILD) -o bin/porter ./cmd/porter
+	mkdir -p bin/mixins/porter
+	cp bin/porter bin/mixins/porter/
 
 exec:
 	mkdir -p bin/mixins/exec
