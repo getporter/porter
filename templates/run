@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec /cnab/app/porter run porter.yaml
+exec /cnab/app/porter run -f /cnab/app/porter.yaml
