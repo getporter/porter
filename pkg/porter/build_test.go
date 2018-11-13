@@ -3,6 +3,8 @@ package porter
 import (
 	"testing"
 
+	"github.com/deislabs/porter/pkg/config"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
@@ -11,6 +13,10 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
+
+	p.TestConfig.TestContext.AddFile("../../templates/porter.yaml", config.Name)
+	err := p.LoadManifest(config.Name)
+	require.NoError(t, err)
 
 	gotlines, err := p.buildDockerFile()
 	require.NoError(t, err)
@@ -28,15 +34,29 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	err := p.generateDockerFile()
+	p.TestConfig.TestContext.AddFile("../../templates/porter.yaml", config.Name)
+	err := p.LoadManifest(config.Name)
 	require.NoError(t, err)
 
-	exists, err := p.FileSystem.Exists("Dockerfile")
+	err = p.generateDockerFile()
 	require.NoError(t, err)
-	require.True(t, exists, "Dockerfile wasn't written")
+
+	dockerfileExists, err := p.FileSystem.Exists("Dockerfile")
+	require.NoError(t, err)
+	require.True(t, dockerfileExists, "Dockerfile wasn't written")
 
 	f, _ := p.FileSystem.Stat("Dockerfile")
 	if f.Size() == 0 {
 		t.Fatalf("Dockerfile is empty")
 	}
+
+	wantPorterMixin := "cnab/app/mixins/porter/porter"
+	porterMixinExists, err := p.FileSystem.Exists(wantPorterMixin)
+	require.NoError(t, err)
+	assert.True(t, porterMixinExists, "The porter mixin wasn't copied into %s", wantPorterMixin)
+
+	wantExecMixin := "cnab/app/mixins/exec/exec"
+	execMixinExists, err := p.FileSystem.Exists(wantExecMixin)
+	require.NoError(t, err)
+	assert.True(t, execMixinExists, "The exec mixin wasn't copied into %s", wantExecMixin)
 }

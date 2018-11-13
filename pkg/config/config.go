@@ -89,3 +89,13 @@ func (c *Config) GetMixinsDir() (string, error) {
 	}
 	return filepath.Join(home, "mixins"), nil
 }
+
+func (c *Config) GetMixinPath(mixin string) (string, error) {
+	mixinsDir, err := c.GetMixinsDir()
+	if err != nil {
+		return "", err
+	}
+
+	executablePath := filepath.Join(mixinsDir, mixin, mixin)
+	return executablePath, nil
+}

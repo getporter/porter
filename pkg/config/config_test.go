@@ -1,6 +1,7 @@
 package config
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -42,7 +43,8 @@ func TestConfig_GetPorterConfigTemplate(t *testing.T) {
 	gotTmpl, err := c.GetPorterConfigTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, c.Templates["porter.yaml"], gotTmpl)
+	wantTmpl, _ := ioutil.ReadFile("../../templates/porter.yaml")
+	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
 func TestConfig_GetRunScriptTemplate(t *testing.T) {
@@ -52,5 +54,6 @@ func TestConfig_GetRunScriptTemplate(t *testing.T) {
 	gotTmpl, err := c.GetRunScriptTemplate()
 	require.NoError(t, err)
 
-	assert.Equal(t, c.Templates["run"], gotTmpl)
+	wantTmpl, _ := ioutil.ReadFile("../../templates/run")
+	assert.Equal(t, wantTmpl, gotTmpl)
 }

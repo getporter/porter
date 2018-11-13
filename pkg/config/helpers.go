@@ -3,18 +3,14 @@ package config
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/stretchr/testify/require"
 )
 
 type TestConfig struct {
 	*Config
 	TestContext *context.TestContext
-
-	Templates map[string][]byte
 }
 
 // NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
@@ -25,7 +21,6 @@ func NewTestConfig(t *testing.T) *TestConfig {
 			Context: cxt.Context,
 		},
 		TestContext: cxt,
-		Templates:   make(map[string][]byte),
 	}
 	return c
 }
@@ -33,32 +28,19 @@ func NewTestConfig(t *testing.T) *TestConfig {
 // InitializePorterHome initializes the test filesystem with the supporting files in the PORTER_HOME directory.
 func (c *TestConfig) SetupPorterHome() {
 	// Set up the test porter home directory
-	os.Setenv(EnvHOME, "/root/.porter")
+	home := "/root/.porter"
+	os.Setenv(EnvHOME, home)
 
-	// Copy templates
-	srcDir := "../../templates/"
-	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		dest := strings.TrimPrefix(path, srcDir)
-		c.AddTemplate(path, dest)
-
-		return nil
-	})
-	require.NoError(c.TestContext.T, err)
+	// Copy bin dir contents to the home directory
+	c.TestContext.AddDirectory("../../bin/", home)
 }
 
 func (c *TestConfig) AddTemplate(src, dest string) {
 	templatesDir, err := c.GetTemplatesDir()
-	require.NoError(c.TestContext.T, err)
+	if err != nil {
+		c.TestContext.T.Fatal(err)
+	}
 
 	templDest := filepath.Join(templatesDir, dest)
-	tmpl := c.TestContext.AddFile(src, templDest)
-	c.Templates[dest] = tmpl
+	c.TestContext.AddFile(src, templDest)
 }
