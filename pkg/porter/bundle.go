@@ -98,16 +98,16 @@ type Action struct {
 
 // Bundle is a CNAB metadata document
 type Bundle struct {
-	Name             string            `json:"name" toml:"name"`
-	Version          string            `json:"version" toml:"version"`
-	Description      string            `json:"description" toml:"description"`
-	Keywords         []string          `json:"keywords,omitempty" toml:"keywords,omitempty"`
-	Maintainers      []Maintainer      `json:"maintainers,omitempty" toml:"maintainers,omitempty"`
-	InvocationImages []InvocationImage `json:"invocationImages" toml:"invocationImages"`
-	Images           []Image           `json:"images" toml:"images"`
-	Actions          map[string]Action `json:"actions,omitempty" toml:"actions,omitempty"`
-	//	Parameters       map[string]ParameterDefinition `json:"parameters" toml:"parameters"`
-	Credentials map[string]Location `json:"credentials" toml:"credentials"`
+	Name             string                         `json:"name" toml:"name"`
+	Version          string                         `json:"version" toml:"version"`
+	Description      string                         `json:"description" toml:"description"`
+	Keywords         []string                       `json:"keywords,omitempty" toml:"keywords,omitempty"`
+	Maintainers      []Maintainer                   `json:"maintainers,omitempty" toml:"maintainers,omitempty"`
+	InvocationImages []InvocationImage              `json:"invocationImages" toml:"invocationImages"`
+	Images           []Image                        `json:"images" toml:"images"`
+	Actions          map[string]Action              `json:"actions,omitempty" toml:"actions,omitempty"`
+	Parameters       map[string]ParameterDefinition `json:"parameters" toml:"parameters"`
+	Credentials      map[string]Location            `json:"credentials" toml:"credentials"`
 }
 
 // // ValuesOrDefaults returns parameter values or the default parameter values
