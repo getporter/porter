@@ -115,8 +115,7 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 func (p *Porter) copyMixins() error {
 
 	// Always copy in porter
-	mixinDir, _ := p.GetMixinsDir()
-	porterPath := fmt.Sprintf("%s/%s", mixinDir, "porter")
+	porterPath, _ := p.GetMixinPath("porter")
 	porterMixin, err := p.Config.FileSystem.ReadFile(porterPath)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't read the porter binary for container build")
@@ -151,10 +150,10 @@ func (p *Porter) copyMixins() error {
 }
 
 func (p *Porter) copyMixin(mixin string) error {
-	mixinDir, _ := p.GetMixinsDir()
+	mixinPath, _ := p.GetMixinPath(mixin)
 
 	fmt.Printf("Processing mixin %s ===> \n", mixin)
-	fmt.Printf("Reading: %s\n", fmt.Sprintf("%s/%s", mixinDir, mixin))
+	fmt.Printf("Reading: %s\n", mixinPath)
 	fmt.Printf("Writing: %s\n", fmt.Sprintf(mixinExecTemplate, mixin, mixin))
 
 	mixinsDirExists, err := p.Config.FileSystem.DirExists(fmt.Sprintf(mixinDirTemplate, mixin))
@@ -166,7 +165,7 @@ func (p *Porter) copyMixin(mixin string) error {
 		p.Config.FileSystem.Mkdir(fmt.Sprintf(mixinDirTemplate, mixin), 0755)
 	}
 
-	mixinExec, err := p.Config.FileSystem.Open(fmt.Sprintf("%s/%s", mixinDir, mixin))
+	mixinExec, err := p.Config.FileSystem.Open(mixinPath)
 	if err != nil {
 		return fmt.Errorf("couldn't open mixin for container build: %s", err)
 	}
