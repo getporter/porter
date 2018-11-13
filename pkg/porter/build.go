@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -49,48 +48,44 @@ func (p *Porter) Build() error {
 }
 
 func (p *Porter) generateDockerFile() error {
+	lines, err := p.buildDockerFile()
+	if err != nil {
+		return errors.Wrap(err, "error generating the Dockerfile")
+	}
+
+	fmt.Printf("\nWriting Dockerfile =======>\n")
+	contents := strings.Join(lines, "\n")
+	err = p.Config.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
+	return errors.Wrap(err, "couldn't write the Dockerfile")
+}
+
+func (p *Porter) buildDockerFile() ([]string, error) {
 	fmt.Printf("\nGenerating Dockerfile =======>\n")
 
-	f, err := p.Config.FileSystem.OpenFile("Dockerfile", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("couldn't open Dockerfile: %s", err)
-	}
-	defer f.Close()
+	lines := make([]string, 0, 10)
 
-	w := bufio.NewWriter(f)
-	defer w.Flush()
+	p.addDockerBaseImage(lines)
+	p.addCNAB(lines)
+	p.addPorterYAML(lines)
+	p.addRun(lines)
+	p.addMixins(lines)
 
-	err = p.addDockerBaseImage(w)
-	err = p.addCNAB(w)
-	err = p.addPorterYAML(w)
-	err = p.addRun(w)
-	err = p.addMixins(w)
-
-	return err
+	return lines, nil
 }
 
-func (p *Porter) addDockerBaseImage(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "FROM ubuntu:latest\n"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
-	}
-	return nil
+func (p *Porter) addDockerBaseImage(dockerfile []string) {
+	dockerfile = append(dockerfile, `FROM ubuntu:latest`)
 }
 
-func (p *Porter) addPorterYAML(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "COPY porter.yaml cnab/app/porter.yaml\n"); err != nil {
-		return fmt.Errorf("couldn't write porter.yaml: %s", err)
-	}
-	return nil
+func (p *Porter) addPorterYAML(dockerfile []string) {
+	dockerfile = append(dockerfile, `COPY porter.yaml /cnab/app/porter.yaml`)
 }
 
-func (p *Porter) addCNAB(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "ADD cnab/ cnab/\n"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
-	}
-	return nil
+func (p *Porter) addCNAB(dockerfile []string) {
+	dockerfile = append(dockerfile, `COPY cnab/ /cnab/`)
 }
 
-func (p *Porter) addMixins(x io.Writer) error {
+func (p *Porter) addMixins(dockerfile []string) error {
 
 	// Always copy in porter
 	mixinDir, _ := p.GetMixinsDir()
@@ -168,11 +163,8 @@ func (p *Porter) getMixinBuildInstructions(mixin string) ([]string, error) {
 	return nil, nil
 }
 
-func (p *Porter) addRun(w io.Writer) error {
-	if _, err := fmt.Fprintf(w, "CMD [\"/cnab/app/run\"]"); err != nil {
-		return fmt.Errorf("couldn't write docker base image: %s", err)
-	}
-	return nil
+func (p *Porter) addRun(dockerfile []string) {
+	dockerfile = append(dockerfile, `CMD [/cnab/app/run]`)
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
