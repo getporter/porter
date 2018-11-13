@@ -64,28 +64,46 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 
 	lines := make([]string, 0, 10)
 
-	p.addDockerBaseImage(lines)
-	p.addCNAB(lines)
-	p.addPorterYAML(lines)
-	p.addRun(lines)
-	p.addMixins(lines)
+	lines = append(lines, p.buildFromSection())
+	lines = append(lines, p.buildCNABSection()...)
+	lines = append(lines, p.buildPorterSection()...)
+	lines = append(lines, p.buildCMDSection())
+
+	mixinLines, err := p.buildMixinsSection()
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
+	}
+
+	lines = append(lines, mixinLines...)
 
 	return lines, nil
 }
 
-func (p *Porter) addDockerBaseImage(dockerfile []string) {
-	dockerfile = append(dockerfile, `FROM ubuntu:latest`)
+func (p *Porter) buildFromSection() string {
+	return `FROM ubuntu:latest`
 }
 
-func (p *Porter) addPorterYAML(dockerfile []string) {
-	dockerfile = append(dockerfile, `COPY porter.yaml /cnab/app/porter.yaml`)
+func (p *Porter) buildPorterSection() []string {
+	return []string{
+		`COPY porter.yaml /cnab/app/porter.yaml`,
+	}
 }
 
-func (p *Porter) addCNAB(dockerfile []string) {
-	dockerfile = append(dockerfile, `COPY cnab/ /cnab/`)
+func (p *Porter) buildCNABSection() []string {
+	return []string{
+		`COPY cnab/ /cnab/`,
+	}
 }
 
-func (p *Porter) addMixins(dockerfile []string) error {
+func (p *Porter) buildCMDSection() string {
+	return `CMD [/cnab/app/run]`
+}
+
+func (p *Porter) buildMixinsSection() ([]string, error) {
+	return nil, nil
+}
+
+func (p *Porter) copyMixins() error {
 
 	// Always copy in porter
 	mixinDir, _ := p.GetMixinsDir()
@@ -119,7 +137,7 @@ func (p *Porter) addMixins(dockerfile []string) error {
 	}
 	fmt.Printf("Processing mixins ===> \n")
 	for _, mixin := range p.Manifest.Mixins {
-		err := p.buildMixin(mixin)
+		err := p.copyMixin(mixin)
 		if err != nil {
 			return err
 		}
@@ -127,7 +145,7 @@ func (p *Porter) addMixins(dockerfile []string) error {
 	return nil
 }
 
-func (p *Porter) buildMixin(mixin string) error {
+func (p *Porter) copyMixin(mixin string) error {
 	mixinDir, _ := p.GetMixinsDir()
 
 	fmt.Printf("Processing mixin %s ===> \n", mixin)
@@ -157,14 +175,6 @@ func (p *Porter) buildMixin(mixin string) error {
 
 	_, err = io.Copy(f, mixinExec)
 	return errors.Wrapf(err, "couldn't write mixin %q", mixin)
-}
-
-func (p *Porter) getMixinBuildInstructions(mixin string) ([]string, error) {
-	return nil, nil
-}
-
-func (p *Porter) addRun(dockerfile []string) {
-	dockerfile = append(dockerfile, `CMD [/cnab/app/run]`)
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
