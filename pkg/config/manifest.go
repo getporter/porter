@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
