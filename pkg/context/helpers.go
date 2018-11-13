@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
-	"github.com/stretchr/testify/require"
 )
 
 type TestContext struct {
@@ -35,12 +36,42 @@ func NewTestContext(t *testing.T) *TestContext {
 
 func (c *TestContext) AddFile(src, dest string) []byte {
 	data, err := ioutil.ReadFile(src)
-	require.NoError(c.T, err)
+	if err != nil {
+		c.T.Fatal(err)
+	}
 
 	err = c.FileSystem.WriteFile(dest, data, os.ModePerm)
-	require.NoError(c.T, err)
+	if err != nil {
+		c.T.Fatal(err)
+	}
 
 	return data
+}
+
+func (c *TestContext) AddDirectory(srcDir, destDir string) {
+	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip the root src directory
+		if path == srcDir {
+			return nil
+		}
+
+		// Translate the path from the src to the final destination
+		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
+
+		if info.IsDir() {
+			return c.FileSystem.MkdirAll(dest, os.ModePerm)
+		}
+
+		c.AddFile(path, dest)
+		return nil
+	})
+	if err != nil {
+		c.T.Fatal(err)
+	}
 }
 
 func (c *TestContext) GetOutput() string {

@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/deislabs/porter/pkg/context"
 )
 
@@ -27,7 +25,9 @@ func NewTestRunner(t *testing.T, mixin string) *TestRunner {
 
 	// Setup Mixin Home
 	err := c.FileSystem.MkdirAll(mixinDir, os.ModePerm)
-	require.NoError(t, err)
+	if err != nil {
+		c.T.Fatal(err)
+	}
 	c.AddFile("../../bin/mixins/exec/exec", filepath.Join(mixinDir, "exec"))
 
 	return r
