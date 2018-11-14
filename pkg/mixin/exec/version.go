@@ -7,5 +7,5 @@ import (
 )
 
 func (e *Exec) PrintVersion() {
-	fmt.Fprintf(e.Out, "exec %s (%s)\n", pkg.Version, pkg.Commit)
+	fmt.Fprintf(e.Out, "exec mixin %s (%s)\n", pkg.Version, pkg.Commit)
 }

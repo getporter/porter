@@ -8,7 +8,7 @@ import (
 func buildVersionCommand(e *exec.Exec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Print the application version",
+		Short: "Print the mixin version",
 		Run: func(cmd *cobra.Command, args []string) {
 			e.PrintVersion()
 		},

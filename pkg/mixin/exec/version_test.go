@@ -17,7 +17,7 @@ func TestPrintVersion(t *testing.T) {
 	e.PrintVersion()
 
 	gotOutput := string(output.Bytes())
-	wantOutput := "exec v1.2.3 (abc123)"
+	wantOutput := "exec mixin v1.2.3 (abc123)"
 	if !strings.Contains(gotOutput, wantOutput) {
 		t.Fatalf("invalid output:\nWANT:\t%q\nGOT:\t%q\n", wantOutput, gotOutput)
 	}
