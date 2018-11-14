@@ -4,19 +4,21 @@ PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev
 
 PKG = github.com/deislabs/porter
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
-XBUILD = CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
+XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
 
 build: porter exec
 	cp -R templates bin/
 
 porter:
 	$(XBUILD) -o bin/porter ./cmd/porter
+	GOOS=linux $(XBUILD) -o bin/porter-runtime ./cmd/porter
 	mkdir -p bin/mixins/porter
-	cp bin/porter bin/mixins/porter/
+	cp bin/porter* bin/mixins/porter/
 
 exec:
 	mkdir -p bin/mixins/exec
 	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
+	GOOS=linux $(XBUILD) -o bin/mixins/exec/exec-runtime ./cmd/exec
 
 test: test-unit test-cli
 
@@ -34,3 +36,6 @@ docs:
 
 docs-preview:
 	hugo serve --source docs/
+
+clean:
+	-rm -fr bin/
