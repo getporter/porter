@@ -36,7 +36,7 @@ func (p *Porter) Build() error {
 
 	digest, err := p.buildInvocationImage(context.Background())
 	if err != nil {
-		return fmt.Errorf("unable to build CNAB invocation image: %s", err)
+		return errors.Wrap(err, "unable to build CNAB invocation image")
 	}
 
 	taggedImage, err := p.rewriteImageWithDigest(p.Config.Manifest.Image, digest)
@@ -171,7 +171,7 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	fmt.Printf("\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("error %s", err)
+		return "", errors.Wrap(err, "could not get current working directory")
 	}
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
@@ -183,12 +183,9 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return "", fmt.Errorf("cannot create Docker client: %v", err)
+		return "", errors.Wrap(err, "cannot create Docker client")
 	}
 	cli.NegotiateAPIVersion(ctx)
-	if err != nil {
-		return "", fmt.Errorf("cannot update Docker client: %v", err)
-	}
 
 	response, err := cli.ImageBuild(context.Background(), tar, buildOptions)
 	if err != nil {
@@ -200,16 +197,20 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	isTerm := false
 	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, termFd, isTerm, nil)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to stream docker build stdout")
 	}
 
 	authConfig := types.AuthConfig{
 		Username: os.Getenv("DOCKER_USER"),
 		Password: os.Getenv("DOCKER_PASSWORD"),
 	}
+	if authConfig.Username == "" || authConfig.Password == "" {
+		return "", errors.New("DOCKER_USER and DOCKER_PASSWORD must be set")
+	}
+
 	encodedJSON, err := json.Marshal(authConfig)
 	if err != nil {
-		return "", fmt.Errorf("unable to build Docker auth:%s", err)
+		return "", errors.Wrap(err, "unable to build Docker auth")
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
@@ -218,16 +219,19 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		RegistryAuth: authStr,
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "docker push failed")
 	}
 	defer pushResponse.Close()
 	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, os.Stdout, termFd, isTerm, nil)
 	if err != nil {
-		return "", err
+		if strings.HasPrefix(err.Error(), "denied") {
+			return "", errors.Wrap(err, "docker push authentication failed")
+		}
+		return "", errors.Wrap(err, "failed to stream docker push stdout")
 	}
 	dist, err := cli.DistributionInspect(ctx, p.Config.Manifest.Image, "")
 	if err != nil {
-		return "", fmt.Errorf("unable to inspect image: %s", err)
+		return "", errors.Wrap(err, "unable to inspect docker image")
 	}
 	return string(dist.Descriptor.Digest), nil
 }
