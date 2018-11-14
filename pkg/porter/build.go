@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -8,14 +9,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
-
+	cxt "github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+	"github.com/pkg/errors"
 )
 
 func (p *Porter) Build() error {
@@ -51,14 +53,15 @@ func (p *Porter) generateDockerFile() error {
 		return errors.Wrap(err, "error generating the Dockerfile")
 	}
 
-	fmt.Printf("\nWriting Dockerfile =======>\n")
+	fmt.Fprintf(p.Out, "\nWriting Dockerfile =======>\n")
 	contents := strings.Join(lines, "\n")
+	fmt.Fprintln(p.Out, contents)
 	err = p.Config.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
 func (p *Porter) buildDockerFile() ([]string, error) {
-	fmt.Printf("\nGenerating Dockerfile =======>\n")
+	fmt.Fprintf(p.Out, "\nGenerating Dockerfile =======>\n")
 
 	lines := make([]string, 0, 10)
 
@@ -71,8 +74,9 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
 	}
-
 	lines = append(lines, mixinLines...)
+
+	fmt.Fprintln(p.Out, lines)
 
 	return lines, nil
 }
@@ -98,6 +102,35 @@ func (p *Porter) buildCMDSection() string {
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {
+	for _, m := range p.Manifest.Mixins {
+		mixinDir, err := p.GetMixinDir(m)
+		if err != nil {
+			return nil, err
+		}
+
+		r := mixin.NewRunner(m, mixinDir, false)
+		r.Command = "build"
+		r.Data = "" // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
+
+		// Copy the existing context and tweak to pipe the output differently
+		mixinStdout := &bytes.Buffer{}
+		var mixinContext cxt.Context
+		mixinContext = *p.Context
+		mixinContext.Out = mixinStdout   // mixin stdout -> dockerfile lines
+		mixinContext.Err = p.Context.Out // mixin stderr -> logs
+		r.Context = &mixinContext
+
+		err = r.Validate()
+		if err != nil {
+			return nil, err
+		}
+
+		err = r.Run()
+		if err != nil {
+			return nil, err
+		}
+		return strings.Split(mixinStdout.String(), "\n"), nil
+	}
 	return nil, nil
 }
 
