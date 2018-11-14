@@ -27,7 +27,7 @@ steps:
     mkdir -p '$(GOPATH)/src/github.com/deis'
     git clone https://$(GITHUB_TOKEN)@github.com/deis/duffle.git '$(GOPATH)/src/github.com/deis/duffle'
     cd $(GOPATH)/src/github.com/deis/duffle
-    make install
+    make build install
   displayName: 'Install duffle'
 
 - script: |
