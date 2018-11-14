@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -17,11 +16,6 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
-)
-
-const (
-	mixinDirTemplate  = "cnab/app/mixins/%s"
-	mixinExecTemplate = "cnab/app/mixins/%s/%s"
 )
 
 func (p *Porter) Build() error {
@@ -150,35 +144,22 @@ func (p *Porter) copyMixins() error {
 }
 
 func (p *Porter) copyMixin(mixin string) error {
-	mixinPath, _ := p.GetMixinPath(mixin)
-
 	fmt.Printf("Processing mixin %s ===> \n", mixin)
-	fmt.Printf("Reading: %s\n", mixinPath)
-	fmt.Printf("Writing: %s\n", fmt.Sprintf(mixinExecTemplate, mixin, mixin))
+	mixinDir, _ := p.GetMixinDir(mixin)
 
-	mixinsDirExists, err := p.Config.FileSystem.DirExists(fmt.Sprintf(mixinDirTemplate, mixin))
+	dirExists, err := p.FileSystem.DirExists(mixinDir)
 	if err != nil {
-		return fmt.Errorf("couldn't verify mixins directory: %s", err)
+		return errors.Wrapf(err, "could not check if directory exists %q", mixinDir)
+	}
+	if !dirExists {
+		err := p.FileSystem.MkdirAll(mixinDir, os.ModePerm)
+		if err != nil {
+			return errors.Wrapf(err, "could not create mixin directory for %s", mixin)
+		}
 	}
 
-	if !mixinsDirExists {
-		p.Config.FileSystem.Mkdir(fmt.Sprintf(mixinDirTemplate, mixin), 0755)
-	}
-
-	mixinExec, err := p.Config.FileSystem.Open(mixinPath)
-	if err != nil {
-		return fmt.Errorf("couldn't open mixin for container build: %s", err)
-	}
-	defer mixinExec.Close()
-
-	f, err := p.Config.FileSystem.OpenFile(fmt.Sprintf(mixinExecTemplate, mixin, mixin), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return fmt.Errorf("couldn't open mixin in build path container build: %s", err)
-	}
-	defer f.Close()
-
-	_, err = io.Copy(f, mixinExec)
-	return errors.Wrapf(err, "couldn't write mixin %q", mixin)
+	err = p.Context.CopyDirectory(mixinDir, "cnab/app/mixins", true)
+	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
