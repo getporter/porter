@@ -24,6 +24,12 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-    make test-unit
+    git clone https://github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
+    cd $(GOPATH)/src/github.com/deislabs/duffle
+    make install
+  displayName: 'Install duffle'
+
+- script: |
+    make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Test'
