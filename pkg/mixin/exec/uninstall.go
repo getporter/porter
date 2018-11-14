@@ -1,6 +1,6 @@
 package exec
 
-func (e *Exec) Install(commandFile string) error {
+func (e *Exec) Uninstall(commandFile string) error {
 	err := e.LoadInstruction(commandFile)
 	if err != nil {
 		return err

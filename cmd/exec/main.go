@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/deislabs/porter/pkg/mixin/exec"
@@ -9,15 +10,17 @@ import (
 )
 
 func main() {
-	cmd := buildRootCommand()
+	cmd := buildRootCommand(os.Stdin)
 	if err := cmd.Execute(); err != nil {
 		fmt.Printf("err: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func buildRootCommand() *cobra.Command {
-	e := &exec.Exec{}
+func buildRootCommand(in io.Reader) *cobra.Command {
+	e := &exec.Exec{
+		In: in,
+	}
 	cmd := &cobra.Command{
 		Use:  "exec",
 		Long: "exec is a porter 👩🏽‍✈️ mixin that you can you can use to execute arbitrary commands",
@@ -31,5 +34,7 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildVersionCommand(e))
 	cmd.AddCommand(buildBuildCommand(e))
 	cmd.AddCommand(buildInstallCommand(e))
+	cmd.AddCommand(buildUninstallCommand(e))
+
 	return cmd
 }
