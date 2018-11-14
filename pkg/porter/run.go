@@ -56,7 +56,7 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	name := s.GetMixinName()
 	mixinDir := filepath.Join(mixinsDir, name)
 
-	r := mixin.NewRunner(name, mixinDir)
+	r := mixin.NewRunner(name, mixinDir, true)
 	r.Command = string(action)
 	r.Data = s.GetMixinData()
 	r.Context = p.Context

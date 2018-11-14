@@ -16,15 +16,17 @@ type Runner struct {
 	mixinDir string
 
 	Mixin   string
+	Runtime bool
 	Command string
 	Data    string
 	File    string
 }
 
-func NewRunner(mixin, mixinDir string) *Runner {
+func NewRunner(mixin, mixinDir string, runtime bool) *Runner {
 	return &Runner{
 		Context:  context.New(),
 		Mixin:    mixin,
+		Runtime:  runtime,
 		mixinDir: mixinDir,
 	}
 }
@@ -85,5 +87,9 @@ func (r *Runner) Run() error {
 }
 
 func (r *Runner) getMixinPath() string {
-	return filepath.Join(r.mixinDir, r.Mixin)
+	path := filepath.Join(r.mixinDir, r.Mixin)
+	if r.Runtime {
+		return path + "-runtime"
+	}
+	return path
 }

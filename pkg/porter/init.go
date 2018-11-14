@@ -31,7 +31,7 @@ func (p *Porter) Init() error {
 		return err
 	}
 
-	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0644)
+	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "failed to write %s", config.RunScript)
 	}

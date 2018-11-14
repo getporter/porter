@@ -1,2 +1,6 @@
-docs/public/
-bin
+/docs/public/
+/bin
+/cnab/
+/porter.yaml
+/Dockerfile
+/bundle.json

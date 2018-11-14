@@ -34,7 +34,8 @@ func NewTestContext(t *testing.T) *TestContext {
 	return c
 }
 
-func (c *TestContext) AddFile(src, dest string) []byte {
+// TODO: Replace these functions with a union file system for test data
+func (c *TestContext) AddTestFile(src, dest string) []byte {
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(err)
@@ -48,7 +49,7 @@ func (c *TestContext) AddFile(src, dest string) []byte {
 	return data
 }
 
-func (c *TestContext) AddDirectory(srcDir, destDir string) {
+func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -66,7 +67,7 @@ func (c *TestContext) AddDirectory(srcDir, destDir string) {
 			return c.FileSystem.MkdirAll(dest, os.ModePerm)
 		}
 
-		c.AddFile(path, dest)
+		c.AddTestFile(path, dest)
 		return nil
 	})
 	if err != nil {
