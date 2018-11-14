@@ -32,6 +32,6 @@ steps:
   displayName: 'Install duffle'
 
 - script: |
-    make test-cli
+    DOCKER_USER=$(DOCKER_USER) DOCKER_PASSWORD=$(DOCKER_PASSWORD) make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Test'
