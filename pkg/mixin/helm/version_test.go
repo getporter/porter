@@ -1,4 +1,4 @@
-package exec
+package helm
 
 import (
 	"bytes"
@@ -13,11 +13,11 @@ func TestPrintVersion(t *testing.T) {
 	pkg.Version = "v1.2.3"
 
 	output := &bytes.Buffer{}
-	e := Exec{Out: output}
-	e.PrintVersion()
+	m := Mixin{Out: output}
+	m.PrintVersion()
 
 	gotOutput := string(output.Bytes())
-	wantOutput := "exec mixin v1.2.3 (abc123)"
+	wantOutput := "helm mixin v1.2.3 (abc123)"
 	if !strings.Contains(gotOutput, wantOutput) {
 		t.Fatalf("invalid output:\nWANT:\t%q\nGOT:\t%q\n", wantOutput, gotOutput)
 	}

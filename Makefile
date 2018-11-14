@@ -27,7 +27,7 @@ test: test-unit test-cli
 test-unit: build
 	go test ./...
 
-test-cli: build
+test-cli: clean build
 	./bin/porter help
 	./bin/porter version
 	./bin/porter init
@@ -45,4 +45,5 @@ docs-preview:
 clean:
 	-rm -fr bin/
 	-rm -fr cnab/
-	rm Dockerfile porter.yaml
+	-rm Dockerfile porter.yaml
+	-duffle uninstall PORTER-HELLO

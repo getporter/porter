@@ -18,6 +18,9 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	err := p.LoadManifest(config.Name)
 	require.NoError(t, err)
 
+	// ignore mixins in the unit tests
+	p.Manifest.Mixins = []string{}
+
 	gotlines, err := p.buildDockerFile()
 	require.NoError(t, err)
 
@@ -37,6 +40,9 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
 	err := p.LoadManifest(config.Name)
 	require.NoError(t, err)
+
+	// ignore mixins in the unit tests
+	p.Manifest.Mixins = []string{}
 
 	err = p.generateDockerFile()
 	require.NoError(t, err)
