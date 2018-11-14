@@ -94,7 +94,7 @@ func (p *Porter) buildCNABSection() []string {
 }
 
 func (p *Porter) buildCMDSection() string {
-	return `CMD [/cnab/app/run]`
+	return `CMD ["/cnab/app/run"]`
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {

@@ -25,7 +25,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"FROM ubuntu:latest",
 		"COPY cnab/ /cnab/",
 		"COPY porter.yaml /cnab/app/porter.yaml",
-		"CMD [/cnab/app/run]",
+		`CMD ["/cnab/app/run"]`,
 	}
 	assert.Equal(t, wantlines, gotlines)
 }
