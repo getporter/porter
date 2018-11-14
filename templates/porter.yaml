@@ -14,7 +14,7 @@ mixins:
 #        destination: bundle.credentials.dbhost
 name: HELLO
 version: 0.1.0
-invocationImage: porter:latest
+invocationImage: porter-hello:latest
 install:
 - description: "Install Hello World"
   exec:

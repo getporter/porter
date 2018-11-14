@@ -46,11 +46,6 @@ func (p *Porter) Build() error {
 }
 
 func (p *Porter) generateDockerFile() error {
-	err := p.copyMixins()
-	if err != nil {
-		return err
-	}
-
 	lines, err := p.buildDockerFile()
 	if err != nil {
 		return errors.Wrap(err, "error generating the Dockerfile")
@@ -107,40 +102,17 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 }
 
 func (p *Porter) copyMixins() error {
-
-	// Always copy in porter
-	porterPath, _ := p.GetMixinPath("porter")
-	porterMixin, err := p.Config.FileSystem.ReadFile(porterPath)
-	if err != nil {
-		return errors.Wrapf(err, "couldn't read the porter binary for container build")
-	}
-
-	err = p.Config.FileSystem.WriteFile("cnab/app/porter", porterMixin, 0755)
-	if err != nil {
-		return errors.Wrap(err, "couldn't write the porter binary for container build")
-	}
-
-	err = p.copyMixin("porter")
-	if err != nil {
-		return err
-	}
-
-	cnabMixins := "cnab/app/mixins"
-	mixinsDirExists, err := p.Config.FileSystem.DirExists(cnabMixins)
-	if err != nil {
-		return errors.Wrap(err, "couldn't verify mixins directory")
-	}
-	if !mixinsDirExists {
-		p.Config.FileSystem.Mkdir(cnabMixins, 0755)
-	}
 	fmt.Printf("Processing mixins ===> \n")
-	for _, mixin := range p.Manifest.Mixins {
+	for _, mixin := range append(p.Manifest.Mixins, "porter") {
 		err := p.copyMixin(mixin)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+
+	// Make the porter runtime available at the root of the app
+	err := p.Context.CopyFile("cnab/app/mixins/porter/porter-runtime", "cnab/app/porter-runtime")
+	return errors.Wrap(err, "could not copy porter-runtime mixin")
 }
 
 func (p *Porter) copyMixin(mixin string) error {
@@ -152,7 +124,7 @@ func (p *Porter) copyMixin(mixin string) error {
 		return errors.Wrapf(err, "could not check if directory exists %q", mixinDir)
 	}
 	if !dirExists {
-		err := p.FileSystem.MkdirAll(mixinDir, os.ModePerm)
+		err := p.FileSystem.MkdirAll(mixinDir, 0755)
 		if err != nil {
 			return errors.Wrapf(err, "could not create mixin directory for %s", mixin)
 		}

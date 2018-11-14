@@ -85,5 +85,5 @@ func (r *Runner) Run() error {
 }
 
 func (r *Runner) getMixinPath() string {
-	return filepath.Join(r.mixinDir, r.Mixin)
+	return filepath.Join(r.mixinDir, r.Mixin+"-runtime")
 }
