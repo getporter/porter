@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -33,14 +32,4 @@ func (c *TestConfig) SetupPorterHome() {
 
 	// Copy bin dir contents to the home directory
 	c.TestContext.AddTestDirectory("../../bin/", home)
-}
-
-func (c *TestConfig) AddTemplate(src, dest string) {
-	templatesDir, err := c.GetTemplatesDir()
-	if err != nil {
-		c.TestContext.T.Fatal(err)
-	}
-
-	templDest := filepath.Join(templatesDir, dest)
-	c.TestContext.AddTestFile(src, templDest)
 }
