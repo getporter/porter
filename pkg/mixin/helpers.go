@@ -1,8 +1,6 @@
 package mixin
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -14,21 +12,17 @@ type TestRunner struct {
 }
 
 // NewTestRunner initializes a mixin test runner, with the output buffered, and an in-memory file system.
-func NewTestRunner(t *testing.T, mixin string) *TestRunner {
+func NewTestRunner(t *testing.T, mixin string, runtime bool) *TestRunner {
 	c := context.NewTestContext(t)
 	mixinDir := "/root/.porter/mixins/exec"
 	r := &TestRunner{
-		Runner:      NewRunner(mixin, mixinDir),
+		Runner:      NewRunner(mixin, mixinDir, runtime),
 		TestContext: c,
 	}
 	r.Context = c.Context
 
 	// Setup Mixin Home
-	err := c.FileSystem.MkdirAll(mixinDir, os.ModePerm)
-	if err != nil {
-		c.T.Fatal(err)
-	}
-	c.AddTestFile("../../bin/mixins/exec/exec", filepath.Join(mixinDir, "exec"))
+	c.AddTestDirectory("../../bin/mixins", "/root/.porter/mixins")
 
 	return r
 }
