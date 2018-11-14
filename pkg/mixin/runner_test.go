@@ -12,7 +12,7 @@ func TestRunner_Validate(t *testing.T) {
 	r := NewTestRunner(t, "exec")
 
 	r.File = "exec_input.yaml"
-	r.TestContext.AddFile("testdata/exec_input.yaml", r.File)
+	r.TestContext.AddTestFile("testdata/exec_input.yaml", r.File)
 
 	err := r.Validate()
 	require.NoError(t, err)

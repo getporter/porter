@@ -32,7 +32,7 @@ func (c *TestConfig) SetupPorterHome() {
 	os.Setenv(EnvHOME, home)
 
 	// Copy bin dir contents to the home directory
-	c.TestContext.AddDirectory("../../bin/", home)
+	c.TestContext.AddTestDirectory("../../bin/", home)
 }
 
 func (c *TestConfig) AddTemplate(src, dest string) {
@@ -42,5 +42,5 @@ func (c *TestConfig) AddTemplate(src, dest string) {
 	}
 
 	templDest := filepath.Join(templatesDir, dest)
-	c.TestContext.AddFile(src, templDest)
+	c.TestContext.AddTestFile(src, templDest)
 }

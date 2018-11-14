@@ -28,7 +28,7 @@ func NewTestRunner(t *testing.T, mixin string) *TestRunner {
 	if err != nil {
 		c.T.Fatal(err)
 	}
-	c.AddFile("../../bin/mixins/exec/exec", filepath.Join(mixinDir, "exec"))
+	c.AddTestFile("../../bin/mixins/exec/exec", filepath.Join(mixinDir, "exec"))
 
 	return r
 }

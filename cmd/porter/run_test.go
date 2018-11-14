@@ -15,7 +15,7 @@ func TestRun_Validate(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.TestConfig.TestContext.AddFile("../../templates/porter.yaml", config.Name)
+	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
 	cmd := buildRunCommand(p.Porter)
 
 	os.Setenv(config.EnvACTION, string(config.ActionInstall))

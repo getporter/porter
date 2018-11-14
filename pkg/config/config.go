@@ -90,12 +90,30 @@ func (c *Config) GetMixinsDir() (string, error) {
 	return filepath.Join(home, "mixins"), nil
 }
 
-func (c *Config) GetMixinPath(mixin string) (string, error) {
+func (c *Config) GetMixinDir(mixin string) (string, error) {
 	mixinsDir, err := c.GetMixinsDir()
 	if err != nil {
 		return "", err
 	}
 
-	executablePath := filepath.Join(mixinsDir, mixin, mixin)
+	return filepath.Join(mixinsDir, mixin), nil
+}
+
+func (c *Config) GetMixinPath(mixin string) (string, error) {
+	mixinDir, err := c.GetMixinDir(mixin)
+	if err != nil {
+		return "", err
+	}
+
+	executablePath := filepath.Join(mixinDir, mixin)
 	return executablePath, nil
+}
+
+func (c *Config) GetMixinRuntimePath(mixin string) (string, error) {
+	path, err := c.GetMixinPath(mixin)
+	if err != nil {
+		return "", nil
+	}
+
+	return path + "-runtime", nil
 }

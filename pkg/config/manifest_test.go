@@ -11,7 +11,7 @@ func TestLoadManifest(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
 	require.NoError(t, c.LoadManifest(Name))
 	require.NoError(t, c.Manifest.Validate())
@@ -39,7 +39,7 @@ func TestManifest_Validate(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestAction_Validate(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)
