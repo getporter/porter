@@ -6,6 +6,8 @@ PKG = github.com/deislabs/porter
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
 
+REGISTRY ?= $(USER)
+
 build: porter exec
 	cp -R templates bin/
 
@@ -26,9 +28,12 @@ test-unit: build
 	go test ./...
 
 test-cli: build
-	./bin/porter version
 	./bin/porter help
-	./bin/porter run --action install --file templates/porter.yaml
+	./bin/porter version
+	./bin/porter init
+	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
+	./bin/porter build
+	duffle install PORTER-HELLO -f bundle.json --insecure
 
 .PHONY: docs
 docs:
@@ -39,3 +44,5 @@ docs-preview:
 
 clean:
 	-rm -fr bin/
+	-rm -fr cnab/
+	rm Dockerfile porter.yaml
