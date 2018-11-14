@@ -24,6 +24,6 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-    make test
+    make test-unit
   workingDirectory: '$(modulePath)'
   displayName: 'Test'
