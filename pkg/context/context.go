@@ -14,6 +14,7 @@ import (
 type Context struct {
 	Debug      bool
 	FileSystem *afero.Afero
+	In         io.Reader
 	Out        io.Writer
 	Err        io.Writer
 }
@@ -21,6 +22,7 @@ type Context struct {
 func New() *Context {
 	return &Context{
 		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
+		In:         os.Stdin,
 		Out:        os.Stdout,
 		Err:        os.Stderr,
 	}

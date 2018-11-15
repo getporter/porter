@@ -2,17 +2,23 @@ package helm
 
 import (
 	"bufio"
-	"io"
 	"io/ioutil"
+
+	"github.com/deislabs/porter/pkg/context"
 
 	"github.com/pkg/errors"
 )
 
 // Helm is the logic behind the helm mixin
 type Mixin struct {
-	In  io.Reader
-	Out io.Writer
-	Err io.Writer
+	*context.Context
+}
+
+// New helm mixin client, initialized with useful defaults.
+func New() *Mixin {
+	return &Mixin{
+		Context: context.New(),
+	}
 }
 
 func (m *Mixin) getPayloadData() ([]byte, error) {
