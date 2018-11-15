@@ -200,19 +200,10 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		return "", errors.Wrap(err, "failed to stream docker build stdout")
 	}
 
-	authConfig := types.AuthConfig{
-		Username: os.Getenv("DOCKER_USER"),
-		Password: os.Getenv("DOCKER_PASSWORD"),
-	}
-	if authConfig.Username == "" || authConfig.Password == "" {
-		return "", errors.New("DOCKER_USER and DOCKER_PASSWORD must be set")
-	}
-
-	encodedJSON, err := json.Marshal(authConfig)
+	authStr, err := p.getDockerAuth()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to build Docker auth")
+		return "", err
 	}
-	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
 	pushResponse, err := cli.ImagePush(ctx, p.Config.Manifest.Image, types.ImagePushOptions{
 		All:          true,
@@ -229,11 +220,27 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		}
 		return "", errors.Wrap(err, "failed to stream docker push stdout")
 	}
-	dist, err := cli.DistributionInspect(ctx, p.Config.Manifest.Image, "")
+	dist, err := cli.DistributionInspect(ctx, p.Config.Manifest.Image, authStr)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to inspect docker image")
 	}
 	return string(dist.Descriptor.Digest), nil
+}
+
+func (p *Porter) getDockerAuth() (string, error) {
+	authConfig := types.AuthConfig{
+		Username: os.Getenv("DOCKER_USER"),
+		Password: os.Getenv("DOCKER_PASSWORD"),
+	}
+	if authConfig.Username == "" || authConfig.Password == "" {
+		return "", errors.New("DOCKER_USER and DOCKER_PASSWORD must be set")
+	}
+
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to build Docker auth")
+	}
+	return base64.URLEncoding.EncodeToString(encodedJSON), nil
 }
 
 func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
