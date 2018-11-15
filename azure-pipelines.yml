@@ -24,6 +24,19 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-    make test-unit
+     make build test-unit
   workingDirectory: '$(modulePath)'
-  displayName: 'Test'
+  displayName: 'Unit Test'
+
+- script: |
+    mkdir -p '$(GOPATH)/src/github.com/deis'
+    git clone https://$(GITHUB_TOKEN)@github.com/deis/duffle.git '$(GOPATH)/src/github.com/deis/duffle'
+    cd $(GOPATH)/src/github.com/deis/duffle
+    make bootstrap build
+    cp bin/duffle $(GOPATH)/bin/
+  displayName: 'Install duffle'
+
+- script: |
+    DOCKER_USER=$(DOCKER_USER) DOCKER_PASSWORD=$(DOCKER_PASSWORD) make test-cli
+  workingDirectory: '$(modulePath)'
+  displayName: 'Integration Test'
