@@ -12,7 +12,7 @@ for CNAB bundles that allows you to reuse existing bundles, and understands how 
 translate CNAB actions to Helm, Terraform, Azure, etc.
 
 ```console
-$ porter init
+$ porter create
 created porter.yaml
 
 $ porter build

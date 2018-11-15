@@ -40,7 +40,7 @@ test-unit: build
 test-cli: clean build
 	./bin/porter help
 	./bin/porter version
-	./bin/porter init
+	./bin/porter create
 	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
 	./bin/porter build
 	duffle install PORTER-HELLO -f bundle.json --insecure
