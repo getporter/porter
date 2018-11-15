@@ -24,6 +24,11 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
+     make build test-unit
+  workingDirectory: '$(modulePath)'
+  displayName: 'Unit Test'
+
+- script: |
     mkdir -p '$(GOPATH)/src/github.com/deis'
     git clone https://$(GITHUB_TOKEN)@github.com/deis/duffle.git '$(GOPATH)/src/github.com/deis/duffle'
     cd $(GOPATH)/src/github.com/deis/duffle
@@ -34,4 +39,4 @@ steps:
 - script: |
     DOCKER_USER=$(DOCKER_USER) DOCKER_PASSWORD=$(DOCKER_PASSWORD) make test-cli
   workingDirectory: '$(modulePath)'
-  displayName: 'Test'
+  displayName: 'Integration Test'
