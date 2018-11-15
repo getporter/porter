@@ -24,7 +24,7 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-     make build test-unit
+     make bootstrap build test-unit lint
   workingDirectory: '$(modulePath)'
   displayName: 'Unit Test'
 

@@ -8,6 +8,16 @@ XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)
 
 REGISTRY ?= $(USER)
 
+ifeq ($(OS),Windows_NT)
+	TARGET = $(PROJECT).exe
+	SHELL  = cmd.exe
+	CHECK  = where.exe
+else
+	TARGET = $(PROJECT)
+	SHELL  = bash
+	CHECK  = command -v
+endif
+
 build: porter exec
 	cp -R templates bin/
 
@@ -47,3 +57,20 @@ clean:
 	-rm -fr cnab/
 	-rm Dockerfile porter.yaml
 	-duffle uninstall PORTER-HELLO
+
+.PHONY: lint
+lint:
+	golangci-lint run --config ./golangci.yml
+
+HAS_DEP          := $(shell $(CHECK) dep)
+HAS_GOLANGCI     := $(shell $(CHECK) golangci-lint)
+
+.PHONY: bootstrap
+bootstrap:
+ifndef HAS_DEP
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+endif
+ifndef HAS_GOLANGCI
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin
+endif
+	dep ensure -vendor-only -v
