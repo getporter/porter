@@ -1,9 +1,9 @@
 package exec
 
-func (e *Exec) Install(commandFile string) error {
-	err := e.LoadInstruction(commandFile)
+func (m *Mixin) Install(commandFile string) error {
+	err := m.LoadInstruction(commandFile)
 	if err != nil {
 		return err
 	}
-	return e.Execute()
+	return m.Execute()
 }
