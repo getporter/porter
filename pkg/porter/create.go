@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Porter) Init() error {
-	fmt.Fprintln(p.Out, "initializing porter configuration in the current directory")
+func (p *Porter) Create() error {
+	fmt.Fprintln(p.Out, "creates porter configuration in the current directory")
 
 	configTmpl, err := p.Config.GetPorterConfigTemplate()
 	if err != nil {
