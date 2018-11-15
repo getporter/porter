@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInit(t *testing.T) {
+func TestCreate(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	err := p.Init()
+	err := p.Create()
 	require.NoError(t, err)
 
 	configFileExists, err := p.FileSystem.Exists(config.Name)
