@@ -1,9 +1,9 @@
 package exec
 
-func (e *Exec) Uninstall(commandFile string) error {
-	err := e.LoadInstruction(commandFile)
+func (m *Mixin) Uninstall(commandFile string) error {
+	err := m.LoadInstruction(commandFile)
 	if err != nil {
 		return err
 	}
-	return e.Execute()
+	return m.Execute()
 }

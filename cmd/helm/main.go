@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/deislabs/porter/pkg/mixin/helm"
@@ -10,15 +11,16 @@ import (
 )
 
 func main() {
-	cmd := buildRootCommand()
+	cmd := buildRootCommand(os.Stdin)
 	if err := cmd.Execute(); err != nil {
 		fmt.Printf("err: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func buildRootCommand() *cobra.Command {
-	m := &helm.Mixin{}
+func buildRootCommand(in io.Reader) *cobra.Command {
+	m := helm.New()
+	m.In = in
 	cmd := &cobra.Command{
 		Use:  "helm",
 		Long: "A helm mixin for porter 👩🏽‍✈️",

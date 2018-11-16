@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildInstallCommand(e *exec.Exec) *cobra.Command {
+func buildInstallCommand(m *exec.Mixin) *cobra.Command {
 	var opts struct {
 		file string
 	}
@@ -13,7 +13,7 @@ func buildInstallCommand(e *exec.Exec) *cobra.Command {
 		Use:   "install",
 		Short: "Execute the install functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return e.Install(opts.file)
+			return m.Install(opts.file)
 		},
 	}
 	flags := cmd.Flags()

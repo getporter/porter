@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildUninstallCommand(e *exec.Exec) *cobra.Command {
+func buildUninstallCommand(m *exec.Mixin) *cobra.Command {
 	var opts struct {
 		file string
 	}
@@ -13,7 +13,7 @@ func buildUninstallCommand(e *exec.Exec) *cobra.Command {
 		Use:   "uninstall",
 		Short: "Execute the uninstall functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return e.Uninstall(opts.file)
+			return m.Uninstall(opts.file)
 		},
 	}
 	flags := cmd.Flags()
