@@ -18,7 +18,8 @@ func TestMixin_Build(t *testing.T) {
  curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz && \
  tar -xzf helm.tgz && \
  mv linux-amd64/helm /usr/local/bin && \
- rm helm.tgz`
+ rm helm.tgz
+RUN helm init --client-only`
 
 	gotOutput := m.TestContext.GetOutput()
 	assert.Equal(t, wantOutput, gotOutput)
