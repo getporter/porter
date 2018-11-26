@@ -17,9 +17,9 @@ name: HELLO
 version: 0.1.0
 invocationImage: porter-hello:latest
 
-#credentials:
-#  - name: kubeconfig
-#    path: /root/.kube/config
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
 
 install:
 - description: "Install Hello World"
@@ -30,7 +30,8 @@ install:
     - echo Hello World
 - description: "Try Helm"
   helm:
-    chart: mysql
+    name: mydb
+    chart: stable/mysql
 
 uninstall:
 - description: "Uninstall Hello World"

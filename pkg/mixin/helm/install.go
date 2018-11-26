@@ -1,6 +1,10 @@
 package helm
 
 import (
+	"fmt"
+	"os/exec"
+	"strings"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,6 +24,20 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
-	// TODO: implement
-	return nil
+
+	cmd := exec.Command("helm", "install", "--name", args.Name, args.Chart)
+	cmd.Stdout = m.Out
+	cmd.Stderr = m.Err
+
+	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+	if m.Debug {
+		fmt.Fprintln(m.Out, prettyCmd)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("could not execute command, %s: %s", prettyCmd, err)
+	}
+
+	return cmd.Wait()
 }
