@@ -82,7 +82,7 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 }
 
 func (p *Porter) buildFromSection() string {
-	return `FROM ubuntu:latest`
+	return `FROM debian:latest`
 }
 
 func (p *Porter) buildPorterSection() []string {
