@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-
 	"github.com/spf13/afero"
 )
 
@@ -20,7 +19,10 @@ type Context struct {
 }
 
 func New() *Context {
+	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
+	_, debug := os.LookupEnv("PORTER_DEBUG")
 	return &Context{
+		Debug:      debug,
 		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
 		In:         os.Stdin,
 		Out:        os.Stdout,
