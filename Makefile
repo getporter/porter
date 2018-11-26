@@ -27,7 +27,7 @@ helm:
 	$(XBUILD) -o bin/mixins/helm/helm ./cmd/helm
 	GOOS=linux $(XBUILD) -o bin/mixins/helm/helm-runtime ./cmd/helm
 
-test: test-unit test-cli
+test: clean test-unit test-cli
 
 test-unit: build
 	go test ./...
