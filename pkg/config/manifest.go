@@ -7,12 +7,13 @@ import (
 )
 
 type Manifest struct {
-	Name       string                `yaml:"image,omitempty"`
-	Version    string                `yaml:"version,omitempty"`
-	Image      string                `yaml:"invocationImage,omitempty"`
-	Mixins     []string              `yaml:"mixins,omitempty"`
-	Install    Steps                 `yaml:"install"`
-	Parameters []ParameterDefinition `yaml:"parameters,omitempty"`
+	Name        string                 `yaml:"image,omitempty"`
+	Version     string                 `yaml:"version,omitempty"`
+	Image       string                 `yaml:"invocationImage,omitempty"`
+	Mixins      []string               `yaml:"mixins,omitempty"`
+	Install     Steps                  `yaml:"install"`
+	Parameters  []ParameterDefinition  `yaml:"parameters,omitempty"`
+	Credentials []CredentialDefinition `yaml:"credentials,omitempty"`
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -28,6 +29,12 @@ type ParameterDefinition struct {
 	MaxLength     *int              `yaml:"maxLength,omitempty"`
 	Metadata      ParameterMetadata `yaml:"metadata,omitempty"`
 	Destination   *Location         `yaml:"destination,omitempty"`
+}
+
+type CredentialDefinition struct {
+	Name                string `yaml:"name"`
+	Path                string `yaml:"path"`
+	EnvironmentVariable string `yaml:"env"`
 }
 
 type Location struct {
