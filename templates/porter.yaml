@@ -4,6 +4,7 @@
 
 mixins:
   - exec
+  - helm
 
 #dependencies:
 #  - name: mysql
@@ -22,6 +23,9 @@ install:
     arguments:
     - -c
     - echo Hello World
+- description: "Try Helm"
+  helm:
+    chart: mysql
 uninstall:
 - description: "Uninstall Hello World"
   exec:

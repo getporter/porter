@@ -102,6 +102,7 @@ func (p *Porter) buildCMDSection() string {
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {
+	lines := make([]string, 0)
 	for _, m := range p.Manifest.Mixins {
 		mixinDir, err := p.GetMixinDir(m)
 		if err != nil {
@@ -129,13 +130,15 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		return strings.Split(mixinStdout.String(), "\n"), nil
+
+		l := strings.Split(mixinStdout.String(), "\n")
+		lines = append(lines, l...)
 	}
-	return nil, nil
+	return lines, nil
 }
 
 func (p *Porter) copyMixins() error {
-	fmt.Printf("Processing mixins ===> \n")
+	fmt.Printf("Copying mixins ===> \n")
 	for _, mixin := range append(p.Manifest.Mixins, "porter") {
 		err := p.copyMixin(mixin)
 		if err != nil {
@@ -149,7 +152,7 @@ func (p *Porter) copyMixins() error {
 }
 
 func (p *Porter) copyMixin(mixin string) error {
-	fmt.Printf("Processing mixin %s ===> \n", mixin)
+	fmt.Printf("Copying mixin %s ===> \n", mixin)
 	mixinDir, _ := p.GetMixinDir(mixin)
 
 	dirExists, err := p.FileSystem.DirExists(mixinDir)

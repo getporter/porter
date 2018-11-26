@@ -8,7 +8,7 @@ XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)
 
 REGISTRY ?= $(USER)
 
-build: porter exec
+build: porter exec helm
 	cp -R templates bin/
 
 porter:
@@ -22,7 +22,12 @@ exec:
 	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
 	GOOS=linux $(XBUILD) -o bin/mixins/exec/exec-runtime ./cmd/exec
 
-test: test-unit test-cli
+helm:
+	mkdir -p bin/mixins/helm
+	$(XBUILD) -o bin/mixins/helm/helm ./cmd/helm
+	GOOS=linux $(XBUILD) -o bin/mixins/helm/helm-runtime ./cmd/helm
+
+test: clean test-unit test-cli
 
 test-unit: build
 	go test ./...
