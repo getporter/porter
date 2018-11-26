@@ -13,6 +13,7 @@ mixins:
 #    outputs:
 #      - source: bundle.dependencies.mysql.outputs.host
 #        destination: bundle.credentials.dbhost
+
 name: HELLO
 version: 0.1.0
 invocationImage: porter-hello:latest
@@ -22,13 +23,13 @@ credentials:
     path: /root/.kube/config
 
 install:
-- description: "Install Hello World"
+- description: "Say Hello World"
   exec:
     command: bash
     arguments:
     - -c
     - echo Hello World
-- description: "Try Helm"
+- description: "Install MySQL with Helm"
   helm:
     name: mydb
     chart: stable/mysql

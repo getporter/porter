@@ -38,7 +38,7 @@ test-cli: clean build
 	./bin/porter create
 	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
 	./bin/porter build
-	duffle install PORTER-HELLO -f bundle.json --insecure
+	duffle install PORTER-HELLO -f bundle.json --credentials k8s --insecure
 
 .PHONY: docs
 docs:
@@ -51,4 +51,4 @@ clean:
 	-rm -fr bin/
 	-rm -fr cnab/
 	-rm Dockerfile porter.yaml
-	-duffle uninstall PORTER-HELLO
+	-duffle uninstall PORTER-HELLO --credentials k8s
