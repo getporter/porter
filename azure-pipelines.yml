@@ -18,7 +18,7 @@ steps:
   inputs:
     containerRegistryType: Container Registry
     dockerRegistryEndpoint: deislabs-registry
-  command: login
+    command: login
 
 - script: |
     mkdir -p '$(GOBIN)'
