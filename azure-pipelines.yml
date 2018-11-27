@@ -31,7 +31,7 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-    docker login -u $(DOCKER_USER) --password-stdin <<< $DOCKER_PASSWORD
+    docker login -u $(DOCKER_USER) --password $(DOCKER_PASSWORD)
 - script: |
      make build test-unit
   workingDirectory: '$(modulePath)'
