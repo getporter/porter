@@ -12,6 +12,7 @@ type Manifest struct {
 	Image       string                 `yaml:"invocationImage,omitempty"`
 	Mixins      []string               `yaml:"mixins,omitempty"`
 	Install     Steps                  `yaml:"install"`
+	Uninstall  Steps                 `yaml:"uninstall"`
 	Parameters  []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials []CredentialDefinition `yaml:"credentials,omitempty"`
 }
@@ -77,6 +78,8 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	switch action {
 	case ActionInstall:
 		steps = m.Install
+	case ActionUninstall:
+		steps = m.Uninstall
 	}
 
 	if len(steps) == 0 {

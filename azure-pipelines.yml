@@ -42,7 +42,11 @@ steps:
     cp bin/duffle $(GOPATH)/bin/
   displayName: 'Install duffle'
 
+- task: DownloadSecureFile@1
+  inputs:
+    secureFile: kubeconfig
+
 - script: |
-    make test-cli
+    KUBECONFIG=$(DOWNLOADSECUREFILE_SECUREFILEPATH) make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'

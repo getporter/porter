@@ -5,6 +5,7 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
@@ -67,6 +68,10 @@ func (r *Runner) Run() error {
 		cmd.Args = append(cmd.Args, "-f", r.File)
 	}
 
+	if r.Debug {
+		cmd.Args = append(cmd.Args, "--debug")
+	}
+
 	if r.Data != "" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
@@ -78,9 +83,14 @@ func (r *Runner) Run() error {
 		}()
 	}
 
+	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+	if r.Debug {
+		fmt.Fprintln(r.Out, prettyCmd)
+	}
+
 	err := cmd.Start()
 	if err != nil {
-		return errors.Wrapf(err, "could not run mixin command %v", cmd)
+		return errors.Wrapf(err, "could not run mixin command %s", prettyCmd)
 	}
 
 	return cmd.Wait()

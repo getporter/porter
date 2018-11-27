@@ -30,6 +30,8 @@ func buildRootCommand(in io.Reader) *cobra.Command {
 		},
 	}
 
+	cmd.PersistentFlags().BoolVar(&m.Debug, "debug", false, "Enable debug logging")
+
 	cmd.AddCommand(buildVersionCommand(m))
 	cmd.AddCommand(buildBuildCommand(m))
 	cmd.AddCommand(buildInstallCommand(m))

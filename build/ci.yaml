@@ -1,0 +1,5 @@
+name: ci
+credentials:
+- name: kubeconfig
+  source:
+    path: KUBECONFIGPATH

@@ -50,7 +50,7 @@ func (m *Mixin) Execute() error {
 		return fmt.Errorf("failed to start...%s", err)
 	}
 
-	return nil
+	return cmd.Wait()
 }
 
 func (m *Mixin) getCommandFile(commandFile string, w io.Writer) ([]byte, error) {
