@@ -3,20 +3,22 @@ package porter
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
+
+	"github.com/docker/cli/cli/command"
+	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+	"github.com/docker/docker/registry"
+
 	"github.com/pkg/errors"
 )
 
@@ -184,13 +186,12 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	}
 	tar, _ := archive.TarWithOptions(path, &archive.TarOptions{})
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return "", errors.Wrap(err, "cannot create Docker client")
+	cli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr, false, nil)
+	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
+		return "", err
 	}
-	cli.NegotiateAPIVersion(ctx)
 
-	response, err := cli.ImageBuild(context.Background(), tar, buildOptions)
+	response, err := cli.Client().ImageBuild(context.Background(), tar, buildOptions)
 	if err != nil {
 		return "", err
 	}
@@ -203,15 +204,27 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		return "", errors.Wrap(err, "failed to stream docker build stdout")
 	}
 
-	authStr, err := p.getDockerAuth()
+	ref, err := reference.ParseNormalizedNamed(p.Config.Manifest.Image)
 	if err != nil {
 		return "", err
 	}
 
-	pushResponse, err := cli.ImagePush(ctx, p.Config.Manifest.Image, types.ImagePushOptions{
+	// Resolve the Repository name from fqn to RepositoryInfo
+	repoInfo, err := registry.ParseRepositoryInfo(ref)
+	if err != nil {
+		return "", err
+	}
+	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
+	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
+	if err != nil {
+		return "", err
+	}
+	options := types.ImagePushOptions{
 		All:          true,
-		RegistryAuth: authStr,
-	})
+		RegistryAuth: encodedAuth,
+	}
+
+	pushResponse, err := cli.Client().ImagePush(ctx, p.Config.Manifest.Image, options)
 	if err != nil {
 		return "", errors.Wrap(err, "docker push failed")
 	}
@@ -223,27 +236,11 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		}
 		return "", errors.Wrap(err, "failed to stream docker push stdout")
 	}
-	dist, err := cli.DistributionInspect(ctx, p.Config.Manifest.Image, authStr)
+	dist, err := cli.Client().DistributionInspect(ctx, p.Config.Manifest.Image, encodedAuth)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to inspect docker image")
 	}
 	return string(dist.Descriptor.Digest), nil
-}
-
-func (p *Porter) getDockerAuth() (string, error) {
-	authConfig := types.AuthConfig{
-		Username: os.Getenv("DOCKER_USER"),
-		Password: os.Getenv("DOCKER_PASSWORD"),
-	}
-	if authConfig.Username == "" || authConfig.Password == "" {
-		return "", errors.New("DOCKER_USER and DOCKER_PASSWORD must be set")
-	}
-
-	encodedJSON, err := json.Marshal(authConfig)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to build Docker auth")
-	}
-	return base64.URLEncoding.EncodeToString(encodedJSON), nil
 }
 
 func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
