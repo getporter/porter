@@ -8,6 +8,8 @@ XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)
 
 REGISTRY ?= $(USER)
 
+KUBECONFIG ?= ~/.kube/config
+
 build: porter exec helm
 	cp -R templates bin/
 
@@ -32,13 +34,18 @@ test: clean test-unit test-cli
 test-unit: build
 	go test ./...
 
-test-cli: clean build
+test-cli: clean build prepare-credentials
 	./bin/porter help
 	./bin/porter version
 	./bin/porter create
 	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
 	./bin/porter build
-	duffle install PORTER-HELLO -f bundle.json --credentials k8s --insecure
+	duffle install PORTER-HELLO -f bundle.json --credentials ci --insecure
+
+prepare-credentials:
+	duffle init
+	cp build/ci.yaml ~/.duffle/credentials
+	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' ~/.duffle/credentials/ci.yaml
 
 .PHONY: docs
 docs:
@@ -51,4 +58,5 @@ clean:
 	-rm -fr bin/
 	-rm -fr cnab/
 	-rm Dockerfile porter.yaml
-	-duffle uninstall PORTER-HELLO --credentials k8s
+	-duffle uninstall PORTER-HELLO --credentials ci
+	-helm delete --purge porter-ci-mysql --kubeconfig $(KUBECONFIG)

@@ -31,7 +31,7 @@ install:
     - echo Hello World
 - description: "Install MySQL with Helm"
   helm:
-    name: mydb
+    name: porter-ci-mysql
     chart: stable/mysql
 
 uninstall:
