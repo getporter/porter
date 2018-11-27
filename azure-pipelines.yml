@@ -13,6 +13,13 @@ variables:
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
 steps:
+- task: Docker@1
+  displayName: Login
+  inputs:
+    containerRegistryType: Container Registry
+    dockerRegistryEndpoint: deislabs-registry
+  command: login
+
 - script: |
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
@@ -36,6 +43,6 @@ steps:
   displayName: 'Install duffle'
 
 - script: |
-    DOCKER_USER=$(DOCKER_USER) DOCKER_PASSWORD=$(DOCKER_PASSWORD) make test-cli
+    make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'
