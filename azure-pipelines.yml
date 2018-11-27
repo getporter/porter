@@ -47,6 +47,7 @@ steps:
     secureFile: kubeconfig
 
 - script: |
-    KUBECONFIG=$(DOWNLOADSECUREFILE_SECUREFILEPATH) make test-cli
+    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
+    make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'
