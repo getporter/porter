@@ -271,6 +271,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	image.Digest = digest
 	bundle.InvocationImages = []InvocationImage{image}
 	bundle.Parameters = p.generateBundleParameters()
+	bundle.Credentials = p.generateBundleCredentials()
 	return p.WriteFile(bundle, 0644)
 
 }
@@ -303,6 +304,19 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 			}
 		}
 		params[param.Name] = p
+	}
+	return params
+}
+
+func (p *Porter) generateBundleCredentials() map[string]Location {
+	params := map[string]Location{}
+	for _, cred := range p.Manifest.Credentials {
+		fmt.Printf("Generating credential %s ====>\n", cred.Name)
+		l := Location{
+			Path:                cred.Path,
+			EnvironmentVariable: cred.EnvironmentVariable,
+		}
+		params[cred.Name] = l
 	}
 	return params
 }
