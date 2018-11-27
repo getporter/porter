@@ -16,6 +16,11 @@ mixins:
 name: HELLO
 version: 0.1.0
 invocationImage: porter-hello:latest
+
+credentials:
+  - name: kubeconfig
+    path: ~/.kube/config
+
 install:
 - description: "Install Hello World"
   exec:
@@ -26,6 +31,7 @@ install:
 - description: "Try Helm"
   helm:
     chart: mysql
+
 uninstall:
 - description: "Uninstall Hello World"
   exec:

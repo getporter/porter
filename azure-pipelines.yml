@@ -29,9 +29,8 @@ steps:
   displayName: 'Unit Test'
 
 - script: |
-    mkdir -p '$(GOPATH)/src/github.com/deis'
-    git clone https://$(GITHUB_TOKEN)@github.com/deis/duffle.git '$(GOPATH)/src/github.com/deis/duffle'
-    cd $(GOPATH)/src/github.com/deis/duffle
+    git clone https://$(GITHUB_TOKEN)@github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
+    cd $(GOPATH)/src/github.com/deislabs/duffle
     make bootstrap build
     cp bin/duffle $(GOPATH)/bin/
   displayName: 'Install duffle'
