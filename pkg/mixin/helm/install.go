@@ -55,16 +55,14 @@ func (m *Mixin) Install() error {
 	sort.Strings(setKeys)
 
 	for _, k := range setKeys {
-		cmd.Args = append(cmd.Args, "--set", fmt.Sprintf(`"%s=%s"`, k, args.Set[k]))
+		cmd.Args = append(cmd.Args, "--set", fmt.Sprintf("%s=%s", k, args.Set[k]))
 	}
 
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 
 	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
-	if m.Debug {
-		fmt.Fprintln(m.Out, prettyCmd)
-	}
+	fmt.Fprintln(m.Out, prettyCmd)
 
 	err = cmd.Start()
 	if err != nil {
