@@ -8,7 +8,7 @@ XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)
 
 REGISTRY ?= $(USER)
 
-KUBECONFIG ?= ~/.kube/config
+KUBECONFIG ?= $(HOME)/.kube/config
 
 build: porter exec helm
 	cp -R templates bin/
