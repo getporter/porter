@@ -33,6 +33,10 @@ install:
   helm:
     name: porter-ci-mysql
     chart: stable/mysql
+    version: 0.10.2
+    replace: true
+    set:
+      mysqlDatabase: hellodb
 
 uninstall:
 - description: "Uninstall Hello World"
