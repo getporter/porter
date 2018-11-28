@@ -15,14 +15,16 @@ import (
 )
 
 type Manifest struct {
-	Name        string                 `yaml:"image,omitempty"`
-	Version     string                 `yaml:"version,omitempty"`
-	Image       string                 `yaml:"invocationImage,omitempty"`
-	Mixins      []string               `yaml:"mixins,omitempty"`
-	Install     Steps                  `yaml:"install"`
-	Uninstall   Steps                  `yaml:"uninstall"`
-	Parameters  []ParameterDefinition  `yaml:"parameters,omitempty"`
-	Credentials []CredentialDefinition `yaml:"credentials,omitempty"`
+	Name         string                 `yaml:"image,omitempty"`
+	Version      string                 `yaml:"version,omitempty"`
+	Image        string                 `yaml:"invocationImage,omitempty"`
+	Mixins       []string               `yaml:"mixins,omitempty"`
+	Install      Steps                  `yaml:"install"`
+	Uninstall    Steps                  `yaml:"uninstall"`
+	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
+	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
+	Dependencies []Dependency           `yaml:"dependencies,omitempty"`
+	Outputs      []BundleOutput         `yaml:"outputs,omitempty"`
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -54,6 +56,24 @@ type Location struct {
 // ParameterMetadata contains metadata for a parameter definition.
 type ParameterMetadata struct {
 	Description string `yaml:"description,omitempty"`
+}
+
+type Dependency struct {
+	Name string `yaml:"name"`
+	// TODO: Need to add parameters (with source) once it's completed in #20
+	Connections []BundleConnection `yaml:"connections",omitempty`
+}
+
+type BundleOutput struct {
+	Name                string `yaml:"name"`
+	Path                string `yaml:"path"`
+	EnvironmentVariable string `yaml:"env"`
+}
+
+type BundleConnection struct {
+	Source      string `yaml:source`
+	Destination string `yaml:destination`
+	// TODO: Need to add type once it's completed in #20
 }
 
 func (c *Config) LoadManifest(file string) error {
