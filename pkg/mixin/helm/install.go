@@ -2,7 +2,6 @@ package helm
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -25,7 +24,7 @@ func (m *Mixin) Install() error {
 		return err
 	}
 
-	cmd := exec.Command("helm", "install", "--name", args.Name, args.Chart)
+	cmd := m.NewCommand("helm", "install", "--name", args.Name, args.Chart)
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 
