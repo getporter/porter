@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestMixin_Install(t *testing.T) {
-	os.Setenv(test.ExpectedCommandEnv, `helm install --name MYRELEASE MYCHART --namespace MYNAMESPACE --version 1.0.0 --replace --set "baz=qux" --set "foo=bar"`)
+	os.Setenv(test.ExpectedCommandEnv, `helm install --name MYRELEASE MYCHART --namespace MYNAMESPACE --version 1.0.0 --replace --values /tmp/val1.yaml --values /tmp/val2.yaml --set "baz=qux" --set "foo=bar"`)
 	defer os.Unsetenv(test.ExpectedCommandEnv)
 
 	args := InstallArguments{
@@ -28,6 +28,10 @@ func TestMixin_Install(t *testing.T) {
 		Set: map[string]string{
 			"foo": "bar",
 			"baz": "qux",
+		},
+		Values: []string{
+			"/tmp/val1.yaml",
+			"/tmp/val2.yaml",
 		},
 	}
 	b, _ := yaml.Marshal(args)

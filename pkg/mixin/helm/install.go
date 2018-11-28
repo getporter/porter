@@ -15,6 +15,7 @@ type InstallArguments struct {
 	Version   string            `yaml:"version"`
 	Replace   bool              `yaml:"replace"`
 	Set       map[string]string `yaml:"set"`
+	Values    []string          `yaml:"values"`
 }
 
 func (m *Mixin) Install() error {
@@ -40,6 +41,10 @@ func (m *Mixin) Install() error {
 
 	if args.Replace {
 		cmd.Args = append(cmd.Args, "--replace")
+	}
+
+	for _, v := range args.Values {
+		cmd.Args = append(cmd.Args, "--values", v)
 	}
 
 	// sort the set consistently
