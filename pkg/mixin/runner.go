@@ -3,7 +3,6 @@ package mixin
 import (
 	"fmt"
 	"io"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -58,7 +57,7 @@ func (r *Runner) Run() error {
 	}
 
 	mixinPath := r.getMixinPath()
-	cmd := exec.Command(mixinPath, r.Command)
+	cmd := r.NewCommand(mixinPath, r.Command)
 
 	// Pipe the output from the mixin to porter
 	cmd.Stdout = r.Context.Out

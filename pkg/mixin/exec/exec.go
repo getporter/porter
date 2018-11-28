@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os/exec"
 
 	"github.com/deislabs/porter/pkg/context"
 	"gopkg.in/yaml.v2"
@@ -41,7 +40,7 @@ func (m *Mixin) LoadInstruction(commandFile string) error {
 }
 
 func (m *Mixin) Execute() error {
-	cmd := exec.Command(m.instruction.Command, m.instruction.Arguments...)
+	cmd := m.NewCommand(m.instruction.Command, m.instruction.Arguments...)
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 

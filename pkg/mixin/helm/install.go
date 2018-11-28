@@ -2,16 +2,20 @@ package helm
 
 import (
 	"fmt"
-	"os/exec"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
 type InstallArguments struct {
-	Name       string            `yaml:"name"`
-	Chart      string            `yaml:"chart"`
-	Parameters map[string]string `yaml:"parameters"`
+	Namespace string            `yaml:"namespace"`
+	Name      string            `yaml:"name"`
+	Chart     string            `yaml:"chart"`
+	Version   string            `yaml:"version"`
+	Replace   bool              `yaml:"replace"`
+	Set       map[string]string `yaml:"set"`
+	Values    []string          `yaml:"values"`
 }
 
 func (m *Mixin) Install() error {
@@ -25,7 +29,35 @@ func (m *Mixin) Install() error {
 		return err
 	}
 
-	cmd := exec.Command("helm", "install", "--name", args.Name, args.Chart)
+	cmd := m.NewCommand("helm", "install", "--name", args.Name, args.Chart)
+
+	if args.Namespace != "" {
+		cmd.Args = append(cmd.Args, "--namespace", args.Namespace)
+	}
+
+	if args.Version != "" {
+		cmd.Args = append(cmd.Args, "--version", args.Version)
+	}
+
+	if args.Replace {
+		cmd.Args = append(cmd.Args, "--replace")
+	}
+
+	for _, v := range args.Values {
+		cmd.Args = append(cmd.Args, "--values", v)
+	}
+
+	// sort the set consistently
+	setKeys := make([]string, 0, len(args.Set))
+	for k := range args.Set {
+		setKeys = append(setKeys, k)
+	}
+	sort.Strings(setKeys)
+
+	for _, k := range setKeys {
+		cmd.Args = append(cmd.Args, "--set", fmt.Sprintf(`"%s=%s"`, k, args.Set[k]))
+	}
+
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 

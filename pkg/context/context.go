@@ -3,6 +3,7 @@ package context
 import (
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -10,12 +11,15 @@ import (
 	"github.com/spf13/afero"
 )
 
+type CommandBuilder func(name string, arg ...string) *exec.Cmd
+
 type Context struct {
 	Debug      bool
 	FileSystem *afero.Afero
 	In         io.Reader
 	Out        io.Writer
 	Err        io.Writer
+	NewCommand CommandBuilder
 }
 
 func New() *Context {
@@ -27,6 +31,7 @@ func New() *Context {
 		In:         os.Stdin,
 		Out:        os.Stdout,
 		Err:        os.Stderr,
+		NewCommand: exec.Command,
 	}
 }
 
