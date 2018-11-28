@@ -12,6 +12,7 @@ type InstallArguments struct {
 	Namespace string            `yaml:"namespace"`
 	Name      string            `yaml:"name"`
 	Chart     string            `yaml:"chart"`
+	Version   string            `yaml:"version"`
 	Set       map[string]string `yaml:"set"`
 }
 
@@ -30,6 +31,10 @@ func (m *Mixin) Install() error {
 
 	if args.Namespace != "" {
 		cmd.Args = append(cmd.Args, "--namespace", args.Namespace)
+	}
+
+	if args.Version != "" {
+		cmd.Args = append(cmd.Args, "--version", args.Version)
 	}
 
 	// sort the set consistently
