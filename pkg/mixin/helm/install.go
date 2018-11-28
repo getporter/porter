@@ -9,9 +9,10 @@ import (
 )
 
 type InstallArguments struct {
-	Name  string            `yaml:"name"`
-	Chart string            `yaml:"chart"`
-	Set   map[string]string `yaml:"set"`
+	Namespace string            `yaml:"namespace"`
+	Name      string            `yaml:"name"`
+	Chart     string            `yaml:"chart"`
+	Set       map[string]string `yaml:"set"`
 }
 
 func (m *Mixin) Install() error {
@@ -26,6 +27,10 @@ func (m *Mixin) Install() error {
 	}
 
 	cmd := m.NewCommand("helm", "install", "--name", args.Name, args.Chart)
+
+	if args.Namespace != "" {
+		cmd.Args = append(cmd.Args, "--namespace", args.Namespace)
+	}
 
 	// sort the set consistently
 	setKeys := make([]string, 0, len(args.Set))
