@@ -26,12 +26,16 @@ func (p *Porter) MapElem(m, k, v reflect.Value) error {
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
+	// If the value is is a map, check to see if it's a
+	// single entry map with the key "source".
 	if kind := v.Kind(); kind == reflect.Map {
 		if len(v.MapKeys()) == 1 {
 			sk := v.MapKeys()[0]
 			if sk.Kind() == reflect.Interface {
 				sk = sk.Elem()
 			}
+			//if the key is a string, and the string is source, then we should try
+			//and replace this
 			if sk.Kind() == reflect.String && sk.String() == "source" {
 				kv := v.MapIndex(sk)
 				if kv.Kind() == reflect.Interface {
@@ -56,6 +60,7 @@ func (p *Porter) Slice(val reflect.Value) error {
 func (p *Porter) SliceElem(index int, val reflect.Value) error {
 	v, ok := val.Interface().(string)
 	if ok {
+		//if the array entry is a string that matches source:...., we should replace it
 		re := regexp.MustCompile("source:\\s?(.*)")
 		matches := re.FindStringSubmatch(v)
 		if len(matches) > 0 {
