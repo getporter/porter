@@ -211,3 +211,96 @@ func TestDependency_Validate_NameRequired(t *testing.T) {
 	err = c.Manifest.Dependencies[0].Validate()
 	assert.EqualError(t, err, "dependency name is required")
 }
+
+func TestManifest_MergeDependency(t *testing.T) {
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			&Step{Description: "install wordpress"},
+		},
+		Uninstall: Steps{
+			&Step{Description: "uninstall wordpress"},
+		},
+	}
+
+	depM := &Manifest{
+		Mixins: []string{"exec", "helm"},
+		Install: Steps{
+			&Step{Description: "install mysql"},
+		},
+		Uninstall: Steps{
+			&Step{Description: "uninstall mysql"},
+		},
+		Credentials: []CredentialDefinition{
+			{Name: "kubeconfig", Path: "/root/.kube/config"},
+		},
+	}
+
+	err := m.MergeDependency(depM)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"exec", "helm"}, m.Mixins)
+
+	assert.Len(t, m.Install, 2)
+	assert.Equal(t, "install mysql", m.Install[0].Description)
+	assert.Equal(t, "install wordpress", m.Install[1].Description)
+
+	assert.Len(t, m.Uninstall, 2)
+	assert.Equal(t, "uninstall mysql", m.Uninstall[0].Description)
+	assert.Equal(t, "uninstall wordpress", m.Uninstall[1].Description)
+
+	assert.Len(t, m.Credentials, 1)
+}
+
+func TestMergeCredentials(t *testing.T) {
+	testcases := []struct {
+		name               string
+		c1, c2, wantResult CredentialDefinition
+		wantError          string
+	}{
+		{
+			name:       "combine path and environment variable",
+			c1:         CredentialDefinition{Name: "foo", Path: "p1"},
+			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
+			wantResult: CredentialDefinition{Name: "foo", Path: "p1", EnvironmentVariable: "v2"},
+		},
+		{
+			name:       "same path",
+			c1:         CredentialDefinition{Name: "foo", Path: "p"},
+			c2:         CredentialDefinition{Name: "foo", Path: "p"},
+			wantResult: CredentialDefinition{Name: "foo", Path: "p"},
+		},
+		{
+			name:      "conflicting path",
+			c1:        CredentialDefinition{Name: "foo", Path: "p1"},
+			c2:        CredentialDefinition{Name: "foo", Path: "p2"},
+			wantError: "cannot merge credential foo: conflict on path",
+		},
+		{
+			name:       "same environment variable",
+			c1:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+			wantResult: CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+		},
+		{
+			name:      "conficting environment variable",
+			c1:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v1"},
+			c2:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
+			wantError: "cannot merge credential foo: conflict on environment variable",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := mergeCredentials(tc.c1, tc.c2)
+
+			if tc.wantError == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantResult, result)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+			}
+		})
+	}
+
+}

@@ -158,10 +158,90 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 }
 
 func (m *Manifest) MergeDependency(dep *Manifest) error {
+	// include any unique credentials from the dependency
+	for i, cred := range dep.Credentials {
+		dupe := false
+		for _, x := range m.Credentials {
+			if cred.Name == x.Name {
+				result, err := mergeCredentials(x, cred)
+				if err != nil {
+					return err
+				}
+
+				// Allow for having the same credential populated both as an env var and a file
+				dep.Credentials[i].EnvironmentVariable = result.EnvironmentVariable
+				dep.Credentials[i].Path = result.Path
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			m.Credentials = append(m.Credentials, cred)
+		}
+	}
+
+	// prepend the dependency's mixins
+	m.Mixins = prependMixins(dep.Mixins, m.Mixins)
+
+	// prepend dependency's steps for each action
+	m.Install = m.Install.Prepend(dep.Install)
+	m.Uninstall = m.Install.Prepend(dep.Uninstall)
+
 	return nil
 }
 
+func prependMixins(m1, m2 []string) []string {
+	mixins := make([]string, len(m1), len(m1)+len(m2))
+	copy(mixins, m1)
+	for _, m := range m2 {
+		dupe := false
+		for _, x := range m1 {
+			if m == x {
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			mixins = append(mixins, m)
+		}
+	}
+	return mixins
+}
+
+func mergeCredentials(c1, c2 CredentialDefinition) (CredentialDefinition, error) {
+	result := CredentialDefinition{Name: c1.Name}
+
+	if c1.Name != c2.Name {
+		return result, fmt.Errorf("cannot merge credentials that don't have the same name: %s and %s", c1.Name, c2.Name)
+	}
+
+	if c1.Path != "" && c2.Path != "" && c1.Path != c2.Path {
+		return result, fmt.Errorf("cannot merge credential %s: conflict on path", c1.Name)
+	}
+	result.Path = c1.Path
+	if result.Path == "" {
+		result.Path = c2.Path
+	}
+
+	if c1.EnvironmentVariable != "" && c2.EnvironmentVariable != "" && c1.EnvironmentVariable != c2.EnvironmentVariable {
+		return result, fmt.Errorf("cannot merge credential %s: conflict on environment variable", c1.Name)
+	}
+	result.EnvironmentVariable = c1.EnvironmentVariable
+	if result.EnvironmentVariable == "" {
+		result.EnvironmentVariable = c2.EnvironmentVariable
+	}
+
+	return result, nil
+}
+
 type Steps []*Step
+
+func (s Steps) Prepend(s1 Steps) Steps {
+	result := make(Steps, len(s)+len(s1))
+	copy(result[:len(s)], s1)
+	copy(result[len(s):], s)
+	return result
+}
 
 func (s Steps) Validate(m *Manifest) error {
 	for _, step := range s {
