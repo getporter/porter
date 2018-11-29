@@ -34,6 +34,10 @@ func (p *Porter) Run(file string, action config.Action) error {
 	}
 
 	for _, step := range steps {
+		err := p.resolveSourcedValues(step)
+		if err != nil {
+			return errors.Wrap(err, "unable to resolve sourced values")
+		}
 		runner := p.loadRunner(step, action, mixinsDir)
 
 		err = runner.Validate()
