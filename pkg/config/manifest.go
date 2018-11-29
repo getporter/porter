@@ -183,9 +183,11 @@ func (m *Manifest) MergeDependency(dep *Manifest) error {
 	// prepend the dependency's mixins
 	m.Mixins = prependMixins(dep.Mixins, m.Mixins)
 
-	// prepend dependency's steps for each action
+	// prepend dependency's install steps
 	m.Install = m.Install.Prepend(dep.Install)
-	m.Uninstall = m.Install.Prepend(dep.Uninstall)
+
+	// append uninstall steps so that we unroll it in dependency order (i.e. uninstall wordpress before we delete the database)
+	m.Uninstall = append(m.Uninstall, dep.Uninstall...)
 
 	return nil
 }

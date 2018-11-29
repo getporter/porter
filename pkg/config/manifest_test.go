@@ -246,8 +246,8 @@ func TestManifest_MergeDependency(t *testing.T) {
 	assert.Equal(t, "install wordpress", m.Install[1].Description)
 
 	assert.Len(t, m.Uninstall, 2)
-	assert.Equal(t, "uninstall mysql", m.Uninstall[0].Description)
-	assert.Equal(t, "uninstall wordpress", m.Uninstall[1].Description)
+	assert.Equal(t, "uninstall wordpress", m.Uninstall[0].Description)
+	assert.Equal(t, "uninstall mysql", m.Uninstall[1].Description)
 
 	assert.Len(t, m.Credentials, 1)
 }
@@ -283,7 +283,7 @@ func TestMergeCredentials(t *testing.T) {
 			wantResult: CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
 		},
 		{
-			name:      "conficting environment variable",
+			name:      "conflicting environment variable",
 			c1:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v1"},
 			c2:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
 			wantError: "cannot merge credential foo: conflict on environment variable",
