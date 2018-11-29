@@ -25,7 +25,7 @@ import (
 func (p *Porter) Build() error {
 	err := p.Config.LoadManifest("porter.yaml")
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if err := p.loadDependencies(); err != nil {

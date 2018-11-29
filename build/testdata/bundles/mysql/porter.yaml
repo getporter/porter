@@ -1,0 +1,26 @@
+mixins:
+- helm
+
+name: mysql
+version: 0.1.0
+invocationImage: porter-mysql:latest
+
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+
+install:
+- description: "Install MySQL"
+  helm:
+    name: porter-ci-mysql
+    chart: stable/mysql
+    version: 0.10.2
+    replace: true
+    set:
+      mysqlDatabase: mydb
+
+uninstall:
+- description: "Uninstall MySQL"
+  helm:
+    name: porter-ci-mysql
+    purge: true
