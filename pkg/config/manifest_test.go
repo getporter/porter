@@ -195,3 +195,19 @@ func TestResolveArray(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "Ralpha", args[0])
 }
+
+func TestDependency_Validate_NameRequired(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+
+	err := c.LoadManifest(Name)
+	require.NoError(t, err)
+
+	// Sabotage!
+	c.Manifest.Dependencies[0].Name = ""
+
+	err = c.Manifest.Dependencies[0].Validate()
+	assert.EqualError(t, err, "dependency name is required")
+}

@@ -64,6 +64,13 @@ type Dependency struct {
 	Connections []BundleConnection `yaml:"connections",omitempty`
 }
 
+func (d *Dependency) Validate() error {
+	if d.Name == "" {
+		return errors.New("dependency name is required")
+	}
+	return nil
+}
+
 type BundleOutput struct {
 	Name                string `yaml:"name"`
 	Path                string `yaml:"path"`
@@ -112,6 +119,13 @@ func (m *Manifest) Validate() error {
 	err = m.Uninstall.Validate(m)
 	if err != nil {
 		result = multierror.Append(result, err)
+	}
+
+	for _, dep := range m.Dependencies {
+		err = dep.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
 	}
 
 	return result
