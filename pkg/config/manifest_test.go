@@ -14,7 +14,6 @@ func TestLoadManifest(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
 	require.NoError(t, c.LoadManifest(Name))
-	require.NoError(t, c.Manifest.Validate())
 
 	assert.NotNil(t, c.Manifest)
 	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
@@ -47,7 +46,7 @@ func TestManifest_Validate(t *testing.T) {
 	assert.NoError(t, c.Manifest.Validate())
 }
 
-func TestAction_Validate(t *testing.T) {
+func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
@@ -56,5 +55,41 @@ func TestAction_Validate(t *testing.T) {
 	err := c.LoadManifest(Name)
 	require.NoError(t, err)
 
-	assert.NoError(t, c.Manifest.Install.Validate(c.Manifest))
+	// Sabotage!
+	c.Manifest.Mixins = []string{}
+
+	err = c.Manifest.Install.Validate(c.Manifest)
+	assert.EqualError(t, err, "mixin (exec) was not declared")
+}
+
+func TestAction_Validate_RequireMixinData(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+
+	err := c.LoadManifest(Name)
+	require.NoError(t, err)
+
+	// Sabotage!
+	c.Manifest.Install[0].Data = nil
+
+	err = c.Manifest.Install.Validate(c.Manifest)
+	assert.EqualError(t, err, "no mixin specified")
+}
+
+func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+
+	err := c.LoadManifest(Name)
+	require.NoError(t, err)
+
+	// Sabotage!
+	c.Manifest.Install[0].Data["rando-mixin"] = ""
+
+	err = c.Manifest.Install.Validate(c.Manifest)
+	assert.EqualError(t, err, "more than one mixin specified")
 }
