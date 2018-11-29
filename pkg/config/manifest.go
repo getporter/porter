@@ -83,19 +83,29 @@ type BundleConnection struct {
 	// TODO: Need to add type once it's completed in #20
 }
 
-func (c *Config) LoadManifest(file string) error {
+func (c *Config) ReadManifest(file string) (*Manifest, error) {
 	data, err := c.FileSystem.ReadFile(file)
 	if err != nil {
-		return errors.Wrapf(err, "could not read manifest at %q", file)
+		return nil, errors.Wrapf(err, "could not read manifest at %q", file)
 	}
 
 	m := &Manifest{}
 	err = yaml.Unmarshal(data, m)
 	if err != nil {
-		return errors.Wrapf(err, "could not parse manifest yaml in %q", file)
+		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", file)
 	}
+
+	return m, nil
+}
+
+func (c *Config) LoadManifest(file string) error {
+	m, err := c.ReadManifest(file)
+	if err != nil {
+		return err
+	}
+
 	c.Manifest = m
-	return nil
+	return c.Manifest.Validate()
 }
 
 func (m *Manifest) Validate() error {
@@ -145,6 +155,10 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	}
 
 	return steps, nil
+}
+
+func (m *Manifest) MergeDependency(dep *Manifest) error {
+	return nil
 }
 
 type Steps []*Step

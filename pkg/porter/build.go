@@ -5,11 +5,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/config"
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
-
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/distribution/reference"
@@ -18,7 +19,6 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
-
 	"github.com/pkg/errors"
 )
 
@@ -26,6 +26,10 @@ func (p *Porter) Build() error {
 	err := p.Config.LoadManifest("porter.yaml")
 	if err != nil {
 		return nil
+	}
+
+	if err := p.loadDependencies(); err != nil {
+		return err
 	}
 
 	if err := p.copyMixins(); err != nil {
@@ -47,6 +51,25 @@ func (p *Porter) Build() error {
 	}
 
 	return p.buildBundle(taggedImage, digest)
+}
+
+func (p *Porter) loadDependencies() error {
+	homeDir, err := p.GetHomeDir()
+	if err != nil {
+		return err
+	}
+
+	bundleDir := filepath.Join(homeDir, "bundles")
+	for _, dep := range p.Manifest.Dependencies {
+		cfgPath := filepath.Join(bundleDir, dep.Name, config.Name)
+		m, err := p.ReadManifest(cfgPath)
+		if err != nil {
+			return errors.Wrapf(err, "could not read dependency manifest from %s", cfgPath)
+		}
+
+		p.Manifest.MergeDependency(m)
+	}
+	return nil
 }
 
 func (p *Porter) generateDockerFile() error {
