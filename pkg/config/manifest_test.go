@@ -14,7 +14,6 @@ func TestLoadManifest(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
 	require.NoError(t, c.LoadManifest(Name))
-	require.NoError(t, c.Manifest.Validate())
 
 	assert.NotNil(t, c.Manifest)
 	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)

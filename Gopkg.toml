@@ -10,10 +10,6 @@
   name = "github.com/docker/distribution"
   branch = "master"
 
-[[constraint]]
-  name = "github.com/docker/go-metrics"
-  branch = "master"
-
 [prune]
   non-go = true
   go-tests = true

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -64,13 +65,29 @@ func (c *Config) LoadManifest(file string) error {
 }
 
 func (m *Manifest) Validate() error {
+	var result error
+
 	if len(m.Mixins) == 0 {
-		return errors.New("no mixins declared")
+		result = multierror.Append(result, errors.New("no mixins declared"))
 	}
+
 	if m.Install == nil {
-		return errors.New("no install action defined")
+		result = multierror.Append(result, errors.New("no install action defined"))
 	}
-	return m.Install.Validate(m)
+	err := m.Install.Validate(m)
+	if err != nil {
+		result = multierror.Append(result, err)
+	}
+
+	if m.Uninstall == nil {
+		result = multierror.Append(result, errors.New("no uninstall action defined"))
+	}
+	err = m.Uninstall.Validate(m)
+	if err != nil {
+		result = multierror.Append(result, err)
+	}
+
+	return result
 }
 
 func (m *Manifest) GetSteps(action Action) (Steps, error) {

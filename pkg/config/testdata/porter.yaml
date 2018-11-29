@@ -8,3 +8,11 @@ install:
       arguments:
       - "-c"
       - "Hello World!"
+
+uninstall:
+- description: "Uninstall Hello World"
+  exec:
+    command: bash
+    arguments:
+    - -c
+    - echo Goodbye World

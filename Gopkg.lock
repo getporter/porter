@@ -235,6 +235,22 @@
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:f0d9d74edbd40fdeada436d5ac9cb5197407899af3fef85ff0137077ffe8ae19"
+  name = "github.com/hashicorp/errwrap"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "8a6fb523712970c966eefc6b39ed2c5e74880354"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:2ed138049ab373f696db2081ca48f15c5abdf20893803612a284f2bdce2bf443"
+  name = "github.com/hashicorp/go-multierror"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "886a7fbe3eb1c874d46f623bfa70af45f425b3d1"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:0b06ffe0c0764e413a6738e3f045d6bb14117359aef80a09f8c60fbff2ecad6b"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
@@ -498,10 +514,11 @@
     "github.com/docker/cli/cli/flags",
     "github.com/docker/distribution/reference",
     "github.com/docker/docker/api/types",
-    "github.com/docker/docker/client",
     "github.com/docker/docker/pkg/archive",
     "github.com/docker/docker/pkg/jsonmessage",
     "github.com/docker/docker/pkg/term",
+    "github.com/docker/docker/registry",
+    "github.com/hashicorp/go-multierror",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
