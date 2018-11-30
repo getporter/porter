@@ -12,8 +12,6 @@ KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
-.EXPORT_ALL_VARIABLES:
-
 build: porter exec helm
 	cp -R templates bin/
 
@@ -39,6 +37,10 @@ test-unit: build
 	go test ./...
 
 test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
+	export KUBECONFIG
+	export PORTER_HOME
+	export DUFFLE_HOME
+
 	./bin/porter help
 	./bin/porter version
 

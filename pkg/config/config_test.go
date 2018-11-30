@@ -71,16 +71,3 @@ func TestConfig_GetBundleDir(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "bundles/mysql", result)
 }
-
-func TestConfig_GetBundleDir_BundleNotInstalled(t *testing.T) {
-	c := NewTestConfig(t)
-
-	c.TestContext.AddTestFile("testdata/missingdep.porter.yaml", Name)
-
-	err := c.LoadManifest()
-	require.NoError(t, err)
-
-	result, err := c.GetBundleDir("mysql")
-	require.NoError(t, err)
-	assert.Equal(t, "bundles/mysql", result)
-}

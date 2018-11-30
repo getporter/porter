@@ -12,7 +12,7 @@ func TestLoadManifest(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
 	require.NoError(t, c.LoadManifest())
 
@@ -27,31 +27,47 @@ func TestLoadManifest(t *testing.T) {
 	assert.Equal(t, "exec", mixin)
 
 	data := installStep.GetMixinData()
-	wantData := `arguments:
-- -c
-- Hello World!
-command: bash
-`
+	wantData := "arguments:\n- -c\n- echo Hello World\ncommand: bash\n"
 	assert.Equal(t, wantData, data)
 }
 
-func TestManifest_Validate(t *testing.T) {
+func TestLoadManifestWithDependencies(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest()
-	require.NoError(t, err)
+	require.NoError(t, c.LoadManifest())
 
-	assert.NoError(t, c.Manifest.Validate())
+	assert.NotNil(t, c.Manifest)
+	assert.Equal(t, []string{"helm", "exec"}, c.Manifest.Mixins)
+	assert.Len(t, c.Manifest.Install, 2)
+
+	installStep := c.Manifest.Install[0]
+	assert.NotNil(t, installStep.Description)
+
+	mixin := installStep.GetMixinName()
+	assert.Equal(t, "helm", mixin)
+
+	data := installStep.GetMixinData()
+	wantData := "chart: stable/mysql\nname: porter-ci-mysql\nreplace: true\nset:\n  mysqlDatabase: mydb\nversion: 0.10.2\n"
+	assert.Equal(t, wantData, data)
+}
+
+func TestConfig_LoadManifest_BundleDependencyNotInstalled(t *testing.T) {
+	c := NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/missingdep.porter.yaml", Name)
+
+	err := c.LoadManifest()
+	require.Errorf(t, err, "bundle missingdep not installed in PORTER_HOME")
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
 	err := c.LoadManifest()
 	require.NoError(t, err)
@@ -67,7 +83,7 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
 	err := c.LoadManifest()
 	require.NoError(t, err)
@@ -83,7 +99,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
 	err := c.LoadManifest()
 	require.NoError(t, err)
