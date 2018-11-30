@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,4 +93,105 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 
 	err = c.Manifest.Install.Validate(c.Manifest)
 	assert.EqualError(t, err, "more than one mixin specified")
+}
+
+func TestResolveMapParam(t *testing.T) {
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			ParameterDefinition{
+				Name: "person",
+			},
+		},
+	}
+
+	os.Setenv("PERSON", "Ralpha")
+	s := &Step{
+		Description: "a test step",
+		Data: map[string]interface{}{
+			"Parameters": map[string]interface{}{
+				"Thing": map[string]interface{}{
+					"source": "bundle.parameters.person",
+				},
+			},
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	pms, ok := s.Data["Parameters"].(map[string]interface{})
+	assert.True(t, ok)
+	val, ok := pms["Thing"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, "Ralpha", val)
+}
+
+func TestResolveMapParamUnknown(t *testing.T) {
+
+	m := &Manifest{
+		Parameters: []ParameterDefinition{},
+	}
+
+	s := &Step{
+		Description: "a test step",
+		Data: map[string]interface{}{
+			"Parameters": map[string]interface{}{
+				"Thing": map[string]interface{}{
+					"source": "bundle.parameters.person",
+				},
+			},
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.Error(t, err)
+	assert.Equal(t, "unable to source value: unable to find parameter", err.Error())
+}
+
+func TestResolveArrayUnknown(t *testing.T) {
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			ParameterDefinition{
+				Name: "name",
+			},
+		},
+	}
+
+	s := &Step{
+		Description: "a test step",
+		Data: map[string]interface{}{
+			"Arguments": []string{
+				"source: bundle.parameters.person",
+			},
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.Error(t, err)
+	assert.Equal(t, "unable to source value: unable to find parameter", err.Error())
+}
+
+func TestResolveArray(t *testing.T) {
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			ParameterDefinition{
+				Name: "person",
+			},
+		},
+	}
+
+	os.Setenv("PERSON", "Ralpha")
+	s := &Step{
+		Description: "a test step",
+		Data: map[string]interface{}{
+			"Arguments": []string{
+				"source: bundle.parameters.person",
+			},
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	args, ok := s.Data["Arguments"].([]string)
+	assert.True(t, ok)
+	assert.Equal(t, "Ralpha", args[0])
 }
