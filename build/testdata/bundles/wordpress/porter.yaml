@@ -22,6 +22,7 @@ install:
     helm:
       name: porter-ci-wordpress
       chart: stable/wordpress
+      replace: true
       # TODO: wire up the mysql dependency
 
 uninstall:

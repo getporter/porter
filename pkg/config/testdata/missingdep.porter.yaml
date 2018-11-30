@@ -1,0 +1,21 @@
+mixins:
+  - exec
+
+dependencies:
+- name: missingdep
+
+install:
+  - description: "Install Hello World"
+    exec:
+      command: bash
+      arguments:
+      - "-c"
+      - "Hello World!"
+
+uninstall:
+- description: "Uninstall Hello World"
+  exec:
+    command: bash
+    arguments:
+    - -c
+    - echo Goodbye World

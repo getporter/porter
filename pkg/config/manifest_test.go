@@ -14,7 +14,7 @@ func TestLoadManifest(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	require.NoError(t, c.LoadManifest(Name))
+	require.NoError(t, c.LoadManifest())
 
 	assert.NotNil(t, c.Manifest)
 	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
@@ -41,7 +41,7 @@ func TestManifest_Validate(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	assert.NoError(t, c.Manifest.Validate())
@@ -53,7 +53,7 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -69,7 +69,7 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -85,7 +85,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -202,7 +202,7 @@ func TestDependency_Validate_NameRequired(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!

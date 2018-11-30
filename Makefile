@@ -46,7 +46,7 @@ test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
 	./bin/porter create
 	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
 	./bin/porter build
-	duffle install PORTER-HELLO -f bundle.json --credentials ci --insecure
+	duffle install PORTER-HELLO -f bundle.json --insecure
 
 	# Verify a bundle with dependencies
 	cp build/testdata/bundles/wordpress/porter.yaml .
@@ -74,5 +74,7 @@ clean:
 	-rm -fr bin/
 	-rm -fr cnab/
 	-rm Dockerfile porter.yaml
-	-duffle uninstall PORTER-HELLO --credentials ci
-	-helm delete --purge porter-ci-mysql --kubeconfig $(KUBECONFIG)
+	-duffle uninstall PORTER-HELLO
+	-duffle uninstall PORTER-WORDPRESS --credentials ci
+	-helm delete --purge porter-ci-mysql
+	-helm delete --purge porter-ci-wordpress

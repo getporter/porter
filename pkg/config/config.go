@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -78,8 +79,67 @@ func (c *Config) GetRunScriptTemplate() ([]byte, error) {
 		return nil, err
 	}
 
-	tmplPath := filepath.Join(tmplDir, filepath.Base(RunScript))
-	return c.FileSystem.ReadFile(tmplPath)
+	path := filepath.Join(tmplDir, filepath.Base(RunScript))
+	b, err := c.FileSystem.ReadFile(path)
+	return b, errors.Wrapf(err, "could not read script template at %s", path)
+}
+
+// GetBundleManifest gets the path to another bundle's manifest.
+func (c *Config) GetBundleManifestPath(bundle string) (string, error) {
+	bundlesDir, err := c.GetBundleDir(bundle)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(bundlesDir, Name), nil
+}
+
+// GetBundlesDir locates the bundle cache from the porter home directory.
+func (c *Config) GetBundlesCache() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "bundles"), nil
+}
+
+// GetBundleDir locates a bundle
+// Lookup order:
+// - ./bundles/
+// - PORTER_HOME/bundles/
+func (c *Config) GetBundleDir(bundle string) (string, error) {
+	// Check for a local bundle next to the current manifest
+	if c.Manifest != nil {
+		localDir := c.Manifest.GetManifestDir()
+		localBundleDir := filepath.Join(localDir, "bundles", bundle)
+
+		dirExists, err := c.FileSystem.DirExists(localBundleDir)
+		if err != nil {
+			return "", errors.Wrapf(err, "could not check if directory %s exists", localBundleDir)
+		}
+
+		if dirExists {
+			return localBundleDir, nil
+		}
+	}
+
+	// Fall back to looking in the cache under PORTER_HOME
+	cacheDir, err := c.GetBundlesCache()
+	if err != nil {
+		return "", err
+	}
+
+	bundleDir := filepath.Join(cacheDir, bundle)
+
+	dirExists, err := c.FileSystem.DirExists(bundleDir)
+	if err != nil {
+		return "", errors.Wrapf(err, "bundle %s not accessible at %s", bundle, bundleDir)
+	}
+	if !dirExists {
+		return "", errors.Errorf("bundle %s not installed in PORTER_HOME", bundle)
+	}
+
+	return bundleDir, nil
 }
 
 func (c *Config) GetMixinsDir() (string, error) {
@@ -96,7 +156,17 @@ func (c *Config) GetMixinDir(mixin string) (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(mixinsDir, mixin), nil
+	mixinDir := filepath.Join(mixinsDir, mixin)
+
+	dirExists, err := c.FileSystem.DirExists(mixinDir)
+	if err != nil {
+		return "", errors.Wrapf(err, "mixin %s not accessible at %s", mixin, mixinDir)
+	}
+	if !dirExists {
+		return "", fmt.Errorf("mixin %s not installed in PORTER_HOME", mixin)
+	}
+
+	return mixinDir, nil
 }
 
 func (c *Config) GetMixinPath(mixin string) (string, error) {

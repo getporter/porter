@@ -2,19 +2,23 @@ package config
 
 import (
 	"fmt"
-	"github.com/mitchellh/reflectwalk"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/hashicorp/go-multierror"
+	"github.com/mitchellh/reflectwalk"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
+	// path where the manifest was loaded, used to resolve local bundle references
+	path string
+
 	Name         string                 `yaml:"image,omitempty"`
 	Version      string                 `yaml:"version,omitempty"`
 	Image        string                 `yaml:"invocationImage,omitempty"`
@@ -83,29 +87,70 @@ type BundleConnection struct {
 	// TODO: Need to add type once it's completed in #20
 }
 
-func (c *Config) ReadManifest(file string) (*Manifest, error) {
-	data, err := c.FileSystem.ReadFile(file)
+func (c *Config) ReadManifest(path string) (*Manifest, error) {
+	data, err := c.FileSystem.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read manifest at %q", file)
+		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
 	}
 
 	m := &Manifest{}
 	err = yaml.Unmarshal(data, m)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", file)
+		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
 	}
+	m.path = path
 
 	return m, nil
 }
 
-func (c *Config) LoadManifest(file string) error {
+func (c *Config) LoadManifest() error {
+	return c.LoadManifestFrom(Name)
+}
+
+func (c *Config) LoadManifestFrom(file string) error {
 	m, err := c.ReadManifest(file)
 	if err != nil {
 		return err
 	}
 
 	c.Manifest = m
-	return c.Manifest.Validate()
+
+	err = c.Manifest.Validate()
+	if err != nil {
+		return err
+	}
+
+	return c.LoadDependencies()
+}
+
+// GetManifestDir returns the path to the directory that contains the manifest.
+func (m *Manifest) GetManifestDir() string {
+	return filepath.Dir(m.path)
+}
+
+func (c *Config) LoadDependencies() error {
+	for _, dep := range c.Manifest.Dependencies {
+		path, err := c.GetBundleManifestPath(dep.Name)
+		if err != nil {
+			return err
+		}
+
+		m, err := c.ReadManifest(path)
+		if err != nil {
+			return err
+		}
+
+		err = m.Validate()
+		if err != nil {
+			return err
+		}
+
+		err = c.Manifest.MergeDependency(m)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *Manifest) Validate() error {

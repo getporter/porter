@@ -57,3 +57,30 @@ func TestConfig_GetRunScriptTemplate(t *testing.T) {
 	wantTmpl, _ := ioutil.ReadFile("../../templates/run")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
+
+func TestConfig_GetBundleDir(t *testing.T) {
+	c := NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	result, err := c.GetBundleDir("mysql")
+	require.NoError(t, err)
+	assert.Equal(t, "bundles/mysql", result)
+}
+
+func TestConfig_GetBundleDir_BundleNotInstalled(t *testing.T) {
+	c := NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/missingdep.porter.yaml", Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	result, err := c.GetBundleDir("mysql")
+	require.NoError(t, err)
+	assert.Equal(t, "bundles/mysql", result)
+}
