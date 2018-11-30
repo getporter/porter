@@ -144,7 +144,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to source value: unable to find parameter", err.Error())
+	assert.Equal(t, "unable to set value for Thing: no value found for source specification: bundle.parameters.person", err.Error())
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
@@ -167,7 +167,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to source value: unable to find parameter", err.Error())
+	assert.Equal(t, "unable to source value: no value found for source specification: bundle.parameters.person", err.Error())
 }
 
 func TestResolveArray(t *testing.T) {
