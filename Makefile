@@ -54,7 +54,7 @@ test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
 	cp build/testdata/bundles/wordpress/porter.yaml .
 	sed -i 's/porter-wordpress:latest/$(REGISTRY)\/porter-wordpress:latest/g' porter.yaml
 	./bin/porter build
-	duffle install PORTER-WORDPRESS -f bundle.json --credentials ci --insecure
+	duffle install PORTER-WORDPRESS -f bundle.json --credentials ci --insecure --home $(DUFFLE_HOME)
 
 init-duffle-home-for-ci:
 	duffle init --home $(DUFFLE_HOME)
