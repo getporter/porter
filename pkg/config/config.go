@@ -136,7 +136,8 @@ func (c *Config) GetBundleDir(bundle string) (string, error) {
 		return "", errors.Wrapf(err, "bundle %s not accessible at %s", bundle, bundleDir)
 	}
 	if !dirExists {
-		return "", errors.Errorf("bundle %s not installed in PORTER_HOME", bundle)
+		h, _ := c.GetHomeDir()
+		return "", errors.Errorf("bundle %s not available locally or in %s", bundle, h)
 	}
 
 	return bundleDir, nil

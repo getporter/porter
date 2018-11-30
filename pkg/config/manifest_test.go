@@ -36,6 +36,7 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	c.SetupPorterHome()
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
 	require.NoError(t, c.LoadManifest())
 
@@ -217,6 +218,7 @@ func TestDependency_Validate_NameRequired(t *testing.T) {
 	c.SetupPorterHome()
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
 	err := c.LoadManifest()
 	require.NoError(t, err)
