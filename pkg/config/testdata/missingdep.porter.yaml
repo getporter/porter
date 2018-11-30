@@ -2,12 +2,7 @@ mixins:
   - exec
 
 dependencies:
-- name: mysql
-  parameters:
-    database-name: wordpress
-  connections:
-  - source: bundle.dependencies.mysql.outputs.host
-    destination: bundle.credentials.dbhost
+- name: missingdep
 
 install:
   - description: "Install Hello World"

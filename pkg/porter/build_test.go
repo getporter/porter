@@ -15,7 +15,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 
 	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest(config.Name)
+	err := p.LoadManifest()
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
@@ -38,7 +38,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 
 	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest(config.Name)
+	err := p.LoadManifest()
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
@@ -57,15 +57,15 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	}
 }
 
-func TestPorter_copyMixins(t *testing.T) {
+func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
 	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest(config.Name)
+	err := p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.copyMixins()
+	err = p.prepareDockerFilesystem()
 	require.NoError(t, err)
 
 	wantPorterMixin := "cnab/app/mixins/porter/porter-runtime"

@@ -2,27 +2,33 @@ package config
 
 import (
 	"fmt"
-	"github.com/mitchellh/reflectwalk"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/hashicorp/go-multierror"
+	"github.com/mitchellh/reflectwalk"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
-	Name        string                 `yaml:"image,omitempty"`
-	Version     string                 `yaml:"version,omitempty"`
-	Image       string                 `yaml:"invocationImage,omitempty"`
-	Mixins      []string               `yaml:"mixins,omitempty"`
-	Install     Steps                  `yaml:"install"`
-	Uninstall   Steps                  `yaml:"uninstall"`
-	Parameters  []ParameterDefinition  `yaml:"parameters,omitempty"`
-	Credentials []CredentialDefinition `yaml:"credentials,omitempty"`
+	// path where the manifest was loaded, used to resolve local bundle references
+	path string
+
+	Name         string                 `yaml:"image,omitempty"`
+	Version      string                 `yaml:"version,omitempty"`
+	Image        string                 `yaml:"invocationImage,omitempty"`
+	Mixins       []string               `yaml:"mixins,omitempty"`
+	Install      Steps                  `yaml:"install"`
+	Uninstall    Steps                  `yaml:"uninstall"`
+	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
+	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
+	Dependencies []Dependency           `yaml:"dependencies,omitempty"`
+	Outputs      []BundleOutput         `yaml:"outputs,omitempty"`
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -56,18 +62,94 @@ type ParameterMetadata struct {
 	Description string `yaml:"description,omitempty"`
 }
 
-func (c *Config) LoadManifest(file string) error {
-	data, err := c.FileSystem.ReadFile(file)
+type Dependency struct {
+	Name string `yaml:"name"`
+	// TODO: Need to add parameters (with source) once it's completed in #20
+	Connections []BundleConnection `yaml:"connections",omitempty`
+}
+
+func (d *Dependency) Validate() error {
+	if d.Name == "" {
+		return errors.New("dependency name is required")
+	}
+	return nil
+}
+
+type BundleOutput struct {
+	Name                string `yaml:"name"`
+	Path                string `yaml:"path"`
+	EnvironmentVariable string `yaml:"env"`
+}
+
+type BundleConnection struct {
+	Source      string `yaml:source`
+	Destination string `yaml:destination`
+	// TODO: Need to add type once it's completed in #20
+}
+
+func (c *Config) ReadManifest(path string) (*Manifest, error) {
+	data, err := c.FileSystem.ReadFile(path)
 	if err != nil {
-		return errors.Wrapf(err, "could not read manifest at %q", file)
+		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
 	}
 
 	m := &Manifest{}
 	err = yaml.Unmarshal(data, m)
 	if err != nil {
-		return errors.Wrapf(err, "could not parse manifest yaml in %q", file)
+		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
 	}
+	m.path = path
+
+	return m, nil
+}
+
+func (c *Config) LoadManifest() error {
+	return c.LoadManifestFrom(Name)
+}
+
+func (c *Config) LoadManifestFrom(file string) error {
+	m, err := c.ReadManifest(file)
+	if err != nil {
+		return err
+	}
+
 	c.Manifest = m
+
+	err = c.Manifest.Validate()
+	if err != nil {
+		return err
+	}
+
+	return c.LoadDependencies()
+}
+
+// GetManifestDir returns the path to the directory that contains the manifest.
+func (m *Manifest) GetManifestDir() string {
+	return filepath.Dir(m.path)
+}
+
+func (c *Config) LoadDependencies() error {
+	for _, dep := range c.Manifest.Dependencies {
+		path, err := c.GetBundleManifestPath(dep.Name)
+		if err != nil {
+			return err
+		}
+
+		m, err := c.ReadManifest(path)
+		if err != nil {
+			return err
+		}
+
+		err = m.Validate()
+		if err != nil {
+			return err
+		}
+
+		err = c.Manifest.MergeDependency(m)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -94,6 +176,13 @@ func (m *Manifest) Validate() error {
 		result = multierror.Append(result, err)
 	}
 
+	for _, dep := range m.Dependencies {
+		err = dep.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
 	return result
 }
 
@@ -113,7 +202,93 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	return steps, nil
 }
 
+func (m *Manifest) MergeDependency(dep *Manifest) error {
+	// include any unique credentials from the dependency
+	for i, cred := range dep.Credentials {
+		dupe := false
+		for _, x := range m.Credentials {
+			if cred.Name == x.Name {
+				result, err := mergeCredentials(x, cred)
+				if err != nil {
+					return err
+				}
+
+				// Allow for having the same credential populated both as an env var and a file
+				dep.Credentials[i].EnvironmentVariable = result.EnvironmentVariable
+				dep.Credentials[i].Path = result.Path
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			m.Credentials = append(m.Credentials, cred)
+		}
+	}
+
+	// prepend the dependency's mixins
+	m.Mixins = prependMixins(dep.Mixins, m.Mixins)
+
+	// prepend dependency's install steps
+	m.Install = m.Install.Prepend(dep.Install)
+
+	// append uninstall steps so that we unroll it in dependency order (i.e. uninstall wordpress before we delete the database)
+	m.Uninstall = append(m.Uninstall, dep.Uninstall...)
+
+	return nil
+}
+
+func prependMixins(m1, m2 []string) []string {
+	mixins := make([]string, len(m1), len(m1)+len(m2))
+	copy(mixins, m1)
+	for _, m := range m2 {
+		dupe := false
+		for _, x := range m1 {
+			if m == x {
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			mixins = append(mixins, m)
+		}
+	}
+	return mixins
+}
+
+func mergeCredentials(c1, c2 CredentialDefinition) (CredentialDefinition, error) {
+	result := CredentialDefinition{Name: c1.Name}
+
+	if c1.Name != c2.Name {
+		return result, fmt.Errorf("cannot merge credentials that don't have the same name: %s and %s", c1.Name, c2.Name)
+	}
+
+	if c1.Path != "" && c2.Path != "" && c1.Path != c2.Path {
+		return result, fmt.Errorf("cannot merge credential %s: conflict on path", c1.Name)
+	}
+	result.Path = c1.Path
+	if result.Path == "" {
+		result.Path = c2.Path
+	}
+
+	if c1.EnvironmentVariable != "" && c2.EnvironmentVariable != "" && c1.EnvironmentVariable != c2.EnvironmentVariable {
+		return result, fmt.Errorf("cannot merge credential %s: conflict on environment variable", c1.Name)
+	}
+	result.EnvironmentVariable = c1.EnvironmentVariable
+	if result.EnvironmentVariable == "" {
+		result.EnvironmentVariable = c2.EnvironmentVariable
+	}
+
+	return result, nil
+}
+
 type Steps []*Step
+
+func (s Steps) Prepend(s1 Steps) Steps {
+	result := make(Steps, len(s)+len(s1))
+	copy(result[:len(s)], s1)
+	copy(result[len(s):], s)
+	return result
+}
 
 func (s Steps) Validate(m *Manifest) error {
 	for _, step := range s {

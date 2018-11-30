@@ -9,7 +9,6 @@ import (
 
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
-
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/distribution/reference"
@@ -18,17 +17,16 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
-
 	"github.com/pkg/errors"
 )
 
 func (p *Porter) Build() error {
-	err := p.Config.LoadManifest("porter.yaml")
+	err := p.Config.LoadManifest()
 	if err != nil {
-		return nil
+		return err
 	}
 
-	if err := p.copyMixins(); err != nil {
+	if err := p.prepareDockerFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy mixins: %s", err)
 	}
 
@@ -139,7 +137,15 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 	return lines, nil
 }
 
-func (p *Porter) copyMixins() error {
+func (p *Porter) prepareDockerFilesystem() error {
+	fmt.Printf("Copying dependencies ===> \n")
+	for _, dep := range p.Manifest.Dependencies {
+		err := p.copyDependency(dep.Name)
+		if err != nil {
+			return err
+		}
+	}
+
 	fmt.Printf("Copying mixins ===> \n")
 	for _, mixin := range append(p.Manifest.Mixins, "porter") {
 		err := p.copyMixin(mixin)
@@ -153,19 +159,22 @@ func (p *Porter) copyMixins() error {
 	return errors.Wrap(err, "could not copy porter-runtime mixin")
 }
 
+func (p *Porter) copyDependency(bundle string) error {
+	fmt.Printf("Copying bundle dependency %s ===> \n", bundle)
+	bundleDir, err := p.GetBundleDir(bundle)
+	if err != nil {
+		return err
+	}
+
+	err = p.Context.CopyDirectory(bundleDir, "cnab/app/bundles", true)
+	return errors.Wrapf(err, "could not copy bundle directory contents for %s", bundle)
+}
+
 func (p *Porter) copyMixin(mixin string) error {
 	fmt.Printf("Copying mixin %s ===> \n", mixin)
-	mixinDir, _ := p.GetMixinDir(mixin)
-
-	dirExists, err := p.FileSystem.DirExists(mixinDir)
+	mixinDir, err := p.GetMixinDir(mixin)
 	if err != nil {
-		return errors.Wrapf(err, "could not check if directory exists %q", mixinDir)
-	}
-	if !dirExists {
-		err := p.FileSystem.MkdirAll(mixinDir, 0755)
-		if err != nil {
-			return errors.Wrapf(err, "could not create mixin directory for %s", mixin)
-		}
+		return err
 	}
 
 	err = p.Context.CopyDirectory(mixinDir, "cnab/app/mixins", true)

@@ -4,44 +4,35 @@
 
 mixins:
   - exec
-  - helm
-
-#dependencies:
-#  - name: mysql
-#    parameters:
-#      database-name: wordpress
-#    outputs:
-#      - source: bundle.dependencies.mysql.outputs.host
-#        destination: bundle.credentials.dbhost
 
 name: HELLO
 version: 0.1.0
 invocationImage: porter-hello:latest
 
-credentials:
-  - name: kubeconfig
-    path: /root/.kube/config
-
 install:
-- description: "Say Hello World"
-  exec:
-    command: bash
-    arguments:
-    - -c
-    - echo Hello World
-- description: "Install MySQL with Helm"
-  helm:
-    name: porter-ci-mysql
-    chart: stable/mysql
-    version: 0.10.2
-    replace: true
-    set:
-      mysqlDatabase: hellodb
+  - description: "Install Hello World"
+    exec:
+      command: bash
+      arguments:
+        - -c
+        - echo Hello World
 
 uninstall:
-- description: "Uninstall Hello World"
-  exec:
-    command: bash
-    arguments:
-    - -c
-    - echo Goodbye World
+  - description: "Uninstall Hello World"
+    exec:
+      command: bash
+      arguments:
+        - -c
+        - echo Goodbye World
+
+#dependencies:
+#  - name: mysql
+#    parameters:
+#      database-name: wordpress
+#    connections:
+#      - source: bundle.dependencies.mysql.outputs.host
+#        destination: bundle.credentials.dbhost
+
+#credentials:
+#  - name: kubeconfig
+#    path: /root/.kube/config

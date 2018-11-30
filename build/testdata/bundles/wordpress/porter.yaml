@@ -1,0 +1,31 @@
+mixins:
+  - helm
+
+name: wordpress
+version: 0.1.0
+invocationImage: porter-wordpress:latest
+
+dependencies:
+  - name: mysql
+    parameters:
+      database-name: wordpress
+    #connections:
+    #  - source: bundle.dependencies.mysql.outputs.host
+    #    destination: bundle.credentials.dbhost
+
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
+
+install:
+  - description: "Install Wordpress"
+    helm:
+      name: porter-ci-wordpress
+      chart: stable/wordpress
+      replace: true
+      # TODO: wire up the mysql dependency
+
+uninstall:
+  - description: "Uninstall Wordpress"
+    helm:
+      name: porter-ci-wordpress

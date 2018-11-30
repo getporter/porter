@@ -13,7 +13,7 @@ import (
 func (p *Porter) Run(file string, action config.Action) error {
 	fmt.Fprintf(p.Out, "executing porter %s configuration from %s\n", action, file)
 
-	err := p.Config.LoadManifest(file)
+	err := p.Config.LoadManifestFrom(file)
 	if err != nil {
 		return err
 	}

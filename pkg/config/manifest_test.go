@@ -12,9 +12,9 @@ func TestLoadManifest(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
-	require.NoError(t, c.LoadManifest(Name))
+	require.NoError(t, c.LoadManifest())
 
 	assert.NotNil(t, c.Manifest)
 	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
@@ -27,33 +27,50 @@ func TestLoadManifest(t *testing.T) {
 	assert.Equal(t, "exec", mixin)
 
 	data := installStep.GetMixinData()
-	wantData := `arguments:
-- -c
-- Hello World!
-command: bash
-`
+	wantData := "arguments:\n- -c\n- echo Hello World\ncommand: bash\n"
 	assert.Equal(t, wantData, data)
 }
 
-func TestManifest_Validate(t *testing.T) {
+func TestLoadManifestWithDependencies(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
 	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
 
-	err := c.LoadManifest(Name)
-	require.NoError(t, err)
+	require.NoError(t, c.LoadManifest())
 
-	assert.NoError(t, c.Manifest.Validate())
+	assert.NotNil(t, c.Manifest)
+	assert.Equal(t, []string{"helm", "exec"}, c.Manifest.Mixins)
+	assert.Len(t, c.Manifest.Install, 2)
+
+	installStep := c.Manifest.Install[0]
+	assert.NotNil(t, installStep.Description)
+
+	mixin := installStep.GetMixinName()
+	assert.Equal(t, "helm", mixin)
+
+	data := installStep.GetMixinData()
+	wantData := "chart: stable/mysql\nname: porter-ci-mysql\nreplace: true\nset:\n  mysqlDatabase: mydb\nversion: 0.10.2\n"
+	assert.Equal(t, wantData, data)
+}
+
+func TestConfig_LoadManifest_BundleDependencyNotInstalled(t *testing.T) {
+	c := NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/missingdep.porter.yaml", Name)
+
+	err := c.LoadManifest()
+	require.Errorf(t, err, "bundle missingdep not installed in PORTER_HOME")
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -67,9 +84,9 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -83,9 +100,9 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
 
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
-	err := c.LoadManifest(Name)
+	err := c.LoadManifest()
 	require.NoError(t, err)
 
 	// Sabotage!
@@ -194,4 +211,114 @@ func TestResolveArray(t *testing.T) {
 	args, ok := s.Data["Arguments"].([]string)
 	assert.True(t, ok)
 	assert.Equal(t, "Ralpha", args[0])
+}
+
+func TestDependency_Validate_NameRequired(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	// Sabotage!
+	c.Manifest.Dependencies[0].Name = ""
+
+	err = c.Manifest.Dependencies[0].Validate()
+	assert.EqualError(t, err, "dependency name is required")
+}
+
+func TestManifest_MergeDependency(t *testing.T) {
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			&Step{Description: "install wordpress"},
+		},
+		Uninstall: Steps{
+			&Step{Description: "uninstall wordpress"},
+		},
+	}
+
+	depM := &Manifest{
+		Mixins: []string{"exec", "helm"},
+		Install: Steps{
+			&Step{Description: "install mysql"},
+		},
+		Uninstall: Steps{
+			&Step{Description: "uninstall mysql"},
+		},
+		Credentials: []CredentialDefinition{
+			{Name: "kubeconfig", Path: "/root/.kube/config"},
+		},
+	}
+
+	err := m.MergeDependency(depM)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"exec", "helm"}, m.Mixins)
+
+	assert.Len(t, m.Install, 2)
+	assert.Equal(t, "install mysql", m.Install[0].Description)
+	assert.Equal(t, "install wordpress", m.Install[1].Description)
+
+	assert.Len(t, m.Uninstall, 2)
+	assert.Equal(t, "uninstall wordpress", m.Uninstall[0].Description)
+	assert.Equal(t, "uninstall mysql", m.Uninstall[1].Description)
+
+	assert.Len(t, m.Credentials, 1)
+}
+
+func TestMergeCredentials(t *testing.T) {
+	testcases := []struct {
+		name               string
+		c1, c2, wantResult CredentialDefinition
+		wantError          string
+	}{
+		{
+			name:       "combine path and environment variable",
+			c1:         CredentialDefinition{Name: "foo", Path: "p1"},
+			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
+			wantResult: CredentialDefinition{Name: "foo", Path: "p1", EnvironmentVariable: "v2"},
+		},
+		{
+			name:       "same path",
+			c1:         CredentialDefinition{Name: "foo", Path: "p"},
+			c2:         CredentialDefinition{Name: "foo", Path: "p"},
+			wantResult: CredentialDefinition{Name: "foo", Path: "p"},
+		},
+		{
+			name:      "conflicting path",
+			c1:        CredentialDefinition{Name: "foo", Path: "p1"},
+			c2:        CredentialDefinition{Name: "foo", Path: "p2"},
+			wantError: "cannot merge credential foo: conflict on path",
+		},
+		{
+			name:       "same environment variable",
+			c1:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+			wantResult: CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+		},
+		{
+			name:      "conflicting environment variable",
+			c1:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v1"},
+			c2:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
+			wantError: "cannot merge credential foo: conflict on environment variable",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := mergeCredentials(tc.c1, tc.c2)
+
+			if tc.wantError == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantResult, result)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+			}
+		})
+	}
+
 }
