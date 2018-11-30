@@ -291,6 +291,14 @@
   revision = "95e2e42e3ece7421c14512f79f796fe3f5d7e5dc"
 
 [[projects]]
+  digest = "1:44e35ced240c6d8316dc8d604a73774ab052d40ebe636fd8f2ba5934f6329034"
+  name = "github.com/mitchellh/reflectwalk"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "eecee6c969c02c8cc2ae48e1e269843ae8590796"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:e0cc8395ea893c898ff5eb0850f4d9851c1f57c78c232304a026379a47a552d0"
   name = "github.com/opencontainers/go-digest"
   packages = ["."]
@@ -519,6 +527,7 @@
     "github.com/docker/docker/pkg/term",
     "github.com/docker/docker/registry",
     "github.com/hashicorp/go-multierror",
+    "github.com/mitchellh/reflectwalk",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
