@@ -17,7 +17,8 @@ import (
 
 type Manifest struct {
 	// path where the manifest was loaded, used to resolve local bundle references
-	path string
+	path    string
+	outputs map[string]string
 
 	Name         string                 `yaml:"image,omitempty"`
 	Version      string                 `yaml:"version,omitempty"`
@@ -27,7 +28,7 @@ type Manifest struct {
 	Uninstall    Steps                  `yaml:"uninstall"`
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
-	Dependencies []Dependency           `yaml:"dependencies,omitempty"`
+	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -62,8 +63,8 @@ type ParameterMetadata struct {
 }
 
 type Dependency struct {
-	// Stores the results of a bundle after it has been executed
-	outputs []BundleOutput
+	// The manifest for the dependency
+	m *Manifest
 
 	Name        string             `yaml:"name"`
 	Parameters  map[string]string  `yaml:"parameters,omitempty"`
@@ -75,6 +76,63 @@ func (d *Dependency) Validate() error {
 		return errors.New("dependency name is required")
 	}
 	return nil
+}
+
+func (d *Dependency) resolveValue(key string) (interface{}, error) {
+	var replacement interface{}
+
+	source := strings.Split(key, ".")
+	if len(source) < 5 {
+		return nil, fmt.Errorf("invalid source reference %s", key)
+	}
+
+	/*
+		sourceType := source[1]
+		sourceName := source[2]
+
+
+		switch sourceType {
+		case "parameters":
+			for _, param := range d.Parameters {
+				if param.Name == sourceName {
+					if param.Destination == nil {
+						// Porter by default sets CNAB params to name.ToUpper()
+						pe := strings.ToUpper(sourceName)
+						replacement = os.Getenv(pe)
+					} else if param.Destination.EnvironmentVariable != "" {
+						replacement = os.Getenv(param.Destination.EnvironmentVariable)
+					} else if param.Destination == nil && param.Destination.Path != "" {
+						replacement = param.Destination.Path
+					} else {
+						return nil, errors.New(
+							"unknown parameter definition, no environment variable or path specified",
+						)
+					}
+				}
+			}
+		case "outputs":
+			for _, cred := range d.Outputs {
+				if cred.Name == sourceName {
+					if cred.Path != "" {
+						replacement = cred.Path
+					} else if cred.EnvironmentVariable != "" {
+						replacement = os.Getenv(cred.EnvironmentVariable)
+					} else {
+						return nil, errors.New(
+							"unknown credential definition, no environment variable or path specified",
+						)
+					}
+				}
+			}
+		default:
+			return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
+		}
+	*/
+
+	if replacement == nil {
+		return nil, errors.New(fmt.Sprintf("no value found for source specification: %s", key))
+	}
+	return replacement, nil
 }
 
 type BundleOutput struct {
@@ -137,17 +195,17 @@ func (c *Config) LoadDependencies() error {
 			return err
 		}
 
-		m, err := c.ReadManifest(path)
+		dep.m, err = c.ReadManifest(path)
 		if err != nil {
 			return err
 		}
 
-		err = m.Validate()
+		err = dep.m.Validate()
 		if err != nil {
 			return err
 		}
 
-		err = c.Manifest.MergeDependency(m)
+		err = c.Manifest.MergeDependency(dep)
 		if err != nil {
 			return err
 		}
@@ -204,9 +262,34 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	return steps, nil
 }
 
-func (m *Manifest) MergeDependency(dep *Manifest) error {
+func (m *Manifest) ApplyOutputs(step *Step, assignments []string) error {
+	scope := m
+	if step.dep != nil {
+		scope = step.dep.m
+	}
+	if scope.outputs == nil {
+		scope.outputs = map[string]string{}
+	}
+
+	for _, assignment := range assignments {
+		parts := strings.SplitN(assignment, "=", 2)
+		if len(parts) != 2 {
+			return errors.Errorf("invalid output assignment %v", assignment)
+		}
+		outvar := parts[0]
+		outval := parts[1]
+		if _, exists := scope.outputs[outvar]; exists {
+			return fmt.Errorf("output already set: %s", outvar)
+		}
+		scope.outputs[outvar] = outval
+	}
+
+	return nil
+}
+
+func (m *Manifest) MergeDependency(dep *Dependency) error {
 	// include any unique credentials from the dependency
-	for i, cred := range dep.Credentials {
+	for i, cred := range dep.m.Credentials {
 		dupe := false
 		for _, x := range m.Credentials {
 			if cred.Name == x.Name {
@@ -216,8 +299,8 @@ func (m *Manifest) MergeDependency(dep *Manifest) error {
 				}
 
 				// Allow for having the same credential populated both as an env var and a file
-				dep.Credentials[i].EnvironmentVariable = result.EnvironmentVariable
-				dep.Credentials[i].Path = result.Path
+				dep.m.Credentials[i].EnvironmentVariable = result.EnvironmentVariable
+				dep.m.Credentials[i].Path = result.Path
 				dupe = true
 				break
 			}
@@ -228,15 +311,30 @@ func (m *Manifest) MergeDependency(dep *Manifest) error {
 	}
 
 	// prepend the dependency's mixins
-	m.Mixins = prependMixins(dep.Mixins, m.Mixins)
+	m.Mixins = prependMixins(dep.m.Mixins, m.Mixins)
 
 	// prepend dependency's install steps
-	m.Install = m.Install.Prepend(dep.Install)
+	m.MergeInstall(dep)
 
 	// append uninstall steps so that we unroll it in dependency order (i.e. uninstall wordpress before we delete the database)
-	m.Uninstall = append(m.Uninstall, dep.Uninstall...)
+	m.MergeUninstall(dep)
 
 	return nil
+}
+
+func (m *Manifest) MergeInstall(dep *Dependency) {
+	dep.m.Install.setDependency(dep)
+
+	result := make(Steps, len(m.Install)+len(dep.m.Install))
+	copy(result[:len(m.Install)], dep.m.Install)
+	copy(result[len(m.Install):], m.Install)
+	m.Install = result
+}
+
+func (m *Manifest) MergeUninstall(dep *Dependency) {
+	dep.m.Uninstall.setDependency(dep)
+
+	m.Uninstall = append(m.Uninstall, dep.m.Uninstall...)
 }
 
 func prependMixins(m1, m2 []string) []string {
@@ -285,13 +383,6 @@ func mergeCredentials(c1, c2 CredentialDefinition) (CredentialDefinition, error)
 
 type Steps []*Step
 
-func (s Steps) Prepend(s1 Steps) Steps {
-	result := make(Steps, len(s)+len(s1))
-	copy(result[:len(s)], s1)
-	copy(result[len(s):], s)
-	return result
-}
-
 func (s Steps) Validate(m *Manifest) error {
 	for _, step := range s {
 		err := step.Validate(m)
@@ -302,8 +393,16 @@ func (s Steps) Validate(m *Manifest) error {
 	return nil
 }
 
+// setDependency remembers the dependency that generated the step
+func (s Steps) setDependency(dep *Dependency) {
+	for _, s := range s {
+		s.dep = dep
+	}
+}
+
 type Step struct {
 	runner *mixin.Runner
+	dep    *Dependency // The dependency that owns this step
 
 	Description string                 `yaml:"description"`
 	Outputs     []StepOutput           `yaml:"outputs"`
@@ -311,6 +410,9 @@ type Step struct {
 }
 
 type StepOutput struct {
+	// The final value of the output returned by the mixin after executing
+	value string
+
 	Name string                 `yaml:"name"`
 	Data map[string]interface{} `yaml:",inline"`
 }
@@ -419,13 +521,21 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 
 func (m *Manifest) resolveValue(key string) (interface{}, error) {
 	source := strings.Split(key, ".")
+	if len(source) < 3 {
+		return nil, fmt.Errorf("invalid source reference %s", key)
+	}
+
+	sourceType := source[1]
+	sourceName := source[2]
+
 	var replacement interface{}
-	if source[1] == "parameters" {
+	switch sourceType {
+	case "parameters":
 		for _, param := range m.Parameters {
-			if param.Name == source[2] {
+			if param.Name == sourceName {
 				if param.Destination == nil {
 					// Porter by default sets CNAB params to name.ToUpper()
-					pe := strings.ToUpper(source[2])
+					pe := strings.ToUpper(sourceName)
 					replacement = os.Getenv(pe)
 				} else if param.Destination.EnvironmentVariable != "" {
 					replacement = os.Getenv(param.Destination.EnvironmentVariable)
@@ -438,9 +548,9 @@ func (m *Manifest) resolveValue(key string) (interface{}, error) {
 				}
 			}
 		}
-	} else if source[1] == "credentials" {
+	case "credentials":
 		for _, cred := range m.Credentials {
-			if cred.Name == source[2] {
+			if cred.Name == sourceName {
 				if cred.Path != "" {
 					replacement = cred.Path
 				} else if cred.EnvironmentVariable != "" {
@@ -452,11 +562,16 @@ func (m *Manifest) resolveValue(key string) (interface{}, error) {
 				}
 			}
 		}
-	} else {
-		return nil, errors.New(
-			fmt.Sprintf("unknown source specification: %s", key),
-		)
+	case "dependencies":
+		for _, dep := range m.Dependencies {
+			if dep.Name == sourceName {
+				return dep.resolveValue(key)
+			}
+		}
+	default:
+		return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
 	}
+
 	if replacement == nil {
 		return nil, errors.New(fmt.Sprintf("no value found for source specification: %s", key))
 	}
