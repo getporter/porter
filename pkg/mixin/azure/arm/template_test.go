@@ -7,81 +7,63 @@ import (
 )
 
 const mysqlTemplate = `{
-	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "administratorLogin": {
+            "type": "string"
+        },
+        "administratorLoginPassword": {
+            "type": "securestring"
+        },
+        "location": {
+            "type": "string"
+        },
+        "serverName": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "sslEnforcement": {
+            "type": "string"
+        },
 		"tags": {
 			"type": "object"
 		}
-	},
-	"variables": {
-		"DBforMySQLapiVersion": "2017-12-01"
-	},
-	"resources": [
-		{
-			"apiVersion": "[variables('DBforMySQLapiVersion')]",
-			"kind": "",
-			"location": "{{.location}}",
-			"name": "{{ .serverName }}",
-			"properties": {
-				"version": "{{.version}}",
-				"administratorLogin": "azureuser",
-				"administratorLoginPassword": "{{ .administratorLoginPassword }}",
-				"storageProfile": {
-					"storageMB": {{.storage}},
-					{{ if .geoRedundantBackup }}
-					"geoRedundantBackup": "Enabled",
-					{{ end }}
-					"backupRetentionDays": {{.backupRetention}}
-				},
-				"sslEnforcement": "{{ .sslEnforcement }}"
-			},
-			"sku": {
-				"name": "{{.sku}}",
-				"tier": "{{.tier}}",
-				"capacity": "{{.cores}}",
-				"size": "{{.storage}}",
-				"family": "Gen5"
-			},
-			"type": "Microsoft.DBforMySQL/servers",
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-12-01-preview",
+            "kind": "",
+            "location": "[parameters('location')]",
+            "name": "[parameters('serverName')]",
 			"tags": "[parameters('tags')]",
-			"resources": [
-				{{ $root := . }}
-				{{range .firewallRules}}
-				{
-					"type": "firewallrules",
-					"apiVersion": "[variables('DBforMySQLapiVersion')]",
-					"dependsOn": [
-						"Microsoft.DBforMySQL/servers/{{ $.serverName }}"
-					],
-					"location": "{{$root.location}}",
-					"name": "{{.name}}",
-					"properties": {
-						"startIpAddress": "{{.startIPAddress}}",
-						"endIpAddress": "{{.endIPAddress}}"
-					}
-				},
-				{{end}}
-				{
-					"apiVersion": "[variables('DBforMySQLapiVersion')]",
-					"name": "{{ .databaseName }}",
-					"type": "databases",
-					"location": "{{$root.location}}",
-					"dependsOn": [
-						{{range $.firewallRules}}
-						"Microsoft.DBforMySQL/servers/{{ $.serverName }}/firewallrules/{{.name}}",
-						{{end}}
-						"Microsoft.DBforMySQL/servers/{{ $.serverName }}"
-					],
-					"properties": {}
-				}
-			]
-		}
-	],
+            "properties": {
+                "version": "[parameters('version')]",
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+				"sslEnforcement": "[parameters('sslEnforcement')]",
+                "storageProfile": {
+                    "storageMB": "102400",
+                    "backupRetentionDays": 7,
+                    "geoRedundantBackup": "Disabled"
+                }
+            },
+            "sku": {
+                "name": "GP_Gen5_4",
+                "tier": "GeneralPurpose",
+                "capacity": 4,
+                "size": 102400,
+                "family": "Gen5"
+            },
+            "type": "Microsoft.DBforMySQL/servers"
+        }
+    ],
 	"outputs": {
-		"fullyQualifiedDomainName": {
+		"MYSQL_HOST": {
 			"type": "string",
-			"value": "[reference('{{ .serverName }}').fullyQualifiedDomainName]"
+			"value": "[reference(parameters('serverName')).fullyQualifiedDomainName]"
 		}
 	}
 }`

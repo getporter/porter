@@ -57,6 +57,5 @@
 			"type": "string",
 			"value": "[reference(parameters('serverName')).fullyQualifiedDomainName]"
 		}
-	},
-    "variables": {}
+	}
 }
