@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 type InstallArguments struct {
