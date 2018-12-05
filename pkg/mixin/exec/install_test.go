@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/deislabs/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -33,4 +35,14 @@ func TestMixin_Install(t *testing.T) {
 	err := h.Install("")
 
 	require.NoError(t, err)
+}
+
+func TestMixin_LoadInstructionFromFile(t *testing.T) {
+	h := NewTestMixin(t)
+	h.TestContext.AddTestDirectory("testdata", "testdata")
+
+	err := h.LoadInstruction("testdata/exec_input.yaml")
+	require.NoError(t, err)
+
+	assert.Equal(t, "bash", h.Mixin.Step.Instruction.Command)
 }
