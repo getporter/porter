@@ -29,11 +29,9 @@ func (p *Porter) Build() error {
 	if err := p.prepareDockerFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy mixins: %s", err)
 	}
-
 	if err := p.generateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-
 	digest, err := p.buildInvocationImage(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "unable to build CNAB invocation image")
@@ -65,10 +63,11 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 
 	lines := make([]string, 0, 10)
 
-	lines = append(lines, p.buildFromSection())
+	lines = append(lines, p.buildFromSection()...)
 	lines = append(lines, p.buildCNABSection()...)
 	lines = append(lines, p.buildPorterSection()...)
 	lines = append(lines, p.buildCMDSection())
+	lines = append(lines, p.buildCopySSL())
 
 	mixinLines, err := p.buildMixinsSection()
 	if err != nil {
@@ -81,8 +80,11 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 	return lines, nil
 }
 
-func (p *Porter) buildFromSection() string {
-	return `FROM debian:latest`
+func (p *Porter) buildFromSection() []string {
+	return []string{
+		`FROM quay.io/deis/lightweight-docker-go:v0.2.0`,
+		`FROM debian:stretch`,
+	}
 }
 
 func (p *Porter) buildPorterSection() []string {
@@ -99,6 +101,10 @@ func (p *Porter) buildCNABSection() []string {
 
 func (p *Porter) buildCMDSection() string {
 	return `CMD ["/cnab/app/run"]`
+}
+
+func (p *Porter) buildCopySSL() string {
+	return `COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt`
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {

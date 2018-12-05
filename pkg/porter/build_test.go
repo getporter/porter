@@ -25,7 +25,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	require.NoError(t, err)
 
 	wantlines := []string{
-		"FROM debian:latest",
+		"FROM debian:stretch",
 		"COPY cnab/ /cnab/",
 		"COPY porter.yaml /cnab/app/porter.yaml",
 		`CMD ["/cnab/app/run"]`,

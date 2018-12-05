@@ -76,3 +76,9 @@ func (c *Context) CopyFile(src, dest string) error {
 	err = c.FileSystem.WriteFile(dest, data, info.Mode())
 	return errors.WithStack(err)
 }
+
+// NewOutput creates a new output file. The caller should
+// handle closing the file once finished
+func (c *Context) NewOutput() (afero.File, error) {
+	return c.FileSystem.TempFile("/cnab/app/porter/outputs", "mixin-output")
+}
