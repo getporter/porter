@@ -5,8 +5,15 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/config"
 	"gopkg.in/yaml.v2"
 )
+
+type InstallStep struct {
+	Description string              `yaml:"description"`
+	Outputs     []config.StepOutput `yaml:"outputs"`
+	Arguments   InstallArguments    `yaml:"helm"`
+}
 
 type InstallArguments struct {
 	Namespace string            `yaml:"namespace"`
@@ -23,39 +30,39 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
-	var args InstallArguments
-	err = yaml.Unmarshal(payload, &args)
+	var step InstallStep
+	err = yaml.Unmarshal(payload, &step)
 	if err != nil {
 		return err
 	}
 
-	cmd := m.NewCommand("helm", "install", "--name", args.Name, args.Chart)
+	cmd := m.NewCommand("helm", "install", "--name", step.Arguments.Name, step.Arguments.Chart)
 
-	if args.Namespace != "" {
-		cmd.Args = append(cmd.Args, "--namespace", args.Namespace)
+	if step.Arguments.Namespace != "" {
+		cmd.Args = append(cmd.Args, "--namespace", step.Arguments.Namespace)
 	}
 
-	if args.Version != "" {
-		cmd.Args = append(cmd.Args, "--version", args.Version)
+	if step.Arguments.Version != "" {
+		cmd.Args = append(cmd.Args, "--version", step.Arguments.Version)
 	}
 
-	if args.Replace {
+	if step.Arguments.Replace {
 		cmd.Args = append(cmd.Args, "--replace")
 	}
 
-	for _, v := range args.Values {
+	for _, v := range step.Arguments.Values {
 		cmd.Args = append(cmd.Args, "--values", v)
 	}
 
 	// sort the set consistently
-	setKeys := make([]string, 0, len(args.Set))
-	for k := range args.Set {
+	setKeys := make([]string, 0, len(step.Arguments.Set))
+	for k := range step.Arguments.Set {
 		setKeys = append(setKeys, k)
 	}
 	sort.Strings(setKeys)
 
 	for _, k := range setKeys {
-		cmd.Args = append(cmd.Args, "--set", fmt.Sprintf("%s=%s", k, args.Set[k]))
+		cmd.Args = append(cmd.Args, "--set", fmt.Sprintf("%s=%s", k, step.Arguments.Set[k]))
 	}
 
 	cmd.Stdout = m.Out
