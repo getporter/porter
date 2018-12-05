@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"bufio"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"os"
@@ -52,12 +53,10 @@ func (m *Mixin) Install() error {
 		return err
 	}
 	defer f.Close()
+	buf := bufio.NewWriter(f)
 	for k, v := range outputs {
-		val, ok := v.(string)
-		if !ok {
-			val = fmt.Sprintf("%v", v)
-		}
-		os.Setenv(k, val)
+		output := fmt.Sprintf("%s=%v\n", k, v)
+		buf.Write([]byte(output))
 	}
 	return nil
 }
