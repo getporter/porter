@@ -28,7 +28,6 @@ type Manifest struct {
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
 	Dependencies []Dependency           `yaml:"dependencies,omitempty"`
-	Outputs      []BundleOutput         `yaml:"outputs,omitempty"`
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -63,8 +62,11 @@ type ParameterMetadata struct {
 }
 
 type Dependency struct {
-	Name string `yaml:"name"`
-	// TODO: Need to add parameters (with source) once it's completed in #20
+	// Stores the results of a bundle after it has been executed
+	outputs []BundleOutput
+
+	Name        string             `yaml:"name"`
+	Parameters  map[string]string  `yaml:"parameters,omitempty"`
 	Connections []BundleConnection `yaml:"connections",omitempty`
 }
 
@@ -301,10 +303,16 @@ func (s Steps) Validate(m *Manifest) error {
 }
 
 type Step struct {
-	Description string                 `yaml:"description"`
-	Data        map[string]interface{} `yaml:",inline"`
-
 	runner *mixin.Runner
+
+	Description string                 `yaml:"description"`
+	Outputs     []StepOutput           `yaml:"outputs"`
+	Data        map[string]interface{} `yaml:",inline"`
+}
+
+type StepOutput struct {
+	Name string                 `yaml:"name"`
+	Data map[string]interface{} `yaml:",inline"`
 }
 
 func (s *Step) Validate(m *Manifest) error {
@@ -336,14 +344,6 @@ func (s *Step) GetMixinName() string {
 		mixinName = k
 	}
 	return mixinName
-}
-
-func (s *Step) GetMixinData() string {
-	var mixinData []byte
-	for _, data := range s.Data {
-		mixinData, _ = yaml.Marshal(data)
-	}
-	return string(mixinData)
 }
 
 // ResolveStep will walk through the Step's data and resolve any placeholder

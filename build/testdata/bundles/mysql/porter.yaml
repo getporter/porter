@@ -18,6 +18,16 @@ install:
     replace: true
     set:
       mysqlDatabase: mydb
+  outputs:
+  - name: mysql-password
+    secret: porter-ci-mysql
+    key: mysql-password
+#- description: "foo"
+#  exec:
+#    command: printf
+#    args:
+#      - "password %s:"
+#      - source: bundle.outputs.mysql-password
 
 uninstall:
 - description: "Uninstall MySQL"

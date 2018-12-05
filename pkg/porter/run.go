@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/pkg/errors"
 
 	"github.com/deislabs/porter/pkg/config"
@@ -62,8 +64,10 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 
 	r := mixin.NewRunner(name, mixinDir, true)
 	r.Command = string(action)
-	r.Data = s.GetMixinData()
 	r.Context = p.Context
+
+	stepBytes, _ := yaml.Marshal(s)
+	r.Step = string(stepBytes)
 
 	return r
 }

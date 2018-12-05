@@ -111,7 +111,7 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 
 		r := mixin.NewRunner(m, mixinDir, false)
 		r.Command = "build"
-		r.Data = "" // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
+		r.Step = "" // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
 
 		// Copy the existing context and tweak to pipe the output differently
 		mixinStdout := &bytes.Buffer{}

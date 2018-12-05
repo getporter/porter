@@ -25,10 +25,6 @@ func TestLoadManifest(t *testing.T) {
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
-
-	data := installStep.GetMixinData()
-	wantData := "arguments:\n- -c\n- echo Hello World\ncommand: bash\n"
-	assert.Equal(t, wantData, data)
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
@@ -49,10 +45,6 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "helm", mixin)
-
-	data := installStep.GetMixinData()
-	wantData := "chart: stable/mysql\nname: porter-ci-mysql\nreplace: true\nset:\n  mysqlDatabase: mydb\nversion: 0.10.2\n"
-	assert.Equal(t, wantData, data)
 }
 
 func TestConfig_LoadManifest_BundleDependencyNotInstalled(t *testing.T) {

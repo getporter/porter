@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"gopkg.in/yaml.v2"
 )
@@ -14,7 +15,13 @@ import (
 type Mixin struct {
 	*context.Context
 
-	instruction Instruction
+	Step Step
+}
+
+type Step struct {
+	Description string              `yaml:"description"`
+	Outputs     []config.StepOutput `yaml:"outputs"`
+	Instruction Instruction         `yaml:"exec"`
 }
 
 type Instruction struct {
@@ -36,11 +43,11 @@ func (m *Mixin) LoadInstruction(commandFile string) error {
 	if err != nil {
 		return fmt.Errorf("there was an error getting commands: %s", err)
 	}
-	return yaml.Unmarshal(contents, &m.instruction)
+	return yaml.Unmarshal(contents, &m.Step)
 }
 
 func (m *Mixin) Execute() error {
-	cmd := m.NewCommand(m.instruction.Command, m.instruction.Arguments...)
+	cmd := m.NewCommand(m.Step.Instruction.Command, m.Step.Instruction.Arguments...)
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 
