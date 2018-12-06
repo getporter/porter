@@ -9,6 +9,11 @@ credentials:
 - name: kubeconfig
   path: /root/.kube/config
 
+parameters:
+- name: database_name
+  type: string
+  default: mydb
+
 install:
 - description: "Install MySQL"
   helm:
@@ -17,7 +22,8 @@ install:
     version: 0.10.2
     replace: true
     set:
-      mysqlDatabase: mydb
+      mysqlDatabase:
+        source: bundle.parameters.database_name
   outputs:
   - name: mysql-password
     secret: porter-ci-mysql

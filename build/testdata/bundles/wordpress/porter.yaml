@@ -8,21 +8,26 @@ invocationImage: porter-wordpress:latest
 dependencies:
   - name: mysql
     parameters:
-      database-name: wordpress
+      database_name: wordpress
 
 credentials:
   - name: kubeconfig
     path: /root/.kube/config
 
+parameters:
+  - name: wordpress_name
+    type: string
+    default: mywordpress
+
 install:
   - description: "Install Wordpress"
     helm:
-      name: porter-ci-wordpress
+      name: bundle.paramteres.wordpress_name
       chart: stable/wordpress
       replace: true
       set:
         externalDatabase.database:
-          source: bundle.dependencies.mysql.parameters.database-name
+          source: bundle.dependencies.mysql.parameters.database_name
         externalDatabase.host:
           source: bundle.dependencies.mysql.outputs.dbhost
         externalDatabase.user:
