@@ -1,7 +1,6 @@
 package helm
 
 import (
-	"bufio"
 	"fmt"
 	"sort"
 	"strings"
@@ -86,21 +85,20 @@ func (m *Mixin) Install() error {
 		return err
 	}
 
-	f, err := m.Context.NewOutput()
+	client, err := getKubernetesClient()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	buf := bufio.NewWriter(f)
-	defer buf.Flush()
-
+	var lines []string
 	for _, output := range step.Outputs {
-		val, err := m.getSecret(step.Arguments.Namespace, output.Secret, output.Key)
+		val, err := getSecret(client, step.Arguments.Namespace, output.Secret, output.Key)
 		if err != nil {
 			return err
 		}
-		l := fmt.Sprintf("%s=%s\n", output.Name, val)
-		buf.Write([]byte(l))
+		l := fmt.Sprintf("%s=%s", output.Name, val)
+		lines = append(lines, l)
+
 	}
+	m.Context.WriteOutput(lines)
 	return nil
 }

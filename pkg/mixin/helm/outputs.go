@@ -13,22 +13,27 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func (m *Mixin) getSecret(namespace, name, key string) (string, error) {
-	if namespace == "" {
-		namespace = "default"
-	}
+func getKubernetesClient() (*kubernetes.Clientset, error) {
+
 	home := os.Getenv("HOME")
 	kubecfg := filepath.Join(home, ".kube", "config")
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubecfg)
 	if err != nil {
-		return "", fmt.Errorf("couldn't build kubernetes config: %s", err)
+		return nil, fmt.Errorf("couldn't build kubernetes config: %s", err)
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return "", errWrap.Wrap(err, "couldn't create kubernetes client")
+		return nil, errWrap.Wrap(err, "couldn't create kubernetes client")
 	}
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	return clientset, nil
+}
+
+func getSecret(client *kubernetes.Clientset, namespace, name, key string) (string, error) {
+	if namespace == "" {
+		namespace = "default"
+	}
+	secret, err := client.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return "", fmt.Errorf("error getting secret %s from namespace %s: %s", name, namespace, err)
 	}
