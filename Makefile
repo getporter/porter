@@ -15,6 +15,11 @@ PORTER_HOME ?= bin
 build: porter exec helm azure
 	cp -R templates bin/
 
+quickbuild:
+	go build -o bin/porter ./cmd/porter
+	go build -o bin/mixins/exec/exec ./cmd/exec
+	go build -o bin/mixins/helm/helm ./cmd/helm
+
 porter:
 	$(XBUILD) -o bin/porter ./cmd/porter
 	GOOS=linux $(XBUILD) -o bin/porter-runtime ./cmd/porter

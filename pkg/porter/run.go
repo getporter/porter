@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -35,8 +36,13 @@ func (p *Porter) Run(file string, action config.Action) error {
 		return err
 	}
 
+	err = p.FileSystem.MkdirAll(mixin.OutputsDir, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "could not create outputs directory %s", mixin.OutputsDir)
+	}
+
 	for _, step := range steps {
-		err := p.Config.Manifest.ResolveStep(step)
+		err := p.Manifest.ResolveStep(step)
 		if err != nil {
 			return errors.Wrap(err, "unable to resolve sourced values")
 		}
@@ -51,6 +57,11 @@ func (p *Porter) Run(file string, action config.Action) error {
 		err = runner.Run()
 		if err != nil {
 			return errors.Wrap(err, "mixin execution failed")
+		}
+
+		err = p.collectStepOutput(step)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -70,4 +81,39 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	r.Step = string(stepBytes)
 
 	return r
+}
+
+func (p *Porter) collectStepOutput(step *config.Step) error {
+	outputs, err := p.readOutputs()
+	if err != nil {
+		return err
+	}
+	return p.Manifest.ApplyOutputs(step, outputs)
+}
+
+func (p *Porter) readOutputs() ([]string, error) {
+	var outputs []string
+
+	outfiles, err := p.FileSystem.ReadDir(mixin.OutputsDir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not list %s", mixin.OutputsDir)
+	}
+
+	for _, outfile := range outfiles {
+		if outfile.IsDir() {
+			continue
+		}
+
+		outpath := filepath.Join(mixin.OutputsDir, outfile.Name())
+		contents, err := p.FileSystem.ReadFile(outpath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not read output file %s", outpath)
+		}
+
+		for _, line := range strings.Split(string(contents), "\n") {
+			outputs = append(outputs, line)
+		}
+	}
+
+	return outputs, nil
 }

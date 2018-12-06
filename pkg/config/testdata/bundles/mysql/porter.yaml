@@ -18,6 +18,8 @@ install:
     replace: true
     set:
       mysqlDatabase: mydb
+  outputs:
+  - name: host
 
 uninstall:
 - description: "Uninstall MySQL"
