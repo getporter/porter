@@ -22,7 +22,8 @@ parameters:
 install:
   - description: "Install Wordpress"
     helm:
-      name: bundle.paramteres.wordpress_name
+      name: 
+        source: bundle.parameters.wordpress_name
       chart: stable/wordpress
       replace: true
       set:
