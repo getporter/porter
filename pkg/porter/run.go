@@ -111,7 +111,16 @@ func (p *Porter) readOutputs() ([]string, error) {
 		}
 
 		for _, line := range strings.Split(string(contents), "\n") {
-			outputs = append(outputs, line)
+			// remove any empty lines from the split process
+			if len(line) > 0 {
+				outputs = append(outputs, line)
+			}
+		}
+		// remove file when we have read it, it shouldn't be here for the
+		// next step
+		err = p.FileSystem.Remove(outpath)
+		if err != nil {
+			return nil, err
 		}
 	}
 

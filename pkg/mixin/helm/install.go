@@ -5,14 +5,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
+	"github.com/pkg/errors"
+
 	"gopkg.in/yaml.v2"
 )
 
 type InstallStep struct {
-	Description string              `yaml:"description"`
-	Outputs     []config.StepOutput `yaml:"outputs"`
-	Arguments   InstallArguments    `yaml:"helm"`
+	Description string           `yaml:"description"`
+	Outputs     []HelmOutput     `yaml:"outputs"`
+	Arguments   InstallArguments `yaml:"helm"`
+}
+
+type HelmOutput struct {
+	Name   string `yaml:"name"`
+	Secret string `yaml:"secret"`
+	Key    string `yaml:"key"`
 }
 
 type InstallArguments struct {
@@ -30,6 +37,12 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
+
+	kubeClient, err := m.getKubernetesClient("/root/.kube/config")
+	if err != nil {
+		return errors.Wrap(err, "couldn't get kubernetes client")
+	}
+
 	var step InstallStep
 	err = yaml.Unmarshal(payload, &step)
 	if err != nil {
@@ -75,6 +88,21 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return fmt.Errorf("could not execute command, %s: %s", prettyCmd, err)
 	}
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
 
-	return cmd.Wait()
+	var lines []string
+	for _, output := range step.Outputs {
+		val, err := getSecret(kubeClient, step.Arguments.Namespace, output.Secret, output.Key)
+		if err != nil {
+			return err
+		}
+		l := fmt.Sprintf("%s=%s", output.Name, val)
+		lines = append(lines, l)
+
+	}
+	m.Context.WriteOutput(lines)
+	return nil
 }

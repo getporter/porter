@@ -22,6 +22,9 @@ const mysqlTemplate = `{
         "serverName": {
             "type": "string"
         },
+         "databaseName": {
+            "type": "string"
+        },
         "version": {
             "type": "string"
         },
@@ -57,7 +60,19 @@ const mysqlTemplate = `{
                 "size": 102400,
                 "family": "Gen5"
             },
-            "type": "Microsoft.DBforMySQL/servers"
+            "type": "Microsoft.DBforMySQL/servers",
+            "resources": [
+                {
+					"apiVersion": "2017-12-01-preview",
+					"name": "[parameters('databaseName')]",
+					"type": "databases",
+					 "location": "[parameters('location')]",
+					"dependsOn": [
+						"[concat('Microsoft.DBforMySQL/servers/', parameters('serverName'))]"
+					],
+					"properties": {}
+				}
+            ]
         }
     ],
 	"outputs": {

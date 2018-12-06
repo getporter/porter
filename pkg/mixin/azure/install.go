@@ -1,7 +1,6 @@
 package azure
 
 import (
-	"bufio"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"strings"
@@ -33,7 +32,6 @@ func (m *Mixin) Install() error {
 	}
 	args := step.Arguments
 	// Get the arm deployer
-
 	deployer, err := m.getARMDeployer()
 	if err != nil {
 		return err
@@ -63,22 +61,17 @@ func (m *Mixin) Install() error {
 		newKey := strings.ToUpper(k)
 		outputs[newKey] = v
 	}
-	f, err := m.Context.NewOutput()
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	buf := bufio.NewWriter(f)
-	defer buf.Flush()
+
+	var lines []string
 	for _, output := range step.Outputs {
 		// ToUpper the key because of the case weirdness with ARM outputs
 		v, ok := outputs[strings.ToUpper(output.Key)]
 		if !ok {
 			return fmt.Errorf("couldn't find output key")
 		}
-
-		o := fmt.Sprintf("%s=%v\n", output.Name, v)
-		buf.Write([]byte(o))
+		l := fmt.Sprintf("%s=%v", output.Name, v)
+		lines = append(lines, l)
 	}
+	m.Context.WriteOutput(lines)
 	return nil
 }
