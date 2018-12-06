@@ -14,10 +14,15 @@ credentials:
   - name: kubeconfig
     path: /root/.kube/config
 
+parameters:
+  - name: wordpress_name
+    type: string
+    default: mywordpress
+
 install:
   - description: "Install Wordpress"
     helm:
-      name: porter-ci-wordpress
+      name: bundle.paramteres.wordpress_name
       chart: stable/wordpress
       replace: true
       set:
