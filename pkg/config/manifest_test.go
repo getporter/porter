@@ -346,9 +346,14 @@ func TestManifest_ApplyDependencyOutputs(t *testing.T) {
 			wantOutputs: map[string]string{"host": "localhost"},
 		},
 		{
-			name:        "value with equals sitng",
+			name:        "value with equals sign",
 			rawOutputs:  []string{"cert=abc123==="},
 			wantOutputs: map[string]string{"cert": "abc123==="},
+		},
+		{
+			name:       "missing equals sign",
+			rawOutputs: []string{"foo"},
+			wantError:  "invalid output assignment",
 		},
 	}
 
@@ -364,13 +369,59 @@ func TestManifest_ApplyDependencyOutputs(t *testing.T) {
 
 			depStep := c.Manifest.Install[0]
 			err := c.Manifest.ApplyOutputs(depStep, tc.rawOutputs)
-			require.NoError(t, err)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+				return
+			}
 
 			depM := c.Manifest.Dependencies[0].m
 			for wantKey, wantValue := range tc.wantOutputs {
 				assert.Contains(t, depM.outputs, wantKey)
 				assert.Equal(t, wantValue, depM.outputs[wantKey])
 			}
+		})
+	}
+}
+
+func TestManifest_resolveSource(t *testing.T) {
+	testcases := []struct {
+		name       string
+		outputs    map[string]string
+		source     string
+		wantResult interface{}
+		wantError  string
+	}{
+		{
+			name:       "happy path",
+			outputs:    map[string]string{"foo": "bar"},
+			source:     "bundle.outputs.foo",
+			wantResult: "bar",
+		},
+		{
+			name:      "missing output",
+			outputs:   map[string]string{"foo": "bar"},
+			source:    "bundle.outputs.missing",
+			wantError: "no value found for source specification: bundle.outputs.missing",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := &Manifest{
+				outputs: tc.outputs,
+			}
+
+			result, err := m.resolveValue(tc.source)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+				return
+			}
+
+			assert.Equal(t, tc.wantResult, result)
 		})
 	}
 }

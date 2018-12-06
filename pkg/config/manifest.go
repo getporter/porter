@@ -86,48 +86,22 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 		return nil, fmt.Errorf("invalid source reference %s", key)
 	}
 
-	/*
-		sourceType := source[1]
-		sourceName := source[2]
+	// bundle.dependencies.DEP.TYPE.NAME
+	sourceType := source[3]
+	sourceName := source[4]
 
-
-		switch sourceType {
-		case "parameters":
-			for _, param := range d.Parameters {
-				if param.Name == sourceName {
-					if param.Destination == nil {
-						// Porter by default sets CNAB params to name.ToUpper()
-						pe := strings.ToUpper(sourceName)
-						replacement = os.Getenv(pe)
-					} else if param.Destination.EnvironmentVariable != "" {
-						replacement = os.Getenv(param.Destination.EnvironmentVariable)
-					} else if param.Destination == nil && param.Destination.Path != "" {
-						replacement = param.Destination.Path
-					} else {
-						return nil, errors.New(
-							"unknown parameter definition, no environment variable or path specified",
-						)
-					}
-				}
-			}
-		case "outputs":
-			for _, cred := range d.Outputs {
-				if cred.Name == sourceName {
-					if cred.Path != "" {
-						replacement = cred.Path
-					} else if cred.EnvironmentVariable != "" {
-						replacement = os.Getenv(cred.EnvironmentVariable)
-					} else {
-						return nil, errors.New(
-							"unknown credential definition, no environment variable or path specified",
-						)
-					}
-				}
-			}
-		default:
-			return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
-		}
-	*/
+	switch sourceType {
+	case "outputs":
+		replacement = d.m.outputs[sourceName]
+		// TODO: once we have capturing outputs implemented, put this back
+		//if o, exists := d.m.outputs[sourceName]; exists {
+		//	replacement = o
+		//}
+	case "parameters":
+		replacement = "NOTIMPLEMENTED"
+	default:
+		return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
+	}
 
 	if replacement == nil {
 		return nil, errors.New(fmt.Sprintf("no value found for source specification: %s", key))
@@ -502,6 +476,10 @@ func (m *Manifest) Slice(val reflect.Value) error {
 // individual slice elements. It will resolve source references to their value within a
 // porter bundle and replace the value
 func (m *Manifest) SliceElem(index int, val reflect.Value) error {
+	if !val.CanInterface() {
+		return nil
+	}
+
 	v, ok := val.Interface().(string)
 	if ok {
 		//if the array entry is a string that matches source:...., we should replace it
@@ -515,6 +493,22 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 			}
 			val.Set(reflect.ValueOf(r))
 		}
+	}
+	return nil
+}
+
+// Struct implements reflectwalk's StructWalker so that we can skip private fields
+func (m *Manifest) Struct(val reflect.Value) error {
+	return nil
+}
+
+// Struct implements reflectwalk's StructWalker so that we can skip private fields
+func (m *Manifest) StructField(field reflect.StructField, val reflect.Value) error {
+	isUnexported := func() bool {
+		return field.PkgPath != ""
+	}
+	if isUnexported() {
+		return reflectwalk.SkipEntry
 	}
 	return nil
 }
@@ -561,6 +555,10 @@ func (m *Manifest) resolveValue(key string) (interface{}, error) {
 					)
 				}
 			}
+		}
+	case "outputs":
+		if o, exists := m.outputs[sourceName]; exists {
+			replacement = o
 		}
 	case "dependencies":
 		for _, dep := range m.Dependencies {
