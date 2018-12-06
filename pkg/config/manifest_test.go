@@ -233,20 +233,22 @@ func TestManifest_MergeDependency(t *testing.T) {
 		},
 	}
 
-	depM := &Manifest{
-		Mixins: []string{"exec", "helm"},
-		Install: Steps{
-			&Step{Description: "install mysql"},
-		},
-		Uninstall: Steps{
-			&Step{Description: "uninstall mysql"},
-		},
-		Credentials: []CredentialDefinition{
-			{Name: "kubeconfig", Path: "/root/.kube/config"},
+	dep := &Dependency{
+		m: &Manifest{
+			Mixins: []string{"exec", "helm"},
+			Install: Steps{
+				&Step{Description: "install mysql"},
+			},
+			Uninstall: Steps{
+				&Step{Description: "uninstall mysql"},
+			},
+			Credentials: []CredentialDefinition{
+				{Name: "kubeconfig", Path: "/root/.kube/config"},
+			},
 		},
 	}
 
-	err := m.MergeDependency(depM)
+	err := m.MergeDependency(dep)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"exec", "helm"}, m.Mixins)
@@ -313,4 +315,113 @@ func TestMergeCredentials(t *testing.T) {
 		})
 	}
 
+}
+
+func TestManifest_ApplyBundleOutputs(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
+
+	require.NoError(t, c.LoadManifest())
+
+	depStep := c.Manifest.Install[0]
+	err := c.Manifest.ApplyOutputs(depStep, []string{"foo=bar"})
+	require.NoError(t, err)
+
+	assert.Contains(t, c.Manifest.outputs, "foo")
+	assert.Equal(t, "bar", c.Manifest.outputs["foo"])
+}
+
+func TestManifest_ApplyDependencyOutputs(t *testing.T) {
+	testcases := []struct {
+		name        string
+		rawOutputs  []string
+		wantOutputs map[string]string
+		wantError   string
+	}{
+		{
+			name:        "happy path",
+			rawOutputs:  []string{"host=localhost"},
+			wantOutputs: map[string]string{"host": "localhost"},
+		},
+		{
+			name:        "value with equals sign",
+			rawOutputs:  []string{"cert=abc123==="},
+			wantOutputs: map[string]string{"cert": "abc123==="},
+		},
+		{
+			name:       "missing equals sign",
+			rawOutputs: []string{"foo"},
+			wantError:  "invalid output assignment",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := NewTestConfig(t)
+			c.SetupPorterHome()
+
+			c.TestContext.AddTestFile("testdata/porter.yaml", Name)
+			c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
+
+			require.NoError(t, c.LoadManifest())
+
+			depStep := c.Manifest.Install[0]
+			err := c.Manifest.ApplyOutputs(depStep, tc.rawOutputs)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+				return
+			}
+
+			depM := c.Manifest.Dependencies[0].m
+			for wantKey, wantValue := range tc.wantOutputs {
+				assert.Contains(t, depM.outputs, wantKey)
+				assert.Equal(t, wantValue, depM.outputs[wantKey])
+			}
+		})
+	}
+}
+
+func TestManifest_resolveSource(t *testing.T) {
+	testcases := []struct {
+		name       string
+		outputs    map[string]string
+		source     string
+		wantResult interface{}
+		wantError  string
+	}{
+		{
+			name:       "happy path",
+			outputs:    map[string]string{"foo": "bar"},
+			source:     "bundle.outputs.foo",
+			wantResult: "bar",
+		},
+		{
+			name:      "missing output",
+			outputs:   map[string]string{"foo": "bar"},
+			source:    "bundle.outputs.missing",
+			wantError: "no value found for source specification: bundle.outputs.missing",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := &Manifest{
+				outputs: tc.outputs,
+			}
+
+			result, err := m.resolveValue(tc.source)
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+				return
+			}
+
+			assert.Equal(t, tc.wantResult, result)
+		})
+	}
 }

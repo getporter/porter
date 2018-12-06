@@ -9,9 +9,6 @@ dependencies:
   - name: mysql
     parameters:
       database-name: wordpress
-    #connections:
-    #  - source: bundle.dependencies.mysql.outputs.host
-    #    destination: bundle.credentials.dbhost
 
 credentials:
   - name: kubeconfig
@@ -23,7 +20,15 @@ install:
       name: porter-ci-wordpress
       chart: stable/wordpress
       replace: true
-      # TODO: wire up the mysql dependency
+      set:
+        externalDatabase.database:
+          source: bundle.dependencies.mysql.parameters.database-name
+        externalDatabase.host:
+          source: bundle.dependencies.mysql.outputs.dbhost
+        externalDatabase.user:
+          source: bundle.dependencies.mysql.outputs.dbuser
+        externalDatabase.password:
+          source: bundle.dependencies.mysql.outputs.dbpassword
 
 uninstall:
   - description: "Uninstall Wordpress"
