@@ -4,7 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"strings"
 )
+
+type InstallStep struct {
+	Description string           `yaml:"description"`
+	Outputs     []AzureOutput    `yaml:"outputs"`
+	Arguments   InstallArguments `yaml:"azure"`
+}
 
 type InstallArguments struct {
 	Type          string                 `yaml:"type"`
@@ -19,21 +26,24 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
-	var args InstallArguments
-	err = yaml.Unmarshal(payload, &args)
+	var step InstallStep
+	err = yaml.Unmarshal(payload, &step)
 	if err != nil {
 		return err
 	}
-
+	args := step.Arguments
 	// Get the arm deployer
 
 	deployer, err := m.getARMDeployer()
+	if err != nil {
+		return err
+	}
 	// Get the Template based on the arguments (type)
 	t, err := deployer.FindTemplate(args.Type, args.Template)
 	if err != nil {
 		return err
 	}
-
+	fmt.Fprintln(m.Out, "Starting deployment operations...")
 	// call Deployer.Deploy(...)
 	outputs, err := deployer.Deploy(
 		args.Name,
@@ -46,16 +56,29 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Fprintln(m.Out, "Finished deployment operations...")
+	// ARM does some stupid stuff with output keys, turn them
+	// all into upper case for better matching
+	for k, v := range outputs {
+		newKey := strings.ToUpper(k)
+		outputs[newKey] = v
+	}
 	f, err := m.Context.NewOutput()
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	buf := bufio.NewWriter(f)
-	for k, v := range outputs {
-		output := fmt.Sprintf("%s=%v\n", k, v)
-		buf.Write([]byte(output))
+	defer buf.Flush()
+	for _, output := range step.Outputs {
+		// ToUpper the key because of the case weirdness with ARM outputs
+		v, ok := outputs[strings.ToUpper(output.Key)]
+		if !ok {
+			return fmt.Errorf("couldn't find output key")
+		}
+
+		o := fmt.Sprintf("%s=%v\n", output.Name, v)
+		buf.Write([]byte(o))
 	}
 	return nil
 }

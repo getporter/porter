@@ -80,5 +80,18 @@ func (c *Context) CopyFile(src, dest string) error {
 // NewOutput creates a new output file. The caller should
 // handle closing the file once finished
 func (c *Context) NewOutput() (afero.File, error) {
-	return c.FileSystem.TempFile("/cnab/app/porter/outputs", "mixin-output")
+	exists, err := c.FileSystem.DirExists("/cnab/app/porter/outputs")
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		if err := c.FileSystem.MkdirAll("/cnab/app/porter/outputs", os.ModePerm); err != nil {
+			return nil, errors.Wrap(err, "couldn't make output directory")
+		}
+	}
+	f, err := c.FileSystem.TempFile("/cnab/app/porter/outputs", "mixin-output")
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't open outputs file")
+	}
+	return f, nil
 }
