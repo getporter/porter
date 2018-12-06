@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,6 +37,12 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return err
 	}
+
+	kubeClient, err := m.getKubernetesClient("/root/.kube/config")
+	if err != nil {
+		return errors.Wrap(err, "couldn't get kubernetes client")
+	}
+
 	var step InstallStep
 	err = yaml.Unmarshal(payload, &step)
 	if err != nil {
@@ -85,13 +93,9 @@ func (m *Mixin) Install() error {
 		return err
 	}
 
-	client, err := getKubernetesClient()
-	if err != nil {
-		return err
-	}
 	var lines []string
 	for _, output := range step.Outputs {
-		val, err := getSecret(client, step.Arguments.Namespace, output.Secret, output.Key)
+		val, err := getSecret(kubeClient, step.Arguments.Namespace, output.Secret, output.Key)
 		if err != nil {
 			return err
 		}

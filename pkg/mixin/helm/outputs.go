@@ -29,7 +29,7 @@ func getKubernetesClient() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func getSecret(client *kubernetes.Clientset, namespace, name, key string) (string, error) {
+func getSecret(client kubernetes.Interface, namespace, name, key string) (string, error) {
 	if namespace == "" {
 		namespace = "default"
 	}
