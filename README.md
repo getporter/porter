@@ -4,7 +4,7 @@
 
 <p><center><i>Porter makes authoring bundles easier</i></center></p>
 
-Porter is a helper binary that Duffle can build into your CNAB invocation images. It provides a declarative authoring experience for CNAB bundles that allows you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
+Porter takes the work out of creating CNAB bundles. It provides a declarative authoring experience that lets you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
 
 ## Wordpress Bundle Today
 
@@ -23,105 +23,201 @@ Example:
 
 CNAB and Duffle provide value to the _consumer_ of the bundle. The bundle development experience still needs improvement. The current state shifts the traditional bash script into a container but doesn't remove the complexity involved in authoring that bash script.
 
-Porter replaces the bash script with a declarative experience:
+Porter helps you compose bundles with a declarative experience:
 
-* No run script! 🤩
+* No bash script! 🤩
 * No Dockerfile! 😍
 * No need to understand the CNAB spec! 😎
 * MORE YAML! 🚀
 
 Example:
 
-The porter.yaml file replaces the bundle run script. The run script is now just a boring call to `porter porter.yaml`. The porter runtime handles interpreting and executing the steps:
+The porter manifest and runtime handles interpreting and executing the logical package management steps:
 
 ```yaml
+name: wordpress
+version: 0.1.0
+invocationImage: deislabs/wordpress:latest
+
 mixins:
   - helm
-dependencies:
-  - name: mysql
-    parameters:
-      database-name: wordpress
-    outputs:
-      - source: bundle.dependencies.mysql.outputs.host
-        destination: bundle.credentials.dbhost
+
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
+
+parameters:
+  - name: wordpress_name
+    type: string
+    default: mywordpress
+
 install:
-  - description: "Install Wordpress Helm Chart"
+  - description: "Install MySQL"
+    helm:
+      name: mywordpress-mysql
+      chart: stable/mysql
+      set:
+        mysqlDatabase: wordpress
+      outputs:
+        - name: dbhost
+          secret: mywordpress-mysql
+          key: mysql-host
+        - name: dbuser
+          secret: mywordpress-mysql
+          key: mysql-user
+        - name: dbpassword
+          secret: mywordpress-mysql
+          key: mysql-password
+  - description: "Install Wordpress"
     helm:
       name:
-        source: bundle.name
+        source: bundle.parameters.wordpress_name
       chart: stable/wordpress
       parameters:
-        externalDatabase.database:
-          source: bundle.dependencies.mysql.parameters.database-name
+        externalDatabase.database: wordpress
         externalDatabase.host:
-          source: bundle.credentials.dbhost
+          source: bundle.outputs.dbhost
         externalDatabase.user:
-          source: bundle.credentials.dbuser
+          source: bundle.outputs.dbuser
         externalDatabase.password:
-          source: bundle.credentials.dbpassword
+          source: bundle.outputs.dbpassword
+
 uninstall:
   - description: "Uninstall Wordpress Helm Chart"
     helm:
       name:
-        source: bundle.name
+        source: bundle.parameters.wordpress_name
 ```
 
-* The porter binary calls the helm mixin which handles running helm init and helm install using all the values above
-* Porter handles populating Parameters from the `CNAB_P_*` environment variables
-* Porter makes the credential environment variables easyily accessible
+## Mixins
+Many of the underlying tools that you want to work with already understand package management. Porter makes it easy to
+compose your bundle using these existing tools through **mixins**. A mixin handles translating Porter's manifest into
+the appropriate actions for the other tools. So far we have mixins for **exec** (bash), **helm** and **azure**. 
+
+Anyone can write a mixin binary and drop it into the porter mixins directory (PORTER_HOME/mixins). Mixins are responsible for
+a few tasks:
+
+* **Adding lines to the Dockerfile for the invocation image.**
+    
+    For example the helm mixin ensures that helm is installed and initialized.
+* **Translating steps from the manifest into CNAB actions.**
+
+    For example the helm mixin understands how to install/uninstall a helm chart. 
+* **Collecting outputs from a step.**
+
+    For example, the step to install mysql handles collecting the database host, username and password.
+
+## Where's the bundle.json?
+The `porter build` command handles:
+
+* translating the Porter manifest into a bundle.json
+* creating a Dockerfile for the invocation image
+* building and pushing the invocation image
+
+So it's still there, but you don't have to mess with it. 😎 A few of the sections in the Porter manifest to map 1:1
+to sections in the bundle.json file, such as the bundle metadata, Parameters, and Credentials.
+
+## Hot Wiring a Bundle
+I lied, they aren't actually 1:1 mappings. Porter has some special sauce, the `source` reference that makes it much
+easier to connect together components in your bundle. For example, creating a database in one step, and then using
+the connection string for that database in the next.
+
+Porter supports resolving source values right before a step is executed. Here are a few examples of source references:
+
+* `bundle.outputs.private_key`
+* `bundle.parameters.wordpress_name`
+* `bundle.credentials.kubeconfig`
+* `bundle.dependencies.mysql.parameters.database_name`
+* `bundle.dependencies.mysql.outputs.dbhost`
+
 ---
 
 ## Bundle Dependencies
 
-Porter gets even better when bundles can use other bundles. In the Wordpress example above, the Wordpress bundle was able to access database connection variables provided by the MySQL bundle.
+Porter gets even better when bundles use other bundles. In the example above, the Wordpress installation step relied on the MySQL installation step.
+With bundle dependencies, you can rely on other bundles and the outputs that they provide (such as database credentials).
 
 These are _not_ changes to the CNAB runtime spec, though we may later decide that it would be useful to have a companion "authoring" spec. Everything porter does
 is baked into your invocation image at build time.
 
-## MySQL porter.yaml
+Here's what the example above looks like when instead of shoving everything into a single bundle, we split out installing MySQL from Wordpress into separate bundles.
+
+### MySQL Porter Manifest
 The MySQL author indicates that the bundle can provide credentials for connecting to the database that it created.
 
 ```yaml
-mixins:
-  - azure
+name: mysql
+version: 0.1.0
+invocationImage: deislabs/mysql:latest
 
-outputs:
-  - name: host
-    env: MYSQL_HOST
-  - name: user
-    env: MYSQL_USER
+mixins:
+  - helm
+
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
+
+parameters:
+  - name: database_name
+    type: string
+    default: mydb
 
 install:
-  - name: "Provision MySQL Server"
-    azure:
-      mysql.server: # The mixin exports MYSQL_HOST, MYSQL_USER, etc
-       - create:
-           resource-group: default
-           location: westus
-           sku-name: GP_Gen4_2
-           version: "5.7"
-  - name: "Create MySQL Database"
-    azure:
-      mysql.db:
-        - create:
-          name:
-            source: bundle.parameters.server-name
-          server-name:
-            source: bundle.outputs.host
-          resource-group: default
+  - description: "Install MySQL"
+    helm:
+      name: mysql
+      chart: stable/mysql
+      set:
+      mysqlDatabase:
+        source: bundle.parameters.database_name
+    outputs:
+      - name: dbhost
+        secret: mysql
+        key: mysql-host
+      - name: dbuser
+        secret: mysql
+        key: mysql-user
+      - name: dbpassword
+        secret: mysql
+        key: mysql-password
 ```
 
-## Piping dependency inputs and outputs
-The Wordpress author can connect the credentials provided by the MySQL bundle directly to the Wordpress database credentials that the Helm Wordpress chart requires.
-
+### Wordpress Porter Manifest
 ```yaml
-...
+mixins:
+  - helm
+
+name: wordpress
+version: 0.1.0
+invocationImage: deislabs/wordpress:latest
+
+parameters:
+  - name: wordpress_name
+    type: string
+    default: mywordpress
+
 dependencies:
   - name: mysql
     parameters:
-      database-name: wordpress
-    connections:
-      - source: dependencies.mysql.outputs.host
-        destination: credentials.dbhost
-...
+      database_name: wordpress
+
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
+
+install:
+  - description: "Install Wordpress"
+    helm:
+      name:
+        source: bundle.parameters.wordpress_name
+      chart: stable/wordpress
+      set:
+        externalDatabase.database:
+          source: bundle.dependencies.mysql.parameters.database_name
+        externalDatabase.host:
+          source: bundle.dependencies.mysql.outputs.dbhost
+        externalDatabase.user:
+          source: bundle.dependencies.mysql.outputs.dbuser
+        externalDatabase.password:
+          source: bundle.dependencies.mysql.outputs.dbpassword
 ```
