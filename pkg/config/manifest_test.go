@@ -425,3 +425,26 @@ func TestManifest_resolveSource(t *testing.T) {
 		})
 	}
 }
+
+func TestManifest_MergeParameters(t *testing.T) {
+	dep := &Dependency{
+		Name:       "mysql",
+		Parameters: map[string]string{"database": "wordpress"},
+		m: &Manifest{
+			Name: "mysql",
+			Parameters: []ParameterDefinition{
+				{Name: "database"},
+			},
+		},
+	}
+	m := &Manifest{
+		Name:         "wordpress",
+		Dependencies: []*Dependency{dep},
+	}
+
+	err := m.MergeParameters(dep)
+	require.NoError(t, err)
+
+	require.Len(t, m.Parameters, 1)
+	assert.Equal(t, "wordpress", m.Parameters[0].DefaultValue)
+}

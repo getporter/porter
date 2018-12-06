@@ -98,7 +98,23 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 		//	replacement = o
 		//}
 	case "parameters":
-		replacement = "NOTIMPLEMENTED"
+		for _, param := range d.m.Parameters {
+			if param.Name == sourceName {
+				if param.Destination == nil {
+					// Porter by default sets CNAB params to name.ToUpper()
+					pe := strings.ToUpper(sourceName)
+					replacement = os.Getenv(pe)
+				} else if param.Destination.EnvironmentVariable != "" {
+					replacement = os.Getenv(param.Destination.EnvironmentVariable)
+				} else if param.Destination == nil && param.Destination.Path != "" {
+					replacement = param.Destination.Path
+				} else {
+					return nil, errors.New(
+						"unknown parameter definition, no environment variable or path specified",
+					)
+				}
+			}
+		}
 	default:
 		return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
 	}
@@ -284,6 +300,11 @@ func (m *Manifest) MergeDependency(dep *Dependency) error {
 		}
 	}
 
+	err := m.MergeParameters(dep)
+	if err != nil {
+		return err
+	}
+
 	// prepend the dependency's mixins
 	m.Mixins = prependMixins(dep.m.Mixins, m.Mixins)
 
@@ -353,6 +374,33 @@ func mergeCredentials(c1, c2 CredentialDefinition) (CredentialDefinition, error)
 	}
 
 	return result, nil
+}
+
+func (m *Manifest) MergeParameters(dep *Dependency) error {
+	// include any unique parameters from the dependency
+	for _, param := range dep.m.Parameters {
+		dupe := false
+		for _, x := range m.Parameters {
+			if param.Name == x.Name {
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			m.Parameters = append(m.Parameters, param)
+		}
+	}
+
+	// Default the bundle parameters from any hard-coded values set in the dependencies
+	for depP, defaultValue := range dep.Parameters {
+		for i, param := range m.Parameters {
+			if param.Name == depP {
+				m.Parameters[i].DefaultValue = defaultValue
+			}
+		}
+	}
+
+	return nil
 }
 
 type Steps []*Step
