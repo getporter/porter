@@ -20,6 +20,11 @@ type Mixin struct {
 	//also add the azure clients here
 }
 
+type AzureOutput struct {
+	Name string `yaml:"name"`
+	Key  string `yaml:"key"`
+}
+
 // New azure mixin client, initialized with useful defaults.
 func New() (*Mixin, error) {
 	cfg, err := GetConfigFromEnvironment()

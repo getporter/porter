@@ -388,7 +388,6 @@ func (d *deployer) doDeployment(
 		}
 	}
 	// Deploy the template
-	fmt.Printf("Starting ARM deployment")
 	result, err := d.deploymentsClient.CreateOrUpdate(
 		ctx,
 		resourceGroupName,
@@ -401,7 +400,6 @@ func (d *deployer) doDeployment(
 			},
 		},
 	)
-	fmt.Printf("Started ARM deployment")
 	if err != nil {
 		return nil, fmt.Errorf("error submitting ARM template: %s", err)
 	}
@@ -422,7 +420,7 @@ func (d *deployer) doDeployment(
 		deploymentName,
 	)
 	if err != nil {
-		fmt.Printf("%s", err)
+		return nil, err
 	}
 
 	return &deployment, nil
