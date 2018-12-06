@@ -102,5 +102,5 @@ func (m *Mixin) Install() error {
 		l := fmt.Sprintf("%s=%s\n", output.Name, val)
 		buf.Write([]byte(l))
 	}
-	return cmd.Wait()
+	return nil
 }
