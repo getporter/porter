@@ -1,18 +1,24 @@
 package helm
 
 import (
+	"bufio"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
 	"gopkg.in/yaml.v2"
 )
 
 type InstallStep struct {
-	Description string              `yaml:"description"`
-	Outputs     []config.StepOutput `yaml:"outputs"`
-	Arguments   InstallArguments    `yaml:"helm"`
+	Description string           `yaml:"description"`
+	Outputs     []HelmOutput     `yaml:"outputs"`
+	Arguments   InstallArguments `yaml:"helm"`
+}
+
+type HelmOutput struct {
+	Name   string `yaml:"name"`
+	Secret string `yaml:"secret"`
+	Key    string `yaml:"key"`
 }
 
 type InstallArguments struct {
@@ -78,6 +84,23 @@ func (m *Mixin) Install() error {
 	err = cmd.Wait()
 	if err != nil {
 		return err
+	}
+
+	f, err := m.Context.NewOutput()
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf := bufio.NewWriter(f)
+	defer buf.Flush()
+
+	for _, output := range step.Outputs {
+		val, err := m.getSecret(step.Arguments.Namespace, output.Secret, output.Key)
+		if err != nil {
+			return err
+		}
+		l := fmt.Sprintf("%s=%s\n", output.Name, val)
+		buf.Write([]byte(l))
 	}
 	return cmd.Wait()
 }
