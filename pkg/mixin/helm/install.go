@@ -75,6 +75,9 @@ func (m *Mixin) Install() error {
 	if err != nil {
 		return fmt.Errorf("could not execute command, %s: %s", prettyCmd, err)
 	}
-
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
 	return cmd.Wait()
 }
