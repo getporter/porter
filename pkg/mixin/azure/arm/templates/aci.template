@@ -1,0 +1,105 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"name": {
+			"type": "String"
+		},
+		"location": {
+			"type": "String"
+		},
+		"image": {
+			"type": "String"
+		},
+		"osType": {
+			"allowedValues": [
+				"Linux",
+				"Windows"
+			],
+            "defaultValue" : "Linux",
+			"type": "String"
+		},
+		"numberCores": {
+			"defaultValue": "1",
+			"type": "String"
+		},
+		"memory": {
+			"defaultValue": "0.5",
+			"type": "String"
+		},
+		"dnsLabel": {
+			"defaultValue": "",
+			"type": "String"
+		},
+		"port": {
+			"defaultValue": "80",
+			"type": "String"
+		},
+		"commands": {
+			"defaultValue": "none",
+			"type": "String"
+		},
+		"restartPolicy": {
+            "defaultValue" : "OnFailure",
+			"type": "String"
+		},
+        "tags": {
+			"type": "object"
+		}
+	},
+	"variables": {
+		"APIversion": "2018-04-01",
+		"location": "[parameters('location')]",
+		"name": "[parameters('name')]",
+		"image": "[parameters('image')]",
+		"osType": "[parameters('osType')]",
+		"numberCores": "[int(parameters('numberCores'))]",
+		"memory": "[float(parameters('memory'))]",
+		"dnsLabel": "[parameters('dnsLabel')]",
+		"port": "[int(parameters('port'))]",
+		"commands": "[if(equals(parameters('commands'), 'none'), take(createArray(''), 0), split(parameters('commands'), ', '))]",
+		"restartPolicy": "[parameters('restartPolicy')]"
+	},
+	"resources": [{
+		"name": "[variables('name')]",
+		"type": "Microsoft.ContainerInstance/containerGroups",
+        "tags": "[parameters('tags')]",
+		"apiVersion": "[variables('APIversion')]",
+		"location": "[variables('location')]",
+		"properties": {
+			"containers": [{
+				"name": "[variables('name')]",
+				"properties": {
+					"image": "[variables('image')]",
+					"command": "[variables('commands')]",
+					"ports": [{
+						"protocol": "TCP",
+						"port": "[variables('port')]"
+					}],
+					"resources": {
+						"requests": {
+							"cpu": "[variables('numberCores')]",
+							"memoryInGb": "[variables('memory')]"
+						}
+					}
+				}
+			}],
+			"restartPolicy": "[variables('restartPolicy')]",
+			"osType": "[variables('osType')]",
+			"ipAddress": {
+				"type": "Public",
+				"dnsNameLabel": "[variables('dnsLabel')]",
+				"ports": [{
+					"protocol": "TCP",
+					"port": "[variables('port')]"
+				}]
+			}
+		}
+	}],
+	"outputs": {
+        "IP_ADDRESS": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.ip]"
+        }
+    }
+}

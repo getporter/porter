@@ -12,7 +12,7 @@ KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
-build: porter exec helm
+build: porter exec helm azure
 	cp -R templates bin/
 
 porter:
@@ -30,6 +30,11 @@ helm:
 	mkdir -p bin/mixins/helm
 	$(XBUILD) -o bin/mixins/helm/helm ./cmd/helm
 	GOOS=linux $(XBUILD) -o bin/mixins/helm/helm-runtime ./cmd/helm
+
+azure:
+	mkdir -p bin/mixins/azure
+	$(XBUILD) -o bin/mixins/azure/azure ./cmd/azure
+	GOOS=linux $(XBUILD) -o bin/mixins/azure/azure-runtime ./cmd/azure
 
 test: clean test-unit test-cli
 
