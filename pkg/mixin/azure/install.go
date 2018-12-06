@@ -32,7 +32,6 @@ func (m *Mixin) Install() error {
 	}
 	args := step.Arguments
 	// Get the arm deployer
-
 	deployer, err := m.getARMDeployer()
 	if err != nil {
 		return err
