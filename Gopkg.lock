@@ -1120,8 +1120,8 @@
     "util/integer",
   ]
   pruneopts = "NUT"
-  revision = "1638f8970cefaa404ff3a62950f88b08292b2696"
-  version = "v9.0.0"
+  revision = "bf181536cb4da7eeb6ed732fcf79ecf0e36efaa2"
+  version = "kubernetes-1.12.2"
 
 [[projects]]
   branch = "master"

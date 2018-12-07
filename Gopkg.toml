@@ -35,20 +35,8 @@
   name = "github.com/prometheus/common"
 
 [[constraint]]
-  name = "k8s.io/kubernetes"
-  version = "1.12.2"
-
-[[constraint]]
-  name = "k8s.io/api"
-  version = "kubernetes-1.12.2"
-
-[[constraint]]
-  name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.2"
-
-[[constraint]]
   name = "k8s.io/client-go"
-  version = "9.0.0"
+  version = "kubernetes-1.12.2"
 
 [prune]
   non-go = true
