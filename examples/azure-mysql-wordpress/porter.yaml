@@ -60,6 +60,7 @@ install:
       set:
         mariadb.enabled: "false"
         externalDatabase.port: 3306
+        readinessProbe.initialDelaySeconds: 120
         externalDatabase.host:
           source: bundle.outputs.MYSQL_HOST
         externalDatabase.user:
