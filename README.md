@@ -1,5 +1,4 @@
-[![Build Status](https://dev.azure.com/cnlabs/porter/_apis/build/status/deislabs.porter)](https://dev.azure.com/cnlabs/porter/_build/latest)
-
+[![Build Status](https://dev.azure.com/cnlabs/porter/_apis/build/status/deislabs.porter?branchName=master)](https://dev.azure.com/cnlabs/porter/_build/latest?definitionId=6?branchName=master)
 # Porter - We got your baggage, bae
 
 <p><center><i>Porter makes authoring bundles easier</i></center></p>
