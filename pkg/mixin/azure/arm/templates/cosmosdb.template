@@ -42,5 +42,14 @@
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+		"HOST": {
+			"type": "string",
+			"value": "[reference('{{ .name }}').documentEndpoint]"
+		},
+		"primary_key":{
+			"type": "string",
+			"value": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', '{{ .name }}'), '2015-04-08').primaryMasterKey]"
+		}
+	}
 }
