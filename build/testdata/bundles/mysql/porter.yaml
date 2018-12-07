@@ -10,9 +10,15 @@ credentials:
   path: /root/.kube/config
 
 parameters:
-- name: database_name
+- name: database-name
   type: string
   default: mydb
+  destination:
+    env: DATABASE_NAME
+- name: mysql-user
+  type: string
+  destination:
+    env: MYSQL_USER
 
 install:
 - description: "Install MySQL"
@@ -23,18 +29,16 @@ install:
     replace: true
     set:
       mysqlDatabase:
-        source: bundle.parameters.database_name
+        source: bundle.parameters.database-name
+      mysqlUser:
+        source: bundle.parameters.mysql-user
   outputs:
+  - name: mysql-root-password
+    secret: porter-ci-mysql
+    key: mysql-root-password
   - name: mysql-password
     secret: porter-ci-mysql
     key: mysql-password
-#- description: "foo"
-#  exec:
-#    command: printf
-#    args:
-#      - "password %s:"
-#      - source: bundle.outputs.mysql-password
-
 uninstall:
 - description: "Uninstall MySQL"
   helm:

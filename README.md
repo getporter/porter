@@ -71,7 +71,7 @@ install:
   - description: "Install Wordpress"
     helm:
       name:
-        source: bundle.parameters.wordpress_name
+        source: bundle.parameters.wordpress-name
       chart: stable/wordpress
       parameters:
         externalDatabase.database: wordpress
@@ -86,7 +86,7 @@ uninstall:
   - description: "Uninstall Wordpress Helm Chart"
     helm:
       name:
-        source: bundle.parameters.wordpress_name
+        source: bundle.parameters.wordpress-name
 ```
 
 ## Mixins
@@ -125,7 +125,7 @@ the connection string for that database in the next.
 Porter supports resolving source values right before a step is executed. Here are a few examples of source references:
 
 * `bundle.outputs.private_key`
-* `bundle.parameters.wordpress_name`
+* `bundle.parameters.wordpress-name`
 * `bundle.credentials.kubeconfig`
 * `bundle.dependencies.mysql.parameters.database_name`
 * `bundle.dependencies.mysql.outputs.dbhost`
@@ -209,7 +209,7 @@ install:
   - description: "Install Wordpress"
     helm:
       name:
-        source: bundle.parameters.wordpress_name
+        source: bundle.parameters.wordpress-name
       chart: stable/wordpress
       set:
         externalDatabase.database:

@@ -1,42 +1,46 @@
 mixins:
-  - helm
+- helm
 
 name: wordpress
 version: 0.1.0
 invocationImage: porter-wordpress:latest
 
 dependencies:
-  - name: mysql
-    parameters:
-      database_name: wordpress
+- name: mysql
+  parameters:
+    database_name: wordpress
+    mysql_user: wordpress
 
 credentials:
-  - name: kubeconfig
-    path: /root/.kube/config
+- name: kubeconfig
+  path: /root/.kube/config
 
 parameters:
-  - name: wordpress_name
-    type: string
-    default: mywordpress
+- name: wordpress-name
+  type: string
+  default: porter-ci-wordpress
+  destination:
+    env: WORDPRESS_NAME
 
 install:
-  - description: "Install Wordpress"
-    helm:
-      name: 
-        source: bundle.parameters.wordpress_name
-      chart: stable/wordpress
-      replace: true
-      set:
-        externalDatabase.database:
-          source: bundle.dependencies.mysql.parameters.database_name
-        externalDatabase.host:
-          source: bundle.dependencies.mysql.outputs.dbhost
-        externalDatabase.user:
-          source: bundle.dependencies.mysql.outputs.dbuser
-        externalDatabase.password:
-          source: bundle.dependencies.mysql.outputs.dbpassword
+- description: "Install Wordpress"
+  helm:
+    name:
+      source: bundle.parameters.wordpress-name
+    chart: stable/wordpress
+    replace: true
+    set:
+      externalDatabase.database:
+        source: bundle.dependencies.mysql.parameters.database-name
+      #externalDatabase.host:
+      #  source: bundle.dependencies.mysql.outputs.services
+      externalDatabase.user:
+        source: bundle.dependencies.mysql.parameters.mysql-user
+      externalDatabase.password:
+        source: bundle.dependencies.mysql.outputs.mysql-password
 
 uninstall:
-  - description: "Uninstall Wordpress"
-    helm:
-      name: porter-ci-wordpress
+- description: "Uninstall Wordpress"
+  helm:
+    name:
+      source: bundle.parameters.wordpress-name
