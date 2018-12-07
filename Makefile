@@ -88,5 +88,6 @@ clean:
 	-rm Dockerfile porter.yaml
 	-duffle uninstall PORTER-HELLO
 	-duffle uninstall PORTER-WORDPRESS --credentials ci
+	-helm delete --purge mywordpress
 	-helm delete --purge porter-ci-mysql
 	-helm delete --purge porter-ci-wordpress
