@@ -2,6 +2,19 @@ KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
+CLIENT_PLATFORM = $(shell go env GOOS)
+CLIENT_ARCH = $(shell go env GOARCH)
+RUNTIME_PLATFORM = linux
+RUNTIME_ARCH = amd64
+
+ifeq ($(CLIENT_PLATFORM),windows)
+FILE_EXT=.exe
+else ifeq ($(RUNTIME_PLATFORM),windows)
+FILE_EXT=.exe
+else
+FILE_EXT=
+endif
+
 HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/v0.1.0-ralpha.1+aviation/helm
 AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/v0.1.0-ralpha.1+aviation/azure
 
