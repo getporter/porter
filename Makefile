@@ -32,24 +32,24 @@ xbuild-client:
 
 bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
-	curl -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+	curl -f -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 	chmod +x bin/mixins/helm/helm
 
 bin/mixins/helm/helm-runtime:
 	mkdir -p bin/mixins/helm
-	curl -o bin/mixins/helm/helm-runtime $(HELM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+	curl -f -o bin/mixins/helm/helm-runtime $(HELM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
 	chmod +x bin/mixins/helm/helm-runtime
 
 helm: bin/mixins/helm/helm bin/mixins/helm/helm-runtime
 
 bin/mixins/azure/azure:
 	mkdir -p bin/mixins/azure
-	curl -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+	curl -f -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 	chmod +x bin/mixins/azure/azure
 
 bin/mixins/azure/azure-runtime:
 	mkdir -p bin/mixins/azure
-	curl -o bin/mixins/azure/azure-runtime $(AZURE_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+	curl -f -o bin/mixins/azure/azure-runtime $(AZURE_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
 	chmod +x bin/mixins/azure/azure-runtime
 
 azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
