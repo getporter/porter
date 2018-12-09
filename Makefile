@@ -1,3 +1,5 @@
+MIXIN = porter
+
 COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION ?= $(shell git describe --tags --dirty='+dev' --abbrev=0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
@@ -5,6 +7,22 @@ PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev
 PKG = github.com/deislabs/porter
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
+BINDIR = bin/mixins/$(MIXIN)
+
+CLIENT_PLATFORM = $(shell go env GOOS)
+CLIENT_ARCH = $(shell go env GOARCH)
+RUNTIME_PLATFORM = linux
+RUNTIME_ARCH = amd64
+SUPPORTED_CLIENT_PLATFORMS = linux darwin windows
+SUPPORTED_CLIENT_ARCHES = amd64 386
+
+ifeq ($(CLIENT_PLATFORM),windows)
+FILE_EXT=.exe
+else ifeq ($(RUNTIME_PLATFORM),windows)
+FILE_EXT=.exe
+else
+FILE_EXT=
+endif
 
 REGISTRY ?= $(USER)
 
@@ -12,34 +30,60 @@ KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
-build: porter exec helm azure
+HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/v0.1.0-ralpha.1+aviation/helm
+AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/v0.1.0-ralpha.1+aviation/azure
+
+build: build-client build-runtime azure helm
+
+build-runtime:
+	mkdir -p $(BINDIR)
+	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) go build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
+	cp $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) bin/
+
+build-client:
+	mkdir -p $(BINDIR)
+	go build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
+	cp $(BINDIR)/$(MIXIN)$(FILE_EXT) bin/
 	cp -R templates bin/
 
-quickbuild:
-	go build -o bin/porter ./cmd/porter
-	go build -o bin/mixins/exec/exec ./cmd/exec
-	go build -o bin/mixins/helm/helm ./cmd/helm
+build-all: xbuild-runtime $(addprefix build-for-,$(SUPPORTED_CLIENT_PLATFORMS))
+	cp -R templates bin/
 
-porter:
-	$(XBUILD) -o bin/porter ./cmd/porter
-	GOOS=linux $(XBUILD) -o bin/porter-runtime ./cmd/porter
-	mkdir -p bin/mixins/porter
-	cp bin/porter* bin/mixins/porter/
+build-for-%:
+	$(MAKE) CLIENT_PLATFORM=$* xbuild-client
+
+xbuild-runtime:
+	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/$(VERSION)/$(MIXIN)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)$(FILE_EXT) ./cmd/$(MIXIN)
+
+xbuild-client: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
+$(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
+	mkdir -p $(dir $@)
+	$(XBUILD) -o $@ ./cmd/$(MIXIN)
 
 exec:
 	mkdir -p bin/mixins/exec
 	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
 	GOOS=linux $(XBUILD) -o bin/mixins/exec/exec-runtime ./cmd/exec
 
-helm:
+bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
-	$(XBUILD) -o bin/mixins/helm/helm ./cmd/helm
-	GOOS=linux $(XBUILD) -o bin/mixins/helm/helm-runtime ./cmd/helm
+	curl -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 
-azure:
+bin/mixins/helm/helm-runtime:
+	mkdir -p bin/mixins/helm
+	curl -o bin/mixins/helm/helm-runtime $(HELM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+
+helm: bin/mixins/helm/helm bin/mixins/helm/helm-runtime
+
+bin/mixins/azure/azure:
 	mkdir -p bin/mixins/azure
-	$(XBUILD) -o bin/mixins/azure/azure ./cmd/azure
-	GOOS=linux $(XBUILD) -o bin/mixins/azure/azure-runtime ./cmd/azure
+	curl -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+
+bin/mixins/azure/azure-runtime:
+	mkdir -p bin/mixins/azure
+	curl -o bin/mixins/azure/azure-runtime $(AZURE_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+
+azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
 
 test: clean test-unit test-cli
 
@@ -88,6 +132,5 @@ clean:
 	-rm Dockerfile porter.yaml
 	-duffle uninstall PORTER-HELLO
 	-duffle uninstall PORTER-WORDPRESS --credentials ci
-	-helm delete --purge mywordpress
 	-helm delete --purge porter-ci-mysql
 	-helm delete --purge porter-ci-wordpress
