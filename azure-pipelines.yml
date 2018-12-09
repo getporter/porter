@@ -41,7 +41,7 @@ steps:
   displayName: 'Unit Test'
 
 - script: |
-    git clone https://$(GITHUB_TOKEN)@github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
+    git clone https://github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
     cd $(GOPATH)/src/github.com/deislabs/duffle
     make bootstrap build
     cp bin/duffle $(GOPATH)/bin/
@@ -56,3 +56,9 @@ steps:
     make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'
+
+- script: |
+    AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make xbuild-all publish
+  workingDirectory: '$(modulePath)'
+  displayName: 'Publish'
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))

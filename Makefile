@@ -1,45 +1,74 @@
-COMMIT ?= $(shell git rev-parse --short HEAD)
-VERSION ?= $(shell git describe --tags --dirty='+dev' --abbrev=0)
-PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
-
-PKG = github.com/deislabs/porter
-LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
-XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
-
-REGISTRY ?= $(USER)
-
 KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
-build: porter exec helm azure
+CLIENT_PLATFORM = $(shell go env GOOS)
+CLIENT_ARCH = $(shell go env GOARCH)
+RUNTIME_PLATFORM = linux
+RUNTIME_ARCH = amd64
+
+ifeq ($(CLIENT_PLATFORM),windows)
+FILE_EXT=.exe
+else ifeq ($(RUNTIME_PLATFORM),windows)
+FILE_EXT=.exe
+else
+FILE_EXT=
+endif
+
+HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/v0.1.0-ralpha.1+aviation/helm
+AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/v0.1.0-ralpha.1+aviation/azure
+
+build: build-client build-runtime azure helm
+
+build-runtime:
+	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
+
+build-client:
+	$(MAKE) build-client MIXIN=porter -f mixin.mk
+	$(MAKE) build-client MIXIN=exec -f mixin.mk
+	cp bin/mixins/porter/porter$(FILE_EXT) bin/
 	cp -R templates bin/
 
-quickbuild:
-	go build -o bin/porter ./cmd/porter
-	go build -o bin/mixins/exec/exec ./cmd/exec
-	go build -o bin/mixins/helm/helm ./cmd/helm
+xbuild-all:
+	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
+	cp -R templates bin/
 
-porter:
-	$(XBUILD) -o bin/porter ./cmd/porter
-	GOOS=linux $(XBUILD) -o bin/porter-runtime ./cmd/porter
-	mkdir -p bin/mixins/porter
-	cp bin/porter* bin/mixins/porter/
+xbuild-runtime:
+	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-runtime MIXIN=exec -f mixin.mk
 
-exec:
-	mkdir -p bin/mixins/exec
-	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
-	GOOS=linux $(XBUILD) -o bin/mixins/exec/exec-runtime ./cmd/exec
+xbuild-client:
+	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-client MIXIN=exec -f mixin.mk
 
-helm:
+bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
-	$(XBUILD) -o bin/mixins/helm/helm ./cmd/helm
-	GOOS=linux $(XBUILD) -o bin/mixins/helm/helm-runtime ./cmd/helm
+	curl -f -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+	chmod +x bin/mixins/helm/helm
+	bin/mixins/helm/helm version
 
-azure:
+bin/mixins/helm/helm-runtime:
+	mkdir -p bin/mixins/helm
+	curl -f -o bin/mixins/helm/helm-runtime $(HELM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+	chmod +x bin/mixins/helm/helm-runtime
+
+helm: bin/mixins/helm/helm bin/mixins/helm/helm-runtime
+
+bin/mixins/azure/azure:
 	mkdir -p bin/mixins/azure
-	$(XBUILD) -o bin/mixins/azure/azure ./cmd/azure
-	GOOS=linux $(XBUILD) -o bin/mixins/azure/azure-runtime ./cmd/azure
+	curl -f -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+	chmod +x bin/mixins/azure/azure
+	# commented out because azure version is borked
+	#bin/mixins/azure/azure version
+
+bin/mixins/azure/azure-runtime:
+	mkdir -p bin/mixins/azure
+	curl -f -o bin/mixins/azure/azure-runtime $(AZURE_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+	chmod +x bin/mixins/azure/azure-runtime
+
+azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
 
 test: clean test-unit test-cli
 
@@ -82,12 +111,19 @@ docs:
 docs-preview:
 	hugo serve --source docs/
 
+publish:
+	$(MAKE) publish MIXIN=exec -f mixin.mk
+	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
+	if [[ "$(PERMALINK)" == "latest" ]]; then \
+	az storage blob upload-batch -d porter/$(VERSION) -s $(BINDIR)/$(VERSION); \
+	fi
+	az storage blob upload-batch -d porter/$(PERMALINK) -s $(BINDIR)/$(VERSION)
+
 clean:
 	-rm -fr bin/
 	-rm -fr cnab/
 	-rm Dockerfile porter.yaml
 	-duffle uninstall PORTER-HELLO
 	-duffle uninstall PORTER-WORDPRESS --credentials ci
-	-helm delete --purge mywordpress
 	-helm delete --purge porter-ci-mysql
 	-helm delete --purge porter-ci-wordpress
