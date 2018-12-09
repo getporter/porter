@@ -44,7 +44,14 @@ xbuild-runtime:
 xbuild-client: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
 $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
 	mkdir -p $(dir $@)
-	$(XBUILD) -o $@ ./cmd/$(MIXIN)
+	GOOS=$(CLIENT_PLATFORM) GOARCH=$(CLIENT_ARCH) $(XBUILD) -o $@ ./cmd/$(MIXIN)
+
+publish:
+	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
+	if [[ "$(PERMALINK)" == "latest" ]]; then \
+	az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(VERSION) -s $(BINDIR)/$(VERSION); \
+	fi
+	az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(VERSION)
 
 clean:
 	-rm -fr bin/mixins/$(MIXIN)

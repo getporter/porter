@@ -47,6 +47,7 @@ bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
 	curl -f -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 	chmod +x bin/mixins/helm/helm
+	bin/mixins/helm/helm version
 
 bin/mixins/helm/helm-runtime:
 	mkdir -p bin/mixins/helm
@@ -59,6 +60,7 @@ bin/mixins/azure/azure:
 	mkdir -p bin/mixins/azure
 	curl -f -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 	chmod +x bin/mixins/azure/azure
+	bin/mixins/azure/azure version
 
 bin/mixins/azure/azure-runtime:
 	mkdir -p bin/mixins/azure
@@ -107,6 +109,14 @@ docs:
 
 docs-preview:
 	hugo serve --source docs/
+
+publish:
+	$(MAKE) publish MIXIN=exec -f mixin.mk
+	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
+	if [[ "$(PERMALINK)" == "latest" ]]; then \
+	az storage blob upload-batch -d porter/$(VERSION) -s $(BINDIR)/$(VERSION); \
+	fi
+	az storage blob upload-batch -d porter/$(PERMALINK) -s $(BINDIR)/$(VERSION)
 
 clean:
 	-rm -fr bin/

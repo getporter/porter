@@ -56,3 +56,9 @@ steps:
     make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'
+
+- script: |
+    AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make xbuild-all publish
+  workingDirectory: '$(modulePath)'
+  displayName: 'Publish'
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
