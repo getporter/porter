@@ -1,3 +1,8 @@
+SHELL = bash
+
+VERSION ?= $(shell git describe --tags --dirty='+dev' --abbrev=0 2> /dev/null || echo v0)
+PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
+
 KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
