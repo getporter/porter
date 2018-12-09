@@ -1,6 +1,6 @@
 SHELL = bash
 
-VERSION ?= $(shell git describe --tags --dirty='+dev' --abbrev=0 2> /dev/null || echo v0)
+VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG ?= $(HOME)/.kube/config
@@ -120,9 +120,9 @@ publish:
 	$(MAKE) publish MIXIN=exec -f mixin.mk
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
-	az storage blob upload-batch -d porter/$(VERSION) -s $(BINDIR)/$(VERSION); \
+	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
 	fi
-	az storage blob upload-batch -d porter/$(PERMALINK) -s $(BINDIR)/$(VERSION)
+	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/mixins/porter/$(VERSION)
 
 clean:
 	-rm -fr bin/
