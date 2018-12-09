@@ -1,31 +1,3 @@
-MIXIN = porter
-
-COMMIT ?= $(shell git rev-parse --short HEAD)
-VERSION ?= $(shell git describe --tags --dirty='+dev' --abbrev=0)
-PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
-
-PKG = github.com/deislabs/porter
-LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
-XBUILD = GOARCH=amd64 CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
-BINDIR = bin/mixins/$(MIXIN)
-
-CLIENT_PLATFORM = $(shell go env GOOS)
-CLIENT_ARCH = $(shell go env GOARCH)
-RUNTIME_PLATFORM = linux
-RUNTIME_ARCH = amd64
-SUPPORTED_CLIENT_PLATFORMS = linux darwin windows
-SUPPORTED_CLIENT_ARCHES = amd64 386
-
-ifeq ($(CLIENT_PLATFORM),windows)
-FILE_EXT=.exe
-else ifeq ($(RUNTIME_PLATFORM),windows)
-FILE_EXT=.exe
-else
-FILE_EXT=
-endif
-
-REGISTRY ?= $(USER)
-
 KUBECONFIG ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
@@ -36,34 +8,27 @@ AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/v0.
 build: build-client build-runtime azure helm
 
 build-runtime:
-	mkdir -p $(BINDIR)
-	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) go build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
-	cp $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) bin/
+	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
 
 build-client:
-	mkdir -p $(BINDIR)
-	go build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
-	cp $(BINDIR)/$(MIXIN)$(FILE_EXT) bin/
+	$(MAKE) build-client MIXIN=porter -f mixin.mk
+	$(MAKE) build-client MIXIN=exec -f mixin.mk
+	cp bin/mixins/porter/porter$(FILE_EXT) bin/
 	cp -R templates bin/
 
-build-all: xbuild-runtime $(addprefix build-for-,$(SUPPORTED_CLIENT_PLATFORMS))
+xbuild-all:
+	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
 	cp -R templates bin/
-
-build-for-%:
-	$(MAKE) CLIENT_PLATFORM=$* xbuild-client
 
 xbuild-runtime:
-	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/$(VERSION)/$(MIXIN)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)$(FILE_EXT) ./cmd/$(MIXIN)
+	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-runtime MIXIN=exec -f mixin.mk
 
-xbuild-client: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
-$(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
-	mkdir -p $(dir $@)
-	$(XBUILD) -o $@ ./cmd/$(MIXIN)
-
-exec:
-	mkdir -p bin/mixins/exec
-	$(XBUILD) -o bin/mixins/exec/exec ./cmd/exec
-	GOOS=linux $(XBUILD) -o bin/mixins/exec/exec-runtime ./cmd/exec
+xbuild-client:
+	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-client MIXIN=exec -f mixin.mk
 
 bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
