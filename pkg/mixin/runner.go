@@ -100,5 +100,5 @@ func (r *Runner) getMixinPath() string {
 	if r.Runtime {
 		return path + "-runtime"
 	}
-	return path
+	return path + FileExt
 }
