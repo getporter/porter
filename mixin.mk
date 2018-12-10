@@ -1,4 +1,5 @@
 PKG = github.com/deislabs/porter
+SHELL = bash
 
 COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
