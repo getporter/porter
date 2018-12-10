@@ -121,8 +121,10 @@ publish:
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
+	az storage blob upload-batch -d porter/$(VERSION)/templates -s templates; \
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/mixins/porter/$(VERSION)
+	az storage blob upload-batch -d porter/$(PERMALINK)/templates -s templates; \
 
 clean:
 	-rm -fr bin/
