@@ -12,9 +12,9 @@ Porter is also a command line tool that can be used to build CNABs, but enforces
 
 ## Why Porter?
 
-If [Duffle](https://github.com/deislabs/duffle) and Porter can both build CNAB bundles, why was Porter created? 
+If [Duffle](https://github.com/deislabs/duffle) and Porter can both build CNABs, why was Porter created? 
 
-As mentioned above, the CNAB specification defines the general structure of a CNAB bundle. This enables tools like Duffle to support both building and installing bundles. With great flexibility can come great complexity, however. Building CNABs can be a difficult undertaking. 
+As mentioned above, the CNAB specification defines the general structure of an application bundle. This enables tools like Duffle to support both building and installing bundles. With great flexibility can come great complexity, however. Building CNABs can be a difficult undertaking. 
 
 Porter, on the other hand, provides a declarative authoring experience. Porter introduces a structured manifest that allows bundle authors to declare dependencies on other bundles, explicitly declare the capabilities that a bundle will use and how parameters, credentials and outputs are passed to individual steps within a bundle. This allows bundle authors to create reusable bundles that translate CNAB actions into Helm, Terraform, Azure or other systems. 
 
