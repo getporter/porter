@@ -5,6 +5,8 @@
 
 Porter takes the work out of creating CNAB bundles. It provides a declarative authoring experience that lets you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
 
+<p><center><strong><a href="porter-or-duffle.md">Does Porter Replace Duffle</strong></center></p>
+
 # Install
 
 ## MacOS
