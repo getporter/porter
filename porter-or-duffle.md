@@ -1,6 +1,6 @@
 # Does Porter Replace Duffle?
 
-** TL;DR: NOPE 😁 **
+**TL;DR: NOPE 😁**
 
 ## What is Duffle?
 
