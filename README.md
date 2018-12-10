@@ -5,6 +5,18 @@
 
 Porter takes the work out of creating CNAB bundles. It provides a declarative authoring experience that lets you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
 
+# Install
+
+## MacOS
+```
+curl https://deislabs.blob.core.windows.net/porter/latest/install-mac.sh | bash
+```
+
+## Linux
+```
+curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
+```
+
 ## Wordpress Bundle Today
 
 The author has to do everything:
@@ -91,17 +103,17 @@ uninstall:
 ## Mixins
 Many of the underlying tools that you want to work with already understand package management. Porter makes it easy to
 compose your bundle using these existing tools through **mixins**. A mixin handles translating Porter's manifest into
-the appropriate actions for the other tools. So far we have mixins for **exec** (bash), **helm** and **azure**. 
+the appropriate actions for the other tools. So far we have mixins for **exec** (bash), **helm** and **azure**.
 
 Anyone can write a mixin binary and drop it into the porter mixins directory (PORTER_HOME/mixins). Mixins are responsible for
 a few tasks:
 
 * **Adding lines to the Dockerfile for the invocation image.**
-    
+
     For example the helm mixin ensures that helm is installed and initialized.
 * **Translating steps from the manifest into CNAB actions.**
 
-    For example the helm mixin understands how to install/uninstall a helm chart. 
+    For example the helm mixin understands how to install/uninstall a helm chart.
 * **Collecting outputs from a step.**
 
     For example, the step to install mysql handles collecting the database host, username and password.

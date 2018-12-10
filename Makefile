@@ -122,9 +122,11 @@ publish:
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
 	az storage blob upload-batch -d porter/$(VERSION)/templates -s templates; \
+	az storage blob upload-batch -d porter/$(VERSION) -s scripts/install; \
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/mixins/porter/$(VERSION)
-	az storage blob upload-batch -d porter/$(PERMALINK)/templates -s templates; \
+	az storage blob upload-batch -d porter/$(PERMALINK)/templates -s templates
+	az storage blob upload-batch -d porter/$(PERMALINK) -s scripts/install
 
 clean:
 	-rm -fr bin/
