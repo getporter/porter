@@ -19,6 +19,11 @@ curl https://deislabs.blob.core.windows.net/porter/latest/install-mac.sh | bash
 curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
 ```
 
+## Windows
+```
+iwr "https://deislabs.blob.core.windows.net/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+```
+
 ## Wordpress Bundle Today
 
 The author has to do everything:
