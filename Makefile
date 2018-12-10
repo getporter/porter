@@ -20,8 +20,8 @@ else
 FILE_EXT=
 endif
 
-HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/v0.1.0-ralpha.1+aviation/helm
-AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/v0.1.0-ralpha.1+aviation/azure
+HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/latest/helm
+AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/latest/azure
 
 build: build-client build-runtime azure helm
 
