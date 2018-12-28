@@ -3,6 +3,8 @@ package porter
 import (
 	"testing"
 
+	"encoding/json"
+
 	"github.com/deislabs/porter/pkg/config"
 
 	"github.com/stretchr/testify/assert"
@@ -79,4 +81,36 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	execMixinExists, err := p.FileSystem.Exists(wantExecMixin)
 	require.NoError(t, err)
 	assert.True(t, execMixinExists, "The exec-runtime mixin wasn't copied into %s", wantExecMixin)
+}
+
+func TestPorter_buildBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+
+	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
+	err := p.LoadManifest()
+	require.NoError(t, err)
+
+	err = p.buildBundle("foo", "digest")
+	require.NoError(t, err)
+
+	bundleJSONExists, err := p.FileSystem.Exists("bundle.json")
+	require.NoError(t, err)
+	require.True(t, bundleJSONExists, "bundle.json wasn't written")
+
+	f, _ := p.FileSystem.Stat("bundle.json")
+	if f.Size() == 0 {
+		t.Fatalf("bundle.json is empty")
+	}
+
+	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
+	require.NoError(t, err)
+
+	var bundle Bundle
+	err = json.Unmarshal(bundleBytes, &bundle)
+	require.NoError(t, err)
+
+	require.Equal(t, bundle.Name, "HELLO")
+	require.Equal(t, bundle.Version, "0.1.0")
+	require.Equal(t, bundle.Description, "An example Porter configuration")
 }
