@@ -5,8 +5,7 @@ mixins:
 name: porter-azure-ark
 description: "A Porter example using Azure Storage and Ark"
 version: 0.1.0
-# TODO: change to deislabs
-invocationImage: quay.io/vdice/porter-azure-ark:latest
+invocationImage: deislabs/porter-azure-ark:latest
 
 credentials:
 - name: SUBSCRIPTION_ID
@@ -17,12 +16,18 @@ credentials:
   env: AZURE_CLIENT_ID
 - name: CLIENT_SECRET
   env: AZURE_CLIENT_SECRET
-- name: RESOURCE_GROUP
-  env: AZURE_RESOURCE_GROUP
 - name: kubeconfig
   path: /root/.kube/config
 
 parameters:
+- name: resource_group
+  type: string
+  default: porterdemo
+
+- name: location
+  type: string
+  default: eastus
+
 - name: storage_account_name
   type: string
   default: porterdemoaccount
@@ -37,9 +42,10 @@ install:
       type: storage
       name: porter-azure-ark
       resourceGroup:
-        source: bundle.credentials.RESOURCE_GROUP
+        source: bundle.parameters.resource_group
       parameters:
-        location: "eastus"
+        location:
+          source: bundle.parameters.location
         storageAccountName:
           source: bundle.parameters.storage_account_name
         storageContainerName:
