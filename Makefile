@@ -1,5 +1,6 @@
 SHELL = bash
 
+REGISTRY ?= $(USER)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
