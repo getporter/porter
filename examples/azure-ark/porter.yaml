@@ -72,7 +72,7 @@ install:
         credentials.secretContents.AZURE_CLIENT_SECRET:
           source: bundle.credentials.CLIENT_SECRET
         credentials.secretContents.AZURE_RESOURCE_GROUP:
-          source: bundle.credentials.RESOURCE_GROUP
+          source: bundle.parameters.resource_group
         credentials.secretContents.AZURE_STORAGE_ACCOUNT_ID:
           source: bundle.parameters.storage_account_name
         credentials.secretContents.AZURE_STORAGE_KEY:
