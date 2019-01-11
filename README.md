@@ -50,7 +50,7 @@ If I write 5 bundles that each use MySQL, I have to redo in each bundle how to m
 
 Example:
 * [Wordpress Bundle's Dockerfile](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/Dockerfile)
-* [Wordprss Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
+* [Wordpress Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
 
 ## Wordpress Bundle with Porter
 
