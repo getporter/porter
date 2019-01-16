@@ -20,7 +20,8 @@ type Manifest struct {
 	path    string
 	outputs map[string]string
 
-	Name         string                 `yaml:"image,omitempty"`
+	Name         string                 `yaml:"name,omitempty"`
+	Description  string                 `yaml:"description,omitempty"`
 	Version      string                 `yaml:"version,omitempty"`
 	Image        string                 `yaml:"invocationImage,omitempty"`
 	Mixins       []string               `yaml:"mixins,omitempty"`
