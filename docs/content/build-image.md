@@ -3,11 +3,13 @@ title: Building Invocation Images
 descriptions: How does Porter build an Invocation Image?
 ---
 
-When you build Cloud Native Application Bundle (CNAB) with Porter, a bundle.json and an invocation image are created for you. How does Porter turn your _porter.yaml_ into an invocation image? When you create a new bundle with Porter, your project is bootstrapped with a sample _porter.yaml_ and a new _cnab_ directory. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built.
+When you build Cloud Native Application Bundle (CNAB) with Porter, a bundle.json and an invocation image are created for you. How does Porter turn your _porter.yaml_ into an invocation image? This walkthrough will explain how Porter constructs the invocation image, including how mixins and other bundles allow you to compose functionality.
 
 ## Starting From Scratch
 
-To create a new CNAB with Porter, you first run `porter create`. A new `porter.yaml` is created for you:
+When you create a new bundle with Porter, your project is bootstrapped with a sample _porter.yaml_ and a new _cnab_ directory. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built. 
+
+To create a new CNAB with Porter, you first run `porter create`. The generated `porter.yaml` will look like this:
 
 ```yaml
 # This is the configuration for Porter
