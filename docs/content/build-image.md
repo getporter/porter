@@ -3,7 +3,7 @@ title: Building Invocation Images
 descriptions: How does Porter build an Invocation Image?
 ---
 
-When you build Cloud Native Application Bundle (CNAB) with Porter, a bundle.json and an invocation image are created for you. How does Porter turn your _porter.yaml_ into an invocation image? This walkthrough will explain how Porter constructs the invocation image, including how mixins and other bundles allow you to compose functionality.
+When you build a Cloud Native Application Bundle (CNAB) with Porter, a bundle.json and an invocation image are created for you. How does Porter turn your _porter.yaml_ into an invocation image? This walkthrough will explain how Porter constructs the invocation image, including how mixins and other bundles allow you to compose functionality.
 
 ## Starting From Scratch
 
@@ -171,7 +171,7 @@ latest: digest: sha256:c3187dc004475bd754235caf735d5adc449405126091594b24a38ebba
 
 ## Mixins Help The Build
 
-In the simple example above, we saw that Porter, the Dockerfile was build by the base `porter build` functionality. The example _porter.yaml_ included the `exec` mixin, resulting in the executable being included in the invocation image. The `exec` mixin doesn't require any additional components, so the `porter build` output reported that the mixin did not have any build time dependencies:
+In the simple example above, the resulting Dockerfile was built entirely by the default `porter build` functionality. The `porter build` output reported that the `exec` mixin did not have any build time dependencies:
 
 ```
 # exec mixin has no buildtime dependencies
@@ -204,7 +204,7 @@ uninstall:
     purge: true
 ```
 
-When we run `porter build` on this, the output is a different:
+When we run `porter build` on this, the output is different:
 
 ```console
 $ porter build 
@@ -229,7 +229,7 @@ RUN apt-get update && \
 RUN helm init --client-only
 ```
 
-First, the `helm` mixin is copied instead `exec` mixin. The Dockerfile looks similar in the beginning, but we can then see our next difference. This following lines of our generated Dockerfile was contributed by the `helm` mixin:
+First, the `helm` mixin is copied instead of `exec` mixin. The Dockerfile looks similar in the beginning, but we can then see our next difference. The following lines of our generated Dockerfile were contributed by the `helm` mixin:
 
 ```
 RUN apt-get update && \
@@ -264,7 +264,7 @@ Flags:
 Use "helm [command] --help" for more information about a command.
 ```
 
-The [Porter Mixin Contract](#tbd) specifies that mixins must provide a `build` sub command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the `helm` mixin, this includes installing Helm and running a `helm init --client only` to prepare the image. At build time, Porter uses the _porter.yaml_ to determine what mixins are required for the bundle. Porter then invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
+The [Porter Mixin Contract](#tbd) specifies that mixins must provide a `build` sub command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the `helm` mixin, this includes installing Helm and running a `helm init --client-only` to prepare the image. At build time, Porter uses the _porter.yaml_ to determine what mixins are required for the bundle. Porter then invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
 
 ## Including The Dependencies
 
@@ -355,4 +355,4 @@ cnab/
     └── run
 ```
 
-Porter found the `mysql` bundle by first looking in the `./bundles` directory. If nothing was found, it then checked `$PORTER_HOME\bundles` for the `mysql` bundle. In this case, it found the bundle and was able to copy it into the directory. Porter also copied the `helm` mixin into our bundle, despite the `porter.yaml` declaring only the `helm` mixin. It did this because the `mysql` dependency requires the `helm` mixin. As we acn also see from the Dockerfile, it included the mixin for the `mysql` before the `exec` mixin.
+Porter found the `mysql` bundle by first looking in the `./bundles` directory. If nothing was found, it then checked `$PORTER_HOME\bundles` for the `mysql` bundle. In this case, it found the bundle and was able to copy it into the directory. Porter also copied the `helm` mixin into our bundle, despite the `porter.yaml` declaring only the `exec` mixin. It did this because the `mysql` dependency requires the `helm` mixin. As we can also see from the Dockerfile, it included the mixin for the `mysql` before the `exec` mixin.
