@@ -56,7 +56,7 @@ install:
     helm:
       name: porter-ci-wordpress
       chart: stable/wordpress
-      repalce: true
+      replace: true
       set:
         mariadb.enabled: "false"
         externalDatabase.port: 3306

@@ -1,0 +1,88 @@
+mixins:
+  - azure
+  - helm
+ 
+name: porter-azure-ark
+description: "A Porter example using Azure Storage and Ark"
+version: 0.1.0
+invocationImage: deislabs/porter-azure-ark:latest
+
+credentials:
+- name: SUBSCRIPTION_ID
+  env: AZURE_SUBSCRIPTION_ID
+- name: TENANT_ID
+  env: AZURE_TENANT_ID
+- name: CLIENT_ID
+  env: AZURE_CLIENT_ID
+- name: CLIENT_SECRET
+  env: AZURE_CLIENT_SECRET
+- name: kubeconfig
+  path: /root/.kube/config
+
+parameters:
+- name: resource_group
+  type: string
+  default: porterdemo
+
+- name: location
+  type: string
+  default: eastus
+
+- name: storage_account_name
+  type: string
+  default: porterdemoaccount
+
+- name: storage_container_name
+  type: string
+  default: porterdemocontainer
+
+install:
+  - description: "Create Azure Storage Account and Container"
+    azure:
+      type: storage
+      name: porter-azure-ark
+      resourceGroup:
+        source: bundle.parameters.resource_group
+      parameters:
+        location:
+          source: bundle.parameters.location
+        storageAccountName:
+          source: bundle.parameters.storage_account_name
+        storageContainerName:
+          source: bundle.parameters.storage_container_name 
+    outputs:
+      - name: "STORAGE_ACCOUNT_KEY"
+        key: "STORAGE_ACCOUNT_KEY"        
+
+  - description: "Helm Install Ark"
+    helm:
+      name: porter-azure-ark
+      chart: stable/ark
+      replace: true
+      set:
+        cloudprovider: "azure"
+        bucket:
+          source: bundle.parameters.storage_container_name
+        credentials.secretContents.AZURE_SUBSCRIPTION_ID:
+          source: bundle.credentials.SUBSCRIPTION_ID
+        credentials.secretContents.AZURE_TENANT_ID:
+          source: bundle.credentials.TENANT_ID
+        credentials.secretContents.AZURE_CLIENT_ID:
+          source: bundle.credentials.CLIENT_ID
+        credentials.secretContents.AZURE_CLIENT_SECRET:
+          source: bundle.credentials.CLIENT_SECRET
+        credentials.secretContents.AZURE_RESOURCE_GROUP:
+          source: bundle.parameters.resource_group
+        credentials.secretContents.AZURE_STORAGE_ACCOUNT_ID:
+          source: bundle.parameters.storage_account_name
+        credentials.secretContents.AZURE_STORAGE_KEY:
+          source: bundle.outputs.STORAGE_ACCOUNT_KEY
+        configuration.persistentVolumeProvider.name: "azure"
+        configuration.persistentVolumeProvider.config.apitimeout: "15m"
+        configuration.backupStorageProvider.name: "azure"
+        configuration.backupStorageProvider.bucket:
+          source: bundle.parameters.storage_container_name
+uninstall:
+  - description: "Uninstall Ark"
+    azure:
+      name: porter-azure-ark
