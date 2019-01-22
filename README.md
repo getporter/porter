@@ -1,9 +1,43 @@
+<img align="right" src="docs/static/images/porter-logo.png" width="140px" />
+
 [![Build Status](https://dev.azure.com/cnlabs/porter/_apis/build/status/deislabs.porter?branchName=master)](https://dev.azure.com/cnlabs/porter/_build/latest?definitionId=6?branchName=master)
+
+
 # Porter - We got your baggage, bae
 
-<p><center><i>Porter makes authoring bundles easier</i></center></p>
+<p align="center"><i>Porter makes authoring bundles easier</i></p>
 
 Porter takes the work out of creating CNAB bundles. It provides a declarative authoring experience that lets you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
+
+# FAQ
+* [What is CNAB?](https://cnab.io)
+* [Does Porter Replace Duffle?](porter-or-duffle.md)
+
+# Install
+
+We have a few release types available for you to use:
+
+* **canary**: tip of master
+* **vX.Y.Z**: official release
+* **latest**: most recent release
+
+You can change the URLs below replacing `latest` with `canary` or a version number
+like `v0.1.0-ralpha.1+aviation`.
+
+## MacOS
+```
+curl https://deislabs.blob.core.windows.net/porter/latest/install-mac.sh | bash
+```
+
+## Linux
+```
+curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
+```
+
+## Windows
+```
+iwr "https://deislabs.blob.core.windows.net/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+```
 
 ## Wordpress Bundle Today
 
@@ -16,7 +50,7 @@ If I write 5 bundles that each use MySQL, I have to redo in each bundle how to m
 
 Example:
 * [Wordpress Bundle's Dockerfile](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/Dockerfile)
-* [Wordprss Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
+* [Wordpress Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
 
 ## Wordpress Bundle with Porter
 
@@ -91,17 +125,17 @@ uninstall:
 ## Mixins
 Many of the underlying tools that you want to work with already understand package management. Porter makes it easy to
 compose your bundle using these existing tools through **mixins**. A mixin handles translating Porter's manifest into
-the appropriate actions for the other tools. So far we have mixins for **exec** (bash), **helm** and **azure**. 
+the appropriate actions for the other tools. So far we have mixins for **exec** (bash), **helm** and **azure**.
 
 Anyone can write a mixin binary and drop it into the porter mixins directory (PORTER_HOME/mixins). Mixins are responsible for
 a few tasks:
 
 * **Adding lines to the Dockerfile for the invocation image.**
-    
+
     For example the helm mixin ensures that helm is installed and initialized.
 * **Translating steps from the manifest into CNAB actions.**
 
-    For example the helm mixin understands how to install/uninstall a helm chart. 
+    For example the helm mixin understands how to install/uninstall a helm chart.
 * **Collecting outputs from a step.**
 
     For example, the step to install mysql handles collecting the database host, username and password.

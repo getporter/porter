@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml

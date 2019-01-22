@@ -273,8 +273,9 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	fmt.Printf("\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
 	bundle := Bundle{
-		Name:    p.Config.Manifest.Name,
-		Version: p.Config.Manifest.Version,
+		Name:        p.Config.Manifest.Name,
+		Description: p.Config.Manifest.Description,
+		Version:     p.Config.Manifest.Version,
 	}
 	image := InvocationImage{
 		Image:     invocationImage,
@@ -285,7 +286,6 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	bundle.Parameters = p.generateBundleParameters()
 	bundle.Credentials = p.generateBundleCredentials()
 	return p.WriteFile(bundle, 0644)
-
 }
 
 func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
