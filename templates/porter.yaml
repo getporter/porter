@@ -7,6 +7,7 @@ mixins:
 
 name: HELLO
 version: 0.1.0
+description: "An example Porter configuration"
 invocationImage: porter-hello:latest
 
 install:
