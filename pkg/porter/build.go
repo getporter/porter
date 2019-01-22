@@ -64,9 +64,6 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 	lines := make([]string, 0, 10)
 
 	lines = append(lines, p.buildFromSection()...)
-	lines = append(lines, p.buildCNABSection()...)
-	lines = append(lines, p.buildPorterSection()...)
-	lines = append(lines, p.buildCMDSection())
 	lines = append(lines, p.buildCopySSL())
 
 	mixinLines, err := p.buildMixinsSection()
@@ -74,6 +71,11 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
 	}
 	lines = append(lines, mixinLines...)
+
+	// Defer cnab/porter.yaml copy lines until very last, as these perhaps more subject to change
+	lines = append(lines, p.buildCNABSection()...)
+	lines = append(lines, p.buildPorterSection()...)
+	lines = append(lines, p.buildCMDSection())
 
 	fmt.Fprintln(p.Out, lines)
 
