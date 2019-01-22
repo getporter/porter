@@ -1,4 +1,131 @@
 baseURL = "/"
 languageCode = "en-us"
 title = "Porter"
-theme = "learn"
+theme = "porter"
+
+# Docs Navigation
+
+[params]
+  title = "Porter"
+  author = "Carolyn Van Slyck"
+  description = "Porter - A Cloud Native Package Manager"
+
+canonifyURLs = "false"
+relativeURLs = "true"
+pluralizeListTitles = "false"
+plainIdAnchors = "true"
+defaultContentLanguage = "en"
+
+[[menu.main]]
+  name = "Getting Started"
+  url = "/getting-started"
+  identifier = "getting-started"
+  weight = 2
+  [[menu.main]]
+    name = "Install Porter"
+    url = "/install"
+    identifier = "install"
+    weight = 11
+    parent = "getting-started"
+  [[menu.main]]
+    name = "QuickStart"
+    url = "/quickstart"
+    identifier = "quickstart"
+    weight = 12
+    parent = "getting-started"
+  [[menu.main]]
+    name = "Finding Bundles"
+    url = "/finding-bundles"
+    identifier = "finding-bundles"
+    weight = 16
+    parent = "getting-started"
+
+[[menu.main]]
+  name = "Porter Commands"
+  url = "/cli"
+  identifier = "cli"
+  weight = 102
+  [[menu.main]]
+    name = "Porter"
+    url = "/porter"
+    identifier = "porter-command"
+    weight = 121
+    parent = "cli"
+  [[menu.main]]
+    name = "Command Completion"
+    url = "/command-completion"
+    identifier = "command-completion"
+    weight = 199
+    parent = "cli"
+  [[menu.main]]
+    name = "porter create"
+    url = "/porter-create"
+    identifier = "porter-create"
+    weight = 123
+    parent = "cli"
+  [[menu.main]]
+    name = "porter build"
+    url = "/porter-build"
+    identifier = "porter-build"
+    weight = 124
+    parent = "cli"
+  [[menu.main]]
+    name = "porter run"
+    url = "/porter-run"
+    identifier = "porter-run"
+    weight = 125
+    parent = "cli"
+  [[menu.main]]
+    name = "porter version"
+    url = "/porter-version"
+    identifier = "porter-version"
+    weight = 126
+    parent = "cli"
+
+[[menu.main]]
+  name = "Authoring Bundles"
+  url = "/authoring-bundles"
+  identifier = "authoring-bundles"
+  weight = 200
+  [[menu.main]]
+    name = "Intro to Bundles"
+    url = "/bundles"
+    identifier = "bundles"
+    weight = 201
+    parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Using Mixins"
+    url = "/using-mixins"
+    identifier = "using-mixins"
+    weight = 202
+    parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Signing Bundles"
+    url = "/signed-bundles"
+    identifier = "signed-bundles"
+    weight = 206
+    parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Distributing Bundles"
+    url = "/distributing-bundles"
+    identifier = "distributing-bundles"
+    weight = 207
+    parent = "authoring-bundles"
+
+[[menu.main]]
+  name = "Developing Mixins"
+  url = "/mixin-dev-guide"
+  identifier = "mixin-dev-guide"
+  weight = 300
+
+[[menu.main]]
+  name = "Architecture"
+  url = "/architecture"
+  identifier = "architecture"
+  weight = 501
+
+[[menu.main]]
+  name = "CNAB Spec"
+  url = "https://cnab.io"
+  identifier = "cnab"
+  weight = 600

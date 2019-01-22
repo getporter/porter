@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="{{ with .Site.LanguageCode }}{{ . }}{{ else }}en-US{{ end }}">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Porter Docs | {{ .Title }}</title>
+
+  <meta name="description" content="{{ with .Site.Params.description }}{{ . }}{{ end }}">
+  <meta name="author" content="{{ with .Site.Params.name }}{{ . }}{{ end }}">
+  <meta property="og:title" content="Porter - A Cloud Native Package Manager" />
+  <meta property="og:url" content="{{ .Site.BaseURL }}" />
+  <meta property="og:image" content="{{ .Site.BaseURL }}/src/img/favicon-152.png" />
+  <meta name="google-site-verification" content="dCa3wS47cErhx0IpaxbB85NfcOP-vFxevknVk6fzf5I" />
+
+  <link rel="icon" href="/src/img/favicon-152.png" type="image/x-icon">
+  <link rel="apple-touch-icon-precomposed" href="/src/img/apple-touch-icon-precomposed.png">
+
+  <link href="/src/css/styles.min.css" rel="stylesheet">
+</head>
+
+<body id="landing" class="home">
+
+  
+
+  <div class="off-canvas-wrap" data-offcanvas>
+    <div class="inner-wrap">
+
+      <nav class="home-nav">
+        <h1>
+          <a href="{{ .Site.BaseURL }}" title="porter.sh">
+            {{ partial "logo.html" . }}
+          </a>
+        </h1>
+
+        <ul class="inline">
+          {{ partial "nav.html" . }}
+        </ul>
+      </nav>
+
+      <section class="main-section">
+
+        <div id="helm" class="home">
+
+          <section class="billboard">
+            <div class="container">
+              <h1>A Cloud Native Package Manager</h1>
+              <h2>Porter understands that clouds are messy things, and is here to pack <em>and</em> carry your bags.</h2>
+            </div>
+          </section>
+
+          <div class="container content">
+            <div class="row">
+              <div class="small-12 medium-6 columns">
+                <h2>What is Porter?</h2>
+
+                <p>Porter is great. You should use it. Your whole family should too.</p>
+
+                <h2>The CNAB Spec</h2>
+
+                <p>Cloud Native Application Bundles, or CNAB, are funny farts that are cloud shaped bundles of joy.</p>
+              </div>
+
+              <div class="hide-for-small-down medium-6 columns">
+                <img src="{{ .Site.BaseURL }}src/img/chart-illustration.png" alt="Porter Overview" class="helm-overview-img">
+              </div>
+            </div>
+          </div>
+
+          <div class="container helm-features">
+            <div class="row ">
+              <div class="small-12 columns">
+                <h2>Why Teams <i class="fa fa-heart"></i> Helm</h2>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="small-6 medium-6 large-4 columns">
+                <img src="{{ .Site.BaseURL }}src/img/feature-icon-1.png" alt="Manage Complexity">
+                <h3>Manage Complexity</h3>
+                <p>Bundles describe even the most complex apps, provide repeatable application installation, and serve as a single point of authority.</p>
+              </div>
+              <div class="small-6 medium-6 large-4 columns">
+                <img src="{{ .Site.BaseURL }}src/img/feature-icon-2.png" alt="Easy Updates">
+                <h3>Easy Updates</h3>
+                <p>Take the pain out of updates with in-place upgrades and custom hooks.</p>
+              </div>
+              <div class="small-6 medium-6 large-4 columns">
+                <img src="{{ .Site.BaseURL }}src/img/feature-icon-3.png" alt="Easy Sharing">
+                <h3>Simple Sharing</h3>
+                <p>Bundles are easy to version, share, and host on public or private servers.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="container content">
+            <div class="row">
+
+              <div class="small-12 medium-12 large-7 get-helm columns" align="center">
+                <h2>Install Porter!</h2>
+                <p><a href="{{ .Site.BaseURL }}install"><img src="{{ .Site.BaseURL }}images/porter-logo.png" alt="Install Porter" width="150"></a></p>
+              </div>
+
+              <div class="small-12 medium-12 large-5 get-charts columns">
+                <h2>Get Charts</h2>
+
+                <p>Looking for sample charts?</p>
+
+                <p><a href="http://github.com/helm/charts"><img src="{{ .Site.BaseURL }}src/img/helm-charts.png" alt="Sample Charts"></a></p>
+
+                <p>Visit the <a href="http://github.com/helm/charts">Helm > Charts</a> repo on <a href="http://github.com/helm/charts">github.com/helm/charts</a> to explore and use community charts.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="container content helm-community">
+            <div class="row">
+              <div class="small-12 medium-12 columns">
+                <h2 class="text-center">Join the Community</h2>
+                <p class="text-center">More information about the Helm project, and how to contribute.</p>
+
+                <div class="row">
+                  <div class="small-12 medium-12 large-5 helm-community-links columns">
+                    <ul>
+                      <li><i class="fa fa-book"></i> <a href="https://docs.helm.sh/">Read the Docs</a></li>
+                      <li><i class="fa fa-tags"></i> <a href="https://github.com/helm/helm/releases">Releases</a></li>
+                      <li><i class="fa fa-github"></i> <a href="https://github.com/helm/helm">Helm on Github</a></li>
+                      <li><i class="fa fa-comments"></i> <a href="http://slack.k8s.io/">Chat #helm-users on Slack</a></li>
+                    </ul>
+                  </div>
+
+                  <div class="hide-for-medium-down medium-7 helm-community-blocks columns">
+                    <section>
+                      <h4>SIG-Apps</h4>
+                      <p><a href="https://github.com/kubernetes/community/blob/master/sig-apps/README.md">SIG-Apps</a> is a Special Interest Group for deploying and operating apps in Kubernetes. They <a href="https://github.com/kubernetes/community/blob/master/sig-apps/README.md">meet each week</a> to demo and discuss tools and projects.</p>
+                      <iframe data-proofer-ignore width="220" height="130" src="" data-src="//youtube.com/embed/?listType=playlist&list=PLI1CvzwXi1cUVsxm2QBIyJgeCkf62ylun" frameborder="0" allowfullscreen></iframe>
+
+                      <script type="text/javascript">
+                        var vidDefer = document.getElementsByTagName('iframe');
+                        function videoLoad() {
+                          for (var i=0; i<vidDefer.length; i++) {
+                            if(vidDefer[i].getAttribute('data-src')) {
+                              vidDefer[i].setAttribute('src',vidDefer[i].getAttribute('data-src'));
+                            }
+                          }
+                        };
+                        window.onload = videoLoad;
+                      </script>
+                    </section>
+
+                    <section>
+                      <h4>Developer Standups</h4>
+                      <p>Each week, the Helm teams meet on <a href="https://zoom.us/j/4526666954">Zoom</a>.</p>
+                      <div class="right">
+                        <a href="https://github.com/helm/community/blob/master/communication.md">
+                          <i class="fa fa-calendar"></i>
+                          <em>Thursdays</em>
+                          <small>9:30-10am, PT</small>
+                        </a>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        
+        </div> <!-- / #helm -->
+
+      </section>
+
+      <footer class="row helm-contrib-logos">
+        <div class="small-12 medium-12 large-12 columns text-center">
+          <img src="{{ .Site.BaseURL }}src/img/helm-logo.svg" style="max-width: 140px;" alt="Helm is supported by and built with a community of over 250 contributors" class="helm-logo">
+      
+          <hr>
+          <p class="contributors">Helm is supported by and built with a community of over 250 developers.</p>
+          <hr>
+      
+          <div class="row helm-contrib-logos contrib-logos-1">
+            <a target="_blank" href="http://microsoft.com/"><img src="{{ .Site.BaseURL }}src/img/logowall/microsoft.png" alt="Microsoft"></a>
+            <a target="_blank" href="https://google.com/"><img src="{{ .Site.BaseURL }}src/img/logowall/google.png" alt="Google"></a>
+            <a target="_blank" href="https://codefresh.io/"><img src="{{ .Site.BaseURL }}src/img/logowall/codefresh.png" alt="Codefresh"></a>
+            <a target="_blank" href="https://bitnami.com/"><img src="{{ .Site.BaseURL }}src/img/logowall/bitnami.png" alt="Bitnami"></a>
+            <a target="_blank" href="https://www.ticketmaster.com/"><img src="{{ .Site.BaseURL }}src/img/logowall/tm.png" alt="Ticketmaster"></a>
+            <a target="_blank" href="https://www.codecentric.de"><img src="{{ .Site.BaseURL }}src/img/logowall/codecentric.png" alt="codecentric AG"></a>
+          </div>
+      
+          <p><small>...and many other wonderful <a href="https://github.com/helm/helm/blob/master/OWNERS" target="_blank">helm</a> and <a href="https://github.com/helm/charts/blob/master/OWNERS" target="_blank">charts</a> core maintainers.</small></p>
+        </div>
+      </footer>
+    
+      <footer class="row full-width">
+        <div class="small-12 medium-12 large-12 columns cncf">
+          <a href="https://www.cncf.io/" title="Cloud Native Computing Foundation" target="_blank">
+            <img src="{{ .Site.BaseURL }}src/img/cncf-color.png" alt="We are a Cloud Native Computing Foundation project" class="">
+            <p>We are a Cloud Native Computing Foundation incubating project.</p>
+          </a>
+        </div>
+      </footer>
+
+
+      <a class="exit-off-canvas" data-proofer-ignore></a>
+    </div>
+  </div>
+
+  <!-- Google Analytics -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-42867143-2', 'auto');
+    ga('send', 'pageview');
+  </script>
+  <!-- End Google Analytics -->
+
+  <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+
+</body>
+</html>
