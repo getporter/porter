@@ -12,6 +12,7 @@ CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
+BASEURL_FLAG ?= 
 
 ifeq ($(CLIENT_PLATFORM),windows)
 FILE_EXT=.exe
@@ -112,7 +113,7 @@ init-porter-home-for-ci:
 
 .PHONY: docs
 docs:
-	hugo --source docs/
+	hugo --source docs/ $(BASEURL_FLAG)
 
 docs-preview:
 	hugo serve --source docs/
