@@ -20,7 +20,7 @@ mixins:
   - exec
 
 name: HELLO
-version: 0.1.0
+version: "0.1.0"
 invocationImage: porter-hello:latest
 
 install:
@@ -117,7 +117,7 @@ Copying mixin porter ===>
 
 The first thing that happens after running `porter build`, Porter will copy any dependencies and mixins into the `cnab\app` directory of your bundle. 
 
-Porter locates available mixins in the `$PORTER_HOME\mixins` directory. In this example, we are using the `exec` mixin, so the `$PORTER_HOME\mixins\exec` directory will be copied into the invocation image. When a mixin is [installed](#tbd) for use with Porter, it contains binaries for multiple operating systems, including Linux and Mac OS. The correct binary will be copied into the current `cnab` directory for use in the invocation image.
+Porter locates available mixins in the `$PORTER_HOME\mixins` directory. By default, the Porter home directory is located in `~/.porter`. In this example, we are using the `exec` mixin, so the `$PORTER_HOME\mixins\exec` directory will be copied into the invocation image. When a mixin is [installed](#tbd) for use with Porter, it contains binaries for multiple operating systems. The correct binary will be copied into the current `cnab` directory for use in the invocation image.
 
 After copying any dependencies and mixins to the `cnab` directory of the bundle, a Dockerfile is generated:
 
@@ -133,7 +133,7 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 # exec mixin has no buildtime dependencies
 ```
 
-Porter starts the Dockerfile by using two base images: `quay.io/deis/lightweight-docker-go:v0.2.0` and `debian:stretch`. Next, the `cnab` directory is added to the image. This will include any contributions from dependencies and the mixin executables. Next, the _porter.yaml_ is added to the image. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
+Porter starts the Dockerfile by using a base image. The base image is currently not configurable. Next, the `cnab` directory is added to the image. This will include any contributions from dependencies and the mixin executables. Next, the _porter.yaml_ is added to the image. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
 
 Once this is completed, the image is built and pushed to the specified Docker registry:
 
@@ -184,7 +184,7 @@ mixins:
 - helm
 
 name: mysql
-version: 0.1.0
+version: "0.1.0"
 invocationImage: jeremyrickard/porter-mysql:latest
 
 credentials:
@@ -196,7 +196,7 @@ install:
   helm:
     name: porter-ci-mysql
     chart: stable/mysql
-    version: 0.10.2
+    version: "0.10.2"
 uninstall:
 - description: "Uninstall MySQL"
   helm:
@@ -275,7 +275,7 @@ mixins:
 - exec 
 
 name: dependency-example 
-version: 0.1.0
+version: "0.1.0"
 invocationImage: jeremyrickard/dependency-example:latest
 
 dependencies:
@@ -301,7 +301,7 @@ uninstall:
       - echo Goodbye World
 ```
 
-This bundle, for example, declares a dependency on a bundle named `mysql`. The CNAB specification doesn't provide a mechanism for handling dependency resolution. Porter addresses this capability by resolving any dependencies at build time, including the contents of each dependency in the invocation image. At runtime the contents of that bundle will therefore be in the bundle and the Porter runtime component can execute them successfully.
+This bundle, for example, declares a dependency on a bundle named `mysql`. The CNAB specification doesn't provide a mechanism for handling dependency resolution. Porter supplements the CNAB spec to support dependencies by resolving any dependencies at build time, including the contents of each dependency in the invocation image. At runtime the contents of that bundle will therefore be in the bundle and the Porter runtime component can execute them successfully.
 
 ```console
 $ porter build
@@ -356,3 +356,5 @@ cnab/
 ```
 
 Porter found the `mysql` bundle by first looking in the `./bundles` directory. If nothing was found, it then checked `$PORTER_HOME\bundles` for the `mysql` bundle. In this case, it found the bundle and was able to copy it into the directory. Porter also copied the `helm` mixin into our bundle, despite the `porter.yaml` declaring only the `exec` mixin. It did this because the `mysql` dependency requires the `helm` mixin. As we can also see from the Dockerfile, it included the mixin for the `mysql` before the `exec` mixin.
+
+In the end, regardless of whether there are dependencies, the result is a single invocation image with all of the necessary pieces: the porter-runtime, selected mixins and any relevant configuration files, scripts, charts or manifests. That invocation image can then be executed by any tool that supports the CNAB spec, while still taking advantage of the Porter capabilities.
