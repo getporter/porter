@@ -114,39 +114,55 @@ defaultContentLanguage = "en"
 
 [[menu.main]]
   name = "Developing Mixins"
-  url = "/mixin-dev-guide"
-  identifier = "mixin-dev-guide"
+  identifier = "developing-mixins"
   weight = 300
+  [[menu.main]]
+    name = "Overview"
+    url = "/mixin-dev-guide"
+    identifier = "mixin-dev-guide"
+    weight = 301
+    parent = "developing-mixins"
   [[menu.main]]
     name = "Mixin Architecture"
     url = "/mixin-architecture"
     identifier = "mixin-architecture"
     weight = 310
-    parent = "mixin-dev-guide"
+    parent = "developing-mixins"
   [[menu.main]]
     name = "Distributing Mixins"
     url = "/mixin-distribution"
     identifier = "mixin-distribution"
     weight = 311
-    parent = "mixin-dev-guide"
+    parent = "developing-mixins"
 
 [[menu.main]]
-  name = "Architecture"
-  url = "/architecture"
-  identifier = "architecture"
+  name = "Porter Architecture"
+  identifier = "porter-architecture"
   weight = 400
+  [[menu.main]]
+    name = "Overview"
+    url = "/architecture"
+    identifier = "architecture"
+    weight = 401
+    parent = "porter-architecture"
   [[menu.main]]
     name = "Buildtime"
     url = "/achitecture-buildtime"
     identifier = "architecture-buildtime"
-    weight = 401
-    parent = "architecture"
+    weight = 402
+    parent = "porter-architecture"
   [[menu.main]]
     name = "Runtime"
     url = "/achitecture-runtime"
     identifier = "architecture-runtime"
-    weight = 402
-    parent = "architecture"
+    weight = 403
+    parent = "porter-architecture"
+  [[menu.main]]
+    name = "Invocation Images"
+    url = "/build-image"
+    identifier = "build-image"
+    weight = 404
+    parent = "porter-architecture"
 
 [[menu.main]]
   name = "References"

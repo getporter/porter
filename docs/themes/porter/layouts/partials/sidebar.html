@@ -19,7 +19,7 @@
           <ul class="current">
             {{ range .Children.ByWeight }}
             <li class="toctree-l2 {{if $.IsMenuCurrent "main" . }} active {{end}}">
-              <a href="../../docs/{{ .Parent | safeHTMLAttr }}/#{{ .URL | safeHTMLAttr }}" title="Switch to {{ .Name }}">
+              <a href="{{ .URL | safeHTMLAttr }}" title="{{ .Name }}">
                 {{ .Name }}
               </a>
             </li>
