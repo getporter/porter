@@ -1,15 +1,6 @@
-## Take me to the source code!
-<https://github.com/deislabs/porter>
-
-## Who is Porter For?
-* [Personas](/personas)
-
-## What is Porter?
-
-Porter is a helper binary that [Duffle](https://github.com/deis/duffle) can build
-into your CNAB invocation images. It provides a declarative authoring experience
-for CNAB bundles that allows you to reuse existing bundles, and understands how to
-translate CNAB actions to Helm, Terraform, Azure, etc.
+Porter takes the work out of creating CNAB bundles. It provides a declarative authoring 
+experience that lets you to reuse existing bundles, and understands how to translate 
+CNAB actions to Helm, Terraform, Azure, etc.
 
 ```console
 $ porter create
