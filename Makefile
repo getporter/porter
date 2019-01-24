@@ -67,8 +67,7 @@ bin/mixins/azure/azure:
 	mkdir -p bin/mixins/azure
 	curl -f -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
 	chmod +x bin/mixins/azure/azure
-	# commented out because azure version is borked
-	#bin/mixins/azure/azure version
+	bin/mixins/azure/azure version
 
 bin/mixins/azure/azure-runtime:
 	mkdir -p bin/mixins/azure
