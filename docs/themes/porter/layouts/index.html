@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="{{ with .Site.LanguageCode }}{{ . }}{{ else }}en-US{{ end }}">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Porter</title>
+
+  <meta name="description" content="{{ with .Site.Params.description }}{{ . }}{{ end }}">
+  <meta name="author" content="{{ with .Site.Params.name }}{{ . }}{{ end }}">
+  <meta property="og:title" content="Porter - A Friendlier Cloud Installer" />
+  <meta property="og:url" content="{{ .Site.BaseURL }}" />
+  <meta property="og:image" content="{{ .Site.BaseURL }}/src/img/favicon-152.png" />
+  <meta name="google-site-verification" content="dCa3wS47cErhx0IpaxbB85NfcOP-vFxevknVk6fzf5I" />
+
+  <link rel="icon" href="/src/img/favicon-152.png" type="image/x-icon">
+
+  <link href="/src/css/styles.min.css" rel="stylesheet">
+</head>
+
+<body id="landing" class="home">
+  <div class="off-canvas-wrap" data-offcanvas>
+    <div class="inner-wrap">
+
+      <nav class="home-nav">
+        <h1>
+          <a href="{{ .Site.BaseURL }}" title="porter.sh">
+            {{ partial "logo.html" . }}
+          </a>
+        </h1>
+
+        <ul class="inline">
+          {{ partial "nav.html" . }}
+        </ul>
+      </nav>
+
+      <section class="main-section">
+
+        <div id="helm" class="home">
+
+          <section class="billboard">
+            <div class="container">
+              <h1>A Friendlier Cloud Installer</h1>
+              <h2>Porter understands that clouds are messy things, and is here to pack <em>and</em> carry your bags.</h2>
+            </div>
+          </section>
+
+          <div class="container content">
+            <div class="row">
+              <div class="small-12 medium-6 columns">
+                <h2>What is Porter?</h2>
+
+                <p>When we deploy to the cloud, most of us aren’t dealing with just a single cloud provider or toolchain. 
+                  The simplest of applications today need nginx, Let’s Encrypt, persistent file storage, DNS, and 
+                  somewhere in there is your application. One app is installed with Helm, another with the cloud provider’s cli
+                  and it’s all glued together with magic bash scripts.
+
+                <p>That is a lot to figure out! 😅</p>
+
+                <p>Porter is a cloud installer that helps you manage everything 
+                  together in a single bundle, focusing on what you know best: your application.</p>
+              </div>
+
+              <div class="hide-for-small-down medium-6 columns">
+                <img src="{{ .Site.BaseURL }}src/img/chart-illustration.png" alt="Porter Overview" class="helm-overview-img">
+              </div>
+            </div>
+          </div>
+
+          <div class="container helm-features">
+            <div class="row ">
+              <div class="small-12 columns">
+                <h2>Porter Features</h2>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="small-6 medium-6 large-4 columns">
+                <span style="font-size: 5em">👜 🧳 </span>
+                <h3>Install your app and its baggage</h3>
+                <p>Bundle up not just the app, but everything it needs to run in the cloud
+                </p>
+              </div>
+              <div class="small-6 medium-6 large-4 columns">
+                <span style="font-size: 5em">👩🏾‍🔬 🧬 </span>
+                <h3>Build bundles smarter, not harder</h3>
+                <p>Use mixins for common tools and clouds, and depend on existing bundles.</p>
+              </div>
+              <div class="small-6 medium-6 large-4 columns">
+                <span style="font-size: 5em">🚂 📦 </span>
+                <h3>Surprise! It does package management too</h3>
+                <p>Package and version your bundle, then distribute it for others to use.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="container content">
+            <div class="row">
+
+              <div class="small-12 medium-12 large-7 get-helm columns" align="center">
+                <h2>Install Porter!</h2>
+                <p><a href="{{ .Site.BaseURL }}install"><img src="{{ .Site.BaseURL }}images/porter-logo.png" alt="Install Porter" width="150"></a></p>
+              </div>
+
+              <div class="small-12 medium-12 large-5 get-charts columns">
+                <h2>Find Bundles</h2>
+
+                <p>Looking for prebuilt bundles?</p>
+
+                <p><a href="#TODO"><img src="{{ .Site.BaseURL }}src/img/helm-charts.png" alt="Example Bundles"></a></p>
+
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- / #helm -->
+
+      </section>
+
+      <a class="exit-off-canvas" data-proofer-ignore></a>
+    </div>
+  </div>
+
+  <!-- Google Analytics -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-TODO', 'auto');
+    ga('send', 'pageview');
+  </script>
+  <!-- End Google Analytics -->
+
+  <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+
+</body>
+</html>

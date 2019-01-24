@@ -3,6 +3,12 @@
 # Add steps that test, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
+trigger:
+  branches:
+    include:
+      - refs/heads/master
+      - refs/tags/*
+
 pool:
   vmImage: 'Ubuntu 16.04'
 
