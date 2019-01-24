@@ -1,6 +1,6 @@
 ---
-title: Mixins 
-descriptions: How do mixins work?
+title: Mixin Architecture 
+descriptions: How do mixins work? Hotwiring a porter mixin.
 ---
 
 ## What is a Mixin
