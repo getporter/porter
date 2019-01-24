@@ -5,6 +5,8 @@ descriptions: How do mixins work?
 
 ## What is a Mixin
 
+Porter provides two major capabilities: a bundle building capability and with a bundle run time capability.
+
 A cloud native application bundle built with Porter consists of two main components: the Porter runtime and a declarative manifest file named `porter.yaml`.
 
 The Porter runtime provides the entry point for the bundle and is responsible for executing the desired functionality that has been expressed in the `porter.yaml`. The `porter.yaml` declares what should happen for bundle action. Each bundle action is defined as one or more operations, or steps. Each step definition defines a discrete piece of functionality, such installing a Helm chart or creating a service in a cloud provider. The Porter runtime is responsible for executing each step, but does not implement the desired functionality itself. The functionality declared in each step is actually provided by components called mixins. Porter invokes the mixin by passing the relevant section of the `porter.yaml` to the mixin via standard input. The mixin accepts the YAML document that describes the desired result and performs the desired action. Once finished, the mixin wil write any desired outputs to standard out and return control to the Porter runtime.
@@ -30,13 +32,11 @@ install:
 
 ## Mixin API
 
-Porter provides a contract that mixins must fulfill in order to be included in the Porter ecosystem. This contract specifies how Porter will execute the mixins, as show above, but also specifies how the mixin is used to build the invocation image for the bundle. Additionally, the contract specifies how a mixin can specify the inputs it can accept and the outputs that it can provide.
+Porter defines a contract that mixins must fulfill in order to be included in the Porter ecosystem. This contract specifies how Porter will execute the mixins, as show above, but also specifies how the mixin is used to build the invocation image for the bundle. Additionally, the contract specifies how a mixin can specify the inputs it can accept and the outputs that it can provide.
 
 ### Build Time
 
-The previous example introduced how mixins are used when a bundle is executed. In the case of the `exec` mixin, the resulting bundle invocation image already has everything needed to execute the mixin. Other mixins may require additional runtime software. The `helm` mixin, for example, requires the [Helm](https://helm.sh/) client at runtime. Porter is responsible for building the invocation image for the bundle, so it needs to know what each mixin will need so that it can be included in the bundle. The mixin is responsible for providing any relevant lines to ensure that the generated invocation image Dockerfile has all required runtime components.
-
-In order to provide these lines, Porter expects that a mixin will provide a `build` command. This command should output any necessary Dockerfile commands to standard out. To see this in action, consider the `helm` mixin:
+The previous example introduced how mixins are used when a bundle is executed. In the case of the `exec` mixin, the resulting bundle invocation image already has everything needed to execute the mixin. Other mixins may require additional runtime software. The `helm` mixin, for example, requires the [Helm](https://helm.sh/) client at runtime. Porter is responsible for building the invocation image for the bundle, so it needs to know what each mixin will need so that it can be included in the bundle. The mixin is responsible for providing any relevant lines to ensure that the generated invocation image Dockerfile has all required runtime components. Porter expects that the mixin will provide any relevant Dockerfile additions through a `build` command. The `build` should output any necessary Dockerfile commands to standard out. To see this in action, consider the `helm` mixin:
 
 ```console
 $ ./bin/mixins/helm/helm build
@@ -72,7 +72,7 @@ Available Commands:
   build       Generate Dockerfile lines for the bundle invocation image
   help        Help about any command
   install     Execute the install functionality of this mixin
-  install     Execute the install functionality of this mixin
+  uninstall   Execute the uninstall functionality of this mixin
   version     Print the mixin version
 
 Flags:
@@ -82,7 +82,7 @@ Flags:
 Use "helm [command] --help" for more information about a command.
 ```
 
-Porter will pass the entire step, in YAML form, to the mixin. Porter expects the step YAML to have a `description` field and an array of 0 or more `outputs`, but allows each mixin to process the remaining structure of the YAML as needed. For example, the `helm` mixin expects to be passed a YAML document like this:
+Porter will pass the entire step, in YAML form, to the mixin. Porter expects the step YAML to have a `description` field and an array of optional `outputs`, and allows each mixin to process the remaining structure of the YAML as needed. For example, the `helm` mixin expects to be passed a YAML document like this:
 
 ```yaml
   description: "Install MySQL"
