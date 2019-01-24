@@ -52,16 +52,19 @@ steps:
     make bootstrap build
     cp bin/duffle $(GOPATH)/bin/
   displayName: 'Install duffle'
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
 - task: DownloadSecureFile@1
   inputs:
     secureFile: kubeconfig
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
 - script: |
     export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
     make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'Integration Test'
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
 - script: |
     AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make xbuild-all publish
