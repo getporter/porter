@@ -1,0 +1,47 @@
+/* ==
+Helm
+*/
+
+// point to the node_modules directory
+$npm : '../../../../../node_modules';
+
+// load reset (normalize)
+@import "../../../../../node_modules/foundation-sites/scss/normalize.scss";
+
+// load foundation
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/grid.scss";
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/block-grid.scss";
+
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/buttons.scss";
+
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/inline-lists.scss";
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/top-bar.scss";
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/type.scss";
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/offcanvas.scss";
+@import "../../../../../node_modules/foundation-sites/scss/foundation/components/visibility.scss";
+
+
+// load helm styles
+@import "helm-animation.scss";
+@import "helm-mixins.scss";
+@import "helm-buttons.scss";
+@import "helm-typography.scss";
+
+// load main helm.sh page
+@import "helm-home.scss";
+@import "helm-blog.scss";
+
+// load documentation styles
+@import "docs-layout.scss";
+@import "docs-sidebar.scss";
+@import "docs-topbar.scss";
+@import "docs-footer.scss";
+@import "docs-home.scss";
+@import "docs-content.scss";
+@import "docs-responsive.scss";
+@import "docs-404.scss";
+
+html {
+  background: white !important;
+
+}

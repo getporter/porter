@@ -1,0 +1,15 @@
+[settings]
+  ID = "porter"
+
+[build]
+  publish = "docs/public"
+  command = "make docs"
+
+[build.environment]
+  HUGO_VERSION = "0.53"
+
+[context.branch-deploy]
+  command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"
+  
+[context.deploy-preview]
+  command = "make docs BASEURL_FLAG=\"-b $DEPLOY_PRIME_URL\"/"
