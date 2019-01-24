@@ -33,6 +33,7 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildCreateCommand(p))
 	cmd.AddCommand(buildRunCommand(p))
 	cmd.AddCommand(buildBuildCommand(p))
+	cmd.AddCommand(buildMixinCommands(p))
 
 	return cmd
 }
