@@ -13,7 +13,7 @@ The Porter runtime provides the entry point for the bundle and is responsible fo
 
 For example, a bundle author may wish to execute a bash command. The author would include the `exec` mixin in the mixins section of the porter.yaml and then create a step that defines the desired bash command. For example, the following bundle example would execute `bash -c "echo Hello World"`:
 
-```
+```yaml
 mixins:
 - exec
 
@@ -61,7 +61,7 @@ The [CNAB specification](https://github.com/deislabs/cnab-spec/blob/master/103-b
 
 Porter in turn, expects that a mixin should provide a command that corresponds to each of these actions. If the corresponding action is not relevant, the mixin should still provide a command for the action and return no error. Here is `helm` mixin again for reference:
 
-```
+```console
 $ ./bin/mixins/helm/helm
 A helm mixin for porter 👩🏽‍✈️
 
