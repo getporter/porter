@@ -1,11 +1,10 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"text/tabwriter"
 
+	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 
@@ -18,29 +17,28 @@ type MixinMetaData struct {
 	// etc
 }
 
-func (p *Porter) PrintMixins(format string) error {
+func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
 	mixins, err := p.GetMixins()
 	if err != nil {
 		return err
 	}
 
-	switch format {
-	case "human":
-		table := tabwriter.NewWriter(p.Out, 0, 0, 1, ' ', tabwriter.TabIndent)
-		fmt.Fprintln(table, "Name")
-		for _, mixin := range mixins {
-			fmt.Fprintln(table, mixin.Name)
-		}
-		table.Flush()
-
-	case "json":
-		b, err := json.MarshalIndent(mixins, "", "  ")
-		if err != nil {
-			return errors.Wrap(err, "could not marshal mixins to json")
-		}
-		fmt.Fprintln(p.Out, string(b))
+	switch opts.Format {
+	case printer.FormatTable:
+		printMixinRow :=
+			func(v interface{}) []interface{} {
+				m, ok := v.(MixinMetaData)
+				if !ok {
+					return nil
+				}
+				return []interface{}{m.Name}
+			}
+		return printer.PrintTable(p.Out, mixins, printMixinRow)
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, mixins)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
-	return nil
 }
 
 func (p *Porter) GetMixins() ([]MixinMetaData, error) {
