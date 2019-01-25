@@ -6,23 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildMixinCommands(p *porter.Porter) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "mixins",
-		Short: "Interact with the porter mixins",
-	}
-
-	cmd.AddCommand(buildMixinListCommand(p))
-	return cmd
-}
-
-func buildMixinListCommand(p *porter.Porter) *cobra.Command {
+func buildListMixinsCommand(p *porter.Porter) *cobra.Command {
 	opts := struct {
 		rawFormat string
 		format    printer.Format
 	}{}
 	cmd := &cobra.Command{
-		Use:   "list",
+		Use:   "mixins",
 		Short: "List installed mixins",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
