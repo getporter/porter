@@ -2,7 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
@@ -47,7 +46,7 @@ func (p *Porter) GetMixins() ([]MixinMetaData, error) {
 		return nil, err
 	}
 
-	files, err := ioutil.ReadDir(mixinsDir)
+	files, err := p.FileSystem.ReadDir(mixinsDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list the contents of the mixins directory %q", mixinsDir)
 	}

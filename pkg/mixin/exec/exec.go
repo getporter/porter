@@ -8,7 +8,7 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Exec is the logic behind the exec mixin
@@ -64,5 +64,5 @@ func (m *Mixin) getCommandFile(commandFile string, w io.Writer) ([]byte, error) 
 		reader := bufio.NewReader(m.In)
 		return ioutil.ReadAll(reader)
 	}
-	return ioutil.ReadFile(commandFile)
+	return m.FileSystem.ReadFile(commandFile)
 }
