@@ -20,7 +20,6 @@ func buildListMixinsCommand(p *porter.Porter) *cobra.Command {
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			return p.PrintMixins(printer.PrintOptions{Format: opts.format})
 		},
 	}
