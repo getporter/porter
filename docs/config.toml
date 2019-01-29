@@ -46,40 +46,40 @@ defaultContentLanguage = "en"
   identifier = "cli"
   weight = 102
   [[menu.main]]
-    name = "Porter"
-    url = "/porter"
-    identifier = "porter-command"
-    weight = 121
-    parent = "cli"
-  [[menu.main]]
-    name = "Command Completion"
-    url = "/command-completion"
-    identifier = "command-completion"
-    weight = 199
-    parent = "cli"
-  [[menu.main]]
     name = "porter create"
-    url = "/porter-create"
-    identifier = "porter-create"
+    url = "/cli#create"
+    identifier = "cli-create"
     weight = 123
     parent = "cli"
   [[menu.main]]
     name = "porter build"
-    url = "/porter-build"
-    identifier = "porter-build"
+    url = "/cli#build"
+    identifier = "cli-build"
     weight = 124
     parent = "cli"
   [[menu.main]]
     name = "porter run"
-    url = "/porter-run"
-    identifier = "porter-run"
+    url = "/cli#run"
+    identifier = "cli-run"
     weight = 125
     parent = "cli"
   [[menu.main]]
-    name = "porter version"
-    url = "/porter-version"
-    identifier = "porter-version"
+    name = "porter list mixins"
+    url = "/cli#list-mixins"
+    identifier = "cli-list-mixins"
     weight = 126
+    parent = "cli"
+  [[menu.main]]
+    name = "porter completion"
+    url = "/cli#completion"
+    identifier = "cli-completion"
+    weight = 198
+    parent = "cli"
+  [[menu.main]]
+    name = "porter version"
+    url = "/cli#version"
+    identifier = "cli-version"
+    weight = 199
     parent = "cli"
 
 [[menu.main]]
