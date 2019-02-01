@@ -27,6 +27,7 @@ type Manifest struct {
 	Mixins       []string               `yaml:"mixins,omitempty"`
 	Install      Steps                  `yaml:"install"`
 	Uninstall    Steps                  `yaml:"uninstall"`
+	Upgrade      Steps                  `yaml:"upgrade"`
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
 	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
@@ -244,6 +245,8 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 		steps = m.Install
 	case ActionUninstall:
 		steps = m.Uninstall
+	case ActionUpgrade:
+		steps = m.Upgrade
 	}
 
 	if len(steps) == 0 {
@@ -315,22 +318,36 @@ func (m *Manifest) MergeDependency(dep *Dependency) error {
 	// append uninstall steps so that we unroll it in dependency order (i.e. uninstall wordpress before we delete the database)
 	m.MergeUninstall(dep)
 
+	// prepend dependency's upgrade steps
+	m.MergeUpgrade(dep)
+
 	return nil
 }
 
 func (m *Manifest) MergeInstall(dep *Dependency) {
 	dep.m.Install.setDependency(dep)
 
-	result := make(Steps, len(m.Install)+len(dep.m.Install))
-	copy(result[:len(m.Install)], dep.m.Install)
-	copy(result[len(m.Install):], m.Install)
-	m.Install = result
+	m.Install = prependSteps(dep.m.Install, m.Install)
+}
+
+func (m *Manifest) MergeUpgrade(dep *Dependency) {
+	dep.m.Upgrade.setDependency(dep)
+
+	m.Upgrade = prependSteps(dep.m.Upgrade, m.Upgrade)
 }
 
 func (m *Manifest) MergeUninstall(dep *Dependency) {
 	dep.m.Uninstall.setDependency(dep)
 
 	m.Uninstall = append(m.Uninstall, dep.m.Uninstall...)
+}
+
+func prependSteps(s1, s2 Steps) Steps {
+	result := make(Steps, len(s2)+len(s1))
+	copy(result[:len(s2)], s1)
+	copy(result[len(s2):], s2)
+
+	return result
 }
 
 func prependMixins(m1, m2 []string) []string {
