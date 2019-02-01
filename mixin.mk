@@ -1,6 +1,8 @@
 PKG = github.com/deislabs/porter
 SHELL = bash
 
+PORTER_HOME ?= $(HOME)/.porter
+
 COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
@@ -53,6 +55,11 @@ publish:
 	az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(VERSION) -s $(BINDIR)/$(VERSION); \
 	fi
 	az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(VERSION)
+
+install:
+	mkdir -p $(PORTER_HOME)/mixins/$(MIXIN)
+	install $(BINDIR)/$(MIXIN)$(FILE_EXT) $(PORTER_HOME)/mixins/$(MIXIN)/$(MIXIN)$(FILE_EXT)
+	install $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) $(PORTER_HOME)/mixins/$(MIXIN)/$(MIXIN)-runtime$(FILE_EXT)
 
 clean:
 	-rm -fr bin/mixins/$(MIXIN)

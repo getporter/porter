@@ -76,6 +76,11 @@ bin/mixins/azure/azure-runtime:
 
 azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
 
+install:
+	install bin/mixins/porter/porter$(FILE_EXT) /usr/local/bin
+	$(MAKE) install MIXIN=porter -f mixin.mk
+	$(MAKE) install MIXIN=exec -f mixin.mk
+
 test: clean test-unit test-cli
 
 test-unit: build
