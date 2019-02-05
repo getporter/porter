@@ -3,7 +3,6 @@ package config
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,23 +11,26 @@ import (
 
 func TestConfig_GetHomeDir(t *testing.T) {
 	c := NewTestConfig(t)
-
-	// Set up a test porter home
-	testEntrypoint, err := os.Executable()
-	testHome := filepath.Dir(testEntrypoint)
-	require.NoError(t, err)
-	err = c.FileSystem.MkdirAll(testHome, os.ModePerm)
-	require.NoError(t, err)
+	c.SetupPorterHome()
 
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
 
-	assert.Equal(t, testHome, home)
+	assert.Equal(t, "/root/.porter", home)
 }
 
-func TestConfig_GetHomeDir_HomeSet(t *testing.T) {
+func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
+
+	// Set up no PORTER_HOME, and /usr/local/bin/porter -> ~/.porter/porter
+	os.Unsetenv(EnvHOME)
+	getExecutable = func() (string, error) {
+		return "/usr/local/bin/porter", nil
+	}
+	evalSymlinks = func(path string) (string, error) {
+		return "/root/.porter/porter", nil
+	}
 
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
