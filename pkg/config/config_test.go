@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,9 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
 
-	assert.Equal(t, "/root/.porter", home)
+	// The reason why we do filepath.join here and not above is because resolving symlinks gets the OS involved
+	// and on Windows, that means flipping the afero `/` to `\`.
+	assert.Equal(t, filepath.Join("/root", ".porter"), home)
 }
 
 func TestConfig_GetPorterConfigTemplate(t *testing.T) {
