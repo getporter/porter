@@ -19,6 +19,9 @@ on top of your work.
 1. `make build`, and the resulting binaries are located in `./bin`.
 1. `./bin/porter COMMAND`, such as `./bin/porter build`.
 
+If you would like to install a developer build, run `make install`.
+This copies a dev build to `~/.porter` and symlinks it to `/usr/local/bin`.
+
 # Documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [Netlify](netlify.com).
