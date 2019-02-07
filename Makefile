@@ -129,6 +129,11 @@ publish:
 	az storage blob upload-batch -d porter/$(PERMALINK)/templates -s templates
 	az storage blob upload-batch -d porter/$(PERMALINK) -s scripts/install
 
+install: build
+	mkdir -p $(HOME)/.porter
+	cp -R bin/* $(HOME)/.porter/
+	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
+
 clean:
 	-rm -fr bin/
 	-rm -fr cnab/

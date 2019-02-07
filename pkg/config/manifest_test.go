@@ -228,6 +228,9 @@ func TestManifest_MergeDependency(t *testing.T) {
 		Install: Steps{
 			&Step{Description: "install wordpress"},
 		},
+		Upgrade: Steps{
+			&Step{Description: "upgrade wordpress"},
+		},
 		Uninstall: Steps{
 			&Step{Description: "uninstall wordpress"},
 		},
@@ -238,6 +241,9 @@ func TestManifest_MergeDependency(t *testing.T) {
 			Mixins: []string{"exec", "helm"},
 			Install: Steps{
 				&Step{Description: "install mysql"},
+			},
+			Upgrade: Steps{
+				&Step{Description: "upgrade mysql"},
 			},
 			Uninstall: Steps{
 				&Step{Description: "uninstall mysql"},
@@ -256,6 +262,10 @@ func TestManifest_MergeDependency(t *testing.T) {
 	assert.Len(t, m.Install, 2)
 	assert.Equal(t, "install mysql", m.Install[0].Description)
 	assert.Equal(t, "install wordpress", m.Install[1].Description)
+
+	assert.Len(t, m.Upgrade, 2)
+	assert.Equal(t, "upgrade mysql", m.Upgrade[0].Description)
+	assert.Equal(t, "upgrade wordpress", m.Upgrade[1].Description)
 
 	assert.Len(t, m.Uninstall, 2)
 	assert.Equal(t, "uninstall wordpress", m.Uninstall[0].Description)

@@ -1,6 +1,12 @@
 # Philosophy
 PRs are most welcome!
 
+* If there isn't an issue for your PR, please make an issue first and explain the problem or motivation for
+the change you are proposing. When the solution isn't straightforward, for example "Implement missing command X",
+then also outline your proposed solution. Your PR will go smoother if the solution is agreed upon before you've
+spent a lot of time implementing it.
+  * It's OK to submit a PR directly for problems such as misspellings or other things where the motivation/problem is
+    unambiguous.
 * If you aren't sure about your solution yet, put WIP in the title so that people know to be nice and 
 wait for you to finish before commenting.
 * Try to keep your PRs to a single task. Please don't tackle multiple things in a single PR if possible. Otherwise, grouping related changes into commits will help us out a bunch when reviewing!
@@ -12,6 +18,9 @@ on top of your work.
 
 1. `make build`, and the resulting binaries are located in `./bin`.
 1. `./bin/porter COMMAND`, such as `./bin/porter build`.
+
+If you would like to install a developer build, run `make install`.
+This copies a dev build to `~/.porter` and symlinks it to `/usr/local/bin`.
 
 # Documentation
 

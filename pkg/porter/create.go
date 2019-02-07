@@ -9,7 +9,7 @@ import (
 )
 
 func (p *Porter) Create() error {
-	fmt.Fprintln(p.Out, "creates porter configuration in the current directory")
+	fmt.Fprintln(p.Out, "creating porter configuration in the current directory")
 
 	configTmpl, err := p.Config.GetPorterConfigTemplate()
 	if err != nil {

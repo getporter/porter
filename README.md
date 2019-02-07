@@ -3,11 +3,11 @@
 [![Build Status](https://dev.azure.com/cnlabs/porter/_apis/build/status/deislabs.porter?branchName=master)](https://dev.azure.com/cnlabs/porter/_build/latest?definitionId=6?branchName=master)
 
 
-# Porter - We got your baggage, bae
+# Porter is a Cloud Installer
 
-<p align="center"><i>Porter makes authoring bundles easier</i></p>
-
-Porter takes the work out of creating CNAB bundles. It provides a declarative authoring experience that lets you to reuse existing bundles, and understands how to translate CNAB actions to Helm, Terraform, Azure, etc.
+Porter gives you building blocks to create a cloud installer for your application, handling all the
+necessary infrastructure and configuration setup. It is a declarative authoring experience that lets you
+focus on what you know best: your application.
 
 Learn more at [porter.sh](https://porter.sh)
 
