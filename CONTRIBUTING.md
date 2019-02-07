@@ -46,7 +46,7 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [N
 1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
 1. Open <http://localhost:1313> to preview the site.
 
-If anyone is interested in contributing changes to our makefile to improve the authoring exerience, such 
+If anyone is interested in contributing changes to our makefile to improve the authoring experience, such 
 as doing this with Docker so that you don't need Hugo installed, it would be a welcome contribution! ❤️
 
 [good-first-issue]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+label%3Abacklog+

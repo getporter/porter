@@ -1,0 +1,17 @@
+package main
+
+import (
+	"github.com/deislabs/porter/pkg/porter"
+	"github.com/spf13/cobra"
+)
+
+func buildSchemaCommand(p *porter.Porter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "schema",
+		Short: "Print the JSON schema for the Porter manifest",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.PrintManifestSchema()
+		},
+	}
+	return cmd
+}

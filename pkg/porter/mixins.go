@@ -2,13 +2,19 @@ package porter
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 
 type MixinMetaData struct {
+	// Mixin Name
 	Name string
+	// Mixin Directory
+	Dir string
+	// Path to the client executable
+	ClientPath string
 	// Version
 	// Repository or Source (where did it come from)
 	// Author
@@ -56,7 +62,13 @@ func (p *Porter) GetMixins() ([]MixinMetaData, error) {
 		if !file.IsDir() {
 			continue
 		}
-		mixins = append(mixins, MixinMetaData{Name: file.Name()})
+
+		mixinDir := filepath.Join(mixinsDir, file.Name())
+		mixins = append(mixins, MixinMetaData{
+			Name:       file.Name(),
+			ClientPath: filepath.Join(mixinDir, file.Name()),
+			Dir:        mixinDir,
+		})
 	}
 
 	return mixins, nil
