@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
 )
 
@@ -52,36 +53,16 @@ func (c *Config) GetHomeDir() (string, error) {
 	return porterDir, nil
 }
 
-// GetTemplatesDir determines the path to the templates directory.
-func (c *Config) GetTemplatesDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "templates"), nil
-}
-
 // GetPorterConfigTemplate reads templates/porter.yaml from the porter home directory.
 func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
-	tmplDir, err := c.GetTemplatesDir()
-	if err != nil {
-		return nil, err
-	}
-
-	tmplPath := filepath.Join(tmplDir, Name)
-	return c.FileSystem.ReadFile(tmplPath)
+	t := packr.New("templates", "./templates")
+	return t.Find(Name)
 }
 
 // GetRunScriptTemplate reads templates/run from the porter home directory.
 func (c *Config) GetRunScriptTemplate() ([]byte, error) {
-	tmplDir, err := c.GetTemplatesDir()
-	if err != nil {
-		return nil, err
-	}
-
-	path := filepath.Join(tmplDir, filepath.Base(RunScript))
-	b, err := c.FileSystem.ReadFile(path)
-	return b, errors.Wrapf(err, "could not read script template at %s", path)
+	t := packr.New("templates", "./templates")
+	return t.Find(filepath.Base(RunScript))
 }
 
 // GetBundleManifest gets the path to another bundle's manifest.

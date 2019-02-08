@@ -35,12 +35,10 @@ build-client:
 	$(MAKE) build-client MIXIN=porter -f mixin.mk
 	$(MAKE) build-client MIXIN=exec -f mixin.mk
 	cp bin/mixins/porter/porter$(FILE_EXT) bin/
-	cp -R templates bin/
 
 xbuild-all:
 	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk
 	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
-	cp -R templates bin/
 
 xbuild-runtime:
 	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk
@@ -122,11 +120,9 @@ publish:
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
-	az storage blob upload-batch -d porter/$(VERSION)/templates -s templates; \
 	az storage blob upload-batch -d porter/$(VERSION) -s scripts/install; \
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/mixins/porter/$(VERSION)
-	az storage blob upload-batch -d porter/$(PERMALINK)/templates -s templates
 	az storage blob upload-batch -d porter/$(PERMALINK) -s scripts/install
 
 clean:

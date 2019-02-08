@@ -43,7 +43,7 @@ func TestConfig_GetPorterConfigTemplate(t *testing.T) {
 	gotTmpl, err := c.GetPorterConfigTemplate()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("../../templates/porter.yaml")
+	wantTmpl, _ := ioutil.ReadFile("./templates/porter.yaml")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
@@ -54,7 +54,7 @@ func TestConfig_GetRunScriptTemplate(t *testing.T) {
 	gotTmpl, err := c.GetRunScriptTemplate()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("../../templates/run")
+	wantTmpl, _ := ioutil.ReadFile("./templates/run")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 

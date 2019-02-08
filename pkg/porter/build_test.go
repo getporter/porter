@@ -15,9 +15,11 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest()
+	err = p.LoadManifest()
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
@@ -41,8 +43,11 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
@@ -65,8 +70,11 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
 	require.NoError(t, err)
 
 	err = p.prepareDockerFilesystem()
@@ -87,8 +95,11 @@ func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
-	err := p.LoadManifest()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
 	require.NoError(t, err)
 
 	err = p.buildBundle("foo", "digest")
