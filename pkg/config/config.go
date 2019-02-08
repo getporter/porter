@@ -23,9 +23,16 @@ const (
 	EnvACTION = "CNAB_ACTION"
 )
 
+// These are functions that afero doesn't support, so this lets us stub them out for tests to set the
+// location of the current executable porter binary and resolve PORTER_HOME.
+var getExecutable = os.Executable
+var evalSymlinks = filepath.EvalSymlinks
+
 type Config struct {
 	*context.Context
 	Manifest *Manifest
+
+	porterHome string
 }
 
 // New Config initializes a default porter configuration.
@@ -37,19 +44,34 @@ func New() *Config {
 
 // GetHomeDir determines the path to the porter home directory.
 func (c *Config) GetHomeDir() (string, error) {
-	home, ok := os.LookupEnv(EnvHOME)
-	if ok {
-		return home, nil
+	if c.porterHome != "" {
+		return c.porterHome, nil
 	}
 
-	porterPath, err := os.Executable()
-	if err != nil {
-		return "", errors.Wrap(err, "could not get path to the executing porter binary")
+	home := os.Getenv(EnvHOME)
+
+	if home == "" {
+		porterPath, err := getExecutable()
+		if err != nil {
+			return "", errors.Wrap(err, "could not get path to the executing porter binary")
+		}
+
+		// This is for the scenario when someone symlinks the ~/.porter/porter binary to /usr/local/porter
+		// We try to resolve back to the original location so that we can find the mixins, etc next to it.
+		hardPath, err := evalSymlinks(porterPath)
+		if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
+			fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
+		} else if hardPath != porterPath {
+			if c.Debug {
+				fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
+			}
+			porterPath = hardPath
+		}
+		home = filepath.Dir(porterPath)
 	}
 
-	porterDir := filepath.Dir(porterPath)
-
-	return porterDir, nil
+	c.porterHome = home
+	return c.porterHome, nil
 }
 
 // GetTemplatesDir determines the path to the templates directory.
