@@ -6,7 +6,7 @@ descriptions: Get started using Porter
 ## Getting Porter
 
 First make sure Porter is installed.
-Please see the [installation instructions](./instructions.md) for more info.
+Please see the [installation instructions](./install.md) for more info.
 
 ## Creating a new installer
 Use the `porter create` command to start a new project:
