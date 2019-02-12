@@ -53,13 +53,13 @@ func (c *Config) GetHomeDir() (string, error) {
 	return porterDir, nil
 }
 
-// GetPorterConfigTemplate reads templates/porter.yaml from the porter home directory.
+// GetPorterConfigTemplate returns a porter.yaml template file for use in new bundles
 func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
 	t := packr.New("templates", "./templates")
 	return t.Find(Name)
 }
 
-// GetRunScriptTemplate reads templates/run from the porter home directory.
+// GetRunScriptTemplate returns a run.sh template for use in new bundles
 func (c *Config) GetRunScriptTemplate() ([]byte, error) {
 	t := packr.New("templates", "./templates")
 	return t.Find(filepath.Base(RunScript))

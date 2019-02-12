@@ -31,10 +31,19 @@ build-runtime:
 	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
 	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
 
-build-client:
+build-client: build-templates
 	$(MAKE) build-client MIXIN=porter -f mixin.mk
 	$(MAKE) build-client MIXIN=exec -f mixin.mk
 	cp bin/mixins/porter/porter$(FILE_EXT) bin/
+
+build-templates: get-deps
+	cd pkg/porter && packr2 build
+
+HAS_PACKR2 := $(shell command -v packr2)
+get-deps:
+ifndef HAS_PACKR2
+	go get -u github.com/gobuffalo/packr/v2/packr2
+endif
 
 xbuild-all:
 	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk

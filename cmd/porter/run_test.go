@@ -16,7 +16,7 @@ func TestRun_Validate(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 	cmd := buildRunCommand(p.Porter)
 

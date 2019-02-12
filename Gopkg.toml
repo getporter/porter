@@ -10,6 +10,10 @@
   name = "github.com/docker/distribution"
   branch = "master"
 
+[[constraint]]
+  name = "github.com/gobuffalo/packr"
+  version = "2.0.0-rc.8"
+
 [prune]
   non-go = true
   go-tests = true
