@@ -4,4 +4,4 @@
 // and any other packr generated files.
 package config
 
-import _ "github.com/deislabs/porter/pkg/config/packrd"
+import _ "github.com/deislabs/porter/pkg/porter/packrd"
