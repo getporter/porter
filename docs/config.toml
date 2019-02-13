@@ -84,13 +84,12 @@ defaultContentLanguage = "en"
 
 [[menu.main]]
   name = "Authoring Bundles"
-  url = "/authoring-bundles"
   identifier = "authoring-bundles"
   weight = 200
   [[menu.main]]
-    name = "Intro to Bundles"
-    url = "/bundles"
-    identifier = "bundles"
+    name = "Overview"
+    url = "/authoring-bundles"
+    identifier = "authoring-bundles-overview"
     weight = 201
     parent = "authoring-bundles"
   [[menu.main]]
@@ -98,6 +97,12 @@ defaultContentLanguage = "en"
     url = "/using-mixins"
     identifier = "using-mixins"
     weight = 202
+    parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Dependencies"
+    url = "/dependencies"
+    identifier = "dependencies"
+    weight = 203
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Signing Bundles"
