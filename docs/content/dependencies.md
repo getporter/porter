@@ -67,9 +67,9 @@ transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](
 
 ## Dependency Ordering
 
-Depending on the action being performed, Porter handles executing the dependencies
+Depending on the action being performed, Porter handles executing the dependent bundle's
 steps either before or after the steps in the root bundle.
 
-* Install - The dependency's steps are executed _before_ the steps in the root bundle.
-* Upgrade - The dependency's steps are executed _before_ the steps in the root bundle.
-* Uninstall - The dependency's steps are executed _after_ the steps in the root bundle.
+* Install - The steps are executed _before_ the steps in the root bundle.
+* Upgrade - The steps are executed _before_ the steps in the root bundle.
+* Uninstall - The steps are executed _after_ the steps in the root bundle.
