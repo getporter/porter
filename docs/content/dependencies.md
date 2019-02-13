@@ -62,9 +62,8 @@ dependencies:
 
 ## Dependency Graph
 
-Currently Porter does not build a dependency graph and only supports direct
-dependencies. Dependencies of dependencies, transitive dependencies, are
-ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) for more information.
+Currently Porter only supports direct dependencies. Dependencies of dependencies, 
+transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) for more information.
 
 ## Dependency Ordering
 
