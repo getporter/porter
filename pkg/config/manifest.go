@@ -546,6 +546,24 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 		return nil
 	}
 
+	// There are two cases possible in the YAML. The first is when the element in the slice is a string. That might look like:
+	// install:
+	//   - description: "Install Hello World"
+	//     exec:
+	// 	     command: bash
+	// 	     arguments:
+	// 	       - -c
+	// 	       - "source:  bundle.parameters.command"
+	// The second case is when the declaration interpreted to represent a Map. This is the case when there are no quotes:
+	// install:
+	//   - description: "Install Hello World"
+	//     exec:
+	// 	     command: bash
+	// 	     arguments:
+	// 	       - -c
+	// 	       - source:  bundle.parameters.command
+	// Branching logic below first checks the easy case (a string) then falls through into the case where we have a map with a single key.
+	// This is fairly similar to how we process map elements, but the replacement is done differently.
 	v, ok := val.Interface().(string)
 	if ok {
 		//if the array entry is a string that matches source:...., we should replace it
@@ -559,6 +577,34 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 			}
 			val.Set(reflect.ValueOf(r))
 		}
+	} else {
+		v := val
+		if val.Kind() == reflect.Interface {
+			val = val.Elem()
+		}
+		if kind := val.Kind(); kind == reflect.Map {
+			if len(val.MapKeys()) == 1 {
+				sk := val.MapKeys()[0]
+				if sk.Kind() == reflect.Interface {
+					sk = sk.Elem()
+				}
+				//if the key is a string, and the string is source, then we should try
+				//and replace this
+				if sk.Kind() == reflect.String && sk.String() == "source" {
+					kv := val.MapIndex(sk)
+					if kv.Kind() == reflect.Interface {
+						kv = kv.Elem()
+						value := kv.String()
+						replacement, err := m.resolveValue(value)
+						if err != nil {
+							errors.Wrap(err, fmt.Sprintf("unable to resolve value for key: %s", value))
+						}
+						v.Set(reflect.ValueOf(replacement))
+					}
+				}
+			}
+		} // it's not a map, we shouldn't try and process it.
+
 	}
 	return nil
 }

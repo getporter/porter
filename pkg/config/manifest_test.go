@@ -205,6 +205,30 @@ func TestResolveArray(t *testing.T) {
 	assert.Equal(t, "Ralpha", args[0])
 }
 
+func TestResolveSliceWithAMap(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/slice-test.yaml", Name)
+
+	require.NoError(t, c.LoadManifest())
+
+	installStep := c.Manifest.Install[0]
+
+	os.Setenv("COMMAND", "echo hello world")
+	err := c.Manifest.ResolveStep(installStep)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, installStep.Data)
+	t.Logf("install data %v", installStep.Data)
+	exec := installStep.Data["exec"].(map[interface{}]interface{})
+	assert.NotNil(t, exec)
+	args := exec["arguments"].([]interface{})
+	assert.Len(t, args, 2)
+	assert.Equal(t, "echo hello world", args[1])
+	assert.NotNil(t, args)
+}
+
 func TestDependency_Validate_NameRequired(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
