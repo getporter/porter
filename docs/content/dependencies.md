@@ -3,11 +3,18 @@ title: Dependencies
 description: Dependency Management with Porter
 ---
 
+In the Porter manifest you can [define a dependency](#define-a-dependency) on another 
+Porter authored bundle, and when you build the bundle, the root bundle and its dependencies 
+are combined into a single composite bundle. The final bundle is a CNAB compliant bundle
+that can be used with any CNAB tool.
+
+Since the CNAB Spec does not allow for dependencies between bundles, this dependency feature
+is unique to Porter, and **only bundles that have been authored by Porter can be used as dependencies.**
+
 ## Define a dependency
 
 In the manifest, list the dependencies in the order that they should be
-installed. Only bundles that have been authored by Porter, and have a Porter
-manifest, can be dependencies.
+installed.
 
 ```yaml
 dependencies:
@@ -64,12 +71,3 @@ steps either before or after the steps in the root bundle.
 * Install - The dependency's steps are executed _before_ the steps in the root bundle.
 * Upgrade - The dependency's steps are executed _before_ the steps in the root bundle.
 * Uninstall - The dependency's steps are executed _after_ the steps in the root bundle.
-
-## Dependencies and the CNAB Spec
-
-The CNAB Spec that Porter implements does not define how dependencies between
-bundles works (or that they can even exist). Porter has a trick for getting
-around that: Porter identifies dependencies between bundles and then builds a
-single composite bundle during the `porter build` command. At runtime there is a
-single invocation image, so that any tool can work with bundles created by
-porter.
