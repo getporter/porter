@@ -597,16 +597,13 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 						value := kv.String()
 						replacement, err := m.resolveValue(value)
 						if err != nil {
-							errors.Wrap(err, "unable to resolve value for map")
+							errors.Wrap(err, fmt.Sprintf("unable to resolve value for key: %s", value))
 						}
 						v.Set(reflect.ValueOf(replacement))
 					}
 				}
 			}
-		} else {
-			fmt.Println("not sure what this is...")
-			fmt.Printf("eh? %s", reflect.TypeOf(val).String())
-		}
+		} // it's not a map, we shouldn't try and process it.
 
 	}
 	return nil
