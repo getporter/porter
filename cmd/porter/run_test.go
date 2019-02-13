@@ -15,12 +15,14 @@ func TestRun_Validate(t *testing.T) {
 
 	p := porter.NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.TestConfig.TestContext.AddTestFile("../../templates/porter.yaml", config.Name)
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.NoError(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 	cmd := buildRunCommand(p.Porter)
 
 	os.Setenv(config.EnvACTION, string(config.ActionInstall))
 
-	err := cmd.PreRunE(cmd, []string{})
+	err = cmd.PreRunE(cmd, []string{})
 	require.Nil(t, err)
 }
 

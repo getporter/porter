@@ -77,6 +77,10 @@ func (c *TestContext) AddTestFile(src, dest string) []byte {
 	return data
 }
 
+func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
+	return c.FileSystem.WriteFile(dest, file, os.ModePerm)
+}
+
 func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
