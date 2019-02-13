@@ -11,6 +11,8 @@ that can be used with any CNAB tool.
 Since the CNAB Spec does not allow for dependencies between bundles, this dependency feature
 is unique to Porter, and **only bundles that have been authored by Porter can be used as dependencies.**
 
+Here is a [full example][example] of a Porter manifest that uses dependencies.
+
 ## Define a dependency
 
 In the manifest, list the dependencies in the order that they should be
@@ -73,3 +75,5 @@ steps either before or after the steps in the root bundle.
 * Install - The steps are executed _before_ the steps in the root bundle.
 * Upgrade - The steps are executed _before_ the steps in the root bundle.
 * Uninstall - The steps are executed _after_ the steps in the root bundle.
+
+[example]: https://github.com/deislabs/porter/blob/master/build/testdata/bundles/wordpress/porter.yaml
