@@ -28,19 +28,6 @@ will be revisited.
 * bundles (in the same directory as the Porter manifest)
 * PORTER_HOME/bundles
 
-Parameters defined in a dependent bundle can be defaulted from the root bundle.
-In the example below, the mysql bundle defined the `database_name` and
-`mysql_user` parameters, and the root bundle (Wordpress) decided to default them
-to a specific value, so that the user wouldn't be required to select a value for
-those parameters when installing Wordpress.
-
-```yaml
-dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
-```
 
 ## Consolidating Parameters and Credentials
 
@@ -56,6 +43,22 @@ build fails.
 _Note: Porter doesn't yet have a conflict resolution mechanism in place to
 allow an author to force consolidating parameters/credentials, or resolve a
 conflict._
+
+## Defaulting Parameters
+
+Parameters defined in a dependent bundle can be defaulted from the root bundle.
+In the example below, the mysql bundle defined the `database_name` and
+`mysql_user` parameters, and the root bundle (Wordpress) defaulted those parameters
+to a specific value, so that the user wouldn't be required to choose a value for
+those parameters when installing Wordpress.
+
+```yaml
+dependencies:
+- name: mysql
+  parameters:
+    database_name: wordpress
+    mysql_user: wordpress
+```
 
 ## Dependency Graph
 
