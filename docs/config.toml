@@ -33,12 +33,12 @@ defaultContentLanguage = "en"
     identifier = "quickstart"
     weight = 12
     parent = "getting-started"
-  [[menu.main]]
-    name = "Finding Bundles"
-    url = "/finding-bundles"
-    identifier = "finding-bundles"
-    weight = 16
-    parent = "getting-started"
+  #[[menu.main]]
+  #  name = "Finding Bundles"
+  #  url = "/finding-bundles"
+  #  identifier = "finding-bundles"
+  #  weight = 16
+  #  parent = "getting-started"
 
 [[menu.main]]
   name = "Porter Commands"
@@ -104,18 +104,18 @@ defaultContentLanguage = "en"
     identifier = "dependencies"
     weight = 203
     parent = "authoring-bundles"
-  [[menu.main]]
-    name = "Signing Bundles"
-    url = "/signed-bundles"
-    identifier = "signed-bundles"
-    weight = 206
-    parent = "authoring-bundles"
-  [[menu.main]]
-    name = "Distributing Bundles"
-    url = "/distributing-bundles"
-    identifier = "distributing-bundles"
-    weight = 207
-    parent = "authoring-bundles"
+  #[[menu.main]]
+  #  name = "Signing Bundles"
+  #  url = "/signed-bundles"
+  #  identifier = "signed-bundles"
+  #  weight = 206
+  #  parent = "authoring-bundles"
+  #[[menu.main]]
+  #  name = "Distributing Bundles"
+  #  url = "/distributing-bundles"
+  #  identifier = "distributing-bundles"
+  #  weight = 207
+  #  parent = "authoring-bundles"
 
 [[menu.main]]
   name = "Developing Mixins"
@@ -133,12 +133,12 @@ defaultContentLanguage = "en"
     identifier = "mixin-architecture"
     weight = 310
     parent = "developing-mixins"
-  [[menu.main]]
-    name = "Distributing Mixins"
-    url = "/mixin-distribution"
-    identifier = "mixin-distribution"
-    weight = 311
-    parent = "developing-mixins"
+  #[[menu.main]]
+  #  name = "Distributing Mixins"
+  #  url = "/mixin-distribution"
+  #  identifier = "mixin-distribution"
+  #  weight = 311
+  #  parent = "developing-mixins"
 
 [[menu.main]]
   name = "Porter Architecture"
@@ -152,13 +152,13 @@ defaultContentLanguage = "en"
     parent = "porter-architecture"
   [[menu.main]]
     name = "Buildtime"
-    url = "/achitecture-buildtime"
+    url = "/architecture-buildtime"
     identifier = "architecture-buildtime"
     weight = 402
     parent = "porter-architecture"
   [[menu.main]]
     name = "Runtime"
-    url = "/achitecture-runtime"
+    url = "/architecture-runtime"
     identifier = "architecture-runtime"
     weight = 403
     parent = "porter-architecture"
