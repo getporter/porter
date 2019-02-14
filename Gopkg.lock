@@ -13,6 +13,14 @@
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
+  digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
+
+[[projects]]
   digest = "1:2be791e7b333ff7c06f8fb3dc18a7d70580e9399dbdffd352621d067ff260b6e"
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
@@ -203,6 +211,112 @@
   version = "v0.3.3"
 
 [[projects]]
+  digest = "1:3e067df3c1fc8619e2a563b49c57acbe72d4082e43191dd6b48ceac8c675487e"
+  name = "github.com/gobuffalo/buffalo-plugins"
+  packages = [
+    "plugins",
+    "plugins/plugdeps",
+  ]
+  pruneopts = "NUT"
+  revision = "f34e38fbc353e263d53fec0fd045bd466d3ea315"
+  version = "v1.13.0"
+
+[[projects]]
+  digest = "1:9059915429f7f3a5f18cfa6b7cab9a28721d7ac6db4079a62044aa229eb7f2a8"
+  name = "github.com/gobuffalo/envy"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "fa0dfdc10b5366ce365b7d9d1755a03e4e797bc5"
+  version = "v1.6.15"
+
+[[projects]]
+  digest = "1:0e67b5c03e1928415499050db721277f0a535af2a89ce3630f3815ecf40116d8"
+  name = "github.com/gobuffalo/events"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "7405490b2bb796f2d6aaea94f4c8692e67aa7086"
+  version = "v1.2.0"
+
+[[projects]]
+  digest = "1:23483c1d3534f35cab7e62cd704994a262da008f9eaec4d2f3834aabd7c28fb4"
+  name = "github.com/gobuffalo/flect"
+  packages = [
+    ".",
+    "name",
+  ]
+  pruneopts = "NUT"
+  revision = "d4fc286952bf96d0262a67b482e234613ae36f59"
+  version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6df8abf01c3ffb21ac90ea22247c070e67d9fd9ba3ee8d7c7216c2d923a6c7aa"
+  name = "github.com/gobuffalo/genny"
+  packages = [
+    ".",
+    "movinglater/gotools",
+    "movinglater/gotools/goimports",
+    "movinglater/gotools/gomods",
+  ]
+  pruneopts = "NUT"
+  revision = "008a76242145c9fca08b9047da7da6108292c569"
+
+[[projects]]
+  branch = "master"
+  digest = "1:00da8dfd876a14358de6cf64a45c979b54520b362773c6badfc108141222dab0"
+  name = "github.com/gobuffalo/logger"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "5b956e21995cbed3ab29e4901f9e746a6a1d53bb"
+
+[[projects]]
+  digest = "1:e796fc4105513995d2440e4fc6f1930c8c2e6606a3e18727fdbb75c2cce70ef1"
+  name = "github.com/gobuffalo/mapi"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "09ac528b16b7e871fe0f14d4867a07820a30a14b"
+  version = "v1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:d8c5d932e5c2e94bcafc81c9ff5b724295d9c4d82ae909a3bd42a02fa9c3fe6d"
+  name = "github.com/gobuffalo/meta"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "50a99e08b8cf340b099048d2ad70bf525f2e16a7"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1bd962822ed7c015863e795590291d54a9afe18b4c3892d7cc1af6b56592271f"
+  name = "github.com/gobuffalo/packd"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "eca3b8fd66872a76119b189bbe0f58f776a2a39f"
+
+[[projects]]
+  digest = "1:35dacc7984f032f325419f21cafe65ad80fb66c9602a11e777e3bc426a966a96"
+  name = "github.com/gobuffalo/packr"
+  packages = [
+    "v2",
+    "v2/file",
+    "v2/file/resolver",
+    "v2/file/resolver/encoding/hex",
+    "v2/jam/parser",
+    "v2/plog",
+  ]
+  pruneopts = "NUT"
+  revision = "d93b0e17023e6fa58f86d547bdc551837df1daa8"
+  version = "v2.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:cc66a6ea07a8c9a8b95da5b0a78b90cd33cdbe3198ff9698f5b388876eee5464"
+  name = "github.com/gobuffalo/syncx"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "558ac7de985fc4f4057bff27c7bdf99e92fe0750"
+
+[[projects]]
   digest = "1:38e684375ef5b55e812332266d63f9fc5b6329ab303067c4cdda051db6d29ca4"
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
@@ -267,11 +381,43 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:da62aa6632d04e080b8a8b85a59ed9ed1550842a0099a55f3ae3a20d02a3745a"
+  name = "github.com/joho/godotenv"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "23d116af351c84513e1946b527c88823e476be13"
+  version = "v1.3.0"
+
+[[projects]]
+  digest = "1:75b5172f534d05a5abff749f1cf002351f834a2a5592812210aca5e139f9ddad"
+  name = "github.com/karrick/godirwalk"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "dfb93c3b8093779973bb5ace7d7f7666b99d4298"
+  version = "v1.7.8"
+
+[[projects]]
   digest = "1:4059c14e87a2de3a434430340521b5feece186c1469eff0834c29a63870de3ed"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
   pruneopts = "NUT"
   revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:04ceda71def965b54370f9089593723a00f72db5062d377b9d5a11114c41ad1f"
+  name = "github.com/markbates/oncer"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "bf2de49a0be218916e69a11d22866e6cd0a560f2"
+
+[[projects]]
+  digest = "1:a270612d988b6288fdcfe032c8a7393e9c1f5d55da7294feeaf684f12e6315e4"
+  name = "github.com/markbates/safe"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "6fea05a5732486546a4836b7a1d596c5ec687b98"
   version = "v1.0.1"
 
 [[projects]]
@@ -388,6 +534,18 @@
   ]
   pruneopts = "NUT"
   revision = "619930b0b4713cc1280189bf0a4c54b3fb506f60"
+
+[[projects]]
+  digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
+  name = "github.com/rogpeppe/go-internal"
+  packages = [
+    "modfile",
+    "module",
+    "semver",
+  ]
+  pruneopts = "NUT"
+  revision = "1cf9852c553c5b7da2d5a4a091129a7822fed0c9"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:d848e2bdc690ea54c4b49894b67a05db318a97ee6561879b814c2c1f82f61406"
@@ -507,6 +665,27 @@
   version = "v0.3.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:f57e88c4326d5433c2f4eb28fcd1662be003cb0d11dd13710c8828e687303c76"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
+    "go/packages",
+    "go/types/typeutil",
+    "imports",
+    "internal/fastwalk",
+    "internal/gopathwalk",
+    "internal/module",
+    "internal/semver",
+  ]
+  pruneopts = "NUT"
+  revision = "508f945e1a9bd8b5e3a9444bb2cdd13d0896132e"
+
+[[projects]]
   digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -526,6 +705,8 @@
     "github.com/docker/docker/pkg/jsonmessage",
     "github.com/docker/docker/pkg/term",
     "github.com/docker/docker/registry",
+    "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/hashicorp/go-multierror",
     "github.com/mitchellh/reflectwalk",
     "github.com/pkg/errors",
