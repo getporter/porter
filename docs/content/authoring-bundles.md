@@ -11,3 +11,4 @@ description: Authoring Bundles with Porter
 ## See Also
 
 * [Bundle Dependencies](/dependencies/)
+* [Parameters, Credentials and Outputs](/wiring/)

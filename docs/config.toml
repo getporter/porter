@@ -104,6 +104,12 @@ defaultContentLanguage = "en"
     identifier = "dependencies"
     weight = 203
     parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Using Parameters, Credentials and Outputs"
+    url = "/wiring"
+    identifier = "wiring"
+    weight = 203
+    parent = "authoring-bundles"
   #[[menu.main]]
   #  name = "Signing Bundles"
   #  url = "/signed-bundles"
