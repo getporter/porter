@@ -47,6 +47,11 @@ steps:
   displayName: 'Unit Test'
 
 - script: |
+    make xbuild-all
+  workingDirectory: '$(modulePath)'
+  displayName: 'Cross Compile'
+
+- script: |
     git clone https://github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
     cd $(GOPATH)/src/github.com/deislabs/duffle
     make bootstrap build
