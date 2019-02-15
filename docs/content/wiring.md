@@ -7,7 +7,7 @@ description: How to wire parameters, credentials and outputs into steps
 
 In the Porter manifest, you can declare both [parameters](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#parameters) and [credentials](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#credentials), which are defined in the CNAB spec. The CNAB specification specifies how both credentials and parameters can be provided to an [invocation image](https://github.com/deislabs/cnab-spec/blob/master/102-invocation-image.md) and how they should be declared in a bundle manifest. 
 
-The Porter manifest allows you to provide all the elements defined in the specification, but with Porter's opinionated approach by default. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](mixin-architecture.md). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies.
+The Porter manifest allows you to provide all the elements defined in the specification, but with Porter's opinionated approach by default. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies.
 
 ## Parameters
 
@@ -110,7 +110,7 @@ install:
         - source:  bundle.parameters.command
 ```
 
-When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. For example, given the exec mixin will actually get the following YAML:
+When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. For example, given the YAML example above, the exec mixin will actually get the following YAML:
 
 ```yaml
 description: "Install Hello World"
@@ -182,7 +182,7 @@ TODO: What happens if someone overwrites one? Should we fail the `porter build`?
 
 Once an output has been declared, it can be referenced in the same way as parameters and credentials. Outputs are referenced with the syntax `source: bundle.outputs.OUTPUT_NAME`
 
-For example, given the install step above, we can use the MYSQL_URL with the helm mixin in the following way:
+For example, given the install step above, we can use the `MYSQL_URL` with the helm mixin in the following way:
 
 ```yaml
   - description: "Helm Install Wordpress"
@@ -202,7 +202,7 @@ For example, given the install step above, we can use the MYSQL_URL with the hel
           source: bundle.parameters.database_name
 ```
 
-Just like in the case of credentials and parameters, the value of the bundle.outputs.MYSQL_URL reference will be rewritten in the YAML before the helm mixin is invoked.
+Just like in the case of credentials and parameters, the value of the `bundle.outputs.MYSQL_URL` reference will be rewritten in the YAML before the helm mixin is invoked.
 
 ## Using Parameters, Credentials, and Outputs from Bundle Dependencies
 
