@@ -305,8 +305,8 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 		}
 
 		// If the default is empty, set required to true.
-		if param.DefaultValue == "" {
-			param.Required = true
+		if param.DefaultValue == nil {
+			p.Required = true
 		}
 
 		if param.Metadata.Description != "" {

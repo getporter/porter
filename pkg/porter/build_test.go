@@ -125,3 +125,30 @@ func TestPorter_buildBundle(t *testing.T) {
 	require.Equal(t, bundle.Version, "0.1.0")
 	require.Equal(t, bundle.Description, "An example Porter configuration")
 }
+
+func TestPorter_paramRequired(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
+
+	err := p.LoadManifest()
+	require.NoError(t, err)
+
+	err = p.buildBundle("foo", "digest")
+	require.NoError(t, err)
+
+	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
+	require.NoError(t, err)
+
+	var bundle Bundle
+	err = json.Unmarshal(bundleBytes, &bundle)
+	require.NoError(t, err)
+
+	p1, ok := bundle.Parameters["command"]
+	require.True(t, ok)
+	require.False(t, p1.Required)
+
+	p2, ok := bundle.Parameters["command2"]
+	require.True(t, ok)
+	require.True(t, p2.Required)
+}
