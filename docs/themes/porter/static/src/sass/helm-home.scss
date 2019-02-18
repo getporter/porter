@@ -13,7 +13,7 @@ body.home {
   h1 {
     @include klinicBold;
   }
-  
+
   h2, h3, h4, h5 {
     @include klinicReg;
   }
@@ -101,7 +101,7 @@ nav.home-nav {
 
   .billboard {
     background-color: white;
-    background: url('../img/pattern-topo.png') left top repeat;
+    //background: url('../img/pattern-topo.png') left top repeat;
     background-size: 376px;
     background-attachment: fixed;
     min-height: 480px;
@@ -667,7 +667,7 @@ nav.home-nav {
       background-color: $light1;
     }
   }
-  
+
   .geo-shapes-title {
     margin: 0 auto;
 
@@ -868,23 +868,23 @@ nav.home-nav {
         color: darken($light2, 12.5%);
       }
     }
-    
+
     hr.blank {
       color: white;
       border-color: white;
     }
-    
+
     a.ripple {
       @include ripple;
       display: inline;
-      
+
       &:after {
         position: absolute;
         left: 0;
         bottom: -0.2em;
       }
     }
-    
+
     .breakout-cta-row {
       background: white;
       box-shadow: 0 1px 3px darken($light2, 2.5%);
