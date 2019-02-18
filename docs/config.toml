@@ -8,7 +8,7 @@ theme = "porter"
 [params]
   title = "Porter"
   author = "Carolyn Van Slyck"
-  description = "Porter - A Cloud Native Package Manager"
+  description = "Porter - A Friendlier Cloud Installer"
 
 canonifyURLs = "false"
 relativeURLs = "true"
