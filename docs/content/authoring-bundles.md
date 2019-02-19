@@ -39,7 +39,7 @@ they need to run, such as a CLI or config files, and how to execute their steps 
 
 Anyone can [create a mixin](/mixin-dev-guide/), here's a list of the mixins that are installed with Porter by default:
 
-* exec - runs shell scripts and commands
+* exec - run shell scripts and commands
 * helm - use the helm cli
 * azure - provision services on the Azure cloud
 
