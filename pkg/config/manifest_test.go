@@ -205,6 +205,31 @@ func TestResolveArray(t *testing.T) {
 	assert.Equal(t, "Ralpha", args[0])
 }
 
+func TestResolveInMainDict(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", Name)
+
+	require.NoError(t, c.LoadManifest())
+
+	installStep := c.Manifest.Install[0]
+
+	os.Setenv("COMMAND", "echo hello world")
+	err := c.Manifest.ResolveStep(installStep)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, installStep.Data)
+	t.Logf("install data %v", installStep.Data)
+	exec := installStep.Data["exec"].(map[interface{}]interface{})
+	assert.NotNil(t, exec)
+	command := exec["command"].(interface{})
+	assert.NotNil(t, command)
+	cmdVal, ok := command.(string)
+	assert.True(t, ok)
+	assert.Equal(t, "echo hello world", cmdVal)
+}
+
 func TestResolveSliceWithAMap(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
