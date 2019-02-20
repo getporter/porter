@@ -162,3 +162,4 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 * [Using Mixins](/using-mixins/)
 * [Bundle Dependencies](/dependencies/)
+* [Parameters, Credentials and Outputs](/wiring/)
