@@ -101,7 +101,7 @@ nav.home-nav {
 
   .billboard {
     background-color: white;
-    //background: url('../img/pattern-topo.png') left top repeat;
+    //background: url('/src/img/pattern-topo.png') left top repeat;
     background-size: 376px;
     background-attachment: fixed;
     min-height: 480px;
@@ -124,7 +124,7 @@ nav.home-nav {
 
     &:after {
       $height: 6px;
-      background: url('../img/pattern-waves.png') left top repeat-x;
+      background: url('/src/img/pattern-waves.png') left top repeat-x;
       background-size: $gutter;
       bottom: 0;
       content: '';
@@ -227,7 +227,7 @@ nav.home-nav {
   }
 
   .helm-features {
-    background: url('../img/features-bg.png') no-repeat center 0;
+    background: url('/src/img/features-bg.png') no-repeat center 0;
     background-size: cover;
     text-align: center;
     margin-top: 5em;
@@ -573,7 +573,7 @@ nav.home-nav {
   height: 2em;
   @media only screen and (min-device-width: $mobile-maximum-width + 1) {
     $duration: 20s;
-    background: url('../img/boat.png') no-repeat;
+    background: url('/src/img/boat.png') no-repeat;
     background-size: $boat-size;
     height: 169px; //TODO programmatize this!
     position: relative;
