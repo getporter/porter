@@ -5,9 +5,7 @@ description: How to wire parameters, credentials and outputs into steps
 
 # Parameters, Credentials and Outputs in Porter
 
-In the Porter manifest, you can declare both [parameters](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#parameters) and [credentials](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#credentials), which are defined in the CNAB spec. The CNAB specification specifies how both credentials and parameters can be provided to an [invocation image](https://github.com/deislabs/cnab-spec/blob/master/102-invocation-image.md) and how they should be declared in a bundle manifest. 
-
-The Porter manifest allows you to provide all the elements defined in the specification, but with Porter's opinionated approach by default. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies.
+In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies.
 
 ## Parameters
 
@@ -19,21 +17,7 @@ parameters:
   type: string
 ```
 
-This is the minimum required to create a parameter in Porter. Porter will specify an environment variable destination that defaults to the upper-cased name of the parameter. This would result in the following parameter definition in the `bundle.json`:
-
-```json
-"parameters": {
-    "database_name": {
-        "type": "string",
-        "required": false,
-        "metadata": {},
-        "destination": {
-            "path": "",
-            "env": "DATABASE_NAME"
-        }
-    }
-}
-```
+This is the minimum required to create a parameter in Porter. Porter will specify an environment variable destination that defaults to the upper-cased name of the parameter.
 
 You can also provide any other attributes, as specified by the CNAB [parameters](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#parameters) specification. To specify a default value, for example, you could provide the following parameter definition:
 
@@ -41,23 +25,6 @@ You can also provide any other attributes, as specified by the CNAB [parameters]
 - name: database_name
   type: string
   default: "wordpress"
-```
-
-This would result in the following `bundle.json` parameter definition:
-
-```json
-"parameters": {
-    "database_name": {
-        "type": "string",
-        "defaultValue": "wordpress",
-        "required": false,
-        "metadata": {},
-        "destination": {
-            "path": "",
-            "env": "DATABASE_NAME"
-        }
-    }
-}
 ```
 
 ## Wiring Parameters
@@ -110,17 +77,6 @@ install:
         - source:  bundle.parameters.command
 ```
 
-When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. For example, given the YAML example above, the exec mixin will actually get the following YAML:
-
-```yaml
-description: "Install Hello World"
-exec:
-  command: bash
-  arguments:
-    - -c
-    - echo Hello World
-```
-
 ## Credentials
 
 Credentials are defined in the `porter.yaml` with a YAML block of one more credential definitions. You can declare that a credential should be placed in a path within the invocation image or into an environment variable.
@@ -149,7 +105,7 @@ When the bundle is executed, the Porter runtime will locate the parameter defini
 
 ## Outputs
 
-In addition to parameters and credentials, Porter allows you to declare how to store mixin outputs. The form used to declare these varies by mixin, but might look something like:
+In addition to parameters and credentials, Porter introduces an type called an output. Outputs are values that are generated during the execution of a mixin. These could be things like a hostname for a newly provisioned Azure service or a generated password from something installed with Helm. These often need to be used in subsequent steps so Porter allows you to declare how to reference them after they have been created. The form used to declare these varies by mixin, but might look something like:
 
 ```yaml
 install:
