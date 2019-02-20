@@ -37,8 +37,8 @@ parameters:
   default: porterdemocontainer
 
 install:
-  - description: "Create Azure Storage Account and Container"
-    azure:
+  - azure:
+      description: "Create Azure Storage Account and Container"
       type: storage
       name: porter-azure-ark
       resourceGroup:
@@ -50,12 +50,12 @@ install:
           source: bundle.parameters.storage_account_name
         storageContainerName:
           source: bundle.parameters.storage_container_name 
-    outputs:
-      - name: "STORAGE_ACCOUNT_KEY"
-        key: "STORAGE_ACCOUNT_KEY"        
+      outputs:
+        - name: "STORAGE_ACCOUNT_KEY"
+          key: "STORAGE_ACCOUNT_KEY"
 
-  - description: "Helm Install Ark"
-    helm:
+  - helm:
+      description: "Helm Install Ark"
       name: porter-azure-ark
       chart: stable/ark
       replace: true
@@ -83,6 +83,6 @@ install:
         configuration.backupStorageProvider.bucket:
           source: bundle.parameters.storage_container_name
 uninstall:
-  - description: "Uninstall Ark"
-    azure:
+  - azure:
+      description: "Uninstall Ark"
       name: porter-azure-ark

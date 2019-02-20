@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 
@@ -53,7 +53,8 @@ func (p *Porter) Run(file string, action config.Action) error {
 			return errors.Wrap(err, "mixin validation failed")
 		}
 
-		fmt.Fprintln(p.Out, step.Description)
+		description, _ := step.GetDescription()
+		fmt.Fprintln(p.Out, description)
 		err = runner.Run()
 		if err != nil {
 			return errors.Wrap(err, "mixin execution failed")

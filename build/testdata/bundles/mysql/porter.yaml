@@ -21,8 +21,8 @@ parameters:
     env: MYSQL_USER
 
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
     version: 0.10.2
@@ -32,15 +32,15 @@ install:
         source: bundle.parameters.database-name
       mysqlUser:
         source: bundle.parameters.mysql-user
-  outputs:
-  - name: mysql-root-password
-    secret: porter-ci-mysql
-    key: mysql-root-password
-  - name: mysql-password
-    secret: porter-ci-mysql
-    key: mysql-password
+    outputs:
+    - name: mysql-root-password
+      secret: porter-ci-mysql
+      key: mysql-root-password
+    - name: mysql-password
+      secret: porter-ci-mysql
+      key: mysql-password
 uninstall:
-- description: "Uninstall MySQL"
-  helm:
+- helm:
+    description: "Uninstall MySQL"
     name: porter-ci-mysql
     purge: true

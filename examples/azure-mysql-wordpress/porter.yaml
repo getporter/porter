@@ -32,8 +32,8 @@ parameters:
   default: "wordpress"
 
 install:
-  - description: "Create Azure MySQL"
-    azure:
+  - azure:
+      description: "Create Azure MySQL"
       type: mysql
       name: mysql-azure-porter-demo-wordpress
       resourceGroup: "porter-test"
@@ -48,12 +48,12 @@ install:
         sslEnforcement: "Disabled"
         databaseName:
           source: bundle.parameters.database_name          
-    outputs:
-      - name: "MYSQL_HOST"
-        key: "MYSQL_HOST"
+      outputs:
+        - name: "MYSQL_HOST"
+          key: "MYSQL_HOST"
 
-  - description: "Helm Install Wordpress"
-    helm:
+  - helm:
+      description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: stable/wordpress
       replace: true
@@ -70,8 +70,8 @@ install:
         externalDatabase.database:
           source: bundle.parameters.database_name
 uninstall:
-  - description: "Uninstall Wordpress"
-    azure:
+  - azure:
+      description: "Uninstall Wordpress"
       name: porter-ci-wordpress
      
 

@@ -75,8 +75,8 @@ parameters:
     default: mywordpress
 
 install:
-  - description: "Install MySQL"
-    helm:
+  - helm:
+      description: "Install MySQL"
       name: mywordpress-mysql
       chart: stable/mysql
       set:
@@ -91,8 +91,8 @@ install:
         - name: dbpassword
           secret: mywordpress-mysql
           key: mysql-password
-  - description: "Install Wordpress"
-    helm:
+  - helm:
+      description: "Install Wordpress"
       name:
         source: bundle.parameters.wordpress-name
       chart: stable/wordpress
@@ -106,8 +106,8 @@ install:
           source: bundle.outputs.dbpassword
 
 uninstall:
-  - description: "Uninstall Wordpress Helm Chart"
-    helm:
+  - helm:
+      description: "Uninstall Wordpress Helm Chart"
       name:
         source: bundle.parameters.wordpress-name
 ```
@@ -186,14 +186,14 @@ parameters:
     default: mydb
 
 install:
-  - description: "Install MySQL"
-    helm:
+  - helm:
+      description: "Install MySQL"
       name: mysql
       chart: stable/mysql
       set:
       mysqlDatabase:
         source: bundle.parameters.database_name
-    outputs:
+      outputs:
       - name: dbhost
         secret: mysql
         key: mysql-host
@@ -229,8 +229,8 @@ credentials:
     path: /root/.kube/config
 
 install:
-  - description: "Install Wordpress"
-    helm:
+  - helm:
+      description: "Install Wordpress"
       name:
         source: bundle.parameters.wordpress-name
       chart: stable/wordpress
