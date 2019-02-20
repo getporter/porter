@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"bytes"
 	"testing"
 
 	"encoding/json"
@@ -37,6 +38,36 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		`CMD ["/cnab/app/run"]`,
 	}
 	assert.Equal(t, wantlines, gotlines)
+}
+
+func TestPorter_buildDockerfile_output(t *testing.T) {
+	buffer := bytes.NewBuffer([]byte{})
+	p := NewTestPorter(t)
+	p.Out = buffer
+	p.TestConfig.SetupPorterHome()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
+	require.NoError(t, err)
+
+	// ignore mixins in the unit tests
+	p.Manifest.Mixins = []string{}
+
+	_, err = p.buildDockerFile()
+	require.NoError(t, err)
+
+	wantlines := `
+Generating Dockerfile =======>
+FROM quay.io/deis/lightweight-docker-go:v0.2.0
+FROM debian:stretch
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY cnab/ /cnab/
+COPY porter.yaml /cnab/app/porter.yaml
+CMD ["/cnab/app/run"]
+`
+	assert.Equal(t, wantlines, buffer.String())
 }
 
 func TestPorter_generateDockerfile(t *testing.T) {

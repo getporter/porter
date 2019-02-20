@@ -77,7 +77,9 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 	lines = append(lines, p.buildPorterSection()...)
 	lines = append(lines, p.buildCMDSection())
 
-	fmt.Fprintln(p.Out, lines)
+	for _, line := range lines {
+		fmt.Fprintln(p.Out, line)
+	}
 
 	return lines, nil
 }
