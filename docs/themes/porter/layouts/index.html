@@ -44,7 +44,7 @@
           <section class="billboard">
             <div class="container">
               <h1>A Friendlier Cloud Installer</h1>
-              <h2>Porter understands that clouds are messy things, and is here to pack <em>and</em> carry your bags.</h2>
+              <h2>Clouds are messy things. Porter is here to pack <em>and</em> carry your bags.</h2>
             </div>
           </section>
 
@@ -53,14 +53,14 @@
               <div class="small-12 medium-6 columns">
                 <h2>What is Porter?</h2>
 
-                <p>When we deploy to the cloud, most of us aren’t dealing with just a single cloud provider or toolchain. 
-                  The simplest of applications today need nginx, Let’s Encrypt, persistent file storage, DNS, and 
+                <p>When we deploy to the cloud, most of us aren’t dealing with just a single cloud provider or toolchain.
+                  The simplest of applications today need a load balancer, SSL certificate, persistent file storage, DNS, and
                   somewhere in there is your application. One app is installed with Helm, another with the cloud provider’s cli
-                  and it’s all glued together with magic bash scripts.
+                  and it is all glued together with magic bash scripts.
 
                 <p>That is a lot to figure out! 😅</p>
 
-                <p>Porter is a cloud installer that helps you manage everything 
+                <p>Porter is a cloud installer that helps you manage everything
                   together in a single bundle, focusing on what you know best: your application.</p>
               </div>
 
@@ -70,6 +70,10 @@
             </div>
           </div>
 
+          <div class="container content" style="background-color: #141414;">
+            <img src="/images/bundle-manifest-wide.png" width="1079px" style="display: block; margin-left: auto; margin-right: auto;"/>
+          </div>
+          
           <div class="container helm-features">
             <div class="row ">
               <div class="small-12 columns">
@@ -80,19 +84,19 @@
             <div class="row">
               <div class="small-6 medium-6 large-4 columns">
                 <span style="font-size: 5em">👜 🧳 </span>
-                <h3>Install your app and its baggage</h3>
-                <p>Bundle up not just the app, but everything it needs to run in the cloud
+                <h3>Your app and its baggage:<br/>installed</h3>
+                <p>Bundle up not just your application, but everything it needs to run in the cloud.
                 </p>
               </div>
               <div class="small-6 medium-6 large-4 columns">
                 <span style="font-size: 5em">👩🏾‍🔬 🧬 </span>
-                <h3>Build bundles smarter, not harder</h3>
+                <h3>Smart bundles:<br/>out-of-the-box</h3>
                 <p>Use mixins for common tools and clouds, and depend on existing bundles.</p>
               </div>
               <div class="small-6 medium-6 large-4 columns">
                 <span style="font-size: 5em">🚂 📦 </span>
-                <h3>Surprise! It does package management too</h3>
-                <p>Package and version your bundle, then distribute it for others to use.</p>
+                <h3>Bundle management:<br/>simplified</h3>
+                <p>Package and version your bundle, and then distribute it to others just like Docker images.</p>
               </div>
             </div>
           </div>
@@ -106,11 +110,15 @@
               </div>
 
               <div class="small-12 medium-12 large-5 get-charts columns">
-                <h2>Find Bundles</h2>
+                <a href="https://github.com/deislabs/porter/tree/master/examples">
+                  <h2>Example Bundles</h2>
+                </a>
 
-                <p>Looking for prebuilt bundles?</p>
+                <p>Looking for ideas and copy/pasta?</p>
 
-                <p><a href="#TODO"><img src="{{ .Site.BaseURL }}src/img/helm-charts.png" alt="Example Bundles"></a></p>
+                <a href="https://github.com/deislabs/porter/tree/master/examples">
+                  <p><img src="{{ .Site.BaseURL }}src/img/helm-charts.png" alt="Example Bundles"></p>
+                </a>
 
               </div>
             </div>
