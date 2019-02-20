@@ -298,12 +298,17 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 			DataType:      param.DataType,
 			DefaultValue:  param.DefaultValue,
 			AllowedValues: param.AllowedValues,
-			Required:      param.Required,
 			MinValue:      param.MinValue,
 			MaxValue:      param.MaxValue,
 			MinLength:     param.MinLength,
 			MaxLength:     param.MaxLength,
 		}
+
+		// If the default is empty, set required to true.
+		if param.DefaultValue == nil {
+			p.Required = true
+		}
+
 		if param.Metadata.Description != "" {
 			p.Metadata = ParameterMetadata{Description: param.Metadata.Description}
 		}
