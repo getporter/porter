@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bytes"
 	"testing"
 
 	"encoding/json"
@@ -41,9 +40,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 }
 
 func TestPorter_buildDockerfile_output(t *testing.T) {
-	buffer := bytes.NewBuffer([]byte{})
 	p := NewTestPorter(t)
-	p.Out = buffer
 	p.TestConfig.SetupPorterHome()
 	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
 	require.Nil(t, err)
@@ -67,7 +64,7 @@ COPY cnab/ /cnab/
 COPY porter.yaml /cnab/app/porter.yaml
 CMD ["/cnab/app/run"]
 `
-	assert.Equal(t, wantlines, buffer.String())
+	assert.Equal(t, wantlines, p.TestConfig.TestContext.GetOutput())
 }
 
 func TestPorter_generateDockerfile(t *testing.T) {
