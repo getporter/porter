@@ -1,10 +1,13 @@
 SHELL = bash
 
+# --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
+MAKE_OPTS ?= --no-print-directory
+
 REGISTRY ?= $(USER)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
-KUBECONFIG ?= $(HOME)/.kube/config
+KUBECONFIG  ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
@@ -28,34 +31,38 @@ AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/lat
 build: build-client build-runtime azure helm
 
 build-runtime:
-	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
-	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=exec -f mixin.mk
 
 build-client: build-templates
-	$(MAKE) build-client MIXIN=porter -f mixin.mk
-	$(MAKE) build-client MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-client MIXIN=exec -f mixin.mk
 	cp bin/mixins/porter/porter$(FILE_EXT) bin/
 
 build-templates: get-deps
 	cd pkg/porter && packr2 build
 
 HAS_PACKR2 := $(shell command -v packr2)
+HAS_DEP    := $(shell command -v dep)
 get-deps:
 ifndef HAS_PACKR2
 	go get -u github.com/gobuffalo/packr/v2/packr2
 endif
+ifndef HAS_DEP
+	go get -u github.com/golang/dep/cmd/dep
+endif
 
 xbuild-all:
-	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk
-	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=exec -f mixin.mk
 
 xbuild-runtime:
-	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk
-	$(MAKE) xbuild-runtime MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=exec -f mixin.mk
 
 xbuild-client:
-	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk
-	$(MAKE) xbuild-client MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=porter -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=exec -f mixin.mk
 
 bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
@@ -88,7 +95,7 @@ test: clean test-unit test-cli
 test-unit: build
 	go test ./...
 
-test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
+test-cli: build init-duffle-home-for-ci init-porter-home-for-ci
 	export KUBECONFIG
 	export PORTER_HOME
 	export DUFFLE_HOME
@@ -117,6 +124,16 @@ init-porter-home-for-ci:
 	#porter init
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
+# target added to fetch latest duffle release; intended for CI use
+DUFFLE_BIN ?= duffle-linux-amd64
+bin/$(DUFFLE_BIN):
+	@mkdir -p bin
+	@curl -s https://api.github.com/repos/deislabs/duffle/releases/latest | \
+		jq -r ".assets | .[].browser_download_url" | grep $(DUFFLE_BIN) | \
+		wget -i - -O bin/$(DUFFLE_BIN)
+	@chmod +x bin/$(DUFFLE_BIN)
+	@cp bin/$(DUFFLE_BIN) $(GOPATH)/bin/duffle
+
 .PHONY: docs
 docs:
 	hugo --source docs/ $(BASEURL_FLAG)
@@ -125,7 +142,7 @@ docs-preview:
 	hugo serve --source docs/
 
 publish:
-	$(MAKE) publish MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
