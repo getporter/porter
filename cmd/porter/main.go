@@ -25,6 +25,7 @@ func buildRootCommand() *cobra.Command {
 			p.Out = cmd.OutOrStdout()
 			p.Err = cmd.OutOrStderr()
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.PersistentFlags().BoolVar(&p.Debug, "debug", false, "Enable debug logging")
