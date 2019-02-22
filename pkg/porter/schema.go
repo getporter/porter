@@ -112,7 +112,7 @@ func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
 	return manifestSchema, nil
 }
 
-func (p *Porter) getMixinSchema(m MixinMetaData) (map[string]interface{}, error) {
+func (p *Porter) getMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
 	r := mixin.NewRunner(m.Name, m.Dir, false)
 	r.Command = "schema"
 
