@@ -26,7 +26,7 @@ MIXIN_TAG ?= canary
 HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
 AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
 
-build: build-client build-runtime azure helm
+build: get-deps build-client build-runtime azure helm
 	rm -r bin/mixins/porter
 
 build-runtime:
@@ -34,13 +34,10 @@ build-runtime:
 	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
 	mv bin/mixins/porter/porter-runtime$(FILE_EXT) bin/
 
-build-client: build-templates
+build-client:
 	$(MAKE) build-client MIXIN=porter -f mixin.mk
 	$(MAKE) build-client MIXIN=exec -f mixin.mk
 	mv bin/mixins/porter/porter$(FILE_EXT) bin/
-
-build-templates: get-deps
-	cd pkg/porter && packr2 build
 
 HAS_PACKR2 := $(shell command -v packr2)
 get-deps:
