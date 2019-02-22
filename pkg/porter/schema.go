@@ -1,16 +1,12 @@
 package porter
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+
+	"github.com/deislabs/porter/pkg/config"
 
 	"github.com/pkg/errors"
-
-	"github.com/deislabs/porter/pkg/context"
-
-	"github.com/deislabs/porter/pkg/mixin"
 
 	"github.com/gobuffalo/packr/v2"
 )
@@ -85,7 +81,7 @@ func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
 	}
 
 	for _, mixin := range mixins {
-		mixinSchema, err := p.getMixinSchema(mixin)
+		mixinSchema, err := p.GetMixinSchema(mixin)
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
 			if p.Debug {
@@ -110,32 +106,4 @@ func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
 	installSchema["anyOf"] = anyOfSchema
 
 	return manifestSchema, nil
-}
-
-func (p *Porter) getMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
-	r := mixin.NewRunner(m.Name, m.Dir, false)
-	r.Command = "schema"
-
-	// Copy the existing context and tweak to pipe the output differently
-	mixinSchema := &bytes.Buffer{}
-	var mixinContext context.Context
-	mixinContext = *p.Context
-	mixinContext.Out = mixinSchema
-	if !p.Debug {
-		mixinContext.Err = ioutil.Discard
-	}
-	r.Context = &mixinContext
-
-	err := r.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	schemaMap := make(map[string]interface{})
-	err = json.Unmarshal(mixinSchema.Bytes(), &schemaMap)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", m.Name, mixinSchema.String())
-	}
-
-	return schemaMap, nil
 }

@@ -1,7 +1,13 @@
 package porter
 
 import (
+	"encoding/json"
 	"testing"
+
+	"github.com/gobuffalo/packr/v2"
+	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/mixin"
 
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
 
@@ -18,8 +24,10 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	c := config.NewTestConfig(t)
 	p := &TestPorter{
 		Porter: &Porter{
-			Config:        c.Config,
-			MixinProvider: mixinprovider.NewFileSystem(c.Config),
+			Config: c.Config,
+			MixinProvider: &TestMixinProvider{
+				MixinProvider: mixinprovider.NewFileSystem(c.Config),
+			},
 		},
 		TestConfig: c,
 	}
@@ -29,5 +37,22 @@ func NewTestPorter(t *testing.T) *TestPorter {
 
 // TODO: use this later to not actually execute a mixin during a unit test
 type TestMixinProvider struct {
-	*mixinprovider.FileSystem
+	MixinProvider
+}
+
+func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
+	t := packr.New("schema", "./schema")
+
+	b, err := t.Find(m.Name + ".json")
+	if err != nil {
+		return nil, err
+	}
+
+	manifestSchema := make(map[string]interface{})
+	err = json.Unmarshal(b, &manifestSchema)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal the %s mixin schema", m.Name)
+	}
+
+	return manifestSchema, nil
 }

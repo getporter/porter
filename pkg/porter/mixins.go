@@ -11,6 +11,7 @@ import (
 // MixinProvider handles searching, listing and communicating with the mixins.
 type MixinProvider interface {
 	GetMixins() ([]mixin.Metadata, error)
+	GetMixinSchema(m mixin.Metadata) (map[string]interface{}, error)
 }
 
 func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
