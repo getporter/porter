@@ -454,11 +454,11 @@ func (s *Step) GetDescription() (string, error) {
 	children := s.Data[mixinName]
 	d, ok := children.(map[interface{}]interface{})["description"]
 	if !ok {
-		return "", errors.Errorf("mixin (%s) missing description", mixinName)
+		return "", errors.Errorf("mixin step (%s) missing description", mixinName)
 	}
 	desc, ok := d.(string)
 	if !ok {
-		return "", errors.Errorf("invalid description type (%T) for mixin (%s)", desc, mixinName)
+		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
 	}
 
 	return desc, nil
