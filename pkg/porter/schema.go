@@ -90,7 +90,13 @@ func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
 			continue
 		}
 
-		for action, actionSchema := range mixinSchema {
+		mixinSchemaMap := make(map[string]interface{})
+		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema)
+		}
+
+		for action, actionSchema := range mixinSchemaMap {
 			if !config.IsSupportedAction(action) {
 				continue
 			}

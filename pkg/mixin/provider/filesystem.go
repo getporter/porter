@@ -2,7 +2,6 @@ package mixinprovider
 
 import (
 	"bytes"
-	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 
@@ -50,7 +49,7 @@ func (p *FileSystem) GetMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
+func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (string, error) {
 	r := mixin.NewRunner(m.Name, m.Dir, false)
 	r.Command = "schema"
 
@@ -66,14 +65,8 @@ func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (map[string]interface{}, e
 
 	err := r.Run()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	schemaMap := make(map[string]interface{})
-	err = json.Unmarshal(mixinSchema.Bytes(), &schemaMap)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", m.Name, mixinSchema.String())
-	}
-
-	return schemaMap, nil
+	return mixinSchema.String(), nil
 }

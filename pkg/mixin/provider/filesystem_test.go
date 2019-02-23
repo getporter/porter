@@ -1,7 +1,6 @@
 package mixinprovider
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -69,17 +68,15 @@ func TestFileSystem_GetMixinSchema(t *testing.T) {
 	for _, m := range mixins {
 		if m.Name == "exec" {
 			e = &m
+			break
 		}
 	}
 	require.NotNil(t, e)
 
-	schema, err := p.GetMixinSchema(*e)
+	gotSchema, err := p.GetMixinSchema(*e)
 	require.NoError(t, err)
 
-	gotSchema, err := json.MarshalIndent(schema, "", "  ")
-	require.NoError(t, err)
-
-	wantSchema, err := ioutil.ReadFile("../../porter/schema/exec.json")
+	wantSchema, err := ioutil.ReadFile("../../exec/testdata/schema.json")
 	require.NoError(t, err)
 
 	assert.Equal(t, string(wantSchema), string(gotSchema))

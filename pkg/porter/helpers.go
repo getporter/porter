@@ -1,15 +1,11 @@
 package porter
 
 import (
-	"encoding/json"
 	"testing"
 
-	"github.com/gobuffalo/packr/v2"
-	"github.com/pkg/errors"
-
 	"github.com/deislabs/porter/pkg/mixin"
-
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
+	"github.com/gobuffalo/packr/v2"
 
 	"github.com/deislabs/porter/pkg/config"
 )
@@ -47,19 +43,8 @@ func (p *TestMixinProvider) GetMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
+func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (string, error) {
 	t := packr.New("schema", "./schema")
 
-	b, err := t.Find(m.Name + ".json")
-	if err != nil {
-		return nil, err
-	}
-
-	manifestSchema := make(map[string]interface{})
-	err = json.Unmarshal(b, &manifestSchema)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal the %s mixin schema", m.Name)
-	}
-
-	return manifestSchema, nil
+	return t.FindString(m.Name + ".json")
 }
