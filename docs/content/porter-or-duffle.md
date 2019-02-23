@@ -32,6 +32,7 @@ Here is an example that highlights the differences between Porter and Duffle:
 ## Wordpress Bundle Today
 
 The author has to do everything:
+
 * Create an invocation image with all the necessary binaries and CNAB config.
 * Know how to not only install their own application, but how to install/uninstall/upgrade all of their dependencies.
 * Figure out CNAB's environment variable naming and how to get at parameters, credentials and actions.
@@ -39,6 +40,7 @@ The author has to do everything:
 If I write 5 bundles that each use MySQL, I have to redo in each bundle how to manage MySQL. There's no way for someone to write a MySQL bundle that authors can benefit from.
 
 Example:
+
 * [Wordpress Bundle's Dockerfile](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/Dockerfile)
 * [Wordpress Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
 
