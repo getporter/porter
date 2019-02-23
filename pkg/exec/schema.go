@@ -2,8 +2,6 @@ package exec
 
 import (
 	"fmt"
-
-	packr "github.com/gobuffalo/packr/v2"
 )
 
 func (m *Mixin) PrintSchema() error {
@@ -18,7 +16,5 @@ func (m *Mixin) PrintSchema() error {
 }
 
 func (m *Mixin) GetSchema() (string, error) {
-	t := packr.New("schema", "./schema")
-
-	return t.FindString("exec.json")
+	return m.schemas.FindString("exec.json")
 }
