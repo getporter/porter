@@ -7,8 +7,6 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 
 	"github.com/pkg/errors"
-
-	"github.com/gobuffalo/packr/v2"
 )
 
 func (p *Porter) PrintManifestSchema() error {
@@ -27,9 +25,7 @@ func (p *Porter) PrintManifestSchema() error {
 }
 
 func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
-	t := packr.New("schema", "./schema")
-
-	b, err := t.Find("manifest.json")
+	b, err := p.schemas.Find("manifest.json")
 	if err != nil {
 		return nil, err
 	}
