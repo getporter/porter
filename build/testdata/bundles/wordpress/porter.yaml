@@ -8,8 +8,8 @@ invocationImage: porter-wordpress:latest
 dependencies:
 - name: mysql
   parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+    database-name: wordpress
+    mysql-user: wordpress
 
 credentials:
 - name: kubeconfig
