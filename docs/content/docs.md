@@ -34,21 +34,21 @@ credentials:
   path: /root/.kube/config
 
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: mydb
     chart: stable/mysql
     version: 0.10.2
     replace: true
     set:
       mysqlDatabase: mydb
-  outputs:
-  - name: "MYSQL_HOST"
-    key: "MYSQL_HOST"
+    outputs:
+    - name: "MYSQL_HOST"
+      key: "MYSQL_HOST"
 
 uninstall:
-- description: "Uninstall MySQL"
-  helm:
+- helm:
+    description: "Uninstall MySQL"
     name: mydb
     purge: true
 ```

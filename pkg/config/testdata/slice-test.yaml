@@ -12,8 +12,8 @@ parameters:
     default: "echo Hello World"
 
 install:
-  - description: "Install Hello World"
-    exec:
+  - exec:
+      description: "Install Hello World"
       command: bash
       arguments:
         - -c
@@ -21,8 +21,8 @@ install:
 
 
 uninstall:
-  - description: "Uninstall Hello World"
-    exec:
+  - exec:
+      description: "Uninstall Hello World"
       command: bash
       arguments:
         - -c

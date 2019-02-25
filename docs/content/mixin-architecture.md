@@ -22,8 +22,8 @@ version: 0.1.0
 invocationImage: porter-hello:latest
 
 install:
-- description: "Say Hello"
-  exec:
+- exec:
+    description: "Say Hello"
     command: bash
     arguments:
       - -c
@@ -85,17 +85,17 @@ Use "helm [command] --help" for more information about a command.
 Porter will pass the entire step, in YAML form, to the mixin. Porter expects the step YAML to have a `description` field and an array of optional `outputs`, and allows each mixin to process the remaining structure of the YAML as needed. For example, the `helm` mixin expects to be passed a YAML document like this:
 
 ```yaml
+helm:
   description: "Install MySQL"
-  helm:
-    name: porter-ci-mysql
-    chart: stable/mysql
-    version: 0.10.2
-    replace: true
-    set:
-      mysqlDatabase:
-        source: bundle.parameters.database-name
-      mysqlUser:
-        source: bundle.parameters.mysql-user
+  name: porter-ci-mysql
+  chart: stable/mysql
+  version: 0.10.2
+  replace: true
+  set:
+    mysqlDatabase:
+      source: bundle.parameters.database-name
+    mysqlUser:
+      source: bundle.parameters.mysql-user
   outputs:
   - name: mysql-root-password
     secret: porter-ci-mysql

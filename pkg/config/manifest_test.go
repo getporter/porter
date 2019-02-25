@@ -21,7 +21,8 @@ func TestLoadManifest(t *testing.T) {
 	assert.Len(t, c.Manifest.Install, 1)
 
 	installStep := c.Manifest.Install[0]
-	assert.NotNil(t, installStep.Description)
+	description, _ := installStep.GetDescription()
+	assert.NotNil(t, description)
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "exec", mixin)
@@ -41,7 +42,8 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	assert.Len(t, c.Manifest.Install, 2)
 
 	installStep := c.Manifest.Install[0]
-	assert.NotNil(t, installStep.Description)
+	description, _ := installStep.GetDescription()
+	assert.NotNil(t, description)
 
 	mixin := installStep.GetMixinName()
 	assert.Equal(t, "helm", mixin)
@@ -107,7 +109,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 func TestResolveMapParam(t *testing.T) {
 	m := &Manifest{
 		Parameters: []ParameterDefinition{
-			ParameterDefinition{
+			{
 				Name: "person",
 			},
 		},
@@ -115,8 +117,8 @@ func TestResolveMapParam(t *testing.T) {
 
 	os.Setenv("PERSON", "Ralpha")
 	s := &Step{
-		Description: "a test step",
 		Data: map[string]interface{}{
+			"description": "a test step",
 			"Parameters": map[string]interface{}{
 				"Thing": map[string]interface{}{
 					"source": "bundle.parameters.person",
@@ -141,8 +143,8 @@ func TestResolveMapParamUnknown(t *testing.T) {
 	}
 
 	s := &Step{
-		Description: "a test step",
 		Data: map[string]interface{}{
+			"description": "a test step",
 			"Parameters": map[string]interface{}{
 				"Thing": map[string]interface{}{
 					"source": "bundle.parameters.person",
@@ -159,15 +161,15 @@ func TestResolveMapParamUnknown(t *testing.T) {
 func TestResolveArrayUnknown(t *testing.T) {
 	m := &Manifest{
 		Parameters: []ParameterDefinition{
-			ParameterDefinition{
+			{
 				Name: "name",
 			},
 		},
 	}
 
 	s := &Step{
-		Description: "a test step",
 		Data: map[string]interface{}{
+			"description": "a test step",
 			"Arguments": []string{
 				"source: bundle.parameters.person",
 			},
@@ -182,7 +184,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 func TestResolveArray(t *testing.T) {
 	m := &Manifest{
 		Parameters: []ParameterDefinition{
-			ParameterDefinition{
+			{
 				Name: "person",
 			},
 		},
@@ -190,8 +192,8 @@ func TestResolveArray(t *testing.T) {
 
 	os.Setenv("PERSON", "Ralpha")
 	s := &Step{
-		Description: "a test step",
 		Data: map[string]interface{}{
+			"description": "a test step",
 			"Arguments": []string{
 				"source: bundle.parameters.person",
 			},
@@ -275,13 +277,13 @@ func TestManifest_MergeDependency(t *testing.T) {
 	m := &Manifest{
 		Mixins: []string{"helm"},
 		Install: Steps{
-			&Step{Description: "install wordpress"},
+			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "install wordpress"}}},
 		},
 		Upgrade: Steps{
-			&Step{Description: "upgrade wordpress"},
+			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "upgrade wordpress"}}},
 		},
 		Uninstall: Steps{
-			&Step{Description: "uninstall wordpress"},
+			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "uninstall wordpress"}}},
 		},
 	}
 
@@ -289,13 +291,13 @@ func TestManifest_MergeDependency(t *testing.T) {
 		m: &Manifest{
 			Mixins: []string{"exec", "helm"},
 			Install: Steps{
-				&Step{Description: "install mysql"},
+				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "install mysql"}}},
 			},
 			Upgrade: Steps{
-				&Step{Description: "upgrade mysql"},
+				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "upgrade mysql"}}},
 			},
 			Uninstall: Steps{
-				&Step{Description: "uninstall mysql"},
+				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "uninstall mysql"}}},
 			},
 			Credentials: []CredentialDefinition{
 				{Name: "kubeconfig", Path: "/root/.kube/config"},
@@ -309,16 +311,22 @@ func TestManifest_MergeDependency(t *testing.T) {
 	assert.Equal(t, []string{"exec", "helm"}, m.Mixins)
 
 	assert.Len(t, m.Install, 2)
-	assert.Equal(t, "install mysql", m.Install[0].Description)
-	assert.Equal(t, "install wordpress", m.Install[1].Description)
+	description, _ := m.Install[0].GetDescription()
+	assert.Equal(t, "install mysql", description)
+	description, _ = m.Install[1].GetDescription()
+	assert.Equal(t, "install wordpress", description)
 
 	assert.Len(t, m.Upgrade, 2)
-	assert.Equal(t, "upgrade mysql", m.Upgrade[0].Description)
-	assert.Equal(t, "upgrade wordpress", m.Upgrade[1].Description)
+	description, _ = m.Upgrade[0].GetDescription()
+	assert.Equal(t, "upgrade mysql", description)
+	description, _ = m.Upgrade[1].GetDescription()
+	assert.Equal(t, "upgrade wordpress", description)
 
 	assert.Len(t, m.Uninstall, 2)
-	assert.Equal(t, "uninstall wordpress", m.Uninstall[0].Description)
-	assert.Equal(t, "uninstall mysql", m.Uninstall[1].Description)
+	description, _ = m.Uninstall[0].GetDescription()
+	assert.Equal(t, "uninstall wordpress", description)
+	description, _ = m.Uninstall[1].GetDescription()
+	assert.Equal(t, "uninstall mysql", description)
 
 	assert.Len(t, m.Credentials, 1)
 }

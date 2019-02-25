@@ -6,16 +6,16 @@ version: 0.1.0
 invocationImage: porter-hello:latest
 
 install:
-- description: "Say Hello"
-  exec:
+- exec:
+    description: "Say Hello"
     command: bash
     arguments:
       - -c
       - echo Hello World
 
 uninstall:
-- description: "Say Goodbye"
-  exec:
+- exec:
+    description: "Say Goodbye"
     command: bash
     arguments:
       - -c

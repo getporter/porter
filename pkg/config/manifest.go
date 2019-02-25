@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/reflectwalk"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
@@ -95,10 +95,6 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 	switch sourceType {
 	case "outputs":
 		replacement = d.m.outputs[sourceName]
-		// TODO: once we have capturing outputs implemented, put this back
-		//if o, exists := d.m.outputs[sourceName]; exists {
-		//	replacement = o
-		//}
 	case "parameters":
 		for _, param := range d.m.Parameters {
 			if param.Name == sourceName {
@@ -444,9 +440,28 @@ type Step struct {
 	runner *mixin.Runner
 	dep    *Dependency // The dependency that owns this step
 
-	Description string                 `yaml:"description"`
-	Outputs     []StepOutput           `yaml:"outputs"`
-	Data        map[string]interface{} `yaml:",inline"`
+	Data map[string]interface{} `yaml:",inline"`
+}
+
+// GetDescription returns a description of the step.
+// Every step must have this property.
+func (s *Step) GetDescription() (string, error) {
+	if s.Data == nil {
+		return "", errors.New("empty step data")
+	}
+
+	mixinName := s.GetMixinName()
+	children := s.Data[mixinName]
+	d, ok := children.(map[interface{}]interface{})["description"]
+	if !ok {
+		return "", errors.Errorf("mixin step (%s) missing description", mixinName)
+	}
+	desc, ok := d.(string)
+	if !ok {
+		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
+	}
+
+	return desc, nil
 }
 
 type StepOutput struct {
@@ -475,6 +490,10 @@ func (s *Step) Validate(m *Manifest) error {
 	}
 	if !mixinDeclared {
 		return errors.Errorf("mixin (%s) was not declared", mixinType)
+	}
+
+	if _, err := s.GetDescription(); err != nil {
+		return err
 	}
 
 	return nil
@@ -548,16 +567,16 @@ func (m *Manifest) SliceElem(index int, val reflect.Value) error {
 
 	// There are two cases possible in the YAML. The first is when the element in the slice is a string. That might look like:
 	// install:
-	//   - description: "Install Hello World"
-	//     exec:
+	//   - exec:
+	//       description: "Install Hello World"
 	// 	     command: bash
 	// 	     arguments:
 	// 	       - -c
 	// 	       - "source:  bundle.parameters.command"
 	// The second case is when the declaration interpreted to represent a Map. This is the case when there are no quotes:
 	// install:
-	//   - description: "Install Hello World"
-	//     exec:
+	//   - exec:
+	//       description: "Install Hello World"
 	// 	     command: bash
 	// 	     arguments:
 	// 	       - -c
