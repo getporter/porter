@@ -108,10 +108,10 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	err = p.prepareDockerFilesystem()
 	require.NoError(t, err)
 
-	wantPorterMixin := "cnab/app/mixins/porter/porter-runtime"
-	porterMixinExists, err := p.FileSystem.Exists(wantPorterMixin)
+	wantPorterRuntime := "cnab/app/porter-runtime"
+	porterMixinExists, err := p.FileSystem.Exists(wantPorterRuntime)
 	require.NoError(t, err)
-	assert.True(t, porterMixinExists, "The porter-runtime mixin wasn't copied into %s", wantPorterMixin)
+	assert.True(t, porterMixinExists, "The porter-runtime wasn't copied into %s", wantPorterRuntime)
 
 	wantExecMixin := "cnab/app/mixins/exec/exec-runtime"
 	execMixinExists, err := p.FileSystem.Exists(wantExecMixin)

@@ -156,17 +156,25 @@ func (p *Porter) prepareDockerFilesystem() error {
 		}
 	}
 
+	fmt.Printf("Copying porter runtime ===> \n")
+	pr, err := p.GetPorterRuntimePath()
+	if err != nil {
+		return err
+	}
+	err = p.CopyFile(pr, "cnab/app/porter-runtime")
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("Copying mixins ===> \n")
-	for _, mixin := range append(p.Manifest.Mixins, "porter") {
+	for _, mixin := range p.Manifest.Mixins {
 		err := p.copyMixin(mixin)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Make the porter runtime available at the root of the app
-	err := p.Context.CopyFile("cnab/app/mixins/porter/porter-runtime", "cnab/app/porter-runtime")
-	return errors.Wrap(err, "could not copy porter-runtime mixin")
+	return nil
 }
 
 func (p *Porter) copyDependency(bundle string) error {
