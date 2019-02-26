@@ -26,18 +26,6 @@ func TestRun_Validate(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestRun_Validate_MissingFile(t *testing.T) {
-	p := porter.NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	cmd := buildRunCommand(p.Porter)
-
-	cmd.Flags().Set("action", string(config.ActionInstall))
-
-	err := cmd.PreRunE(cmd, []string{})
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "invalid --file")
-}
-
 func TestRun_Validate_MissingAction(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
