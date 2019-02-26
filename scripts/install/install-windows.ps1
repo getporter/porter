@@ -15,15 +15,15 @@ mkdir -p $PORTER_HOME/mixins/azure
 echo "Installed $(iex "$PORTER_HOME\porter.exe version")"
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/exec/latest/exec-windows-amd64.exe", "$PORTER_HOME\mixins\exec\exec.exe")
-(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/exec/latest/exec-runtime-linux-amd64", "$PORTER_HOME\mixins\exec\exec-runtime.exe")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/exec/latest/exec-runtime-linux-amd64", "$PORTER_HOME\mixins\exec\exec-runtime")
 echo "Installed $(iex "$PORTER_HOME\mixins\exec\exec.exe version")"
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/helm/latest/helm-windows-amd64.exe", "$PORTER_HOME\mixins\helm\helm.exe")
-(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/helm/latest/helm-runtime-linux-amd64", "$PORTER_HOME\mixins\helm\helm-runtime.exe")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/helm/latest/helm-runtime-linux-amd64", "$PORTER_HOME\mixins\helm\helm-runtime")
 echo "Installed $(iex "$PORTER_HOME\mixins\helm\helm.exe version")"
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/azure/latest/azure-windows-amd64.exe", "$PORTER_HOME\mixins\azure\azure.exe")
-(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/azure/latest/azure-runtime-linux-amd64", "$PORTER_HOME\mixins\azure\azure-runtime.exe")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/azure/latest/azure-runtime-linux-amd64", "$PORTER_HOME\mixins\azure\azure-runtime")
 echo "Installed azure mixin"
 
 echo "Installation complete. Add $PORTER_HOME to your PATH."
