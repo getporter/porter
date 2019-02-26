@@ -22,6 +22,14 @@ on top of your work.
 If you would like to install a developer build, run `make install`.
 This copies a dev build to `~/.porter` and symlinks it to `/usr/local/bin`.
 
+# Mixins
+
+When you run `make build`, the canary\* build of external mixins are automatically installed into your bin directory
+in the root of the repository. If you want to work against a different version of a mixin, then run `make clean build MIXIN_TAG=v1.2.3`.
+or use `latest` for the most recent tagged release.
+
+\* canary = most recent successful build of master
+
 # Documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [Netlify](netlify.com).
