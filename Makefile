@@ -26,15 +26,17 @@ HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/lates
 AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/latest/azure
 
 build: build-client build-runtime azure helm
+	rm -r bin/mixins/porter
 
 build-runtime:
 	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
 	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
+	mv bin/mixins/porter/porter-runtime$(FILE_EXT) bin/
 
 build-client: build-templates
 	$(MAKE) build-client MIXIN=porter -f mixin.mk
 	$(MAKE) build-client MIXIN=exec -f mixin.mk
-	cp bin/mixins/porter/porter$(FILE_EXT) bin/
+	mv bin/mixins/porter/porter$(FILE_EXT) bin/
 
 build-templates: get-deps
 	cd pkg/porter && packr2 build
