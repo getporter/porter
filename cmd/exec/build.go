@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/mixin/exec"
+	"github.com/deislabs/porter/pkg/exec"
 
 	"github.com/spf13/cobra"
 )
