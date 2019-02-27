@@ -40,6 +40,13 @@ type TestMixinProvider struct {
 	MixinProvider
 }
 
+func (p *TestMixinProvider) GetMixins() ([]mixin.Metadata, error) {
+	mixins := []mixin.Metadata{
+		{Name: "exec"},
+	}
+	return mixins, nil
+}
+
 func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (map[string]interface{}, error) {
 	t := packr.New("schema", "./schema")
 

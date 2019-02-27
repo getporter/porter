@@ -11,7 +11,6 @@ import (
 func TestMixin_PrintSchema(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.Debug = false // Don't print debug warnings about not being able to query the schema of the mixins, messes up the test
 
 	err := p.PrintManifestSchema()
 	require.NoError(t, err)
