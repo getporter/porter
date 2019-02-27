@@ -22,8 +22,9 @@ else
 FILE_EXT=
 endif
 
-HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/latest/helm
-AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/latest/azure
+MIXIN_TAG ?= canary
+HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
+AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
 
 build: build-client build-runtime azure helm
 	rm -r bin/mixins/porter
