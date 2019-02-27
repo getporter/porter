@@ -1,6 +1,7 @@
 package mixin
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -22,7 +23,8 @@ func NewTestRunner(t *testing.T, mixin string, runtime bool) *TestRunner {
 	r.Context = c.Context
 
 	// Setup Mixin Home
-	c.AddTestDirectory("../../bin/mixins", "/root/.porter/mixins")
+	srcMixinsDir := filepath.Join(c.FindBinDir(), "mixins")
+	c.AddTestDirectory(srcMixinsDir, "/root/.porter/mixins")
 
 	return r
 }
