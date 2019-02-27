@@ -1,3 +1,10 @@
+We have [good first issues][good-first-issue] for new contributors and [help wanted][help-wanted] issues for our other contributors.
+
+* `good first issue` has extra information to help you make your first contribution.
+* `help wanted` are issues suitable for someone who isn't a core maintainer.
+
+Maintainers will do our best regularly make new issues for you to solve and then help out as you work on them. 💖
+ 
 # Philosophy
 PRs are most welcome!
 
@@ -41,3 +48,6 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [N
 
 If anyone is interested in contributing changes to our makefile to improve the authoring exerience, such 
 as doing this with Docker so that you don't need Hugo installed, it would be a welcome contribution! ❤️
+
+[good-first-issue]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+label%3Abacklog+
+[help-wanted]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+label%3Abacklog+
