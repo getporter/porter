@@ -10,19 +10,21 @@ credentials:
   path: /root/.kube/config
 
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
     version: 0.10.2
     replace: true
     set:
       mysqlDatabase: mydb
-  outputs:
-  - name: host
+    outputs:
+    - name: host
+      secret: porter-ci-mysql
+      key: mysql-root-password
 
 uninstall:
-- description: "Uninstall MySQL"
-  helm:
+- helm:
+    description: "Uninstall MySQL"
     name: porter-ci-mysql
     purge: true

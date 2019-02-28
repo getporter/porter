@@ -24,16 +24,16 @@ version: "0.1.0"
 invocationImage: porter-hello:latest
 
 install:
-  - description: "Install Hello World"
-    exec:
+  - exec:
+      description: "Install Hello World"
       command: bash
       arguments:
         - -c
         - echo Hello World
 
 uninstall:
-  - description: "Uninstall Hello World"
-    exec:
+  - exec:
+      description: "Uninstall Hello World"
       command: bash
       arguments:
         - -c
@@ -192,14 +192,14 @@ credentials:
   path: /root/.kube/config
 
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
     version: "0.10.2"
 uninstall:
-- description: "Uninstall MySQL"
-  helm:
+- helm:
+    description: "Uninstall MySQL"
     name: porter-ci-mysql
     purge: true
 ```
@@ -285,16 +285,16 @@ dependencies:
     mysql_user: wordpress
 
 install:
-- description: "Say Hello"
-  exec:
+- exec:
+    description: "Say Hello"
     command: bash
     arguments:
       - -c
       - echo Hello World
 
 uninstall:
-- description: "Say Goodbye"
-  exec:
+- exec:
+    description: "Say Goodbye"
     command: bash
     arguments:
       - -c

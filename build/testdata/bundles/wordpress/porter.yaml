@@ -8,8 +8,8 @@ invocationImage: porter-wordpress:latest
 dependencies:
 - name: mysql
   parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+    database-name: wordpress
+    mysql-user: wordpress
 
 credentials:
 - name: kubeconfig
@@ -23,8 +23,8 @@ parameters:
     env: WORDPRESS_NAME
 
 install:
-- description: "Install Wordpress"
-  helm:
+- helm:
+    description: "Install Wordpress"
     name:
       source: bundle.parameters.wordpress-name
     chart: stable/wordpress
@@ -40,7 +40,7 @@ install:
         source: bundle.dependencies.mysql.outputs.mysql-password
 
 uninstall:
-- description: "Uninstall Wordpress"
-  helm:
+- helm:
+    description: "Uninstall Wordpress"
     name:
       source: bundle.parameters.wordpress-name

@@ -5,4 +5,4 @@
 /Dockerfile
 /bundle.json
 /porter
-
+*-packr.go

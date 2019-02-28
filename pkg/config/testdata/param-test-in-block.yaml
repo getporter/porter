@@ -12,14 +12,14 @@ parameters:
     default: "echo Hello World"
 
 install:
-  - description: "Install Hello World"
-    exec:
+  - exec:
+      description: "Install Hello World"
       command: 
         source:  bundle.parameters.command
 
 uninstall:
-  - description: "Uninstall Hello World"
-    exec:
+  - exec:
+      description: "Uninstall Hello World"
       command: bash
       arguments:
         - -c

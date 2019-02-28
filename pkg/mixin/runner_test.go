@@ -2,8 +2,10 @@ package mixin
 
 import (
 	"bytes"
+	"path/filepath"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,8 +44,10 @@ func TestRunner_Validate_MissingExecutable(t *testing.T) {
 func TestRunner_Run(t *testing.T) {
 	output := &bytes.Buffer{}
 
+	binDir := context.NewTestContext(t).FindBinDir()
+
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
-	r := NewRunner("exec", "../../bin/mixins/exec", false)
+	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
 	r.Command = "install"
 	r.File = "testdata/exec_input.yaml"
 

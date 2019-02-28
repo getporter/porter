@@ -32,6 +32,7 @@ Here is an example that highlights the differences between Porter and Duffle:
 ## Wordpress Bundle Today
 
 The author has to do everything:
+
 * Create an invocation image with all the necessary binaries and CNAB config.
 * Know how to not only install their own application, but how to install/uninstall/upgrade all of their dependencies.
 * Figure out CNAB's environment variable naming and how to get at parameters, credentials and actions.
@@ -39,6 +40,7 @@ The author has to do everything:
 If I write 5 bundles that each use MySQL, I have to redo in each bundle how to manage MySQL. There's no way for someone to write a MySQL bundle that authors can benefit from.
 
 Example:
+
 * [Wordpress Bundle's Dockerfile](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/Dockerfile)
 * [Wordpress Bundle's Run script](https://github.com/deis/bundles/blob/master/wordpress-mysql/cnab/app/run)
 
@@ -75,8 +77,8 @@ parameters:
     default: mywordpress
 
 install:
-  - description: "Install MySQL"
-    helm:
+  - helm:
+      description: "Install MySQL"
       name: mywordpress-mysql
       chart: stable/mysql
       set:
@@ -91,8 +93,8 @@ install:
         - name: dbpassword
           secret: mywordpress-mysql
           key: mysql-password
-  - description: "Install Wordpress"
-    helm:
+  - helm:
+      description: "Install Wordpress"
       name:
         source: bundle.parameters.wordpress-name
       chart: stable/wordpress
@@ -106,8 +108,8 @@ install:
           source: bundle.outputs.dbpassword
 
 uninstall:
-  - description: "Uninstall Wordpress Helm Chart"
-    helm:
+  - helm:
+      description: "Uninstall Wordpress Helm Chart"
       name:
         source: bundle.parameters.wordpress-name
 ```
@@ -186,14 +188,14 @@ parameters:
     default: mydb
 
 install:
-  - description: "Install MySQL"
-    helm:
+  - helm:
+      description: "Install MySQL"
       name: mysql
       chart: stable/mysql
       set:
       mysqlDatabase:
         source: bundle.parameters.database_name
-    outputs:
+      outputs:
       - name: dbhost
         secret: mysql
         key: mysql-host
@@ -229,8 +231,8 @@ credentials:
     path: /root/.kube/config
 
 install:
-  - description: "Install Wordpress"
-    helm:
+  - helm:
+      description: "Install Wordpress"
       name:
         source: bundle.parameters.wordpress-name
       chart: stable/wordpress

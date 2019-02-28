@@ -39,6 +39,34 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	assert.Equal(t, wantlines, gotlines)
 }
 
+func TestPorter_buildDockerfile_output(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
+	require.NoError(t, err)
+
+	// ignore mixins in the unit tests
+	p.Manifest.Mixins = []string{}
+
+	_, err = p.buildDockerFile()
+	require.NoError(t, err)
+
+	wantlines := `
+Generating Dockerfile =======>
+FROM quay.io/deis/lightweight-docker-go:v0.2.0
+FROM debian:stretch
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY cnab/ /cnab/
+COPY porter.yaml /cnab/app/porter.yaml
+CMD ["/cnab/app/run"]
+`
+	assert.Equal(t, wantlines, p.TestConfig.TestContext.GetOutput())
+}
+
 func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
@@ -80,10 +108,10 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	err = p.prepareDockerFilesystem()
 	require.NoError(t, err)
 
-	wantPorterMixin := "cnab/app/mixins/porter/porter-runtime"
-	porterMixinExists, err := p.FileSystem.Exists(wantPorterMixin)
+	wantPorterRuntime := "cnab/app/porter-runtime"
+	porterMixinExists, err := p.FileSystem.Exists(wantPorterRuntime)
 	require.NoError(t, err)
-	assert.True(t, porterMixinExists, "The porter-runtime mixin wasn't copied into %s", wantPorterMixin)
+	assert.True(t, porterMixinExists, "The porter-runtime wasn't copied into %s", wantPorterRuntime)
 
 	wantExecMixin := "cnab/app/mixins/exec/exec-runtime"
 	execMixinExists, err := p.FileSystem.Exists(wantExecMixin)

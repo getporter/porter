@@ -31,5 +31,5 @@ func (c *TestConfig) SetupPorterHome() {
 	os.Setenv(EnvHOME, home)
 
 	// Copy bin dir contents to the home directory
-	c.TestContext.AddTestDirectory("../../bin/", home)
+	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), home)
 }

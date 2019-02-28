@@ -25,32 +25,39 @@ else
 FILE_EXT=
 endif
 
-HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/latest/helm
-AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/latest/azure
+MIXIN_TAG ?= canary
+HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
+AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
 
 build: build-client build-runtime azure helm
+	rm -r bin/mixins/porter
 
 build-runtime:
 	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=porter -f mixin.mk
 	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=exec -f mixin.mk
+	mv bin/mixins/porter/porter-runtime$(FILE_EXT) bin/
 
-build-client: build-templates
+build-client: generate
 	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk
 	$(MAKE) $(MAKE_OPTS) build-client MIXIN=exec -f mixin.mk
-	cp bin/mixins/porter/porter$(FILE_EXT) bin/
+	mv bin/mixins/porter/porter$(FILE_EXT) bin/
 
-build-templates: get-deps
-	cd pkg/porter && packr2 build
+generate: packr2
+	go generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
-HAS_DEP    := $(shell command -v dep)
-get-deps:
+packr2:
 ifndef HAS_PACKR2
 	go get -u github.com/gobuffalo/packr/v2/packr2
 endif
+
+HAS_DEP := $(shell command -v dep)
+dep:
 ifndef HAS_DEP
 	go get -u github.com/golang/dep/cmd/dep
 endif
+
+get-deps: packr2 dep
 
 xbuild-all:
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk

@@ -1,3 +1,5 @@
+//go:generate packr2
+
 package config
 
 import (
@@ -73,6 +75,25 @@ func (c *Config) GetHomeDir() (string, error) {
 
 	c.porterHome = home
 	return c.porterHome, nil
+}
+
+func (c *Config) GetPorterPath() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	executablePath := filepath.Join(home, "porter")
+	return executablePath, nil
+}
+
+func (c *Config) GetPorterRuntimePath() (string, error) {
+	path, err := c.GetPorterPath()
+	if err != nil {
+		return "", nil
+	}
+
+	return path + "-runtime", nil
 }
 
 // GetPorterConfigTemplate returns a porter.yaml template file for use in new bundles

@@ -11,16 +11,16 @@ description: "An example Porter configuration"
 invocationImage: porter-hello:latest
 
 install:
-  - description: "Install Hello World"
-    exec:
+  - exec:
+      description: "Install Hello World"
       command: bash
       arguments:
         - -c
         - echo Hello World
 
 uninstall:
-  - description: "Uninstall Hello World"
-    exec:
+  - exec:
+      description: "Uninstall Hello World"
       command: bash
       arguments:
         - -c

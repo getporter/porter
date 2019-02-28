@@ -8,6 +8,7 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/gobuffalo/packr/v2"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -16,6 +17,8 @@ type Mixin struct {
 	*context.Context
 
 	Step Step
+
+	schemas *packr.Box
 }
 
 type Step struct {
@@ -35,7 +38,12 @@ type Instruction struct {
 func New() *Mixin {
 	return &Mixin{
 		Context: context.New(),
+		schemas: NewSchemaBox(),
 	}
+}
+
+func NewSchemaBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/pkg/exec/schema", "./schema")
 }
 
 func (m *Mixin) LoadInstruction(commandFile string) error {

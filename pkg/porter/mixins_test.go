@@ -44,8 +44,9 @@ func TestPorter_PrintMixins(t *testing.T) {
 	require.Nil(t, err)
 
 	// Just copy in the exec and helm mixins
-	p.TestConfig.TestContext.AddTestDirectory("../../bin/mixins/helm", filepath.Join(mixinsDir, "helm"))
-	p.TestConfig.TestContext.AddTestDirectory("../../bin/mixins/exec", filepath.Join(mixinsDir, "exec"))
+	srcMixinsDir := filepath.Join(p.TestConfig.TestContext.FindBinDir(), "mixins")
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(srcMixinsDir, "/helm"), filepath.Join(mixinsDir, "helm"))
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(srcMixinsDir, "/exec"), filepath.Join(mixinsDir, "exec"))
 
 	opts := printer.PrintOptions{Format: printer.FormatTable}
 	err = p.PrintMixins(opts)
