@@ -33,10 +33,6 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 				return err
 			}
 
-			if exists, _ := p.FileSystem.Exists(opts.file); !exists {
-				return fmt.Errorf("invalid --file: the specified porter configuration file %q doesn't exist\n", opts.file)
-			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

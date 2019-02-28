@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/gobuffalo/packr/v2"
@@ -132,12 +133,14 @@ func (c *Config) GetBundlesCache() (string, error) {
 // - ./bundles/
 // - PORTER_HOME/bundles/
 func (c *Config) GetBundleDir(bundle string) (string, error) {
+	urlPath := strings.HasPrefix(c.Manifest.path, "http")
+
 	// Check for a local bundle next to the current manifest
-	if c.Manifest != nil {
+	if c.Manifest != nil || urlPath == false {
 		localDir := c.Manifest.GetManifestDir()
 		localBundleDir := filepath.Join(localDir, "bundles", bundle)
-
 		dirExists, err := c.FileSystem.DirExists(localBundleDir)
+
 		if err != nil {
 			return "", errors.Wrapf(err, "could not check if directory %s exists", localBundleDir)
 		}
