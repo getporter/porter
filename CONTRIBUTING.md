@@ -49,5 +49,5 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [N
 If anyone is interested in contributing changes to our makefile to improve the authoring experience, such 
 as doing this with Docker so that you don't need Hugo installed, it would be a welcome contribution! ❤️
 
-[good-first-issue]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+label%3Abacklog+
-[help-wanted]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+label%3Abacklog+
+[good-first-issue]: https://waffle.io/deislabs/porter?search=backlog&label=good%20first%20issue
+[help-wanted]: https://waffle.io/deislabs/porter?search=backlog&label=help%20wanted
