@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "exec.install": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "exec": {
+          "properties": {
+            "arguments": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "install": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/exec.install"
+        }
+      ],
+      "type": "array"
+    },
+    "invocationImage": {
+      "type": "string"
+    },
+    "mixins": {
+      "items": {
+        "enum": [
+          "exec"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

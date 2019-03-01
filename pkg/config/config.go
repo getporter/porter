@@ -37,13 +37,19 @@ type Config struct {
 	Manifest *Manifest
 
 	porterHome string
+	templates  *packr.Box
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		Context: context.New(),
+		Context:   context.New(),
+		templates: NewTemplatesBox(),
 	}
+}
+
+func NewTemplatesBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/pkg/config/templates", "./templates")
 }
 
 // GetHomeDir determines the path to the porter home directory.
@@ -99,14 +105,12 @@ func (c *Config) GetPorterRuntimePath() (string, error) {
 
 // GetPorterConfigTemplate returns a porter.yaml template file for use in new bundles
 func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
-	t := packr.New("templates", "./templates")
-	return t.Find(Name)
+	return c.templates.Find(Name)
 }
 
 // GetRunScriptTemplate returns a run.sh template for use in new bundles
 func (c *Config) GetRunScriptTemplate() ([]byte, error) {
-	t := packr.New("templates", "./templates")
-	return t.Find(filepath.Base(RunScript))
+	return c.templates.Find(filepath.Base(RunScript))
 }
 
 // GetBundleManifest gets the path to another bundle's manifest.

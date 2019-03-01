@@ -14,14 +14,13 @@ type TestConfig struct {
 
 // NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
 func NewTestConfig(t *testing.T) *TestConfig {
-	cxt := context.NewTestContext(t)
-	c := &TestConfig{
-		Config: &Config{
-			Context: cxt.Context,
-		},
-		TestContext: cxt,
+	tc := context.NewTestContext(t)
+	cfg := New()
+	cfg.Context = tc.Context
+	return &TestConfig{
+		Config:      cfg,
+		TestContext: tc,
 	}
-	return c
 }
 
 // InitializePorterHome initializes the test filesystem with the supporting files in the PORTER_HOME directory.

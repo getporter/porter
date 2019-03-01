@@ -23,7 +23,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 			if opts.rawAction == "" {
 				opts.rawAction = os.Getenv(config.EnvACTION)
 				if p.Debug {
-					fmt.Fprintf(p.Out, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, opts.rawAction)
+					fmt.Fprintf(p.Err, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, opts.rawAction)
 				}
 			}
 
