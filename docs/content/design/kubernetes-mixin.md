@@ -9,7 +9,24 @@ description: The Porter Kubernetes Mixin
 
 The Kubernetes Mixin provides bundle authors with the ability to apply and delete Kubernetes manifests. The mixin will leverage `kubectl`, similar to how the Helm mixin utilizes the `helm` command line tool.
 
+## Authoring a bundle with the mixin
+
+In order to build a CNAB with the kubernetes mixin, the bundle author should place one more more Kubernetes manifests within the cnab directory of their bundle. The mixin will provide a default location, `/cnab/app/kubernetes`, but bundle authors can place manifests in any path within the cnab directory and then declare the directory within the `porter.yaml`. This will enable the mixin to be used multiple times within a bundle with different manifests.
+
 ## Build Time
+
+Rather than trying to rebuild the functionality of `kubectl`, this mixin will contribute lines to the invocation image Dockerfile that will result in `kubectl` being installed:
+
+```
+RUN apt-get update && \
+apt-get install -y apt-transport-https curl && \
+curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.13
+.0/bin/linux/amd64/kubectl && \
+mv kubectl /usr/local/bin && \
+chmod a+x /usr/local/bin/kubectl
+```
+
+Releases of the mixin will pin to versions of `kubectl`. We will initially pin to the 1.13 release, but may bump to 1.14 depending on implementation schedule and the kubernetes release cycle.
 
 ## Dry Run
 
@@ -32,7 +49,7 @@ The mixin allows bundle authors to specify the following parameters on install:
 | Parameter | Type |  Description   | Default   |
 |-----------|:----:|:-------------:|:---------:|
 | `namespace` | string | The namespace in which to create resources | `default` |
-| `manifests` | string | The path to the manifests. Can be a file or directory | `/cnab/app/kuberentes` |
+| `manifests` | string | The path to the manifests. Can be a file or directory | `/cnab/app/kubernetes` |
 | `allow-missing-template-keys` | boolean | If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. | `true` |
 | `output` | string | Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file. | |
 | `record` | boolean | Record current kubectl command in the resource annotation. If set to false, do not record the command. If set to true, record the command. If not set, default to updating the existing annotation value only if one already exists. | `false` |
