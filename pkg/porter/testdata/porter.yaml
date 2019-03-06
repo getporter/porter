@@ -1,0 +1,22 @@
+mixins:
+- exec
+
+name: hello
+version: 0.1.0
+invocationImage: porter-hello:latest
+
+install:
+- exec:
+    description: "Say Hello"
+    command: bash
+    arguments:
+      - -c
+      - echo Hello World
+
+uninstall:
+- exec:
+    description: "Say Goodbye"
+    command: bash
+    arguments:
+      - -c
+      - echo Goodbye World
