@@ -104,17 +104,13 @@
       "type": "string"
     },
     "install": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/exec.install"
-        },
-        {
-          "$ref": "#/definitions/exec.upgrade"
-        },
-        {
-          "$ref": "#/definitions/exec.uninstall"
-        }
-      ],
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/exec.install"
+          }
+        ]
+      },
       "type": "array"
     },
     "invocationImage": {
@@ -123,8 +119,6 @@
     "mixins": {
       "items": {
         "enum": [
-          "exec",
-          "exec",
           "exec"
         ],
         "type": "string"
@@ -134,9 +128,35 @@
     "name": {
       "type": "string"
     },
+    "uninstall": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/exec.uninstall"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "upgrade": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/exec.upgrade"
+          }
+        ]
+      },
+      "type": "array"
+    },
     "version": {
       "type": "string"
     }
   },
+  "required": [
+    "name",
+    "version",
+    "invocationImage",
+    "mixins"
+  ],
   "type": "object"
 }
