@@ -3,25 +3,99 @@
   "additionalProperties": false,
   "definitions": {
     "exec.install": {
+      "additionalProperties": false,
       "properties": {
-        "description": {
-          "type": "string"
-        },
         "exec": {
+          "additionalProperties": false,
           "properties": {
             "arguments": {
               "items": {
+                "minItems": 1,
                 "type": "string"
               },
               "type": "array"
             },
             "command": {
               "type": "string"
+            },
+            "description": {
+              "type": "string"
             }
           },
+          "required": [
+            "description",
+            "command"
+          ],
           "type": "object"
         }
       },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
+    },
+    "exec.uninstall": {
+      "additionalProperties": false,
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "items": {
+                "minItems": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "description",
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
+    },
+    "exec.upgrade": {
+      "additionalProperties": false,
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "items": {
+                "minItems": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "description",
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
       "type": "object"
     }
   },
@@ -33,6 +107,12 @@
       "anyOf": [
         {
           "$ref": "#/definitions/exec.install"
+        },
+        {
+          "$ref": "#/definitions/exec.upgrade"
+        },
+        {
+          "$ref": "#/definitions/exec.uninstall"
         }
       ],
       "type": "array"
@@ -43,6 +123,8 @@
     "mixins": {
       "items": {
         "enum": [
+          "exec",
+          "exec",
           "exec"
         ],
         "type": "string"
