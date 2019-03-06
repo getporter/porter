@@ -37,6 +37,28 @@ or use `latest` for the most recent tagged release.
 
 \* canary = most recent successful build of master
 
+# Logging
+
+**Print to the `Out` property for informational messages and send debug messages to the `Err` property.**
+
+Example:
+
+```golang
+fmt.Fprintln(p.Out, "Initiating battlestar protocol"
+fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
+```
+
+Most of the structs in Porter have an embedded `github.com/deislabs/porter/pkg/context.Context` struct. This has both 
+`Out` and `Err` which represent stdout and stderr respectively. You should log to those instead of directly to 
+stdout/stderr because that is how we capture output in our unit tests. That means use `fmt.Fprint*` instead of 
+`fmt.Print*` so that you can pass in `Out` or `Err`.
+
+Some of our commands are designed to be consumed by another tool and intermixing debug lines and the command output 
+would make the resulting output unusable. For example, `porter schema` outputs a json schema
+and if log lines were sent to stdout as well, then the resulting json schema would be unparsable. This is why we send
+regular command output to `Out` and debug information to `Err`. It allows us to then run the command and see the debug 
+output separately, like so `porter schema --debug 2> err.log`.
+
 # Documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [Netlify](netlify.com).
