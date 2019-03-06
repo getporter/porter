@@ -6,3 +6,4 @@
 /bundle.json
 /porter
 *-packr.go
+.DS_Store
