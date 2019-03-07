@@ -1,11 +1,19 @@
 const { events, Job, Group } = require("brigadier");
 
+// **********************************************
 // Globals
+// **********************************************
 
 const projectName = "porter";
 const projectOrg = "deislabs";
 
+// **********************************************
 // Event Handlers
+// **********************************************
+
+events.on("check_suite:requested", runSuite)
+events.on("check_suite:rerequested", runSuite)
+events.on("check_run:rerequested", runSuite)
 
 events.on("exec", (e, p) => {
   Group.runAll([
@@ -15,10 +23,6 @@ events.on("exec", (e, p) => {
     testIntegration(e, p)
   ]);
 })
-
-events.on("check_suite:requested", runSuite)
-events.on("check_suite:rerequested", runSuite)
-events.on("check_run:rerequested", runSuite)
 
 // Although a GH App will trigger 'check_suite:requested' on a push to master event,
 // it will not for a tag push, hence the need for this handler
@@ -32,7 +36,9 @@ events.on("publish", (e, p) => {
   publish(e, p).run();
 })
 
+// **********************************************
 // Actions
+// **********************************************
 
 function build(e, p) {
   var goBuild = new GoJob(`${projectName}-build`);
@@ -74,21 +80,28 @@ function testIntegration(e, p) {
   // TODO: create k8s secret on infra cluster, supply appropriate name/key below
   // ALTERNATIVELY, if we save as secret in Azure Key Vault, can fetch and use.
   // This might be preferred as not tied to a particular k8s cluster, etc.
-  goTest.env = {
-    kubeconfig: {
-      secretKeyRef: {
-        name: "porter-kubeconfig",
-        key: "kubeconfig"
-      }
+  goTest.env.kubeconfig = {
+    secretKeyRef: {
+      name: "porter-kubeconfig",
+      key: "kubeconfig"
     }
   };
 
+  // Install docker cli
   goTest.tasks.push(
-    "apt-get update && apt-get install -y jq",
+    "apt-get update && apt-get install -y jq apt-transport-https ca-certificates curl gnupg2 software-properties-common",
+    "curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -",
+    `add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"`,
+    "apt-get update && apt-get install -y docker-ce"
+  )
+
+  goTest.tasks.push(
     "mkdir -p ${HOME}/.kube",
-    "echo ${kubeconfig} > ${HOME}/.kube/config",
-    "export KUBECONFIG=${HOME}/.kube/config",
-    "make bin/duffle-linux-amd64 test-cli"
+    'echo "${kubeconfig}" > ${HOME}/.kube/config',
+    `docker login ${p.secrets.dockerhubRegistry} \
+      -u ${p.secrets.dockerhubUsername} \
+      -p ${p.secrets.dockerhubPassword}`,
+    `REGISTRY=${p.secrets.dockerhubOrg} make bin/duffle-linux-amd64 test-cli`
   );
 
   return goTest;
@@ -135,7 +148,9 @@ function runSuite(e, p) {
   });
 }
 
+// **********************************************
 // Classes/Helpers
+// **********************************************
 
 // GoJob is a Job with Golang-related prerequisites set up
 class GoJob extends Job {
