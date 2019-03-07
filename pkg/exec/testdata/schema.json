@@ -3,24 +3,82 @@
   "install": {
     "type": "object",
     "properties": {
-      "description": {
-        "type": "string"
-      },
       "exec": {
         "type": "object",
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "command": {
             "type": "string"
           },
           "arguments": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minItems": 1
             }
           }
-        }
+        },
+        "additionalProperties": false,
+        "required": ["description", "command"]
       }
-    }
+    },
+    "additionalProperties": false,
+    "required": ["exec"]
   },
-  "additionalProperties": false
+  "upgrade": {
+    "type": "object",
+    "properties": {
+      "exec": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": ["description", "command"]
+      }
+    },
+    "additionalProperties": false,
+    "required": ["exec"]
+  },
+  "uninstall": {
+    "type": "object",
+    "properties": {
+      "exec": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": ["description", "command"]
+      }
+    },
+    "additionalProperties": false,
+    "required": ["exec"]
+  }
 }

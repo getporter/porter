@@ -92,10 +92,8 @@ func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
 			return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema)
 		}
 
-		for action, actionSchema := range mixinSchemaMap {
-			if !config.IsSupportedAction(action) {
-				continue
-			}
+		for _, action := range config.GetSupportActions() {
+			actionSchema := mixinSchemaMap[string(action)]
 
 			ref := fmt.Sprintf("%s.%s", mixin.Name, action)
 			definitionSchema[ref] = actionSchema

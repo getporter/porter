@@ -31,6 +31,10 @@ func ParseAction(value string) (Action, error) {
 	}
 }
 
+func GetSupportActions() []Action {
+	return []Action{ActionInstall, ActionUpgrade, ActionUninstall}
+}
+
 // IsInvalidActionError determines if an error is the error returned by ParseAction when
 // a value isn't a valid action.
 func IsInvalidActionError(err error) bool {
