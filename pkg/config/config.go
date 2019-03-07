@@ -1,5 +1,3 @@
-//go:generate packr2
-
 package config
 
 import (
@@ -9,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
 )
 
@@ -37,20 +34,15 @@ type Config struct {
 	Manifest *Manifest
 
 	porterHome string
-	templates  *packr.Box
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
 		Context:   context.New(),
-		templates: NewTemplatesBox(),
 	}
 }
 
-func NewTemplatesBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/config/templates", "./templates")
-}
 
 // GetHomeDir determines the path to the porter home directory.
 func (c *Config) GetHomeDir() (string, error) {
@@ -101,16 +93,6 @@ func (c *Config) GetPorterRuntimePath() (string, error) {
 	}
 
 	return path + "-runtime", nil
-}
-
-// GetPorterConfigTemplate returns a porter.yaml template file for use in new bundles
-func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
-	return c.templates.Find(Name)
-}
-
-// GetRunScriptTemplate returns a run.sh template for use in new bundles
-func (c *Config) GetRunScriptTemplate() ([]byte, error) {
-	return c.templates.Find(filepath.Base(RunScript))
 }
 
 // GetBundleManifest gets the path to another bundle's manifest.
