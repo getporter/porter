@@ -1,36 +1,9 @@
 const { events, Job, Group } = require("brigadier");
 
-// TODO: place globals, helpers, etc. in different js files?
-// e.g.:
-// const { GoJob, Notification } = require("helpers")
-
 // Globals
 
 const projectName = "porter";
 const projectOrg = "deislabs";
-
-class GoJob extends Job {
-  constructor (name) {
-    super(name);
-
-    const gopath = "/go";
-    const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
-
-    this.image = "golang:1.11";
-    this.env = {
-      "GOPATH": gopath
-    };
-    this.tasks = [
-      // Need to move the source into GOPATH so vendor/ works as desired.
-      "mkdir -p " + localPath,
-      "mv /src/* " + localPath,
-      "mv /src/.git " + localPath,
-      "cd " + localPath,
-      "make get-deps"
-    ];
-    this.streamLogs = true;
-  }
-}
 
 // Event Handlers
 
@@ -50,15 +23,16 @@ events.on("check_run:rerequested", runSuite)
 // Although a GH App will trigger 'check_suite:requested' on a push to master event,
 // it will not for a tag push, hence the need for this handler
 events.on("push", (e, p) => {
-  // TODO
+  if (e.revision.ref.includes("refs/heads/master") || e.revision.ref.startsWith("refs/tags/")) {
+    publish(e, p).run();
+  }
 })
 
-events.on("release", (e, p) => {
-  // TODO
+events.on("publish", (e, p) => {
+  publish(e, p).run();
 })
 
-
-// Functions/Helpers
+// Actions
 
 function build(e, p) {
   var goBuild = new GoJob(`${projectName}-build`);
@@ -123,86 +97,85 @@ function testIntegration(e, p) {
 function publish(e, p) {
   var goPublish = new GoJob(`${projectName}-publish`);
 
+  // Install az cli
+  goPublish.tasks.push(
+    `apt-get update && apt-get install apt-transport-https lsb-release software-properties-common dirmngr -y`,
+    `AZ_REPO=$(lsb_release -cs) && \
+      echo "AZ_REPO = $AZ_REPO" && \
+      echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+        tee /etc/apt/sources.list.d/azure-cli.list`,
+    `apt-key --keyring /etc/apt/trusted.gpg.d/Microsoft.gpg adv \
+      --keyserver packages.microsoft.com \
+      --recv-keys BC528686B50D79E339D3721CEB3E94ADBE1229CF`,
+    `apt-get update && apt-get install azure-cli -y`
+  )
+
   // TODO: we could/should refactor so that this job shares a mount with the xbuild job above,
   // to remove the need of re-xbuilding before publishing
 
   // TODO: add 'azureStorageConnectiontring' secret to secrets section of brigade project
+  goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
-    `export AZURE_STORAGE_CONNECTION_STRING=${project.secrets.azureStorageConnectiontring}`,
     "make xbuild-all publish"
   )
 
   return goPublish;
 }
 
-// Here we can add additional Check Runs, which will run in parallel and
-// report their results independently to GitHub
+
+// Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
-  runBuild(e, p).catch(e => {console.error(e.toString())});
-  runXBuild(e, p).catch(e => {console.error(e.toString())});
-  runTests(e, p).catch(e => {console.error(e.toString())});
-  runIntegrationTests(e, p).catch(e => {console.error(e.toString())});
-
-  // if master, runPublish
-  // TODO
+  Group.runAll([
+    new CheckRun("build", build(e, p), e, p),
+    new CheckRun("xbuild", xbuild(e, p), e, p),
+    new CheckRun("tests", test(e, p), e, p),
+    new CheckRun("integrationTests", testIntegration(e, p), e, p)
+  ]).catch(e => {
+    console.error(e.toString());
+  });
 }
 
-// TODO: reduce duplication with a run<action> helper that the functions below can use
+// Classes/Helpers
 
-// runBuild is a Check Run that is ran as part of a Checks Suite
-function runBuild(e, p) {
-  // Create Notification object (which is just a Job to update GH using the Checks API)
-  var note = new Notification(`build`, e, p);
-  note.conclusion = "";
-  note.title = "Run Go Build";
-  note.summary = "Running the go build for " + e.revision.commit;
-  note.text = "Ensuring the build completes successfully"
+// GoJob is a Job with Golang-related prerequisites set up
+class GoJob extends Job {
+  constructor (name) {
+    super(name);
 
-  // Send notification, then run, then send pass/fail notification
-  return notificationWrap(build(e, p), note)
+    const gopath = "/go";
+    const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
+
+    this.image = "golang:1.11";
+    this.env = {
+      "GOPATH": gopath
+    };
+    this.tasks = [
+      // Need to move the source into GOPATH so vendor/ works as desired.
+      "mkdir -p " + localPath,
+      "mv /src/* " + localPath,
+      "mv /src/.git " + localPath,
+      "cd " + localPath,
+      "make get-deps"
+    ];
+    this.streamLogs = true;
+  }
 }
 
-// runBuild is a Check Run that is ran as part of a Checks Suite
-function runXBuild(e, p) {
-  // Create Notification object (which is just a Job to update GH using the Checks API)
-  var note = new Notification(`xbuild`, e, p);
-  note.conclusion = "";
-  note.title = "Run Go Build - Cross-Compile";
-  note.summary = "Running the go cross-compile build for " + e.revision.commit;
-  note.text = "Ensuring the cross-compile build completes successfully"
+// CheckRun returns a GitHub Check Run that can be run as part of a GitHub Checks Suite
+class CheckRun {
+  constructor(action, actionFunc, e, p) {
+    this.notification = new Notification(action, e, p);
+    this.notification.conclusion = "";
+    this.notification.title = `Run ${action}`;
+    this.notification.summary = `Running ${action} for ${e.revision.commit}`;
+    this.notification.text = `Ensuring ${action} completes successfully`
 
-  // Send notification, then run, then send pass/fail notification
-  return notificationWrap(xbuild(e, p), note)
-}
+    this.actionFunc = actionFunc;
+  }
 
-// runTests is a Check Run that is ran as part of a Checks Suite
-function runTests(e, p) {
-  console.log("Check requested")
-
-  // Create Notification object (which is just a Job to update GH using the Checks API)
-  var note = new Notification(`tests`, e, p);
-  note.conclusion = "";
-  note.title = "Run Unit Tests";
-  note.summary = "Running the unit tests pass for " + e.revision.commit;
-  note.text = "Ensuring all unit tests pass."
-
-  // Send notification, then run, then send pass/fail notification
-  return notificationWrap(test(e, p), note)
-}
-
-// runIntegrationTests is a Check Run that is ran as part of a Checks Suite
-function runIntegrationTests(e, p) {
-  console.log("Check requested")
-
-  // Create Notification object (which is just a Job to update GH using the Checks API)
-  var note = new Notification(`tests`, e, p);
-  note.conclusion = "";
-  note.title = "Run Integration Tests";
-  note.summary = "Running the integration tests pass for " + e.revision.commit;
-  note.text = "Ensuring all integration tests pass."
-
-  // Send notification, then run, then send pass/fail notification
-  return notificationWrap(testIntegration(e, p), note)
+  run() {
+    return notificationWrap(this.actionFunc, this.notification);
+  }
 }
 
 // A GitHub Check Suite notification
@@ -243,7 +216,7 @@ class Notification {
   }
 }
 
-// Helper to wrap a job execution between two notifications.
+// notificationWrap is a helper to wrap a job execution between two notifications.
 async function notificationWrap(job, note, conclusion) {
   if (conclusion == null) {
     conclusion = "success"
@@ -271,4 +244,3 @@ async function notificationWrap(job, note, conclusion) {
     }
   }
 }
-
