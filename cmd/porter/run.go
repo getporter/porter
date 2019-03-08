@@ -23,7 +23,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 			if opts.rawAction == "" {
 				opts.rawAction = os.Getenv(config.EnvACTION)
 				if p.Debug {
-					fmt.Fprintf(p.Out, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, opts.rawAction)
+					fmt.Fprintf(p.Err, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, opts.rawAction)
 				}
 			}
 
@@ -31,10 +31,6 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 			opts.action, err = config.ParseAction(opts.rawAction)
 			if err != nil {
 				return err
-			}
-
-			if exists, _ := p.FileSystem.Exists(opts.file); !exists {
-				return fmt.Errorf("invalid --file: the specified porter configuration file %q doesn't exist\n", opts.file)
 			}
 
 			return nil

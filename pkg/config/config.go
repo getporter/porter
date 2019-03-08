@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/gobuffalo/packr/v2"
@@ -36,13 +37,19 @@ type Config struct {
 	Manifest *Manifest
 
 	porterHome string
+	templates  *packr.Box
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		Context: context.New(),
+		Context:   context.New(),
+		templates: NewTemplatesBox(),
 	}
+}
+
+func NewTemplatesBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/pkg/config/templates", "./templates")
 }
 
 // GetHomeDir determines the path to the porter home directory.
@@ -98,14 +105,12 @@ func (c *Config) GetPorterRuntimePath() (string, error) {
 
 // GetPorterConfigTemplate returns a porter.yaml template file for use in new bundles
 func (c *Config) GetPorterConfigTemplate() ([]byte, error) {
-	t := packr.New("templates", "./templates")
-	return t.Find(Name)
+	return c.templates.Find(Name)
 }
 
 // GetRunScriptTemplate returns a run.sh template for use in new bundles
 func (c *Config) GetRunScriptTemplate() ([]byte, error) {
-	t := packr.New("templates", "./templates")
-	return t.Find(filepath.Base(RunScript))
+	return c.templates.Find(filepath.Base(RunScript))
 }
 
 // GetBundleManifest gets the path to another bundle's manifest.
@@ -132,12 +137,14 @@ func (c *Config) GetBundlesCache() (string, error) {
 // - ./bundles/
 // - PORTER_HOME/bundles/
 func (c *Config) GetBundleDir(bundle string) (string, error) {
+	urlPath := strings.HasPrefix(c.Manifest.path, "http")
+
 	// Check for a local bundle next to the current manifest
-	if c.Manifest != nil {
+	if c.Manifest != nil || urlPath == false {
 		localDir := c.Manifest.GetManifestDir()
 		localBundleDir := filepath.Join(localDir, "bundles", bundle)
-
 		dirExists, err := c.FileSystem.DirExists(localBundleDir)
+
 		if err != nil {
 			return "", errors.Wrapf(err, "could not check if directory %s exists", localBundleDir)
 		}

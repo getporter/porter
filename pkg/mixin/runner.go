@@ -50,10 +50,10 @@ func (r *Runner) Validate() error {
 
 func (r *Runner) Run() error {
 	if r.Debug {
-		fmt.Fprintf(r.Out, "DEBUG mixin:    %s\n", r.Mixin)
-		fmt.Fprintf(r.Out, "DEBUG mixinDir: %s\n", r.mixinDir)
-		fmt.Fprintf(r.Out, "DEBUG file:     %s\n", r.File)
-		fmt.Fprintf(r.Out, "DEBUG stdin:\n%s\n", r.Step)
+		fmt.Fprintf(r.Err, "DEBUG mixin:    %s\n", r.Mixin)
+		fmt.Fprintf(r.Err, "DEBUG mixinDir: %s\n", r.mixinDir)
+		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", r.File)
+		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", r.Step)
 	}
 
 	mixinPath := r.getMixinPath()
@@ -84,7 +84,7 @@ func (r *Runner) Run() error {
 
 	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	if r.Debug {
-		fmt.Fprintln(r.Out, prettyCmd)
+		fmt.Fprintln(r.Err, prettyCmd)
 	}
 
 	err := cmd.Start()

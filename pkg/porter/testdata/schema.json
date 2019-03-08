@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "exec.install": {
+      "additionalProperties": false,
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "items": {
+                "minItems": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "description",
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
+    },
+    "exec.uninstall": {
+      "additionalProperties": false,
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "items": {
+                "minItems": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "description",
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
+    },
+    "exec.upgrade": {
+      "additionalProperties": false,
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "properties": {
+            "arguments": {
+              "items": {
+                "minItems": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "command": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "description",
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "install": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/exec.install"
+        },
+        {
+          "$ref": "#/definitions/exec.upgrade"
+        },
+        {
+          "$ref": "#/definitions/exec.uninstall"
+        }
+      ],
+      "type": "array"
+    },
+    "invocationImage": {
+      "type": "string"
+    },
+    "mixins": {
+      "items": {
+        "enum": [
+          "exec",
+          "exec",
+          "exec"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

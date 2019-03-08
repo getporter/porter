@@ -12,10 +12,10 @@
   <meta name="author" content="{{ with .Site.Params.name }}{{ . }}{{ end }}">
   <meta property="og:title" content="Porter - A Friendlier Cloud Installer" />
   <meta property="og:url" content="{{ .Site.BaseURL }}" />
-  <meta property="og:image" content="{{ .Site.BaseURL }}/src/img/favicon-152.png" />
+  <meta property="og:image" content="{{ .Site.BaseURL }}/images/porter-logo.png" />
   <meta name="google-site-verification" content="TODO" />
 
-  <link rel="icon" href="/src/img/favicon-152.png" type="image/x-icon">
+  <link rel="icon" href="/src/img/favicon.png" type="image/x-icon">
 
   {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS | resources.Minify }}
   <link rel="stylesheet" href="{{ $style.Permalink }}">
@@ -108,7 +108,7 @@
 
               <div class="small-12 medium-12 large-7 get-helm columns" align="center">
                 <a href="{{ .Site.BaseURL }}quickstart"><h2>Try Porter!</h2>
-                <p><img src="{{ .Site.BaseURL }}images/porter-logo.png" alt="Porter holding out her hand" width="150"></p></a>
+                <p><img src="{{ .Site.BaseURL }}images/porter-notext.png" alt="Porter holding out her hand" width="260"></p></a>
               </div>
 
               <div class="small-12 medium-12 large-5 get-charts columns">

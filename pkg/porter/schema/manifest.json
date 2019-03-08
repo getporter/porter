@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {},
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "invocationImage": {
+      "type": "string"
+    },
+    "mixins": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": []
+      }
+    },
+    "install": {
+      "type": "array",
+      "anyOf": []
+    }
+  },
+  "additionalProperties": false
+}

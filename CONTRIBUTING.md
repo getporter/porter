@@ -37,6 +37,28 @@ or use `latest` for the most recent tagged release.
 
 \* canary = most recent successful build of master
 
+# Logging
+
+**Print to the `Out` property for informational messages and send debug messages to the `Err` property.**
+
+Example:
+
+```golang
+fmt.Fprintln(p.Out, "Initiating battlestar protocol"
+fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
+```
+
+Most of the structs in Porter have an embedded `github.com/deislabs/porter/pkg/context.Context` struct. This has both 
+`Out` and `Err` which represent stdout and stderr respectively. You should log to those instead of directly to 
+stdout/stderr because that is how we capture output in our unit tests. That means use `fmt.Fprint*` instead of 
+`fmt.Print*` so that you can pass in `Out` or `Err`.
+
+Some of our commands are designed to be consumed by another tool and intermixing debug lines and the command output 
+would make the resulting output unusable. For example, `porter schema` outputs a json schema
+and if log lines were sent to stdout as well, then the resulting json schema would be unparsable. This is why we send
+regular command output to `Out` and debug information to `Err`. It allows us to then run the command and see the debug 
+output separately, like so `porter schema --debug 2> err.log`.
+
 # Documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [Netlify](netlify.com).
@@ -46,8 +68,8 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [N
 1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
 1. Open <http://localhost:1313> to preview the site.
 
-If anyone is interested in contributing changes to our makefile to improve the authoring exerience, such 
+If anyone is interested in contributing changes to our makefile to improve the authoring experience, such 
 as doing this with Docker so that you don't need Hugo installed, it would be a welcome contribution! ❤️
 
-[good-first-issue]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22+label%3Abacklog+
-[help-wanted]: https://github.com/deislabs/porter/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22+label%3Abacklog+
+[good-first-issue]: https://waffle.io/deislabs/porter?search=backlog&label=good%20first%20issue
+[help-wanted]: https://waffle.io/deislabs/porter?search=backlog&label=help%20wanted

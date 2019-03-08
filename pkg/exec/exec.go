@@ -1,3 +1,5 @@
+//go:generate packr2
+
 package exec
 
 import (
