@@ -137,8 +137,8 @@ function runSuite(e, p) {
   Group.runAll([
     new CheckRun("build", build(e, p), e, p),
     new CheckRun("xbuild", xbuild(e, p), e, p),
-    new CheckRun("tests", test(e, p), e, p),
-    new CheckRun("integrationTests", testIntegration(e, p), e, p)
+    new CheckRun("test", test(e, p), e, p),
+    new CheckRun("integrationtest", testIntegration(e, p), e, p)
   ]).catch(e => {
     console.error(e.toString());
   });
