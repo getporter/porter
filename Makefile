@@ -131,8 +131,12 @@ init-porter-home-for-ci:
 	#porter init
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
+# TODO: Can use gofish (https://github.com/fishworks/gofish) for this
+#       if/once https://github.com/fishworks/fish-food/pull/134 is merged.
+#       Bonus: multi-os support included thanks to gofish!
 # target added to fetch latest duffle release; intended for CI use
-DUFFLE_BIN ?= duffle-linux-amd64
+DUFFLE_RELEASE ?= 0.1.0-ralpha.5+englishrose
+DUFFLE_BIN ?= duffle-$(DUFFLE_RELEASE)-linux-amd64
 bin/$(DUFFLE_BIN):
 	@mkdir -p bin
 	@curl -s https://api.github.com/repos/deislabs/duffle/releases/latest | \

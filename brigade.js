@@ -11,9 +11,10 @@ const projectOrg = "deislabs";
 // Event Handlers
 // **********************************************
 
-events.on("check_suite:requested", runSuite)
-events.on("check_suite:rerequested", runSuite)
-events.on("check_run:rerequested", runSuite)
+events.on("check_suite:requested", runSuite);
+events.on("check_suite:rerequested", runSuite);
+// TODO: we should determine which check run is being requested and *only* run this
+events.on("check_run:rerequested", runSuite);
 
 events.on("exec", (e, p) => {
   Group.runAll([
@@ -22,7 +23,7 @@ events.on("exec", (e, p) => {
     test(e, p),
     testIntegration(e, p)
   ]);
-})
+});
 
 // Although a GH App will trigger 'check_suite:requested' on a push to master event,
 // it will not for a tag push, hence the need for this handler
@@ -30,11 +31,11 @@ events.on("push", (e, p) => {
   if (e.revision.ref.includes("refs/heads/master") || e.revision.ref.startsWith("refs/tags/")) {
     publish(e, p).run();
   }
-})
+});
 
 events.on("publish", (e, p) => {
   publish(e, p).run();
-})
+});
 
 // **********************************************
 // Actions
@@ -73,7 +74,7 @@ function test(e, p) {
 // TODO: we could refactor so that this job shares a mount with the build job above,
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
-  var goTest = new GoJob(`${projectName}-test-integration`);
+  var goTest = new GoJob(`${projectName}-integrationtest`);
   // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
   goTest.docker.enabled = true;
 
@@ -83,21 +84,6 @@ function testIntegration(e, p) {
       key: "kubeconfig"
     }
   };
-
-  // Install helm via gofish
-  goTest.tasks.push(
-    "apt-get update && apt-get install -y sudo",
-    "curl -fsSL https://raw.githubusercontent.com/fishworks/gofish/master/scripts/install.sh | bash",
-    "gofish init && gofish install helm"
-  )
-
-  // Install docker cli
-  goTest.tasks.push(
-    "apt-get update && apt-get install -y jq apt-transport-https ca-certificates curl gnupg2 software-properties-common",
-    "curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -",
-    `add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"`,
-    "apt-get update && apt-get install -y docker-ce"
-  )
 
   // Setup kubeconfig, docker login, run tests
   goTest.tasks.push(
@@ -114,19 +100,6 @@ function testIntegration(e, p) {
 
 function publish(e, p) {
   var goPublish = new GoJob(`${projectName}-publish`);
-
-  // Install az cli
-  goPublish.tasks.push(
-    `apt-get update && apt-get install apt-transport-https lsb-release software-properties-common dirmngr -y`,
-    `AZ_REPO=$(lsb_release -cs) && \
-      echo "AZ_REPO = $AZ_REPO" && \
-      echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
-        tee /etc/apt/sources.list.d/azure-cli.list`,
-    `apt-key --keyring /etc/apt/trusted.gpg.d/Microsoft.gpg adv \
-      --keyserver packages.microsoft.com \
-      --recv-keys BC528686B50D79E339D3721CEB3E94ADBE1229CF`,
-    `apt-get update && apt-get install azure-cli -y`
-  )
 
   // TODO: we could/should refactor so that this job shares a mount with the xbuild job above,
   // to remove the need of re-xbuilding before publishing
@@ -159,7 +132,9 @@ class GoJob extends Job {
     const gopath = "/go";
     const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
 
-    this.image = "golang:1.11";
+    // Here using the large-but-useful deis/go-dev image as we have a need for deps
+    // already pre-installed in this image, e.g. helm, az, docker, etc.
+    this.image = "deis/go-dev";
     this.env = {
       "GOPATH": gopath
     };
