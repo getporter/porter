@@ -84,6 +84,13 @@ function testIntegration(e, p) {
     }
   };
 
+  // Install helm via gofish
+  goTest.tasks.push(
+    "apt-get update && apt-get install -y sudo",
+    "curl -fsSL https://raw.githubusercontent.com/fishworks/gofish/master/scripts/install.sh | bash",
+    "gofish init && gofish install helm"
+  )
+
   // Install docker cli
   goTest.tasks.push(
     "apt-get update && apt-get install -y jq apt-transport-https ca-certificates curl gnupg2 software-properties-common",
@@ -92,6 +99,7 @@ function testIntegration(e, p) {
     "apt-get update && apt-get install -y docker-ce"
   )
 
+  // Setup kubeconfig, docker login, run tests
   goTest.tasks.push(
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
