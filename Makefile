@@ -102,7 +102,7 @@ test: clean test-unit test-cli
 test-unit: build
 	go test ./...
 
-test-cli: build init-duffle-home-for-ci init-porter-home-for-ci
+test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
 	export KUBECONFIG
 	export PORTER_HOME
 	export DUFFLE_HOME

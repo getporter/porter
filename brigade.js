@@ -17,9 +17,9 @@ events.on("check_run:rerequested", runSuite)
 
 events.on("exec", (e, p) => {
   Group.runAll([
-    // build(e, p),
-    // xbuild(e, p),
-    // test(e, p),
+    build(e, p),
+    xbuild(e, p),
+    test(e, p),
     testIntegration(e, p)
   ]);
 })
@@ -77,9 +77,6 @@ function testIntegration(e, p) {
   // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
   goTest.docker.enabled = true;
 
-  // TODO: create k8s secret on infra cluster, supply appropriate name/key below
-  // ALTERNATIVELY, if we save as secret in Azure Key Vault, can fetch and use.
-  // This might be preferred as not tied to a particular k8s cluster, etc.
   goTest.env.kubeconfig = {
     secretKeyRef: {
       name: "porter-kubeconfig",
@@ -126,7 +123,6 @@ function publish(e, p) {
   // TODO: we could/should refactor so that this job shares a mount with the xbuild job above,
   // to remove the need of re-xbuilding before publishing
 
-  // TODO: add 'azureStorageConnectiontring' secret to secrets section of brigade project
   goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
     "make xbuild-all publish"
