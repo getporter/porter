@@ -131,17 +131,12 @@ function publish(e, p) {
   return goPublish;
 }
 
-
 // Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
-  Group.runAll([
-    new CheckRun("build", build(e, p), e, p),
-    new CheckRun("xbuild", xbuild(e, p), e, p),
-    new CheckRun("test", test(e, p), e, p),
-    new CheckRun("integrationtest", testIntegration(e, p), e, p)
-  ]).catch(e => {
-    console.error(e.toString());
-  });
+  checkRun(e, p, build, "Build").catch(e  => {console.error(e.toString())});
+  checkRun(e, p, xbuild, "Cross-Platform Build").catch(e  => {console.error(e.toString())});
+  checkRun(e, p, test, "Test").catch(e  => {console.error(e.toString())});
+  checkRun(e, p, testIntegration, "Integration Test").catch(e  => {console.error(e.toString())});
 }
 
 // **********************************************
@@ -172,21 +167,20 @@ class GoJob extends Job {
   }
 }
 
-// CheckRun returns a GitHub Check Run that can be run as part of a GitHub Checks Suite
-class CheckRun {
-  constructor(action, actionFunc, e, p) {
-    this.notification = new Notification(action, e, p);
-    this.notification.conclusion = "";
-    this.notification.title = `Run ${action}`;
-    this.notification.summary = `Running ${action} for ${e.revision.commit}`;
-    this.notification.text = `Ensuring ${action} completes successfully`
+// checkRun is a GitHub Check Run that is ran as part of a Checks Suite,
+// running the provided runFunc corresponding to the provided description 
+function checkRun(e, p, runFunc, description) {
+  console.log(`Check requested: ${description}`);
 
-    this.actionFunc = actionFunc;
-  }
+  // Create Notification object (which is just a Job to update GH using the Checks API)
+  note = new Notification(description.toLowerCase().replace(/[^a-z]/g, ''), e, p);
+  note.conclusion = "";
+  note.title = `Run ${description}`;
+  note.summary = `Running ${description} for ${e.revision.commit}`;
+  note.text = `Ensuring ${description} complete(s) successfully`
 
-  run() {
-    return notificationWrap(this.actionFunc, this.notification);
-  }
+  // Send notification, then run, then send pass/fail notification
+  return notificationWrap(runFunc(e, p), note);
 }
 
 // A GitHub Check Suite notification
