@@ -1,6 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {},
   "type": "object",
   "properties": {
     "name": {
@@ -23,22 +22,13 @@
       }
     },
     "install": {
-      "type": "array",
-      "items": {
-        "anyOf": []
-      }
+      "anyOf": []
     },
     "upgrade": {
-      "type": "array",
-      "items": {
-        "anyOf": []
-      }
+      "anyOf": []
     },
     "uninstall": {
-      "type": "array",
-      "items": {
-        "anyOf": []
-      }
+      "anyOf": []
     }
   },
   "additionalProperties": false,

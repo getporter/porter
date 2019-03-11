@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/pkg/errors"
@@ -36,11 +37,6 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 	err = json.Unmarshal(b, &manifestSchema)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not unmarshal the root porter manifest schema")
-	}
-
-	definitionSchema, ok := manifestSchema["definitions"].(jsonSchema)
-	if !ok {
-		return nil, errors.Errorf("root porter manifest schema has invalid definitions type, expected map[string]interface{} but got %T", manifestSchema["definitions"])
 	}
 
 	propertiesSchema, ok := manifestSchema["properties"].(jsonSchema)
@@ -88,7 +84,8 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 			continue
 		}
 
-		mixinEnumSchema = append(mixinEnumSchema, mixin.Name)
+		// Update relative refs with the new location and reload
+		mixinSchema = strings.Replace(mixinSchema, "#/", fmt.Sprintf("#/mixin.%s/", mixin.Name), -1)
 
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
@@ -96,22 +93,21 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 			return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema)
 		}
 
+		mixinEnumSchema = append(mixinEnumSchema, mixin.Name)
+
+		// embed the entire mixin schema in the root
+		manifestSchema["mixin."+mixin.Name] = mixinSchemaMap
+
 		for _, action := range config.GetSupportActions() {
-			mixinActionSchema := mixinSchemaMap[string(action)]
+			actionRef := fmt.Sprintf("#/mixin.%s/properties/%s", mixin.Name, action)
+			actionSchema := actionSchemas[string(action)]
 
-			ref := fmt.Sprintf("%s.%s", mixin.Name, action)
-			definitionSchema[ref] = mixinActionSchema
-
-			actionItemSchema, ok := actionSchemas[string(action)]["items"].(jsonSchema)
+			actionAnyOfSchema, ok := actionSchema["anyOf"].([]interface{})
 			if !ok {
-				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
+				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.anyOf type, expected []interface{} but got %T", action, actionSchema["anyOf"])
 			}
-			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
-			if !ok {
-				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
-			}
-			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": "#/definitions/" + ref})
-			actionItemSchema["anyOf"] = actionAnyOfSchema
+			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
+			actionSchema["anyOf"] = actionAnyOfSchema
 		}
 	}
 

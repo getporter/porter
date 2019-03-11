@@ -1,117 +1,76 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
-  "definitions": {
-    "exec.install": {
-      "additionalProperties": false,
-      "properties": {
-        "exec": {
-          "additionalProperties": false,
-          "properties": {
-            "arguments": {
-              "items": {
-                "minItems": 1,
+  "mixin.exec": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+      "execStep": {
+        "additionalProperties": false,
+        "properties": {
+          "exec": {
+            "additionalProperties": false,
+            "properties": {
+              "arguments": {
+                "items": {
+                  "minItems": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "command": {
                 "type": "string"
               },
-              "type": "array"
+              "description": {
+                "minLength": 1,
+                "type": "string"
+              }
             },
-            "command": {
-              "type": "string"
-            },
-            "description": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "description",
-            "command"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "exec"
-      ],
-      "type": "object"
+            "required": [
+              "description",
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "exec"
+        ],
+        "type": "object"
+      }
     },
-    "exec.uninstall": {
-      "additionalProperties": false,
-      "properties": {
-        "exec": {
-          "additionalProperties": false,
-          "properties": {
-            "arguments": {
-              "items": {
-                "minItems": 1,
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "command": {
-              "type": "string"
-            },
-            "description": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "description",
-            "command"
-          ],
-          "type": "object"
-        }
+    "properties": {
+      "install": {
+        "items": {
+          "$ref": "#/mixin.exec/definitions/execStep"
+        },
+        "type": "array"
       },
-      "required": [
-        "exec"
-      ],
-      "type": "object"
+      "uninstall": {
+        "items": {
+          "$ref": "#/mixin.exec/definitions/execStep"
+        },
+        "type": "array"
+      },
+      "upgrade": {
+        "items": {
+          "$ref": "#/mixin.exec/definitions/execStep"
+        },
+        "type": "array"
+      }
     },
-    "exec.upgrade": {
-      "additionalProperties": false,
-      "properties": {
-        "exec": {
-          "additionalProperties": false,
-          "properties": {
-            "arguments": {
-              "items": {
-                "minItems": 1,
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "command": {
-              "type": "string"
-            },
-            "description": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "description",
-            "command"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "exec"
-      ],
-      "type": "object"
-    }
+    "type": "object"
   },
   "properties": {
     "description": {
       "type": "string"
     },
     "install": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/exec.install"
-          }
-        ]
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "$ref": "#/mixin.exec/properties/install"
+        }
+      ]
     },
     "invocationImage": {
       "type": "string"
@@ -129,24 +88,18 @@
       "type": "string"
     },
     "uninstall": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/exec.uninstall"
-          }
-        ]
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "$ref": "#/mixin.exec/properties/uninstall"
+        }
+      ]
     },
     "upgrade": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/exec.upgrade"
-          }
-        ]
-      },
-      "type": "array"
+      "anyOf": [
+        {
+          "$ref": "#/mixin.exec/properties/upgrade"
+        }
+      ]
     },
     "version": {
       "type": "string"
