@@ -29,7 +29,7 @@ AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(M
 build: build-client build-runtime azure helm
 	rm -r bin/mixins/porter
 
-build-runtime:
+build-runtime: generate
 	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
 	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
 	mv bin/mixins/porter/porter-runtime$(FILE_EXT) bin/
