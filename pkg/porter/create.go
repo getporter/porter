@@ -11,7 +11,7 @@ import (
 func (p *Porter) Create() error {
 	fmt.Fprintln(p.Out, "creating porter configuration in the current directory")
 
-	configTmpl, err := p.Config.GetPorterConfigTemplate()
+	configTmpl, err := p.GetManifestTemplate()
 	if err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func (p *Porter) Create() error {
 		return errors.Wrapf(err, "failed to write %s", config.Name)
 	}
 
-	runTmpl, err := p.Config.GetRunScriptTemplate()
+	runTmpl, err := p.GetRunScriptTemplate()
 	if err != nil {
 		return err
 	}

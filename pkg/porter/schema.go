@@ -25,7 +25,7 @@ func (p *Porter) PrintManifestSchema() error {
 }
 
 func (p *Porter) GetManifestSchema() (map[string]interface{}, error) {
-	b, err := p.schemas.Find("manifest.json")
+	b, err := p.Templates.GetSchemaTemplate()
 	if err != nil {
 		return nil, err
 	}
