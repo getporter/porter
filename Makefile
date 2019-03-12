@@ -27,17 +27,14 @@ HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIX
 AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
 
 build: build-client build-runtime azure helm
-	rm -r bin/mixins/porter
 
 build-runtime: generate
-	$(MAKE) build-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) build-runtime MIXIN=porter -f mixin.mk BINDIR=bin
 	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
-	mv bin/mixins/porter/porter-runtime$(FILE_EXT) bin/
 
 build-client: generate
-	$(MAKE) build-client MIXIN=porter -f mixin.mk
+	$(MAKE) build-client MIXIN=porter -f mixin.mk BINDIR=bin
 	$(MAKE) build-client MIXIN=exec -f mixin.mk
-	mv bin/mixins/porter/porter$(FILE_EXT) bin/
 
 generate: packr2
 	go generate ./...
@@ -49,15 +46,15 @@ ifndef HAS_PACKR2
 endif
 
 xbuild-all:
-	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
 	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
 
 xbuild-runtime:
-	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk BINDIR=bin
 	$(MAKE) xbuild-runtime MIXIN=exec -f mixin.mk
 
 xbuild-client:
-	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk
+	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk BINDIR=bin
 	$(MAKE) xbuild-client MIXIN=exec -f mixin.mk
 
 bin/mixins/helm/helm:
@@ -127,15 +124,19 @@ docs:
 docs-preview:
 	hugo serve --source docs/
 
-publish:
+prep-install-scripts:
+	mkdir -p bin/$(VERSION)
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-mac.sh > bin/$(VERSION)/install-mac.sh
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-linux.sh > bin/$(VERSION)/install-linux.sh
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-windows.ps1 > bin/$(VERSION)/install-windows.ps1
+
+publish: prep-install-scripts
 	$(MAKE) publish MIXIN=exec -f mixin.mk
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
-	az storage blob upload-batch -d porter/$(VERSION) -s bin/mixins/porter/$(VERSION); \
-	az storage blob upload-batch -d porter/$(VERSION) -s scripts/install; \
+	az storage blob upload-batch -d porter/$(VERSION) -s bin/$(VERSION); \
 	fi
-	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/mixins/porter/$(VERSION)
-	az storage blob upload-batch -d porter/$(PERMALINK) -s scripts/install
+	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION)
 
 install: build
 	mkdir -p $(HOME)/.porter
