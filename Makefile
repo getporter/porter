@@ -127,7 +127,13 @@ docs:
 docs-preview:
 	hugo serve --source docs/
 
-publish:
+prep-install-scripts:
+	mkdir -p bin/mixins/porter/$(VERSION)
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-mac.sh > bin/mixins/porter/$(VERSION)/install-mac.sh
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-linux.sh > bin/mixins/porter/$(VERSION)/install-linux.sh
+	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-windows.ps1 > bin/mixins/porter/$(VERSION)/install-windows.ps1
+
+publish: prep-install-scripts
 	$(MAKE) publish MIXIN=exec -f mixin.mk
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
