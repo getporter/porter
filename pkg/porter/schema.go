@@ -109,7 +109,10 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
 			}
 
-			actionRef := fmt.Sprintf("#/mixin.%s/properties/%s/items", mixin.Name, action)
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, action)
+			// WORKAROUND bug in the RedHat yaml lib used by VS Code, it doesn't handle more than one ref dereference
+			// actionRef := fmt.Sprintf("#/mixin.%s/properties/%s/items", mixin.Name, action)
+
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
 			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}

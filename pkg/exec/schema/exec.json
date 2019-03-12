@@ -1,7 +1,73 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "execStep": {
+    "installStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
+    },
+    "upgradeStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
+    },
+    "uninstallStep": {
       "type": "object",
       "properties": {
         "exec": {
@@ -40,19 +106,19 @@
     "install": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/execStep"
+        "$ref": "#/definitions/installStep"
       }
     },
     "upgrade": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/execStep"
+        "$ref": "#/definitions/upgradeStep"
       }
     },
     "uninstall": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/execStep"
+        "$ref": "#/definitions/uninstallStep"
       }
     }
   },

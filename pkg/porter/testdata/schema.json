@@ -5,7 +5,73 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
-      "execStep": {
+      "installStep": {
+        "additionalProperties": false,
+        "properties": {
+          "exec": {
+            "additionalProperties": false,
+            "properties": {
+              "arguments": {
+                "items": {
+                  "minItems": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "command": {
+                "type": "string"
+              },
+              "description": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "description",
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "exec"
+        ],
+        "type": "object"
+      },
+      "uninstallStep": {
+        "additionalProperties": false,
+        "properties": {
+          "exec": {
+            "additionalProperties": false,
+            "properties": {
+              "arguments": {
+                "items": {
+                  "minItems": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "command": {
+                "type": "string"
+              },
+              "description": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "description",
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "exec"
+        ],
+        "type": "object"
+      },
+      "upgradeStep": {
         "additionalProperties": false,
         "properties": {
           "exec": {
@@ -42,19 +108,19 @@
     "properties": {
       "install": {
         "items": {
-          "$ref": "#/mixin.exec/definitions/execStep"
+          "$ref": "#/mixin.exec/definitions/installStep"
         },
         "type": "array"
       },
       "uninstall": {
         "items": {
-          "$ref": "#/mixin.exec/definitions/execStep"
+          "$ref": "#/mixin.exec/definitions/uninstallStep"
         },
         "type": "array"
       },
       "upgrade": {
         "items": {
-          "$ref": "#/mixin.exec/definitions/execStep"
+          "$ref": "#/mixin.exec/definitions/upgradeStep"
         },
         "type": "array"
       }
@@ -69,7 +135,7 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/mixin.exec/properties/install/items"
+            "$ref": "#/mixin.exec/definitions/installStep"
           }
         ]
       },
@@ -94,7 +160,7 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/mixin.exec/properties/uninstall/items"
+            "$ref": "#/mixin.exec/definitions/uninstallStep"
           }
         ]
       },
@@ -104,7 +170,7 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/mixin.exec/properties/upgrade/items"
+            "$ref": "#/mixin.exec/definitions/upgradeStep"
           }
         ]
       },
