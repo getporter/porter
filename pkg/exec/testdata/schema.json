@@ -1,84 +1,126 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "install": {
-    "type": "object",
-    "properties": {
-      "exec": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "command": {
-            "type": "string"
-          },
-          "arguments": {
-            "type": "array",
-            "items": {
+  "definitions": {
+    "installStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
               "type": "string",
-              "minItems": 1
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
             }
-          }
-        },
-        "additionalProperties": false,
-        "required": ["description", "command"]
-      }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
     },
-    "additionalProperties": false,
-    "required": ["exec"]
+    "upgradeStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
+    },
+    "uninstallStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
+    }
   },
-  "upgrade": {
-    "type": "object",
-    "properties": {
-      "exec": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "command": {
-            "type": "string"
-          },
-          "arguments": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minItems": 1
-            }
-          }
-        },
-        "additionalProperties": false,
-        "required": ["description", "command"]
+  "type": "object",
+  "properties": {
+    "install": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/installStep"
       }
     },
-    "additionalProperties": false,
-    "required": ["exec"]
+    "upgrade": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/upgradeStep"
+      }
+    },
+    "uninstall": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/uninstallStep"
+      }
+    }
   },
-  "uninstall": {
-    "type": "object",
-    "properties": {
-      "exec": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "command": {
-            "type": "string"
-          },
-          "arguments": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minItems": 1
-            }
-          }
-        },
-        "additionalProperties": false,
-        "required": ["description", "command"]
-      }
-    },
-    "additionalProperties": false,
-    "required": ["exec"]
-  }
+  "additionalProperties": false
 }
