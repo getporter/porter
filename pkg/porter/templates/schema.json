@@ -22,13 +22,22 @@
       }
     },
     "install": {
-      "anyOf": []
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     },
     "upgrade": {
-      "anyOf": []
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     },
     "uninstall": {
-      "anyOf": []
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     }
   },
   "additionalProperties": false,

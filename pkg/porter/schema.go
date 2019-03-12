@@ -99,15 +99,19 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		manifestSchema["mixin."+mixin.Name] = mixinSchemaMap
 
 		for _, action := range config.GetSupportActions() {
-			actionRef := fmt.Sprintf("#/mixin.%s/properties/%s", mixin.Name, action)
-			actionSchema := actionSchemas[string(action)]
-
-			actionAnyOfSchema, ok := actionSchema["anyOf"].([]interface{})
-			if !ok {
-				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.anyOf type, expected []interface{} but got %T", action, actionSchema["anyOf"])
+			actionItemSchema, ok := actionSchemas[string(action)]["items"].(jsonSchema)
+			if err != nil {
+				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
 			}
+
+			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
+			if !ok {
+				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
+			}
+
+			actionRef := fmt.Sprintf("#/mixin.%s/properties/%s/items", mixin.Name, action)
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
-			actionSchema["anyOf"] = actionAnyOfSchema
+			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}
 	}
 

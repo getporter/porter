@@ -66,11 +66,14 @@
       "type": "string"
     },
     "install": {
-      "anyOf": [
-        {
-          "$ref": "#/mixin.exec/properties/install"
-        }
-      ]
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/mixin.exec/properties/install/items"
+          }
+        ]
+      },
+      "type": "array"
     },
     "invocationImage": {
       "type": "string"
@@ -88,18 +91,24 @@
       "type": "string"
     },
     "uninstall": {
-      "anyOf": [
-        {
-          "$ref": "#/mixin.exec/properties/uninstall"
-        }
-      ]
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/mixin.exec/properties/uninstall/items"
+          }
+        ]
+      },
+      "type": "array"
     },
     "upgrade": {
-      "anyOf": [
-        {
-          "$ref": "#/mixin.exec/properties/upgrade"
-        }
-      ]
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/mixin.exec/properties/upgrade/items"
+          }
+        ]
+      },
+      "type": "array"
     },
     "version": {
       "type": "string"
