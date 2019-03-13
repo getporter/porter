@@ -137,6 +137,7 @@ class GoJob extends Job {
 
     // Here using the large-but-useful deis/go-dev image as we have a need for deps
     // already pre-installed in this image, e.g. helm, az, docker, etc.
+    // TODO: replace with lighter-weight image (Carolyn)
     this.image = "deis/go-dev";
     this.env = {
       "GOPATH": gopath
