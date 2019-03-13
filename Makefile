@@ -126,9 +126,9 @@ docs-preview:
 
 prep-install-scripts:
 	mkdir -p bin/$(VERSION)
-	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-mac.sh > bin/$(VERSION)/install-mac.sh
-	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-linux.sh > bin/$(VERSION)/install-linux.sh
-	sed 's|UNKNOWN|$(VERSION)|g' scripts/install/install-windows.ps1 > bin/$(VERSION)/install-windows.ps1
+	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-mac.sh > bin/$(VERSION)/install-mac.sh
+	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-linux.sh > bin/$(VERSION)/install-linux.sh
+	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-windows.ps1 > bin/$(VERSION)/install-windows.ps1
 
 publish: prep-install-scripts
 	$(MAKE) publish MIXIN=exec -f mixin.mk
