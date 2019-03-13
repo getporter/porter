@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,27 +40,6 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 	assert.Equal(t, filepath.Join("/root", ".porter"), home)
 }
 
-func TestConfig_GetPorterConfigTemplate(t *testing.T) {
-	c := NewTestConfig(t)
-	c.SetupPorterHome()
-
-	gotTmpl, err := c.GetPorterConfigTemplate()
-	require.NoError(t, err)
-
-	wantTmpl, _ := ioutil.ReadFile("./templates/porter.yaml")
-	assert.Equal(t, wantTmpl, gotTmpl)
-}
-
-func TestConfig_GetRunScriptTemplate(t *testing.T) {
-	c := NewTestConfig(t)
-	c.SetupPorterHome()
-
-	gotTmpl, err := c.GetRunScriptTemplate()
-	require.NoError(t, err)
-
-	wantTmpl, _ := ioutil.ReadFile("./templates/run")
-	assert.Equal(t, wantTmpl, gotTmpl)
-}
 
 func TestConfig_GetBundleDir(t *testing.T) {
 	c := NewTestConfig(t)

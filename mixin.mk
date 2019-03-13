@@ -10,7 +10,7 @@ PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev
 
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 XBUILD = CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
-BINDIR = bin/mixins/$(MIXIN)
+BINDIR ?= bin/mixins/$(MIXIN)
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)

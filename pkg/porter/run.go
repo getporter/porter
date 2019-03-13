@@ -70,6 +70,36 @@ func (p *Porter) Run(file string, action config.Action) error {
 	return nil
 }
 
+type ActionInput struct {
+	action config.Action
+	Steps  []*config.Step `yaml:"steps"`
+}
+
+// MarshalYAML marshals the step nested under the action
+// install:
+// - helm:
+//   ...
+// Solution from https://stackoverflow.com/a/42547226
+func (a *ActionInput) MarshalYAML() (interface{}, error) {
+	// encode the original
+	b, err := yaml.Marshal(a.Steps)
+	if err != nil {
+		return nil, err
+	}
+
+	// decode it back to get a map
+	var tmp interface{}
+	err = yaml.Unmarshal(b, &tmp)
+	if err != nil {
+		return nil, err
+	}
+	stepMap := tmp.([]interface{})
+	actionMap := map[string]interface{}{
+		string(a.action): stepMap,
+	}
+	return actionMap, nil
+}
+
 func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir string) *mixin.Runner {
 	name := s.GetMixinName()
 	mixinDir := filepath.Join(mixinsDir, name)
@@ -78,8 +108,12 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	r.Command = string(action)
 	r.Context = p.Context
 
-	stepBytes, _ := yaml.Marshal(s)
-	r.Step = string(stepBytes)
+	input := &ActionInput{
+		action: action,
+		Steps:  []*config.Step{s},
+	}
+	inputBytes, _ := yaml.Marshal(input)
+	r.Input = string(inputBytes)
 
 	return r
 }

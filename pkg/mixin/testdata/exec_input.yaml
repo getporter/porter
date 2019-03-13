@@ -1,6 +1,7 @@
-exec:
-  description: "Say Hello"
-  command: bash
-  arguments:
-  - -c
-  - echo Hello World
+install:
+- exec:
+    description: "Say Hello"
+    command: bash
+    arguments:
+    - -c
+    - echo Hello World

@@ -1,6 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {},
   "type": "object",
   "properties": {
     "name": {
@@ -24,8 +23,23 @@
     },
     "install": {
       "type": "array",
-      "anyOf": []
+      "items": {
+        "anyOf": []
+      }
+    },
+    "upgrade": {
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
+    },
+    "uninstall": {
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "required": ["name","version", "invocationImage", "mixins"]
 }

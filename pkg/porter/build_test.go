@@ -15,7 +15,7 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	configTpl, err := p.GetManifestTemplate()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -42,7 +42,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 func TestPorter_buildDockerfile_output(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	configTpl, err := p.GetManifestTemplate()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -71,7 +71,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	configTpl, err := p.GetManifestTemplate()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -98,7 +98,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	configTpl, err := p.GetManifestTemplate()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -123,7 +123,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.TestConfig.GetPorterConfigTemplate()
+	configTpl, err := p.GetManifestTemplate()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
