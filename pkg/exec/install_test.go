@@ -22,7 +22,10 @@ func TestMixin_Install(t *testing.T) {
 			Arguments: []string{"-c", "echo Hello World"},
 		},
 	}
-	b, _ := yaml.Marshal(step)
+	action := Action{
+		Steps: []Step{step},
+	}
+	b, _ := yaml.Marshal(action)
 
 	h := NewTestMixin(t)
 	h.In = bytes.NewReader(b)
@@ -36,8 +39,10 @@ func TestMixin_LoadInstructionFromFile(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.LoadInstruction("testdata/exec_input.yaml")
+	err := h.loadAction("testdata/exec_input.yaml")
 	require.NoError(t, err)
 
-	assert.Equal(t, "bash", h.Mixin.Step.Instruction.Command)
+	assert.Len(t, h.Mixin.Action.Steps, 1)
+	step := h.Mixin.Action.Steps[0]
+	assert.Equal(t, "bash", step.Instruction.Command)
 }

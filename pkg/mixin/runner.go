@@ -18,7 +18,7 @@ type Runner struct {
 	Mixin   string
 	Runtime bool
 	Command string
-	Step    string
+	Input   string
 	File    string
 }
 
@@ -53,7 +53,7 @@ func (r *Runner) Run() error {
 		fmt.Fprintf(r.Err, "DEBUG mixin:    %s\n", r.Mixin)
 		fmt.Fprintf(r.Err, "DEBUG mixinDir: %s\n", r.mixinDir)
 		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", r.File)
-		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", r.Step)
+		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", r.Input)
 	}
 
 	mixinPath := r.getMixinPath()
@@ -71,14 +71,14 @@ func (r *Runner) Run() error {
 		cmd.Args = append(cmd.Args, "--debug")
 	}
 
-	if r.Step != "" {
+	if r.Input != "" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
 			return err
 		}
 		go func() {
 			defer stdin.Close()
-			io.WriteString(stdin, r.Step)
+			io.WriteString(stdin, r.Input)
 		}()
 	}
 
