@@ -51,14 +51,6 @@ ifndef HAS_PACKR2
 	go get -u github.com/gobuffalo/packr/v2/packr2
 endif
 
-HAS_DEP := $(shell command -v dep)
-dep:
-ifndef HAS_DEP
-	go get -u github.com/golang/dep/cmd/dep
-endif
-
-get-deps: packr2 dep
-
 xbuild-all:
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=exec -f mixin.mk

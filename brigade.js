@@ -146,8 +146,7 @@ class GoJob extends Job {
       "mkdir -p " + localPath,
       "mv /src/* " + localPath,
       "mv /src/.git " + localPath,
-      "cd " + localPath,
-      "make get-deps"
+      "cd " + localPath
     ];
     this.streamLogs = true;
   }
