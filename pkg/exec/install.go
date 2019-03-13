@@ -1,7 +1,7 @@
 package exec
 
 func (m *Mixin) Install(commandFile string) error {
-	err := m.LoadInstruction(commandFile)
+	err := m.loadAction(commandFile)
 	if err != nil {
 		return err
 	}
