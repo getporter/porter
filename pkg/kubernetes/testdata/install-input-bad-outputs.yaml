@@ -1,0 +1,8 @@
+install:
+  - kubernetes:
+      description: "Install Hello World App"
+      manifests:
+        - /cnab/app/manifests/hello
+      wait: true
+      outputs:
+        - name: ip-address
