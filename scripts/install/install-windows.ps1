@@ -3,11 +3,11 @@ $PORTER_URL="https://deislabs.blob.core.windows.net/porter"
 $PORTER_VERSION="UNKNOWN"
 echo "Installing porter to $PORTER_HOME"
 
-mkdir -p $PORTER_HOME/templates
-mkdir -p $PORTER_HOME/mixins/porter
-mkdir -p $PORTER_HOME/mixins/exec
-mkdir -p $PORTER_HOME/mixins/helm
-mkdir -p $PORTER_HOME/mixins/azure
+mkdir -force -p $PORTER_HOME/templates
+mkdir -force -p $PORTER_HOME/mixins/porter
+mkdir -force -p $PORTER_HOME/mixins/exec
+mkdir -force -p $PORTER_HOME/mixins/helm
+mkdir -force -p $PORTER_HOME/mixins/azure
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_VERSION/porter-windows-amd64.exe", "$PORTER_HOME\porter.exe")
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_VERSION/porter-runtime-linux-amd64", "$PORTER_HOME\mixins\porter\porter-runtime")
