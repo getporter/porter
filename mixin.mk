@@ -1,6 +1,9 @@
 PKG = github.com/deislabs/porter
 SHELL = bash
 
+# --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
+MAKE_OPTS ?= --no-print-directory
+
 COMMIT ?= $(shell git rev-parse --short HEAD)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
@@ -37,7 +40,7 @@ build-client:
 xbuild-all: xbuild-runtime $(addprefix xbuild-for-,$(SUPPORTED_CLIENT_PLATFORMS))
 
 xbuild-for-%:
-	$(MAKE) CLIENT_PLATFORM=$* MIXIN=$(MIXIN) xbuild-client -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) CLIENT_PLATFORM=$* MIXIN=$(MIXIN) xbuild-client -f mixin.mk
 
 xbuild-runtime:
 	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/$(VERSION)/$(MIXIN)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)$(FILE_EXT) ./cmd/$(MIXIN)

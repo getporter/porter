@@ -1,10 +1,13 @@
 SHELL = bash
 
+# --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
+MAKE_OPTS ?= --no-print-directory
+
 REGISTRY ?= $(USER)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
-KUBECONFIG ?= $(HOME)/.kube/config
+KUBECONFIG  ?= $(HOME)/.kube/config
 DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
@@ -29,12 +32,12 @@ AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(M
 build: build-client build-runtime azure helm
 
 build-runtime: generate
-	$(MAKE) build-runtime MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) build-runtime MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=exec -f mixin.mk
 
 build-client: generate
-	$(MAKE) build-client MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) build-client MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) build-client MIXIN=exec -f mixin.mk
 
 generate: packr2
 	go generate ./...
@@ -46,16 +49,16 @@ ifndef HAS_PACKR2
 endif
 
 xbuild-all:
-	$(MAKE) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) xbuild-all MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=exec -f mixin.mk
 
 xbuild-runtime:
-	$(MAKE) xbuild-runtime MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) xbuild-runtime MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=exec -f mixin.mk
 
 xbuild-client:
-	$(MAKE) xbuild-client MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) xbuild-client MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=exec -f mixin.mk
 
 bin/mixins/helm/helm:
 	mkdir -p bin/mixins/helm
@@ -131,7 +134,7 @@ prep-install-scripts:
 	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-windows.ps1 > bin/$(VERSION)/install-windows.ps1
 
 publish: prep-install-scripts
-	$(MAKE) publish MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 	az storage blob upload-batch -d porter/$(VERSION) -s bin/$(VERSION); \
