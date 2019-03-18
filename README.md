@@ -16,3 +16,23 @@ Learn more at [porter.sh](https://porter.sh)
 ---
 
 _Want to work on Porter with us? See our [Contributing Guide](CONTRIBUTING.md)_
+
+---
+
+## Roadmap
+
+_2019/03/14 pi day_ 🥧
+
+Porter go in lots of directions! Here are our top 3 goals at the moment:
+
+1. Use Porter without installing Duffle - Milestone [Look Ma, No Duffle](https://github.com/deislabs/porter/milestone/3)
+
+    Compile duffle functionality into porter as needed, instead of having the user switch between the two CLIs.
+
+2. Dependency Distribution - Milestone TBC
+
+    Solve end-to-end how bundle authors use porter to build, publish and then use someone's bundle as a dependency.
+
+3. Mixin Distribution - Milestone TBC
+
+    Make it easy for anyone to create and distribute mixins that porter can discover and install.
