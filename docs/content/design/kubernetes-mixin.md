@@ -50,12 +50,8 @@ The mixin allows bundle authors to specify the following parameters on install:
 |-----------|------|-------------|---------|
 | `namespace` | string | The namespace in which to create resources | `default` |
 | `manifests` | string | The path to the manifests. Can be a file or directory | `/cnab/app/kubernetes` |
-| `allow-missing-template-keys` | boolean | If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. | `true` |
-| `output` | string | Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file. | |
-| `record` | boolean | Record current kubectl command in the resource annotation. If set to false, do not record the command. If set to true, record the command. If not set, default to updating the existing annotation value only if one already exists. | `false` |
-| `save-config` | boolean | If true, the configuration of current object will be saved in its annotation. Otherwise, the annotation will be unchanged. This flag is useful when you want to perform kubectl apply on this object in the future. | `false` |
+| `record` | boolean | Record current kubectl command in the resource annotation. If set to false, do not record the command. If set to true, record the command. If not set, default to updating the existing annotation value only if one already exists. | `false` | 
 | `selector` | string | Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2) | |
-| `template` | string | Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates | |
 | `validate` | boolean | If true, use a schema to validate the input before sending it | `true` |
 | `wait` | boolean | If true, wait for resources to be gone before returning. This waits for finalizers. | `true` |
 
@@ -67,15 +63,12 @@ The mixin allows bundle authors to specify the following parameters on install:
 |-----------|------|-------------|---------|
 | `namespace` | string | The namespace in which to create resources. | `default` |
 | `manifests` | string | The path to the manifests. Can be a file or directory. | `/cnab/app/kubernetes` |
-| `allow-missing-template-keys` | boolean | If true, ignore any errors in templates when a field or map key is missing in the template. Only applies to golang and jsonpath output formats. | `true` |
-| `force` | boolean | If true, immediately remove resources from API and bypass graceful deletion. Note that immediate deletion of some resources may result in inconsistency or data loss and requires confirmation. Overrides `grace-period`. | `false`|
-| `grace-period` | integer | Period of time in seconds given to the resource to terminate gracefully. Ignored if negative. Set to 1 for immediate shutdown. If `force` is true, will result in 0. | -1 |
-| `output` | string | Output format. One of: json|yaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-file. | |
+| `force` | boolean | If true, immediately remove resources from API and bypass graceful deletion. Note that immediate deletion of some resources may result in inconsistency or data loss and requires confirmation. Overrides `gracePeriod`. | `false`|
+| `gracePeriod` | integer | Period of time in seconds given to the resource to terminate gracefully. Ignored if negative. Set to 1 for immediate shutdown. If `force` is true, will result in 0. | -1 |
 | `overwrite` | boolean | Automatically resolve conflicts between the modified and live configuration by using values from the modified configuration. | `true` |
-| `record` | boolean | Record current kubectl command in the resource annotation. If set to false, do not record the command. If set to true, record the command. If not set, default to updating the existing annotation value only if one already exists. | `false` |
-| `save-config` | boolean | If true, the configuration of current object will be saved in its annotation. Otherwise, the annotation will be unchanged. This flag is useful when you want to perform kubectl apply on this object in the future. | `false` |
+| `prune` | boolean | Automatically delete resource objects, including the uninitialized ones, that do not appear in the configs. | `false` |
+| `record` | boolean | Record current kubectl command in the resource annotation. If set to false, do not record the command. If set to true, record the command. If not set, default to updating the existing annotation value only if one already exists. | `false` ||
 | `selector` | string | Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2). | |
-| `template` | string | Template string or path to template file to use when -o=go-template, -o=go-template-file. The template format is golang templates. | |
 | `timeout` | integer | The length of time (in seconds) to wait before giving up on a delete, zero means determine a timeout from the size of the object. | 0 |
 | `validate` | boolean | If true, use a schema to validate the input before sending it. | `true` |
 | `wait` | boolean | If true, wait for resources to be gone before returning. This waits for finalizers. | `true` |
@@ -93,13 +86,15 @@ The mixin allows bundle authors to specify the following parameters on delete:
 | `namespace` | string | The namespace in which to create resources. | `default` |
 | `manifests` | string | The path to the manifests. Can be a file or directory. | `/cnab/app/kuberentes` |
 | `force` | boolean | If true, immediately remove resources from API and bypass graceful deletion. Note that immediate deletion of some resources may result in inconsistency or data loss and requires confirmation. Sets grace period to `0`. | `false` |
-| `grace-period` | integer | Period of time in seconds given to the resource to terminate gracefully. Ignored if negative. Set to 1 for immediate shutdown. | `-1` |
+| `gracePeriod` | integer | Period of time in seconds given to the resource to terminate gracefully. Ignored if negative. Set to 1 for immediate shutdown. | `-1` |
 | `timeout` | integer | The length of time (in seconds) to wait before giving up on a delete, zero means determine a timeout from the size of the object. | 0 |
 | `wait` | boolean | If true, wait for resources to be gone before returning. This waits for finalizers. | `true` |
 
 ### Outputs
 
-This mixin will leverage the `kubectl get` command in order to populate outputs. Given the wide range of objects that can be created, the mixin will support JSON Path to specify how to retrieve values to populate outputs. Bundle authors will specify the object type, name and provide a JSONPath to obtain the data. For example, to obtain the ClusterIP of a a given service, consider the following porter.yaml excerpt:
+This mixin will leverage the `kubectl get` command in order to populate outputs. Given the wide range of objects that can be created, the mixin will support JSON Path to specify how to retrieve values to populate outputs. Bundle authors will specify the object type, name and provide a JSONPath to obtain the data. The mixin will not attempt further processing of the data, so if a JSONPath expression is given that results in multiple items, the JSON representing that will be stuck into the output as is. Namespace will default to `default` if not specified
+
+For example, to obtain the ClusterIP of a a given service, consider the following porter.yaml excerpt:
 
 ```yaml
 install:
@@ -108,7 +103,8 @@ install:
     manifests:  "/cnab/app/manifests/super-cool-app"
     outputs:
       - name: cluster_ip
-        resource_type: "service"
-        resource_name: "super-cool-service"
-        jsonpath: "spec.clusterIP"
+        resourceType: "service"
+        resourceName: "super-cool-service"
+        namespace: "cool"
+        jsonPath: "spec.clusterIP"
 ```

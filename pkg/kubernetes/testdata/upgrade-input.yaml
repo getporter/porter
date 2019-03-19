@@ -1,0 +1,6 @@
+upgrade:
+  - kubernetes:
+      description: "Upgrade Hello World App"
+      manifests:
+        - /cnab/app/manifests/hello
+      wait: true
