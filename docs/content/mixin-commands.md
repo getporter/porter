@@ -17,8 +17,9 @@ recommended so that your mixin has a good user experience.
 
 **Optional Commands**
 
-* [version](#version)
 * [status](#status)
+* [version](#version)
+
 
 # build
 
@@ -188,7 +189,7 @@ host=127.0.0.1
 
 # status
 
-The status command (required) is called from inside the invocation image during
+The status command (optional) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
 The mixin should write any output values to a file in the
 `/cnab/app/porter/outputs/` directory.
@@ -202,6 +203,7 @@ status:
     description: "Status of MySQL"
     releases:
     - porter-ci-mysql
+```
 
 # version
 
