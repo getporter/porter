@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 
 func TestMixin_InstallStep(t *testing.T) {
 
-	manifestDirectory := "/cnab/app/manifesto"
+	manifestDirectory := "/cnab/app/manifests"
 
 	installCmd := "kubectl apply -f"
 
@@ -39,38 +39,48 @@ func TestMixin_InstallStep(t *testing.T) {
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", installCmd, manifestDirectory),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
+
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
 					Manifests: []string{manifestDirectory},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait", installCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s", installCmd, manifestDirectory),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{},
-			},
-		},
-		{
-			expectedCommand: fmt.Sprintf("%s %s", installCmd, defaultManifestPath),
-			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
-					Wait: &dontWait,
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Wait:      &dontWait,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s", installCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s", installCmd, manifestDirectory, namespace),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
 					Namespace: namespace,
 					Wait:      &dontWait,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s --validate=false", installCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s --validate=false", installCmd, manifestDirectory, namespace),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
 					Namespace: namespace,
 					Validate:  &validateIt,
 					Wait:      &dontWait,
@@ -78,9 +88,13 @@ func TestMixin_InstallStep(t *testing.T) {
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s --record=true", installCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s --record=true", installCmd, manifestDirectory, namespace),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
 					Namespace: namespace,
 					Record:    &recordIt,
 					Wait:      &dontWait,
@@ -88,10 +102,14 @@ func TestMixin_InstallStep(t *testing.T) {
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", installCmd, defaultManifestPath, selector),
+			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", installCmd, manifestDirectory, selector),
 			installStep: InstallStep{
-				InstallArguments: &InstallArguments{
-					Selector: selector,
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Selector:  selector,
 				},
 			},
 		},

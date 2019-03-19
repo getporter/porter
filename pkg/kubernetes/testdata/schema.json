@@ -12,14 +12,13 @@
                 "minLength": 1
               },
               "namespace": {
-                "type": "string",
-                "minLength": 0
+                "type": "string"
               },
               "manifests": {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "minItems": 0
+                  "minItems": 1
                 }
               },
               "record": {
@@ -27,8 +26,7 @@
                 "default":"false"
               },
               "selector": {
-                "type": "string",
-                "minLength": 0
+                "type": "string"
               },
               "validate": {
                 "type": "boolean",
@@ -44,7 +42,7 @@
             },
             "additionalProperties": false,
             "required": [
-              "description"
+              "description", "manifests"
             ]
           }
         },
@@ -64,44 +62,46 @@
                 "minLength": 1
               },
               "namespace": {
-                "type": "string",
-                "minLength": 0
+                "type": "string"
               },
               "manifests": {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "minItems": 0
+                  "minItems": 1
                 }
               },
               "force": {
-                "type": "boolean",
+                "type": ["boolean","null"],
                 "default":"false"
               },
               "gracePeriod" : {
                 "type": "integer"
               },
               "overwrite": {
-                "type": "boolean",
+                "type": ["boolean","null"],
+                "default":"true"
+              },
+              "prune": {
+                "type": ["boolean","null"],
                 "default":"true"
               },
               "record": {
-                "type": "boolean",
+                "type": ["boolean","null"],
                 "default":"false"
               },
               "selector": {
-                "type": "string",
-                "minLength": 0
+                "type": "string"
               },
               "timeout" : {
                 "type": "integer"
               },
               "validate": {
-                "type": "boolean",
+                "type": ["boolean","null"],
                 "default":"true"
               },
               "wait": {
-                "type": "boolean",
+                "type": ["boolean","null"],
                 "default":"true"
               },
               "outputs": {
@@ -110,7 +110,7 @@
             },
             "additionalProperties": false,
             "required": [
-              "description"
+              "description", "manifests"
             ]
           }
         },
@@ -130,22 +130,24 @@
                 "minLength": 1
               },
               "namespace": {
-                "type": "string",
-                "minLength": 0
+                "type": "string"
               },
               "manifests": {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "minItems": 0
+                  "minItems": 1
                 }
               },
               "force": {
-                "type": "boolean",
+                "type": ["boolean","null"],
                 "default":"false"
               },
               "gracePeriod" : {
                 "type": "integer"
+              },
+              "selector": {
+                "type": "string"
               },
               "timeout" : {
                 "type": "integer"
@@ -157,7 +159,7 @@
             },
             "additionalProperties": false,
             "required": [
-              "description"
+              "description", "manifests"
             ]
           }
         },
@@ -172,6 +174,9 @@
           "type": "object",
           "properties": {
             "name": {
+              "type": "string"
+            },
+            "namespace": {
               "type": "string"
             },
             "resourceType": {

@@ -15,11 +15,11 @@ type UpgradeAction struct {
 }
 
 type UpgradeStep struct {
-	*UpgradeArguments `yaml:"kubernetes"`
+	UpgradeArguments `yaml:"kubernetes"`
 }
 
 type UpgradeArguments struct {
-	*InstallArguments
+	InstallArguments `yaml:",inline"`
 
 	// Upgrade specific arguments
 	Force       *bool `yaml:"force,omitempty"`
@@ -49,9 +49,8 @@ func (m *Mixin) Upgrade() error {
 
 	step := action.Steps[0]
 	var commands []*exec.Cmd
-	manifests := m.resolveManifests(step.Manifests)
 
-	for _, manifestPath := range manifests {
+	for _, manifestPath := range step.Manifests {
 		commandPayload, err := m.buildUpgradeCommand(step.UpgradeArguments, manifestPath)
 		if err != nil {
 			return err
@@ -80,7 +79,7 @@ func (m *Mixin) Upgrade() error {
 	return err
 }
 
-func (m *Mixin) buildUpgradeCommand(args *UpgradeArguments, manifestPath string) ([]string, error) {
+func (m *Mixin) buildUpgradeCommand(args UpgradeArguments, manifestPath string) ([]string, error) {
 	command, err := m.buildInstallCommand(args.InstallArguments, manifestPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create upgrade command")

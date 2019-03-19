@@ -19,7 +19,7 @@ type UnInstallTest struct {
 
 func TestMixin_UninstallStep(t *testing.T) {
 
-	manifestDirectory := "/cnab/app/manifesto"
+	manifestDirectory := "/cnab/app/manifests"
 
 	deleteCmd := "kubectl delete -f"
 
@@ -37,63 +37,84 @@ func TestMixin_UninstallStep(t *testing.T) {
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", deleteCmd, manifestDirectory),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
 					Manifests: []string{manifestDirectory},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait", deleteCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s", deleteCmd, manifestDirectory),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{},
-			},
-		},
-		{
-			expectedCommand: fmt.Sprintf("%s %s", deleteCmd, defaultManifestPath),
-			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
-					Wait: &dontWait,
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Wait:      &dontWait,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s", deleteCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s", deleteCmd, manifestDirectory, namespace),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
 					Namespace: namespace,
 					Wait:      &dontWait,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", deleteCmd, defaultManifestPath, selector),
+			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", deleteCmd, manifestDirectory, selector),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
-					Selector: selector,
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Selector:  selector,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --force --grace-period=0 --wait", deleteCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s --force --grace-period=0 --wait", deleteCmd, manifestDirectory),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
-					Force: &forceIt,
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Force:     &forceIt,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --grace-period=%d --wait", deleteCmd, defaultManifestPath, withGrace),
+			expectedCommand: fmt.Sprintf("%s %s --grace-period=%d --wait", deleteCmd, manifestDirectory, withGrace),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests:   []string{manifestDirectory},
 					GracePeriod: &withGrace,
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --timeout=%ds --wait", deleteCmd, defaultManifestPath, timeout),
+			expectedCommand: fmt.Sprintf("%s %s --timeout=%ds --wait", deleteCmd, manifestDirectory, timeout),
 			uninstallStep: UninstallStep{
-				UninstallArguments: &UninstallArguments{
-					Timeout: &timeout,
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Timeout:   &timeout,
 				},
 			},
 		},
@@ -110,7 +131,7 @@ func TestMixin_UninstallStep(t *testing.T) {
 			h := NewTestMixin(t)
 			h.In = bytes.NewReader(b)
 
-			err := h.UnInstall()
+			err := h.Uninstall()
 
 			require.NoError(t, err)
 		})

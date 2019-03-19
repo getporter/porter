@@ -19,7 +19,7 @@ type UpgradeTest struct {
 
 func TestMixin_UpgradeStep(t *testing.T) {
 
-	manifestDirectory := "/cnab/app/manifesto"
+	manifestDirectory := "/cnab/app/manifests"
 
 	upgradeCmd := "kubectl apply -f"
 
@@ -46,36 +46,52 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
 						Manifests: []string{manifestDirectory},
 					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait", upgradeCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s --wait", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{},
-				},
-			},
-		},
-		{
-			expectedCommand: fmt.Sprintf("%s %s", upgradeCmd, defaultManifestPath),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
-						Wait: &dontWait,
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
 					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s", upgradeCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
+						Wait:      &dontWait,
+					},
+				},
+			},
+		},
+		{
+			expectedCommand: fmt.Sprintf("%s %s -n %s", upgradeCmd, manifestDirectory, namespace),
+			upgradeStep: UpgradeStep{
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
 						Namespace: namespace,
 						Wait:      &dontWait,
 					},
@@ -83,10 +99,14 @@ func TestMixin_UpgradeStep(t *testing.T) {
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s --validate=false", upgradeCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s --validate=false", upgradeCmd, manifestDirectory, namespace),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
 						Namespace: namespace,
 						Validate:  &validateIt,
 						Wait:      &dontWait,
@@ -95,10 +115,14 @@ func TestMixin_UpgradeStep(t *testing.T) {
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s -n %s --record=true", upgradeCmd, defaultManifestPath, namespace),
+			expectedCommand: fmt.Sprintf("%s %s -n %s --record=true", upgradeCmd, manifestDirectory, namespace),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
 						Namespace: namespace,
 						Record:    &recordIt,
 						Wait:      &dontWait,
@@ -107,11 +131,15 @@ func TestMixin_UpgradeStep(t *testing.T) {
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", upgradeCmd, defaultManifestPath, selector),
+			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", upgradeCmd, manifestDirectory, selector),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					InstallArguments: &InstallArguments{
-						Selector: selector,
+				UpgradeArguments: UpgradeArguments{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
+						Selector:  selector,
 					},
 				},
 			},
@@ -119,47 +147,72 @@ func TestMixin_UpgradeStep(t *testing.T) {
 
 		// These tests exercise the upgrade options
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait --force --grace-period=0", upgradeCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s --wait --force --grace-period=0", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					Force:            &forceIt,
-					InstallArguments: &InstallArguments{},
+				UpgradeArguments: UpgradeArguments{
+					Force: &forceIt,
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
+					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait --grace-period=%d", upgradeCmd, defaultManifestPath, withGrace),
+			expectedCommand: fmt.Sprintf("%s %s --wait --grace-period=%d", upgradeCmd, manifestDirectory, withGrace),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					GracePeriod:      &withGrace,
-					InstallArguments: &InstallArguments{},
+				UpgradeArguments: UpgradeArguments{
+					GracePeriod: &withGrace,
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
+					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait --overwrite=false", upgradeCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s --wait --overwrite=false", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					Overwrite:        &overwriteIt,
-					InstallArguments: &InstallArguments{},
+				UpgradeArguments: UpgradeArguments{
+					Overwrite: &overwriteIt,
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "upgrade",
+						},
+						Manifests: []string{manifestDirectory},
+					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait --prune=true", upgradeCmd, defaultManifestPath),
+			expectedCommand: fmt.Sprintf("%s %s --wait --prune=true", upgradeCmd, manifestDirectory),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					Prune:            &pruneIt,
-					InstallArguments: &InstallArguments{},
+				UpgradeArguments: UpgradeArguments{
+					Prune: &pruneIt,
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "upgrade",
+						},
+						Manifests: []string{manifestDirectory},
+					},
 				},
 			},
 		},
 		{
-			expectedCommand: fmt.Sprintf("%s %s --wait --timeout=%ds", upgradeCmd, defaultManifestPath, timeout),
+			expectedCommand: fmt.Sprintf("%s %s --wait --timeout=%ds", upgradeCmd, manifestDirectory, timeout),
 			upgradeStep: UpgradeStep{
-				UpgradeArguments: &UpgradeArguments{
-					Timeout:          &timeout,
-					InstallArguments: &InstallArguments{},
+				UpgradeArguments: UpgradeArguments{
+					Timeout: &timeout,
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "upgrade",
+						},
+						Manifests: []string{manifestDirectory},
+					},
 				},
 			},
 		},

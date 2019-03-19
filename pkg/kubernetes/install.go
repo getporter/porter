@@ -15,7 +15,7 @@ type InstallAction struct {
 }
 
 type InstallStep struct {
-	*InstallArguments `yaml:"kubernetes"`
+	InstallArguments `yaml:"kubernetes"`
 }
 
 type InstallArguments struct {
@@ -46,9 +46,8 @@ func (m *Mixin) Install() error {
 
 	step := action.Steps[0]
 	var commands []*exec.Cmd
-	manifests := m.resolveManifests(step.Manifests)
 
-	for _, manifestPath := range manifests {
+	for _, manifestPath := range step.Manifests {
 		commandPayload, err := m.buildInstallCommand(step.InstallArguments, manifestPath)
 		if err != nil {
 			return err
@@ -87,7 +86,7 @@ func (m *Mixin) getInstallStep(payload []byte) (*InstallStep, error) {
 	return &step, nil
 }
 
-func (m *Mixin) buildInstallCommand(step *InstallArguments, manifestPath string) ([]string, error) {
+func (m *Mixin) buildInstallCommand(step InstallArguments, manifestPath string) ([]string, error) {
 	command := []string{"apply", "-f", manifestPath}
 	if step.Namespace != "" {
 		command = append(command, "-n", step.Namespace)

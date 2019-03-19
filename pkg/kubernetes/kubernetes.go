@@ -16,8 +16,6 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-const defaultManifestPath = "/cnab/app/manifests/kubernetes"
-
 type Mixin struct {
 	*context.Context
 
@@ -46,7 +44,11 @@ func (m *Mixin) getCommandFile(commandFile string, w io.Writer) ([]byte, error) 
 func (m *Mixin) getPayloadData() ([]byte, error) {
 	reader := bufio.NewReader(m.In)
 	data, err := ioutil.ReadAll(reader)
-	return data, errors.Wrap(err, "could not read payload from STDIN")
+	if err != nil {
+		errors.Wrap(err, "could not read payload from STDIN")
+	}
+	err = m.ValidatePayload(data)
+	return data, errors.Wrap(err, "could not validate payload")
 }
 
 func (m *Mixin) ValidatePayload(b []byte) error {
@@ -84,14 +86,6 @@ func (m *Mixin) ValidatePayload(b []byte) error {
 	}
 
 	return nil
-}
-
-// If no manifest is specified, update the empty slice to include the default path
-func (m *Mixin) resolveManifests(manifests []string) []string {
-	if len(manifests) == 0 {
-		return append(manifests, defaultManifestPath)
-	}
-	return manifests
 }
 
 func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string) (string, error) {

@@ -15,7 +15,7 @@ type UninstallAction struct {
 }
 
 type UninstallStep struct {
-	*UninstallArguments `yaml:"kubernetes"`
+	UninstallArguments `yaml:"kubernetes"`
 }
 
 type UninstallArguments struct {
@@ -31,8 +31,8 @@ type UninstallArguments struct {
 	Wait        *bool  `yaml:"wait,omitempty"`
 }
 
-// UnInstall will delete anything created during the install or upgrade step
-func (m *Mixin) UnInstall() error {
+// Uninstall will delete anything created during the install or upgrade step
+func (m *Mixin) Uninstall() error {
 	payload, err := m.getPayloadData()
 	if err != nil {
 		return err
@@ -50,9 +50,8 @@ func (m *Mixin) UnInstall() error {
 
 	step := action.Steps[0]
 	var commands []*exec.Cmd
-	manifests := m.resolveManifests(step.Manifests)
 
-	for _, manifestPath := range manifests {
+	for _, manifestPath := range step.Manifests {
 		commandPayload, err := m.buildUninstallCommand(step.UninstallArguments, manifestPath)
 		if err != nil {
 			return err
@@ -78,7 +77,7 @@ func (m *Mixin) UnInstall() error {
 	return nil
 }
 
-func (m *Mixin) buildUninstallCommand(args *UninstallArguments, manifestPath string) ([]string, error) {
+func (m *Mixin) buildUninstallCommand(args UninstallArguments, manifestPath string) ([]string, error) {
 	command := []string{"delete", "-f", manifestPath}
 	if args.Namespace != "" {
 		command = append(command, "-n", args.Namespace)
