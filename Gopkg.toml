@@ -1,19 +1,48 @@
+# Stay exactly in step with a specific duffle release
 [[constraint]]
-  name = "github.com/spf13/cobra"
-  version = "0.0.3"
+  name = "github.com/deislabs/duffle"
+  version = "=0.1.0-ralpha.5+englishrose"
 
+#
+# SEMVER IS DEAD, LONG LIVE SEMVER
+# Use a very specific version of docker and its libraries because they aren't contained in a release yet, but duffle uses some unreleased feature/code ¯\_(ツ)_/¯
+#
 [[constraint]]
   name = "github.com/docker/cli"
-  version = "v18.06.0-ce"
+  revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  revision = "f76d6a078d881f410c00e8d900dcdfc2e026c841"
 
 [[constraint]]
   name = "github.com/docker/distribution"
-  branch = "master"
+  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
 
+# The tip of master doesn't work well with the other versions
+[[constraint]]
+  name = "github.com/docker/go-metrics"
+  revision = "399ea8c73916000c64c2c76e8da00ca82f8387ab"
+
+# later patch versions (e.g. 1.2.5) of containerd don't compile with these pinned versions of docker
+[[constraint]]
+  name = "github.com/containerd/containerd"
+  version = "=v1.2.2"
+
+# later patch versions have a breaking change (api.StackVersion is removed)
+[[constraint]]
+  name = "github.com/docker/compose-on-kubernetes"
+  version = "=v0.4.18"
+#
+# End Pinning
+#
+
+# Use v2 of packr, not master
 [[constraint]]
   name = "github.com/gobuffalo/packr"
-  version = "2.0.0-rc.8"
+  version = "v2"
 
+# Use v1.1+ of jsonschema
 [[constraint]]
   name = "github.com/xeipuuv/gojsonschema"
   version = "v1.1.0"
@@ -24,7 +53,34 @@
   name = "github.com/ghodss/yaml"
   version = "v1.0.0"
 
+#
+# Anytime K8s is referenced, they all need to be on the same release
+#
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.11.5"
+
+[[constraint]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.11.5"
+
+#
+# Workaround a bug in docker/compose-on-kubernetes Gopkg.toml (they used "revision" instead of "version")
+#
+[[override]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.11.5"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.11.5"
+
 [prune]
   non-go = true
   go-tests = true
   unused-packages = true
+
+# This is temporary until we know what packages we need from duffle
+[[prune.project]]
+  name = "github.com/deislabs/duffle"
+  unused-packages = false
