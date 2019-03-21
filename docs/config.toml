@@ -134,6 +134,12 @@ defaultContentLanguage = "en"
     weight = 301
     parent = "developing-mixins"
   [[menu.main]]
+    name = "Commands"
+    url = "/mixin-commands"
+    identifier = "mixin-commands"
+    weight = 303
+    parent = "developing-mixins"
+  [[menu.main]]
     name = "Mixin Architecture"
     url = "/mixin-architecture"
     identifier = "mixin-architecture"
