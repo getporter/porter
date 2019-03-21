@@ -29,7 +29,7 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
   porter install --cred azure --cred kubernetes
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Prepare()
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(opts)
@@ -39,15 +39,15 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.BoolVar(&opts.Insecure, "insecure", false,
 		"Allow installing untrusted bundles")
-	f.StringVarP(&opts.File, "file", "f", "bundle.json",
-		"Path to the CNAB definition to install")
+	f.StringVarP(&opts.File, "file", "f", "",
+		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.Name, "name", "",
 		"Name of the claim, defaults to the name of the bundle")
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
-	f.StringSliceVar(&opts.RawParams, "param", nil,
+	f.StringSliceVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialSets, "cred", "c", nil,
+	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 
 	return cmd

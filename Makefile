@@ -100,21 +100,13 @@ test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
 	export KUBECONFIG
 	export PORTER_HOME
 	export DUFFLE_HOME
+	export REGISTRY
 
 	./bin/porter help
 	./bin/porter version
 
-	# Verify our default template bundle
-	./bin/porter create
-	sed -i 's/porter-hello:latest/$(REGISTRY)\/porter-hello:latest/g' porter.yaml
-	./bin/porter build
-	duffle install PORTER-HELLO -f bundle.json --insecure
-
-	# Verify a bundle with dependencies
-	cp build/testdata/bundles/wordpress/porter.yaml .
-	sed -i 's/porter-wordpress:latest/$(REGISTRY)\/porter-wordpress:latest/g' porter.yaml
-	./bin/porter build
-	duffle install PORTER-WORDPRESS -f bundle.json --credentials ci --insecure --home $(DUFFLE_HOME)
+	./scripts/test/test-hello.sh
+	./scripts/test/test-wordpress.sh
 
 init-duffle-home-for-ci:
 	duffle init --home $(DUFFLE_HOME)

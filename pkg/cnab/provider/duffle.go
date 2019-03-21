@@ -1,7 +1,9 @@
 package cnabprovider
 
 import (
-	_ "github.com/deislabs/duffle/pkg/action"
+	"os"
+
+	"github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/context"
 )
 
@@ -15,6 +17,16 @@ func NewDuffle(c *context.Context) *Duffle {
 	}
 }
 
-func (d *Duffle) Install() error {
-	return nil
+func (d *Duffle) newDockerDriver() *driver.DockerDriver {
+	dd := &driver.DockerDriver{}
+
+	// Load any driver-specific config out of the environment.
+	// TODO: This should be exposed in duffle, taken from cmd/duffle/main.go prepareDriver
+	driverCfg := map[string]string{}
+	for env := range dd.Config() {
+		driverCfg[env] = os.Getenv(env)
+	}
+	dd.SetConfig(driverCfg)
+
+	return dd
 }

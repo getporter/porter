@@ -189,6 +189,8 @@
     "pkg/claim",
     "pkg/credentials",
     "pkg/driver",
+    "pkg/loader",
+    "pkg/signature",
     "pkg/utils/crud",
   ]
   pruneopts = "NT"
@@ -940,9 +942,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cb77e5934866333fa0784326a57e64c4da128001c94fbd1d29819d79bd3b1087"
+  digest = "1:182dd9800ee84d44a8130f315724eff62075f97b83531fccd4e988e3082f09a1"
   name = "golang.org/x/crypto"
   packages = [
+    "cast5",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/clearsign",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
     "pbkdf2",
     "ssh/terminal",
   ]
@@ -1261,6 +1271,10 @@
   input-imports = [
     "github.com/containerd/containerd",
     "github.com/deislabs/duffle/pkg/action",
+    "github.com/deislabs/duffle/pkg/bundle",
+    "github.com/deislabs/duffle/pkg/claim",
+    "github.com/deislabs/duffle/pkg/driver",
+    "github.com/deislabs/duffle/pkg/loader",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/flags",
     "github.com/docker/compose-on-kubernetes",
