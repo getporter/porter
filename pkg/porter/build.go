@@ -213,7 +213,10 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	}
 	tar, _ := archive.TarWithOptions(path, &archive.TarOptions{})
 
-	cli := command.NewDockerCli(os.Stdin, os.Stdout, os.Stderr, false, nil)
+	cli, err := command.NewDockerCli()
+	if err != nil {
+		return "", errors.Wrap(err, "could not create new docker client")
+	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
 		return "", err
 	}
