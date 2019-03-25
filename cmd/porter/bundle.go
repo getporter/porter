@@ -47,7 +47,8 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.RawParams, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
-	f.StringSliceVarP(&opts.CredentialSets, "cred", "c", nil, "Credential to use when installing the bundle. May be either a named set of credentials or a filepath.")
+	f.StringSliceVarP(&opts.CredentialSets, "cred", "c", nil,
+		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 
 	return cmd
 }
