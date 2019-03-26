@@ -19,17 +19,19 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install",
+		Use:   "install [CLAIM]",
 		Short: "Install a bundle",
+		Long: `Install a bundle.
+
+The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle.`,
 		Example: `  porter install
   porter install --insecure
-  porter install --file myapp/bundle.json
-  porter install --name MyAppInDev
+  porter install MyAppInDev --file myapp/bundle.json
   porter install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter install --cred azure --cred kubernetes
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate()
+			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(opts)
@@ -41,8 +43,6 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 		"Allow installing untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
-	f.StringVar(&opts.Name, "name", "",
-		"Name of the claim, defaults to the name of the bundle")
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,

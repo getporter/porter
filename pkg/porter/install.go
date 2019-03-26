@@ -44,8 +44,13 @@ type InstallOptions struct {
 // Validate prepares for an installation and validates the installation options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *InstallOptions) Validate() error {
-	err := o.validateBundlePath()
+func (o *InstallOptions) Validate(args []string) error {
+	err := o.validateClaimName(args)
+	if err != nil {
+		return err
+	}
+
+	err = o.validateBundlePath()
 	if err != nil {
 		return err
 	}
@@ -53,6 +58,17 @@ func (o *InstallOptions) Validate() error {
 	err = o.validateParams()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// validateClaimName grabs the claim name from the first positional argument.
+func (o *InstallOptions) validateClaimName(args []string) error {
+	if len(args) == 1 {
+		o.Name = args[0]
+	} else if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, the claim name, but multiple were received: %s", args)
 	}
 
 	return nil
