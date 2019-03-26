@@ -52,13 +52,13 @@ type ParameterDefinition struct {
 
 type CredentialDefinition struct {
 	Name                string `yaml:"name"`
-	Path                string `yaml:"path"`
-	EnvironmentVariable string `yaml:"env"`
+	Path                string `yaml:"path,omitempty"`
+	EnvironmentVariable string `yaml:"env,omitempty"`
 }
 
 type Location struct {
-	Path                string `yaml:"path"`
-	EnvironmentVariable string `yaml:"env"`
+	Path                string `yaml:"path,omitempty"`
+	EnvironmentVariable string `yaml:"env,omitempty"`
 }
 
 // ParameterMetadata contains metadata for a parameter definition.
