@@ -74,8 +74,8 @@ type InvocationImage struct {
 //
 // A location may be either a file (by path) or an environment variable.
 type Location struct {
-	Path                string `json:"path" toml:"path"`
-	EnvironmentVariable string `json:"env" toml:"env"`
+	Path                string `json:"path,omitempty" toml:"path"`
+	EnvironmentVariable string `json:"env,omitempty" toml:"env"`
 }
 
 // Maintainer describes a code maintainer of a bundle
@@ -83,9 +83,9 @@ type Maintainer struct {
 	// Name is a user name or organization name
 	Name string `json:"name" toml:"name"`
 	// Email is an optional email address to contact the named maintainer
-	Email string `json:"email" toml:"email"`
+	Email string `json:"email,omitempty" toml:"email"`
 	// Url is an optional URL to an address for the named maintainer
-	URL string `json:"url" toml:"url"`
+	URL string `json:"url,omitempty" toml:"url"`
 }
 
 // Action describes a custom (non-core) action.
