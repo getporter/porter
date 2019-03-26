@@ -3,17 +3,18 @@ package cnabprovider
 import (
 	"os"
 
+	"github.com/deislabs/porter/pkg/config"
+
 	"github.com/deislabs/duffle/pkg/driver"
-	"github.com/deislabs/porter/pkg/context"
 )
 
 type Duffle struct {
-	*context.Context
+	*config.Config
 }
 
-func NewDuffle(c *context.Context) *Duffle {
+func NewDuffle(c *config.Config) *Duffle {
 	return &Duffle{
-		Context: c,
+		Config: c,
 	}
 }
 

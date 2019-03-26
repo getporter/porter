@@ -58,10 +58,18 @@ func (d *Duffle) Install(args InstallArguments) error {
 	i := action.Install{
 		Driver: d.newDockerDriver(),
 	}
-	creds := d.loadCredentials(args.CredentialIdentifiers)
+	creds, err := d.loadCredentials(b, args.CredentialIdentifiers)
+	if err != nil {
+		return errors.Wrap(err, "could not load credentials")
+	}
 
 	if d.Debug {
-		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, c.Parameters)
+		// only print out the names of the credentials, not the contents, cuz they big and sekret
+		credKeys := make([]string, 0, len(creds))
+		for k := range creds {
+			credKeys = append(credKeys, k)
+		}
+		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, c.Parameters, credKeys)
 	}
 
 	err = i.Run(c, creds, d.Out)

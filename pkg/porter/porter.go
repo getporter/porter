@@ -23,6 +23,6 @@ func New() *Porter {
 		Config:        c,
 		Templates:     NewTemplates(),
 		MixinProvider: mixinprovider.NewFileSystem(c),
-		CNABProvider:  cnabprovider.NewDuffle(c.Context),
+		CNABProvider:  cnabprovider.NewDuffle(c),
 	}
 }
