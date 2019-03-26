@@ -8,7 +8,6 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
-DUFFLE_HOME ?= bin/.duffle
 PORTER_HOME ?= bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
@@ -96,25 +95,12 @@ test: clean test-unit test-cli
 test-unit: build
 	go test ./...
 
-test-cli: clean build init-duffle-home-for-ci init-porter-home-for-ci
-	export KUBECONFIG
-	export PORTER_HOME
-	export DUFFLE_HOME
-	export REGISTRY
-
-	./bin/porter help
-	./bin/porter version
-
-	./scripts/test/test-hello.sh
-	./scripts/test/test-wordpress.sh
-
-init-duffle-home-for-ci:
-	duffle init --home $(DUFFLE_HOME)
-	cp -R build/testdata/credentials $(DUFFLE_HOME)
-	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(DUFFLE_HOME)/credentials/ci.yaml
+test-cli: clean build init-porter-home-for-ci
+	PORTER_HOME=$(PORTER_HOME) REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
-	#porter init
+	cp -R build/testdata/credentials $(PORTER_HOME)
+	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.yaml
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
 .PHONY: docs
@@ -147,8 +133,6 @@ install: build
 clean:
 	-rm -fr bin/
 	-rm -fr cnab/
-	-rm Dockerfile porter.yaml
-	-duffle uninstall PORTER-HELLO
-	-duffle uninstall PORTER-WORDPRESS --credentials ci
+	-rm porter.yaml Dockerfile bundle.json
 	-helm delete --purge porter-ci-mysql
 	-helm delete --purge porter-ci-wordpress

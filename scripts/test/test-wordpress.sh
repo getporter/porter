@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 
-KUBECONFIG=${KUBECONFIG:-$(HOME)/.kube/config}
-DUFFLE_HOME=${DUFFLE_HOME:-bin/.duffle}
-PORTER_HOME=${PORTER_HOME:-bin}
+set -euo pipefail
+export REGISTRY=${REGISTRY:-$USER}
+export PORTER_HOME=${PORTER_HOME:-bin}
+export KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
+# Run tests at the root of the repository
+export TEST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+pushd ${TEST_DIR}
+trap popd EXIT
 
 # Verify a bundle with dependencies
 cp build/testdata/bundles/wordpress/porter.yaml .
 sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter.yaml
-./bin/porter build
-./bin/porter install PORTER-WORDPRESS -f bundle.json --credentials ci --insecure --home ${DUFFLE_HOME}
+
+${PORTER_HOME}/porter build
+${PORTER_HOME}/porter install PORTER-WORDPRESS -f bundle.json --cred ci --insecure
