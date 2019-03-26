@@ -15,3 +15,4 @@ sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter
 
 ${PORTER_HOME}/porter build
 ${PORTER_HOME}/porter install PORTER-WORDPRESS -f bundle.json --cred ci --insecure
+cat ${PORTER_HOME}/claims/wordpress.json

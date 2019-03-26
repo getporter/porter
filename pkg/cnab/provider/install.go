@@ -72,12 +72,11 @@ func (d *Duffle) Install(args InstallArguments) error {
 		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, c.Parameters, credKeys)
 	}
 
+	// Install and ALWAYS write out a claim, even if the installation fails
 	err = i.Run(c, creds, d.Out)
+	saveErr := d.NewClaimStore().Store(*c)
 	if err != nil {
 		return errors.Wrap(err, "failed to install the bundle")
 	}
-
-	// TODO: export claim storage from duffle and call out to it,
-	// save always
-	return nil
+	return errors.Wrap(saveErr, "failed to record the installation for the bundle")
 }

@@ -14,3 +14,4 @@ sed -i "s/porter-hello:latest/${REGISTRY}\/porter-hello:latest/g" porter.yaml
 
 ${PORTER_HOME}/porter build
 ${PORTER_HOME}/porter install --insecure
+cat ${PORTER_HOME}/claims/HELLO.json
