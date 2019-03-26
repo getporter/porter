@@ -149,9 +149,15 @@ func TestPorter_buildBundle(t *testing.T) {
 	err = json.Unmarshal(bundleBytes, &bundle)
 	require.NoError(t, err)
 
-	require.Equal(t, bundle.Name, "HELLO")
-	require.Equal(t, bundle.Version, "0.1.0")
-	require.Equal(t, bundle.Description, "An example Porter configuration")
+	assert.Equal(t, bundle.Name, "HELLO")
+	assert.Equal(t, bundle.Version, "0.1.0")
+	assert.Equal(t, bundle.Description, "An example Porter configuration")
+
+	debugParam, ok := bundle.Parameters["porter-debug"]
+	require.True(t, ok)
+	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
+	assert.Equal(t, "bool", debugParam.DataType)
+	assert.Equal(t, false, debugParam.DefaultValue)
 }
 
 func TestPorter_paramRequired(t *testing.T) {

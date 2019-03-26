@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/config"
+
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/docker/cli/cli/command"
@@ -305,7 +307,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 
 func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 	params := map[string]ParameterDefinition{}
-	for _, param := range p.Manifest.Parameters {
+	for _, param := range append(p.Manifest.Parameters, p.buildDefaultPorterParameters()...) {
 		fmt.Printf("Generating parameter definition %s ====>\n", param.Name)
 		p := ParameterDefinition{
 			DataType:      param.DataType,
@@ -338,6 +340,21 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 		params[param.Name] = p
 	}
 	return params
+}
+
+func (p *Porter) buildDefaultPorterParameters() []config.ParameterDefinition {
+	return []config.ParameterDefinition{
+		{
+			Name: "porter-debug",
+			Destination: &config.Location{
+				EnvironmentVariable: "PORTER_DEBUG",
+			},
+			DataType:     "bool",
+			DefaultValue: false,
+			Metadata: config.ParameterMetadata{
+				Description: "Print debug information from Porter when executing the bundle"},
+		},
+	}
 }
 
 func (p *Porter) generateBundleCredentials() map[string]Location {
