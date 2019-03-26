@@ -22,6 +22,9 @@ const (
 
 	// EnvACTION is the request
 	EnvACTION = "CNAB_ACTION"
+
+	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
+	EnvDEBUG = "PORTER_DEBUG"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
@@ -39,10 +42,9 @@ type Config struct {
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		Context:   context.New(),
+		Context: context.New(),
 	}
 }
-
 
 // GetHomeDir determines the path to the porter home directory.
 func (c *Config) GetHomeDir() (string, error) {

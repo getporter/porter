@@ -2,7 +2,9 @@ package porter
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -13,15 +15,80 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 )
 
-func (p *Porter) Run(file string, action config.Action) error {
-	fmt.Fprintf(p.Out, "executing porter %s configuration from %s\n", action, file)
+type RunOptions struct {
+	config *config.Config
 
-	err := p.Config.LoadManifestFrom(file)
+	File         string
+	Action       string
+	parsedAction config.Action
+}
+
+func NewRunOptions(c *config.Config) RunOptions {
+	return RunOptions{
+		config: c,
+	}
+}
+
+func (o *RunOptions) Validate() error {
+	err := o.defaultDebug()
 	if err != nil {
 		return err
 	}
 
-	steps, err := p.Manifest.GetSteps(action)
+	err = o.validateAction()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *RunOptions) validateAction() error {
+	if o.Action == "" {
+		o.Action = os.Getenv(config.EnvACTION)
+		if o.config.Debug {
+			fmt.Fprintf(o.config.Err, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, o.Action)
+		}
+	}
+
+	var err error
+	o.parsedAction, err = config.ParseAction(o.Action)
+	return err
+}
+
+func (o *RunOptions) defaultDebug() error {
+	// if debug was manually set, leave it
+	if o.config.Debug {
+		return nil
+	}
+
+	rawDebug, set := os.LookupEnv(config.EnvDEBUG)
+	if !set {
+		return nil
+	}
+
+	debug, err := strconv.ParseBool(rawDebug)
+	if err != nil {
+		return errors.Wrapf(err, "invalid PORTER_DEBUG, expected a bool (true/false) but got %s", rawDebug)
+	}
+
+	if debug {
+		fmt.Fprintf(o.config.Err, "DEBUG: defaulting debug to %s (%t)\n", config.EnvDEBUG, debug)
+		o.config.Debug = debug
+	}
+
+	return nil
+}
+
+func (p *Porter) Run(opts RunOptions) error {
+	fmt.Fprintf(p.Out, "executing porter %s configuration from %s\n", opts.parsedAction, opts.File)
+
+	err := p.Config.LoadManifestFrom(opts.File)
+	if err != nil {
+		return err
+	}
+
+	steps, err := p.Manifest.GetSteps(opts.parsedAction)
 	if err != nil {
 		return err
 	}
@@ -46,7 +113,7 @@ func (p *Porter) Run(file string, action config.Action) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to resolve sourced values")
 		}
-		runner := p.loadRunner(step, action, mixinsDir)
+		runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
 
 		err = runner.Validate()
 		if err != nil {

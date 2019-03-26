@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -26,6 +27,28 @@ func TestPorter_readOutputs(t *testing.T) {
 		"A=B",
 	}
 	assert.Equal(t, wantOutputs, gotOutputs)
+}
+
+func TestPorter_defaultDebugToOff(t *testing.T) {
+	p := New() // Don't use the test porter, it has debug on by default
+	opts := NewRunOptions(p.Config)
+
+	err := opts.defaultDebug()
+	require.NoError(t, err)
+	assert.False(t, p.Config.Debug)
+}
+
+func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
+	os.Setenv(config.EnvDEBUG, "true")
+	defer os.Unsetenv(config.EnvDEBUG)
+
+	p := New() // Don't use the test porter, it has debug on by default
+	opts := NewRunOptions(p.Config)
+
+	err := opts.defaultDebug()
+	require.NoError(t, err)
+
+	assert.True(t, p.Config.Debug)
 }
 
 func TestActionInput_MarshalYAML(t *testing.T) {
