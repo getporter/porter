@@ -7,3 +7,9 @@
 /porter
 *-packr.go
 .DS_Store
+
+examples/**/cnab/app/mixins
+examples/**/cnab/app/porter-runtime
+examples/**/Dockerfile
+examples/**/bundle.json
+examples/**/bundle.cnab
