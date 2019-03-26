@@ -113,6 +113,9 @@ func (p *Porter) Run(opts RunOptions) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to resolve sourced values")
 		}
+		// Hand over values needing masking in context output streams
+		p.Context.SetSensitiveValues(p.Manifest.GetSensitiveValues())
+
 		runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
 
 		err = runner.Validate()

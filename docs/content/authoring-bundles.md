@@ -63,6 +63,9 @@ parameters:
 - name: mysql_user
   type: string
   default: azureuser
+- name: mysql_password
+  type: string
+  sensitive: true
 - name: database_name
   type: string
   default: "wordpress"
@@ -76,6 +79,7 @@ parameters:
 * `destination`: The destination in the bundle to define the parameter.
   * `env`: The name for the environment variable. Defaults to the name of the parameter in upper case.
   * `path`: The path for the file. Required for file paths, there is no default.
+* `sensitive`: Designate this parameter's value as sensitive, for masking in console output.
  
 ## Credentials
 
@@ -84,6 +88,8 @@ you to pass in sensitive data when you execute the bundle, such as passwords or 
 
 When the bundle is executed, for example when you run `duffle install`, the installer will look on your local system
 for the named credential and then place the value or file found in the bundle as either an environment variable or file.
+
+By default, all credential values are considered sensitive and will be masked in console output.
 
 ```yaml
 credentials:
@@ -133,6 +139,7 @@ install:
 * `MIXIN`: The name of the mixin that will handle this step. In the example above, `helm` is the mixin.
 * `outputs`: Any outputs provided by the steps. The `name` is required but the rest of the the schema for the 
 output is specific to the mixin. In the example above, the mixin will make the Kubernetes secret data available as outputs.
+By default, all output values are considered sensitive and will be masked in console output.
 
 ## Dependencies
 

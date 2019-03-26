@@ -19,8 +19,9 @@ import (
 
 type Manifest struct {
 	// path where the manifest was loaded, used to resolve local bundle references
-	path    string
-	outputs map[string]string
+	path            string
+	outputs         map[string]string
+	sensitiveValues []string
 
 	Name         string                 `yaml:"name,omitempty"`
 	Description  string                 `yaml:"description,omitempty"`
@@ -48,6 +49,7 @@ type ParameterDefinition struct {
 	MaxLength     *int              `yaml:"maxLength,omitempty"`
 	Metadata      ParameterMetadata `yaml:"metadata,omitempty"`
 	Destination   *Location         `yaml:"destination,omitempty"`
+	Sensitive     bool              `yaml:"sensitive"`
 }
 
 type CredentialDefinition struct {
@@ -97,6 +99,10 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 	switch sourceType {
 	case "outputs":
 		replacement = d.m.outputs[sourceName]
+		// Porter considers all outputs as sensitive
+		if replacement != nil {
+			d.m.sensitiveValues = append(d.m.sensitiveValues, reflect.ValueOf(replacement).String())
+		}
 	case "parameters":
 		for _, param := range d.m.Parameters {
 			if param.Name == sourceName {
@@ -112,6 +118,10 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 					return nil, errors.New(
 						"unknown parameter definition, no environment variable or path specified",
 					)
+				}
+				// if replacement has been set and parameter is designated sensitive, add to list of sensitive values
+				if replacement != nil && param.Sensitive {
+					d.m.sensitiveValues = append(d.m.sensitiveValues, reflect.ValueOf(replacement).String())
 				}
 			}
 		}
@@ -270,6 +280,13 @@ func (m *Manifest) Validate() error {
 	}
 
 	return result
+}
+
+func (m *Manifest) GetSensitiveValues() []string {
+	if m.sensitiveValues == nil {
+		return []string{}
+	}
+	return m.sensitiveValues
 }
 
 func (m *Manifest) GetSteps(action Action) (Steps, error) {
@@ -671,7 +688,7 @@ func (m *Manifest) Struct(val reflect.Value) error {
 	return nil
 }
 
-// Struct implements reflectwalk's StructWalker so that we can skip private fields
+// StructField implements reflectwalk's StructWalker so that we can skip private fields
 func (m *Manifest) StructField(field reflect.StructField, val reflect.Value) error {
 	isUnexported := func() bool {
 		return field.PkgPath != ""
@@ -709,6 +726,10 @@ func (m *Manifest) resolveValue(key string) (interface{}, error) {
 						"unknown parameter definition, no environment variable or path specified",
 					)
 				}
+				// if replacement has been set and parameter is designated sensitive, add to list of sensitive values
+				if replacement != nil && param.Sensitive {
+					m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
+				}
 			}
 		}
 	case "credentials":
@@ -723,16 +744,30 @@ func (m *Manifest) resolveValue(key string) (interface{}, error) {
 						"unknown credential definition, no environment variable or path specified",
 					)
 				}
+
+				// if replacement has been set, add to list of sensitive values
+				if replacement != nil {
+					m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
+				}
 			}
 		}
 	case "outputs":
 		if o, exists := m.outputs[sourceName]; exists {
 			replacement = o
+			// Porter considers all outputs as sensitive
+			if replacement != nil {
+				m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
+			}
 		}
 	case "dependencies":
 		for _, dep := range m.Dependencies {
 			if dep.Name == sourceName {
-				return dep.resolveValue(key)
+				replacement, err := dep.resolveValue(key)
+				// Retrieve updated list of sensitive values from dependency and add to our list
+				for _, val := range dep.m.GetSensitiveValues() {
+					m.sensitiveValues = append(m.sensitiveValues, val)
+				}
+				return replacement, err
 			}
 		}
 	default:

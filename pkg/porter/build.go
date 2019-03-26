@@ -320,6 +320,7 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 			MaxValue:      param.MaxValue,
 			MinLength:     param.MinLength,
 			MaxLength:     param.MaxLength,
+			Sensitive:     param.Sensitive,
 		}
 
 		// If the default is empty, set required to true.
