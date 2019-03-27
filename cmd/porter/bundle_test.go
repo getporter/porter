@@ -27,7 +27,7 @@ func TestValidateInstallCommand(t *testing.T) {
 			err = cmd.ParseFlags(args)
 			require.NoError(t, err)
 
-			err = cmd.PreRunE(cmd, args)
+			err = cmd.PreRunE(cmd, cmd.Flags().Args())
 			if tc.wantError == "" {
 				require.NoError(t, err)
 			} else {

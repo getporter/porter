@@ -1,0 +1,3 @@
+A=false
+B=1
+D=blue

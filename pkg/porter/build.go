@@ -213,7 +213,10 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 		Tags:           []string{p.Config.Manifest.Image},
 		Dockerfile:     "Dockerfile",
 	}
-	tar, _ := archive.TarWithOptions(path, &archive.TarOptions{})
+	tar, err := archive.TarWithOptions(path, &archive.TarOptions{})
+	if err != nil {
+		return "", err
+	}
 
 	cli, err := command.NewDockerCli()
 	if err != nil {
