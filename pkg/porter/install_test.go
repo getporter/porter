@@ -7,6 +7,81 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPorter_applyDefaultOptions(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	err := p.Create()
+	require.NoError(t, err)
+
+	opts := &InstallOptions{}
+	err = opts.validateParams()
+	require.NoError(t, err)
+
+	p.Debug = true
+	err = p.applyDefaultOptions(opts)
+	require.NoError(t, err)
+
+	assert.Equal(t, p.Manifest.Name, opts.Name)
+
+	debug, set := opts.combinedParameters["porter-debug"]
+	assert.True(t, set)
+	assert.Equal(t, "true", debug)
+}
+
+func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := &InstallOptions{}
+	err := opts.validateParams()
+	require.NoError(t, err)
+
+	err = p.applyDefaultOptions(opts)
+	require.NoError(t, err)
+
+	assert.Equal(t, "", opts.Name)
+}
+
+func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	err := p.Create()
+	require.NoError(t, err)
+
+	opts := InstallOptions{}
+	err = opts.validateParams()
+	require.NoError(t, err)
+
+	p.Debug = false
+	err = p.applyDefaultOptions(&opts)
+	require.NoError(t, err)
+
+	assert.Equal(t, p.Manifest.Name, opts.Name)
+
+	_, set := opts.combinedParameters["porter-debug"]
+	assert.False(t, set)
+}
+
+func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	err := p.Create()
+	require.NoError(t, err)
+
+	opts := InstallOptions{
+		Params: []string{"porter-debug=false"},
+	}
+	err = opts.validateParams()
+	require.NoError(t, err)
+
+	p.Debug = true
+	err = p.applyDefaultOptions(&opts)
+	require.NoError(t, err)
+
+	debug, set := opts.combinedParameters["porter-debug"]
+	assert.True(t, set)
+	assert.Equal(t, "false", debug)
+}
+
 func TestInstallOptions_validateParams(t *testing.T) {
 	opts := InstallOptions{
 		Params: []string{"A=1", "B=2"},

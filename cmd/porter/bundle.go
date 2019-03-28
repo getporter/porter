@@ -17,7 +17,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 }
 
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.InstallOptions{}
+	opts := &porter.InstallOptions{}
 	cmd := &cobra.Command{
 		Use:   "install [CLAIM]",
 		Short: "Install a bundle",
