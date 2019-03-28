@@ -31,6 +31,9 @@ parameters:
   type: string
   default: "wordpress"
 
+- name: server_name
+  type: string
+
 install:
   - azure:
       description: "Create Azure MySQL"
@@ -43,7 +46,8 @@ install:
         administratorLoginPassword:
           source: bundle.parameters.mysql_password
         location: "eastus"
-        serverName: "mysql-jeremy-porter-test"
+        serverName:
+          source: bundle.parameters.server_name
         version: "5.7"
         sslEnforcement: "Disabled"
         databaseName:
