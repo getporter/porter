@@ -39,6 +39,9 @@ type InstallOptions struct {
 
 	// parsedParamFiles is the parsed set of parameters from Params.
 	parsedParamFiles []map[string]string
+
+	// combinedParameters is parsedParams merged on top of parsedParamFiles.
+	combinedParameters map[string]string
 }
 
 // Validate prepares for an installation and validates the installation options.
@@ -166,6 +169,8 @@ func (o *InstallOptions) validateParams() error {
 		return err
 	}
 
+	o.combinedParameters = o.combineParameters()
+
 	return nil
 }
 
@@ -240,28 +245,60 @@ func (o *InstallOptions) combineParameters() map[string]string {
 // ToDuffleArgs converts this instance of user-provided installation options
 // to duffle installation arguments.
 func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
-	return cnabprovider.InstallArguments{
+	args := cnabprovider.InstallArguments{
 		Claim:                 o.Name,
 		BundleIdentifier:      o.File,
 		BundleIsFile:          true,
 		Insecure:              o.Insecure,
-		Params:                o.combineParameters(),
-		CredentialIdentifiers: o.CredentialIdentifiers,
+		Params:                make(map[string]string, len(o.combinedParameters)),
+		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 	}
+
+	// Do a safe copy so that modifications to the duffle args aren't also made to the
+	// original options, which is confusing to debug
+	for k, v := range o.combinedParameters {
+		args.Params[k] = v
+	}
+	copy(args.CredentialIdentifiers, o.CredentialIdentifiers)
+
+	return args
 }
 
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
-func (p *Porter) InstallBundle(opts InstallOptions) error {
-	err := p.Config.LoadManifest()
+func (p *Porter) InstallBundle(opts *InstallOptions) error {
+	err := p.applyDefaultOptions(opts)
 	if err != nil {
 		return err
 	}
 
+	fmt.Fprintf(p.Out, "installing %s...\n", opts.Name)
+	return p.Install(opts.ToDuffleArgs())
+}
+
+// applyDefaultOptions applies more advanced defaults to the options
+// based on values that beyond just what was supplied by the user
+// such as information in the manifest itself.
+func (p *Porter) applyDefaultOptions(opts *InstallOptions) error {
+	// TODO: this is going to be made generic to more than just install
+	// in a later PR for uninstall.
+
+	//
+	// Default the claim name to the bundle name
+	//
 	if opts.Name == "" {
-		opts.Name = p.Manifest.Name
+		err := p.Config.LoadManifest()
+		if err == nil {
+			opts.Name = p.Manifest.Name
+		}
 	}
 
-	fmt.Fprintf(p.Out, "installing %s...\n", p.Manifest.Name)
-	return p.Install(opts.ToDuffleArgs())
+	//
+	// Default the porter-debug param to --debug
+	//
+	if _, set := opts.combinedParameters["porter-debug"]; !set && p.Debug {
+		opts.combinedParameters["porter-debug"] = "true"
+	}
+
+	return nil
 }
