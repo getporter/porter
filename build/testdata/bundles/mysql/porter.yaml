@@ -42,5 +42,6 @@ install:
 uninstall:
 - helm:
     description: "Uninstall MySQL"
-    name: porter-ci-mysql
     purge: true
+    releases:
+      - porter-ci-mysql

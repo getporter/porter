@@ -42,5 +42,6 @@ install:
 uninstall:
 - helm:
     description: "Uninstall Wordpress"
-    name:
-      source: bundle.parameters.wordpress-name
+    purge: true
+    releases:
+      - "source: bundle.parameters.wordpress-name"

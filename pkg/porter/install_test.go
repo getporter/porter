@@ -18,7 +18,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	require.NoError(t, err)
 
 	p.Debug = true
-	err = p.applyDefaultOptions(opts)
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
 	assert.Equal(t, p.Manifest.Name, opts.Name)
@@ -35,7 +35,7 @@ func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	err := opts.validateParams()
 	require.NoError(t, err)
 
-	err = p.applyDefaultOptions(opts)
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
 	assert.Equal(t, "", opts.Name)
@@ -52,7 +52,7 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 	require.NoError(t, err)
 
 	p.Debug = false
-	err = p.applyDefaultOptions(&opts)
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
 	assert.Equal(t, p.Manifest.Name, opts.Name)
@@ -68,13 +68,15 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := InstallOptions{
-		Params: []string{"porter-debug=false"},
+		sharedOptions{
+			Params: []string{"porter-debug=false"},
+		},
 	}
 	err = opts.validateParams()
 	require.NoError(t, err)
 
 	p.Debug = true
-	err = p.applyDefaultOptions(&opts)
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
 	debug, set := opts.combinedParameters["porter-debug"]
@@ -84,7 +86,9 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 
 func TestInstallOptions_validateParams(t *testing.T) {
 	opts := InstallOptions{
-		Params: []string{"A=1", "B=2"},
+		sharedOptions{
+			Params: []string{"A=1", "B=2"},
+		},
 	}
 
 	err := opts.validateParams()
@@ -122,11 +126,13 @@ func TestInstallOptions_validateClaimName(t *testing.T) {
 
 func TestInstallOptions_combineParameters(t *testing.T) {
 	opts := InstallOptions{
-		ParamFiles: []string{
-			"testdata/install/base-params.txt",
-			"testdata/install/dev-params.txt",
+		sharedOptions{
+			ParamFiles: []string{
+				"testdata/install/base-params.txt",
+				"testdata/install/dev-params.txt",
+			},
+			Params: []string{"A=true", "E=puppies", "E=kitties"},
 		},
-		Params: []string{"A=true", "E=puppies", "E=kitties"},
 	}
 
 	err := opts.validateParams()
