@@ -12,9 +12,11 @@ func TestCommandWiring(t *testing.T) {
 		"build",
 		"create",
 		"install",
+		"uninstall",
 		"run",
 		"schema",
 		"bundle install",
+		"bundle uninstall",
 		"list mixins",
 		"version",
 	}

@@ -36,7 +36,11 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildRunCommand(p))
 	cmd.AddCommand(buildBuildCommand(p))
 	cmd.AddCommand(buildBundleCommands(p))
-	cmd.AddCommand(buildInstallCommand(p))
+
+	for _, alias := range buildBundleAliasCommands(p) {
+		cmd.AddCommand(alias)
+	}
+
 	cmd.AddCommand(buildListCommands(p))
 
 	return cmd
