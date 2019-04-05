@@ -8,12 +8,19 @@
 
   <title>Porter | {{ .Title }}</title>
 
-  <meta name="description" content="{{ with .Site.Params.description }}{{ . }}{{ end }}">
-  <meta name="author" content="{{ with .Site.Params.name }}{{ . }}{{ end }}">
-  <meta property="og:title" content="Porter - A Friendlier Cloud Installer" />
-  <meta property="og:url" content="{{ .Site.BaseURL }}" />
-  <meta property="og:image" content="{{ .Site.BaseURL }}/images/porter-logo.png" />
-  <meta name="google-site-verification" content="TODO" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="deislabs">
+  <meta name="twitter:title" content="Porter | {{ .Title }}">
+  <meta name="twitter:description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta name="twitter:image" content="{{ .Site.BaseURL }}/images/porter-twitter-card.png">
+  <meta name="twitter:image:alt" content="A porter who carries your bags">
+
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta name="author" content="{{ with .Site.Params.author }}{{ . }}{{ end }}">
+  <meta property="og:title" content="Porter | {{ .Title }}" />
+  <meta property="og:url" content="{{ .Permalink }}" />
+  <meta property="og:image" content="{{ .Site.BaseURL }}/images/porter-twitter-card.png" />
 
   <link rel="icon" href="/src/img/favicon.png" type="image/x-icon">
   {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS | resources.Minify }}

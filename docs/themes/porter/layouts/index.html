@@ -8,16 +8,22 @@
 
   <title>Porter</title>
 
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="deislabs">
+  <meta name="twitter:title" content="Porter - A Friendly Cloud Installer">
+  <meta name="twitter:description" content="Compose Cloud Native Application Bundles from existing bundles and deployment tools">
+  <meta name="twitter:image" content="{{ .Site.BaseURL }}/images/porter-twitter-card.png">
+  <meta name="twitter:image:alt" content="A porter who carries your bags">
+
   <meta name="description" content="{{ with .Site.Params.description }}{{ . }}{{ end }}">
-  <meta name="author" content="{{ with .Site.Params.name }}{{ . }}{{ end }}">
-  <meta property="og:title" content="Porter - A Friendlier Cloud Installer" />
+  <meta name="author" content="{{ with .Site.Params.author }}{{ . }}{{ end }}">
+  <meta property="og:title" content="Porter - A Friendly Cloud Installer" />
   <meta property="og:url" content="{{ .Site.BaseURL }}" />
-  <meta property="og:image" content="{{ .Site.BaseURL }}/images/porter-logo.png" />
-  <meta name="google-site-verification" content="TODO" />
+  <meta property="og:image" content="{{ .Site.BaseURL }}/images/porter-twitter-card.png" />
 
   <link rel="icon" href="/src/img/favicon.png" type="image/x-icon">
-
-  {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS | resources.Minify }}
+  {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS }}
   <link rel="stylesheet" href="{{ $style.Permalink }}">
 
   <link href="/src/css/custom.css" rel="stylesheet">
@@ -45,7 +51,7 @@
 
           <section class="billboard">
             <div class="container">
-              <h1>A Friendlier Cloud Installer</h1>
+              <h1>A Friendly Cloud Installer <br/>for Cloud Native Application Bundles</h1>
               <h2>Clouds are messy things. Porter is here to pack <em>and</em> carry your bags.</h2>
             </div>
           </section>
@@ -62,8 +68,8 @@
 
                 <p>That is a lot to figure out! 😅</p>
 
-                <p>Porter is a cloud installer that helps you manage everything
-                  together in a single bundle, focusing on what you know best: your application.</p>
+                <p>Porter is a cloud installer based on the Cloud Native Application Bundle (<a href="https://cnab.io">CNAB</a>)
+                  spec that helps you manage everything together in a single bundle, focusing on what you know best: your application.</p>
               </div>
 
               <div class="hide-for-small-down medium-6 columns">
