@@ -12,7 +12,7 @@ mkdir -p $PORTER_HOME/mixins/exec
 mkdir -p $PORTER_HOME/mixins/helm
 mkdir -p $PORTER_HOME/mixins/azure
 
-curl -fsSLo $PORTER_HOME/porter $PORTER_URL/$ORTER_VERSION/porter-linux-amd64
+curl -fsSLo $PORTER_HOME/porter $PORTER_URL/$PORTER_VERSION/porter-linux-amd64
 curl -fsSLo $PORTER_HOME/mixins/porter/porter-runtime $PORTER_URL/$PORTER_VERSION/porter-runtime-linux-amd64
 curl -fsSLo $PORTER_HOME/templates/porter.yaml $PORTER_URL/$PORTER_VERSION/templates/porter.yaml
 curl -fsSLo $PORTER_HOME/templates/run $PORTER_URL/$PORTER_VERSION/templates/run
