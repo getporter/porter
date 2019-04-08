@@ -18,6 +18,7 @@ events.on("check_run:rerequested", runSuite);
 
 events.on("exec", (e, p) => {
   Group.runAll([
+    verify(e, p),
     build(e, p),
     xbuild(e, p),
     test(e, p),
@@ -40,6 +41,16 @@ events.on("publish", (e, p) => {
 // **********************************************
 // Actions
 // **********************************************
+
+function verify(e, p) {
+  var goBuild = new GoJob(`${projectName}-verify`);
+
+  goBuild.tasks.push(
+      "make verify"
+  );
+
+  return goBuild;
+}
 
 function build(e, p) {
   var goBuild = new GoJob(`${projectName}-build`);
@@ -117,6 +128,7 @@ function publish(e, p) {
 
 // Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
+  checkRun(e, p, verify, "Verify").catch(e  => {console.error(e.toString())});
   checkRun(e, p, build, "Build").catch(e  => {console.error(e.toString())});
   checkRun(e, p, xbuild, "Cross-Platform Build").catch(e  => {console.error(e.toString())});
   checkRun(e, p, test, "Test").catch(e  => {console.error(e.toString())});

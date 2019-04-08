@@ -90,6 +90,18 @@ bin/mixins/azure/azure-runtime:
 
 azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
 
+verify: verify-vendor
+
+verify-vendor: dep
+	dep check
+
+HAS_DEP := $(shell command -v dep)
+dep:
+ifndef HAS_DEP
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+endif
+	dep version
+
 test: clean test-unit test-cli
 
 test-unit: build

@@ -42,7 +42,7 @@ steps:
   displayName: 'Set up the Go workspace'
 
 - script: |
-     make build test-unit
+     make verify build test-unit
   workingDirectory: '$(modulePath)'
   displayName: 'Unit Test'
 
