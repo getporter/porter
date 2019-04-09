@@ -1,15 +1,19 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"strings"
 )
 
-func buildBundleCommands(p *porter.Porter) *cobra.Command {
+func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bundle",
-		Short: "bundle commands",
+		Use:     "bundles",
+		Aliases: []string{"bundle"},
+		Short:   "Bundle commands",
+		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle install is available as porter install as well.",
 	}
 
 	cmd.AddCommand(buildBundleInstallCommand(p))

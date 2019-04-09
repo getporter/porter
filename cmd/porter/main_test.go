@@ -15,6 +15,7 @@ func TestCommandWiring(t *testing.T) {
 		"uninstall",
 		"run",
 		"schema",
+		"bundles",
 		"bundle install",
 		"bundle uninstall",
 		"list mixins",
