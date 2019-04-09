@@ -5,7 +5,6 @@ import (
 
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 func buildBundlesCommand(p *porter.Porter) *cobra.Command {
@@ -16,6 +15,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle install is available as porter install as well.",
 	}
 
+	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 
@@ -24,9 +24,27 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 
 func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 	return []*cobra.Command{
+		buildCreateCommand(p),
 		buildInstallCommand(p),
 		buildUninstallCommand(p),
 	}
+}
+
+func buildBundleCreateCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:   "create",
+		Short: "Create a bundle",
+		Long:  "Create a bundle. This generates a porter manifest, porter.yaml, and the CNAB run script in the current directory.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.Create()
+		},
+	}
+}
+
+func buildCreateCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleCreateCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle create", "porter create", -1)
+	return cmd
 }
 
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
