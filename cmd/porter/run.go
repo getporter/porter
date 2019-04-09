@@ -17,6 +17,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Run(opts)
 		},
+		Hidden: true, // Hide runtime commands from the helptext
 	}
 
 	cmd.Flags().StringVarP(&opts.File, "file", "f", "porter.yaml", "The porter configuration file (Defaults to porter.yaml)")
