@@ -23,5 +23,9 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.File, "file", "f", "porter.yaml", "The porter configuration file (Defaults to porter.yaml)")
 	cmd.Flags().StringVar(&opts.Action, "action", "", "The bundle action to execute (Defaults to CNAB_ACTION)")
 
+	cmd.Annotations = map[string]string{
+		"group": "runtime",
+	}
+
 	return cmd
 }

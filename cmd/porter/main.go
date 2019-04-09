@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/gobuffalo/packr/v2"
+
 	"github.com/deislabs/porter/pkg/porter"
 
 	"github.com/spf13/cobra"
@@ -18,8 +20,12 @@ func main() {
 func buildRootCommand() *cobra.Command {
 	p := porter.New()
 	cmd := &cobra.Command{
-		Use:  "porter",
-		Long: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",
+		Use:   "porter",
+		Short: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",
+		Example: `  porter create
+  porter build
+  porter install
+  porter uninstall`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Enable swapping out stdout/stderr for testing
 			p.Out = cmd.OutOrStdout()
@@ -40,5 +46,13 @@ func buildRootCommand() *cobra.Command {
 		cmd.AddCommand(alias)
 	}
 
+	help := newHelptextBox()
+	usage, _ := help.FindString("usage.txt")
+	cmd.SetUsageTemplate(usage)
+
 	return cmd
+}
+
+func newHelptextBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/cmd/porter/helptext", "./helptext")
 }

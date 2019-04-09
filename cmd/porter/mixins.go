@@ -12,6 +12,9 @@ func buildMixinsCommand(p *porter.Porter) *cobra.Command {
 		Aliases: []string{"mixin"},
 		Short:   "Mixin commands",
 	}
+	cmd.Annotations = map[string]string{
+		"group": "resource",
+	}
 
 	cmd.AddCommand(buildMixinsListCommand(p))
 

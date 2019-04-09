@@ -14,6 +14,9 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 		Short:   "Bundle commands",
 		Long:    "Commands for working with bundles. These all have shortcuts so that you can call these commands without the bundle resource prefix. For example, porter bundle install is available as porter install as well.",
 	}
+	cmd.Annotations = map[string]string{
+		"group": "resource",
+	}
 
 	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleBuildCommand(p))
@@ -46,6 +49,9 @@ func buildBundleCreateCommand(p *porter.Porter) *cobra.Command {
 func buildCreateCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleCreateCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle create", "porter create", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
 	return cmd
 }
 
@@ -63,6 +69,9 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 func buildBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleBuildCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle build", "porter build", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
 	return cmd
 }
 
@@ -106,6 +115,9 @@ The first argument is the name of the claim to create for the installation. The 
 func buildInstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleInstallCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle install", "porter install", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
 	return cmd
 }
 
@@ -149,5 +161,8 @@ The first argument is the name of the claim to uninstall. The claim name default
 func buildUninstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleUninstallCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle uninstall", "porter uninstall", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
 	return cmd
 }
