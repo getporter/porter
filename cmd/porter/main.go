@@ -36,21 +36,12 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildRunCommand(p))
 	cmd.AddCommand(buildBuildCommand(p))
 	cmd.AddCommand(buildBundlesCommand(p))
+	cmd.AddCommand(buildMixinsCommand(p))
 
 	for _, alias := range buildBundleAliasCommands(p) {
 		cmd.AddCommand(alias)
 	}
 
 
-	return cmd
-}
-
-func buildListCommands(p *porter.Porter) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "list resources",
-	}
-
-	cmd.AddCommand(buildListMixinsCommand(p))
 	return cmd
 }

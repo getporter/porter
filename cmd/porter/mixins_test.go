@@ -10,7 +10,7 @@ import (
 
 func TestBuildListMixinsCommand_DefaultFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
-	cmd := buildListMixinsCommand(p.Porter)
+	cmd := buildMixinsListCommand(p.Porter)
 
 	err := cmd.PreRunE(cmd, []string{})
 
@@ -20,7 +20,7 @@ func TestBuildListMixinsCommand_DefaultFormat(t *testing.T) {
 
 func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
-	cmd := buildListMixinsCommand(p.Porter)
+	cmd := buildMixinsListCommand(p.Porter)
 	cmd.ParseFlags([]string{"-o", "json"})
 
 	err := cmd.PreRunE(cmd, []string{})
@@ -31,7 +31,7 @@ func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
 
 func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
-	cmd := buildListMixinsCommand(p.Porter)
+	cmd := buildMixinsListCommand(p.Porter)
 	cmd.ParseFlags([]string{"-o", "flarts"})
 
 	err := cmd.PreRunE(cmd, []string{})

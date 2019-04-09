@@ -18,7 +18,8 @@ func TestCommandWiring(t *testing.T) {
 		"bundles",
 		"bundle install",
 		"bundle uninstall",
-		"list mixins",
+		"mixins",
+		"mixins list",
 		"version",
 	}
 
