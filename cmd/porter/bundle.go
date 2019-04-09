@@ -16,6 +16,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildBundleCreateCommand(p))
+	cmd.AddCommand(buildBundleBuildCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 
@@ -25,6 +26,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 	return []*cobra.Command{
 		buildCreateCommand(p),
+		buildBuildCommand(p),
 		buildInstallCommand(p),
 		buildUninstallCommand(p),
 	}
@@ -44,6 +46,23 @@ func buildBundleCreateCommand(p *porter.Porter) *cobra.Command {
 func buildCreateCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleCreateCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle create", "porter create", -1)
+	return cmd
+}
+
+func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:   "build",
+		Short: "Build a bundle",
+		Long:  "Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.Build()
+		},
+	}
+}
+
+func buildBuildCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleBuildCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle build", "porter build", -1)
 	return cmd
 }
 
