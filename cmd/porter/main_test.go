@@ -17,6 +17,7 @@ func TestCommandWiring(t *testing.T) {
 		"schema",
 		"bundles",
 		"bundle create",
+		"bundle build",
 		"bundle install",
 		"bundle uninstall",
 		"mixins",
@@ -29,8 +30,9 @@ func TestCommandWiring(t *testing.T) {
 			osargs := strings.Split(tc, " ")
 
 			rootCmd := buildRootCommand()
-			_, _, err := rootCmd.Find(osargs)
+			cmd, _, err := rootCmd.Find(osargs)
 			assert.NoError(t, err)
+			assert.Equal(t, osargs[len(osargs)-1], cmd.Name())
 		})
 	}
 }
