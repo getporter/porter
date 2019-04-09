@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 func buildBundleCommands(p *porter.Porter) *cobra.Command {
@@ -32,11 +33,11 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 		Long: `Install a bundle.
 
 The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle.`,
-		Example: `  porter install
-  porter install --insecure
-  porter install MyAppInDev --file myapp/bundle.json
-  porter install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
-  porter install --cred azure --cred kubernetes
+		Example: `  porter bundle install
+  porter bundle install --insecure
+  porter bundle install MyAppInDev --file myapp/bundle.json
+  porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
+  porter bundle install --cred azure --cred kubernetes
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
@@ -62,7 +63,9 @@ The first argument is the name of the claim to create for the installation. The 
 }
 
 func buildInstallCommand(p *porter.Porter) *cobra.Command {
-	return buildBundleInstallCommand(p)
+	cmd := buildBundleInstallCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle install", "porter install", -1)
+	return cmd
 }
 
 func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
@@ -73,11 +76,11 @@ func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 		Long: `Uninstall a bundle
 
 The first argument is the name of the claim to uninstall. The claim name defaults to the name of the bundle.`,
-		Example: `  porter uninstall
-  porter uninstall --insecure
-  porter uninstall MyAppInDev --file myapp/bundle.json
-  porter uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
-  porter uninstall --cred azure --cred kubernetes
+		Example: `  porter bundle uninstall
+  porter bundle uninstall --insecure
+  porter bundle uninstall MyAppInDev --file myapp/bundle.json
+  porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
+  porter bundle uninstall --cred azure --cred kubernetes
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
@@ -103,5 +106,7 @@ The first argument is the name of the claim to uninstall. The claim name default
 }
 
 func buildUninstallCommand(p *porter.Porter) *cobra.Command {
-	return buildBundleUninstallCommand(p)
+	cmd := buildBundleUninstallCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle uninstall", "porter uninstall", -1)
+	return cmd
 }
