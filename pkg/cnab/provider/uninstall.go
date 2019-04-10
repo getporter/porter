@@ -67,7 +67,12 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 		for k := range creds {
 			credKeys = append(credKeys, k)
 		}
-		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, claim.Parameters, credKeys)
+		// param values may also be sensitive, so just print names
+		paramKeys := make([]string, 0, len(claim.Parameters))
+		for k := range claim.Parameters {
+			paramKeys = append(paramKeys, k)
+		}
+		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
 	}
 
 	err = i.Run(&claim, creds, d.Out)

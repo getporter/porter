@@ -94,6 +94,8 @@ func (d *Dependency) resolveValue(key string) (interface{}, error) {
 
 	// bundle.dependencies.DEP.TYPE.NAME
 	sourceType := source[3]
+	// TODO: we may need/want to sanitize this string,
+	// i.e., trim spaces, unsupported characters, etc. (unsupported chars may/should be caught earlier?)
 	sourceName := source[4]
 
 	switch sourceType {
@@ -476,9 +478,11 @@ type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
 	for _, step := range s {
-		err := step.Validate(m)
-		if err != nil {
-			return err
+		if step != nil {
+			err := step.Validate(m)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

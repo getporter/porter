@@ -14,5 +14,18 @@ cp build/testdata/bundles/wordpress/porter.yaml .
 sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter.yaml
 
 ${PORTER_HOME}/porter build
-${PORTER_HOME}/porter install --insecure --cred ci --debug
+
+# Create temp file for install output, to search after action has completed
+install_log=$(mktemp)
+sensitive_value=${RANDOM}-value
+
+# Piping both stderr and stdout to log as debug logs may flow via stderr
+${PORTER_HOME}/porter install --insecure --cred ci --param wordpress-password="${sensitive_value}" --debug 2>&1 | tee ${install_log}
+
+# Be sure that sensitive data is masked
+if cat ${install_log} | grep -q "${sensitive_value}"; then
+  echo "ERROR: Sensitive parameter value (wordpress-password) not masked in console output"
+  exit 1
+fi
+
 cat ${PORTER_HOME}/claims/wordpress.json

@@ -331,6 +331,7 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 		if param.Metadata.Description != "" {
 			p.Metadata = ParameterMetadata{Description: param.Metadata.Description}
 		}
+
 		if param.Destination != nil {
 			p.Destination = &Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,

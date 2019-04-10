@@ -109,30 +109,32 @@ func (p *Porter) Run(opts RunOptions) error {
 	}
 
 	for _, step := range steps {
-		err := p.Manifest.ResolveStep(step)
-		if err != nil {
-			return errors.Wrap(err, "unable to resolve sourced values")
-		}
-		// Hand over values needing masking in context output streams
-		p.Context.SetSensitiveValues(p.Manifest.GetSensitiveValues())
+		if step != nil {
+			err := p.Manifest.ResolveStep(step)
+			if err != nil {
+				return errors.Wrap(err, "unable to resolve sourced values")
+			}
+			// Hand over values needing masking in context output streams
+			p.Context.SetSensitiveValues(p.Manifest.GetSensitiveValues())
 
-		runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
+			runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
 
-		err = runner.Validate()
-		if err != nil {
-			return errors.Wrap(err, "mixin validation failed")
-		}
+			err = runner.Validate()
+			if err != nil {
+				return errors.Wrap(err, "mixin validation failed")
+			}
 
-		description, _ := step.GetDescription()
-		fmt.Fprintln(p.Out, description)
-		err = runner.Run()
-		if err != nil {
-			return errors.Wrap(err, "mixin execution failed")
-		}
+			description, _ := step.GetDescription()
+			fmt.Fprintln(p.Out, description)
+			err = runner.Run()
+			if err != nil {
+				return errors.Wrap(err, "mixin execution failed")
+			}
 
-		err = p.collectStepOutput(step)
-		if err != nil {
-			return err
+			err = p.collectStepOutput(step)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
