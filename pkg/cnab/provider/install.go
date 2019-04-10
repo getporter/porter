@@ -69,7 +69,12 @@ func (d *Duffle) Install(args InstallArguments) error {
 		for k := range creds {
 			credKeys = append(credKeys, k)
 		}
-		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, c.Parameters, credKeys)
+		// param values may also be sensitive, so just print names
+		paramKeys := make([]string, 0, len(params))
+		for k := range params {
+			paramKeys = append(paramKeys, k)
+		}
+		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, paramKeys, credKeys)
 	}
 
 	// Install and ALWAYS write out a claim, even if the installation fails

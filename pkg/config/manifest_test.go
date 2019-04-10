@@ -242,6 +242,121 @@ func TestResolveArray(t *testing.T) {
 	assert.Equal(t, "Ralpha", args[0])
 }
 
+func TestResolveSensitiveParameter(t *testing.T) {
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name:      "sensitive_param",
+				Sensitive: true,
+			},
+			{
+				Name: "regular_param",
+			},
+		},
+	}
+
+	os.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	os.Setenv("REGULAR_PARAM", "regular param value")
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Arguments": []string{
+				"source: bundle.parameters.sensitive_param",
+				"source: bundle.parameters.regular_param",
+			},
+		},
+	}
+
+	// Prior to resolving step values, this method should return an empty string array
+	assert.Equal(t, m.GetSensitiveValues(), []string{})
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	args, ok := s.Data["Arguments"].([]string)
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(args))
+	assert.Equal(t, "deliciou$dubonnet", args[0])
+	assert.Equal(t, "regular param value", args[1])
+
+	// There should now be one sensitive value tracked under the manifest
+	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
+}
+
+func TestResolveCredential(t *testing.T) {
+	m := &Manifest{
+		Credentials: []CredentialDefinition{
+			{
+				Name:                "password",
+				EnvironmentVariable: "PASSWORD",
+			},
+		},
+	}
+
+	os.Setenv("PASSWORD", "deliciou$dubonnet")
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Arguments": []string{
+				"source: bundle.credentials.password",
+			},
+		},
+	}
+
+	// Prior to resolving step values, this method should return an empty string array
+	assert.Equal(t, m.GetSensitiveValues(), []string{})
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	args, ok := s.Data["Arguments"].([]string)
+	assert.True(t, ok)
+	assert.Equal(t, "deliciou$dubonnet", args[0])
+
+	// There should now be a sensitive value tracked under the manifest
+	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
+}
+
+func TestResolveOutputs(t *testing.T) {
+	m := &Manifest{
+		outputs: map[string]string{
+			"output": "output_value",
+		},
+		Dependencies: []*Dependency{
+			&Dependency{
+				Name: "dep",
+				m: &Manifest{
+					outputs: map[string]string{
+						"dep_output": "dep_output_value",
+					},
+				},
+			},
+		},
+	}
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Arguments": []string{
+				"source: bundle.outputs.output",
+				"source: bundle.dependencies.dep.outputs.dep_output",
+			},
+		},
+	}
+
+	// Prior to resolving step values, this method should return an empty string array
+	assert.Equal(t, m.GetSensitiveValues(), []string{})
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	args, ok := s.Data["Arguments"].([]string)
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(args))
+	assert.Equal(t, "output_value", args[0])
+	assert.Equal(t, "dep_output_value", args[1])
+
+	// There should now be a sensitive value tracked under the manifest
+	assert.Equal(t, []string{"output_value", "dep_output_value"}, m.GetSensitiveValues())
+}
+
 func TestResolveInMainDict(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()

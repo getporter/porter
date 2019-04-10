@@ -25,7 +25,7 @@ parameters:
 
 - name: mysql_password
   type: string
-  default: "!Th1s1s4p4ss!"
+  sensitive: true
 
 - name: database_name
   type: string
@@ -73,9 +73,16 @@ install:
           source: bundle.parameters.mysql_password
         externalDatabase.database:
           source: bundle.parameters.database_name
+
 uninstall:
-  - azure:
-      description: "Uninstall Wordpress"
-      name: porter-ci-wordpress
+  # TODO: enable once the porter-azure mixin supports this action
+  # - azure:
+  #     description: "Uninstall Mysql"
+  #     name: mysql-azure-porter-demo-wordpress
+  - helm:
+      description: "Helm Uninstall Wordpress"
+      purge: true
+      releases:
+        - "porter-ci-wordpress"
      
 

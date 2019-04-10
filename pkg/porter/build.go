@@ -320,6 +320,7 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 			MaxValue:      param.MaxValue,
 			MinLength:     param.MinLength,
 			MaxLength:     param.MaxLength,
+			Sensitive:     param.Sensitive,
 		}
 
 		// If the default is empty, set required to true.
@@ -330,6 +331,7 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 		if param.Metadata.Description != "" {
 			p.Metadata = ParameterMetadata{Description: param.Metadata.Description}
 		}
+
 		if param.Destination != nil {
 			p.Destination = &Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,

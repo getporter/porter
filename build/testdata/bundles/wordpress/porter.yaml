@@ -1,4 +1,5 @@
 mixins:
+- exec
 - helm
 
 name: wordpress
@@ -22,26 +23,32 @@ parameters:
   destination:
     env: WORDPRESS_NAME
 
+- name: wordpress-password
+  type: string
+  sensitive: true
+
 install:
-- helm:
-    description: "Install Wordpress"
-    name:
-      source: bundle.parameters.wordpress-name
-    chart: stable/wordpress
-    replace: true
-    set:
-      externalDatabase.database:
-        source: bundle.dependencies.mysql.parameters.database-name
-      #externalDatabase.host:
-      #  source: bundle.dependencies.mysql.outputs.services
-      externalDatabase.user:
-        source: bundle.dependencies.mysql.parameters.mysql-user
-      externalDatabase.password:
-        source: bundle.dependencies.mysql.outputs.mysql-password
+  - helm:
+      description: "Install Wordpress"
+      name:
+        source: bundle.parameters.wordpress-name
+      chart: stable/wordpress
+      replace: true
+      set:
+        wordpressPassword:
+          source: bundle.parameters.wordpress-password
+        externalDatabase.database:
+          source: bundle.dependencies.mysql.parameters.database-name
+        #externalDatabase.host:
+        #  source: bundle.dependencies.mysql.outputs.services
+        externalDatabase.user:
+          source: bundle.dependencies.mysql.parameters.mysql-user
+        externalDatabase.password:
+          source: bundle.dependencies.mysql.outputs.mysql-password
 
 uninstall:
-- helm:
-    description: "Uninstall Wordpress"
-    purge: true
-    releases:
-      - "source: bundle.parameters.wordpress-name"
+  - helm:
+      description: "Uninstall Wordpress"
+      purge: true
+      releases:
+        - "source: bundle.parameters.wordpress-name"
