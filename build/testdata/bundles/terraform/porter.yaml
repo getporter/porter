@@ -12,7 +12,6 @@ parameters:
 install:
   - terraform:
       description: "Install Terraform assets"
-      init: true
       autoApprove: true
       vars:
         file_contents:
