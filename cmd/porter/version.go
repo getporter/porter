@@ -6,11 +6,16 @@ import (
 )
 
 func buildVersionCommand(p *porter.Porter) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the application version",
 		Run: func(cmd *cobra.Command, args []string) {
 			p.PrintVersion()
 		},
 	}
+	cmd.Annotations = map[string]string{
+		"group": "meta",
+	}
+
+	return cmd
 }

@@ -13,5 +13,8 @@ func buildSchemaCommand(p *porter.Porter) *cobra.Command {
 			return p.PrintManifestSchema()
 		},
 	}
+	cmd.Annotations = map[string]string{
+		"group": "meta",
+	}
 	return cmd
 }
