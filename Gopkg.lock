@@ -80,6 +80,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:a8e5037a4d69c6ad7f36cc3ef3202c04eaaba0ef0fab1d960affc6452a8edf25"
+  name = "github.com/cbroglie/mustache"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "eb931a9d20042e51d8a3a9ad5a9ba9bc8282c564"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:c41ccacec3d1871a9a76c0a105cb4e50bd7d6489d91f0262e37ab66c3d79cc6a"
   name = "github.com/containerd/containerd"
   packages = [
@@ -681,14 +689,6 @@
   revision = "95e2e42e3ece7421c14512f79f796fe3f5d7e5dc"
 
 [[projects]]
-  digest = "1:44e35ced240c6d8316dc8d604a73774ab052d40ebe636fd8f2ba5934f6329034"
-  name = "github.com/mitchellh/reflectwalk"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "eecee6c969c02c8cc2ae48e1e269843ae8590796"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -1270,6 +1270,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
     "github.com/deislabs/duffle/pkg/action",
     "github.com/deislabs/duffle/pkg/bundle",
@@ -1291,8 +1292,8 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/hashicorp/go-multierror",
-    "github.com/mitchellh/reflectwalk",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",

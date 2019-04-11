@@ -14,8 +14,7 @@ parameters:
 install:
   - exec:
       description: "Install Hello World"
-      command: 
-        source:  bundle.parameters.command
+      command: "{{ bundle.parameters.command }}"
 
 uninstall:
   - exec:

@@ -84,3 +84,7 @@
 [[prune.project]]
   name = "github.com/deislabs/duffle"
   unused-packages = false
+
+[[constraint]]
+  name = "github.com/cbroglie/mustache"
+  version = "1.0.1"
