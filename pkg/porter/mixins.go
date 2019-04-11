@@ -12,6 +12,7 @@ import (
 type MixinProvider interface {
 	GetMixins() ([]mixin.Metadata, error)
 	GetMixinSchema(m mixin.Metadata) (string, error)
+	InstallMixin(opts mixin.InstallOptions) error
 }
 
 func (p *Porter) PrintMixins(opts printer.PrintOptions) error {

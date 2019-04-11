@@ -41,3 +41,7 @@ func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (string, error) {
 	t := exec.NewSchemaBox()
 	return t.FindString("exec.json")
 }
+
+func (p *TestMixinProvider) InstallMixin(o mixin.InstallOptions) error {
+	return nil
+}
