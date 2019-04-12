@@ -15,11 +15,21 @@ const (
 func TestMainWithMockedCommandHandlers(m *testing.M) {
 	// Fake out executing a command
 	if _, mockCommand := os.LookupEnv(MockedCommandEnv); mockCommand {
-		if wantCmd, doAssert := os.LookupEnv(ExpectedCommandEnv); doAssert {
+		if expectedCmdEnv, doAssert := os.LookupEnv(ExpectedCommandEnv); doAssert {
 			gotCmd := strings.Join(os.Args[1:len(os.Args)], " ")
 
-			if wantCmd != gotCmd {
-				fmt.Printf("WANT COMMAND: %q\n", wantCmd)
+			// There may be multiple expected commands, separated by a newline character
+			wantCmds := strings.Split(expectedCmdEnv, "\n")
+
+			commandNotFound := true
+			for _, wantCmd := range wantCmds {
+				if wantCmd == gotCmd {
+					commandNotFound = false
+				}
+			}
+
+			if commandNotFound {
+				fmt.Printf("WANT COMMANDS : %q\n", wantCmds)
 				fmt.Printf("GOT COMMAND : %q\n", gotCmd)
 				os.Exit(127)
 			}
