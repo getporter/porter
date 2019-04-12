@@ -35,20 +35,16 @@ install:
       chart: stable/wordpress
       replace: true
       set:
-        wordpressPassword:
-          source: bundle.parameters.wordpress-password
-        externalDatabase.database:
-          source: bundle.dependencies.mysql.parameters.database-name
+        wordpressPassword: {{ bundle.parameters.wordpress-password }}
+        externalDatabase.database: {{ bundle.dependencies.mysql.parameters.database-name }}
         #externalDatabase.host:
         #  source: bundle.dependencies.mysql.outputs.services
-        externalDatabase.user:
-          source: bundle.dependencies.mysql.parameters.mysql-user
-        externalDatabase.password:
-          source: bundle.dependencies.mysql.outputs.mysql-password
+        externalDatabase.user: {{ bundle.dependencies.mysql.parameters.mysql-user }}
+        externalDatabase.password: {{ bundle.dependencies.mysql.outputs.mysql-password }}
 
 uninstall:
   - helm:
       description: "Uninstall Wordpress"
       purge: true
-      releases:
-        - "source: bundle.parameters.wordpress-name"
+      releases: 
+        - {{ bundle.parameters.wordpress-name }}
