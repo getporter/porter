@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 )
 
@@ -22,7 +23,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	p.applyDefaultOptions(&opts.sharedOptions)
 
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	return p.Uninstall(opts.ToDuffleArgs())
+	return p.CNAB.Uninstall(opts.ToDuffleArgs())
 }
 
 // ToDuffleArgs converts this instance of user-provided options

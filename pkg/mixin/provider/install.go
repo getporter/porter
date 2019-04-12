@@ -4,7 +4,7 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 )
 
-func (p *FileSystem) InstallMixin(opts mixin.InstallOptions) error {
+func (p *FileSystem) Install(opts mixin.InstallOptions) error {
 
 	/*
 		curl -fsSLo $PORTER_HOME/mixins/exec/exec $PORTER_URL/mixins/exec/$PORTER_VERSION/exec-linux-amd64

@@ -10,13 +10,13 @@ import (
 
 // MixinProvider handles searching, listing and communicating with the mixins.
 type MixinProvider interface {
-	GetMixins() ([]mixin.Metadata, error)
-	GetMixinSchema(m mixin.Metadata) (string, error)
-	InstallMixin(opts mixin.InstallOptions) error
+	List() ([]mixin.Metadata, error)
+	GetSchema(m mixin.Metadata) (string, error)
+	Install(opts mixin.InstallOptions) error
 }
 
 func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
-	mixins, err := p.GetMixins()
+	mixins, err := p.Mixins.List()
 	if err != nil {
 		return err
 	}

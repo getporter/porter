@@ -12,17 +12,17 @@ import (
 type Porter struct {
 	*config.Config
 	*Templates
-	MixinProvider
-	CNABProvider
+	Mixins MixinProvider
+	CNAB   CNABProvider
 }
 
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
 	return &Porter{
-		Config:        c,
-		Templates:     NewTemplates(),
-		MixinProvider: mixinprovider.NewFileSystem(c),
-		CNABProvider:  cnabprovider.NewDuffle(c),
+		Config:    c,
+		Templates: NewTemplates(),
+		Mixins:    mixinprovider.NewFileSystem(c),
+		CNAB:      cnabprovider.NewDuffle(c),
 	}
 }

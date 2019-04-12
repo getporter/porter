@@ -69,13 +69,13 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		actionSchemas[string(action)] = actionSchema
 	}
 
-	mixins, err := p.GetMixins()
+	mixins, err := p.Mixins.List()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, mixin := range mixins {
-		mixinSchema, err := p.GetMixinSchema(mixin)
+		mixinSchema, err := p.Mixins.GetSchema(mixin)
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
 			if p.Debug {

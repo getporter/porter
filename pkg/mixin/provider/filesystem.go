@@ -21,7 +21,7 @@ type FileSystem struct {
 	*config.Config
 }
 
-func (p *FileSystem) GetMixins() ([]mixin.Metadata, error) {
+func (p *FileSystem) List() ([]mixin.Metadata, error) {
 	mixinsDir, err := p.GetMixinsDir()
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (p *FileSystem) GetMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (string, error) {
+func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
 	r := mixin.NewRunner(m.Name, m.Dir, false)
 	r.Command = "schema"
 
