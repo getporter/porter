@@ -50,8 +50,11 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := mixin.InstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install",
+		Use:   "install NAME",
 		Short: "Install a mixin",
+		Example: `  porter mixin install helm --url https://deislabs.blob.core.windows.net/porter/mixins/helm
+  porter mixin install azure --version v0.4.0-ralpha.1+dubonnet --url https://deislabs.blob.core.windows.net/porter/mixins/azure
+  porter mixin install kubernetes --version canary --url https://deislabs.blob.core.windows.net/porter/mixins/kubernetes`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},

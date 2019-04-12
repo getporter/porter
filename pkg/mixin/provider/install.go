@@ -45,6 +45,10 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) 
 }
 
 func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Downloading %s to %s\n", url.String(), destPath)
+	}
+
 	// Ensure the parent directories exist
 	parentDir := filepath.Dir(destPath)
 	err := p.FileSystem.MkdirAll(parentDir, 0755)
@@ -71,9 +75,6 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 		return errors.Wrapf(err, "could not set the mixin as executable at %s", destPath)
 	}
 
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Downloading %s to %s\n", url.String(), destPath)
-	}
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
 		return errors.Wrapf(err, "error writing the mixin to %s", destPath)

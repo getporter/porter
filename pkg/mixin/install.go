@@ -14,7 +14,7 @@ type InstallOptions struct {
 	parsedURL *url.URL
 }
 
-// CopyParsedURL returns a copy of of the parsed URL that is safe to modify.
+// GetParsedURL returns a copy of of the parsed URL that is safe to modify.
 func (o *InstallOptions) GetParsedURL() url.URL {
 	return *o.parsedURL
 }
@@ -51,7 +51,7 @@ func (o *InstallOptions) defaultVersion() {
 	}
 }
 
-// validateClaimName grabs the claim name from the first positional argument.
+// validateMixinName grabs the mixin name from the first positional argument.
 func (o *InstallOptions) validateMixinName(args []string) error {
 	switch len(args) {
 	case 0:
