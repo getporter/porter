@@ -63,7 +63,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.Version, "version", "v", "latest",
 		"The mixin version. This can either be a version number, or a tagged release like 'latest' or 'canary'")
 	cmd.Flags().StringVar(&opts.URL, "url", "",
-		"URL where the mixin can be downloaded. The download URL format is URL/VERSION/MIXIN-GOOS-GOARCH[OS_FILE_EXTENSION], so if the binaries are located at https://example.com/mixins/v1.0.0/helm-darwin-amd64, then --url should be https://example.com/mixins/.")
+		"URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads")
 
 	return cmd
 }

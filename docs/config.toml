@@ -145,12 +145,12 @@ defaultContentLanguage = "en"
     identifier = "mixin-architecture"
     weight = 310
     parent = "developing-mixins"
-  #[[menu.main]]
-  #  name = "Distributing Mixins"
-  #  url = "/mixin-distribution"
-  #  identifier = "mixin-distribution"
-  #  weight = 311
-  #  parent = "developing-mixins"
+  [[menu.main]]
+    name = "Distributing Mixins"
+    url = "/mixin-distribution"
+    identifier = "mixin-distribution"
+    weight = 311
+    parent = "developing-mixins"
 
 [[menu.main]]
   name = "Porter Architecture"
