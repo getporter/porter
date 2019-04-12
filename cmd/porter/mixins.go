@@ -56,7 +56,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Mixins.Install(opts)
+			return p.InstallMixin(opts)
 		},
 	}
 

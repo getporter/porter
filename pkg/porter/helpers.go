@@ -1,10 +1,8 @@
 package porter
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/deislabs/porter/pkg"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/exec"
 	"github.com/deislabs/porter/pkg/mixin"
@@ -44,9 +42,9 @@ func (p *TestMixinProvider) GetSchema(m mixin.Metadata) (string, error) {
 }
 
 func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
-	return fmt.Sprintf("exec mixin %s (%s)\n", pkg.Version, pkg.Commit), nil
+	return "exec mixin v1.0 (abc123)", nil
 }
 
-func (p *TestMixinProvider) Install(o mixin.InstallOptions) error {
-	return nil
+func (p *TestMixinProvider) Install(o mixin.InstallOptions) (mixin.Metadata, error) {
+	return mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }

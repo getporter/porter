@@ -5,22 +5,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 
-	"github.com/pkg/errors"
-
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/pkg/errors"
 )
 
-func (p *FileSystem) Install(opts mixin.InstallOptions) error {
+func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) {
 	mixinsDir, err := p.GetMixinsDir()
 	if err != nil {
-		return err
+		return mixin.Metadata{}, err
 	}
-
 	mixinDir := filepath.Join(mixinsDir, opts.Name)
 
 	clientUrl := opts.GetParsedURL()
@@ -28,7 +25,7 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) error {
 	clientPath := filepath.Join(mixinDir, opts.Name) + mixin.FileExt
 	err = p.downloadFile(clientUrl, clientPath)
 	if err != nil {
-		return err
+		return mixin.Metadata{}, err
 	}
 
 	runtimeUrl := opts.GetParsedURL()
@@ -36,7 +33,7 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) error {
 	runtimePath := filepath.Join(mixinDir, opts.Name+"-runtime")
 	err = p.downloadFile(runtimeUrl, runtimePath)
 	if err != nil {
-		return err
+		return mixin.Metadata{}, err
 	}
 
 	m := mixin.Metadata{
@@ -44,22 +41,13 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) error {
 		Dir:        mixinDir,
 		ClientPath: clientPath,
 	}
-	confirmedVersion, err := p.GetVersion(m)
-
-	// TODO: Once we can extract the version from the mixin with json (#263), then we can print it out as installed mixin @v1.0.0
-	if p.Debug {
-		fmt.Fprintf(p.Out, "installed %s mixin to %s\n%s", m.Name, m.Dir, confirmedVersion)
-	} else {
-		fmt.Fprintf(p.Out, "installed %s mixin\n%s", m.Name, confirmedVersion)
-	}
-
-	return nil
+	return m, nil
 }
 
 func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 	// Ensure the parent directories exist
 	parentDir := filepath.Dir(destPath)
-	err := os.MkdirAll(parentDir, 0755)
+	err := p.FileSystem.MkdirAll(parentDir, 0755)
 	if err != nil {
 		errors.Wrapf(err, "unable to create parent directory %s", parentDir)
 	}
@@ -73,12 +61,12 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 	}
 	defer resp.Body.Close()
 
-	destFile, err := os.Create(destPath)
+	destFile, err := p.FileSystem.Create(destPath)
 	if err != nil {
 		return errors.Wrapf(err, "could not create the mixin at %s", destPath)
 	}
 	defer destFile.Close()
-	err = os.Chmod(destPath, 0755)
+	err = p.FileSystem.Chmod(destPath, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not set the mixin as executable at %s", destPath)
 	}

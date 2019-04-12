@@ -13,7 +13,7 @@ type MixinProvider interface {
 	List() ([]mixin.Metadata, error)
 	GetSchema(m mixin.Metadata) (string, error)
 	GetVersion(m mixin.Metadata) (string, error)
-	Install(opts mixin.InstallOptions) error
+	Install(opts mixin.InstallOptions) (mixin.Metadata, error)
 }
 
 func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
@@ -38,4 +38,24 @@ func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
+	m, err := p.Mixins.Install(opts)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Once we can extract the version from the mixin with json (#263), then we can print it out as installed mixin @v1.0.0
+	confirmedVersion, err := p.Mixins.GetVersion(m)
+	if err != nil {
+		return err
+	}
+	if p.Debug {
+		fmt.Fprintf(p.Out, "installed %s mixin to %s\n%s", m.Name, m.Dir, confirmedVersion)
+	} else {
+		fmt.Fprintf(p.Out, "installed %s mixin\n%s", m.Name, confirmedVersion)
+	}
+
+	return nil
 }
