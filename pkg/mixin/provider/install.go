@@ -33,6 +33,7 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) 
 	runtimePath := filepath.Join(mixinDir, opts.Name+"-runtime")
 	err = p.downloadFile(runtimeUrl, runtimePath)
 	if err != nil {
+		p.FileSystem.RemoveAll(mixinDir) // If the runtime download files, cleanup the mixin so it's not half installed
 		return mixin.Metadata{}, err
 	}
 
@@ -49,13 +50,6 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 		fmt.Fprintf(p.Err, "Downloading %s to %s\n", url.String(), destPath)
 	}
 
-	// Ensure the parent directories exist
-	parentDir := filepath.Dir(destPath)
-	err := p.FileSystem.MkdirAll(parentDir, 0755)
-	if err != nil {
-		errors.Wrapf(err, "unable to create parent directory %s", parentDir)
-	}
-
 	resp, err := http.Get(url.String())
 	if err != nil {
 		return errors.Wrapf(err, "error downloading the mixin from %s", url.String())
@@ -65,18 +59,31 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 	}
 	defer resp.Body.Close()
 
+	// Ensure the parent directories exist
+	parentDir := filepath.Dir(destPath)
+	err = p.FileSystem.MkdirAll(parentDir, 0755)
+	if err != nil {
+		errors.Wrapf(err, "unable to create parent directory %s", parentDir)
+	}
+	cleanup := func() {
+		p.FileSystem.RemoveAll(parentDir) // If we can't install the mixin, don't leave traces of it
+	}
+
 	destFile, err := p.FileSystem.Create(destPath)
 	if err != nil {
+		cleanup()
 		return errors.Wrapf(err, "could not create the mixin at %s", destPath)
 	}
 	defer destFile.Close()
 	err = p.FileSystem.Chmod(destPath, 0755)
 	if err != nil {
+		cleanup()
 		return errors.Wrapf(err, "could not set the mixin as executable at %s", destPath)
 	}
 
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
+		cleanup()
 		return errors.Wrapf(err, "error writing the mixin to %s", destPath)
 	}
 	return nil
