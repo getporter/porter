@@ -8,3 +8,4 @@ ${PORTER_HOME}/porter version
 
 ${DIR}/test-hello.sh
 ${DIR}/test-wordpress.sh
+${DIR}/test-terraform.sh

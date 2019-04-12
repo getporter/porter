@@ -1,0 +1,35 @@
+mixins:
+  - terraform
+
+name: porter-terraform
+version: 0.1.0
+invocationImage: porter-terraform:latest
+
+parameters:
+  - name: file_contents
+    type: string
+
+install:
+  - terraform:
+      description: "Install Terraform assets"
+      autoApprove: true
+      vars:
+        file_contents:
+          source: bundle.parameters.file_contents
+
+upgrade:
+  - terraform:
+      description: "Upgrade Terraform assets"
+      autoApprove: true
+      vars:
+        file_contents:
+          source: bundle.parameters.file_contents
+
+status:
+  - terraform:
+      description: "Get Terraform status"
+
+uninstall:
+  - terraform:
+      autoApprove: true
+      description: "Uninstall Terraform assets"

@@ -24,11 +24,12 @@ else
 FILE_EXT=
 endif
 
-MIXIN_TAG ?= canary
-HELM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
-AZURE_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
+MIXIN_TAG          ?= canary
+HELM_MIXIN_URL      = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
+AZURE_MIXIN_URL     = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
+TERRAFORM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/terraform/$(MIXIN_TAG)/terraform
 
-build: build-client build-runtime azure helm
+build: build-client build-runtime azure helm terraform
 
 build-runtime: generate
 	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=porter -f mixin.mk BINDIR=bin
@@ -89,6 +90,19 @@ bin/mixins/azure/azure-runtime:
 	chmod +x bin/mixins/azure/azure-runtime
 
 azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
+
+bin/mixins/terraform/terraform:
+	mkdir -p bin/mixins/terraform
+	curl -f -o bin/mixins/terraform/terraform $(TERRAFORM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
+	chmod +x bin/mixins/terraform/terraform
+	bin/mixins/terraform/terraform version
+
+bin/mixins/terraform/terraform-runtime:
+	mkdir -p bin/mixins/terraform
+	curl -f -o bin/mixins/terraform/terraform-runtime $(TERRAFORM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
+	chmod +x bin/mixins/terraform/terraform-runtime
+
+terraform: bin/mixins/terraform/terraform bin/mixins/terraform/terraform-runtime
 
 verify: verify-vendor
 
