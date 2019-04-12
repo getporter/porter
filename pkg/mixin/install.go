@@ -36,6 +36,10 @@ func (o *InstallOptions) Validate(args []string) error {
 }
 
 func (o *InstallOptions) validateURL() error {
+	if o.URL == "" {
+		return errors.New("--url is required")
+	}
+
 	parsedURL, err := url.Parse(o.URL)
 	if err != nil {
 		return errors.Wrapf(err, "invalid --url %s", o.URL)

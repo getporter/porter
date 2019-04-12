@@ -31,8 +31,19 @@ func TestInstallOptions_Validate_BadURL(t *testing.T) {
 	assert.EqualError(t, err, "invalid --url :#: parse :: missing protocol scheme")
 }
 
+func TestInstallOptions_Validate_MissingURL(t *testing.T) {
+	opts := InstallOptions{
+		URL: "",
+	}
+
+	err := opts.Validate([]string{"helm"})
+	assert.EqualError(t, err, "--url is required")
+}
+
 func TestInstallOptions_Validate_DefaultVersion(t *testing.T) {
-	opts := InstallOptions{}
+	opts := InstallOptions{
+		URL: "https://example.com",
+	}
 
 	opts.Validate([]string{"helm"})
 

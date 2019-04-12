@@ -43,9 +43,10 @@ func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 func TestBuildMixinInstallCommand(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	cmd := BuildMixinInstallCommand(p.Porter)
-	cmd.ParseFlags([]string{"--url", "https://example.com/mixins/helm"})
+	err := cmd.ParseFlags([]string{"--url", "https://example.com/mixins/helm"})
+	require.NoError(t, err)
 
-	err := cmd.PreRunE(cmd, []string{"helm"})
+	err = cmd.PreRunE(cmd, []string{"helm"})
 	require.NoError(t, err)
 }
 
