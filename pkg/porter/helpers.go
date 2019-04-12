@@ -43,6 +43,9 @@ func (p *TestMixinProvider) GetSchema(m mixin.Metadata) (string, error) {
 	return t.FindString("exec.json")
 }
 
+func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
+	return fmt.Sprintf("exec mixin %s (%s)\n", pkg.Version, pkg.Commit), nil
+}
 
 func (p *TestMixinProvider) Install(o mixin.InstallOptions) error {
 	return nil

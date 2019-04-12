@@ -12,6 +12,7 @@ import (
 type MixinProvider interface {
 	List() ([]mixin.Metadata, error)
 	GetSchema(m mixin.Metadata) (string, error)
+	GetVersion(m mixin.Metadata) (string, error)
 	Install(opts mixin.InstallOptions) error
 }
 

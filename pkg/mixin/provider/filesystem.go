@@ -70,3 +70,25 @@ func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
 
 	return mixinSchema.String(), nil
 }
+
+func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
+	r := mixin.NewRunner(m.Name, m.Dir, false)
+	r.Command = "version"
+
+	// Copy the existing context and tweak to pipe the output differently
+	mixinVersion := &bytes.Buffer{}
+	var mixinContext context.Context
+	mixinContext = *p.Context
+	mixinContext.Out = mixinVersion
+	if !p.Debug {
+		mixinContext.Err = ioutil.Discard
+	}
+	r.Context = &mixinContext
+
+	err := r.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return mixinVersion.String(), nil
+}
