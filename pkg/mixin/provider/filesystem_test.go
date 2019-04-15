@@ -31,7 +31,7 @@ func TestFileSystem_GetMixins(t *testing.T) {
 	c.CopyDirectory(filepath.Join(srcMixinsDir, "exec"), mixinsDir, true)
 
 	p := NewFileSystem(c.Config)
-	mixins, err := p.GetMixins()
+	mixins, err := p.List()
 
 	require.Nil(t, err)
 	require.Len(t, mixins, 2)
@@ -49,7 +49,7 @@ func TestFileSystem_GetMixins(t *testing.T) {
 	assert.Equal(t, binary.Name(), "exec")
 }
 
-func TestFileSystem_GetMixinSchema(t *testing.T) {
+func TestFileSystem_GetSchema(t *testing.T) {
 	c := config.NewTestConfig(t)
 	// Hit the real file system for this test
 	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
@@ -61,7 +61,7 @@ func TestFileSystem_GetMixinSchema(t *testing.T) {
 	defer os.Unsetenv(config.EnvHOME)
 
 	p := NewFileSystem(c.Config)
-	mixins, err := p.GetMixins()
+	mixins, err := p.List()
 	require.NoError(t, err)
 
 	var e *mixin.Metadata
@@ -73,7 +73,7 @@ func TestFileSystem_GetMixinSchema(t *testing.T) {
 	}
 	require.NotNil(t, e)
 
-	gotSchema, err := p.GetMixinSchema(*e)
+	gotSchema, err := p.GetSchema(*e)
 	require.NoError(t, err)
 
 	wantSchema, err := ioutil.ReadFile("../../exec/testdata/schema.json")

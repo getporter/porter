@@ -5951,8 +5951,7 @@ body {
   .main .content-wrap h1 {
     text-transform: none;
     letter-spacing: 0.03em;
-    margin-top: 1em;
-    padding-top: 2.5em; }
+    margin-top: 1em; }
   .main .content-wrap article {
     padding: 2em 0 0;
     overflow: auto; }

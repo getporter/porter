@@ -3,9 +3,8 @@ package porter
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/exec"
-
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/exec"
 	"github.com/deislabs/porter/pkg/mixin"
 )
 
@@ -19,7 +18,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	p := New()
 	p.Config = tc.Config
-	p.MixinProvider = &TestMixinProvider{}
+	p.Mixins = &TestMixinProvider{}
 	return &TestPorter{
 		Porter:     p,
 		TestConfig: tc,
@@ -30,14 +29,22 @@ func NewTestPorter(t *testing.T) *TestPorter {
 type TestMixinProvider struct {
 }
 
-func (p *TestMixinProvider) GetMixins() ([]mixin.Metadata, error) {
+func (p *TestMixinProvider) List() ([]mixin.Metadata, error) {
 	mixins := []mixin.Metadata{
 		{Name: "exec"},
 	}
 	return mixins, nil
 }
 
-func (p *TestMixinProvider) GetMixinSchema(m mixin.Metadata) (string, error) {
+func (p *TestMixinProvider) GetSchema(m mixin.Metadata) (string, error) {
 	t := exec.NewSchemaBox()
 	return t.FindString("exec.json")
+}
+
+func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
+	return "exec mixin v1.0 (abc123)", nil
+}
+
+func (p *TestMixinProvider) Install(o mixin.InstallOptions) (mixin.Metadata, error) {
+	return mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }

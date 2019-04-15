@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ func buildMixinsCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildMixinsListCommand(p))
+	cmd.AddCommand(BuildMixinInstallCommand(p))
 
 	return cmd
 }
@@ -39,6 +41,32 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.rawFormat, "output", "o", "table", "Output format, allowed values are: table, json")
+	cmd.Flags().StringVarP(&opts.rawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json")
+
+	return cmd
+}
+
+func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
+	opts := mixin.InstallOptions{}
+	cmd := &cobra.Command{
+		Use:   "install NAME",
+		Short: "Install a mixin",
+		Example: `  porter mixin install helm --url https://deislabs.blob.core.windows.net/porter/mixins/helm
+  porter mixin install azure --version v0.4.0-ralpha.1+dubonnet --url https://deislabs.blob.core.windows.net/porter/mixins/azure
+  porter mixin install kubernetes --version canary --url https://deislabs.blob.core.windows.net/porter/mixins/kubernetes`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.InstallMixin(opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.Version, "version", "v", "latest",
+		"The mixin version. This can either be a version number, or a tagged release like 'latest' or 'canary'")
+	cmd.Flags().StringVar(&opts.URL, "url", "",
+		"URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads")
+
 	return cmd
 }

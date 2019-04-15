@@ -21,7 +21,7 @@ type FileSystem struct {
 	*config.Config
 }
 
-func (p *FileSystem) GetMixins() ([]mixin.Metadata, error) {
+func (p *FileSystem) List() ([]mixin.Metadata, error) {
 	mixinsDir, err := p.GetMixinsDir()
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (p *FileSystem) GetMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (string, error) {
+func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
 	r := mixin.NewRunner(m.Name, m.Dir, false)
 	r.Command = "schema"
 
@@ -69,4 +69,26 @@ func (p *FileSystem) GetMixinSchema(m mixin.Metadata) (string, error) {
 	}
 
 	return mixinSchema.String(), nil
+}
+
+func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
+	r := mixin.NewRunner(m.Name, m.Dir, false)
+	r.Command = "version"
+
+	// Copy the existing context and tweak to pipe the output differently
+	mixinVersion := &bytes.Buffer{}
+	var mixinContext context.Context
+	mixinContext = *p.Context
+	mixinContext.Out = mixinVersion
+	if !p.Debug {
+		mixinContext.Err = ioutil.Discard
+	}
+	r.Context = &mixinContext
+
+	err := r.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return mixinVersion.String(), nil
 }

@@ -11,3 +11,4 @@ TODO:
 
 ## See Also
 * [Mixin Architecture](/mixin-architecture/)
+* [Mixin Distribution](/mixin-distribution/)

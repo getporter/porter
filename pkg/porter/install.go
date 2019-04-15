@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 )
 
@@ -47,5 +48,5 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	fmt.Fprintf(p.Out, "installing %s...\n", opts.Name)
-	return p.Install(opts.ToDuffleArgs())
+	return p.CNAB.Install(opts.ToDuffleArgs())
 }

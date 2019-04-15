@@ -39,3 +39,21 @@ func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 	require.NotNil(t, err)
 	require.Contains(t, err.Error(), "invalid format: flarts")
 }
+
+func TestBuildMixinInstallCommand(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	cmd := BuildMixinInstallCommand(p.Porter)
+	err := cmd.ParseFlags([]string{"--url", "https://example.com/mixins/helm"})
+	require.NoError(t, err)
+
+	err = cmd.PreRunE(cmd, []string{"helm"})
+	require.NoError(t, err)
+}
+
+func TestBuildMixinInstallCommand_NoMixinName(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	cmd := BuildMixinInstallCommand(p.Porter)
+
+	err := cmd.PreRunE(cmd, []string{})
+	require.EqualError(t, err, "no mixin name was specified")
+}
