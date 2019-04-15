@@ -30,3 +30,5 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
 fi
 
 cat ${PORTER_HOME}/claims/wordpress.json
+
+${PORTER_HOME}/porter uninstall --insecure --cred ci --debug
