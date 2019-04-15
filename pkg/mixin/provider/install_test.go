@@ -46,47 +46,6 @@ func TestFileSystem_Install(t *testing.T) {
 	assert.True(t, runtimeExists)
 }
 
-func TestFileSystem_Install_Rollback(t *testing.T) {
-	// serve out a fake mixin
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a mixxin\n")
-	}))
-	defer ts.Close()
-
-	c := config.NewTestConfig(t)
-	p := NewFileSystem(c.Config)
-	// Hit the real file system for this test because Afero doesn't enforce file permissions and that's how we are
-	// sabotaging the install
-	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-
-	// bin is my home now
-	binDir := c.TestContext.FindBinDir()
-	os.Setenv(config.EnvHOME, binDir)
-	defer os.Unsetenv(config.EnvHOME)
-
-	// Make the install fail
-	mixinsDir, _ := p.GetMixinsDir()
-	mixinDir := path.Join(mixinsDir, "mixxin")
-	p.FileSystem.MkdirAll(mixinDir, 0755)
-	f, err := p.FileSystem.OpenFile(path.Join(mixinDir, "mixxin"), os.O_CREATE, 0400)
-	require.NoError(t, err)
-	f.Close()
-
-	opts := mixin.InstallOptions{
-		Version: "latest",
-		URL:     ts.URL,
-	}
-	opts.Validate([]string{"mixxin"})
-
-	_, err = p.Install(opts)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "could not create the mixin at")
-
-	// Make sure the mixin directory was removed
-	mixinDirExists, _ := p.FileSystem.DirExists(mixinDir)
-	assert.False(t, mixinDirExists)
-}
-
 func TestFileSystem_Install_RollbackBadDownload(t *testing.T) {
 	// serve out a fake mixin
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +68,7 @@ func TestFileSystem_Install_RollbackBadDownload(t *testing.T) {
 	mixinsDir, _ := p.GetMixinsDir()
 	mixinDir := path.Join(mixinsDir, "mixxin")
 	p.FileSystem.MkdirAll(mixinDir, 0755)
-	f, err := p.FileSystem.OpenFile(path.Join(mixinDir, "mixxin"), os.O_CREATE, 0400)
+	f, err := p.FileSystem.OpenFile(path.Join(mixinDir, "mixxin"), os.O_CREATE, 0000)
 	require.NoError(t, err)
 	f.Close()
 
