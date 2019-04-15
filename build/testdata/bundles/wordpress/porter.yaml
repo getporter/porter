@@ -22,10 +22,12 @@ parameters:
   default: porter-ci-wordpress
   destination:
     env: WORDPRESS_NAME
-
 - name: wordpress-password
   type: string
   sensitive: true
+- name: namespace
+  type: string
+  default: ''
 
 install:
   - helm:
@@ -33,6 +35,8 @@ install:
       name:
         source: bundle.parameters.wordpress-name
       chart: stable/wordpress
+      namespace:
+        source: bundle.parameters.namespace
       replace: true
       set:
         wordpressPassword:

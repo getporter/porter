@@ -40,3 +40,8 @@ fi
 # ${PORTER_HOME}/porter uninstall --insecure --debug
 
 cat ${PORTER_HOME}/claims/porter-terraform.json
+
+# TODO: Figure out why this fails with the following error when the param is being set
+# Error: Error asking for user input: missing required value for "file_contents"
+# See https://github.com/deislabs/porter-terraform/issues/8
+# ${PORTER_HOME}/porter uninstall --insecure --debug --param file_contents='foo!'

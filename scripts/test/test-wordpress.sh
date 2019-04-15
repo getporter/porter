@@ -3,6 +3,7 @@
 set -euo pipefail
 export REGISTRY=${REGISTRY:-$USER}
 export PORTER_HOME=${PORTER_HOME:-bin}
+export NAMESPACE="$(head /dev/urandom | tr -dc a-z0-9 | head -c 10 ; echo '')"
 export KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
 # Run tests at the root of the repository
 export TEST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
@@ -20,7 +21,7 @@ install_log=$(mktemp)
 sensitive_value=${RANDOM}-value
 
 # Piping both stderr and stdout to log as debug logs may flow via stderr
-${PORTER_HOME}/porter install --insecure --cred ci --param wordpress-password="${sensitive_value}" --debug 2>&1 | tee ${install_log}
+${PORTER_HOME}/porter install --insecure --cred ci --param wordpress-password="${sensitive_value}" --param namespace=$NAMESPACE --debug 2>&1 | tee ${install_log}
 
 # Be sure that sensitive data is masked
 if cat ${install_log} | grep -q "${sensitive_value}"; then
@@ -29,3 +30,5 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
 fi
 
 cat ${PORTER_HOME}/claims/wordpress.json
+
+${PORTER_HOME}/porter uninstall --insecure --cred ci --debug

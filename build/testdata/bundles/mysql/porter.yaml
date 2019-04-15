@@ -19,6 +19,9 @@ parameters:
   type: string
   destination:
     env: MYSQL_USER
+- name: namespace
+  type: string
+  default: ''
 
 install:
 - helm:
@@ -26,6 +29,8 @@ install:
     name: porter-ci-mysql
     chart: stable/mysql
     version: 0.10.2
+    namespace:
+      source: bundle.parameters.namespace
     replace: true
     set:
       mysqlDatabase:
