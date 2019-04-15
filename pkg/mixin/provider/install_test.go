@@ -93,7 +93,7 @@ func TestFileSystem_Install_RollbackBadDownload(t *testing.T) {
 func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	// serve out a fake mixin
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.RequestURI, "runtime") {
+		if strings.Contains(r.RequestURI, "linux-amd64") {
 			w.WriteHeader(400)
 		} else {
 			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a client mixxin\n")
