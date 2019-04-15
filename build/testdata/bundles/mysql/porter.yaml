@@ -22,11 +22,15 @@ parameters:
 - name: namespace
   type: string
   default: ''
+- name: mysql-name
+  type: string
+  default: porter-ci-mysql
 
 install:
 - helm:
     description: "Install MySQL"
-    name: porter-ci-mysql
+    name:
+      source: bundle.parameters.mysql-name
     chart: stable/mysql
     version: 0.10.2
     namespace:
@@ -39,14 +43,16 @@ install:
         source: bundle.parameters.mysql-user
     outputs:
     - name: mysql-root-password
-      secret: porter-ci-mysql
+      secret:
+        source: bundle.parameters.mysql-name
       key: mysql-root-password
     - name: mysql-password
-      secret: porter-ci-mysql
+      secret:
+        source: bundle.parameters.mysql-name
       key: mysql-password
 uninstall:
 - helm:
     description: "Uninstall MySQL"
     purge: true
     releases:
-      - porter-ci-mysql
+      - "source: bundle.parameters.mysql-name"
