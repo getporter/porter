@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path"
 	"strings"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,6 +44,10 @@ func TestFileSystem_Install(t *testing.T) {
 	assert.True(t, runtimeExists)
 }
 
+/*
+* Revisit when we can make a general purpose new Afero FS for sabotaging
+ arbitrary OS calls. This test as-is works when run as a non-root user, but
+ our CI runs as root, so it's commented out.
 func TestFileSystem_Install_RollbackBadDownload(t *testing.T) {
 	// serve out a fake mixin
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +88,7 @@ func TestFileSystem_Install_RollbackBadDownload(t *testing.T) {
 	mixinDirExists, _ := p.FileSystem.DirExists(mixinDir)
 	assert.False(t, mixinDirExists)
 }
+*/
 
 func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	// serve out a fake mixin
