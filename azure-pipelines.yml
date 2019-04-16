@@ -1,78 +1,13 @@
-# Go
-# Build your Go project.
-# Add steps that test, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/go
-
 trigger:
   branches:
     include:
       - refs/heads/master
-      - refs/tags/*
 
 pool:
   vmImage: 'Ubuntu 16.04'
 
-variables:
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  GOROOT: '/usr/local/go1.11' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
-
 steps:
-- task: Docker@1
-  displayName: Login
-  inputs:
-    containerRegistryType: Container Registry
-    dockerRegistryEndpoint: deislabs-registry
-    command: login
-
-- task: HelmInstaller@0
-  inputs:
-    helmVersion: '2.11.0'
-    checkLatestHelmVersion: false
-
 - script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
-
-- script: |
-     make verify build test-unit
-  workingDirectory: '$(modulePath)'
-  displayName: 'Unit Test'
-
-- script: |
-    make xbuild-all
-  workingDirectory: '$(modulePath)'
-  displayName: 'Cross Compile'
-
-- script: |
-    git clone https://github.com/deislabs/duffle.git '$(GOPATH)/src/github.com/deislabs/duffle'
-    cd $(GOPATH)/src/github.com/deislabs/duffle
-    make bootstrap build
-    cp bin/duffle $(GOPATH)/bin/
-  displayName: 'Install duffle'
-  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-- task: DownloadSecureFile@1
-  inputs:
-    secureFile: kubeconfig
-  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-- script: |
-    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    make test-cli
-  workingDirectory: '$(modulePath)'
-  displayName: 'Integration Test'
-  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-- script: |
-    AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make xbuild-all publish
-  workingDirectory: '$(modulePath)'
-  displayName: 'Publish'
-  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    PORTER_VERSION=canary ./scripts/install/install-linux.sh
+    PORTER_VERSION=latest ./scripts/install/install-linux.sh
+  displayName: 'Test Linux Install Script'
