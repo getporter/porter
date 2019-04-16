@@ -17,7 +17,7 @@ install:
       command: bash
       arguments:
         - -c
-        - source:  bundle.parameters.command
+        - "{{ bundle.parameters.command }}"
 
 
 uninstall:

@@ -95,23 +95,18 @@ install:
           key: mysql-password
   - helm:
       description: "Install Wordpress"
-      name:
-        source: bundle.parameters.wordpress-name
+      name: {{ bundle.parameters.wordpress-name }}
       chart: stable/wordpress
       parameters:
         externalDatabase.database: wordpress
-        externalDatabase.host:
-          source: bundle.outputs.dbhost
-        externalDatabase.user:
-          source: bundle.outputs.dbuser
-        externalDatabase.password:
-          source: bundle.outputs.dbpassword
+        externalDatabase.host: {{ bundle.outputs.dbhost }}
+        externalDatabase.user: {{ bundle.outputs.dbuser }}
+        externalDatabase.password: {{ bundle.outputs.dbpassword }}
 
 uninstall:
   - helm:
       description: "Uninstall Wordpress Helm Chart"
-      name:
-        source: bundle.parameters.wordpress-name
+      name: {{ bundle.parameters.wordpress-name }}
 ```
 
 ## Mixins
@@ -193,8 +188,7 @@ install:
       name: mysql
       chart: stable/mysql
       set:
-      mysqlDatabase:
-        source: bundle.parameters.database_name
+      mysqlDatabase: {{ bundle.parameters.database_name }}
       outputs:
       - name: dbhost
         secret: mysql
@@ -233,17 +227,12 @@ credentials:
 install:
   - helm:
       description: "Install Wordpress"
-      name:
-        source: bundle.parameters.wordpress-name
+      name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
       set:
-        externalDatabase.database:
-          source: bundle.dependencies.mysql.parameters.database_name
-        externalDatabase.host:
-          source: bundle.dependencies.mysql.outputs.dbhost
-        externalDatabase.user:
-          source: bundle.dependencies.mysql.outputs.dbuser
-        externalDatabase.password:
-          source: bundle.dependencies.mysql.outputs.dbpassword
+        externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database_name }}"
+        externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.dbhost }}"
+        externalDatabase.user: "{{ bundle.dependencies.mysql.outputs.dbuser }}"
+        externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.dbpassword }}"
 ```
 

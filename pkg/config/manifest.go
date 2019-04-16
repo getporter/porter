@@ -6,13 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
-	"regexp"
 	"strings"
 
+	"github.com/cbroglie/mustache"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/hashicorp/go-multierror"
-	"github.com/mitchellh/reflectwalk"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -84,57 +82,61 @@ func (d *Dependency) Validate() error {
 	return nil
 }
 
-func (d *Dependency) resolveValue(key string) (interface{}, error) {
-	var replacement interface{}
-
-	source := strings.Split(key, ".")
-	if len(source) < 5 {
-		return nil, fmt.Errorf("invalid source reference %s", key)
+func resolveParameter(pd ParameterDefinition) (string, error) {
+	pe := pd.Name
+	if pd.Destination == nil {
+		// Porter by default sets CNAB params to name.ToUpper()
+		return os.Getenv(strings.ToUpper(pe)), nil
+	} else if pd.Destination.EnvironmentVariable != "" {
+		return os.Getenv(pd.Destination.EnvironmentVariable), nil
+	} else if pd.Destination == nil && pd.Destination.Path != "" {
+		return pd.Destination.Path, nil
 	}
+	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
 
-	// bundle.dependencies.DEP.TYPE.NAME
-	sourceType := source[3]
-	// TODO: we may need/want to sanitize this string,
-	// i.e., trim spaces, unsupported characters, etc. (unsupported chars may/should be caught earlier?)
-	sourceName := source[4]
+}
 
-	switch sourceType {
-	case "outputs":
-		replacement = d.m.outputs[sourceName]
-		// Porter considers all outputs as sensitive
-		if replacement != nil {
-			d.m.sensitiveValues = append(d.m.sensitiveValues, reflect.ValueOf(replacement).String())
+func resolveCredential(cd CredentialDefinition) (string, error) {
+	if cd.EnvironmentVariable != "" {
+		return os.Getenv(cd.EnvironmentVariable), nil
+	} else if cd.Path != "" {
+		return cd.Path, nil
+	} else {
+		return "", fmt.Errorf("credential: %s is malformed", cd.Name)
+	}
+}
+
+func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
+	sensitiveStuff := []string{}
+	depVals := make(map[string]interface{})
+	params := make(map[string]interface{})
+	depVals["parameters"] = params
+	for _, param := range d.m.Parameters {
+		val, err := resolveParameter(param)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, fmt.Sprintf("could not handle bundle dependency %s", d.Name))
 		}
-	case "parameters":
-		for _, param := range d.m.Parameters {
-			if param.Name == sourceName {
-				if param.Destination == nil {
-					// Porter by default sets CNAB params to name.ToUpper()
-					pe := strings.ToUpper(sourceName)
-					replacement = os.Getenv(pe)
-				} else if param.Destination.EnvironmentVariable != "" {
-					replacement = os.Getenv(param.Destination.EnvironmentVariable)
-				} else if param.Destination == nil && param.Destination.Path != "" {
-					replacement = param.Destination.Path
-				} else {
-					return nil, errors.New(
-						"unknown parameter definition, no environment variable or path specified",
-					)
-				}
-				// if replacement has been set and parameter is designated sensitive, add to list of sensitive values
-				if replacement != nil && param.Sensitive {
-					d.m.sensitiveValues = append(d.m.sensitiveValues, reflect.ValueOf(replacement).String())
-				}
-			}
+		if param.Sensitive {
+			sensitiveStuff = append(sensitiveStuff, val)
 		}
-	default:
-		return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
+		params[param.Name] = val
 	}
 
-	if replacement == nil {
-		return nil, errors.New(fmt.Sprintf("no value found for source specification: %s", key))
+	creds := make(map[string]interface{})
+	depVals["credentials"] = creds
+	for _, cred := range d.m.Credentials {
+		val, err := resolveCredential(cred)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, fmt.Sprintf("could not handle bundle dependency %s", d.Name))
+		}
+		sensitiveStuff = append(sensitiveStuff, val)
+		params[cred.Name] = val
 	}
-	return replacement, nil
+	depVals["outputs"] = d.m.outputs
+	for _, output := range d.m.outputs {
+		sensitiveStuff = append(sensitiveStuff, output)
+	}
+	return depVals, sensitiveStuff, nil
 }
 
 type BundleOutput struct {
@@ -566,220 +568,76 @@ func (s *Step) GetMixinName() string {
 	return mixinName
 }
 
+func (m *Manifest) buildSourceData() (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+	m.sensitiveValues = []string{}
+	bundle := make(map[string]interface{})
+	data["bundle"] = bundle
+
+	params := make(map[string]interface{})
+	bundle["parameters"] = params
+	for _, param := range m.Parameters {
+		//pe := strings.ToUpper(param.Name)
+		pe := param.Name
+		var val string
+		val, err := resolveParameter(param)
+		if err != nil {
+			return nil, err
+		}
+		if param.Sensitive {
+			m.sensitiveValues = append(m.sensitiveValues, val)
+		}
+		params[pe] = val
+	}
+
+	creds := make(map[string]interface{})
+	bundle["credentials"] = creds
+	for _, cred := range m.Credentials {
+		pe := cred.Name
+		val, err := resolveCredential(cred)
+		if err != nil {
+			return nil, err
+		}
+		m.sensitiveValues = append(m.sensitiveValues, val)
+		creds[pe] = val
+	}
+	bundle["outputs"] = m.outputs
+	for _, output := range m.outputs {
+		m.sensitiveValues = append(m.sensitiveValues, output)
+	}
+	deps := make(map[string]interface{})
+	bundle["dependencies"] = deps
+	for _, dependency := range m.Dependencies {
+		dep, sensitives, err := dependency.resolve()
+		if err != nil {
+			return nil, err
+		}
+		deps[dependency.Name] = dep
+		m.sensitiveValues = append(m.sensitiveValues, sensitives...)
+	}
+	return data, nil
+}
+
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
 func (m *Manifest) ResolveStep(step *Step) error {
-	return reflectwalk.Walk(step, m)
-}
 
-// Map is a NOOP but implements the github.com/mitchellh/reflectwalk MapWalker interface
-func (m *Manifest) Map(val reflect.Value) error {
-	return nil
-}
-
-// MapElem implements the github.com/mitchellh/reflectwalk MapWalker interface and handles
-// individual map elements. It will resolve source references to their value within a
-// porter bundle and replace the value
-func (m *Manifest) MapElem(mp, k, v reflect.Value) error {
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
+	mustache.AllowMissingVariables = false
+	sourceData, err := m.buildSourceData()
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve step: unable to populate source data")
 	}
-	// If the value is is a map, check to see if it's a
-	// single entry map with the key "source".
-	if kind := v.Kind(); kind == reflect.Map {
-		if len(v.MapKeys()) == 1 {
-			sk := v.MapKeys()[0]
-			if sk.Kind() == reflect.Interface {
-				sk = sk.Elem()
-			}
-			//if the key is a string, and the string is source, then we should try
-			//and replace this
-			if sk.Kind() == reflect.String && sk.String() == "source" {
-				kv := v.MapIndex(sk)
-				if kv.Kind() == reflect.Interface {
-					kv = kv.Elem()
-					value := kv.String()
-					replacement, err := m.resolveValue(value)
-					if err != nil {
-						return errors.Wrap(err, fmt.Sprintf("unable to set value for %s", k.String()))
-					}
-					mp.SetMapIndex(k, reflect.ValueOf(replacement))
-				}
-			}
-		}
+	payload, err := yaml.Marshal(step)
+	if err != nil {
+		return err
+	}
+	rendered, err := mustache.Render(string(payload), sourceData)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve step: unable to render template values")
+	}
+	err = yaml.Unmarshal([]byte(rendered), step)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve step: invalid step yaml")
 	}
 	return nil
-}
-
-// Slice is a NOOP but implements the github.com/mitchellh/reflectwalk SliceWalker interface
-func (m *Manifest) Slice(val reflect.Value) error {
-	return nil
-}
-
-// SliceElem implements the github.com/mitchellh/reflectwalk SliceWalker interface and handles
-// individual slice elements. It will resolve source references to their value within a
-// porter bundle and replace the value
-func (m *Manifest) SliceElem(index int, val reflect.Value) error {
-	if !val.CanInterface() {
-		return nil
-	}
-
-	// There are two cases possible in the YAML. The first is when the element in the slice is a string. That might look like:
-	// install:
-	//   - exec:
-	//       description: "Install Hello World"
-	// 	     command: bash
-	// 	     arguments:
-	// 	       - -c
-	// 	       - "source:  bundle.parameters.command"
-	// The second case is when the declaration interpreted to represent a Map. This is the case when there are no quotes:
-	// install:
-	//   - exec:
-	//       description: "Install Hello World"
-	// 	     command: bash
-	// 	     arguments:
-	// 	       - -c
-	// 	       - source:  bundle.parameters.command
-	// Branching logic below first checks the easy case (a string) then falls through into the case where we have a map with a single key.
-	// This is fairly similar to how we process map elements, but the replacement is done differently.
-	v, ok := val.Interface().(string)
-	if ok {
-		//if the array entry is a string that matches source:...., we should replace it
-		re := regexp.MustCompile("source:\\s?(.*)")
-		matches := re.FindStringSubmatch(v)
-		if len(matches) > 0 {
-			source := matches[1]
-			r, err := m.resolveValue(source)
-			if err != nil {
-				return errors.Wrap(err, "unable to source value")
-			}
-			val.Set(reflect.ValueOf(r))
-		}
-	} else {
-		v := val
-		if val.Kind() == reflect.Interface {
-			val = val.Elem()
-		}
-		if kind := val.Kind(); kind == reflect.Map {
-			if len(val.MapKeys()) == 1 {
-				sk := val.MapKeys()[0]
-				if sk.Kind() == reflect.Interface {
-					sk = sk.Elem()
-				}
-				//if the key is a string, and the string is source, then we should try
-				//and replace this
-				if sk.Kind() == reflect.String && sk.String() == "source" {
-					kv := val.MapIndex(sk)
-					if kv.Kind() == reflect.Interface {
-						kv = kv.Elem()
-						value := kv.String()
-						replacement, err := m.resolveValue(value)
-						if err != nil {
-							errors.Wrap(err, fmt.Sprintf("unable to resolve value for key: %s", value))
-						}
-						v.Set(reflect.ValueOf(replacement))
-					}
-				}
-			}
-		} // it's not a map, we shouldn't try and process it.
-
-	}
-	return nil
-}
-
-// Struct implements reflectwalk's StructWalker so that we can skip private fields
-func (m *Manifest) Struct(val reflect.Value) error {
-	return nil
-}
-
-// StructField implements reflectwalk's StructWalker so that we can skip private fields
-func (m *Manifest) StructField(field reflect.StructField, val reflect.Value) error {
-	isUnexported := func() bool {
-		return field.PkgPath != ""
-	}
-	if isUnexported() {
-		return reflectwalk.SkipEntry
-	}
-	return nil
-}
-
-func (m *Manifest) resolveValue(key string) (interface{}, error) {
-	source := strings.Split(key, ".")
-	if len(source) < 3 {
-		return nil, fmt.Errorf("invalid source reference %s", key)
-	}
-
-	sourceType := source[1]
-	sourceName := source[2]
-
-	var replacement interface{}
-	switch sourceType {
-	case "parameters":
-		for _, param := range m.Parameters {
-			if param.Name == sourceName {
-				if param.Destination == nil {
-					// Porter by default sets CNAB params to name.ToUpper()
-					pe := strings.ToUpper(sourceName)
-					replacement = os.Getenv(pe)
-				} else if param.Destination.EnvironmentVariable != "" {
-					replacement = os.Getenv(param.Destination.EnvironmentVariable)
-				} else if param.Destination == nil && param.Destination.Path != "" {
-					replacement = param.Destination.Path
-				} else {
-					return nil, errors.New(
-						"unknown parameter definition, no environment variable or path specified",
-					)
-				}
-				// if replacement has been set and parameter is designated sensitive, add to list of sensitive values
-				if replacement != nil && param.Sensitive {
-					m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
-				}
-			}
-		}
-	case "credentials":
-		for _, cred := range m.Credentials {
-			if cred.Name == sourceName {
-				if cred.Path != "" {
-					replacement = cred.Path
-				} else if cred.EnvironmentVariable != "" {
-					replacement = os.Getenv(cred.EnvironmentVariable)
-				} else {
-					return nil, errors.New(
-						"unknown credential definition, no environment variable or path specified",
-					)
-				}
-
-				// if replacement has been set, add to list of sensitive values
-				if replacement != nil {
-					m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
-				}
-			}
-		}
-	case "outputs":
-		if o, exists := m.outputs[sourceName]; exists {
-			replacement = o
-			// Porter considers all outputs as sensitive
-			if replacement != nil {
-				m.sensitiveValues = append(m.sensitiveValues, reflect.ValueOf(replacement).String())
-			}
-		}
-	case "dependencies":
-		for _, dep := range m.Dependencies {
-			if dep.Name == sourceName {
-				replacement, err := dep.resolveValue(key)
-				// Retrieve updated list of sensitive values from dependency and add to our list
-				for _, val := range dep.m.GetSensitiveValues() {
-					m.sensitiveValues = append(m.sensitiveValues, val)
-				}
-				return replacement, err
-			}
-		}
-	default:
-		return nil, errors.New(fmt.Sprintf("unknown source specification: %s", key))
-	}
-
-	if replacement == nil {
-		return nil, errors.New(fmt.Sprintf("no value found for source specification: %s", key))
-	}
-	return replacement, nil
 }

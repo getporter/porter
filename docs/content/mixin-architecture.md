@@ -92,10 +92,8 @@ helm:
   version: 0.10.2
   replace: true
   set:
-    mysqlDatabase:
-      source: bundle.parameters.database-name
-    mysqlUser:
-      source: bundle.parameters.mysql-user
+    mysqlDatabase: "{{ bundle.parameters.database-name }}"
+    mysqlUser: "{{ bundle.parameters.mysql-user }}"
   outputs:
   - name: mysql-root-password
     secret: porter-ci-mysql

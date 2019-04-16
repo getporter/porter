@@ -1,11 +1,14 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gopkg.in/yaml.v2"
 )
 
 func TestReadManifest_URL(t *testing.T) {
@@ -155,16 +158,24 @@ func TestResolveMapParam(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Parameters": map[string]interface{}{
-				"Thing": map[string]interface{}{
-					"source": "bundle.parameters.person",
-				},
+				"Thing": "{{bundle.parameters.person}}",
 			},
 		},
 	}
 
+	before, _ := yaml.Marshal(s)
+	t.Logf("Before:\n %s", before)
 	err := m.ResolveStep(s)
 	require.NoError(t, err)
-	pms, ok := s.Data["Parameters"].(map[string]interface{})
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+	assert.NotNil(t, s.Data)
+	t.Logf("Length of data:%d", len(s.Data))
+	assert.NotEmpty(t, s.Data["Parameters"])
+	for k, v := range s.Data {
+		t.Logf("Key %s, value: %s, type: %T", k, v, v)
+	}
+	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	val, ok := pms["Thing"].(string)
 	assert.True(t, ok)
@@ -181,16 +192,14 @@ func TestResolveMapParamUnknown(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Parameters": map[string]interface{}{
-				"Thing": map[string]interface{}{
-					"source": "bundle.parameters.person",
-				},
+				"Thing": "{{bundle.parameters.person}}",
 			},
 		},
 	}
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to set value for Thing: no value found for source specification: bundle.parameters.person", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
@@ -206,14 +215,14 @@ func TestResolveArrayUnknown(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"source: bundle.parameters.person",
+				"{{ bundle.parameters.person }}",
 			},
 		},
 	}
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to source value: no value found for source specification: bundle.parameters.person", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArray(t *testing.T) {
@@ -230,16 +239,16 @@ func TestResolveArray(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"source: bundle.parameters.person",
+				"{{ bundle.parameters.person }}",
 			},
 		},
 	}
 
 	err := m.ResolveStep(s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]string)
+	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
-	assert.Equal(t, "Ralpha", args[0])
+	assert.Equal(t, "Ralpha", args[0].(string))
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
@@ -261,8 +270,8 @@ func TestResolveSensitiveParameter(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"source: bundle.parameters.sensitive_param",
-				"source: bundle.parameters.regular_param",
+				"{{ bundle.parameters.sensitive_param }}",
+				"{{ bundle.parameters.regular_param }}",
 			},
 		},
 	}
@@ -272,7 +281,7 @@ func TestResolveSensitiveParameter(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]string)
+	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(args))
 	assert.Equal(t, "deliciou$dubonnet", args[0])
@@ -297,7 +306,7 @@ func TestResolveCredential(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"source: bundle.credentials.password",
+				"{{ bundle.credentials.password }}",
 			},
 		},
 	}
@@ -307,7 +316,7 @@ func TestResolveCredential(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]string)
+	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
 
@@ -336,8 +345,8 @@ func TestResolveOutputs(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"source: bundle.outputs.output",
-				"source: bundle.dependencies.dep.outputs.dep_output",
+				"{{ bundle.outputs.output }}",
+				"{{ bundle.dependencies.dep.outputs.dep_output }}",
 			},
 		},
 	}
@@ -347,11 +356,11 @@ func TestResolveOutputs(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]string)
+	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, 2, len(args))
-	assert.Equal(t, "output_value", args[0])
-	assert.Equal(t, "dep_output_value", args[1])
+	assert.Equal(t, "output_value", args[0].(string))
+	assert.Equal(t, "dep_output_value", args[1].(string))
 
 	// There should now be a sensitive value tracked under the manifest
 	assert.Equal(t, []string{"output_value", "dep_output_value"}, m.GetSensitiveValues())
@@ -402,8 +411,151 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	assert.NotNil(t, exec)
 	args := exec["arguments"].([]interface{})
 	assert.Len(t, args, 2)
-	assert.Equal(t, "echo hello world", args[1])
+	assert.Equal(t, "echo hello world", args[1].(string))
 	assert.NotNil(t, args)
+}
+
+func TestResolveMultipleOutputs(t *testing.T) {
+
+	databaseURL := "localhost"
+	databasePort := "3303"
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"helm": map[interface{}]interface{}{
+				"description": "install wordpress",
+				"Arguments": []string{
+					"jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}",
+				},
+			},
+		},
+	}
+
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
+		outputs: map[string]string{
+			"database_url":  databaseURL,
+			"database_port": databasePort,
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	helm, ok := s.Data["helm"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	args, ok := helm["Arguments"].([]interface{})
+	assert.True(t, ok)
+	assert.Equal(t, fmt.Sprintf("jdbc://%s:%s", databaseURL, databasePort), args[0].(string))
+}
+
+func TestResolveMissingOutputs(t *testing.T) {
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"helm": map[interface{}]interface{}{
+				"description": "install wordpress",
+				"Arguments": []string{
+					"jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}",
+				},
+			},
+		},
+	}
+
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.Error(t, err)
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"database_url\"", err.Error())
+}
+
+func TestResolveDependencyParam(t *testing.T) {
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"helm": map[interface{}]interface{}{
+				"description": "install wordpress",
+				"Arguments": []string{
+					"{{bundle.dependencies.mysql.parameters.database}}",
+				},
+			},
+		},
+	}
+
+	m := &Manifest{
+		Dependencies: []*Dependency{
+			&Dependency{
+				Name: "mysql",
+				m: &Manifest{
+					Name: "mysql",
+					Parameters: []ParameterDefinition{
+						{
+							Name: "database",
+						},
+					},
+				},
+			},
+		},
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
+	}
+
+	os.Setenv("DATABASE", "wordpress")
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	helm, ok := s.Data["helm"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	args, ok := helm["Arguments"].([]interface{})
+	assert.True(t, ok)
+	assert.Equal(t, "wordpress", args[0].(string))
+}
+
+func TestResolveMissingDependencyParam(t *testing.T) {
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"helm": map[interface{}]interface{}{
+				"description": "install wordpress",
+				"Arguments": []string{
+					"{{bundle.dependencies.mysql.parameters.nope}}",
+				},
+			},
+		},
+	}
+
+	m := &Manifest{
+		Dependencies: []*Dependency{
+			&Dependency{
+				Name: "mysql",
+				m: &Manifest{
+					Name: "mysql",
+					Parameters: []ParameterDefinition{
+						{
+							Name: "database",
+						},
+					},
+				},
+			},
+		},
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
+	}
+
+	os.Setenv("DATABASE", "wordpress")
+	err := m.ResolveStep(s)
+	require.Error(t, err)
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
 }
 
 func TestDependency_Validate_NameRequired(t *testing.T) {
@@ -598,47 +750,6 @@ func TestManifest_ApplyDependencyOutputs(t *testing.T) {
 				assert.Contains(t, depM.outputs, wantKey)
 				assert.Equal(t, wantValue, depM.outputs[wantKey])
 			}
-		})
-	}
-}
-
-func TestManifest_resolveSource(t *testing.T) {
-	testcases := []struct {
-		name       string
-		outputs    map[string]string
-		source     string
-		wantResult interface{}
-		wantError  string
-	}{
-		{
-			name:       "happy path",
-			outputs:    map[string]string{"foo": "bar"},
-			source:     "bundle.outputs.foo",
-			wantResult: "bar",
-		},
-		{
-			name:      "missing output",
-			outputs:   map[string]string{"foo": "bar"},
-			source:    "bundle.outputs.missing",
-			wantError: "no value found for source specification: bundle.outputs.missing",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			m := &Manifest{
-				outputs: tc.outputs,
-			}
-
-			result, err := m.resolveValue(tc.source)
-			if tc.wantError == "" {
-				require.NoError(t, err)
-			} else {
-				require.Contains(t, err.Error(), tc.wantError)
-				return
-			}
-
-			assert.Equal(t, tc.wantResult, result)
 		})
 	}
 }

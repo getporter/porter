@@ -14,16 +14,14 @@ install:
       description: "Install Terraform assets"
       autoApprove: true
       vars:
-        file_contents:
-          source: bundle.parameters.file_contents
+        file_contents: "{{bundle.parameters.file_contents}}"
 
 upgrade:
   - terraform:
       description: "Upgrade Terraform assets"
       autoApprove: true
       vars:
-        file_contents:
-          source: bundle.parameters.file_contents
+        file_contents: "{{ bundle.parameters.file_contents }}"
 
 status:
   - terraform:
