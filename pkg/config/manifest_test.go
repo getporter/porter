@@ -199,7 +199,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
@@ -222,7 +222,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArray(t *testing.T) {
@@ -473,7 +473,7 @@ func TestResolveMissingOutputs(t *testing.T) {
 
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: Missing variable \"database_url\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"database_url\"", err.Error())
 }
 
 func TestResolveDependencyParam(t *testing.T) {
@@ -555,7 +555,7 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 	os.Setenv("DATABASE", "wordpress")
 	err := m.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: Missing variable \"nope\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
 }
 
 func TestDependency_Validate_NameRequired(t *testing.T) {

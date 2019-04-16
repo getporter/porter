@@ -227,12 +227,12 @@ credentials:
 install:
   - helm:
       description: "Install Wordpress"
-      name: {{ bundle.parameters.wordpress-name }}
+      name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
       set:
-        externalDatabase.database: {{ bundle.dependencies.mysql.parameters.database_name }}
-        externalDatabase.host: {{ bundle.dependencies.mysql.outputs.dbhost }} 
-        externalDatabase.user: {{ bundle.dependencies.mysql.outputs.dbuser }} 
-        externalDatabase.password: {{ bundle.dependencies.mysql.outputs.dbpassword }}
+        externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database_name }}"
+        externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.dbhost }}"
+        externalDatabase.user: "{{ bundle.dependencies.mysql.outputs.dbuser }}"
+        externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.dbpassword }}"
 ```
 

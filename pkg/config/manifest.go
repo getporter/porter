@@ -593,7 +593,6 @@ func (m *Manifest) buildSourceData() (map[string]interface{}, error) {
 	creds := make(map[string]interface{})
 	bundle["credentials"] = creds
 	for _, cred := range m.Credentials {
-		//pe := strings.ToUpper(cred.Name)
 		pe := cred.Name
 		val, err := resolveCredential(cred)
 		if err != nil {
@@ -626,15 +625,19 @@ func (m *Manifest) ResolveStep(step *Step) error {
 	mustache.AllowMissingVariables = false
 	sourceData, err := m.buildSourceData()
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step")
+		return errors.Wrap(err, "unable to resolve step: unable to populate source data")
 	}
 	payload, err := yaml.Marshal(step)
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step")
+		return err
 	}
 	rendered, err := mustache.Render(string(payload), sourceData)
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step")
+		return errors.Wrap(err, "unable to resolve step: unable to render template values")
 	}
-	return yaml.Unmarshal([]byte(rendered), step)
+	err = yaml.Unmarshal([]byte(rendered), step)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve step: invalid step yaml")
+	}
+	return nil
 }
