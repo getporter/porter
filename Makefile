@@ -24,22 +24,23 @@ else
 FILE_EXT=
 endif
 
-MIXIN_TAG          ?= canary
-HELM_MIXIN_URL      = https://deislabs.blob.core.windows.net/porter/mixins/helm/$(MIXIN_TAG)/helm
-AZURE_MIXIN_URL     = https://deislabs.blob.core.windows.net/porter/mixins/azure/$(MIXIN_TAG)/azure
-TERRAFORM_MIXIN_URL = https://deislabs.blob.core.windows.net/porter/mixins/terraform/$(MIXIN_TAG)/terraform
+INT_MIXINS = exec kubernetes
+EXT_MIXINS = helm azure terraform
+MIXIN_TAG ?= canary
+MIXINS_URL = https://deislabs.blob.core.windows.net/porter/mixins
 
-build: build-client build-runtime azure helm terraform
+.PHONY: build
+build: build-porter build-mixins get-mixins
 
-build-runtime: generate
-	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) build-runtime MIXIN=kubernetes -f mixin.mk
+build-porter: generate
+	$(MAKE) $(MAKE_OPTS) build MIXIN=porter -f mixin.mk BINDIR=bin
 
-build-client: generate
+build-porter-client: generate
 	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) build-client MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) build-client MIXIN=kubernetes -f mixin.mk
+
+build-mixins: $(addprefix build-mixin-,$(INT_MIXINS))
+build-mixin-%: generate
+	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
 
 generate: packr2
 	go generate ./...
@@ -50,59 +51,28 @@ ifndef HAS_PACKR2
 	go get -u github.com/gobuffalo/packr/v2/packr2
 endif
 
-xbuild-all:
+xbuild-all: xbuild-porter xbuild-mixins
+
+xbuild-porter: generate
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=kubernetes -f mixin.mk
 
-xbuild-runtime:
-	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) xbuild-runtime MIXIN=kubernetes -f mixin.mk
+xbuild-mixins: $(addprefix xbuild-mixin-,$(INT_MIXINS))
+xbuild-mixin-%: generate
+	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=$* -f mixin.mk
 
-xbuild-client:
-	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) xbuild-client MIXIN=kubernetes -f mixin.mk
+get-mixins: $(addprefix get-mixin-,$(EXT_MIXINS))
 
+get-mixin-helm: bin/mixins/helm/helm
 bin/mixins/helm/helm:
-	mkdir -p bin/mixins/helm
-	curl -f -o bin/mixins/helm/helm $(HELM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
-	chmod +x bin/mixins/helm/helm
-	bin/mixins/helm/helm version
+	bin/porter mixin install helm --version $(MIXIN_TAG) --url $(MIXINS_URL)/helm
 
-bin/mixins/helm/helm-runtime:
-	mkdir -p bin/mixins/helm
-	curl -f -o bin/mixins/helm/helm-runtime $(HELM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
-	chmod +x bin/mixins/helm/helm-runtime
-
-helm: bin/mixins/helm/helm bin/mixins/helm/helm-runtime
-
+get-mixin-azure: bin/mixins/azure/azure
 bin/mixins/azure/azure:
-	mkdir -p bin/mixins/azure
-	curl -f -o bin/mixins/azure/azure $(AZURE_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
-	chmod +x bin/mixins/azure/azure
-	bin/mixins/azure/azure version
+	bin/porter mixin install azure --version $(MIXIN_TAG) --url $(MIXINS_URL)/azure
 
-bin/mixins/azure/azure-runtime:
-	mkdir -p bin/mixins/azure
-	curl -f -o bin/mixins/azure/azure-runtime $(AZURE_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
-	chmod +x bin/mixins/azure/azure-runtime
-
-azure: bin/mixins/azure/azure bin/mixins/azure/azure-runtime
-
+get-mixin-terraform: bin/mixins/terraform/terraform
 bin/mixins/terraform/terraform:
-	mkdir -p bin/mixins/terraform
-	curl -f -o bin/mixins/terraform/terraform $(TERRAFORM_MIXIN_URL)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)
-	chmod +x bin/mixins/terraform/terraform
-	bin/mixins/terraform/terraform version
-
-bin/mixins/terraform/terraform-runtime:
-	mkdir -p bin/mixins/terraform
-	curl -f -o bin/mixins/terraform/terraform-runtime $(TERRAFORM_MIXIN_URL)-runtime-$(RUNTIME_PLATFORM)-$(RUNTIME_ARCH)
-	chmod +x bin/mixins/terraform/terraform-runtime
-
-terraform: bin/mixins/terraform/terraform bin/mixins/terraform/terraform-runtime
+	bin/porter mixin install terraform --version $(MIXIN_TAG) --url $(MIXINS_URL)/terraform
 
 verify: verify-vendor
 
@@ -116,12 +86,12 @@ ifndef HAS_DEP
 endif
 	dep version
 
-test: clean test-unit test-cli
+test: clean-last-testrun test-unit test-cli
 
 test-unit: build
 	go test ./...
 
-test-cli: clean build init-porter-home-for-ci
+test-cli: clean-last-testrun build init-porter-home-for-ci
 	PORTER_HOME=$(PORTER_HOME) REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
@@ -156,9 +126,11 @@ install: build
 	cp -R bin/* $(HOME)/.porter/
 	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
 
-clean:
+clean: clean-mixins clean-last-testrun
+
+clean-mixins:
 	-rm -fr bin/
-	-rm -fr cnab/
-	-rm porter.yaml Dockerfile bundle.json
-	-helm delete --purge porter-ci-mysql
-	-helm delete --purge porter-ci-wordpress
+
+clean-last-testrun:
+	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
+	-helm delete --purge porter-ci-mysql porter-ci-wordpress
