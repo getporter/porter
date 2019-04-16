@@ -31,3 +31,5 @@ uninstall:
   - terraform:
       autoApprove: true
       description: "Uninstall Terraform assets"
+      vars:
+        file_contents: "{{bundle.parameters.file_contents}}"

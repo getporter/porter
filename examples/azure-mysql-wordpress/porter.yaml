@@ -41,17 +41,13 @@ install:
       name: mysql-azure-porter-demo-wordpress
       resourceGroup: "porter-test"
       parameters:
-        administratorLogin: 
-          source: bundle.parameters.mysql_user 
-        administratorLoginPassword:
-          source: bundle.parameters.mysql_password
+        administratorLogin: "{{ bundle.parameters.mysql_user }} "
+        administratorLoginPassword: "{{ bundle.parameters.mysql_password }}"
         location: "eastus"
-        serverName:
-          source: bundle.parameters.server_name
+        serverName: "{{ bundle.parameters.server_name }}"
         version: "5.7"
         sslEnforcement: "Disabled"
-        databaseName:
-          source: bundle.parameters.database_name          
+        databaseName: "{{ bundle.parameters.database_name }}"
       outputs:
         - name: "MYSQL_HOST"
           key: "MYSQL_HOST"
@@ -65,14 +61,10 @@ install:
         mariadb.enabled: "false"
         externalDatabase.port: 3306
         readinessProbe.initialDelaySeconds: 120
-        externalDatabase.host:
-          source: bundle.outputs.MYSQL_HOST
-        externalDatabase.user:
-          source: bundle.parameters.mysql_user
-        externalDatabase.password:
-          source: bundle.parameters.mysql_password
-        externalDatabase.database:
-          source: bundle.parameters.database_name
+        externalDatabase.host: "{{ bundle.outputs.MYSQL_HOST }}"
+        externalDatabase.user: "{{ bundle.parameters.mysql_user }}"
+        externalDatabase.password: "{{ bundle.parameters.mysql_password }}"
+        externalDatabase.database: "{{ bundle.parameters.database_name }}"
 
 uninstall:
   # TODO: enable once the porter-azure mixin supports this action

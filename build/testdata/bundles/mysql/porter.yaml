@@ -29,28 +29,24 @@ parameters:
 install:
 - helm:
     description: "Install MySQL"
-    name:
-      source: bundle.parameters.mysql-name
+    name: "{{ bundle.parameters.mysql-name }}"
     chart: stable/mysql
     version: 0.10.2
-    namespace:
-      source: bundle.parameters.namespace
+    namespace: "{{ bundle.parameters.namespace }}"
     replace: true
     set:
       mysqlDatabase: "{{ bundle.parameters.database-name}}"
       mysqlUser: "{{ bundle.parameters.mysql-user }}"
     outputs:
     - name: mysql-root-password
-      secret:
-        source: bundle.parameters.mysql-name
+      secret: "{{ bundle.parameters.mysql-name }}"
       key: mysql-root-password
     - name: mysql-password
-      secret:
-        source: bundle.parameters.mysql-name
+      secret: "{{ bundle.parameters.mysql-name }}"
       key: mysql-password
 uninstall:
 - helm:
     description: "Uninstall MySQL"
     purge: true
     releases:
-      - "source: bundle.parameters.mysql-name"
+      - "{{ bundle.parameters.mysql-name }}"
