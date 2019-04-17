@@ -46,13 +46,57 @@ func buildRootCommand() *cobra.Command {
 		cmd.AddCommand(alias)
 	}
 
+	// Hide the help command from the help text
+	cmd.SetHelpCommand(&cobra.Command{
+		Use:    "help",
+		Hidden: true,
+	})
+
 	help := newHelptextBox()
 	usage, _ := help.FindString("usage.txt")
 	cmd.SetUsageTemplate(usage)
+	cobra.AddTemplateFunc("ShouldShowGroupCommands", ShouldShowGroupCommands)
+	cobra.AddTemplateFunc("ShouldShowGroupCommand", ShouldShowGroupCommand)
+	cobra.AddTemplateFunc("ShouldShowUngroupedCommands", ShouldShowUngroupedCommands)
+	cobra.AddTemplateFunc("ShouldShowUngroupedCommand", ShouldShowUngroupedCommand)
 
 	return cmd
 }
 
 func newHelptextBox() *packr.Box {
 	return packr.New("github.com/deislabs/porter/cmd/porter/helptext", "./helptext")
+}
+
+func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
+	for _, child := range cmd.Commands() {
+		if ShouldShowGroupCommand(child, group) {
+			return true
+		}
+	}
+	return false
+}
+
+func ShouldShowGroupCommand(cmd *cobra.Command, group string) bool {
+	if cmd.Annotations["group"] == group {
+		return true
+	}
+	return false
+}
+
+func ShouldShowUngroupedCommands(cmd *cobra.Command) bool {
+	for _, child := range cmd.Commands() {
+		if ShouldShowUngroupedCommand(child) {
+			return true
+		}
+	}
+	return false
+}
+
+func ShouldShowUngroupedCommand(cmd *cobra.Command) bool {
+	if !cmd.IsAvailableCommand() {
+		return false
+	}
+
+	_, hasGroup := cmd.Annotations["group"]
+	return !hasGroup
 }

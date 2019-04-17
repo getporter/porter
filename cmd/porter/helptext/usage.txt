@@ -6,19 +6,19 @@ Aliases:
   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
 Examples:
-{{.Example}}{{end}}{{if not .HasParent }}
+{{.Example}}{{end}}{{if ShouldShowGroupCommands . "resource"}}
 
-Resources:{{range .Commands}}{{if eq (index .Annotations "group") "resource"}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}
+Resources:{{range .Commands}}{{if ShouldShowGroupCommand . "resource"}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if ShouldShowUngroupedCommands .}}
 
-Aliases:{{range .Commands}}{{if eq (index .Annotations "group") "alias"}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}
+Commands:{{range .Commands}}{{if ShouldShowUngroupedCommand . }}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if ShouldShowGroupCommands . "alias"}}
 
-Metadata:{{range .Commands}}{{if eq (index .Annotations "group") "meta"}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{if .HasAvailableSubCommands}}
+Aliased Commands:{{range .Commands}}{{if ShouldShowGroupCommand . "alias"}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if ShouldShowGroupCommands . "meta"}}
 
-Available Commands:{{range .Commands}}{{if .IsAvailableCommand}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+Meta Commands:{{range .Commands}}{{if ShouldShowGroupCommand . "meta"}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
