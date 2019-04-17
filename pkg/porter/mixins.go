@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/deislabs/porter/pkg/mixin"
-
+	"github.com/deislabs/porter/pkg/mixin/feed"
 	"github.com/deislabs/porter/pkg/printer"
 )
 
@@ -58,4 +58,8 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 	}
 
 	return nil
+}
+
+func (p *Porter) GenerateMixinFeed(opts feed.GenerateOptions) error {
+	return feed.Generate(opts, p.Context)
 }
