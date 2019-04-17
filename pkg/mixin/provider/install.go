@@ -29,7 +29,7 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) 
 	}
 
 	runtimeUrl := opts.GetParsedURL()
-	runtimeUrl.Path = path.Join(runtimeUrl.Path, opts.Version, fmt.Sprintf("%s-runtime-linux-amd64", opts.Name))
+	runtimeUrl.Path = path.Join(runtimeUrl.Path, opts.Version, fmt.Sprintf("%s-linux-amd64", opts.Name))
 	runtimePath := filepath.Join(mixinDir, opts.Name+"-runtime")
 	err = p.downloadFile(runtimeUrl, runtimePath)
 	if err != nil {

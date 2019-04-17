@@ -28,7 +28,7 @@ for our DeisLabs mixins helpful as a starting point.
 Porter expects mixins to be published with a specific naming convention:
 
 * client: `VERSION/MIXIN-GOOS-GOARCH[FILE-EXT]`
-* runtime: `VERSION/MIXIN-runtime-linux-amd64`
+* runtime: `VERSION/MIXIN-linux-amd64`
 
 \* Note: Porter uses `GOOS` and `GOARCH` which are terms from the Go programming
 language, because it is written in Go. You must use the same terms, for example
@@ -41,7 +41,6 @@ base url/
 └── v0.4.0-ralpha.1+dubonnet
     ├── exec-darwin-amd64
     ├── exec-linux-amd64
-    ├── exec-runtime-linux-amd64
     └── exec-windows-amd64.exe
 ```
 
@@ -59,7 +58,7 @@ porter mixin install NAME --version VERSION --url URL
 ```
 
 * client url: `URL/VERSION/NAME-GOOS-GOARCH[FILE_EXT]`
-* runtime url: `URL/VERSION/NAME-runtime-linux-amd64`
+* runtime url: `URL/VERSION/NAME-linux-amd64`
 
 When `--version` is not specified, it is defaulted to `latest` which should
 represent the most recent version of the mixin.
