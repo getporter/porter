@@ -60,19 +60,10 @@ xbuild-mixins: $(addprefix xbuild-mixin-,$(INT_MIXINS))
 xbuild-mixin-%: generate
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=$* -f mixin.mk
 
-get-mixins: $(addprefix get-mixin-,$(EXT_MIXINS))
-
-get-mixin-helm: bin/mixins/helm/helm
-bin/mixins/helm/helm:
-	bin/porter mixin install helm --version $(MIXIN_TAG) --url $(MIXINS_URL)/helm
-
-get-mixin-azure: bin/mixins/azure/azure
-bin/mixins/azure/azure:
-	bin/porter mixin install azure --version $(MIXIN_TAG) --url $(MIXINS_URL)/azure
-
-get-mixin-terraform: bin/mixins/terraform/terraform
-bin/mixins/terraform/terraform:
-	bin/porter mixin install terraform --version $(MIXIN_TAG) --url $(MIXINS_URL)/terraform
+get-mixins:
+	$(foreach MIXIN, $(EXT_MIXINS), \
+		bin/porter mixin install $(MIXIN) --version $(MIXIN_TAG) --url $(MIXINS_URL)/$(MIXIN); \
+	)
 
 verify: verify-vendor
 
@@ -133,4 +124,3 @@ clean-mixins:
 
 clean-last-testrun:
 	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
-	-helm delete --purge porter-ci-mysql porter-ci-wordpress
