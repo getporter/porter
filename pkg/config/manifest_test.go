@@ -776,3 +776,24 @@ func TestManifest_MergeParameters(t *testing.T) {
 	require.Len(t, m.Parameters, 1)
 	assert.Equal(t, "wordpress", m.Parameters[0].DefaultValue)
 }
+
+func TestManifest_ResolveBundleName(t *testing.T) {
+	m := &Manifest{
+		Name: "mybundle",
+	}
+
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step exercising bundle name interpolation",
+			"Arguments": []string{
+				"{{ bundle.name }}",
+			},
+		},
+	}
+
+	err := m.ResolveStep(s)
+	require.NoError(t, err)
+	args, ok := s.Data["Arguments"].([]interface{})
+	assert.True(t, ok)
+	assert.Equal(t, "mybundle", args[0].(string))
+}

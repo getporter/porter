@@ -574,6 +574,9 @@ func (m *Manifest) buildSourceData() (map[string]interface{}, error) {
 	bundle := make(map[string]interface{})
 	data["bundle"] = bundle
 
+	// Enable interpolation of manifest/bundle name via bundle.name
+	bundle["name"] = m.Name
+
 	params := make(map[string]interface{})
 	bundle["parameters"] = params
 	for _, param := range m.Parameters {
