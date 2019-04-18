@@ -84,6 +84,7 @@ func buildMixinsFeedCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(BuildMixinFeedGenerateCommand(p))
+	cmd.AddCommand(BuildMixinFeedTemplateCommand(p))
 
 	return cmd
 }
@@ -101,7 +102,7 @@ The file names of the mixins must follow the naming conventions required of publ
 
 VERSION/MIXIN-GOOS-GOARCH[FILE_EXT]
 
-More than one mixin may be present in the directory, and the directories may be nested a few levels dep, as long as the file path ends with the above naming convention, porter will find and match it. Below is an example directory structure that porter can list to generate a feed:
+More than one mixin may be present in the directory, and the directories may be nested a few levels deep, as long as the file path ends with the above naming convention, porter will find and match it. Below is an example directory structure that porter can list to generate a feed:
 
 bin/
 └── v1.2.3/
@@ -128,5 +129,17 @@ See https://porter.sh/mixin-distribution more details.
 	cmd.Flags().StringVarP(&opts.TemplateFile, "template", "t", "atom-template.xml",
 		"The template atom file used to populate the text fields in the generated feed.")
 
+	return cmd
+}
+
+func BuildMixinFeedTemplateCommand(p *porter.Porter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "template",
+		Short: "Create an atom feed template",
+		Long:  "Create an atom feed template in the current directory",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.CreateMixinFeedTemplate()
+		},
+	}
 	return cmd
 }

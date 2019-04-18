@@ -63,3 +63,7 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 func (p *Porter) GenerateMixinFeed(opts feed.GenerateOptions) error {
 	return feed.Generate(opts, p.Context)
 }
+
+func (p *Porter) CreateMixinFeedTemplate() error {
+	return feed.CreateTemplate(p.Context)
+}
