@@ -52,58 +52,10 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
 	return nil
 }
 
-type mixinFileset struct {
-	Mixin   string
-	Version string
-	Files   []mixinFile
-}
-
-func (f *mixinFileset) Updated() string {
-	return toAtomTimestamp(f.GetLastUpdated())
-}
-
-func (f *mixinFileset) GetLastUpdated() time.Time {
-	var max time.Time
-	for _, f := range f.Files {
-		if f.Updated.After(max) {
-			max = f.Updated
-		}
-	}
-	return max
-}
-
-type mixinEntries []*mixinFileset
-
-func (e mixinEntries) Len() int {
-	return len(e)
-}
-
-func (e mixinEntries) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
-
-func (e mixinEntries) Less(i, j int) bool {
-	return e[i].GetLastUpdated().Before(e[j].GetLastUpdated())
-}
-
-type mixinFile struct {
-	File    string
-	Updated time.Time
-}
-
-type mixinFeed map[string]map[string]*mixinFileset
-
-func Generate(opts GenerateOptions, cxt *context.Context) error {
-	feedTmpl, err := cxt.FileSystem.ReadFile(opts.TemplateFile)
-	if err != nil {
-		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
-	}
-
+func (feed MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error {
 	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
-	feed := mixinFeed{}
-	found := 0
-	err = cxt.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
+	return cxt.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -116,31 +68,34 @@ func Generate(opts GenerateOptions, cxt *context.Context) error {
 
 			versions, ok := feed[mixin]
 			if !ok {
-				versions = map[string]*mixinFileset{}
+				versions = map[string]*MixinFileset{}
 				feed[mixin] = versions
 			}
 
 			fileset, ok := versions[version]
 			if !ok {
-				fileset = &mixinFileset{
+				fileset = &MixinFileset{
 					Mixin:   mixin,
 					Version: version,
 				}
 				versions[version] = fileset
-				found++
 			}
-			fileset.Files = append(fileset.Files, mixinFile{File: filename, Updated: info.ModTime()})
+			fileset.Files = append(fileset.Files, MixinFile{File: filename, Updated: info.ModTime()})
 		}
 
 		return nil
 	})
+}
+
+func (feed MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
+	feedTmpl, err := cxt.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
 	}
 
 	tmplData := map[string]interface{}{}
 	mixins := make([]string, 0, len(feed))
-	entries := make(mixinEntries, 0, found)
+	entries := make(MixinEntries, 0, len(feed))
 	for m, versions := range feed {
 		mixins = append(mixins, m)
 		for _, fileset := range versions {

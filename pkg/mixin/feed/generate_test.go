@@ -49,7 +49,10 @@ func TestGenerate(t *testing.T) {
 		SearchDirectory: "bin",
 		TemplateFile:    "template.xml",
 	}
-	err := Generate(opts, tc.Context)
+	f := MixinFeed{}
+	err := f.Generate(opts, tc.Context)
+	require.NoError(t, err)
+	err = f.Save(opts, tc.Context)
 	require.NoError(t, err)
 
 	b, err := tc.FileSystem.ReadFile("atom.xml")
@@ -68,19 +71,19 @@ func TestMixinEntries_Sort(t *testing.T) {
 	up3, _ := time.Parse("2006-Jan-02", "2013-Feb-03")
 	up4, _ := time.Parse("2006-Jan-02", "2013-Feb-04")
 
-	entries := mixinEntries{
+	entries := MixinEntries{
 		{
-			Files: []mixinFile{
+			Files: []MixinFile{
 				{Updated: up3},
 			},
 		},
 		{
-			Files: []mixinFile{
+			Files: []MixinFile{
 				{Updated: up2},
 			},
 		},
 		{
-			Files: []mixinFile{
+			Files: []MixinFile{
 				{Updated: up4},
 			},
 		},
