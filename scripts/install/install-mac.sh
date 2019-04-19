@@ -38,4 +38,6 @@ chmod +x $PORTER_HOME/mixins/azure/azure
 chmod +x $PORTER_HOME/mixins/azure/azure-runtime
 echo Installed azure mixin
 
-echo "Installation complete. Add $PORTER_HOME to your PATH."
+echo "Installation complete."
+echo "Add porter to your path by running:"
+echo "export $PATH=$PATH:$PORTER_HOME"
