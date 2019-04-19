@@ -38,7 +38,7 @@ func (o *GenerateOptions) ValidateSearchDirectory(cxt *context.Context) error {
 	}
 
 	if _, err := cxt.FileSystem.Stat(o.SearchDirectory); err != nil {
-		return errors.Wrapf(err, "invalid --directory %s", o.SearchDirectory)
+		return errors.Wrapf(err, "invalid --dir %s", o.SearchDirectory)
 	}
 
 	return nil
@@ -99,7 +99,7 @@ func Generate(opts GenerateOptions, cxt *context.Context) error {
 		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
 	}
 
-	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-([a-z0-9]+)-([a-z0-9]+)(\.exe)?`)
+	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
 	feed := mixinFeed{}
 	found := 0

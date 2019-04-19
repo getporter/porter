@@ -16,6 +16,7 @@ CLIENT_PLATFORM ?= $(shell go env GOOS)
 CLIENT_ARCH ?= $(shell go env GOARCH)
 RUNTIME_PLATFORM ?= linux
 RUNTIME_ARCH ?= amd64
+# NOTE: When we add more to the build matrix, update the regex for porter mixins feed generate
 SUPPORTED_PLATFORMS = linux darwin windows
 SUPPORTED_ARCHES = amd64
 
