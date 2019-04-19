@@ -40,4 +40,4 @@ echo Installed azure mixin
 
 echo "Installation complete."
 echo "Add porter to your path by running:"
-echo "export $PATH=$PATH:$PORTER_HOME"
+echo "export PATH=$PATH:$PORTER_HOME"
