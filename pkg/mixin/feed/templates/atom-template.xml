@@ -14,7 +14,7 @@
         <category term="{{Mixin}}"/>
         <content>{{Version}}</content>
         {{#Files}}
-        <link ref="download" href="https://example.com/mixins/{{Version}}/{{File}}" />
+        <link rel="download" href="https://example.com/mixins/{{Version}}/{{File}}" />
         {{/Files}}
     </entry>
     {{/Entries}}

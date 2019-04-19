@@ -18,7 +18,7 @@
         <category term="{{Mixin}}"/>
         <content>{{Version}}</content>
         {{#Files}}
-        <link ref="download" href="https://porter.sh/mixins/{{Version}}/{{File}}" />
+        <link rel="download" href="https://porter.sh/mixins/{{Version}}/{{File}}" />
         {{/Files}}
     </entry>
     {{/Entries}}
