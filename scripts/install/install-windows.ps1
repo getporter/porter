@@ -27,4 +27,6 @@ echo "Installed $(iex "$PORTER_HOME\mixins\helm\helm.exe version")"
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/mixins/azure/$PORTER_VERSION/azure-runtime-linux-amd64", "$PORTER_HOME\mixins\azure\azure-runtime")
 echo "Installed azure mixin"
 
-echo "Installation complete. Add $PORTER_HOME to your PATH."
+echo "Installation complete."
+echo "Add porter to your path by running:"
+echo '$env:PATH+=";$env:USERPROFILE\.porter"'
