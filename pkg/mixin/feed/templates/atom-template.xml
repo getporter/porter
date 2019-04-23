@@ -1,0 +1,21 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://example.com/mixins</id>
+    <title>Example Mixins</title>
+    <updated>{{Updated}}</updated>
+    <link rel="self" href="https://example.com/mixins/atom.xml"/>
+    {{#Mixins}}
+    <category term="{{.}}"/>
+    {{/Mixins}}
+    {{#Entries}}
+    <entry>
+        <id>https://example.com/mixins/{{Version}}/{{Mixin}}</id>
+        <title>{{Mixin}} @ {{Version}}</title>
+        <updated>{{Updated}}</updated>
+        <category term="{{Mixin}}"/>
+        <content>{{Version}}</content>
+        {{#Files}}
+        <link rel="download" href="https://example.com/mixins/{{Version}}/{{File}}" />
+        {{/Files}}
+    </entry>
+    {{/Entries}}
+</feed>
