@@ -2,12 +2,13 @@ package porter
 
 import (
 	"bufio"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/parameters"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/parameters"
+	"github.com/pkg/errors"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 )
@@ -17,7 +18,6 @@ type CNABProvider interface {
 	Install(arguments cnabprovider.InstallArguments) error
 	Uninstall(arguments cnabprovider.UninstallArguments) error
 }
-
 
 // sharedOptions are common options that apply to multiple CNAB actions.
 type sharedOptions struct {
@@ -40,6 +40,9 @@ type sharedOptions struct {
 
 	// CredentialIdentifiers is a list of credential names or paths to make available to the bundle.
 	CredentialIdentifiers []string
+
+	// Driver is the CNAB-compliant driver used to run bundle actions.
+	Driver string
 
 	// parsedParams is the parsed set of parameters from Params.
 	parsedParams map[string]string
@@ -66,6 +69,11 @@ func (o *sharedOptions) Validate(args []string) error {
 	}
 
 	err = o.validateParams()
+	if err != nil {
+		return err
+	}
+
+	err = o.validateDriver()
 	if err != nil {
 		return err
 	}
@@ -259,4 +267,15 @@ func (o *sharedOptions) combineParameters() map[string]string {
 	}
 
 	return final
+}
+
+// Validate that the provided driver is supported
+func (o *sharedOptions) validateDriver() error {
+	// Not using duffle's driver.Lookup() as it currently does not return an error on invalid drivers
+	switch o.Driver {
+	case "docker", "debug":
+		return nil
+	default:
+		return errors.Errorf("unsupported driver provided: %s", o.Driver)
+	}
 }

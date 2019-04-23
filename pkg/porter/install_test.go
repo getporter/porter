@@ -150,3 +150,33 @@ func TestInstallOptions_combineParameters(t *testing.T) {
 
 	assert.Equal(t, wantParams, gotParams)
 }
+
+func TestInstallOptions_validateDriver(t *testing.T) {
+	testcases := []struct {
+		name       string
+		driver     string
+		wantDriver string
+		wantError  string
+	}{
+		{"valid driver provided", "debug", "debug", ""},
+		{"invalid driver provided", "dbeug", "", "unsupported driver provided: dbeug"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := InstallOptions{
+				sharedOptions{
+					Driver: tc.driver,
+				},
+			}
+			err := opts.validateDriver()
+
+			if tc.wantError == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantDriver, opts.Driver)
+			} else {
+				require.EqualError(t, err, tc.wantError)
+			}
+		})
+	}
+}

@@ -36,5 +36,6 @@ func (o *UninstallOptions) ToDuffleArgs() cnabprovider.UninstallArguments {
 		Insecure:              o.Insecure,
 		Params:                o.combineParameters(),
 		CredentialIdentifiers: o.CredentialIdentifiers,
+		Driver:                o.Driver,
 	}
 }

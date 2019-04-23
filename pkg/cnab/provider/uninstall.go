@@ -25,6 +25,9 @@ type UninstallArguments struct {
 
 	// Either a filepath to a credential file or the name of a set of a credentials.
 	CredentialIdentifiers []string
+
+	// Driver is the CNAB-compliant driver used to run bundle actions.
+	Driver string
 }
 
 func (d *Duffle) Uninstall(args UninstallArguments) error {
@@ -53,9 +56,14 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 		}
 	}
 
-	i := action.Uninstall{
-		Driver: d.newDockerDriver(),
+	driver, err := d.newDriver(args.Driver)
+	if err != nil {
+		return errors.Wrap(err, "unable to instantiate driver")
 	}
+	i := action.Uninstall{
+		Driver: driver,
+	}
+
 	creds, err := d.loadCredentials(claim.Bundle, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")

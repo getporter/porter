@@ -26,6 +26,9 @@ type InstallArguments struct {
 
 	// Either a filepath to a credential file or the name of a set of a credentials.
 	CredentialIdentifiers []string
+
+	// Driver is the CNAB-compliant driver used to run bundle actions.
+	Driver string
 }
 
 func (d *Duffle) Install(args InstallArguments) error {
@@ -55,9 +58,14 @@ func (d *Duffle) Install(args InstallArguments) error {
 	}
 	c.Parameters = params
 
-	i := action.Install{
-		Driver: d.newDockerDriver(),
+	driver, err := d.newDriver(args.Driver)
+	if err != nil {
+		return errors.Wrap(err, "unable to instantiate driver")
 	}
+	i := action.Install{
+		Driver: driver,
+	}
+
 	creds, err := d.loadCredentials(b, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
