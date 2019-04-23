@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path"
 
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/mmcdole/gofeed/atom"
 	"github.com/pkg/errors"
 )
 
-func (feed *MixinFeed) Load(file string, cxt *context.Context) error {
-	contents, err := cxt.FileSystem.ReadFile(file)
+func (feed *MixinFeed) Load(file string) error {
+	contents, err := feed.FileSystem.ReadFile(file)
 	if err != nil {
 		return errors.Wrapf(err, "error reading mixin feed at %s", file)
 	}
@@ -19,8 +19,8 @@ func (feed *MixinFeed) Load(file string, cxt *context.Context) error {
 	p := atom.Parser{}
 	atomFeed, err := p.Parse(bytes.NewReader(contents))
 	if err != nil {
-		if cxt.Debug {
-			fmt.Fprintln(cxt.Err, string(contents))
+		if feed.Debug {
+			fmt.Fprintln(feed.Err, string(contents))
 		}
 		return errors.Wrap(err, "error parsing the mixin feed as an atom xml file")
 	}
@@ -31,53 +31,53 @@ func (feed *MixinFeed) Load(file string, cxt *context.Context) error {
 		feed.Mixins = append(feed.Mixins, category.Term)
 	}
 
-	feed.Index = make(map[string]map[string]*MixinFileset)
 	for _, entry := range atomFeed.Entries {
 		fileset := &MixinFileset{}
 
 		if len(entry.Categories) == 0 {
-			if cxt.Debug {
-				fmt.Fprintf(cxt.Err, "skipping invalid entry %s, missing category (mixin name)", entry.ID)
+			if feed.Debug {
+				fmt.Fprintf(feed.Err, "skipping invalid entry %s, missing category (mixin name)", entry.ID)
 			}
 			continue
 		}
 		fileset.Mixin = entry.Categories[0].Term
 		if fileset.Mixin == "" {
-			if cxt.Debug {
-				fmt.Fprintf(cxt.Err, "skipping invalid entry %s, empty category (mixin name)", entry.ID)
+			if feed.Debug {
+				fmt.Fprintf(feed.Err, "skipping invalid entry %s, empty category (mixin name)", entry.ID)
 			}
 			continue
 		}
 
 		fileset.Version = entry.Content.Value
 		if fileset.Version == "" {
-			if cxt.Debug {
-				fmt.Fprintf(cxt.Err, "skipping invalid entry %s, empty content (version)", entry.ID)
+			if feed.Debug {
+				fmt.Fprintf(feed.Err, "skipping invalid entry %s, empty content (version)", entry.ID)
 			}
 			continue
 		}
 
-		fileset.Files = make([]MixinFile, 0, len(entry.Links))
+		fileset.Files = make([]*MixinFile, 0, len(entry.Links))
 		for _, link := range entry.Links {
 			if link.Rel == "download" {
 				if entry.UpdatedParsed == nil {
-					if cxt.Debug {
-						fmt.Fprintf(cxt.Err, "skipping invalid entry %s, invalid updated %q could not be parsed as RFC3339", entry.ID, entry.Updated)
+					if feed.Debug {
+						fmt.Fprintf(feed.Err, "skipping invalid entry %s, invalid updated %q could not be parsed as RFC3339", entry.ID, entry.Updated)
 					}
 					continue
 				}
 
 				parsedUrl, err := url.Parse(link.Href)
 				if err != nil || link.Href == "" {
-					if cxt.Debug {
-						fmt.Fprintf(cxt.Err, "skipping invalid entry %s, invalid link.href %q", entry.ID, link.Href)
+					if feed.Debug {
+						fmt.Fprintf(feed.Err, "skipping invalid entry %s, invalid link.href %q", entry.ID, link.Href)
 					}
 					continue
 				}
 
-				file := MixinFile{
+				file := &MixinFile{
 					URL:     parsedUrl,
 					Updated: *entry.UpdatedParsed,
+					File: path.Base(parsedUrl.Path),
 				}
 				fileset.Files = append(fileset.Files, file)
 			}

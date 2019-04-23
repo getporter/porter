@@ -2,12 +2,15 @@ package feed
 
 import (
 	"fmt"
+	"github.com/deislabs/porter/pkg/context"
 	"net/url"
 	"strings"
 	"time"
 )
 
 type MixinFeed struct {
+	*context.Context
+
 	// Index of mixin files
 	Index map[string]map[string]*MixinFileset
 
@@ -16,6 +19,13 @@ type MixinFeed struct {
 
 	// Updated timestamp according to the atom xml feed
 	Updated *time.Time
+}
+
+func NewMixinFeed(cxt *context.Context) *MixinFeed {
+	return &MixinFeed{
+		Index: make(map[string]map[string]*MixinFileset),
+		Context:cxt,
+	}
 }
 
 func (feed *MixinFeed) Search(mixin string, version string) *MixinFileset {
@@ -30,7 +40,7 @@ func (feed *MixinFeed) Search(mixin string, version string) *MixinFileset {
 type MixinFileset struct {
 	Mixin   string
 	Version string
-	Files   []MixinFile
+	Files   []*MixinFile
 }
 
 func (f *MixinFileset) FindDownloadURL(os string, arch string) *url.URL {

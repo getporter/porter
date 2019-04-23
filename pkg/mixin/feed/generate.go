@@ -52,11 +52,22 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
 	return nil
 }
 
-func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error {
+func (feed *MixinFeed) Generate(opts GenerateOptions) error {
+	// Check if the atom file already exists, and load in the existing data first
+	existingFeed, err := feed.FileSystem.Exists(opts.AtomFile)
+	if err != nil {
+		return err
+	}
+	if existingFeed {
+		err := feed.Load(opts.AtomFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
-	feed.Index = make(map[string]map[string]*MixinFileset)
-	return cxt.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
+	return feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -66,6 +77,7 @@ func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) erro
 			version := matches[2]
 			mixin := matches[3]
 			filename := info.Name()
+			updated := info.ModTime()
 
 			versions, ok := feed.Index[mixin]
 			if !ok {
@@ -81,15 +93,25 @@ func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) erro
 				}
 				versions[version] = fileset
 			}
-			fileset.Files = append(fileset.Files, MixinFile{File: filename, Updated: info.ModTime()})
+
+			// Check if the file is already in the feed
+			for _, file := range fileset.Files {
+				// The file is already in the feed, bump the timestamp and move on
+				if file.File == filename && file.Updated.After(updated) {
+					file.Updated = updated
+					return nil
+				}
+			}
+			// Add the file to the feed's index
+			fileset.Files = append(fileset.Files, &MixinFile{File: filename, Updated: updated})
 		}
 
 		return nil
 	})
 }
 
-func (feed *MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
-	feedTmpl, err := cxt.FileSystem.ReadFile(opts.TemplateFile)
+func (feed *MixinFeed) Save(opts GenerateOptions) error {
+	feedTmpl, err := feed.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
 	}
@@ -105,17 +127,19 @@ func (feed *MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
 	}
 	sort.Sort(sort.Reverse(entries))
 
+	sort.Strings(mixins)
+
 	tmplData["Mixins"] = mixins
 	tmplData["Entries"] = entries
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
-	err = cxt.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0644)
+	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)
 	}
 
-	fmt.Fprintf(cxt.Out, "wrote feed to %s\n", opts.AtomFile)
+	fmt.Fprintf(feed.Out, "wrote feed to %s\n", opts.AtomFile)
 	return nil
 }
 

@@ -46,8 +46,8 @@ func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (mixin.Metada
 		return mixin.Metadata{}, err
 	}
 
-	searchFeed := feed.MixinFeed{}
-	err = searchFeed.Load(feedPath, p.Context)
+	searchFeed := feed.NewMixinFeed(p.Context)
+	err = searchFeed.Load(feedPath)
 	if err != nil {
 		return mixin.Metadata{}, err
 	}
