@@ -61,6 +61,14 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
+  digest = "1:d043e5ae59276188d876090c261c311e146792c0908e08e67e766b1020a72d00"
+  name = "github.com/PuerkitoBio/goquery"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "2d2796f41742ece03e8086188fa4db16a3a0b458"
+  version = "v1.5.0"
+
+[[projects]]
   branch = "master"
   digest = "1:47ea4fbe2ab4aeb9808502c51e657041c2e49b36b83fc1c1a349135cdf16342f"
   name = "github.com/agl/ed25519"
@@ -70,6 +78,14 @@
   ]
   pruneopts = "NUT"
   revision = "5312a61534124124185d41f09206b9fef1d88403"
+
+[[projects]]
+  digest = "1:fc86904a62ac4bfff8cfbe94f42231ce3d8cea8fe2506d5293eaef468f8eaecf"
+  name = "github.com/andybalholm/cascadia"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "901648c87902174f774fac311d7f176f8647bdaa"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -689,6 +705,26 @@
   revision = "95e2e42e3ece7421c14512f79f796fe3f5d7e5dc"
 
 [[projects]]
+  digest = "1:3ccad4d009443c040011dafc1c10598117ce59141b27e9e9ea8997b3f5d9f6aa"
+  name = "github.com/mmcdole/gofeed"
+  packages = [
+    "atom",
+    "extensions",
+    "internal/shared",
+  ]
+  pruneopts = "NUT"
+  revision = "42010a154d249f5f753dfe03a6390b59671e403e"
+  version = "v1.0.0-beta2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0668ee7d9d42dcf7c3b1f53b09157db54ea773c0f62fda3f8bd5595402771b70"
+  name = "github.com/mmcdole/goxpp"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0068e33feabfc0086c7aeb58a9603f91c061c89f"
+
+[[projects]]
   digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -962,11 +998,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b9fa9d0ef68d285f2f5e9a3731e014e51b95fab22961de70149f41e0371323f2"
+  digest = "1:062eb4710af3b39043dd8acd6e1beee10ca3ab7154963f820b754e91c946de86"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
+    "html",
+    "html/atom",
+    "html/charset",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -999,17 +1038,29 @@
   revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
 
 [[projects]]
-  digest = "1:e7071ed636b5422cc51c0e3a6cebc229d6c9fffc528814b519a980641422d619"
+  digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
   name = "golang.org/x/text"
   packages = [
     "collate",
     "collate/build",
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
     "internal/colltab",
     "internal/gen",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "internal/utf8internal",
     "language",
+    "runes",
     "secure/bidirule",
     "transform",
     "unicode/bidi",
@@ -1293,6 +1344,7 @@
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
     "github.com/hashicorp/go-multierror",
+    "github.com/mmcdole/gofeed/atom",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",

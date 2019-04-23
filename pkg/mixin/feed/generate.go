@@ -52,9 +52,10 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
 	return nil
 }
 
-func (feed MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error {
+func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error {
 	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
+	feed.Index = make(map[string]map[string]*MixinFileset)
 	return cxt.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -66,10 +67,10 @@ func (feed MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error
 			mixin := matches[3]
 			filename := info.Name()
 
-			versions, ok := feed[mixin]
+			versions, ok := feed.Index[mixin]
 			if !ok {
 				versions = map[string]*MixinFileset{}
-				feed[mixin] = versions
+				feed.Index[mixin] = versions
 			}
 
 			fileset, ok := versions[version]
@@ -87,16 +88,16 @@ func (feed MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error
 	})
 }
 
-func (feed MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
+func (feed *MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
 	feedTmpl, err := cxt.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
 	}
 
 	tmplData := map[string]interface{}{}
-	mixins := make([]string, 0, len(feed))
-	entries := make(MixinEntries, 0, len(feed))
-	for m, versions := range feed {
+	mixins := make([]string, 0, len(feed.Index))
+	entries := make(MixinEntries, 0, len(feed.Index))
+	for m, versions := range feed.Index {
 		mixins = append(mixins, m)
 		for _, fileset := range versions {
 			entries = append(entries, fileset)

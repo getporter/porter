@@ -31,13 +31,31 @@ func TestInstallOptions_Validate_BadURL(t *testing.T) {
 	assert.EqualError(t, err, "invalid --url :#: parse :: missing protocol scheme")
 }
 
+func TestInstallOptions_Validate_BadFeedURL(t *testing.T) {
+	opts := InstallOptions{
+		FeedURL: ":#",
+	}
+
+	err := opts.Validate([]string{"helm"})
+	assert.EqualError(t, err, "invalid --feed-url :#: parse :: missing protocol scheme")
+}
+
 func TestInstallOptions_Validate_MissingURL(t *testing.T) {
 	opts := InstallOptions{
 		URL: "",
 	}
 
 	err := opts.Validate([]string{"helm"})
-	assert.EqualError(t, err, "--url is required")
+	assert.EqualError(t, err, "either --url or --feed-url is required")
+}
+
+func TestInstallOptions_Validate_FeedUrlSpecified(t *testing.T) {
+	opts := InstallOptions{
+		FeedURL: "https://example.com/atom.xml",
+	}
+
+	err := opts.Validate([]string{"helm"})
+	assert.NoError(t, err)
 }
 
 func TestInstallOptions_Validate_DefaultVersion(t *testing.T) {

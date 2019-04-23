@@ -8,10 +8,12 @@ import (
 )
 
 type InstallOptions struct {
-	Name      string
-	URL       string
-	Version   string
-	parsedURL *url.URL
+	Name          string
+	URL           string
+	FeedURL       string
+	Version       string
+	parsedURL     *url.URL
+	parsedFeedURL *url.URL
 }
 
 // GetParsedURL returns a copy of of the parsed URL that is safe to modify.
@@ -19,8 +21,17 @@ func (o *InstallOptions) GetParsedURL() url.URL {
 	return *o.parsedURL
 }
 
+func (o *InstallOptions) GetParsedFeedURL() url.URL {
+	return *o.parsedFeedURL
+}
+
 func (o *InstallOptions) Validate(args []string) error {
 	err := o.validateMixinName(args)
+	if err != nil {
+		return err
+	}
+
+	err = o.validateFeedURL()
 	if err != nil {
 		return err
 	}
@@ -36,8 +47,8 @@ func (o *InstallOptions) Validate(args []string) error {
 }
 
 func (o *InstallOptions) validateURL() error {
-	if o.URL == "" {
-		return errors.New("--url is required")
+	if o.URL == "" && o.FeedURL == "" {
+		return errors.New("either --url or --feed-url is required")
 	}
 
 	parsedURL, err := url.Parse(o.URL)
@@ -46,6 +57,20 @@ func (o *InstallOptions) validateURL() error {
 	}
 
 	o.parsedURL = parsedURL
+	return nil
+}
+
+func (o *InstallOptions) validateFeedURL() error {
+	if o.FeedURL == "" {
+		return nil
+	}
+
+	parsedFeedURL, err := url.Parse(o.FeedURL)
+	if err != nil {
+		return errors.Wrapf(err, "invalid --feed-url %s", o.FeedURL)
+	}
+
+	o.parsedFeedURL = parsedFeedURL
 	return nil
 }
 

@@ -2,6 +2,7 @@ package mixinprovider
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -14,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFileSystem_Install(t *testing.T) {
+func TestFileSystem_InstallFromUrl(t *testing.T) {
 	// serve out a fake mixin
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a mixxin\n")
@@ -41,6 +42,48 @@ func TestFileSystem_Install(t *testing.T) {
 	clientExists, _ := p.FileSystem.Exists("/root/.porter/mixins/mixxin/mixxin")
 	assert.True(t, clientExists)
 	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/mixins/mixxin/mixxin-runtime")
+	assert.True(t, runtimeExists)
+}
+
+func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
+	var testURL = ""
+	feed, err := ioutil.ReadFile("../feed/testdata/atom.xml")
+	require.NoError(t, err)
+
+	// serve out a fake feed and mixin
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.RequestURI, "atom.xml") {
+			// swap out the urls in the test atom feed to match the test http server here so that porter downloads
+			// the mixin binaries from the fake server
+			testAtom := strings.Replace(string(feed), "https://porter.sh", testURL, -1)
+			fmt.Fprintln(w, testAtom)
+		} else {
+			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am the helm mixin\n")
+		}
+	}))
+	defer ts.Close()
+	testURL = ts.URL
+
+	c := config.NewTestConfig(t)
+	c.SetupPorterHome()
+	p := NewFileSystem(c.Config)
+
+	opts := mixin.InstallOptions{
+		Version: "v1.2.4",
+		FeedURL: ts.URL + "/atom.xml",
+	}
+	opts.Validate([]string{"helm"})
+
+	m, err := p.Install(opts)
+
+	require.NoError(t, err)
+	assert.Equal(t, "helm", m.Name)
+	assert.Equal(t, "/root/.porter/mixins/helm", m.Dir)
+	assert.Equal(t, "/root/.porter/mixins/helm/helm", m.ClientPath)
+
+	clientExists, _ := p.FileSystem.Exists("/root/.porter/mixins/helm/helm")
+	assert.True(t, clientExists)
+	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/mixins/helm/helm-runtime")
 	assert.True(t, runtimeExists)
 }
 
