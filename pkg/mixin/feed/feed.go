@@ -23,6 +23,7 @@ type MixinFeed struct {
 
 func NewMixinFeed(cxt *context.Context) *MixinFeed {
 	return &MixinFeed{
+		Index: make(map[string]map[string]*MixinFileset),
 		Context:cxt,
 	}
 }
@@ -39,7 +40,7 @@ func (feed *MixinFeed) Search(mixin string, version string) *MixinFileset {
 type MixinFileset struct {
 	Mixin   string
 	Version string
-	Files   []MixinFile
+	Files   []*MixinFile
 }
 
 func (f *MixinFileset) FindDownloadURL(os string, arch string) *url.URL {

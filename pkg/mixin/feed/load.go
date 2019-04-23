@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path"
 
 	"github.com/mmcdole/gofeed/atom"
 	"github.com/pkg/errors"
@@ -30,7 +31,6 @@ func (feed *MixinFeed) Load(file string) error {
 		feed.Mixins = append(feed.Mixins, category.Term)
 	}
 
-	feed.Index = make(map[string]map[string]*MixinFileset)
 	for _, entry := range atomFeed.Entries {
 		fileset := &MixinFileset{}
 
@@ -56,7 +56,7 @@ func (feed *MixinFeed) Load(file string) error {
 			continue
 		}
 
-		fileset.Files = make([]MixinFile, 0, len(entry.Links))
+		fileset.Files = make([]*MixinFile, 0, len(entry.Links))
 		for _, link := range entry.Links {
 			if link.Rel == "download" {
 				if entry.UpdatedParsed == nil {
@@ -74,9 +74,10 @@ func (feed *MixinFeed) Load(file string) error {
 					continue
 				}
 
-				file := MixinFile{
+				file := &MixinFile{
 					URL:     parsedUrl,
 					Updated: *entry.UpdatedParsed,
+					File: path.Base(parsedUrl.Path),
 				}
 				fileset.Files = append(fileset.Files, file)
 			}

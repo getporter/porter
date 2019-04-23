@@ -66,6 +66,42 @@ func TestGenerate(t *testing.T) {
 	assert.Equal(t, wantXml, gotXml)
 }
 
+func TestGenerate_ExistingFeed(t *testing.T) {
+	tc := context.NewTestContext(t)
+	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
+	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
+
+	tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
+	tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+
+	up4, _ := time.Parse("2006-Jan-02", "2013-Feb-04")
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4)
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4)
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4)
+
+	opts := GenerateOptions{
+		AtomFile:        "atom.xml",
+		SearchDirectory: "bin",
+		TemplateFile:    "template.xml",
+	}
+	f := NewMixinFeed(tc.Context)
+	err := f.Generate(opts)
+	require.NoError(t, err)
+	err = f.Save(opts)
+	require.NoError(t, err)
+
+	b, err := tc.FileSystem.ReadFile("atom.xml")
+	require.NoError(t, err)
+	gotXml := string(b)
+
+	b, err = ioutil.ReadFile("testdata/atom.xml")
+	require.NoError(t, err)
+	wantXml := string(b)
+
+	assert.Equal(t, wantXml, gotXml)
+}
+
 func TestMixinEntries_Sort(t *testing.T) {
 	up2, _ := time.Parse("2006-Jan-02", "2013-Feb-02")
 	up3, _ := time.Parse("2006-Jan-02", "2013-Feb-03")
@@ -73,17 +109,17 @@ func TestMixinEntries_Sort(t *testing.T) {
 
 	entries := MixinEntries{
 		{
-			Files: []MixinFile{
+			Files: []*MixinFile{
 				{Updated: up3},
 			},
 		},
 		{
-			Files: []MixinFile{
+			Files: []*MixinFile{
 				{Updated: up2},
 			},
 		},
 		{
-			Files: []MixinFile{
+			Files: []*MixinFile{
 				{Updated: up4},
 			},
 		},

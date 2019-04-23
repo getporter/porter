@@ -61,12 +61,14 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 }
 
 func (p *Porter) GenerateMixinFeed(opts feed.GenerateOptions) error {
-	f := feed.MixinFeed{}
-	err := f.Generate(opts, p.Context)
+	f := feed.NewMixinFeed(p.Context)
+
+	err := f.Generate(opts)
 	if err != nil {
 		return err
 	}
-	return f.Save(opts, p.Context)
+
+	return f.Save(opts)
 }
 
 func (p *Porter) CreateMixinFeedTemplate() error {
