@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/deislabs/porter/pkg/mixin/feed"
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/deislabs/porter/pkg/mixin/feed"
 	"github.com/pkg/errors"
 )
 
@@ -105,27 +105,35 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool)
 
 	resp, err := http.Get(url.String())
 	if err != nil {
-		return errors.Wrapf(err, "error downloading the mixin from %s", url.String())
+		return errors.Wrapf(err, "error downloading %s", url.String())
 	}
 	if resp.StatusCode != 200 {
-		return errors.Errorf("bad status returned when downloading the mixin from %s (%d)", url.String(), resp.StatusCode)
+		return errors.Errorf("bad status returned when downloading %s (%d)", url.String(), resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
 	// Ensure the parent directories exist
 	parentDir := filepath.Dir(destPath)
-	err = p.FileSystem.MkdirAll(parentDir, 0755)
+	parentDirExists, err := p.FileSystem.DirExists(parentDir)
 	if err != nil {
-		errors.Wrapf(err, "unable to create parent directory %s", parentDir)
+		return errors.Wrapf(err, "unable to check if directory exists %s", parentDir)
 	}
-	cleanup := func() {
-		p.FileSystem.RemoveAll(parentDir) // If we can't install the mixin, don't leave traces of it
+
+	cleanup := func(){}
+	if !parentDirExists {
+		err = p.FileSystem.MkdirAll(parentDir, 0755)
+		if err != nil {
+			errors.Wrapf(err, "unable to create parent directory %s", parentDir)
+		}
+		cleanup = func() {
+			p.FileSystem.RemoveAll(parentDir) // If we can't download the file, don't leave traces of it
+		}
 	}
 
 	destFile, err := p.FileSystem.Create(destPath)
 	if err != nil {
 		cleanup()
-		return errors.Wrapf(err, "could not create the mixin at %s", destPath)
+		return errors.Wrapf(err, "could not create the file at %s", destPath)
 	}
 	defer destFile.Close()
 
@@ -140,7 +148,7 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool)
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
 		cleanup()
-		return errors.Wrapf(err, "error writing the mixin to %s", destPath)
+		return errors.Wrapf(err, "error writing the file to %s", destPath)
 	}
 	return nil
 }
