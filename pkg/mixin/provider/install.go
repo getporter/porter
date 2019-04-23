@@ -34,7 +34,7 @@ func (p *FileSystem) InstallFromURL(opts mixin.InstallOptions) (mixin.Metadata, 
 
 func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (mixin.Metadata, error) {
 	feedUrl := opts.GetParsedFeedURL()
-	tmpDir, err := p.FileSystem.TempDir("porter", "")
+	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
 		return mixin.Metadata{}, errors.Wrap(err, "error creating temp directory")
 	}
