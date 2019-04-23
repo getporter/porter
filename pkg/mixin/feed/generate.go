@@ -52,11 +52,11 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
 	return nil
 }
 
-func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) error {
+func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
 	feed.Index = make(map[string]map[string]*MixinFileset)
-	return cxt.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
+	return feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -88,8 +88,8 @@ func (feed *MixinFeed) Generate(opts GenerateOptions, cxt *context.Context) erro
 	})
 }
 
-func (feed *MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
-	feedTmpl, err := cxt.FileSystem.ReadFile(opts.TemplateFile)
+func (feed *MixinFeed) Save(opts GenerateOptions) error {
+	feedTmpl, err := feed.FileSystem.ReadFile(opts.TemplateFile)
 	if err != nil {
 		return errors.Wrapf(err, "error reading template file at %s", opts.TemplateFile)
 	}
@@ -110,12 +110,12 @@ func (feed *MixinFeed) Save(opts GenerateOptions, cxt *context.Context) error {
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
-	err = cxt.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0644)
+	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)
 	}
 
-	fmt.Fprintf(cxt.Out, "wrote feed to %s\n", opts.AtomFile)
+	fmt.Fprintf(feed.Out, "wrote feed to %s\n", opts.AtomFile)
 	return nil
 }
 

@@ -49,10 +49,10 @@ func TestGenerate(t *testing.T) {
 		SearchDirectory: "bin",
 		TemplateFile:    "template.xml",
 	}
-	f := MixinFeed{}
-	err := f.Generate(opts, tc.Context)
+	f := NewMixinFeed(tc.Context)
+	err := f.Generate(opts)
 	require.NoError(t, err)
-	err = f.Save(opts, tc.Context)
+	err = f.Save(opts)
 	require.NoError(t, err)
 
 	b, err := tc.FileSystem.ReadFile("atom.xml")
