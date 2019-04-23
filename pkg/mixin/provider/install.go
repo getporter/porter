@@ -41,7 +41,7 @@ func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (mixin.Metada
 	defer p.FileSystem.RemoveAll(tmpDir)
 	feedPath := filepath.Join(tmpDir, "atom.xml")
 
-	err = p.downloadFile(feedUrl, feedPath)
+	err = p.downloadFile(feedUrl, feedPath, false)
 	if err != nil {
 		return mixin.Metadata{}, err
 	}
@@ -78,13 +78,13 @@ func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl ur
 	mixinDir := filepath.Join(mixinsDir, name)
 
 	clientPath := filepath.Join(mixinDir, name) + mixin.FileExt
-	err = p.downloadFile(clientUrl, clientPath)
+	err = p.downloadFile(clientUrl, clientPath, true)
 	if err != nil {
 		return mixin.Metadata{}, err
 	}
 
 	runtimePath := filepath.Join(mixinDir, name+"-runtime")
-	err = p.downloadFile(runtimeUrl, runtimePath)
+	err = p.downloadFile(runtimeUrl, runtimePath, true)
 	if err != nil {
 		p.FileSystem.RemoveAll(mixinDir) // If the runtime download fails, cleanup the mixin so it's not half installed
 		return mixin.Metadata{}, err
@@ -98,7 +98,7 @@ func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl ur
 	return m, nil
 }
 
-func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
+func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool) error {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Downloading %s to %s\n", url.String(), destPath)
 	}
@@ -128,10 +128,13 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string) error {
 		return errors.Wrapf(err, "could not create the mixin at %s", destPath)
 	}
 	defer destFile.Close()
-	err = p.FileSystem.Chmod(destPath, 0755)
-	if err != nil {
-		cleanup()
-		return errors.Wrapf(err, "could not set the mixin as executable at %s", destPath)
+
+	if executable {
+		err = p.FileSystem.Chmod(destPath, 0755)
+		if err != nil {
+			cleanup()
+			return errors.Wrapf(err, "could not set the file as executable at %s", destPath)
+		}
 	}
 
 	_, err = io.Copy(destFile, resp.Body)
