@@ -29,13 +29,21 @@ events.on("exec", (e, p) => {
 // Although a GH App will trigger 'check_suite:requested' on a push to master event,
 // it will not for a tag push, hence the need for this handler
 events.on("push", (e, p) => {
-  if (e.revision.ref.includes("refs/heads/master") || e.revision.ref.startsWith("refs/tags/")) {
-    publish(e, p).run();
+  if (e.revision.ref.startsWith("refs/tags/")) {
+    Group.runEach([
+      test(e, p),
+      testIntegration(e, p),
+      publish(e, p),
+    ])
   }
 });
 
 events.on("publish", (e, p) => {
-  publish(e, p).run();
+  Group.runEach([
+    test(e, p),
+    testIntegration(e, p),
+    publish(e, p),
+  ])
 });
 
 // **********************************************
@@ -120,7 +128,7 @@ function publish(e, p) {
 
   goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
-    "make xbuild-all publish"
+    "make build xbuild-all publish"
   )
 
   return goPublish;
@@ -128,11 +136,19 @@ function publish(e, p) {
 
 // Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
-  checkRun(e, p, verify, "Verify").catch(e  => {console.error(e.toString())});
-  checkRun(e, p, build, "Build").catch(e  => {console.error(e.toString())});
-  checkRun(e, p, xbuild, "Cross-Platform Build").catch(e  => {console.error(e.toString())});
-  checkRun(e, p, test, "Test").catch(e  => {console.error(e.toString())});
-  checkRun(e, p, testIntegration, "Integration Test").catch(e  => {console.error(e.toString())});
+  if (e.revision.ref.includes("refs/heads/master")) {
+    Group.runEach([
+      checkRun(e, p, test, "Test"),
+      checkRun(e, p, testIntegration, "Integration Test"),
+      checkRun(e, p, publish, "Publish")
+    ])
+  } else {
+    checkRun(e, p, verify, "Verify").catch(e => {console.error(e.toString())});
+    checkRun(e, p, build, "Build").catch(e => {console.error(e.toString())});
+    checkRun(e, p, xbuild, "Cross-Platform Build").catch(e => {console.error(e.toString())});
+    checkRun(e, p, test, "Test").catch(e => {console.error(e.toString())});
+    checkRun(e, p, testIntegration, "Integration Test").catch(e => {console.error(e.toString())});
+  }
 }
 
 // **********************************************
