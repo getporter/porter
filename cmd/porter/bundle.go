@@ -82,12 +82,16 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 		Short: "Install a bundle",
 		Long: `Install a bundle.
 
-The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle.`,
+The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle.
+
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
+For instance, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
   porter bundle install --insecure
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
+  porter bundle install --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
@@ -108,6 +112,8 @@ The first argument is the name of the claim to create for the installation. The 
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
+	f.StringVarP(&opts.Driver, "driver", "d", "docker",
+		"Specify a driver to use. Allowed values: docker, debug")
 
 	return cmd
 }
@@ -128,12 +134,16 @@ func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 		Short: "Uninstall a bundle",
 		Long: `Uninstall a bundle
 
-The first argument is the name of the claim to uninstall. The claim name defaults to the name of the bundle.`,
+The first argument is the name of the claim to uninstall. The claim name defaults to the name of the bundle.
+
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
+For instance, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
   porter bundle uninstall --insecure
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
+  porter bundle uninstall --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
@@ -154,6 +164,8 @@ The first argument is the name of the claim to uninstall. The claim name default
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
+	f.StringVarP(&opts.Driver, "driver", "d", "docker",
+		"Specify a driver to use. Allowed values: docker, debug")
 
 	return cmd
 }

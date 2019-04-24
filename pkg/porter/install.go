@@ -27,6 +27,7 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 		Insecure:              o.Insecure,
 		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
+		Driver:                o.Driver,
 	}
 
 	// Do a safe copy so that modifications to the duffle args aren't also made to the
