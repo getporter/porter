@@ -1,0 +1,13 @@
+trigger:
+  branches:
+    include:
+      - refs/heads/master
+
+pool:
+  vmImage: 'Ubuntu 16.04'
+
+steps:
+- script: |
+    PORTER_VERSION=canary ./scripts/install/install-linux.sh
+    PORTER_VERSION=latest ./scripts/install/install-linux.sh
+  displayName: 'Test Linux Install Script'
