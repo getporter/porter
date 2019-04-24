@@ -689,6 +689,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:a26f8da48b22e6176c1c6a2459904bb30bd0c49ada04b2963c2c3a203e81a620"
+  name = "github.com/masterminds/semver"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
+  version = "v1.4.2"
+
+[[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -863,18 +871,6 @@
   ]
   pruneopts = "NUT"
   revision = "619930b0b4713cc1280189bf0a4c54b3fb506f60"
-
-[[projects]]
-  digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
-  name = "github.com/rogpeppe/go-internal"
-  packages = [
-    "modfile",
-    "module",
-    "semver",
-  ]
-  pruneopts = "NUT"
-  revision = "1cf9852c553c5b7da2d5a4a091129a7822fed0c9"
-  version = "v1.2.2"
 
 [[projects]]
   digest = "1:d848e2bdc690ea54c4b49894b67a05db318a97ee6561879b814c2c1f82f61406"
@@ -1344,6 +1340,7 @@
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
     "github.com/hashicorp/go-multierror",
+    "github.com/masterminds/semver",
     "github.com/mmcdole/gofeed/atom",
     "github.com/pkg/errors",
     "github.com/spf13/afero",

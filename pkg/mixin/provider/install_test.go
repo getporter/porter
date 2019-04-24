@@ -158,7 +158,7 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 
 	_, err := p.Install(opts)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "bad status returned when downloading the mixin")
+	assert.Contains(t, err.Error(), "bad status returned when downloading")
 
 	// Make sure the mixin directory was removed
 	mixinDirExists, _ := p.FileSystem.DirExists(mixinDir)

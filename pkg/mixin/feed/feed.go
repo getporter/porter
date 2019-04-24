@@ -2,10 +2,12 @@ package feed
 
 import (
 	"fmt"
-	"github.com/deislabs/porter/pkg/context"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/deislabs/porter/pkg/context"
+	"github.com/masterminds/semver"
 )
 
 type MixinFeed struct {
@@ -34,7 +36,29 @@ func (feed *MixinFeed) Search(mixin string, version string) *MixinFileset {
 		return nil
 	}
 
-	return versions[version]
+	fileset, ok := versions[version]
+	if ok {
+		return fileset
+	}
+
+	// Return the highest version of the requested mixin according to semver
+	if version == "latest" {
+		var latestVersion *semver.Version
+		for version := range versions {
+			v, err := semver.NewVersion(version)
+			if err != nil {
+				continue
+			}
+			if latestVersion == nil || v.GreaterThan(latestVersion) {
+				latestVersion = v
+			}
+		}
+		if latestVersion != nil {
+			return versions[latestVersion.Original()]
+		}
+	}
+
+	return nil
 }
 
 type MixinFileset struct {
