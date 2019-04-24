@@ -6,7 +6,7 @@ PORTER_URL=https://deislabs.blob.core.windows.net/porter
 PORTER_VERSION=${PORTER_VERSION:-UNKNOWN}
 echo "Installing porter to $PORTER_HOME"
 
-mkdir $PORTER_HOME
+mkdir -p $PORTER_HOME
 
 curl -fsSLo $PORTER_HOME/porter $PORTER_URL/$PORTER_VERSION/porter-linux-amd64
 chmod +x $PORTER_HOME/porter

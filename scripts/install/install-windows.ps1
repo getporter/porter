@@ -3,7 +3,7 @@ $PORTER_URL="https://deislabs.blob.core.windows.net/porter"
 $PORTER_VERSION="UNKNOWN"
 echo "Installing porter to $PORTER_HOME"
 
-mkdir $PORTER_HOME
+mkdir -f $PORTER_HOME
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_VERSION/porter-windows-amd64.exe", "$PORTER_HOME\porter.exe")
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_VERSION/porter-linux-amd64", "$PORTER_HOME\porter-runtime")
