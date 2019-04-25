@@ -73,3 +73,63 @@ as doing this with Docker so that you don't need Hugo installed, it would be a w
 
 [good-first-issue]: https://waffle.io/deislabs/porter?search=backlog&label=good%20first%20issue
 [help-wanted]: https://waffle.io/deislabs/porter?search=backlog&label=help%20wanted
+
+# Cutting a Release
+
+🧀💨
+
+Our CI system watches for tags, and when a tag is pushed, it executes the
+publish target in the Makefile. When you are asked to cut a new release,
+here is the process:
+
+1. Figure out the correct version number, we follow [semver](semver.org) and
+    have a funny [release naming scheme][release-name]:
+    * Bump the major segment if there are any breaking changes.
+    * Bump the minor segment if there are new features only.
+    * Bump the patch segment if there are bug fixes only.
+    * Bump the build segment (version-prerelease.BUILDTAG+releasename) if you only
+      fixed something in the build, but the final binaries are the same.
+1. Figure out if the release name (version-prerelease.buildtag+RELEASENAME) should
+    change.
+    
+    * Keep the release name the same if it is just a build tag or patch bump.
+    * It is a new release name for major and minor bumps.
+    
+    If you need a new release name, it must be conversation with the team.
+    [Release naming scheme][release-name] explains the meaning behind the
+    release names.
+1. Ensure that the master CI build is passing, then make the tag and push it.
+
+    ```
+    git checkout master
+    git pull
+    git tag VERSION -a -m ""
+    git push --tags
+    ```
+
+1. Generate some release notes and put them into the release on GitHub.
+    The following command gives you a list of all the merged pull requests:
+
+    ```
+    git log --oneline OLDVERSION..NEWVERSION  | grep "#" > gitlog.txt
+    ```
+
+    You need to go through that and make a bulleted list of features
+    and fixes with the PR titles and links to the PR. If you come up with an
+    easier way of doing this, please submit a PR to update these instructions. 😅
+
+    ```
+    # Features
+    * PR TITLE (#PR NUMBER)
+
+    # Fixes
+    * PR TITLE (#PR NUMBER)
+
+    # Install or Upgrade
+    Run (or re-run) the installation from https://porter.sh/install to get the 
+    latest version of porter.
+    ```
+1. Name the release after the version.
+    
+
+[release-name]: https://porter.sh/faq/#how-does-your-release-naming-scheme-work
