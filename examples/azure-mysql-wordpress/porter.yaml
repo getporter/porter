@@ -41,7 +41,7 @@ install:
       name: mysql-azure-porter-demo-wordpress
       resourceGroup: "porter-test"
       parameters:
-        administratorLogin: "{{ bundle.parameters.mysql_user }} "
+        administratorLogin: "{{ bundle.parameters.mysql_user }}"
         administratorLoginPassword: "{{ bundle.parameters.mysql_password }}"
         location: "eastus"
         serverName: "{{ bundle.parameters.server_name }}"
