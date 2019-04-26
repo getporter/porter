@@ -182,6 +182,12 @@ defaultContentLanguage = "en"
     parent = "porter-architecture"
 
 [[menu.main]]
+  name = "FAQ"
+  identifier = "faq"
+  url = "/faq"
+  weight = 500
+
+[[menu.main]]
   name = "References"
   identifier = "references"
   weight = 600

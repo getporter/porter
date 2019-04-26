@@ -3,9 +3,40 @@ title: FAQ
 description: Frequently Asked Questions
 ---
 
-* [What is CNAB?](https://cnab.io)
-* [Does Porter Replace Duffle?](porter-or-duffle.md)
+* [What is CNAB?](#what-is-cnab)
+* [Does Porter Replace Duffle?](#does-porter-replace-duffle)
+* [Should I use Porter or Duffle?](#should-i-use-porter-or-duffle)
 * [How does your release naming scheme work?](#how-does-your-release-naming-scheme-work)
+
+## What is CNAB?
+
+CNAB stands for "Cloud Native Application Bundle". When we say "bundle", that is what
+we are referring to. There is a CNAB Specification and you can learn more about
+it at [cnab.io](https://cnab.io).
+
+## Does Porter replace Duffle?
+
+  <p align="center"><strong>No, Porter is not a replacement of Duffle.</strong></p>
+
+In short:
+
+> Duffle is the reference implementation of the CNAB specification and is used 
+> to quickly vet and demonstrate a working specification.
+
+> Porter supports the CNAB spec and empowers bundle authors to create composable, 
+> reusable bundles using familiar tools like Helm, Terraform, and their cloud provider's 
+> CLIs. Porter is designed to be the best user experience for working with bundles.
+
+See [Porter or Duffle](/porter-or-duffle) for a comparison of the tools.
+
+## Should I use Porter or Duffle?
+
+If you are contributing to the CNAB specification, we recommend vetting your contributions by
+"verification through implementation" on Duffle.
+
+If you are making bundles, may we suggest using Porter?
+
+<p align="center">👩🏽‍✈️ ️️👩🏽‍✈️ 👩🏽‍✈️</p> 
 
 ## How does your release naming scheme work?
 
