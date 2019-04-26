@@ -57,3 +57,4 @@ uninstall:
 
 * [Install Porter](/install/)
 * [Quick Start](/quickstart/)
+* [Frequently Asked Questions](/faq)
