@@ -131,19 +131,19 @@ install:
           key: mysql-password
   - helm:
       description: "Install Wordpress"
-      name: {{ bundle.parameters.wordpress-name }}
+      name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
       parameters:
         externalDatabase.database: wordpress
-        externalDatabase.host: {{ bundle.outputs.dbhost }}
-        externalDatabase.user: {{ bundle.outputs.dbuser }}
-        externalDatabase.password: {{ bundle.outputs.dbpassword }}
+        externalDatabase.host: "{{ bundle.outputs.dbhost }}"
+        externalDatabase.user: "{{ bundle.outputs.dbuser }}"
+        externalDatabase.password: "{{ bundle.outputs.dbpassword }}"
 
 uninstall:
   - helm:
       description: "Uninstall Wordpress Helm Chart"
       releases:
-      - {{ bundle.parameters.wordpress-name }}
+      - "{{ bundle.parameters.wordpress-name }}"
 ```
 
 ### Mixins
@@ -175,17 +175,16 @@ So it's still there, but you don't have to mess with it. 😎 A few of the secti
 to sections in the bundle.json file, such as the bundle metadata, Parameters, and Credentials.
 
 ### Hot Wiring a Bundle
-I lied, they aren't actually 1:1 mappings. Porter has some special sauce, the `source` reference that makes it much
+I lied, they aren't actually 1:1 mappings. Porter has templating that makes it
 easier to connect together components in your bundle. For example, creating a database in one step, and then using
 the connection string for that database in the next.
 
-Porter supports resolving source values right before a step is executed. Here are a few examples of source references:
+Porter supports resolving source values right before a step is executed. Here are a few examples of templating:
 
-* `bundle.outputs.private_key`
-* `bundle.parameters.wordpress-name`
-* `bundle.credentials.kubeconfig`
-* `bundle.dependencies.mysql.parameters.database_name`
-* `bundle.dependencies.mysql.outputs.dbhost`
+* `name: "{{ bundle.parameters.wordpress-name }}"`
+* `kubeconfig: "{{ bundle.credentials.kubeconfig }}"`
+* `externalDatabase.name: "{{ bundle.dependencies.mysql.parameters.database_name }}"`
+* `externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.dbhost }}"`
 
 ### Bundle Dependencies
 
@@ -223,7 +222,7 @@ install:
       name: mysql
       chart: stable/mysql
       set:
-      mysqlDatabase: {{ bundle.parameters.database_name }}
+      mysqlDatabase: "{{ bundle.parameters.database_name }}"
       outputs:
       - name: dbhost
         secret: mysql
