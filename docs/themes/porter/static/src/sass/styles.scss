@@ -41,6 +41,8 @@ $npm : '../../../../../node_modules';
 @import "docs-responsive.scss";
 @import "docs-404.scss";
 
+@import "deislabs.scss";
+
 html {
   background: white !important;
 
