@@ -60,19 +60,12 @@ able to `docker push` to and that your end-users are able to `docker pull` from.
 
 ## Install the bundle
 
-_Wondering the differences between Duffle and Porter? Please see [this page](/porter-or-duffle/)._
-
-First, make sure Duffle is installed
-(see [install instructions](https://github.com/deislabs/duffle/blob/master/README.md#getting-started)).
-
-You can then use `duffle install` to install your bundle ("demo" is the unique installation name):
+You can then use `porter install` to install your bundle ("demo" is the unique installation name):
 ```
-duffle install demo -f bundle.json
+porter install demo
 ```
 
-The `duffle list` command can be used to show all installed bundles.
-
-If you wish to uninstall the bundle, you can use `duffle uninstall`:
+If you wish to uninstall the bundle, you can use `porter uninstall`:
 ```
-duffle uninstall demo
+porter uninstall demo
 ```

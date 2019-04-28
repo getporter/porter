@@ -86,7 +86,7 @@ parameters:
 Credentials are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/802-credential-sets.md) and allow
 you to pass in sensitive data when you execute the bundle, such as passwords or configuration files.
 
-When the bundle is executed, for example when you run `duffle install`, the installer will look on your local system
+When the bundle is executed, for example when you run `porter install`, the installer will look on your local system
 for the named credential and then place the value or file found in the bundle as either an environment variable or file.
 
 By default, all credential values are considered sensitive and will be masked in console output.
