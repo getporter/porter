@@ -16,7 +16,7 @@ created Dockerfile
 created bundle.json
 created cnab/app/run
 
-$ duffle install myapp -f bundle.json
+$ porter install
 ```
 
 Here's a sample Porter manifest:
