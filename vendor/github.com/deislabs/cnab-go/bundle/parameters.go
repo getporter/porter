@@ -1,4 +1,4 @@
-package porter
+package bundle
 
 import (
 	"errors"
@@ -9,22 +9,22 @@ import (
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	DataType      string            `json:"type" toml:"type"`
-	DefaultValue  interface{}       `json:"defaultValue,omitempty" toml:"defaultValue,omitempty"`
-	AllowedValues []interface{}     `json:"allowedValues,omitempty" toml:"allowedValues,omitempty"`
-	Required      bool              `json:"required" toml:"required"`
-	MinValue      *int              `json:"minValue,omitempty" toml:"minValue,omitempty"`
-	MaxValue      *int              `json:"maxValue,omitempty" toml:"maxValue,omitempty"`
-	MinLength     *int              `json:"minLength,omitempty" toml:"minLength,omitempty"`
-	MaxLength     *int              `json:"maxLength,omitempty" toml:"maxLength,omitempty"`
-	Metadata      ParameterMetadata `json:"metadata,omitempty" toml:"metadata,omitempty"`
-	Destination   *Location         `json:"destination,omitemtpty" toml:"destination,omitempty"`
-	Sensitive     bool              `json:"sensitive" toml:"sensitive"`
+	DataType      string             `json:"type" mapstructure:"type"`
+	DefaultValue  interface{}        `json:"defaultValue,omitempty" mapstructure:"defaultValue"`
+	AllowedValues []interface{}      `json:"allowedValues,omitempty" mapstructure:"allowedValues"`
+	Required      bool               `json:"required,omitempty" mapstructure:"required"`
+	MinValue      *int               `json:"minValue,omitempty" mapstructure:"minValue"`
+	MaxValue      *int               `json:"maxValue,omitempty" mapstructure:"maxValue"`
+	MinLength     *int               `json:"minLength,omitempty" mapstructure:"minLength"`
+	MaxLength     *int               `json:"maxLength,omitempty" mapstructure:"maxLength"`
+	Metadata      *ParameterMetadata `json:"metadata,omitempty" mapstructure:"metadata"`
+	Destination   *Location          `json:"destination,omitemtpty" mapstructure:"destination"`
+	ApplyTo       []string           `json:"apply-to,omitempty" mapstructure:"apply-to,omitempty"`
 }
 
 // ParameterMetadata contains metadata for a parameter definition.
 type ParameterMetadata struct {
-	Description string `json:"description,omitempty" toml:"description,omitempty"`
+	Description string `json:"description,omitempty" mapstructure:"description"`
 }
 
 // ValidateParameterValue checks whether a value is valid as the value of
@@ -45,7 +45,7 @@ func (pd ParameterDefinition) validateByType(value interface{}) error {
 	case "bool":
 		return pd.validateBoolParameterValue(value)
 	default:
-		return fmt.Errorf("invalid parameter definition")
+		return errors.New("invalid parameter definition")
 	}
 }
 
@@ -53,7 +53,7 @@ func (pd ParameterDefinition) validateAllowedValue(value interface{}) error {
 	if len(pd.AllowedValues) > 0 {
 		val := pd.CoerceValue(value)
 		if !isInCollection(val, pd.allowedValues()) {
-			return fmt.Errorf("value is not in the set of allowed values for this parameter")
+			return errors.New("value is not in the set of allowed values for this parameter")
 		}
 	}
 	return nil
@@ -113,7 +113,7 @@ func (pd ParameterDefinition) ConvertValue(val string) (interface{}, error) {
 		} else if strings.ToLower(val) == "false" {
 			return false, nil
 		} else {
-			return false, fmt.Errorf("%s is not a valid boolean", val)
+			return false, fmt.Errorf("%q is not a valid boolean", val)
 		}
 	default:
 		return nil, errors.New("invalid parameter definition")
@@ -123,13 +123,13 @@ func (pd ParameterDefinition) ConvertValue(val string) (interface{}, error) {
 func (pd ParameterDefinition) validateStringParameterValue(value interface{}) error {
 	s, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("Value is not a string")
+		return errors.New("value is not a string")
 	}
 	if pd.MinLength != nil && len(s) < *pd.MinLength {
-		return fmt.Errorf("Value is too short: minimum length is %d", pd.MinLength)
+		return fmt.Errorf("value is too short: minimum length is %d", *pd.MinLength)
 	}
 	if pd.MaxLength != nil && len(s) > *pd.MaxLength {
-		return fmt.Errorf("Value is too long: maximum length is %d", pd.MaxLength)
+		return fmt.Errorf("value is too long: maximum length is %d", *pd.MaxLength)
 	}
 	return nil
 }
@@ -139,18 +139,18 @@ func (pd ParameterDefinition) validateIntParameterValue(value interface{}) error
 	if !ok {
 		f, ok := value.(float64)
 		if !ok {
-			return fmt.Errorf("Value is not a number")
+			return errors.New("value is not a number")
 		}
 		i, ok = asInt(f)
 		if !ok {
-			return fmt.Errorf("Value is not an integer")
+			return errors.New("value is not an integer")
 		}
 	}
 	if pd.MinValue != nil && i < *pd.MinValue {
-		return fmt.Errorf("Value is too low: minimum value is %d", pd.MinValue)
+		return fmt.Errorf("value is too low: minimum value is %d", *pd.MinValue)
 	}
 	if pd.MaxValue != nil && i > *pd.MaxValue {
-		return fmt.Errorf("Value is too long: maximum length is %d", pd.MaxValue)
+		return fmt.Errorf("value is too high: maximum value is %d", *pd.MaxValue)
 	}
 	return nil
 }
@@ -158,7 +158,7 @@ func (pd ParameterDefinition) validateIntParameterValue(value interface{}) error
 func (pd ParameterDefinition) validateBoolParameterValue(value interface{}) error {
 	_, ok := value.(bool)
 	if !ok {
-		return fmt.Errorf("Value is not a boolean")
+		return errors.New("value is not a boolean")
 	}
 	return nil
 }
