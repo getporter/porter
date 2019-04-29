@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
-
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/docker/cli/cli/command"
@@ -292,27 +292,39 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	fmt.Printf("\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
-	bundle := Bundle{
+	b := bundle.Bundle{
 		Name:        p.Config.Manifest.Name,
 		Description: p.Config.Manifest.Description,
 		Version:     p.Config.Manifest.Version,
 	}
-	image := InvocationImage{
-		Image:     invocationImage,
-		ImageType: "docker",
+	image := bundle.InvocationImage{
+		BaseImage: bundle.BaseImage{
+			Image:     invocationImage,
+			ImageType: "docker",
+		},
 	}
 	image.Digest = digest
-	bundle.InvocationImages = []InvocationImage{image}
-	bundle.Parameters = p.generateBundleParameters()
-	bundle.Credentials = p.generateBundleCredentials()
-	return p.WriteFile(bundle, 0644)
+	b.InvocationImages = []bundle.InvocationImage{image}
+	b.Parameters = p.generateBundleParameters()
+	b.Credentials = p.generateBundleCredentials()
+	return p.writeBundle(b)
 }
 
-func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
-	params := map[string]ParameterDefinition{}
+func (p Porter) writeBundle(b bundle.Bundle) error {
+	f, err := p.Config.FileSystem.OpenFile("bundle.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	defer f.Close()
+	if err != nil {
+		return errors.Wrapf(err, "error creating bundle.json")
+	}
+	_, err = b.WriteTo(f)
+	return errors.Wrap(err, "error writing to bundle.json")
+}
+
+func (p *Porter) generateBundleParameters() map[string]bundle.ParameterDefinition {
+	params := map[string]bundle.ParameterDefinition{}
 	for _, param := range append(p.Manifest.Parameters, p.buildDefaultPorterParameters()...) {
 		fmt.Printf("Generating parameter definition %s ====>\n", param.Name)
-		p := ParameterDefinition{
+		p := bundle.ParameterDefinition{
 			DataType:      param.DataType,
 			DefaultValue:  param.DefaultValue,
 			AllowedValues: param.AllowedValues,
@@ -320,7 +332,6 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 			MaxValue:      param.MaxValue,
 			MinLength:     param.MinLength,
 			MaxLength:     param.MaxLength,
-			Sensitive:     param.Sensitive,
 		}
 
 		// If the default is empty, set required to true.
@@ -329,16 +340,16 @@ func (p *Porter) generateBundleParameters() map[string]ParameterDefinition {
 		}
 
 		if param.Metadata.Description != "" {
-			p.Metadata = ParameterMetadata{Description: param.Metadata.Description}
+			p.Metadata = &bundle.ParameterMetadata{Description: param.Metadata.Description}
 		}
 
 		if param.Destination != nil {
-			p.Destination = &Location{
+			p.Destination = &bundle.Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,
 				Path:                param.Destination.Path,
 			}
 		} else {
-			p.Destination = &Location{
+			p.Destination = &bundle.Location{
 				EnvironmentVariable: strings.ToUpper(param.Name),
 			}
 		}
@@ -362,11 +373,11 @@ func (p *Porter) buildDefaultPorterParameters() []config.ParameterDefinition {
 	}
 }
 
-func (p *Porter) generateBundleCredentials() map[string]Location {
-	params := map[string]Location{}
+func (p *Porter) generateBundleCredentials() map[string]bundle.Location {
+	params := map[string]bundle.Location{}
 	for _, cred := range p.Manifest.Credentials {
 		fmt.Printf("Generating credential %s ====>\n", cred.Name)
-		l := Location{
+		l := bundle.Location{
 			Path:                cred.Path,
 			EnvironmentVariable: cred.EnvironmentVariable,
 		}

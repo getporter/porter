@@ -1,14 +1,12 @@
 package porter
 
 import (
+	"encoding/json"
 	"testing"
 
-	"encoding/json"
-
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
-
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -145,7 +143,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
 	require.NoError(t, err)
 
-	var bundle Bundle
+	var bundle bundle.Bundle
 	err = json.Unmarshal(bundleBytes, &bundle)
 	require.NoError(t, err)
 
@@ -174,7 +172,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
 	require.NoError(t, err)
 
-	var bundle Bundle
+	var bundle bundle.Bundle
 	err = json.Unmarshal(bundleBytes, &bundle)
 	require.NoError(t, err)
 

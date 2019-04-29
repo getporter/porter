@@ -205,6 +205,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:8cd271f26db91626bd5993ed540069dbade9f6149134e7f8a0ed951cbbf4f2ec"
+  name = "github.com/deislabs/cnab-go"
+  packages = ["bundle"]
+  pruneopts = "NUT"
+  revision = "7cd944a8ee450ee465795d21ad7302bed34ad1b0"
+
+[[projects]]
   digest = "1:a222203ae2f42f5a3d06fde5f9746e51291567a3df8a5ebedce334cd93b7b97a"
   name = "github.com/deislabs/duffle"
   packages = [
@@ -1319,6 +1327,7 @@
   input-imports = [
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
+    "github.com/deislabs/cnab-go/bundle",
     "github.com/deislabs/duffle/pkg/action",
     "github.com/deislabs/duffle/pkg/bundle",
     "github.com/deislabs/duffle/pkg/claim",
