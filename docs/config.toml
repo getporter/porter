@@ -58,21 +58,39 @@ defaultContentLanguage = "en"
     weight = 124
     parent = "cli"
   [[menu.main]]
-    name = "porter run"
-    url = "/cli#run"
-    identifier = "cli-run"
+    name = "porter install"
+    url = "/cli#install"
+    identifier = "cli-install"
     weight = 125
     parent = "cli"
   [[menu.main]]
-    name = "porter list mixins"
-    url = "/cli#list-mixins"
-    identifier = "cli-list-mixins"
+    name = "porter uninstall"
+    url = "/cli#uninstall"
+    identifier = "cli-uninstall"
     weight = 126
     parent = "cli"
   [[menu.main]]
-    name = "porter completion"
-    url = "/cli#completion"
-    identifier = "cli-completion"
+    name = "porter mixins list"
+    url = "/cli#mixins-list"
+    identifier = "cli-mixins-list"
+    weight = 127
+    parent = "cli"
+  [[menu.main]]
+    name = "porter mixins feed template"
+    url = "/cli#mixins-feed-template"
+    identifier = "cli-mixins-feed-template"
+    weight = 128
+    parent = "cli"
+  [[menu.main]]
+    name = "porter mixins feed generate"
+    url = "/cli#mixins-feed generate"
+    identifier = "cli-mixins-feed-generate"
+    weight = 129
+    parent = "cli"
+  [[menu.main]]
+    name = "porter schema"
+    url = "/cli#schema"
+    identifier = "cli-schema"
     weight = 198
     parent = "cli"
   [[menu.main]]
