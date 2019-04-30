@@ -18,6 +18,14 @@ install:
         - -c
         - echo Hello World
 
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo World 2.0
+
 uninstall:
   - exec:
       description: "Uninstall Hello World"

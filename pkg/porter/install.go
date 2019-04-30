@@ -21,13 +21,15 @@ func (o *InstallOptions) Validate(args []string) error {
 // to duffle installation arguments.
 func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 	args := cnabprovider.InstallArguments{
-		Claim:                 o.Name,
-		BundleIdentifier:      o.File,
-		BundleIsFile:          true,
-		Insecure:              o.Insecure,
-		Params:                make(map[string]string, len(o.combinedParameters)),
-		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
-		Driver:                o.Driver,
+		ActionArguments: cnabprovider.ActionArguments{
+			Claim:                 o.Name,
+			BundleIdentifier:      o.File,
+			BundleIsFile:          true,
+			Insecure:              o.Insecure,
+			Params:                make(map[string]string, len(o.combinedParameters)),
+			CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
+			Driver:                o.Driver,
+		},
 	}
 
 	// Do a safe copy so that modifications to the duffle args aren't also made to the

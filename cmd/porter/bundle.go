@@ -21,6 +21,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleBuildCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
+	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 
 	return cmd
@@ -31,6 +32,7 @@ func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 		buildCreateCommand(p),
 		buildBuildCommand(p),
 		buildInstallCommand(p),
+		buildUpgradeCommand(p),
 		buildUninstallCommand(p),
 	}
 }
@@ -121,6 +123,58 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 func buildInstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleInstallCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle install", "porter install", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
+	return cmd
+}
+
+func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.UpgradeOptions{}
+	cmd := &cobra.Command{
+		Use:   "upgrade [CLAIM]",
+		Short: "Upgrade a bundle",
+		Long: `Upgrade a bundle.
+
+The first argument is the name of the claim to upgrade. The claim name defaults to the name of the bundle.
+
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
+For instance, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+		Example: `  porter bundle upgrade
+  porter bundle upgrade --insecure
+  porter bundle upgrade MyAppInDev --file myapp/bundle.json
+  porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
+  porter bundle upgrade --cred azure --cred kubernetes
+  porter bundle upgrade --driver debug
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.UpgradeBundle(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.BoolVar(&opts.Insecure, "insecure", false,
+		"Allow working with untrusted bundles")
+	f.StringVarP(&opts.File, "file", "f", "",
+		"Path to the CNAB definition to upgrade. Defaults to the bundle in the current directory.")
+	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
+		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
+	f.StringSliceVar(&opts.Params, "param", nil,
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
+	f.StringVarP(&opts.Driver, "driver", "d", "docker",
+		"Specify a driver to use. Allowed values: docker, debug")
+
+	return cmd
+}
+
+func buildUpgradeCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleUpgradeCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle upgrade", "porter upgrade", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}

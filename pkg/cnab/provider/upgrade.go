@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-type UninstallArguments struct {
+type UpgradeArguments struct {
 	ActionArguments
 }
 
-func (d *Duffle) Uninstall(args UninstallArguments) error {
-	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Install
+func (d *Duffle) Upgrade(args UpgradeArguments) error {
+	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Upgrade
 	// we shouldn't be reimplementing calling all these functions all over again
 
 	claims := d.NewClaimStore()
@@ -23,7 +23,7 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 
 	if args.BundleIdentifier != "" {
 		// TODO: handle resolving based on bundle name
-		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to unisntall it?
+		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to upgrade it?
 		claim.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
 		if err != nil {
 			return err
@@ -41,7 +41,7 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
-	i := action.Uninstall{
+	i := action.Upgrade{
 		Driver: driver,
 	}
 
@@ -61,18 +61,19 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 		for k := range claim.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "upgrading bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
 	}
 
 	err = i.Run(&claim, creds, d.Out)
 	if err != nil {
-		return errors.Wrap(err, "failed to uninstall the bundle")
+		return errors.Wrap(err, "failed to upgrade the bundle")
 	}
 
-	err = claims.Delete(args.Claim)
+	// Upgrade and ALWAYS write out a claim, even if the upgrade fails
+	err = i.Run(&claim, creds, d.Out)
+	saveErr := claims.Store(claim)
 	if err != nil {
-		return errors.Wrap(err, "failed to remove the record of the bundle")
+		return errors.Wrap(err, "failed to upgrade the bundle")
 	}
-
-	return nil
+	return errors.Wrap(saveErr, "failed to record the upgrade for the bundle")
 }
