@@ -1,12 +1,12 @@
 package genny
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/gobuffalo/packd"
-	"github.com/pkg/errors"
 )
 
 // ForceBox will mount each file in the box and wrap it with ForceFile
@@ -16,7 +16,7 @@ func ForceBox(g *Generator, box packd.Walker, force bool) error {
 		ff := ForceFile(f, force)
 		f, err := ff(f)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		g.File(f)
 		return nil
@@ -29,7 +29,7 @@ func ForceFile(f File, force bool) TransformerFn {
 		path := f.Name()
 		path, err := filepath.Abs(path)
 		if err != nil {
-			return f, errors.WithStack(err)
+			return f, err
 		}
 		_, err = os.Stat(path)
 		if err != nil {
@@ -37,10 +37,10 @@ func ForceFile(f File, force bool) TransformerFn {
 			return f, nil
 		}
 		if !force {
-			return f, errors.Errorf("path %s already exists", path)
+			return f, fmt.Errorf("path %s already exists", path)
 		}
 		if err := os.RemoveAll(path); err != nil {
-			return f, errors.WithStack(err)
+			return f, err
 		}
 		return f, nil
 	}
@@ -56,7 +56,7 @@ func Force(path string, force bool) RunFn {
 	return func(r *Runner) error {
 		path, err := filepath.Abs(path)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		fi, err := os.Stat(path)
 		if err != nil {
@@ -65,19 +65,19 @@ func Force(path string, force bool) RunFn {
 		}
 		if !force {
 			if !fi.IsDir() {
-				return errors.Errorf("path %s already exists", path)
+				return fmt.Errorf("path %s already exists", path)
 			}
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
-				return errors.WithStack(err)
+				return err
 			}
 			if len(files) > 0 {
-				return errors.Errorf("path %s already exists", path)
+				return fmt.Errorf("path %s already exists", path)
 			}
 			return nil
 		}
 		if err := os.RemoveAll(path); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		return nil
 	}

@@ -3,6 +3,7 @@ package genny
 import (
 	"bytes"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -10,9 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gobuffalo/events"
 	"github.com/markbates/safe"
-	"github.com/pkg/errors"
 )
 
 type DeleteFn func()
@@ -66,17 +65,17 @@ func (s *Step) After(g *Generator) DeleteFn {
 func (s *Step) Run(r *Runner) error {
 	for _, b := range s.before {
 		if err := s.runGenerator(r, b); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 
 	if err := s.runGenerator(r, s.as); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	for _, b := range s.after {
 		if err := s.runGenerator(r, b); err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 
@@ -86,11 +85,11 @@ func (s *Step) Run(r *Runner) error {
 func (s *Step) runGenerator(r *Runner, g *Generator) error {
 	r.curGen = g
 
-	payload := events.Payload{
-		"runner":    r,
-		"step":      s,
-		"generator": g,
-	}
+	// payload := events.Payload{
+	// 	"runner":    r,
+	// 	"step":      s,
+	// 	"generator": g,
+	// }
 	if g.Should != nil {
 		err := safe.RunE(func() error {
 			if !g.Should(r) {
@@ -100,20 +99,20 @@ func (s *Step) runGenerator(r *Runner, g *Generator) error {
 		})
 		if err != nil {
 			r.Logger.Debugf("Step: %s [skipped]", g.StepName)
-			events.EmitPayload(EvtStepPrefix+":skipping:"+g.StepName, payload)
+			// events.EmitPayload(EvtStepPrefix+":skipping:"+g.StepName, payload)
 			return nil
 		}
 	}
 	r.Logger.Debugf("Step: %s", g.StepName)
-	events.EmitPayload(EvtStepPrefix+":running:"+g.StepName, payload)
+	// events.EmitPayload(EvtStepPrefix+":running:"+g.StepName, payload)
 	return r.Chdir(r.Root, func() error {
 		for _, fn := range g.runners {
 			err := safe.RunE(func() error {
 				return fn(r)
 			})
 			if err != nil {
-				events.EmitError(EvtStepPrefix+":running:"+g.StepName+":err", err, payload)
-				return errors.WithStack(err)
+				// events.EmitError(EvtStepPrefix+":running:"+g.StepName+":err", err, payload)
+				return err
 			}
 		}
 		return nil

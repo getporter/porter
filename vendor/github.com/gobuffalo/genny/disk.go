@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/gobuffalo/packd"
-	"github.com/pkg/errors"
 )
 
 // Disk is a virtual file system that works
@@ -97,14 +96,14 @@ func (d *Disk) Find(name string) (File, error) {
 	}
 	f, err := os.Open(osname)
 	if err != nil {
-		return gf, errors.WithStack(err)
+		return gf, err
 	}
 	defer f.Close()
 
 	bb := &bytes.Buffer{}
 
 	if _, err := io.Copy(bb, f); err != nil {
-		return gf, errors.WithStack(err)
+		return gf, err
 	}
 	gf = NewFile(name, bb)
 	d.Add(gf)

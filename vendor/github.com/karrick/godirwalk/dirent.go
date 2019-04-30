@@ -3,8 +3,6 @@ package godirwalk
 import (
 	"os"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 )
 
 // Dirent stores the name and file system mode type of discovered file system
@@ -22,7 +20,7 @@ type Dirent struct {
 func NewDirent(osPathname string) (*Dirent, error) {
 	fi, err := os.Lstat(osPathname)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot lstat")
+		return nil, err
 	}
 	return &Dirent{
 		name:     filepath.Base(osPathname),

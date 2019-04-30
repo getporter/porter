@@ -1,10 +1,9 @@
 package genny
 
 import (
+	"fmt"
 	"net/http"
 	"os/exec"
-
-	"github.com/pkg/errors"
 )
 
 type Results struct {
@@ -19,7 +18,7 @@ func (r Results) Find(s string) (File, error) {
 			return f, nil
 		}
 	}
-	return nil, errors.Errorf("%s not found", s)
+	return nil, fmt.Errorf("%s not found", s)
 }
 
 type RequestResult struct {

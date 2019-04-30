@@ -1,11 +1,10 @@
 package godirwalk
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
-
-	"github.com/pkg/errors"
 )
 
 // DefaultScratchBufferSize specifies the size of the scratch buffer that will
@@ -183,18 +182,18 @@ func Walk(pathname string, options *Options) error {
 	if options.FollowSymbolicLinks {
 		fi, err = os.Stat(pathname)
 		if err != nil {
-			return errors.Wrap(err, "cannot Stat")
+			return err
 		}
 	} else {
 		fi, err = os.Lstat(pathname)
 		if err != nil {
-			return errors.Wrap(err, "cannot Lstat")
+			return err
 		}
 	}
 
 	mode := fi.Mode()
 	if mode&os.ModeDir == 0 {
-		return errors.Errorf("cannot Walk non-directory: %s", pathname)
+		return fmt.Errorf("cannot Walk non-directory: %s", pathname)
 	}
 
 	dirent := &Dirent{
@@ -233,7 +232,7 @@ func walk(osPathname string, dirent *Dirent, options *Options) error {
 		if err == filepath.SkipDir {
 			return err
 		}
-		err = errors.Wrap(err, "Callback") // wrap potential errors returned by callback
+		err = errCallback(err.Error()) // wrap potential errors returned by callback
 		if action := options.ErrorCallback(osPathname, err); action == SkipNode {
 			return nil
 		}
@@ -247,35 +246,9 @@ func walk(osPathname string, dirent *Dirent, options *Options) error {
 		if !options.FollowSymbolicLinks {
 			return nil
 		}
-		// Only need to Stat entry if platform did not already have os.ModeDir
-		// set, such as would be the case for unix like operating systems. (This
-		// guard eliminates extra os.Stat check on Windows.)
-		if !dirent.IsDir() {
-			referent, err := os.Readlink(osPathname)
-			if err != nil {
-				err = errors.Wrap(err, "cannot Readlink")
-				if action := options.ErrorCallback(osPathname, err); action == SkipNode {
-					return nil
-				}
-				return err
-			}
-
-			var osp string
-			if filepath.IsAbs(referent) {
-				osp = referent
-			} else {
-				osp = filepath.Join(filepath.Dir(osPathname), referent)
-			}
-
-			fi, err := os.Stat(osp)
-			if err != nil {
-				err = errors.Wrap(err, "cannot Stat")
-				if action := options.ErrorCallback(osp, err); action == SkipNode {
-					return nil
-				}
-				return err
-			}
-			dirent.modeType = fi.Mode() & os.ModeType
+		skip, err := symlinkDirHelper(osPathname, dirent, options)
+		if err != nil || skip {
+			return err
 		}
 	}
 
@@ -286,7 +259,6 @@ func walk(osPathname string, dirent *Dirent, options *Options) error {
 	// If get here, then specified pathname refers to a directory.
 	deChildren, err := ReadDirents(osPathname, options.ScratchBuffer)
 	if err != nil {
-		err = errors.Wrap(err, "cannot ReadDirents")
 		if action := options.ErrorCallback(osPathname, err); action == SkipNode {
 			return nil
 		}
@@ -308,38 +280,12 @@ func walk(osPathname string, dirent *Dirent, options *Options) error {
 			// directory, but continue to its siblings. If received skipdir on a
 			// non-directory, stop processing remaining siblings.
 			if deChild.IsSymlink() {
-				// Only need to Stat entry if platform did not already have
-				// os.ModeDir set, such as would be the case for unix like
-				// operating systems. (This guard eliminates extra os.Stat check
-				// on Windows.)
-				if !deChild.IsDir() {
-					// Resolve symbolic link referent to determine whether node
-					// is directory or not.
-					referent, err := os.Readlink(osChildname)
-					if err != nil {
-						err = errors.Wrap(err, "cannot Readlink")
-						if action := options.ErrorCallback(osChildname, err); action == SkipNode {
-							continue // with next child
-						}
-						return err
-					}
-
-					var osp string
-					if filepath.IsAbs(referent) {
-						osp = referent
-					} else {
-						osp = filepath.Join(osPathname, referent)
-					}
-
-					fi, err := os.Stat(osp)
-					if err != nil {
-						err = errors.Wrap(err, "cannot Stat")
-						if action := options.ErrorCallback(osp, err); action == SkipNode {
-							continue // with next child
-						}
-						return err
-					}
-					deChild.modeType = fi.Mode() & os.ModeType
+				var skip bool
+				if skip, err = symlinkDirHelper(osChildname, deChild, options); err != nil {
+					return err
+				}
+				if skip {
+					continue
 				}
 			}
 			if !deChild.IsDir() {
@@ -359,9 +305,13 @@ func walk(osPathname string, dirent *Dirent, options *Options) error {
 		return err
 	}
 
-	err = errors.Wrap(err, "PostChildrenCallback") // wrap potential errors returned by callback
+	err = errCallback(err.Error()) // wrap potential errors returned by callback
 	if action := options.ErrorCallback(osPathname, err); action == SkipNode {
 		return nil
 	}
 	return err
 }
+
+type errCallback string
+
+func (e errCallback) Error() string { return string(e) }

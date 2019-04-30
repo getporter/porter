@@ -2,7 +2,6 @@ package genny
 
 import (
 	"github.com/markbates/safe"
-	"github.com/pkg/errors"
 )
 
 type TransformerFn func(File) (File, error)
@@ -24,12 +23,12 @@ func (t Transformer) Transform(f File) (File, error) {
 		var e error
 		f, e = t.fn(f)
 		if e != nil {
-			return errors.WithStack(e)
+			return e
 		}
 		return nil
 	})
 	if err != nil {
-		return f, errors.WithStack(err)
+		return f, err
 	}
 	if t.StripExt {
 		return StripExt(f, t.Ext), nil

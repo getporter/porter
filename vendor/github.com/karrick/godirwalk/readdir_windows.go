@@ -2,8 +2,6 @@ package godirwalk
 
 import (
 	"os"
-
-	"github.com/pkg/errors"
 )
 
 // The functions in this file are mere wrappers of what is already provided by
@@ -17,7 +15,7 @@ import (
 func readdirents(osDirname string, _ []byte) (Dirents, error) {
 	dh, err := os.Open(osDirname)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot Open")
+		return nil, err
 	}
 
 	fileinfos, err := dh.Readdir(0)
@@ -25,7 +23,7 @@ func readdirents(osDirname string, _ []byte) (Dirents, error) {
 		err = er
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot Readdir")
+		return nil, err
 	}
 
 	entries := make(Dirents, len(fileinfos))
@@ -39,7 +37,7 @@ func readdirents(osDirname string, _ []byte) (Dirents, error) {
 func readdirnames(osDirname string, _ []byte) ([]string, error) {
 	dh, err := os.Open(osDirname)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot Open")
+		return nil, err
 	}
 
 	entries, err := dh.Readdirnames(0)
@@ -47,7 +45,7 @@ func readdirnames(osDirname string, _ []byte) ([]string, error) {
 		err = er
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot Readdirnames")
+		return nil, err
 	}
 
 	return entries, nil

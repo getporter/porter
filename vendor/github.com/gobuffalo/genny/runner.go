@@ -12,10 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gobuffalo/events"
 	"github.com/markbates/oncer"
 	"github.com/markbates/safe"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,7 +59,7 @@ func (r *Runner) With(g *Generator) error {
 		var err error
 		step, err = NewStep(g, len(r.steps))
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	r.moot.Unlock()
@@ -84,7 +82,7 @@ func (r *Runner) WithGroup(gg *Group) {
 */
 func (r *Runner) WithNew(g *Generator, err error) error {
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	r.With(g)
 	return nil
@@ -98,7 +96,7 @@ func (r *Runner) WithFn(fn func() (*Generator, error)) error {
 	return safe.RunE(func() error {
 		g, err := fn()
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 		r.With(g)
 		return nil
@@ -137,7 +135,7 @@ func (r *Runner) FindStep(name string) (*Step, error) {
 	s, ok := r.steps[name]
 	r.moot.RUnlock()
 	if !ok {
-		return nil, errors.Errorf("could not find step %s", name)
+		return nil, fmt.Errorf("could not find step %s", name)
 	}
 	return s, nil
 }
@@ -145,7 +143,7 @@ func (r *Runner) FindStep(name string) (*Step, error) {
 func (r *Runner) ReplaceStep(name string, s *Step) error {
 	os, err := r.FindStep(name)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	s.index = os.index
 	return r.WithStep(name, s)
@@ -157,24 +155,24 @@ func (r *Runner) Run() error {
 	}
 	steps := r.Steps()
 
-	payload := events.Payload{
-		"runner": r,
-		"steps":  steps,
-	}
+	// payload := events.Payload{
+	// 	"runner": r,
+	// 	"steps":  steps,
+	// }
 
-	events.EmitPayload(EvtStarted, payload)
+	// events.EmitPayload(EvtStarted, payload)
 
 	for _, step := range steps {
 		if err := step.Run(r); err != nil {
-			payload = events.Payload{
-				"runner": r,
-				"step":   step,
-			}
-			events.EmitError(EvtFinishedErr, err, payload)
-			return errors.WithStack(err)
+			// payload = events.Payload{
+			// 	"runner": r,
+			// 	"step":   step,
+			// }
+			// events.EmitError(EvtFinishedErr, err, payload)
+			return err
 		}
 	}
-	events.EmitPayload(EvtFinished, payload)
+	// events.EmitPayload(EvtFinished, payload)
 
 	return nil
 }
@@ -205,7 +203,7 @@ func (r *Runner) File(f File) error {
 		var err error
 		f, err = r.curGen.Transform(f)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	name := f.Name()
@@ -224,7 +222,7 @@ func (r *Runner) File(f File) error {
 		err := safe.RunE(func() error {
 			var e error
 			if f, e = r.FileFn(f); e != nil {
-				return errors.WithStack(e)
+				return e
 			}
 			if s, ok := f.(io.Seeker); ok {
 				s.Seek(0, 0)
@@ -232,7 +230,7 @@ func (r *Runner) File(f File) error {
 			return nil
 		})
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 	}
 	f = NewFile(f.Name(), f)
@@ -265,7 +263,7 @@ func (r *Runner) Chdir(path string, fn func() error) error {
 	}
 
 	if err := safe.RunE(fn); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -308,7 +306,7 @@ func (r *Runner) RequestWithClient(req *http.Request, c *http.Client) (*http.Res
 		var e error
 		res, e = r.RequestFn(req, c)
 		if e != nil {
-			return errors.WithStack(e)
+			return e
 		}
 		return nil
 	})
