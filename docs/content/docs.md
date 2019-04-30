@@ -49,7 +49,8 @@ install:
 uninstall:
 - helm:
     description: "Uninstall MySQL"
-    name: mydb
+    releases:
+    - mydb
     purge: true
 ```
 
