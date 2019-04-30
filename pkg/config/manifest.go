@@ -10,9 +10,9 @@ import (
 
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Manifest struct {

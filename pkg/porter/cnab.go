@@ -16,6 +16,7 @@ import (
 // CNABProvider
 type CNABProvider interface {
 	Install(arguments cnabprovider.InstallArguments) error
+	Upgrade(arguments cnabprovider.UpgradeArguments) error
 	Uninstall(arguments cnabprovider.UninstallArguments) error
 }
 
