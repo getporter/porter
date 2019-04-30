@@ -17,7 +17,7 @@
 
 [[constraint]]
   name = "github.com/docker/distribution"
-  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
+  revision = "0d3efadf0154c2b8a4e7b6621fff9809655cc580"
 
 # The tip of master doesn't work well with the other versions
 [[constraint]]
@@ -27,7 +27,7 @@
 # later patch versions (e.g. 1.2.5) of containerd don't compile with these pinned versions of docker
 [[constraint]]
   name = "github.com/containerd/containerd"
-  version = "=v1.2.2"
+  version = "=v1.2.6"
 
 # later patch versions have a breaking change (api.StackVersion is removed)
 [[constraint]]
@@ -88,3 +88,7 @@
 [[constraint]]
   name = "github.com/cbroglie/mustache"
   version = "1.0.1"
+
+[[constraint]]
+  name = "github.com/radu-matei/coras"
+  branch = "normalized-ref"
