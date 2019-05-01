@@ -1,9 +1,11 @@
 package porter
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -48,7 +50,7 @@ func (p *Porter) Build() error {
 }
 
 func (p *Porter) generateDockerFile() error {
-	lines, err := p.buildDockerFile()
+	lines, err := p.buildDockerfile()
 	if err != nil {
 		return errors.Wrap(err, "error generating the Dockerfile")
 	}
@@ -60,13 +62,13 @@ func (p *Porter) generateDockerFile() error {
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
-func (p *Porter) buildDockerFile() ([]string, error) {
+func (p *Porter) buildDockerfile() ([]string, error) {
 	fmt.Fprintf(p.Out, "\nGenerating Dockerfile =======>\n")
 
-	lines := make([]string, 0, 10)
-
-	lines = append(lines, p.buildFromSection()...)
-	lines = append(lines, p.buildCopySSL())
+	lines, err := p.getBaseDockerfile()
+	if err != nil {
+		return nil, err
+	}
 
 	mixinLines, err := p.buildMixinsSection()
 	if err != nil {
@@ -86,11 +88,38 @@ func (p *Porter) buildDockerFile() ([]string, error) {
 	return lines, nil
 }
 
-func (p *Porter) buildFromSection() []string {
-	return []string{
-		`FROM quay.io/deis/lightweight-docker-go:v0.2.0`,
-		`FROM debian:stretch`,
+func (p *Porter) getBaseDockerfile() ([]string, error) {
+	var reader io.Reader
+	if p.Manifest.Dockerfile != "" {
+		exists, err := p.FileSystem.Exists(p.Manifest.Dockerfile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error checking if Dockerfile exists: %q", p.Manifest.Dockerfile)
+		}
+		if !exists {
+			return nil, errors.Errorf("the Dockerfile specified in the manifest doesn't exist: %q", p.Manifest.Dockerfile)
+		}
+
+		file, err := p.FileSystem.Open(p.Manifest.Dockerfile)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		reader = file
+
+	} else {
+		contents, err := p.Templates.GetDockerfile()
+		if err != nil {
+			return nil, errors.Wrap(err, "error loading default Dockerfile template")
+		}
+		reader = bytes.NewReader(contents)
 	}
+
+	var lines []string
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, nil
 }
 
 func (p *Porter) buildPorterSection() []string {
@@ -107,10 +136,6 @@ func (p *Porter) buildCNABSection() []string {
 
 func (p *Porter) buildCMDSection() string {
 	return `CMD ["/cnab/app/run"]`
-}
-
-func (p *Porter) buildCopySSL() string {
-	return `COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt`
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {

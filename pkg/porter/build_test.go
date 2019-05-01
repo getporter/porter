@@ -13,7 +13,7 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -23,7 +23,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	p.Manifest.Mixins = []string{}
 
-	gotlines, err := p.buildDockerFile()
+	gotlines, err := p.buildDockerfile()
 	require.NoError(t, err)
 
 	wantlines := []string{
@@ -37,10 +37,45 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	assert.Equal(t, wantlines, gotlines)
 }
 
+func TestPorter_buildCustomDockerfile(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	configTpl, err := p.GetManifest()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
+	require.NoError(t, err)
+
+	// Use a custom dockerfile template
+	p.Manifest.Dockerfile = "Dockerfile.template"
+	customFrom := `FROM ubuntu:latest
+COPY mybin /cnab/app/
+
+`
+	p.TestConfig.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+
+	// ignore mixins in the unit tests
+	p.Manifest.Mixins = []string{}
+
+	gotlines, err := p.buildDockerfile()
+	require.NoError(t, err)
+
+	wantLines := []string{
+		"FROM ubuntu:latest",
+		"COPY mybin /cnab/app/",
+		"",
+		"COPY cnab/ /cnab/",
+		"COPY porter.yaml /cnab/app/porter.yaml",
+		"CMD [\"/cnab/app/run\"]",
+	}
+	assert.Equal(t, wantLines, gotlines)
+}
+
 func TestPorter_buildDockerfile_output(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -50,7 +85,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	// ignore mixins in the unit tests
 	p.Manifest.Mixins = []string{}
 
-	_, err = p.buildDockerFile()
+	_, err = p.buildDockerfile()
 	require.NoError(t, err)
 
 	wantlines := `
@@ -69,7 +104,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -96,7 +131,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -121,7 +156,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
