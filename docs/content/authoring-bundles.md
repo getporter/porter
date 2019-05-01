@@ -17,7 +17,8 @@ We have full [examples](https://github.com/deislabs/porter/tree/master/examples)
 
 ## Bundle Metadata
 
-The metadata is defined by the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md).
+A lot of the metadata is defined by the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md)
+although Porter does have extra fields that are specific to making Porter bundles.
 
 ```yaml
 name: porter-azure-wordpress
@@ -31,6 +32,8 @@ invocationImage: deislabs/porter-azure-wordpress:latest
 * `version`: The version of the bundle, uses [semver](https://semver.org)
 * `invocationImage`: The name of the container image to tag the bundle with when it is built. The format is
 `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter build` so select a location that you have access to.
+* `dockerfile`: The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
+    to provide a suitable base image, for example one that has root ssl certificates installed.
 
 ## Mixins
 
