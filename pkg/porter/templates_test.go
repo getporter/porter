@@ -8,22 +8,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTemplates_GetManifestTemplate(t *testing.T) {
+func TestTemplates_GetManifest(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	gotTmpl, err := p.GetManifestTemplate()
+	gotTmpl, err := p.GetManifest()
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/porter.yaml")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
-func TestTemplates_GetRunScriptTemplate(t *testing.T) {
+func TestTemplates_GetRunScript(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	gotTmpl, err := p.GetRunScriptTemplate()
+	gotTmpl, err := p.GetRunScript()
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/run")

@@ -24,19 +24,19 @@ func NewTemplatesBox() *packr.Box {
 	return packr.New("github.com/deislabs/porter/pkg/porter/templates", "./templates")
 }
 
-// GetManifestTemplate returns a porter.yaml template file for use in new bundles.
-func (t *Templates) GetManifestTemplate() ([]byte, error) {
+// GetManifest returns a porter.yaml template file for use in new bundles.
+func (t *Templates) GetManifest() ([]byte, error) {
 	return t.box.Find(config.Name)
 }
 
-// GetRunScriptTemplate returns a run.sh template for use in new bundles.
-func (t *Templates) GetRunScriptTemplate() ([]byte, error) {
+// GetRunScript returns a run.sh template for use in new bundles.
+func (t *Templates) GetRunScript() ([]byte, error) {
 	return t.box.Find(path.Base(config.RunScript))
 }
 
-// GetSchemaTemplate returns the template manifest schema for the porter manifest.
+// GetSchema returns the template manifest schema for the porter manifest.
 // Note that is is incomplete and does not include the mixins' schemas.ß
-func (t *Templates) GetSchemaTemplate() ([]byte, error) {
+func (t *Templates) GetSchema() ([]byte, error) {
 	return t.box.Find("schema.json")
 }
 

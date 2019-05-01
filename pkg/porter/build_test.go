@@ -13,7 +13,7 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -75,7 +75,7 @@ COPY mybin /cnab/app/
 func TestPorter_buildDockerfile_output(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -104,7 +104,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -131,7 +131,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -156,7 +156,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifestTemplate()
+	configTpl, err := p.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
