@@ -39,3 +39,8 @@ func (t *Templates) GetRunScriptTemplate() ([]byte, error) {
 func (t *Templates) GetSchemaTemplate() ([]byte, error) {
 	return t.box.Find("schema.json")
 }
+
+// GetDockerfile returns the default Dockerfile for invocation images.
+func (t *Templates) GetDockerfile() ([]byte, error) {
+	return t.box.Find("Dockerfile")
+}

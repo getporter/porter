@@ -1,10 +1,11 @@
 package porter
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemplates_GetManifestTemplate(t *testing.T) {
@@ -26,5 +27,16 @@ func TestTemplates_GetRunScriptTemplate(t *testing.T) {
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/run")
+	assert.Equal(t, wantTmpl, gotTmpl)
+}
+
+func TestTemplates_GetDockerfile(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+
+	gotTmpl, err := p.GetDockerfile()
+	require.NoError(t, err)
+
+	wantTmpl, _ := ioutil.ReadFile("./templates/Dockerfile")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }

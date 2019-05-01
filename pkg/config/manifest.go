@@ -21,10 +21,16 @@ type Manifest struct {
 	outputs         map[string]string
 	sensitiveValues []string
 
-	Name         string                 `yaml:"name,omitempty"`
-	Description  string                 `yaml:"description,omitempty"`
-	Version      string                 `yaml:"version,omitempty"`
-	Image        string                 `yaml:"invocationImage,omitempty"`
+	Name        string `yaml:"name,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	Version     string `yaml:"version,omitempty"`
+
+	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
+	Image string `yaml:"invocationImage,omitempty"`
+
+	// Dockerfile is the relative path to the Dockerfile template for the invocation image
+	Dockerfile string `yaml:"dockerfile,omitempty"`
+
 	Mixins       []string               `yaml:"mixins,omitempty"`
 	Install      Steps                  `yaml:"install"`
 	Uninstall    Steps                  `yaml:"uninstall"`
