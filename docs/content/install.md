@@ -26,3 +26,24 @@ curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bas
 ```
 iwr "https://deislabs.blob.core.windows.net/porter/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
+
+# Mixins
+
+We have a number of [mixins](/mixins) to help you get started. The stable ones are installed
+by default by the script:
+
+* exec
+* kubernetes
+* helm
+* azure
+
+You can install a new version of a mixin, or install a mixin that someone else made
+using the `porter mixin install` command built into porter.
+
+```console
+$ porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
+installed terraform mixin
+terraform mixin v0.1.0-ralpha.1+elderflowerspritz (edf8778)
+```
+
+All of the DeisLabs created mixes are published to the same feed: `https://cdn.deislabs.io/porter/atom.xml`.
