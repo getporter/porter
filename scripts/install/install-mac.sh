@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORTER_HOME=~/.porter
-PORTER_URL=https://deislabs.blob.core.windows.net/porter
+PORTER_URL=https://cdn.deislabs.io/porter
 PORTER_VERSION=${PORTER_VERSION:-UNKNOWN}
 echo "Installing porter to $PORTER_HOME"
 
@@ -14,10 +14,11 @@ chmod +x $PORTER_HOME/porter
 chmod +x $PORTER_HOME/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
 
-MIXINS_URL=$PORTER_URL/mixins
-$PORTER_HOME/porter mixin install exec --version $PORTER_VERSION --url $MIXINS_URL/exec
-$PORTER_HOME/porter mixin install helm --version $PORTER_VERSION --url $MIXINS_URL/helm
-$PORTER_HOME/porter mixin install azure --version $PORTER_VERSION --url $MIXINS_URL/azure
+FEED_URL=$PORTER_URL/atom.xml
+$PORTER_HOME/porter mixin install exec --version $PORTER_VERSION --feed-url $FEED_URL
+$PORTER_HOME/porter mixin install kubernetes --version $PORTER_VERSION --feed-url $FEED_URL
+$PORTER_HOME/porter mixin install helm --version $PORTER_VERSION --feed-url $FEED_URL
+$PORTER_HOME/porter mixin install azure --version $PORTER_VERSION --feed-url $FEED_URL
 
 echo "Installation complete."
 echo "Add porter to your path by running:"
