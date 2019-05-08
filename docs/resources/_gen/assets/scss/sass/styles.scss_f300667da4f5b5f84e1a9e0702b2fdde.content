@@ -6117,19 +6117,29 @@ body {
       min-width: 100%; }
     .home .fa {
       display: none; }
-    .home #helm .billboard {
-      padding-top: 180px; }
-      .home #helm .billboard .container {
-        margin-left: 5%;
-        margin-right: 5%; }
-      .home #helm .billboard h1 {
-        font-size: 2rem; }
-      .home #helm .billboard .helm-logo {
-        max-width: 6rem !important;
-        left: 50% !important;
-        margin-left: -3rem !important; }
+  nav.home-nav h1 {
+    position: absolute;
+    left: 50%;
+    top: 0.5rem;
+    margin-left: -22.5%;
+    max-width: 250px;
+    text-align: center; }
+    nav.home-nav h1 img {
+      max-width: 45%;
+      min-height: auto !important;
+      margin: 0 auto; }
+  nav.home-nav ul {
+    position: absolute;
+    top: 7.5rem;
+    left: 0%;
+    width: 100%;
+    right: 0%;
+    text-align: center; }
+  .home #helm .billboard h1 {
+    margin-top: 1em;
+    font-size: 1.5em; }
   .main .content-wrap h1 {
-    font-size: 32px; }
+    font-size: 17.92px; }
   .main .content-wrap article {
     padding: 0 0 0.5em; }
     .main .content-wrap article h1 {
@@ -6223,16 +6233,16 @@ body {
   background-color: white;
   border-top: 2px solid rgba(0, 0, 0, 0.05);
   position: relative;
-  min-height: 3rem;
-  padding-top: 3rem; }
+  min-height: 3rem; }
   #footer .deislabs {
     width: 5.5rem;
     height: 7.3rem;
     display: inline-block;
     position: absolute;
-    top: -4rem; }
+    top: 1rem;
+    margin-bottom: 1.25rem; }
     #footer .deislabs span {
-      background: url("/src/img/deislabs.svg") no-repeat center bottom;
+      background: url(../src/img/deislabs.svg) no-repeat center bottom;
       width: 100%;
       height: 3rem;
       background-size: contain;
@@ -6251,17 +6261,17 @@ body {
       content: " ";
       transition: all 0.3s ease-in-out; }
       #footer .deislabs em.dl-tr {
-        background: url("/src/img/deislabs-tr.svg") no-repeat 50% 50%;
+        background: url(../src/img/deislabs-tr.svg) no-repeat 50% 50%;
         background-size: contain;
         left: 0;
         top: 0; }
       #footer .deislabs em.dl-sq {
-        background: url("/src/img/deislabs-sq.svg") no-repeat 50% 50%;
+        background: url(../src/img/deislabs-sq.svg) no-repeat 50% 50%;
         background-size: contain;
         right: 0;
         bottom: 1.8rem; }
       #footer .deislabs em.dl-ci {
-        background: url("/src/img/deislabs-ci.svg") no-repeat 50% 50%;
+        background: url(../src/img/deislabs-ci.svg) no-repeat 50% 50%;
         background-size: contain;
         left: 0;
         bottom: 1.8rem; }
@@ -6277,12 +6287,10 @@ body {
       #footer .deislabs a:hover em.dl-ci {
         bottom: 4.2rem; }
   #footer p {
-    margin: 1.2rem 0;
-    padding: 0 0 0 6rem;
-    font-weight: 400;
-    font-size: 18pt; }
+    margin: 2rem 0;
+    padding: 0 0 0 6rem; }
   #footer .fa {
-    font-size: 24px;
+    font-size: 1em;
     color: #333; }
 
 html {
