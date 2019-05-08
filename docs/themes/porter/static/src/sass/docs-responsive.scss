@@ -34,31 +34,43 @@
     .fa {
       display: none;
     }
+  }
 
-    #helm {
-      .billboard {
-        padding-top: 180px;
-
-        .container {
-          margin-left: 5%;
-          margin-right: 5%;
-        }
-
-        h1 {
-          font-size: 2rem;
-        }
-
-        .helm-logo {
-          max-width: 6rem !important;
-          left: 50% !important;
-          margin-left: -3rem !important;
-        }
+  nav.home-nav {
+    h1 {
+      position: absolute;
+      left: 50%;
+      top: 0.5rem;
+      margin-left: -22.5%;
+      max-width: 250px;
+      text-align: center;
+      
+      img {
+        max-width: 45%;
+        min-height: auto !important;
+        margin: 0 auto;
       }
+    }
+
+    ul {
+      position: absolute;
+      top: 7.5rem;
+      left: 0%;
+      width: 100%;
+      right: 0%;
+      text-align: center;
+    }
+  }
+
+  .home #helm .billboard {
+    h1 {
+      margin-top: 1em;
+      font-size: 1.5em;
     }
   }
 
   .main .content-wrap h1 {
-    font-size: $scalex8;
+    font-size: $scalex5;
   }
 
   .main .content-wrap article {
