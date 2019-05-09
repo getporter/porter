@@ -8,6 +8,7 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/parameters"
+	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
@@ -18,6 +19,7 @@ type CNABProvider interface {
 	Install(arguments cnabprovider.InstallArguments) error
 	Upgrade(arguments cnabprovider.UpgradeArguments) error
 	Uninstall(arguments cnabprovider.UninstallArguments) error
+	List(opts printer.PrintOptions) error
 }
 
 // sharedOptions are common options that apply to multiple CNAB actions.

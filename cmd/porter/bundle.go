@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/deislabs/porter/pkg/porter"
+	"github.com/deislabs/porter/pkg/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleBuildCommand(p))
+	cmd.AddCommand(buildBundleListCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
@@ -74,6 +76,35 @@ func buildBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
+	return cmd
+}
+
+func buildBundleListCommand(p *porter.Porter) *cobra.Command {
+	opts := struct {
+		rawFormat string
+		format    printer.Format
+	}{}
+
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "list bundles",
+		Long:  `List all bundles stored locally`,
+		Example: `  porter bundle list
+  porter bundle list -o json`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			opts.format, err = printer.ParseFormat(opts.rawFormat)
+			return err
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ListBundles(printer.PrintOptions{Format: opts.format})
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.rawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
+
 	return cmd
 }
 
