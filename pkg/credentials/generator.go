@@ -100,9 +100,6 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 	sourceValuePromptTemplate := "Enter the %s that will be used to set credential %q"
 
 	c := credentials.CredentialStrategy{Name: name}
-	// answers := &credentialAnswers{}
-
-	// c.Source = credentials.Source{}
 
 	source := ""
 	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {
