@@ -11,10 +11,11 @@ import (
 
 // CondensedClaim holds a subset of pertinent values to be listed from a claim.Claim
 type CondensedClaim struct {
-	Name    string
-	Created time.Time
-	Action  string
-	Status  string
+	Name     string
+	Created  time.Time
+	Modified time.Time
+	Action   string
+	Status   string
 }
 
 // List lists bundles with the printer.Format provided
@@ -28,10 +29,11 @@ func (d *Duffle) List(opts printer.PrintOptions) error {
 	var condensedClaims []CondensedClaim
 	for _, claim := range claims {
 		condensedClaim := CondensedClaim{
-			Name:    claim.Name,
-			Created: claim.Created,
-			Action:  claim.Result.Action,
-			Status:  claim.Result.Status,
+			Name:     claim.Name,
+			Created:  claim.Created,
+			Modified: claim.Modified,
+			Action:   claim.Result.Action,
+			Status:   claim.Result.Status,
 		}
 		condensedClaims = append(condensedClaims, condensedClaim)
 	}
@@ -48,9 +50,10 @@ func (d *Duffle) List(opts printer.PrintOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Name, cl.Created, cl.Action, cl.Status}
+				return []interface{}{cl.Name, cl.Created, cl.Modified, cl.Action, cl.Status}
 			}
-		return printer.PrintTable(d.Out, condensedClaims, printClaimRow, "NAME", "INSTALLED", "LAST ACTION", "LAST STATUS")
+		return printer.PrintTable(d.Out, condensedClaims, printClaimRow,
+			"NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}

@@ -88,7 +88,7 @@ func buildBundleListCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list bundles",
-		Long:  `List all bundles stored locally`,
+		Long:  `List all bundles managed by Porter`,
 		Example: `  porter bundle list
   porter bundle list -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
