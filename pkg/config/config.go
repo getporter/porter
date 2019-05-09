@@ -203,3 +203,19 @@ func (c *Config) GetMixinRuntimePath(mixin string) (string, error) {
 
 	return path + "-runtime", nil
 }
+
+func (c *Config) GetCredentialsDir() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "credentials"), nil
+}
+
+func (c *Config) GetCredentialPath(name string) (string, error) {
+	credDir, err := c.GetCredentialsDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(credDir, fmt.Sprintf("%s.yaml", name)), nil
+}
