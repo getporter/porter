@@ -104,7 +104,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", false,
+	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
@@ -156,7 +156,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", false,
+	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the CNAB definition to upgrade. Defaults to the bundle in the current directory.")
@@ -208,7 +208,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", false,
+	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the CNAB definition to uninstall. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
