@@ -92,7 +92,7 @@ will then provide it to the bundle in the correct location. `,
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", false,
+	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
