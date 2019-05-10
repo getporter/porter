@@ -80,29 +80,30 @@ func buildBuildCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildBundleListCommand(p *porter.Porter) *cobra.Command {
-	opts := struct {
-		rawFormat string
-		format    printer.Format
-	}{}
+	opts := porter.ListOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "list bundles",
-		Long:  `List all bundles managed by Porter`,
+		Short: "list installed bundles",
+		Long: `List all bundles installed by Porter.
+
+A listing of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
+
+Optional output formats include json and yaml.`,
 		Example: `  porter bundle list
   porter bundle list -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			opts.format, err = printer.ParseFormat(opts.rawFormat)
+			opts.Format, err = printer.ParseFormat(opts.RawFormat)
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListBundles(printer.PrintOptions{Format: opts.format})
+			return p.ListBundles(printer.PrintOptions{Format: opts.Format})
 		},
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.rawFormat, "output", "o", "table",
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 
 	return cmd
