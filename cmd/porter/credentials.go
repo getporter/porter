@@ -8,9 +8,10 @@ import (
 
 func buildCredentialsCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "credentials",
-		Aliases: []string{"cred"},
-		Short:   "Credentials commands",
+		Use:         "credentials",
+		Aliases:     []string{"cred"},
+		Annotations: map[string]string{"group": "resource"},
+		Short:       "Credentials commands",
 	}
 
 	cmd.AddCommand(buildCredentialsAddCommand(p))
@@ -25,8 +26,9 @@ func buildCredentialsCommand(p *porter.Porter) *cobra.Command {
 
 func buildCredentialsAddCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add",
-		Short: "Add Credential",
+		Use:    "add",
+		Short:  "Add Credential",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -40,8 +42,9 @@ func buildCredentialsAddCommand(p *porter.Porter) *cobra.Command {
 
 func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit",
-		Short: "Edit Credential",
+		Use:    "edit",
+		Short:  "Edit Credential",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -56,9 +59,9 @@ func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 func buildCredentialsGenerateCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.CredentialOptions{}
 	cmd := &cobra.Command{
-		Use:   "generate [name]",
+		Use:   "generate [NAME]",
 		Short: "Generate Credential Set",
-		Long: `Generate a CNAB Credential Set.
+		Long: `Generate a named set of credentials.
 
 The first argument is the name of credential set you wish to generate. If not
 provided, this will default to the bundle name. By default, Porter will 
@@ -104,8 +107,9 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 		format    printer.Format
 	}{}
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List credentials",
+		Use:    "list",
+		Short:  "List credentials",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			opts.format, err = printer.ParseFormat(opts.rawFormat)
@@ -122,8 +126,9 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 
 func buildCredentialsRemoveCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove",
-		Short: "Remove a Credential",
+		Use:    "remove",
+		Short:  "Remove a Credential",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},
@@ -137,8 +142,9 @@ func buildCredentialsRemoveCommand(p *porter.Porter) *cobra.Command {
 
 func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show",
-		Short: "Show a Credential",
+		Use:    "show",
+		Short:  "Show a Credential",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},

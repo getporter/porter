@@ -66,14 +66,13 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 
 	cs, err := credentials.GenerateCredentials(genOpts)
 	if err != nil {
-		//do something with the error
-		return err
+		return errors.Wrap(err, "unable to generate credentials")
 	}
 
 	//write the credential out to PORTER_HOME with Porter's Context
 	data, err := yaml.Marshal(cs)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to generate credentials YAML")
 	}
 	if opts.DryRun {
 		fmt.Fprintf(p.Out, "%v", string(data))
@@ -82,9 +81,13 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 
 	dest, err := p.Config.GetCredentialPath(genOpts.Name)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to determine credentials directory")
 	}
 
 	fmt.Fprintf(p.Out, "Saving credential to %s\n", dest)
-	return p.Context.FileSystem.WriteFile(dest, data, 0600)
+	err = p.Context.FileSystem.WriteFile(dest, data, 0600)
+	if err != nil {
+		return errors.Wrapf(err, "couldn't write credential file %s", dest)
+	}
+	return nil
 }

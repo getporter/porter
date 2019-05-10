@@ -85,7 +85,7 @@ func genCredentialSet(name string, creds map[string]bundle.Location, fn credenti
 func genEmptyCredentials(name string) (credentials.CredentialStrategy, error) {
 	return credentials.CredentialStrategy{
 		Name:   name,
-		Source: credentials.Source{Value: "EMPTY"},
+		Source: credentials.Source{Value: "TODO"},
 	}, nil
 }
 
