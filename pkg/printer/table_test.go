@@ -8,13 +8,14 @@ import (
 )
 
 type testType struct {
-	A, B string
+	A, B interface{}
 }
 
 func TestPrintTable(t *testing.T) {
 	v := []testType{
 		{A: "foo", B: "bar"},
 		{A: "baz", B: "qux"},
+		{A: 123, B: true},
 	}
 
 	b := &bytes.Buffer{}
@@ -27,7 +28,7 @@ func TestPrintTable(t *testing.T) {
 		"A", "B")
 
 	require.Nil(t, err)
-	require.Equal(t, "A B\nfoo bar\nbaz qux\n", b.String())
+	require.Equal(t, "A     B\nfoo   bar\nbaz   qux\n123   true\n", b.String())
 }
 
 func TestPrintTable_WithoutHeaders(t *testing.T) {
@@ -44,5 +45,5 @@ func TestPrintTable_WithoutHeaders(t *testing.T) {
 	})
 
 	require.Nil(t, err)
-	require.Equal(t, "foo bar\n", b.String())
+	require.Equal(t, "foo   bar\n", b.String())
 }
