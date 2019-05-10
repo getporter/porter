@@ -26,25 +26,23 @@ func buildMixinsCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
-	opts := struct {
-		rawFormat string
-		format    printer.Format
-	}{}
+	opts := porter.PrintMixinsOptions{}
+
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List installed mixins",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			opts.format, err = printer.ParseFormat(opts.rawFormat)
+			opts.Format, err = printer.ParseFormat(opts.RawFormat)
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintMixins(printer.PrintOptions{Format: opts.format})
+			return p.PrintMixins(opts)
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.rawFormat, "output", "o", "table",
-		"Output format, allowed values are: table, json")
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json, yaml")
 
 	return cmd
 }

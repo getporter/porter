@@ -16,7 +16,13 @@ type MixinProvider interface {
 	Install(opts mixin.InstallOptions) (mixin.Metadata, error)
 }
 
-func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
+// PrintMixinsOptions represent options for the PrintMixins function
+type PrintMixinsOptions struct {
+	RawFormat string
+	Format    printer.Format
+}
+
+func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 	mixins, err := p.Mixins.List()
 	if err != nil {
 		return err
@@ -35,6 +41,8 @@ func (p *Porter) PrintMixins(opts printer.PrintOptions) error {
 		return printer.PrintTable(p.Out, mixins, printMixinRow)
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, mixins)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, mixins)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}

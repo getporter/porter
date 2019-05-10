@@ -6,17 +6,16 @@ import (
 )
 
 func buildUninstallCommand(m *exec.Mixin) *cobra.Command {
-	var opts struct {
-		file string
-	}
+	opts := exec.UninstallOptions{}
+
 	cmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Execute the uninstall functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.Uninstall(opts.file)
+			return m.Uninstall(opts.File)
 		},
 	}
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.file, "file", "f", "", "Path to the script to execute")
+	flags.StringVarP(&opts.File, "file", "f", "", "Path to the script to execute")
 	return cmd
 }
