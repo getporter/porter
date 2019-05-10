@@ -105,75 +105,102 @@ defaultContentLanguage = "en"
     identifier = "cli-version"
     weight = 199
     parent = "cli"
-
+[[menu.main]]
+  name = "Mixins"
+  identifier = "mixins"
+  weight = 200
+  [[menu.main]]
+  name = "Overview"
+  identifier = "mixins-overview"
+  weight = 201
+  url = "/mixins"
+  parent = "mixins"
+  [[menu.main]]
+    name = "exec"
+    identifier = "exec-mixin"
+    weight = 202
+    url = "/mixins/exec"
+    parent = "mixins"
+  [[menu.main]]
+    name = "kubernetes"
+    identifier = "kubernetes-mixin"
+    weight = 203
+    url = "/mixins/kubernetes"
+    parent = "mixins"
+  [[menu.main]]
+    name = "helm"
+    identifier = "helm-mixin"
+    weight = 204
+    url = "/mixins/helm"
+    parent = "mixins"
+  [[menu.main]]
+    name = "azure"
+    identifier = "azure-mixin"
+    weight = 205
+    url = "/mixins/azure"
+    parent = "mixins"
+  [[menu.main]]
+    name = "terraform"
+    identifier = "terraform-mixin"
+    weight = 206
+    url = "/mixins/terraform"
+    parent = "mixins"
 [[menu.main]]
   name = "Authoring Bundles"
   identifier = "authoring-bundles"
-  weight = 200
+  weight = 300
   [[menu.main]]
     name = "Overview"
     url = "/authoring-bundles"
     identifier = "authoring-bundles-overview"
-    weight = 201
+    weight = 301
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Using Mixins"
     url = "/using-mixins"
     identifier = "using-mixins"
-    weight = 202
+    weight = 302
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Dependencies"
     url = "/dependencies"
     identifier = "dependencies"
-    weight = 203
+    weight = 303
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Using Parameters, Credentials and Outputs"
     url = "/wiring"
     identifier = "wiring"
-    weight = 203
+    weight = 303
     parent = "authoring-bundles"
-  #[[menu.main]]
-  #  name = "Signing Bundles"
-  #  url = "/signed-bundles"
-  #  identifier = "signed-bundles"
-  #  weight = 206
-  #  parent = "authoring-bundles"
-  #[[menu.main]]
-  #  name = "Distributing Bundles"
-  #  url = "/distributing-bundles"
-  #  identifier = "distributing-bundles"
-  #  weight = 207
-  #  parent = "authoring-bundles"
 
 [[menu.main]]
   name = "Developing Mixins"
   identifier = "developing-mixins"
-  weight = 300
+  weight = 350
   [[menu.main]]
     name = "Overview"
     url = "/mixin-dev-guide"
     identifier = "mixin-dev-guide"
-    weight = 301
+    weight = 351
     parent = "developing-mixins"
   [[menu.main]]
     name = "Commands"
     url = "/mixin-commands"
     identifier = "mixin-commands"
-    weight = 303
+    weight = 353
     parent = "developing-mixins"
   [[menu.main]]
     name = "Mixin Architecture"
     url = "/mixin-architecture"
     identifier = "mixin-architecture"
-    weight = 310
+    weight = 360
     parent = "developing-mixins"
   [[menu.main]]
     name = "Distributing Mixins"
     url = "/mixin-distribution"
     identifier = "mixin-distribution"
-    weight = 311
+    weight = 361
     parent = "developing-mixins"
 
 [[menu.main]]
