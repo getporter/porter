@@ -27,7 +27,7 @@ on top of your work.
 1. `./bin/porter COMMAND`, such as `./bin/porter build`.
 
 If you would like to install a developer build, run `make install`.
-This copies a dev build to `~/.porter` and symlinks it to `/usr/local/bin`.
+This copies a dev build (assumed previously built via e.g. `make build`) to `~/.porter` and symlinks it to `/usr/local/bin`.
 
 # Mixins
 

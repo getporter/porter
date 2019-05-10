@@ -8,7 +8,7 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git name-rev --name-only --tags --no-undefined HEAD &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
-PORTER_HOME ?= bin
+PORTER_HOME = bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
@@ -115,7 +115,7 @@ publish: prep-install-scripts
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION)
 
-install: build
+install:
 	mkdir -p $(HOME)/.porter
 	cp -R bin/* $(HOME)/.porter/
 	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
