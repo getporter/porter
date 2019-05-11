@@ -96,6 +96,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  digest = "1:b229b8cc1731eb4bc227fd1447d1bbbe453ac5b17d32b27a4b51493d787d74b5"
+  name = "github.com/carolynvs/datetime-printer"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "916b2f2f2e4884932d9d90268ceffc1af7c3ddb7"
+  version = "v0.2.0"
+
+[[projects]]
   digest = "1:a8e5037a4d69c6ad7f36cc3ef3202c04eaaba0ef0fab1d960affc6452a8edf25"
   name = "github.com/cbroglie/mustache"
   packages = ["."]
@@ -396,6 +404,14 @@
   pruneopts = "NUT"
   revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
   version = "v0.3.3"
+
+[[projects]]
+  digest = "1:b7ffca49e9cfd3dfb04a8e0a59347708c6f78f68476a32c5e0a0edca5d1b258c"
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
@@ -1325,6 +1341,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/carolynvs/datetime-printer",
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
     "github.com/deislabs/cnab-go/bundle",
