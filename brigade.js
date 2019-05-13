@@ -104,13 +104,10 @@ function testIntegration(e, p) {
     }
   };
 
-  // Setup kubeconfig, fetch duffle, docker login, run tests
+  // Setup kubeconfig, docker login, run tests
   goTest.tasks.push(
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
-    "apt-get update && apt-get install -y sudo",
-    "curl -fsSL https://raw.githubusercontent.com/fishworks/gofish/master/scripts/install.sh | bash",
-    "gofish init && gofish install duffle",
     `docker login ${p.secrets.dockerhubRegistry} \
       -u ${p.secrets.dockerhubUsername} \
       -p ${p.secrets.dockerhubPassword}`,
