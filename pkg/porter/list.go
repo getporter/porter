@@ -2,11 +2,13 @@ package porter
 
 import (
 	"fmt"
+	"sort"
+	"time"
 
-	"github.com/pkg/errors"
-
+	dtprinter "github.com/carolynvs/datetime-printer"
 	cnab "github.com/deislabs/porter/pkg/cnab/provider"
-	printer "github.com/deislabs/porter/pkg/printer"
+	"github.com/deislabs/porter/pkg/printer"
+	"github.com/pkg/errors"
 )
 
 // ListOptions represent options for a bundle list command
@@ -15,18 +17,25 @@ type ListOptions struct {
 	Format    printer.Format
 }
 
-const (
-	// TimeFormat is used to generate a human-readable representation of a raw time.Time value
-	TimeFormat = "Mon Jan _2 15:04:05"
-)
-
 // CondensedClaim holds a subset of pertinent values to be listed from a claim.Claim
 type CondensedClaim struct {
 	Name     string
-	Created  string
-	Modified string
+	Created  time.Time
+	Modified time.Time
 	Action   string
 	Status   string
+}
+
+type CondensedClaimList []CondensedClaim
+
+func (l CondensedClaimList) Len() int {
+	return len(l)
+}
+func (l CondensedClaimList) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
+func (l CondensedClaimList) Less(i, j int) bool {
+	return l[i].Modified.Before(l[j].Modified)
 }
 
 // ListBundles lists installed bundles using the printer.Format provided
@@ -38,17 +47,18 @@ func (p *Porter) ListBundles(opts printer.PrintOptions) error {
 		return errors.Wrap(err, "could not list claims")
 	}
 
-	var condensedClaims []CondensedClaim
+	var condensedClaims CondensedClaimList
 	for _, claim := range claims {
 		condensedClaim := CondensedClaim{
 			Name:     claim.Name,
-			Created:  fmt.Sprint(claim.Created.Format(TimeFormat)),
-			Modified: fmt.Sprint(claim.Modified.Format(TimeFormat)),
+			Created:  claim.Created,
+			Modified: claim.Modified,
 			Action:   claim.Result.Action,
 			Status:   claim.Result.Status,
 		}
 		condensedClaims = append(condensedClaims, condensedClaim)
 	}
+	sort.Sort(sort.Reverse(condensedClaims))
 
 	switch opts.Format {
 	case printer.FormatJson:
@@ -56,13 +66,19 @@ func (p *Porter) ListBundles(opts printer.PrintOptions) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, condensedClaims)
 	case printer.FormatTable:
+		// have every row use the same "now" starting ... NOW!
+		now := time.Now()
+		tp:= dtprinter.DateTimePrinter{
+			Now:func() time.Time {return now},
+		}
+
 		printClaimRow :=
 			func(v interface{}) []interface{} {
 				cl, ok := v.(CondensedClaim)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Name, cl.Created, cl.Modified, cl.Action, cl.Status}
+				return []interface{}{cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Action, cl.Status}
 			}
 		return printer.PrintTable(p.Out, condensedClaims, printClaimRow,
 			"NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")

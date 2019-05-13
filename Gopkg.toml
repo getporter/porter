@@ -3,6 +3,10 @@
   name = "github.com/deislabs/duffle"
   version = "=0.1.0-ralpha.5+englishrose"
 
+[[constraint]]
+  name = "github.com/carolynvs/datetime-printer"
+  version = "v0.2.0"
+
 #
 # SEMVER IS DEAD, LONG LIVE SEMVER
 # Use a very specific version of docker and its libraries because they aren't contained in a release yet, but duffle uses some unreleased feature/code ¯\_(ツ)_/¯
