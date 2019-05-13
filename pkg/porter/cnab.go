@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/deislabs/duffle/pkg/bundle"
+
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/parameters"
 	"github.com/pkg/errors"
@@ -15,6 +17,7 @@ import (
 
 // CNABProvider
 type CNABProvider interface {
+	LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error)
 	Install(arguments cnabprovider.InstallArguments) error
 	Upgrade(arguments cnabprovider.UpgradeArguments) error
 	Uninstall(arguments cnabprovider.UninstallArguments) error
