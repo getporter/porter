@@ -1,7 +1,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://porter.sh/mixins</id>
     <title>DeisLabs Mixins</title>
-    <updated>2013-02-04T00:00:00Z</updated>
+    <updated>2013-02-10T00:00:00Z</updated>
     <link rel="self" href="https://porter.sh/mixins/atom.xml"/>
     <author>
         <name>DeisLabs</name>
@@ -9,6 +9,16 @@
     </author>
     <category term="exec"/>
     <category term="helm"/>
+    <entry>
+        <id>https://porter.sh/mixins/canary/exec</id>
+        <title>exec @ canary</title>
+        <updated>2013-02-10T00:00:00Z</updated>
+        <category term="exec"/>
+        <content>canary</content>
+        <link rel="download" href="https://porter.sh/mixins/canary/exec-darwin-amd64" />
+        <link rel="download" href="https://porter.sh/mixins/canary/exec-linux-amd64" />
+        <link rel="download" href="https://porter.sh/mixins/canary/exec-windows-amd64.exe" />
+    </entry>
     <entry>
         <id>https://porter.sh/mixins/v1.2.4/helm</id>
         <title>helm @ v1.2.4</title>
