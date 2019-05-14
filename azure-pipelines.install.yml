@@ -7,7 +7,5 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 steps:
-- script: |
-    PORTER_VERSION=canary ./scripts/install/install-linux.sh
-    PORTER_VERSION=latest ./scripts/install/install-linux.sh
+- bash: scripts/test/test-install.sh
   displayName: 'Test Linux Install Script'
