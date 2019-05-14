@@ -1,12 +1,14 @@
 # CNAB Bundle with Porter - Spring Music Demo App
 
-This project is a sample CNAB bundle that is created and managed by Porter. https://porter.sh 
+This bundle demonstrates advanced use cases for Porter.
 
-This bundle uses 3 mixins to access your Azure subscription and deploy the app. These values need to be updated in the porter.yaml.
+The bundle leverages a base Dockerfile (cnab/app/Dockerfile.base) to customize the resulting invocation image for the bundle by first installing the `azure cli` so that it can be used by the `exec` mixin. It then uses 4 mixins to access your Azure subscription and deploy the app. These values need to be updated in the porter.yaml.
 
-* The `exec` mixin uses an Azure Service Principal to access via the CLI.
-* The `azure` mixin uses ARM and requires the subscription and tenant info. 
-* The `helm` mixin deploys the chart into your AKS cluster.
+* The `azure` mixin is used to create an AKS cluster using ARM. This requires subscription and tenant info.
+* The `exec` mixin uses an Azure Service Principal to access via the CLI and install Helm's Tiller into an AKS cluster.
+* The `kubernetes` mixin applys RBAC policies for Helm
+* The `helm` mixin deploys the chart into the AKS cluster.
+
 
 ### Prerequisites
 
