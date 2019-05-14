@@ -1,0 +1,132 @@
+name: spring-music-bundle
+version: 0.1.0
+description: "Spring Music Demo app with Azure Cosmos DB"
+invocationImage: jeremyrickard/spring-music-installer:v314
+dockerfile: cnab/app/Dockerfile.base
+
+mixins:
+  - exec
+  - helm
+  - azure
+  - kubernetes
+
+install:
+  - azure:
+      description: "Create AKS"
+      type: aks
+      name: "{{ bundle.parameters.aks-cluster-name }}"
+      resourceGroup: "{{ bundle.parameters.aks-resource-group }}"
+      parameters:
+        clusterName: "{{ bundle.parameters.aks-cluster-name }}"
+        servicePrincipalClientId: "{{ bundle.credentials.CLIENT_ID}}"
+        servicePrincipalClientSecret: "{{ bundle.credentials.CLIENT_SECRET}}"
+        location: "{{ bundle.parameters.azure-location }}"
+
+  - exec: 
+      description: "Azure CLI login"
+      command: "az"
+      arguments: 
+        - "login" 
+        - "--service-principal"
+        - "--username" 
+        - "{{ bundle.credentials.CLIENT_ID}}"
+        - "--password" 
+        - "{{ bundle.credentials.CLIENT_SECRET}}"
+        - "--tenant" 
+        - "{{ bundle.credentials.TENANT_ID}}"
+
+  - exec: 
+      description: "Azure CLI AKS get-credentials"
+      command: "az"
+      arguments: 
+        - "aks" 
+        - "get-credentials" 
+        - "--resource-group" 
+        - "{{ bundle.parameters.aks-resource-group }}"
+        - "--name"
+        - "{{ bundle.parameters.aks-cluster-name }}"
+
+  - kubernetes:
+      description: "Add RBAC roles for Tiller"
+      manifests:
+        - /cnab/app/manifests
+      wait: true  
+
+  - exec: 
+      description: "Initialize helm on cluster"
+      command: "helm"
+      arguments: 
+        - "init" 
+        - "--service-account"
+        - "tiller" 
+        - "--upgrade"
+
+  - azure:
+      description: "Create Azure Cosmos DB"
+      type: cosmosdb
+      name: spring-music-cosmos
+      resourceGroup: "{{ bundle.parameters.app-resource-group }}"
+      parameters:
+        name: "{{ bundle.parameters.cosmosdb-service-name }}"
+        kind: "MongoDB"
+        location: "{{ bundle.parameters.azure-location }}"
+      outputs:
+        - name: "COSMOSDB_HOST"
+          key: "HOST"
+        - name: "COSMOSDB_KEY"
+          key: "primary_key"       
+        - name: "COSMOSDB_CONNECTION_STRING"
+          key: "connection_string"
+          
+  - helm:
+      description: "Helm Install Spring Music Demo App"
+      name: spring-music-helm
+      chart: /cnab/app/charts/spring-music
+      replace: true
+      set:
+        deploy.cosmosConnectString: $COSMOSDB_CONNECTION_STRING
+
+uninstall:
+  - exec:
+      description: "Uninstall Spring Music Demo"
+      command: bash
+      arguments:
+        - -c
+        - echo App should be uninstalled here, but it is not
+
+credentials:
+- name: SUBSCRIPTION_ID
+  env: AZURE_SUBSCRIPTION_ID
+- name: CLIENT_ID
+  env: AZURE_CLIENT_ID
+- name: TENANT_ID
+  env: AZURE_TENANT_ID
+- name: CLIENT_SECRET
+  env: AZURE_CLIENT_SECRET
+
+parameters:
+- name: app-resource-group
+  type: string
+  default: spring-music-demo
+  destination:
+    env: APP_RESOURCE_GROUP
+- name: aks-resource-group
+  type: string
+  default: spring-music-demo
+  destination:
+    env: AKS_RESOURCE_GROUP
+- name: aks-cluster-name
+  type: string
+  default: my-aks-spring
+  destination:
+    env: AKS_CLUSTER_NAME
+- name: cosmosdb-service-name
+  type: string
+  default: myspringmusic
+  destination:
+    env: COSMOSDB_SERVICE_NAME
+- name: azure-location
+  type: string
+  default: eastus
+  destination:
+    env: AZURE_LOCATION
