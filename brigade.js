@@ -13,8 +13,7 @@ const projectOrg = "deislabs";
 
 events.on("check_suite:requested", runSuite);
 events.on("check_suite:rerequested", runSuite);
-// TODO: we should determine which check run is being requested and *only* run this
-events.on("check_run:rerequested", runSuite);
+events.on("check_run:rerequested", runCheck);
 
 events.on("exec", (e, p) => {
   Group.runAll([
@@ -131,20 +130,51 @@ function publish(e, p) {
   return goPublish;
 }
 
+// These represent the standard checks that run for PRs (see runSuite below)
+// 
+// They are encapsulated in an object such that individual checks may be run
+// using data supplied by a corresponding GitHub webhook, say, on a
+// check_run:rerequested event (see runCheck below)
+checks = {
+  "verify": { runFunc: verify, description: "Verify" },
+  "build": { runFunc: build, description: "Build" },
+  "crossplatformbuild": { runFunc: xbuild, description: "Cross-Platform Build" },
+  "test": { runFunc: test, description: "Test" },
+  "integrationtest": { runFunc: testIntegration, description: "Integration Test" }
+};
+
+// runCheck can be invoked to (re-)run an individual GitHub Check Run, as opposed to a full suite
+function runCheck(e, p) {
+  payload = JSON.parse(e.payload);
+
+  name = payload.body.check_run.name;
+  check = checks[name];
+
+  if (typeof check !== 'undefined') {
+    checkRun(e, p, check.runFunc, check.description)
+      .catch(e => {console.error(e.toString())});
+  } else {
+    err = new Error(`No check found with name: ${name}`);
+    // TODO: remove this console.error statement once Brigade logs err.message when thrown
+    // https://github.com/brigadecore/brigade-github-app/pull/43
+    console.error(err.message);
+    throw err;
+  }
+}
+
 // Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
-  if (e.revision.ref.includes("refs/heads/master")) {
+  if (e.revision.ref == "master" ) {
     Group.runEach([
       checkRun(e, p, test, "Test"),
       checkRun(e, p, testIntegration, "Integration Test"),
       checkRun(e, p, publish, "Publish")
     ])
   } else {
-    checkRun(e, p, verify, "Verify").catch(e => {console.error(e.toString())});
-    checkRun(e, p, build, "Build").catch(e => {console.error(e.toString())});
-    checkRun(e, p, xbuild, "Cross-Platform Build").catch(e => {console.error(e.toString())});
-    checkRun(e, p, test, "Test").catch(e => {console.error(e.toString())});
-    checkRun(e, p, testIntegration, "Integration Test").catch(e => {console.error(e.toString())});
+    for (check of Object.values(checks)) {
+        checkRun(e, p, check.runFunc, check.description)
+          .catch(e => {console.error(e.toString())});
+    }
   }
 }
 
