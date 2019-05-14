@@ -44,6 +44,15 @@ func TestGenerate(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/v1.2.3/exec-linux-amd64", up2, up2)
 	tc.FileSystem.Chtimes("bin/v1.2.3/exec-windows-amd64.exe", up2, up2)
 
+	tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
+	tc.FileSystem.Create("bin/canary/exec-linux-amd64")
+	tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+
+	up10, _ := time.Parse("2006-Jan-02", "2013-Feb-10")
+	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
+
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
 		SearchDirectory: "bin",
@@ -80,6 +89,15 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4)
 	tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4)
 
+	tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
+	tc.FileSystem.Create("bin/canary/exec-linux-amd64")
+	tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+
+	up10, _ := time.Parse("2006-Jan-02", "2013-Feb-10")
+	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
+	
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
 		SearchDirectory: "bin",

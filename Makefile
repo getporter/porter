@@ -106,14 +106,17 @@ prep-install-scripts:
 publish: prep-install-scripts
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=kubernetes -f mixin.mk
+
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 		az storage blob upload-batch -d porter/$(VERSION) -s bin/$(VERSION); \
-		az storage blob download -c porter -n atom.xml -f bin/atom.xml; \
-		bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml; \
-		az storage blob upload -c porter -n atom.xml -f bin/atom.xml; \
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION)
+
+	# Generate the mixin feed
+	az storage blob download -c porter -n atom.xml -f bin/atom.xml
+	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
+	az storage blob upload -c porter -n atom.xml -f bin/atom.xml
 
 install:
 	mkdir -p $(HOME)/.porter
