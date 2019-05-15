@@ -12,7 +12,7 @@ The bundle leverages a base Dockerfile (cnab/app/Dockerfile.base) to customize t
 
 ### Prerequisites
 
-- Porter on local machine. http://porter.sh
+- Porter on local machine. See these helpful [installation instructions](https://porter.sh/install) 
 - Docker on local machine (eg - Docker for Mac)
 - Bash
 - Azure service principal with rights to create a RG, AKS, Cosmos, etc. 
