@@ -37,6 +37,6 @@ Porter go in lots of directions! Here are our top 4 goals at the moment:
 
     Make it easy for anyone to create and distribute mixins that porter can discover and install.
 
-4. CNAB Specification Compliance - Milestone TBC
+4. CNAB Specification Compliance - Milestone [CNAB 1.0](https://github.com/deislabs/porter/milestone/12)
 
     As the [CNAB specification](https://github.com/deislabs/cnab-spec) moves toward 1.0, update Porter to be compliant with the spec. Currently, if you build a bundle with Porter, you'll be able to install it with Porter. There are some gaps with the spec that limit compatibility with other CNAB tooling. See the [CNAB 1.0 Milestone](https://github.com/deislabs/porter/milestone/12) for more information on these gaps.

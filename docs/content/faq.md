@@ -63,4 +63,3 @@ release cadence, and still guarantee that a version will work with another produ
 ## Does CNAB fully implement the CNAB specification?
 
 Porter currently implements much of the CNAB spec, however, as the [CNAB specification](https://github.com/deislabs/cnab-spec) moves toward 1.0, some gaps have emerged. Currently, if you build a bundle with Porter, you'll be able to install it with Porter. There are some gaps with the spec that limit compatibility with other CNAB tooling. See the [CNAB 1.0 Milestone](https://github.com/deislabs/porter/milestone/12) for more information on these gaps.
-
