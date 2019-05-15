@@ -33,12 +33,12 @@ defaultContentLanguage = "en"
     identifier = "quickstart"
     weight = 12
     parent = "getting-started"
-  #[[menu.main]]
-  #  name = "Finding Bundles"
-  #  url = "/finding-bundles"
-  #  identifier = "finding-bundles"
-  #  weight = 16
-  #  parent = "getting-started"
+  [[menu.main]]
+    name = "Best Practices"
+    url = "/best-practices"
+    identifier = "best-practices"
+    weight = 13
+    parent = "getting-started"
 
 [[menu.main]]
   name = "Porter Commands"
