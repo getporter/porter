@@ -76,6 +76,12 @@ defaultContentLanguage = "en"
     weight = 127
     parent = "cli"
   [[menu.main]]
+    name = "porter bundle list"
+    url = "/cli#bundle-list"
+    identifier = "cli-bundle-list"
+    weight = 128
+    parent = "cli"
+  [[menu.main]]
     name = "porter mixins list"
     url = "/cli#mixins-list"
     identifier = "cli-mixins-list"
