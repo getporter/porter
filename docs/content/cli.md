@@ -14,8 +14,9 @@ description: Porter CLI Commands Explained
 This command is aliased and is available both as `porter create`
 and `porter bundle create`.
 
-```console $ porter create --help Create a bundle. This generates a porter
-manifest, porter.yaml, and the CNAB run script in the current directory.
+```console
+ $ porter create --help
+Create a bundle. This generates a porter manifest, porter.yaml, and the CNAB run script in the current directory.
 
 Usage:
   porter create [flags]
@@ -32,9 +33,9 @@ Global Flags:
 This command is aliased and is available both as `porter build`
 and `porter bundle build`.
 
-```console $ porter build --help Builds the bundle in the current directory by
-generating a Dockerfile and a CNAB bundle.json, and then building the invocation
-image.
+```console
+ $ porter build --help
+Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
 
 Usage:
   porter build [flags]
@@ -191,6 +192,35 @@ Flags:
                              May be specified multiple times.
       --param-file strings   Path to a parameters definition file for the bundle, each line 
                              in the form of NAME=VALUE. May be specified multiple times.
+
+Global Flags:
+      --debug   Enable debug logging
+```
+
+### Bundle List
+
+This command is available both as `porter bundle list` and `porter bundles list`.
+
+```console
+ $ porter bundle list --help
+List all bundles installed by Porter.
+
+A listing of bundles currently installed by Porter will be provided, along with
+metadata such as creation time, last action, last status, etc.
+
+Optional output formats include json and yaml.
+
+Usage:
+  porter bundles list [flags]
+
+Examples:
+  porter bundle list
+  porter bundle list -o json
+
+Flags:
+  -h, --help            help for list
+  -o, --output string   Specify an output format.
+                        Allowed values: table, json, yaml (default "table")
 
 Global Flags:
       --debug   Enable debug logging
