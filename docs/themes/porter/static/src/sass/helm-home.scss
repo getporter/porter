@@ -76,7 +76,7 @@ nav.home-nav {
         line-height: 2;
         position: relative;
         letter-spacing: 0.0125em;
-        color: $darkblue;
+        color: $dark2;
         @include klinicBold;
         @include ripple;
 
@@ -217,8 +217,7 @@ nav.home-nav {
     }
 
     a {
-      color: $darkblue;
-      font-weight: bold;
+      color: $dark2;
     }
 
     .helm-overview-img {
@@ -378,7 +377,7 @@ nav.home-nav {
           @include klinicReg;
 
           a {
-            color: $darkblue;
+            color: $dark2;
             border-bottom: 3px solid $blue;
 
             &:hover {
@@ -409,10 +408,6 @@ nav.home-nav {
         min-height: 125px;
         position: relative;
 
-        &:first-child {
-          min-height: 175px;
-        }
-
         h4 {
           color: $darkblue;
           font-size: 1.5em;
@@ -423,12 +418,10 @@ nav.home-nav {
         p {
           color: $darkblue;
           font-size: 1rem;
-          float: left;
-          max-width: 60%;
         }
 
         a {
-          color: $darkblue;
+          color: $dark2;
         }
 
         iframe {
@@ -518,8 +511,7 @@ nav.home-nav {
     color: #9B9B9B;
 
     a {
-      font-weight: bold;
-      color: $darkblue;
+      color: $dark2;
       border-bottom: 2px solid transparent;
 
       &:hover {

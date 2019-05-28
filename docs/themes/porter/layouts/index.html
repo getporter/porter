@@ -112,9 +112,16 @@
           <div class="container content">
             <div class="row">
 
-              <div class="small-12 medium-12 large-7 get-helm columns" align="center">
-                <a href="{{ .Site.BaseURL }}quickstart"><h2>Try Porter!</h2>
-                <p><img src="{{ .Site.BaseURL }}images/porter-notext.png" alt="Porter holding out her hand" width="260"></p></a>
+              <div class="small-12 medium-12 large-7 get-helm columns">
+                <a href="{{ .Site.BaseURL }}mixin-dev-guide"><h2>Contribute a Mixin</h2></a>
+                <p>
+                  Porter is a cloud-agnostic tool that can work anywhere and with any tool, but in order to
+                  have great support for these clouds and tools, custom-made mixins are best.</p>
+
+                  <p>Do you know GCE, AWS/CloudFormation, Digital Ocean, kustomize, or other tools we don't have <a href="{{.Site.BaseURL}}mixins">custom mixins</a> for yet?</p>
+                    
+                  <p align="center"><a href="{{ .Site.BaseURL }}mixin-dev-guide">Help us make more mixins! 🙌</a></p>
+                </p>
               </div>
 
               <div class="small-12 medium-12 large-5 get-charts columns">
@@ -131,6 +138,47 @@
               </div>
             </div>
           </div>
+
+          <div class="container content helm-community">
+            <div class="row">
+              <div class="small-12 medium-12 columns">
+                <h2 class="text-center">Join the Community</h2>
+                <p class="text-center">More information about the Porter project, and how to contribute.</p>
+
+                <div class="row">
+                  <div class="small-12 medium-12 large-5 helm-community-links columns">
+                    <ul>
+                      <li><i class="fa fa-book"></i> <a href="{{.Site.BaseURL}}docs">Read the Docs</a></li>
+                      <li><i class="fa fa-tags"></i> <a href="https://github.com/deislabs/porter/releases">Releases</a></li>
+                      <li><i class="fa fa-github"></i> <a href="https://github.com/deislabs/porter">Porter on Github</a></li>
+                    </ul>
+                  </div>
+
+                  <div class="hide-for-medium-down medium-7 helm-community-blocks columns">
+                    <section>
+                      <h4>Project Status</h4>
+                      <p>As the <a href="https://github.com/deislabs/cnab-spec">CNAB specification</a> moves toward 1.0, we are working to make Porter compliant with the spec. 
+                        If you build a bundle with Porter, you'll be able to install it with Porter.
+                        
+                      <p>There are some gaps with the spec that limit compatibility with other CNAB tooling. 
+                        See our <a href="https://github.com/deislabs/porter/milestone/12">CNAB 1.0 Milestone</a> for more information on what still needs work.
+                      </p>
+                    </section>
+
+                    <section>
+                      <h4>Roadmap</h4>
+                      <p>Our <a href="https://github.com/deislabs/porter#roadmap">roadmap</a> has our top priorities for the next three months. If you'd like to help, we have <a href="https://github.com/deislabs/porter/labels/good%20first%20issue">good first issues</a> for brand-new contributors and <a href="https://github.com/deislabs/porter/labels/help%20wanted">help wanted</a> for non-maintainers.</p>
+                      
+                      <p>Don't see a good place to start? Message @carolynvs on the CNCF, Kubernetes or Gophers slacks! ✨</p>
+                    </section>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
         </div> <!-- / #helm -->
 
       </section>
