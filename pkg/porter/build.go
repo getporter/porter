@@ -31,21 +31,6 @@ func (p *Porter) Build() error {
 		return err
 	}
 
-	runTmpl, err := p.Templates.GetRunScript()
-	if err != nil {
-		return err
-	}
-
-	err = p.FileSystem.MkdirAll(filepath.Dir(config.RunScript), 0755)
-	if err != nil {
-		return err
-	}
-
-	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
-	if err != nil {
-		return errors.Wrapf(err, "failed to write %s", config.RunScript)
-	}
-
 	if err := p.prepareDockerFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy mixins: %s", err)
 	}
@@ -203,6 +188,22 @@ func (p *Porter) prepareDockerFilesystem() error {
 	}
 
 	fmt.Printf("Copying porter runtime ===> \n")
+
+	runTmpl, err := p.Templates.GetRunScript()
+	if err != nil {
+		return err
+	}
+
+	err = p.FileSystem.MkdirAll(filepath.Dir(config.RunScript), 0755)
+	if err != nil {
+		return err
+	}
+
+	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "failed to write %s", config.RunScript)
+	}
+
 	pr, err := p.GetPorterRuntimePath()
 	if err != nil {
 		return err
