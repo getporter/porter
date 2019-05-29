@@ -14,6 +14,8 @@ const projectOrg = "deislabs";
 events.on("check_suite:requested", runSuite);
 events.on("check_suite:rerequested", runSuite);
 events.on("check_run:rerequested", runCheck);
+events.on("issue_comment:created", handleIssueComment);
+events.on("issue_comment:edited", handleIssueComment);
 
 events.on("exec", (e, p) => {
   Group.runAll([
@@ -178,6 +180,24 @@ function runSuite(e, p) {
   }
 }
 
+// handleIssueComment handles an issue_comment event, parsing the comment
+// text and determining whether or not to trigger a corresponding action
+function handleIssueComment(e, p) {
+  payload = JSON.parse(e.payload);
+
+  // Extract the comment body and trim whitespace
+  comment = payload.body.comment.body.trim();
+
+  // Here we determine if a comment should provoke an action
+  switch(comment) {
+    case "/brig run":
+      runSuite(e, p);
+      break;
+    default:
+      console.log(`No applicable action found for comment: ${comment}`);
+  }
+}
+
 // **********************************************
 // Classes/Helpers
 // **********************************************
@@ -247,7 +267,9 @@ class Notification {
   // Send a new notification, and return a Promise<result>.
   run() {
     this.count++
-    var j = new Job(`${ this.name }-${ this.count }`, "deis/brigade-github-check-run:latest");
+    // TODO: change to latest semver release, once available
+    // var j = new Job(`${ this.name }-${ this.count }`, "brigadecore/brigade-github-check-run:TBD");
+    var j = new Job(`${ this.name }-${ this.count }`, "brigadecore/brigade-github-check-run:c04ea3f");
     j.env = {
       CHECK_CONCLUSION: this.conclusion,
       CHECK_NAME: this.name,
