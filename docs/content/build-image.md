@@ -133,7 +133,7 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 # exec mixin has no buildtime dependencies
 ```
 
-Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, contents of the current directory is copied into `cnab/app/` in the invocation image. This will include any contributions from dependencies and the mixin executables. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
+Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, contents of the current directory are copied into `cnab/app/` in the invocation image. This will include any contributions from dependencies and the mixin executables. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
 
 Once this is completed, the image is built and pushed to the specified Docker registry:
 

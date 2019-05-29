@@ -147,7 +147,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	runscriptExists, err := p.FileSystem.Exists(wantRunscript)
 	require.NoError(t, err)
 	assert.True(t, runscriptExists, "The run script wasn't copied into %s", wantRunscript)
-	
+
 	wantPorterRuntime := "cnab/app/porter-runtime"
 	porterMixinExists, err := p.FileSystem.Exists(wantPorterRuntime)
 	require.NoError(t, err)
