@@ -83,7 +83,7 @@ test-unit: build
 	go test ./...
 
 test-cli: clean-last-testrun build init-porter-home-for-ci
-	PORTER_HOME=$(PORTER_HOME) REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
+	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
 	cp -R build/testdata/credentials $(PORTER_HOME)

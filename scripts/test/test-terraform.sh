@@ -2,17 +2,19 @@
 
 set -euo pipefail
 export REGISTRY=${REGISTRY:-$USER}
-export PORTER_HOME=${PORTER_HOME:-bin}
-# Run tests at the root of the repository
-export TEST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+export REPO_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+export PORTER_HOME=${PORTER_HOME:-$REPO_DIR/bin}
+# Run tests in a temp directory
+export TEST_DIR=/tmp/porter/terraform
+mkdir -p ${TEST_DIR}
 pushd ${TEST_DIR}
 trap popd EXIT
 
 # Populate cnab/app with terraform assets
-cp -r build/testdata/bundles/terraform/cnab .
+cp -r ${REPO_DIR}/build/testdata/bundles/terraform/cnab .
 
 # Copy in the terraform porter manifest
-cp build/testdata/bundles/terraform/porter.yaml .
+cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .
 sed -i "s/porter-terraform:latest/${REGISTRY}\/porter-terraform:latest/g" porter.yaml
 
 porter_output=$(mktemp)

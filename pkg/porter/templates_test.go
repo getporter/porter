@@ -12,10 +12,10 @@ func TestTemplates_GetManifest(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	gotTmpl, err := p.GetManifest()
+	gotTmpl, err := p.Templates.GetManifest()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/porter.yaml")
+	wantTmpl, _ := ioutil.ReadFile("./templates/create/porter.yaml")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
@@ -23,10 +23,10 @@ func TestTemplates_GetRunScript(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	gotTmpl, err := p.GetRunScript()
+	gotTmpl, err := p.Templates.GetRunScript()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/run")
+	wantTmpl, _ := ioutil.ReadFile("./templates/build/cnab/app/run")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
 
@@ -34,9 +34,9 @@ func TestTemplates_GetDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	gotTmpl, err := p.GetDockerfile()
+	gotTmpl, err := p.Templates.GetDockerfile()
 	require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/Dockerfile")
+	wantTmpl, _ := ioutil.ReadFile("./templates/build/Dockerfile")
 	assert.Equal(t, wantTmpl, gotTmpl)
 }

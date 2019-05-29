@@ -2,16 +2,18 @@
 
 set -euo pipefail
 export REGISTRY=${REGISTRY:-$USER}
-export PORTER_HOME=${PORTER_HOME:-bin}
+export REPO_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+export PORTER_HOME=${PORTER_HOME:-$REPO_DIR/bin}
 export NAMESPACE="$(head /dev/urandom | tr -dc a-z0-9 | head -c 10 ; echo '')"
 export KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
-# Run tests at the root of the repository
-export TEST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+# Run tests in a temp directory
+export TEST_DIR=/tmp/porter/wordpress
+mkdir -p ${TEST_DIR}
 pushd ${TEST_DIR}
 trap popd EXIT
 
 # Verify a bundle with dependencies
-cp build/testdata/bundles/wordpress/porter.yaml .
+cp ${REPO_DIR}/build/testdata/bundles/wordpress/porter.yaml .
 sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter.yaml
 
 ${PORTER_HOME}/porter build

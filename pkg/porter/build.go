@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -28,6 +29,21 @@ func (p *Porter) Build() error {
 	err := p.Config.LoadManifest()
 	if err != nil {
 		return err
+	}
+
+	runTmpl, err := p.Templates.GetRunScript()
+	if err != nil {
+		return err
+	}
+
+	err = p.FileSystem.MkdirAll(filepath.Dir(config.RunScript), 0755)
+	if err != nil {
+		return err
+	}
+
+	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "failed to write %s", config.RunScript)
 	}
 
 	if err := p.prepareDockerFilesystem(); err != nil {
@@ -76,9 +92,12 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 	}
 	lines = append(lines, mixinLines...)
 
-	// Defer cnab/porter.yaml copy lines until very last, as these perhaps more subject to change
-	lines = append(lines, p.buildCNABSection()...)
-	lines = append(lines, p.buildPorterSection()...)
+	// The template dockerfile copies everything by default, but if the user
+	// supplied their own, copy over cnab/ and porter.yaml
+	if p.Manifest.Dockerfile != "" {
+		lines = append(lines, p.buildCNABSection()...)
+		lines = append(lines, p.buildPorterSection()...)
+	}
 	lines = append(lines, p.buildCMDSection())
 
 	for _, line := range lines {
