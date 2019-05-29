@@ -156,11 +156,7 @@ function runCheck(e, p) {
     checkRun(e, p, check.runFunc, check.description)
       .catch(e => {console.error(e.toString())});
   } else {
-    err = new Error(`No check found with name: ${name}`);
-    // TODO: remove this console.error statement once Brigade logs err.message when thrown
-    // https://github.com/brigadecore/brigade-github-app/pull/43
-    console.error(err.message);
-    throw err;
+    throw new Error(`No check found with name: ${name}`);
   }
 }
 
@@ -174,8 +170,8 @@ function runSuite(e, p) {
     ])
   } else {
     for (check of Object.values(checks)) {
-        checkRun(e, p, check.runFunc, check.description)
-          .catch(e => {console.error(e.toString())});
+      checkRun(e, p, check.runFunc, check.description)
+        .catch(e => {console.error(e.toString())});
     }
   }
 }
