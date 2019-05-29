@@ -144,6 +144,22 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	assert.EqualError(t, err, "more than one mixin specified")
 }
 
+func TestManifest_Validate_Dockerfile(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	c.Manifest.Dockerfile = "Dockerfile"
+
+	err = c.Manifest.Validate()
+
+	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
+}
+
 func TestResolveMapParam(t *testing.T) {
 	m := &Manifest{
 		Parameters: []ParameterDefinition{

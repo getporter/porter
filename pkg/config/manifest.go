@@ -262,6 +262,10 @@ func (c *Config) LoadDependencies() error {
 func (m *Manifest) Validate() error {
 	var result error
 
+	if strings.ToLower(m.Dockerfile) == "dockerfile" {
+		return errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
+	}
+
 	if len(m.Mixins) == 0 {
 		result = multierror.Append(result, errors.New("no mixins declared"))
 	}
