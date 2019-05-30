@@ -169,7 +169,7 @@ The `porter build` command handles:
 
 * translating the Porter manifest into a bundle.json
 * creating a Dockerfile for the invocation image
-* building and pushing the invocation image
+* building the invocation image
 
 So it's still there, but you don't have to mess with it. 😎 A few of the sections in the Porter manifest to map 1:1
 to sections in the bundle.json file, such as the bundle metadata, Parameters, and Credentials.

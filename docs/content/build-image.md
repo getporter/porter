@@ -49,7 +49,7 @@ uninstall:
 #    path: /root/.kube/config
 ```
 
-After the scaffolding is created, edit the _porter.yaml_ and modify the `invocationImage: porter-hello:latest` element to include a Docker registry that you can push to.
+After the scaffolding is created, you may edit the _porter.yaml_ and modify the `invocationImage: porter-hello:latest` element to include a Docker registry that you can push to. The invocation image is not pushed during the `porter build` workflow, however.
 
 Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image:
 
@@ -92,18 +92,8 @@ Step 6/6 : COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-ce
  ---> ee8ade0c612c
 Successfully built ee8ade0c612c
 Successfully tagged jeremyrickard/porter-hello:latest
-The push refers to repository [docker.io/jeremyrickard/porter-hello]
-937aeedb310f: Preparing
-8f17ef8f8a30: Preparing
-fc9479d629d7: Preparing
-c581f4ede92d: Preparing
-8f17ef8f8a30: Layer already exists
-937aeedb310f: Layer already exists
-fc9479d629d7: Pushed
-c581f4ede92d: Pushed
-latest: digest: sha256:c3187dc004475bd754235caf735d5adc449405126091594b24a38ebba93ae76a size: 1158
 
-Generating Bundle File with Invocation Image jeremyrickard/porter-hello@sha256:c3187dc004475bd754235caf735d5adc449405126091594b24a38ebba93ae76a =======>
+Generating Bundle File with Invocation Image jeremyrickard/porter-hello@latest =======>
 ```
 
 A lot just happened by running that command! Let's break walk through the output and discuss what happened.
@@ -135,7 +125,7 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 
 Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, contents of the current directory are copied into `cnab/app/` in the invocation image. This will include any contributions from dependencies and the mixin executables. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
 
-Once this is completed, the image is built and pushed to the specified Docker registry:
+Once this is completed, the image is built:
 
 ```console
 Starting Invocation Image Build =======>
@@ -157,16 +147,6 @@ Step 6/6 : COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-ce
  ---> ee8ade0c612c
 Successfully built ee8ade0c612c
 Successfully tagged jeremyrickard/porter-hello:latest
-The push refers to repository [docker.io/jeremyrickard/porter-hello]
-937aeedb310f: Preparing
-8f17ef8f8a30: Preparing
-fc9479d629d7: Preparing
-c581f4ede92d: Preparing
-8f17ef8f8a30: Layer already exists
-937aeedb310f: Layer already exists
-fc9479d629d7: Pushed
-c581f4ede92d: Pushed
-latest: digest: sha256:c3187dc004475bd754235caf735d5adc449405126091594b24a38ebba93ae76a size: 1158
 ```
 
 ## Mixins Help The Build

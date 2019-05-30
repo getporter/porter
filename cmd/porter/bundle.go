@@ -36,6 +36,7 @@ func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 		buildInstallCommand(p),
 		buildUpgradeCommand(p),
 		buildUninstallCommand(p),
+		buildPublishCommand(p),
 	}
 }
 
@@ -259,6 +260,41 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 func buildUninstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleUninstallCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle uninstall", "porter uninstall", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
+	return cmd
+}
+
+func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
+
+	opts := porter.PublishOptions{}
+	cmd := cobra.Command{
+		Use:   "publish",
+		Short: "Publish a bundle",
+		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
+		Example: `  porter bundle publish
+  porter bundle publish --file myapp/porter.yaml
+  porter bundle publish --tag deislabs/super-cool-app:v1.0
+  porter bundle publish --file myapp/porter.yaml --tag deislabs/super-cool-app:v1.0
+		`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.Publish(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+	f.StringVarP(&opts.Tag, "tag", "t", "", "Tag to apply to the CNAB bundle. Defaults to the `Tag` value currently in the Porter manifest.")
+	return &cmd
+}
+
+func buildPublishCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundlePublishCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle publish", "porter publish", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
