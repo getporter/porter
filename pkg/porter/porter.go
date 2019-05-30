@@ -11,7 +11,7 @@ import (
 // Porter is the logic behind the porter client.
 type Porter struct {
 	*config.Config
-	*Templates
+	Templates *Templates
 	Mixins MixinProvider
 	CNAB   CNABProvider
 }

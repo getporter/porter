@@ -2,39 +2,31 @@ package porter
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/deislabs/porter/pkg/config"
-	"github.com/pkg/errors"
 )
 
 func (p *Porter) Create() error {
 	fmt.Fprintln(p.Out, "creating porter configuration in the current directory")
 
-	configTmpl, err := p.GetManifest()
+	err := p.CopyTemplate(p.Templates.GetManifest, config.Name)
 	if err != nil {
 		return err
 	}
 
-	err = p.FileSystem.WriteFile(config.Name, configTmpl, 0644)
-	if err != nil {
-		return errors.Wrapf(err, "failed to write %s", config.Name)
-	}
-
-	runTmpl, err := p.GetRunScript()
+	err = p.CopyTemplate(p.Templates.GetReadme, "README.md")
 	if err != nil {
 		return err
 	}
 
-	err = p.FileSystem.MkdirAll(filepath.Dir(config.RunScript), 0755)
+	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "Dockerfile.tmpl")
 	if err != nil {
 		return err
 	}
 
-	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
+	err = p.CopyTemplate(p.Templates.GetDockerignore, ".dockerignore")
 	if err != nil {
-		return errors.Wrapf(err, "failed to write %s", config.RunScript)
+		return err
 	}
 
-	return nil
+	return p.CopyTemplate(p.Templates.GetGitignore, ".gitignore")
 }

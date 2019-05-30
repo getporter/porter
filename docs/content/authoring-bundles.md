@@ -25,6 +25,7 @@ name: porter-azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
 invocationImage: deislabs/porter-azure-wordpress:latest
+dockerfile: dockerfile.tmpl
 ```
 
 * `name`: The name of the bundle
@@ -32,8 +33,10 @@ invocationImage: deislabs/porter-azure-wordpress:latest
 * `version`: The version of the bundle, uses [semver](https://semver.org)
 * `invocationImage`: The name of the container image to tag the bundle with when it is built. The format is
 `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter build` so select a location that you have access to.
-* `dockerfile`: The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
-    to provide a suitable base image, for example one that has root ssl certificates installed.
+* `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
+    to provide a suitable base image, for example one that has root ssl certificates installed. When a Dockerfile template is
+    not specified, Porter automatically copies the contents of the current directory into /cnab/app/ of the invocation image. 
+    When using a Dockerfile template, you must manually copy any files you need in your bundle using COPY statements.
 
 ## Mixins
 

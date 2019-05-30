@@ -13,7 +13,7 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -30,8 +30,9 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"FROM quay.io/deis/lightweight-docker-go:v0.2.0",
 		"FROM debian:stretch",
 		"COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt",
-		"COPY cnab/ /cnab/",
-		"COPY porter.yaml /cnab/app/porter.yaml",
+		"",
+		"COPY . /cnab/app",
+		"RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab",
 		`CMD ["/cnab/app/run"]`,
 	}
 	assert.Equal(t, wantlines, gotlines)
@@ -40,7 +41,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 func TestPorter_buildCustomDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -75,7 +76,7 @@ COPY mybin /cnab/app/
 func TestPorter_buildDockerfile_output(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -93,8 +94,9 @@ Generating Dockerfile =======>
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY cnab/ /cnab/
-COPY porter.yaml /cnab/app/porter.yaml
+
+COPY . /cnab/app
+RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
 CMD ["/cnab/app/run"]
 `
 	assert.Equal(t, wantlines, p.TestConfig.TestContext.GetOutput())
@@ -104,7 +106,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -131,7 +133,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
@@ -140,6 +142,11 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 
 	err = p.prepareDockerFilesystem()
 	require.NoError(t, err)
+
+	wantRunscript := "cnab/app/run"
+	runscriptExists, err := p.FileSystem.Exists(wantRunscript)
+	require.NoError(t, err)
+	assert.True(t, runscriptExists, "The run script wasn't copied into %s", wantRunscript)
 
 	wantPorterRuntime := "cnab/app/porter-runtime"
 	porterMixinExists, err := p.FileSystem.Exists(wantPorterRuntime)
@@ -156,7 +163,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	configTpl, err := p.GetManifest()
+	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 

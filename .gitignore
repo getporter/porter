@@ -1,9 +1,5 @@
 /docs/public/
 /bin
-/cnab/
-/porter.yaml
-/Dockerfile
-/bundle.json
 /porter
 *-packr.go
 .DS_Store

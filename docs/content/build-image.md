@@ -61,13 +61,13 @@ Copying mixin exec ===>
 Copying mixin porter ===>
 
 Generating Dockerfile =======>
-[FROM quay.io/deis/lightweight-docker-go:v0.2.0 FROM debian:stretch COPY cnab/ /cnab/ COPY porter.yaml /cnab/app/porter.yaml CMD ["/cnab/app/run"] COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt # exec mixin has no buildtime dependencies ]
+[FROM quay.io/deis/lightweight-docker-go:v0.2.0 FROM debian:stretch COPY * /cnab/app/ RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab CMD ["/cnab/app/run"] COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt # exec mixin has no buildtime dependencies ]
 
 Writing Dockerfile =======>
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY cnab/ /cnab/
-COPY porter.yaml /cnab/app/porter.yaml
+COPY . /cnab/app/
+RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
 CMD ["/cnab/app/run"]
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 # exec mixin has no buildtime dependencies
@@ -78,10 +78,10 @@ Step 1/6 : FROM quay.io/deis/lightweight-docker-go:v0.2.0
  ---> acf6712d2918
 Step 2/6 : FROM debian:stretch
  ---> de8b49d4b0b3
-Step 3/6 : COPY cnab/ /cnab/
+Step 3/6 : COPY . /cnab/app/
  ---> Using cache
  ---> 209f021564f0
-Step 4/6 : COPY porter.yaml /cnab/app/porter.yaml
+Step 4/6 : RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
  ---> Using cache
  ---> 10740e93dd11
 Step 5/6 : CMD ["/cnab/app/run"]
@@ -125,15 +125,15 @@ After copying any dependencies and mixins to the `cnab` directory of the bundle,
 Generating Dockerfile =======>
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY cnab/ /cnab/
-COPY porter.yaml/cnab/app/porter.yaml
+COPY * /cnab/app/
+RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
 CMD ["/cnab/app/run"]
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # exec mixin has no buildtime dependencies
 ```
 
-Porter starts the Dockerfile by using a base image. The base image is currently not configurable. Next, the `cnab` directory is added to the image. This will include any contributions from dependencies and the mixin executables. Next, the _porter.yaml_ is added to the image. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
+Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, contents of the current directory are copied into `cnab/app/` in the invocation image. This will include any contributions from dependencies and the mixin executables. Next, an entry point that conforms to the CNAB specification is added to the image. Finally, a set of CA certificates is added.
 
 Once this is completed, the image is built and pushed to the specified Docker registry:
 
@@ -143,10 +143,10 @@ Step 1/6 : FROM quay.io/deis/lightweight-docker-go:v0.2.0
  ---> acf6712d2918
 Step 2/6 : FROM debian:stretch
  ---> de8b49d4b0b3
-Step 3/6 : COPY cnab/ /cnab/
+Step 3/6 : COPY * /cnab/app/
  ---> Using cache
  ---> 209f021564f0
-Step 4/6 : COPY porter.yaml /cnab/app/porter.yaml
+Step 4/6 : RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
  ---> Using cache
  ---> 10740e93dd11
 Step 5/6 : CMD ["/cnab/app/run"]
@@ -217,8 +217,8 @@ Copying mixin porter ===>
 Generating Dockerfile =======>
 FROM quay.io/deis/lightweight-docker-go:v0.2.0 
 FROM debian:stretch
-COPY cnab/ /cnab/
-COPY porter.yaml /cnab/app/porter.yaml
+COPY * /cnab/app/
+RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
 CMD ["/cnab/app/run"]
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 RUN apt-get update && \
@@ -314,13 +314,13 @@ Copying mixin exec ===>
 Copying mixin porter ===>
 
 Generating Dockerfile =======>
-[FROM quay.io/deis/lightweight-docker-go:v0.2.0 FROM debian:stretch COPY cnab/ /cnab/ COPY porter.yaml /cnab/app/porter.yaml CMD ["/cnab/app/run"] COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt RUN apt-get update && \  apt-get install -y curl && \  curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz && \  tar -xzf helm.tgz && \  mv linux-amd64/helm /usr/local/bin && \  rm helm.tgz RUN helm init --client-only # exec mixin has no buildtime dependencies ]
+[FROM quay.io/deis/lightweight-docker-go:v0.2.0 FROM debian:stretch COPY * /cnab/app/ RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab CMD ["/cnab/app/run"] COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt RUN apt-get update && \  apt-get install -y curl && \  curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz && \  tar -xzf helm.tgz && \  mv linux-amd64/helm /usr/local/bin && \  rm helm.tgz RUN helm init --client-only # exec mixin has no buildtime dependencies ]
 
 Writing Dockerfile =======>
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY cnab/ /cnab/
-COPY porter.yaml /cnab/app/porter.yaml
+COPY * /cnab/app/
+RUN mv /cnab/app/cnab/app/* /cnab/app &&     rm -r /cnab/app/cnab
 CMD ["/cnab/app/run"]
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 RUN apt-get update && \
