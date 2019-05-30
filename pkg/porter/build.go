@@ -66,7 +66,7 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 
 	mixinLines, err := p.buildMixinsSection()
 	if err != nil {
-		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
+		return nil, errors.Wrap(err, "error generating Dockerfile content for mixins")
 	}
 	lines = append(lines, mixinLines...)
 
@@ -76,7 +76,7 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 		lines = append(lines, p.buildCNABSection()...)
 		lines = append(lines, p.buildPorterSection()...)
 	}
-	lines = append(lines, p.buildCMDSection())
+	lines = append(lines, p.buildCMDSection()...)
 
 	for _, line := range lines {
 		fmt.Fprintln(p.Out, line)
@@ -131,8 +131,11 @@ func (p *Porter) buildCNABSection() []string {
 	}
 }
 
-func (p *Porter) buildCMDSection() string {
-	return `CMD ["/cnab/app/run"]`
+func (p *Porter) buildCMDSection() []string {
+	return []string{
+		`RUN chmod 755 "/cnab/app/run"`,
+		`CMD ["/cnab/app/run"]`,
+	}
 }
 
 func (p *Porter) buildMixinsSection() ([]string, error) {
