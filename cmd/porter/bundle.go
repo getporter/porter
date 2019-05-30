@@ -272,7 +272,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "publish",
 		Short: "Publish a bundle",
-		Long:  "Publishes a bundle by pushing the invocation image, updating the reference in the CNAB bundle.json, and publishing to an OCI registry.",
+		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
   porter bundle publish --tag deislabs/super-cool-app:v1.0

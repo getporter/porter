@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/deislabs/porter/pkg/config"
@@ -26,30 +27,24 @@ type PublishOptions struct {
 }
 
 func (p PublishOptions) Validate(porter *Porter) error {
-	if p.File != "" {
-		return nil
-	}
-	fs := porter.Context.FileSystem
-	pwd, err := os.Getwd()
-	if err != nil {
-		return errors.Wrap(err, "could not get current working directory")
-	}
-	fmt.Println(pwd)
-	files, err := fs.ReadDir(pwd)
-	if err != nil {
-		return errors.Wrapf(err, "could not list current directory %s", pwd)
-	}
-	foundManifest := false
-	for _, f := range files {
-		if !f.IsDir() && f.Name() == config.Name {
-			foundManifest = true
+	if p.File == "" {
+		fs := porter.Context.FileSystem
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "could not get current working directory")
+		}
+
+		exists, err := fs.Exists(filepath.Join(pwd, config.Name))
+		if err != nil {
+			return errors.Wrap(err, "error finding porter.yaml")
+		}
+
+		if !exists {
+			return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
 		}
 	}
 
-	if p.File == "" && !foundManifest {
-		return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
-	}
-
+	// Bundle tags must be valid OCI reference formats.
 	if p.Tag != "" {
 		_, err := reference.ParseNormalizedNamed(p.Tag)
 		if err != nil {
@@ -97,7 +92,8 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	if opts.Tag != "" {
 		//p.Config.Manifest.Tag = opts.Tag
 	}
-	fmt.Fprintf(p.Out, "Tagging bundle image as %s...\n", "")
+	// TODO: uncomment this when cnab-to-oci is integrated
+	//fmt.Fprintf(p.Out, "Tagging bundle image as %s...\n", "")
 
 	// TODO: Use CNAB-to-OCI to push the bundle (see https://github.com/deislabs/porter/issues/254)
 	return nil
