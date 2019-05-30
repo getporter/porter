@@ -46,8 +46,8 @@ func (p PublishOptions) Validate(porter *Porter) error {
 		}
 	}
 
-	if p.File == "" && foundManifest {
-		return errors.New("first run 'porter build' to generate a bundle.json, then run 'porter install'")
+	if p.File == "" && !foundManifest {
+		return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
 	}
 
 	if p.Tag != "" {
