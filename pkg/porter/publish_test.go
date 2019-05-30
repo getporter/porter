@@ -65,7 +65,7 @@ func TestPublish_InValidTag(t *testing.T) {
 	assert.EqualError(
 		t,
 		err,
-		"invalid bundle tag value: invalid reference format",
+		"invalid --tag value. expected format is REGISTRY/IMAGE:TAG: invalid reference format",
 		"porter.yaml not present so should have failed validation",
 	)
 }

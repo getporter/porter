@@ -48,7 +48,7 @@ func (p PublishOptions) Validate(porter *Porter) error {
 	if p.Tag != "" {
 		_, err := reference.ParseNormalizedNamed(p.Tag)
 		if err != nil {
-			return errors.Wrap(err, "invalid bundle tag value")
+			return errors.Wrap(err, "invalid --tag value. expected format is REGISTRY/IMAGE:TAG")
 		}
 	}
 	return nil
