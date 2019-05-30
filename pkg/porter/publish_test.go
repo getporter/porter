@@ -62,5 +62,10 @@ func TestPublish_InValidTag(t *testing.T) {
 
 	err = opts.Validate(p.Porter)
 	require.Error(t, err, "options contained invalid tag, should have gotten an error")
-	assert.EqualError(t, err, "invalid reference format", "porter.yaml not present so should have failed validation")
+	assert.EqualError(
+		t,
+		err,
+		"invalid bundle tag value: invalid reference format",
+		"porter.yaml not present so should have failed validation",
+	)
 }
