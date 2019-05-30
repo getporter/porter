@@ -16,12 +16,10 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
-	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
-	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 )
 
@@ -37,17 +35,12 @@ func (p *Porter) Build() error {
 	if err := p.generateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-	digest, err := p.buildInvocationImage(context.Background())
+	err = p.buildInvocationImage(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "unable to build CNAB invocation image")
 	}
 
-	taggedImage, err := p.rewriteImageWithDigest(p.Config.Manifest.Image, digest)
-	if err != nil {
-		return fmt.Errorf("unable to regenerate tag: %s", err)
-	}
-
-	return p.buildBundle(taggedImage, digest)
+	return p.buildBundle(p.Config.Manifest.Image, "")
 }
 
 func (p *Porter) generateDockerFile() error {
@@ -246,11 +239,11 @@ func (p *Porter) copyMixin(mixin string) error {
 	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
 }
 
-func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
+func (p *Porter) buildInvocationImage(ctx context.Context) error {
 	fmt.Printf("\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
-		return "", errors.Wrap(err, "could not get current working directory")
+		return errors.Wrap(err, "could not get current working directory")
 	}
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
@@ -260,20 +253,20 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	}
 	tar, err := archive.TarWithOptions(path, &archive.TarOptions{})
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	cli, err := command.NewDockerCli()
 	if err != nil {
-		return "", errors.Wrap(err, "could not create new docker client")
+		return errors.Wrap(err, "could not create new docker client")
 	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return "", err
+		return err
 	}
 
 	response, err := cli.Client().ImageBuild(context.Background(), tar, buildOptions)
 	if err != nil {
-		return "", err
+		return err
 	}
 	termFd, _ := term.GetFdInfo(os.Stdout)
 	// Setting this to false here because Moby os.Exit(1) all over the place and this fails on WSL (only)
@@ -281,58 +274,9 @@ func (p *Porter) buildInvocationImage(ctx context.Context) (string, error) {
 	isTerm := false
 	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, termFd, isTerm, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stream docker build stdout")
+		return errors.Wrap(err, "failed to stream docker build stdout")
 	}
-
-	ref, err := reference.ParseNormalizedNamed(p.Config.Manifest.Image)
-	if err != nil {
-		return "", err
-	}
-
-	// Resolve the Repository name from fqn to RepositoryInfo
-	repoInfo, err := registry.ParseRepositoryInfo(ref)
-	if err != nil {
-		return "", err
-	}
-	authConfig := command.ResolveAuthConfig(ctx, cli, repoInfo.Index)
-	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
-	if err != nil {
-		return "", err
-	}
-	options := types.ImagePushOptions{
-		All:          true,
-		RegistryAuth: encodedAuth,
-	}
-
-	pushResponse, err := cli.Client().ImagePush(ctx, p.Config.Manifest.Image, options)
-	if err != nil {
-		return "", errors.Wrap(err, "docker push failed")
-	}
-	defer pushResponse.Close()
-	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, os.Stdout, termFd, isTerm, nil)
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "denied") {
-			return "", errors.Wrap(err, "docker push authentication failed")
-		}
-		return "", errors.Wrap(err, "failed to stream docker push stdout")
-	}
-	dist, err := cli.Client().DistributionInspect(ctx, p.Config.Manifest.Image, encodedAuth)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to inspect docker image")
-	}
-	return string(dist.Descriptor.Digest), nil
-}
-
-func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
-	ref, err := reference.Parse(InvocationImage)
-	if err != nil {
-		return "", fmt.Errorf("unable to parse docker image: %s", err)
-	}
-	named, ok := ref.(reference.Named)
-	if !ok {
-		return "", fmt.Errorf("had an issue with the docker image")
-	}
-	return fmt.Sprintf("%s@%s", named.Name(), digest), nil
+	return nil
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
@@ -348,7 +292,9 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 			ImageType: "docker",
 		},
 	}
-	image.Digest = digest
+	if digest != "" {
+		image.Digest = digest
+	}
 	b.InvocationImages = []bundle.InvocationImage{image}
 	b.Parameters = p.generateBundleParameters()
 	b.Credentials = p.generateBundleCredentials()
