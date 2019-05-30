@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{ partial "head.html" . }}
+    <link href="/src/css/slides.css" rel="stylesheet">
+  </head>
+  <body>
+    <textarea id="source">
+{{.RawContent}}
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
