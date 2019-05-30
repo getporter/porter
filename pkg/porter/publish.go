@@ -77,11 +77,6 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	if err != nil {
 		return err
 	}
-	if opts.Tag != "" {
-		fmt.Fprintf(p.Out, "Tagging invocation image from %s to %s...\n", p.Config.Manifest.Image, opts.Tag)
-		cli.Client().ImageTag(ctx, p.Config.Manifest.Image, opts.Tag)
-		p.Config.Manifest.Image = opts.Tag
-	}
 	fmt.Fprintln(p.Out, "Pushing CNAB invocation image...")
 	digest, err := p.publishInvocationImage(ctx, cli)
 	if err != nil {
@@ -98,6 +93,11 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to generate CNAB bundle.json")
 	}
+
+	if opts.Tag != "" {
+		//p.Config.Manifest.Tag = opts.Tag
+	}
+	fmt.Fprintf(p.Out, "Tagging bundle image as %s...\n", "")
 
 	// TODO: Use CNAB-to-OCI to push the bundle (see https://github.com/deislabs/porter/issues/254)
 	return nil

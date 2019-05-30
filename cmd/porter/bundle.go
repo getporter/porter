@@ -288,7 +288,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.StringVarP(&opts.Tag, "tag", "t", "", "Tag to apply to the CNAB invocation image. Defaults to the value currently in the Porter manifest.")
+	f.StringVarP(&opts.Tag, "tag", "t", "", "Tag to apply to the CNAB bundle. Defaults to the `Tag` value currently in the Porter manifest.")
 	return &cmd
 }
 
