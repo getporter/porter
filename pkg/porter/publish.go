@@ -1,55 +1,53 @@
 package porter
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/docker/cli/cli/command"
+	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
+
+	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/pkg/errors"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
 // Porter handles defaulting any missing values.
 type PublishOptions struct {
-	File     string
-	Tag      string
-	CNABFile string
+	File             string
+	InsecureRegistry bool
 }
 
+// Validate performs validation on the publish options
 func (p PublishOptions) Validate(porter *Porter) error {
-	if p.File == "" {
-		fs := porter.Context.FileSystem
+	fs := porter.Context.FileSystem
+	f := p.File
+	if f == "" {
 		pwd, err := os.Getwd()
 		if err != nil {
 			return errors.Wrap(err, "could not get current working directory")
 		}
+		f = filepath.Join(pwd, config.Name)
 
-		exists, err := fs.Exists(filepath.Join(pwd, config.Name))
-		if err != nil {
-			return errors.Wrap(err, "error finding porter.yaml")
-		}
-
-		if !exists {
-			return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
-		}
 	}
-
-	// Bundle tags must be valid OCI reference formats.
-	if p.Tag != "" {
-		_, err := reference.ParseNormalizedNamed(p.Tag)
-		if err != nil {
-			return errors.Wrap(err, "invalid --tag value. expected format is REGISTRY/IMAGE:TAG")
-		}
+	exists, err := fs.Exists(f)
+	if err != nil {
+		return errors.Wrap(err, "error finding porter.yaml")
+	}
+	if !exists {
+		return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
 	}
 	return nil
 }
@@ -89,14 +87,56 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return errors.Wrap(err, "unable to generate CNAB bundle.json")
 	}
 
-	if opts.Tag != "" {
-		//p.Config.Manifest.Tag = opts.Tag
+	b, err := p.Config.FileSystem.ReadFile("bundle.json")
+	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
+	if err != nil {
+		return errors.Wrap(err, "unable to load CNAB bundle")
 	}
-	// TODO: uncomment this when cnab-to-oci is integrated
-	//fmt.Fprintf(p.Out, "Tagging bundle image as %s...\n", "")
 
-	// TODO: Use CNAB-to-OCI to push the bundle (see https://github.com/deislabs/porter/issues/254)
+	if p.Config.Manifest.BundleTag == "" {
+		return errors.New("porter.yaml must specify a `tag` value for this bundle")
+	}
+
+	ref, err := parseOCIReference(p.Config.Manifest.BundleTag) //tag from manifest
+	if err != nil {
+		return errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
+	}
+	insecureRegistries := []string{}
+	if opts.InsecureRegistry {
+		reg := reference.Domain(ref)
+		fmt.Printf("Registry is: %s", reg)
+		insecureRegistries = append(insecureRegistries, reg)
+	}
+
+	resolverConfig := createResolver(insecureRegistries)
+
+	err = remotes.FixupBundle(context.Background(), &bun, ref, resolverConfig, remotes.WithEventCallback(displayEvent))
+	if err != nil {
+		return err
+	}
+	d, err := remotes.Push(context.Background(), &bun, ref, resolverConfig.Resolver, true)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Pushed successfully, with digest %q\n", d.Digest)
 	return nil
+}
+
+func createResolver(insecureRegistries []string) remotes.ResolverConfig {
+	return remotes.NewResolverConfigFromDockerConfigFile(dockerconfig.LoadDefaultConfigFile(os.Stderr), insecureRegistries...)
+}
+
+func displayEvent(ev remotes.FixupEvent) {
+	switch ev.EventType {
+	case remotes.FixupEventTypeCopyImageStart:
+		fmt.Fprintf(os.Stderr, "Starting to copy image %s...\n", ev.SourceImage)
+	case remotes.FixupEventTypeCopyImageEnd:
+		if ev.Error != nil {
+			fmt.Fprintf(os.Stderr, "Failed to copy image %s: %s\n", ev.SourceImage, ev.Error)
+		} else {
+			fmt.Fprintf(os.Stderr, "Completed image %s copy\n", ev.SourceImage)
+		}
+	}
 }
 
 func (p *Porter) getDockerClient(ctx context.Context) (*command.DockerCli, error) {
@@ -112,7 +152,7 @@ func (p *Porter) getDockerClient(ctx context.Context) (*command.DockerCli, error
 
 func (p *Porter) publishInvocationImage(ctx context.Context, cli *command.DockerCli) (string, error) {
 
-	ref, err := reference.ParseNormalizedNamed(p.Config.Manifest.Image)
+	ref, err := parseOCIReference(p.Config.Manifest.Image)
 	if err != nil {
 		return "", err
 	}
@@ -165,4 +205,8 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 		return "", fmt.Errorf("had an issue with the docker image")
 	}
 	return fmt.Sprintf("%s@%s", named.Name(), digest), nil
+}
+
+func parseOCIReference(ociRef string) (reference.Named, error) {
+	return reference.ParseNormalizedNamed(ociRef)
 }

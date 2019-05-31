@@ -305,7 +305,11 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 }
 
 func (p Porter) writeBundle(b bundle.Bundle) error {
-	f, err := p.Config.FileSystem.OpenFile("cnab/bundle.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	return p.writeBundleFile(b, "cnab/bundle.json")
+}
+
+func (p Porter) writeBundleFile(b bundle.Bundle, path string) error {
+	f, err := p.Config.FileSystem.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error creating cnab/bundle.json")

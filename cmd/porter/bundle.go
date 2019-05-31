@@ -127,6 +127,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
+  porter bundle install --tag deislabs/porter-kube-bundle:v1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -149,7 +150,10 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", "docker",
 		"Specify a driver to use. Allowed values: docker, debug")
-
+	f.StringVarP(&opts.Tag, "tag", "t", "",
+		"Install from a bundle in an OCI registry specified by the given tag")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
+		"Treat the given bundle registry as insecure")
 	return cmd
 }
 
@@ -275,8 +279,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
-  porter bundle publish --tag deislabs/super-cool-app:v1.0
-  porter bundle publish --file myapp/porter.yaml --tag deislabs/super-cool-app:v1.0
+  porter bundle publish --insecure
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
@@ -288,7 +291,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.StringVarP(&opts.Tag, "tag", "t", "", "Tag to apply to the CNAB bundle. Defaults to the `Tag` value currently in the Porter manifest.")
+	f.BoolVar(&opts.InsecureRegistry, "insecure", false, "Treat the registry as insecure.")
 	return &cmd
 }
 

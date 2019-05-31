@@ -112,7 +112,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:c41ccacec3d1871a9a76c0a105cb4e50bd7d6489d91f0262e37ab66c3d79cc6a"
+  branch = "hell"
+  digest = "1:04a0bf4aed6e8923d26eb0de03e645345d3b95ae443ef9b6e27838ac57fdffe2"
   name = "github.com/containerd/containerd"
   packages = [
     ".",
@@ -164,8 +165,8 @@
     "sys",
   ]
   pruneopts = "NUT"
-  revision = "9754871865f7fe2f4e74d43e2fc7ccd237edcbce"
-  version = "v1.2.2"
+  revision = "497a1b0ce81a842c38d5814a738bc4b047f927cb"
+  source = "github.com/deislabs/containerd"
 
 [[projects]]
   branch = "master"
@@ -271,6 +272,17 @@
   ]
   pruneopts = "NUT"
   revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
+
+[[projects]]
+  branch = "master"
+  digest = "1:dceb82de160ec21c5e3a22d48db99932f82f40c74bd7cad8bc23b7455613836b"
+  name = "github.com/docker/cnab-to-oci"
+  packages = [
+    "converter",
+    "remotes",
+  ]
+  pruneopts = "NUT"
+  revision = "f0b63ad74619a620bafcba7855274b685a1f8ee0"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
@@ -1415,6 +1427,7 @@
     "github.com/deislabs/duffle/pkg/utils/crud",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/flags",
+    "github.com/docker/cnab-to-oci/remotes",
     "github.com/docker/compose-on-kubernetes",
     "github.com/docker/distribution/reference",
     "github.com/docker/docker/api/types",
@@ -1425,6 +1438,7 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/hashicorp/go-multierror",
     "github.com/masterminds/semver",
     "github.com/mmcdole/gofeed/atom",
