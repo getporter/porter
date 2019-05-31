@@ -9,7 +9,7 @@ import (
 func buildCredentialsCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "credentials",
-		Aliases:     []string{"cred"},
+		Aliases:     []string{"credential", "cred", "creds"},
 		Annotations: map[string]string{"group": "resource"},
 		Short:       "Credentials commands",
 	}
@@ -102,24 +102,31 @@ will then provide it to the bundle in the correct location. `,
 }
 
 func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
-	opts := struct {
-		rawFormat string
-		format    printer.Format
-	}{}
+	opts := porter.ListOptions{}
+
 	cmd := &cobra.Command{
-		Use:    "list",
-		Short:  "List credentials",
-		Hidden: true,
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List credentials",
+		Long: `List credentials available to Porter.
+
+A listing of credentials currently available to Porter will be provided, along with metadata such as modification time, etc.
+		
+Optional output formats include json and yaml.`,
+		Example: `  porter credentials list [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			opts.format, err = printer.ParseFormat(opts.rawFormat)
+			opts.Format, err = printer.ParseFormat(opts.RawFormat)
 			return err
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p.PrintVersion()
-			return nil
+			return p.ListCredentials(printer.PrintOptions{Format: opts.Format})
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
 
 	return cmd
 }

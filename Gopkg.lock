@@ -213,12 +213,24 @@
   version = "v1.1.1"
 
 [[projects]]
+<<<<<<< HEAD
   branch = "custom-extensions"
   digest = "1:dfe6ce9e92d2315c432afc126c2527b99b1b2212f4af7df1629c818d0d8dafbe"
+=======
+  branch = "master"
+  digest = "1:c40d52bd9a6ce87eeb00a2d93e375c7bc92acb96426627da6555b21a264c1bdf"
+>>>>>>> feat(credentials): add credentials list command
   name = "github.com/deislabs/cnab-go"
-  packages = ["bundle"]
+  packages = [
+    "bundle",
+    "credentials",
+  ]
   pruneopts = "NUT"
+<<<<<<< HEAD
   revision = "1aa435456c4b74dba1d2276cb45a8482e33477a9"
+=======
+  revision = "ef2eb2a629bbca48ca1ab277b3b3bfb60eb53316"
+>>>>>>> feat(credentials): add credentials list command
 
 [[projects]]
   digest = "1:a222203ae2f42f5a3d06fde5f9746e51291567a3df8a5ebedce334cd93b7b97a"
@@ -1401,6 +1413,7 @@
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
     "github.com/deislabs/cnab-go/bundle",
+    "github.com/deislabs/cnab-go/credentials",
     "github.com/deislabs/duffle/pkg/action",
     "github.com/deislabs/duffle/pkg/bundle",
     "github.com/deislabs/duffle/pkg/claim",
