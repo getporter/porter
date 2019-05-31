@@ -193,6 +193,10 @@ func TestPorter_buildBundle(t *testing.T) {
 	assert.Equal(t, bundle.Version, "0.1.0")
 	assert.Equal(t, bundle.Description, "An example Porter configuration")
 
+	stamp, err := p.LoadStamp(bundle)
+	require.NoError(t, err)
+	assert.Equal(t, "781cc745a6efa4f8618d737f1bd60fa659a55809e34a59adbf4b37f78825d4b5", stamp.ManifestDigest)
+
 	debugParam, ok := bundle.Parameters["porter-debug"]
 	require.True(t, ok)
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)

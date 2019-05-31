@@ -25,6 +25,8 @@ const (
 
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
+
+	CustomBundleKey = "sh.porter"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
