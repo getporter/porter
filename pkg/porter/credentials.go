@@ -3,10 +3,10 @@ package porter
 import (
 	"fmt"
 
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/credentials"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
-
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -23,13 +23,13 @@ type CredentialOptions struct {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (g *CredentialOptions) Validate(args []string) error {
+func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error {
 	err := g.validateCredName(args)
 	if err != nil {
 		return err
 	}
 
-	err = g.validateBundlePath()
+	err = g.validateBundlePath(cxt)
 	if err != nil {
 		return err
 	}

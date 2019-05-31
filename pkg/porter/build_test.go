@@ -173,16 +173,16 @@ func TestPorter_buildBundle(t *testing.T) {
 	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
-	bundleJSONExists, err := p.FileSystem.Exists("bundle.json")
+	bundleJSONExists, err := p.FileSystem.Exists("cnab/bundle.json")
 	require.NoError(t, err)
-	require.True(t, bundleJSONExists, "bundle.json wasn't written")
+	require.True(t, bundleJSONExists, "cnab/bundle.json wasn't written")
 
-	f, _ := p.FileSystem.Stat("bundle.json")
+	f, _ := p.FileSystem.Stat("cnab/bundle.json")
 	if f.Size() == 0 {
-		t.Fatalf("bundle.json is empty")
+		t.Fatalf("cnab/bundle.json is empty")
 	}
 
-	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
+	bundleBytes, err := p.FileSystem.ReadFile("cnab/bundle.json")
 	require.NoError(t, err)
 
 	var bundle bundle.Bundle
@@ -211,7 +211,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
-	bundleBytes, err := p.FileSystem.ReadFile("bundle.json")
+	bundleBytes, err := p.FileSystem.ReadFile("cnab/bundle.json")
 	require.NoError(t, err)
 
 	var bundle bundle.Bundle

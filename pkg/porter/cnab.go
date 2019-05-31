@@ -2,17 +2,15 @@ package porter
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/deislabs/duffle/pkg/bundle"
-
+	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/parameters"
 	"github.com/pkg/errors"
-
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 )
 
 // CNABProvider
@@ -61,13 +59,13 @@ type sharedOptions struct {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *sharedOptions) Validate(args []string) error {
+func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
 	err := o.validateClaimName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.validateBundlePath()
+	err = o.validateBundlePath(cxt)
 	if err != nil {
 		return err
 	}
@@ -97,8 +95,8 @@ func (o *sharedOptions) validateClaimName(args []string) error {
 }
 
 // validateBundlePath gets the absolute path to the bundle file.
-func (o *sharedOptions) validateBundlePath() error {
-	err := o.defaultBundleFile()
+func (o *sharedOptions) validateBundlePath(cxt *context.Context) error {
+	err := o.defaultBundleFile(cxt)
 	if err != nil {
 		return err
 	}
@@ -122,42 +120,29 @@ func (o *sharedOptions) validateBundlePath() error {
 
 // defaultBundleFile defaults the bundle file to the bundle in the current directory
 // when none is set.
-func (o *sharedOptions) defaultBundleFile() error {
+func (o *sharedOptions) defaultBundleFile(cxt *context.Context) error {
 	if o.File != "" {
 		return nil
 	}
 
+	// We are looking both for a bundle.json OR a porter manifest
+	// If we can't find a bundle.json, but we found manifest, tell them to run porter build first
 	pwd, err := os.Getwd()
 	if err != nil {
 		return errors.Wrap(err, "could not get current working directory")
 	}
-
-	files, err := ioutil.ReadDir(pwd)
-	if err != nil {
-		return errors.Wrapf(err, "could not list current directory %s", pwd)
+	foundCNAB, _ := cxt.FileSystem.Exists(filepath.Join(pwd, "cnab/bundle.json"))
+	if foundCNAB {
+		o.File = "cnab/bundle.json"
 	}
-
-	// We are looking both for a bundle.json OR a porter manifest
-	// If we can't find a bundle.json, but we found manifest, tell them to run porter build first
-	foundManifest := false
-	for _, f := range files {
-		// TODO: handle defaulting to a signed bundle
-		if !f.IsDir() && f.Name() == "bundle.json" {
-			o.File = "bundle.json"
-			break
-		}
-
-		if !f.IsDir() && f.Name() == config.Name {
-			foundManifest = true
-		}
-	}
+	foundManifest, _ := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
 
 	if !o.bundleRequired && o.File == "" {
 		return nil
 	}
 
 	if o.File == "" && foundManifest {
-		return errors.New("first run 'porter build' to generate a bundle.json, then run 'porter install'")
+		return errors.New("first run 'porter build' and then run 'porter install'")
 	}
 
 	return nil
