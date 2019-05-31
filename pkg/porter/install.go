@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/context"
 )
 
 // InstallOptions that may be specified when installing a bundle.
@@ -12,9 +13,9 @@ type InstallOptions struct {
 	sharedOptions
 }
 
-func (o *InstallOptions) Validate(args []string) error {
+func (o *InstallOptions) Validate(args []string, cxt *context.Context) error {
 	o.bundleRequired = true
-	return o.sharedOptions.Validate(args)
+	return o.sharedOptions.Validate(args, cxt)
 }
 
 // ToDuffleArgs converts this instance of user-provided installation options

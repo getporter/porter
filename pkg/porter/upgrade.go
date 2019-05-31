@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/context"
 )
 
 // UpgradeOptions that may be specified when uninstalling a bundle.
@@ -12,9 +13,9 @@ type UpgradeOptions struct {
 	sharedOptions
 }
 
-func (o *UpgradeOptions) Validate(args []string) error {
+func (o *UpgradeOptions) Validate(args []string, cxt *context.Context) error {
 	o.bundleRequired = false
-	return o.sharedOptions.Validate(args)
+	return o.sharedOptions.Validate(args, cxt)
 }
 
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses

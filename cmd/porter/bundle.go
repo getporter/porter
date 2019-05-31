@@ -129,7 +129,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle install --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(opts)
@@ -181,7 +181,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UpgradeBundle(opts)
@@ -233,7 +233,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle uninstall --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UninstallBundle(opts)

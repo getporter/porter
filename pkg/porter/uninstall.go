@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/context"
 )
 
 // UninstallOptions that may be specified when uninstalling a bundle.
@@ -12,9 +13,9 @@ type UninstallOptions struct {
 	sharedOptions
 }
 
-func (o *UninstallOptions) Validate(args []string) error {
+func (o *UninstallOptions) Validate(args []string, cxt *context.Context) error {
 	o.bundleRequired = false
-	return o.sharedOptions.Validate(args)
+	return o.sharedOptions.Validate(args, cxt)
 }
 
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses

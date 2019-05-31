@@ -84,7 +84,7 @@ will then provide it to the bundle in the correct location. `,
   porter bundle credential generate kubecred --file myapp/bundle.json --dry-run
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.GenerateCredentials(opts)
