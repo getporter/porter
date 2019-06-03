@@ -302,9 +302,121 @@ execution completed successfully!
 ```
 
 ---
-# Hello X Tutorial 
+name: mellamo
+class: center
+
+# Tutorial
+# Hi, My Name is _
+
+.center[
+  ![como se llamo me llamo llama](/images/me-llamo.jpg)
+]
 
 ---
+name: parameters
+
+## Parameters
+
+Variables in your bundle that you can modify at runtime
+
+### Define a Paramer
+```yaml
+parameters:
+- name: name
+  type: string
+  default: llama
+```
+
+### Use a Parameter
+```yaml
+- "echo Hello, {{ bundle.parameters.name }}"
+```
+
+* Needs double quotes around the yaml entry
+* Needs double curly braces around the templating
+* Uses the format `bundle.parameters.PARAMETER_NAME`
+
+???
+Explain defaults and when parameters are required
+
+---
+
+## Try it out: Print Your Name
+
+Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti", using a parameter.
+
+1. Edit the porter.yaml to define a parameter named `name`.
+1. Use the parameter in the `install` action and echo your name.
+1. Rebuild your bundle with `porter build`.
+1. Finally run `porter install -p name=YOUR_NAME` and look for your name in the output.
+
+---
+
+### porter bundle list
+
+```console
+$ porter bundle list
+NAME          CREATED         MODIFIED        LAST ACTION   LAST STATUS
+HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
+HELLO         8 minutes ago   8 minutes ago   install       success
+```
+
+???
+Ask them to list their bundles
+
+---
+name: claims
+
+### Claims
+
+Claims are records of any actions performed by CNAB compliant tools on a bundle.
+
+```console
+$ cat ~/.porter/claims/HELLO.json
+{
+  "name": "HELLO",
+  "revision": "01DCFCN6AH00SM8E1968XHTSJ5",
+  "created": "2019-06-03T14:22:00.952704-05:00",
+  "modified": "2019-06-03T14:22:02.449355-05:00",
+  "result": {
+    "message": "",
+    "action": "install",
+    "status": "success"
+  },
+  "parameters": {
+    "porter-debug": false,
+    "name": "llama"
+  },
+  ...
+}
+```
+
+---
+name: cleanup
+## Cleaning up Hello World
+
+First run `porter uninstall` without any arguments:
+```console
+$ porter uninstall
+uninstalling HELLO...
+executing porter uninstall configuration from /cnab/app/porter.yaml
+Uninstall Hello World
+Goodbye World
+execution completed successfully!
+```
+
+Now run `porter uninstall` with the name you used for the modified bundle:
+```console
+$ porter uninstall HELLO_LLAMA
+uninstalling HELLO_LLAMA...
+executing porter uninstall configuration from /cnab/app/porter.yaml
+Uninstall Hello llama
+Goodbye llama
+execution completed successfully!
+```
+
+---
+name: wordpress
 
 # Wordpress Tutorial
 
