@@ -44,7 +44,7 @@ func buildBundleCreateCommand(p *porter.Porter) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create",
 		Short: "Create a bundle",
-		Long:  "Create a bundle. This generates a porter manifest, porter.yaml, and the CNAB run script in the current directory.",
+		Long:  "Create a bundle. This generates a porter bundle in the current directory.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Create()
 		},
