@@ -11,7 +11,10 @@
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
     <script>
-      var slideshow = remark.create();
+      var slideshow = remark.create({
+        ratio: '16:9',
+        slideNumberFormat: function(current, total) { return '';}
+      });
     </script>
   </body>
 </html>

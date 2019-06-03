@@ -8,3 +8,8 @@
     color: #f3f3f3;
     line-height: 0.8em;
 }
+
+.remark-slide-content {
+    background-image: url(/images/facet.png);
+    background-size: contain;
+}

@@ -5,7 +5,8 @@ description: |
   application and its infrastructure so that it is easier to manage.
 url: "/pack-your-bags/"
 ---
-class: center, middle, inverse
+class: center, middle
+
 # Pack your bags
 ##  Managing Distributed Applications with CNAB
 
