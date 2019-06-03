@@ -10,6 +10,10 @@
     line-height: 1.2em;
 }
 
+.remark-code {
+    font-size: .8em;
+}
+
 .remark-slide-content p,
 .remark-slide-content pre,
 .remark-slide-content li {
@@ -18,4 +22,9 @@
 
 div.center p {
     max-width: unset; /* If we are centering, limiting the width shoves stuff off to the left */
+}
+
+.footnote {
+    color: grey;
+    font-size: .7em;
 }
