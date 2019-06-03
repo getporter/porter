@@ -8,5 +8,14 @@
 .remark-slide-content p {
     font-size: 1.2em;
     line-height: 1.2em;
+}
+
+.remark-slide-content p,
+.remark-slide-content pre,
+.remark-slide-content li {
     max-width: 40em; /* Don't run into the green stuff on the right from the facet theme */
+}
+
+div.center p {
+    max-width: unset; /* If we are centering, limiting the width shoves stuff off to the left */
 }

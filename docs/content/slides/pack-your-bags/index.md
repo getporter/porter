@@ -90,12 +90,47 @@ class: center, middle
 
 # Manage Bundles with Porter
 
+.center[
+  🚨 Not Setup Yet? 🚨
+
+  https://porter.sh/pack-your-bags/#setup
+  
+  ]
 ---
 
 # Hello World Tutorial
 
 ---
 
+## porter create
+
+```console
+$ porter create --help
+Create a bundle. This generates an empty porter bundle for you to customize.
+```
+
+---
+
+### porter.yaml
+
+
+### README.md
+
+### Dockerfile.tmpl
+
+---
+
+## Try it out
+
+```console
+$ mkdir hello
+$ porter create
+creating porter configuration in the current directory
+$ ls
+Dockerfile.tmpl  README.md  porter.yaml
+```
+
+---
 # Hello X Tutorial 
 
 ---
