@@ -4,6 +4,10 @@
   version = "=0.1.0-ralpha.5+englishrose"
 
 [[constraint]]
+  name = "github.com/deislabs/cnab-go"
+  branch = "custom-extensions"
+  
+[[constraint]]
   name = "github.com/carolynvs/datetime-printer"
   version = "v0.2.0"
 

@@ -23,6 +23,10 @@ type Bundle struct {
 	Actions          map[string]Action              `json:"actions,omitempty" mapstructure:"actions"`
 	Parameters       map[string]ParameterDefinition `json:"parameters" mapstructure:"parameters"`
 	Credentials      map[string]Location            `json:"credentials" mapstructure:"credentials"`
+
+	// Custom extension metadata is a named collection of auxiliary data whose
+	// meaning is defined outside of the CNAB specification.
+	Custom map[string]interface{} `json:"custom" mapstructure:"custom"`
 }
 
 //Unmarshal unmarshals a Bundle that was not signed.

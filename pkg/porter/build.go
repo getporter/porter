@@ -285,6 +285,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 		Name:        p.Config.Manifest.Name,
 		Description: p.Config.Manifest.Description,
 		Version:     p.Config.Manifest.Version,
+		Custom:      make(map[string]interface{}, 1),
 	}
 	image := bundle.InvocationImage{
 		BaseImage: bundle.BaseImage{
@@ -298,6 +299,8 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	b.InvocationImages = []bundle.InvocationImage{image}
 	b.Parameters = p.generateBundleParameters()
 	b.Credentials = p.generateBundleCredentials()
+	b.Custom[config.CustomBundleKey] = p.GenerateStamp(p.Manifest)
+
 	return p.writeBundle(b)
 }
 
