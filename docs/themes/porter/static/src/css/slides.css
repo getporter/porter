@@ -1,15 +1,12 @@
-.inverse {
-    background: #272822;
-    color: #777872;
-    text-shadow: 0 0 20px #333;
-}
-
-.inverse h2 {
-    color: #f3f3f3;
-    line-height: 0.8em;
-}
-
 .remark-slide-content {
     background-image: url(/images/facet.png);
     background-size: contain;
+}
+
+.remark-slide-content ol,
+.remark-slide-content ul,
+.remark-slide-content p {
+    font-size: 1.2em;
+    line-height: 1.2em;
+    max-width: 40em; /* Don't run into the green stuff on the right from the facet theme */
 }
