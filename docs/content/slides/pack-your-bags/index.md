@@ -11,6 +11,28 @@ class: center, middle
 ##  Managing Distributed Applications with CNAB
 
 ---
+name: setup
+
+# Workshop Setup
+
+It can take a while for things to download and install over the workshop wifi,
+so please go to the workshop materials directory and follow the setup instructions
+to get all the materials ready.
+
+.center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
+
+* Clone the workshop repository
+  ```
+  git clone https://github.com/deislabs/porter.git
+  cd porter/workshop
+  ```
+* [Install Porter](https://porter.sh/install)
+* Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
+* [Install Helm 2](https://helm.sh/docs/install/)
+* Initialize Helm on your cluster by running `helm init`
+
+
+---
 name: agenda
 
 # Agenda
