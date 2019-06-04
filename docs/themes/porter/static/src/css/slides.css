@@ -38,3 +38,11 @@ div.center p {
     color: grey;
     font-size: .7em;
 }
+
+#introductions {
+    width: 40em;
+}
+#introductions p {
+    margin-bottom: unset;
+    white-space: nowrap;
+}

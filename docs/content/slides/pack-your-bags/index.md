@@ -46,15 +46,20 @@ name: introductions
 
 # Introductions
 
-😅<br/>
-Carolyn Van Slyck<br/>
-Senior Software Engineer<br/>
-Microsoft Azure<br/>
-
-😎<br/>
-Jeremy Rickard<br/>
-Senior Software Engineer<br/>
-Microsoft Azure<br/>
+<div id="introductions">
+  <div class="left">
+    <img src="/images/carolynvs.jpg" width="150px" />
+    <p>Carolyn Van Slyck</p>
+    <p>Senior Software Engineer</p>
+    <p>Microsoft Azure</p>
+  </div>
+  <div class="right">
+    <img src="/images/jerrycar.jpg" width="200px" />
+    <p>Jeremy Rickard</p>
+    <p>Senior Software Engineer</p>
+    <p>Microsoft Azure</p>
+  </div>
+</div>
 
 ---
 name: cnab
