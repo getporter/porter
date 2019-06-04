@@ -263,9 +263,7 @@ class Notification {
   // Send a new notification, and return a Promise<result>.
   run() {
     this.count++
-    // TODO: change to latest semver release, once available
-    // var j = new Job(`${ this.name }-${ this.count }`, "brigadecore/brigade-github-check-run:TBD");
-    var j = new Job(`${ this.name }-${ this.count }`, "brigadecore/brigade-github-check-run:c04ea3f");
+    var j = new Job(`${ this.name }-${ this.count }`, "brigadecore/brigade-github-check-run:v0.1.0");
     j.env = {
       CHECK_CONCLUSION: this.conclusion,
       CHECK_NAME: this.name,
