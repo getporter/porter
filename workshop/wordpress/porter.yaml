@@ -1,0 +1,65 @@
+mixins:
+  - helm
+ 
+name: wordpress 
+version: 0.1.0
+invocationImage: porter-workshop-wordpress:v0.1.0
+
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+
+parameters:
+- name: namespace
+  type: string
+  default: "wordpress"
+- name: wordpress-password
+  type: string
+  sensitive: true
+  default: "topsecretpassword"
+- name: port
+  type: int
+  default: 30030
+
+install:
+- helm:
+    description: "Install MySQL"
+    name: porter-workshop-mysql
+    chart: stable/mysql
+    version: 0.10.2
+    namespace: "{{ bundle.parameters.namespace }}"
+    replace: true
+    set:
+      mysqlDatabase: wordpress
+      mysqlUser: wordpress
+    outputs:
+    - name: mysql-password
+      secret: porter-workshop-mysql
+      key: mysql-password
+
+- helm:
+    description: "Helm Install Wordpress"
+    name: porter-workshop-wordpress
+    chart: stable/wordpress
+    namespace: wordpress
+    replace: true
+    set:
+      wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
+      externalDatabase.host: porter-workshop-mysql
+      externalDatabase.database: wordpress
+      externalDatabase.user: wordpress
+      externalDatabase.password: "{{ bundle.outputs.mysql-password }}"
+      externalDatabase.port: 3306
+      mariadb.enabled: false
+      service.type: NodePort
+      service.nodePorts.http: "{{ bundle.parameters.port }}"
+
+uninstall:
+  - helm:
+      description: "Helm Uninstall Wordpress"
+      purge: true
+      releases:
+        - porter-workshop-wordpress
+        - porter-workshop-mysql
+     
+
