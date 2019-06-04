@@ -5,7 +5,7 @@
 
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  branch = "custom-extensions"
+  branch = "master"
   
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"
@@ -36,7 +36,7 @@
 [[override]]
   name = "github.com/containerd/containerd"
   source = "github.com/deislabs/containerd"
-  branch = "hell"
+  branch = "cnab-to-oci"
 
 # later patch versions have a breaking change (api.StackVersion is removed)
 [[constraint]]
