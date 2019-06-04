@@ -439,15 +439,34 @@ of the user executing the bundle_, and are loaded into the bundle either as envi
 They are mapped from the local system using named credential sets, instead of specified on the command-line.
 
 ---
+name: creds-v-params
+## Credentials vs. Parameters
+
+### Parameters
+* Application Configuration
+* Stored in the claim
+* 🚨 Available in **plaintext** on the local filesystem
+
+### Credentials
+* Identity of the user executing the bundle
+* Is not stored in the claim
+* Has to be presented every time you perform an action
+
+---
 name: passwords
 
 ## Credentials, Passwords and Sensitive Data
 
-* Credentials are for data identifying data associated with a user. They are re-specified everytime you run a bundle, and are not stored in the claim.
-* Parameters can store sensitive data using the `sensitive` flag. This prevents the value from being printed to the console.
-* We (porter) and the CNAB spec are working on more robust storage mechanisms for claims with sensitive data, and better ways to pull data from secret stores so that they don't end up on the file system unencrypted.
+* Credentials are for data identifying data associated with a user. They are 
+re-specified every time you run a bundle, and are not stored in the claim.
+* Parameters can store sensitive data using the `sensitive` flag. This prevents 
+the value from being printed to the console.
+* We (porter) and the CNAB spec are working on more robust storage mechanisms for 
+claims with sensitive data, and better ways to pull data from secret stores so that 
+they don't end up on the file system unencrypted.
 
-In all honesty this area is a work in progress. I would shove as everything in a credential for now but be aware of the distinction and where the CNAB spec is moving.
+In all honesty this area is a work in progress. I would shove as everything in a 
+credential for now but be aware of the distinction and where the CNAB spec is moving.
 
 ---
 
