@@ -35,48 +35,51 @@ func (l CredentialsFileList) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// ListCredentials lists credentials using the provided printer.PrintOptions
-func (p *Porter) ListCredentials(opts printer.PrintOptions) error {
-	dir, err := p.Config.GetCredentialsDir()
+// fetchCredentials fetches all credentials from the designated credentials dir
+func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
+	credsDir, err := p.Config.GetCredentialsDir()
 	if err != nil {
-		return errors.Wrap(err, "unable to determine credentials directory")
-	}
-
-	// TODO: should this go somewhere else?
-	// i.e., where should logic for init-ing dirs needed by porter go?
-	// e.g., on 'porter creds list' with a fresh porter install/home
-	if ok, _ := p.Context.FileSystem.DirExists(dir); !ok {
-		p.Context.FileSystem.Mkdir(dir, os.ModePerm)
+		return &CredentialsFileList{}, errors.Wrap(err, "unable to determine credentials directory")
 	}
 
 	credentialsFiles := CredentialsFileList{}
-	err = p.Context.FileSystem.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			credSet := &credentials.CredentialSet{}
-			data, err := p.Context.FileSystem.ReadFile(path)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("unable to load credential set from %s:\n%s", path, err))
+	if ok, _ := p.Context.FileSystem.DirExists(credsDir); ok {
+		err = p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() {
+				credSet := &credentials.CredentialSet{}
+				data, err := p.Context.FileSystem.ReadFile(path)
+				if err != nil {
+					return errors.Wrap(err, fmt.Sprintf("unable to load credential set from %s:\n%s", path, err))
+				}
+				if err = yaml.Unmarshal(data, credSet); err != nil {
+					return errors.Wrap(err, "unable to unmarshal credential set")
+				}
+				credentialsFiles = append(credentialsFiles,
+					CredentialsFile{Name: credSet.Name, Modified: info.ModTime()})
 			}
-			if err = yaml.Unmarshal(data, credSet); err != nil {
-				return errors.Wrap(err, "unable to unmarshal credential set")
-			}
-			credentialsFiles = append(credentialsFiles,
-				CredentialsFile{Name: credSet.Name, Modified: info.ModTime()})
+			return nil
+		})
+		if err != nil {
+			return &CredentialsFileList{}, errors.Wrap(err, "encountered error while listing credentials")
 		}
-		return nil
-	})
-	if err != nil {
-		return errors.Wrap(err, "encountered error while listing credentials")
+		sort.Sort(sort.Reverse(credentialsFiles))
 	}
-	sort.Sort(sort.Reverse(credentialsFiles))
+	return &credentialsFiles, nil
+}
+
+// ListCredentials lists credentials using the provided printer.PrintOptions
+func (p *Porter) ListCredentials(opts printer.PrintOptions) error {
+	credentialsFiles, err := p.fetchCredentials()
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch credentials")
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, credentialsFiles)
+		return printer.PrintJson(p.Out, *credentialsFiles)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, credentialsFiles)
+		return printer.PrintYaml(p.Out, *credentialsFiles)
 	case printer.FormatTable:
-		// TODO: update table printing
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -91,7 +94,7 @@ func (p *Porter) ListCredentials(opts printer.PrintOptions) error {
 				}
 				return []interface{}{cr.Name, tp.Format(cr.Modified)}
 			}
-		return printer.PrintTable(p.Out, credentialsFiles, printCredRow,
+		return printer.PrintTable(p.Out, *credentialsFiles, printCredRow,
 			"NAME", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)

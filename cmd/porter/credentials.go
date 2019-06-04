@@ -108,11 +108,7 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "List credentials",
-		Long: `List credentials available to Porter.
-
-A listing of credentials currently available to Porter will be provided, along with metadata such as modification time, etc.
-		
-Optional output formats include json and yaml.`,
+		Long:    `List named sets of credentials defined by the user.`,
 		Example: `  porter credentials list [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
