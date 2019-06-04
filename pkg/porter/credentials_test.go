@@ -87,7 +87,7 @@ func TestGenerateBadNameProvided(t *testing.T) {
 type CredentialsListTest struct {
 	name         string
 	format       printer.Format
-	wantContains string
+	wantContains []string
 	errorMsg     string
 }
 
@@ -96,25 +96,25 @@ func TestCredentialsList_None(t *testing.T) {
 		{
 			name:         "invalid format",
 			format:       "wingdings",
-			wantContains: "",
+			wantContains: []string{},
 			errorMsg:     "invalid format: wingdings",
 		},
 		{
 			name:         "json",
 			format:       printer.FormatJson,
-			wantContains: "[]\n",
+			wantContains: []string{"[]\n"},
 			errorMsg:     "",
 		},
 		{
 			name:         "yaml",
 			format:       printer.FormatYaml,
-			wantContains: "[]\n\n",
+			wantContains: []string{"[]\n\n"},
 			errorMsg:     "",
 		},
 		{
 			name:         "table",
 			format:       printer.FormatTable,
-			wantContains: "NAME   MODIFIED\n",
+			wantContains: []string{"NAME   MODIFIED\n"},
 			errorMsg:     "",
 		},
 	}
@@ -135,7 +135,9 @@ func TestCredentialsList_None(t *testing.T) {
 			}
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
-			require.Equal(t, tc.wantContains, gotOutput)
+			for _, contains := range tc.wantContains {
+				require.Contains(t, gotOutput, contains)
+			}
 		})
 	}
 }
@@ -145,21 +147,27 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name:         "json",
 			format:       printer.FormatJson,
-			wantContains: `"Name": "kool-kreds"`,
+			wantContains: []string{`"Name": "kool-kreds"`},
 			errorMsg:     "",
 		},
 		{
 			name:         "yaml",
 			format:       printer.FormatYaml,
-			wantContains: `- name: kool-kreds`,
+			wantContains: []string{`- name: kool-kreds`},
 			errorMsg:     "",
 		},
 		{
 			name:   "table",
 			format: printer.FormatTable,
-			wantContains: `NAME         MODIFIED
-kool-kreds   now`,
+			wantContains: []string{`NAME         MODIFIED
+kool-kreds   now`},
 			errorMsg: "",
+		},
+		{
+			name:         "error",
+			format:       printer.FormatTable,
+			wantContains: []string{},
+			errorMsg:     "",
 		},
 	}
 
@@ -180,8 +188,46 @@ kool-kreds   now`,
 			require.NoError(t, err, "no error should have existed")
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
-			// TODO: change to require.Equal, verify modified, perhaps w/ regex?
-			require.Contains(t, gotOutput, tc.wantContains)
+			for _, contains := range tc.wantContains {
+				require.Contains(t, gotOutput, contains)
+			}
+		})
+	}
+}
+
+func TestCredentialsList_BadCred(t *testing.T) {
+	testcases := []CredentialsListTest{
+		{
+			name:   "unmarshal error",
+			format: printer.FormatTable,
+			wantContains: []string{
+				"unable to unmarshal credential set from file bad-creds.yaml: yaml: unmarshal errors",
+				`NAME         MODIFIED
+good-creds   now`},
+			errorMsg: "",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.CNAB = &TestCNABProvider{}
+
+			credsDir, err := p.TestConfig.GetCredentialsDir()
+			require.NoError(t, err, "no error should have existed")
+
+			p.TestConfig.TestContext.AddTestDirectory("testdata/good-and-bad-test-creds", credsDir)
+
+			listOpts := printer.PrintOptions{
+				Format: tc.format,
+			}
+			err = p.ListCredentials(listOpts)
+			require.NoError(t, err, "no error should have existed")
+
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			for _, contains := range tc.wantContains {
+				require.Contains(t, gotOutput, contains)
+			}
 		})
 	}
 }

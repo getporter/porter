@@ -44,24 +44,27 @@ func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
 
 	credentialsFiles := CredentialsFileList{}
 	if ok, _ := p.Context.FileSystem.DirExists(credsDir); ok {
-		err = p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
+		p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
 				credSet := &credentials.CredentialSet{}
 				data, err := p.Context.FileSystem.ReadFile(path)
 				if err != nil {
-					return errors.Wrap(err, fmt.Sprintf("unable to load credential set from %s:\n%s", path, err))
+					if p.Debug {
+						fmt.Fprintf(p.Err, "unable to load credential set from %s: %s\n", path, err)
+					}
+					return nil
 				}
 				if err = yaml.Unmarshal(data, credSet); err != nil {
-					return errors.Wrap(err, "unable to unmarshal credential set")
+					if p.Debug {
+						fmt.Fprintf(p.Err, "unable to unmarshal credential set from file %s: %s\n", info.Name(), err)
+					}
+					return nil
 				}
 				credentialsFiles = append(credentialsFiles,
 					CredentialsFile{Name: credSet.Name, Modified: info.ModTime()})
 			}
 			return nil
 		})
-		if err != nil {
-			return &CredentialsFileList{}, errors.Wrap(err, "encountered error while listing credentials")
-		}
 		sort.Sort(sort.Reverse(credentialsFiles))
 	}
 	return &credentialsFiles, nil
