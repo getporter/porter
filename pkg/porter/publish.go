@@ -87,7 +87,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return errors.Wrap(err, "unable to generate CNAB bundle.json")
 	}
 
-	b, err := p.Config.FileSystem.ReadFile("bundle.json")
+	b, err := p.Config.FileSystem.ReadFile("cnab/bundle.json")
 	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
 	if err != nil {
 		return errors.Wrap(err, "unable to load CNAB bundle")
@@ -104,13 +104,12 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	insecureRegistries := []string{}
 	if opts.InsecureRegistry {
 		reg := reference.Domain(ref)
-		fmt.Printf("Registry is: %s", reg)
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	resolverConfig := createResolver(insecureRegistries)
+	resolverConfig := p.createResolver(insecureRegistries)
 
-	err = remotes.FixupBundle(context.Background(), &bun, ref, resolverConfig, remotes.WithEventCallback(displayEvent))
+	err = remotes.FixupBundle(context.Background(), &bun, ref, resolverConfig, remotes.WithEventCallback(p.displayEvent))
 	if err != nil {
 		return err
 	}
@@ -118,23 +117,23 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pushed successfully, with digest %q\n", d.Digest)
+	fmt.Fprintf(p.Out, "Pushed successfully, with digest %q\n", d.Digest)
 	return nil
 }
 
-func createResolver(insecureRegistries []string) remotes.ResolverConfig {
-	return remotes.NewResolverConfigFromDockerConfigFile(dockerconfig.LoadDefaultConfigFile(os.Stderr), insecureRegistries...)
+func (p *Porter) createResolver(insecureRegistries []string) remotes.ResolverConfig {
+	return remotes.NewResolverConfigFromDockerConfigFile(dockerconfig.LoadDefaultConfigFile(p.Out), insecureRegistries...)
 }
 
-func displayEvent(ev remotes.FixupEvent) {
+func (p *Porter) displayEvent(ev remotes.FixupEvent) {
 	switch ev.EventType {
 	case remotes.FixupEventTypeCopyImageStart:
-		fmt.Fprintf(os.Stderr, "Starting to copy image %s...\n", ev.SourceImage)
+		fmt.Fprintf(p.Out, "Starting to copy image %s...\n", ev.SourceImage)
 	case remotes.FixupEventTypeCopyImageEnd:
 		if ev.Error != nil {
-			fmt.Fprintf(os.Stderr, "Failed to copy image %s: %s\n", ev.SourceImage, ev.Error)
+			fmt.Fprintf(p.Out, "Failed to copy image %s: %s\n", ev.SourceImage, ev.Error)
 		} else {
-			fmt.Fprintf(os.Stderr, "Completed image %s copy\n", ev.SourceImage)
+			fmt.Fprintf(p.Out, "Completed image %s copy\n", ev.SourceImage)
 		}
 	}
 }
@@ -177,11 +176,11 @@ func (p *Porter) publishInvocationImage(ctx context.Context, cli *command.Docker
 	}
 	defer pushResponse.Close()
 
-	termFd, _ := term.GetFdInfo(os.Stdout)
+	termFd, _ := term.GetFdInfo(p.Out)
 	// Setting this to false here because Moby os.Exit(1) all over the place and this fails on WSL (only)
 	// when Term is true.
 	isTerm := false
-	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, os.Stdout, termFd, isTerm, nil)
+	err = jsonmessage.DisplayJSONMessagesStream(pushResponse, p.Out, termFd, isTerm, nil)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "denied") {
 			return "", errors.Wrap(err, "docker push authentication failed")

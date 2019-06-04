@@ -35,37 +35,3 @@ func TestPublish_PorterYamlDoesNotExist(t *testing.T) {
 		"porter.yaml not present so should have failed validation",
 	)
 }
-
-func TestPublish_ValidTag(t *testing.T) {
-
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	pwd, err := os.Getwd()
-	require.NoError(t, err, "should not have gotten an error obtaining current working directory")
-	t.Log(p.TestConfig.TestContext.FindBinDir())
-	p.TestConfig.TestContext.AddTestDirectory("testdata", pwd)
-	opts := PublishOptions{}
-	opts.Tag = "somerepo/thing:10"
-	err = opts.Validate(p.Porter)
-	require.NoError(t, err, "options were valid, should not have failed validation")
-}
-
-func TestPublish_InValidTag(t *testing.T) {
-
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	pwd, err := os.Getwd()
-	require.NoError(t, err, "should not have gotten an error")
-	p.TestConfig.TestContext.AddTestDirectory("testdata", pwd)
-	opts := PublishOptions{}
-	opts.Tag = "someinvalid/repo/thing:10:10"
-
-	err = opts.Validate(p.Porter)
-	require.Error(t, err, "options contained invalid tag, should have gotten an error")
-	assert.EqualError(
-		t,
-		err,
-		"invalid --tag value. expected format is REGISTRY/IMAGE:TAG: invalid reference format",
-		"porter.yaml not present so should have failed validation",
-	)
-}
