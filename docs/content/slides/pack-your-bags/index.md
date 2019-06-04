@@ -317,7 +317,8 @@ name: parameters
 
 ## Parameters
 
-Variables in your bundle that you can modify at runtime
+Variables in your bundle that you can specify when you execute the bundle
+and are loaded into the bundle either as environment variables or files.
 
 ### Define a Paramer
 ```yaml
@@ -392,8 +393,8 @@ $ cat ~/.porter/claims/HELLO.json
 ```
 
 ---
-name: cleanup
-## Cleaning up Hello World
+name: cleanup-hello
+## Cleanup Hello World
 
 First run `porter uninstall` without any arguments:
 ```console
@@ -417,8 +418,108 @@ execution completed successfully!
 
 ---
 name: wordpress
+class: center
 
-# Wordpress Tutorial
+# Tutorial
+# Wordpress
+
+---
+name: credentials
+
+## Credentials
+
+Variables that can be specified when the bundle is executed that are _associated with the identity 
+of the user executing the bundle_, and are loaded into the bundle either as environment variables or files.
+
+They are mapped from the local system using named credential sets, instead of specified on the command-line.
+
+---
+name: passwords
+
+## Credentials, Passwords and Sensitive Data
+
+* Credentials are for data identifying data associated with a user. They are re-specified everytime you run a bundle, and are not stored in the claim.
+* Parameters can store sensitive data using the `sensitive` flag. This prevents the value from being printed to the console.
+* We (porter) and the CNAB spec are working on more robust storage mechanisms for claims with sensitive data, and better ways to pull data from secret stores so that they don't end up on the file system unencrypted.
+
+In all honesty this area is a work in progress. I would shove as everything in a credential for now but be aware of the distinction and where the CNAB spec is moving.
+
+---
+
+## porter credentials generate
+
+```console
+$ porter credentials generate --help
+Generate a named set of credentials.
+
+The first argument is the name of credential set you wish to generate. If not
+provided, this will default to the bundle name. By default, Porter will
+generate a credential set for the bundle in the current directory. You may also
+specify a bundle with --file.
+
+Bundles define 1 or more credential(s) that are required to interact with a
+bundle. The bundle definition defines where the credential should be delivered
+to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+represents the source data that you wish to use when interacting with the
+bundle. These will typically be environment variables or files on your local
+file system.
+
+When you wish to install, upgrade or delete a bundle, Porter will use the
+credential set to determine where to read the necessary information from and
+will then provide it to the bundle in the correct location.
+```
+
+---
+
+## Try it out: porter credentials generate
+
+Generate a set of credentials for the wordpress bundle in this repository.
+
+1. Change to the `wordpress` directory under the workshop materials
+1. Run `porter credentials generate` and follow the interactive prompts to create a set of credentials
+for the wordpress bundle.
+
+---
+
+## Wordpress Credential Mapping
+
+### ~/.porter/credentials/wordpress.yaml
+```yaml
+name: wordpress
+credentials:
+- name: kubeconfig
+  source:
+    path: /Users/carolynvs/.kube/config
+```
+
+### porter.yaml
+```yaml
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+```
+
+---
+
+## Try it out: porter install --cred
+
+Install the wordpress bundle and pass it the named set of credentials that you generated.
+
+```console
+$ porter install --cred wordpress
+```
+
+---
+name: cleanup-wordpress
+
+## Cleanup Wordpress
+
+```console
+$ porter uninstall --cred wordpress
+```
+
+???
+Explain why --cred is required again for uninstall 
 
 ---
 class: center, middle
