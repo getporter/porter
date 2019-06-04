@@ -117,7 +117,7 @@ func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 		Short: "Install a bundle",
 		Long: `Install a bundle.
 
-The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle.
+The first argument is the name of the claim to create for the installation. The claim name defaults to the name of the bundle. 
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For instance, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
@@ -127,7 +127,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
-  porter bundle install --tag deislabs/porter-kube-bundle:v1.0
+  porter bundle install MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

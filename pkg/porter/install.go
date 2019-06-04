@@ -71,6 +71,13 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 			return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
 		}
 		opts.File = bundlePath
+		b, err := p.CNAB.LoadBundle(bundlePath, true)
+		if err != nil {
+			return errors.Wrap(err, "unable to load bundle")
+		}
+		if opts.Name == "" {
+			opts.Name = b.Name
+		}
 	}
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
