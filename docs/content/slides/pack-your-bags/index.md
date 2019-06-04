@@ -66,24 +66,39 @@ name: cnab
 
 # What is CNAB?
 
+Quick demo of 2 min demo of porter doing a porter install (azure + helm)
+Runs while we talk (azure-mysql-wordpress or a quickstart from Brian)
+
+Break up our talk 1-20 + 23
+
 ???
 Explain why a spec is necessary
-
----
-name: anatomy
-
-# Anatomy of a Bundle
 
 ---
 name: sharing
 
 # Sharing Bundles
 
+OCI (docker) Registries
+Slide 22
+
 ---
+name: anatomy
 
-# Demo
+# Anatomy of a Bundle
 
-## porter push + docker app install
+Slide 21 from our talk
+
+---
+# CNAB Specification
+
+* bundle format
+* run entrypoint
+* well-defined install/uninstall verbs
+* passing data into a bundle
+
+---
+# Breakdown of Azure MySQL Wordpress
 
 ---
 class: center, middle
@@ -495,16 +510,6 @@ will then provide it to the bundle in the correct location.
 
 ---
 
-## Try it out: porter credentials generate
-
-Generate a set of credentials for the wordpress bundle in this repository.
-
-1. Change to the `wordpress` directory under the workshop materials
-1. Run `porter credentials generate` and follow the interactive prompts to create a set of credentials
-for the wordpress bundle.
-
----
-
 ## Wordpress Credential Mapping
 
 ### ~/.porter/credentials/wordpress.yaml
@@ -522,6 +527,19 @@ credentials:
 - name: kubeconfig
   path: /root/.kube/config
 ```
+
+---
+
+## Try it out: porter credentials generate
+
+Generate a set of credentials for the wordpress bundle in this repository.
+
+1. Change to the `wordpress` directory under the workshop materials
+1. Run `porter credentials generate` and follow the interactive prompts to create a set of credentials
+for the wordpress bundle.
+
+???
+we all do this together
 
 ---
 
