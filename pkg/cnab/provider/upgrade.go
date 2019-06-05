@@ -64,11 +64,6 @@ func (d *Duffle) Upgrade(args UpgradeArguments) error {
 		fmt.Fprintf(d.Err, "upgrading bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
 	}
 
-	err = i.Run(&claim, creds, d.Out)
-	if err != nil {
-		return errors.Wrap(err, "failed to upgrade the bundle")
-	}
-
 	// Upgrade and ALWAYS write out a claim, even if the upgrade fails
 	err = i.Run(&claim, creds, d.Out)
 	saveErr := claims.Store(claim)
