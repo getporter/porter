@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ListOptions represent options for a bundle list command
+// ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
 	RawFormat string
 	Format    printer.Format
@@ -68,8 +68,8 @@ func (p *Porter) ListBundles(opts printer.PrintOptions) error {
 	case printer.FormatTable:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
-		tp:= dtprinter.DateTimePrinter{
-			Now:func() time.Time {return now},
+		tp := dtprinter.DateTimePrinter{
+			Now: func() time.Time { return now },
 		}
 
 		printClaimRow :=

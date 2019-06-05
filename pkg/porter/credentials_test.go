@@ -301,3 +301,124 @@ func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	assert.True(t, credFileExists, "expected the file %s to exist", path)
 	assert.NoError(t, err, "should have been able to check if get credential path exists")
 }
+
+type CredentialShowTest struct {
+	name       string
+	format     printer.Format
+	wantOutput string
+}
+
+func TestShowCredential_NotFound(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialShowOptions{
+		Format: printer.FormatTable,
+		Name:   "non-existent-cred",
+	}
+
+	err := p.ShowCredential(opts)
+	assert.Error(t, err, "an error should have occurred")
+	assert.EqualError(t, err,
+		"unable to load credential set non-existent-cred: open /root/.porter/credentials/non-existent-cred.yaml: file does not exist")
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Equal(t, "", gotOutput)
+}
+
+func TestShowCredential_Found(t *testing.T) {
+	testcases := []CredentialShowTest{
+		{
+			name:   "json",
+			format: printer.FormatJson,
+			wantOutput: `{
+  "name": "kool-kreds",
+  "credentials": [
+    {
+      "name": "kool-config",
+      "source": {
+        "path": "/path/to/kool-config"
+      }
+    },
+    {
+      "name": "kool-envvar",
+      "source": {
+        "env": "KOOL_ENV_VAR"
+      }
+    },
+    {
+      "name": "kool-cmd",
+      "source": {
+        "command": "echo 'kool'"
+      }
+    },
+    {
+      "name": "kool-val",
+      "source": {
+        "value": "kool"
+      }
+    }
+  ]
+}
+`,
+		},
+		{
+			name:   "yaml",
+			format: printer.FormatYaml,
+			wantOutput: `name: kool-kreds
+credentials:
+- name: kool-config
+  source:
+    path: /path/to/kool-config
+- name: kool-envvar
+  source:
+    env: KOOL_ENV_VAR
+- name: kool-cmd
+  source:
+    command: echo 'kool'
+- name: kool-val
+  source:
+    value: kool
+
+`,
+		},
+		{
+			name:   "table",
+			format: printer.FormatTable,
+			wantOutput: `Name: kool-kreds
+
+Credential Mappings
+===================
+Name          Local Source           Source Type
+kool-config   /path/to/kool-config   Path
+kool-envvar   KOOL_ENV_VAR           EnvVar
+kool-cmd      echo 'kool'            Command
+kool-val      kool                   Value
+`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.TestConfig.SetupPorterHome()
+			p.CNAB = &TestCNABProvider{}
+
+			opts := CredentialShowOptions{
+				Format: tc.format,
+				Name:   "kool-kreds",
+			}
+
+			credsDir, err := p.TestConfig.GetCredentialsDir()
+			require.NoError(t, err, "no error should have existed")
+
+			p.TestConfig.TestContext.AddTestDirectory("testdata/test-creds", credsDir)
+
+			err = p.ShowCredential(opts)
+			assert.NoError(t, err, "an error should not have occurred")
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			assert.Equal(t, tc.wantOutput, gotOutput)
+		})
+	}
+}

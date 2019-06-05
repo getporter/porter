@@ -146,17 +146,24 @@ func buildCredentialsRemoveCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.CredentialShowOptions{}
+
 	cmd := &cobra.Command{
-		Use:    "show",
-		Short:  "Show a Credential",
-		Hidden: true,
+		Use:     "show",
+		Short:   "Show a Credential",
+		Long:    `Show a particular credential set, including all named credentials and their corresponding mappings.`,
+		Example: `  porter credential show NAME [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p.PrintVersion()
-			return nil
+			return p.ShowCredential(opts)
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
+
 	return cmd
 }

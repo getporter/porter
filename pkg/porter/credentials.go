@@ -3,7 +3,10 @@ package porter
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -15,6 +18,13 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
+
+// CredentialShowOptions represent options for Porter's credential show command
+type CredentialShowOptions struct {
+	RawFormat string
+	Format    printer.Format
+	Name      string
+}
 
 // CredentialsFile represents a CNAB credentials file and corresponding metadata
 type CredentialsFile struct {
@@ -202,4 +212,95 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return errors.Wrapf(err, "couldn't write credential file %s", dest)
 	}
 	return nil
+}
+
+// Validate validates the args provided Porter's credential show command
+func (o *CredentialShowOptions) Validate(args []string) error {
+	switch len(args) {
+	case 0:
+		return errors.Errorf("no credential name was specified")
+	case 1:
+		o.Name = strings.ToLower(args[0])
+	default:
+		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+	}
+
+	format, err := printer.ParseFormat(o.RawFormat)
+	if err != nil {
+		return err
+	}
+	o.Format = format
+
+	return nil
+}
+
+// ShowCredential shows the credential set corresponding to the provided name, using
+// the provided printer.PrintOptions for display.
+func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
+	credsDir, err := p.Config.GetCredentialsDir()
+	if err != nil {
+		return errors.Wrap(err, "unable to determine credentials directory")
+	}
+
+	credSet := &credentials.CredentialSet{}
+	data, err := p.Context.FileSystem.ReadFile(filepath.Join(credsDir, fmt.Sprintf("%s.yaml", opts.Name)))
+	if err != nil {
+		return errors.Wrapf(err, "unable to load credential set %s", opts.Name)
+	}
+
+	if err = yaml.Unmarshal(data, credSet); err != nil {
+		return errors.Wrapf(err, "unable to unmarshal credential set %s", opts.Name)
+	}
+
+	switch opts.Format {
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, credSet)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, credSet)
+	case printer.FormatTable:
+		printCredentialRow :=
+			func(v interface{}) []interface{} {
+				cs, ok := v.(credentials.CredentialStrategy)
+				if !ok {
+					return nil
+				}
+
+				// Build a reflected Source of type reflectedStruct, for use below
+				reflectedSource := reflectedStruct{
+					Value: reflect.ValueOf(cs.Source),
+					Type:  reflect.TypeOf(cs.Source),
+				}
+
+				// Determine the source type by seeing which reflected source's field
+				// corresponds to a non-empty reflected source value
+				var source string
+				var sourceType string
+				// Iterate through all of the fields of a credentials.Source struct
+				for i := 0; i < reflectedSource.Type.NumField(); i++ {
+					// A Field name would be 'Path', 'EnvVar', etc.
+					fieldName := reflectedSource.Type.Field(i).Name
+					// Get the value for said Field
+					fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
+					// If not empty, this field value and name represent our source and source type, respectively
+					if fieldValue != "" {
+						source = fieldValue
+						sourceType = fieldName
+					}
+				}
+				return []interface{}{cs.Name, source, sourceType}
+			}
+
+		fmt.Fprintf(p.Out, "Name: %s\n\n", credSet.Name)
+		fmt.Fprintln(p.Out, "Credential Mappings")
+		fmt.Fprintln(p.Out, "===================")
+		return printer.PrintTable(p.Out, credSet.Credentials, printCredentialRow,
+			"Name", "Local Source", "Source Type")
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+}
+
+type reflectedStruct struct {
+	Value reflect.Value
+	Type  reflect.Type
 }
