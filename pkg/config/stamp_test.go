@@ -24,7 +24,7 @@ func TestConfig_ComputeManifestDigest(t *testing.T) {
 func TestConfig_LoadStamp(t *testing.T) {
 	c := NewTestConfig(t)
 
-	bun := bundle.Bundle{
+	bun := &bundle.Bundle{
 		Custom: map[string]interface{}{
 			CustomBundleKey: map[string]interface{}{
 				"manifestDigest": simpleManifestDigest,
@@ -40,7 +40,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	c := NewTestConfig(t)
 
-	bun := bundle.Bundle{
+	bun := &bundle.Bundle{
 		Custom: map[string]interface{}{
 			CustomBundleKey: []string{
 				simpleManifestDigest,

@@ -44,7 +44,7 @@ func (c *Config) digestManifest(m *Manifest) (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func (c *Config) LoadStamp(bun bundle.Bundle) (*Stamp, error) {
+func (c *Config) LoadStamp(bun *bundle.Bundle) (*Stamp, error) {
 	data := bun.Custom[CustomBundleKey]
 
 	dataB, err := json.Marshal(data)

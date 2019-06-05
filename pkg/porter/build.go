@@ -24,7 +24,7 @@ import (
 )
 
 func (p *Porter) Build() error {
-	err := p.Config.LoadManifest()
+	err := p.LoadManifest()
 	if err != nil {
 		return err
 	}
