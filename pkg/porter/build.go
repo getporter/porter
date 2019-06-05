@@ -185,7 +185,7 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 }
 
 func (p *Porter) prepareDockerFilesystem() error {
-	fmt.Printf("Copying dependencies ===> \n")
+	fmt.Fprintf(p.Out, "Copying dependencies ===> \n")
 	for _, dep := range p.Manifest.Dependencies {
 		err := p.copyDependency(dep.Name)
 		if err != nil {
@@ -193,7 +193,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 		}
 	}
 
-	fmt.Printf("Copying porter runtime ===> \n")
+	fmt.Fprintf(p.Out, "Copying porter runtime ===> \n")
 
 	runTmpl, err := p.Templates.GetRunScript()
 	if err != nil {
@@ -219,7 +219,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 		return err
 	}
 
-	fmt.Printf("Copying mixins ===> \n")
+	fmt.Fprintf(p.Out, "Copying mixins ===> \n")
 	for _, mixin := range p.Manifest.Mixins {
 		err := p.copyMixin(mixin)
 		if err != nil {
@@ -231,7 +231,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 }
 
 func (p *Porter) copyDependency(bundle string) error {
-	fmt.Printf("Copying bundle dependency %s ===> \n", bundle)
+	fmt.Fprintf(p.Out, "Copying bundle dependency %s ===> \n", bundle)
 	bundleDir, err := p.GetBundleDir(bundle)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (p *Porter) copyDependency(bundle string) error {
 }
 
 func (p *Porter) copyMixin(mixin string) error {
-	fmt.Printf("Copying mixin %s ===> \n", mixin)
+	fmt.Fprintf(p.Out, "Copying mixin %s ===> \n", mixin)
 	mixinDir, err := p.GetMixinDir(mixin)
 	if err != nil {
 		return err
@@ -253,7 +253,7 @@ func (p *Porter) copyMixin(mixin string) error {
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) error {
-	fmt.Printf("\nStarting Invocation Image Build =======> \n")
+	fmt.Fprintf(p.Out, "\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
 		return errors.Wrap(err, "could not get current working directory")
@@ -299,7 +299,7 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	fmt.Printf("\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
+	fmt.Fprintf(p.Out, "\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
 	b := bundle.Bundle{
 		Name:        p.Config.Manifest.Name,
 		Description: p.Config.Manifest.Description,
@@ -336,7 +336,7 @@ func (p Porter) writeBundle(b bundle.Bundle) error {
 func (p *Porter) generateBundleParameters() map[string]bundle.ParameterDefinition {
 	params := map[string]bundle.ParameterDefinition{}
 	for _, param := range append(p.Manifest.Parameters, p.buildDefaultPorterParameters()...) {
-		fmt.Printf("Generating parameter definition %s ====>\n", param.Name)
+		fmt.Fprintf(p.Out, "Generating parameter definition %s ====>\n", param.Name)
 		p := bundle.ParameterDefinition{
 			DataType:      param.DataType,
 			DefaultValue:  param.DefaultValue,
@@ -389,7 +389,7 @@ func (p *Porter) buildDefaultPorterParameters() []config.ParameterDefinition {
 func (p *Porter) generateBundleCredentials() map[string]bundle.Location {
 	params := map[string]bundle.Location{}
 	for _, cred := range p.Manifest.Credentials {
-		fmt.Printf("Generating credential %s ====>\n", cred.Name)
+		fmt.Fprintf(p.Out, "Generating credential %s ====>\n", cred.Name)
 		l := bundle.Location{
 			Path:                cred.Path,
 			EnvironmentVariable: cred.EnvironmentVariable,
