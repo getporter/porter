@@ -195,7 +195,7 @@ func TestPorter_buildBundle(t *testing.T) {
 
 	stamp, err := p.LoadStamp(bundle)
 	require.NoError(t, err)
-	assert.Equal(t, "781cc745a6efa4f8618d737f1bd60fa659a55809e34a59adbf4b37f78825d4b5", stamp.ManifestDigest)
+	assert.Equal(t, "06a51d04297375bf111ab15e579b8a7ab72e2661018c4d08d1d3f38198028e49", stamp.ManifestDigest)
 
 	debugParam, ok := bundle.Parameters["porter-debug"]
 	require.True(t, ok)
