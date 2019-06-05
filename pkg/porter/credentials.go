@@ -178,9 +178,12 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	// Make the credentials path if it doesn't exist. MkdirAll does nothing if it already exists
 	// Readable, writable only by the user
 	err = p.Config.FileSystem.MkdirAll(credentialsDir, 0700)
+	if err != nil {
+		return errors.Wrap(err, "unable to create credentials directory")
+	}
 	dest, err := p.Config.GetCredentialPath(genOpts.Name)
 	if err != nil {
-		return errors.Wrap(err, "unable to determine credentials directory")
+		return errors.Wrap(err, "unable to determine credentials path")
 	}
 
 	fmt.Fprintf(p.Out, "Saving credential to %s\n", dest)
