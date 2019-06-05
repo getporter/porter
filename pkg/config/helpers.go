@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -29,6 +30,13 @@ func (c *TestConfig) SetupPorterHome() {
 	home := "/root/.porter"
 	os.Setenv(EnvHOME, home)
 
-	// Copy bin dir contents to the home directory
-	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), home)
+	// Fake out the porter home directory
+	c.FileSystem.Create(filepath.Join(home, "porter"))
+	c.FileSystem.Create(filepath.Join(home, "porter-runtime"))
+
+	mixinsDir, _ := c.GetMixinsDir()
+	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec-runtime"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm-runtime"))
 }
