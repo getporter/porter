@@ -140,14 +140,16 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
+		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "",
+		"Path to the CNAB bundle.json file.")
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
 		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
-	f.StringVarP(&opts.Driver, "driver", "d", "docker",
+	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
 
 	return cmd
@@ -192,7 +194,9 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the CNAB definition to upgrade. Defaults to the bundle in the current directory.")
+		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "",
+		"Path to the CNAB bundle.json file.")
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
@@ -244,7 +248,9 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the CNAB definition to uninstall. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
+		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "",
+		"Path to the CNAB bundle.json file.")
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,

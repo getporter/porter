@@ -95,7 +95,9 @@ will then provide it to the bundle in the correct location. `,
 	f.BoolVar(&opts.Insecure, "insecure", true,
 		"Allow working with untrusted bundles.")
 	f.StringVarP(&opts.File, "file", "f", "",
-		"Path to the CNAB definition to install. Defaults to the bundle in the current directory.")
+		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "",
+		"Path to the CNAB bundle.json file.")
 	f.BoolVar(&opts.DryRun, "dry-run", false,
 		"Generate credential but do not save it.")
 	return cmd

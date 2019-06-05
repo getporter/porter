@@ -33,7 +33,7 @@ func (o *UninstallOptions) ToDuffleArgs() cnabprovider.UninstallArguments {
 	return cnabprovider.UninstallArguments{
 		ActionArguments: cnabprovider.ActionArguments{
 			Claim:                 o.Name,
-			BundleIdentifier:      o.File,
+			BundleIdentifier:      o.CNABFile,
 			BundleIsFile:          true,
 			Insecure:              o.Insecure,
 			Params:                o.combineParameters(),

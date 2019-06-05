@@ -21,6 +21,8 @@ type CNABProvider interface {
 	Uninstall(arguments cnabprovider.UninstallArguments) error
 }
 
+const DefaultDriver = "docker"
+
 // sharedOptions are common options that apply to multiple CNAB actions.
 type sharedOptions struct {
 	bundleRequired bool
