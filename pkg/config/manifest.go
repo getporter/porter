@@ -28,6 +28,9 @@ type Manifest struct {
 	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
 	Image string `yaml:"invocationImage,omitempty"`
 
+	// BundleTag is the name of the bundle in the format REGISTRY/NAME:TAG
+	BundleTag string `yaml:"tag"`
+
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 

@@ -9,6 +9,8 @@ name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
 invocationImage: porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
+
 # Uncomment out the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl
 

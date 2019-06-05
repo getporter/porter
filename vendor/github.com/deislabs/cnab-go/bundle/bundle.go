@@ -26,7 +26,7 @@ type Bundle struct {
 
 	// Custom extension metadata is a named collection of auxiliary data whose
 	// meaning is defined outside of the CNAB specification.
-	Custom map[string]interface{} `json:"custom" mapstructure:"custom"`
+	Custom map[string]interface{} `json:"custom,omitempty" mapstructure:"custom"`
 }
 
 //Unmarshal unmarshals a Bundle that was not signed.

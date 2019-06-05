@@ -92,6 +92,11 @@ type ResolverOptions struct {
 	// since the registry does not have upload tracking and the existing
 	// mechanism for getting blob upload status is expensive.
 	Tracker StatusTracker
+
+	// OriginProvider returns a slice of refspecs where the Pusher may find candidates for mounting
+	// instead of pushing from local store.
+	// When the Pusher succeeds by mounting, it returns an AlreadyExists error
+	OriginProvider func(ocispec.Descriptor) []reference.Spec
 }
 
 // DefaultHost is the default host function.
@@ -103,11 +108,13 @@ func DefaultHost(ns string) (string, error) {
 }
 
 type dockerResolver struct {
-	auth      Authorizer
-	host      func(string) (string, error)
-	plainHTTP bool
-	client    *http.Client
-	tracker   StatusTracker
+	auth           Authorizer
+	host           func(string) (string, error)
+	headers        http.Header
+	plainHTTP      bool
+	client         *http.Client
+	tracker        StatusTracker
+	originProvider func(ocispec.Descriptor) []reference.Spec
 }
 
 // NewResolver returns a new resolver to a Docker registry
@@ -121,12 +128,16 @@ func NewResolver(options ResolverOptions) remotes.Resolver {
 	if options.Authorizer == nil {
 		options.Authorizer = NewAuthorizer(options.Client, options.Credentials)
 	}
+	if options.OriginProvider == nil {
+		options.OriginProvider = func(_ ocispec.Descriptor) []reference.Spec { return nil }
+	}
 	return &dockerResolver{
-		auth:      options.Authorizer,
-		host:      options.Host,
-		plainHTTP: options.PlainHTTP,
-		client:    options.Client,
-		tracker:   options.Tracker,
+		auth:           options.Authorizer,
+		host:           options.Host,
+		plainHTTP:      options.PlainHTTP,
+		client:         options.Client,
+		tracker:        options.Tracker,
+		originProvider: options.OriginProvider,
 	}
 }
 
@@ -284,9 +295,10 @@ func (r *dockerResolver) Pusher(ctx context.Context, ref string) (remotes.Pusher
 	}
 
 	return dockerPusher{
-		dockerBase: base,
-		tag:        refspec.Object,
-		tracker:    r.tracker,
+		dockerBase:     base,
+		tag:            refspec.Object,
+		tracker:        r.tracker,
+		originProvider: r.originProvider,
 	}, nil
 }
 

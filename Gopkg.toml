@@ -5,7 +5,7 @@
 
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  branch = "custom-extensions"
+  branch = "master"
   
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"
@@ -33,9 +33,10 @@
   revision = "399ea8c73916000c64c2c76e8da00ca82f8387ab"
 
 # later patch versions (e.g. 1.2.5) of containerd don't compile with these pinned versions of docker
-[[constraint]]
+[[override]]
   name = "github.com/containerd/containerd"
-  version = "=v1.2.2"
+  source = "github.com/deislabs/containerd"
+  branch = "cnab-to-oci"
 
 # later patch versions have a breaking change (api.StackVersion is removed)
 [[constraint]]

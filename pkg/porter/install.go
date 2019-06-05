@@ -5,17 +5,35 @@ import (
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/pkg/errors"
 )
 
 // InstallOptions that may be specified when installing a bundle.
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
 	sharedOptions
+	BundlePullOptions
 }
 
 func (o *InstallOptions) Validate(args []string, cxt *context.Context) error {
-	o.bundleRequired = true
+	if o.Tag != "" {
+		err := o.validateTag()
+		if err != nil {
+			return err
+		}
+	} else {
+		o.bundleRequired = true
+	}
 	return o.sharedOptions.Validate(args, cxt)
+}
+
+func (o *InstallOptions) validateTag() error {
+	_, err := parseOCIReference(o.Tag)
+	if err != nil {
+		return errors.Wrap(err, "invalid value for --tag, specified value should be of the form REGISTRY/bundle:tag")
+	}
+	return nil
+
 }
 
 // ToDuffleArgs converts this instance of user-provided installation options
@@ -46,6 +64,21 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
+	// If opts.Tag is set, fetch the bundle
+	if opts.Tag != "" {
+		bundlePath, err := p.PullBundle(opts.BundlePullOptions)
+		if err != nil {
+			return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
+		}
+		opts.File = bundlePath
+		b, err := p.CNAB.LoadBundle(bundlePath, true)
+		if err != nil {
+			return errors.Wrap(err, "unable to load bundle")
+		}
+		if opts.Name == "" {
+			opts.Name = b.Name
+		}
+	}
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
