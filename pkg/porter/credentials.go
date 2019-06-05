@@ -29,11 +29,12 @@ func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error 
 		return err
 	}
 
-	err = g.validateBundlePath(cxt)
+	err = g.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return g.validateBundleJson(cxt)
 }
 
 func (g *CredentialOptions) validateCredName(args []string) error {

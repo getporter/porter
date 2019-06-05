@@ -14,7 +14,6 @@ type InstallOptions struct {
 }
 
 func (o *InstallOptions) Validate(args []string, cxt *context.Context) error {
-	o.bundleRequired = true
 	return o.sharedOptions.Validate(args, cxt)
 }
 
@@ -47,6 +46,11 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

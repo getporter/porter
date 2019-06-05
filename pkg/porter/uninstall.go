@@ -14,14 +14,21 @@ type UninstallOptions struct {
 }
 
 func (o *UninstallOptions) Validate(args []string, cxt *context.Context) error {
-	o.bundleRequired = false
 	return o.sharedOptions.Validate(args, cxt)
 }
 
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
-	p.applyDefaultOptions(&opts.sharedOptions)
+	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
 	return p.CNAB.Uninstall(opts.ToDuffleArgs())
