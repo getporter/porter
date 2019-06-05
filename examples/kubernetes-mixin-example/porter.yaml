@@ -1,7 +1,3 @@
-# This is the configuration for Porter
-# You must define steps for each action, but the rest is optional
-# Uncomment out the sections below to take full advantage of what Porter can do!
-
 mixins:
   - exec
   - kubernetes
