@@ -1,0 +1,36 @@
+mixins:
+  - exec
+
+name: HELLO-LLAMA
+version: 0.1.0
+description: "An example Porter configuration with moar llamas"
+invocationImage: porter-hello-llama:latest
+
+parameters:
+- name: name
+  type: string
+  default: llama
+
+install:
+  - exec:
+      description: "Install Hello Llama"
+      command: bash
+      arguments:
+        - -c
+        - "echo Hello, {{ bundle.parameters.name }}"
+
+upgrade:
+  - exec:
+      description: "Llama 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo {{ bundle.parameters.name }} 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello Llama"
+      command: bash
+      arguments:
+        - -c
+        - "echo Goodbye, {{ bundle.parameters.name }}"

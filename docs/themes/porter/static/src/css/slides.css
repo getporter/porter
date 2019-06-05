@@ -1,0 +1,48 @@
+.remark-slide-content {
+    background-image: url(/images/facet.png);
+    background-size: contain;
+}
+
+.remark-slide-content ol,
+.remark-slide-content ul {
+    font-size: unset;
+}
+
+.remark-slide-content li,
+.remark-slide-content p {
+    font-size: 1.2em;
+    line-height: 1.2em;
+    color: #666
+}
+
+.remark-code {
+    font-size: .8em;
+}
+
+.remark-slide-content pre {
+    margin-bottom: 1em;
+}
+
+.remark-slide-content p,
+.remark-slide-content pre,
+.remark-slide-content ol,
+.remark-slide-content ul {
+    max-width: 40em; /* Don't run into the green stuff on the right from the facet theme */
+}
+
+div.center p {
+    max-width: unset; /* If we are centering, limiting the width shoves stuff off to the left */
+}
+
+.footnote {
+    color: grey;
+    font-size: .7em;
+}
+
+#introductions {
+    width: 40em;
+}
+#introductions p {
+    margin-bottom: unset;
+    white-space: nowrap;
+}
