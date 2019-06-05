@@ -76,6 +76,7 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 		lines = append(lines, p.buildCNABSection()...)
 		lines = append(lines, p.buildPorterSection()...)
 	}
+	lines = append(lines, p.buildWORKDIRSection())
 	lines = append(lines, p.buildCMDSection())
 
 	for _, line := range lines {
@@ -129,6 +130,10 @@ func (p *Porter) buildCNABSection() []string {
 	return []string{
 		`COPY cnab/ /cnab/`,
 	}
+}
+
+func (p *Porter) buildWORKDIRSection() string {
+	return `WORKDIR /cnab/app`
 }
 
 func (p *Porter) buildCMDSection() string {

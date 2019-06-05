@@ -33,6 +33,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"",
 		"COPY . /cnab/app",
 		"RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab",
+		"WORKDIR /cnab/app",
 		`CMD ["/cnab/app/run"]`,
 	}
 	assert.Equal(t, wantlines, gotlines)
@@ -68,6 +69,7 @@ COPY mybin /cnab/app/
 		"",
 		"COPY cnab/ /cnab/",
 		"COPY porter.yaml /cnab/app/porter.yaml",
+		"WORKDIR /cnab/app",
 		"CMD [\"/cnab/app/run\"]",
 	}
 	assert.Equal(t, wantLines, gotlines)
@@ -97,6 +99,7 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 
 COPY . /cnab/app
 RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
+WORKDIR /cnab/app
 CMD ["/cnab/app/run"]
 `
 	assert.Equal(t, wantlines, p.TestConfig.TestContext.GetOutput())
