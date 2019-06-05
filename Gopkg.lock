@@ -1439,7 +1439,6 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
-    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/hashicorp/go-multierror",
     "github.com/masterminds/semver",
     "github.com/mmcdole/gofeed/atom",
