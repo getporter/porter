@@ -188,19 +188,19 @@ func TestPorter_buildBundle(t *testing.T) {
 	bundleBytes, err := p.FileSystem.ReadFile("cnab/bundle.json")
 	require.NoError(t, err)
 
-	var bundle bundle.Bundle
-	err = json.Unmarshal(bundleBytes, &bundle)
+	bun := &bundle.Bundle{}
+	err = json.Unmarshal(bundleBytes, bun)
 	require.NoError(t, err)
 
-	assert.Equal(t, bundle.Name, "HELLO")
-	assert.Equal(t, bundle.Version, "0.1.0")
-	assert.Equal(t, bundle.Description, "An example Porter configuration")
+	assert.Equal(t, bun.Name, "HELLO")
+	assert.Equal(t, bun.Version, "0.1.0")
+	assert.Equal(t, bun.Description, "An example Porter configuration")
 
-	stamp, err := p.LoadStamp(bundle)
+	stamp, err := p.LoadStamp(bun)
 	require.NoError(t, err)
 	assert.Equal(t, "06a51d04297375bf111ab15e579b8a7ab72e2661018c4d08d1d3f38198028e49", stamp.ManifestDigest)
 
-	debugParam, ok := bundle.Parameters["porter-debug"]
+	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok)
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
 	assert.Equal(t, "bool", debugParam.DataType)

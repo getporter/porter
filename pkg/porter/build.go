@@ -31,7 +31,7 @@ type BuildOptions struct {
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
-	err := p.Config.LoadManifest()
+	err := p.LoadManifest()
 	if err != nil {
 		return err
 	}
