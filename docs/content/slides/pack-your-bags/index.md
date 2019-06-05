@@ -484,7 +484,6 @@ In all honesty this area is a work in progress. I would shove as everything in a
 credential for now but be aware of the distinction and where the CNAB spec is moving.
 
 ---
-
 ## porter credentials generate
 
 ```console
@@ -509,7 +508,6 @@ will then provide it to the bundle in the correct location.
 ```
 
 ---
-
 ## Wordpress Credential Mapping
 
 ### ~/.porter/credentials/wordpress.yaml
@@ -529,7 +527,6 @@ credentials:
 ```
 
 ---
-
 ## Try it out: porter credentials generate
 
 Generate a set of credentials for the wordpress bundle in this repository.
@@ -542,7 +539,6 @@ for the wordpress bundle.
 we all do this together
 
 ---
-
 ## Try it out: porter install --cred
 
 Install the wordpress bundle and pass it the named set of credentials that you generated.
@@ -569,42 +565,271 @@ class: center, middle
 # BREAK
 
 ---
+name: author
 class: center, middle
 
 # Authoring Bundles
 
 ---
-
+name: manifest
 # Porter Manifest In-Depth
 
 ---
+## Metadata
 
-# Steps and Actions
+```yaml
+name: "azure-wordpress"
+version: "v0.1.0"
+invocationImage: "deislabs/azure-wordpress-ii:v0.1.0"
+tag: "deislabs/azure-wordpress:v0.1.0"
+```
+
+---
+## Mixins
+
+Declare any mixins that you are going to use
+
+```yaml
+mixins:
+  - azure
+  - helm
+```
+
+---
+## Parameters
+
+Define parameters that the bundle requires.
+
+```yaml
+parameters:
+- name: mysql_user
+  type: string
+  default: wordpress
+- name: mysql_password
+  type: string
+  sensitive: true
+```
+
+---
+## Credentials
+
+Define credentials that the bundle requires and where they should be placed
+in the bundle when it is executing:
+
+* environment variables (env)
+* files (path)
+
+```yaml
+credentials:
+- name: SUBSCRIPTION_ID
+  env: AZURE_SUBSCRIPTION_ID
+- name: kubeconfig
+  path: /root/.kube/config
+```
+
+---
+## Custom Dockerfile
+
+Specify a custom Dockerfile for the invocation image
+
+* Use a different base image
+* Add users, tweak the environment and configuration
+* Install tools and applications
+
+```yaml
+dockerfile: Dockerfile.tmpl
+```
+
+---
+## Review: Default Dockerfile
+
+* Uses Debian for the base image
+* Installs root ssl certificates
+* Copies everything in the local bundle directory into the invocation image 
+  in the same directory as your bundle for you automatically
+
+---
+# Actions and Steps
+
+---
+## Actions
+
+Actions map to the verbs you use when you use Porter.
+
+* porter install
+* porter upgrade
+* porter uninstall
+
+These are defined in the CNAB specification.
+
+---
+## Steps
+
+Within an action you can define a series of ordered steps.
+
+* A step must complete successfully before the next step is executed.
+* A step is defined using a mixin. Each step can use only one mixin. So far we have
+used the `exec` mixin that lets you run commands.
+* Mixins must be declared ahead of time in the `mixins` section of the manifest.
 
 ---
 
-# Wiring
+```yaml
+install: # action
+  - exec: # step
+      description: "Install my application"
+      command: bash
+      arguments:
+        - install-myapp.sh
+```
 
 ---
+### Referencing files from the Manifest
 
-# Templating
+We recommend referencing files using relative paths
+
+```console
+$ tree
+├── Dockerfile
+├── README.md
+├── porter.yaml
+└── scripts
+*    └── do-things.sh
+```
+
+**porter.yaml**
+```yaml
+install:
+  - exec:
+      description: Do Things
+      command: bash
+      arguments:
+*        - scripts/do-things.sh
+```
+
 
 ---
+## Step Outputs
+
+* You tell the mixin what data to extract and put into an ouput
+* Each mixin output will look different, but they all require a `name`
+* Porter stores the output value, making it available to later steps
+* Not all mixins support outputs
+
+---
+### Helm Mixin Output
+
+```yaml
+install:
+- helm:
+    ...
+    outputs:
+    - name: mysql-password
+      secret: mydb
+      key: mysql-password
+```
+
+---
+### Kubernetes Mixin Output
+
+```yaml
+install:
+  - kubernetes:
+      description: "Create NGINX Deployment"
+      manifests:
+        - manifests/nginx
+      wait: true
+      outputs:
+        - name: "IP_ADDRESS"
+          resourceType: service
+          resourceName: nginx-deployment
+          jsonPath: "{.spec.clusterIP}"
+```
+
+---
+name: wiring
+
+## Hot Wiring the Manifest
+
+These variables are available for you to use in the manifest:
+
+* bundle.name
+* bundle.parameters.PARAMETER_NAME
+* bundle.credentials.CREDENTIAL_NAME
+* bundle.outputs.OUTPUT_NAME
+
+---
+name: templating
+
+## Templating
+
+Porter uses a template engine to substitute values into the manifest.
+
+* Needs double quotes around the yaml entry
+* Use double curly braces around the templated value
+
+**Example**
+```yaml
+connectionString: "{{bundle.outputs.host}}:{{bundle.outputs.port}}"
+```
+
+---
+name: mixins
 class: center, middle
 
 # Mixins
 
+_"Mixins are the lifeblood of Porter._
+
+_They adapt between CNAB and existing tools. Porter is just glue."_
+
+---
+## Mixins Available Today
+
+* exec
+* kubernetes
+* helm
+* azure
+* terraform
+
+---
+## Installing Mixins
+
+Anyone can make a mixin and have people install it using Porter
+
+**porter mixin install terraform --feed-url cdn.deislabs.io/porter/atom.xml**
+
 ---
 
-# Step Outputs
+## What if I need a mixin that doesn't exist? 😰
+
+You can always use a custom dockerfile to install the tool you need and then
+execute the commands with the exec mixin.
+
+Custom mixins are just easier to use, but aren't necessary.
 
 ---
-
 # Make Your Own Mixin
 
 ---
+## What makes a mixin?
 
-# Break Glass
+* Executable written in any language
+* Communicates to Porter on stdin and stdout
+* Supports a few commands: build, schema, install, upgrade, uninstall
+* Translates the steps from the porter manifest to commands against any external tool or service
+
+---
+## What mixin would you make?
+
+* Docker
+* Google Cloud
+* CloudFormation
+* AWS
+* Artifactory
+* Vault
+* Dominos 🍕
+* What else?
 
 ---
 class: center, middle
@@ -612,18 +837,15 @@ class: center, middle
 # CNAB Best Practices
 
 ---
-
 # What would you really put into a bundle?
 
 ---
-
 # What does a real bundle look like?
 
 ???
 Look at the azure examples and quick starts
 
 ---
-
 # How does this fit into a CI/C pipeline?
 
 ---
