@@ -42,7 +42,7 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 	args := cnabprovider.InstallArguments{
 		ActionArguments: cnabprovider.ActionArguments{
 			Claim:                 o.Name,
-			BundleIdentifier:      o.File,
+			BundleIdentifier:      o.CNABFile,
 			BundleIsFile:          true,
 			Insecure:              o.Insecure,
 			Params:                make(map[string]string, len(o.combinedParameters)),

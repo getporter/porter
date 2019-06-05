@@ -141,7 +141,7 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 
 	//TODO make this work for either porter.yaml OR a bundle
-	bundle, err := p.CNAB.LoadBundle(opts.File, opts.Insecure)
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile, opts.Insecure)
 	if err != nil {
 		return err
 	}

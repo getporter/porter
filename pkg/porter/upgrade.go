@@ -33,7 +33,7 @@ func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.UpgradeArguments {
 	return cnabprovider.UpgradeArguments{
 		ActionArguments: cnabprovider.ActionArguments{
 			Claim:                 o.Name,
-			BundleIdentifier:      o.File,
+			BundleIdentifier:      o.CNABFile,
 			BundleIsFile:          true,
 			Insecure:              o.Insecure,
 			Params:                o.combineParameters(),
