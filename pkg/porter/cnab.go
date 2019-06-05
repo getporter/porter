@@ -108,7 +108,7 @@ func (o *sharedOptions) validateClaimName(args []string) error {
 }
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
-func (o *sharedOptions) defaultBundleFiles(cxt *context.Context) error {
+func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	if o.File == "" {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -134,17 +134,17 @@ func (o *sharedOptions) defaultBundleFiles(cxt *context.Context) error {
 	return nil
 }
 
-func (o *sharedOptions) validateBundleFiles(cxt *context.Context) error {
+func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {
 	if o.File != "" && o.CNABFile != "" {
 		return errors.New("cannot specify both --file and --cnab-file")
 	}
 
-	err := o.validateManifest(cxt)
+	err := o.validateFile(cxt)
 	if err != nil {
 		return err
 	}
 
-	err = o.validateBundleJson(cxt)
+	err = o.validateCNABFile(cxt)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (o *sharedOptions) validateBundleFiles(cxt *context.Context) error {
 	return nil
 }
 
-func (o *sharedOptions) validateManifest(cxt *context.Context) error {
+func (o *bundleFileOptions) validateFile(cxt *context.Context) error {
 	if o.File == "" {
 		return nil
 	}
@@ -165,8 +165,8 @@ func (o *sharedOptions) validateManifest(cxt *context.Context) error {
 	return nil
 }
 
-// validateBundleJson converts the bundle file path to an absolute filepath and verifies that it exists.
-func (o *sharedOptions) validateBundleJson(cxt *context.Context) error {
+// validateCNABFile converts the bundle file path to an absolute filepath and verifies that it exists.
+func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	if o.CNABFile == "" {
 		return nil
 	}

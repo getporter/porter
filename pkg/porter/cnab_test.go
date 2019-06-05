@@ -67,7 +67,7 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 				},
 			}
 
-			err := opts.validateBundleJson(cxt.Context)
+			err := opts.validateCNABFile(cxt.Context)
 
 			if tc.wantError == "" {
 				require.NoError(t, err)

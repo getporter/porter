@@ -124,7 +124,7 @@ func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error 
 		return err
 	}
 
-	return g.validateBundleJson(cxt)
+	return g.validateCNABFile(cxt)
 }
 
 func (g *CredentialOptions) validateCredName(args []string) error {
