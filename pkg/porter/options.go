@@ -4,14 +4,18 @@ package porter
 // based on values that beyond just what was supplied by the user
 // such as information in the manifest itself.
 func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
+	if opts.File != "" {
+		err := p.LoadManifestFrom(opts.File)
+		if err != nil {
+			return err
+		}
+	}
+
 	//
 	// Default the claim name to the bundle name
 	//
-	if opts.Name == "" {
-		err := p.Config.LoadManifest()
-		if err == nil {
-			opts.Name = p.Manifest.Name
-		}
+	if opts.Name == "" && p.Manifest != nil {
+		opts.Name = p.Manifest.Name
 	}
 
 	//

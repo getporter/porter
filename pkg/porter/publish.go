@@ -26,7 +26,7 @@ import (
 // PublishOptions are options that may be specified when publishing a bundle.
 // Porter handles defaulting any missing values.
 type PublishOptions struct {
-	File             string
+	bundleFileOptions
 	InsecureRegistry bool
 }
 
@@ -56,11 +56,16 @@ func (p PublishOptions) Validate(porter *Porter) error {
 // and then regenerates the bundle.json. Finally it [TODO] publishes the manifest to an OCI registry.
 func (p *Porter) Publish(opts PublishOptions) error {
 	var err error
-	if opts.File != "" {
+	if opts.File != "" { // TODO: Extract validation from sharedOptions so that we aren't diverging logic from the other commands like we are here. Normally file is always populated by Validate.
 		err = p.Config.LoadManifestFrom(opts.File)
 	} else {
 		err = p.Config.LoadManifest()
 	}
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
