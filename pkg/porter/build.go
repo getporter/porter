@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +24,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Porter) Build() error {
+type BuildOptions struct {
+	contextOptions
+}
+
+func (p *Porter) Build(opts BuildOptions) error {
+	opts.Apply(p.Context)
+
 	err := p.Config.LoadManifest()
 	if err != nil {
 		return err
@@ -51,7 +58,11 @@ func (p *Porter) generateDockerFile() error {
 
 	fmt.Fprintf(p.Out, "\nWriting Dockerfile =======>\n")
 	contents := strings.Join(lines, "\n")
-	fmt.Fprintln(p.Out, contents)
+
+	if p.IsVerbose() {
+		fmt.Fprintln(p.Out, contents)
+	}
+
 	err = p.Config.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
@@ -78,8 +89,10 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 	}
 	lines = append(lines, p.buildCMDSection())
 
-	for _, line := range lines {
-		fmt.Fprintln(p.Out, line)
+	if p.IsVerbose() {
+		for _, line := range lines {
+			fmt.Fprintln(p.Out, line)
+		}
 	}
 
 	return lines, nil
@@ -268,13 +281,19 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	termFd, _ := term.GetFdInfo(os.Stdout)
+
+	dockerOutput := ioutil.Discard
+	if p.IsVerbose() {
+		dockerOutput = p.Out
+	}
+
+	termFd, _ := term.GetFdInfo(dockerOutput)
 	// Setting this to false here because Moby os.Exit(1) all over the place and this fails on WSL (only)
 	// when Term is true.
 	isTerm := false
-	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, termFd, isTerm, nil)
+	err = jsonmessage.DisplayJSONMessagesStream(response.Body, dockerOutput, termFd, isTerm, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to stream docker build stdout")
+		return errors.Wrap(err, "failed to stream docker build output")
 	}
 	return nil
 }
