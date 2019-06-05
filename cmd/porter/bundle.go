@@ -153,7 +153,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.StringVarP(&opts.Tag, "tag", "t", "",
 		"Install from a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
-		"Treat the given bundle registry as insecure")
+		"Don't require TLS for the registry")
 	return cmd
 }
 
@@ -291,7 +291,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.BoolVar(&opts.InsecureRegistry, "insecure", false, "Treat the registry as insecure.")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false, "Don't require TLS for the registry.")
 	return &cmd
 }
 
