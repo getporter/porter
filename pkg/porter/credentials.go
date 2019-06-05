@@ -135,6 +135,9 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 	return nil
 }
 
+// GenerateCredentials builds a new credential set based on the given options. This can be either
+// a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
+// error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 
 	//TODO make this work for either porter.yaml OR a bundle
@@ -168,13 +171,23 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		fmt.Fprintf(p.Out, "%v", string(data))
 		return nil
 	}
-
+	credentialsDir, err := p.Config.GetCredentialsDir()
+	if err != nil {
+		return errors.Wrap(err, "unable to get credentials directory")
+	}
+	// Make the credentials path if it doesn't exist. MkdirAll does nothing if it already exists
+	// Readable, writable only by the user
+	err = p.Config.FileSystem.MkdirAll(credentialsDir, 0700)
+	if err != nil {
+		return errors.Wrap(err, "unable to create credentials directory")
+	}
 	dest, err := p.Config.GetCredentialPath(genOpts.Name)
 	if err != nil {
-		return errors.Wrap(err, "unable to determine credentials directory")
+		return errors.Wrap(err, "unable to determine credentials path")
 	}
 
 	fmt.Fprintf(p.Out, "Saving credential to %s\n", dest)
+
 	err = p.Context.FileSystem.WriteFile(dest, data, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "couldn't write credential file %s", dest)

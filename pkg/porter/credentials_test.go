@@ -7,6 +7,7 @@ import (
 	printer "github.com/deislabs/porter/pkg/printer"
 
 	"github.com/deislabs/duffle/pkg/bundle"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -230,4 +231,73 @@ good-creds   now`},
 			}
 		})
 	}
+}
+
+func TestGenerateNoCredentialDirectory(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialOptions{
+		Silent: true,
+	}
+	opts.Name = "name"
+
+	//Check if the credentials directory exists in the FS. It shouldn't.
+	credDir, err := p.Config.GetCredentialsDir()
+	require.NoError(t, err, "should have been able to get credentials directory path")
+	credDirExists, err := p.Porter.Context.FileSystem.DirExists(credDir)
+	require.NoError(t, err, "shouldn't have failed on dir exists")
+	require.False(t, credDirExists, "there should not have been a credential directory for this test")
+
+	//Now generate the credentials. After completion, the directory should now exist. It should be
+	//created if it does not exit
+	err = p.GenerateCredentials(opts)
+	assert.NoError(t, err, "credential generation should have been successful")
+	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
+	assert.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
+	assert.True(t, credDirExists, "should have been a credential directory after the generation")
+
+	//Verify that the credential was actually created.
+	path, err := p.Porter.Config.GetCredentialPath("name")
+	assert.NoError(t, err, "couldn't get credential path")
+	credFileExists, err := p.Porter.Context.FileSystem.Exists(path)
+	assert.True(t, credFileExists, "expected the file %s to exist", path)
+	assert.NoError(t, err, "should have been able to check if get credential path exists")
+}
+
+func TestGenerateCredentialDirectoryExists(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialOptions{
+		Silent: true,
+	}
+	opts.Name = "name"
+
+	//Create the credentials directory
+	credDir, err := p.Config.GetCredentialsDir()
+	require.NoError(t, err, "should have been able to get credentials directory path")
+	err = p.Config.FileSystem.MkdirAll(credDir, 0600)
+	require.NoError(t, err, "should have been able to make directory path")
+
+	//Verify the directory does in fact, exist.
+	credDirExists, err := p.Porter.Context.FileSystem.DirExists(credDir)
+	require.NoError(t, err, "shouldn't have failed on dir exists")
+	require.True(t, credDirExists, "there should have been a credential directory for this test")
+
+	//Generate the credential now. The directory does exist, so there should be no error.
+	err = p.GenerateCredentials(opts)
+	assert.NoError(t, err, "credential generation should have been successful")
+	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
+	assert.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
+	assert.True(t, credDirExists, "should have been a credential directory after the generation")
+
+	//Verify we wrote the credential file.
+	path, err := p.Porter.Config.GetCredentialPath("name")
+	assert.NoError(t, err, "couldn't get credential path")
+	credFileExists, err := p.Porter.Context.FileSystem.Exists(path)
+	assert.True(t, credFileExists, "expected the file %s to exist", path)
+	assert.NoError(t, err, "should have been able to check if get credential path exists")
 }
