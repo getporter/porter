@@ -7,11 +7,11 @@ Once you have built a bundle with Porter, the next step is to share the bundle a
 
 ## Preparing For Bundle Publishing
 
-Before you can publish your bundle, you must first run a `porter build` command. This will create the invocation image so it can be pushed to an OCI (Docker) registry along with your CNAB bundle manifest. It's a good idea to work with your bundle and test it locally before you decide to publish it to a registry.
+Before you can publish your bundle, you must first run a `porter build` command. This will create the invocation image so it can be pushed to an OCI (Docker) registry along with your CNAB bundle manifest. It's a good idea to work with your bundle and test it locally before you publish it to a registry.
 
 ## Bundle Publish
 
-Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing the both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both nvocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
+Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing the both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both invocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
 
 ```yaml
 name: kube-example
@@ -21,7 +21,7 @@ invocationImage: deislabs/porter-kubernetes:latest
 tag: deislabs/porter-kube-bundle:1.0
 ```
 
-This YAML snippet indicates that the invocation image will be built and tagged as `deislabs/porter-kubernetes:latest`. The first part of this reference, `deislabs` indicates the registry that the invocation image should eventually be published to. The `porter-kubernetes` segment identifies the iamge, while the `:latest` portion denotes a specific version. Much like the `invocationImage` attribute is used to control the name of resulting Docker invocation image, the `tag` attribute is used to specify the name and location of the resulting CNAB bundle. In both cases, when you are ready to publish your bundle, it would be a good idea to provide specific versions for both of these, such as `v1.0.0`. We recommend using [semantic versioning](https://semver.org/) for both the invocation image and the bundle. We also recommend specifying the same registry for both, in order to simplify access to your bundle and invocation image by end users.
+This YAML snippet indicates that the invocation image will be built and tagged as `deislabs/porter-kubernetes:latest`. The first part of this reference, `deislabs` indicates the registry that the invocation image should eventually be published to. The `porter-kubernetes` segment identifies the image, while the `:latest` portion denotes a specific version. Much like the `invocationImage` attribute is used to control the name of resulting Docker invocation image, the `tag` attribute is used to specify the name and location of the resulting CNAB bundle. In both cases, when you are ready to publish your bundle, it would be a good idea to provide specific versions for both of these, such as `v1.0.0`. We recommend using [semantic versioning](https://semver.org/) for both the invocation image and the bundle. We also recommend specifying the same registry for both, in order to simplify access to your bundle and invocation image by end users.
 
 Once you have provided values for these, run the `porter build` command one last time to verify that your invocation image can be successfully built and to ensure that the value you specified in `invocationImage` is correct.
 

@@ -68,10 +68,9 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := InstallOptions{
-		sharedOptions{
+		sharedOptions: sharedOptions{
 			Params: []string{"porter-debug=false"},
 		},
-		BundlePullOptions{},
 	}
 	err = opts.validateParams()
 	require.NoError(t, err)
@@ -87,10 +86,9 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 
 func TestInstallOptions_validateParams(t *testing.T) {
 	opts := InstallOptions{
-		sharedOptions{
+		sharedOptions: sharedOptions{
 			Params: []string{"A=1", "B=2"},
 		},
-		BundlePullOptions{},
 	}
 
 	err := opts.validateParams()
@@ -128,14 +126,13 @@ func TestInstallOptions_validateClaimName(t *testing.T) {
 
 func TestInstallOptions_combineParameters(t *testing.T) {
 	opts := InstallOptions{
-		sharedOptions{
+		sharedOptions: sharedOptions{
 			ParamFiles: []string{
 				"testdata/install/base-params.txt",
 				"testdata/install/dev-params.txt",
 			},
 			Params: []string{"A=true", "E=puppies", "E=kitties"},
 		},
-		BundlePullOptions{},
 	}
 
 	err := opts.validateParams()
@@ -168,10 +165,9 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{
-				sharedOptions{
+				sharedOptions: sharedOptions{
 					Driver: tc.driver,
 				},
-				BundlePullOptions{},
 			}
 			err := opts.validateDriver()
 
@@ -187,8 +183,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 
 func TestInstallOptions_validtag(t *testing.T) {
 	opts := InstallOptions{
-		sharedOptions{},
-		BundlePullOptions{
+		BundlePullOptions: BundlePullOptions{
 			Tag: "deislabs/kubetest:1.0",
 		},
 	}
@@ -199,8 +194,7 @@ func TestInstallOptions_validtag(t *testing.T) {
 
 func TestInstallOptions_invalidtag(t *testing.T) {
 	opts := InstallOptions{
-		sharedOptions{},
-		BundlePullOptions{
+		BundlePullOptions: BundlePullOptions{
 			Tag: "deislabs/kubetest:1.0:ahjdljahsdj",
 		},
 	}

@@ -2,7 +2,7 @@ package cache
 
 import (
 	"crypto/md5"
-	"fmt"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 
@@ -45,8 +45,10 @@ func (c *Cache) StoreBundle(bundleTag string, bun *bundle.Bundle) (string, error
 	bid := getBundleID(bundleTag)
 	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
 	cachedBundlePath := filepath.Join(bundleCnabDir, "bundle.json")
-	c.FileSystem.MkdirAll(bundleCnabDir, os.ModePerm)
-
+	err = c.FileSystem.MkdirAll(bundleCnabDir, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create cache directory")
+	}
 	f, err := c.FileSystem.OpenFile(cachedBundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
@@ -82,5 +84,5 @@ func getBundleID(bundleTag string) string {
 	// hash the tag, tags have characters that won't work as part of a path
 	// so hashing here to get a path friendly name
 	bid := md5.Sum([]byte(bundleTag))
-	return fmt.Sprintf("%x", bid)
+	return hex.EncodeToString(bid[:])
 }
