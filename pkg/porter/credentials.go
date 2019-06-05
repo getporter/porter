@@ -2,16 +2,106 @@ package porter
 
 import (
 	"fmt"
+	"os"
+	"sort"
+	"time"
 
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/credentials"
+	"github.com/deislabs/porter/pkg/credentialsgenerator"
 	"github.com/deislabs/porter/pkg/printer"
+
+	dtprinter "github.com/carolynvs/datetime-printer"
+	credentials "github.com/deislabs/cnab-go/credentials"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
-func (p *Porter) PrintCredentials(opts printer.PrintOptions) error {
-	return nil
+// CredentialsFile represents a CNAB credentials file and corresponding metadata
+type CredentialsFile struct {
+	Name     string
+	Modified time.Time
+}
+
+// CredentialsFileList is a slice of CredentialsFiles
+type CredentialsFileList []CredentialsFile
+
+func (l CredentialsFileList) Len() int {
+	return len(l)
+}
+func (l CredentialsFileList) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
+func (l CredentialsFileList) Less(i, j int) bool {
+	return l[i].Modified.Before(l[j].Modified)
+}
+
+// fetchCredentials fetches all credentials from the designated credentials dir
+func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
+	credsDir, err := p.Config.GetCredentialsDir()
+	if err != nil {
+		return &CredentialsFileList{}, errors.Wrap(err, "unable to determine credentials directory")
+	}
+
+	credentialsFiles := CredentialsFileList{}
+	if ok, _ := p.Context.FileSystem.DirExists(credsDir); ok {
+		p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
+			if !info.IsDir() {
+				credSet := &credentials.CredentialSet{}
+				data, err := p.Context.FileSystem.ReadFile(path)
+				if err != nil {
+					if p.Debug {
+						fmt.Fprintf(p.Err, "unable to load credential set from %s: %s\n", path, err)
+					}
+					return nil
+				}
+				if err = yaml.Unmarshal(data, credSet); err != nil {
+					if p.Debug {
+						fmt.Fprintf(p.Err, "unable to unmarshal credential set from file %s: %s\n", info.Name(), err)
+					}
+					return nil
+				}
+				credentialsFiles = append(credentialsFiles,
+					CredentialsFile{Name: credSet.Name, Modified: info.ModTime()})
+			}
+			return nil
+		})
+		sort.Sort(sort.Reverse(credentialsFiles))
+	}
+	return &credentialsFiles, nil
+}
+
+// ListCredentials lists credentials using the provided printer.PrintOptions
+func (p *Porter) ListCredentials(opts printer.PrintOptions) error {
+	credentialsFiles, err := p.fetchCredentials()
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch credentials")
+	}
+
+	switch opts.Format {
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, *credentialsFiles)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, *credentialsFiles)
+	case printer.FormatTable:
+		// have every row use the same "now" starting ... NOW!
+		now := time.Now()
+		tp := dtprinter.DateTimePrinter{
+			Now: func() time.Time { return now },
+		}
+
+		printCredRow :=
+			func(v interface{}) []interface{} {
+				cr, ok := v.(CredentialsFile)
+				if !ok {
+					return nil
+				}
+				return []interface{}{cr.Name, tp.Format(cr.Modified)}
+			}
+		return printer.PrintTable(p.Out, *credentialsFiles, printCredRow,
+			"NAME", "MODIFIED")
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
 }
 
 type CredentialOptions struct {
@@ -56,7 +146,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	if name == "" {
 		name = bundle.Name
 	}
-	genOpts := credentials.GenerateOptions{
+	genOpts := credentialsgenerator.GenerateOptions{
 		Name:        name,
 		Credentials: bundle.Credentials,
 		Silent:      opts.Silent,
@@ -64,7 +154,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
 
-	cs, err := credentials.GenerateCredentials(genOpts)
+	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to generate credentials")
 	}

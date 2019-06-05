@@ -1,0 +1,5 @@
+name: kool-kreds
+credentials:
+- name: kool-config
+  source:
+    path: /path/to/kool-config

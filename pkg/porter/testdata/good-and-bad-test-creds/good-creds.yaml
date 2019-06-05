@@ -1,0 +1,5 @@
+name: good-creds
+credentials:
+- name: good-cred
+  source:
+    env: GOOD_CRED

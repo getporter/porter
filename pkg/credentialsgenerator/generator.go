@@ -1,4 +1,4 @@
-package credentials
+package credentialsgenerator
 
 import (
 	"errors"
@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/deislabs/cnab-go/credentials"
 	"github.com/deislabs/duffle/pkg/bundle"
-	"github.com/deislabs/duffle/pkg/credentials"
 
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
