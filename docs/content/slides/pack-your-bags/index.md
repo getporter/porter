@@ -162,9 +162,11 @@ class: center, middle
 ---
 class: center, middle
 
-# That's great! 
+# How exciting! 
 
-# So you write impressive docs
+--
+
+# So you write extensive docs
 .center[
   ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
 ]
@@ -172,7 +174,7 @@ class: center, middle
 ---
 class: center, middle
 
-# Your friend does not thank you...
+# You are no longer friends...
 
 .center[
   ![you fight for the users](/images/pack-your-bags/Spongebob-patrick-crying.jpg)
@@ -210,28 +212,10 @@ class: center, middle
 ---
 class: center, middle
 
-# Making everyone do this is not going to cut it...
+# Everyone do this is not going to cut it...
 
 .center[
   ![nobody wants to do this](/images/pack-your-bags/scroll-of-truth.png)
-]
-
----
-class: center, middle
-
-# Containers helped us ship our app...
-
-.center[
-  ![ship it](/images/pack-your-bags/container-ship.jpg)
-]
-
----
-class: center, middle
-
-# But containers don't really solve this...
-
-.center[
-  ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
 ]
 
 ---
@@ -241,6 +225,22 @@ class: center, middle
 
 .center[
   ![this is my thinking face](/images/pack-your-bags/thinking.jpg)
+]
+
+---
+
+# Containers helped us ship our app...
+
+.center[
+  ![ship it](/images/pack-your-bags/container-ship.jpg)
+]
+
+---
+
+# But containers don't really solve this...
+
+.center[
+  ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
 ]
 
 ---
