@@ -61,14 +61,20 @@ func buildCreateCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
-	return &cobra.Command{
+	opts := porter.BuildOptions{}
+
+	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
 		Long:  "Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Build()
+			return p.Build(opts)
 		},
 	}
+
+	cmd.Flags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
+
+	return cmd
 }
 
 func buildBuildCommand(p *porter.Porter) *cobra.Command {

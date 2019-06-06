@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +24,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Porter) Build() error {
+type BuildOptions struct {
+	contextOptions
+}
+
+func (p *Porter) Build(opts BuildOptions) error {
+	opts.Apply(p.Context)
+
 	err := p.Config.LoadManifest()
 	if err != nil {
 		return err
@@ -51,7 +58,11 @@ func (p *Porter) generateDockerFile() error {
 
 	fmt.Fprintf(p.Out, "\nWriting Dockerfile =======>\n")
 	contents := strings.Join(lines, "\n")
-	fmt.Fprintln(p.Out, contents)
+
+	if p.IsVerbose() {
+		fmt.Fprintln(p.Out, contents)
+	}
+
 	err = p.Config.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
@@ -79,8 +90,10 @@ func (p *Porter) buildDockerfile() ([]string, error) {
 	lines = append(lines, p.buildWORKDIRSection())
 	lines = append(lines, p.buildCMDSection())
 
-	for _, line := range lines {
-		fmt.Fprintln(p.Out, line)
+	if p.IsVerbose() {
+		for _, line := range lines {
+			fmt.Fprintln(p.Out, line)
+		}
 	}
 
 	return lines, nil
@@ -177,7 +190,7 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 }
 
 func (p *Porter) prepareDockerFilesystem() error {
-	fmt.Printf("Copying dependencies ===> \n")
+	fmt.Fprintf(p.Out, "Copying dependencies ===> \n")
 	for _, dep := range p.Manifest.Dependencies {
 		err := p.copyDependency(dep.Name)
 		if err != nil {
@@ -185,7 +198,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 		}
 	}
 
-	fmt.Printf("Copying porter runtime ===> \n")
+	fmt.Fprintf(p.Out, "Copying porter runtime ===> \n")
 
 	runTmpl, err := p.Templates.GetRunScript()
 	if err != nil {
@@ -211,7 +224,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 		return err
 	}
 
-	fmt.Printf("Copying mixins ===> \n")
+	fmt.Fprintf(p.Out, "Copying mixins ===> \n")
 	for _, mixin := range p.Manifest.Mixins {
 		err := p.copyMixin(mixin)
 		if err != nil {
@@ -223,7 +236,7 @@ func (p *Porter) prepareDockerFilesystem() error {
 }
 
 func (p *Porter) copyDependency(bundle string) error {
-	fmt.Printf("Copying bundle dependency %s ===> \n", bundle)
+	fmt.Fprintf(p.Out, "Copying bundle dependency %s ===> \n", bundle)
 	bundleDir, err := p.GetBundleDir(bundle)
 	if err != nil {
 		return err
@@ -234,7 +247,7 @@ func (p *Porter) copyDependency(bundle string) error {
 }
 
 func (p *Porter) copyMixin(mixin string) error {
-	fmt.Printf("Copying mixin %s ===> \n", mixin)
+	fmt.Fprintf(p.Out, "Copying mixin %s ===> \n", mixin)
 	mixinDir, err := p.GetMixinDir(mixin)
 	if err != nil {
 		return err
@@ -245,7 +258,7 @@ func (p *Porter) copyMixin(mixin string) error {
 }
 
 func (p *Porter) buildInvocationImage(ctx context.Context) error {
-	fmt.Printf("\nStarting Invocation Image Build =======> \n")
+	fmt.Fprintf(p.Out, "\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
 		return errors.Wrap(err, "could not get current working directory")
@@ -273,19 +286,25 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	termFd, _ := term.GetFdInfo(os.Stdout)
+
+	dockerOutput := ioutil.Discard
+	if p.IsVerbose() {
+		dockerOutput = p.Out
+	}
+
+	termFd, _ := term.GetFdInfo(dockerOutput)
 	// Setting this to false here because Moby os.Exit(1) all over the place and this fails on WSL (only)
 	// when Term is true.
 	isTerm := false
-	err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stdout, termFd, isTerm, nil)
+	err = jsonmessage.DisplayJSONMessagesStream(response.Body, dockerOutput, termFd, isTerm, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to stream docker build stdout")
+		return errors.Wrap(err, "failed to stream docker build output")
 	}
 	return nil
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	fmt.Printf("\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
+	fmt.Fprintf(p.Out, "\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
 	b := bundle.Bundle{
 		Name:        p.Config.Manifest.Name,
 		Description: p.Config.Manifest.Description,
@@ -322,7 +341,7 @@ func (p Porter) writeBundle(b bundle.Bundle) error {
 func (p *Porter) generateBundleParameters() map[string]bundle.ParameterDefinition {
 	params := map[string]bundle.ParameterDefinition{}
 	for _, param := range append(p.Manifest.Parameters, p.buildDefaultPorterParameters()...) {
-		fmt.Printf("Generating parameter definition %s ====>\n", param.Name)
+		fmt.Fprintf(p.Out, "Generating parameter definition %s ====>\n", param.Name)
 		p := bundle.ParameterDefinition{
 			DataType:      param.DataType,
 			DefaultValue:  param.DefaultValue,
@@ -375,7 +394,7 @@ func (p *Porter) buildDefaultPorterParameters() []config.ParameterDefinition {
 func (p *Porter) generateBundleCredentials() map[string]bundle.Location {
 	params := map[string]bundle.Location{}
 	for _, cred := range p.Manifest.Credentials {
-		fmt.Printf("Generating credential %s ====>\n", cred.Name)
+		fmt.Fprintf(p.Out, "Generating credential %s ====>\n", cred.Name)
 		l := bundle.Location{
 			Path:                cred.Path,
 			EnvironmentVariable: cred.EnvironmentVariable,

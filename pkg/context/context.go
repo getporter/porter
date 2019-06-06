@@ -18,11 +18,20 @@ type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
 	Debug      bool
+	verbose    bool
 	FileSystem *afero.Afero
 	In         io.Reader
 	Out        io.Writer
 	Err        io.Writer
 	NewCommand CommandBuilder
+}
+
+func (c *Context) SetVerbose(value bool) {
+	c.verbose = value
+}
+
+func (c *Context) IsVerbose() bool {
+	return c.Debug || c.verbose
 }
 
 // CensoredWriter is a writer wrapping the provided io.Writer with logic to censor certain values
