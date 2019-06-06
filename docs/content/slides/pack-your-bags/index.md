@@ -62,48 +62,362 @@ name: introductions
 </div>
 
 ---
+name: kickoff
+class: center, middle
+# First A Quick Demo!
+
+---
 name: cnab
-
-# What is CNAB?
-
-Quick demo of 2 min demo of porter doing a porter install (azure + helm)
-Runs while we talk (azure-mysql-wordpress or a quickstart from Brian)
-
-Break up our talk 1-20 + 23
-
-???
-Explain why a spec is necessary
-
----
-name: sharing
-
-# Sharing Bundles
-
-OCI (docker) Registries
-Slide 22
-
----
-name: anatomy
-
-# Anatomy of a Bundle
-
-Slide 21 from our talk
-
----
-# CNAB Specification
-
-* bundle format
-* run entrypoint
-* well-defined install/uninstall verbs
-* passing data into a bundle
-
----
-# Breakdown of Azure MySQL Wordpress
+# What's a CNAB???
 
 ---
 class: center, middle
 
-# BREAK
+# Let's Answer That With A Story!
+
+---
+class: center, middle
+
+# The Cast
+
+---
+class: center, middle
+
+# You!
+.center[
+  ![you, a developer](/images/pack-your-bags/you-a-developer.jpg)
+]
+
+---
+class: center, middle
+
+# Your friend!
+.center[
+  ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
+]
+
+---
+class: center, middle
+
+# Your friend!
+.center[
+  ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
+]
+
+---
+class: center, middle
+
+# Your App!
+.center[
+  ![it's the journey that matters](/images/pack-your-bags/mcguffin.png)
+]
+
+---
+class: center, middle
+
+# Your Fans!
+.center[
+  ![trending](/images/pack-your-bags/your-fans.jpg)
+]
+
+---
+class: center, middle
+
+# Act One!
+
+---
+class: center, middle
+
+# You Built an App
+
+.center[
+  ![you again](/images/pack-your-bags/you-a-developer.jpg)
+  ![it's the journey that matters](/images/pack-your-bags/mcguffin.png)
+]
+
+---
+class: center, middle
+
+# It Runs Happily In The Cloud
+
+---
+# ....your cloud
+.center[
+  ![that's a bingo](/images/pack-your-bags/cloud-bingo.png)
+]
+
+---
+class: center, middle
+
+# Act Two!
+
+---
+class: center, middle
+
+# Your Friend Wants To Run It!
+.center[
+  ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
+]
+
+---
+class: center, middle
+
+# How exciting! 
+
+--
+
+# So you write extensive docs
+.center[
+  ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
+]
+
+---
+class: center, middle
+
+# You are no longer friends...
+
+.center[
+  ![you fight for the users](/images/pack-your-bags/Spongebob-patrick-crying.jpg)
+]
+
+.footnote[http://vignette3.wikia.nocookie.net/spongebob/images/f/f0/Spongebob-patrick-crying.jpg/revision/latest?cb=20140713205315]
+
+---
+class: center, middle
+
+# So you work together...
+
+.center[
+  ![pair programming](/images/pack-your-bags/working-together.jpg)
+]
+
+---
+class: center, middle
+
+# Then you help a few more people...
+
+.center[
+  ![go team](/images/pack-your-bags/go-team.jpg)
+]
+
+---
+class: center, middle
+
+# Act Three!
+
+---
+class: center, middle
+
+# Suddenly McGuffin has FANS!
+
+.center[
+  ![all the github stars!!!](/images/pack-your-bags/your-fans.jpg)
+]
+
+---
+class: center, middle
+
+# This won't scale...
+
+.center[
+  ![nobody wants to do this](/images/pack-your-bags/scroll-of-truth.png)
+]
+
+---
+class: center, middle
+
+# So what do we do...
+
+.center[
+  ![this is my thinking face](/images/pack-your-bags/thinking.jpg)
+]
+
+---
+class: center
+
+# Containers helped us ship our app...
+
+.center[
+  ![ship it](/images/pack-your-bags/container-ship.jpg)
+]
+
+---
+class: center
+
+# But containers don't really solve this...
+
+.center[
+  ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
+]
+
+---
+class: middle
+
+# This is the problem CNAB wants to solve
+
+---
+
+# Hashtag Goals
+
+--
+
+* Package All The Logic To Make Your App Happen
+
+--
+
+* Allow Consumer To Verify Everything They Will Install
+
+--
+
+* Distribute Them In Verifiable Way
+
+---
+class: center, middle
+
+# How that works
+
+.center[
+  ![workflow](/images/pack-your-bags/the-workflow.png) ![magic](/images/pack-your-bags/magic.gif)
+]
+
+.footnote[_http://www.reactiongifs.com/magic-3_]
+
+---
+name: anatomy
+class: center, middle
+
+# Anatomy of a Bundle
+
+.center[
+  ![so what is it](/images/pack-your-bags/anatomy.png)
+]
+
+---
+
+# Application Images
+
+* CNAB doesn't change this
+* Build your application like you do now
+
+---
+
+# The Invocation Image
+
+--
+
+* MSI for the Cloud
+--
+
+* It's a Docker Image
+--
+
+* It contains all the tools you need to install your app
+--
+
+* It contains configuration, metadata, templates, etc
+
+---
+class: center, middle
+
+# The Invocation Image
+
+.center[
+  ![so what is it](/images/pack-your-bags/easy-bake-oven-image.png)
+]
+
+---
+
+# The Bundle Descriptor
+--
+
+* JSON!
+--
+
+* List of the invocation image(s) (with digests!)
+--
+
+* List of the application image(s) (with digests!)
+--
+
+* Definitions for inputs and outputs
+--
+
+* Can be signed
+
+---
+
+# Are we done?
+--
+
+* We can install (complicated) things
+
+--
+
+* We can verify what we are going to install
+
+--
+
+* But how do we distribute bundles?
+
+---
+
+# Sharing Images With OCI Registries (Docker Registries)
+
+.center[
+  ![how docker shares](/images/pack-your-bags/ship-it.png)
+]
+
+---
+
+# Distributing App and Invocation Images is solved
+--
+
+## So what about the bundle?
+--
+
+## It turns out OCI can help here too...
+
+---
+
+# OCI Registries Can Store Lots of Things
+
+* CNAB today is working within the OCI Spec (not optimal)
+* CNAB Spec group working with OCI to improve this
+
+---
+
+# Sharing Bundles With OCI Registries (Docker Registries)
+
+.center[
+  ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
+]
+
+---
+
+# CNAB Specification
+--
+
+* The Bundle format
+--
+
+* Defines how things are passed into and out of the invocation image
+--
+
+* A required entrypoint in invocation image
+--
+
+* Well-defined verbs
+--
+
+    *. Install
+    *. Upgrade
+    *. Uninstall
+--
+
+---
+class: center, middle
+
+# An Example: Azure MySQL + Wordpress
 
 ---
 class: center, middle
@@ -320,6 +634,11 @@ Install Hello World
 Hello World
 execution completed successfully!
 ```
+
+---
+class: center, middle
+
+# BREAK
 
 ---
 name: mellamo
