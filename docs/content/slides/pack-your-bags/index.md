@@ -43,7 +43,6 @@ name: agenda
 
 ---
 name: introductions
-
 # Introductions
 
 <div id="introductions">
@@ -60,6 +59,14 @@ name: introductions
     <p>Microsoft Azure</p>
   </div>
 </div>
+
+---
+name: hi
+# Stop and Say Hi
+
+1. Introduce yourself to at least 2 people next to you.
+2. Find out what they enjoy working on.
+3. Share what talks or parts of Velocity they are looking forward to.
 
 ---
 name: kickoff
@@ -283,6 +290,13 @@ class: center, middle
 .footnote[_http://www.reactiongifs.com/magic-3_]
 
 ---
+## Try it out: Install a bundle
+
+```console
+$ porter install --tag deislabs/porter-hello-velocity
+```
+
+---
 name: anatomy
 class: center, middle
 
@@ -418,6 +432,16 @@ class: center, middle
 class: center, middle
 
 # An Example: Azure MySQL + Wordpress
+
+---
+name: talkback
+
+# Talk Back
+
+* What tools do you use to deploy?
+* Is it to a cloud? On-premise?
+* Are you using a mix of tooling and platforms?
+* What does your deployment lifecycle look like?
 
 ---
 class: center, middle
@@ -1219,3 +1243,13 @@ class: center, middle
 * Cloud + Break Glass
 * Order a pizza with Porter
 * Make a mixin
+
+---
+name: rate
+class center, middle
+# Workshop Feedback
+
+Please take a minute now to rate this workshop before you leave
+
+<img src="/images/pack-your-bags/feedback-desktop.png" class="left" width="500px" />
+<img src="/images/pack-your-bags/feedback-mobile.png" class="right" width="350px" />
