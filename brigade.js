@@ -85,7 +85,7 @@ function xbuild(e, p) {
 }
 
 function testUnit(e, p) {
-  var goTest = new GoJob(`${projectName}-testUnit`);
+  var goTest = new GoJob(`${projectName}-testunit`);
 
   goTest.tasks.push(
     "make test-unit"
@@ -97,7 +97,7 @@ function testUnit(e, p) {
 // TODO: we could refactor so that this job shares a mount with the build job above,
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
-  var goTest = new GoJob(`${projectName}-testIntegration`);
+  var goTest = new GoJob(`${projectName}-testintegration`);
   // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
   goTest.docker.enabled = true;
 
@@ -122,7 +122,7 @@ function testIntegration(e, p) {
 }
 
 function testCLI(e, p) {
-  var goTest = new GoJob(`${projectName}-testCLI`);
+  var goTest = new GoJob(`${projectName}-testcli`);
   // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
   goTest.docker.enabled = true;
 
@@ -193,9 +193,9 @@ function runCheck(e, p) {
 function runSuite(e, p) {
   if (e.revision.ref == "master" ) {
     Group.runEach([
-      checkRun(e, p, testUnit(), "Unit Test"),
+      checkRun(e, p, testUnit, "Unit Test"),
       checkRun(e, p, testIntegration, "Integration Test"),
-      checkRun(e, p, testCLI(), "CLI Test"),
+      checkRun(e, p, testCLI, "CLI Test"),
       checkRun(e, p, publish, "Publish")
     ])
   } else {
