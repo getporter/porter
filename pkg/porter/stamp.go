@@ -21,7 +21,7 @@ func (p *Porter) EnsureBundleIsUpToDate(opts bundleFileOptions) error {
 
 	if !upToDate {
 		fmt.Fprintln(p.Out, "Building bundle ===>")
-		return p.Build()
+		return p.Build(BuildOptions{})
 	}
 	return nil
 }

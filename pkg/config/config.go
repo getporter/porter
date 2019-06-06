@@ -80,6 +80,10 @@ func (c *Config) GetHomeDir() (string, error) {
 	return c.porterHome, nil
 }
 
+func (c *Config) SetHomeDir(home string) {
+	c.porterHome = home
+}
+
 func (c *Config) GetPorterPath() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
