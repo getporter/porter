@@ -294,7 +294,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
   porter bundle publish --insecure
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(p)
+			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Publish(opts)

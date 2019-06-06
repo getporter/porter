@@ -31,6 +31,20 @@ type bundleFileOptions struct {
 	CNABFile string
 }
 
+func (o *bundleFileOptions) Validate(cxt *context.Context) error {
+	err := o.validateBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	err = o.defaultBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 // sharedOptions are common options that apply to multiple CNAB actions.
 type sharedOptions struct {
 	bundleFileOptions
@@ -72,12 +86,7 @@ func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	err = o.validateBundleFiles(cxt)
-	if err != nil {
-		return err
-	}
-
-	err = o.defaultBundleFiles(cxt)
+	err = o.bundleFileOptions.Validate(cxt)
 	if err != nil {
 		return err
 	}
@@ -124,9 +133,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 			o.File = config.Name
 			o.CNABFile = "cnab/bundle.json"
 		}
-	}
-
-	if o.File != "" {
+	} else {
 		bundleDir := filepath.Dir(o.File)
 		o.CNABFile = filepath.Join(bundleDir, "cnab/bundle.json")
 	}

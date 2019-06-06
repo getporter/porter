@@ -4,22 +4,19 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/config"
+	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
+	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
-
-	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/pkg/errors"
 )
 
@@ -31,24 +28,16 @@ type PublishOptions struct {
 }
 
 // Validate performs validation on the publish options
-func (p PublishOptions) Validate(porter *Porter) error {
-	fs := porter.Context.FileSystem
-	f := p.File
-	if f == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-		f = filepath.Join(pwd, config.Name)
-
-	}
-	exists, err := fs.Exists(f)
+func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
+	err := o.bundleFileOptions.Validate(cxt)
 	if err != nil {
-		return errors.Wrap(err, "error finding porter.yaml")
+		return err
 	}
-	if !exists {
-		return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
+
+	if o.File == "" {
+		return errors.New("could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file")
 	}
+
 	return nil
 }
 
