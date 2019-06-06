@@ -149,7 +149,7 @@ class: center, middle
 ---
 class: center, middle
 
-# Act Two
+# Act Two!
 
 ---
 class: center, middle
@@ -199,6 +199,11 @@ class: center, middle
 .center[
   ![go team](/images/pack-your-bags/go-team.jpg)
 ]
+
+---
+class: center, middle
+
+# Act Three!
 
 ---
 class: center, middle
