@@ -217,7 +217,7 @@ class: center, middle
 ---
 class: center, middle
 
-# Everyone do this is not going to cut it...
+# This won't scale...
 
 .center[
   ![nobody wants to do this](/images/pack-your-bags/scroll-of-truth.png)
@@ -233,6 +233,7 @@ class: center, middle
 ]
 
 ---
+class: center
 
 # Containers helped us ship our app...
 
@@ -241,6 +242,7 @@ class: center, middle
 ]
 
 ---
+class: center
 
 # But containers don't really solve this...
 
