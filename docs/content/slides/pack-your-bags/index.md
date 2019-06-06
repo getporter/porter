@@ -128,7 +128,7 @@ class: center, middle
 ---
 class: center, middle
 
-## You Built an App
+# You Built an App
 
 .center[
   ![you again](/images/pack-your-bags/you-a-developer.jpg)
@@ -154,7 +154,7 @@ class: center, middle
 ---
 class: center, middle
 
-## Your Friend Wants To Run It!
+# Your Friend Wants To Run It!
 .center[
   ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
 ]
@@ -162,7 +162,9 @@ class: center, middle
 ---
 class: center, middle
 
-# You write impressive docs
+# That's great! 
+
+# So you write impressive docs
 .center[
   ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
 ]
@@ -208,7 +210,7 @@ class: center, middle
 ---
 class: center, middle
 
-# Your impressive docs don't really scale though...
+# Making everyone do this is not going to cut it...
 
 .center[
   ![nobody wants to do this](/images/pack-your-bags/scroll-of-truth.png)
@@ -217,7 +219,7 @@ class: center, middle
 ---
 class: center, middle
 
-# Docker helped us ship our app...
+# Containers helped us ship our app...
 
 .center[
   ![ship it](/images/pack-your-bags/container-ship.jpg)
