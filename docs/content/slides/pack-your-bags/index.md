@@ -124,7 +124,12 @@ class: center, middle
 class: center, middle
 
 # Act One!
-# You Built an App
+
+---
+class: center, middle
+
+## You Built an App
+
 .center[
   ![you again](/images/pack-your-bags/you-a-developer.jpg)
   ![it's the journey that matters](/images/pack-your-bags/mcguffin.png)
@@ -134,6 +139,8 @@ class: center, middle
 class: center, middle
 
 # It Runs Happily In The Cloud
+
+---
 # ....your cloud
 .center[
   ![that's a bingo](/images/pack-your-bags/cloud-bingo.png)
@@ -143,7 +150,11 @@ class: center, middle
 class: center, middle
 
 # Act Two
-# Your Friend Wants To Run It!
+
+---
+class: center, middle
+
+## Your Friend Wants To Run It!
 .center[
   ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
 ]
@@ -159,15 +170,8 @@ class: center, middle
 ---
 class: center, middle
 
-# You write impressive docs
-.center[
-  ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
-]
+# Your friend does not thank you...
 
----
-class: center, middle
-
-# Your friend does not thank you....
 .center[
   ![you fight for the users](/images/pack-your-bags/Spongebob-patrick-crying.jpg)
 ]
@@ -177,7 +181,8 @@ class: center, middle
 ---
 class: center, middle
 
-# So you work together....
+# So you work together...
+
 .center[
   ![pair programming](/images/pack-your-bags/working-together.jpg)
 ]
@@ -185,15 +190,17 @@ class: center, middle
 ---
 class: center, middle
 
-# Finally your friend has McGuffin in his cloud...then you help a few more people
+# Then you help a few more people...
+
 .center[
-  ![go team](/images/pack-your-bags/working-together.jpg)
+  ![go team](/images/pack-your-bags/go-team.jpg)
 ]
 
 ---
 class: center, middle
 
 # Suddenly McGuffin has FANS!
+
 .center[
   ![all the github stars!!!](/images/pack-your-bags/your-fans.jpg)
 ]
@@ -202,6 +209,7 @@ class: center, middle
 class: center, middle
 
 # Your impressive docs don't really scale though...
+
 .center[
   ![nobody wants to do this](/images/pack-your-bags/scroll-of-truth.png)
 ]
@@ -209,7 +217,8 @@ class: center, middle
 ---
 class: center, middle
 
-# Docker made us rethink how we ship the bits of our app...
+# Docker helped us ship our app...
+
 .center[
   ![ship it](/images/pack-your-bags/container-ship.jpg)
 ]
@@ -218,6 +227,7 @@ class: center, middle
 class: center, middle
 
 # But containers don't really solve this...
+
 .center[
   ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
 ]
@@ -226,22 +236,30 @@ class: center, middle
 class: center, middle
 
 # So what do we do...
+
 .center[
   ![this is my thinking face](/images/pack-your-bags/thinking.jpg)
 ]
 
 ---
-class: center, middle
+class: middle
 
 # This is the problem CNAB wants to solve
 
 ---
-class: center, middle
 
 # Hashtag Goals
 
+--
+
 * Package All The Logic To Make Your App Happen
+
+--
+
 * Allow Consumer To Verify Everything They Will Install
+
+--
+
 * Distribute Them In Verifiable Way
 
 ---
@@ -250,8 +268,7 @@ class: center, middle
 # How that works
 
 .center[
-  ![workflow](/images/pack-your-bags/he-workflow.png)
-  ![magic](/images/pack-your-bags/magic.gif)
+  ![workflow](/images/pack-your-bags/the-workflow.png) ![magic](/images/pack-your-bags/magic.gif)
 ]
 
 .footnote[_http://www.reactiongifs.com/magic-3_]
@@ -272,13 +289,20 @@ class: center, middle
 # Your App...
 
 ---
-class: center, middle
 
 # The Invocation Image
 
+--
+
 * MSI for the Cloud?
+-- 
+
 * It's a Docker Image
+--
+
 * It contains all the tools you need to install your app
+--
+
 * It contains configuration, metadata, templates, etc
 
 ---
@@ -291,54 +315,73 @@ class: center, middle
 ]
 
 ---
-class: center, middle
 
 # The Bundle Descriptor
+--
 
 * JSON!
+--
+
 * List of the invocation image(s) (with digests!)
+--
+
 * List of the application image(s) (with digests!)
+--
+
 * Definitions for inputs and outputs
+--
+
 * Can be signed
 
 ---
-name: sharing
-class: center, middle
 
-# So we can install things
-# So we can verify what we are going to install
+# Are we done?
 --
-# How do we distribute bundles?
+
+* We can install (complicated) things
+
+--
+
+* We can verify what we are going to install
+
+--
+
+* But how do we distribute bundles?
 
 ---
-class: center, middle
 
-## Sharing Images With OCI Registries (Docker Registries)
+# Sharing Images With OCI Registries (Docker Registries)
 
 .center[
   ![how docker shares](/images/pack-your-bags/ship-it.png)
 ]
 
 ---
-class: center, middle
 
-## Distributing App and Invocation Images is solved
+# Yes and...?
 --
-## So what about the bundle?
+
+* Distributing App and Invocation Images is solved
+
+--
+
+* So what about the bundle?
+
+--
+
+* It turns out OCI can help here too...
 
 ---
-class: center, middle
 
-## Sharing Bundles With OCI Registries (Docker Registries)
+# Sharing Bundles With OCI Registries (Docker Registries)
 
 .center[
   ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
 ]
 
 ---
-class: center, middle
 
-## OCI Registries Can Store Lots of Things
+# OCI Registries Can Store Lots of Things
 
 * CNAB today is working within the OCI Spec (not optimal)
 * CNAB Spec group working with OCI to improve this
@@ -346,24 +389,29 @@ class: center, middle
 ---
 
 # CNAB Specification
-
-### The Bundle format
---
-### Defines how things are passed into and out of the invocation image
---
-### A required entrypoint in invocation image
 --
 
-### Well-defined verbs
+* The Bundle format
 --
-* Install
-* Upgrade
-* Uninstall
+
+* Defines how things are passed into and out of the invocation image
+--
+
+* A required entrypoint in invocation image
+--
+
+* Well-defined verbs
+--
+
+    1. Install
+    1. Upgrade
+    1. Uninstall
 --
 
 ---
+class: center, middle
 
-# Breakdown of Azure MySQL Wordpress
+# An Example: Azure MySQL + Wordpress
 
 ---
 class: center, middle
