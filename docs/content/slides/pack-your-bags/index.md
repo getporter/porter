@@ -286,9 +286,11 @@ class: center, middle
 ]
 
 ---
-class: center, middle
 
-# Your App...
+# Application Images
+
+* CNAB doesn't change this
+* Build your application like you do now
 
 ---
 
@@ -296,8 +298,8 @@ class: center, middle
 
 --
 
-* MSI for the Cloud?
--- 
+* MSI for the Cloud
+--
 
 * It's a Docker Image
 --
@@ -360,18 +362,20 @@ class: center, middle
 
 ---
 
-# Yes and...?
+# Distributing App and Invocation Images is solved
 --
 
-* Distributing App and Invocation Images is solved
-
+## So what about the bundle?
 --
 
-* So what about the bundle?
+## It turns out OCI can help here too...
 
---
+---
 
-* It turns out OCI can help here too...
+# OCI Registries Can Store Lots of Things
+
+* CNAB today is working within the OCI Spec (not optimal)
+* CNAB Spec group working with OCI to improve this
 
 ---
 
@@ -380,13 +384,6 @@ class: center, middle
 .center[
   ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
 ]
-
----
-
-# OCI Registries Can Store Lots of Things
-
-* CNAB today is working within the OCI Spec (not optimal)
-* CNAB Spec group working with OCI to improve this
 
 ---
 
@@ -405,9 +402,9 @@ class: center, middle
 * Well-defined verbs
 --
 
-    1. Install
-    1. Upgrade
-    1. Uninstall
+    *. Install
+    *. Upgrade
+    *. Uninstall
 --
 
 ---
