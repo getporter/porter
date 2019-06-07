@@ -15,7 +15,6 @@ import (
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/deislabs/cnab-go/credentials"
-
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -47,7 +46,20 @@ func (l CredentialsFileList) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// fetchCredentials fetches all credentials from the designated credentials dir
+// fetchCredential returns a *credentials.CredentialsSet according to the supplied
+// credential name, or an error if encountered
+func (p *Porter) fetchCredential(name string) (*credentials.CredentialSet, error) {
+	credsDir, err := p.Config.GetCredentialsDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to determine credentials directory")
+	}
+
+	path := filepath.Join(credsDir, fmt.Sprintf("%s.yaml", name))
+	return p.readCredential(name, path)
+}
+
+// fetchCredentials fetches all credentials in the form of a CredentialsFileList
+// from the designated credentials dir, or an error if encountered
 func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
 	credsDir, err := p.Config.GetCredentialsDir()
 	if err != nil {
@@ -58,17 +70,12 @@ func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
 	if ok, _ := p.Context.FileSystem.DirExists(credsDir); ok {
 		p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
-				credSet := &credentials.CredentialSet{}
-				data, err := p.Context.FileSystem.ReadFile(path)
+				credName := strings.Split(info.Name(), ".")[0]
+				credSet, err := p.readCredential(credName, path)
 				if err != nil {
+					// If an error is encountered while reading, log and move on to the next
 					if p.Debug {
-						fmt.Fprintf(p.Err, "unable to load credential set from %s: %s\n", path, err)
-					}
-					return nil
-				}
-				if err = yaml.Unmarshal(data, credSet); err != nil {
-					if p.Debug {
-						fmt.Fprintf(p.Err, "unable to unmarshal credential set from file %s: %s\n", info.Name(), err)
+						fmt.Fprint(p.Err, err.Error())
 					}
 					return nil
 				}
@@ -80,6 +87,23 @@ func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
 		sort.Sort(sort.Reverse(credentialsFiles))
 	}
 	return &credentialsFiles, nil
+}
+
+// readCredential reads a credential with the given name via the provided path
+// and returns a CredentialSet or an error, if encountered
+func (p *Porter) readCredential(name, path string) (*credentials.CredentialSet, error) {
+	credSet := &credentials.CredentialSet{}
+
+	data, err := p.Context.FileSystem.ReadFile(path)
+	if err != nil {
+		return credSet, errors.Wrapf(err, "unable to load credential %s", name)
+	}
+
+	if err = yaml.Unmarshal(data, credSet); err != nil {
+		return credSet, errors.Wrapf(err, "unable to unmarshal credential %s", name)
+	}
+
+	return credSet, nil
 }
 
 // ListCredentials lists credentials using the provided printer.PrintOptions
@@ -239,19 +263,9 @@ func (o *CredentialShowOptions) Validate(args []string) error {
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
-	credsDir, err := p.Config.GetCredentialsDir()
+	credSet, err := p.fetchCredential(opts.Name)
 	if err != nil {
-		return errors.Wrap(err, "unable to determine credentials directory")
-	}
-
-	credSet := &credentials.CredentialSet{}
-	data, err := p.Context.FileSystem.ReadFile(filepath.Join(credsDir, fmt.Sprintf("%s.yaml", opts.Name)))
-	if err != nil {
-		return errors.Wrapf(err, "unable to load credential set %s", opts.Name)
-	}
-
-	if err = yaml.Unmarshal(data, credSet); err != nil {
-		return errors.Wrapf(err, "unable to unmarshal credential set %s", opts.Name)
+		return err
 	}
 
 	switch opts.Format {
@@ -260,30 +274,15 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, credSet)
 	case printer.FormatTable:
-		var data [][]string
+		// Here we use an instance of olekukonko/tablewriter as our table,
+		// rather than using the printer pkg variant, as we wish to decorate
+		// the table a bit differently from the default
+		var rows [][]string
 
-		// Iterate through all CredentialStrategies to build up our data set
+		// Iterate through all CredentialStrategies and add to rows
 		for _, cs := range credSet.Credentials {
-			// Build a reflected Source of type reflectedStruct, for use below
-			reflectedSource := reflectedStruct{
-				Value: reflect.ValueOf(cs.Source),
-				Type:  reflect.TypeOf(cs.Source),
-			}
-
-			// Determine the source type ('Path', 'EnvVar', etc.) by seeing which
-			// reflected source's field corresponds to a non-empty reflected source value
-
-			// Iterate through all of the fields of a credentials.Source struct
-			for i := 0; i < reflectedSource.Type.NumField(); i++ {
-				// A Field name would be 'Path', 'EnvVar', etc.
-				fieldName := reflectedSource.Type.Field(i).Name
-				// Get the value for said Field
-				fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
-				// If not empty, this field value and name represent our source and source type, respectively
-				if fieldValue != "" {
-					data = append(data, []string{cs.Name, fieldValue, fieldName})
-				}
-			}
+			sourceVal, sourceType := GetCredentialSourceValueAndType(cs.Source)
+			rows = append(rows, []string{cs.Name, sourceVal, sourceType})
 		}
 
 		// Build and configure our tablewriter
@@ -300,8 +299,8 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 
 		// Now print the table
 		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
-		for _, v := range data {
-			table.Append(v)
+		for _, row := range rows {
+			table.Append(row)
 		}
 		table.Render()
 		return nil
@@ -313,4 +312,31 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 type reflectedStruct struct {
 	Value reflect.Value
 	Type  reflect.Type
+}
+
+// GetCredentialSourceValueAndType takes a given credentials.Source struct and
+// returns the source value itself as well as source type, e.g., 'Path', 'EnvVar', etc.,
+// both in their string forms
+func GetCredentialSourceValueAndType(cs credentials.Source) (string, string) {
+	var sourceVal, sourceType string
+
+	// Build a reflected credentials.Source struct
+	reflectedSource := reflectedStruct{
+		Value: reflect.ValueOf(cs),
+		Type:  reflect.TypeOf(cs),
+	}
+
+	// Iterate through all of the fields of a credentials.Source struct
+	for i := 0; i < reflectedSource.Type.NumField(); i++ {
+		// A Field name would be 'Path', 'EnvVar', etc.
+		fieldName := reflectedSource.Type.Field(i).Name
+		// Get the value for said Field
+		fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
+		// If value non-empty, this field value and name represent our source value
+		// and source type, respectively
+		if fieldValue != "" {
+			sourceVal, sourceType = fieldValue, fieldName
+		}
+	}
+	return sourceVal, sourceType
 }
