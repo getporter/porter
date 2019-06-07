@@ -975,6 +975,7 @@ credentials:
 ```
 
 ---
+name: dockerfile
 ## Custom Dockerfile
 
 Specify a custom Dockerfile for the invocation image
@@ -986,6 +987,18 @@ Specify a custom Dockerfile for the invocation image
 ```yaml
 dockerfile: Dockerfile.tmpl
 ```
+
+---
+## Try it out: Custom Dockerfile
+
+Make a bundle that uses a custom `dockerfile` template and uses **mcr.microsoft.com/azure-cli**
+as its base image
+
+1. Create a porter bundle in a new directory with `porter create`.
+1. Modify the **porter.yaml** to uncomment out `#dockerfile: Dockerfile.tmpl`.
+1. Edit **Dockerfile.tmpl** to use **mcr.microsoft.com/azure-cli** for the base image.
+1. Edit the install action to run `az help`. 
+1. Install the bundle.
 
 ---
 ## Review: Default Dockerfile

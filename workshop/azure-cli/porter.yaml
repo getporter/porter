@@ -1,0 +1,33 @@
+mixins:
+  - exec
+
+name: azure-cli
+version: 0.1.0
+description: "Print the azure cli help text"
+invocationImage: porter-azure-cli:0.1.0
+
+# Uncomment out the line below to use a template Dockerfile for your invocation image
+dockerfile: Dockerfile.tmpl
+
+install:
+  - exec:
+      description: "Print help"
+      command: az
+      arguments:
+        - help
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo World 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Goodbye World
