@@ -1,0 +1,5 @@
+name: etcd-operator
+credentials:
+- name: kubeconfig
+  source:
+    path: $HOME/.kube/config
