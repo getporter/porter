@@ -1,0 +1,30 @@
+mixins:
+  - helm
+
+name: etcd-operator
+version: 0.1.0
+description: "An etcd-operator bundle"
+invocationImage: porter-etcd-operator:latest
+
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+
+install:
+  - helm:
+      description: "Install etcd-operator"
+      name: myetcd-operator
+      chart: stable/etcd-operator
+      namespace: etcd-operator
+
+upgrade:
+  - helm:
+      description: "Upgrade etcd-operator"
+      name: myetcd-operator
+      chart: stable/etcd-operator
+
+uninstall:
+  - helm:
+      description: "Uninstall etcd-operator"
+      releases:
+      - myetcd-operator
