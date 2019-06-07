@@ -191,6 +191,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
+  porter bundle upgrade MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -215,6 +216,10 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Tag, "tag", "t", "",
+		"Install from a bundle in an OCI registry specified by the given tag")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
+		"Don't require TLS for the registry")
 
 	return cmd
 }
@@ -245,6 +250,8 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
+  porter bundle uninstall MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
+  
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -269,6 +276,10 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Tag, "tag", "t", "",
+		"Install from a bundle in an OCI registry specified by the given tag")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
+		"Don't require TLS for the registry")
 
 	return cmd
 }

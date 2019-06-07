@@ -11,12 +11,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Cache struct {
+type BundleCache interface {
+	FindBundle(string) (string, bool, error)
+	StoreBundle(string, *bundle.Bundle) (string, error)
+	GetCacheDir() (string, error)
+}
+
+type cache struct {
 	*config.Config
 }
 
-func New(cfg *config.Config) *Cache {
-	return &Cache{
+func New(cfg *config.Config) BundleCache {
+	return &cache{
 		Config: cfg,
 	}
 }
@@ -24,7 +30,7 @@ func New(cfg *config.Config) *Cache {
 // FindBundle looks for a given bundle tag in the Porter bundle cache and
 // returns the path to the bundle if it exists. If it is not found, an
 // empty string and the boolean false value are returned.
-func (c *Cache) FindBundle(bundleTag string) (string, bool, error) {
+func (c *cache) FindBundle(bundleTag string) (string, bool, error) {
 	bid := getBundleID(bundleTag)
 	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
 	cachedBundlePath := filepath.Join(bundleCnabDir, "bundle.json")
@@ -41,7 +47,7 @@ func (c *Cache) FindBundle(bundleTag string) (string, bool, error) {
 
 // StoreBundle will write a given bundle to the bundle cache, in a location derived
 // from the bundleTag.
-func (c *Cache) StoreBundle(bundleTag string, bun *bundle.Bundle) (string, error) {
+func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle) (string, error) {
 	bid := getBundleID(bundleTag)
 	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
 	cachedBundlePath := filepath.Join(bundleCnabDir, "bundle.json")
@@ -61,7 +67,7 @@ func (c *Cache) StoreBundle(bundleTag string, bun *bundle.Bundle) (string, error
 	return cachedBundlePath, nil
 }
 
-func (c *Cache) getCacheDir() (string, error) {
+func (c *cache) GetCacheDir() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
 		return "", err
@@ -69,8 +75,8 @@ func (c *Cache) getCacheDir() (string, error) {
 	return filepath.Join(home, "cache"), nil
 }
 
-func (c *Cache) getCachedBundleCNABDir(bid string) (string, error) {
-	cacheDir, err := c.getCacheDir()
+func (c *cache) getCachedBundleCNABDir(bid string) (string, error) {
+	cacheDir, err := c.GetCacheDir()
 	if err != nil {
 		return "", err
 	}

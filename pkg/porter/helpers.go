@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/cache"
 	"github.com/deislabs/porter/pkg/config"
 	execmixin "github.com/deislabs/porter/pkg/exec"
 	"github.com/deislabs/porter/pkg/mixin"
@@ -30,6 +32,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p := New()
 	p.Config = tc.Config
 	p.Mixins = &TestMixinProvider{}
+	p.Cache = cache.New(tc.Config)
 	return &TestPorter{
 		Porter:     p,
 		TestConfig: tc,
@@ -89,4 +92,23 @@ func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
 
 func (p *TestMixinProvider) Install(o mixin.InstallOptions) (mixin.Metadata, error) {
 	return mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
+}
+
+// If you seek a mock cache for testing, use this
+type mockCache struct {
+	findBundleMock        func(string) (string, bool, error)
+	storeBundleMock       func(string, *bundle.Bundle) (string, error)
+	getBundleCacheDirMock func() (string, error)
+}
+
+func (b *mockCache) FindBundle(tag string) (string, bool, error) {
+	return b.findBundleMock(tag)
+}
+
+func (b *mockCache) StoreBundle(tag string, bun *bundle.Bundle) (string, error) {
+	return b.storeBundleMock(tag, bun)
+}
+
+func (b *mockCache) GetCacheDir() (string, error) {
+	return b.GetCacheDir()
 }

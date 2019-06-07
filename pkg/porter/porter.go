@@ -12,7 +12,7 @@ import (
 // Porter is the logic behind the porter client.
 type Porter struct {
 	*config.Config
-	Cache     *cache.Cache
+	Cache     cache.BundleCache
 	Templates *Templates
 	Mixins    MixinProvider
 	CNAB      CNABProvider
