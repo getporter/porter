@@ -1258,8 +1258,6 @@ Example tag of `cnabaholic/hello-people:latest`:
 * Run `porter install --tag cnabaholic/hello-people:latest`
 
 ---
-
----
 class: center, middle
 
 # CNAB Best Practices
