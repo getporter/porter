@@ -15,6 +15,8 @@ import (
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/deislabs/cnab-go/credentials"
+
+	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -258,43 +260,51 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, credSet)
 	case printer.FormatTable:
-		printCredentialRow :=
-			func(v interface{}) []interface{} {
-				cs, ok := v.(credentials.CredentialStrategy)
-				if !ok {
-					return nil
-				}
+		var data [][]string
 
-				// Build a reflected Source of type reflectedStruct, for use below
-				reflectedSource := reflectedStruct{
-					Value: reflect.ValueOf(cs.Source),
-					Type:  reflect.TypeOf(cs.Source),
-				}
-
-				// Determine the source type by seeing which reflected source's field
-				// corresponds to a non-empty reflected source value
-				var source string
-				var sourceType string
-				// Iterate through all of the fields of a credentials.Source struct
-				for i := 0; i < reflectedSource.Type.NumField(); i++ {
-					// A Field name would be 'Path', 'EnvVar', etc.
-					fieldName := reflectedSource.Type.Field(i).Name
-					// Get the value for said Field
-					fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
-					// If not empty, this field value and name represent our source and source type, respectively
-					if fieldValue != "" {
-						source = fieldValue
-						sourceType = fieldName
-					}
-				}
-				return []interface{}{cs.Name, source, sourceType}
+		// Iterate through all CredentialStrategies to build up our data set
+		for _, cs := range credSet.Credentials {
+			// Build a reflected Source of type reflectedStruct, for use below
+			reflectedSource := reflectedStruct{
+				Value: reflect.ValueOf(cs.Source),
+				Type:  reflect.TypeOf(cs.Source),
 			}
 
+			// Determine the source type ('Path', 'EnvVar', etc.) by seeing which
+			// reflected source's field corresponds to a non-empty reflected source value
+
+			// Iterate through all of the fields of a credentials.Source struct
+			for i := 0; i < reflectedSource.Type.NumField(); i++ {
+				// A Field name would be 'Path', 'EnvVar', etc.
+				fieldName := reflectedSource.Type.Field(i).Name
+				// Get the value for said Field
+				fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
+				// If not empty, this field value and name represent our source and source type, respectively
+				if fieldValue != "" {
+					data = append(data, []string{cs.Name, fieldValue, fieldName})
+				}
+			}
+		}
+
+		// Build and configure our tablewriter
+		table := tablewriter.NewWriter(p.Out)
+		table.SetCenterSeparator("")
+		table.SetColumnSeparator("")
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
+		table.SetAutoFormatHeaders(false)
+
+		// First, print the CredentialSet name
 		fmt.Fprintf(p.Out, "Name: %s\n\n", credSet.Name)
-		fmt.Fprintln(p.Out, "Credential Mappings")
-		fmt.Fprintln(p.Out, "===================")
-		return printer.PrintTable(p.Out, credSet.Credentials, printCredentialRow,
-			"Name", "Local Source", "Source Type")
+
+		// Now print the table
+		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
+		for _, v := range data {
+			table.Append(v)
+		}
+		table.Render()
+		return nil
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
