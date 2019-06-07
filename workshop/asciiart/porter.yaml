@@ -1,0 +1,32 @@
+mixins:
+  - exec
+
+name: asciiart
+version: 0.1.0
+description: "A bundle that turns pictures into ascii art"
+invocationImage: porter-ascii-art:latest
+dockerfile: Dockerfile.tmpl
+
+install:
+  - exec:
+      description: "Draw a gopher"
+      command: goasciiart
+      arguments:
+        - -p=gopher-install.png
+        - -w=100
+
+upgrade:
+  - exec:
+      description: "Draw another gopher"
+      command: goasciiart
+      arguments:
+        - -p=gopher-upgrade.png
+        - -w=100
+
+uninstall:
+  - exec:
+      description: "Goodbye Gopher"
+      command: goasciiart
+      arguments:
+        - -p=gopher-uninstall.png
+        - -w=100
