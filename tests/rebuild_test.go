@@ -90,3 +90,41 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, gotOutput, "Building bundle ===>", "expected a rebuild before generating credentials")
 }
+
+func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	// Create a bundle that uses credentials
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+
+	credentialOptions := porter.CredentialOptions{}
+	credentialOptions.Insecure = true
+	credentialOptions.Silent = true
+	credentialOptions.Validate([]string{}, p.Context)
+	err := p.GenerateCredentials(credentialOptions)
+	require.NoError(t, err)
+
+	// Modify the porter.yaml to trigger a rebuild
+	m, err := p.ReadManifest(config.Name)
+	require.NoError(t, err)
+	m.Version = "0.2.0"
+	data, err := yaml.Marshal(m)
+	require.NoError(t, err)
+	err = p.FileSystem.WriteFile(config.Name, data, 0644)
+	require.NoError(t, err)
+
+	// hack: simulate exactly what happens with the CLI where there is no persisted state between calls
+	// TODO: consider refactoring where we store manifest to better match the cli
+	p.Manifest = nil
+
+	// Re-generate the credentials
+	err = p.GenerateCredentials(credentialOptions)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	buildCount := strings.Count(gotOutput, "Building bundle ===>")
+	assert.Equal(t, 2, buildCount, "expected a rebuild before generating credentials")
+}
