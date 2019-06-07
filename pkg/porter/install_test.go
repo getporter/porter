@@ -56,15 +56,8 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	opts := &InstallOptions{
-		BundleLifecycleOpts{
-			sharedOptions: sharedOptions{
-				bundleFileOptions: bundleFileOptions{
-					File: "porter.yaml",
-				},
-			},
-		},
-	}
+	opts := &InstallOptions{}
+	opts.File = "porter.yaml"
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
@@ -84,14 +77,9 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	opts := InstallOptions{
-		BundleLifecycleOpts{
-			sharedOptions: sharedOptions{
-				bundleFileOptions: bundleFileOptions{},
-				Params:            []string{"porter-debug=false"},
-			},
-		},
-	}
+	opts := InstallOptions{}
+	opts.Params = []string{"porter-debug=false"}
+
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
@@ -106,13 +94,8 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 
 func TestInstallOptions_validateParams(t *testing.T) {
 	p := NewTestPorter(t)
-	opts := InstallOptions{
-		BundleLifecycleOpts: BundleLifecycleOpts{
-			sharedOptions: sharedOptions{
-				Params: []string{"A=1", "B=2"},
-			},
-		},
-	}
+	opts := InstallOptions{}
+	opts.Params = []string{"A=1", "B=2"}
 
 	err := opts.validateParams(p.Context)
 	require.NoError(t, err)

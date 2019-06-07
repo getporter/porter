@@ -191,7 +191,6 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
-  porter bundle upgrade --driver debug
   porter bundle upgrade MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -250,7 +249,6 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
-  porter bundle uninstall --driver debug
   porter bundle uninstall --driver debug
   porter bundle uninstall MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
   
