@@ -18,7 +18,7 @@ type TestPorter struct {
 	TestConfig *config.TestConfig
 
 	// original directory where the test was being executed
-	testDir string
+	TestDir string
 
 	// tempDirectories that need to be cleaned up at the end of the testRun
 	cleanupDirs []string
@@ -52,7 +52,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err)
 	p.cleanupDirs = append(p.cleanupDirs, homeDir)
 
-	p.testDir, _ = os.Getwd()
+	p.TestDir, _ = os.Getwd()
 	err = os.Chdir(bundleDir)
 	require.NoError(t, err)
 }
@@ -64,7 +64,7 @@ func (p *TestPorter) CleanupIntegrationTest() {
 		p.FileSystem.RemoveAll(dir)
 	}
 
-	os.Chdir(p.testDir)
+	os.Chdir(p.TestDir)
 }
 
 // TODO: use this later to not actually execute a mixin during a unit test

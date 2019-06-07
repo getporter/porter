@@ -3,6 +3,7 @@
 package tests
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -68,4 +69,24 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 
 	// Verify that the bundle's version matches the updated version in the porter.yaml
 	// TODO: separate ListBundle's printing from fetching claims
+}
+
+func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	// Create a bundle that uses credentials
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+
+	credentialOptions := porter.CredentialOptions{}
+	credentialOptions.Insecure = true
+	credentialOptions.Silent = true
+	credentialOptions.Validate([]string{}, p.Context)
+	err := p.GenerateCredentials(credentialOptions)
+	assert.NoError(t, err)
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, gotOutput, "Building bundle ===>", "expected a rebuild before generating credentials")
 }
