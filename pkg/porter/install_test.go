@@ -15,9 +15,11 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := &InstallOptions{
-		sharedOptions: sharedOptions{
-			bundleFileOptions: bundleFileOptions{
-				File: "porter.yaml",
+		BundleLifecycleOpts{
+			sharedOptions: sharedOptions{
+				bundleFileOptions: bundleFileOptions{
+					File: "porter.yaml",
+				},
 			},
 		},
 	}
@@ -55,9 +57,11 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := &InstallOptions{
-		sharedOptions: sharedOptions{
-			bundleFileOptions: bundleFileOptions{
-				File: "porter.yaml",
+		BundleLifecycleOpts{
+			sharedOptions: sharedOptions{
+				bundleFileOptions: bundleFileOptions{
+					File: "porter.yaml",
+				},
 			},
 		},
 	}
@@ -81,9 +85,10 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := InstallOptions{
-		sharedOptions: sharedOptions{
-			bundleFileOptions: bundleFileOptions{
-				Params: []string{"porter-debug=false"},
+		BundleLifecycleOpts{
+			sharedOptions: sharedOptions{
+				bundleFileOptions: bundleFileOptions{},
+				Params:            []string{"porter-debug=false"},
 			},
 		},
 	}
