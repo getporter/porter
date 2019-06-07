@@ -140,7 +140,12 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
-	err := p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
