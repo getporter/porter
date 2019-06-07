@@ -14,6 +14,15 @@ type BundlePullOptions struct {
 	Force            bool
 }
 
+func (b BundlePullOptions) validateTag() error {
+	_, err := parseOCIReference(b.Tag)
+	if err != nil {
+		return errors.Wrap(err, "invalid value for --tag, specified value should be of the form REGISTRY/bundle:tag")
+	}
+	return nil
+
+}
+
 // PullBundle looks for a given bundle tag in the bundle cache. If it is not found, it is
 // pulled and stored in the cache. The path to the cached bundle is returned.
 func (p *Porter) PullBundle(opts BundlePullOptions) (string, error) {
