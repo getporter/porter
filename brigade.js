@@ -169,9 +169,9 @@ checks = {
   "verify": { runFunc: verify, description: "Verify" },
   "build": { runFunc: build, description: "Build" },
   "crossplatformbuild": { runFunc: xbuild, description: "Cross-Platform Build" },
-  "unitTest": { runFunc: testUnit, description: "Unit Test" },
-  "integrationTest": { runFunc: testIntegration, description: "Integration Test" },
-  "cliTest": { runFunc: testCLI, description: "CLI Test" }
+  "unittest": { runFunc: testUnit, description: "Unit Test" },
+  "integrationtest": { runFunc: testIntegration, description: "Integration Test" },
+  "clitest": { runFunc: testCLI, description: "CLI Test" }
 };
 
 // runCheck can be invoked to (re-)run an individual GitHub Check Run, as opposed to a full suite
