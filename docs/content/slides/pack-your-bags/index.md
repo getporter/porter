@@ -409,19 +409,6 @@ class: center, middle
 
 ---
 
-# How does it do that?
-
-* Relocates all referenced images into the new repository
-* Updates the bundle with the new images and digests
-* Stores the bundle information as a combination:
-  * OCI manifest list annotations to the main manifest list for the tag
-  * A new manifest list for the bundle credentials and parameters.
-* When pulling a bundle, it reconstructs it from the parts mentioned above
-
-See [OCI Bundle Format](/oci-bundle-format) for an example.
-
----
-
 # CNAB Specification
 --
 
@@ -1215,19 +1202,10 @@ tag: deislabs/porter-azure-wordpress-bundle:latest
 $ porter publish --help
 Publishes a bundle by pushing the invocation image and bundle to a registry.
 
-Usage:
-  porter publish [flags]
 
 Examples:
   porter publish
-  porter publish --file myapp/porter.yaml
-  porter publish --insecure
 
-
-Flags:
-  -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-  -h, --help                help for publish
-      --insecure-registry   Don't require TLS for the registry.
 ```
 
 ---
@@ -1248,14 +1226,25 @@ Example (assuming your username is cnabaholic):
 
 ---
 
-# Try to run your neighbor's bundle
+# Now run your bundle
 
-* Ask your neighbor for their new bundle tag
-* Run `porter install --tag [their tag]
+* Run `porter install --tag [your new tag]
 
 Example tag of `cnabaholic/hello-people:latest`:
 
 * Run `porter install --tag cnabaholic/hello-people:latest`
+
+---
+
+# How does it do that?
+
+* Updates the bundle with the new images and digests
+* Stores the bundle information as a combination:
+  * OCI manifest list annotations to the main manifest list for the tag
+  * A new manifest list for the bundle credentials and parameters.
+* When pulling a bundle, it reconstructs it from the parts mentioned above
+
+See [OCI Bundle Format](/oci-bundle-format) for an example.
 
 ---
 class: center, middle
