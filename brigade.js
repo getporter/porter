@@ -18,7 +18,7 @@ events.on("issue_comment:created", handleIssueComment);
 events.on("issue_comment:edited", handleIssueComment);
 
 events.on("exec", (e, p) => {
-  Group.runAll([
+  return Group.runAll([
     verify(e, p),
     build(e, p),
     xbuild(e, p),
@@ -32,7 +32,7 @@ events.on("exec", (e, p) => {
 // it will not for a tag push, hence the need for this handler
 events.on("push", (e, p) => {
   if (e.revision.ref.startsWith("refs/tags/")) {
-    Group.runEach([
+    return Group.runEach([
       testUnit(e, p),
       testIntegration(e, p),
       testCLI(e, p),
@@ -42,7 +42,7 @@ events.on("push", (e, p) => {
 });
 
 events.on("publish", (e, p) => {
-  Group.runEach([
+  return Group.runEach([
     testUnit(e, p),
     testIntegration(e, p),
     testCLI(e, p),
@@ -54,6 +54,8 @@ events.on("publish", (e, p) => {
 // Actions
 // **********************************************
 
+// Important: each Job name below must only consist of lowercase
+// alphanumeric characters and hyphens, per K8s resource name restrictions
 function verify(e, p) {
   var goBuild = new GoJob(`${projectName}-verify`);
 
@@ -182,8 +184,7 @@ function runCheck(e, p) {
   check = checks[name];
 
   if (typeof check !== 'undefined') {
-    checkRun(e, p, check.runFunc, check.description)
-      .catch(e => {console.error(e.toString())});
+    return checkRun(e, p, check.runFunc, check.description);
   } else {
     throw new Error(`No check found with name: ${name}`);
   }
@@ -191,19 +192,36 @@ function runCheck(e, p) {
 
 // Here we add GitHub Check Runs, which will run in parallel and report their results independently to GitHub
 function runSuite(e, p) {
+  var checkRuns = new Array();
+
+  // Construct Check Run Suite depending on branch
   if (e.revision.ref == "master" ) {
-    Group.runEach([
+    checkRuns = [
       checkRun(e, p, testUnit, "Unit Test"),
       checkRun(e, p, testIntegration, "Integration Test"),
       checkRun(e, p, testCLI, "CLI Test"),
       checkRun(e, p, publish, "Publish")
-    ])
+    ]
   } else {
     for (check of Object.values(checks)) {
-      checkRun(e, p, check.runFunc, check.description)
-        .catch(e => {console.error(e.toString())});
+      checkRuns.push(checkRun(e, p, check.runFunc, check.description));
     }
   }
+
+  // Now run the Check Run Suite
+  //
+  // Important: To prevent Promise.all() from failing fast, we catch and
+  // return all errors. This ensures Promise.all() always resolves. We then
+  // iterate over all resolved values looking for errors. If we find one, we
+  // throw it so the whole build will fail.
+  //
+  // Ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all#Promise.all_fail-fast_behaviour
+  return Promise.all(checkRuns)
+    .then((values) => {
+      values.forEach((value) => {
+        if (value instanceof Error) throw value;
+      });
+    });
 }
 
 // handleIssueComment handles an issue_comment event, parsing the comment
@@ -315,12 +333,12 @@ async function notificationWrap(job, note, conclusion) {
   }
   await note.run();
   try {
-    let res = await job.run()
+    let res = await job.run();
     const logs = await job.logs();
 
     note.conclusion = conclusion;
     note.summary = `Task "${ job.name }" passed`;
-    note.text = note.text = `Task Complete: ${conclusion}`;
+    note.text = `Task Complete: ${conclusion}`;
     return await note.run();
   } catch (e) {
     const logs = await job.logs();
