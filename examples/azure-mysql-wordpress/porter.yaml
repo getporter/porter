@@ -5,6 +5,7 @@ mixins:
 name: porter-azure-wordpress 
 version: 0.1.0
 invocationImage: deislabs/porter-azure-wordpress:latest
+tag: deislabs/porter-azure-wordpress-bundle:latest
 
 credentials:
 - name: SUBSCRIPTION_ID
