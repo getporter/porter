@@ -16,10 +16,8 @@ import (
 
 func TestFileSystem_GetMixins(t *testing.T) {
 	// Do this in a temp directory so that we can control which mixins show up in the list
-	os.Setenv(config.EnvHOME, os.TempDir())
-	defer os.Unsetenv(config.EnvHOME)
-
 	c := config.NewTestConfig(t)
+	c.SetHomeDir(os.TempDir())
 	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()} // Hit the real file system for this test
 
 	mixinsDir, err := c.GetMixinsDir()
@@ -57,8 +55,7 @@ func TestFileSystem_GetSchema(t *testing.T) {
 
 	// bin is my home now
 	binDir := c.TestContext.FindBinDir()
-	os.Setenv(config.EnvHOME, binDir)
-	defer os.Unsetenv(config.EnvHOME)
+	c.SetHomeDir(binDir)
 
 	p := NewFileSystem(c.Config)
 	mixins, err := p.List()

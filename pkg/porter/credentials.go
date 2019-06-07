@@ -119,11 +119,12 @@ func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error 
 		return err
 	}
 
-	err = g.validateBundlePath(cxt)
+	err = g.defaultBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return g.validateCNABFile(cxt)
 }
 
 func (g *CredentialOptions) validateCredName(args []string) error {
@@ -139,9 +140,12 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
+	err := p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	if err != nil {
+		return err
+	}
 
-	//TODO make this work for either porter.yaml OR a bundle
-	bundle, err := p.CNAB.LoadBundle(opts.File, opts.Insecure)
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile, opts.Insecure)
 	if err != nil {
 		return err
 	}

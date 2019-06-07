@@ -21,8 +21,6 @@ func (o *InstallOptions) Validate(args []string, cxt *context.Context) error {
 		if err != nil {
 			return err
 		}
-	} else {
-		o.bundleRequired = true
 	}
 	return o.sharedOptions.Validate(args, cxt)
 }
@@ -42,7 +40,7 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 	args := cnabprovider.InstallArguments{
 		ActionArguments: cnabprovider.ActionArguments{
 			Claim:                 o.Name,
-			BundleIdentifier:      o.File,
+			BundleIdentifier:      o.CNABFile,
 			BundleIsFile:          true,
 			Insecure:              o.Insecure,
 			Params:                make(map[string]string, len(o.combinedParameters)),
@@ -80,6 +78,11 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		}
 	}
 	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

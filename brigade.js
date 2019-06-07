@@ -22,8 +22,9 @@ events.on("exec", (e, p) => {
     verify(e, p),
     build(e, p),
     xbuild(e, p),
-    test(e, p),
-    testIntegration(e, p)
+    testUnit(e, p),
+    testIntegration(e, p),
+    testCLI(e, p)
   ]);
 });
 
@@ -32,8 +33,9 @@ events.on("exec", (e, p) => {
 events.on("push", (e, p) => {
   if (e.revision.ref.startsWith("refs/tags/")) {
     Group.runEach([
-      test(e, p),
+      testUnit(e, p),
       testIntegration(e, p),
+      testCLI(e, p),
       publish(e, p),
     ])
   }
@@ -41,8 +43,9 @@ events.on("push", (e, p) => {
 
 events.on("publish", (e, p) => {
   Group.runEach([
-    test(e, p),
+    testUnit(e, p),
     testIntegration(e, p),
+    testCLI(e, p),
     publish(e, p),
   ])
 });
@@ -81,8 +84,8 @@ function xbuild(e, p) {
   return goBuild;
 }
 
-function test(e, p) {
-  var goTest = new GoJob(`${projectName}-test`);
+function testUnit(e, p) {
+  var goTest = new GoJob(`${projectName}-testunit`);
 
   goTest.tasks.push(
     "make test-unit"
@@ -94,7 +97,7 @@ function test(e, p) {
 // TODO: we could refactor so that this job shares a mount with the build job above,
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
-  var goTest = new GoJob(`${projectName}-integrationtest`);
+  var goTest = new GoJob(`${projectName}-testintegration`);
   // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
   goTest.docker.enabled = true;
 
@@ -112,7 +115,32 @@ function testIntegration(e, p) {
     `docker login ${p.secrets.dockerhubRegistry} \
       -u ${p.secrets.dockerhubUsername} \
       -p ${p.secrets.dockerhubPassword}`,
-    `REGISTRY=${p.secrets.dockerhubOrg} make test-cli`
+    `REGISTRY=${p.secrets.dockerhubOrg} make test-integration`
+  );
+
+  return goTest;
+}
+
+function testCLI(e, p) {
+  var goTest = new GoJob(`${projectName}-testcli`);
+  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  goTest.docker.enabled = true;
+
+  goTest.env.kubeconfig = {
+    secretKeyRef: {
+      name: "porter-kubeconfig",
+      key: "kubeconfig"
+    }
+  };
+
+  // Setup kubeconfig, docker login, run tests
+  goTest.tasks.push(
+      "mkdir -p ${HOME}/.kube",
+      'echo "${kubeconfig}" > ${HOME}/.kube/config',
+      `docker login ${p.secrets.dockerhubRegistry} \
+      -u ${p.secrets.dockerhubUsername} \
+      -p ${p.secrets.dockerhubPassword}`,
+      `REGISTRY=${p.secrets.dockerhubOrg} make test-cli`
   );
 
   return goTest;
@@ -141,8 +169,9 @@ checks = {
   "verify": { runFunc: verify, description: "Verify" },
   "build": { runFunc: build, description: "Build" },
   "crossplatformbuild": { runFunc: xbuild, description: "Cross-Platform Build" },
-  "test": { runFunc: test, description: "Test" },
-  "integrationtest": { runFunc: testIntegration, description: "Integration Test" }
+  "unittest": { runFunc: testUnit, description: "Unit Test" },
+  "integrationtest": { runFunc: testIntegration, description: "Integration Test" },
+  "clitest": { runFunc: testCLI, description: "CLI Test" }
 };
 
 // runCheck can be invoked to (re-)run an individual GitHub Check Run, as opposed to a full suite
@@ -164,8 +193,9 @@ function runCheck(e, p) {
 function runSuite(e, p) {
   if (e.revision.ref == "master" ) {
     Group.runEach([
-      checkRun(e, p, test, "Test"),
+      checkRun(e, p, testUnit, "Unit Test"),
       checkRun(e, p, testIntegration, "Integration Test"),
+      checkRun(e, p, testCLI, "CLI Test"),
       checkRun(e, p, publish, "Publish")
     ])
   } else {

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -28,7 +27,7 @@ func NewTestConfig(t *testing.T) *TestConfig {
 func (c *TestConfig) SetupPorterHome() {
 	// Set up the test porter home directory
 	home := "/root/.porter"
-	os.Setenv(EnvHOME, home)
+	c.SetHomeDir(home)
 
 	// Fake out the porter home directory
 	c.FileSystem.Create(filepath.Join(home, "porter"))
@@ -39,4 +38,11 @@ func (c *TestConfig) SetupPorterHome() {
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec-runtime"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm-runtime"))
+}
+
+// InitializePorterHome initializes the filesystem with the supporting files in the PORTER_HOME directory.
+func (c *TestConfig) SetupIntegrationTest(home string) {
+	c.SetHomeDir(home)
+	// Copy bin dir contents to the home directory
+	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), home)
 }

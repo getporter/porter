@@ -21,15 +21,36 @@ type CNABProvider interface {
 	Uninstall(arguments cnabprovider.UninstallArguments) error
 }
 
+const DefaultDriver = "docker"
+
+type bundleFileOptions struct {
+	// File path to the porter manifest. Defaults to the bundle in the current directory.
+	File string
+
+	// CNABFile is the path to the bundle.json file. Cannot be specified at the same time as the porter manifest.
+	CNABFile string
+}
+
+func (o *bundleFileOptions) Validate(cxt *context.Context) error {
+	err := o.validateBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	err = o.defaultBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 // sharedOptions are common options that apply to multiple CNAB actions.
 type sharedOptions struct {
-	bundleRequired bool
+	bundleFileOptions
 
 	// Name of the claim. Defaults to the name of the bundle.
 	Name string
-
-	// File path to the CNAB bundle. Defaults to the bundle in the current directory.
-	File string
 
 	// Insecure bundles allowed.
 	Insecure bool
@@ -65,16 +86,17 @@ func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	err = o.validateBundlePath(cxt)
+	err = o.bundleFileOptions.Validate(cxt)
 	if err != nil {
 		return err
 	}
 
-	err = o.validateParams()
+	err = o.validateParams(cxt)
 	if err != nil {
 		return err
 	}
 
+	o.defaultDriver()
 	err = o.validateDriver()
 	if err != nil {
 		return err
@@ -94,93 +116,101 @@ func (o *sharedOptions) validateClaimName(args []string) error {
 	return nil
 }
 
-// validateBundlePath gets the absolute path to the bundle file.
-func (o *sharedOptions) validateBundlePath(cxt *context.Context) error {
-	err := o.defaultBundleFile(cxt)
+// defaultBundleFiles defaults the porter manifest and the bundle.json files.
+func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
+	if o.File == "" {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "could not get current working directory")
+		}
+
+		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+		if err != nil {
+			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
+		}
+
+		if manifestExists {
+			o.File = config.Name
+			o.CNABFile = "cnab/bundle.json"
+		}
+	} else {
+		bundleDir := filepath.Dir(o.File)
+		o.CNABFile = filepath.Join(bundleDir, "cnab/bundle.json")
+	}
+
+	return nil
+}
+
+func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {
+	if o.File != "" && o.CNABFile != "" {
+		return errors.New("cannot specify both --file and --cnab-file")
+	}
+
+	err := o.validateFile(cxt)
 	if err != nil {
 		return err
 	}
 
-	err = o.prepareBundleFile()
+	err = o.validateCNABFile(cxt)
 	if err != nil {
 		return err
 	}
 
-	if !o.bundleRequired && o.File == "" {
+	return nil
+}
+
+func (o *bundleFileOptions) validateFile(cxt *context.Context) error {
+	if o.File == "" {
 		return nil
 	}
 
 	// Verify the file can be accessed
-	if _, err := os.Stat(o.File); err != nil {
-		return errors.Wrapf(err, "unable to access bundle file %s", o.File)
+	if _, err := cxt.FileSystem.Stat(o.File); err != nil {
+		return errors.Wrapf(err, "unable to access --file %s", o.File)
 	}
 
 	return nil
 }
 
-// defaultBundleFile defaults the bundle file to the bundle in the current directory
-// when none is set.
-func (o *sharedOptions) defaultBundleFile(cxt *context.Context) error {
-	if o.File != "" {
+// validateCNABFile converts the bundle file path to an absolute filepath and verifies that it exists.
+func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
+	if o.CNABFile == "" {
 		return nil
 	}
 
-	// We are looking both for a bundle.json OR a porter manifest
-	// If we can't find a bundle.json, but we found manifest, tell them to run porter build first
-	pwd, err := os.Getwd()
-	if err != nil {
-		return errors.Wrap(err, "could not get current working directory")
-	}
-	foundCNAB, _ := cxt.FileSystem.Exists(filepath.Join(pwd, "cnab/bundle.json"))
-	if foundCNAB {
-		o.File = "cnab/bundle.json"
-	}
-	foundManifest, _ := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+	originalPath := o.CNABFile
+	if !filepath.IsAbs(o.CNABFile) {
+		// Convert to an absolute filepath because duffle needs it that way
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "could not get current working directory")
+		}
 
-	if !o.bundleRequired && o.File == "" {
-		return nil
+		f := filepath.Join(pwd, o.CNABFile)
+		f, err = filepath.Abs(f)
+		if err != nil {
+			return errors.Wrapf(err, "could not get absolute path for --cnab-file %s", o.CNABFile)
+		}
+
+		o.CNABFile = f
 	}
 
-	if o.File == "" && foundManifest {
-		return errors.New("first run 'porter build' and then run 'porter install'")
+	// Verify the file can be accessed
+	if _, err := cxt.FileSystem.Stat(o.CNABFile); err != nil {
+		// warn about the original relative path
+		return errors.Wrapf(err, "unable to access --cnab-file %s", originalPath)
 	}
 
 	return nil
 }
 
-// prepareBundleFile converts the bundle file path to an absolute filepath.
-func (o *sharedOptions) prepareBundleFile() error {
-	if !o.bundleRequired && o.File == "" {
-		return nil
-	}
-
-	if filepath.IsAbs(o.File) {
-		return nil
-	}
-
-	// Convert to an absolute filepath
-	pwd, err := os.Getwd()
-	if err != nil {
-		return errors.Wrap(err, "could not get current working directory")
-	}
-
-	f := filepath.Join(pwd, o.File)
-	f, err = filepath.Abs(f)
-	if err != nil {
-		return errors.Wrapf(err, "could not get absolute path for bundle file %s", f)
-	}
-
-	o.File = f
-	return nil
-}
-
-func (o *sharedOptions) validateParams() error {
+func (o *sharedOptions) validateParams(cxt *context.Context) error {
 	err := o.parseParams()
 	if err != nil {
 		return err
 	}
 
-	err = o.parseParamFiles()
+	err = o.parseParamFiles(cxt)
 	if err != nil {
 		return err
 	}
@@ -201,11 +231,11 @@ func (o *sharedOptions) parseParams() error {
 }
 
 // parseParamFiles parses the variable assignments in ParamFiles.
-func (o *sharedOptions) parseParamFiles() error {
+func (o *sharedOptions) parseParamFiles(cxt *context.Context) error {
 	o.parsedParamFiles = make([]map[string]string, 0, len(o.ParamFiles))
 
 	for _, path := range o.ParamFiles {
-		err := o.parseParamFile(path)
+		err := o.parseParamFile(path, cxt)
 		if err != nil {
 			return err
 		}
@@ -214,8 +244,8 @@ func (o *sharedOptions) parseParamFiles() error {
 	return nil
 }
 
-func (o *sharedOptions) parseParamFile(path string) error {
-	f, err := os.Open(path)
+func (o *sharedOptions) parseParamFile(path string, cxt *context.Context) error {
+	f, err := cxt.FileSystem.Open(path)
 	if err != nil {
 		return errors.Wrapf(err, "could not read param file %s", path)
 	}
@@ -256,6 +286,13 @@ func (o *sharedOptions) combineParameters() map[string]string {
 	}
 
 	return final
+}
+
+// Validate that the provided driver is supported
+func (o *sharedOptions) defaultDriver() {
+	if o.Driver == "" {
+		o.Driver = DefaultDriver
+	}
 }
 
 // Validate that the provided driver is supported

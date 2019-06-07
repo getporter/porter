@@ -14,14 +14,21 @@ type UpgradeOptions struct {
 }
 
 func (o *UpgradeOptions) Validate(args []string, cxt *context.Context) error {
-	o.bundleRequired = false
 	return o.sharedOptions.Validate(args, cxt)
 }
 
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
-	p.applyDefaultOptions(&opts.sharedOptions)
+	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(p.Out, "upgrading %s...\n", opts.Name)
 	return p.CNAB.Upgrade(opts.ToDuffleArgs())
@@ -33,7 +40,7 @@ func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.UpgradeArguments {
 	return cnabprovider.UpgradeArguments{
 		ActionArguments: cnabprovider.ActionArguments{
 			Claim:                 o.Name,
-			BundleIdentifier:      o.File,
+			BundleIdentifier:      o.CNABFile,
 			BundleIsFile:          true,
 			Insecure:              o.Insecure,
 			Params:                o.combineParameters(),

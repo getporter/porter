@@ -4,51 +4,40 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/config"
+	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
+	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
-
-	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/pkg/errors"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
 // Porter handles defaulting any missing values.
 type PublishOptions struct {
-	File             string
+	bundleFileOptions
 	InsecureRegistry bool
 }
 
 // Validate performs validation on the publish options
-func (p PublishOptions) Validate(porter *Porter) error {
-	fs := porter.Context.FileSystem
-	f := p.File
-	if f == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-		f = filepath.Join(pwd, config.Name)
-
-	}
-	exists, err := fs.Exists(f)
+func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
+	err := o.bundleFileOptions.Validate(cxt)
 	if err != nil {
-		return errors.Wrap(err, "error finding porter.yaml")
+		return err
 	}
-	if !exists {
-		return errors.New("could not find porter.yaml. run `porter create` and `porter build` to create a new bundle before publishing")
+
+	if o.File == "" {
+		return errors.New("could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file")
 	}
+
 	return nil
 }
 
@@ -56,11 +45,16 @@ func (p PublishOptions) Validate(porter *Porter) error {
 // and then regenerates the bundle.json. Finally it [TODO] publishes the manifest to an OCI registry.
 func (p *Porter) Publish(opts PublishOptions) error {
 	var err error
-	if opts.File != "" {
+	if opts.File != "" { // TODO: Extract validation from sharedOptions so that we aren't diverging logic from the other commands like we are here. Normally file is always populated by Validate.
 		err = p.Config.LoadManifestFrom(opts.File)
 	} else {
 		err = p.Config.LoadManifest()
 	}
+	if err != nil {
+		return err
+	}
+
+	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

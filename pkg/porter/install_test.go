@@ -3,6 +3,7 @@ package porter
 import (
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,8 +14,14 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	opts := &InstallOptions{}
-	err = opts.validateParams()
+	opts := &InstallOptions{
+		sharedOptions: sharedOptions{
+			bundleFileOptions: bundleFileOptions{
+				File: "porter.yaml",
+			},
+		},
+	}
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = true
@@ -32,7 +39,7 @@ func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	p := NewTestPorter(t)
 
 	opts := &InstallOptions{}
-	err := opts.validateParams()
+	err := opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
 	err = p.applyDefaultOptions(&opts.sharedOptions)
@@ -47,8 +54,14 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	opts := InstallOptions{}
-	err = opts.validateParams()
+	opts := &InstallOptions{
+		sharedOptions: sharedOptions{
+			bundleFileOptions: bundleFileOptions{
+				File: "porter.yaml",
+			},
+		},
+	}
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = false
@@ -69,10 +82,13 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 
 	opts := InstallOptions{
 		sharedOptions: sharedOptions{
+			bundleFileOptions: bundleFileOptions{
+				File: "porter.yaml",
+			},
 			Params: []string{"porter-debug=false"},
 		},
 	}
-	err = opts.validateParams()
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = true
@@ -85,13 +101,14 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 }
 
 func TestInstallOptions_validateParams(t *testing.T) {
+	p := NewTestPorter(t)
 	opts := InstallOptions{
 		sharedOptions: sharedOptions{
 			Params: []string{"A=1", "B=2"},
 		},
 	}
 
-	err := opts.validateParams()
+	err := opts.validateParams(p.Context)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -125,6 +142,9 @@ func TestInstallOptions_validateClaimName(t *testing.T) {
 }
 
 func TestInstallOptions_combineParameters(t *testing.T) {
+	p := NewTestPorter(t)
+	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
+
 	opts := InstallOptions{
 		sharedOptions: sharedOptions{
 			ParamFiles: []string{
@@ -135,7 +155,7 @@ func TestInstallOptions_combineParameters(t *testing.T) {
 		},
 	}
 
-	err := opts.validateParams()
+	err := opts.validateParams(p.Context)
 	require.NoError(t, err)
 
 	gotParams := opts.combineParameters()
@@ -158,7 +178,8 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		wantDriver string
 		wantError  string
 	}{
-		{"valid driver provided", "debug", "debug", ""},
+		{"debug", "debug", "debug", ""},
+		{"docker", "docker", "docker", ""},
 		{"invalid driver provided", "dbeug", "", "unsupported driver provided: dbeug"},
 	}
 
