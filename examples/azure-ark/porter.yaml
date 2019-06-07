@@ -6,6 +6,7 @@ name: porter-azure-ark
 description: "A Porter example using Azure Storage and Ark"
 version: 0.1.0
 invocationImage: deislabs/porter-azure-ark:latest
+tag: deislabs/porter-azure-ark-bundle:latest
 
 credentials:
 - name: SUBSCRIPTION_ID

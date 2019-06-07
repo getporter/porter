@@ -22,11 +22,12 @@ to get all the materials ready.
 .center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
 
 * Clone the workshop repository
-  ```
+  ```console
   git clone https://github.com/deislabs/porter.git
   cd porter/workshop
   ```
 * [Install Porter](https://porter.sh/install)
+* Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
 * Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
 * [Install Helm 2](https://helm.sh/docs/install/)
 * Initialize Helm on your cluster by running `helm init`
@@ -408,6 +409,19 @@ class: center, middle
 
 ---
 
+# How does it do that?
+
+* Relocates all referenced images into the new repository
+* Updates the bundle with the new images and digests
+* Stores the bundle information as a combination:
+  * OCI manifest list annotations to the main manifest list for the tag
+  * A new manifest list for the bundle credentials and parameters.
+* When pulling a bundle, it reconstructs it from the parts mentioned above
+
+See [OCI Bundle Format](/oci-bundle-format) for an example.
+
+---
+
 # CNAB Specification
 --
 
@@ -423,15 +437,18 @@ class: center, middle
 * Well-defined verbs
 --
 
-    *. Install
-    *. Upgrade
-    *. Uninstall
---
+  * Install
+  * Upgrade
+  * Uninstall
 
 ---
 class: center, middle
 
 # An Example: Azure MySQL + Wordpress
+
+.center[
+  https://github.com/deislabs/porter/tree/master/examples/azure-mysql-wordpress
+]
 
 ---
 name: talkback
@@ -1173,6 +1190,74 @@ Custom mixins are just easier to use, but aren't necessary.
 * Vault
 * Dominos 🍕
 * What else?
+
+---
+
+# Publishing Your Bundles
+
+Use  `porter publish` to share bundles:
+
+* Publishes both the invocation image and the CNAB bundle manifest to an OCI registry.
+* Uses Docker tags for both
+
+```yaml
+name: porter-azure-wordpress
+version: 0.1.0
+invocationImage: deislabs/porter-azure-wordpress:latest
+tag: deislabs/porter-azure-wordpress-bundle:latest
+```
+
+---
+
+## porter publish
+
+```console
+$ porter publish --help
+Publishes a bundle by pushing the invocation image and bundle to a registry.
+
+Usage:
+  porter publish [flags]
+
+Examples:
+  porter publish
+  porter publish --file myapp/porter.yaml
+  porter publish --insecure
+
+
+Flags:
+  -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+  -h, --help                help for publish
+      --insecure-registry   Don't require TLS for the registry.
+```
+
+---
+
+# Try to publish
+
+* Modify the helloworld bundle again
+* Edit the porter.yaml:
+  * Change the `invocationImage` property to reflect your Docker Hub account
+  * Change `tag` property to reflect your Docker Hub account
+  * Change the message to something unique
+* Run `porter build`
+* Run `porter publish`
+
+Example (assuming your username is cnabaholic):
+
+* Change `deislabs/cool-image:latest` to `cnabaholic/cool-image:latest`
+
+---
+
+# Try to run your neighbor's bundle
+
+* Ask your neighbor for their new bundle tag
+* Run `porter install --tag [their tag]
+
+Example tag of `cnabaholic/hello-people:latest`:
+
+* Run `porter install --tag cnabaholic/hello-people:latest`
+
+---
 
 ---
 class: center, middle
