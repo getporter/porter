@@ -760,6 +760,14 @@
   version = "v0.0.7"
 
 [[projects]]
+  digest = "1:70ef8268170621826f8c111ac1674afe75136f526f449453b4a6631c6dba1946"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3ee7d812e62a0804a7d0a324e0249ca2db3476d3"
+  version = "v0.0.4"
+
+[[projects]]
   digest = "1:5985ef4caf91ece5d54817c11ea25f182697534f8ae6521eadcd628c142ac4b6"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -826,6 +834,14 @@
   pruneopts = "NUT"
   revision = "02a8604050d8466dd915307496174adb9be4593a"
   version = "v1.3.1"
+
+[[projects]]
+  digest = "1:a37f6e86e990987d8b1b7642dd1b9763d914cb9bc862d493bae7b53158ac4b27"
+  name = "github.com/olekukonko/tablewriter"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "e6d60cf7ba1f42d86d54cdf5508611c4aafb3970"
+  version = "v0.0.1"
 
 [[projects]]
   digest = "1:e0cc8395ea893c898ff5eb0850f4d9851c1f57c78c232304a026379a47a552d0"
@@ -1442,6 +1458,7 @@
     "github.com/hashicorp/go-multierror",
     "github.com/masterminds/semver",
     "github.com/mmcdole/gofeed/atom",
+    "github.com/olekukonko/tablewriter",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",

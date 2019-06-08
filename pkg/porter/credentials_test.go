@@ -6,6 +6,7 @@ import (
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	printer "github.com/deislabs/porter/pkg/printer"
 
+	credentials "github.com/deislabs/cnab-go/credentials"
 	"github.com/deislabs/duffle/pkg/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -202,7 +203,7 @@ func TestCredentialsList_BadCred(t *testing.T) {
 			name:   "unmarshal error",
 			format: printer.FormatTable,
 			wantContains: []string{
-				"unable to unmarshal credential set from file bad-creds.yaml: yaml: unmarshal errors",
+				"unable to unmarshal credential bad-creds: yaml: unmarshal errors",
 				`NAME         MODIFIED
 good-creds   now`},
 			errorMsg: "",
@@ -300,4 +301,174 @@ func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	credFileExists, err := p.Porter.Context.FileSystem.Exists(path)
 	assert.True(t, credFileExists, "expected the file %s to exist", path)
 	assert.NoError(t, err, "should have been able to check if get credential path exists")
+}
+
+type CredentialShowTest struct {
+	name       string
+	format     printer.Format
+	wantOutput string
+}
+
+func TestShowCredential_NotFound(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialShowOptions{
+		Format: printer.FormatTable,
+		Name:   "non-existent-cred",
+	}
+
+	err := p.ShowCredential(opts)
+	assert.Error(t, err, "an error should have occurred")
+	assert.EqualError(t, err,
+		"unable to load credential non-existent-cred: open /root/.porter/credentials/non-existent-cred.yaml: file does not exist")
+}
+
+func TestShowCredential_Found(t *testing.T) {
+	testcases := []CredentialShowTest{
+		{
+			name:   "json",
+			format: printer.FormatJson,
+			wantOutput: `{
+  "name": "kool-kreds",
+  "credentials": [
+    {
+      "name": "kool-config",
+      "source": {
+        "path": "/path/to/kool-config"
+      }
+    },
+    {
+      "name": "kool-envvar",
+      "source": {
+        "env": "KOOL_ENV_VAR"
+      }
+    },
+    {
+      "name": "kool-cmd",
+      "source": {
+        "command": "echo 'kool'"
+      }
+    },
+    {
+      "name": "kool-val",
+      "source": {
+        "value": "kool"
+      }
+    }
+  ]
+}
+`,
+		},
+		{
+			name:   "yaml",
+			format: printer.FormatYaml,
+			wantOutput: `name: kool-kreds
+credentials:
+- name: kool-config
+  source:
+    path: /path/to/kool-config
+- name: kool-envvar
+  source:
+    env: KOOL_ENV_VAR
+- name: kool-cmd
+  source:
+    command: echo 'kool'
+- name: kool-val
+  source:
+    value: kool
+
+`,
+		},
+		{
+			name:   "table",
+			format: printer.FormatTable,
+			wantOutput: `Name: kool-kreds
+
+------------------------------------------------
+  Name         Local Source          Source Type  
+------------------------------------------------
+  kool-config  /path/to/kool-config  Path         
+  kool-envvar  KOOL_ENV_VAR          EnvVar       
+  kool-cmd     echo 'kool'           Command      
+  kool-val     kool                  Value        
+`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.TestConfig.SetupPorterHome()
+			p.CNAB = &TestCNABProvider{}
+
+			opts := CredentialShowOptions{
+				Format: tc.format,
+				Name:   "kool-kreds",
+			}
+
+			credsDir, err := p.TestConfig.GetCredentialsDir()
+			require.NoError(t, err, "no error should have existed")
+
+			p.TestConfig.TestContext.AddTestDirectory("testdata/test-creds", credsDir)
+
+			err = p.ShowCredential(opts)
+			assert.NoError(t, err, "an error should not have occurred")
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			assert.Equal(t, tc.wantOutput, gotOutput)
+		})
+	}
+}
+
+type SourceTest struct {
+	name      string
+	source    credentials.Source
+	wantValue string
+	wantType  string
+}
+
+func TestGetCredentialSourceValueAndType(t *testing.T) {
+	testcases := []SourceTest{
+		{
+			name: "Source: EnvVar",
+			source: credentials.Source{
+				EnvVar: "ENVY",
+			},
+			wantValue: "ENVY",
+			wantType:  "EnvVar",
+		},
+		{
+			name: "Source: Path",
+			source: credentials.Source{
+				Path: "/pathy/patheson",
+			},
+			wantValue: "/pathy/patheson",
+			wantType:  "Path",
+		},
+		{
+			name: "Source: Command",
+			source: credentials.Source{
+				Command: "sed s/true/false/g",
+			},
+			wantValue: "sed s/true/false/g",
+			wantType:  "Command",
+		},
+		{
+			name: "Source: Value",
+			source: credentials.Source{
+				Value: "abc123",
+			},
+			wantValue: "abc123",
+			wantType:  "Value",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			sv, st := GetCredentialSourceValueAndType(tc.source)
+			assert.Equal(t, tc.wantValue, sv)
+			assert.Equal(t, tc.wantType, st)
+		})
+	}
 }

@@ -3,3 +3,12 @@ credentials:
 - name: kool-config
   source:
     path: /path/to/kool-config
+- name: kool-envvar
+  source:
+    env: KOOL_ENV_VAR
+- name: kool-cmd
+  source:
+    command: "echo 'kool'"
+- name: kool-val
+  source:
+    value: "kool"
