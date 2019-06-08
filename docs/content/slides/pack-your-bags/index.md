@@ -1276,7 +1276,7 @@ Example (assuming your username is cnabaholic):
 
 # Now run your bundle
 
-* Run `porter install --tag [your new tag]
+* Run `porter install --tag [your new tag]`
 
 Example tag of `cnabaholic/hello-people:latest`:
 
@@ -1358,15 +1358,31 @@ What is the timeline for the project and how should they be thinking about begin
 ---
 class: center, middle
 
-# Choose your own adventure
+# Choose your own adventure!
 
-* Cloud + Break Glass
-* Order a pizza with Porter
-* Make a mixin
+* ASCII Art Gophers
+
+---
+name: asciiart
+# Try it out: ASCII Art Gophers
+
+Make a bundle for the https://github.com/stdupp/goasciiart tool. Use it to
+convert cute pictures of gophers into ASCII art when you install the bundle.
+
+Here are some hints so that you can try to solve it in your own way. 
+For the full solution, see the [asciiart][asciiart] directory in the workshop materials.
+
+* A good base image for go is `golang:1.11-stretch`.
+* You need to run `porter build` after modifying the Dockerfile.tmpl to rebuild
+your invocation image to pick up your changes.
+* Don't forget to copy your images into your invocation image to /cnab/app/.
+* The command to run is `goasciiart -p=gopher.png -w=100`.
+
+[asciiart]: https://github.com/deislabs/porter/tree/master/workshop/asciiart
 
 ---
 name: rate
-class center, middle
+class: center, middle
 # Workshop Feedback
 
 Please take a minute now to rate this workshop before you leave
