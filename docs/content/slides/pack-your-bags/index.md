@@ -975,6 +975,7 @@ credentials:
 ```
 
 ---
+name: dockerfile
 ## Custom Dockerfile
 
 Specify a custom Dockerfile for the invocation image
@@ -983,17 +984,47 @@ Specify a custom Dockerfile for the invocation image
 * Add users, tweak the environment and configuration
 * Install tools and applications
 
+⚠️ You are responsible for copying files into the bundle under /cnab/app/
+
+---
+
+### porter.yaml
+
 ```yaml
 dockerfile: Dockerfile.tmpl
 ```
+
+### Dockerfile.tmpl
+
+```Dockerfile
+FROM debian:stretch
+
+RUN apt-get install -y curl
+
+COPY myscript.sh /cnab/app/
+```
+
+
+---
+## Try it out: Custom Dockerfile
+
+Make a bundle that uses a custom `dockerfile` template and uses **mcr.microsoft.com/azure-cli**
+as its base image
+
+1. Create a porter bundle in a new directory with `porter create`.
+1. Modify the **porter.yaml** to uncomment out `#dockerfile: Dockerfile.tmpl`.
+1. Edit **Dockerfile.tmpl** to use **mcr.microsoft.com/azure-cli** for the base image.
+1. Edit the install action to run `az help`.
+1. Build the bundle.
+1. Install the bundle.
 
 ---
 ## Review: Default Dockerfile
 
 * Uses Debian for the base image
 * Installs root ssl certificates
-* Copies everything in the local bundle directory into the invocation image 
-  in the same directory as your bundle for you automatically
+
+🎩✨ Automatically copies everything into the bundle under /cnab/app/ for you
 
 ---
 # Actions and Steps
