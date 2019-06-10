@@ -1002,7 +1002,6 @@ RUN apt-get install -y curl
 COPY myscript.sh /cnab/app/
 ```
 
-
 ---
 ## Try it out: Custom Dockerfile
 
@@ -1082,7 +1081,6 @@ install:
       arguments:
 *        - scripts/do-things.sh
 ```
-
 
 ---
 ## Step Outputs
@@ -1291,23 +1289,6 @@ Example tag of `cnabaholic/hello-people:latest`:
 * When pulling a bundle, it reconstructs it from the parts mentioned above
 
 See [OCI Bundle Format](/oci-bundle-format) for an example.
-
----
-class: center, middle
-
-# CNAB Best Practices
-
----
-# What would you really put into a bundle?
-
----
-# What does a real bundle look like?
-
-???
-Look at the azure examples and quick starts
-
----
-# How does this fit into a CI/C pipeline?
 
 ---
 class: center, middle
