@@ -375,12 +375,17 @@ class: center, middle
 * But how do we distribute bundles?
 
 ---
+class: center
 
-# Sharing Images With OCI Registries (Docker Registries)
+# Sharing Images With OCI Registries
 
-.center[
-  ![how docker shares](/images/pack-your-bags/ship-it.png)
-]
+![how docker shares](/images/pack-your-bags/ship-it.png)
+
+---
+name: registry
+class: center, middle
+
+# OCI Regristry ~ Docker Registry
 
 ---
 
@@ -400,12 +405,11 @@ class: center, middle
 * CNAB Spec group working with OCI to improve this
 
 ---
+class: center
 
-# Sharing Bundles With OCI Registries (Docker Registries)
+# Sharing Bundles With OCI Registries
 
-.center[
-  ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
-]
+![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
 
 ---
 
@@ -603,12 +607,10 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 ```json
 {
     "description": "An example Porter configuration",
-    "invocationImages": [
-        {
+    "invocationImages": [{
             "image": "porter-hello:latest",
             "imageType": "docker"
-        }
-    ],
+        }],
     "name": "HELLO",
     "parameters": {
         "porter-debug": {
