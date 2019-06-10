@@ -294,7 +294,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```console
-$ porter install --tag deislabs/porter-hello-velocity
+$ porter install --tag deislabs/porter-hello-velocity:latest
 ```
 
 ---
@@ -375,12 +375,17 @@ class: center, middle
 * But how do we distribute bundles?
 
 ---
+class: center
 
-# Sharing Images With OCI Registries (Docker Registries)
+# Sharing Images With OCI Registries
 
-.center[
-  ![how docker shares](/images/pack-your-bags/ship-it.png)
-]
+![how docker shares](/images/pack-your-bags/ship-it.png)
+
+---
+name: registry
+class: center, middle
+
+# OCI Regristry ~ Docker Registry
 
 ---
 
@@ -400,12 +405,11 @@ class: center, middle
 * CNAB Spec group working with OCI to improve this
 
 ---
+class: center
 
-# Sharing Bundles With OCI Registries (Docker Registries)
+# Sharing Bundles With OCI Registries
 
-.center[
-  ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
-]
+![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
 
 ---
 
@@ -603,12 +607,10 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 ```json
 {
     "description": "An example Porter configuration",
-    "invocationImages": [
-        {
+    "invocationImages": [{
             "image": "porter-hello:latest",
             "imageType": "docker"
-        }
-    ],
+        }],
     "name": "HELLO",
     "parameters": {
         "porter-debug": {
@@ -645,9 +647,10 @@ Flags:
 ```
 
 ---
+name: execution
 ## CNAB: What Executes Where
 
-TODO PICTURE
+![cloud picture](/images/pack-your-bags/cnab-execution.png)
 
 ---
 
@@ -907,11 +910,6 @@ $ porter uninstall --cred wordpress
 Explain why --cred is required again for uninstall 
 
 ---
-class: center, middle
-
-# BREAK
-
----
 name: author
 class: center, middle
 
@@ -1004,7 +1002,6 @@ RUN apt-get install -y curl
 COPY myscript.sh /cnab/app/
 ```
 
-
 ---
 ## Try it out: Custom Dockerfile
 
@@ -1084,7 +1081,6 @@ install:
       arguments:
 *        - scripts/do-things.sh
 ```
-
 
 ---
 ## Step Outputs
@@ -1293,23 +1289,6 @@ Example tag of `cnabaholic/hello-people:latest`:
 * When pulling a bundle, it reconstructs it from the parts mentioned above
 
 See [OCI Bundle Format](/oci-bundle-format) for an example.
-
----
-class: center, middle
-
-# CNAB Best Practices
-
----
-# What would you really put into a bundle?
-
----
-# What does a real bundle look like?
-
-???
-Look at the azure examples and quick starts
-
----
-# How does this fit into a CI/C pipeline?
 
 ---
 class: center, middle

@@ -1,6 +1,7 @@
 .remark-slide-content {
     background-image: url(/images/facet.png);
     background-size: contain;
+    background-position: top;
 }
 
 .remark-slide-content ol,
