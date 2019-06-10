@@ -909,9 +909,6 @@ $ porter uninstall --cred wordpress
 Explain why --cred is required again for uninstall 
 
 ---
-class: center, middle
-
----
 name: author
 class: center, middle
 
