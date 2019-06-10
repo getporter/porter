@@ -18,7 +18,7 @@ func (opts *BundleLifecycleOpts) populateOptsFromBundlePull(p *Porter) error {
 	if err != nil {
 		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
 	}
-	opts.File = bundlePath
+	opts.CNABFile = bundlePath
 	rdr, err := p.Config.FileSystem.Open(bundlePath)
 	if err != nil {
 		return errors.Wrap(err, "unable to open bundle file")
