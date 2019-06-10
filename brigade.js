@@ -96,28 +96,13 @@ function testUnit(e, p) {
   return goTest;
 }
 
-// TODO: we could refactor so that this job shares a mount with the build job above,
-// to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
   var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  // Enable docker so that the daemon can be used for commands requiring it
   goTest.docker.enabled = true;
 
-  goTest.env.kubeconfig = {
-    secretKeyRef: {
-      name: "porter-kubeconfig",
-      key: "kubeconfig"
-    }
-  };
-
-  // Setup kubeconfig, docker login, run tests
   goTest.tasks.push(
-    "mkdir -p ${HOME}/.kube",
-    'echo "${kubeconfig}" > ${HOME}/.kube/config',
-    `docker login ${p.secrets.dockerhubRegistry} \
-      -u ${p.secrets.dockerhubUsername} \
-      -p ${p.secrets.dockerhubPassword}`,
-    `REGISTRY=${p.secrets.dockerhubOrg} make test-integration`
+    "make test-integration"
   );
 
   return goTest;
@@ -125,7 +110,7 @@ function testIntegration(e, p) {
 
 function testCLI(e, p) {
   var goTest = new GoJob(`${projectName}-testcli`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  // Enable docker so that the daemon can be used for commands requiring it
   goTest.docker.enabled = true;
 
   goTest.env.kubeconfig = {
