@@ -911,8 +911,6 @@ Explain why --cred is required again for uninstall
 ---
 class: center, middle
 
-# BREAK
-
 ---
 name: author
 class: center, middle
