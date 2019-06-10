@@ -39,7 +39,7 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	err = b.populateOptsFromBundlePull(p.Porter)
 	assert.NoError(t, err, "pulling bundle should not have resulted in an error")
 	assert.Equal(t, "mysql", b.Name, "name should have matched testdata bundle")
-	assert.Equal(t, fullPath, b.File, "the prepare method should have set the file to the fullpath")
+	assert.Equal(t, fullPath, b.CNABFile, "the prepare method should have set the file to the fullpath")
 }
 
 func TestBundlePullUpdateOpts_pullError(t *testing.T) {
