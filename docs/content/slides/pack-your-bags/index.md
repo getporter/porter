@@ -294,7 +294,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```console
-$ porter install --tag deislabs/porter-hello-velocity
+$ porter install --tag deislabs/porter-hello-velocity:latest
 ```
 
 ---
@@ -647,9 +647,10 @@ Flags:
 ```
 
 ---
+name: execution
 ## CNAB: What Executes Where
 
-TODO PICTURE
+![cloud picture](/images/pack-your-bags/cnab-execution.png)
 
 ---
 
