@@ -65,6 +65,7 @@ name: introductions
 name: hi
 # Stop and Say Hi
 
+1. Move up to the front tables.
 1. Introduce yourself to at least 2 people next to you.
 2. Find out what they enjoy working on.
 3. Share what talks or parts of Velocity they are looking forward to.
@@ -73,6 +74,9 @@ name: hi
 name: kickoff
 class: center, middle
 # First A Quick Demo!
+
+---
+# What is an application
 
 ---
 name: cnab
@@ -1293,34 +1297,10 @@ See [OCI Bundle Format](/oci-bundle-format) for an example.
 ---
 class: center, middle
 
-# Tooling
-
----
-
-# CNAB Tooling Ecosystem
+# CNAB Ecosystem and Beyond
 
 ???
 Explain where porter shines, what it is good at vs. say docker app
-
----
-
-# Duffle
-
-???
-Mention duffle as a ops tool for managing bundles from multiple orgins at runtime
-
----
-class: center, middle
-
-# Beyond!
-
----
-
-# Roadmap
-
-???
-
-Both CNAB and Porter for the next 3 months and rest of the year
 
 ---
 
@@ -1331,15 +1311,12 @@ What should someone do if they are interested in CNAB for their work or personal
 What is the timeline for the project and how should they be thinking about beginning to incorporate it?
 
 ---
-
-# Contribute!
-
----
 class: center, middle
 
 # Choose your own adventure!
 
 * ASCII Art Gophers
+* Use Porter with Your Favorite Cloud Provider
 
 ---
 name: asciiart
@@ -1358,6 +1335,14 @@ your invocation image to pick up your changes.
 * The command to run is `goasciiart -p=gopher.png -w=100`.
 
 [asciiart]: https://github.com/deislabs/porter/tree/master/workshop/asciiart
+
+---
+name: break-glass
+# Use Porter with Your Favorite Cloud Provider
+
+Use the a custom dockerfile template and the exec mixin
+to make Porter do something with your favorite cloud provider
+such as AWS or GCE.
 
 ---
 name: rate
