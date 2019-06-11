@@ -526,6 +526,7 @@ install:
 
 ```console
 $ mkdir hello
+$ cd hello
 $ porter create
 creating porter configuration in the current directory
 $ ls
@@ -603,7 +604,7 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 
 ---
 
-### bundle.json
+### cnab/bundle.json
 ```json
 {
     "description": "An example Porter configuration",
@@ -719,7 +720,7 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 1. Edit the porter.yaml to define a parameter named `name`.
 1. Use the parameter in the `install` action and echo your name.
 1. Rebuild your bundle with `porter build`.
-1. Finally run `porter install -p name=YOUR_NAME` and look for your name in the output.
+1. Finally run `porter install --param name=YOUR_NAME` and look for your name in the output.
 
 ---
 
@@ -877,11 +878,32 @@ credentials:
 ```
 
 ---
+name: hack
+### A quick hack
+
+If you are using for Docker for Desktop with Kubernetes
+
+1. Copy $HOME/.kube/config to $HOME/.kube/internal-config
+1. Edit **internal-config** and change the server from `localhost` to `host.docker.internal`
+
+```
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: https://host.docker.internal:6443
+  name: docker-for-desktop-cluster
+```
+
+Specify this config file for `porter credentials generate` on the next slide for the kubeconfig.
+
+---
 ## Try it out: porter credentials generate
 
 Generate a set of credentials for the wordpress bundle in this repository.
 
 1. Change to the `wordpress` directory under the workshop materials
+1. Run `porter build`
 1. Run `porter credentials generate` and follow the interactive prompts to create a set of credentials
 for the wordpress bundle.
 
@@ -1180,6 +1202,7 @@ Make a new bundle and install the Helm chart for etcd-operator
 1. Create a porter bundle in a new directory with `porter create`.
 1. Modify the **porter.yaml** to use the **helm** mixin and define credentials for **kubeconfig**.
 1. Using the helm mixin, install the latest **stable/etcd-operator** chart with the default values.
+1. Build the bundle.
 1. Generate credentials for your bundle.
 1. Install your bundle.
 
