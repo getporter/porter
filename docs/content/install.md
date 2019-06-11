@@ -14,17 +14,17 @@ like `v0.1.0-ralpha.1+aviation`.
 
 ## MacOS
 ```
-curl https://cdn.deislabs.io/porter/latest/install-mac.sh | bash
+curl https://deislabs.blob.core.windows.net/porter/latest/install-mac.sh | bash
 ```
 
 ## Linux
 ```
-curl https://cdn.deislabs.io/porter/latest/install-linux.sh | bash
+curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
 ```
 
 ## Windows
 ```
-iwr "https://cdn.deislabs.io/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+iwr "https://deislabs.blob.core.windows.net/porter/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Mixins
@@ -41,9 +41,9 @@ You can install a new version of a mixin, or install a mixin that someone else m
 using the `porter mixin install` command built into porter.
 
 ```console
-$ porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
+$ porter mixin install terraform --feed-url https://deislabs.blob.core.windows.net/porter/atom.xml
 installed terraform mixin
 terraform mixin v0.1.0-ralpha.1+elderflowerspritz (edf8778)
 ```
 
-All of the DeisLabs created mixes are published to the same feed: `https://cdn.deislabs.io/porter/atom.xml`.
+All of the DeisLabs created mixes are published to the same feed: `https://deislabs.blob.core.windows.net/porter/atom.xml`.

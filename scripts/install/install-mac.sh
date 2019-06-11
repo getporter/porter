@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORTER_HOME=~/.porter
-PORTER_URL=https://cdn.deislabs.io/porter
+PORTER_URL=https://deislabs.blob.core.windows.net/porter
 PORTER_VERSION=${PORTER_VERSION:-UNKNOWN}
 echo "Installing porter to $PORTER_HOME"
 
