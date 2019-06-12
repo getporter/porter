@@ -106,8 +106,8 @@ function testUnit(e, p) {
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
   var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable docker so that the daemon can be accessed by porter
-  goTest.docker.enabled = true;
+  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  goTest.privileged = true;
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -116,8 +116,10 @@ function testIntegration(e, p) {
     }
   };
 
-  // Setup kubeconfig, docker login, run tests
+  // Kick off docker daemon, set up kubeconfig, docker login, run tests
   goTest.tasks.push(
+    "dockerd-entrypoint.sh &",
+    "sleep 20",
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
     `docker login ${p.secrets.dockerhubRegistry} \
@@ -131,8 +133,7 @@ function testIntegration(e, p) {
 
 function testCLI(e, p) {
   var goTest = new GoJob(`${projectName}-testcli`);
-  // Enable docker so that the daemon can be accessed by porter
-  goTest.docker.enabled = true;
+  goTest.privileged = true;
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -141,8 +142,10 @@ function testCLI(e, p) {
     }
   };
 
-  // Setup kubeconfig, docker login, run tests
+  // Kick off docker daemon, set up kubeconfig, docker login, run tests
   goTest.tasks.push(
+    "dockerd-entrypoint.sh &",
+    "sleep 20",
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
     `docker login ${p.secrets.dockerhubRegistry} \
@@ -280,13 +283,8 @@ class GoJob extends Job {
     const gopath = "/go";
     const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
 
-    // Here using the large-but-useful deis/go-dev image as we have a need for deps
-    // already pre-installed in this image, e.g. helm, az, docker, etc.
-    // TODO: replace with lighter-weight image (Carolyn)
-    this.image = "deis/go-dev";
-    this.env = {
-      "GOPATH": gopath
-    };
+    this.image = "quay.io/vdice/go-dind:v0.1.0";
+
     this.tasks = [
       // Need to move the source into GOPATH so vendor/ works as desired.
       "mkdir -p " + localPath,
@@ -294,7 +292,6 @@ class GoJob extends Job {
       "mv /src/.git " + localPath,
       "cd " + localPath
     ];
-    this.streamLogs = true;
   }
 }
 
