@@ -5,6 +5,7 @@ mixins:
 name: wordpress
 version: 0.1.0
 invocationImage: porter-wordpress:latest
+tag: deislabs/porter-wordpress-bundle:v0.1.0
 
 dependencies:
 - name: mysql
