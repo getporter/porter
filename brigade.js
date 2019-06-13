@@ -37,6 +37,7 @@ events.on("push", (e, p) => {
       testIntegration(e, p),
       testCLI(e, p),
       publish(e, p),
+      publishExamples(e, p)
     ])
   }
 });
@@ -47,8 +48,13 @@ events.on("publish", (e, p) => {
     testIntegration(e, p),
     testCLI(e, p),
     publish(e, p),
+    publishExamples(e, p)
   ])
 });
+
+events.on("publish-examples", (e, p) => {
+  return publishExamples(e, p).run();
+})
 
 // **********************************************
 // Actions
@@ -60,7 +66,7 @@ function verify(e, p) {
   var goBuild = new GoJob(`${projectName}-verify`);
 
   goBuild.tasks.push(
-      "make verify"
+    "make verify"
   );
 
   return goBuild;
@@ -137,15 +143,34 @@ function testCLI(e, p) {
 
   // Setup kubeconfig, docker login, run tests
   goTest.tasks.push(
-      "mkdir -p ${HOME}/.kube",
-      'echo "${kubeconfig}" > ${HOME}/.kube/config',
-      `docker login ${p.secrets.dockerhubRegistry} \
-      -u ${p.secrets.dockerhubUsername} \
-      -p ${p.secrets.dockerhubPassword}`,
-      `REGISTRY=${p.secrets.dockerhubOrg} make test-cli`
+    "mkdir -p ${HOME}/.kube",
+    'echo "${kubeconfig}" > ${HOME}/.kube/config',
+    `docker login ${p.secrets.dockerhubRegistry} \
+    -u ${p.secrets.dockerhubUsername} \
+    -p ${p.secrets.dockerhubPassword}`,
+    `REGISTRY=${p.secrets.dockerhubOrg} make test-cli`
   );
 
   return goTest;
+}
+
+function publishExamples(e, p) {
+  var examplePublisher = new GoJob(`${projectName}-publish-examples`);
+  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  examplePublisher.docker.enabled = true;
+
+  examplePublisher.tasks.push(
+    // first, build and install porter
+    `make build install`,
+    // login the the registry we'll be pushing to
+    `docker login ${p.secrets.dockerhubRegistry} \
+    -u ${p.secrets.dockerhubUsername} \
+    -p ${p.secrets.dockerhubPassword}`,
+    // now build and publish bundles, using the porter cli
+    `REGISTRY=${p.secrets.dockerhubOrg} make build-bundle publish-bundle`
+  );
+
+  return examplePublisher;
 }
 
 function publish(e, p) {
@@ -200,7 +225,8 @@ function runSuite(e, p) {
       checkRun(e, p, testUnit, "Unit Test"),
       checkRun(e, p, testIntegration, "Integration Test"),
       checkRun(e, p, testCLI, "CLI Test"),
-      checkRun(e, p, publish, "Publish")
+      checkRun(e, p, publish, "Publish"),
+      checkRun(e, p, publishExamples, "Publish Example Bundles")
     ]
   } else {
     for (check of Object.values(checks)) {

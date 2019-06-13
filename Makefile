@@ -121,6 +121,35 @@ publish: prep-install-scripts
 	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
 	az storage blob upload -c porter -n atom.xml -f bin/atom.xml
 
+# all-bundles loops through all items under the dir provided by the first argument
+# and if the item is a sub-directory containing a porter.yaml file,
+# runs the make target(s) provided by the second argument
+define all-bundles
+	@for dir in $$(ls -1 $(1)); do \
+		if [[ -e "$(1)/$$dir/porter.yaml" ]]; then \
+			BUNDLE=$$dir make $(MAKE_OPTS) $(2) ; \
+		fi ; \
+	done
+endef
+
+EXAMPLES_DIR := examples
+
+.PHONY: build-bundle
+build-bundle:
+ifndef BUNDLE
+	$(call all-bundles,$(EXAMPLES_DIR),build-bundle)
+else
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter build
+endif
+
+.PHONY: publish-bundle
+publish-bundle:
+ifndef BUNDLE
+	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
+else
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter publish
+endif
+
 install:
 	mkdir -p $(HOME)/.porter
 	cp -R bin/* $(HOME)/.porter/
