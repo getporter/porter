@@ -155,12 +155,7 @@ func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error 
 		return err
 	}
 
-	err = g.defaultBundleFiles(cxt)
-	if err != nil {
-		return err
-	}
-
-	return g.validateCNABFile(cxt)
+	return g.bundleFileOptions.Validate(cxt)
 }
 
 func (g *CredentialOptions) validateCredName(args []string) error {
