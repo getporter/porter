@@ -315,12 +315,13 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 		BaseImage: bundle.BaseImage{
 			Image:     invocationImage,
 			ImageType: "docker",
+			Digest:    digest,
 		},
 	}
-	if digest != "" {
-		image.Digest = digest
-	}
+
 	b.InvocationImages = []bundle.InvocationImage{image}
+
+	b.Images = p.generateBundleImages()
 	b.Parameters = p.generateBundleParameters()
 	b.Credentials = p.generateBundleCredentials()
 	b.Custom[config.CustomBundleKey] = p.GenerateStamp(p.Manifest)
@@ -336,6 +337,33 @@ func (p Porter) writeBundle(b bundle.Bundle) error {
 	}
 	_, err = b.WriteTo(f)
 	return errors.Wrap(err, "error writing to cnab/bundle.json")
+}
+
+func (p *Porter) generateBundleImages() map[string]bundle.Image {
+	images := make(map[string]bundle.Image, len(p.Manifest.ImageMap))
+
+	for i, refImage := range p.Manifest.ImageMap {
+		img := bundle.Image{
+			Description: refImage.Description,
+			BaseImage: bundle.BaseImage{
+				Image:         refImage.Image,
+				Digest:        refImage.Digest,
+				ImageType:     refImage.ImageType,
+				MediaType:     refImage.MediaType,
+				OriginalImage: refImage.OriginalImage,
+				Size:          refImage.Size,
+			},
+		}
+		if refImage.Platform != nil {
+			img.Platform = &bundle.ImagePlatform{
+				Architecture: refImage.Platform.Architecture,
+				OS:           refImage.Platform.OS,
+			}
+		}
+		images[i] = img
+	}
+
+	return images
 }
 
 func (p *Porter) generateBundleParameters() map[string]bundle.ParameterDefinition {

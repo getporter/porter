@@ -11,6 +11,7 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Credentials](#credentials)
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
+* [Image Map](#image-map)
 * [Generated Files](#generated-files)
 
 We have full [examples](https://github.com/deislabs/porter/tree/master/examples) of Porter manifests in the Porter repository.
@@ -159,6 +160,14 @@ dependencies:
 
 * `name`: The name of the bundle.
 * `parameters`: Optionally set default values for parameters in the bundle.
+
+## Image Map
+
+The Image Map is part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
+The `imageMap` data from the manifest is made available at runtime `/cnab/app/image-map.json` where you may access it
+from a script. 
+
+Note: Neither porter nor the DeisLabs mixins use this information.
 
 ## Generated Files
 
