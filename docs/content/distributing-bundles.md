@@ -51,7 +51,7 @@ Generating credential kubeconfig ====>
 Starting to copy image deislabs/porter-kubernetes@sha256:d8aa654f5e60d64f698d79664480500b8de469a22e15dc69806e8172848e17d6...
 Completed image deislabs/porter-kubernetes@sha256:d8aa654f5e60d64f698d79664480500b8de469a22e15dc69806e8172848e17d6 copy
 WARN[0005] reference for unknown type: application/vnd.cnab.config.v1+json
-Pushed successfully, with digest "sha256:57c34a53e84607562e396280563186759139454d1704c727180aac1819b75a4f"
+Bundle tag deislabs/porter-kubernetes-bundle:1.0 pushed successfully, with digest "sha256:57c34a53e84607562e396280563186759139454d1704c727180aac1819b75a4f"
 ```
 
 Note: you can safely ignore the `WARN[0005] reference for unknown type: application/vnd.cnab.config.v1+json` message.

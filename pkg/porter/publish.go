@@ -111,7 +111,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(p.Out, "Pushed successfully, with digest %q\n", d.Digest)
+	fmt.Fprintf(p.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
 	return nil
 }
 
