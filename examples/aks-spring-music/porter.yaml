@@ -1,9 +1,9 @@
 name: spring-music-bundle
 version: 0.1.0
 description: "Spring Music Demo app with Azure Cosmos DB"
-invocationImage: jeremyrickard/spring-music-installer:v314
+invocationImage: deislabs/spring-music-installer:latest
 dockerfile: cnab/app/Dockerfile.base
-tag: jeremyrickard/spring-music-bundle:v314
+tag: deislabs/spring-music-bundle:v0.1.0
 
 mixins:
   - exec

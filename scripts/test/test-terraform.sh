@@ -15,7 +15,10 @@ cp -r ${REPO_DIR}/build/testdata/bundles/terraform/cnab .
 
 # Copy in the terraform porter manifest
 cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .
+
+# Substitute REGISTRY in for invocation image and bundle tag
 sed -i "s/porter-terraform:latest/${REGISTRY}\/porter-terraform:latest/g" porter.yaml
+sed -i "s/deislabs\/porter-terraform-bundle/${REGISTRY}\/porter-terraform-bundle/g" porter.yaml
 
 porter_output=$(mktemp)
 
@@ -31,12 +34,13 @@ fi
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = foo!'
 
-# TODO: enable when upgrade supported
-# ${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
+${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'
 
 cat ${PORTER_HOME}/claims/porter-terraform.json
 
-${PORTER_HOME}/porter uninstall --insecure --debug --param file_contents='foo!'
+${PORTER_HOME}/porter uninstall --insecure --debug --param file_contents='bar!'
+
+${PORTER_HOME}/porter publish

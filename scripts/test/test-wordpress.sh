@@ -14,7 +14,10 @@ trap popd EXIT
 
 # Verify a bundle with dependencies
 cp ${REPO_DIR}/build/testdata/bundles/wordpress/porter.yaml .
+
+# Substitute REGISTRY in for invocation image and bundle tag
 sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter.yaml
+sed -i "s/deislabs\/porter-wordpress-bundle/${REGISTRY}\/porter-wordpress-bundle/g" porter.yaml
 
 ${PORTER_HOME}/porter build
 
@@ -40,3 +43,6 @@ cat ${PORTER_HOME}/claims/wordpress.json
 
 ${PORTER_HOME}/porter uninstall --insecure --cred ci --debug
 kubectl delete ns $NAMESPACE
+
+# Publish bundle
+${PORTER_HOME}/porter publish

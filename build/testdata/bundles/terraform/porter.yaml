@@ -4,6 +4,7 @@ mixins:
 name: porter-terraform
 version: 0.1.0
 invocationImage: porter-terraform:latest
+tag: deislabs/porter-terraform-bundle:v0.1.0
 
 parameters:
   - name: file_contents
