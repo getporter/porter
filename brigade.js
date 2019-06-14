@@ -106,7 +106,7 @@ function testUnit(e, p) {
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
   var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  // Enable docker so that the daemon can be accessed by porter
   goTest.docker.enabled = true;
 
   goTest.env.kubeconfig = {
@@ -131,7 +131,7 @@ function testIntegration(e, p) {
 
 function testCLI(e, p) {
   var goTest = new GoJob(`${projectName}-testcli`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  // Enable docker so that the daemon can be accessed by porter
   goTest.docker.enabled = true;
 
   goTest.env.kubeconfig = {
@@ -156,13 +156,13 @@ function testCLI(e, p) {
 
 function publishExamples(e, p) {
   var examplePublisher = new GoJob(`${projectName}-publish-examples`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
+  // Enable docker so that the daemon can be accessed by porter
   examplePublisher.docker.enabled = true;
 
   examplePublisher.tasks.push(
     // first, build and install porter
     `make build install`,
-    // login the the registry we'll be pushing to
+    // login to the registry we'll be pushing to
     `docker login ${p.secrets.dockerhubRegistry} \
     -u ${p.secrets.dockerhubUsername} \
     -p ${p.secrets.dockerhubPassword}`,
