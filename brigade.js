@@ -184,6 +184,10 @@ function publish(e, p) {
 
   goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
+    "apk update && apk add py-pip && \
+      apk add --virtual=az-build libffi-dev musl-dev openssl-dev python-dev && \
+      pip install azure-cli && \
+      apk del --purge az-build",
     "make build xbuild-all publish"
   )
 
