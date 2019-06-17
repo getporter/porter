@@ -27,7 +27,8 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	// Install a bundle without building first
 	installOpts := porter.InstallOptions{}
 	installOpts.Insecure = true
-	installOpts.Validate([]string{}, p.Context)
+	err = installOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
 	assert.NoError(t, err, "install should have succeeded")
 }
@@ -43,7 +44,8 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	require.NoError(t, err)
 	installOpts := porter.InstallOptions{}
 	installOpts.Insecure = true
-	installOpts.Validate([]string{}, p.Context)
+	err = installOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
@@ -59,7 +61,8 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	// Upgrade the bundle
 	upgradeOpts := porter.UpgradeOptions{}
 	upgradeOpts.Insecure = true
-	upgradeOpts.Validate([]string{}, p.Context)
+	err = upgradeOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
@@ -83,8 +86,9 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Insecure = true
 	credentialOptions.Silent = true
-	credentialOptions.Validate([]string{}, p.Context)
-	err := p.GenerateCredentials(credentialOptions)
+	err := credentialOptions.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+	err = p.GenerateCredentials(credentialOptions)
 	assert.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -103,8 +107,9 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Insecure = true
 	credentialOptions.Silent = true
-	credentialOptions.Validate([]string{}, p.Context)
-	err := p.GenerateCredentials(credentialOptions)
+	err := credentialOptions.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+	err = p.GenerateCredentials(credentialOptions)
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
