@@ -106,8 +106,8 @@ function testUnit(e, p) {
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
   var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable docker so that the daemon can be used for duffle commands invoked by test-cli
-  goTest.privileged = true;
+  // Enable Docker-in-Docker
+  goTest.enableDind();
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -116,10 +116,8 @@ function testIntegration(e, p) {
     }
   };
 
-  // Kick off docker daemon, set up kubeconfig, docker login, run tests
+  // Set up kubeconfig, docker login, run tests
   goTest.tasks.push(
-    "dockerd-entrypoint.sh &",
-    "sleep 20",
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
     `docker login ${p.secrets.dockerhubRegistry} \
@@ -133,7 +131,8 @@ function testIntegration(e, p) {
 
 function testCLI(e, p) {
   var goTest = new GoJob(`${projectName}-testcli`);
-  goTest.privileged = true;
+  // Enable Docker-in-Docker
+  goTest.enableDind();
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -142,10 +141,8 @@ function testCLI(e, p) {
     }
   };
 
-  // Kick off docker daemon, set up kubeconfig, docker login, run tests
+  // Set up kubeconfig, docker login, run tests
   goTest.tasks.push(
-    "dockerd-entrypoint.sh &",
-    "sleep 20",
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
     `docker login ${p.secrets.dockerhubRegistry} \
@@ -159,8 +156,8 @@ function testCLI(e, p) {
 
 function publishExamples(e, p) {
   var examplePublisher = new GoJob(`${projectName}-publish-examples`);
-  // Enable docker so that the daemon can be accessed by porter
-  examplePublisher.docker.enabled = true;
+  // Enable Docker-in-Docker
+  examplePublisher.enableDind();
 
   examplePublisher.tasks.push(
     // first, build and install porter
@@ -296,6 +293,15 @@ class GoJob extends Job {
       "mv /src/.git " + localPath,
       "cd " + localPath
     ];
+  }
+
+  // enabledDind enables Docker-in-Docker for this job,
+  // setting privileged to true and adding daemon setup to tasks list
+  enableDind() {
+    this.privileged = true;
+    this.tasks.push(
+      "dockerd-entrypoint.sh &",
+      "sleep 20");
   }
 }
 
