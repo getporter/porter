@@ -258,6 +258,11 @@ func (m *Manifest) GetManifestDir() string {
 	return filepath.Dir(m.path)
 }
 
+// GetManifestPath returns the path where the manifest was loaded. May be a URL.
+func (m *Manifest) GetManifestPath() string {
+	return m.path
+}
+
 func (c *Config) LoadDependencies() error {
 	for _, dep := range c.Manifest.Dependencies {
 		path, err := c.GetBundleManifestPath(dep.Name)
