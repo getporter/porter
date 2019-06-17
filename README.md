@@ -29,18 +29,12 @@ Porter could go in lots of directions! Here are our top 4 goals right now:
 
     As the [CNAB specification](https://github.com/deislabs/cnab-spec) moves toward 1.0, update Porter to be compliant with the spec. Currently, if you build a bundle with Porter, you'll be able to install it with Porter. There are some gaps with the spec that limit compatibility with other CNAB tooling. See the [CNAB 1.0 Milestone](https://github.com/deislabs/porter/milestone/12) for more information on these gaps.
     
-2. Use Porter without installing Duffle - Milestone [Look Ma, No Duffle](https://github.com/deislabs/porter/milestone/3)
-
-    Compile duffle functionality into porter as needed, instead of having the user switch between the two CLIs.
-    
-    Progress Report: ALMOST COMPLETE!
-
-3. Dependency Distribution - Milestone [Dependencies](https://github.com/deislabs/porter/milestone/8)
+2. Dependency Distribution - Milestone [Dependencies](https://github.com/deislabs/porter/milestone/8)
 
     Solve end-to-end how bundle authors use porter to build, publish and then use someone's bundle as a dependency.
 
-4. Mixin Distribution - Milestone [Mixin Distrubtion](https://github.com/deislabs/porter/milestone/10)
+3. Mixin Distribution - Milestone [Mixin Distrubtion](https://github.com/deislabs/porter/milestone/10)
 
     Make it easy for anyone to create and distribute mixins that porter can discover and install.
     
-    Progress Report: 25% there, Install works!
+    Progress Report: 25% there, Install works! Onto mixin versioning 💨
