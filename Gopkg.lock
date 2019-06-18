@@ -215,14 +215,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d72a459721ed769889d531817d7a5278e5b387e9867dda13f36667d0d7c9d572"
+  digest = "1:a33cdc0c6fedd6dacea816e9ebaf4ab6fdd840add0c04aef19a51f745ed96017"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "bundle",
     "credentials",
   ]
   pruneopts = "NUT"
-  revision = "50bcf8e15a15ce278dcab2d19561d42b30a74d5b"
+  revision = "5d3f95359876c842bb99397cc132b5e5aeb8e5ab"
 
 [[projects]]
   digest = "1:a222203ae2f42f5a3d06fde5f9746e51291567a3df8a5ebedce334cd93b7b97a"
