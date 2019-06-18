@@ -9,12 +9,12 @@ import (
 	"os"
 	unix_path "path"
 
+	"github.com/deislabs/cnab-go/driver"
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -26,18 +26,26 @@ import (
 type DockerDriver struct {
 	config map[string]string
 	// If true, this will not actually run Docker
-	Simulate  bool
-	dockerCli command.Cli
+	Simulate                   bool
+	dockerCli                  command.Cli
+	dockerConfigurationOptions []DockerConfigurationOption
+	containerOut               io.Writer
+	containerErr               io.Writer
 }
 
 // Run executes the Docker driver
-func (d *DockerDriver) Run(op *Operation) error {
+func (d *DockerDriver) Run(op *driver.Operation) error {
 	return d.exec(op)
 }
 
 // Handles indicates that the Docker driver supports "docker" and "oci"
 func (d *DockerDriver) Handles(dt string) bool {
-	return dt == ImageTypeDocker || dt == ImageTypeOCI
+	return dt == driver.ImageTypeDocker || dt == driver.ImageTypeOCI
+}
+
+// AddConfigurationOptions adds configuration callbacks to the driver
+func (d *DockerDriver) AddConfigurationOptions(opts ...DockerConfigurationOption) {
+	d.dockerConfigurationOptions = append(d.dockerConfigurationOptions, opts...)
 }
 
 // Config returns the Docker driver configuration options
@@ -57,6 +65,16 @@ func (d *DockerDriver) SetConfig(settings map[string]string) {
 // SetDockerCli makes the driver use an already initialized cli
 func (d *DockerDriver) SetDockerCli(dockerCli command.Cli) {
 	d.dockerCli = dockerCli
+}
+
+// SetContainerOut sets the container output stream
+func (d *DockerDriver) SetContainerOut(w io.Writer) {
+	d.containerOut = w
+}
+
+// SetContainerErr sets the container error stream
+func (d *DockerDriver) SetContainerErr(w io.Writer) {
+	d.containerErr = w
 }
 
 func pullImage(ctx context.Context, cli command.Cli, image string) error {
@@ -106,7 +124,7 @@ func (d *DockerDriver) initializeDockerCli() (command.Cli, error) {
 	return cli, nil
 }
 
-func (d *DockerDriver) exec(op *Operation) error {
+func (d *DockerDriver) exec(op *driver.Operation) error {
 	ctx := context.Background()
 
 	cli, err := d.initializeDockerCli()
@@ -127,13 +145,6 @@ func (d *DockerDriver) exec(op *Operation) error {
 		env = append(env, fmt.Sprintf("%s=%v", k, v))
 	}
 
-	mounts := []mount.Mount{
-		{
-			Type:   mount.TypeBind,
-			Source: "/var/run/docker.sock",
-			Target: "/var/run/docker.sock",
-		},
-	}
 	cfg := &container.Config{
 		Image:        op.Image,
 		Env:          env,
@@ -142,7 +153,13 @@ func (d *DockerDriver) exec(op *Operation) error {
 		AttachStdout: true,
 	}
 
-	hostCfg := &container.HostConfig{Mounts: mounts, AutoRemove: true}
+	hostCfg := &container.HostConfig{AutoRemove: true}
+
+	for _, opt := range d.dockerConfigurationOptions {
+		if err := opt(cfg, hostCfg); err != nil {
+			return err
+		}
+	}
 
 	resp, err := cli.Client().ContainerCreate(ctx, cfg, hostCfg, nil, "")
 	switch {
@@ -181,10 +198,20 @@ func (d *DockerDriver) exec(op *Operation) error {
 	if err != nil {
 		return fmt.Errorf("unable to retrieve logs: %v", err)
 	}
+	var (
+		stdout io.Writer = os.Stdout
+		stderr io.Writer = os.Stderr
+	)
+	if d.containerOut != nil {
+		stdout = d.containerOut
+	}
+	if d.containerErr != nil {
+		stderr = d.containerErr
+	}
 	go func() {
 		defer attach.Close()
 		for {
-			_, err := stdcopy.StdCopy(os.Stdout, os.Stderr, attach.Reader)
+			_, err := stdcopy.StdCopy(stdout, stderr, attach.Reader)
 			if err != nil {
 				break
 			}
@@ -234,3 +261,6 @@ func generateTar(files map[string]string) (io.Reader, error) {
 	}()
 	return r, nil
 }
+
+// DockerConfigurationOption is an option used to customize docker driver container and host config
+type DockerConfigurationOption func(*container.Config, *container.HostConfig) error
