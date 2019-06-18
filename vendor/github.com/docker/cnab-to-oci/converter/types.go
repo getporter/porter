@@ -18,10 +18,11 @@ const (
 
 // BundleConfig describes a cnab bundle runtime config
 type BundleConfig struct {
-	SchemaVersion string                                `json:"schema_version" mapstructure:"schema_version"`
-	Actions       map[string]bundle.Action              `json:"actions,omitempty" mapstructure:"actions,omitempty"`
-	Parameters    map[string]bundle.ParameterDefinition `json:"parameters" mapstructure:"parameters"`
-	Credentials   map[string]bundle.Location            `json:"credentials" mapstructure:"credentials"`
+	SchemaVersion string                       `json:"schema_version" mapstructure:"schema_version"`
+	Actions       map[string]bundle.Action     `json:"actions,omitempty" mapstructure:"actions,omitempty"`
+	Parameters    bundle.ParametersDefinition  `json:"parameters" mapstructure:"parameters"`
+	Credentials   map[string]bundle.Credential `json:"credentials" mapstructure:"credentials"`
+	Custom        map[string]interface{}       `json:"custom,omitempty" mapstructure:"custom"`
 }
 
 // PreparedBundleConfig contains the config blob, image manifest (and fallback), and descriptors for a CNAB config
@@ -40,6 +41,7 @@ func CreateBundleConfig(b *bundle.Bundle) *BundleConfig {
 		Actions:       b.Actions,
 		Parameters:    b.Parameters,
 		Credentials:   b.Credentials,
+		Custom:        b.Custom,
 	}
 }
 

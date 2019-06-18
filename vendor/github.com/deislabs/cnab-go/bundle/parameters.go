@@ -7,19 +7,23 @@ import (
 	"strings"
 )
 
+type ParametersDefinition struct {
+	Fields   map[string]ParameterDefinition `json:"fields" mapstructure:"fields"`
+	Required []string                       `json:"required,omitempty" mapstructure:"required,omitempty"`
+}
+
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
 	DataType      string             `json:"type" mapstructure:"type"`
-	DefaultValue  interface{}        `json:"defaultValue,omitempty" mapstructure:"defaultValue"`
+	Default       interface{}        `json:"default,omitempty" mapstructure:"default"`
 	AllowedValues []interface{}      `json:"allowedValues,omitempty" mapstructure:"allowedValues"`
-	Required      bool               `json:"required,omitempty" mapstructure:"required"`
 	MinValue      *int               `json:"minValue,omitempty" mapstructure:"minValue"`
 	MaxValue      *int               `json:"maxValue,omitempty" mapstructure:"maxValue"`
 	MinLength     *int               `json:"minLength,omitempty" mapstructure:"minLength"`
 	MaxLength     *int               `json:"maxLength,omitempty" mapstructure:"maxLength"`
 	Metadata      *ParameterMetadata `json:"metadata,omitempty" mapstructure:"metadata"`
 	Destination   *Location          `json:"destination,omitemtpty" mapstructure:"destination"`
-	ApplyTo       []string           `json:"apply-to,omitempty" mapstructure:"apply-to,omitempty"`
+	ApplyTo       []string           `json:"applyTo,omitempty" mapstructure:"applyTo,omitempty"`
 }
 
 // ParameterMetadata contains metadata for a parameter definition.
