@@ -181,10 +181,10 @@ function publish(e, p) {
 
   goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
-    "apk update && apk add py-pip && \
-      apk add --virtual=az-build libffi-dev musl-dev openssl-dev python-dev && \
-      pip install azure-cli && \
-      apk del --purge az-build",
+    // Fetch az cli needed for publishing
+    "curl -sLO https://github.com/carolynvs/az-cli/releases/download/v0.3.2/az-linux-amd64 && \
+      chmod +x az-linux-amd64 && \
+      mv az-linux-amd64 /usr/local/bin/az",
     "make build xbuild-all publish"
   )
 
