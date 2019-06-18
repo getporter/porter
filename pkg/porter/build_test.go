@@ -276,3 +276,30 @@ func TestPorter_generateImages(t *testing.T) {
 	assert.Equal(t, mappedImage.Platform.OS, img.Platform.OS)
 	assert.Equal(t, mappedImage.Platform.Architecture, img.Platform.Architecture)
 }
+
+func TestPorter_generateBundleImages_EmptyPlatform(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+
+	configTpl, err := p.Templates.GetManifest()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifest()
+	require.NoError(t, err)
+
+	mappedImage := config.MappedImage{
+		Description: "un petite server",
+		Image:       "deislabs/myserver:1.0.0",
+		ImageType:   "docker",
+		Platform:    nil,
+	}
+	p.Manifest.ImageMap = map[string]config.MappedImage{
+		"server": mappedImage,
+	}
+
+	images := p.generateBundleImages()
+	require.Len(t, images, 1)
+	img := images["server"]
+	assert.Nil(t, img.Platform)
+}
