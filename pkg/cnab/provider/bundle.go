@@ -1,7 +1,7 @@
 package cnabprovider
 
 import (
-	"github.com/deislabs/duffle/pkg/bundle"
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/duffle/pkg/loader"
 	"github.com/pkg/errors"
 )
@@ -16,7 +16,7 @@ func (d *Duffle) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, e
 		return nil, errors.New("secure bundles not implemented")
 	}
 
-	l := loader.NewUnsignedLoader()
+	l := loader.New()
 
 	// Issue #439: Errors that come back from the loader can be
 	// pretty opaque.

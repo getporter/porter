@@ -1,7 +1,7 @@
 # Stay exactly in step with a specific duffle release
 [[constraint]]
   name = "github.com/deislabs/duffle"
-  version = "=0.1.0-ralpha.5+englishrose"
+  version = "=0.2.0-beta.1"
 
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
@@ -96,9 +96,9 @@
   go-tests = true
   unused-packages = true
 
-# This is temporary until we know what packages we need from duffle
+# This is temporary until we know what packages we need from cnab-go
 [[prune.project]]
-  name = "github.com/deislabs/duffle"
+  name = "github.com/deislabs/cnab-go"
   unused-packages = false
 
 [[constraint]]

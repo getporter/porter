@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/duffle/pkg/bundle"
-	"github.com/deislabs/duffle/pkg/credentials"
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/credentials"
 	"github.com/deislabs/duffle/pkg/duffle/home"
 )
 

@@ -3,9 +3,9 @@ package cnabprovider
 import (
 	"os"
 
+	"github.com/deislabs/cnab-go/driver"
+	duffledriver "github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/config"
-
-	driver "github.com/deislabs/duffle/pkg/driver"
 )
 
 type Duffle struct {
@@ -19,7 +19,7 @@ func NewDuffle(c *config.Config) *Duffle {
 }
 
 func (d *Duffle) newDriver(driverName string) (driver.Driver, error) {
-	driverImpl, err := driver.Lookup(driverName)
+	driverImpl, err := duffledriver.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
 	}

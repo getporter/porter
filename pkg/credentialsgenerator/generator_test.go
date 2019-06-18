@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/deislabs/duffle/pkg/bundle"
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,15 +27,21 @@ func TestGoodName(t *testing.T) {
 	opts := GenerateOptions{
 		Name:   name,
 		Silent: true,
-		Credentials: map[string]bundle.Location{
-			"one": bundle.Location{
-				EnvironmentVariable: "BLAH",
+		Credentials: map[string]bundle.Credential{
+			"one": {
+				Location: bundle.Location{
+					EnvironmentVariable: "BLAH",
+				},
 			},
-			"two": bundle.Location{
-				EnvironmentVariable: "BLAH",
+			"two": {
+				Location: bundle.Location{
+					EnvironmentVariable: "BLAH",
+				},
 			},
-			"three": bundle.Location{
-				Path: "/something",
+			"three": {
+				Location: bundle.Location{
+					Path: "/something",
+				},
 			},
 		},
 	}
@@ -62,7 +68,7 @@ func TestEmptyCredentials(t *testing.T) {
 	opts := GenerateOptions{
 		Name:        name,
 		Silent:      true,
-		Credentials: map[string]bundle.Location{},
+		Credentials: map[string]bundle.Credential{},
 	}
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "no credentials should have generated an empty credential set")

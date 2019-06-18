@@ -3,7 +3,7 @@ package cnabprovider
 import (
 	"fmt"
 
-	"github.com/deislabs/duffle/pkg/action"
+	"github.com/deislabs/cnab-go/action"
 	"github.com/pkg/errors"
 )
 
