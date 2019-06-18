@@ -6,7 +6,14 @@
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
   branch = "master"
-  
+
+# Using our branch of cnab-to-oci because it is using a more recent version of cnab-go which we need because
+# it has more recent schema changes from CNAB spec 1.0
+[[constraint]]
+  name = "github.com/docker/cnab-to-oci"
+  branch = "cnab-go-with-schema-version"
+  source = "github.com/deislabs/cnab-to-oci"
+
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"
   version = "v0.2.0"

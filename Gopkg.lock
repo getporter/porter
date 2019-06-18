@@ -274,15 +274,16 @@
   revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
 
 [[projects]]
-  branch = "master"
-  digest = "1:dceb82de160ec21c5e3a22d48db99932f82f40c74bd7cad8bc23b7455613836b"
+  branch = "cnab-go-with-schema-version"
+  digest = "1:23f1662bd095eb2be33aa36eddb199c170f2f62cabebeea912b63b840a71d72d"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "f0b63ad74619a620bafcba7855274b685a1f8ee0"
+  revision = "00b720622a47a9722c9521c29ba8514110c08464"
+  source = "github.com/deislabs/cnab-to-oci"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
