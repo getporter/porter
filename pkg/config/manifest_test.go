@@ -7,8 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestReadManifest_URL(t *testing.T) {
@@ -790,7 +789,7 @@ func TestManifest_MergeParameters(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, m.Parameters, 1)
-	assert.Equal(t, "wordpress", m.Parameters[0].DefaultValue)
+	assert.Equal(t, "wordpress", m.Parameters[0].Default)
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {

@@ -201,11 +201,11 @@ func TestPorter_buildBundle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "06a51d04297375bf111ab15e579b8a7ab72e2661018c4d08d1d3f38198028e49", stamp.ManifestDigest)
 
-	debugParam, ok := bun.Parameters["porter-debug"]
+	debugParam, ok := bun.Parameters.Fields["porter-debug"]
 	require.True(t, ok)
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
 	assert.Equal(t, "bool", debugParam.DataType)
-	assert.Equal(t, false, debugParam.DefaultValue)
+	assert.Equal(t, false, debugParam.Default)
 }
 
 func TestPorter_paramRequired(t *testing.T) {
@@ -226,11 +226,6 @@ func TestPorter_paramRequired(t *testing.T) {
 	err = json.Unmarshal(bundleBytes, &bundle)
 	require.NoError(t, err)
 
-	p1, ok := bundle.Parameters["command"]
-	require.True(t, ok)
-	require.False(t, p1.Required)
-
-	p2, ok := bundle.Parameters["command2"]
-	require.True(t, ok)
-	require.True(t, p2.Required)
+	require.NotContains(t, bundle.Parameters.Required, "command")
+	require.Contains(t, bundle.Parameters.Required, "command2")
 }

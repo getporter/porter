@@ -52,7 +52,7 @@ type Manifest struct {
 type ParameterDefinition struct {
 	Name          string            `yaml:"name"`
 	DataType      string            `yaml:"type"`
-	DefaultValue  interface{}       `yaml:"default,omitempty"`
+	Default       interface{}       `yaml:"default,omitempty"`
 	AllowedValues []interface{}     `yaml:"allowed,omitempty"`
 	Required      bool              `yaml:"required"`
 	MinValue      *int              `yaml:"minValue,omitempty"`
@@ -66,6 +66,8 @@ type ParameterDefinition struct {
 
 type CredentialDefinition struct {
 	Name                string `yaml:"name"`
+	Description         string `yaml:"description,omitempty"`
+	Required            bool   `yaml:"required,omitempty"`
 	Path                string `yaml:"path,omitempty"`
 	EnvironmentVariable string `yaml:"env,omitempty"`
 }
@@ -507,7 +509,7 @@ func (m *Manifest) MergeParameters(dep *Dependency) error {
 	for depP, defaultValue := range dep.Parameters {
 		for i, param := range m.Parameters {
 			if param.Name == depP {
-				m.Parameters[i].DefaultValue = defaultValue
+				m.Parameters[i].Default = defaultValue
 			}
 		}
 	}

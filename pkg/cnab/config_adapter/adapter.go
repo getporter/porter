@@ -39,13 +39,15 @@ func (c *ManifestConverter) ToBundle() bundle.Bundle {
 	return b
 }
 
-func (c *ManifestConverter) generateBundleParameters() map[string]bundle.ParameterDefinition {
-	params := map[string]bundle.ParameterDefinition{}
+func (c *ManifestConverter) generateBundleParameters() bundle.ParametersDefinition {
+	params := bundle.ParametersDefinition{
+		Fields: make(map[string]bundle.ParameterDefinition, len(c.Manifest.Parameters)),
+	}
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
 		p := bundle.ParameterDefinition{
 			DataType:      param.DataType,
-			DefaultValue:  param.DefaultValue,
+			Default:       param.Default,
 			AllowedValues: param.AllowedValues,
 			MinValue:      param.MinValue,
 			MaxValue:      param.MaxValue,
@@ -54,8 +56,8 @@ func (c *ManifestConverter) generateBundleParameters() map[string]bundle.Paramet
 		}
 
 		// If the default is empty, set required to true.
-		if param.DefaultValue == nil {
-			p.Required = true
+		if param.Default == nil {
+			params.Required = append(params.Required, param.Name)
 		}
 
 		if param.Metadata.Description != "" {
@@ -72,7 +74,7 @@ func (c *ManifestConverter) generateBundleParameters() map[string]bundle.Paramet
 				EnvironmentVariable: strings.ToUpper(param.Name),
 			}
 		}
-		params[param.Name] = p
+		params.Fields[param.Name] = p
 	}
 	return params
 }
@@ -84,21 +86,25 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 			Destination: &config.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
-			DataType:     "bool",
-			DefaultValue: false,
+			DataType: "bool",
+			Default:  false,
 			Metadata: config.ParameterMetadata{
 				Description: "Print debug information from Porter when executing the bundle"},
 		},
 	}
 }
 
-func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Location {
-	params := map[string]bundle.Location{}
+func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Credential {
+	params := map[string]bundle.Credential{}
 	for _, cred := range c.Manifest.Credentials {
 		fmt.Fprintf(c.Out, "Generating credential %s ====>\n", cred.Name)
-		l := bundle.Location{
-			Path:                cred.Path,
-			EnvironmentVariable: cred.EnvironmentVariable,
+		l := bundle.Credential{
+			Description: cred.Description,
+			Required:    cred.Required,
+			Location: bundle.Location{
+				Path:                cred.Path,
+				EnvironmentVariable: cred.EnvironmentVariable,
+			},
 		}
 		params[cred.Name] = l
 	}
