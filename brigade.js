@@ -106,8 +106,8 @@ function testUnit(e, p) {
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
   var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable docker so that the daemon can be accessed by porter
-  goTest.docker.enabled = true;
+  // Enable Docker-in-Docker
+  goTest.enableDind();
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -116,7 +116,7 @@ function testIntegration(e, p) {
     }
   };
 
-  // Setup kubeconfig, docker login, run tests
+  // Set up kubeconfig, docker login, run tests
   goTest.tasks.push(
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
@@ -131,8 +131,8 @@ function testIntegration(e, p) {
 
 function testCLI(e, p) {
   var goTest = new GoJob(`${projectName}-testcli`);
-  // Enable docker so that the daemon can be accessed by porter
-  goTest.docker.enabled = true;
+  // Enable Docker-in-Docker
+  goTest.enableDind();
 
   goTest.env.kubeconfig = {
     secretKeyRef: {
@@ -141,7 +141,7 @@ function testCLI(e, p) {
     }
   };
 
-  // Setup kubeconfig, docker login, run tests
+  // Set up kubeconfig, docker login, run tests
   goTest.tasks.push(
     "mkdir -p ${HOME}/.kube",
     'echo "${kubeconfig}" > ${HOME}/.kube/config',
@@ -156,8 +156,8 @@ function testCLI(e, p) {
 
 function publishExamples(e, p) {
   var examplePublisher = new GoJob(`${projectName}-publish-examples`);
-  // Enable docker so that the daemon can be accessed by porter
-  examplePublisher.docker.enabled = true;
+  // Enable Docker-in-Docker
+  examplePublisher.enableDind();
 
   examplePublisher.tasks.push(
     // first, build and install porter
@@ -181,6 +181,10 @@ function publish(e, p) {
 
   goPublish.env.AZURE_STORAGE_CONNECTION_STRING = p.secrets.azureStorageConnectionString;
   goPublish.tasks.push(
+    // Fetch az cli needed for publishing
+    "curl -sLO https://github.com/carolynvs/az-cli/releases/download/v0.3.2/az-linux-amd64 && \
+      chmod +x az-linux-amd64 && \
+      mv az-linux-amd64 /usr/local/bin/az",
     "make build xbuild-all publish"
   )
 
@@ -280,13 +284,8 @@ class GoJob extends Job {
     const gopath = "/go";
     const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
 
-    // Here using the large-but-useful deis/go-dev image as we have a need for deps
-    // already pre-installed in this image, e.g. helm, az, docker, etc.
-    // TODO: replace with lighter-weight image (Carolyn)
-    this.image = "deis/go-dev";
-    this.env = {
-      "GOPATH": gopath
-    };
+    this.image = "quay.io/vdice/go-dind:v0.1.0";
+
     this.tasks = [
       // Need to move the source into GOPATH so vendor/ works as desired.
       "mkdir -p " + localPath,
@@ -294,7 +293,15 @@ class GoJob extends Job {
       "mv /src/.git " + localPath,
       "cd " + localPath
     ];
-    this.streamLogs = true;
+  }
+
+  // enabledDind enables Docker-in-Docker for this job,
+  // setting privileged to true and adding daemon setup to tasks list
+  enableDind() {
+    this.privileged = true;
+    this.tasks.push(
+      "dockerd-entrypoint.sh &",
+      "sleep 20");
   }
 }
 
