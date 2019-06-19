@@ -1,9 +1,9 @@
 package cnabprovider
 
 import (
-	"github.com/deislabs/duffle/pkg/claim"
+	"github.com/deislabs/cnab-go/claim"
+	"github.com/deislabs/cnab-go/utils/crud"
 	"github.com/deislabs/duffle/pkg/duffle/home"
-	"github.com/deislabs/duffle/pkg/utils/crud"
 )
 
 func (d *Duffle) NewClaimStore() claim.Store {

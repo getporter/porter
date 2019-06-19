@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
+	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
 	"github.com/deislabs/porter/pkg/config"
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
@@ -304,29 +305,12 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	fmt.Fprintf(p.Out, "\nGenerating Bundle File with Invocation Image %s =======> \n", invocationImage)
-	b := bundle.Bundle{
-		Name:        p.Config.Manifest.Name,
-		Description: p.Config.Manifest.Description,
-		Version:     p.Config.Manifest.Version,
-		Custom:      make(map[string]interface{}, 1),
+	converter := configadapter.ManifestConverter{
+		Manifest: p.Manifest,
+		Context:  p.Context,
 	}
-	image := bundle.InvocationImage{
-		BaseImage: bundle.BaseImage{
-			Image:     invocationImage,
-			ImageType: "docker",
-			Digest:    digest,
-		},
-	}
-
-	b.InvocationImages = []bundle.InvocationImage{image}
-
-	b.Images = p.generateBundleImages()
-	b.Parameters = p.generateBundleParameters()
-	b.Credentials = p.generateBundleCredentials()
-	b.Custom[config.CustomBundleKey] = p.GenerateStamp(p.Manifest)
-
-	return p.writeBundle(b)
+	bun := converter.ToBundle()
+	return p.writeBundle(bun)
 }
 
 func (p Porter) writeBundle(b bundle.Bundle) error {
@@ -337,97 +321,4 @@ func (p Porter) writeBundle(b bundle.Bundle) error {
 	}
 	_, err = b.WriteTo(f)
 	return errors.Wrap(err, "error writing to cnab/bundle.json")
-}
-
-func (p *Porter) generateBundleImages() map[string]bundle.Image {
-	images := make(map[string]bundle.Image, len(p.Manifest.ImageMap))
-
-	for i, refImage := range p.Manifest.ImageMap {
-		img := bundle.Image{
-			Description: refImage.Description,
-			BaseImage: bundle.BaseImage{
-				Image:         refImage.Image,
-				Digest:        refImage.Digest,
-				ImageType:     refImage.ImageType,
-				MediaType:     refImage.MediaType,
-				OriginalImage: refImage.OriginalImage,
-				Size:          refImage.Size,
-			},
-		}
-		if refImage.Platform != nil {
-			img.Platform = &bundle.ImagePlatform{
-				Architecture: refImage.Platform.Architecture,
-				OS:           refImage.Platform.OS,
-			}
-		}
-		images[i] = img
-	}
-
-	return images
-}
-
-func (p *Porter) generateBundleParameters() map[string]bundle.ParameterDefinition {
-	params := map[string]bundle.ParameterDefinition{}
-	for _, param := range append(p.Manifest.Parameters, p.buildDefaultPorterParameters()...) {
-		fmt.Fprintf(p.Out, "Generating parameter definition %s ====>\n", param.Name)
-		p := bundle.ParameterDefinition{
-			DataType:      param.DataType,
-			DefaultValue:  param.DefaultValue,
-			AllowedValues: param.AllowedValues,
-			MinValue:      param.MinValue,
-			MaxValue:      param.MaxValue,
-			MinLength:     param.MinLength,
-			MaxLength:     param.MaxLength,
-		}
-
-		// If the default is empty, set required to true.
-		if param.DefaultValue == nil {
-			p.Required = true
-		}
-
-		if param.Metadata.Description != "" {
-			p.Metadata = &bundle.ParameterMetadata{Description: param.Metadata.Description}
-		}
-
-		if param.Destination != nil {
-			p.Destination = &bundle.Location{
-				EnvironmentVariable: param.Destination.EnvironmentVariable,
-				Path:                param.Destination.Path,
-			}
-		} else {
-			p.Destination = &bundle.Location{
-				EnvironmentVariable: strings.ToUpper(param.Name),
-			}
-		}
-		params[param.Name] = p
-	}
-	return params
-}
-
-func (p *Porter) buildDefaultPorterParameters() []config.ParameterDefinition {
-	return []config.ParameterDefinition{
-		{
-			Name: "porter-debug",
-			Destination: &config.Location{
-				EnvironmentVariable: "PORTER_DEBUG",
-			},
-			DataType:     "bool",
-			DefaultValue: false,
-			Metadata: config.ParameterMetadata{
-				Description: "Print debug information from Porter when executing the bundle"},
-		},
-	}
-}
-
-func (p *Porter) generateBundleCredentials() map[string]bundle.Location {
-	params := map[string]bundle.Location{}
-	for _, cred := range p.Manifest.Credentials {
-		fmt.Fprintf(p.Out, "Generating credential %s ====>\n", cred.Name)
-		l := bundle.Location{
-			Path:                cred.Path,
-			EnvironmentVariable: cred.EnvironmentVariable,
-		}
-		params[cred.Name] = l
-	}
-	return params
 }

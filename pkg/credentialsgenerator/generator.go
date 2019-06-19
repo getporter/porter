@@ -6,9 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/credentials"
-	"github.com/deislabs/duffle/pkg/bundle"
-
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -18,7 +17,7 @@ type GenerateOptions struct {
 	Name string
 
 	//Credentials from the bundle
-	Credentials map[string]bundle.Location
+	Credentials map[string]bundle.Credential
 
 	//Should we survey?
 	Silent bool
@@ -54,7 +53,7 @@ func GenerateCredentials(opts GenerateOptions) (*credentials.CredentialSet, erro
 	return &credSet, nil
 }
 
-func genCredentialSet(name string, creds map[string]bundle.Location, fn credentialGenerator) (credentials.CredentialSet, error) {
+func genCredentialSet(name string, creds map[string]bundle.Credential, fn credentialGenerator) (credentials.CredentialSet, error) {
 	cs := credentials.CredentialSet{
 		Name: name,
 	}

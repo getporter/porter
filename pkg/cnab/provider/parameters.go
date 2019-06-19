@@ -3,9 +3,8 @@ package cnabprovider
 import (
 	"fmt"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/pkg/errors"
-
-	"github.com/deislabs/duffle/pkg/bundle"
 )
 
 // loadParameters accepts a set of string overrides and combines that with the default parameters to create
@@ -14,7 +13,7 @@ func (d *Duffle) loadParameters(bun *bundle.Bundle, rawOverrides map[string]stri
 	overrides := make(map[string]interface{}, len(rawOverrides))
 
 	for key, rawValue := range rawOverrides {
-		paramDef, ok := bun.Parameters[key]
+		paramDef, ok := bun.Parameters.Fields[key]
 		if !ok {
 			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
 		}

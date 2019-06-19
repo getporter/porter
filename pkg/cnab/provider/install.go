@@ -3,8 +3,8 @@ package cnabprovider
 import (
 	"fmt"
 
-	"github.com/deislabs/duffle/pkg/action"
-	"github.com/deislabs/duffle/pkg/claim"
+	"github.com/deislabs/cnab-go/action"
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 

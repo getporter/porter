@@ -102,6 +102,7 @@ func ConvertOCIIndexToBundle(ix *ocischemav1.Index, config *BundleConfig, origin
 		Actions:     config.Actions,
 		Credentials: config.Credentials,
 		Parameters:  config.Parameters,
+		Custom:      config.Custom,
 	}
 	if err := parseTopLevelAnnotations(ix.Annotations, b); err != nil {
 		return nil, err
@@ -186,7 +187,7 @@ func makeManifests(b *bundle.Bundle, targetReference reference.Named, bundleConf
 		image.Annotations = map[string]string{
 			CNABDescriptorTypeAnnotation:          CNABDescriptorTypeComponent,
 			CNABDescriptorComponentNameAnnotation: name,
-			CNABDescriptorOriginalNameAnnotation:  img.Description,
+			CNABDescriptorOriginalNameAnnotation:  img.OriginalImage,
 		}
 		manifests = append(manifests, image)
 	}
@@ -243,12 +244,12 @@ func parseManifests(descriptors []ocischemav1.Descriptor, into *bundle.Bundle, o
 				into.Images = make(map[string]bundle.Image)
 			}
 			into.Images[componentName] = bundle.Image{
-				Description: originalName,
 				BaseImage: bundle.BaseImage{
-					Image:     refFamiliar,
-					ImageType: imageType,
-					MediaType: d.MediaType,
-					Size:      uint64(d.Size),
+					Image:         refFamiliar,
+					OriginalImage: originalName,
+					ImageType:     imageType,
+					MediaType:     d.MediaType,
+					Size:          uint64(d.Size),
 				},
 			}
 		default:

@@ -215,32 +215,30 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d72a459721ed769889d531817d7a5278e5b387e9867dda13f36667d0d7c9d572"
+  digest = "1:28065fae85ce4e032fb5acfb342339cbab580e3a216c64abefbcd0ea3a10904a"
   name = "github.com/deislabs/cnab-go"
   packages = [
+    "action",
     "bundle",
+    "claim",
     "credentials",
+    "driver",
+    "utils/crud",
   ]
-  pruneopts = "NUT"
-  revision = "50bcf8e15a15ce278dcab2d19561d42b30a74d5b"
+  pruneopts = "NT"
+  revision = "5d3f95359876c842bb99397cc132b5e5aeb8e5ab"
 
 [[projects]]
-  digest = "1:a222203ae2f42f5a3d06fde5f9746e51291567a3df8a5ebedce334cd93b7b97a"
+  digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
   name = "github.com/deislabs/duffle"
   packages = [
-    "pkg/action",
-    "pkg/bundle",
-    "pkg/claim",
-    "pkg/credentials",
     "pkg/driver",
     "pkg/duffle/home",
     "pkg/loader",
-    "pkg/signature",
-    "pkg/utils/crud",
   ]
-  pruneopts = "NT"
-  revision = "dcb2e48d8864338e544cc37fdb8b421c17d0d925"
-  version = "0.1.0-ralpha.5+englishrose"
+  pruneopts = "NUT"
+  revision = "4550d7285b4009cc51b867eb6f437c33d521e717"
+  version = "0.2.0-beta.1"
 
 [[projects]]
   digest = "1:4fc9beef384b8f57f5bb5fa8d5b00efa350c21b8ef85d93f4d24ef9c18be812d"
@@ -274,15 +272,16 @@
   revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
 
 [[projects]]
-  branch = "master"
-  digest = "1:dceb82de160ec21c5e3a22d48db99932f82f40c74bd7cad8bc23b7455613836b"
+  branch = "cnab-go-with-schema-version"
+  digest = "1:23f1662bd095eb2be33aa36eddb199c170f2f62cabebeea912b63b840a71d72d"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "f0b63ad74619a620bafcba7855274b685a1f8ee0"
+  revision = "00b720622a47a9722c9521c29ba8514110c08464"
+  source = "github.com/deislabs/cnab-to-oci"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
@@ -435,6 +434,20 @@
   pruneopts = "NUT"
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6be8997d410d48dd045a8c18ee25e59ebfaeb9aa502c240b0d8ad9bb3e3fdd4f"
+  name = "github.com/globalsign/mgo"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram",
+  ]
+  pruneopts = "NUT"
+  revision = "eeefdecb41b842af6dc652aaea4026e8403e62df"
 
 [[projects]]
   digest = "1:3e067df3c1fc8619e2a563b49c57acbe72d4082e43191dd6b48ceac8c675487e"
@@ -828,12 +841,12 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:deffbc414da9eff0c34c5d2d97c89f6647432e1dd44c22acd9130be7c4e9401e"
+  digest = "1:f2052f4354e87a0ce0b16b55586b8d34d502d164d56d5d4397afae37f3330c42"
   name = "github.com/oklog/ulid"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "02a8604050d8466dd915307496174adb9be4593a"
-  version = "v1.3.1"
+  revision = "be3bccf06dda9a40aa6800c4736ac77f2fef987f"
+  version = "v2.0.2"
 
 [[projects]]
   digest = "1:a37f6e86e990987d8b1b7642dd1b9763d914cb9bc862d493bae7b53158ac4b27"
@@ -1074,17 +1087,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:182dd9800ee84d44a8130f315724eff62075f97b83531fccd4e988e3082f09a1"
+  digest = "1:cb77e5934866333fa0784326a57e64c4da128001c94fbd1d29819d79bd3b1087"
   name = "golang.org/x/crypto"
   packages = [
-    "cast5",
-    "openpgp",
-    "openpgp/armor",
-    "openpgp/clearsign",
-    "openpgp/elgamal",
-    "openpgp/errors",
-    "openpgp/packet",
-    "openpgp/s2k",
     "pbkdf2",
     "ssh/terminal",
   ]
@@ -1431,16 +1436,15 @@
     "github.com/carolynvs/datetime-printer",
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
+    "github.com/deislabs/cnab-go/action",
     "github.com/deislabs/cnab-go/bundle",
+    "github.com/deislabs/cnab-go/claim",
     "github.com/deislabs/cnab-go/credentials",
-    "github.com/deislabs/duffle/pkg/action",
-    "github.com/deislabs/duffle/pkg/bundle",
-    "github.com/deislabs/duffle/pkg/claim",
-    "github.com/deislabs/duffle/pkg/credentials",
+    "github.com/deislabs/cnab-go/driver",
+    "github.com/deislabs/cnab-go/utils/crud",
     "github.com/deislabs/duffle/pkg/driver",
     "github.com/deislabs/duffle/pkg/duffle/home",
     "github.com/deislabs/duffle/pkg/loader",
-    "github.com/deislabs/duffle/pkg/utils/crud",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/config",
     "github.com/docker/cli/cli/flags",
