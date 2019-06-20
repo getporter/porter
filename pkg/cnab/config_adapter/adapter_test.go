@@ -47,7 +47,6 @@ func TestPorter_generateImages(t *testing.T) {
 	assert.Equal(t, mappedImage.Digest, img.Digest)
 	assert.Equal(t, mappedImage.Size, img.Size)
 	assert.Equal(t, mappedImage.MediaType, img.MediaType)
-	assert.Equal(t, mappedImage.OriginalImage, img.OriginalImage)
 	assert.Equal(t, mappedImage.Platform.OS, img.Platform.OS)
 	assert.Equal(t, mappedImage.Platform.Architecture, img.Platform.Architecture)
 }

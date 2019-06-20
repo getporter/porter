@@ -21,6 +21,14 @@
   version = "v0.3.1"
 
 [[projects]]
+  digest = "1:a26f8da48b22e6176c1c6a2459904bb30bd0c49ada04b2963c2c3a203e81a620"
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
+  version = "v1.4.2"
+
+[[projects]]
   digest = "1:2be791e7b333ff7c06f8fb3dc18a7d70580e9399dbdffd352621d067ff260b6e"
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
@@ -214,19 +222,20 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:28065fae85ce4e032fb5acfb342339cbab580e3a216c64abefbcd0ea3a10904a"
+  digest = "1:923749c4c69c805b20b98edf4d73c6ed65fce9963fc7dfd528d68da25e1292d8"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
     "bundle",
+    "bundle/definition",
     "claim",
     "credentials",
     "driver",
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "5d3f95359876c842bb99397cc132b5e5aeb8e5ab"
+  revision = "1410239899d044882efcba0f976bf7bb8a00fc27"
+  version = "v0.1.1-beta1"
 
 [[projects]]
   digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
@@ -272,16 +281,15 @@
   revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
 
 [[projects]]
-  branch = "cnab-go-with-schema-version"
-  digest = "1:23f1662bd095eb2be33aa36eddb199c170f2f62cabebeea912b63b840a71d72d"
+  branch = "master"
+  digest = "1:40fb85b6cfffe0948cf921eb40ecdbc32ac67b64cacf37cd5239d3b2d7a43ef2"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "00b720622a47a9722c9521c29ba8514110c08464"
-  source = "github.com/deislabs/cnab-to-oci"
+  revision = "1b72bb4e4634f6ffc0f3508a7be761a13b8bfb3c"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
@@ -749,14 +757,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:a26f8da48b22e6176c1c6a2459904bb30bd0c49ada04b2963c2c3a203e81a620"
-  name = "github.com/masterminds/semver"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "c7af12943936e8c39859482e61f0574c2fd7fc75"
-  version = "v1.4.2"
-
-[[projects]]
   digest = "1:9785a54031460a402fab4e4bbb3124c8dd9e9f7b1982109fef605cb91632d480"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -971,6 +971,22 @@
   ]
   pruneopts = "NUT"
   revision = "619930b0b4713cc1280189bf0a4c54b3fb506f60"
+
+[[projects]]
+  digest = "1:51365c3135ef6d52b4134bfa52005cb4f0cb7740a1ddc5ce46398a2ddf033eef"
+  name = "github.com/qri-io/jsonpointer"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "43be820608971e680b60469cfc7cc0e2e75fd4ef"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:7413856103afc3d0d748c26346ff4e82222cd57cc095e28d18194dfc50ac5582"
+  name = "github.com/qri-io/jsonschema"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "b244d4b99401d163bd9e382fd58698794259d091"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:e09ada96a5a41deda4748b1659cc8953961799e798aea557257b56baee4ecaf3"
@@ -1433,11 +1449,13 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Masterminds/semver",
     "github.com/carolynvs/datetime-printer",
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
     "github.com/deislabs/cnab-go/action",
     "github.com/deislabs/cnab-go/bundle",
+    "github.com/deislabs/cnab-go/bundle/definition",
     "github.com/deislabs/cnab-go/claim",
     "github.com/deislabs/cnab-go/credentials",
     "github.com/deislabs/cnab-go/driver",
@@ -1460,7 +1478,6 @@
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
     "github.com/hashicorp/go-multierror",
-    "github.com/masterminds/semver",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
     "github.com/pkg/errors",

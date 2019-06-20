@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
@@ -31,7 +33,7 @@ func (c *ManifestConverter) ToBundle() bundle.Bundle {
 	}
 
 	b.InvocationImages = []bundle.InvocationImage{image}
-	b.Parameters = c.generateBundleParameters()
+	b.Definitions, b.Parameters = c.generateBundleParameters()
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
@@ -39,29 +41,30 @@ func (c *ManifestConverter) ToBundle() bundle.Bundle {
 	return b
 }
 
-func (c *ManifestConverter) generateBundleParameters() bundle.ParametersDefinition {
-	params := bundle.ParametersDefinition{
+func (c *ManifestConverter) generateBundleParameters() (definition.Definitions, *bundle.ParametersDefinition) {
+	defs := make(definition.Definitions, len(c.Manifest.Parameters))
+	params := &bundle.ParametersDefinition{
 		Fields: make(map[string]bundle.ParameterDefinition, len(c.Manifest.Parameters)),
 	}
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
+		d := &definition.Schema{
+			Type:      param.DataType,
+			Default:   param.Default,
+			Enum:      param.AllowedValues,
+			Minimum:   param.MinValue,
+			Maximum:   param.MaxValue,
+			MinLength: param.MinLength,
+			MaxLength: param.MaxLength,
+		}
 		p := bundle.ParameterDefinition{
-			DataType:      param.DataType,
-			Default:       param.Default,
-			AllowedValues: param.AllowedValues,
-			MinValue:      param.MinValue,
-			MaxValue:      param.MaxValue,
-			MinLength:     param.MinLength,
-			MaxLength:     param.MaxLength,
+			Definition:  param.Name,
+			Description: param.Description,
 		}
 
 		// If the default is empty, set required to true.
 		if param.Default == nil {
 			params.Required = append(params.Required, param.Name)
-		}
-
-		if param.Metadata.Description != "" {
-			p.Metadata = &bundle.ParameterMetadata{Description: param.Metadata.Description}
 		}
 
 		if param.Destination != nil {
@@ -74,9 +77,11 @@ func (c *ManifestConverter) generateBundleParameters() bundle.ParametersDefiniti
 				EnvironmentVariable: strings.ToUpper(param.Name),
 			}
 		}
+
+		defs[param.Name] = d
 		params.Fields[param.Name] = p
 	}
-	return params
+	return defs, params
 }
 
 func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDefinition {
@@ -86,10 +91,9 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 			Destination: &config.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
-			DataType: "bool",
-			Default:  false,
-			Metadata: config.ParameterMetadata{
-				Description: "Print debug information from Porter when executing the bundle"},
+			DataType:    "boolean",
+			Default:     false,
+			Description: "Print debug information from Porter when executing the bundle",
 		},
 	}
 }
@@ -118,12 +122,11 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 		img := bundle.Image{
 			Description: refImage.Description,
 			BaseImage: bundle.BaseImage{
-				Image:         refImage.Image,
-				Digest:        refImage.Digest,
-				ImageType:     refImage.ImageType,
-				MediaType:     refImage.MediaType,
-				OriginalImage: refImage.OriginalImage,
-				Size:          refImage.Size,
+				Image:     refImage.Image,
+				Digest:    refImage.Digest,
+				ImageType: refImage.ImageType,
+				MediaType: refImage.MediaType,
+				Size:      refImage.Size,
 			},
 		}
 		if refImage.Platform != nil {

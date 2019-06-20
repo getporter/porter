@@ -50,18 +50,18 @@ type Manifest struct {
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name          string            `yaml:"name"`
-	DataType      string            `yaml:"type"`
-	Default       interface{}       `yaml:"default,omitempty"`
-	AllowedValues []interface{}     `yaml:"allowed,omitempty"`
-	Required      bool              `yaml:"required"`
-	MinValue      *int              `yaml:"minValue,omitempty"`
-	MaxValue      *int              `yaml:"maxValue,omitempty"`
-	MinLength     *int              `yaml:"minLength,omitempty"`
-	MaxLength     *int              `yaml:"maxLength,omitempty"`
-	Metadata      ParameterMetadata `yaml:"metadata,omitempty"`
-	Destination   *Location         `yaml:"destination,omitempty"`
-	Sensitive     bool              `yaml:"sensitive"`
+	Name          string        `yaml:"name"`
+	DataType      string        `yaml:"type"`
+	Default       interface{}   `yaml:"default,omitempty"`
+	AllowedValues []interface{} `yaml:"allowed,omitempty"`
+	Required      bool          `yaml:"required"`
+	MinValue      *float64      `yaml:"minValue,omitempty"`
+	MaxValue      *float64      `yaml:"maxValue,omitempty"`
+	MinLength     *float64      `yaml:"minLength,omitempty"`
+	MaxLength     *float64      `yaml:"maxLength,omitempty"`
+	Description   string        `yaml:"description,omitempty"`
+	Destination   *Location     `yaml:"destination,omitempty"`
+	Sensitive     bool          `yaml:"sensitive"`
 }
 
 type CredentialDefinition struct {
@@ -75,11 +75,6 @@ type CredentialDefinition struct {
 type Location struct {
 	Path                string `yaml:"path,omitempty"`
 	EnvironmentVariable string `yaml:"env,omitempty"`
-}
-
-// ParameterMetadata contains metadata for a parameter definition.
-type ParameterMetadata struct {
-	Description string `yaml:"description,omitempty"`
 }
 
 type MappedImage struct {

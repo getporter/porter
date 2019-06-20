@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/masterminds/semver"
 )
 
 type MixinFeed struct {
@@ -25,8 +25,8 @@ type MixinFeed struct {
 
 func NewMixinFeed(cxt *context.Context) *MixinFeed {
 	return &MixinFeed{
-		Index: make(map[string]map[string]*MixinFileset),
-		Context:cxt,
+		Index:   make(map[string]map[string]*MixinFileset),
+		Context: cxt,
 	}
 }
 
