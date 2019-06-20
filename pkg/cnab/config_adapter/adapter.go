@@ -11,19 +11,22 @@ import (
 	"github.com/deislabs/porter/pkg/context"
 )
 
+const SchemaVersion = "v1.0.0-WD"
+
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
 	*context.Context
 	Manifest *config.Manifest
 }
 
-func (c *ManifestConverter) ToBundle() bundle.Bundle {
+func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	fmt.Fprintf(c.Out, "\nGenerating Bundle File with Invocation Image %s =======> \n", c.Manifest.Image)
-	b := bundle.Bundle{
-		Name:        c.Manifest.Name,
-		Description: c.Manifest.Description,
-		Version:     c.Manifest.Version,
-		Custom:      make(map[string]interface{}, 1),
+	b := &bundle.Bundle{
+		SchemaVersion: SchemaVersion,
+		Name:          c.Manifest.Name,
+		Description:   c.Manifest.Description,
+		Version:       c.Manifest.Version,
+		Custom:        make(map[string]interface{}, 1),
 	}
 	image := bundle.InvocationImage{
 		BaseImage: bundle.BaseImage{

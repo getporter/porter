@@ -313,7 +313,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	return p.writeBundle(bun)
 }
 
-func (p Porter) writeBundle(b bundle.Bundle) error {
+func (p Porter) writeBundle(b *bundle.Bundle) error {
 	f, err := p.Config.FileSystem.OpenFile("cnab/bundle.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
