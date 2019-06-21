@@ -3,10 +3,12 @@ package converter
 import (
 	"encoding/json"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema2"
-	"github.com/opencontainers/go-digest"
+	digest "github.com/opencontainers/go-digest"
 	ocischema "github.com/opencontainers/image-spec/specs-go"
 	ocischemav1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
@@ -20,7 +22,8 @@ const (
 type BundleConfig struct {
 	SchemaVersion string                       `json:"schema_version" mapstructure:"schema_version"`
 	Actions       map[string]bundle.Action     `json:"actions,omitempty" mapstructure:"actions,omitempty"`
-	Parameters    bundle.ParametersDefinition  `json:"parameters" mapstructure:"parameters"`
+	Definitions   definition.Definitions       `json:"definitions" mapstructure:"definitions"`
+	Parameters    *bundle.ParametersDefinition `json:"parameters" mapstructure:"parameters"`
 	Credentials   map[string]bundle.Credential `json:"credentials" mapstructure:"credentials"`
 	Custom        map[string]interface{}       `json:"custom,omitempty" mapstructure:"custom"`
 }
@@ -39,6 +42,7 @@ func CreateBundleConfig(b *bundle.Bundle) *BundleConfig {
 	return &BundleConfig{
 		SchemaVersion: CNABVersion,
 		Actions:       b.Actions,
+		Definitions:   b.Definitions,
 		Parameters:    b.Parameters,
 		Credentials:   b.Credentials,
 		Custom:        b.Custom,

@@ -13,14 +13,19 @@ func (d *Duffle) loadParameters(bun *bundle.Bundle, rawOverrides map[string]stri
 	overrides := make(map[string]interface{}, len(rawOverrides))
 
 	for key, rawValue := range rawOverrides {
-		paramDef, ok := bun.Parameters.Fields[key]
+		param, ok := bun.Parameters.Fields[key]
 		if !ok {
 			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
 		}
 
-		value, err := paramDef.ConvertValue(rawValue)
+		def, ok := bun.Definitions[param.Definition]
+		if !ok {
+			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+		}
+
+		value, err := def.ConvertValue(rawValue)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, paramDef.DataType)
+			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, def.Type)
 		}
 
 		overrides[key] = value

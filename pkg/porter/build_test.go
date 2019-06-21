@@ -202,10 +202,12 @@ func TestPorter_buildBundle(t *testing.T) {
 	assert.Equal(t, "06a51d04297375bf111ab15e579b8a7ab72e2661018c4d08d1d3f38198028e49", stamp.ManifestDigest)
 
 	debugParam, ok := bun.Parameters.Fields["porter-debug"]
-	require.True(t, ok)
+	require.True(t, ok, "porter-debug parameter was not defined")
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
-	assert.Equal(t, "bool", debugParam.DataType)
-	assert.Equal(t, false, debugParam.Default)
+	debugDef, ok := bun.Definitions["porter-debug"]
+	require.True(t, ok, "porter-debug definition was not defined")
+	assert.Equal(t, "boolean", debugDef.Type)
+	assert.Equal(t, false, debugDef.Default)
 }
 
 func TestPorter_paramRequired(t *testing.T) {
