@@ -81,13 +81,25 @@ parameters:
 ```
 
 * `name`: The name of the parameter.
-* `type`: The data type of the parameter: string, int, boolean.
-* `default`: Optional. The default value for the parameter.
+* `type`: The data type of the parameter: string, integer, number, boolean.
 * `destination`: The destination in the bundle to define the parameter.
   * `env`: The name for the environment variable. Defaults to the name of the parameter in upper case.
   * `path`: The path for the file. Required for file paths, there is no default.
-* `sensitive`: Designate this parameter's value as sensitive, for masking in console output.
+* `sensitive`: Optional. Designate this parameter's value as sensitive, for masking in console output.
  
+### Parameter Schema
+
+The [CNAB Spec for parameter definitions](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions)
+has full support for [json schema](https://json-schema.org). We aren't quite there yet but 
+are working towards it. Here is what Porter supports for defining schema for parameters currently:
+
+* `default`: The default value for the parameter. When a default is not provided, the `required` is defaulted to true.
+* `required`: Specify if the parameter must be specified when the bundle is executed.
+* `enum`: A list of allowed values.
+* [Numeric Range](https://json-schema.org/understanding-json-schema/reference/numeric.html?highlight=minimum#range) 
+    using `minimum`, `maximum`, `exclusiveMinimum` and `exclusiveMaximum`.
+* String length using `minLength` and `maxLength`.
+
 ## Credentials
 
 Credentials are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/802-credential-sets.md) and allow

@@ -52,13 +52,15 @@ func (c *ManifestConverter) generateBundleParameters() (definition.Definitions, 
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
 		d := &definition.Schema{
-			Type:      param.DataType,
-			Default:   param.Default,
-			Enum:      param.AllowedValues,
-			Minimum:   param.MinValue,
-			Maximum:   param.MaxValue,
-			MinLength: param.MinLength,
-			MaxLength: param.MaxLength,
+			Type:             param.Type,
+			Default:          param.Default,
+			Enum:             param.Enum,
+			Minimum:          param.Minimum,
+			Maximum:          param.Maximum,
+			ExclusiveMinimum: param.ExclusiveMinimum,
+			ExclusiveMaximum: param.ExclusiveMaximum,
+			MinLength:        param.MinLength,
+			MaxLength:        param.MaxLength,
 		}
 		p := bundle.ParameterDefinition{
 			Definition:  param.Name,
@@ -96,8 +98,8 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: config.Schema{
-				DataType: "boolean",
-				Default:  false,
+				Type:    "boolean",
+				Default: false,
 			},
 		},
 	}

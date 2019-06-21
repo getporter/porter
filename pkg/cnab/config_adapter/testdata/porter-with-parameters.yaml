@@ -1,0 +1,64 @@
+name: HELLO
+version: 0.1.0
+description: "An example Porter configuration"
+invocationImage: porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
+
+parameters:
+  - name: ainteger
+    type: integer
+    default: 1
+    required: true
+    minimum: 0
+    maximum: 10
+  - name: anumber
+    type: number
+    default: 0.5
+    required: true
+    exclusiveMinimum: 0
+    exclusiveMaximum: 1
+  - name: astringenum
+    type: string
+    default: blue
+    enum:
+      - blue
+      - red
+      - purple
+      - pink
+    required: true
+  - name: astring
+    type: string
+    required: true
+    minLength: 1
+    maxLength: 10
+  - name: aboolean
+    type: boolean
+    required: true
+    default: true
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Hello World
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo World 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Goodbye World

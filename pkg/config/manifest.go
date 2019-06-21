@@ -59,14 +59,16 @@ type ParameterDefinition struct {
 }
 
 type Schema struct {
-	DataType      string        `yaml:"type"`
-	Default       interface{}   `yaml:"default,omitempty"`
-	AllowedValues []interface{} `yaml:"allowed,omitempty"`
-	Required      bool          `yaml:"required"`
-	MinValue      *float64      `yaml:"minValue,omitempty"`
-	MaxValue      *float64      `yaml:"maxValue,omitempty"`
-	MinLength     *float64      `yaml:"minLength,omitempty"`
-	MaxLength     *float64      `yaml:"maxLength,omitempty"`
+	Type             string        `yaml:"type"`
+	Default          interface{}   `yaml:"default,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty"`
+	Required         bool          `yaml:"required"`
+	Minimum          *float64      `yaml:"minimum,omitempty"`
+	ExclusiveMinimum *float64      `yaml:"exclusiveMinimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"`
+	ExclusiveMaximum *float64      `yaml:"exclusiveMaximum,omitempty"`
+	MinLength        *float64      `yaml:"minLength,omitempty"`
+	MaxLength        *float64      `yaml:"maxLength,omitempty"`
 }
 
 type CredentialDefinition struct {

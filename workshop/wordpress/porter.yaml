@@ -18,7 +18,7 @@ parameters:
   sensitive: true
   default: "topsecretpassword"
 - name: port
-  type: int
+  type: integer
   default: 30030
 
 install:
