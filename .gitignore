@@ -4,8 +4,6 @@
 *-packr.go
 .DS_Store
 
-examples/**/cnab/app/mixins
-examples/**/cnab/app/porter-runtime
+.cnab
 examples/**/Dockerfile
-examples/**/bundle.json
-examples/**/bundle.cnab
+workshop/**/Dockerfile

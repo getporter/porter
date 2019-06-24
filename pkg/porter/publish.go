@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/cnab-go/bundle"
 	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
@@ -81,7 +82,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return errors.Wrap(err, "unable to generate CNAB bundle.json")
 	}
 
-	b, err := p.Config.FileSystem.ReadFile("cnab/bundle.json")
+	b, err := p.Config.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
 	if err != nil {
 		return errors.Wrap(err, "unable to load CNAB bundle")

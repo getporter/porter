@@ -14,9 +14,6 @@ const (
 	// Name is the file name of the porter configuration file.
 	Name = "porter.yaml"
 
-	// RunScript is the path to the CNAB run script.
-	RunScript = "cnab/app/run"
-
 	// EnvHOME is the name of the environment variable containing the porter home directory path.
 	EnvHOME = "PORTER_HOME"
 

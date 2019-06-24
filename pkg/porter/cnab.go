@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/cnab-go/bundle"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
@@ -131,11 +132,11 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 
 		if manifestExists {
 			o.File = config.Name
-			o.CNABFile = "cnab/bundle.json"
+			o.CNABFile = build.LOCAL_BUNDLE
 		}
 	} else {
 		bundleDir := filepath.Dir(o.File)
-		o.CNABFile = filepath.Join(bundleDir, "cnab/bundle.json")
+		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "porter.yaml", opts.File)
-	assert.Equal(t, "cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, build.LOCAL_BUNDLE, opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
@@ -36,7 +37,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	err := opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
 
-	assert.Equal(t, "mybun/cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, filepath.Join("mybun", build.LOCAL_BUNDLE), opts.CNABFile)
 }
 
 func TestSharedOptions_validateBundleJson(t *testing.T) {
