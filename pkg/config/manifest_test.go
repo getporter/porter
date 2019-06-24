@@ -330,7 +330,7 @@ func TestResolveCredential(t *testing.T) {
 	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
 }
 
-func TestResolveOutputs(t *testing.T) {
+func TestResolveStepOutputs(t *testing.T) {
 	t.Skip("Skip while dependencies is being rewritten")
 
 	m := &Manifest{
@@ -418,7 +418,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	assert.NotNil(t, args)
 }
 
-func TestResolveMultipleOutputs(t *testing.T) {
+func TestResolveMultipleStepOutputs(t *testing.T) {
 
 	databaseURL := "localhost"
 	databasePort := "3303"
@@ -454,7 +454,7 @@ func TestResolveMultipleOutputs(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("jdbc://%s:%s", databaseURL, databasePort), args[0].(string))
 }
 
-func TestResolveMissingOutputs(t *testing.T) {
+func TestResolveMissingStepOutputs(t *testing.T) {
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -573,7 +573,7 @@ func TestManifest_ApplyBundleOutputs(t *testing.T) {
 	require.NoError(t, c.LoadManifest())
 
 	depStep := c.Manifest.Install[0]
-	err := c.Manifest.ApplyOutputs(depStep, []string{"foo=bar"})
+	err := c.Manifest.ApplyStepOutputs(depStep, []string{"foo=bar"})
 	require.NoError(t, err)
 
 	assert.Contains(t, c.Manifest.outputs, "foo")

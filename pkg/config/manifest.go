@@ -41,6 +41,7 @@ type Manifest struct {
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
 	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
+	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. The mappings are mounted as a file at runtime to
 	// /cnab/app/image-map.json. This data is not used by porter or any of the deislabs mixins, so only populate when you
@@ -105,6 +106,37 @@ type Dependency struct {
 	Parameters map[string]string `yaml:"parameters,omitempty"`
 }
 
+// OutputDefinition defines a single output for a CNAB
+type OutputDefinition struct {
+	Name    string   `yaml:"name"`
+	ApplyTo []string `yaml:"applyTo,omitempty"`
+
+	// TODO: use cnab-go's bundle/definition.Schema for the rest of these
+	// *definition.Schema
+	DataType      string        `yaml:"type"`
+	Default       interface{}   `yaml:"default,omitempty"`
+	Description   string        `yaml:"description,omitempty"`
+	AllowedValues []interface{} `yaml:"allowed,omitempty"`
+	Required      bool          `yaml:"required"`
+	MinValue      *float64      `yaml:"minValue,omitempty"`
+	MaxValue      *float64      `yaml:"maxValue,omitempty"`
+	MinLength     *float64      `yaml:"minLength,omitempty"`
+	MaxLength     *float64      `yaml:"maxLength,omitempty"`
+	Destination   *Location     `yaml:"destination,omitempty"`
+	Sensitive     bool          `yaml:"sensitive"`
+}
+
+func (od *OutputDefinition) Validate() error {
+	if od.Name == "" {
+		return errors.New("output name is required")
+	}
+
+	// TODO: check DataType to make sure it is one of allowed values
+	// e.g., string, integer, boolean...
+
+	return nil
+}
+
 func (d *Dependency) Validate() error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
@@ -156,12 +188,14 @@ func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
 	return depVals, sensitiveStuff, nil
 }
 
+// TODO: can remove?
 type BundleOutput struct {
 	Name                string `yaml:"name"`
 	Path                string `yaml:"path"`
 	EnvironmentVariable string `yaml:"env"`
 }
 
+// TODO: can remove?
 type BundleConnection struct {
 	Source      string `yaml:source`
 	Destination string `yaml:destination`
@@ -286,6 +320,13 @@ func (m *Manifest) Validate() error {
 		}
 	}
 
+	for _, output := range m.Outputs {
+		err = output.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
 	return result
 }
 
@@ -314,7 +355,7 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	return steps, nil
 }
 
-func (m *Manifest) ApplyOutputs(step *Step, assignments []string) error {
+func (m *Manifest) ApplyStepOutputs(step *Step, assignments []string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}

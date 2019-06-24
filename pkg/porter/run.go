@@ -135,6 +135,51 @@ func (p *Porter) Run(opts RunOptions) error {
 			if err != nil {
 				return err
 			}
+
+			// TODO: refactor for unit testing
+			// Apply/update bundle outputs
+			for _, bundleOutput := range p.Manifest.Outputs {
+				doApply := true
+
+				// If ApplyTo array non-empty, default doApply to false
+				// and only set to true if at least one entry matches current Action
+				if len(bundleOutput.ApplyTo) > 0 {
+					doApply = false
+					for _, applyTo := range bundleOutput.ApplyTo {
+						if opts.Action == applyTo {
+							doApply = true
+						}
+					}
+				}
+
+				if doApply {
+					// Read step outputs provided by the mixin
+					outputs, err := p.readOutputs()
+					if err != nil {
+						return errors.Wrap(err, "could not read step outputs")
+					}
+
+					// Ensure outputs directory exists
+					exists, err := p.FileSystem.DirExists("/cnab/app/outputs")
+					if err != nil {
+						return err
+					}
+					if !exists {
+						if err := p.FileSystem.MkdirAll("/cnab/app/outputs", os.ModePerm); err != nil {
+							return errors.Wrap(err, "could not make CNAB outputs directory")
+						}
+					}
+
+					// Write outputs to expected CNAB locations
+					for _, output := range outputs {
+						outpath := filepath.Join("/cnab/app/outputs", bundleOutput.Name)
+						err := p.FileSystem.WriteFile(outpath, []byte(output), os.ModePerm)
+						if err != nil {
+							return errors.Wrapf(err, "could not write output file %s", outpath)
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -195,7 +240,7 @@ func (p *Porter) collectStepOutput(step *config.Step) error {
 	if err != nil {
 		return err
 	}
-	return p.Manifest.ApplyOutputs(step, outputs)
+	return p.Manifest.ApplyStepOutputs(step, outputs)
 }
 
 func (p *Porter) readOutputs() ([]string, error) {
