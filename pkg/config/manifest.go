@@ -70,11 +70,11 @@ type Schema struct {
 }
 
 type CredentialDefinition struct {
-	Path                string `yaml:"path,omitempty"`
-	EnvironmentVariable string `yaml:"env,omitempty"`
 	Name        string `yaml:"name"`
 	Description string `yaml:"description,omitempty"`
 	Required    bool   `yaml:"required,omitempty"`
+
+	Location `yaml:",inline"`
 }
 
 type Location struct {
