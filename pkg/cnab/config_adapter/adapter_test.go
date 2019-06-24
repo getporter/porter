@@ -3,6 +3,8 @@ package configadapter
 import (
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
+
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,6 +52,79 @@ func TestPorter_ToBundle(t *testing.T) {
 
 	assert.Contains(t, bun.Parameters.Fields, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
+}
+
+func makefloat64(v float64) *float64 {
+	return &v
+}
+
+func TestPorter_generateBundleParametersSchema(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	defs, _ := a.generateBundleParameters()
+
+	testcases := []struct {
+		propname string
+		wantDef  definition.Schema
+	}{
+		{"ainteger",
+			definition.Schema{
+				Type:    "integer",
+				Default: 1,
+				Minimum: makefloat64(0),
+				Maximum: makefloat64(10),
+			},
+		},
+		{"anumber",
+			definition.Schema{
+				Type:             "number",
+				Default:          0.5,
+				ExclusiveMinimum: makefloat64(0),
+				ExclusiveMaximum: makefloat64(1),
+			},
+		},
+		{
+			"astringenum",
+			definition.Schema{
+				Type:    "string",
+				Default: "blue",
+				Enum:    []interface{}{"blue", "red", "purple", "pink"},
+			},
+		},
+		{
+			"astring",
+			definition.Schema{
+				Type:      "string",
+				MinLength: makefloat64(1),
+				MaxLength: makefloat64(10),
+			},
+		},
+		{
+			"aboolean",
+			definition.Schema{
+				Type:    "boolean",
+				Default: true,
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.propname, func(t *testing.T) {
+			def, ok := defs[tc.propname]
+			require.True(t, ok, "property definition was not generated")
+
+			assert.Equal(t, tc.wantDef, *def)
+		})
+	}
 }
 
 func TestPorter_buildDefaultPorterParameters(t *testing.T) {

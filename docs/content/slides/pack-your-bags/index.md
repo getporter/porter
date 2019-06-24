@@ -617,15 +617,20 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
             "imageType": "docker"
         }],
     "name": "HELLO",
-    "parameters": {
+    "definitions": {
         "porter-debug": {
-            "destination": {
-                "env": "PORTER_DEBUG"
-            },
-            "metadata": {
-                "description": "Print debug information from Porter when executing the bundle"
-            },
-            "type": "bool"
+          "type": "boolean"
+        }
+    },
+    "parameters": {
+        "fields": {
+            "porter-debug": {
+                "description": "Print debug information from Porter when executing the bundle",
+                "definition": "porter-debug",
+                "destination": {
+                    "env": "PORTER_DEBUG"
+                }
+            }
         }
     },
     "version": "0.1.0"

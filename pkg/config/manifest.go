@@ -50,26 +50,33 @@ type Manifest struct {
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name          string        `yaml:"name"`
-	DataType      string        `yaml:"type"`
-	Default       interface{}   `yaml:"default,omitempty"`
-	AllowedValues []interface{} `yaml:"allowed,omitempty"`
-	Required      bool          `yaml:"required"`
-	MinValue      *float64      `yaml:"minValue,omitempty"`
-	MaxValue      *float64      `yaml:"maxValue,omitempty"`
-	MinLength     *float64      `yaml:"minLength,omitempty"`
-	MaxLength     *float64      `yaml:"maxLength,omitempty"`
-	Description   string        `yaml:"description,omitempty"`
-	Destination   *Location     `yaml:"destination,omitempty"`
-	Sensitive     bool          `yaml:"sensitive"`
+	Name        string    `yaml:"name"`
+	Description string    `yaml:"description,omitempty"`
+	Sensitive   bool      `yaml:"sensitive"`
+	Destination *Location `yaml:"destination,omitempty"`
+
+	Schema `yaml:",inline"`
+}
+
+type Schema struct {
+	Type             string        `yaml:"type"`
+	Default          interface{}   `yaml:"default,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty"`
+	Required         bool          `yaml:"required"`
+	Minimum          *float64      `yaml:"minimum,omitempty"`
+	ExclusiveMinimum *float64      `yaml:"exclusiveMinimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty"`
+	ExclusiveMaximum *float64      `yaml:"exclusiveMaximum,omitempty"`
+	MinLength        *float64      `yaml:"minLength,omitempty"`
+	MaxLength        *float64      `yaml:"maxLength,omitempty"`
 }
 
 type CredentialDefinition struct {
-	Name                string `yaml:"name"`
-	Description         string `yaml:"description,omitempty"`
-	Required            bool   `yaml:"required,omitempty"`
-	Path                string `yaml:"path,omitempty"`
-	EnvironmentVariable string `yaml:"env,omitempty"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description,omitempty"`
+	Required    bool   `yaml:"required,omitempty"`
+
+	Location `yaml:",inline"`
 }
 
 type Location struct {

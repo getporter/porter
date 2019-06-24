@@ -310,8 +310,8 @@ func TestResolveCredential(t *testing.T) {
 	m := &Manifest{
 		Credentials: []CredentialDefinition{
 			{
-				Name:                "password",
-				EnvironmentVariable: "PASSWORD",
+				Name:     "password",
+				Location: Location{EnvironmentVariable: "PASSWORD"},
 			},
 		},
 	}
@@ -617,7 +617,7 @@ func TestManifest_MergeDependency(t *testing.T) {
 				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "uninstall mysql"}}},
 			},
 			Credentials: []CredentialDefinition{
-				{Name: "kubeconfig", Path: "/root/.kube/config"},
+				{Name: "kubeconfig", Location: Location{Path: "/root/.kube/config"}},
 			},
 		},
 	}
@@ -656,32 +656,32 @@ func TestMergeCredentials(t *testing.T) {
 	}{
 		{
 			name:       "combine path and environment variable",
-			c1:         CredentialDefinition{Name: "foo", Path: "p1"},
-			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
-			wantResult: CredentialDefinition{Name: "foo", Path: "p1", EnvironmentVariable: "v2"},
+			c1:         CredentialDefinition{Name: "foo", Location: Location{Path: "p1"}},
+			c2:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v2"}},
+			wantResult: CredentialDefinition{Name: "foo", Location: Location{Path: "p1", EnvironmentVariable: "v2"}},
 		},
 		{
 			name:       "same path",
-			c1:         CredentialDefinition{Name: "foo", Path: "p"},
-			c2:         CredentialDefinition{Name: "foo", Path: "p"},
-			wantResult: CredentialDefinition{Name: "foo", Path: "p"},
+			c1:         CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
+			c2:         CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
+			wantResult: CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
 		},
 		{
 			name:      "conflicting path",
-			c1:        CredentialDefinition{Name: "foo", Path: "p1"},
-			c2:        CredentialDefinition{Name: "foo", Path: "p2"},
+			c1:        CredentialDefinition{Name: "foo", Location: Location{Path: "p1"}},
+			c2:        CredentialDefinition{Name: "foo", Location: Location{Path: "p2"}},
 			wantError: "cannot merge credential foo: conflict on path",
 		},
 		{
 			name:       "same environment variable",
-			c1:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
-			c2:         CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
-			wantResult: CredentialDefinition{Name: "foo", EnvironmentVariable: "v"},
+			c1:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
+			c2:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
+			wantResult: CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
 		},
 		{
 			name:      "conflicting environment variable",
-			c1:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v1"},
-			c2:        CredentialDefinition{Name: "foo", EnvironmentVariable: "v2"},
+			c1:        CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v1"}},
+			c2:        CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v2"}},
 			wantError: "cannot merge credential foo: conflict on environment variable",
 		},
 	}
