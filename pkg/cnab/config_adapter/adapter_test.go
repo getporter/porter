@@ -70,7 +70,8 @@ func TestPorter_generateBundleParametersSchema(t *testing.T) {
 		Manifest: c.Manifest,
 	}
 
-	defs, _ := a.generateBundleParameters()
+	defs := make(definition.Definitions, len(c.Manifest.Parameters))
+	_ = a.generateBundleParameters(&defs)
 
 	testcases := []struct {
 		propname string
@@ -139,7 +140,8 @@ func TestPorter_buildDefaultPorterParameters(t *testing.T) {
 		Manifest: c.Manifest,
 	}
 
-	defs, params := a.generateBundleParameters()
+	defs := make(definition.Definitions, len(c.Manifest.Parameters))
+	params := a.generateBundleParameters(&defs)
 
 	debugParam, ok := params.Fields["porter-debug"]
 	assert.True(t, ok, "porter-debug parameter was not defined")
@@ -222,3 +224,5 @@ func TestPorter_generateBundleImages_EmptyPlatform(t *testing.T) {
 	img := images["server"]
 	assert.Nil(t, img.Platform)
 }
+
+// TODO: test generateBundleOutputs

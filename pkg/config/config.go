@@ -23,6 +23,10 @@ const (
 	EnvDEBUG = "PORTER_DEBUG"
 
 	CustomBundleKey = "sh.porter"
+
+	// BundleOutputsDir is the directory where outputs are expected to be placed
+	// during the execution of a bundle action.
+	BundleOutputsDir = "/cnab/app/outputs"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
@@ -168,4 +172,12 @@ func (c *Config) GetCredentialPath(name string) (string, error) {
 		return "", err
 	}
 	return filepath.Join(credDir, fmt.Sprintf("%s.yaml", name)), nil
+}
+
+func (c *Config) GetOutputsDir() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "outputs"), nil
 }

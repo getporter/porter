@@ -131,11 +131,6 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "mixin execution failed")
 			}
 
-			err = p.collectStepOutput(step)
-			if err != nil {
-				return err
-			}
-
 			// TODO: refactor for unit testing
 			// Apply/update bundle outputs
 			for _, bundleOutput := range p.Manifest.Outputs {
@@ -154,31 +149,38 @@ func (p *Porter) Run(opts RunOptions) error {
 
 				if doApply {
 					// Read step outputs provided by the mixin
-					outputs, err := p.readOutputs()
+					// TODO: technically we are re-reading mixin step outputs
+					// think about consolidating?
+					outputs, err := p.readOutputs(false)
 					if err != nil {
 						return errors.Wrap(err, "could not read step outputs")
 					}
 
 					// Ensure outputs directory exists
-					exists, err := p.FileSystem.DirExists("/cnab/app/outputs")
+					exists, err := p.FileSystem.DirExists(config.BundleOutputsDir)
 					if err != nil {
 						return err
 					}
 					if !exists {
-						if err := p.FileSystem.MkdirAll("/cnab/app/outputs", os.ModePerm); err != nil {
+						if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
 							return errors.Wrap(err, "could not make CNAB outputs directory")
 						}
 					}
 
 					// Write outputs to expected CNAB locations
 					for _, output := range outputs {
-						outpath := filepath.Join("/cnab/app/outputs", bundleOutput.Name)
-						err := p.FileSystem.WriteFile(outpath, []byte(output), os.ModePerm)
+						outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+						err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
 						if err != nil {
 							return errors.Wrapf(err, "could not write output file %s", outpath)
 						}
 					}
 				}
+			}
+
+			err = p.collectStepOutput(step)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -236,14 +238,15 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 }
 
 func (p *Porter) collectStepOutput(step *config.Step) error {
-	outputs, err := p.readOutputs()
+	outputs, err := p.readOutputs(true)
 	if err != nil {
 		return err
 	}
+
 	return p.Manifest.ApplyStepOutputs(step, outputs)
 }
 
-func (p *Porter) readOutputs() ([]string, error) {
+func (p *Porter) readOutputs(remove bool) ([]string, error) {
 	var outputs []string
 
 	outfiles, err := p.FileSystem.ReadDir(mixin.OutputsDir)
@@ -270,9 +273,11 @@ func (p *Porter) readOutputs() ([]string, error) {
 		}
 		// remove file when we have read it, it shouldn't be here for the
 		// next step
-		err = p.FileSystem.Remove(outpath)
-		if err != nil {
-			return nil, err
+		if remove {
+			err = p.FileSystem.Remove(outpath)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

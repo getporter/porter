@@ -110,7 +110,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 			Definition:  output.Name,
 			Description: output.Description,
 			ApplyTo:     output.ApplyTo,
-			Path:        filepath.Join("/cnab/app/outputs/", output.Name),
+			Path:        filepath.Join(config.BundleOutputsDir, output.Name),
 		}
 
 		(*defs)[output.Name] = d

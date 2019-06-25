@@ -232,6 +232,17 @@ func (p *Porter) prepareDockerFilesystem() error {
 		}
 	}
 
+	// Create the local outputs directory, if it doesn't already exist
+	outputsDir, err := p.Config.GetOutputsDir()
+	if err != nil {
+		return errors.Wrap(err, "unable to get outputs directory")
+	}
+
+	err = p.FileSystem.MkdirAll(outputsDir, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "could not create outputs directory %s", outputsDir)
+	}
+
 	return nil
 }
 
