@@ -36,7 +36,7 @@ dockerfile: dockerfile.tmpl
 `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
     to provide a suitable base image, for example one that has root ssl certificates installed. When a Dockerfile template is
-    not specified, Porter automatically copies the contents of the current directory into /cnab/app/ of the invocation image. 
+    not specified, Porter automatically copies the contents of the current directory into `$BUNDLE_DIR` of the invocation image. 
     When using a Dockerfile template, you must manually copy any files you need in your bundle using COPY statements.
 
 ## Mixins

@@ -2,8 +2,10 @@ package porter
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/cnab-go/bundle"
 	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
 	"github.com/deislabs/porter/pkg/config"
@@ -32,10 +34,13 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"FROM debian:stretch",
 		"COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt",
 		"",
-		"COPY . /cnab/app",
-		"RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab",
-		"WORKDIR /cnab/app",
-		`CMD ["/cnab/app/run"]`,
+		"ARG BUNDLE_DIR",
+		"",
+		"COPY .cnab /cnab",
+		"COPY . $BUNDLE_DIR",
+		"RUN rm -fr $BUNDLE_DIR/.cnab",
+		"WORKDIR $BUNDLE_DIR",
+		"CMD [\"/cnab/app/run\"]",
 	}
 	assert.Equal(t, wantlines, gotlines)
 }
@@ -68,9 +73,9 @@ COPY mybin /cnab/app/
 		"FROM ubuntu:latest",
 		"COPY mybin /cnab/app/",
 		"",
-		"COPY cnab/ /cnab/",
-		"COPY porter.yaml /cnab/app/porter.yaml",
-		"WORKDIR /cnab/app",
+		"COPY .cnab/ /cnab/",
+		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
+		"WORKDIR $BUNDLE_DIR",
 		"CMD [\"/cnab/app/run\"]",
 	}
 	assert.Equal(t, wantLines, gotlines)
@@ -98,9 +103,12 @@ FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY . /cnab/app
-RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
-WORKDIR /cnab/app
+ARG BUNDLE_DIR
+
+COPY .cnab /cnab
+COPY . $BUNDLE_DIR
+RUN rm -fr $BUNDLE_DIR/.cnab
+WORKDIR $BUNDLE_DIR
 CMD ["/cnab/app/run"]
 `
 	assert.Equal(t, wantlines, p.TestConfig.TestContext.GetOutput())
@@ -147,17 +155,17 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	err = p.prepareDockerFilesystem()
 	require.NoError(t, err)
 
-	wantRunscript := "cnab/app/run"
+	wantRunscript := build.LOCAL_RUN
 	runscriptExists, err := p.FileSystem.Exists(wantRunscript)
 	require.NoError(t, err)
 	assert.True(t, runscriptExists, "The run script wasn't copied into %s", wantRunscript)
 
-	wantPorterRuntime := "cnab/app/porter-runtime"
+	wantPorterRuntime := filepath.Join(build.LOCAL_APP, "porter-runtime")
 	porterMixinExists, err := p.FileSystem.Exists(wantPorterRuntime)
 	require.NoError(t, err)
 	assert.True(t, porterMixinExists, "The porter-runtime wasn't copied into %s", wantPorterRuntime)
 
-	wantExecMixin := "cnab/app/mixins/exec/exec-runtime"
+	wantExecMixin := filepath.Join(build.LOCAL_APP, "mixins", "exec", "exec-runtime")
 	execMixinExists, err := p.FileSystem.Exists(wantExecMixin)
 	require.NoError(t, err)
 	assert.True(t, execMixinExists, "The exec-runtime mixin wasn't copied into %s", wantExecMixin)
@@ -177,16 +185,16 @@ func TestPorter_buildBundle(t *testing.T) {
 	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
-	bundleJSONExists, err := p.FileSystem.Exists("cnab/bundle.json")
+	bundleJSONExists, err := p.FileSystem.Exists(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
-	require.True(t, bundleJSONExists, "cnab/bundle.json wasn't written")
+	require.True(t, bundleJSONExists, "%s wasn't written", build.LOCAL_BUNDLE)
 
-	f, _ := p.FileSystem.Stat("cnab/bundle.json")
+	f, _ := p.FileSystem.Stat(build.LOCAL_BUNDLE)
 	if f.Size() == 0 {
-		t.Fatalf("cnab/bundle.json is empty")
+		t.Fatalf("%s is empty", build.LOCAL_BUNDLE)
 	}
 
-	bundleBytes, err := p.FileSystem.ReadFile("cnab/bundle.json")
+	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 
 	bun := &bundle.Bundle{}
@@ -221,7 +229,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
-	bundleBytes, err := p.FileSystem.ReadFile("cnab/bundle.json")
+	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 
 	var bundle bundle.Bundle

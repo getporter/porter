@@ -10,8 +10,8 @@ mkdir -p ${TEST_DIR}
 pushd ${TEST_DIR}
 trap popd EXIT
 
-# Populate cnab/app with terraform assets
-cp -r ${REPO_DIR}/build/testdata/bundles/terraform/cnab .
+# Copy terraform assets
+cp -r ${REPO_DIR}/build/testdata/bundles/terraform/terraform .
 
 # Copy in the terraform porter manifest
 cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .

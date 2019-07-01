@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/build"
 	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
-	"github.com/deislabs/porter/pkg/config"
 	cxt "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/docker/cli/cli/command"
@@ -24,6 +24,9 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/pkg/errors"
 )
+
+// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
+var BUNDLE_DIR string = "/cnab/app"
 
 type BuildOptions struct {
 	contextOptions
@@ -136,18 +139,18 @@ func (p *Porter) getBaseDockerfile() ([]string, error) {
 
 func (p *Porter) buildPorterSection() []string {
 	return []string{
-		`COPY porter.yaml /cnab/app/porter.yaml`,
+		`COPY porter.yaml $BUNDLE_DIR/porter.yaml`,
 	}
 }
 
 func (p *Porter) buildCNABSection() []string {
 	return []string{
-		`COPY cnab/ /cnab/`,
+		`COPY .cnab/ /cnab/`,
 	}
 }
 
 func (p *Porter) buildWORKDIRSection() string {
-	return `WORKDIR /cnab/app`
+	return `WORKDIR $BUNDLE_DIR`
 }
 
 func (p *Porter) buildCMDSection() string {
@@ -191,6 +194,10 @@ func (p *Porter) buildMixinsSection() ([]string, error) {
 }
 
 func (p *Porter) prepareDockerFilesystem() error {
+	// clean up previously generated files
+	p.FileSystem.RemoveAll(build.LOCAL_CNAB)
+	p.FileSystem.Remove("Dockerfile")
+
 	fmt.Fprintf(p.Out, "Copying dependencies ===> \n")
 	for _, dep := range p.Manifest.Dependencies {
 		err := p.copyDependency(dep.Name)
@@ -206,21 +213,21 @@ func (p *Porter) prepareDockerFilesystem() error {
 		return err
 	}
 
-	err = p.FileSystem.MkdirAll(filepath.Dir(config.RunScript), 0755)
+	err = p.FileSystem.MkdirAll(build.LOCAL_APP, 0755)
 	if err != nil {
 		return err
 	}
 
-	err = p.FileSystem.WriteFile(config.RunScript, runTmpl, 0755)
+	err = p.FileSystem.WriteFile(build.LOCAL_RUN, runTmpl, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "failed to write %s", config.RunScript)
+		return errors.Wrapf(err, "failed to write %s", build.LOCAL_RUN)
 	}
 
 	pr, err := p.GetPorterRuntimePath()
 	if err != nil {
 		return err
 	}
-	err = p.CopyFile(pr, "cnab/app/porter-runtime")
+	err = p.CopyFile(pr, filepath.Join(build.LOCAL_APP, "porter-runtime"))
 	if err != nil {
 		return err
 	}
@@ -243,7 +250,7 @@ func (p *Porter) copyDependency(bundle string) error {
 		return err
 	}
 
-	err = p.Context.CopyDirectory(bundleDir, "cnab/app/bundles", true)
+	err = p.Context.CopyDirectory(bundleDir, filepath.Join(build.LOCAL_APP, "bundles"), true)
 	return errors.Wrapf(err, "could not copy bundle directory contents for %s", bundle)
 }
 
@@ -254,7 +261,7 @@ func (p *Porter) copyMixin(mixin string) error {
 		return err
 	}
 
-	err = p.Context.CopyDirectory(mixinDir, "cnab/app/mixins", true)
+	err = p.Context.CopyDirectory(mixinDir, filepath.Join(build.LOCAL_APP, "mixins"), true)
 	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
 }
 
@@ -269,6 +276,9 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 		PullParent:     false,
 		Tags:           []string{p.Config.Manifest.Image},
 		Dockerfile:     "Dockerfile",
+		BuildArgs: map[string]*string{
+			"BUNDLE_DIR": &BUNDLE_DIR,
+		},
 	}
 	tar, err := archive.TarWithOptions(path, &archive.TarOptions{})
 	if err != nil {
@@ -314,11 +324,11 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 }
 
 func (p Porter) writeBundle(b *bundle.Bundle) error {
-	f, err := p.Config.FileSystem.OpenFile("cnab/bundle.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
-		return errors.Wrapf(err, "error creating cnab/bundle.json")
+		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)
 	}
 	_, err = b.WriteTo(f)
-	return errors.Wrap(err, "error writing to cnab/bundle.json")
+	return errors.Wrapf(err, "error writing to %s", build.LOCAL_BUNDLE)
 }
