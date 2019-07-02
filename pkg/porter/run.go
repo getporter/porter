@@ -131,6 +131,16 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "mixin execution failed")
 			}
 
+			outputs, err := p.readOutputs()
+			if err != nil {
+				return errors.Wrap(err, "could not read step outputs")
+			}
+
+			err = p.Manifest.ApplyStepOutputs(step, outputs)
+			if err != nil {
+				return err
+			}
+
 			// TODO: refactor for unit testing
 			// Apply/update bundle outputs
 			for _, bundleOutput := range p.Manifest.Outputs {
@@ -148,14 +158,6 @@ func (p *Porter) Run(opts RunOptions) error {
 				}
 
 				if doApply {
-					// Read step outputs provided by the mixin
-					// TODO: technically we are re-reading mixin step outputs
-					// think about consolidating?
-					outputs, err := p.readOutputs(false)
-					if err != nil {
-						return errors.Wrap(err, "could not read step outputs")
-					}
-
 					// Ensure outputs directory exists
 					exists, err := p.FileSystem.DirExists(config.BundleOutputsDir)
 					if err != nil {
@@ -169,18 +171,19 @@ func (p *Porter) Run(opts RunOptions) error {
 
 					// Write outputs to expected CNAB locations
 					for _, output := range outputs {
-						outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
-						err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
-						if err != nil {
-							return errors.Wrapf(err, "could not write output file %s", outpath)
+						// Currently, outputs are all transfered in one file, delimited by newlines
+						// We therefore have to check if a given output (line) corresponds to this bundle output
+						// TODO: refactor once outputs are transferred in the form of files
+						outputKey := strings.Split(output, "=")[0]
+						if outputKey == bundleOutput.Name {
+							outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+							err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
+							if err != nil {
+								return errors.Wrapf(err, "could not write output file %s", outpath)
+							}
 						}
 					}
 				}
-			}
-
-			err = p.collectStepOutput(step)
-			if err != nil {
-				return err
 			}
 		}
 	}
@@ -237,16 +240,7 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	return r
 }
 
-func (p *Porter) collectStepOutput(step *config.Step) error {
-	outputs, err := p.readOutputs(true)
-	if err != nil {
-		return err
-	}
-
-	return p.Manifest.ApplyStepOutputs(step, outputs)
-}
-
-func (p *Porter) readOutputs(remove bool) ([]string, error) {
+func (p *Porter) readOutputs() ([]string, error) {
 	var outputs []string
 
 	outfiles, err := p.FileSystem.ReadDir(mixin.OutputsDir)
@@ -271,13 +265,9 @@ func (p *Porter) readOutputs(remove bool) ([]string, error) {
 				outputs = append(outputs, line)
 			}
 		}
-		// remove file when we have read it, it shouldn't be here for the
-		// next step
-		if remove {
-			err = p.FileSystem.Remove(outpath)
-			if err != nil {
-				return nil, err
-			}
+		err = p.FileSystem.Remove(outpath)
+		if err != nil {
+			return nil, err
 		}
 	}
 

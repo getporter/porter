@@ -600,3 +600,43 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "mybundle", args[0].(string))
 }
+
+func TestReadManifest_Validate_BundleOutput(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs.yaml", Name)
+
+	wantOutputs := []OutputDefinition{
+		{
+			Name:        "mysql-root-password",
+			Description: "The root MySQL password",
+			Schema: Schema{
+				Type: "string",
+			},
+		},
+		{
+			Name: "mysql-password",
+			Schema: Schema{
+				Type: "string",
+			},
+			ApplyTo: []string{
+				"install",
+				"upgrade",
+			},
+		},
+	}
+
+	require.NoError(t, c.LoadManifest())
+	require.NoError(t, c.Manifest.Validate())
+	require.Equal(t, wantOutputs, c.Manifest.Outputs)
+}
+
+func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", Name)
+
+	require.Error(t, c.LoadManifest())
+}

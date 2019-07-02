@@ -95,14 +95,15 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 	outputs := &bundle.OutputsDefinition{
 		Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
 	}
+
 	for _, output := range c.Manifest.Outputs {
 		fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
 		d := &definition.Schema{
-			Type:      output.DataType,
+			Type:      output.Type,
 			Default:   output.Default,
-			Enum:      output.AllowedValues,
-			Minimum:   output.MinValue,
-			Maximum:   output.MaxValue,
+			Enum:      output.Enum,
+			Minimum:   output.Minimum,
+			Maximum:   output.Maximum,
 			MinLength: output.MinLength,
 			MaxLength: output.MaxLength,
 		}

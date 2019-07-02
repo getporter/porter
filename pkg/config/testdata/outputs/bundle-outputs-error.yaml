@@ -1,0 +1,42 @@
+mixins:
+- helm
+
+name: outputs
+version: 0.1.0
+invocationImage: porter-outputs:latest
+tag: deislabs/porter-outputs-bundle:v0.1.0
+
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+
+install:
+- helm:
+    description: "Install MySQL"
+    name: test-mysql
+    chart: stable/mysql
+    set:
+      mysqlDatabase: test-mysql-db
+      mysqlUser: test-mysql-user
+    outputs:
+    - name: mysql-root-password
+      secret: test-mysql
+      key: mysql-root-password
+    - name: mysql-password
+      secret: test-mysql
+      key: mysql-password
+
+uninstall:
+- helm:
+    description: "Uninstall MySQL"
+    purge: true
+    releases:
+      - test-mysql
+
+outputs:
+- name: mysql-root-password
+  type: string
+- name: mysql-password
+  type: string
+  # this section needs to be an array of strings; hence will cause an error
+  applyTo: install

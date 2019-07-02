@@ -31,6 +31,7 @@ ${PORTER_HOME}/porter install --insecure --cred ci \
     --param namespace=$NAMESPACE \
     --param wordpress-name="porter-ci-wordpress-$NAMESPACE" \
     --param mysql-name="porter-ci-mysql-$NAMESPACE" \
+    --param mysql-password="insecure-db-password" \
     --debug 2>&1 | tee ${install_log}
 
 # Be sure that sensitive data is masked
@@ -38,6 +39,10 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
   echo "ERROR: Sensitive parameter value (wordpress-password) not masked in console output"
   exit 1
 fi
+
+# Verify outputs
+cat ${PORTER_HOME}/outputs/wordpress/wordpress-password | grep "${sensitive_value}"
+cat ${PORTER_HOME}/outputs/wordpress/mysql-password | grep "insecure-db-password"
 
 cat ${PORTER_HOME}/claims/wordpress.json
 

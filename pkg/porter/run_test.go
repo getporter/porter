@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,47 +17,24 @@ import (
 func TestPorter_readOutputs(t *testing.T) {
 	p := NewTestPorter(t)
 
-	type readOutputsTest struct {
-		Name    string
-		Remove  bool
-		FailMsg string
+	p.TestConfig.TestContext.AddTestFile("testdata/outputs1.txt", filepath.Join(mixin.OutputsDir, "myoutput1"))
+	p.TestConfig.TestContext.AddTestFile("testdata/outputs2.txt", filepath.Join(mixin.OutputsDir, "myoutput2"))
+
+	gotOutputs, err := p.readOutputs()
+	require.NoError(t, err)
+
+	for _, file := range []string{filepath.Join(mixin.OutputsDir, "myoutput1"), filepath.Join(mixin.OutputsDir, "myoutput2")} {
+		if exists, _ := p.FileSystem.Exists(file); exists {
+			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", file))
+		}
 	}
 
-	testcases := []readOutputsTest{
-		{
-			Name:    "remove: true",
-			Remove:  true,
-			FailMsg: "files should not exist after reading outputs",
-		},
-		{
-			Name:    "remove: false",
-			Remove:  false,
-			FailMsg: "files should exist after reading outputs",
-		},
+	wantOutputs := []string{
+		"FOO=BAR",
+		"BAZ=QUX",
+		"A=B",
 	}
-
-	for _, tc := range testcases {
-		t.Run(tc.Name, func(t *testing.T) {
-			p.TestConfig.TestContext.AddTestFile("testdata/outputs1.txt", filepath.Join(mixin.OutputsDir, "myoutput1"))
-			p.TestConfig.TestContext.AddTestFile("testdata/outputs2.txt", filepath.Join(mixin.OutputsDir, "myoutput2"))
-
-			gotOutputs, err := p.readOutputs(tc.Remove)
-			require.NoError(t, err)
-
-			for _, file := range []string{filepath.Join(mixin.OutputsDir, "myoutput1"), filepath.Join(mixin.OutputsDir, "myoutput2")} {
-				if exists, _ := p.FileSystem.Exists(file); exists == tc.Remove {
-					require.Fail(t, tc.FailMsg)
-				}
-			}
-
-			wantOutputs := []string{
-				"FOO=BAR",
-				"BAZ=QUX",
-				"A=B",
-			}
-			assert.Equal(t, wantOutputs, gotOutputs)
-		})
-	}
+	assert.Equal(t, wantOutputs, gotOutputs)
 }
 
 func TestPorter_defaultDebugToOff(t *testing.T) {

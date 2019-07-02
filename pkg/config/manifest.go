@@ -108,22 +108,11 @@ type Dependency struct {
 
 // OutputDefinition defines a single output for a CNAB
 type OutputDefinition struct {
-	Name    string   `yaml:"name"`
-	ApplyTo []string `yaml:"applyTo,omitempty"`
+	Name        string   `yaml:"name"`
+	ApplyTo     []string `yaml:"applyTo,omitempty"`
+	Description string   `yaml:"description,omitempty"`
 
-	// TODO: use cnab-go's bundle/definition.Schema for the rest of these
-	// *definition.Schema
-	DataType      string        `yaml:"type"`
-	Default       interface{}   `yaml:"default,omitempty"`
-	Description   string        `yaml:"description,omitempty"`
-	AllowedValues []interface{} `yaml:"allowed,omitempty"`
-	Required      bool          `yaml:"required"`
-	MinValue      *float64      `yaml:"minValue,omitempty"`
-	MaxValue      *float64      `yaml:"maxValue,omitempty"`
-	MinLength     *float64      `yaml:"minLength,omitempty"`
-	MaxLength     *float64      `yaml:"maxLength,omitempty"`
-	Destination   *Location     `yaml:"destination,omitempty"`
-	Sensitive     bool          `yaml:"sensitive"`
+	Schema `yaml:",inline"`
 }
 
 func (od *OutputDefinition) Validate() error {
@@ -131,8 +120,7 @@ func (od *OutputDefinition) Validate() error {
 		return errors.New("output name is required")
 	}
 
-	// TODO: check DataType to make sure it is one of allowed values
-	// e.g., string, integer, boolean...
+	// TODO: Validate inline Schema
 
 	return nil
 }
