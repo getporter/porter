@@ -3,6 +3,7 @@ package configadapter
 import (
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
 
 	"github.com/deislabs/porter/pkg/config"
@@ -225,4 +226,74 @@ func TestPorter_generateBundleImages_EmptyPlatform(t *testing.T) {
 	assert.Nil(t, img.Platform)
 }
 
-// TODO: test generateBundleOutputs
+func TestPorter_generateBundleOutputs(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	outputDefinitions := []config.OutputDefinition{
+		{
+			Name:        "output1",
+			Description: "Description of output1",
+			ApplyTo: []string{
+				"install",
+				"upgrade",
+			},
+			Schema: config.Schema{
+				Type: "string",
+			},
+		},
+		{
+			Name:        "output2",
+			Description: "Description of output2",
+			Schema: config.Schema{
+				Type: "boolean",
+			},
+		},
+	}
+
+	a.Manifest.Outputs = outputDefinitions
+
+	defs := make(definition.Definitions, len(a.Manifest.Outputs))
+	outputs := a.generateBundleOutputs(&defs)
+	require.Len(t, defs, 2)
+
+	wantOutputDefinitions := bundle.OutputsDefinition{
+		Fields: map[string]bundle.OutputDefinition{
+			"output1": {
+				Definition:  "output1",
+				Description: "Description of output1",
+				ApplyTo: []string{
+					"install",
+					"upgrade",
+				},
+				Path: "/cnab/app/outputs/output1",
+			},
+			"output2": {
+				Definition:  "output2",
+				Description: "Description of output2",
+				Path:        "/cnab/app/outputs/output2",
+			},
+		},
+	}
+
+	require.Equal(t, &wantOutputDefinitions, outputs)
+
+	wantDefinitions := definition.Definitions{
+		"output1": &definition.Schema{
+			Type: "string",
+		},
+		"output2": &definition.Schema{
+			Type: "boolean",
+		},
+	}
+
+	require.Equal(t, wantDefinitions, defs)
+}
