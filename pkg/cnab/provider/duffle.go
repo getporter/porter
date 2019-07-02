@@ -22,7 +22,7 @@ func NewDuffle(c *config.Config) *Duffle {
 	}
 }
 
-func (d *Duffle) newDriver(driverName string) (driver.Driver, error) {
+func (d *Duffle) newDriver(driverName, bundleName string) (driver.Driver, error) {
 	driverImpl, err := duffledriver.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
@@ -45,8 +45,8 @@ func (d *Duffle) newDriver(driverName string) (driver.Driver, error) {
 			return nil, errors.Wrap(err, "unable to get outputs directory")
 		}
 
-		// Create outputs sub-directory using the manifest name, if it does not already exist
-		bundleOutputsDir := filepath.Join(outputsDir, d.Manifest.Name)
+		// Create outputs sub-directory using the bundle name
+		bundleOutputsDir := filepath.Join(outputsDir, bundleName)
 		err = d.FileSystem.MkdirAll(bundleOutputsDir, 0755)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not create outputs directory %s for docker driver bind mount", bundleOutputsDir)
