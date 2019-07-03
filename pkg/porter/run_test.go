@@ -114,11 +114,11 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 
 	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
 	assert.NoError(t, err)
-	assert.Equal(t, outputs[0], string(bytes))
+	assert.Equal(t, "bar", string(bytes))
 
 	bytes, err = p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
-	assert.Equal(t, outputs[1], string(bytes))
+	assert.Equal(t, "abc", string(bytes))
 }
 
 func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
@@ -183,5 +183,5 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	// 123 output should exist (applyTo matches)
 	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
-	assert.Equal(t, []byte("123=abc"), bytes)
+	assert.Equal(t, []byte("abc"), bytes)
 }

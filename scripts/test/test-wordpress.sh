@@ -40,10 +40,11 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
   exit 1
 fi
 
-# Verify outputs
-# TODO: use porter cli to access and verify
-cat ${PORTER_HOME}/outputs/wordpress/wordpress-password | grep "${sensitive_value}"
-cat ${PORTER_HOME}/outputs/wordpress/mysql-password | grep "insecure-db-password"
+echo "Verifing bundle outputs..."
+listing=$(${PORTER_HOME}/porter outputs list -b wordpress)
+echo "${listing}" | grep "wordpress-password" && echo "${listing}" | grep "mysql-password"
+${PORTER_HOME}/porter output show -n wordpress-password -b wordpress | grep "${sensitive_value}"
+${PORTER_HOME}/porter output show -n mysql-password -b wordpress | grep "insecure-db-password"
 
 cat ${PORTER_HOME}/claims/wordpress.json
 

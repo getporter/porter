@@ -39,6 +39,7 @@ func (d *Duffle) newDriver(driverName, bundleName string) (driver.Driver, error)
 	}
 
 	// If docker driver, setup host bind mount for outputs
+	// TODO: separate function/add tests
 	if dockerish, ok := driverImpl.(*duffledriver.DockerDriver); ok {
 		outputsDir, err := d.Config.GetOutputsDir()
 		if err != nil {

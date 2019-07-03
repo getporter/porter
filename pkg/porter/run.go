@@ -244,7 +244,9 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
 			// Currently, outputs are all transfered in one file, delimited by newlines
 			// We therefore have to check if a given output (line) corresponds to this bundle output
 			// TODO: refactor once outputs are transferred in the form of files
-			outputKey := strings.Split(output, "=")[0]
+			outputSplit := strings.SplitN(output, "=", 2)
+			outputKey := outputSplit[0]
+			outputValue := outputSplit[1]
 
 			// If a given step output matches a bundle output, proceed
 			if outputKey == bundleOutput.Name {
@@ -269,7 +271,7 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
 
 					// Write output
 					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
-					err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
+					err := p.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
 					if err != nil {
 						return errors.Wrapf(err, "unable to write output file %s", outpath)
 					}
