@@ -141,49 +141,10 @@ func (p *Porter) Run(opts RunOptions) error {
 				return err
 			}
 
-			// TODO: refactor for unit testing
-			// Apply/update bundle outputs
-			for _, bundleOutput := range p.Manifest.Outputs {
-				doApply := true
-
-				// If ApplyTo array non-empty, default doApply to false
-				// and only set to true if at least one entry matches current Action
-				if len(bundleOutput.ApplyTo) > 0 {
-					doApply = false
-					for _, applyTo := range bundleOutput.ApplyTo {
-						if opts.Action == applyTo {
-							doApply = true
-						}
-					}
-				}
-
-				if doApply {
-					// Ensure outputs directory exists
-					exists, err := p.FileSystem.DirExists(config.BundleOutputsDir)
-					if err != nil {
-						return err
-					}
-					if !exists {
-						if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
-							return errors.Wrap(err, "could not make CNAB outputs directory")
-						}
-					}
-
-					// Write outputs to expected CNAB locations
-					for _, output := range outputs {
-						// Currently, outputs are all transfered in one file, delimited by newlines
-						// We therefore have to check if a given output (line) corresponds to this bundle output
-						// TODO: refactor once outputs are transferred in the form of files
-						outputKey := strings.Split(output, "=")[0]
-						if outputKey == bundleOutput.Name {
-							outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
-							err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
-							if err != nil {
-								return errors.Wrapf(err, "could not write output file %s", outpath)
-							}
-						}
-					}
-				}
+			// Apply any Bundle Outputs declared in this step
+			err = p.ApplyBundleOutputs(opts, outputs)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -272,4 +233,49 @@ func (p *Porter) readOutputs() ([]string, error) {
 	}
 
 	return outputs, nil
+}
+
+// ApplyBundleOutputs writes the provided outputs to the proper location
+// in the execution environment
+func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
+	for _, output := range outputs {
+		// Iterate through bundle outputs declared in the manifest
+		for _, bundleOutput := range p.Manifest.Outputs {
+			// Currently, outputs are all transfered in one file, delimited by newlines
+			// We therefore have to check if a given output (line) corresponds to this bundle output
+			// TODO: refactor once outputs are transferred in the form of files
+			outputKey := strings.Split(output, "=")[0]
+
+			// If a given step output matches a bundle output, proceed
+			if outputKey == bundleOutput.Name {
+				doApply := true
+
+				// If ApplyTo array non-empty, default doApply to false
+				// and only set to true if at least one entry matches current Action
+				if len(bundleOutput.ApplyTo) > 0 {
+					doApply = false
+					for _, applyTo := range bundleOutput.ApplyTo {
+						if opts.Action == applyTo {
+							doApply = true
+						}
+					}
+				}
+
+				if doApply {
+					// Ensure outputs directory exists
+					if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
+						return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
+					}
+
+					// Write output
+					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+					err := p.FileSystem.WriteFile(outpath, []byte(output), 0755)
+					if err != nil {
+						return errors.Wrapf(err, "unable to write output file %s", outpath)
+					}
+				}
+			}
+		}
+	}
+	return nil
 }

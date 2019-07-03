@@ -78,3 +78,110 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 	wantYaml := "install:\n- exec:\n    command: echo hi\n"
 	assert.Equal(t, wantYaml, string(b))
 }
+
+func TestApplyBundleOutputs_None(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+}
+
+func TestApplyBundleOutputs_Some_Match(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
+			},
+			{
+				Name: "123",
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
+	assert.NoError(t, err)
+	assert.Equal(t, outputs[0], string(bytes))
+
+	bytes, err = p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
+	assert.NoError(t, err)
+	assert.Equal(t, outputs[1], string(bytes))
+}
+
+func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "bar",
+			},
+			{
+				Name: "456",
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	// No outputs declared in the manifest match those in outputs,
+	// so no output file is expected to be written
+	for _, output := range []string{"foo", "bar", "123", "456"} {
+		_, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
+		assert.Error(t, err)
+	}
+}
+
+func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
+				ApplyTo: []string{
+					"upgrade",
+				},
+			},
+			{
+				Name: "123",
+				ApplyTo: []string{
+					"install",
+				},
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+	opts.Action = "install"
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	// foo output should not exist (applyTo doesn't match)
+	_, err = p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
+	assert.Error(t, err)
+
+	// 123 output should exist (applyTo matches)
+	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("123=abc"), bytes)
+}

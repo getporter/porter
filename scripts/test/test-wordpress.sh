@@ -41,6 +41,7 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
 fi
 
 # Verify outputs
+# TODO: use porter cli to access and verify
 cat ${PORTER_HOME}/outputs/wordpress/wordpress-password | grep "${sensitive_value}"
 cat ${PORTER_HOME}/outputs/wordpress/mysql-password | grep "insecure-db-password"
 
