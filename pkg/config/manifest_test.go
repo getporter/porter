@@ -75,24 +75,15 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	require.NoError(t, c.LoadManifest())
 
 	assert.NotNil(t, c.Manifest)
-	assert.Equal(t, []string{"helm", "exec"}, c.Manifest.Mixins)
-	assert.Len(t, c.Manifest.Install, 2)
+	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
+	assert.Len(t, c.Manifest.Install, 1)
 
 	installStep := c.Manifest.Install[0]
 	description, _ := installStep.GetDescription()
 	assert.NotNil(t, description)
 
 	mixin := installStep.GetMixinName()
-	assert.Equal(t, "helm", mixin)
-}
-
-func TestConfig_LoadManifest_BundleDependencyNotInstalled(t *testing.T) {
-	c := NewTestConfig(t)
-
-	c.TestContext.AddTestFile("testdata/missingdep.porter.yaml", Name)
-
-	err := c.LoadManifest()
-	require.Errorf(t, err, "bundle missingdep not installed in PORTER_HOME")
+	assert.Equal(t, "exec", mixin)
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
@@ -340,6 +331,8 @@ func TestResolveCredential(t *testing.T) {
 }
 
 func TestResolveOutputs(t *testing.T) {
+	t.Skip("Skip while dependencies is being rewritten")
+
 	m := &Manifest{
 		outputs: map[string]string{
 			"output": "output_value",
@@ -347,11 +340,6 @@ func TestResolveOutputs(t *testing.T) {
 		Dependencies: []*Dependency{
 			&Dependency{
 				Name: "dep",
-				m: &Manifest{
-					outputs: map[string]string{
-						"dep_output": "dep_output_value",
-					},
-				},
 			},
 		},
 	}
@@ -492,6 +480,7 @@ func TestResolveMissingOutputs(t *testing.T) {
 }
 
 func TestResolveDependencyParam(t *testing.T) {
+	t.Skip("Skip while dependencies is being rewritten")
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -508,14 +497,6 @@ func TestResolveDependencyParam(t *testing.T) {
 		Dependencies: []*Dependency{
 			&Dependency{
 				Name: "mysql",
-				m: &Manifest{
-					Name: "mysql",
-					Parameters: []ParameterDefinition{
-						{
-							Name: "database",
-						},
-					},
-				},
 			},
 		},
 		Mixins: []string{"helm"},
@@ -535,6 +516,7 @@ func TestResolveDependencyParam(t *testing.T) {
 }
 
 func TestResolveMissingDependencyParam(t *testing.T) {
+	t.Skip("Skip while dependencies is being rewritten")
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -551,14 +533,6 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 		Dependencies: []*Dependency{
 			&Dependency{
 				Name: "mysql",
-				m: &Manifest{
-					Name: "mysql",
-					Parameters: []ParameterDefinition{
-						{
-							Name: "database",
-						},
-					},
-				},
 			},
 		},
 		Mixins: []string{"helm"},
@@ -590,117 +564,6 @@ func TestDependency_Validate_NameRequired(t *testing.T) {
 	assert.EqualError(t, err, "dependency name is required")
 }
 
-func TestManifest_MergeDependency(t *testing.T) {
-	m := &Manifest{
-		Mixins: []string{"helm"},
-		Install: Steps{
-			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "install wordpress"}}},
-		},
-		Upgrade: Steps{
-			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "upgrade wordpress"}}},
-		},
-		Uninstall: Steps{
-			&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "uninstall wordpress"}}},
-		},
-	}
-
-	dep := &Dependency{
-		m: &Manifest{
-			Mixins: []string{"exec", "helm"},
-			Install: Steps{
-				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "install mysql"}}},
-			},
-			Upgrade: Steps{
-				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "upgrade mysql"}}},
-			},
-			Uninstall: Steps{
-				&Step{Data: map[string]interface{}{"helm": map[interface{}]interface{}{"description": "uninstall mysql"}}},
-			},
-			Credentials: []CredentialDefinition{
-				{Name: "kubeconfig", Location: Location{Path: "/root/.kube/config"}},
-			},
-		},
-	}
-
-	err := m.MergeDependency(dep)
-	require.NoError(t, err)
-
-	assert.Equal(t, []string{"exec", "helm"}, m.Mixins)
-
-	assert.Len(t, m.Install, 2)
-	description, _ := m.Install[0].GetDescription()
-	assert.Equal(t, "install mysql", description)
-	description, _ = m.Install[1].GetDescription()
-	assert.Equal(t, "install wordpress", description)
-
-	assert.Len(t, m.Upgrade, 2)
-	description, _ = m.Upgrade[0].GetDescription()
-	assert.Equal(t, "upgrade mysql", description)
-	description, _ = m.Upgrade[1].GetDescription()
-	assert.Equal(t, "upgrade wordpress", description)
-
-	assert.Len(t, m.Uninstall, 2)
-	description, _ = m.Uninstall[0].GetDescription()
-	assert.Equal(t, "uninstall wordpress", description)
-	description, _ = m.Uninstall[1].GetDescription()
-	assert.Equal(t, "uninstall mysql", description)
-
-	assert.Len(t, m.Credentials, 1)
-}
-
-func TestMergeCredentials(t *testing.T) {
-	testcases := []struct {
-		name               string
-		c1, c2, wantResult CredentialDefinition
-		wantError          string
-	}{
-		{
-			name:       "combine path and environment variable",
-			c1:         CredentialDefinition{Name: "foo", Location: Location{Path: "p1"}},
-			c2:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v2"}},
-			wantResult: CredentialDefinition{Name: "foo", Location: Location{Path: "p1", EnvironmentVariable: "v2"}},
-		},
-		{
-			name:       "same path",
-			c1:         CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
-			c2:         CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
-			wantResult: CredentialDefinition{Name: "foo", Location: Location{Path: "p"}},
-		},
-		{
-			name:      "conflicting path",
-			c1:        CredentialDefinition{Name: "foo", Location: Location{Path: "p1"}},
-			c2:        CredentialDefinition{Name: "foo", Location: Location{Path: "p2"}},
-			wantError: "cannot merge credential foo: conflict on path",
-		},
-		{
-			name:       "same environment variable",
-			c1:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
-			c2:         CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
-			wantResult: CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v"}},
-		},
-		{
-			name:      "conflicting environment variable",
-			c1:        CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v1"}},
-			c2:        CredentialDefinition{Name: "foo", Location: Location{EnvironmentVariable: "v2"}},
-			wantError: "cannot merge credential foo: conflict on environment variable",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			result, err := mergeCredentials(tc.c1, tc.c2)
-
-			if tc.wantError == "" {
-				require.NoError(t, err)
-				assert.Equal(t, tc.wantResult, result)
-			} else {
-				require.Contains(t, err.Error(), tc.wantError)
-			}
-		})
-	}
-
-}
-
 func TestManifest_ApplyBundleOutputs(t *testing.T) {
 	c := NewTestConfig(t)
 	c.SetupPorterHome()
@@ -715,81 +578,6 @@ func TestManifest_ApplyBundleOutputs(t *testing.T) {
 
 	assert.Contains(t, c.Manifest.outputs, "foo")
 	assert.Equal(t, "bar", c.Manifest.outputs["foo"])
-}
-
-func TestManifest_ApplyDependencyOutputs(t *testing.T) {
-	testcases := []struct {
-		name        string
-		rawOutputs  []string
-		wantOutputs map[string]string
-		wantError   string
-	}{
-		{
-			name:        "happy path",
-			rawOutputs:  []string{"host=localhost"},
-			wantOutputs: map[string]string{"host": "localhost"},
-		},
-		{
-			name:        "value with equals sign",
-			rawOutputs:  []string{"cert=abc123==="},
-			wantOutputs: map[string]string{"cert": "abc123==="},
-		},
-		{
-			name:       "missing equals sign",
-			rawOutputs: []string{"foo"},
-			wantError:  "invalid output assignment",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := NewTestConfig(t)
-			c.SetupPorterHome()
-
-			c.TestContext.AddTestFile("testdata/porter.yaml", Name)
-			c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
-
-			require.NoError(t, c.LoadManifest())
-
-			depStep := c.Manifest.Install[0]
-			err := c.Manifest.ApplyOutputs(depStep, tc.rawOutputs)
-			if tc.wantError == "" {
-				require.NoError(t, err)
-			} else {
-				require.Contains(t, err.Error(), tc.wantError)
-				return
-			}
-
-			depM := c.Manifest.Dependencies[0].m
-			for wantKey, wantValue := range tc.wantOutputs {
-				assert.Contains(t, depM.outputs, wantKey)
-				assert.Equal(t, wantValue, depM.outputs[wantKey])
-			}
-		})
-	}
-}
-
-func TestManifest_MergeParameters(t *testing.T) {
-	dep := &Dependency{
-		Name:       "mysql",
-		Parameters: map[string]string{"database": "wordpress"},
-		m: &Manifest{
-			Name: "mysql",
-			Parameters: []ParameterDefinition{
-				{Name: "database"},
-			},
-		},
-	}
-	m := &Manifest{
-		Name:         "wordpress",
-		Dependencies: []*Dependency{dep},
-	}
-
-	err := m.MergeParameters(dep)
-	require.NoError(t, err)
-
-	require.Len(t, m.Parameters, 1)
-	assert.Equal(t, "wordpress", m.Parameters[0].Default)
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {

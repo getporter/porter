@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
@@ -100,16 +99,6 @@ func (c *Config) GetPorterRuntimePath() (string, error) {
 	return path + "-runtime", nil
 }
 
-// GetBundleManifest gets the path to another bundle's manifest.
-func (c *Config) GetBundleManifestPath(bundle string) (string, error) {
-	bundlesDir, err := c.GetBundleDir(bundle)
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(bundlesDir, Name), nil
-}
-
 // GetBundlesDir locates the bundle cache from the porter home directory.
 func (c *Config) GetBundlesCache() (string, error) {
 	home, err := c.GetHomeDir()
@@ -117,48 +106,6 @@ func (c *Config) GetBundlesCache() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, "bundles"), nil
-}
-
-// GetBundleDir locates a bundle
-// Lookup order:
-// - ./bundles/
-// - PORTER_HOME/bundles/
-func (c *Config) GetBundleDir(bundle string) (string, error) {
-	urlPath := strings.HasPrefix(c.Manifest.path, "http")
-
-	// Check for a local bundle next to the current manifest
-	if c.Manifest != nil || urlPath == false {
-		localDir := c.Manifest.GetManifestDir()
-		localBundleDir := filepath.Join(localDir, "bundles", bundle)
-		dirExists, err := c.FileSystem.DirExists(localBundleDir)
-
-		if err != nil {
-			return "", errors.Wrapf(err, "could not check if directory %s exists", localBundleDir)
-		}
-
-		if dirExists {
-			return localBundleDir, nil
-		}
-	}
-
-	// Fall back to looking in the cache under PORTER_HOME
-	cacheDir, err := c.GetBundlesCache()
-	if err != nil {
-		return "", err
-	}
-
-	bundleDir := filepath.Join(cacheDir, bundle)
-
-	dirExists, err := c.FileSystem.DirExists(bundleDir)
-	if err != nil {
-		return "", errors.Wrapf(err, "bundle %s not accessible at %s", bundle, bundleDir)
-	}
-	if !dirExists {
-		h, _ := c.GetHomeDir()
-		return "", errors.Errorf("bundle %s not available locally or in %s", bundle, h)
-	}
-
-	return bundleDir, nil
 }
 
 func (c *Config) GetMixinsDir() (string, error) {

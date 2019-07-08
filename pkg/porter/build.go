@@ -198,14 +198,6 @@ func (p *Porter) prepareDockerFilesystem() error {
 	p.FileSystem.RemoveAll(build.LOCAL_CNAB)
 	p.FileSystem.Remove("Dockerfile")
 
-	fmt.Fprintf(p.Out, "Copying dependencies ===> \n")
-	for _, dep := range p.Manifest.Dependencies {
-		err := p.copyDependency(dep.Name)
-		if err != nil {
-			return err
-		}
-	}
-
 	fmt.Fprintf(p.Out, "Copying porter runtime ===> \n")
 
 	runTmpl, err := p.Templates.GetRunScript()
@@ -241,17 +233,6 @@ func (p *Porter) prepareDockerFilesystem() error {
 	}
 
 	return nil
-}
-
-func (p *Porter) copyDependency(bundle string) error {
-	fmt.Fprintf(p.Out, "Copying bundle dependency %s ===> \n", bundle)
-	bundleDir, err := p.GetBundleDir(bundle)
-	if err != nil {
-		return err
-	}
-
-	err = p.Context.CopyDirectory(bundleDir, filepath.Join(build.LOCAL_APP, "bundles"), true)
-	return errors.Wrapf(err, "could not copy bundle directory contents for %s", bundle)
 }
 
 func (p *Porter) copyMixin(mixin string) error {
