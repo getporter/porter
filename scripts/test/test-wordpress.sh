@@ -31,7 +31,6 @@ ${PORTER_HOME}/porter install --insecure --cred ci \
     --param namespace=$NAMESPACE \
     --param wordpress-name="porter-ci-wordpress-$NAMESPACE" \
     --param mysql-name="porter-ci-mysql-$NAMESPACE" \
-    --param mysql-password="insecure-db-password" \
     --debug 2>&1 | tee ${install_log}
 
 # Be sure that sensitive data is masked
@@ -41,10 +40,9 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
 fi
 
 echo "Verifing bundle outputs..."
-listing=$(${PORTER_HOME}/porter outputs list -b wordpress)
-echo "${listing}" | grep "wordpress-password" && echo "${listing}" | grep "mysql-password"
+# TODO: porter bundle show wordpress to see outputs listing
+${PORTER_HOME}/porter outputs list -b wordpress | grep "wordpress-password"
 ${PORTER_HOME}/porter output show -n wordpress-password -b wordpress | grep "${sensitive_value}"
-${PORTER_HOME}/porter output show -n mysql-password -b wordpress | grep "insecure-db-password"
 
 cat ${PORTER_HOME}/claims/wordpress.json
 
