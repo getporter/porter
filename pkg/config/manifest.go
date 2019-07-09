@@ -111,6 +111,7 @@ type OutputDefinition struct {
 	Name        string   `yaml:"name"`
 	ApplyTo     []string `yaml:"applyTo,omitempty"`
 	Description string   `yaml:"description,omitempty"`
+	Sensitive   bool     `yaml:"sensitive"`
 
 	Schema `yaml:",inline"`
 }

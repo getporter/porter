@@ -52,13 +52,3 @@ uninstall:
     purge: true
     releases:
       - "{{ bundle.parameters.mysql-name }}"
-
-outputs:
-- name: mysql-root-password
-  description: "The root MySQL password"
-  type: string
-- name: mysql-password
-  type: string
-  applyTo:
-  - install
-  - upgrade

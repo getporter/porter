@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -99,9 +100,17 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 		Outputs: []config.OutputDefinition{
 			{
 				Name: "foo",
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: true,
 			},
 			{
 				Name: "123",
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: false,
 			},
 		},
 	}
@@ -112,13 +121,31 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
 
-	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
-	assert.NoError(t, err)
-	assert.Equal(t, "bar", string(bytes))
+	want := map[string]Output{
+		"foo": {
+			Name:      "foo",
+			Type:      "string",
+			Sensitive: true,
+			Value:     "bar",
+		},
+		"123": {
+			Name:      "123",
+			Type:      "string",
+			Sensitive: false,
+			Value:     "abc",
+		},
+	}
 
-	bytes, err = p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
-	assert.NoError(t, err)
-	assert.Equal(t, "abc", string(bytes))
+	for _, outputName := range []string{"foo", "123"} {
+		bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
+		assert.NoError(t, err)
+
+		var output Output
+		err = json.Unmarshal(bytes, &output)
+		assert.NoError(t, err)
+
+		assert.Equal(t, want[outputName], output)
+	}
 }
 
 func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
@@ -165,6 +192,10 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 				ApplyTo: []string{
 					"install",
 				},
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: false,
 			},
 		},
 	}
@@ -183,5 +214,16 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	// 123 output should exist (applyTo matches)
 	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
-	assert.Equal(t, []byte("abc"), bytes)
+
+	var output Output
+	err = json.Unmarshal(bytes, &output)
+	assert.NoError(t, err)
+
+	want := Output{
+		Name:      "123",
+		Type:      "string",
+		Sensitive: false,
+		Value:     "abc",
+	}
+	assert.Equal(t, want, output)
 }

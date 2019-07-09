@@ -64,3 +64,4 @@ outputs:
     applyTo:
       - "install"
       - "upgrade"
+    sensitive: true

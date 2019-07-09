@@ -25,6 +25,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
+	cmd.AddCommand(buildBundleShowCommand(p))
 
 	return cmd
 }
@@ -37,6 +38,7 @@ func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 		buildUpgradeCommand(p),
 		buildUninstallCommand(p),
 		buildPublishCommand(p),
+		buildShowCommand(p),
 	}
 }
 
@@ -321,6 +323,42 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 func buildPublishCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundlePublishCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle publish", "porter publish", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
+	return cmd
+}
+
+// TODO: test!
+func buildBundleShowCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ShowOptions{}
+
+	cmd := cobra.Command{
+		Use:   "show",
+		Short: "Show a bundle",
+		Long:  "Displays info relating to a bundle claim, including status and a listing of outputs.",
+		Example: `  porter bundle show [CLAIM]
+
+Optional output formats include json and yaml.
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ShowBundle(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
+
+	return &cmd
+}
+
+func buildShowCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleShowCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle show", "porter show", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}

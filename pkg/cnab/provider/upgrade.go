@@ -37,7 +37,7 @@ func (d *Duffle) Upgrade(args UpgradeArguments) error {
 		}
 	}
 
-	driver, err := d.newDriver(args.Driver, claim.Bundle.Name)
+	driver, err := d.newDriver(args.Driver, claim.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}

@@ -39,7 +39,7 @@ func (d *Duffle) Install(args InstallArguments) error {
 	}
 	c.Parameters = params
 
-	driver, err := d.newDriver(args.Driver, b.Name)
+	driver, err := d.newDriver(args.Driver, c.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}

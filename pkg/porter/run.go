@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -269,9 +270,22 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
 						return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
 					}
 
-					// Write output
 					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
-					err := p.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
+
+					// Create data structure with relevant data for use in listing/showing later
+					output := Output{
+						Name:      bundleOutput.Name,
+						Sensitive: bundleOutput.Sensitive,
+						Type:      bundleOutput.Type,
+						Value:     outputValue,
+					}
+
+					data, err := json.Marshal(output)
+					if err != nil {
+						return err
+					}
+
+					err = p.FileSystem.WriteFile(outpath, data, 0755)
 					if err != nil {
 						return errors.Wrapf(err, "unable to write output file %s", outpath)
 					}
