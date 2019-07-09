@@ -5,7 +5,7 @@ import (
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
-
+	"github.com/deislabs/porter/pkg/cnab/extensions"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +13,7 @@ import (
 
 func TestPorter_ToBundle(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
 	err := c.LoadManifest()
 	require.NoError(t, err)
@@ -21,23 +21,6 @@ func TestPorter_ToBundle(t *testing.T) {
 	a := ManifestConverter{
 		Context:  c.Context,
 		Manifest: c.Manifest,
-	}
-
-	mappedImage := config.MappedImage{
-		Description:   "un petite server",
-		Image:         "deislabs/myserver:1.0.0",
-		ImageType:     "docker",
-		Digest:        "abc123",
-		Size:          12,
-		MediaType:     "download",
-		OriginalImage: "deis/myserver:1.0.0",
-		Platform: &config.ImagePlatform{
-			OS:           "linux",
-			Architecture: "amd64",
-		},
-	}
-	a.Manifest.ImageMap = map[string]config.MappedImage{
-		"server": mappedImage,
 	}
 
 	bun := a.ToBundle()
@@ -53,6 +36,9 @@ func TestPorter_ToBundle(t *testing.T) {
 
 	assert.Contains(t, bun.Parameters.Fields, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
+
+	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Dependencies was not populated")
+	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
 }
 
 func makefloat64(v float64) *float64 {
@@ -296,4 +282,61 @@ func TestPorter_generateBundleOutputs(t *testing.T) {
 	}
 
 	require.Equal(t, wantDefinitions, defs)
+}
+
+func TestPorter_generateDependencies(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	deps := a.generateDependencies()
+
+	require.NotNil(t, deps, "Dependencies should not be nil")
+	require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+
+	testcases := []struct {
+		name    string
+		wantDep extensions.Dependency
+	}{
+		{"no-version", extensions.Dependency{
+			Bundle: "deislabs/azure-mysql:5.7",
+		}},
+		{"no-ranges", extensions.Dependency{
+			Bundle: "deislabs/azure-active-directory",
+			Version: &extensions.DependencyVersion{
+				AllowPrereleases: true,
+			},
+		}},
+		{"with-ranges", extensions.Dependency{
+			Bundle: "deislabs/azure-blob-storage",
+			Version: &extensions.DependencyVersion{
+				Ranges: []string{
+					"1.x - 2",
+					"2.1 - 3.x",
+				},
+			},
+		}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var dep *extensions.Dependency
+			for _, d := range deps.Requires {
+				if d.Bundle == tc.wantDep.Bundle {
+					dep = &d
+					break
+				}
+			}
+
+			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
+			assert.Equal(t, &tc.wantDep, dep)
+		})
+	}
 }

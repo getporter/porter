@@ -1,0 +1,98 @@
+{
+  "name": "foo",
+  "version": "1.0",
+  "schemaVersion": "99.99",
+  "invocationImages": [
+    {
+      "imageType": "docker",
+      "image": "technosophos/helloworld:0.1.0"
+    }
+  ],
+  "images": {
+    "image1":{
+      "description": "image1",
+      "image": "urn:image1uri",
+      "refs": [
+        {
+          "path": "image1path",
+          "field": "image.1.field"
+        }
+      ]
+    },
+    "image2":{
+      "name": "image2",
+      "uri": "urn:image2uri",
+      "refs": [
+        {
+          "path": "image2path",
+          "field": "image.2.field"
+        }
+      ]
+    }
+  },
+  "credentials": {
+    "foo": {
+      "path": "pfoo"
+    },
+    "bar": {
+      "env": "ebar"
+    },
+    "quux": {
+      "path": "pquux",
+      "env": "equux"
+    }
+  },
+  "requiredExtensions" : {
+    "dependencies": "https://cnab.io/specs/v1/dependencies.schema.json"
+  },
+  "custom": {
+    "com.example.duffle-bag": {
+      "icon": "https://example.com/icon.png",
+      "iconType": "PNG"
+    },
+    "com.example.backup-preferences": {
+      "enabled": true,
+      "frequency": "daily"
+    },
+    "dependencies": {
+      "requires": [
+        {
+          "bundle": "somecloud/blob-storage"
+        },
+        {
+          "bundle": "somecloud/mysql",
+          "version": {
+            "prereleases": true,
+            "ranges": ["5.7.x"]
+          }
+        }
+      ]
+    }
+  },
+  "definitions" : {
+    "complexThing" : {
+      "type" : "object",
+      "properties" : {
+        "host" : {
+          "default" : "localhost",
+          "type" : "string",
+          "minLength" : 3,
+          "maxLength" : 10
+        },
+        "port" : {
+          "type" : "integer",
+          "minimum": 8000
+        }
+      },
+      "required" : ["port"]
+    }
+  },
+  "parameters" : {
+    "serverConfig" : {
+      "definition" : "complexThing",
+      "destination" : {
+        "path": "/cnab/is/go"
+      }
+    }
+  }
+}

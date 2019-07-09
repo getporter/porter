@@ -102,7 +102,11 @@ type ImagePlatform struct {
 }
 
 type Dependency struct {
-	Name       string            `yaml:"name"`
+	Name             string   `yaml:"name"`
+	Tag              string   `yaml:"tag"`
+	Versions         []string `yaml:"versions"`
+	AllowPrereleases bool     `yaml:"prereleases"`
+
 	Parameters map[string]string `yaml:"parameters,omitempty"`
 }
 

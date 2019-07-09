@@ -1,0 +1,43 @@
+name: HELLO
+version: 0.1.0
+description: "An example Porter configuration"
+invocationImage: porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
+
+dependencies:
+  - name: mysql
+    tag: "deislabs/azure-mysql:5.7"
+  - name: ad
+    tag: "deislabs/azure-active-directory"
+    prereleases: true
+  - name: storage
+    tag: "deislabs/azure-blob-storage"
+    versions:
+      - 1.x - 2
+      - 2.1 - 3.x
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Hello World
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo World 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Goodbye World

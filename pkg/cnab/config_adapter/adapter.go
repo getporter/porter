@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/cnab/extensions"
+
 	"github.com/deislabs/cnab-go/bundle/definition"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -43,6 +45,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
+	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
 
 	return b
 }
@@ -177,4 +180,32 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	}
 
 	return images
+}
+
+func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
+	if len(c.Manifest.Dependencies) == 0 {
+		return nil
+	}
+
+	deps := &extensions.Dependencies{
+		Requires: make([]extensions.Dependency, 0, len(c.Manifest.Dependencies)),
+	}
+
+	for _, dep := range c.Manifest.Dependencies {
+		r := extensions.Dependency{
+			Bundle: dep.Tag,
+		}
+		if len(dep.Versions) > 0 || dep.AllowPrereleases {
+			r.Version = &extensions.DependencyVersion{
+				AllowPrereleases: dep.AllowPrereleases,
+			}
+			if len(dep.Versions) > 0 {
+				r.Version.Ranges = make([]string, len(dep.Versions))
+				copy(r.Version.Ranges, dep.Versions)
+			}
+		}
+		deps.Requires = append(deps.Requires, r)
+	}
+
+	return deps
 }
