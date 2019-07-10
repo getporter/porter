@@ -202,7 +202,7 @@ Global Flags:
 This command is available both as `porter bundle list` and `porter bundles list`.
 
 ```console
- $ porter bundle list --help
+$ porter bundle list --help
 List all bundles installed by Porter.
 
 A listing of bundles currently installed by Porter will be provided, along with
@@ -221,6 +221,31 @@ Flags:
   -h, --help            help for list
   -o, --output string   Specify an output format.
                         Allowed values: table, json, yaml (default "table")
+
+Global Flags:
+      --debug   Enable debug logging
+```
+
+### Bundle Show
+
+This command is available both as `porter bundle show` and `porter bundles show`.
+
+```console
+$ porter bundle show --help
+Displays info relating to a bundle claim, including status and a listing of outputs.
+
+Usage:
+  porter bundles show [CLAIM] [flags]
+
+Examples:
+  porter bundle show [CLAIM]
+
+Optional output formats include json and yaml.
+
+
+Flags:
+  -h, --help            help for show
+  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
 
 Global Flags:
       --debug   Enable debug logging

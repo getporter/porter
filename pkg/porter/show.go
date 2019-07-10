@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 
 	cnab "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/config"
+	context "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"
 )
 
@@ -29,11 +32,30 @@ type ClaimListing struct {
 	Outputs
 }
 
-// Validate prepares for a show bundle action and validates the options.
-func (so *ShowOptions) Validate(args []string) error {
+// Validate prepares for a show bundle action and validates the args/options.
+func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	err := so.sharedOptions.validateClaimName(args)
 	if err != nil {
 		return err
+	}
+
+	// If claim name not supplied, try to determine from manifest in current working directory
+	if so.sharedOptions.Name == "" {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "could not get current working directory")
+		}
+
+		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+		if err != nil {
+			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
+		}
+
+		if manifestExists {
+			so.sharedOptions.File = config.Name
+		} else {
+			return errors.New("claim name must be provided")
+		}
 	}
 
 	parsedFormat, err := printer.ParseFormat(so.RawFormat)
@@ -48,7 +70,12 @@ func (so *ShowOptions) Validate(args []string) error {
 // ShowBundle shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
 func (p *Porter) ShowBundle(opts ShowOptions, cp cnab.Provider) error {
+	err := p.applyDefaultOptions(&opts.sharedOptions)
+	if err != nil {
+		return err
+	}
 	name := opts.sharedOptions.Name
+
 	claim, err := cp.FetchClaim(name)
 	if err != nil {
 		return err
