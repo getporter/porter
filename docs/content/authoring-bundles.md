@@ -90,8 +90,8 @@ parameters:
  
 ## Outputs
 
-Outputs are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#outputs) and
-allow outputs generated during the course of executing a bundle to be accessed.  These are global/bundle-wide outputs,
+Outputs are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#outputs) to
+allow access to outputs generated during the course of executing a bundle.  These are global/bundle-wide outputs,
 as opposed to step outputs described in [Parameters, Credentials and Outputs](/wiring/).  However, as of writing, each
 bundle output is only valid if it references a step output declared under one or more [bundle actions](#bundle-actions).
 
