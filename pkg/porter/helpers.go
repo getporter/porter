@@ -124,7 +124,7 @@ type TestCNABProvider struct {
 
 func NewTestCNABProvider() *TestCNABProvider {
 	return &TestCNABProvider{
-		FileSystem: afero.NewOsFs(),
+		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
 	}
 }
 
