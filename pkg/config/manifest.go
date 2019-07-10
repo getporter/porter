@@ -101,12 +101,8 @@ type ImagePlatform struct {
 }
 
 type Dependency struct {
-	// The manifest for the dependency
-	m *Manifest
-
-	Name        string             `yaml:"name"`
-	Parameters  map[string]string  `yaml:"parameters,omitempty"`
-	Connections []BundleConnection `yaml:"connections",omitempty`
+	Name       string            `yaml:"name"`
+	Parameters map[string]string `yaml:"parameters,omitempty"`
 }
 
 func (d *Dependency) Validate() error {
@@ -143,33 +139,20 @@ func resolveCredential(cd CredentialDefinition) (string, error) {
 func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
 	sensitiveStuff := []string{}
 	depVals := make(map[string]interface{})
+
 	params := make(map[string]interface{})
 	depVals["parameters"] = params
-	for _, param := range d.m.Parameters {
-		val, err := resolveParameter(param)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, fmt.Sprintf("could not handle bundle dependency %s", d.Name))
-		}
-		if param.Sensitive {
-			sensitiveStuff = append(sensitiveStuff, val)
-		}
-		params[param.Name] = val
-	}
+	// TODO: Populate dependency parameters lookup
 
 	creds := make(map[string]interface{})
 	depVals["credentials"] = creds
-	for _, cred := range d.m.Credentials {
-		val, err := resolveCredential(cred)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, fmt.Sprintf("could not handle bundle dependency %s", d.Name))
-		}
-		sensitiveStuff = append(sensitiveStuff, val)
-		params[cred.Name] = val
-	}
-	depVals["outputs"] = d.m.outputs
-	for _, output := range d.m.outputs {
-		sensitiveStuff = append(sensitiveStuff, output)
-	}
+	// TODO: Resolve dependency credentials lookup, or remove it from the template language if it shouldn't be accessible
+
+	outputs := make(map[string]interface{})
+	depVals["outputs"] = outputs
+	// TODO: Populate dependency output lookups
+	// TODO: Add outputs onto sensitive stuff
+
 	return depVals, sensitiveStuff, nil
 }
 
@@ -254,7 +237,9 @@ func (c *Config) LoadManifestFrom(file string) error {
 		return err
 	}
 
-	return c.LoadDependencies()
+	// TODO: Temporarily disable loading dependencies while we rewrite the dependency feature
+	//return c.LoadDependencies()
+	return nil
 }
 
 // GetManifestDir returns the path to the directory that contains the manifest.
@@ -265,31 +250,6 @@ func (m *Manifest) GetManifestDir() string {
 // GetManifestPath returns the path where the manifest was loaded. May be a URL.
 func (m *Manifest) GetManifestPath() string {
 	return m.path
-}
-
-func (c *Config) LoadDependencies() error {
-	for _, dep := range c.Manifest.Dependencies {
-		path, err := c.GetBundleManifestPath(dep.Name)
-		if err != nil {
-			return err
-		}
-
-		dep.m, err = c.ReadManifest(path)
-		if err != nil {
-			return err
-		}
-
-		err = dep.m.Validate()
-		if err != nil {
-			return err
-		}
-
-		err = c.Manifest.MergeDependency(dep)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (m *Manifest) Validate() error {
@@ -355,12 +315,8 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 }
 
 func (m *Manifest) ApplyOutputs(step *Step, assignments []string) error {
-	scope := m
-	if step.dep != nil {
-		scope = step.dep.m
-	}
-	if scope.outputs == nil {
-		scope.outputs = map[string]string{}
+	if m.outputs == nil {
+		m.outputs = map[string]string{}
 	}
 
 	for _, assignment := range assignments {
@@ -370,150 +326,10 @@ func (m *Manifest) ApplyOutputs(step *Step, assignments []string) error {
 		}
 		outvar := parts[0]
 		outval := parts[1]
-		if _, exists := scope.outputs[outvar]; exists {
+		if _, exists := m.outputs[outvar]; exists {
 			return fmt.Errorf("output already set: %s", outvar)
 		}
-		scope.outputs[outvar] = outval
-	}
-
-	return nil
-}
-
-func (m *Manifest) MergeDependency(dep *Dependency) error {
-	// include any unique credentials from the dependency
-	for i, cred := range dep.m.Credentials {
-		dupe := false
-		for _, x := range m.Credentials {
-			if cred.Name == x.Name {
-				result, err := mergeCredentials(x, cred)
-				if err != nil {
-					return err
-				}
-
-				// Allow for having the same credential populated both as an env var and a file
-				dep.m.Credentials[i].EnvironmentVariable = result.EnvironmentVariable
-				dep.m.Credentials[i].Path = result.Path
-				dupe = true
-				break
-			}
-		}
-		if !dupe {
-			m.Credentials = append(m.Credentials, cred)
-		}
-	}
-
-	err := m.MergeParameters(dep)
-	if err != nil {
-		return err
-	}
-
-	// prepend the dependency's mixins
-	m.Mixins = prependMixins(dep.m.Mixins, m.Mixins)
-
-	// prepend dependency's install steps
-	m.MergeInstall(dep)
-
-	// append uninstall steps so that we unroll it in dependency order (i.e. uninstall wordpress before we delete the database)
-	m.MergeUninstall(dep)
-
-	// prepend dependency's upgrade steps
-	m.MergeUpgrade(dep)
-
-	return nil
-}
-
-func (m *Manifest) MergeInstall(dep *Dependency) {
-	dep.m.Install.setDependency(dep)
-
-	m.Install = prependSteps(dep.m.Install, m.Install)
-}
-
-func (m *Manifest) MergeUpgrade(dep *Dependency) {
-	dep.m.Upgrade.setDependency(dep)
-
-	m.Upgrade = prependSteps(dep.m.Upgrade, m.Upgrade)
-}
-
-func (m *Manifest) MergeUninstall(dep *Dependency) {
-	dep.m.Uninstall.setDependency(dep)
-
-	m.Uninstall = append(m.Uninstall, dep.m.Uninstall...)
-}
-
-func prependSteps(s1, s2 Steps) Steps {
-	result := make(Steps, len(s2)+len(s1))
-	copy(result[:len(s2)], s1)
-	copy(result[len(s2):], s2)
-
-	return result
-}
-
-func prependMixins(m1, m2 []string) []string {
-	mixins := make([]string, len(m1), len(m1)+len(m2))
-	copy(mixins, m1)
-	for _, m := range m2 {
-		dupe := false
-		for _, x := range m1 {
-			if m == x {
-				dupe = true
-				break
-			}
-		}
-		if !dupe {
-			mixins = append(mixins, m)
-		}
-	}
-	return mixins
-}
-
-func mergeCredentials(c1, c2 CredentialDefinition) (CredentialDefinition, error) {
-	result := CredentialDefinition{Name: c1.Name}
-
-	if c1.Name != c2.Name {
-		return result, fmt.Errorf("cannot merge credentials that don't have the same name: %s and %s", c1.Name, c2.Name)
-	}
-
-	if c1.Path != "" && c2.Path != "" && c1.Path != c2.Path {
-		return result, fmt.Errorf("cannot merge credential %s: conflict on path", c1.Name)
-	}
-	result.Path = c1.Path
-	if result.Path == "" {
-		result.Path = c2.Path
-	}
-
-	if c1.EnvironmentVariable != "" && c2.EnvironmentVariable != "" && c1.EnvironmentVariable != c2.EnvironmentVariable {
-		return result, fmt.Errorf("cannot merge credential %s: conflict on environment variable", c1.Name)
-	}
-	result.EnvironmentVariable = c1.EnvironmentVariable
-	if result.EnvironmentVariable == "" {
-		result.EnvironmentVariable = c2.EnvironmentVariable
-	}
-
-	return result, nil
-}
-
-func (m *Manifest) MergeParameters(dep *Dependency) error {
-	// include any unique parameters from the dependency
-	for _, param := range dep.m.Parameters {
-		dupe := false
-		for _, x := range m.Parameters {
-			if param.Name == x.Name {
-				dupe = true
-				break
-			}
-		}
-		if !dupe {
-			m.Parameters = append(m.Parameters, param)
-		}
-	}
-
-	// Default the bundle parameters from any hard-coded values set in the dependencies
-	for depP, defaultValue := range dep.Parameters {
-		for i, param := range m.Parameters {
-			if param.Name == depP {
-				m.Parameters[i].Default = defaultValue
-			}
-		}
+		m.outputs[outvar] = outval
 	}
 
 	return nil
@@ -533,16 +349,8 @@ func (s Steps) Validate(m *Manifest) error {
 	return nil
 }
 
-// setDependency remembers the dependency that generated the step
-func (s Steps) setDependency(dep *Dependency) {
-	for _, s := range s {
-		s.dep = dep
-	}
-}
-
 type Step struct {
 	runner *mixin.Runner
-	dep    *Dependency // The dependency that owns this step
 
 	Data map[string]interface{} `yaml:",inline"`
 }

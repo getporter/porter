@@ -39,18 +39,3 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 	// and on Windows, that means flipping the afero `/` to `\`.
 	assert.Equal(t, filepath.Join("/root", ".porter"), home)
 }
-
-
-func TestConfig_GetBundleDir(t *testing.T) {
-	c := NewTestConfig(t)
-
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
-
-	err := c.LoadManifest()
-	require.NoError(t, err)
-
-	result, err := c.GetBundleDir("mysql")
-	require.NoError(t, err)
-	assert.Equal(t, "bundles/mysql", result)
-}
