@@ -3,9 +3,11 @@ package main
 import (
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	cnab "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/deislabs/porter/pkg/printer"
-	"github.com/spf13/cobra"
 )
 
 func buildBundlesCommand(p *porter.Porter) *cobra.Command {
@@ -329,7 +331,6 @@ func buildPublishCommand(p *porter.Porter) *cobra.Command {
 	return cmd
 }
 
-// TODO: test!
 func buildBundleShowCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ShowOptions{}
 
@@ -345,7 +346,8 @@ Optional output formats include json and yaml.
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowBundle(opts)
+			cp := cnab.NewDuffle(p.Config)
+			return p.ShowBundle(opts, cp)
 		},
 	}
 

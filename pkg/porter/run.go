@@ -280,7 +280,7 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
 						Value:     outputValue,
 					}
 
-					data, err := json.Marshal(output)
+					data, err := json.MarshalIndent(output, "", "  ")
 					if err != nil {
 						return err
 					}

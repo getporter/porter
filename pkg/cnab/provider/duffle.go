@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/driver"
 	duffledriver "github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/config"
@@ -11,6 +12,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 )
+
+type Provider interface {
+	FetchClaim(name string) (*claim.Claim, error)
+}
 
 type Duffle struct {
 	*config.Config
@@ -66,4 +71,13 @@ func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) 
 	}
 
 	return driverImpl, err
+}
+
+func (d *Duffle) FetchClaim(name string) (*claim.Claim, error) {
+	claimStore := d.NewClaimStore()
+	claim, err := claimStore.Read(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
+	}
+	return &claim, nil
 }

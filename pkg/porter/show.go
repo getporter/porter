@@ -47,10 +47,24 @@ func (so *ShowOptions) Validate(args []string) error {
 
 // ShowBundle shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
-func (p *Porter) ShowBundle(opts ShowOptions) error {
-	cl, err := p.fetchClaim(opts.Name)
+func (p *Porter) ShowBundle(opts ShowOptions, cp cnab.Provider) error {
+	claim, err := cp.FetchClaim(opts.Name)
 	if err != nil {
 		return err
+	}
+
+	outputs, err := p.listBundleOutputs(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	cl := ClaimListing{
+		Name:     claim.Name,
+		Created:  claim.Created,
+		Modified: claim.Modified,
+		Action:   claim.Result.Action,
+		Status:   claim.Result.Status,
+		Outputs:  *outputs,
 	}
 
 	switch opts.Format {
@@ -88,8 +102,6 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 
 			// Iterate through all Bundle Outputs and add to rows
 			for _, o := range cl.Outputs {
-				// TODO: test sensitive
-				// TODO: test truncation
 				value := o.Value
 				// If output is sensitive, substitute local path
 				if o.Sensitive {
@@ -120,38 +132,4 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
-}
-
-func (p *Porter) fetchClaim(name string) (*ClaimListing, error) {
-	cp := cnab.NewDuffle(p.Config)
-	claimStore := cp.NewClaimStore()
-	claim, err := claimStore.Read(name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
-	}
-
-	var condensedClaims CondensedClaimList
-	condensedClaim := CondensedClaim{
-		Name:     claim.Name,
-		Created:  claim.Created,
-		Modified: claim.Modified,
-		Action:   claim.Result.Action,
-		Status:   claim.Result.Status,
-	}
-	condensedClaims = append(condensedClaims, condensedClaim)
-
-	outputList, err := p.listBundleOutputs(name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to list outputs for claim %s", name)
-	}
-
-	return &ClaimListing{
-		Name:     claim.Name,
-		Created:  claim.Created,
-		Modified: claim.Modified,
-		Action:   claim.Result.Action,
-		Status:   claim.Result.Status,
-		Outputs:  *outputList,
-	}, nil
-
 }

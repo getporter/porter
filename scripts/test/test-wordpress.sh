@@ -39,10 +39,11 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
   exit 1
 fi
 
-echo "Verifing bundle outputs..."
-# TODO: porter bundle show wordpress to see outputs listing
-${PORTER_HOME}/porter outputs list -b wordpress | grep "wordpress-password"
-${PORTER_HOME}/porter output show -n wordpress-password -b wordpress | grep "${sensitive_value}"
+echo "Verifing bundle outputs via 'porter bundle show'"
+show_output=$(${PORTER_HOME}/porter show wordpress)
+echo "${show_output}"
+echo "${show_output}" | grep -q "wordpress-password"
+# TODO: check for output path (since output is default sensitive)
 
 cat ${PORTER_HOME}/claims/wordpress.json
 

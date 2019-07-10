@@ -177,14 +177,12 @@ func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
 	return depVals, sensitiveStuff, nil
 }
 
-// TODO: can remove?
 type BundleOutput struct {
 	Name                string `yaml:"name"`
 	Path                string `yaml:"path"`
 	EnvironmentVariable string `yaml:"env"`
 }
 
-// TODO: can remove?
 type BundleConnection struct {
 	Source      string `yaml:source`
 	Destination string `yaml:destination`
