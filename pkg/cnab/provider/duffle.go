@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/driver"
 	duffledriver "github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/config"
@@ -12,10 +11,6 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 )
-
-type Provider interface {
-	FetchClaim(name string) (*claim.Claim, error)
-}
 
 type Duffle struct {
 	*config.Config
@@ -43,19 +38,28 @@ func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) 
 		configurable.SetConfig(driverCfg)
 	}
 
+	// Setup host mount for outputs
+	err = d.setupOutputsMount(driverImpl, claimName)
+	if err != nil {
+		return nil, err
+	}
+
+	return driverImpl, err
+}
+
+func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) error {
 	// If docker driver, setup host bind mount for outputs
-	// TODO: separate function/add tests
 	if dockerish, ok := driverImpl.(*duffledriver.DockerDriver); ok {
 		outputsDir, err := d.Config.GetOutputsDir()
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get outputs directory")
+			return errors.Wrap(err, "unable to get outputs directory")
 		}
 
-		// Create outputs sub-directory using the bundle name
+		// Create source outputs sub-directory using the bundle name
 		bundleOutputsDir := filepath.Join(outputsDir, claimName)
-		err = d.FileSystem.MkdirAll(bundleOutputsDir, 0755)
+		err = d.FileSystem.MkdirAll(bundleOutputsDir, os.ModePerm)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not create outputs directory %s for docker driver bind mount", bundleOutputsDir)
+			return errors.Wrapf(err, "could not create outputs directory %s for docker driver bind mount", bundleOutputsDir)
 		}
 
 		var cfgOpt duffledriver.DockerConfigurationOption = func(containerCfg *container.Config, hostCfg *container.HostConfig) error {
@@ -69,15 +73,5 @@ func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) 
 		}
 		dockerish.AddConfigurationOptions(cfgOpt)
 	}
-
-	return driverImpl, err
-}
-
-func (d *Duffle) FetchClaim(name string) (*claim.Claim, error) {
-	claimStore := d.NewClaimStore()
-	claim, err := claimStore.Read(name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
-	}
-	return &claim, nil
+	return nil
 }

@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"testing"
 	"time"
@@ -9,13 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/deislabs/cnab-go/claim"
-	cnab "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/printer"
 )
 
 func TestPorter_ShowBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
+	p.CNAB = NewTestCNABProvider()
 
 	homeDir, err := p.TestConfig.GetHomeDir()
 	require.NoError(t, err)
@@ -28,7 +27,6 @@ func TestPorter_ShowBundle(t *testing.T) {
 		},
 		Format: printer.FormatTable,
 	}
-	d := cnab.NewTestDuffle(p.TestConfig)
 
 	// Create test claim
 	claim := claim.Claim{
@@ -40,11 +38,13 @@ func TestPorter_ShowBundle(t *testing.T) {
 			Status: "success",
 		},
 	}
-	claimBytes, err := json.MarshalIndent(claim, "", "  ")
-	require.NoError(t, err)
-	d.ClaimStore.Store("test-bundle", claimBytes)
+	if testy, ok := p.CNAB.(*TestCNABProvider); ok {
+		testy.CreateClaim(&claim)
+	} else {
+		t.Fatal("expected p.CNAB to be of type *TestCNABProvider")
+	}
 
-	err = p.ShowBundle(opts, d)
+	err = p.ShowBundle(opts)
 	require.NoError(t, err)
 
 	wantOutput :=

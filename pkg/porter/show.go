@@ -10,7 +10,6 @@ import (
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 
-	cnab "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
 	context "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"
@@ -69,14 +68,14 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 
 // ShowBundle shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
-func (p *Porter) ShowBundle(opts ShowOptions, cp cnab.Provider) error {
+func (p *Porter) ShowBundle(opts ShowOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
 	name := opts.sharedOptions.Name
 
-	claim, err := cp.FetchClaim(name)
+	claim, err := p.CNAB.FetchClaim(name)
 	if err != nil {
 		return err
 	}

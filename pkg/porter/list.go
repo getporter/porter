@@ -40,8 +40,6 @@ func (l CondensedClaimList) Less(i, j int) bool {
 
 // ListBundles lists installed bundles using the printer.Format provided
 func (p *Porter) ListBundles(opts printer.PrintOptions) error {
-	// TODO: supply cnab.Provider interface as second arg, use to access ClaimStore
-	// This will enable unit testing (see show_test.go)
 	cp := cnab.NewDuffle(p.Config)
 	claimStore := cp.NewClaimStore()
 	claims, err := claimStore.ReadAll()

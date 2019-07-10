@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cnab "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/deislabs/porter/pkg/printer"
 )
@@ -346,8 +345,7 @@ Optional output formats include json and yaml.
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cp := cnab.NewDuffle(p.Config)
-			return p.ShowBundle(opts, cp)
+			return p.ShowBundle(opts)
 		},
 	}
 

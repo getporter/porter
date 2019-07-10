@@ -3,40 +3,11 @@ package porter
 import (
 	"testing"
 
-	"github.com/deislabs/cnab-go/bundle"
 	credentials "github.com/deislabs/cnab-go/credentials"
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	printer "github.com/deislabs/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type TestCNABProvider struct {
-}
-
-func (t *TestCNABProvider) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
-	b := &bundle.Bundle{
-		Name: "testbundle",
-		Credentials: map[string]bundle.Credential{
-			"name": {
-				Location: bundle.Location{
-					EnvironmentVariable: "BLAH",
-				},
-			},
-		},
-	}
-	return b, nil
-}
-
-func (t *TestCNABProvider) Install(arguments cnabprovider.InstallArguments) error {
-	return nil
-}
-func (t *TestCNABProvider) Upgrade(arguments cnabprovider.UpgradeArguments) error {
-	return nil
-}
-func (t *TestCNABProvider) Uninstall(arguments cnabprovider.UninstallArguments) error {
-	return nil
-}
 
 func TestGenerateNoName(t *testing.T) {
 	p := NewTestPorter(t)
