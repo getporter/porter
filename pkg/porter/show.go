@@ -6,17 +6,18 @@ import (
 	"time"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
-	cnab "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/printer"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+
+	cnab "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/printer"
 )
 
 // ShowOptions represent options for showing a particular claim
 type ShowOptions struct {
+	sharedOptions
 	RawFormat string
 	Format    printer.Format
-	Name      string
 }
 
 type ClaimListing struct {
@@ -30,10 +31,9 @@ type ClaimListing struct {
 
 // Validate prepares for a show bundle action and validates the options.
 func (so *ShowOptions) Validate(args []string) error {
-	if len(args) == 1 {
-		so.Name = args[0]
-	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the claim name, but multiple were received: %s", args)
+	err := so.sharedOptions.validateClaimName(args)
+	if err != nil {
+		return err
 	}
 
 	parsedFormat, err := printer.ParseFormat(so.RawFormat)
@@ -48,12 +48,13 @@ func (so *ShowOptions) Validate(args []string) error {
 // ShowBundle shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
 func (p *Porter) ShowBundle(opts ShowOptions, cp cnab.Provider) error {
-	claim, err := cp.FetchClaim(opts.Name)
+	name := opts.sharedOptions.Name
+	claim, err := cp.FetchClaim(name)
 	if err != nil {
 		return err
 	}
 
-	outputs, err := p.listBundleOutputs(opts.Name)
+	outputs, err := p.listBundleOutputs(name)
 	if err != nil {
 		return err
 	}

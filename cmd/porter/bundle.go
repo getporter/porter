@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -335,7 +336,7 @@ func buildBundleShowCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ShowOptions{}
 
 	cmd := cobra.Command{
-		Use:   "show",
+		Use:   "show [CLAIM]",
 		Short: "Show a bundle",
 		Long:  "Displays info relating to a bundle claim, including status and a listing of outputs.",
 		Example: `  porter bundle show [CLAIM]
@@ -343,6 +344,9 @@ func buildBundleShowCommand(p *porter.Porter) *cobra.Command {
 Optional output formats include json and yaml.
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("a claim name must be provided")
+			}
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

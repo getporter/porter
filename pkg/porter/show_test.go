@@ -23,7 +23,9 @@ func TestPorter_ShowBundle(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory("testdata/outputs", filepath.Join(homeDir, "outputs"))
 
 	opts := ShowOptions{
-		Name:   "test-bundle",
+		sharedOptions: sharedOptions{
+			Name: "test-bundle",
+		},
 		Format: printer.FormatTable,
 	}
 	d := cnab.NewTestDuffle(p.TestConfig)
