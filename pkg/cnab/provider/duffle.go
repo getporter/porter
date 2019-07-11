@@ -2,10 +2,14 @@ package cnabprovider
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/deislabs/cnab-go/driver"
 	duffledriver "github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/pkg/errors"
 )
 
 type Duffle struct {
@@ -18,7 +22,7 @@ func NewDuffle(c *config.Config) *Duffle {
 	}
 }
 
-func (d *Duffle) newDriver(driverName string) (driver.Driver, error) {
+func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) {
 	driverImpl, err := duffledriver.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
@@ -34,5 +38,40 @@ func (d *Duffle) newDriver(driverName string) (driver.Driver, error) {
 		configurable.SetConfig(driverCfg)
 	}
 
+	// Setup host mount for outputs
+	err = d.setupOutputsMount(driverImpl, claimName)
+	if err != nil {
+		return nil, err
+	}
+
 	return driverImpl, err
+}
+
+func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) error {
+	// If docker driver, setup host bind mount for outputs
+	if dockerish, ok := driverImpl.(*duffledriver.DockerDriver); ok {
+		outputsDir, err := d.Config.GetOutputsDir()
+		if err != nil {
+			return errors.Wrap(err, "unable to get outputs directory")
+		}
+
+		// Create source outputs sub-directory using the bundle name
+		bundleOutputsDir := filepath.Join(outputsDir, claimName)
+		err = d.FileSystem.MkdirAll(bundleOutputsDir, os.ModePerm)
+		if err != nil {
+			return errors.Wrapf(err, "could not create outputs directory %s for docker driver bind mount", bundleOutputsDir)
+		}
+
+		var cfgOpt duffledriver.DockerConfigurationOption = func(containerCfg *container.Config, hostCfg *container.HostConfig) error {
+			outputsMount := mount.Mount{
+				Type:   mount.TypeBind,
+				Source: bundleOutputsDir,
+				Target: config.BundleOutputsDir,
+			}
+			hostCfg.Mounts = append(hostCfg.Mounts, outputsMount)
+			return nil
+		}
+		dockerish.AddConfigurationOptions(cfgOpt)
+	}
+	return nil
 }

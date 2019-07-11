@@ -8,6 +8,7 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Bundle Metadata](#bundle-metadata)
 * [Mixins](#mixins)
 * [Parameters](#parameters)
+* [Outputs](#outputs)
 * [Credentials](#credentials)
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
@@ -87,11 +88,37 @@ parameters:
   * `path`: The path for the file. Required for file paths, there is no default.
 * `sensitive`: Optional. Designate this parameter's value as sensitive, for masking in console output.
  
-### Parameter Schema
+## Outputs
 
-The [CNAB Spec for parameter definitions](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions)
-has full support for [json schema](https://json-schema.org). We aren't quite there yet but 
-are working towards it. Here is what Porter supports for defining schema for parameters currently:
+Outputs are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#outputs) to
+allow access to outputs generated during the course of executing a bundle.  These are global/bundle-wide outputs,
+as opposed to step outputs described in [Parameters, Credentials and Outputs](/wiring/).  However, as of writing, each
+bundle output is only valid if it references a step output declared under one or more [bundle actions](#bundle-actions).
+
+```yaml
+outputs:
+- name: mysql_user
+  type: string
+  description: "MySQL user name"
+- name: mysql_password
+  type: string
+  applyTo:
+    - "install"
+    - "upgrade"
+```
+
+* `name`: The name of the output.
+* `type`: The data type of the output: string, integer, number, boolean.
+* `applyTo`: (Optional) Restrict this output to a given list of actions. If empty or missing, applies to all actions.
+* `description`: (Optional) A brief description of the given output.
+* `sensitive`: (Optional) Designate an output as sensitive. Defaults to false.
+
+### Definition Schema for Parameters and Outputs
+
+The [CNAB Spec for definitions](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions)
+applies to both parameters and outputs.  It has full support for [json schema](https://json-schema.org). We aren't
+quite there yet but are working towards it. Here is what Porter supports for defining schema for parameters and outputs
+currently:
 
 * `default`: The default value for the parameter. When a default is not provided, the `required` is defaulted to true.
 * `required`: Specify if the parameter must be specified when the bundle is executed.

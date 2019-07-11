@@ -37,7 +37,7 @@ func (d *Duffle) Uninstall(args UninstallArguments) error {
 		}
 	}
 
-	driver, err := d.newDriver(args.Driver)
+	driver, err := d.newDriver(args.Driver, claim.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}

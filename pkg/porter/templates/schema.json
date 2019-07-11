@@ -38,6 +38,12 @@
       "items": {
         "anyOf": []
       }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     }
   },
   "additionalProperties": false,

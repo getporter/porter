@@ -1,16 +1,21 @@
 package porter
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
 
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/porter/pkg/cache"
+	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
 	execmixin "github.com/deislabs/porter/pkg/exec"
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -111,4 +116,63 @@ func (b *mockCache) StoreBundle(tag string, bun *bundle.Bundle) (string, error) 
 
 func (b *mockCache) GetCacheDir() (string, error) {
 	return b.GetCacheDir()
+}
+
+type TestCNABProvider struct {
+	FileSystem afero.Fs
+}
+
+func NewTestCNABProvider() *TestCNABProvider {
+	return &TestCNABProvider{
+		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
+	}
+}
+
+func (t *TestCNABProvider) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
+	b := &bundle.Bundle{
+		Name: "testbundle",
+		Credentials: map[string]bundle.Credential{
+			"name": {
+				Location: bundle.Location{
+					EnvironmentVariable: "BLAH",
+				},
+			},
+		},
+	}
+	return b, nil
+}
+
+func (t *TestCNABProvider) Install(arguments cnabprovider.InstallArguments) error {
+	return nil
+}
+func (t *TestCNABProvider) Upgrade(arguments cnabprovider.UpgradeArguments) error {
+	return nil
+}
+func (t *TestCNABProvider) Uninstall(arguments cnabprovider.UninstallArguments) error {
+	return nil
+}
+
+func (t *TestCNABProvider) FetchClaim(name string) (*claim.Claim, error) {
+	bytes, err := afero.ReadFile(t.FileSystem, name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not read claim file for %s", name)
+	}
+
+	var claim claim.Claim
+	err = json.Unmarshal(bytes, &claim)
+	if err != nil {
+		fmt.Printf("unmarshaled claim: %v", claim)
+		return nil, errors.Wrapf(err, "error encountered unmarshaling claim %s", name)
+	}
+
+	return &claim, nil
+}
+
+func (t *TestCNABProvider) CreateClaim(claim *claim.Claim) error {
+	bytes, err := json.Marshal(claim)
+	if err != nil {
+		return errors.Wrapf(err, "error encountered marshaling claim %s", claim.Name)
+	}
+
+	return afero.WriteFile(t.FileSystem, claim.Name, bytes, os.ModePerm)
 }

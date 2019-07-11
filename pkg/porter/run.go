@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -131,7 +132,18 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "mixin execution failed")
 			}
 
-			err = p.collectStepOutput(step)
+			outputs, err := p.readOutputs()
+			if err != nil {
+				return errors.Wrap(err, "could not read step outputs")
+			}
+
+			err = p.Manifest.ApplyStepOutputs(step, outputs)
+			if err != nil {
+				return err
+			}
+
+			// Apply any Bundle Outputs declared in this step
+			err = p.ApplyBundleOutputs(opts, outputs)
 			if err != nil {
 				return err
 			}
@@ -190,14 +202,6 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	return r
 }
 
-func (p *Porter) collectStepOutput(step *config.Step) error {
-	outputs, err := p.readOutputs()
-	if err != nil {
-		return err
-	}
-	return p.Manifest.ApplyOutputs(step, outputs)
-}
-
 func (p *Porter) readOutputs() ([]string, error) {
 	var outputs []string
 
@@ -223,8 +227,6 @@ func (p *Porter) readOutputs() ([]string, error) {
 				outputs = append(outputs, line)
 			}
 		}
-		// remove file when we have read it, it shouldn't be here for the
-		// next step
 		err = p.FileSystem.Remove(outpath)
 		if err != nil {
 			return nil, err
@@ -232,4 +234,64 @@ func (p *Porter) readOutputs() ([]string, error) {
 	}
 
 	return outputs, nil
+}
+
+// ApplyBundleOutputs writes the provided outputs to the proper location
+// in the execution environment
+func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
+	for _, output := range outputs {
+		// Iterate through bundle outputs declared in the manifest
+		for _, bundleOutput := range p.Manifest.Outputs {
+			// Currently, outputs are all transfered in one file, delimited by newlines
+			// We therefore have to check if a given output (line) corresponds to this bundle output
+			// TODO: refactor once outputs are transferred in the form of files
+			outputSplit := strings.SplitN(output, "=", 2)
+			outputKey := outputSplit[0]
+			outputValue := outputSplit[1]
+
+			// If a given step output matches a bundle output, proceed
+			if outputKey == bundleOutput.Name {
+				doApply := true
+
+				// If ApplyTo array non-empty, default doApply to false
+				// and only set to true if at least one entry matches current Action
+				if len(bundleOutput.ApplyTo) > 0 {
+					doApply = false
+					for _, applyTo := range bundleOutput.ApplyTo {
+						if opts.Action == applyTo {
+							doApply = true
+						}
+					}
+				}
+
+				if doApply {
+					// Ensure outputs directory exists
+					if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
+						return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
+					}
+
+					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+
+					// Create data structure with relevant data for use in listing/showing later
+					output := Output{
+						Name:      bundleOutput.Name,
+						Sensitive: bundleOutput.Sensitive,
+						Type:      bundleOutput.Type,
+						Value:     outputValue,
+					}
+
+					data, err := json.MarshalIndent(output, "", "  ")
+					if err != nil {
+						return err
+					}
+
+					err = p.FileSystem.WriteFile(outpath, data, 0755)
+					if err != nil {
+						return errors.Wrapf(err, "unable to write output file %s", outpath)
+					}
+				}
+			}
+		}
+	}
+	return nil
 }

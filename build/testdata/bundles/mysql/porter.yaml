@@ -45,6 +45,7 @@ install:
     - name: mysql-password
       secret: "{{ bundle.parameters.mysql-name }}"
       key: mysql-password
+
 uninstall:
 - helm:
     description: "Uninstall MySQL"

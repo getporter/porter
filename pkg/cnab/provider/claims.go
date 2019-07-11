@@ -4,6 +4,7 @@ import (
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/utils/crud"
 	"github.com/deislabs/duffle/pkg/duffle/home"
+	"github.com/pkg/errors"
 )
 
 func (d *Duffle) NewClaimStore() claim.Store {
@@ -11,4 +12,14 @@ func (d *Duffle) NewClaimStore() claim.Store {
 	homepath, _ := d.GetHomeDir()
 	h := home.Home(homepath)
 	return claim.NewClaimStore(crud.NewFileSystemStore(h.Claims(), "json"))
+}
+
+// FetchClaim fetches a claim from the given CNABProvider's claim store
+func (d *Duffle) FetchClaim(name string) (*claim.Claim, error) {
+	claimStore := d.NewClaimStore()
+	claim, err := claimStore.Read(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
+	}
+	return &claim, nil
 }

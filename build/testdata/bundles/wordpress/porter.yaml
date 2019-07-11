@@ -45,6 +45,10 @@ install:
         externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
         externalDatabase.port: 3306
         mariadb.enabled: false
+      outputs:
+        - name: wordpress-password
+          secret: "{{ bundle.parameters.wordpress-name }}-wordpress"
+          key: wordpress-password
 
 uninstall:
   - helm:
@@ -52,3 +56,12 @@ uninstall:
       purge: true
       releases: 
         - "{{ bundle.parameters.wordpress-name }}"
+
+outputs:
+  - name: wordpress-password
+    description: "The Wordpress installation password"
+    type: string
+    applyTo:
+      - "install"
+      - "upgrade"
+    sensitive: true

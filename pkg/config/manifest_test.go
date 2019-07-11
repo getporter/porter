@@ -330,7 +330,7 @@ func TestResolveCredential(t *testing.T) {
 	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
 }
 
-func TestResolveOutputs(t *testing.T) {
+func TestResolveStepOutputs(t *testing.T) {
 	t.Skip("Skip while dependencies is being rewritten")
 
 	m := &Manifest{
@@ -418,7 +418,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	assert.NotNil(t, args)
 }
 
-func TestResolveMultipleOutputs(t *testing.T) {
+func TestResolveMultipleStepOutputs(t *testing.T) {
 
 	databaseURL := "localhost"
 	databasePort := "3303"
@@ -454,7 +454,7 @@ func TestResolveMultipleOutputs(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("jdbc://%s:%s", databaseURL, databasePort), args[0].(string))
 }
 
-func TestResolveMissingOutputs(t *testing.T) {
+func TestResolveMissingStepOutputs(t *testing.T) {
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -573,7 +573,7 @@ func TestManifest_ApplyBundleOutputs(t *testing.T) {
 	require.NoError(t, c.LoadManifest())
 
 	depStep := c.Manifest.Install[0]
-	err := c.Manifest.ApplyOutputs(depStep, []string{"foo=bar"})
+	err := c.Manifest.ApplyStepOutputs(depStep, []string{"foo=bar"})
 	require.NoError(t, err)
 
 	assert.Contains(t, c.Manifest.outputs, "foo")
@@ -599,4 +599,44 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, "mybundle", args[0].(string))
+}
+
+func TestReadManifest_Validate_BundleOutput(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs.yaml", Name)
+
+	wantOutputs := []OutputDefinition{
+		{
+			Name:        "mysql-root-password",
+			Description: "The root MySQL password",
+			Schema: Schema{
+				Type: "string",
+			},
+		},
+		{
+			Name: "mysql-password",
+			Schema: Schema{
+				Type: "string",
+			},
+			ApplyTo: []string{
+				"install",
+				"upgrade",
+			},
+		},
+	}
+
+	require.NoError(t, c.LoadManifest())
+	require.NoError(t, c.Manifest.Validate())
+	require.Equal(t, wantOutputs, c.Manifest.Outputs)
+}
+
+func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", Name)
+
+	require.Error(t, c.LoadManifest())
 }

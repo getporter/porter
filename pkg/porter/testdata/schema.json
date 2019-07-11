@@ -156,6 +156,12 @@
     "name": {
       "type": "string"
     },
+    "outputs": {
+      "items": {
+        "anyOf": []
+      },
+      "type": "array"
+    },
     "uninstall": {
       "items": {
         "anyOf": [

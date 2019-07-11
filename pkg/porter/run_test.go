@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,8 +20,15 @@ func TestPorter_readOutputs(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("testdata/outputs1.txt", filepath.Join(mixin.OutputsDir, "myoutput1"))
 	p.TestConfig.TestContext.AddTestFile("testdata/outputs2.txt", filepath.Join(mixin.OutputsDir, "myoutput2"))
+
 	gotOutputs, err := p.readOutputs()
 	require.NoError(t, err)
+
+	for _, file := range []string{filepath.Join(mixin.OutputsDir, "myoutput1"), filepath.Join(mixin.OutputsDir, "myoutput2")} {
+		if exists, _ := p.FileSystem.Exists(file); exists {
+			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", file))
+		}
+	}
 
 	wantOutputs := []string{
 		"FOO=BAR",
@@ -69,4 +78,152 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 	require.NoError(t, err)
 	wantYaml := "install:\n- exec:\n    command: echo hi\n"
 	assert.Equal(t, wantYaml, string(b))
+}
+
+func TestApplyBundleOutputs_None(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+}
+
+func TestApplyBundleOutputs_Some_Match(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: true,
+			},
+			{
+				Name: "123",
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: false,
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	want := map[string]Output{
+		"foo": {
+			Name:      "foo",
+			Type:      "string",
+			Sensitive: true,
+			Value:     "bar",
+		},
+		"123": {
+			Name:      "123",
+			Type:      "string",
+			Sensitive: false,
+			Value:     "abc",
+		},
+	}
+
+	for _, outputName := range []string{"foo", "123"} {
+		bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
+		assert.NoError(t, err)
+
+		var output Output
+		err = json.Unmarshal(bytes, &output)
+		assert.NoError(t, err)
+
+		assert.Equal(t, want[outputName], output)
+	}
+}
+
+func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "bar",
+			},
+			{
+				Name: "456",
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	// No outputs declared in the manifest match those in outputs,
+	// so no output file is expected to be written
+	for _, output := range []string{"foo", "bar", "123", "456"} {
+		_, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, output))
+		assert.Error(t, err)
+	}
+}
+
+func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
+	p := NewTestPorter(t)
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
+				ApplyTo: []string{
+					"upgrade",
+				},
+			},
+			{
+				Name: "123",
+				ApplyTo: []string{
+					"install",
+				},
+				Schema: config.Schema{
+					Type: "string",
+				},
+				Sensitive: false,
+			},
+		},
+	}
+	opts := NewRunOptions(p.Config)
+	opts.Action = "install"
+
+	outputs := []string{"foo=bar", "123=abc"}
+
+	err := p.ApplyBundleOutputs(opts, outputs)
+	assert.NoError(t, err)
+
+	// foo output should not exist (applyTo doesn't match)
+	_, err = p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "foo"))
+	assert.Error(t, err)
+
+	// 123 output should exist (applyTo matches)
+	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
+	assert.NoError(t, err)
+
+	var output Output
+	err = json.Unmarshal(bytes, &output)
+	assert.NoError(t, err)
+
+	want := Output{
+		Name:      "123",
+		Type:      "string",
+		Sensitive: false,
+		Value:     "abc",
+	}
+	assert.Equal(t, want, output)
 }

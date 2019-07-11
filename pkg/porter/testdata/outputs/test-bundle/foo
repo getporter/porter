@@ -1,0 +1,6 @@
+{
+  "name":"foo",
+  "type":"string",
+  "value":"foo-value",
+  "sensitive":true
+}

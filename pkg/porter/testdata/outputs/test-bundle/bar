@@ -1,0 +1,6 @@
+{
+  "name":"bar",
+  "type":"string",
+  "value":"bar-value",
+  "sensitive":false
+}

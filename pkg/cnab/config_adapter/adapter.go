@@ -2,6 +2,7 @@ package configadapter
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
@@ -35,8 +36,10 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		},
 	}
 
+	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs))
 	b.InvocationImages = []bundle.InvocationImage{image}
-	b.Definitions, b.Parameters = c.generateBundleParameters()
+	b.Parameters = c.generateBundleParameters(&b.Definitions)
+	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
@@ -44,8 +47,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	return b
 }
 
-func (c *ManifestConverter) generateBundleParameters() (definition.Definitions, *bundle.ParametersDefinition) {
-	defs := make(definition.Definitions, len(c.Manifest.Parameters))
+func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) *bundle.ParametersDefinition {
 	params := &bundle.ParametersDefinition{
 		Fields: make(map[string]bundle.ParameterDefinition, len(c.Manifest.Parameters)),
 	}
@@ -83,10 +85,39 @@ func (c *ManifestConverter) generateBundleParameters() (definition.Definitions, 
 			}
 		}
 
-		defs[param.Name] = d
+		(*defs)[param.Name] = d
 		params.Fields[param.Name] = p
 	}
-	return defs, params
+	return params
+}
+
+func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) *bundle.OutputsDefinition {
+	outputs := &bundle.OutputsDefinition{
+		Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
+	}
+
+	for _, output := range c.Manifest.Outputs {
+		fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
+		d := &definition.Schema{
+			Type:      output.Type,
+			Default:   output.Default,
+			Enum:      output.Enum,
+			Minimum:   output.Minimum,
+			Maximum:   output.Maximum,
+			MinLength: output.MinLength,
+			MaxLength: output.MaxLength,
+		}
+		o := bundle.OutputDefinition{
+			Definition:  output.Name,
+			Description: output.Description,
+			ApplyTo:     output.ApplyTo,
+			Path:        filepath.Join(config.BundleOutputsDir, output.Name),
+		}
+
+		(*defs)[output.Name] = d
+		outputs.Fields[output.Name] = o
+	}
+	return outputs
 }
 
 func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDefinition {
