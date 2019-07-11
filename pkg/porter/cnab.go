@@ -84,6 +84,8 @@ type sharedOptions struct {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
+	o.Insecure = true
+
 	err := o.validateClaimName(args)
 	if err != nil {
 		return err
