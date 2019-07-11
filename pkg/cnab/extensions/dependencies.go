@@ -38,7 +38,10 @@ type DependencyVersion struct {
 }
 
 func LoadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
-	data := bun.Custom[DependenciesKey]
+	data, ok := bun.Custom[DependenciesKey]
+	if !ok {
+		return nil, nil
+	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
