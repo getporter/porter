@@ -640,3 +640,29 @@ func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
 
 	require.Error(t, c.LoadManifest())
 }
+
+func TestDependency_Validate(t *testing.T) {
+	testcases := []struct {
+		name      string
+		dep       Dependency
+		wantError string
+	}{
+		{"version in tag", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"version ranges", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
+		{"missing name", Dependency{Name: "", Tag: "deislabs/azure-mysql:5.7"}, "dependency name is required"},
+		{"missing tag", Dependency{Name: "mysql", Tag: ""}, "dependency tag is required"},
+		{"version double specified", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.dep.Validate()
+
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tc.wantError)
+			}
+		})
+	}
+}

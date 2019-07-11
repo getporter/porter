@@ -102,7 +102,11 @@ type ImagePlatform struct {
 }
 
 type Dependency struct {
-	Name       string            `yaml:"name"`
+	Name             string   `yaml:"name"`
+	Tag              string   `yaml:"tag"`
+	Versions         []string `yaml:"versions"`
+	AllowPrereleases bool     `yaml:"prereleases"`
+
 	Parameters map[string]string `yaml:"parameters,omitempty"`
 }
 
@@ -130,6 +134,15 @@ func (d *Dependency) Validate() error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}
+
+	if d.Tag == "" {
+		return errors.New("dependency tag is required")
+	}
+
+	if strings.Contains(d.Tag, ":") && len(d.Versions) > 0 {
+		return errors.New("dependency tag can only specify REGISTRY/NAME when version ranges are specified")
+	}
+
 	return nil
 }
 
