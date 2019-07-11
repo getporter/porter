@@ -38,6 +38,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		},
 	}
 
+	b.Actions = c.generateCustomActionDefinitions()
 	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs))
 	b.InvocationImages = []bundle.InvocationImage{image}
 	b.Parameters = c.generateBundleParameters(&b.Definitions)
@@ -48,6 +49,36 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
 
 	return b
+}
+
+func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {
+	if len(c.Manifest.CustomActions) == 0 {
+		return nil
+	}
+
+	defs := make(map[string]bundle.Action, len(c.Manifest.CustomActions))
+	for action, def := range c.Manifest.CustomActionDefinitions {
+		def := bundle.Action{
+			Description: def.Description,
+			Modifies:    def.ModifiesResources,
+			Stateless:   def.Stateless,
+		}
+		defs[action] = def
+	}
+
+	// If they used a custom action but didn't define it, default it to an action that could modify resources and isn't stateless
+	for action := range c.Manifest.CustomActions {
+		if _, ok := c.Manifest.CustomActionDefinitions[action]; !ok {
+			def := bundle.Action{
+				Description: action,
+				Modifies:    true,
+				Stateless:   false,
+			}
+			defs[action] = def
+		}
+	}
+
+	return defs
 }
 
 func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) *bundle.ParametersDefinition {

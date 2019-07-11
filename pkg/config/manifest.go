@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/cbroglie/mustache"
@@ -34,10 +35,15 @@ type Manifest struct {
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
-	Mixins       []string               `yaml:"mixins,omitempty"`
-	Install      Steps                  `yaml:"install"`
-	Uninstall    Steps                  `yaml:"uninstall"`
-	Upgrade      Steps                  `yaml:"upgrade"`
+	Mixins []string `yaml:"mixins,omitempty"`
+
+	Install   Steps `yaml:"install"`
+	Uninstall Steps `yaml:"uninstall"`
+	Upgrade   Steps `yaml:"upgrade"`
+
+	CustomActions           map[string]Steps                  `yaml:"-"`
+	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
+
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
 	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
@@ -108,6 +114,12 @@ type Dependency struct {
 	AllowPrereleases bool     `yaml:"prereleases"`
 
 	Parameters map[string]string `yaml:"parameters,omitempty"`
+}
+
+type CustomActionDefinition struct {
+	Description       string `yaml:"description,omitempty"`
+	ModifiesResources bool   `yaml:"modifies,omitempty"`
+	Stateless         bool   `yaml:"stateless,omitempty"`
 }
 
 // OutputDefinition defines a single output for a CNAB
@@ -202,6 +214,55 @@ type BundleConnection struct {
 	// TODO: Need to add type once it's completed in #20
 }
 
+func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
+	// Unmarshall the manifest into the normal struct
+	manifest := &Manifest{}
+	err := yaml.Unmarshal(manifestData, &manifest)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling the typed manifest")
+	}
+
+	// Identify data from the manifest that wasn't mapped, those are custom actions
+	unmappedData := make(map[string]interface{})
+	err = yaml.Unmarshal(manifestData, &unmappedData)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling the untyped manifest")
+	}
+
+	objValue := reflect.ValueOf(manifest).Elem()
+	knownFields := map[string]reflect.Value{}
+	for i := 0; i != objValue.NumField(); i++ {
+		tagName := strings.Split(objValue.Type().Field(i).Tag.Get("yaml"), ",")[0]
+		knownFields[tagName] = objValue.Field(i)
+	}
+
+	// Remove any fields that have yaml tags
+	for key := range unmappedData {
+		if _, found := knownFields[key]; found {
+			delete(unmappedData, key)
+		}
+	}
+
+	// Marshal the unmapped data as custom actions
+	manifest.CustomActions = make(map[string]Steps, len(unmappedData))
+	for key, chunk := range unmappedData {
+		chunkData, err := yaml.Marshal(chunk)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error remarshaling custom action %s", key)
+		}
+
+		steps := Steps{}
+		err = yaml.Unmarshal(chunkData, &steps)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling custom action %s", key)
+		}
+
+		manifest.CustomActions[key] = steps
+	}
+
+	return manifest, nil
+}
+
 func (c *Config) readFromFile(path string) (*Manifest, error) {
 	if exists, _ := c.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
@@ -212,10 +273,9 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
 	}
 
-	m := &Manifest{}
-	err = yaml.Unmarshal(data, m)
+	m, err := UnmarshalManifest(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
+		return nil, err
 	}
 	m.path = path
 
@@ -229,15 +289,14 @@ func (c *Config) readFromURL(path string) (*Manifest, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not read from url %s", path)
 	}
 
-	m := &Manifest{}
-	err = yaml.Unmarshal(body, m)
+	m, err := UnmarshalManifest(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
+		return nil, err
 	}
 	m.path = path
 
