@@ -5,12 +5,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/mixin"
 )
@@ -102,9 +102,9 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
-	err = p.FileSystem.MkdirAll(mixin.OutputsDir, 0755)
+	err = p.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
 	if err != nil {
-		return errors.Wrapf(err, "could not create outputs directory %s", mixin.OutputsDir)
+		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
 	}
 
 	for _, step := range steps {
@@ -130,7 +130,7 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "mixin execution failed")
 			}
 
-			outputs, err := p.readOutputs()
+			outputs, err := p.readMixinOutputs()
 			if err != nil {
 				return errors.Wrap(err, "could not read step outputs")
 			}
@@ -200,31 +200,26 @@ func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir stri
 	return r
 }
 
-func (p *Porter) readOutputs() ([]string, error) {
-	var outputs []string
+func (p *Porter) readMixinOutputs() (map[string]string, error) {
+	outputs := map[string]string{}
 
-	outfiles, err := p.FileSystem.ReadDir(mixin.OutputsDir)
+	outfiles, err := p.FileSystem.ReadDir(context.MixinOutputsDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not list %s", mixin.OutputsDir)
+		return nil, errors.Wrapf(err, "could not list %s", context.MixinOutputsDir)
 	}
 
 	for _, outfile := range outfiles {
 		if outfile.IsDir() {
 			continue
 		}
-
-		outpath := filepath.Join(mixin.OutputsDir, outfile.Name())
+		outpath := filepath.Join(context.MixinOutputsDir, outfile.Name())
 		contents, err := p.FileSystem.ReadFile(outpath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not read output file %s", outpath)
 		}
 
-		for _, line := range strings.Split(string(contents), "\n") {
-			// remove any empty lines from the split process
-			if len(line) > 0 {
-				outputs = append(outputs, line)
-			}
-		}
+		outputs[outfile.Name()] = string(contents)
+
 		err = p.FileSystem.Remove(outpath)
 		if err != nil {
 			return nil, err
@@ -236,17 +231,10 @@ func (p *Porter) readOutputs() ([]string, error) {
 
 // ApplyBundleOutputs writes the provided outputs to the proper location
 // in the execution environment
-func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
-	for _, output := range outputs {
+func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) error {
+	for outputKey, outputValue := range outputs {
 		// Iterate through bundle outputs declared in the manifest
 		for _, bundleOutput := range p.Manifest.Outputs {
-			// Currently, outputs are all transfered in one file, delimited by newlines
-			// We therefore have to check if a given output (line) corresponds to this bundle output
-			// TODO: refactor once outputs are transferred in the form of files
-			outputSplit := strings.SplitN(output, "=", 2)
-			outputKey := outputSplit[0]
-			outputValue := outputSplit[1]
-
 			// If a given step output matches a bundle output, proceed
 			if outputKey == bundleOutput.Name {
 				doApply := true

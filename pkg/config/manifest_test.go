@@ -583,7 +583,7 @@ func TestManifest_ApplyBundleOutputs(t *testing.T) {
 	require.NoError(t, c.LoadManifest())
 
 	depStep := c.Manifest.Install[0]
-	err := c.Manifest.ApplyStepOutputs(depStep, []string{"foo=bar"})
+	err := c.Manifest.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
 	require.NoError(t, err)
 
 	assert.Contains(t, c.Manifest.outputs, "foo")

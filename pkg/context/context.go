@@ -1,9 +1,7 @@
 package context
 
 import (
-	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -12,6 +10,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
+)
+
+const (
+	// MixinOutputsDir represents the directory where mixin output files are written/read
+	MixinOutputsDir = "/cnab/app/porter/outputs"
 )
 
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
@@ -117,35 +120,20 @@ func (c *Context) CopyFile(src, dest string) error {
 	return errors.WithStack(err)
 }
 
-// WriteOutput writes the given lines to a file in the
-// output directory
-func (c *Context) WriteOutput(lines []string) error {
-	exists, err := c.FileSystem.DirExists("/cnab/app/porter/outputs")
+// WriteMixinOutputToFile writes the provided bytes (representing a mixin output)
+// to a file named by the provided filename in Porter's mixin outputs directory
+func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
+	exists, err := c.FileSystem.DirExists(MixinOutputsDir)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if err := c.FileSystem.MkdirAll("/cnab/app/porter/outputs", os.ModePerm); err != nil {
+		if err := c.FileSystem.MkdirAll(MixinOutputsDir, os.ModePerm); err != nil {
 			return errors.Wrap(err, "couldn't make output directory")
 		}
 	}
-	f, err := c.FileSystem.TempFile("/cnab/app/porter/outputs", "mixin-output")
-	if err != nil {
-		return errors.Wrap(err, "couldn't open outputs file")
-	}
-	defer f.Close()
-	buf := bufio.NewWriter(f)
-	defer buf.Flush()
-	for _, line := range lines {
-		// remove any trailing newline, because we will append one
-		line = strings.TrimSuffix(line, "\n")
-		line = fmt.Sprintf("%s\n", line)
-		_, err := buf.Write([]byte(line))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+
+	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, os.ModePerm)
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams

@@ -88,7 +88,7 @@ func (m *Mixin) ValidatePayload(b []byte) error {
 	return nil
 }
 
-func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string) (string, error) {
+func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string) ([]byte, error) {
 	args := []string{"get", resourceType, resourceName}
 	args = append(args, fmt.Sprintf("-o=jsonpath='%s'", jsonPath))
 	if namespace != "" {
@@ -99,16 +99,15 @@ func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string
 	out, err := cmd.Output()
 	if err != nil {
 		prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
-		return "", errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
+		return nil, errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 	}
-	return string(out), nil
+	return out, nil
 }
 
 func (m *Mixin) handleOutputs(outputs []KubernetesOutput) error {
 	//Now get the outputs
-	var lines []string
 	for _, output := range outputs {
-		val, err := m.getOutput(
+		bytes, err := m.getOutput(
 			output.ResourceType,
 			output.ResourceName,
 			output.Namespace,
@@ -117,9 +116,7 @@ func (m *Mixin) handleOutputs(outputs []KubernetesOutput) error {
 		if err != nil {
 			return err
 		}
-		l := fmt.Sprintf("%s=%s", output.Name, val)
-		lines = append(lines, l)
+		m.Context.WriteMixinOutputToFile(output.Name, bytes)
 	}
-	m.Context.WriteOutput(lines)
 	return nil
 }

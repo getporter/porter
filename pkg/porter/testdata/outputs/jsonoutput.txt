@@ -1,0 +1,8 @@
+{
+  "foo": true,
+  "things": [
+    123,
+    "abc",
+    false
+  ]
+}

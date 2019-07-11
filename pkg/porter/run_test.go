@@ -10,31 +10,53 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPorter_readOutputs(t *testing.T) {
+func TestPorter_readMixinOutputs(t *testing.T) {
 	p := NewTestPorter(t)
 
-	p.TestConfig.TestContext.AddTestFile("testdata/outputs1.txt", filepath.Join(mixin.OutputsDir, "myoutput1"))
-	p.TestConfig.TestContext.AddTestFile("testdata/outputs2.txt", filepath.Join(mixin.OutputsDir, "myoutput2"))
+	testFiles := []string{
+		"emptyoutput",
+		"jsonoutput",
+		"multiliner",
+		"oneliner",
+	}
 
-	gotOutputs, err := p.readOutputs()
+	for _, testFile := range testFiles {
+		p.TestConfig.TestContext.AddTestFile(
+			fmt.Sprintf("testdata/outputs/%s.txt", testFile),
+			filepath.Join(context.MixinOutputsDir, testFile))
+	}
+
+	gotOutputs, err := p.readMixinOutputs()
 	require.NoError(t, err)
 
-	for _, file := range []string{filepath.Join(mixin.OutputsDir, "myoutput1"), filepath.Join(mixin.OutputsDir, "myoutput2")} {
-		if exists, _ := p.FileSystem.Exists(file); exists {
-			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", file))
+	for _, testFile := range testFiles {
+		if exists, _ := p.FileSystem.Exists(testFile); exists {
+			require.Fail(t, fmt.Sprintf("file %s should not exist after reading outputs", testFile))
 		}
 	}
 
-	wantOutputs := []string{
-		"FOO=BAR",
-		"BAZ=QUX",
-		"A=B",
+	wantOutputs := map[string]string{
+		"emptyoutput": "",
+		"jsonoutput": `{
+  "foo": true,
+  "things": [
+    123,
+    "abc",
+    false
+  ]
+}`,
+		"multiliner": `FOO
+
+BAR
+BAZ`,
+		"oneliner": "ABC",
 	}
+
 	assert.Equal(t, wantOutputs, gotOutputs)
 }
 
@@ -87,7 +109,10 @@ func TestApplyBundleOutputs_None(t *testing.T) {
 	}
 	opts := NewRunOptions(p.Config)
 
-	outputs := []string{"foo=bar", "123=abc"}
+	outputs := map[string]string{
+		"foo": "bar",
+		"123": "abc",
+	}
 
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
@@ -116,7 +141,10 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	}
 	opts := NewRunOptions(p.Config)
 
-	outputs := []string{"foo=bar", "123=abc"}
+	outputs := map[string]string{
+		"foo": "bar",
+		"123": "abc",
+	}
 
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
@@ -163,7 +191,10 @@ func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
 	}
 	opts := NewRunOptions(p.Config)
 
-	outputs := []string{"foo=bar", "123=abc"}
+	outputs := map[string]string{
+		"foo": "bar",
+		"123": "abc",
+	}
 
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
@@ -202,7 +233,10 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	opts := NewRunOptions(p.Config)
 	opts.Action = "install"
 
-	outputs := []string{"foo=bar", "123=abc"}
+	outputs := map[string]string{
+		"foo": "bar",
+		"123": "abc",
+	}
 
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
