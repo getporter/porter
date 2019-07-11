@@ -397,21 +397,24 @@ func (m *Manifest) GetSensitiveValues() []string {
 }
 
 func (m *Manifest) GetSteps(action Action) (Steps, error) {
-	var steps Steps
 	switch action {
 	case ActionInstall:
-		steps = m.Install
+		return m.Install, nil
 	case ActionUninstall:
-		steps = m.Uninstall
+		return m.Uninstall, nil
 	case ActionUpgrade:
-		steps = m.Upgrade
+		return m.Upgrade, nil
+	default:
+		customAction, ok := m.CustomActions[string(action)]
+		if !ok {
+			actions := make([]string, 0, len(m.CustomActions))
+			for a := range m.CustomActions {
+				actions = append(actions, a)
+			}
+			return nil, errors.Errorf("unsupported action %q, custom actions are defined for: %s", action, strings.Join(actions, ", "))
+		}
+		return customAction, nil
 	}
-
-	if len(steps) == 0 {
-		return nil, errors.Errorf("unsupported action: %q", action)
-	}
-
-	return steps, nil
 }
 
 func (m *Manifest) ApplyStepOutputs(step *Step, assignments []string) error {

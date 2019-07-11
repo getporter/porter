@@ -26,17 +26,15 @@ func (o *InstallOptions) Validate(args []string, cxt *context.Context) error {
 
 // ToDuffleArgs converts this instance of user-provided installation options
 // to duffle installation arguments.
-func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
-	args := cnabprovider.InstallArguments{
-		ActionArguments: cnabprovider.ActionArguments{
-			Claim:                 o.Name,
-			BundleIdentifier:      o.CNABFile,
-			BundleIsFile:          true,
-			Insecure:              o.Insecure,
-			Params:                make(map[string]string, len(o.combinedParameters)),
-			CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
-			Driver:                o.Driver,
-		},
+func (o *InstallOptions) ToDuffleArgs() cnabprovider.ActionArguments {
+	args := cnabprovider.ActionArguments{
+		Claim:                 o.Name,
+		BundleIdentifier:      o.CNABFile,
+		BundleIsFile:          true,
+		Insecure:              o.Insecure,
+		Params:                make(map[string]string, len(o.combinedParameters)),
+		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
+		Driver:                o.Driver,
 	}
 
 	// Do a safe copy so that modifications to the duffle args aren't also made to the

@@ -6,7 +6,6 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/porter"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,24 +25,18 @@ func TestRun_Validate(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestRun_Validate_MissingAction(t *testing.T) {
+func TestRun_ValidateCustomAction(t *testing.T) {
+	defer os.Unsetenv(config.EnvACTION)
+
 	p := porter.NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
+	configTpl, err := p.Templates.GetManifest()
+	require.NoError(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 	cmd := buildRunCommand(p.Porter)
 
-	err := cmd.PreRunE(cmd, []string{})
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "invalid action")
-}
+	os.Setenv(config.EnvACTION, "status")
 
-func TestRun_Validate_InvalidAction(t *testing.T) {
-	p := porter.NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	cmd := buildRunCommand(p.Porter)
-
-	cmd.Flags().Set("action", "phony")
-
-	err := cmd.PreRunE(cmd, []string{})
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), `invalid action "phony`)
+	err = cmd.PreRunE(cmd, []string{})
+	require.Nil(t, err)
 }

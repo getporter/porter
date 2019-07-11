@@ -18,9 +18,10 @@ import (
 // CNABProvider
 type CNABProvider interface {
 	LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error)
-	Install(arguments cnabprovider.InstallArguments) error
-	Upgrade(arguments cnabprovider.UpgradeArguments) error
-	Uninstall(arguments cnabprovider.UninstallArguments) error
+	Install(arguments cnabprovider.ActionArguments) error
+	Upgrade(arguments cnabprovider.ActionArguments) error
+	Invoke(action string, arguments cnabprovider.ActionArguments) error
+	Uninstall(arguments cnabprovider.ActionArguments) error
 	FetchClaim(name string) (*claim.Claim, error)
 }
 

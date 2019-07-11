@@ -25,6 +25,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleListCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
+	cmd.AddCommand(buildBundleInvokeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 	cmd.AddCommand(buildBundleShowCommand(p))
 
@@ -38,6 +39,7 @@ func buildBundleAliasCommands(p *porter.Porter) []*cobra.Command {
 		buildInstallCommand(p),
 		buildUpgradeCommand(p),
 		buildUninstallCommand(p),
+		buildInvokeCommand(p),
 		buildPublishCommand(p),
 		buildShowCommand(p),
 	}
@@ -162,7 +164,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Install from a bundle in an OCI registry specified by the given tag")
+		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
 	return cmd
@@ -220,7 +222,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Install from a bundle in an OCI registry specified by the given tag")
+		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
 
@@ -230,6 +232,64 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 func buildUpgradeCommand(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleUpgradeCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle upgrade", "porter upgrade", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
+	return cmd
+}
+
+func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.InvokeOptions{}
+	cmd := &cobra.Command{
+		Use:   "invoke [CLAIM] --action ACTION",
+		Short: "Invoke a custom action on a bundle",
+		Long: `Invoke a custom action on a bundle.
+
+The first argument is the name of the claim upon which to invoke the action. The claim name defaults to the name of the bundle.
+
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
+For instance, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
+		Example: `  porter bundle invoke --action ACTION
+  porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
+  porter bundle invoke --action ACTION --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
+  porter bundle invoke --action ACTION --cred azure --cred kubernetes
+  porter bundle invoke --action ACTION --driver debug
+  porter bundle invoke --action ACTION MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.InvokeBundle(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVar(&opts.Action, "action", "",
+		"Custom action name to invoke.")
+	f.StringVarP(&opts.File, "file", "f", "",
+		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "",
+		"Path to the CNAB bundle.json file.")
+	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
+		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
+	f.StringSliceVar(&opts.Params, "param", nil,
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
+		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
+	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
+		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Tag, "tag", "t", "",
+		"Use a bundle in an OCI registry specified by the given tag")
+	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
+		"Don't require TLS for the registry")
+
+	return cmd
+}
+
+func buildInvokeCommand(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleInvokeCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle invoke", "porter invoke", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
@@ -280,7 +340,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Install from a bundle in an OCI registry specified by the given tag")
+		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
 

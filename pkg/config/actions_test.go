@@ -2,7 +2,7 @@ package config
 
 import "testing"
 
-func TestIsSupportedAction(t *testing.T) {
+func TestIsCoreAction(t *testing.T) {
 	testcases := map[string]bool{
 		"install":   true,
 		"upgrade":   true,
@@ -11,11 +11,11 @@ func TestIsSupportedAction(t *testing.T) {
 		"INSTALL":   false,
 	}
 
-	for action, wantSupported := range testcases {
+	for action, want := range testcases {
 		t.Run(action, func(t *testing.T) {
-			gotSupported := IsSupportedAction(action)
-			if wantSupported != gotSupported {
-				t.Fatalf("IsSupportedAction(%q) failed, want %t, got %t", action, wantSupported, gotSupported)
+			got := IsCoreAction(Action(action))
+			if want != got {
+				t.Fatalf("IsCoreAction(%q) failed, want %t, got %t", action, want, got)
 			}
 		})
 	}

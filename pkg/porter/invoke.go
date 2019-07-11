@@ -2,19 +2,28 @@ package porter
 
 import (
 	"fmt"
+	"strings"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 
-// UninstallOptions that may be specified when uninstalling a bundle.
+// InvokeOptions that may be specified when invoking a bundle.
 // Porter handles defaulting any missing values.
-type UninstallOptions struct {
+type InvokeOptions struct {
+	// Action name to invoke
+	Action string
 	BundleLifecycleOpts
 }
 
-func (o *UninstallOptions) Validate(args []string, cxt *context.Context) error {
+func (o *InvokeOptions) Validate(args []string, cxt *context.Context) error {
+	if o.Action == "" {
+		return errors.New("--action is required")
+	}
+
+	o.Action = strings.ToLower(o.Action)
+
 	if o.Tag != "" {
 		err := o.validateTag()
 		if err != nil {
@@ -24,12 +33,12 @@ func (o *UninstallOptions) Validate(args []string, cxt *context.Context) error {
 	return o.sharedOptions.Validate(args, cxt)
 }
 
-// UninstallBundle accepts a set of pre-validated UninstallOptions and uses
-// them to uninstall a bundle.
-func (p *Porter) UninstallBundle(opts UninstallOptions) error {
+// InvokeBundle accepts a set of pre-validated InvokeOptions and uses
+// them to upgrade a bundle.
+func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before uninstall")
+		return errors.Wrap(err, "unable to pull bundle before invoking the custom action")
 	}
 
 	err = p.applyDefaultOptions(&opts.sharedOptions)
@@ -42,13 +51,13 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	return p.CNAB.Uninstall(opts.ToDuffleArgs())
+	fmt.Fprintf(p.Out, "invoking custom action %s on %s...\n", opts.Action, opts.Name)
+	return p.CNAB.Invoke(opts.Action, opts.ToDuffleArgs())
 }
 
 // ToDuffleArgs converts this instance of user-provided options
 // to duffle arguments.
-func (o *UninstallOptions) ToDuffleArgs() cnabprovider.ActionArguments {
+func (o *InvokeOptions) ToDuffleArgs() cnabprovider.ActionArguments {
 	return cnabprovider.ActionArguments{
 		Claim:                 o.Name,
 		BundleIdentifier:      o.CNABFile,

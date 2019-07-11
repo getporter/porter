@@ -48,16 +48,14 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 
 // ToDuffleArgs converts this instance of user-provided options
 // to duffle arguments.
-func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.UpgradeArguments {
-	return cnabprovider.UpgradeArguments{
-		ActionArguments: cnabprovider.ActionArguments{
-			Claim:                 o.Name,
-			BundleIdentifier:      o.CNABFile,
-			BundleIsFile:          true,
-			Insecure:              o.Insecure,
-			Params:                o.combineParameters(),
-			CredentialIdentifiers: o.CredentialIdentifiers,
-			Driver:                o.Driver,
-		},
+func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.ActionArguments {
+	return cnabprovider.ActionArguments{
+		Claim:                 o.Name,
+		BundleIdentifier:      o.CNABFile,
+		BundleIsFile:          true,
+		Insecure:              o.Insecure,
+		Params:                o.combineParameters(),
+		CredentialIdentifiers: o.CredentialIdentifiers,
+		Driver:                o.Driver,
 	}
 }

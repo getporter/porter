@@ -7,11 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type UninstallArguments struct {
-	ActionArguments
-}
-
-func (d *Duffle) Uninstall(args UninstallArguments) error {
+func (d *Duffle) Uninstall(args ActionArguments) error {
 	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Install
 	// we shouldn't be reimplementing calling all these functions all over again
 

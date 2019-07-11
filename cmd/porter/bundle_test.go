@@ -67,6 +67,36 @@ func TestValidateUninstallCommand(t *testing.T) {
 	}
 }
 
+func TestValidateInvokeCommand(t *testing.T) {
+	testcases := []struct {
+		name      string
+		args      string
+		wantError string
+	}{
+		{"no args", "invoke", "--action is required"},
+		{"action specified", "invoke --action status", ""},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := buildRootCommand()
+			osargs := strings.Split(tc.args, " ")
+			cmd, args, err := p.Find(osargs)
+			require.NoError(t, err)
+
+			err = cmd.ParseFlags(args)
+			require.NoError(t, err)
+
+			err = cmd.PreRunE(cmd, cmd.Flags().Args())
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.wantError)
+			}
+		})
+	}
+}
+
 func TestValidateBundleListCommand(t *testing.T) {
 	testcases := []struct {
 		name      string

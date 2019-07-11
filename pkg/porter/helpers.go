@@ -142,13 +142,19 @@ func (t *TestCNABProvider) LoadBundle(bundleFile string, insecure bool) (*bundle
 	return b, nil
 }
 
-func (t *TestCNABProvider) Install(arguments cnabprovider.InstallArguments) error {
+func (t *TestCNABProvider) Install(arguments cnabprovider.ActionArguments) error {
 	return nil
 }
-func (t *TestCNABProvider) Upgrade(arguments cnabprovider.UpgradeArguments) error {
+
+func (t *TestCNABProvider) Upgrade(arguments cnabprovider.ActionArguments) error {
 	return nil
 }
-func (t *TestCNABProvider) Uninstall(arguments cnabprovider.UninstallArguments) error {
+
+func (t *TestCNABProvider) Invoke(action string, arguments cnabprovider.ActionArguments) error {
+	return nil
+}
+
+func (t *TestCNABProvider) Uninstall(arguments cnabprovider.ActionArguments) error {
 	return nil
 }
 
