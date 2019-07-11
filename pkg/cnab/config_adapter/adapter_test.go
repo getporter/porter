@@ -37,7 +37,7 @@ func TestPorter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Parameters.Fields, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
 
-	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Dependencies was not populated")
+	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Porter stamp was not populated")
 	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
 }
 
