@@ -176,7 +176,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return err
 	}
 
-	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

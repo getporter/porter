@@ -10,10 +10,14 @@ type BundleLifecycleOpts struct {
 	BundlePullOptions
 }
 
-// populateOptsFromBundlePull handles calling the bundle pull operation and updating
+// prepullBundleByTag handles calling the bundle pull operation and updating
 // the shared options like name and bundle file path. This is used by install, upgrade
 // and uninstall
-func (opts *BundleLifecycleOpts) populateOptsFromBundlePull(p *Porter) error {
+func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
+	if opts.Tag == "" {
+		return nil
+	}
+
 	bundlePath, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
 		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)

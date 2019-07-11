@@ -36,7 +36,7 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 			Tag: "deislabs/kubekahn:1.0",
 		},
 	}
-	err = b.populateOptsFromBundlePull(p.Porter)
+	err = p.prepullBundleByTag(b)
 	assert.NoError(t, err, "pulling bundle should not have resulted in an error")
 	assert.Equal(t, "mysql", b.Name, "name should have matched testdata bundle")
 	assert.Equal(t, fullPath, b.CNABFile, "the prepare method should have set the file to the fullpath")
@@ -58,7 +58,7 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 			Tag: "deislabs/kubekahn:latest",
 		},
 	}
-	err := b.populateOptsFromBundlePull(p.Porter)
+	err := p.prepullBundleByTag(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to pull bundle deislabs/kubekahn:latest")
 
@@ -79,7 +79,7 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 			Tag: "deislabs/kubekahn:latest",
 		},
 	}
-	err := b.populateOptsFromBundlePull(p.Porter)
+	err := p.prepullBundleByTag(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to open bundle file")
 

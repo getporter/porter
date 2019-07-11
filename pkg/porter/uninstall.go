@@ -27,19 +27,17 @@ func (o *UninstallOptions) Validate(args []string, cxt *context.Context) error {
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
-	if opts.Tag != "" {
-		o := &opts
-		err := o.populateOptsFromBundlePull(p)
-		if err != nil {
-			return errors.Wrap(err, "unable to pull bundle before uninstalling")
-		}
+	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	if err != nil {
+		return errors.Wrap(err, "unable to pull bundle before uninstall")
 	}
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
 
-	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

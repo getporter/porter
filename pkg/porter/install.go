@@ -52,19 +52,17 @@ func (o *InstallOptions) ToDuffleArgs() cnabprovider.InstallArguments {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
-	if opts.Tag != "" {
-		o := &opts
-		err := o.populateOptsFromBundlePull(p)
-		if err != nil {
-			return errors.Wrap(err, "unable to pull bundle before installation")
-		}
+	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	if err != nil {
+		return errors.Wrap(err, "unable to pull bundle before installation")
 	}
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
 
-	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
