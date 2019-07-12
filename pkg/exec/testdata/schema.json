@@ -67,6 +67,39 @@
         "exec"
       ]
     },
+    "invokeStep": {
+      "type": "object",
+      "properties": {
+        "exec": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description",
+            "command"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exec"
+      ]
+    },
     "uninstallStep": {
       "type": "object",
       "properties": {
@@ -113,6 +146,12 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/upgradeStep"
+      }
+    },
+    ".*": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/invokeStep"
       }
     },
     "uninstall": {

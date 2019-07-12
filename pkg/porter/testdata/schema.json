@@ -38,6 +38,39 @@
         ],
         "type": "object"
       },
+      "invokeStep": {
+        "additionalProperties": false,
+        "properties": {
+          "exec": {
+            "additionalProperties": false,
+            "properties": {
+              "arguments": {
+                "items": {
+                  "minItems": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "command": {
+                "type": "string"
+              },
+              "description": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "description",
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "exec"
+        ],
+        "type": "object"
+      },
       "uninstallStep": {
         "additionalProperties": false,
         "properties": {
@@ -106,6 +139,12 @@
       }
     },
     "properties": {
+      ".*": {
+        "items": {
+          "$ref": "#/mixin.exec/definitions/invokeStep"
+        },
+        "type": "array"
+      },
       "install": {
         "items": {
           "$ref": "#/mixin.exec/definitions/installStep"
@@ -128,6 +167,16 @@
     "type": "object"
   },
   "properties": {
+    ".*": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/mixin.exec/definitions/invokeStep"
+          }
+        ]
+      },
+      "type": "array"
+    },
     "description": {
       "type": "string"
     },

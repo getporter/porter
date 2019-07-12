@@ -1,22 +1,40 @@
 mixins:
-- exec
+  - exec
 
-name: hello
+name: HELLO_CUSTOM
 version: 0.1.0
-invocationImage: porter-hello:latest
+description: "A bundle with a custom action"
+invocationImage: porter-hello-custom:latest
+tag: deislabs/porter-hello-custom-bundle:latest
 
 install:
-- exec:
-    description: "Say Hello"
-    command: bash
-    arguments:
-      - -c
-      - echo Hello World
+  - exec:
+      description: "Install Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Hello World
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      arguments:
+        - -c
+        - echo World 2.0
+
+zombies:
+  - exec:
+      description: "Trigger zombie apocalypse"
+      command: bash
+      arguments:
+        - -c
+        - echo oh noes my brains
 
 uninstall:
-- exec:
-    description: "Say Goodbye"
-    command: bash
-    arguments:
-      - -c
-      - echo Goodbye World
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      arguments:
+        - -c
+        - echo Goodbye World

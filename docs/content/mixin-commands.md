@@ -112,10 +112,13 @@ the action, e.g. "install", and a definition named `<action>Step`, e.g.
       "additionalProperties": false
     }
     ```
+1. Custom action support is signaled by having a property named ".*" with items
+   of type `invokeStep`.
 
 **NOTE**: porter handles rewriting the references when it merges the json
 *schemas. So write your references relative to your mixin's schema document, and
 *porter will take care of adjusting it when the schema is merged.
+
 
 # install
 

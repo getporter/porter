@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/pkg/errors"
 )
 
@@ -59,7 +58,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items.enum type, expected []interface{} but got %T", mixinItemSchema["enum"])
 	}
 
-	supportedActions := config.GetCoreActions()
+	supportedActions := []string{"install", "upgrade", "uninstall", ".*"} // custom actions are defined in json schema as a wildcard .*
 	actionSchemas := make(map[string]jsonSchema, len(supportedActions))
 	for _, action := range supportedActions {
 		actionSchema, ok := propertiesSchema[string(action)].(jsonSchema)
@@ -98,7 +97,19 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		// embed the entire mixin schema in the root
 		manifestSchema["mixin."+mixin.Name] = mixinSchemaMap
 
-		for _, action := range config.GetCoreActions() {
+		for _, action := range supportedActions {
+			// Some mixins don't have custom actions defined in their schema
+			if action == ".*" {
+				mixinProperties, ok := mixinSchemaMap["properties"].(jsonSchema)
+				if !ok {
+					return nil, errors.Errorf("%s mixin schema has invalid properties type, expected map[string]interface{} but got %T", mixin.Name, mixinSchemaMap["properties"])
+				}
+
+				if _, hasCustomActions := mixinProperties[".*"]; !hasCustomActions {
+					continue
+				}
+			}
+
 			actionItemSchema, ok := actionSchemas[string(action)]["items"].(jsonSchema)
 			if err != nil {
 				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
@@ -109,7 +120,11 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
 			}
 
-			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, action)
+			stepPrefix := action
+			if action == ".*" {
+				stepPrefix = "invoke"
+			}
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, stepPrefix)
 			// WORKAROUND bug in the RedHat yaml lib used by VS Code, it doesn't handle more than one ref dereference
 			// actionRef := fmt.Sprintf("#/mixin.%s/properties/%s/items", mixin.Name, action)
 
