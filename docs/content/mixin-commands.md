@@ -17,7 +17,7 @@ recommended so that your mixin has a good user experience.
 
 **Optional Commands**
 
-* [status](#status)
+* [invoke](#invoke)
 * [version](#version)
 
 
@@ -187,22 +187,29 @@ password=topsecret
 host=127.0.0.1
 ```
 
-# status
+# invoke
 
-The status command (optional) is called from inside the invocation image during
-the `porter run` command. The current step from the manifest is passed on stdin.
-The mixin should write any output values to a file in the
-`/cnab/app/porter/outputs/` directory.
+The invoke command (optional) is called from inside the invocation image during
+the `porter run` command when a custom action defined in the bundle is executed.
+The current step from the manifest is passed on stdin. The mixin should write
+any output values to a file in the `/cnab/app/porter/outputs/` directory.
+
+A mixin doesn't have to support custom actions. If your mixin just maps to CLI
+commands, and doesn't take the action into account, then we strongly recommend
+supporting custom actions so that bundle authors can use your mixin anywhere in
+their bundle, not just in install/upgrade/uninstall.
 
 Example:
 
 **stdin**
 ```yaml
 status:
-- helm:
-    description: "Status of MySQL"
-    releases:
-    - porter-ci-mysql
+- exec:
+    description: "Run a rando command, don't care what action I'm in"
+    command: bash
+    arguments:
+    - -c
+    - echo "Don't mind me, just getting the status of something..."
 ```
 
 # version

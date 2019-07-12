@@ -157,8 +157,9 @@ credentials:
 
 ## Bundle Actions
 
-Porter supports the three CNAB actions: install, upgrade, and uninstall. Within each action, you define an ordered list
-of steps to execute. Each step has a mixin, a `description`, and optionally `outputs`.
+Porter and its mixins supports the three CNAB actions: install, upgrade, and
+uninstall. Within each action, you define an ordered list of steps to execute.
+Each step has a mixin, a `description`, and optionally `outputs`.
 
 ```yaml
 install:
@@ -184,6 +185,35 @@ install:
 * `outputs`: Any outputs provided by the steps. The `name` is required but the rest of the the schema for the 
 output is specific to the mixin. In the example above, the mixin will make the Kubernetes secret data available as outputs.
 By default, all output values are considered sensitive and will be masked in console output.
+
+### Custom Actions
+You can also define custom actions, such as `status` or `dry-run`, and define steps for them just as you would for
+the main actions (install/upgrade/uninstall). Most of the mixins support custom actions but not all do.
+
+You have the option of declaring your custom action, though it is not required. Custom actions are defaulted 
+to `stateless: false` and `modifies: true`. [Well-known actions][well-known-actions] defined in the CNAB specification 
+are automatically defaulted, such as `dry-run`, `help`, `log`, and `status`. You do not need to declare custom 
+actions unless you want to change the defaults.
+
+You may want to declare your custom action when the action does not make any changes, and its execution should not 
+be recorded (`stateless: true` and `modifies: false`). The `help` action is supported out-of-the-box by Porter
+and is automatically defaulted to this definition so you do not need to declare it. If you have an action that is 
+similar to `help`, but has a different name, you should declare it in the `customActions` section.
+
+```
+customActions:
+  myhelp:
+    description: "Print a special help message"
+    stateless: true
+    modifies: false
+```
+
+* `description`: Description of the action.
+* `stateless`: Indicates that the action is purely informational, that credentials are not required, 
+   and that Porter should not keep track of when this action was last executed.
+* `modifies`: Indicates whether this action modifies resources managed by the bundle.
+
+[well-known-actions]: https://github.com/deislabs/cnab-spec/blob/master/804-well-known-custom-actions.md
 
 ## Dependencies
 

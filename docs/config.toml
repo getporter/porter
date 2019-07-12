@@ -64,22 +64,28 @@ defaultContentLanguage = "en"
     weight = 125
     parent = "cli"
   [[menu.main]]
+    name = "porter invoke"
+    url = "/cli#invoke"
+    identifier = "cli-invoke"
+    weight = 126
+    parent = "cli"
+  [[menu.main]]
     name = "porter upgrade"
     url = "/cli#upgrade"
     identifier = "cli-upgrade"
-    weight = 126
+    weight = 127
     parent = "cli"
   [[menu.main]]
     name = "porter uninstall"
     url = "/cli#uninstall"
     identifier = "cli-uninstall"
-    weight = 127
+    weight = 128
     parent = "cli"
   [[menu.main]]
     name = "porter bundle list"
     url = "/cli#bundle-list"
     identifier = "cli-bundle-list"
-    weight = 128
+    weight = 129
     parent = "cli"
   [[menu.main]]
     name = "porter mixins list"
