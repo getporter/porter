@@ -27,6 +27,7 @@ func buildBundlesCommand(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 	cmd.AddCommand(buildBundleShowCommand(p))
+	cmd.AddCommand(buildBundleOutputCommand(p))
 
 	return cmd
 }
@@ -363,4 +364,68 @@ func buildShowCommand(p *porter.Porter) *cobra.Command {
 		"group": "alias",
 	}
 	return cmd
+}
+
+func buildBundleOutputCommand(p *porter.Porter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "output",
+		Aliases: []string{"outputs"},
+		Short:   "Output commands",
+		Annotations: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	cmd.AddCommand(buildBundleOutputShowCommand(p))
+	cmd.AddCommand(buildBundleOutputListCommand(p))
+
+	return cmd
+}
+
+func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.OutputListOptions{}
+
+	cmd := cobra.Command{
+		Use:   "list [CLAIM]",
+		Short: "List bundle outputs",
+		Long:  "Displays a listing of bundle outputs.",
+		Example: `  porter bundle outputs list [CLAIM]
+
+Optional output formats include json and yaml.
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ListBundleOutputs(&opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
+
+	return &cmd
+}
+
+func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.OutputShowOptions{}
+
+	cmd := cobra.Command{
+		Use:     "show NAME [--claim|-c CLAIM]",
+		Short:   "Show a bundle output",
+		Long:    "Show a bundle output.",
+		Example: `  porter bundle output show NAME [--claim|-c CLAIM]`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ShowBundleOutput(&opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Name, "claim", "c", "", "Specify a claim that the output belongs to.")
+
+	return &cmd
 }

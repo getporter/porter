@@ -1,6 +1,6 @@
 {
-  "name":"foo",
-  "type":"string",
-  "value":"foo-value",
-  "sensitive":true
+  "name": "foo",
+  "sensitive": true,
+  "type": "string",
+  "value": "foo-value"
 }

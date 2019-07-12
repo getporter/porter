@@ -2,15 +2,11 @@ package porter
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
-	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 
-	"github.com/deislabs/porter/pkg/config"
 	context "github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"
 )
@@ -33,28 +29,16 @@ type ClaimListing struct {
 
 // Validate prepares for a show bundle action and validates the args/options.
 func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
+	// Ensure only one argument exists (claim name) if args length non-zero
 	err := so.sharedOptions.validateClaimName(args)
 	if err != nil {
 		return err
 	}
 
-	// If claim name not supplied, try to determine from manifest in current working directory
-	if so.sharedOptions.Name == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
-		if err != nil {
-			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
-		}
-
-		if manifestExists {
-			so.sharedOptions.File = config.Name
-		} else {
-			return errors.New("claim name must be provided")
-		}
+	// If args length zero, attempt to derive claim name from context
+	err = so.sharedOptions.defaultBundleFiles(cxt)
+	if err != nil {
+		return errors.Wrap(err, "claim name must be provided")
 	}
 
 	parsedFormat, err := printer.ParseFormat(so.RawFormat)
@@ -80,7 +64,7 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 		return err
 	}
 
-	outputs, err := p.listBundleOutputs(name)
+	outputs, err := p.fetchBundleOutputs(name)
 	if err != nil {
 		return err
 	}
@@ -118,44 +102,9 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 			fmt.Fprintln(p.Out)
 			fmt.Fprint(p.Out, "Outputs:\n")
 
-			// Get local output directory for this claim
-			outputsDir, err := p.Config.GetOutputsDir()
-			if err != nil {
-				return errors.Wrap(err, "unable to get outputs directory")
-			}
-			claimOutputsDir := filepath.Join(outputsDir, cl.Name)
-
-			var rows [][]string
-
-			// Iterate through all Bundle Outputs and add to rows
-			for _, o := range cl.Outputs {
-				value := o.Value
-				// If output is sensitive, substitute local path
-				if o.Sensitive {
-					value = filepath.Join(claimOutputsDir, o.Name)
-				}
-				truncatedValue := truncateString(value, 60)
-				rows = append(rows, []string{o.Name, o.Type, truncatedValue})
-			}
-
-			// Build and configure our tablewriter for the outputs
-			table := tablewriter.NewWriter(p.Out)
-			table.SetCenterSeparator("")
-			table.SetColumnSeparator("")
-			table.SetAlignment(tablewriter.ALIGN_LEFT)
-			table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-			table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-			table.SetAutoFormatHeaders(false)
-
-			// Print the outputs table
-			table.SetHeader([]string{"Name", "Type", "Value (Path if sensitive)"})
-			for _, row := range rows {
-				table.Append(row)
-			}
-			table.Render()
+			return p.printOutputsTable(&cl.Outputs, cl.Name)
 		}
 		return nil
-
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
