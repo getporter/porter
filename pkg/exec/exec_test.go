@@ -77,6 +77,18 @@ func TestMixin_Upgrade(t *testing.T) {
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
+func TestMixin_CustomAction(t *testing.T) {
+	h := NewTestMixin(t)
+	h.TestContext.AddTestDirectory("testdata", "testdata")
+
+	err := h.loadAction("testdata/status_input.yaml")
+	require.NoError(t, err)
+
+	assert.Len(t, h.Mixin.Action.Steps, 1)
+	step := h.Mixin.Action.Steps[0]
+	assert.Equal(t, "bash", step.Instruction.Command)
+}
+
 func TestMixin_Uninstall(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
