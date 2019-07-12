@@ -1,0 +1,7 @@
+uninstall:
+- exec:
+    description: "Install Hello World"
+    command: bash
+    arguments:
+    - -c
+    - echo Hello World

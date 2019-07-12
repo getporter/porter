@@ -6,13 +6,13 @@ import (
 )
 
 func buildUpgradeCommand(m *exec.Mixin) *cobra.Command {
-	opts := exec.UpgradeOptions{}
+	opts := exec.ExecuteCommandOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Execute the upgrade functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.Upgrade(opts.File)
+			return m.ExecuteCommand(opts)
 		},
 	}
 	flags := cmd.Flags()
