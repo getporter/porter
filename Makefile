@@ -152,7 +152,6 @@ endif
 
 install:
 	mkdir -p $(HOME)/.porter
-	cp -R bin/bundles $(HOME)/.porter/
 	cp -R bin/mixins $(HOME)/.porter/
 	cp bin/porter* $(HOME)/.porter/
 	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
