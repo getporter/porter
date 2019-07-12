@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/cbroglie/mustache"
-	"github.com/deislabs/porter/pkg/mixin"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -453,8 +452,6 @@ func (s Steps) Validate(m *Manifest) error {
 }
 
 type Step struct {
-	runner *mixin.Runner
-
 	Data map[string]interface{} `yaml:",inline"`
 }
 
