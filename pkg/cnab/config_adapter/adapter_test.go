@@ -369,3 +369,41 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	assert.False(t, zombieDef.Stateless, "expected the zombies custom action to default to not stateless")
 	assert.True(t, zombieDef.Modifies, "expected the zombies custom action to default to modifying resources")
 }
+
+func TestManifestConverter_generateDefaultAction(t *testing.T) {
+	a := ManifestConverter{}
+
+	testcases := []struct {
+		action     string
+		wantAction bundle.Action
+	}{
+		{"dry-run", bundle.Action{
+			Description: "Execute the installation in a dry-run mode, allowing to see what would happen with the given set of parameter values",
+			Modifies:    false,
+			Stateless:   true,
+		}},
+		{
+			"help", bundle.Action{
+				Description: "Print an help message to the standard output",
+				Modifies:    false,
+				Stateless:   true,
+			}},
+		{"log", bundle.Action{
+			Description: "Print logs of the installed system to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}},
+		{"status", bundle.Action{
+			Description: "Print a human readable status message to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.action, func(t *testing.T) {
+			gotAction := a.generateDefaultAction(tc.action)
+			assert.Equal(t, tc.wantAction, gotAction)
+		})
+	}
+}
