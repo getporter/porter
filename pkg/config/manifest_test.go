@@ -51,18 +51,28 @@ func TestLoadManifest(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
 
-	require.NoError(t, c.LoadManifest())
+	require.NoError(t, c.LoadManifest(), "could not load manifest")
 
-	assert.NotNil(t, c.Manifest)
-	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
-	assert.Len(t, c.Manifest.Install, 1)
+	require.NotNil(t, c.Manifest, "manifest was nil")
+	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins, "expected manifest to declare the exec mixin")
+	require.Len(t, c.Manifest.Install, 1, "expected 1 install step")
 
 	installStep := c.Manifest.Install[0]
 	description, _ := installStep.GetDescription()
-	assert.NotNil(t, description)
+	assert.NotNil(t, description, "expected the install description to be populated")
 
 	mixin := installStep.GetMixinName()
-	assert.Equal(t, "exec", mixin)
+	assert.Equal(t, "exec", mixin, "incorrect install step mixin used")
+
+	require.Len(t, c.Manifest.CustomActions, 1, "expected manifest to declare 1 custom action")
+	require.Contains(t, c.Manifest.CustomActions, "status", "expected manifest to declare a status action")
+
+	statusStep := c.Manifest.CustomActions["status"][0]
+	description, _ = statusStep.GetDescription()
+	assert.Equal(t, "Get World Status", description, "unexpected status step description")
+
+	mixin = statusStep.GetMixinName()
+	assert.Equal(t, "exec", mixin, "unexpected status step mixin")
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {

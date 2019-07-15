@@ -3,14 +3,11 @@ package cnabprovider
 import (
 	"fmt"
 
-	"github.com/deislabs/cnab-go/action"
+	cnabaction "github.com/deislabs/cnab-go/action"
 	"github.com/pkg/errors"
 )
 
-func (d *Duffle) Upgrade(args ActionArguments) error {
-	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Upgrade
-	// we shouldn't be reimplementing calling all these functions all over again
-
+func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	claims := d.NewClaimStore()
 	claim, err := claims.Read(args.Claim)
 	if err != nil {
@@ -19,7 +16,6 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 
 	if args.BundleIdentifier != "" {
 		// TODO: handle resolving based on bundle name
-		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to upgrade it?
 		claim.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
 		if err != nil {
 			return err
@@ -37,7 +33,9 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
-	i := action.Upgrade{
+
+	i := cnabaction.RunCustom{
+		Action: action,
 		Driver: driver,
 	}
 
@@ -57,14 +55,14 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 		for k := range claim.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "upgrading bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, action, claim.Name, paramKeys, credKeys)
 	}
 
-	// Upgrade and ALWAYS write out a claim, even if the upgrade fails
+	// Run the action and ALWAYS write out a claim, even if the action fails
 	err = i.Run(&claim, creds, d.Out)
 	saveErr := claims.Store(claim)
 	if err != nil {
-		return errors.Wrap(err, "failed to upgrade the bundle")
+		return errors.Wrap(err, "failed to invoke the bundle")
 	}
-	return errors.Wrap(saveErr, "failed to record the upgrade for the bundle")
+	return errors.Wrap(saveErr, "failed to record the updated claim for the bundle")
 }

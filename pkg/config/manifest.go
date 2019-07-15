@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/cbroglie/mustache"
-	"github.com/deislabs/porter/pkg/mixin"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -34,10 +34,15 @@ type Manifest struct {
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
-	Mixins       []string               `yaml:"mixins,omitempty"`
-	Install      Steps                  `yaml:"install"`
-	Uninstall    Steps                  `yaml:"uninstall"`
-	Upgrade      Steps                  `yaml:"upgrade"`
+	Mixins []string `yaml:"mixins,omitempty"`
+
+	Install   Steps `yaml:"install"`
+	Uninstall Steps `yaml:"uninstall"`
+	Upgrade   Steps `yaml:"upgrade"`
+
+	CustomActions           map[string]Steps                  `yaml:"-"`
+	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
+
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
 	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
@@ -108,6 +113,12 @@ type Dependency struct {
 	AllowPrereleases bool     `yaml:"prereleases"`
 
 	Parameters map[string]string `yaml:"parameters,omitempty"`
+}
+
+type CustomActionDefinition struct {
+	Description       string `yaml:"description,omitempty"`
+	ModifiesResources bool   `yaml:"modifies,omitempty"`
+	Stateless         bool   `yaml:"stateless,omitempty"`
 }
 
 // OutputDefinition defines a single output for a CNAB
@@ -202,6 +213,61 @@ type BundleConnection struct {
 	// TODO: Need to add type once it's completed in #20
 }
 
+func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
+	// Unmarshal the manifest into the normal struct
+	manifest := &Manifest{}
+	err := yaml.Unmarshal(manifestData, &manifest)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling the typed manifest")
+	}
+
+	// Do a second pass to identify custom actions, which don't have yaml tags since they are dynamic
+	// 1. Marshal the manifest a second time into a plain map
+	// 2. Remove keys for fields that are already mapped with yaml tags
+	// 3. Anything left is a custom action
+
+	// Marshal the manifest into an untyped map
+	unmappedData := make(map[string]interface{})
+	err = yaml.Unmarshal(manifestData, &unmappedData)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling the untyped manifest")
+	}
+
+	// Use reflection to figure out which fields are on the manifest and have yaml tags
+	objValue := reflect.ValueOf(manifest).Elem()
+	knownFields := map[string]reflect.Value{}
+	for i := 0; i != objValue.NumField(); i++ {
+		tagName := strings.Split(objValue.Type().Field(i).Tag.Get("yaml"), ",")[0]
+		knownFields[tagName] = objValue.Field(i)
+	}
+
+	// Remove any fields that have yaml tags
+	for key := range unmappedData {
+		if _, found := knownFields[key]; found {
+			delete(unmappedData, key)
+		}
+	}
+
+	// Marshal the remaining keys in the unmappedData as custom actions and append them to the typed manifest
+	manifest.CustomActions = make(map[string]Steps, len(unmappedData))
+	for key, chunk := range unmappedData {
+		chunkData, err := yaml.Marshal(chunk)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error remarshaling custom action %s", key)
+		}
+
+		steps := Steps{}
+		err = yaml.Unmarshal(chunkData, &steps)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error unmarshaling custom action %s", key)
+		}
+
+		manifest.CustomActions[key] = steps
+	}
+
+	return manifest, nil
+}
+
 func (c *Config) readFromFile(path string) (*Manifest, error) {
 	if exists, _ := c.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
@@ -212,10 +278,9 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
 	}
 
-	m := &Manifest{}
-	err = yaml.Unmarshal(data, m)
+	m, err := UnmarshalManifest(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
+		return nil, err
 	}
 	m.path = path
 
@@ -229,15 +294,14 @@ func (c *Config) readFromURL(path string) (*Manifest, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not read from url %s", path)
 	}
 
-	m := &Manifest{}
-	err = yaml.Unmarshal(body, m)
+	m, err := UnmarshalManifest(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse manifest yaml in %q", path)
+		return nil, err
 	}
 	m.path = path
 
@@ -338,21 +402,24 @@ func (m *Manifest) GetSensitiveValues() []string {
 }
 
 func (m *Manifest) GetSteps(action Action) (Steps, error) {
-	var steps Steps
 	switch action {
 	case ActionInstall:
-		steps = m.Install
+		return m.Install, nil
 	case ActionUninstall:
-		steps = m.Uninstall
+		return m.Uninstall, nil
 	case ActionUpgrade:
-		steps = m.Upgrade
+		return m.Upgrade, nil
+	default:
+		customAction, ok := m.CustomActions[string(action)]
+		if !ok {
+			actions := make([]string, 0, len(m.CustomActions))
+			for a := range m.CustomActions {
+				actions = append(actions, a)
+			}
+			return nil, errors.Errorf("unsupported action %q, custom actions are defined for: %s", action, strings.Join(actions, ", "))
+		}
+		return customAction, nil
 	}
-
-	if len(steps) == 0 {
-		return nil, errors.Errorf("unsupported action: %q", action)
-	}
-
-	return steps, nil
 }
 
 func (m *Manifest) ApplyStepOutputs(step *Step, assignments []string) error {
@@ -391,8 +458,6 @@ func (s Steps) Validate(m *Manifest) error {
 }
 
 type Step struct {
-	runner *mixin.Runner
-
 	Data map[string]interface{} `yaml:",inline"`
 }
 

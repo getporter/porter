@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/build"
 	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
@@ -55,7 +55,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return err
 	}
 
-	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}

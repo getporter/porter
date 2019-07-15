@@ -38,6 +38,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		},
 	}
 
+	b.Actions = c.generateCustomActionDefinitions()
 	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs))
 	b.InvocationImages = []bundle.InvocationImage{image}
 	b.Parameters = c.generateBundleParameters(&b.Definitions)
@@ -48,6 +49,74 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
 
 	return b
+}
+
+func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {
+	if len(c.Manifest.CustomActions) == 0 {
+		return nil
+	}
+
+	defs := make(map[string]bundle.Action, len(c.Manifest.CustomActions))
+	for action, def := range c.Manifest.CustomActionDefinitions {
+		def := bundle.Action{
+			Description: def.Description,
+			Modifies:    def.ModifiesResources,
+			Stateless:   def.Stateless,
+		}
+		defs[action] = def
+	}
+
+	// If they used a custom action but didn't define it, default it to a safe action definition
+	for action := range c.Manifest.CustomActions {
+		if _, ok := c.Manifest.CustomActionDefinitions[action]; !ok {
+			defs[action] = c.generateDefaultAction(action)
+		}
+	}
+
+	return defs
+}
+
+func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
+	// See https://github.com/deislabs/cnab-spec/blob/master/804-well-known-custom-actions.md
+	switch action {
+	case "dry-run", "io.cnab.dry-run":
+		return bundle.Action{
+			Description: "Execute the installation in a dry-run mode, allowing to see what would happen with the given set of parameter values",
+			Modifies:    false,
+			Stateless:   true,
+		}
+	case "help", "io.cnab.help":
+		return bundle.Action{
+			Description: "Print an help message to the standard output",
+			Modifies:    false,
+			Stateless:   true,
+		}
+	case "log", "io.cnab.log":
+		return bundle.Action{
+			Description: "Print logs of the installed system to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}
+	case "status", "io.cnab.status":
+		return bundle.Action{
+			Description: "Print a human readable status message to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}
+	case "status+json", "io.cnab.status+json":
+		return bundle.Action{
+			Description: "Print a json payload describing the detailed status with the following the CNAB status schema",
+			Modifies:    false,
+			Stateless:   false,
+		}
+	default:
+		// By default assume that any custom action could modify state
+		return bundle.Action{
+			Description: action,
+			Modifies:    true,
+			Stateless:   false,
+		}
+	}
 }
 
 func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) *bundle.ParametersDefinition {

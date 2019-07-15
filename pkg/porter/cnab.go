@@ -18,9 +18,10 @@ import (
 // CNABProvider
 type CNABProvider interface {
 	LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error)
-	Install(arguments cnabprovider.InstallArguments) error
-	Upgrade(arguments cnabprovider.UpgradeArguments) error
-	Uninstall(arguments cnabprovider.UninstallArguments) error
+	Install(arguments cnabprovider.ActionArguments) error
+	Upgrade(arguments cnabprovider.ActionArguments) error
+	Invoke(action string, arguments cnabprovider.ActionArguments) error
+	Uninstall(arguments cnabprovider.ActionArguments) error
 	FetchClaim(name string) (*claim.Claim, error)
 }
 
@@ -84,6 +85,8 @@ type sharedOptions struct {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
+	o.Insecure = true
+
 	err := o.validateClaimName(args)
 	if err != nil {
 		return err

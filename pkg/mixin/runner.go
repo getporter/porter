@@ -63,6 +63,12 @@ func (r *Runner) Run() error {
 	cmd.Stdout = r.Context.Out
 	cmd.Stderr = r.Context.Err
 
+	if !IsCoreMixinCommand(r.Command) {
+		// For custom commands, don't call the mixin as "mixin CUSTOM" but as "mixin invoke --action CUSTOM"
+		cmd.Args[1] = "invoke"
+		cmd.Args = append(cmd.Args, "--action", r.Command)
+	}
+
 	if r.File != "" {
 		cmd.Args = append(cmd.Args, "-f", r.File)
 	}

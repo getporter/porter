@@ -8,11 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type InstallArguments struct {
-	ActionArguments
-}
-
-func (d *Duffle) Install(args InstallArguments) error {
+func (d *Duffle) Install(args ActionArguments) error {
 	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Install
 	// we shouldn't be reimplementing calling all these functions all over again
 

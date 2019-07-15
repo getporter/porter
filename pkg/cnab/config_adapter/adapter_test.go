@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPorter_ToBundle(t *testing.T) {
+func TestManifestConverter_ToBundle(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
@@ -34,6 +34,7 @@ func TestPorter_ToBundle(t *testing.T) {
 	assert.NoError(t, err, "could not load porter's stamp")
 	assert.NotNil(t, stamp)
 
+	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
 	assert.Contains(t, bun.Parameters.Fields, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
 
@@ -45,7 +46,7 @@ func makefloat64(v float64) *float64 {
 	return &v
 }
 
-func TestPorter_generateBundleParametersSchema(t *testing.T) {
+func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
 
@@ -115,7 +116,7 @@ func TestPorter_generateBundleParametersSchema(t *testing.T) {
 	}
 }
 
-func TestPorter_buildDefaultPorterParameters(t *testing.T) {
+func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
 
@@ -141,7 +142,7 @@ func TestPorter_buildDefaultPorterParameters(t *testing.T) {
 	assert.Equal(t, false, debugDef.Default)
 }
 
-func TestPorter_generateImages(t *testing.T) {
+func TestManifestConverter_generateImages(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
 
@@ -184,7 +185,7 @@ func TestPorter_generateImages(t *testing.T) {
 	assert.Equal(t, mappedImage.Platform.Architecture, img.Platform.Architecture)
 }
 
-func TestPorter_generateBundleImages_EmptyPlatform(t *testing.T) {
+func TestManifestConverter_generateBundleImages_EmptyPlatform(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
 
@@ -212,7 +213,7 @@ func TestPorter_generateBundleImages_EmptyPlatform(t *testing.T) {
 	assert.Nil(t, img.Platform)
 }
 
-func TestPorter_generateBundleOutputs(t *testing.T) {
+func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
 
@@ -284,7 +285,7 @@ func TestPorter_generateBundleOutputs(t *testing.T) {
 	require.Equal(t, wantDefinitions, defs)
 }
 
-func TestPorter_generateDependencies(t *testing.T) {
+func TestManifestConverter_generateDependencies(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 
@@ -337,6 +338,77 @@ func TestPorter_generateDependencies(t *testing.T) {
 
 			require.NotNil(t, dep, "could not find bundle %s", tc.wantDep.Bundle)
 			assert.Equal(t, &tc.wantDep, dep)
+		})
+	}
+}
+
+func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-custom-action.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	defs := a.generateCustomActionDefinitions()
+	require.Len(t, defs, 2, "expected 2 custom action definitions to be generated")
+
+	require.Contains(t, defs, "status")
+	statusDef := defs["status"]
+	assert.Equal(t, "Prints out status of world", statusDef.Description)
+	assert.True(t, statusDef.Stateless, "expected the status custom action to be stateless")
+	assert.False(t, statusDef.Modifies, "expected the status custom action to not modify resources")
+
+	require.Contains(t, defs, "zombies")
+	zombieDef := defs["zombies"]
+	assert.Equal(t, "zombies", zombieDef.Description)
+	assert.False(t, zombieDef.Stateless, "expected the zombies custom action to default to not stateless")
+	assert.True(t, zombieDef.Modifies, "expected the zombies custom action to default to modifying resources")
+}
+
+func TestManifestConverter_generateDefaultAction(t *testing.T) {
+	a := ManifestConverter{}
+
+	testcases := []struct {
+		action     string
+		wantAction bundle.Action
+	}{
+		{"dry-run", bundle.Action{
+			Description: "Execute the installation in a dry-run mode, allowing to see what would happen with the given set of parameter values",
+			Modifies:    false,
+			Stateless:   true,
+		}},
+		{
+			"help", bundle.Action{
+				Description: "Print an help message to the standard output",
+				Modifies:    false,
+				Stateless:   true,
+			}},
+		{"log", bundle.Action{
+			Description: "Print logs of the installed system to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}},
+		{"status", bundle.Action{
+			Description: "Print a human readable status message to the standard output",
+			Modifies:    false,
+			Stateless:   false,
+		}},
+		{"zombies", bundle.Action{
+			Description: "zombies",
+			Modifies:    true,
+			Stateless:   false,
+		}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.action, func(t *testing.T) {
+			gotAction := a.generateDefaultAction(tc.action)
+			assert.Equal(t, tc.wantAction, gotAction)
 		})
 	}
 }

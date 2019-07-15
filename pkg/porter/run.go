@@ -52,9 +52,8 @@ func (o *RunOptions) validateAction() error {
 		}
 	}
 
-	var err error
-	o.parsedAction, err = config.ParseAction(o.Action)
-	return err
+	o.parsedAction = config.Action(o.Action)
+	return nil
 }
 
 func (o *RunOptions) defaultDebug() error {

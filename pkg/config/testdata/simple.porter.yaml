@@ -14,6 +14,14 @@ install:
     - -c
     - echo Hello World
 
+status:
+- exec:
+    description: "Get World Status"
+    command: bash
+    arguments:
+    - -c
+    - echo The world is on fire
+
 uninstall:
 - exec:
     description: "Say Goodbye"

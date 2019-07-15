@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// UpgradeOptions that may be specified when uninstalling a bundle.
+// UpgradeOptions that may be specified when upgrading a bundle.
 // Porter handles defaulting any missing values.
 type UpgradeOptions struct {
 	BundleLifecycleOpts
@@ -27,19 +27,17 @@ func (o *UpgradeOptions) Validate(args []string, cxt *context.Context) error {
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
-	if opts.Tag != "" {
-		o := &opts
-		err := o.populateOptsFromBundlePull(p)
-		if err != nil {
-			return errors.Wrap(err, "unable to pull bundle before upgrade")
-		}
+	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	if err != nil {
+		return errors.Wrap(err, "unable to pull bundle before upgrade")
 	}
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
 
-	err = p.EnsureBundleIsUpToDate(opts.bundleFileOptions)
+	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
@@ -50,16 +48,14 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 
 // ToDuffleArgs converts this instance of user-provided options
 // to duffle arguments.
-func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.UpgradeArguments {
-	return cnabprovider.UpgradeArguments{
-		ActionArguments: cnabprovider.ActionArguments{
-			Claim:                 o.Name,
-			BundleIdentifier:      o.CNABFile,
-			BundleIsFile:          true,
-			Insecure:              o.Insecure,
-			Params:                o.combineParameters(),
-			CredentialIdentifiers: o.CredentialIdentifiers,
-			Driver:                o.Driver,
-		},
+func (o *UpgradeOptions) ToDuffleArgs() cnabprovider.ActionArguments {
+	return cnabprovider.ActionArguments{
+		Claim:                 o.Name,
+		BundleIdentifier:      o.CNABFile,
+		BundleIsFile:          true,
+		Insecure:              o.Insecure,
+		Params:                o.combineParameters(),
+		CredentialIdentifiers: o.CredentialIdentifiers,
+		Driver:                o.Driver,
 	}
 }

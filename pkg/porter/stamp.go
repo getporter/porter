@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// EnsureBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
+// ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
-func (p *Porter) EnsureBundleIsUpToDate(opts bundleFileOptions) error {
+func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 	if opts.File == "" {
 		return nil
 	}

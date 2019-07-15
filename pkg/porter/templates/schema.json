@@ -33,6 +33,12 @@
         "anyOf": []
       }
     },
+    ".*": {
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
+    },
     "uninstall": {
       "type": "array",
       "items": {
