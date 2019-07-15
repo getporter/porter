@@ -302,6 +302,53 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
+### Bundle Outputs List
+
+Outputs from a bundle claim can be listed via `porter bundle outputs list`.
+
+```console
+ $ porter bundle outputs list --help
+Displays a listing of bundle outputs.
+
+Usage:
+  porter bundles output list [CLAIM] [flags]
+
+Examples:
+  porter bundle outputs list [CLAIM]
+
+Optional output formats include json and yaml.
+
+
+Flags:
+  -h, --help            help for list
+  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+
+Global Flags:
+      --debug   Enable debug logging
+```
+
+### Bundle Outputs Show
+
+An individual output from a bundle claim can be retrieved via `porter bundle output show`.
+
+```console
+ $ porter bundle outputs show --help
+Show a bundle output.
+
+Usage:
+  porter bundles output show NAME [--claim|-c CLAIM] [flags]
+
+Examples:
+  porter bundle output show NAME [--claim|-c CLAIM]
+
+Flags:
+  -c, --claim string   Specify a claim that the output belongs to.
+  -h, --help           help for show
+
+Global Flags:
+      --debug   Enable debug logging
+```
+
 ## Mixin Commands
 
 ### Mixins List

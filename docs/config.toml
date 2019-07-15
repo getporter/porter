@@ -88,6 +88,24 @@ defaultContentLanguage = "en"
     weight = 129
     parent = "cli"
   [[menu.main]]
+    name = "porter bundle show"
+    url = "/cli#bundle-show"
+    identifier = "cli-bundle-show"
+    weight = 129
+    parent = "cli"
+  [[menu.main]]
+    name = "porter bundle outputs list"
+    url = "/cli#bundle-outputs-list"
+    identifier = "cli-bundle-outputs-list"
+    weight = 130
+    parent = "cli"
+  [[menu.main]]
+    name = "porter bundle output show"
+    url = "/cli#bundle-output-show"
+    identifier = "cli-bundle-output-show"
+    weight = 131
+    parent = "cli"
+  [[menu.main]]
     name = "porter mixins list"
     url = "/cli#mixins-list"
     identifier = "cli-mixins-list"

@@ -31,22 +31,19 @@ if ! cat ${porter_output} | grep -q 'content:  "" => "foo!"'; then
   exit 1
 fi
 
-echo "Verifing bundle outputs via 'porter bundle show' after install"
-show_output=$(${PORTER_HOME}/porter show porter-terraform)
-echo "${show_output}"
-echo "${show_output}" | grep -q "file_contents"
-echo "${show_output}" | grep -q "foo!"
+echo "Verifing bundle output(s) via 'porter bundle outputs list' after install"
+list_outputs=$(${PORTER_HOME}/porter bundle outputs list)
+echo "${list_outputs}"
+echo "${list_outputs}" | grep -q "file_contents"
+echo "${list_outputs}" | grep -q "foo!"
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = foo!'
 
 ${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
 
-echo "Verifing bundle outputs via 'porter bundle show' after upgrade"
-show_output=$(${PORTER_HOME}/porter show porter-terraform)
-echo "${show_output}"
-echo "${show_output}" | grep -q "file_contents"
-echo "${show_output}" | grep -q "bar!"
+echo "Verifing bundle output(s) via 'porter bundle output show' after upgrade"
+${PORTER_HOME}/porter bundle output show file_contents | grep -q "bar!"
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'

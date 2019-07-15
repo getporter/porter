@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -279,9 +278,9 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs []string) error {
 						Value:     outputValue,
 					}
 
-					data, err := json.MarshalIndent(output, "", "  ")
+					data, err := output.JSONMarshal()
 					if err != nil {
-						return err
+						return errors.Wrap(err, "unable to marshal output")
 					}
 
 					err = p.FileSystem.WriteFile(outpath, data, 0755)
