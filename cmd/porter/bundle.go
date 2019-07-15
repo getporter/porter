@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/deislabs/porter/pkg/porter"
-	"github.com/deislabs/porter/pkg/printer"
 )
 
 func buildBundlesCommand(p *porter.Porter) *cobra.Command {
@@ -106,12 +105,10 @@ Optional output formats include json and yaml.`,
 		Example: `  porter bundle list
   porter bundle list -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			opts.Format, err = printer.ParseFormat(opts.RawFormat)
-			return err
+			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListBundles(printer.PrintOptions{Format: opts.Format})
+			return p.ListBundles(opts.PrintOptions)
 		},
 	}
 

@@ -287,8 +287,10 @@ func TestShowCredential_NotFound(t *testing.T) {
 	p.CNAB = &TestCNABProvider{}
 
 	opts := CredentialShowOptions{
-		Format: printer.FormatTable,
-		Name:   "non-existent-cred",
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatTable,
+		},
+		Name: "non-existent-cred",
 	}
 
 	err := p.ShowCredential(opts)
@@ -376,8 +378,10 @@ credentials:
 			p.CNAB = &TestCNABProvider{}
 
 			opts := CredentialShowOptions{
-				Format: tc.format,
-				Name:   "kool-kreds",
+				PrintOptions: printer.PrintOptions{
+					Format: tc.format,
+				},
+				Name: "kool-kreds",
 			}
 
 			credsDir, err := p.TestConfig.GetCredentialsDir()

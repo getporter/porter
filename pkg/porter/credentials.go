@@ -22,9 +22,8 @@ import (
 
 // CredentialShowOptions represent options for Porter's credential show command
 type CredentialShowOptions struct {
-	RawFormat string
-	Format    printer.Format
-	Name      string
+	printer.PrintOptions
+	Name string
 }
 
 // CredentialsFile represents a CNAB credentials file and corresponding metadata
@@ -246,13 +245,7 @@ func (o *CredentialShowOptions) Validate(args []string) error {
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 
-	format, err := printer.ParseFormat(o.RawFormat)
-	if err != nil {
-		return err
-	}
-	o.Format = format
-
-	return nil
+	return o.ParseFormat()
 }
 
 // ShowCredential shows the credential set corresponding to the provided name, using

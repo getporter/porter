@@ -18,8 +18,7 @@ type MixinProvider interface {
 
 // PrintMixinsOptions represent options for the PrintMixins function
 type PrintMixinsOptions struct {
-	RawFormat string
-	Format    printer.Format
+	printer.PrintOptions
 }
 
 func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {

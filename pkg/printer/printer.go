@@ -11,16 +11,18 @@ const (
 	FormatPlaintext Format = "plaintext"
 )
 
-func ParseFormat(v string) (Format, error) {
-	format := Format(v)
+func (p *PrintOptions) ParseFormat() error {
+	format := Format(p.RawFormat)
 	switch format {
 	case FormatTable, FormatJson, FormatYaml, FormatPlaintext:
-		return format, nil
+		p.Format = format
+		return nil
 	default:
-		return "", errors.Errorf("invalid format: %s", v)
+		return errors.Errorf("invalid format: %s", p.RawFormat)
 	}
 }
 
 type PrintOptions struct {
+	RawFormat string
 	Format
 }

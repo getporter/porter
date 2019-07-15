@@ -23,8 +23,7 @@ type OutputShowOptions struct {
 // OutputListOptions represent options for a bundle output list command
 type OutputListOptions struct {
 	sharedOptions
-	RawFormat string
-	Format    printer.Format
+	printer.PrintOptions
 }
 
 // Output represents a bundle output
@@ -93,13 +92,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 		return errors.Wrap(err, "claim name must be provided")
 	}
 
-	parsedFormat, err := printer.ParseFormat(o.RawFormat)
-	if err != nil {
-		return err
-	}
-	o.Format = parsedFormat
-
-	return nil
+	return o.ParseFormat()
 }
 
 // ShowBundleOutput shows a bundle output value, according to the provided options

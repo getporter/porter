@@ -4,7 +4,6 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/mixin/feed"
 	"github.com/deislabs/porter/pkg/porter"
-	"github.com/deislabs/porter/pkg/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -32,9 +31,7 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 		Use:   "list",
 		Short: "List installed mixins",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			opts.Format, err = printer.ParseFormat(opts.RawFormat)
-			return err
+			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.PrintMixins(opts)
