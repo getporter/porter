@@ -398,6 +398,11 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 			Modifies:    false,
 			Stateless:   false,
 		}},
+		{"zombies", bundle.Action{
+			Description: "zombies",
+			Modifies:    true,
+			Stateless:   false,
+		}},
 	}
 
 	for _, tc := range testcases {

@@ -214,20 +214,26 @@ type BundleConnection struct {
 }
 
 func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
-	// Unmarshall the manifest into the normal struct
+	// Unmarshal the manifest into the normal struct
 	manifest := &Manifest{}
 	err := yaml.Unmarshal(manifestData, &manifest)
 	if err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling the typed manifest")
 	}
 
-	// Identify data from the manifest that wasn't mapped, those are custom actions
+	// Do a second pass to identify custom actions, which don't have yaml tags since they are dynamic
+	// 1. Marshal the manifest a second time into a plain map
+	// 2. Remove keys for fields that are already mapped with yaml tags
+	// 3. Anything left is a custom action
+
+	// Marshal the manifest into an untyped map
 	unmappedData := make(map[string]interface{})
 	err = yaml.Unmarshal(manifestData, &unmappedData)
 	if err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling the untyped manifest")
 	}
 
+	// Use reflection to figure out which fields are on the manifest and have yaml tags
 	objValue := reflect.ValueOf(manifest).Elem()
 	knownFields := map[string]reflect.Value{}
 	for i := 0; i != objValue.NumField(); i++ {
@@ -242,7 +248,7 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 		}
 	}
 
-	// Marshal the unmapped data as custom actions
+	// Marshal the remaining keys in the unmappedData as custom actions and append them to the typed manifest
 	manifest.CustomActions = make(map[string]Steps, len(unmappedData))
 	for key, chunk := range unmappedData {
 		chunkData, err := yaml.Marshal(chunk)
