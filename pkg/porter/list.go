@@ -37,8 +37,8 @@ func (l CondensedClaimList) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// ListBundles lists installed bundles using the printer.Format provided
-func (p *Porter) ListBundles(opts printer.PrintOptions) error {
+// ListBundles lists installed bundles by their claims.
+func (p *Porter) ListBundles(opts ListOptions) error {
 	cp := cnab.NewDuffle(p.Config)
 	claimStore := cp.NewClaimStore()
 	claims, err := claimStore.ReadAll()

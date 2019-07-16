@@ -98,9 +98,8 @@ func TestCredentialsList_None(t *testing.T) {
 			p := NewTestPorter(t)
 			p.CNAB = &TestCNABProvider{}
 
-			listOpts := printer.PrintOptions{
-				Format: tc.format,
-			}
+			listOpts := ListOptions{}
+			listOpts.Format = tc.format
 			err := p.ListCredentials(listOpts)
 			if tc.errorMsg != "" {
 				require.Equal(t, err.Error(), tc.errorMsg)
@@ -155,9 +154,8 @@ kool-kreds   now`},
 
 			p.TestConfig.TestContext.AddTestDirectory("testdata/test-creds", credsDir)
 
-			listOpts := printer.PrintOptions{
-				Format: tc.format,
-			}
+			listOpts := ListOptions{}
+			listOpts.Format = tc.format
 			err = p.ListCredentials(listOpts)
 			require.NoError(t, err, "no error should have existed")
 
@@ -192,9 +190,8 @@ good-creds   now`},
 
 			p.TestConfig.TestContext.AddTestDirectory("testdata/good-and-bad-test-creds", credsDir)
 
-			listOpts := printer.PrintOptions{
-				Format: tc.format,
-			}
+			listOpts := ListOptions{}
+			listOpts.Format = tc.format
 			err = p.ListCredentials(listOpts)
 			require.NoError(t, err, "no error should have existed")
 

@@ -108,7 +108,7 @@ Optional output formats include json and yaml.`,
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListBundles(opts.PrintOptions)
+			return p.ListBundles(opts)
 		},
 	}
 
