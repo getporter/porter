@@ -14,8 +14,7 @@ import (
 // ShowOptions represent options for showing a particular claim
 type ShowOptions struct {
 	sharedOptions
-	RawFormat string
-	Format    printer.Format
+	printer.PrintOptions
 }
 
 type ClaimListing struct {
@@ -41,13 +40,7 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 		return errors.Wrap(err, "claim name must be provided")
 	}
 
-	parsedFormat, err := printer.ParseFormat(so.RawFormat)
-	if err != nil {
-		return err
-	}
-	so.Format = parsedFormat
-
-	return nil
+	return so.ParseFormat()
 }
 
 // ShowBundle shows a bundle, or more properly a bundle claim, along with any

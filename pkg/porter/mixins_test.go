@@ -25,7 +25,11 @@ func TestPorter_PrintMixins(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(srcMixinsDir, "/helm"), filepath.Join(mixinsDir, "helm"))
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(srcMixinsDir, "/exec"), filepath.Join(mixinsDir, "exec"))
 
-	opts := PrintMixinsOptions{Format: printer.FormatTable}
+	opts := PrintMixinsOptions{
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatTable,
+		},
+	}
 	err = p.PrintMixins(opts)
 
 	require.Nil(t, err)

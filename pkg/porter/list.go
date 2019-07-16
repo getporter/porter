@@ -13,8 +13,7 @@ import (
 
 // ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
-	RawFormat string
-	Format    printer.Format
+	printer.PrintOptions
 }
 
 // CondensedClaim holds a subset of pertinent values to be listed from a claim.Claim

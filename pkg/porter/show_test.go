@@ -25,7 +25,9 @@ func TestPorter_ShowBundle(t *testing.T) {
 		sharedOptions: sharedOptions{
 			Name: "test-bundle",
 		},
-		Format: printer.FormatTable,
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatTable,
+		},
 	}
 
 	// Create test claim

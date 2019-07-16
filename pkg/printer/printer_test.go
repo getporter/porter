@@ -15,10 +15,14 @@ func TestParseFormat(t *testing.T) {
 
 	for name, valid := range testcases {
 		t.Run(name, func(t *testing.T) {
-			result, err := ParseFormat(name)
+			opts := PrintOptions{
+				RawFormat: name,
+			}
+
+			err := opts.ParseFormat()
 			if valid {
 				require.Nil(t, err)
-				require.Equal(t, name, string(result))
+				require.Equal(t, name, string(opts.Format))
 			} else {
 				require.NotNil(t, err)
 				require.Contains(t, err.Error(), "invalid format")

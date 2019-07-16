@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/deislabs/porter/pkg/porter"
-	"github.com/deislabs/porter/pkg/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -113,12 +112,10 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 		Long:    `List named sets of credentials defined by the user.`,
 		Example: `  porter credentials list [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			opts.Format, err = printer.ParseFormat(opts.RawFormat)
-			return err
+			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListCredentials(printer.PrintOptions{Format: opts.Format})
+			return p.ListCredentials(opts.PrintOptions)
 		},
 	}
 
