@@ -30,7 +30,7 @@ MIXIN_TAG ?= canary
 MIXINS_URL = https://cdn.deislabs.io/porter/mixins
 
 .PHONY: build
-build: build-porter build-mixins get-mixins
+build: build-porter build-mixins clean-packr get-mixins
 
 build-porter: generate
 	$(MAKE) $(MAKE_OPTS) build MIXIN=porter -f mixin.mk BINDIR=bin
