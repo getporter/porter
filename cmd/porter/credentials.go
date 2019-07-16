@@ -115,7 +115,7 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListCredentials(opts.PrintOptions)
+			return p.ListCredentials(opts)
 		},
 	}
 

@@ -105,8 +105,8 @@ func (p *Porter) readCredential(name, path string) (*credentials.CredentialSet, 
 	return credSet, nil
 }
 
-// ListCredentials lists credentials using the provided printer.PrintOptions
-func (p *Porter) ListCredentials(opts printer.PrintOptions) error {
+// ListCredentials lists saved credential sets.
+func (p *Porter) ListCredentials(opts ListOptions) error {
 	credentialsFiles, err := p.fetchCredentials()
 	if err != nil {
 		return errors.Wrap(err, "unable to fetch credentials")
