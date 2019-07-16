@@ -19,7 +19,7 @@ install:
         - manifests/nginx
       wait: true
       outputs:
-        - name: "IP_ADDRESS"
+        - name: IP_ADDRESS
           resourceType: service
           resourceName: nginx-deployment
           jsonPath: "{.spec.clusterIP}"
@@ -39,5 +39,5 @@ uninstall:
       wait: true
 
 outputs:
-  - name: ip_address
+  - name: IP_ADDRESS
     type: string

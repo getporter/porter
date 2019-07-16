@@ -422,24 +422,17 @@ func (m *Manifest) GetSteps(action Action) (Steps, error) {
 	}
 }
 
-func (m *Manifest) ApplyStepOutputs(step *Step, assignments []string) error {
+func (m *Manifest) ApplyStepOutputs(step *Step, assignments map[string]string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
 
-	for _, assignment := range assignments {
-		parts := strings.SplitN(assignment, "=", 2)
-		if len(parts) != 2 {
-			return errors.Errorf("invalid output assignment %v", assignment)
-		}
-		outvar := parts[0]
-		outval := parts[1]
+	for outvar, outval := range assignments {
 		if _, exists := m.outputs[outvar]; exists {
 			return fmt.Errorf("output already set: %s", outvar)
 		}
 		m.outputs[outvar] = outval
 	}
-
 	return nil
 }
 

@@ -124,7 +124,7 @@ the action, e.g. "install", and a definition named `<action>Step`, e.g.
 
 The install command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
-The mixin should write any output values to a file in the
+The mixin should write any output values to their own files in the
 `/cnab/app/porter/outputs/` directory.
 
 Example:
@@ -136,58 +136,72 @@ install:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
+    outputs:
+      - name: mysql-root-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-root-password
+      - name: mysql-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-password
 ```
 
-**/cnab/app/porter/outputs/mixin-output-abc123**
+**/cnab/app/porter/outputs/mysql-root-password**
 ```
-password=topsecret
-host=127.0.0.1
+topsecret
+```
+**/cnab/app/porter/outputs/mysql-password**
+```
+alsotopsecret
 ```
 
 # upgrade
 
 The upgrade command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
-The mixin should write any output values to a file in the
+The mixin should write any output values to their own files in the
 `/cnab/app/porter/outputs/` directory.
 
 Example:
 
 **stdin**
 ```yaml
+parameters:
+  - name: mysql-password
+    type: string
+...
 upgrade:
 - helm:
     description: "Upgrade MySQL"
     name: porter-ci-mysql
+    replace: true
+    set:
+      mysqlPassword: "{{ bundle.parameters.mysql-password }}"
 ```
 
-**/cnab/app/porter/outputs/mixin-output-abc123**
+**/cnab/app/porter/outputs/mysql-root-password**
 ```
-password=topsecret
-host=127.0.0.1
+topsecret
+```
+**/cnab/app/porter/outputs/mysql-password**
+```
+updatedtopsecret
 ```
 
 # uninstall
 
-The upgrade command (required) is called from inside the invocation image during
+The uninstall command (required) is called from inside the invocation image during
 the `porter run` command. The current step from the manifest is passed on stdin.
-The mixin should write any output values to a file in the
-`/cnab/app/porter/outputs/` directory.
 
 Example:
 
 **stdin**
 ```yaml
-upgrade:
+uninstall:
 - helm:
-    description: "Upgrade MySQL"
-    name: porter-ci-mysql
-```
-
-**/cnab/app/porter/outputs/mixin-output-abc123**
-```
-password=topsecret
-host=127.0.0.1
+    description: "Uninstall MySQL"
+    purge: true
+    releases:
+      - "{{ bundle.parameters.mysql-name }}"
 ```
 
 # invoke
@@ -195,7 +209,7 @@ host=127.0.0.1
 The invoke command (optional) is called from inside the invocation image during
 the `porter run` command when a custom action defined in the bundle is executed.
 The current step from the manifest is passed on stdin. The mixin should write
-any output values to a file in the `/cnab/app/porter/outputs/` directory.
+any output values to their own files in the `/cnab/app/porter/outputs/` directory.
 
 A mixin doesn't have to support custom actions. If your mixin just maps to CLI
 commands, and doesn't take the action into account, then we strongly recommend
