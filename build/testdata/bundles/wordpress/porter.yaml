@@ -4,11 +4,12 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-invocationImage: porter-wordpress:latest
+invocationImage: deislabs/porter-wordpress:latest
 tag: deislabs/porter-wordpress-bundle:v0.1.0
 
 dependencies:
 - name: mysql
+  tag: deislabs/porter-mysql-bundle:v0.1.0
   parameters:
     database-name: wordpress
     mysql-user: wordpress

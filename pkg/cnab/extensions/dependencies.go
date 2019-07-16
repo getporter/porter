@@ -16,7 +16,7 @@ const (
 // https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md
 type Dependencies struct {
 	// Requires is a list of bundles required by this bundle
-	Requires []Dependency `json:"requires,omitempty" mapstructure:"requires"`
+	Requires map[string]Dependency `json:"requires,omitempty" mapstructure:"requires"`
 }
 
 // Dependency describes a dependency on another bundle
@@ -37,7 +37,7 @@ type DependencyVersion struct {
 	AllowPrereleases bool `json:"prereleases" mapstructure:"prereleases"`
 }
 
-func LoadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
+func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
 	data, ok := bun.Custom[DependenciesKey]
 	if !ok {
 		return nil, nil

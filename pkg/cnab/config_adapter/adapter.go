@@ -261,7 +261,7 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	}
 
 	deps := &extensions.Dependencies{
-		Requires: make([]extensions.Dependency, 0, len(c.Manifest.Dependencies)),
+		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
 	}
 
 	for _, dep := range c.Manifest.Dependencies {
@@ -277,7 +277,7 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 				copy(r.Version.Ranges, dep.Versions)
 			}
 		}
-		deps.Requires = append(deps.Requires, r)
+		deps.Requires[dep.Name] = r
 	}
 
 	return deps

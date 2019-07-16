@@ -9,7 +9,7 @@
     }
   ],
   "images": {
-    "image1":{
+    "image1": {
       "description": "image1",
       "image": "urn:image1uri",
       "refs": [
@@ -19,7 +19,7 @@
         }
       ]
     },
-    "image2":{
+    "image2": {
       "name": "image2",
       "uri": "urn:image2uri",
       "refs": [
@@ -42,7 +42,7 @@
       "env": "equux"
     }
   },
-  "requiredExtensions" : {
+  "requiredExtensions": {
     "dependencies": "https://cnab.io/specs/v1/dependencies.schema.json"
   },
   "custom": {
@@ -55,42 +55,46 @@
       "frequency": "daily"
     },
     "dependencies": {
-      "requires": [
-        {
+      "requires": {
+        "storage": {
           "bundle": "somecloud/blob-storage"
         },
-        {
+        "mysql": {
           "bundle": "somecloud/mysql",
           "version": {
             "prereleases": true,
-            "ranges": ["5.7.x"]
+            "ranges": [
+              "5.7.x"
+            ]
           }
         }
-      ]
+      }
     }
   },
-  "definitions" : {
-    "complexThing" : {
-      "type" : "object",
-      "properties" : {
-        "host" : {
-          "default" : "localhost",
-          "type" : "string",
-          "minLength" : 3,
-          "maxLength" : 10
+  "definitions": {
+    "complexThing": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "default": "localhost",
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 10
         },
-        "port" : {
-          "type" : "integer",
+        "port": {
+          "type": "integer",
           "minimum": 8000
         }
       },
-      "required" : ["port"]
+      "required": [
+        "port"
+      ]
     }
   },
-  "parameters" : {
-    "serverConfig" : {
-      "definition" : "complexThing",
-      "destination" : {
+  "parameters": {
+    "serverConfig": {
+      "definition": "complexThing",
+      "destination": {
         "path": "/cnab/is/go"
       }
     }

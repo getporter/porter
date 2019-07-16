@@ -55,7 +55,7 @@ func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry b
 	if err != nil {
 		return errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
 	}
-	insecureRegistries := []string{}
+	var insecureRegistries []string
 	if insecureRegistry {
 		reg := reference.Domain(ref)
 		insecureRegistries = append(insecureRegistries, reg)

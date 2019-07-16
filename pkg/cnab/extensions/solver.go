@@ -1,0 +1,50 @@
+package extensions
+
+import (
+	"strings"
+
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/pkg/errors"
+)
+
+type DependencyLock struct {
+	Name string
+	Tag  string
+}
+
+type DependencySolver struct {
+}
+
+func (s *DependencySolver) ResolveDependencies(bun *bundle.Bundle) ([]DependencyLock, error) {
+	deps, err := ReadDependencies(bun)
+	if deps == nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
+	}
+
+	q := make([]DependencyLock, 0, len(deps.Requires))
+	for name, dep := range deps.Requires {
+		tag, err := s.ResolveVersion(name, dep)
+		if err != nil {
+			return nil, err
+		}
+		lock := DependencyLock{
+			Name: name,
+			Tag:  tag,
+		}
+		q = append(q, lock)
+	}
+
+	return q, nil
+}
+
+func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (string, error) {
+	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
+	if dep.Version == nil {
+		return strings.Split(dep.Bundle, ":")[1], nil
+	}
+
+	return "", errors.Errorf("not implemented: dependency version range specified for %s", name)
+}
