@@ -16,8 +16,8 @@ trap popd EXIT
 cp ${REPO_DIR}/build/testdata/bundles/wordpress/porter.yaml .
 
 # Substitute REGISTRY in for invocation image and bundle tag
-sed -i "s/porter-wordpress:latest/${REGISTRY}\/porter-wordpress:latest/g" porter.yaml
-sed -i "s/deislabs\/porter-wordpress-bundle/${REGISTRY}\/porter-wordpress-bundle/g" porter.yaml
+sed -i "s/deislabs\/porter-wordpress:/${REGISTRY}\/porter-wordpress:/g" porter.yaml
+sed -i "s/deislabs\/porter-wordpress-bundle:/${REGISTRY}\/porter-wordpress-bundle:/g" porter.yaml
 
 ${PORTER_HOME}/porter build
 
@@ -30,8 +30,10 @@ ${PORTER_HOME}/porter install --insecure --cred ci \
     --param wordpress-password="${sensitive_value}" \
     --param namespace=$NAMESPACE \
     --param wordpress-name="porter-ci-wordpress-$NAMESPACE" \
-    --param mysql-name="porter-ci-mysql-$NAMESPACE" \
     --debug 2>&1 | tee ${install_log}
+
+    # TODO: Support setting parameters for dependencies
+    #--param mysql#mysql-name="porter-ci-mysql-$NAMESPACE" \
 
 # Be sure that sensitive data is masked
 if cat ${install_log} | grep -q "${sensitive_value}"; then
@@ -39,15 +41,15 @@ if cat ${install_log} | grep -q "${sensitive_value}"; then
   exit 1
 fi
 
-echo "Verifing bundle outputs via 'porter bundle show'"
+echo "Verifying bundle outputs via 'porter bundle show'"
 show_output=$(${PORTER_HOME}/porter show wordpress)
 echo "${show_output}"
 echo "${show_output}" | grep -q "wordpress-password"
 # TODO: check for output path (since output is default sensitive)
 
-cat ${PORTER_HOME}/claims/wordpress.json
-
-${PORTER_HOME}/porter uninstall --insecure --cred ci --debug
+# For now manually uninstall the dependency
+${PORTER_HOME}/porter uninstall wordpress-mysql --cred ci -f ${REPO_DIR}/build/testdata/bundles/mysql/porter.yaml
+${PORTER_HOME}/porter uninstall --cred ci
 kubectl delete ns $NAMESPACE
 
 # Publish bundle

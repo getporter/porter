@@ -40,10 +40,10 @@ install:
       replace: true
       set:
         wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
-        externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
+        #externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
         #externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.services }}"
-        externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
-        externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+        #externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
+        #externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
         externalDatabase.port: 3306
         mariadb.enabled: false
       outputs:
