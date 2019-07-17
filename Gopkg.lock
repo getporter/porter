@@ -222,7 +222,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:923749c4c69c805b20b98edf4d73c6ed65fce9963fc7dfd528d68da25e1292d8"
+  digest = "1:fc84b2d59bc0e3480ea0a2b3a9732cccd83127d28df0e0f8c0125358913dfcfe"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -234,8 +234,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "1410239899d044882efcba0f976bf7bb8a00fc27"
-  version = "v0.1.1-beta1"
+  revision = "b8d6d13fdfc865b39cf29026ce169e6e709619dd"
+  version = "v0.1.2-beta1"
 
 [[projects]]
   digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
@@ -282,14 +282,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:40fb85b6cfffe0948cf921eb40ecdbc32ac67b64cacf37cd5239d3b2d7a43ef2"
+  digest = "1:c2ab9eddaa3e77cd550fd7430eb20095a86a8a323590dc581332c35e26bc1415"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "1b72bb4e4634f6ffc0f3508a7be761a13b8bfb3c"
+  revision = "c9ffda63d51e790034412d57a3eb7c12c23462d3"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
@@ -1453,6 +1453,7 @@
     "github.com/carolynvs/datetime-printer",
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",
+    "github.com/containerd/containerd/remotes",
     "github.com/deislabs/cnab-go/action",
     "github.com/deislabs/cnab-go/bundle",
     "github.com/deislabs/cnab-go/bundle/definition",

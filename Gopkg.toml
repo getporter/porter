@@ -5,7 +5,7 @@
 
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  version = "0.1.1-beta.1"
+  version = "0.1.2-beta.1"
 
 # Using master until there is a release of cnab-to-oci
 [[constraint]]

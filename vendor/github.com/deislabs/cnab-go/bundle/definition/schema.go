@@ -129,11 +129,12 @@ func (s *Schema) ConvertValue(val string) (interface{}, error) {
 	case "integer":
 		return strconv.Atoi(val)
 	case "boolean":
-		if strings.ToLower(val) == "true" {
+		switch strings.ToLower(val) {
+		case "true":
 			return true, nil
-		} else if strings.ToLower(val) == "false" {
+		case "false":
 			return false, nil
-		} else {
+		default:
 			return false, errors.Errorf("%q is not a valid boolean", val)
 		}
 	default:

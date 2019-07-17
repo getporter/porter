@@ -20,7 +20,7 @@ const (
 
 // BundleConfig describes a cnab bundle runtime config
 type BundleConfig struct {
-	SchemaVersion string                       `json:"schema_version" mapstructure:"schema_version"`
+	SchemaVersion string                       `json:"schemaVersion" mapstructure:"schemaVersion"`
 	Actions       map[string]bundle.Action     `json:"actions,omitempty" mapstructure:"actions,omitempty"`
 	Definitions   definition.Definitions       `json:"definitions" mapstructure:"definitions"`
 	Parameters    *bundle.ParametersDefinition `json:"parameters" mapstructure:"parameters"`
@@ -69,7 +69,7 @@ func (c *BundleConfig) PrepareForPush() (*PreparedBundleConfig, error) {
 		if current == nil {
 			first = cfg
 		} else {
-			first.Fallback = cfg
+			current.Fallback = cfg
 		}
 		current = cfg
 	}
