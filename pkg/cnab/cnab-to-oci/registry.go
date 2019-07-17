@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/deislabs/cnab-go/bundle"
 	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
@@ -42,7 +43,7 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	bun, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries).Resolver)
+	bun, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to pull remote bundle")
 	}
@@ -60,13 +61,13 @@ func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry b
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	resolverConfig := r.createResolver(insecureRegistries)
+	resolver := r.createResolver(insecureRegistries)
 
-	err = remotes.FixupBundle(context.Background(), bun, ref, resolverConfig, remotes.WithEventCallback(r.displayEvent))
+	err = remotes.FixupBundle(context.Background(), bun, ref, resolver, remotes.WithEventCallback(r.displayEvent))
 	if err != nil {
 		return err
 	}
-	d, err := remotes.Push(context.Background(), bun, ref, resolverConfig.Resolver, true)
+	d, err := remotes.Push(context.Background(), bun, ref, resolver, true)
 	if err != nil {
 		return err
 	}
@@ -129,8 +130,8 @@ func (r *Registry) PushInvocationImage(invocationImage string) (string, error) {
 	return string(dist.Descriptor.Digest), nil
 }
 
-func (r *Registry) createResolver(insecureRegistries []string) remotes.ResolverConfig {
-	return remotes.NewResolverConfigFromDockerConfigFile(dockerconfig.LoadDefaultConfigFile(r.Out), insecureRegistries...)
+func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
+	return remotes.CreateResolver(dockerconfig.LoadDefaultConfigFile(r.Out), insecureRegistries...)
 }
 
 func (r *Registry) displayEvent(ev remotes.FixupEvent) {
