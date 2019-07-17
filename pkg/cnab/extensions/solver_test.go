@@ -3,9 +3,36 @@ package extensions
 import (
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDependencySolver_ResolveDependencies(t *testing.T) {
+
+	bun := &bundle.Bundle{
+		Custom: map[string]interface{}{
+			DependenciesKey: Dependencies{
+				Requires: map[string]Dependency{
+					"mysql": {
+						Bundle: "deislabs/mysql:5.7",
+					},
+				},
+			},
+		},
+	}
+
+	s := DependencySolver{}
+	locks, err := s.ResolveDependencies(bun)
+	require.NoError(t, err)
+
+	require.Len(t, locks, 1)
+
+	lock := locks[0]
+	assert.Equal(t, "mysql", lock.Name)
+	assert.Equal(t, "deislabs/mysql:5.7", lock.Tag)
+}
 
 func TestDependencySolver_ResolveVersion(t *testing.T) {
 	testcases := []struct {

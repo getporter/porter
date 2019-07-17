@@ -34,7 +34,7 @@ func (p *Porter) PullBundle(opts BundlePullOptions) (string, error) {
 
 	b, err := p.Registry.PullBundle(opts.Tag, opts.InsecureRegistry)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to pull remote bundle")
+		return "", err
 	}
 
 	return p.Cache.StoreBundle(opts.Tag, b)

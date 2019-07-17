@@ -1,6 +1,7 @@
 package extensions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -26,13 +27,14 @@ func (s *DependencySolver) ResolveDependencies(bun *bundle.Bundle) ([]Dependency
 
 	q := make([]DependencyLock, 0, len(deps.Requires))
 	for name, dep := range deps.Requires {
-		tag, err := s.ResolveVersion(name, dep)
+		bundle := strings.Split(dep.Bundle, ":")[0]
+		version, err := s.ResolveVersion(name, dep)
 		if err != nil {
 			return nil, err
 		}
 		lock := DependencyLock{
 			Name: name,
-			Tag:  tag,
+			Tag:  fmt.Sprintf("%s:%s", bundle, version),
 		}
 		q = append(q, lock)
 	}

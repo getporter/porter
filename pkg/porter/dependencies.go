@@ -31,13 +31,20 @@ func (p *Porter) executeDependencies(parentOpts BundleLifecycleOpts, action CNAB
 		return err
 	}
 
+	// Remember where the deps are pulled to
+	cachedDeps := make(map[string]string, len(deps))
+
 	// pre-pull each dependency to flush out any problems accessing them before we run anything
 	for _, dep := range deps {
+		if p.Debug {
+			fmt.Fprintf(p.Out, "Resolved dependency %s to %s\n", dep.Name, dep.Tag)
+		}
 		pullOpts := BundlePullOptions{
 			Tag:              dep.Tag,
 			InsecureRegistry: parentOpts.InsecureRegistry,
 		}
-		_, err := p.PullBundle(pullOpts)
+		cachePath, err := p.PullBundle(pullOpts)
+		cachedDeps[dep.Name] = cachePath
 		if err != nil {
 			return errors.Wrapf(err, "error pulling dependency %s", dep.Name)
 		}
@@ -48,12 +55,15 @@ func (p *Porter) executeDependencies(parentOpts BundleLifecycleOpts, action CNAB
 	for _, dep := range deps {
 		depArgs := cnabprovider.ActionArguments{
 			Insecure:         parentArgs.Insecure,
-			BundleIdentifier: dep.Tag,
+			BundleIdentifier: cachedDeps[dep.Name],
 			BundleIsFile:     false,
 			Claim:            fmt.Sprintf("%s-%s", parentArgs.Claim, dep.Name),
 			Driver:           parentOpts.Driver,
 			// TODO: Provide credentials and parameters
+			Params:                map[string]string{"mysql-user": "wordpress"},
+			CredentialIdentifiers: parentArgs.CredentialIdentifiers,
 		}
+		fmt.Fprintf(p.Out, "Executing dependency %s...\n", dep.Name)
 		err = action(depArgs)
 		if err != nil {
 			return errors.Wrapf(err, "error installing dependency %s", dep.Name)
