@@ -1,6 +1,112 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "definitions": {
+    "credential": {
+      "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
+      "properties": {
+        "description": {
+          "description": "A user-friendly description of this credential",
+          "type": "string"
+        },
+        "env": {
+          "description": "The environment variable name, such as MY_VALUE, into which the credential value is stored",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of this credential",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path inside of the invocation image where credentials will be mounted",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "description": "Indicates whether this credential must be supplied. By default, credentials are optional.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "description": "A value that is produced by running an invocation image",
+      "properties": {
+        "applyTo": {
+          "description": "An optional exhaustive list of actions producing this output",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "definition": {
+          "description": "The name of a definition that describes the schema structure of this output",
+          "type": "string"
+        },
+        "description": {
+          "description": "A user-friendly description of this output",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of this output",
+          "type": "string"
+        },
+        "sensitive": {
+          "default": false,
+          "description": "Indicates where this output's value is sensitive and should not be logged.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "definition",
+        "name"
+      ],
+      "type": "object"
+    },
+    "parameter": {
+      "description": "A parameter that can be passed into the invocation image",
+      "properties": {
+        "definition": {
+          "description": "The name of a definition that describes the schema structure of this parameter",
+          "type": "string"
+        },
+        "description": {
+          "description": "A user-friendly description of this output",
+          "type": "string"
+        },
+        "destination": {
+          "properties": {
+            "env": {
+              "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
+              "type": "string"
+            },
+            "path": {
+              "description": "The path inside of the invocation image where parameter data is mounted",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "name": {
+          "description": "The name of this parameter",
+          "type": "string"
+        },
+        "sensitive": {
+          "default": false,
+          "description": "Indicates where this parameter's value is sensitive and should not be logged.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "definition",
+        "name"
+      ],
+      "type": "object"
+    }
+  },
   "mixin.exec": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
@@ -177,6 +283,13 @@
       },
       "type": "array"
     },
+    "credentials": {
+      "additionalProperties": {
+        "$ref": "#/definitions/credential"
+      },
+      "description": "Credentials to be injected into the invocation image",
+      "type": "object"
+    },
     "description": {
       "type": "string"
     },
@@ -206,10 +319,18 @@
       "type": "string"
     },
     "outputs": {
-      "items": {
-        "anyOf": []
+      "additionalProperties": {
+        "$ref": "#/definitions/output"
       },
-      "type": "array"
+      "description": "Values that are produced by executing the invocation image",
+      "type": "object"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "$ref": "#/definitions/parameter"
+      },
+      "description": "Parameters that can be injected into the invocation image",
+      "type": "object"
     },
     "uninstall": {
       "items": {

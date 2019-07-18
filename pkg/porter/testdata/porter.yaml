@@ -7,6 +7,41 @@ description: "A bundle with a custom action"
 invocationImage: porter-hello-custom:latest
 tag: deislabs/porter-hello-custom-bundle:latest
 
+credentials:
+  - name: my-first-cred
+    env: MY_FIRST_CRED
+    required: true
+  - name: my-second-cred
+    description: "My second cred"
+    path: /path/to/my-second-cred
+
+parameters:
+  - name: my-first-param
+    type: int
+    default: 9
+    destination:
+      env: MY_FIRST_PARAM
+    required: true
+  - name: my-second-param
+    description: "My second parameter"
+    type: string
+    default: spring-music-demo
+    destination:
+      path: /path/to/my-second-param
+    sensitive: true
+
+outputs:
+  - name: my-first-output
+    type: string
+    applyTo:
+      - "install"
+      - "upgrade"
+    sensitive: true
+  - name: my-second-output
+    description: "My second output"
+    type: boolean
+    sensitive: false
+
 install:
   - exec:
       description: "Install Hello World"
