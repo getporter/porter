@@ -250,7 +250,8 @@ parameters:
     default: mywordpress
 
 dependencies:
-  - name: mysql
+  mysql:
+    tag: deislabs/porter-mysql:latest
     parameters:
       database_name: wordpress
 

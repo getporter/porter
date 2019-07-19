@@ -1,9 +1,7 @@
 # This is the configuration for Porter
 # You must define steps for each action, but the rest is optional
+# See https://porter.sh/authoring-bundles for documentation on how to configure your bundle
 # Uncomment out the sections below to take full advantage of what Porter can do!
-
-mixins:
-  - exec
 
 name: HELLO
 version: 0.1.0
@@ -13,6 +11,9 @@ tag: deislabs/porter-hello-bundle:latest
 
 # Uncomment out the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl
+
+mixins:
+  - exec
 
 install:
   - exec:
@@ -38,11 +39,15 @@ uninstall:
         - -c
         - echo Goodbye World
 
+
+# See https://porter.sh/authoring-bundles/#dependencies
 #dependencies:
-#  - name: mysql
+#  mysql:
+#    tag: deislabs/porter-mysql:latest
 #    parameters:
 #      database-name: wordpress
 
+# See https://porter.sh/wiring/#credentials
 #credentials:
 #  - name: kubeconfig
 #    path: /root/.kube/config

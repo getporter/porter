@@ -347,9 +347,9 @@ func TestResolveStepOutputs(t *testing.T) {
 		outputs: map[string]string{
 			"output": "output_value",
 		},
-		Dependencies: []*Dependency{
-			&Dependency{
-				Name: "dep",
+		Dependencies: map[string]Dependency{
+			"dep": {
+				Tag: "deislabs/porter-hello",
 			},
 		},
 	}
@@ -504,9 +504,9 @@ func TestResolveDependencyParam(t *testing.T) {
 	}
 
 	m := &Manifest{
-		Dependencies: []*Dependency{
-			&Dependency{
-				Name: "mysql",
+		Dependencies: map[string]Dependency{
+			"mysql": {
+				Tag: "deislabs/porter-mysql",
 			},
 		},
 		Mixins: []string{"helm"},
@@ -540,9 +540,9 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 	}
 
 	m := &Manifest{
-		Dependencies: []*Dependency{
-			&Dependency{
-				Name: "mysql",
+		Dependencies: map[string]Dependency{
+			"mysql": {
+				Tag: "deislabs/porter-mysql",
 			},
 		},
 		Mixins: []string{"helm"},
@@ -555,23 +555,6 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 	err := m.ResolveStep(s)
 	require.Error(t, err)
 	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
-}
-
-func TestDependency_Validate_NameRequired(t *testing.T) {
-	c := NewTestConfig(t)
-	c.SetupPorterHome()
-
-	c.TestContext.AddTestFile("testdata/porter.yaml", Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
-
-	err := c.LoadManifest()
-	require.NoError(t, err)
-
-	// Sabotage!
-	c.Manifest.Dependencies[0].Name = ""
-
-	err = c.Manifest.Dependencies[0].Validate()
-	assert.EqualError(t, err, "dependency name is required")
 }
 
 func TestManifest_ApplyBundleOutputs(t *testing.T) {
@@ -657,11 +640,10 @@ func TestDependency_Validate(t *testing.T) {
 		dep       Dependency
 		wantError string
 	}{
-		{"version in tag", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
-		{"version ranges", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
-		{"missing name", Dependency{Name: "", Tag: "deislabs/azure-mysql:5.7"}, "dependency name is required"},
-		{"missing tag", Dependency{Name: "mysql", Tag: ""}, "dependency tag is required"},
-		{"version double specified", Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
+		{"version in tag", Dependency{Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"version ranges", Dependency{Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
+		{"missing tag", Dependency{Tag: ""}, "dependency tag is required"},
+		{"version double specified", Dependency{Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
 	}
 
 	for _, tc := range testcases {

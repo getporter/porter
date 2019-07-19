@@ -4,8 +4,8 @@ version: 0.1.0
 invocationImage: porter-hello:latest
 
 dependencies:
-- name: mysql
-  tag: "deislabs/azure-mysql:5.7"
+  mysql:
+    tag: "deislabs/azure-mysql:5.7"
 
 mixins:
 - exec

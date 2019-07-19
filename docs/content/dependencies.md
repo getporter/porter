@@ -20,7 +20,8 @@ installed.
 
 ```yaml
 dependencies:
-- name: mysql
+  mysql:
+    tag: deislabs/porter-mysql:latest
 ```
 
 Currently dependencies are assumed to be located in one of the locations below.
@@ -56,10 +57,11 @@ those parameters when installing Wordpress.
 
 ```yaml
 dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+  mysql:
+    tag: deislabs/porter-mysql:latest
+    parameters:
+      database_name: wordpress
+      mysql_user: wordpress
 ```
 
 ## Dependency Graph
