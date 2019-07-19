@@ -30,7 +30,13 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		return err
 	}
 
-	err = p.executeDependencies(opts.BundleLifecycleOpts, p.CNAB.Install)
+	deperator := newDependencyExecutioner(p)
+	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Install)
+	if err != nil {
+		return err
+	}
+
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}

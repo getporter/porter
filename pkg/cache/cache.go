@@ -58,11 +58,11 @@ func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle) (string, error
 	f, err := c.FileSystem.OpenFile(cachedBundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
-		return "", errors.Wrapf(err, "error creating cnab/bundle.json")
+		return "", errors.Wrapf(err, "error creating cnab/bundle.json for %s", bundleTag)
 	}
 	_, err = bun.WriteTo(f)
 	if err != nil {
-		return "", errors.Wrap(err, "error writing to cnab/bundle.json")
+		return "", errors.Wrapf(err, "error writing to cnab/bundle.json for %s", bundleTag)
 	}
 	return cachedBundlePath, nil
 }
