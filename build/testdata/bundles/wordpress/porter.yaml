@@ -48,7 +48,7 @@ install:
         mariadb.enabled: false
       outputs:
         - name: wordpress-password
-          secret: "{{ bundle.parameters.wordpress-name }}-wordpress"
+          secret: "{{ bundle.parameters.wordpress-name }}"
           key: wordpress-password
 
 uninstall:

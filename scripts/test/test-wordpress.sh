@@ -30,10 +30,8 @@ ${PORTER_HOME}/porter install --insecure --cred ci \
     --param wordpress-password="${sensitive_value}" \
     --param namespace=$NAMESPACE \
     --param wordpress-name="porter-ci-wordpress-$NAMESPACE" \
+    --param mysql#mysql-name="porter-ci-mysql-$NAMESPACE" \
     --debug 2>&1 | tee ${install_log}
-
-    # TODO: Support setting parameters for dependencies
-    #--param mysql#mysql-name="porter-ci-mysql-$NAMESPACE" \
 
 # Be sure that sensitive data is masked
 if cat ${install_log} | grep -q "${sensitive_value}"; then
