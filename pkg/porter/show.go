@@ -17,15 +17,6 @@ type ShowOptions struct {
 	printer.PrintOptions
 }
 
-type ClaimListing struct {
-	Name     string
-	Created  time.Time
-	Modified time.Time
-	Action   string
-	Status   string
-	Outputs
-}
-
 // Validate prepares for a show bundle action and validates the args/options.
 func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	// Ensure only one argument exists (claim name) if args length non-zero
@@ -57,25 +48,11 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 		return err
 	}
 
-	outputs, err := p.fetchBundleOutputs(name)
-	if err != nil {
-		return err
-	}
-
-	cl := ClaimListing{
-		Name:     claim.Name,
-		Created:  claim.Created,
-		Modified: claim.Modified,
-		Action:   claim.Result.Action,
-		Status:   claim.Result.Status,
-		Outputs:  *outputs,
-	}
-
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, cl)
+		return printer.PrintJson(p.Out, claim)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, cl)
+		return printer.PrintYaml(p.Out, claim)
 	case printer.FormatTable:
 		// Set up human friendly time formatter
 		now := time.Now()
@@ -84,18 +61,24 @@ func (p *Porter) ShowBundle(opts ShowOptions) error {
 		}
 
 		// Print claim details
-		fmt.Fprintf(p.Out, "Name: %s\n", cl.Name)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(cl.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(cl.Modified))
-		fmt.Fprintf(p.Out, "Last Action: %s\n", cl.Action)
-		fmt.Fprintf(p.Out, "Last Status: %s\n", cl.Status)
+		fmt.Fprintf(p.Out, "Name: %s\n", claim.Name)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(claim.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(claim.Modified))
+		fmt.Fprintf(p.Out, "Last Action: %s\n", claim.Result.Action)
+		fmt.Fprintf(p.Out, "Last Status: %s\n", claim.Result.Status)
 
 		// Print outputs, if any
-		if cl.Outputs.Len() > 0 {
+		if len(claim.Outputs) > 0 {
 			fmt.Fprintln(p.Out)
 			fmt.Fprint(p.Out, "Outputs:\n")
 
-			return p.printOutputsTable(&cl.Outputs, cl.Name)
+			// Fetch full Output objects with various metadata fields used for printing
+			outputObjects, err := p.fetchBundleOutputs(name)
+			if err != nil {
+				return err
+			}
+
+			return p.printOutputsTable(outputObjects, claim.Name)
 		}
 		return nil
 	default:

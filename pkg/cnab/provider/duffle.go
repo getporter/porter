@@ -4,9 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/driver"
 	duffledriver "github.com/deislabs/duffle/pkg/driver"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/outputs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
@@ -72,6 +74,19 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 			return nil
 		}
 		dockerish.AddConfigurationOptions(cfgOpt)
+	}
+	return nil
+}
+
+// WriteClaimOutputs writes outputs to a claim, according to the provided bundle
+// and Duffle config
+func (d *Duffle) WriteClaimOutputs(c *claim.Claim) error {
+	for outputName := range c.Bundle.Outputs.Fields {
+		output, err := outputs.ReadBundleOutput(d.Config, outputName, c.Name)
+		if err != nil {
+			return errors.Wrapf(err, "unable to read output %s", outputName)
+		}
+		c.Outputs[outputName] = output.Value
 	}
 	return nil
 }

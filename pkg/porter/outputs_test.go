@@ -6,6 +6,8 @@ import (
 
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deislabs/porter/pkg/outputs"
 )
 
 func TestPorter_fetchBundleOutputs_Error(t *testing.T) {
@@ -18,7 +20,8 @@ func TestPorter_fetchBundleOutputs_Error(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory("testdata/outputs", filepath.Join(homeDir, "outputs"))
 
 	_, err = p.fetchBundleOutputs("bad-outputs-bundle")
-	require.EqualError(t, err, "unable to unmarshal output 'bad-output' for claim 'bad-outputs-bundle'")
+	require.EqualError(t, err,
+		"unable to read output 'bad-output' for claim 'bad-outputs-bundle': unable to unmarshal output 'bad-output' for claim 'bad-outputs-bundle'")
 }
 
 func TestPorter_fetchBundleOutputs(t *testing.T) {
@@ -33,7 +36,7 @@ func TestPorter_fetchBundleOutputs(t *testing.T) {
 	got, err := p.fetchBundleOutputs("test-bundle")
 	require.NoError(t, err)
 
-	want := &Outputs{
+	want := &outputs.Outputs{
 		{
 			Name:      "foo",
 			Type:      "string",
@@ -51,37 +54,12 @@ func TestPorter_fetchBundleOutputs(t *testing.T) {
 	require.Equal(t, want, got)
 }
 
-func TestPorter_readBundleOutput(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-
-	homeDir, err := p.TestConfig.GetHomeDir()
-	require.NoError(t, err)
-
-	p.TestConfig.TestContext.AddTestDirectory("testdata/outputs", filepath.Join(homeDir, "outputs"))
-
-	got, err := p.readBundleOutput("foo", "test-bundle")
-	require.NoError(t, err)
-
-	wantOutput := Output{
-		Name:      "foo",
-		Type:      "string",
-		Value:     "foo-value",
-		Sensitive: true,
-	}
-
-	want, err := wantOutput.JSONMarshal()
-	require.NoError(t, err)
-
-	require.Equal(t, want, got)
-}
-
 func TestPorter_printOutputsTable(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = NewTestCNABProvider()
 
-	outputs := &Outputs{
+	outputs := &outputs.Outputs{
 		{
 			Name:      "foo",
 			Type:      "string",
