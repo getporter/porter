@@ -16,6 +16,12 @@ const (
 	// EnvHOME is the name of the environment variable containing the porter home directory path.
 	EnvHOME = "PORTER_HOME"
 
+	// EnvBundleName is the name of the environment variable containing the name of the bundle.
+	EnvBundleName = "CNAB_ACTION"
+
+	// EnvClaimName is the name of the environment variable containing the name of the claim.
+	EnvClaimName = "CNAB_INSTALLATION_NAME"
+
 	// EnvACTION is the request
 	EnvACTION = "CNAB_ACTION"
 

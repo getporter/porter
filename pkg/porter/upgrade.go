@@ -30,6 +30,17 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 		return err
 	}
 
+	deperator := newDependencyExecutioner(p)
+	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Upgrade)
+	if err != nil {
+		return err
+	}
+
+	err = deperator.Execute()
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintf(p.Out, "upgrading %s...\n", opts.Name)
 	return p.CNAB.Upgrade(opts.ToDuffleArgs())
 }

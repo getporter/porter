@@ -34,7 +34,7 @@ parameters:
 install:
   - helm:
       description: "Install Wordpress"
-      name: "{{bundle.parameters.wordpress-name }}"
+      name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
       namespace: "{{ bundle.parameters.namespace }}"
       replace: true
@@ -50,6 +50,12 @@ install:
         - name: wordpress-password
           secret: "{{ bundle.parameters.wordpress-name }}"
           key: wordpress-password
+
+upgrade:
+  - helm:
+      description: "Upgrade Wordpress"
+      name: "{{ bundle.parameters.wordpress-name }}"
+      chart: stable/wordpress
 
 uninstall:
   - helm:

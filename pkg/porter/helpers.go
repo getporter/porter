@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -36,6 +38,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	p := New()
 	p.Config = tc.Config
+	p.CNAB = cnabprovider.NewDuffle(tc.Config)
 	p.Mixins = &TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
 	return &TestPorter{
@@ -51,7 +54,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.NewCommand = exec.Command
 
 	// Set up porter and the bundle inside of a temp directory
-	homeDir, err := ioutil.TempDir("", "porter")
+	homeDir, err := ioutil.TempDir("/tmp", "porter")
 	require.NoError(t, err)
 	p.cleanupDirs = append(p.cleanupDirs, homeDir)
 	p.TestConfig.SetupIntegrationTest(homeDir)
@@ -63,6 +66,28 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.TestDir, _ = os.Getwd()
 	err = os.Chdir(bundleDir)
 	require.NoError(t, err)
+
+	// Copy test credentials into porter home
+	credsDir, _ := p.GetCredentialsDir()
+	p.FileSystem.Mkdir(credsDir, 0755)
+	ciCredsPath := filepath.Join(credsDir, "ci.yaml")
+	err = p.CopyFile(filepath.Join(p.TestDir, "../build/testdata/credentials/ci.yaml"), ciCredsPath)
+	require.NoError(t, err, "could not copy credentials file")
+
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		home := os.Getenv("HOME")
+		kubeconfig = filepath.Join(home, ".kube/config")
+	}
+
+	ciCredsB, _ := p.FileSystem.ReadFile(ciCredsPath)
+	ciCredsB = []byte(strings.Replace(string(ciCredsB), "KUBECONFIGPATH", kubeconfig, -1))
+	err = p.FileSystem.WriteFile(ciCredsPath, ciCredsB, 0755)
+	require.NoError(t, err, "could not update the credentials file with KUBECONFIG")
+}
+
+func (p *TestPorter) T() *testing.T {
+	return p.TestConfig.TestContext.T
 }
 
 func (p *TestPorter) CleanupIntegrationTest() {

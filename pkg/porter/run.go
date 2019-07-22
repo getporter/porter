@@ -81,7 +81,9 @@ func (o *RunOptions) defaultDebug() error {
 }
 
 func (p *Porter) Run(opts RunOptions) error {
-	fmt.Fprintf(p.Out, "executing porter %s configuration from %s\n", opts.parsedAction, opts.File)
+	claimName := os.Getenv(config.EnvClaimName)
+	bundleName := os.Getenv(config.EnvBundleName)
+	fmt.Fprintf(p.Out, "executing %s action from %s (claim: %s) defined in %s\n", opts.parsedAction, bundleName, claimName, opts.File)
 
 	err := p.Config.LoadManifestFrom(opts.File)
 	if err != nil {
