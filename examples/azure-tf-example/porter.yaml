@@ -1,0 +1,150 @@
+## This section defines which Mixins will be used by the bundle.
+mixins:
+  - azure
+  - exec
+  - terraform
+
+## This section defines the metadata that defines the bundle. This includes the name of the generated
+## invocation image as well as the tag that will be applied to the bundle when it is published.
+
+name: porter-terraform-example
+version: 1.0.0
+description: "An example Porter Bundle using Terraform and Azure"
+invocationImage: deislabs/porter-terraform-invocation:latest
+tag: deislabs/porter-terraform:v1.0
+
+## This section defines what credentials are used for the bundle. In this case, we are operating
+## against Azure, so we need some Azure Service Principal information.
+credentials:
+  - name: subscription_id
+    env: AZURE_SUBSCRIPTION_ID
+
+  - name: tenant_id
+    env: AZURE_TENANT_ID
+
+  - name: client_id
+    env: AZURE_CLIENT_ID
+
+  - name: client_secret
+    env: AZURE_CLIENT_SECRET
+
+## This section defines what paramters are used by the bundle. These parameters are used by various 
+## steps within the bundle
+parameters:
+  - name: location
+    type: string
+    default: "EastUS"
+
+  - name: resource_group_name
+    type: string
+    default: "porter-terraform"
+
+  - name: storage_account_name
+    type: string
+    default: "porterstorage"
+
+  - name: storage_container_name
+    type: string
+    default: "portertf"
+
+  - name: storage_rg
+    type: string
+    default: "porter-storage"
+
+  - name: database-name
+    type: string
+    default: "porter-terraform"
+
+# Note, this is only used for upgrade and uninstall. Porter doesn't have
+# applyTo yet though, so that is missing from here.
+  - name: tf_storage_account_key
+    type: string
+    default: ""
+
+install:
+  - azure:
+      description: "Create an Azure Storage Account"
+      type: storage
+      name: "{{ bundle.parameters.storage_account_name }}"
+      resourceGroup: "{{ bundle.parameters.storage_rg }}"
+      parameters:
+        location: "{{ bundle.parameters.location }}"
+        storageAccountName: "{{ bundle.parameters.storage_account_name }}"
+        storageContainerName: "{{ bundle.parameters.storage_container_name }}"
+      outputs:
+      - name: "STORAGE_ACCOUNT_KEY"
+        key: "STORAGE_ACCOUNT_KEY"
+
+  - exec:
+      description: "Emit the key in base64 encoded form"
+      command: bash
+      arguments:
+        - -c
+        - echo "Here is a the storage account key (base64 encoded) ==> $(echo {{bundle.outputs.STORAGE_ACCOUNT_KEY}} | base64)"
+  
+  - terraform:
+      description: "Create Azure CosmosDB and Event Hubs"
+      autoApprove: true
+      input: false
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.storage_account_name }}"
+        container_name: "{{ bundle.parameters.storage_container_name }}"
+        access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
+      vars:
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        database_name: "{{bundle.parameters.database-name}}"
+        resource_group_name: "{{bundle.parameters.resource_group_name}}"
+        resource_group_location: "{{bundle.parameters.location}}"
+      outputs:
+      - name: cosmos-db-uri
+      - name: eventhubs_connection_string
+    
+upgrade:
+  - terraform:
+      description: "Update Azure CosmosDB and Event Hubs"
+      autoApprove: true
+      input: false
+      vars:
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        database_name: "{{bundle.parameters.database-name}}"
+        resource_group_name: "{{bundle.parameters.resource_group_name}}"
+        resource_group_location: "{{bundle.parameters.location}}"
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.storage_account_name }}"
+        container_name: "{{ bundle.parameters.storage_container_name }}"
+        access_key: "{{ bundle.parameters.tf_storage_account_key }}"
+
+uninstall:
+  - terraform:
+      description: "Remove Azure CosmosDB and Event Hubs"
+      autoApprove: true
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.storage_account_name }}"
+        container_name: "{{ bundle.parameters.storage_container_name }}"
+        access_key: "{{ bundle.parameters.tf_storage_account_key }}"
+      vars:
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        database_name: "{{bundle.parameters.database-name}}"
+        resource_group_name: "{{bundle.parameters.resource_group_name}}"
+        resource_group_location: "{{bundle.parameters.location}}"
+  - azure:
+      description: "Remove the Azure Storage Account"
+      name: porter-tf-storage
+      resourceGroup: "{{ bundle.parameters.storage_rg }}"
+      type: storage
+      parameters:
+        location: "{{ bundle.parameters.location }}"
+        storageAccountName: "{{ bundle.parameters.storage_account_name }}"
+        storageContainerName: "{{ bundle.parameters.storage_container_name }}"
