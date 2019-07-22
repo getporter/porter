@@ -48,7 +48,7 @@ func New() *Config {
 	}
 }
 
-// GetHomeDir determines the path to the porter home directory.
+// GetHomeDir determines the absolute path to the porter home directory.
 func (c *Config) GetHomeDir() (string, error) {
 	if c.porterHome != "" {
 		return c.porterHome, nil
@@ -76,7 +76,15 @@ func (c *Config) GetHomeDir() (string, error) {
 		home = filepath.Dir(porterPath)
 	}
 
-	c.porterHome = home
+	// As a relative path may be supplied via EnvHOME,
+	// we want to return the absolute path for programmatic usage elsewhere,
+	// for instance, in setting up volume mounts for outputs
+	absoluteHome, err := filepath.Abs(home)
+	if err != nil {
+		return "", errors.Wrap(err, "could not get the absolute path for the porter home directory")
+	}
+
+	c.porterHome = absoluteHome
 	return c.porterHome, nil
 }
 
