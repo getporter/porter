@@ -237,13 +237,8 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 				ImageType: refImage.ImageType,
 				MediaType: refImage.MediaType,
 				Size:      refImage.Size,
+				Labels:    refImage.Labels,
 			},
-		}
-		if refImage.Platform != nil {
-			img.Platform = &bundle.ImagePlatform{
-				Architecture: refImage.Platform.Architecture,
-				OS:           refImage.Platform.OS,
-			}
 		}
 		images[i] = img
 	}

@@ -162,9 +162,9 @@ func TestManifestConverter_generateImages(t *testing.T) {
 		Size:          12,
 		MediaType:     "download",
 		OriginalImage: "deis/myserver:1.0.0",
-		Platform: &config.ImagePlatform{
-			OS:           "linux",
-			Architecture: "amd64",
+		Labels: map[string]string{
+			"OS":           "linux",
+			"Architecture": "amd64",
 		},
 	}
 	a.Manifest.ImageMap = map[string]config.MappedImage{
@@ -181,11 +181,11 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	assert.Equal(t, mappedImage.Digest, img.Digest)
 	assert.Equal(t, mappedImage.Size, img.Size)
 	assert.Equal(t, mappedImage.MediaType, img.MediaType)
-	assert.Equal(t, mappedImage.Platform.OS, img.Platform.OS)
-	assert.Equal(t, mappedImage.Platform.Architecture, img.Platform.Architecture)
+	assert.Equal(t, mappedImage.Labels["OS"], img.Labels["OS"])
+	assert.Equal(t, mappedImage.Labels["Architecture"], img.Labels["Architecture"])
 }
 
-func TestManifestConverter_generateBundleImages_EmptyPlatform(t *testing.T) {
+func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
 
@@ -201,7 +201,7 @@ func TestManifestConverter_generateBundleImages_EmptyPlatform(t *testing.T) {
 		Description: "un petite server",
 		Image:       "deislabs/myserver:1.0.0",
 		ImageType:   "docker",
-		Platform:    nil,
+		Labels:      nil,
 	}
 	a.Manifest.ImageMap = map[string]config.MappedImage{
 		"server": mappedImage,
@@ -210,7 +210,7 @@ func TestManifestConverter_generateBundleImages_EmptyPlatform(t *testing.T) {
 	images := a.generateBundleImages()
 	require.Len(t, images, 1)
 	img := images["server"]
-	assert.Nil(t, img.Platform)
+	assert.Nil(t, img.Labels)
 }
 
 func TestManifestConverter_generateBundleOutputs(t *testing.T) {

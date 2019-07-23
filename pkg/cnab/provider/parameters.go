@@ -4,13 +4,16 @@ import (
 	"fmt"
 
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
 // loadParameters accepts a set of string overrides and combines that with the default parameters to create
 // a full set of parameters.
-func (d *Duffle) loadParameters(bun *bundle.Bundle, rawOverrides map[string]string) (map[string]interface{}, error) {
+func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]string) (map[string]interface{}, error) {
+	currentVals := claim.Parameters
 	overrides := make(map[string]interface{}, len(rawOverrides))
+	bun := claim.Bundle
 
 	for key, rawValue := range rawOverrides {
 		param, ok := bun.Parameters.Fields[key]
@@ -31,5 +34,5 @@ func (d *Duffle) loadParameters(bun *bundle.Bundle, rawOverrides map[string]stri
 		overrides[key] = value
 	}
 
-	return bundle.ValuesOrDefaults(overrides, bun)
+	return bundle.ValuesOrDefaults(overrides, currentVals, bun)
 }

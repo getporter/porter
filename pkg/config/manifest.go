@@ -91,19 +91,14 @@ type Location struct {
 }
 
 type MappedImage struct {
-	Description   string         `yaml:"description"`
-	ImageType     string         `yaml:"imageType"`
-	Image         string         `yaml:"image"`
-	OriginalImage string         `yaml:"originalImage,omitempty"`
-	Digest        string         `yaml:"digest,omitempty"`
-	Size          uint64         `yaml:"size,omitempty"`
-	MediaType     string         `yaml:"mediaType,omitempty"`
-	Platform      *ImagePlatform `yaml:"platform,omitempty"`
-}
-
-type ImagePlatform struct {
-	Architecture string `yaml:"architecture,omitempty"`
-	OS           string `yaml:"os,omitempty"`
+	Description   string            `yaml:"description"`
+	ImageType     string            `yaml:"imageType"`
+	Image         string            `yaml:"image"`
+	OriginalImage string            `yaml:"originalImage,omitempty"`
+	Digest        string            `yaml:"digest,omitempty"`
+	Size          uint64            `yaml:"size,omitempty"`
+	MediaType     string            `yaml:"mediaType,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty"`
 }
 
 type Dependency struct {

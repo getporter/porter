@@ -36,6 +36,11 @@ func selectInvocationImage(d driver.Driver, c *claim.Claim) (bundle.InvocationIm
 
 	for _, ii := range c.Bundle.InvocationImages {
 		if d.Handles(ii.ImageType) {
+			if c.RelocationMap != nil {
+				if img, ok := c.RelocationMap[ii.Image]; ok {
+					ii.Image = img
+				}
+			}
 			return ii, nil
 		}
 	}

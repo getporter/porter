@@ -29,7 +29,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 	}
 	c.Bundle = b
 
-	params, err := d.loadParameters(b, args.Params)
+	params, err := d.loadParameters(c, args.Params)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
