@@ -59,13 +59,20 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	}
 
 	defs := make(definition.Definitions, len(c.Manifest.Parameters))
-	_ = a.generateBundleParameters(&defs)
+	params := a.generateBundleParameters(&defs)
 
 	testcases := []struct {
-		propname string
-		wantDef  definition.Schema
+		propname  string
+		wantParam bundle.ParameterDefinition
+		wantDef   definition.Schema
 	}{
 		{"ainteger",
+			bundle.ParameterDefinition{
+				Definition: "ainteger",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "AINTEGER",
+				},
+			},
 			definition.Schema{
 				Type:    "integer",
 				Default: 1,
@@ -74,6 +81,12 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			},
 		},
 		{"anumber",
+			bundle.ParameterDefinition{
+				Definition: "anumber",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "ANUMBER",
+				},
+			},
 			definition.Schema{
 				Type:             "number",
 				Default:          0.5,
@@ -83,6 +96,12 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"astringenum",
+			bundle.ParameterDefinition{
+				Definition: "astringenum",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "ASTRINGENUM",
+				},
+			},
 			definition.Schema{
 				Type:    "string",
 				Default: "blue",
@@ -91,6 +110,12 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"astring",
+			bundle.ParameterDefinition{
+				Definition: "astring",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "ASTRING",
+				},
+			},
 			definition.Schema{
 				Type:      "string",
 				MinLength: makefloat64(1),
@@ -99,18 +124,43 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"aboolean",
+			bundle.ParameterDefinition{
+				Definition: "aboolean",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "ABOOLEAN",
+				},
+			},
 			definition.Schema{
 				Type:    "boolean",
 				Default: true,
+			},
+		},
+		{
+			"installonly",
+			bundle.ParameterDefinition{
+				Definition: "installonly",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "INSTALLONLY",
+				},
+				ApplyTo: []string{
+					"install",
+				},
+			},
+			definition.Schema{
+				Type: "boolean",
 			},
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.propname, func(t *testing.T) {
+			param, ok := params.Fields[tc.propname]
+			require.True(t, ok, "parameter definition was not generated")
+
 			def, ok := defs[tc.propname]
 			require.True(t, ok, "property definition was not generated")
 
+			assert.Equal(t, tc.wantParam, param)
 			assert.Equal(t, tc.wantDef, *def)
 		})
 	}
@@ -276,6 +326,87 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	wantDefinitions := definition.Definitions{
 		"output1": &definition.Schema{
 			Type: "string",
+		},
+		"output2": &definition.Schema{
+			Type: "boolean",
+		},
+	}
+
+	require.Equal(t, wantDefinitions, defs)
+}
+
+func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	outputDefinitions := []config.OutputDefinition{
+		{
+			Name:        "output1",
+			Description: "Description of output1",
+			ApplyTo: []string{
+				"install",
+				"upgrade",
+			},
+			Schema: config.Schema{
+				Type:    "string",
+				Default: "default-output",
+			},
+		},
+		{
+			Name:        "output2",
+			Description: "Description of output2",
+			Schema: config.Schema{
+				Type: "boolean",
+			},
+		},
+	}
+
+	a.Manifest.Outputs = outputDefinitions
+
+	defs := make(definition.Definitions, len(a.Manifest.Outputs))
+
+	// Create pre-existing definition, for instance, if already created
+	// for a Parameter Definition
+	defs["output1"] = &definition.Schema{
+		Default: "preexisting-default-output",
+	}
+
+	outputs := a.generateBundleOutputs(&defs)
+	require.Len(t, defs, 2)
+
+	wantOutputDefinitions := bundle.OutputsDefinition{
+		Fields: map[string]bundle.OutputDefinition{
+			"output1": {
+				Definition:  "output1",
+				Description: "Description of output1",
+				ApplyTo: []string{
+					"install",
+					"upgrade",
+				},
+				Path: "/cnab/app/outputs/output1",
+			},
+			"output2": {
+				Definition:  "output2",
+				Description: "Description of output2",
+				Path:        "/cnab/app/outputs/output2",
+			},
+		},
+	}
+
+	require.Equal(t, &wantOutputDefinitions, outputs)
+
+	// Here we see that the pre-existing output1 definition is preserved
+	wantDefinitions := definition.Definitions{
+		"output1": &definition.Schema{
+			Default: "preexisting-default-output",
 		},
 		"output2": &definition.Schema{
 			Type: "boolean",

@@ -5,6 +5,8 @@ import (
 
 	"github.com/deislabs/cnab-go/action"
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/config"
 )
 
 func (d *Duffle) Upgrade(args ActionArguments) error {
@@ -27,7 +29,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(&claim, args.Params)
+		claim.Parameters, err = d.loadParameters(&claim, args.Params, string(config.ActionUpgrade))
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}

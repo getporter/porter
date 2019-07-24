@@ -56,10 +56,14 @@ type Manifest struct {
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name        string    `yaml:"name"`
+	Name      string `yaml:"name"`
+	Sensitive bool   `yaml:"sensitive"`
+
+	// These could be swapped out with an inline bundle.ParameterDefinition
+	// from cnab-go, e.g. bundle.ParameterDefinition `yaml:",inline"`
 	Description string    `yaml:"description,omitempty"`
-	Sensitive   bool      `yaml:"sensitive"`
 	Destination *Location `yaml:"destination,omitempty"`
+	ApplyTo     []string  `yaml:"applyTo,omitempty"`
 
 	Schema `yaml:",inline"`
 }

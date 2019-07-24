@@ -50,6 +50,6 @@ ${PORTER_HOME}/porter bundle output show file_contents | grep -q "bar!"
 
 cat ${PORTER_HOME}/claims/porter-terraform.json
 
-${PORTER_HOME}/porter uninstall --insecure --debug --param file_contents='bar!'
+${PORTER_HOME}/porter uninstall --insecure --debug
 
 ${PORTER_HOME}/porter publish

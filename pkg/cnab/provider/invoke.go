@@ -23,7 +23,7 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(&claim, args.Params)
+		claim.Parameters, err = d.loadParameters(&claim, args.Params, action)
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}

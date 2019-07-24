@@ -139,6 +139,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		p := bundle.ParameterDefinition{
 			Definition:  param.Name,
 			Description: param.Description,
+			ApplyTo:     param.ApplyTo,
 		}
 
 		// If the default is empty, set required to true.
@@ -157,7 +158,11 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			}
 		}
 
-		(*defs)[param.Name] = d
+		// Only set definition if it doesn't already exist
+		// (Both Params and Outputs may reference same Definition)
+		if _, exists := (*defs)[param.Name]; !exists {
+			(*defs)[param.Name] = d
+		}
 		params.Fields[param.Name] = p
 	}
 	return params
@@ -186,7 +191,11 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 			Path:        filepath.Join(config.BundleOutputsDir, output.Name),
 		}
 
-		(*defs)[output.Name] = d
+		// Only set definition if it doesn't already exist
+		// (Both Params and Outputs may reference same Definition)
+		if _, exists := (*defs)[output.Name]; !exists {
+			(*defs)[output.Name] = d
+		}
 		outputs.Fields[output.Name] = o
 	}
 	return outputs
