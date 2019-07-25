@@ -39,6 +39,10 @@ func TestPorter_ShowBundle(t *testing.T) {
 			Action: "install",
 			Status: "success",
 		},
+		Outputs: map[string]interface{}{
+			"foo": "foo-output",
+			"bar": "bar-output",
+		},
 	}
 	if testy, ok := p.CNAB.(*TestCNABProvider); ok {
 		testy.CreateClaim(&claim)

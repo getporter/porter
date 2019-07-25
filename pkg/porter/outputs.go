@@ -1,14 +1,13 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/outputs"
 	"github.com/deislabs/porter/pkg/printer"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -24,34 +23,6 @@ type OutputShowOptions struct {
 type OutputListOptions struct {
 	sharedOptions
 	printer.PrintOptions
-}
-
-// Output represents a bundle output
-type Output struct {
-	Name      string `json:"name"`
-	Sensitive bool   `json:"sensitive"`
-	Type      string `json:"type"`
-	Value     string `json:"value"`
-}
-
-// Outputs is a slice of Outputs
-type Outputs []Output
-
-func (l Outputs) Len() int {
-	return len(l)
-}
-func (l Outputs) Swap(i, j int) {
-	l[i], l[j] = l[j], l[i]
-}
-func (l Outputs) Less(i, j int) bool {
-	var si = l[i].Name
-	var sj = l[j].Name
-	var siLower = strings.ToLower(si)
-	var sjLower = strings.ToLower(sj)
-	if siLower == sjLower {
-		return si < sj
-	}
-	return siLower < sjLower
 }
 
 // Validate validates the provided args, using the provided context,
@@ -103,15 +74,9 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	}
 	name := opts.sharedOptions.Name
 
-	outputData, err := p.readBundleOutput(opts.Output, name)
+	output, err := outputs.ReadBundleOutput(p.Config, opts.Output, name)
 	if err != nil {
-		return errors.Errorf("unable to read output '%s' for claim '%s'", opts.Output, name)
-	}
-
-	var output Output
-	err = json.Unmarshal(outputData, &output)
-	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", opts.Output, name)
 	}
 
 	fmt.Fprintln(p.Out, output.Value)
@@ -144,32 +109,26 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
 	}
 }
 
-func (p *Porter) fetchBundleOutputs(claim string) (*Outputs, error) {
+func (p *Porter) fetchBundleOutputs(claim string) (*outputs.Outputs, error) {
 	outputsDir, err := p.Config.GetOutputsDir()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get outputs directory")
 	}
 	bundleOutputsDir := filepath.Join(outputsDir, claim)
 
-	var outputList Outputs
+	var outputList outputs.Outputs
 	// Walk through bundleOutputsDir, if exists, and read all output filenames.
 	// We truncate actual output values, intending for the full values to be
 	// retrieved by another command.
 	if ok, _ := p.Context.FileSystem.DirExists(bundleOutputsDir); ok {
 		err := p.Context.FileSystem.Walk(bundleOutputsDir, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
-				outputData, err := p.readBundleOutput(info.Name(), claim)
+				output, err := outputs.ReadBundleOutput(p.Config, info.Name(), claim)
 				if err != nil {
-					return errors.Errorf("unable to read output '%s' for claim '%s'", info.Name(), claim)
+					return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", info.Name(), claim)
 				}
 
-				var output Output
-				err = json.Unmarshal(outputData, &output)
-				if err != nil {
-					return errors.Errorf("unable to unmarshal output '%s' for claim '%s'", info.Name(), claim)
-				}
-
-				outputList = append(outputList, output)
+				outputList = append(outputList, *output)
 			}
 			return nil
 		})
@@ -181,7 +140,7 @@ func (p *Porter) fetchBundleOutputs(claim string) (*Outputs, error) {
 	return &outputList, nil
 }
 
-func (p *Porter) printOutputsTable(outputs *Outputs, claim string) error {
+func (p *Porter) printOutputsTable(outputs *outputs.Outputs, claim string) error {
 	// Get local output directory for this claim
 	outputsDir, err := p.Config.GetOutputsDir()
 	if err != nil {
@@ -219,23 +178,6 @@ func (p *Porter) printOutputsTable(outputs *Outputs, claim string) error {
 	table.Render()
 
 	return nil
-}
-
-func (p *Porter) readBundleOutput(output, bundle string) ([]byte, error) {
-	outputsDir, err := p.Config.GetOutputsDir()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get outputs directory")
-	}
-	bundleOutputsDir := filepath.Join(outputsDir, bundle)
-
-	outputPath := filepath.Join(bundleOutputsDir, output)
-
-	return p.Context.FileSystem.ReadFile(outputPath)
-}
-
-// JSONMarshal marshals an Output to JSON, returning a byte array or error
-func (o *Output) JSONMarshal() ([]byte, error) {
-	return json.MarshalIndent(o, "", "  ")
 }
 
 // TODO: refactor to truncate in the middle?  (Handy if paths are long)

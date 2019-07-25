@@ -27,7 +27,7 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(claim.Bundle, args.Params)
+		claim.Parameters, err = d.loadParameters(&claim, args.Params)
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}

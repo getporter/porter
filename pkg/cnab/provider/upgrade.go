@@ -27,7 +27,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(claim.Bundle, args.Params)
+		claim.Parameters, err = d.loadParameters(&claim, args.Params)
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}
@@ -60,11 +60,19 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 		fmt.Fprintf(d.Err, "upgrading bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
 	}
 
-	// Upgrade and ALWAYS write out a claim, even if the upgrade fails
-	err = i.Run(&claim, creds, d.Out)
+	// Upgrade and capture error
+	runErr := i.Run(&claim, creds, d.Out)
+
+	// Add/update the outputs section of a claim and capture error
+	err = d.WriteClaimOutputs(&claim)
+
+	// ALWAYS write out a claim, even if the upgrade fails
 	saveErr := claims.Store(claim)
+	if runErr != nil {
+		return errors.Wrap(runErr, "failed to upgrade the bundle")
+	}
 	if err != nil {
-		return errors.Wrap(err, "failed to upgrade the bundle")
+		return errors.Wrap(err, "failed to write outputs to the claim")
 	}
 	return errors.Wrap(saveErr, "failed to record the upgrade for the bundle")
 }

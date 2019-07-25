@@ -29,7 +29,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 	}
 	c.Bundle = b
 
-	params, err := d.loadParameters(b, args.Params)
+	params, err := d.loadParameters(c, args.Params)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
@@ -62,11 +62,19 @@ func (d *Duffle) Install(args ActionArguments) error {
 		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, paramKeys, credKeys)
 	}
 
-	// Install and ALWAYS write out a claim, even if the installation fails
-	err = i.Run(c, creds, d.Out)
+	// Install and capture error
+	runErr := i.Run(c, creds, d.Out)
+
+	// Add/update the outputs section of a claim and capture error
+	err = d.WriteClaimOutputs(c)
+
+	// ALWAYS write out a claim, even if the installation fails
 	saveErr := d.NewClaimStore().Store(*c)
+	if runErr != nil {
+		return errors.Wrap(runErr, "failed to install the bundle")
+	}
 	if err != nil {
-		return errors.Wrap(err, "failed to install the bundle")
+		return errors.Wrap(err, "failed to write outputs to the claim")
 	}
 	return errors.Wrap(saveErr, "failed to record the installation for the bundle")
 }
