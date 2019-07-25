@@ -6,6 +6,8 @@ import (
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/config"
 )
 
 func (d *Duffle) Install(args ActionArguments) error {
@@ -29,7 +31,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 	}
 	c.Bundle = b
 
-	params, err := d.loadParameters(c, args.Params)
+	params, err := d.loadParameters(c, args.Params, string(config.ActionInstall))
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}

@@ -9,6 +9,9 @@ tag: deislabs/porter-terraform-bundle:v0.1.0
 parameters:
   - name: file_contents
     type: string
+    applyTo:
+      - install
+      - upgrade
 
 install:
   - terraform:

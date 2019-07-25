@@ -35,6 +35,10 @@ parameters:
     type: boolean
     required: true
     default: true
+  - name: installonly
+    type: boolean
+    applyTo:
+      - install
 
 mixins:
   - exec
