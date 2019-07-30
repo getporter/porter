@@ -81,6 +81,10 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 // WriteClaimOutputs writes outputs to a claim, according to the provided bundle
 // and Duffle config
 func (d *Duffle) WriteClaimOutputs(c *claim.Claim) error {
+	if c.Bundle.Outputs == nil {
+		return nil
+	}
+
 	for outputName := range c.Bundle.Outputs.Fields {
 		output, err := outputs.ReadBundleOutput(d.Config, outputName, c.Name)
 		if err != nil {
