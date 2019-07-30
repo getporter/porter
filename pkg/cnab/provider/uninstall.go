@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/deislabs/cnab-go/action"
-	"github.com/pkg/errors"
-
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/pkg/errors"
 )
 
 func (d *Duffle) Uninstall(args ActionArguments) error {
@@ -14,28 +14,32 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 	// we shouldn't be reimplementing calling all these functions all over again
 
 	claims := d.NewClaimStore()
-	claim, err := claims.Read(args.Claim)
+	c, err := claims.Read(args.Claim)
 	if err != nil {
+		// Yay! It's already gone
+		if err == claim.ErrClaimNotFound {
+			return nil
+		}
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)
 	}
 
 	if args.BundleIdentifier != "" {
 		// TODO: handle resolving based on bundle name
 		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to unisntall it?
-		claim.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
+		c.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(&claim, args.Params, string(config.ActionUninstall))
+		c.Parameters, err = d.loadParameters(&c, args.Params, string(config.ActionUninstall))
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}
 	}
 
-	driver, err := d.newDriver(args.Driver, claim.Name)
+	driver, err := d.newDriver(args.Driver, c.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -43,7 +47,7 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		Driver: driver,
 	}
 
-	creds, err := d.loadCredentials(claim.Bundle, args.CredentialIdentifiers)
+	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}
@@ -55,14 +59,14 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 			credKeys = append(credKeys, k)
 		}
 		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(claim.Parameters))
-		for k := range claim.Parameters {
+		paramKeys := make([]string, 0, len(c.Parameters))
+		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, claim.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, paramKeys, credKeys)
 	}
 
-	err = i.Run(&claim, creds, d.Out)
+	err = i.Run(&c, creds, d.Out)
 	if err != nil {
 		return errors.Wrap(err, "failed to uninstall the bundle")
 	}
