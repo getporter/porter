@@ -57,6 +57,14 @@ upgrade:
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
 
+ping:
+  - exec:
+      description: "Ping"
+      command: "bash"
+      arguments:
+        - -c
+        - echo ping
+
 uninstall:
   - helm:
       description: "Uninstall Wordpress"
