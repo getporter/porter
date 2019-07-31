@@ -220,12 +220,13 @@ customActions:
 
 ## Dependencies
 
+Dependencies are an extension of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md).
 See [dependencies](/dependencies/) for more details on how Porter handles dependencies.
 
 ```yaml
 dependencies:
   mysql:
-    tag: deislabs/porter-wordpress:v0.1.0
+    tag: deislabs/porter-wordpress-bundle:v0.1.0
     parameters:
       database_name: wordpress
       mysql_user: wordpress
