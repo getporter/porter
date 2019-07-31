@@ -83,7 +83,7 @@ test-unit: build
 	go test ./...
 
 test-integration: build
-	go test -tags=integration ./...
+	go test -v -timeout 20m -tags=integration ./tests
 
 test-cli: clean-last-testrun build init-porter-home-for-ci
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
