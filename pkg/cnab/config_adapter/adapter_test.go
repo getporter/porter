@@ -35,7 +35,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.NotNil(t, stamp)
 
 	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
-	assert.Contains(t, bun.Parameters.Fields, "porter-debug", "porter-debug parameter was not defined")
+	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
 
 	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Porter stamp was not populated")
@@ -65,11 +65,11 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 
 	testcases := []struct {
 		propname  string
-		wantParam bundle.ParameterDefinition
+		wantParam bundle.Parameter
 		wantDef   definition.Schema
 	}{
 		{"ainteger",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "ainteger",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "AINTEGER",
@@ -83,7 +83,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			},
 		},
 		{"anumber",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "anumber",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ANUMBER",
@@ -98,7 +98,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"astringenum",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "astringenum",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ASTRINGENUM",
@@ -112,11 +112,12 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"astring",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "astring",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ASTRING",
 				},
+				Required: true,
 			},
 			definition.Schema{
 				Type:      "string",
@@ -126,7 +127,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"aboolean",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "aboolean",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ABOOLEAN",
@@ -139,7 +140,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{
 			"installonly",
-			bundle.ParameterDefinition{
+			bundle.Parameter{
 				Definition: "installonly",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "INSTALLONLY",
@@ -147,6 +148,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				ApplyTo: []string{
 					"install",
 				},
+				Required: true,
 			},
 			definition.Schema{
 				Type: "boolean",
@@ -156,7 +158,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.propname, func(t *testing.T) {
-			param, ok := params.Fields[tc.propname]
+			param, ok := params[tc.propname]
 			require.True(t, ok, "parameter definition was not generated")
 
 			def, ok := defs[tc.propname]
@@ -183,7 +185,7 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 	defs := make(definition.Definitions, len(c.Manifest.Parameters))
 	params := a.generateBundleParameters(&defs)
 
-	debugParam, ok := params.Fields["porter-debug"]
+	debugParam, ok := params["porter-debug"]
 	assert.True(t, ok, "porter-debug parameter was not defined")
 	assert.Equal(t, "porter-debug", debugParam.Definition)
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
@@ -280,20 +282,20 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	outputDefinitions := []config.OutputDefinition{
 		{
 			Name:        "output1",
-			Description: "Description of output1",
 			ApplyTo: []string{
 				"install",
 				"upgrade",
 			},
-			Schema: config.Schema{
+			Schema: definition.Schema{
 				Type: "string",
+				Description: "Description of output1",
 			},
 		},
 		{
 			Name:        "output2",
-			Description: "Description of output2",
-			Schema: config.Schema{
+			Schema: definition.Schema{
 				Type: "boolean",
+				Description: "Description of output2",
 			},
 		},
 	}
@@ -328,9 +330,11 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	wantDefinitions := definition.Definitions{
 		"output1": &definition.Schema{
 			Type: "string",
+			Description: "Description of output1",
 		},
 		"output2": &definition.Schema{
 			Type: "boolean",
+			Description: "Description of output2",
 		},
 	}
 
@@ -352,21 +356,21 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 	outputDefinitions := []config.OutputDefinition{
 		{
 			Name:        "output1",
-			Description: "Description of output1",
 			ApplyTo: []string{
 				"install",
 				"upgrade",
 			},
-			Schema: config.Schema{
+			Schema: definition.Schema{
 				Type:    "string",
 				Default: "default-output",
+				Description: "Description of output1",
 			},
 		},
 		{
 			Name:        "output2",
-			Description: "Description of output2",
-			Schema: config.Schema{
+			Schema: definition.Schema{
 				Type: "boolean",
+				Description: "Description of output2",
 			},
 		},
 	}
@@ -412,6 +416,7 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 		},
 		"output2": &definition.Schema{
 			Type: "boolean",
+			Description: "Description of output2",
 		},
 	}
 

@@ -209,7 +209,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "79e453dce77f9d7cbf96f580ac7cd0b34fa9bf2e28b9d89f4688502833e8e2ea", stamp.ManifestDigest)
 
-	debugParam, ok := bun.Parameters.Fields["porter-debug"]
+	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
 	debugDef, ok := bun.Definitions["porter-debug"]
@@ -236,6 +236,6 @@ func TestPorter_paramRequired(t *testing.T) {
 	err = json.Unmarshal(bundleBytes, &bundle)
 	require.NoError(t, err)
 
-	require.NotContains(t, bundle.Parameters.Required, "command")
-	require.Contains(t, bundle.Parameters.Required, "command2")
+	require.False(t, bundle.Parameters["command"].Required, "expected command param to not be required")
+	require.True(t, bundle.Parameters["command2"].Required, "expected command2 param to be required")
 }

@@ -222,7 +222,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:9f60acd7d2ca0060ebd9064d616b4a09c8906aff099897273fffb2ec81f04815"
+  digest = "1:1262059b93a03512c45efcc15f5e4ce6683f619613305eb0739f7e6e80fdc4a1"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -234,8 +234,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "d0e47f49ea9a4ef8aedf1043b11ffa7506fc10d7"
-  version = "v0.2.0-beta1"
+  revision = "a0a0201df5945d48a40c46e1d33b70350aae62d5"
+  source = "github.com/vdice/cnab-go"
 
 [[projects]]
   digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
