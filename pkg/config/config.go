@@ -17,7 +17,7 @@ const (
 	EnvHOME = "PORTER_HOME"
 
 	// EnvBundleName is the name of the environment variable containing the name of the bundle.
-	EnvBundleName = "CNAB_ACTION"
+	EnvBundleName = "CNAB_BUNDLE_NAME"
 
 	// EnvClaimName is the name of the environment variable containing the name of the claim.
 	EnvClaimName = "CNAB_INSTALLATION_NAME"

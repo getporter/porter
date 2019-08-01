@@ -47,6 +47,9 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 		{name: "unimplemented range",
 			dep:       Dependency{"mysql", &DependencyVersion{nil, true}},
 			wantError: "not implemented"},
+		{name: "unimplemented missing tag",
+			dep:       Dependency{Bundle:"mysql"},
+			wantError: "not implemented"},
 	}
 
 	for _, tc := range testcases {

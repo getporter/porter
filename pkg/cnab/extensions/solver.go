@@ -45,7 +45,12 @@ func (s *DependencySolver) ResolveDependencies(bun *bundle.Bundle) ([]Dependency
 func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (string, error) {
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
 	if dep.Version == nil {
-		return strings.Split(dep.Bundle, ":")[1], nil
+		parts := strings.Split(dep.Bundle, ":")
+		if len(parts) > 1 {
+			return strings.Join(parts[1:], ""), nil
+		} else {
+			return "", errors.Errorf("not implemented: unspecified dependency version for %s", name)
+		}
 	}
 
 	return "", errors.Errorf("not implemented: dependency version range specified for %s", name)

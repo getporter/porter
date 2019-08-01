@@ -65,6 +65,10 @@ func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action c
 }
 
 func (e *dependencyExecutioner) Execute() error {
+	if e.action == nil {
+		return errors.New("Prepare must be called before Execute")
+	}
+
 	// executeDependency the requested action against all of the dependencies
 	parentArgs := e.parentOpts.ToDuffleArgs()
 	for _, dep := range e.deps {
