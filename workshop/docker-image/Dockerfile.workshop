@@ -1,0 +1,14 @@
+FROM docker:dind
+
+RUN apk add bash \
+            git \
+            curl \ 
+            bash-completion \ 
+            jq \
+            ca-certificates && \
+    curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash && \
+    mkdir -p /workshop 
+
+ENV PATH="$PATH:/root/.porter"
+
+WORKDIR /workshop
