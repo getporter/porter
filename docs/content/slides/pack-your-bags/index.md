@@ -21,17 +21,19 @@ to get all the materials ready.
 
 .center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
 
-* Clone the workshop repository
-  ```console
-  git clone https://github.com/deislabs/porter.git
-  cd porter/workshop
-  ```
-* [Install Porter](https://porter.sh/install)
-* Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
-* Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
-* [Install Helm 2](https://helm.sh/docs/install/)
-* Initialize Helm on your cluster by running `helm init`
-
+1. Go to https://labs.play-with-docker.com/
+1. Sign in with your Docker Hub account, or create one if you don't already have an account.
+1. Click `Add new instance`
+1. [Install Porter](https://porter.sh/install)
+   ```
+   curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
+   export PATH=$PATH:~/.porter
+   ```
+1. Clone the workshop repository
+    ```
+    git clone https://github.com/deislabs/porter.git
+    cd porter/workshop
+    ```
 
 ---
 name: agenda
@@ -39,8 +41,11 @@ name: agenda
 # Agenda
 
 1. What is CNAB?
-2. Manage Bundles with Porter
-3. Authoring Bundles
+1. Build a bundle
+1. Install a bundle
+1. Survey of CNAB ecosystem
+1. Create your own bundle
+1. The state of CNAB
 
 ---
 name: introductions
@@ -63,6 +68,7 @@ name: introductions
 
 ---
 name: hi
+exclude: true
 # Stop and Say Hi
 
 1. Move up to the front tables.
@@ -73,6 +79,7 @@ name: hi
 ---
 name: kickoff
 class: center, middle
+exclude: true
 # First A Quick Demo!
 
 ---
@@ -80,21 +87,30 @@ class: center, middle
 
 ---
 name: cnab
-# What's a CNAB???
+# What's a CNAB?
+
+---
+name: use-cases
+# When would you use a bundle?
+
+1. Install the tools to manage your app: helm, aws/azure/gcloud, terraform
+1. Deploy an app along with its infra: cloud storage, dns entry, load balancer, ssl cert
+1. Get software and its dependencies into airgapped networks
+1. Manage disparate operational tech: such as Helm, Chef, or Terraform, across teams and departments
 
 ---
 class: center, middle
-
+exclude: true
 # Let's Answer That With A Story!
 
 ---
 class: center, middle
-
+exclude: true
 # The Cast
 
 ---
 class: center, middle
-
+exclude: true
 # You!
 .center[
   ![you, a developer](/images/pack-your-bags/you-a-developer.jpg)
@@ -102,7 +118,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Your friend!
 .center[
   ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
@@ -110,7 +126,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Your friend!
 .center[
   ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
@@ -118,7 +134,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Your App!
 .center[
   ![it's the journey that matters](/images/pack-your-bags/mcguffin.png)
@@ -126,7 +142,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Your Fans!
 .center[
   ![trending](/images/pack-your-bags/your-fans.jpg)
@@ -134,12 +150,12 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Act One!
 
 ---
 class: center, middle
-
+exclude: true
 # You Built an App
 
 .center[
@@ -149,10 +165,11 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # It Runs Happily In The Cloud
 
 ---
+exclude: true
 # ....your cloud
 .center[
   ![that's a bingo](/images/pack-your-bags/cloud-bingo.png)
@@ -160,12 +177,12 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Act Two!
 
 ---
 class: center, middle
-
+exclude: true
 # Your Friend Wants To Run It!
 .center[
   ![your friend, a computer user](/images/pack-your-bags/your-friend-a-user.jpg)
@@ -173,11 +190,11 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # How exciting! 
 
---
-
+---
+exclude: true
 # So you write extensive docs
 .center[
   ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
@@ -185,7 +202,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # You are no longer friends...
 
 .center[
@@ -196,7 +213,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # So you work together...
 
 .center[
@@ -205,7 +222,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Then you help a few more people...
 
 .center[
@@ -214,12 +231,12 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # Act Three!
 
 ---
 class: center, middle
-
+exclude: true
 # Suddenly McGuffin has FANS!
 
 .center[
@@ -228,7 +245,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # This won't scale...
 
 .center[
@@ -237,7 +254,7 @@ class: center, middle
 
 ---
 class: center, middle
-
+exclude: true
 # So what do we do...
 
 .center[
@@ -246,47 +263,32 @@ class: center, middle
 
 ---
 class: center
-
-# Containers helped us ship our app...
+# Containers ship our application
 
 .center[
   ![ship it](/images/pack-your-bags/container-ship.jpg)
 ]
 
 ---
-class: center
+class: middle
+# ... but don't install everything
 
-# But containers don't really solve this...
-
+<!--
 .center[
   ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
 ]
+-->
 
 ---
-class: middle
-
-# This is the problem CNAB wants to solve
-
----
-
-# Hashtag Goals
-
---
+# This is what CNAB solves
 
 * Package All The Logic To Make Your App Happen
-
---
-
 * Allow Consumer To Verify Everything They Will Install
-
---
-
 * Distribute Them In Verifiable Way
 
 ---
 class: center, middle
-
-# How that works
+# How it works
 
 .center[
   ![workflow](/images/pack-your-bags/the-workflow.png) ![magic](/images/pack-your-bags/magic.gif)
@@ -297,14 +299,13 @@ class: center, middle
 ---
 ## Try it out: Install a bundle
 
-```console
-$ porter install --tag deislabs/porter-hello-velocity:latest
+```
+$ porter install --tag deislabs/porter-hello-devopsdays:latest
 ```
 
 ---
 name: anatomy
 class: center, middle
-
 # Anatomy of a Bundle
 
 .center[
@@ -312,32 +313,21 @@ class: center, middle
 ]
 
 ---
-
 # Application Images
 
 * CNAB doesn't change this
 * Build your application like you do now
 
 ---
-
 # The Invocation Image
 
---
-
 * MSI for the Cloud
---
-
 * It's a Docker Image
---
-
 * It contains all the tools you need to install your app
---
-
 * It contains configuration, metadata, templates, etc
 
 ---
 class: center, middle
-
 # The Invocation Image
 
 .center[
@@ -345,42 +335,23 @@ class: center, middle
 ]
 
 ---
-
 # The Bundle Descriptor
---
 
 * JSON!
---
-
-* List of the invocation image(s) (with digests!)
---
-
-* List of the application image(s) (with digests!)
---
-
+* List of the invocation image(s) with digests
+* List of the application image(s) with digests
 * Definitions for inputs and outputs
---
-
 * Can be signed
 
 ---
-
 # Are we done?
---
 
 * We can install (complicated) things
-
---
-
 * We can verify what we are going to install
-
---
-
 * But how do we distribute bundles?
 
 ---
 class: center
-
 # Sharing Images With OCI Registries
 
 ![how docker shares](/images/pack-your-bags/ship-it.png)
@@ -388,7 +359,6 @@ class: center
 ---
 name: registry
 class: center, middle
-
 # OCI Regristry ~ Docker Registry
 
 ---
@@ -418,27 +388,18 @@ class: center
 ---
 
 # CNAB Specification
---
 
 * The Bundle format
---
-
 * Defines how things are passed into and out of the invocation image
---
-
 * A required entrypoint in invocation image
---
-
 * Well-defined verbs
---
-
   * Install
   * Upgrade
   * Uninstall
 
 ---
 class: center, middle
-
+exclude: true
 # An Example: Azure MySQL + Wordpress
 
 .center[
@@ -446,19 +407,9 @@ class: center, middle
 ]
 
 ---
-name: talkback
-
-# Talk Back
-
-* What tools do you use to deploy?
-* Is it to a cloud? On-premise?
-* Are you using a mix of tooling and platforms?
-* What does your deployment lifecycle look like?
-
----
 class: center, middle
 
-# Manage Bundles with Porter
+# Let's make some bundles!
 
 .center[
   🚨 Not Setup Yet? 🚨
@@ -466,21 +417,23 @@ class: center, middle
   https://porter.sh/pack-your-bags/#setup
   
   ]
+
 ---
 name: hello
 class: center
 
 # Tutorial
-# Hello World
+# Whale Hello
 
 .center[
   ![whale saying hello](/images/whale-hello.png)
 ]
+
 ---
 
 ## porter create
 
-```console
+```
 $ porter create --help
 Create a bundle. This generates a porter bundle in the current directory.
 ```
@@ -514,6 +467,7 @@ name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
 invocationImage: porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
 
 install:
   - exec:
@@ -528,11 +482,14 @@ install:
 
 ## Try it out: porter create
 
-```console
+```
 $ mkdir hello
+
 $ cd hello
+
 $ porter create
 creating porter configuration in the current directory
+
 $ ls
 Dockerfile.tmpl  README.md  porter.yaml
 ```
@@ -541,7 +498,7 @@ Dockerfile.tmpl  README.md  porter.yaml
 
 ## porter build
 
-```console
+```
 $ porter build --help
 Builds the bundle in the current directory by generating a Dockerfile 
 and a CNAB bundle.json, and then building the invocation image.
@@ -551,7 +508,7 @@ and a CNAB bundle.json, and then building the invocation image.
 
 ## Try it out: porter build
 
-```console
+```
 $ porter build
 
 Copying dependencies ===>
@@ -576,25 +533,31 @@ FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY . /cnab/app
-RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
+ARG BUNDLE_DIR
+
+COPY .cnab /cnab
+COPY . $BUNDLE_DIR
+RUN rm -fr $BUNDLE_DIR/.cnab
 # exec mixin has no buildtime dependencies
+
+WORKDIR $BUNDLE_DIR
+CMD ["/cnab/app/run"]
 ```
 .footnote[🚨 Generated by Porter]
 
 ---
 
 ### cnab/
-```console
+```
 $ tree cnab/
-cnab
+.cnab
 ├── app
-│   ├── mixins
-│   │   └── exec
-│   │       ├── exec
-│   │       └── exec-runtime
-│   ├── porter-runtime
-│   └── run
+│  ├── mixins
+│  │  └── exec
+│  │      ├── exec
+│  │      └── exec-runtime
+│  ├── porter-runtime
+│  └── run
 └── bundle.json
 ```
 
@@ -611,30 +574,26 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 ### cnab/bundle.json
 ```json
 {
-    "description": "An example Porter configuration",
-    "invocationImages": [{
-            "image": "porter-hello:latest",
+    "description": "An example Porter bundle",
+    "invocationImages": [
+        {
+            "image": "deislabs/porter-hello-devopsdays-installer:latest",
             "imageType": "docker"
-        }],
-    "name": "HELLO",
-    "definitions": {
-        "porter-debug": {
-          "type": "boolean"
         }
-    },
+    ],
+    "name": "porter-hello-devopsdays",
     "parameters": {
         "fields": {
             "porter-debug": {
-                "description": "Print debug information from Porter when executing the bundle",
                 "definition": "porter-debug",
+                "description": "Print debug information from Porter when executing the bundle",
                 "destination": {
                     "env": "PORTER_DEBUG"
                 }
             }
         }
     },
-    "version": "0.1.0"
-}
+    "definitions": { ...
 ```
 .footnote[🚨 Generated by Porter]
 
@@ -642,7 +601,7 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 
 ## porter install
 
-```console
+```
 $ porter install --help
 Install a bundle.
 
@@ -666,7 +625,7 @@ name: execution
 
 ## Try it out: porter install
 
-```console
+```
 $ porter install
 
 installing HELLO...
@@ -677,14 +636,141 @@ execution completed successfully!
 ```
 
 ---
-class: center, middle
+name: terraform
+# Make a bundle
 
+You can find the bundle in this repository under **workshop/terraform**
+
+---
+# Modify the bundle
+
+Let's make this bundle yours by changing it from the deislabs Docker Hub registry to your own:
+
+1. Open **porter.yaml**
+1. Find the `invocationImage` and the `tag` fields, and then change `deislabs` to your docker username.
+
+    They should now look like this:
+
+    ```yaml
+    invocationImage: "yourname/porter-terraform:v0.1.0"
+    tag: "yourname/porter-terraform-bundle:v0.1.10"
+    ```
+1. Save and close the file.
+
+---
+# Build the bundle
+
+```
+$ porter build
+```
+
+---
+# Run Script
+
+---
+# Dockerfile
+
+---
+# bundle.json
+
+---
+# Create credentials for the bundle
+
+```
+TODO: copy credential file that we give people
+and have them put it into ~/.porter/credentials/azure.yaml
+```
+
+---
+# Publishing Bundles
+
+Use `porter publish` to share bundles:
+
+* Publishes both the invocation image and the CNAB bundle manifest to an OCI registry.
+* Uses Docker tags for both
+
+```yaml
+name: porter-terraform
+version: 0.1.0
+invocationImage: "deislabs/porter-terraform:v0.1.0"
+tag: "deislabs/porter-terraform-bundle:v0.1.0"
+```
+
+---
+## porter publish
+
+```
+$ porter publish --help
+Publishes a bundle by pushing the invocation image and bundle to a registry.
+
+
+Examples:
+  porter publish
+
+```
+
+---
+exclude: true
+# Try to publish
+
+* Modify the helloworld bundle again
+* Edit the porter.yaml:
+  * Change the `invocationImage` property to reflect your Docker Hub account
+  * Change `tag` property to reflect your Docker Hub account
+  * Change the message to something unique
+* Run `porter build`
+* Run `porter publish`
+
+Example (assuming your username is cnabaholic):
+
+* Change `deislabs/cool-image:latest` to `cnabaholic/cool-image:latest`
+
+---
+# Try it out: Publish your bundle
+
+```
+$ porter publish
+```
+
+If you run into trouble here, here are a few things to check:
+* Make sure that you updated the invocationImage and tag to use your docker hub username
+* Log into docker hub with `docker login`
+
+---
+# Try it out: Install the bundle
+
+```
+$ porter install --tag YOURNAME/porter-terraform-bundle:v0.1.0 --cred azure
+```
+
+---
+name: talkback
+
+# Talk Back
+
+* What tools do you use to deploy?
+* Is it to a cloud? On-premise?
+* Are you using a mix of tooling and platforms?
+* What does your deployment lifecycle look like?
+
+---
+class: center, middle
+exclude: true
 # BREAK
+
+bring in the other slides that explain porter meta data, mixins, 
+parameters and credentials
+
+publish, install from our our tag before #4
+_I_ may be comforable with terraform and _I_ know what credentials / parameters are needed
+The person who writes the bundle isn't the person who runs the bundle
+
+5 goes away
 
 ---
 name: mellamo
 class: center
-
+exclude: true
 # Tutorial
 # Hi, My Name is _
 
@@ -693,8 +779,7 @@ class: center
 ]
 
 ---
-name: parameters
-
+exclude: true
 ## Parameters
 
 Variables in your bundle that you can specify when you execute the bundle
@@ -721,7 +806,7 @@ parameters:
 Explain defaults and when parameters are required
 
 ---
-
+exclude: true
 ## Try it out: Print Your Name
 
 Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti", using a parameter.
@@ -732,10 +817,10 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 1. Finally run `porter install --param name=YOUR_NAME` and look for your name in the output.
 
 ---
-
+exclude: true
 ### porter bundle list
 
-```console
+```
 $ porter bundle list
 NAME          CREATED         MODIFIED        LAST ACTION   LAST STATUS
 HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
@@ -747,37 +832,27 @@ Ask them to list their bundles
 
 ---
 name: claims
-
+exclude: true
 ### Claims
 
 Claims are records of any actions performed by CNAB compliant tools on a bundle.
 
-```console
-$ cat ~/.porter/claims/HELLO.json
-{
-  "name": "HELLO",
-  "revision": "01DCFCN6AH00SM8E1968XHTSJ5",
-  "created": "2019-06-03T14:22:00.952704-05:00",
-  "modified": "2019-06-03T14:22:02.449355-05:00",
-  "result": {
-    "message": "",
-    "action": "install",
-    "status": "success"
-  },
-  "parameters": {
-    "porter-debug": false,
-    "name": "llama"
-  },
-  ...
-}
+```
+$ porter bundle show HELLO
+Name: HELLO
+Created: 8 minutes ago
+Modified: 8 minutes ago
+Last Action: install
+Last Status: success
 ```
 
 ---
 name: cleanup-hello
+exclude: true
 ## Cleanup Hello World
 
 First run `porter uninstall` without any arguments:
-```console
+```
 $ porter uninstall
 uninstalling HELLO...
 executing porter uninstall configuration from /cnab/app/porter.yaml
@@ -787,7 +862,7 @@ execution completed successfully!
 ```
 
 Now run `porter uninstall` with the name you used for the modified bundle:
-```console
+```
 $ porter uninstall HELLO_LLAMA
 uninstalling HELLO_LLAMA...
 executing porter uninstall configuration from /cnab/app/porter.yaml
@@ -799,54 +874,15 @@ execution completed successfully!
 ---
 name: wordpress
 class: center
-
+exclude: true
 # Tutorial
 # Wordpress
 
 ---
-name: credentials
-
-## Credentials
-
-Variables that can be specified when the bundle is executed that are _associated with the identity 
-of the user executing the bundle_, and are loaded into the bundle either as environment variables or files.
-
-They are mapped from the local system using named credential sets, instead of specified on the command-line.
-
----
-name: creds-v-params
-## Credentials vs. Parameters
-
-### Parameters
-* Application Configuration
-* Stored in the claim
-* 🚨 Available in **plaintext** on the local filesystem
-
-### Credentials
-* Identity of the user executing the bundle
-* Is not stored in the claim
-* Has to be presented every time you perform an action
-
----
-name: passwords
-
-## Credentials, Passwords and Sensitive Data
-
-* Credentials are for data identifying data associated with a user. They are 
-re-specified every time you run a bundle, and are not stored in the claim.
-* Parameters can store sensitive data using the `sensitive` flag. This prevents 
-the value from being printed to the console.
-* We (porter) and the CNAB spec are working on more robust storage mechanisms for 
-claims with sensitive data, and better ways to pull data from secret stores so that 
-they don't end up on the file system unencrypted.
-
-In all honesty this area is a work in progress. I would shove as everything in a 
-credential for now but be aware of the distinction and where the CNAB spec is moving.
-
----
+exclude: true
 ## porter credentials generate
 
-```console
+```
 $ porter credentials generate --help
 Generate a named set of credentials.
 
@@ -868,6 +904,7 @@ will then provide it to the bundle in the correct location.
 ```
 
 ---
+exclude: true
 ## Wordpress Credential Mapping
 
 ### ~/.porter/credentials/wordpress.yaml
@@ -883,11 +920,13 @@ credentials:
 ```yaml
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  destination:
+    path: /root/.kube/config
 ```
 
 ---
 name: hack
+exclude: true
 ### A quick hack
 
 If you are using for Docker for Desktop with Kubernetes
@@ -907,6 +946,7 @@ clusters:
 Specify this config file for `porter credentials generate` on the next slide for the kubeconfig.
 
 ---
+exclude: true
 ## Try it out: porter credentials generate
 
 Generate a set of credentials for the wordpress bundle in this repository.
@@ -920,20 +960,21 @@ for the wordpress bundle.
 we all do this together
 
 ---
+exclude: true
 ## Try it out: porter install --cred
 
 Install the wordpress bundle and pass it the named set of credentials that you generated.
 
-```console
+```
 $ porter install --cred wordpress
 ```
 
 ---
 name: cleanup-wordpress
-
+exclude: true
 ## Cleanup Wordpress
 
-```console
+```
 $ porter uninstall --cred wordpress
 ```
 
@@ -972,6 +1013,7 @@ mixins:
 ```
 
 ---
+name: parameters
 ## Parameters
 
 Define parameters that the bundle requires.
@@ -987,6 +1029,7 @@ parameters:
 ```
 
 ---
+name: credentials
 ## Credentials
 
 Define credentials that the bundle requires and where they should be placed
@@ -998,10 +1041,49 @@ in the bundle when it is executing:
 ```yaml
 credentials:
 - name: SUBSCRIPTION_ID
-  env: AZURE_SUBSCRIPTION_ID
+  destination:
+    env: AZURE_SUBSCRIPTION_ID
 - name: kubeconfig
-  path: /root/.kube/config
+  destination:
+    path: /root/.kube/config
 ```
+
+---
+## Credentials
+
+Variables that can be specified when the bundle is executed that are _associated with the identity 
+of the user executing the bundle_, and are loaded into the bundle either as environment variables or files.
+
+They are mapped from the local system using named credential sets, instead of specified on the command-line.
+
+---
+name: creds-v-params
+## Credentials vs. Parameters
+
+### Parameters
+* Application Configuration
+* Stored in the claim
+* 🚨 Available in **plaintext** on the local filesystem
+
+### Credentials
+* Identity of the user executing the bundle
+* Is not stored in the claim
+* Has to be presented every time you perform an action
+
+---
+name: passwords
+## Credentials, Passwords and Sensitive Data
+
+* Credentials are for data identifying data associated with a user. They are 
+re-specified every time you run a bundle, and are not stored in the claim.
+* Parameters can store sensitive data using the `sensitive` flag. This prevents 
+the value from being printed to the console.
+* We (porter) and the CNAB spec are working on more robust storage mechanisms for 
+claims with sensitive data, and better ways to pull data from secret stores so that 
+they don't end up on the file system unencrypted.
+
+In all honesty this area is a work in progress. I would shove anything sensitive in a 
+credential for now but be aware of the distinction and where the CNAB spec is moving.
 
 ---
 name: dockerfile
@@ -1013,7 +1095,7 @@ Specify a custom Dockerfile for the invocation image
 * Add users, tweak the environment and configuration
 * Install tools and applications
 
-⚠️ You are responsible for copying files into the bundle under /cnab/app/
+⚠️ You are responsible for copying files into the bundle into `$BUNDLE_DIR`
 
 ---
 
@@ -1028,12 +1110,15 @@ dockerfile: Dockerfile.tmpl
 ```Dockerfile
 FROM debian:stretch
 
+ARG BUNDLE_DIR
+
 RUN apt-get install -y curl
 
-COPY myscript.sh /cnab/app/
+COPY myscript.sh $BUNDLE_DIR
 ```
 
 ---
+exclude: true
 ## Try it out: Custom Dockerfile
 
 Make a bundle that uses a custom `dockerfile` template and uses **mcr.microsoft.com/azure-cli**
@@ -1047,12 +1132,12 @@ as its base image
 1. Install the bundle.
 
 ---
-## Review: Default Dockerfile
+## Porter's Default Dockerfile
 
 * Uses Debian for the base image
 * Installs root ssl certificates
 
-🎩✨ Automatically copies everything into the bundle under /cnab/app/ for you
+🎩✨ Automatically copies everything into the bundle for you
 
 ---
 # Actions and Steps
@@ -1066,7 +1151,11 @@ Actions map to the verbs you use when you use Porter.
 * porter upgrade
 * porter uninstall
 
-These are defined in the CNAB specification.
+These are defined in the CNAB specification. You can also define your own actions and run them
+
+```
+$ porter invoke --action myaction
+```
 
 ---
 ## Steps
@@ -1094,7 +1183,7 @@ install: # action
 
 We recommend referencing files using relative paths
 
-```console
+```
 $ tree
 ├── Dockerfile
 ├── README.md
@@ -1204,6 +1293,7 @@ name: helm
 background-image: url(/images/pack-your-bags/helm-mixin.png)
 
 ---
+exclude: true
 ## Try it out: Install a Helm Chart
 
 Make a new bundle and install the Helm chart for etcd-operator
@@ -1232,9 +1322,11 @@ execute the commands with the exec mixin.
 Custom mixins are just easier to use, but aren't necessary.
 
 ---
+exclude: true
 # Make Your Own Mixin
 
 ---
+exclude: true
 ## What makes a mixin?
 
 * Executable written in any language
@@ -1243,6 +1335,7 @@ Custom mixins are just easier to use, but aren't necessary.
 * Translates the steps from the porter manifest to commands against any external tool or service
 
 ---
+exclude: true
 ## What mixin would you make?
 
 * Docker
@@ -1255,53 +1348,7 @@ Custom mixins are just easier to use, but aren't necessary.
 * What else?
 
 ---
-
-# Publishing Your Bundles
-
-Use  `porter publish` to share bundles:
-
-* Publishes both the invocation image and the CNAB bundle manifest to an OCI registry.
-* Uses Docker tags for both
-
-```yaml
-name: porter-azure-wordpress
-version: 0.1.0
-invocationImage: deislabs/porter-azure-wordpress:latest
-tag: deislabs/porter-azure-wordpress-bundle:latest
-```
-
----
-
-## porter publish
-
-```console
-$ porter publish --help
-Publishes a bundle by pushing the invocation image and bundle to a registry.
-
-
-Examples:
-  porter publish
-
-```
-
----
-
-# Try to publish
-
-* Modify the helloworld bundle again
-* Edit the porter.yaml:
-  * Change the `invocationImage` property to reflect your Docker Hub account
-  * Change `tag` property to reflect your Docker Hub account
-  * Change the message to something unique
-* Run `porter build`
-* Run `porter publish`
-
-Example (assuming your username is cnabaholic):
-
-* Change `deislabs/cool-image:latest` to `cnabaholic/cool-image:latest`
-
----
-
+exclude: true
 # Now run your bundle
 
 * Run `porter install --tag [your new tag]`
@@ -1311,7 +1358,7 @@ Example tag of `cnabaholic/hello-people:latest`:
 * Run `porter install --tag cnabaholic/hello-people:latest`
 
 ---
-
+exclude: true
 # How does it do that?
 
 * Updates the bundle with the new images and digests
@@ -1323,15 +1370,24 @@ Example tag of `cnabaholic/hello-people:latest`:
 See [OCI Bundle Format](/oci-bundle-format) for an example.
 
 ---
-class: center, middle
+name: survey
+# CNAB Tooling and SDKs
 
-# CNAB Ecosystem and Beyond
+* Porter
+* Docker App
+* Duffle
+* cnab-go
 
-???
-Explain where porter shines, what it is good at vs. say docker app
+https://cnab.io/community-projects
 
 ---
+# State of CNAB
 
+* CNAB Core Spec is release 1.0 _very soon_
+* CNAB Signing Spec is underway
+* Tooling is finishing support for CNAB Core
+
+---
 # Next Steps
 
 ???
@@ -1339,8 +1395,6 @@ What should someone do if they are interested in CNAB for their work or personal
 What is the timeline for the project and how should they be thinking about beginning to incorporate it?
 
 ---
-class: center, middle
-
 # Choose your own adventure!
 
 * ASCII Art Gophers
@@ -1371,13 +1425,3 @@ name: break-glass
 Use the a custom dockerfile template and the exec mixin
 to make Porter do something with your favorite cloud provider
 such as AWS or GCE.
-
----
-name: rate
-class: center, middle
-# Workshop Feedback
-
-Please take a minute now to rate this workshop before you leave
-
-<img src="/images/pack-your-bags/feedback-desktop.png" class="left" width="500px" />
-<img src="/images/pack-your-bags/feedback-mobile.png" class="right" width="350px" />
