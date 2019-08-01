@@ -6,7 +6,7 @@
 
 .remark-slide-content ol,
 .remark-slide-content ul {
-    font-size: 1.2rem;
+    font-size: unset;
 }
 
 .remark-slide-content li,
@@ -18,8 +18,6 @@
 
 .remark-code {
     font-size: .8em;
-    display: block;
-    overflow-x: auto;
 }
 
 .remark-slide-content pre {
