@@ -169,34 +169,38 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 }
 
 func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) *bundle.OutputsDefinition {
-	outputs := &bundle.OutputsDefinition{
-		Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
-	}
+	var outputs *bundle.OutputsDefinition
 
-	for _, output := range c.Manifest.Outputs {
-		fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
-		d := &definition.Schema{
-			Type:      output.Type,
-			Default:   output.Default,
-			Enum:      output.Enum,
-			Minimum:   output.Minimum,
-			Maximum:   output.Maximum,
-			MinLength: output.MinLength,
-			MaxLength: output.MaxLength,
-		}
-		o := bundle.OutputDefinition{
-			Definition:  output.Name,
-			Description: output.Description,
-			ApplyTo:     output.ApplyTo,
-			Path:        filepath.Join(config.BundleOutputsDir, output.Name),
+	if len(c.Manifest.Outputs) > 0 {
+		outputs = &bundle.OutputsDefinition{
+			Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
 		}
 
-		// Only set definition if it doesn't already exist
-		// (Both Params and Outputs may reference same Definition)
-		if _, exists := (*defs)[output.Name]; !exists {
-			(*defs)[output.Name] = d
+		for _, output := range c.Manifest.Outputs {
+			fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
+			d := &definition.Schema{
+				Type:      output.Type,
+				Default:   output.Default,
+				Enum:      output.Enum,
+				Minimum:   output.Minimum,
+				Maximum:   output.Maximum,
+				MinLength: output.MinLength,
+				MaxLength: output.MaxLength,
+			}
+			o := bundle.OutputDefinition{
+				Definition:  output.Name,
+				Description: output.Description,
+				ApplyTo:     output.ApplyTo,
+				Path:        filepath.Join(config.BundleOutputsDir, output.Name),
+			}
+
+			// Only set definition if it doesn't already exist
+			// (Both Params and Outputs may reference same Definition)
+			if _, exists := (*defs)[output.Name]; !exists {
+				(*defs)[output.Name] = d
+			}
+			outputs.Fields[output.Name] = o
 		}
-		outputs.Fields[output.Name] = o
 	}
 	return outputs
 }

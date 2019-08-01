@@ -40,6 +40,8 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Porter stamp was not populated")
 	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
+
+	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
 }
 
 func makefloat64(v float64) *float64 {
