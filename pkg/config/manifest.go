@@ -13,6 +13,9 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 type Manifest struct {
@@ -59,26 +62,9 @@ type ParameterDefinition struct {
 	Name      string `yaml:"name"`
 	Sensitive bool   `yaml:"sensitive"`
 
-	// These could be swapped out with an inline bundle.ParameterDefinition
-	// from cnab-go, e.g. bundle.ParameterDefinition `yaml:",inline"`
-	Description string    `yaml:"description,omitempty"`
-	Destination *Location `yaml:"destination,omitempty"`
-	ApplyTo     []string  `yaml:"applyTo,omitempty"`
+	bundle.Parameter `yaml:",inline"`
 
-	Schema `yaml:",inline"`
-}
-
-type Schema struct {
-	Type             string        `yaml:"type"`
-	Default          interface{}   `yaml:"default,omitempty"`
-	Enum             []interface{} `yaml:"enum,omitempty"`
-	Required         bool          `yaml:"required"`
-	Minimum          *float64      `yaml:"minimum,omitempty"`
-	ExclusiveMinimum *float64      `yaml:"exclusiveMinimum,omitempty"`
-	Maximum          *float64      `yaml:"maximum,omitempty"`
-	ExclusiveMaximum *float64      `yaml:"exclusiveMaximum,omitempty"`
-	MinLength        *float64      `yaml:"minLength,omitempty"`
-	MaxLength        *float64      `yaml:"maxLength,omitempty"`
+	definition.Schema `yaml:",inline"`
 }
 
 type CredentialDefinition struct {
@@ -86,12 +72,7 @@ type CredentialDefinition struct {
 	Description string `yaml:"description,omitempty"`
 	Required    bool   `yaml:"required,omitempty"`
 
-	Location `yaml:",inline"`
-}
-
-type Location struct {
-	Path                string `yaml:"path,omitempty"`
-	EnvironmentVariable string `yaml:"env,omitempty"`
+	bundle.Location `yaml:",inline"`
 }
 
 type MappedImage struct {
@@ -121,12 +102,11 @@ type CustomActionDefinition struct {
 
 // OutputDefinition defines a single output for a CNAB
 type OutputDefinition struct {
-	Name        string   `yaml:"name"`
-	ApplyTo     []string `yaml:"applyTo,omitempty"`
-	Description string   `yaml:"description,omitempty"`
-	Sensitive   bool     `yaml:"sensitive"`
+	Name      string   `yaml:"name"`
+	ApplyTo   []string `yaml:"applyTo,omitempty"`
+	Sensitive bool     `yaml:"sensitive"`
 
-	Schema `yaml:",inline"`
+	definition.Schema `yaml:",inline"`
 }
 
 func (od *OutputDefinition) Validate() error {

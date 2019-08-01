@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
@@ -312,7 +314,7 @@ func TestResolveCredential(t *testing.T) {
 		Credentials: []CredentialDefinition{
 			{
 				Name:     "password",
-				Location: Location{EnvironmentVariable: "PASSWORD"},
+				Location: bundle.Location{EnvironmentVariable: "PASSWORD"},
 			},
 		},
 	}
@@ -602,15 +604,15 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 
 	wantOutputs := []OutputDefinition{
 		{
-			Name:        "mysql-root-password",
-			Description: "The root MySQL password",
-			Schema: Schema{
-				Type: "string",
+			Name: "mysql-root-password",
+			Schema: definition.Schema{
+				Type:        "string",
+				Description: "The root MySQL password",
 			},
 		},
 		{
 			Name: "mysql-password",
-			Schema: Schema{
+			Schema: definition.Schema{
 				Type: "string",
 			},
 			ApplyTo: []string{

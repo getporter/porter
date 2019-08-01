@@ -16,7 +16,7 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 	bun := claim.Bundle
 
 	for key, rawValue := range rawOverrides {
-		param, ok := bun.Parameters.Fields[key]
+		param, ok := bun.Parameters[key]
 		if !ok {
 			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
 		}
@@ -51,11 +51,12 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 	// *but* should not apply to this action.
 	// When this occurs, we set an override to the current value in the claim such that
 	// bundle.ValuesOrDefaults does not return an error
-	// TODO: will have to refactor loop once required is back as a bool on the ParameterDefinition
-	for _, required := range bun.Parameters.Required {
-		if _, exists := rawOverrides[required]; !exists {
-			if !appliesToAction(action, bun.Parameters.Fields[required]) {
-				overrides[required] = claim.Parameters[required]
+	for name, param := range bun.Parameters {
+		if param.Required {
+			if _, exists := rawOverrides[name]; !exists {
+				if !appliesToAction(action, param) {
+					overrides[name] = claim.Parameters[name]
+				}
 			}
 		}
 	}
@@ -64,7 +65,7 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 }
 
 // TODO: pilfered from cnab-go.  PR to export func?
-func appliesToAction(action string, parameter bundle.ParameterDefinition) bool {
+func appliesToAction(action string, parameter bundle.Parameter) bool {
 	if len(parameter.ApplyTo) == 0 {
 		return true
 	}

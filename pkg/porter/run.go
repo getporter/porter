@@ -265,8 +265,9 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) 
 					output := output.Output{
 						Name:      bundleOutput.Name,
 						Sensitive: bundleOutput.Sensitive,
-						Type:      bundleOutput.Type,
-						Value:     outputValue,
+						// TODO: helper func to translate Type interface{} to string representation
+						// Type:      bundleOutput.Type,
+						Value: outputValue,
 					}
 
 					data, err := output.JSONMarshal()

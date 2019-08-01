@@ -43,7 +43,6 @@ type Claim struct {
 	Result        Result                    `json:"result"`
 	Parameters    map[string]interface{}    `json:"parameters"`
 	Outputs       map[string]interface{}    `json:"outputs"`
-	Files         map[string]string         `json:"files"`
 	RelocationMap bundle.ImageRelocationMap `json:"relocationMap"`
 }
 

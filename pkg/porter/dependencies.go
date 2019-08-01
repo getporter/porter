@@ -142,7 +142,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Make a lookup of which parameters are defined in the dependent bundle
 	depParams := map[string]struct{}{}
-	for paramName := range depBun.Parameters.Fields {
+	for paramName := range depBun.Parameters {
 		depParams[paramName] = struct{}{}
 	}
 
