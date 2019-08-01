@@ -11,7 +11,7 @@ type ActionArguments struct {
 	// BundleIdentifier is a filepath.
 	BundleIsFile bool
 
-	// Insecure bundle uninstallation allowed.
+	// Insecure bundle action allowed.
 	Insecure bool
 
 	// Params is the set of parameters to pass to the bundle.

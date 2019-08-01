@@ -105,6 +105,19 @@
         "name"
       ],
       "type": "object"
+    },
+    "dependency": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object"
+        }
+      },
+      "required": ["tag"],
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -122,7 +135,8 @@
       "type": "object"
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "A description of the bundle"
     },
     "install": {
       "type": "array",
@@ -131,7 +145,12 @@
       }
     },
     "invocationImage": {
-      "type": "string"
+      "type": "string",
+      "description": "The name of the container image to tag the invocation image with when it is built"
+    },
+    "tag": {
+      "type": "string",
+      "description": "The tag to use when the bundle is published to an OCI registry"
     },
     "mixins": {
       "type": "array",
@@ -141,7 +160,8 @@
       }
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "The name of the bundle"
     },
     "outputs": {
       "additionalProperties": {
@@ -157,6 +177,13 @@
       "description": "Parameters that can be injected into the invocation image",
       "type": "object"
     },
+    "dependencies": {
+      "additionalProperties": {
+        "$ref": "#/definitions/dependency"
+      },
+      "description": "Dependent bundles that must be executed with the bundle",
+      "type": "object"
+    },
     "uninstall": {
       "type": "array",
       "items": {
@@ -170,7 +197,12 @@
       }
     },
     "version": {
-      "type": "string"
+      "type": "string",
+      "description": "The version of the bundle, uses semver"
+    },
+    "dockerfile": {
+      "type": "string",
+      "description": "The relative path to a Dockerfile to use as a template during porter build"
     }
   },
   "additionalProperties": false,

@@ -213,10 +213,11 @@ version: 0.1.0
 invocationImage: porter-wordpress:latest
 
 dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+  mysql:
+    tag: deislabs/porter-mysql:latest
+    parameters:
+      database_name: wordpress
+      mysql_user: wordpress
 
 credentials:
 - name: kubeconfig

@@ -30,6 +30,22 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
+	deperator := newDependencyExecutioner(p)
+	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Uninstall)
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	return p.CNAB.Uninstall(opts.ToDuffleArgs())
+	err = p.CNAB.Uninstall(opts.ToDuffleArgs())
+	if err != nil {
+		if len(deperator.deps) > 0 {
+			return errors.Wrapf(err, "failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name)
+		} else {
+			return err
+		}
+	}
+
+	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
+	return deperator.Execute()
 }

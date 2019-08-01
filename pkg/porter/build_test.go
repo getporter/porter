@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/build"
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/build"
 	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -207,7 +207,7 @@ func TestPorter_buildBundle(t *testing.T) {
 
 	stamp, err := configadapter.LoadStamp(bun)
 	require.NoError(t, err)
-	assert.Equal(t, "06a51d04297375bf111ab15e579b8a7ab72e2661018c4d08d1d3f38198028e49", stamp.ManifestDigest)
+	assert.Equal(t, "79e453dce77f9d7cbf96f580ac7cd0b34fa9bf2e28b9d89f4688502833e8e2ea", stamp.ManifestDigest)
 
 	debugParam, ok := bun.Parameters.Fields["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")

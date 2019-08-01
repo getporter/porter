@@ -312,7 +312,7 @@ For instance, the 'debug' driver may be specified, which simply logs the info gi
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
   porter bundle uninstall MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
-  
+
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

@@ -4,76 +4,87 @@ description: Dependency Management with Porter
 ---
 
 In the Porter manifest you can [define a dependency](#define-a-dependency) on another 
-Porter authored bundle, and when you build the bundle, the root bundle and its dependencies 
-are combined into a single composite bundle. The final bundle is a CNAB compliant bundle
-that can be used with any CNAB tool.
+bundle. The dependent bundle is executed _before_ the bundle is installed, updated, or a custom action is invoked.
+The dependent bundle is uninstalled _after_ the root bundle is uninstalled.
 
-Since the CNAB Spec does not allow for dependencies between bundles, this dependency feature
-is unique to Porter, and **only bundles that have been authored by Porter can be used as dependencies.**
+Dependencies are an extension of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md).
+The Dependency specification is still evolving and we are using Porter to act as an initial implementation. So other CNAB 
+tools may not support dependencies initially.
 
 Here is a [full example][example] of a Porter manifest that uses dependencies.
 
 ## Define a dependency
 
-In the manifest, list the dependencies in the order that they should be
-installed.
+In the manifest, add entries for each dependency of your bundle. The key used is a short name for the dependent bundle that
+you will use to reference the dependent bundle elsewhere in the bundle. For example you can reference the dependent bundle's
+outputs via `{{ bundle.dependencies.KEY.outputs }}`.
 
 ```yaml
 dependencies:
-- name: mysql
+  mysql:
+    tag: deislabs/porter-mysql-bundle:v0.1.0
 ```
-
-Currently dependencies are assumed to be located in one of the locations below.
-Once the CNAB spec has a mechanism for distributing bundles via registries, this
-will be revisited.
-
-* bundles (in the same directory as the Porter manifest)
-* PORTER_HOME/bundles
-
-
-## Consolidating Parameters and Credentials
-
-Porter consolidates the parameters and credentials from the dependencies and
-promotes them to the root bundle. This allows the user executing the bundle to
-interact with the parameter or credential from a dependency just as they would
-from one defined on the root bundle.
-
-When a parameter or credential has the same type and name, then it is
-consolidated. When the same name is used, but not the same type then the bundle
-build fails.
-
-_Note: Porter doesn't yet have a conflict resolution mechanism in place to
-allow an author to force consolidating parameters/credentials, or resolve a
-conflict._
 
 ## Defaulting Parameters
 
 Parameters defined in a dependent bundle can be defaulted from the root bundle.
-In the example below, the mysql bundle defined the `database_name` and
-`mysql_user` parameters, and the root bundle (Wordpress) defaulted those parameters
-to a specific value, so that the user wouldn't be required to choose a value for
-those parameters when installing Wordpress.
+In the example below, the mysql bundle defines `database_name` and
+`mysql_user` parameters, and the root bundle (Wordpress) has chosen to default those parameters
+to specific values, so that the user isn't required to provide values for those parameter.
 
 ```yaml
 dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+  mysql:
+    tag: deislabs/porter-mysql-bundle:v0.1.0
+    parameters:
+      database_name: wordpress
+      mysql_user: wordpress
 ```
+
+## Specifying parameters
+
+You can specifying parameters for a dependent bundle on the command-line using the following syntax
+
+```
+--param KEY#NAME=VALUE
+```
+
+For example, to override the default parameter `database_name` when installing the wordpress bundle the comand would be
+
+```
+$ porter install --tag deislabs/porter-mysql-bundle:v0.1.0 --param mysql#database_name=mywordpress
+```
+
+* `KEY`: The dependency key used in the `dependencies` section of the porter manifest. From the example above, the key is "mysql".
+* `NAME`: The name of the parameter.
+* `VALUE`: The parameter value.
+
+### Parameter Precedence
+
+A parameter for a dependency can be set in a few places, here is the order of precedence:
+
+1. Parameters set directly on the command-line via `--param`
+1. Parameters set in a file via `--param-file`
+1. Parameters set using a dependency default, for example 
+    ```yaml
+    dependencies:
+      mysql:
+        tag: deislabs/porter-mysql-bundle:v0.1.0
+        parameters:
+          database_name: wordpress
+    ```
+1. Parameter defaults defined in a bundle, for example
+    ```yaml
+    parameters:
+    - name: database_name
+      type: string
+      default: mydb
+    ```
 
 ## Dependency Graph
 
-Currently Porter only supports direct dependencies. Dependencies of dependencies, 
-transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) for more information.
-
-## Dependency Ordering
-
-Depending on the action being performed, Porter handles executing the dependent bundle's
-steps either before or after the steps in the root bundle.
-
-* Install - The steps are executed _before_ the steps in the root bundle.
-* Upgrade - The steps are executed _before_ the steps in the root bundle.
-* Uninstall - The steps are executed _after_ the steps in the root bundle.
+At this time Porter only supports direct dependencies. Dependencies of dependencies, a.k.a. 
+transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) 
+for our backlog item tracking this feature. We do plan to support it!
 
 [example]: https://github.com/deislabs/porter/blob/master/build/testdata/bundles/wordpress/porter.yaml

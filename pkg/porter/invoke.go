@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 
+	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 )
@@ -37,6 +38,19 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 	}
 
 	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+	if err != nil {
+		return err
+	}
+
+	deperator := newDependencyExecutioner(p)
+	err = deperator.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {
+		return p.CNAB.Invoke(opts.Action, args)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}

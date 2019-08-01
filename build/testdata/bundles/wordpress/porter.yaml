@@ -4,14 +4,15 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-invocationImage: porter-wordpress:latest
+invocationImage: deislabs/porter-wordpress:latest
 tag: deislabs/porter-wordpress-bundle:v0.1.0
 
 dependencies:
-- name: mysql
-  parameters:
-    database-name: wordpress
-    mysql-user: wordpress
+  mysql:
+    tag: deislabs/porter-mysql-bundle:v0.1.0
+    parameters:
+      database-name: wordpress
+      mysql-user: wordpress
 
 credentials:
 - name: kubeconfig
@@ -33,22 +34,36 @@ parameters:
 install:
   - helm:
       description: "Install Wordpress"
-      name: "{{bundle.parameters.wordpress-name }}"
+      name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
       namespace: "{{ bundle.parameters.namespace }}"
       replace: true
       set:
         wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
-        externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
+        #externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
         #externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.services }}"
-        externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
-        externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+        #externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
+        #externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
         externalDatabase.port: 3306
         mariadb.enabled: false
       outputs:
         - name: wordpress-password
-          secret: "{{ bundle.parameters.wordpress-name }}-wordpress"
+          secret: "{{ bundle.parameters.wordpress-name }}"
           key: wordpress-password
+
+upgrade:
+  - helm:
+      description: "Upgrade Wordpress"
+      name: "{{ bundle.parameters.wordpress-name }}"
+      chart: stable/wordpress
+
+ping:
+  - exec:
+      description: "Ping"
+      command: "bash"
+      arguments:
+        - -c
+        - echo ping
 
 uninstall:
   - helm:

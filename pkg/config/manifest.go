@@ -45,7 +45,7 @@ type Manifest struct {
 
 	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
 	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
-	Dependencies []*Dependency          `yaml:"dependencies,omitempty"`
+	Dependencies map[string]Dependency  `yaml:"dependencies,omitempty"`
 	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. The mappings are mounted as a file at runtime to
@@ -106,7 +106,6 @@ type MappedImage struct {
 }
 
 type Dependency struct {
-	Name             string   `yaml:"name"`
 	Tag              string   `yaml:"tag"`
 	Versions         []string `yaml:"versions"`
 	AllowPrereleases bool     `yaml:"prereleases"`
@@ -141,10 +140,6 @@ func (od *OutputDefinition) Validate() error {
 }
 
 func (d *Dependency) Validate() error {
-	if d.Name == "" {
-		return errors.New("dependency name is required")
-	}
-
 	if d.Tag == "" {
 		return errors.New("dependency tag is required")
 	}
@@ -559,12 +554,12 @@ func (m *Manifest) buildSourceData() (map[string]interface{}, error) {
 	}
 	deps := make(map[string]interface{})
 	bundle["dependencies"] = deps
-	for _, dependency := range m.Dependencies {
+	for name, dependency := range m.Dependencies {
 		dep, sensitives, err := dependency.resolve()
 		if err != nil {
 			return nil, err
 		}
-		deps[dependency.Name] = dep
+		deps[name] = dep
 		m.sensitiveValues = append(m.sensitiveValues, sensitives...)
 	}
 	return data, nil

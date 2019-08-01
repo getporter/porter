@@ -1,9 +1,10 @@
 mixins:
+- exec
 - helm
 
 name: mysql
 version: 0.1.0
-invocationImage: porter-mysql:latest
+invocationImage: deislabs/porter-mysql:latest
 tag: deislabs/porter-mysql-bundle:v0.1.0
 
 credentials:
@@ -45,6 +46,14 @@ install:
     - name: mysql-password
       secret: "{{ bundle.parameters.mysql-name }}"
       key: mysql-password
+
+ping:
+  - exec:
+      description: "Ping"
+      command: "bash"
+      arguments:
+        - -c
+        - echo ping
 
 uninstall:
 - helm:

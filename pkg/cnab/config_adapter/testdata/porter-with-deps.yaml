@@ -5,12 +5,12 @@ invocationImage: porter-hello:latest
 tag: deislabs/porter-hello-bundle:latest
 
 dependencies:
-  - name: mysql
+  mysql:
     tag: "deislabs/azure-mysql:5.7"
-  - name: ad
+  ad:
     tag: "deislabs/azure-active-directory"
     prereleases: true
-  - name: storage
+  storage:
     tag: "deislabs/azure-blob-storage"
     versions:
       - 1.x - 2

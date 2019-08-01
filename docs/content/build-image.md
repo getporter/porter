@@ -260,10 +260,11 @@ version: "0.1.0"
 invocationImage: jeremyrickard/dependency-example:latest
 
 dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+  mysql:
+    tag: jeremyrickard/mysql:latest
+    parameters:
+      database_name: wordpress
+      mysql_user: wordpress
 
 install:
 - exec:

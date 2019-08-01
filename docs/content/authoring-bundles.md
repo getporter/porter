@@ -26,15 +26,18 @@ although Porter does have extra fields that are specific to making Porter bundle
 name: porter-azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
-invocationImage: deislabs/porter-azure-wordpress:latest
+invocationImage: deislabs/porter-azure-wordpress:v0.1.0
+tag: deislabs/porter-azure-wordpress-bundle:v0.1.0
 dockerfile: dockerfile.tmpl
 ```
 
 * `name`: The name of the bundle
 * `description`: A description of the bundle
 * `version`: The version of the bundle, uses [semver](https://semver.org)
-* `invocationImage`: The name of the container image to tag the bundle with when it is built. The format is
-`REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
+* `invocationImage`: The name of the container image to tag the invocation image with when it is built. The format is
+    `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
+* `tag`: The tag to use when the bundle is published to an OCI registry. The format is `REGISTRY/IMAGE:TAG` where TAG is 
+    the semantic version of the bundle.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
     to provide a suitable base image, for example one that has root ssl certificates installed. When a Dockerfile template is
     not specified, Porter automatically copies the contents of the current directory into `$BUNDLE_DIR` of the invocation image. 
@@ -217,17 +220,20 @@ customActions:
 
 ## Dependencies
 
+Dependencies are an extension of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md).
 See [dependencies](/dependencies/) for more details on how Porter handles dependencies.
 
 ```yaml
 dependencies:
-- name: mysql
-  parameters:
-    database_name: wordpress
-    mysql_user: wordpress
+  mysql:
+    tag: deislabs/porter-wordpress-bundle:v0.1.0
+    parameters:
+      database_name: wordpress
+      mysql_user: wordpress
 ```
 
-* `name`: The name of the bundle.
+* `tag`: The tag where the bundle can be found in an OCI registry. The format should be `REGISTRY/NAME:TAG` where TAG is 
+    the semantic version of the bundle.
 * `parameters`: Optionally set default values for parameters in the bundle.
 
 ## Image Map
