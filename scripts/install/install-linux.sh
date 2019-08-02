@@ -18,6 +18,7 @@ $PORTER_HOME/porter mixin install exec --version $PORTER_VERSION --feed-url $FEE
 $PORTER_HOME/porter mixin install kubernetes --version $PORTER_VERSION --feed-url $FEED_URL
 $PORTER_HOME/porter mixin install helm --version $PORTER_VERSION --feed-url $FEED_URL
 $PORTER_HOME/porter mixin install azure --version $PORTER_VERSION --feed-url $FEED_URL
+$PORTER_HOME/porter mixin install terraform --version $PORTER_VERSION --feed-url $FEED_URL
 
 echo "Installation complete."
 echo "Add porter to your path by running:"
