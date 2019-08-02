@@ -25,15 +25,15 @@ Review the `porter.yaml` to see what each of these sections looks like.
 Now, update the `porter.yaml` and change the following values:
 
 ```
-invocationImage: porter-workshop-tf:latest
-tag: deislabs/porter-workshop-tf-bundle:latest
+invocationImage: deislabs/porter-workshop-tf:v0.1.0
+tag: deislabs/porter-workshop-tf-bundle:v0.1.0
 ```
 
 For each of these, change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-invocationImage: jeremyrickard/porter-workshop-tf:latest
-tag: jeremyrickard/porter-workshop-tf-bundle:latest
+invocationImage: jeremyrickard/porter-workshop-tf:v0.1.0
+tag: jeremyrickard/porter-workshop-tf-bundle:v0.1.0
 ```
 
 ## Build The Bundle!

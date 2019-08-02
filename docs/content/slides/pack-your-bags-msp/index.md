@@ -658,8 +658,8 @@ Let's make this bundle yours by changing it from the deislabs Docker Hub registr
     They should now look like this:
 
     ```yaml
-    invocationImage: "yourname/porter-terraform:v0.1.0"
-    tag: "yourname/porter-terraform-bundle:v0.1.10"
+    invocationImage: "yourname/porter-workshop-tf:v0.1.0"
+    tag: "yourname/porter-workshop-tf-bundle:v0.1.0"
     ```
 1. Save and close the file.
 
@@ -698,8 +698,8 @@ Use `porter publish` to share bundles:
 ```yaml
 name: porter-terraform
 version: 0.1.0
-invocationImage: "deislabs/porter-terraform:v0.1.0"
-tag: "deislabs/porter-terraform-bundle:v0.1.0"
+invocationImage: "deislabs/porter-workshop-tf:v0.1.0"
+tag: "deislabs/porter-workshop-tf-bundle:v0.1.0"
 ```
 
 ---
@@ -719,17 +719,8 @@ Examples:
 exclude: true
 # Try to publish
 
-* Modify the helloworld bundle again
-* Edit the porter.yaml:
-  * Change the `invocationImage` property to reflect your Docker Hub account
-  * Change `tag` property to reflect your Docker Hub account
-  * Change the message to something unique
 * Run `porter build`
 * Run `porter publish`
-
-Example (assuming your username is cnabaholic):
-
-* Change `deislabs/cool-image:latest` to `cnabaholic/cool-image:latest`
 
 ---
 # Try it out: Publish your bundle
@@ -746,8 +737,10 @@ If you run into trouble here, here are a few things to check:
 # Try it out: Install the bundle
 
 ```
-$ porter install --tag YOURNAME/porter-terraform-bundle:v0.1.0 --cred azure
+$ porter install --tag YOURNAME/porter-workshop-tf-bundle:v0.1.0 --cred azure --param server-name=<yourname>-mysql --param backend_storage_account=<yourname>storage
 ```
+
+Note: The storage account can't be longer than 24 characters and can only be lowercase alphanumric and must be globally unique. The mysql server name must also be unique.
 
 ---
 name: talkback
@@ -1001,10 +994,11 @@ name: manifest
 ## Metadata
 
 ```yaml
-name: "azure-wordpress"
-version: "v0.1.0"
-invocationImage: "deislabs/azure-wordpress-ii:v0.1.0"
-tag: "deislabs/azure-wordpress:v0.1.0"
+name: porter-workshop-tf 
+version: 0.1.0
+description: "An example using Porter to build the from scratch bundle"
+invocationImage: porter-workshop-tf:latest
+tag: deislabs/porter-workshop-tf-bundle:latest
 ```
 
 ---
@@ -1015,7 +1009,7 @@ Declare any mixins that you are going to use
 ```yaml
 mixins:
   - azure
-  - helm
+  - terraform
 ```
 
 ---
@@ -1026,12 +1020,15 @@ Define parameters that the bundle requires.
 
 ```yaml
 parameters:
-- name: mysql_user
-  type: string
-  default: wordpress
-- name: mysql_password
-  type: string
-  sensitive: true
+  - name: location
+    type: string
+    default: "EastUS"
+
+  - name: server-name
+    type: string
+
+  - name: database-name
+    type: string
 ```
 
 ---
@@ -1046,12 +1043,17 @@ in the bundle when it is executing:
 
 ```yaml
 credentials:
-- name: SUBSCRIPTION_ID
-  destination:
+  - name: subscription_id
     env: AZURE_SUBSCRIPTION_ID
-- name: kubeconfig
-  destination:
-    path: /root/.kube/config
+
+  - name: tenant_id
+    env: AZURE_TENANT_ID
+
+  - name: client_id
+    env: AZURE_CLIENT_ID
+
+  - name: client_secret
+    env: AZURE_CLIENT_SECRET
 ```
 
 ---
