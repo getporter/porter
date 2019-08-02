@@ -639,7 +639,13 @@ execution completed successfully!
 name: terraform
 # Make a bundle
 
-You can find the bundle in this repository under **workshop/terraform**
+You can find these bundles in this repository under and **workshop/scratch/azure** and **workshop/porter-tf/azure**
+
+---
+# Review CNAB The Hardway
+
+---
+# Build the same bundle with Porter
 
 ---
 # Modify the bundle
