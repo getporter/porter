@@ -547,9 +547,9 @@ CMD ["/cnab/app/run"]
 
 ---
 
-### cnab/
+### .cnab/
 ```
-$ tree cnab/
+$ tree .cnab/
 .cnab
 ├── app
 │  ├── mixins
@@ -561,7 +561,7 @@ $ tree cnab/
 └── bundle.json
 ```
 
-### cnab/app/run
+### .cnab/app/run
 
 ```bash
 #!/usr/bin/env bash
@@ -571,7 +571,7 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 
 ---
 
-### cnab/bundle.json
+### .cnab/bundle.json
 ```json
 {
     "description": "An example Porter bundle",

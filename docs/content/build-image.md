@@ -314,11 +314,11 @@ RUN helm init --client-only
 # exec mixin has no buildtime dependencies
 ```
 
-As we can see from this output, Porter found the `mysql` dependency and copied it into our bundle. If we examine the `cnab` directory after this build is complete, it should look like this:
+As we can see from this output, Porter found the `mysql` dependency and copied it into our bundle. If we examine the `.cnab` directory after this build is complete, it should look like this:
 
 ```console
-$ tree cnab/
-cnab/
+$ tree .cnab/
+.cnab/
 └── app
     ├── bundles
     │   └── mysql
