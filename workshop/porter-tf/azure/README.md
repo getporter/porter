@@ -95,11 +95,11 @@ This command will generate a new `credential set` that maps our environment vari
 
 ### Install the Bundle
 
-Now, you're ready to install the bundle.
+Now, you're ready to install the bundle. Replace `<your-name>` with a username like `carolynvs`.
 
 ```
 porter install -c porter-workshop-tf \
-    --param server-name=<your-name>-sql \
-    --param backend_storage_account=<your-name>-storage \
+    --param server-name=<your-name>sql \
+    --param backend_storage_account=<your-name>storage \
     --param database-name=testworkshop
 ```
