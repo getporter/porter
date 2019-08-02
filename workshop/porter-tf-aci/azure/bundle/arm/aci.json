@@ -1,0 +1,107 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "containerName": {
+            "type": "string"
+        },
+        "imageType": {
+            "defaultValue": "Public",
+            "type": "string",
+            "allowedValues": [
+                "Public",
+                "Private"
+            ]
+        },
+        "imageName": {
+            "type": "string"
+        },
+        "osType": {
+            "defaultValue": "Linux",
+            "type": "string",
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ]
+        },
+        "numberCpuCores": {
+            "defaultValue": "1",
+            "type": "string"
+        },
+        "memory": {
+            "defaultValue": "0.5",
+            "type": "string"
+        },
+        "restartPolicy": {
+            "defaultValue": "OnFailure",
+            "type": "string",
+            "allowedValues": [
+                "OnFailure",
+                "Always",
+                "Never"
+            ]
+        },
+        "port": {
+            "type": "string"
+        },
+        "mysqlFQDN": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "location": "[parameters('location')]",
+            "name": "[parameters('containerName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-10-01",
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[parameters('containerName')]",
+                        "properties": {
+                            "image": "[parameters('imageName')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[int(parameters('numberCpuCores'))]",
+                                    "memoryInGB": "[float(parameters('memory'))]"
+                                }
+                            },
+                            "ports": [
+                                {
+                                    "protocol": "TCP",
+                                    "port": "[int(parameters('port'))]"
+                                }
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name" : "MYSQL_FQDN",
+                                    "value" : "[parameters('mysqlFQDN')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "[parameters('restartPolicy')]",
+                "osType": "[parameters('osType')]",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "protocol": "TCP",
+                            "port": "[int(parameters('port'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs" : {
+        "IP_ADDRESS": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerName'))).ipAddress.ip]"
+        }
+    }
+}

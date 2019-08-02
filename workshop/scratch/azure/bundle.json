@@ -1,0 +1,107 @@
+{
+	"credentials": {
+		"CLIENT_ID": {
+			"env": "TF_VAR_client_id"
+		},
+		"CLIENT_SECRET": {
+			"env": "TF_VAR_client_secret"
+		},
+		"SUBSCRIPTION_ID": {
+			"env": "TF_VAR_subscription_id"
+		},
+		"TENANT_ID": {
+			"env": "TF_VAR_tenant_id"
+		}
+  },
+  "definitions" : {
+    "admin" :{
+      "default": "mysql-admin",
+      "type" : "string"
+    },
+    "backend" : {
+      "default": true,
+      "type": "boolean"
+    },
+    "backend_storage_account" : {
+      "type": "string"
+    }, 
+    "backend_storage_container" : {
+      "default": "tf-storage",
+      "type": "string"
+    }, 
+    "backend_storage_resource_group" : {
+      "default" : "devops-days-msp",
+      "type": "string"
+    }, 
+    "location" : {
+      "default" : "EastUS",
+      "type": "string"
+    }, 
+    "string": {
+      "type": "string"
+    }
+  },
+	"description": "A sample hand crafted bundle",
+	"invocationImages": [{
+    "image": "<your image>",
+    "contentDigest" : "<your digest>",
+		"imageType": "docker"
+	}],
+	"name": "hand-crafted-bundle",
+	"parameters": {
+		"fields": {
+			"server_name": {
+        "definition": "string",
+				"destination": {
+					"env": "TF_VAR_server-name"
+				}
+			},
+			"admin_user": {
+        "definition": "admin",
+				"destination": {
+					"env": "TF_VAR_mysql-admin"
+				}
+			
+      },
+      "backend": {
+        "definition" : "backend",
+        "destination" : {
+          "env" : "TF_VAR_backend"
+        }
+      },
+      "backend_storage_account": {
+        "definition": "backend_storage_account",
+        "destination": {
+					"env": "TF_VAR_backend_storage_account"
+        }
+      },
+      "backend_storage_container" : {
+        "definition": "backend_storage_container",
+        "destination": {
+					"env": "TF_VAR_backend_storage_container"
+				}
+      },
+      "backend_storage_resource_group" : {
+        "definition": "backend_storage_resource_group",
+        "destination": {
+					"env": "TF_VAR_backend_storage_resource_group"
+				}
+      },
+      "database-name" : {
+        "definition": "string",
+				"destination": {
+					"env": "TF_VAR_database-name"
+				}
+      },
+      "location": {
+        "definition": "location",
+				"destination": {
+					"env": "TF_VAR_location"
+				}
+      }
+		},
+		"required": ["backend_storage_account", "server-name", "database-name"]
+	},
+  "schemaVersion":"v1.0.0-WD",
+	"version": "0.1.0"
+}

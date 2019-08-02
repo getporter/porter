@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+# NOTE: Service Principal must be a Contributor at the subscription level
+az login --service-principal -u "${TF_VAR_client_id}" -p "${TF_VAR_client_secret}" -t "${TF_VAR_tenant_id}" > /dev/null
+
+if ! az group show -n "${TF_VAR_backend_storage_resource_group}" &> /dev/null; then
+  az group create -n "${TF_VAR_backend_storage_resource_group}" -l "${TF_VAR_location}"
+fi
+
+if ! az storage account show -n "${TF_VAR_backend_storage_account}" -g "${TF_VAR_backend_storage_resource_group}" &> /dev/null; then
+  az storage account create -n "${TF_VAR_backend_storage_account}" -g "${TF_VAR_backend_storage_resource_group}"
+fi
+
+connection_string="$(az storage account show-connection-string -n "${TF_VAR_backend_storage_account}" -g "${TF_VAR_backend_storage_resource_group}")"
+
+if ! az storage container show -n "${TF_VAR_backend_storage_container}" --connection-string "${connection_string}" &> /dev/null; then
+  az storage container create -n "${TF_VAR_backend_storage_container}" --connection-string "${connection_string}"
+fi
+
+# Terraform requires a backend configuration in order to use partial configurations with terraform init
+
+cat << EOF > /cnab/app/terraform/backend.tf
+terraform {
+  backend "azurerm" {
+  }
+}
+EOF
