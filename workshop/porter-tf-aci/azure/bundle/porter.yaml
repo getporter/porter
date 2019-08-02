@@ -1,0 +1,154 @@
+mixins:
+  - azure
+  - exec
+  - terraform 
+
+name: porter-workshop-tf-aci
+version: 0.1.0
+description: "An example using Porter to build the a TF bundle and use ACI"
+invocationImage: porter-workshop-tf-aci:latest
+tag: deislabs/porter-workshop-tf-bundle-aci:latest
+
+## This section defines what credentials are used for the bundle. In this case, we are operating
+## against Azure, so we need some Azure Service Principal information.
+credentials:
+  - name: subscription_id
+    env: AZURE_SUBSCRIPTION_ID
+
+  - name: tenant_id
+    env: AZURE_TENANT_ID
+
+  - name: client_id
+    env: AZURE_CLIENT_ID
+
+  - name: client_secret
+    env: AZURE_CLIENT_SECRET
+
+## This section defines what paramters are used by the bundle. These parameters are used by various 
+## steps within the bundle
+parameters:
+  - name: location
+    type: string
+    default: "EastUS"
+
+  - name: backend_storage_account
+    type: string
+
+  - name: backend_storage_container
+    type: string
+    default: "portertf"
+
+  - name: backend_storage_resource_group
+    type: string
+    default: "devops-days-msp"
+
+  - name: server-name
+    type: string
+
+  - name: database-name
+    type: string
+
+install:
+   - azure:
+      description: "Create an Azure Storage Account"
+      type: storage
+      name: "{{ bundle.parameters.backend_storage_account }}"
+      resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
+      parameters:
+        location: "{{ bundle.parameters.location }}"
+        storageAccountName: "{{ bundle.parameters.backend_storage_account }}"
+        storageContainerName: "{{ bundle.parameters.backend_storage_container }}"
+      outputs:
+      - name: "STORAGE_ACCOUNT_KEY"
+        key: "STORAGE_ACCOUNT_KEY"
+   - terraform:
+      description: "Create Azure MySQL With Terraform"
+      autoApprove: true
+      input: false
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.backend_storage_account }}"
+        container_name: "{{ bundle.parameters.backend_storage_container }}"
+        access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
+      vars:
+        backend_storage_account: "{{ bundle.parameters.backend_storage_account }}"
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        server-name: "{{bundle.parameters.server-name}}"
+        database-name: "{{bundle.parameters.database-name}}"
+      outputs:
+      - name: "mysql_fqdn"
+   - azure:
+      description: "Create an ACI Instance"
+      type: arm
+      template: "arm/aci.json"
+      name: "{{ bundle.parameters.server-name }}-aci"
+      resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
+      parameters:
+        containerName: "{{ bundle.parameters.server-name }}-aci-go"
+        location: "{{ bundle.parameters.location }}"
+        imageName: "nginx:1.17.2"
+        mysqlFQDN: "{{bundle.outputs.mysql_fqdn}}"
+        port: "80"
+      outputs:
+      - name: "IP_ADDRESS"
+        key: "IP_ADDRESS"
+        
+upgrade:
+  - terraform:
+      description: "Update Azure MySQL With Terraform"
+      autoApprove: true
+      input: false
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.backend_storage_account }}"
+        container_name: "{{ bundle.parameters.backend_storage_container }}"
+        access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
+      vars:
+        backend_storage_account: "{{ bundle.parameters.backend_storage_account }}"
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        server-name: "{{bundle.parameters.server-name}}"
+
+uninstall:
+  - azure:
+      description: "Create an ACI Instance"
+      type: aci
+      name: "{{ bundle.name }}-aci"
+      resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
+      parameters:
+        name: "{{ bundle.name }}-aci-go"
+        location: "{{ bundle.parameters.location }}"
+        image: "nginx:1.17.2"
+
+  - terraform:
+      description: "Remove Azure CosmosDB and Event Hubs"
+      autoApprove: true
+      input: false
+      vars:
+        subscription_id: "{{bundle.credentials.subscription_id}}"
+        tenant_id: "{{bundle.credentials.tenant_id}}"
+        client_id: "{{bundle.credentials.client_id}}"
+        client_secret: "{{bundle.credentials.client_secret}}" 
+        database_name: "{{bundle.parameters.database-name}}"
+        resource_group_name: "{{bundle.parameters.resource_group_name}}"
+        resource_group_location: "{{bundle.parameters.location}}"
+      backendConfig:
+        key: "{{ bundle.name }}.tfstate"
+        storage_account_name: "{{ bundle.parameters.storage_account_name }}"
+        container_name: "{{ bundle.parameters.storage_container_name }}"
+        access_key: "{{ bundle.parameters.tf_storage_account_key }}"
+
+  - azure:
+      description: "Create an Azure Storage Account"
+      type: storage
+      name: "{{ bundle.parameters.backend_storage_account }}"
+      resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
+      parameters:
+        location: "{{ bundle.parameters.location }}"
+        storageAccountName: "{{ bundle.parameters.backend_storage_account }}"
+        storageContainerName: "{{ bundle.parameters.backend_storage_container }}"

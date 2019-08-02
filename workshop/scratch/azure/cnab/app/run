@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+
+action=$CNAB_ACTION
+name=$CNAB_INSTALLATION_NAME
+tfdir=/cnab/app/terraform/
+
+export init_backend="${TF_VAR_backend:-false}"
+
+if [[ "${init_backend}" == "true" ]]; then
+    echo "Initializing resources for Terraform's backend storage"
+    source "${BASH_SOURCE%/*}/init-backend"
+fi
+
+cd $tfdir
+terraform init \
+    -backend="${init_backend}" \
+    -backend-config="storage_account_name=${TF_VAR_backend_storage_account}" \
+    -backend-config="container_name=${TF_VAR_backend_storage_container}" \
+    -backend-config="key=${name}.tfstate" \
+    -backend-config="resource_group_name=${TF_VAR_backend_storage_resource_group}" \
+    -backend-config="arm_subscription_id=${TF_VAR_subscription_id}" \
+    -backend-config="arm_client_id=${TF_VAR_client_id}" \
+    -backend-config="arm_client_secret=${TF_VAR_client_secret}" \
+    -backend-config="arm_tenant_id=${TF_VAR_tenant_id}" \
+    -reconfigure
+
+export TF_VAR_installation_name=$name
+
+case $action in
+    install)
+        echo "Applying Terraform template"
+        terraform apply -auto-approve -input=false
+        ;;
+    uninstall)
+        echo "Destroying Terraform template"
+        terraform destroy -auto-approve
+        ;;
+    upgrade)
+        echo "Applying Terraform template"
+        terraform apply -auto-approve -input=false
+        ;;
+    status)
+        echo "Status action"
+        terraform plan
+        ;;
+    *)
+    echo "No action for $action"
+    ;;
+esac
+echo "Action $action complete for $name"
