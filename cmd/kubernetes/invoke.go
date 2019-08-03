@@ -5,9 +5,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildUpgradeCommand(mixin *kubernetes.Mixin) *cobra.Command {
+func buildInvokeCommand(mixin *kubernetes.Mixin) *cobra.Command {
 	return &cobra.Command{
-		Use:   "upgrade",
+		Use:   "invoke",
 		Short: "Use kubectl to apply manifests to a cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return mixin.Execute()

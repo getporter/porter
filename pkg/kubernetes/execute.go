@@ -10,15 +10,44 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type UpgradeAction struct {
-	Steps []UpgradeStep `yaml:"upgrade"`
+type ExecuteAction struct {
+	Steps []ExecuteStep // using UnmarshalYAML so that we don't need a custom type per action
 }
 
-type UpgradeStep struct {
-	UpgradeArguments `yaml:"kubernetes"`
+// UnmarshalYAML takes any yaml in this form
+// ACTION:
+// - kubernetes: ...
+// and puts the steps into the Action.Steps field
+func (a *ExecuteAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	actionMap := map[interface{}][]interface{}{}
+	err := unmarshal(&actionMap)
+	if err != nil {
+		return errors.Wrap(err, "could not unmarshal yaml into an action map of kubernetes steps")
+	}
+
+	for _, stepMaps := range actionMap {
+		b, err := yaml.Marshal(stepMaps)
+		if err != nil {
+			return err
+		}
+
+		var steps []ExecuteStep
+		err = yaml.Unmarshal(b, &steps)
+		if err != nil {
+			return err
+		}
+
+		a.Steps = append(a.Steps, steps...)
+	}
+
+	return nil
 }
 
-type UpgradeArguments struct {
+type ExecuteStep struct {
+	ExecuteInstruction `yaml:"kubernetes"`
+}
+
+type ExecuteInstruction struct {
 	InstallArguments `yaml:",inline"`
 
 	// Upgrade specific arguments
@@ -29,15 +58,15 @@ type UpgradeArguments struct {
 	Timeout     *int  `yaml:"timeout,omitempty"`
 }
 
-// Upgrade will reapply manifests using kubectl
-func (m *Mixin) Upgrade() error {
+// Execute will reapply manifests using kubectl
+func (m *Mixin) Execute() error {
 
 	payload, err := m.getPayloadData()
 	if err != nil {
 		return err
 	}
 
-	var action UpgradeAction
+	var action ExecuteAction
 	err = yaml.Unmarshal(payload, &action)
 	if err != nil {
 		return err
@@ -51,7 +80,7 @@ func (m *Mixin) Upgrade() error {
 	var commands []*exec.Cmd
 
 	for _, manifestPath := range step.Manifests {
-		commandPayload, err := m.buildUpgradeCommand(step.UpgradeArguments, manifestPath)
+		commandPayload, err := m.buildExecuteCommand(step.ExecuteInstruction, manifestPath)
 		if err != nil {
 			return err
 		}
@@ -79,7 +108,7 @@ func (m *Mixin) Upgrade() error {
 	return err
 }
 
-func (m *Mixin) buildUpgradeCommand(args UpgradeArguments, manifestPath string) ([]string, error) {
+func (m *Mixin) buildExecuteCommand(args ExecuteInstruction, manifestPath string) ([]string, error) {
 	command, err := m.buildInstallCommand(args.InstallArguments, manifestPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create upgrade command")

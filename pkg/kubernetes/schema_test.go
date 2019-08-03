@@ -37,6 +37,7 @@ func TestMixin_ValidatePayload(t *testing.T) {
 	}{
 		{"install", "testdata/install-input.yaml", true, ""},
 		{"upgrade", "testdata/upgrade-input.yaml", true, ""},
+		{"invoke", "testdata/invoke-input.yaml", true, ""},
 		{"uninstall", "testdata/uninstall-input.yaml", true, ""},
 		{"install-bad-wait-flag", "testdata/install-input-bad-wait-flag.yaml", false, "install.0.kubernetes.wait: Invalid type. Expected: boolean, given: string"},
 		{"install-no-manifests", "testdata/install-input-no-manifests.yaml", false, "install.0.kubernetes: manifests is required"},
@@ -53,7 +54,7 @@ func TestMixin_ValidatePayload(t *testing.T) {
 			if tc.pass {
 				require.NoError(t, err)
 			} else {
-				require.EqualError(t, err, tc.error)
+				require.Contains(t, err.Error(), tc.error)
 			}
 		})
 	}

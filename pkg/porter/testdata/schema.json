@@ -259,13 +259,15 @@
         "type": "object"
       }
     },
-    "properties": {
+    "patternProperties": {
       ".*": {
         "items": {
           "$ref": "#/mixin.exec/definitions/invokeStep"
         },
         "type": "array"
-      },
+      }
+    },
+    "properties": {
       "install": {
         "items": {
           "$ref": "#/mixin.exec/definitions/installStep"
@@ -287,7 +289,7 @@
     },
     "type": "object"
   },
-  "properties": {
+  "patternProperties": {
     ".*": {
       "items": {
         "anyOf": [
@@ -297,7 +299,9 @@
         ]
       },
       "type": "array"
-    },
+    }
+  },
+  "properties": {
     "credentials": {
       "additionalProperties": {
         "$ref": "#/definitions/credential"

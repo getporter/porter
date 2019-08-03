@@ -12,12 +12,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type UpgradeTest struct {
+type ExecuteTest struct {
 	expectedCommand string
-	upgradeStep     UpgradeStep
+	executeStep     ExecuteStep
 }
 
-func TestMixin_UpgradeStep(t *testing.T) {
+func TestMixin_ExecuteStep(t *testing.T) {
 
 	manifestDirectory := "/cnab/app/manifests"
 
@@ -40,13 +40,13 @@ func TestMixin_UpgradeStep(t *testing.T) {
 
 	timeout := 1
 
-	upgradeTests := []UpgradeTest{
+	upgradeTests := []ExecuteTest{
 		// These tests are largely the same as the install, just testing that the embedded
 		// install gets handled correctly
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -58,8 +58,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -71,8 +71,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -85,8 +85,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s -n %s", upgradeCmd, manifestDirectory, namespace),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -100,8 +100,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s -n %s --validate=false", upgradeCmd, manifestDirectory, namespace),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -116,8 +116,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s -n %s --record=true", upgradeCmd, manifestDirectory, namespace),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -132,8 +132,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --selector=%s --wait", upgradeCmd, manifestDirectory, selector),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					InstallArguments: InstallArguments{
 						Step: Step{
 							Description: "Hello",
@@ -148,8 +148,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		// These tests exercise the upgrade options
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait --force --grace-period=0", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					Force: &forceIt,
 					InstallArguments: InstallArguments{
 						Step: Step{
@@ -162,8 +162,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait --grace-period=%d", upgradeCmd, manifestDirectory, withGrace),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					GracePeriod: &withGrace,
 					InstallArguments: InstallArguments{
 						Step: Step{
@@ -176,8 +176,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait --overwrite=false", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					Overwrite: &overwriteIt,
 					InstallArguments: InstallArguments{
 						Step: Step{
@@ -190,8 +190,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait --prune=true", upgradeCmd, manifestDirectory),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					Prune: &pruneIt,
 					InstallArguments: InstallArguments{
 						Step: Step{
@@ -204,8 +204,8 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		},
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait --timeout=%ds", upgradeCmd, manifestDirectory, timeout),
-			upgradeStep: UpgradeStep{
-				UpgradeArguments: UpgradeArguments{
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
 					Timeout: &timeout,
 					InstallArguments: InstallArguments{
 						Step: Step{
@@ -223,13 +223,13 @@ func TestMixin_UpgradeStep(t *testing.T) {
 		t.Run(upgradeTest.expectedCommand, func(t *testing.T) {
 			os.Setenv(test.ExpectedCommandEnv, upgradeTest.expectedCommand)
 
-			action := UpgradeAction{Steps: []UpgradeStep{upgradeTest.upgradeStep}}
+			action := ExecuteAction{Steps: []ExecuteStep{upgradeTest.executeStep}}
 			b, _ := yaml.Marshal(action)
 
 			h := NewTestMixin(t)
 			h.In = bytes.NewReader(b)
 
-			err := h.Upgrade()
+			err := h.Execute()
 
 			require.NoError(t, err)
 		})
