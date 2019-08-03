@@ -164,6 +164,12 @@ defaultContentLanguage = "en"
     url = "/mixins/helm"
     parent = "mixins"
   [[menu.main]]
+    name = "aws"
+    identifier = "aws-mixin"
+    weight = 205
+    url = "/mixins/aws"
+    parent = "mixins"
+  [[menu.main]]
     name = "azure"
     identifier = "azure-mixin"
     weight = 205
