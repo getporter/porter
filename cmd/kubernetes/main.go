@@ -34,8 +34,9 @@ func buildRootCommand(in io.Reader) *cobra.Command {
 	cmd.AddCommand(buildVersionCommand(mixin))
 	cmd.AddCommand(buildBuildCommand(mixin))
 	cmd.AddCommand(buildInstallCommand(mixin))
+	cmd.AddCommand(buildInvokeCommand(mixin))
 	cmd.AddCommand(buildUpgradeCommand(mixin))
-	cmd.AddCommand(buildUnInstallCommand(mixin))
+	cmd.AddCommand(buildUninstallCommand(mixin))
 	cmd.AddCommand(buildSchemaCommand(mixin))
 	return cmd
 }

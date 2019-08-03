@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildUnInstallCommand(mixin *kubernetes.Mixin) *cobra.Command {
+func buildUninstallCommand(mixin *kubernetes.Mixin) *cobra.Command {
 	return &cobra.Command{
 		Use:   "uninstall",
 		Short: "Use kubectl to delete resources contained in a manifest from a cluster",

@@ -1,220 +1,295 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "definitions": {
-      "installStep": {
-        "type": "object",
-        "properties": {
-          "kubernetes": {
-            "type": "object",
-            "properties": {
-              "description": {
-                "type": "string",
-                "minLength": 1
-              },
-              "namespace": {
-                "type": "string"
-              },
-              "manifests": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minItems": 1
-                }
-              },
-              "record": {
-                "type": "boolean",
-                "default":"false"
-              },
-              "selector": {
-                "type": "string"
-              },
-              "validate": {
-                "type": "boolean",
-                "default":"true"
-              },
-              "wait": {
-                "type": "boolean",
-                "default":"true"
-              },
-              "outputs": {
-                "$ref": "#/definitions/outputs"
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "description", "manifests"
-            ]
-          }
-        },
-        "additionalProperties": false,
-        "required": [
-          "kubernetes"
-        ]
-      },
-      "upgradeStep": {
-        "type": "object",
-        "properties": {
-          "kubernetes": {
-            "type": "object",
-            "properties": {
-              "description": {
-                "type": "string",
-                "minLength": 1
-              },
-              "namespace": {
-                "type": "string"
-              },
-              "manifests": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minItems": 1
-                }
-              },
-              "force": {
-                "type": ["boolean","null"],
-                "default":"false"
-              },
-              "gracePeriod" : {
-                "type": "integer"
-              },
-              "overwrite": {
-                "type": ["boolean","null"],
-                "default":"true"
-              },
-              "prune": {
-                "type": ["boolean","null"],
-                "default":"true"
-              },
-              "record": {
-                "type": ["boolean","null"],
-                "default":"false"
-              },
-              "selector": {
-                "type": "string"
-              },
-              "timeout" : {
-                "type": "integer"
-              },
-              "validate": {
-                "type": ["boolean","null"],
-                "default":"true"
-              },
-              "wait": {
-                "type": ["boolean","null"],
-                "default":"true"
-              },
-              "outputs": {
-                "$ref": "#/definitions/outputs"
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "description", "manifests"
-            ]
-          }
-        },
-        "additionalProperties": false,
-        "required": [
-          "kubernetes"
-        ]
-      },
-      "uninstallStep": {
-        "type": "object",
-        "properties": {
-          "kubernetes": {
-            "type": "object",
-            "properties": {
-              "description": {
-                "type": "string",
-                "minLength": 1
-              },
-              "namespace": {
-                "type": "string"
-              },
-              "manifests": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minItems": 1
-                }
-              },
-              "force": {
-                "type": ["boolean","null"],
-                "default":"false"
-              },
-              "gracePeriod" : {
-                "type": "integer"
-              },
-              "selector": {
-                "type": "string"
-              },
-              "timeout" : {
-                "type": "integer"
-              },
-              "wait": {
-                "type": "boolean",
-                "default":"true"
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "description", "manifests"
-            ]
-          }
-        },
-        "additionalProperties": false,
-        "required": [
-          "kubernetes"
-        ]
-      },
-      "outputs": {
-        "type": "array",
-        "items": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "installStep": {
+      "type": "object",
+      "properties": {
+        "kubernetes": {
           "type": "object",
           "properties": {
-            "name": {
-              "type": "string"
+            "description": {
+              "type": "string",
+              "minLength": 1
             },
             "namespace": {
               "type": "string"
             },
-            "resourceType": {
+            "manifests": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "record": {
+              "type": "boolean",
+              "default":"false"
+            },
+            "selector": {
               "type": "string"
             },
-            "resourceName": {
-              "type": "string"
+            "validate": {
+              "type": "boolean",
+              "default":"true"
             },
-            "jsonPath": {
-              "type": "string"
+            "wait": {
+              "type": "boolean",
+              "default":"true"
+            },
+            "outputs": {
+              "$ref": "#/definitions/outputs"
             }
           },
           "additionalProperties": false,
-          "required": ["name", "resourceType", "resourceName", "jsonPath"]
-        }
-      }
-    },
-    "type": "object",
-    "properties": {
-      "install": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/installStep"
+          "required": [
+            "description", "manifests"
+          ]
         }
       },
-      "upgrade": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/upgradeStep"
+      "additionalProperties": false,
+      "required": [
+        "kubernetes"
+      ]
+    },
+    "upgradeStep": {
+      "type": "object",
+      "properties": {
+        "kubernetes": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "manifests": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "force": {
+              "type": ["boolean","null"],
+              "default":"false"
+            },
+            "gracePeriod" : {
+              "type": "integer"
+            },
+            "overwrite": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "prune": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "record": {
+              "type": ["boolean","null"],
+              "default":"false"
+            },
+            "selector": {
+              "type": "string"
+            },
+            "timeout" : {
+              "type": "integer"
+            },
+            "validate": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "wait": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "outputs": {
+              "$ref": "#/definitions/outputs"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description", "manifests"
+          ]
         }
       },
-      "uninstall": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/uninstallStep"
+      "additionalProperties": false,
+      "required": [
+        "kubernetes"
+      ]
+    },
+    "invokeStep": {
+      "type": "object",
+      "properties": {
+        "kubernetes": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "manifests": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "force": {
+              "type": ["boolean","null"],
+              "default":"false"
+            },
+            "gracePeriod" : {
+              "type": "integer"
+            },
+            "overwrite": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "prune": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "record": {
+              "type": ["boolean","null"],
+              "default":"false"
+            },
+            "selector": {
+              "type": "string"
+            },
+            "timeout" : {
+              "type": "integer"
+            },
+            "validate": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "wait": {
+              "type": ["boolean","null"],
+              "default":"true"
+            },
+            "outputs": {
+              "$ref": "#/definitions/outputs"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description", "manifests"
+          ]
         }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kubernetes"
+      ]
+    },
+    "uninstallStep": {
+      "type": "object",
+      "properties": {
+        "kubernetes": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "manifests": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "force": {
+              "type": ["boolean","null"],
+              "default":"false"
+            },
+            "gracePeriod" : {
+              "type": "integer"
+            },
+            "selector": {
+              "type": "string"
+            },
+            "timeout" : {
+              "type": "integer"
+            },
+            "wait": {
+              "type": "boolean",
+              "default":"true"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "description", "manifests"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kubernetes"
+      ]
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "jsonPath": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": ["name", "resourceType", "resourceName", "jsonPath"]
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "install": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/installStep"
       }
     },
-    "additionalProperties": false
-  }
-  
+    "upgrade": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/upgradeStep"
+      }
+    },
+    "uninstall": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/uninstallStep"
+      }
+    }
+  },
+  "patternProperties": {
+    ".*": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/invokeStep"
+      }
+    }
+  },
+  "additionalProperties": false
+}

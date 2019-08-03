@@ -1,0 +1,6 @@
+poke:
+  - kubernetes:
+      description: "Bump hello world app counter"
+      manifests:
+        - /cnab/app/manifests/hello
+      wait: true
