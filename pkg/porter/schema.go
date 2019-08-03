@@ -43,6 +43,11 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties type, expected map[string]interface{} but got %T", manifestSchema["properties"])
 	}
 
+	patternPropertiesSchema, ok := manifestSchema["patternProperties"].(jsonSchema)[".*"].(jsonSchema)
+	if !ok {
+		return nil, errors.Errorf("root porter manifest schema has invalid patternProperties type, expected map[string]interface{} but got %T", manifestSchema["patternProperties"])
+	}
+
 	mixinSchema, ok := propertiesSchema["mixins"].(jsonSchema)
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins type, expected map[string]interface{} but got %T", propertiesSchema["mixins"])
@@ -58,9 +63,9 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items.enum type, expected []interface{} but got %T", mixinItemSchema["enum"])
 	}
 
-	supportedActions := []string{"install", "upgrade", "uninstall", ".*"} // custom actions are defined in json schema as a wildcard .*
-	actionSchemas := make(map[string]jsonSchema, len(supportedActions))
-	for _, action := range supportedActions {
+	coreActions := []string{"install", "upgrade", "uninstall"} // custom actions are defined in json schema as a wildcard .* under patternProperties
+	actionSchemas := make(map[string]jsonSchema, len(coreActions)+1)
+	for _, action := range coreActions {
 		actionSchema, ok := propertiesSchema[string(action)].(jsonSchema)
 		if !ok {
 			return nil, errors.Errorf("root porter manifest schema has invalid properties.%s type, expected map[string]interface{} but got %T", action, propertiesSchema[string(action)])
@@ -97,19 +102,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		// embed the entire mixin schema in the root
 		manifestSchema["mixin."+mixin.Name] = mixinSchemaMap
 
-		for _, action := range supportedActions {
-			// Some mixins don't have custom actions defined in their schema
-			if action == ".*" {
-				mixinProperties, ok := mixinSchemaMap["properties"].(jsonSchema)
-				if !ok {
-					return nil, errors.Errorf("%s mixin schema has invalid properties type, expected map[string]interface{} but got %T", mixin.Name, mixinSchemaMap["properties"])
-				}
-
-				if _, hasCustomActions := mixinProperties[".*"]; !hasCustomActions {
-					continue
-				}
-			}
-
+		for _, action := range coreActions {
 			actionItemSchema, ok := actionSchemas[string(action)]["items"].(jsonSchema)
 			if err != nil {
 				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
@@ -120,13 +113,28 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
 			}
 
-			stepPrefix := action
-			if action == ".*" {
-				stepPrefix = "invoke"
-			}
-			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, stepPrefix)
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, action)
 			// WORKAROUND bug in the RedHat yaml lib used by VS Code, it doesn't handle more than one ref dereference
 			// actionRef := fmt.Sprintf("#/mixin.%s/properties/%s/items", mixin.Name, action)
+
+			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
+			actionItemSchema["anyOf"] = actionAnyOfSchema
+		}
+
+		// TODO: Do a better merge in case the mixin has a more limited pattern than .*
+		_, hasCustomActions := mixinSchemaMap["patternProperties"]
+		if hasCustomActions{
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/invokeStep", mixin.Name)
+
+			actionItemSchema, ok := patternPropertiesSchema["items"].(jsonSchema)
+			if err != nil {
+				return nil, errors.Errorf("root porter manifest schema has invalid patternProperties.items type, expected map[string]interface{} but got %T", patternPropertiesSchema["items"])
+			}
+
+			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
+			if !ok {
+				return nil, errors.Errorf("root porter manifest schema has invalid patternProperties.items.anyOf type, expected []interface{} but got %T", actionItemSchema["anyOf"])
+			}
 
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
 			actionItemSchema["anyOf"] = actionAnyOfSchema

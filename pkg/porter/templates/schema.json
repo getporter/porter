@@ -121,12 +121,6 @@
     }
   },
   "properties": {
-    ".*": {
-      "type": "array",
-      "items": {
-        "anyOf": []
-      }
-    },
     "credentials": {
       "additionalProperties": {
         "$ref": "#/definitions/credential"
@@ -203,6 +197,14 @@
     "dockerfile": {
       "type": "string",
       "description": "The relative path to a Dockerfile to use as a template during porter build"
+    }
+  },
+  "patternProperties": {
+    ".*": {
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     }
   },
   "additionalProperties": false,
