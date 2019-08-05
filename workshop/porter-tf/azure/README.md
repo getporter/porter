@@ -103,3 +103,11 @@ porter install -c porter-workshop-tf \
     --param backend_storage_account=<your-name>storage \
     --param database-name=testworkshop
 ```
+
+### View the Outputs
+
+Now that you've installed the bundle, you can view any outputs that were created with the `porter bundle` command.
+
+```
+porter bundle show porter-workshop-tf
+```
