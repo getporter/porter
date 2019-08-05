@@ -51,6 +51,8 @@ parameters:
 outputs:
   - name: IP_ADDRESS
     type: string
+  - name: STORAGE_ACCOUNT_KEY
+    type: string
 
 imageMap:
   websvc:
