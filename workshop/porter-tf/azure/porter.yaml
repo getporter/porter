@@ -92,7 +92,7 @@ upgrade:
       - "echo Not implemented yet"
 
 uninstall:
-    - exec: 
+  - exec: 
       description: "Perform an uninstall"
       command: "bash"
       arguments:

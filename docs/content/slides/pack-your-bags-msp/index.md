@@ -1100,6 +1100,21 @@ name: outputs
 Often, a bundle will produce _something_. This might be a new certificate, a hostname, or some other piece of information. Bundle Outputs are used to provide this information back to the CNAB runtime.  
 
 ---
+name: outputs
+### View Bundle Outputs with Porter
+
+```
+$ porter bundle show
+
+
+Outputs:
+-------------------------------------------------------------------------------------------
+  Name                 Type    Value (Path if sensitive)
+-------------------------------------------------------------------------------------------
+  STORAGE_ACCOUNT_KEY  string  JKb9C+J+nFtGrDyBW4Y0zaIK5hzIvi2gW3SfnmnkcunyXSYV3HucQGNIo...
+```
+
+---
 name: dockerfile
 ## Custom Dockerfile
 
