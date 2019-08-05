@@ -1099,6 +1099,12 @@ name: outputs
 
 Often, a bundle will produce _something_. This might be a new certificate, a hostname, or some other piece of information. Bundle Outputs are used to provide this information back to the CNAB runtime.  
 
+```
+outputs:
+  - name: STORAGE_ACCOUNT_KEY
+    type: string
+```
+
 ---
 name: outputs
 ### View Bundle Outputs with Porter
