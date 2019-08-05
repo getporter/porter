@@ -105,3 +105,31 @@ porter install -c porter-workshop-tf \
     --param backend_storage_account=<your-name>storage \
     --param database-name=testworkshop
 ```
+
+### View The Outputs
+
+Once the bundle has been installed, you can use `porter bundle show` to see the outputs:
+
+```
+$ porter bundle show
+Name: porter-workshop-tf-aci
+Created: 2 minutes ago
+Modified: 4 seconds ago
+Last Action: install
+Last Status: success
+
+Outputs:
+-----------------------------------------------
+  Name        Type    Value (Path if sensitive)
+-----------------------------------------------
+  IP_ADDRESS  string  20.42.26.66
+```
+
+This is the IP address of the new ACI container. You can test it out now with `curl`:
+
+```
+$ curl http://20.42.26.66:8080
+Hello, I'm a webserver that connects to jrrserver981.mysql.database.azure.com
+```
+
+You'll want to replace that IP address with what is shown in the output.
