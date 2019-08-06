@@ -190,7 +190,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 	return []config.ParameterDefinition{
 		{
 			Name: "porter-debug",
-			Destination: &bundle.Location{
+			Destination: &config.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{

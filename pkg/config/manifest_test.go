@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -314,7 +313,7 @@ func TestResolveCredential(t *testing.T) {
 		Credentials: []CredentialDefinition{
 			{
 				Name:     "password",
-				Location: bundle.Location{EnvironmentVariable: "PASSWORD"},
+				Location: Location{EnvironmentVariable: "PASSWORD"},
 			},
 		},
 	}

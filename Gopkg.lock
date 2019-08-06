@@ -222,7 +222,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:fbc17e2e9d067056cd4948987ebc510c14d09e1889d9a1cf43aa9d1d4f27fac8"
+  digest = "1:1262059b93a03512c45efcc15f5e4ce6683f619613305eb0739f7e6e80fdc4a1"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -234,7 +234,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "44f18fa40b9ce9acd04c73373b9991a7e5b5a9d5"
+  revision = "a0a0201df5945d48a40c46e1d33b70350aae62d5"
+  source = "github.com/vdice/cnab-go"
 
 [[projects]]
   digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
@@ -1479,7 +1480,6 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
-    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/hashicorp/go-multierror",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
