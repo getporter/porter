@@ -344,6 +344,18 @@ class: center, middle
 * Can be signed
 
 ---
+
+# CNAB Specification
+
+* The Bundle format
+* Defines how things are passed into and out of the invocation image
+* A required entrypoint in invocation image
+* Well-defined verbs
+  * Install
+  * Upgrade
+  * Uninstall
+  
+---
 # Are we done?
 
 * We can install (complicated) things
@@ -384,18 +396,6 @@ class: center
 # Sharing Bundles With OCI Registries
 
 ![how oci shares bundles](/images/pack-your-bags/share-bundles.png)
-
----
-
-# CNAB Specification
-
-* The Bundle format
-* Defines how things are passed into and out of the invocation image
-* A required entrypoint in invocation image
-* Well-defined verbs
-  * Install
-  * Upgrade
-  * Uninstall
 
 ---
 class: center, middle
