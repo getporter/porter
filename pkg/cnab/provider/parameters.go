@@ -11,7 +11,6 @@ import (
 // loadParameters accepts a set of string overrides and combines that with the default parameters to create
 // a full set of parameters.
 func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
-	currentVals := claim.Parameters
 	overrides := make(map[string]interface{}, len(rawOverrides))
 	bun := claim.Bundle
 
@@ -61,7 +60,7 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 		}
 	}
 
-	return bundle.ValuesOrDefaults(overrides, currentVals, bun)
+	return bundle.ValuesOrDefaults(overrides, bun)
 }
 
 // TODO: pilfered from cnab-go.  PR to export func?
