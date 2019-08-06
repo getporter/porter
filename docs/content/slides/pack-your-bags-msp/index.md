@@ -40,12 +40,12 @@ name: agenda
 
 # Agenda
 
-1. What is CNAB?
-1. Build a bundle
-1. Install a bundle
-1. Survey of CNAB ecosystem
-1. Create your own bundle
-1. The state of CNAB
+1. What is CNAB? - 15 minutes
+1. See some bundles - 10 minutes
+1. Build a bundle from scratch - 20 minutes
+1. Walkthrough Porter - 10 minutes
+1. The state of CNAB - 5 minutes
+1. Choose your own adventure - 30 minutes
 
 ---
 name: introductions
@@ -354,7 +354,7 @@ class: center, middle
   * Install
   * Upgrade
   * Uninstall
-  
+
 ---
 # Are we done?
 
@@ -1385,7 +1385,7 @@ https://cnab.io/community-projects
 * Tooling is finishing support for CNAB Core
 
 ---
-# Next Steps
+# Questions and Feedback
 
 ???
 What should someone do if they are interested in CNAB for their work or personal projects?
