@@ -1,0 +1,79 @@
+name: porter-gcloud-compute
+version: 0.1.0
+description: "An example Porter gcloud compute bundle"
+invocationImage: deislabs/porter-gcloud-compute-installer:v0.1.0
+tag: deislabs/porter-gcloud-compute:v0.1.0
+
+mixins:
+  - gcloud
+
+credentials:
+  - name: gcloud-key-file
+    path: /cnab/app/gcloud.json
+
+install:
+  - gcloud:
+      description: "Authenticate"
+      groups:
+        - auth
+      command: activate-service-account
+      flags:
+        key-file: gcloud.json
+  - gcloud:
+      description: "Create VM"
+      groups:
+        - compute
+        - instances
+      command: create
+      arguments:
+        - porter-test
+      flags:
+        project: porterci
+        zone: us-central1-a
+        machine-type: f1-micro
+        image: debian-9-stretch-v20190729
+        image-project: debian-cloud
+        boot-disk-size: 10GB
+        boot-disk-type: pd-standard
+        boot-disk-device-name: porter-test
+
+upgrade:
+  - gcloud:
+      description: "Authenticate"
+      groups:
+        - auth
+      command: activate-service-account
+      flags:
+        key-file: gcloud.json
+  - gcloud:
+      description: "Tag VM"
+      groups:
+        - compute
+        - instances
+      command: update
+      arguments:
+        - porter-test
+      flags:
+        project: porterci
+        zone: us-central1-a
+        update-labels: "color=blue,ready=true"
+
+uninstall:
+  - gcloud:
+      description: "Authenticate"
+      groups:
+        - auth
+      command: activate-service-account
+      flags:
+        key-file: gcloud.json
+  - gcloud:
+      description: "Deprovision VM"
+      groups:
+        - compute
+        - instances
+      command: delete
+      arguments:
+        - porter-test
+      flags:
+        project: porterci
+        zone: us-central1-a

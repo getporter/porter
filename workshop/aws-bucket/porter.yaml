@@ -1,0 +1,44 @@
+name: porter-aws-bucket
+version: 0.1.0
+description: "An example Porter AWS bundle that plays with buckets"
+invocationImage: deislabs/porter-aws-bucket-installer:latest
+tag: deislabs/porter-aws-bucket:latest
+
+mixins:
+  - aws
+
+credentials:
+- name: AWS_SECRET_ACCESS_KEY
+  env: AWS_SECRET_ACCESS_KEY
+- name: AWS_ACCESS_KEY_ID
+  env: AWS_ACCESS_KEY_ID
+
+parameters:
+- name: bucket
+  type: string
+  default: porter-aws-mixin-test
+
+install:
+  - aws:
+      description: "Create Bucket"
+      service: s3api
+      operation: create-bucket
+      flags:
+        bucket: "{{ bundle.parameters.bucket }}"
+        region: us-east-1
+
+list:
+  - aws:
+      description: "List Buckets"
+      service: s3api
+      operation: list-buckets
+      flags:
+        query: "Buckets[].Name"
+
+uninstall:
+  - aws:
+      description: "Delete Bucket"
+      service: s3api
+      operation: delete-bucket
+      flags:
+        bucket: "{{ bundle.parameters.bucket }}"

@@ -636,113 +636,6 @@ execution completed successfully!
 ```
 
 ---
-name: terraform
-# Make a bundle
-
-You can find these bundles in this repository under and **workshop/scratch/azure** and **workshop/porter-tf/azure**
-
----
-# Review CNAB The Hardway
-
----
-# Build the same bundle with Porter
-
----
-# Modify the bundle
-
-Let's make this bundle yours by changing it from the deislabs Docker Hub registry to your own:
-
-1. Open **porter.yaml**
-1. Find the `invocationImage` and the `tag` fields, and then change `deislabs` to your docker username.
-
-    They should now look like this:
-
-    ```yaml
-    invocationImage: "yourname/porter-workshop-tf:v0.1.0"
-    tag: "yourname/porter-workshop-tf-bundle:v0.1.0"
-    ```
-1. Save and close the file.
-
----
-# Build the bundle
-
-```
-$ porter build
-```
-
----
-# Run Script
-
----
-# Dockerfile
-
----
-# bundle.json
-
----
-# Create credentials for the bundle
-
-```
-TODO: copy credential file that we give people
-and have them put it into ~/.porter/credentials/azure.yaml
-```
-
----
-# Publishing Bundles
-
-Use `porter publish` to share bundles:
-
-* Publishes both the invocation image and the CNAB bundle manifest to an OCI registry.
-* Uses Docker tags for both
-
-```yaml
-name: porter-terraform
-version: 0.1.0
-invocationImage: "deislabs/porter-workshop-tf:v0.1.0"
-tag: "deislabs/porter-workshop-tf-bundle:v0.1.0"
-```
-
----
-## porter publish
-
-```
-$ porter publish --help
-Publishes a bundle by pushing the invocation image and bundle to a registry.
-
-
-Examples:
-  porter publish
-
-```
-
----
-exclude: true
-# Try to publish
-
-* Run `porter build`
-* Run `porter publish`
-
----
-# Try it out: Publish your bundle
-
-```
-$ porter publish
-```
-
-If you run into trouble here, here are a few things to check:
-* Make sure that you updated the invocationImage and tag to use your docker hub username
-* Log into docker hub with `docker login`
-
----
-# Try it out: Install the bundle
-
-```
-$ porter install --tag YOURNAME/porter-workshop-tf-bundle:v0.1.0 --cred azure --param server-name=<yourname>-mysql --param backend_storage_account=<yourname>storage
-```
-
-Note: The storage account can't be longer than 24 characters and can only be lowercase alphanumric and must be globally unique. The mysql server name must also be unique.
-
----
 name: talkback
 
 # Talk Back
@@ -753,23 +646,17 @@ name: talkback
 * What does your deployment lifecycle look like?
 
 ---
-class: center, middle
-exclude: true
-# BREAK
+name: terraform
+# A tale of two bundles
 
-bring in the other slides that explain porter meta data, mixins, 
-parameters and credentials
+You can find these bundles in this repository under and **workshop/scratch/azure** and **workshop/porter-tf/azure**
 
-publish, install from our our tag before #4
-_I_ may be comforable with terraform and _I_ know what credentials / parameters are needed
-The person who writes the bundle isn't the person who runs the bundle
-
-5 goes away
+---
+# CNAB The Hardway
 
 ---
 name: mellamo
 class: center
-exclude: true
 # Tutorial
 # Hi, My Name is _
 
@@ -778,7 +665,6 @@ exclude: true
 ]
 
 ---
-exclude: true
 ## Parameters
 
 Variables in your bundle that you can specify when you execute the bundle
@@ -805,7 +691,6 @@ parameters:
 Explain defaults and when parameters are required
 
 ---
-exclude: true
 ## Try it out: Print Your Name
 
 Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti", using a parameter.
@@ -816,7 +701,6 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 1. Finally run `porter install --param name=YOUR_NAME` and look for your name in the output.
 
 ---
-exclude: true
 ### porter bundle list
 
 ```
@@ -826,12 +710,8 @@ HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
 HELLO         8 minutes ago   8 minutes ago   install       success
 ```
 
-???
-Ask them to list their bundles
-
 ---
 name: claims
-exclude: true
 ### Claims
 
 Claims are records of any actions performed by CNAB compliant tools on a bundle.
@@ -847,7 +727,6 @@ Last Status: success
 
 ---
 name: cleanup-hello
-exclude: true
 ## Cleanup Hello World
 
 First run `porter uninstall` without any arguments:
@@ -869,6 +748,85 @@ Uninstall Hello llama
 Goodbye llama
 execution completed successfully!
 ```
+
+---
+# Publishing Bundles
+
+Use `porter publish` to share bundles:
+
+* Publishes both the invocation image and the CNAB bundle manifest to an OCI registry.
+* Uses Docker tags for both
+
+```yaml
+name: HELLO-LLAMA
+version: 0.1.0
+description: "An example Porter configuration with moar llamas"
+invocationImage: "YOURNAME/porter-hello-llama:latest"
+tag: "YOURNAME/porter-hello-llama-bundle:latest"
+```
+
+---
+# Modify the bundle
+
+Let's make this bundle yours by changing it from the deislabs Docker Hub registry to your own:
+
+1. Open **porter.yaml**
+1. Find the `invocationImage` and the `tag` fields, and then change `deislabs` to your docker username.
+
+    They should now look like this:
+
+    ```yaml
+    invocationImage: "YOURNAME/porter-hello-llama:latest"
+    tag: "YOURNAME/porter-hello-llama-bundle:latest"
+    ```
+1. Save and close the file.
+
+---
+## porter publish
+
+```
+$ porter publish --help
+Publishes a bundle by pushing the invocation image and bundle to a registry.
+
+
+Examples:
+  porter publish
+
+```
+
+---
+# Try it out: Publish your bundle
+
+```
+$ porter publish
+```
+
+If you run into trouble here, here are a few things to check:
+* Make sure that you updated the invocationImage and tag to use your docker hub username
+* Log into docker hub with `docker login`
+
+---
+# Try it out: Install the bundle
+
+```
+$ porter install --tag YOURNAME/porter-hello-llama:latest --param name=YOURNAME
+```
+
+---
+class: center, middle
+exclude: true
+# BREAK
+
+bring in the other slides that explain porter meta data, mixins, 
+parameters and credentials
+
+publish, install from our our tag before #4
+_I_ may be comforable with terraform and _I_ know what credentials / parameters are needed
+The person who writes the bundle isn't the person who runs the bundle
+
+5 goes away
+
+
 
 ---
 name: wordpress
@@ -1246,6 +1204,7 @@ install:
 * Not all mixins support outputs
 
 ---
+exclude: true
 ### Helm Mixin Output
 
 ```yaml
@@ -1259,6 +1218,7 @@ install:
 ```
 
 ---
+exclude: true
 ### Kubernetes Mixin Output
 
 ```yaml
@@ -1319,6 +1279,8 @@ _They adapt between CNAB and existing tools. Porter is just glue."_
 * kubernetes
 * helm
 * azure
+* aws
+* gcloud
 * terraform
 
 .center[ https://porter.sh/mixins ]
@@ -1432,31 +1394,8 @@ What is the timeline for the project and how should they be thinking about begin
 ---
 # Choose your own adventure!
 
-* ASCII Art Gophers
-* Use Porter with Your Favorite Cloud Provider
+* ASCII Art Gophers - workshop/asciiart
+* Create a MySQL on Azure - workshop/porter-tf-aci
+* Manage VMs with gcloud - workshop/gcloud-compute
+* Manage Buckets with aws - workshop/aws-bucket
 
----
-name: asciiart
-# Try it out: ASCII Art Gophers
-
-Make a bundle for the https://github.com/stdupp/goasciiart tool. Use it to
-convert cute pictures of gophers into ASCII art when you install the bundle.
-
-Here are some hints so that you can try to solve it in your own way. 
-For the full solution, see the [asciiart][asciiart] directory in the workshop materials.
-
-* A good base image for go is `golang:1.11-stretch`.
-* You need to run `porter build` after modifying the Dockerfile.tmpl to rebuild
-your invocation image to pick up your changes.
-* Don't forget to copy your images into your invocation image to /cnab/app/.
-* The command to run is `goasciiart -p=gopher.png -w=100`.
-
-[asciiart]: https://github.com/deislabs/porter/tree/master/workshop/asciiart
-
----
-name: break-glass
-# Use Porter with Your Favorite Cloud Provider
-
-Use the a custom dockerfile template and the exec mixin
-to make Porter do something with your favorite cloud provider
-such as AWS or GCE.
