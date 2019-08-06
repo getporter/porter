@@ -158,6 +158,12 @@ defaultContentLanguage = "en"
     url = "/mixins/kubernetes"
     parent = "mixins"
   [[menu.main]]
+    name = "gcloud"
+    identifier = "gcloud-mixin"
+    weight = 204
+    url = "/mixins/gcloud"
+    parent = "mixins"
+  [[menu.main]]
     name = "helm"
     identifier = "helm-mixin"
     weight = 204
