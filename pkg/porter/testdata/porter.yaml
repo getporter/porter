@@ -10,7 +10,6 @@ tag: deislabs/porter-hello-custom-bundle:latest
 credentials:
   - name: my-first-cred
     env: MY_FIRST_CRED
-    required: true
   - name: my-second-cred
     description: "My second cred"
     path: /path/to/my-second-cred
@@ -21,7 +20,6 @@ parameters:
     default: 9
     destination:
       env: MY_FIRST_PARAM
-    required: true
   - name: my-second-param
     description: "My second parameter"
     type: string

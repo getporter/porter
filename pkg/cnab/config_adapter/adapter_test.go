@@ -117,6 +117,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ASTRING",
 				},
+				Required: true,
 			},
 			definition.Schema{
 				Type:      "string",
@@ -147,6 +148,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				ApplyTo: []string{
 					"install",
 				},
+				Required: true,
 			},
 			definition.Schema{
 				Type: "boolean",
@@ -328,9 +330,11 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	wantDefinitions := definition.Definitions{
 		"output1": &definition.Schema{
 			Type: "string",
+			Description: "Description of output1",
 		},
 		"output2": &definition.Schema{
 			Type: "boolean",
+			Description: "Description of output2",
 		},
 	}
 
@@ -412,6 +416,7 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 		},
 		"output2": &definition.Schema{
 			Type: "boolean",
+			Description: "Description of output2",
 		},
 	}
 

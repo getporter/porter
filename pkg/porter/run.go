@@ -261,13 +261,17 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) 
 
 					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
+					outputType, ok, err := bundleOutput.Schema.GetType()
+					if !ok && err != nil {
+						return errors.Wrap(err, "unable to get output type")
+					}
+
 					// Create data structure with relevant data for use in listing/showing later
 					output := output.Output{
 						Name:      bundleOutput.Name,
 						Sensitive: bundleOutput.Sensitive,
-						// TODO: helper func to translate Type interface{} to string representation
-						// Type:      bundleOutput.Type,
-						Value: outputValue,
+						Type:      outputType,
+						Value:     outputValue,
 					}
 
 					data, err := output.JSONMarshal()

@@ -126,13 +126,13 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
 		p := bundle.Parameter{
 			Definition:  param.Name,
-			Description: param.Parameter.Description,
 			ApplyTo:     param.ApplyTo,
+			Description: param.Description,
 		}
 
 		// If the default is empty, set required to true.
 		if param.Default == nil {
-			param.Parameter.Required = true
+			p.Required = true
 		}
 
 		if param.Destination != nil {
@@ -149,7 +149,8 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		// Only set definition if it doesn't already exist
 		// (Both Params and Outputs may reference same Definition)
 		if _, exists := (*defs)[param.Name]; !exists {
-			(*defs)[param.Name] = &param.Schema
+			def := param.Schema
+			(*defs)[param.Name] = &def
 		}
 		params[param.Name] = p
 	}
@@ -176,7 +177,8 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 			// Only set definition if it doesn't already exist
 			// (Both Params and Outputs may reference same Definition)
 			if _, exists := (*defs)[output.Name]; !exists {
-				(*defs)[output.Name] = &output.Schema
+				def := output.Schema
+				(*defs)[output.Name] = &def
 			}
 			outputs.Fields[output.Name] = o
 		}
@@ -188,15 +190,13 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 	return []config.ParameterDefinition{
 		{
 			Name: "porter-debug",
-			Parameter: bundle.Parameter{
-				Description: "Print debug information from Porter when executing the bundle",
-				Destination: &bundle.Location{
-					EnvironmentVariable: "PORTER_DEBUG",
-				},
+			Destination: &bundle.Location{
+				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{
-				Type:    "boolean",
-				Default: false,
+				Description: "Print debug information from Porter when executing the bundle",
+				Type:        "boolean",
+				Default:     false,
 			},
 		},
 	}

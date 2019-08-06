@@ -8,13 +8,11 @@ parameters:
   - name: ainteger
     type: integer
     default: 1
-    required: true
     minimum: 0
     maximum: 10
   - name: anumber
     type: number
     default: 0.5
-    required: true
     exclusiveMinimum: 0
     exclusiveMaximum: 1
   - name: astringenum
@@ -25,15 +23,12 @@ parameters:
       - red
       - purple
       - pink
-    required: true
   - name: astring
     type: string
-    required: true
     minLength: 1
     maxLength: 10
   - name: aboolean
     type: boolean
-    required: true
     default: true
   - name: installonly
     type: boolean

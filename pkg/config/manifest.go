@@ -62,7 +62,11 @@ type ParameterDefinition struct {
 	Name      string `yaml:"name"`
 	Sensitive bool   `yaml:"sensitive"`
 
-	bundle.Parameter `yaml:",inline"`
+	// These fields represent a subset of bundle.Parameter as defined in deislabs/cnab-go,
+	// minus the 'Description' field (definition.Schema's will be used)
+	Definition  string           `yaml:"definition"`
+	ApplyTo     []string         `yaml:"applyTo,omitempty"`
+	Destination *bundle.Location `yaml:"destination,omitempty"`
 
 	definition.Schema `yaml:",inline"`
 }
