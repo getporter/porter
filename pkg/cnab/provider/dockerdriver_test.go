@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	duffledriver "github.com/deislabs/duffle/pkg/driver"
+	dockerdriver "github.com/deislabs/cnab-go/driver/docker"
 	"github.com/deislabs/porter/pkg/config"
 )
 
@@ -16,10 +16,10 @@ func TestNewDriver_Docker(t *testing.T) {
 	driver, err := d.newDriver("docker", "myclaim")
 	require.NoError(t, err)
 
-	if _, ok := driver.(*duffledriver.DockerDriver); ok {
+	if _, ok := driver.(*dockerdriver.Driver); ok {
 		// TODO: check dockerConfigurationOptions to verify expected bind mount setup,
-		// once we're able to (add ability to duffledriver pkg)
+		// once we're able to (add ability to dockerdriver pkg)
 	} else {
-		t.Fatal("expected driver to be of type *duffledriver.DockerDriver")
+		t.Fatal("expected driver to be of type *dockerdriver.Driver")
 	}
 }

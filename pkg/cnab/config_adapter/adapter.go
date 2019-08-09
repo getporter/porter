@@ -119,10 +119,9 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 	}
 }
 
-func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) *bundle.ParametersDefinition {
-	params := &bundle.ParametersDefinition{
-		Fields: make(map[string]bundle.ParameterDefinition, len(c.Manifest.Parameters)),
-	}
+func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) map[string]bundle.Parameter {
+	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
+
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
 		d := &definition.Schema{
@@ -136,7 +135,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			MinLength:        param.MinLength,
 			MaxLength:        param.MaxLength,
 		}
-		p := bundle.ParameterDefinition{
+		p := bundle.Parameter{
 			Definition:  param.Name,
 			Description: param.Description,
 			ApplyTo:     param.ApplyTo,
@@ -144,7 +143,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 
 		// If the default is empty, set required to true.
 		if param.Default == nil {
-			params.Required = append(params.Required, param.Name)
+			p.Required = true
 		}
 
 		if param.Destination != nil {
@@ -163,18 +162,16 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		if _, exists := (*defs)[param.Name]; !exists {
 			(*defs)[param.Name] = d
 		}
-		params.Fields[param.Name] = p
+		params[param.Name] = p
 	}
 	return params
 }
 
-func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) *bundle.OutputsDefinition {
-	var outputs *bundle.OutputsDefinition
+func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) map[string]bundle.Output {
+	var outputs map[string]bundle.Output
 
 	if len(c.Manifest.Outputs) > 0 {
-		outputs = &bundle.OutputsDefinition{
-			Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
-		}
+		outputs = make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
 		for _, output := range c.Manifest.Outputs {
 			fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
@@ -187,7 +184,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				MinLength: output.MinLength,
 				MaxLength: output.MaxLength,
 			}
-			o := bundle.OutputDefinition{
+			o := bundle.Output{
 				Definition:  output.Name,
 				Description: output.Description,
 				ApplyTo:     output.ApplyTo,
@@ -199,7 +196,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 			if _, exists := (*defs)[output.Name]; !exists {
 				(*defs)[output.Name] = d
 			}
-			outputs.Fields[output.Name] = o
+			outputs[output.Name] = o
 		}
 	}
 	return outputs

@@ -1,17 +1,23 @@
 package cnabprovider
 
 import (
+	"path/filepath"
+
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/utils/crud"
-	"github.com/deislabs/duffle/pkg/duffle/home"
 	"github.com/pkg/errors"
+)
+
+const (
+	// ClaimsDirectory represents the name of the directory where claims are stored
+	ClaimsDirectory = "claims"
 )
 
 func (d *Duffle) NewClaimStore() claim.Store {
 	// TODO: I'm going to submit a PR after this so that GetHomeDir doesn't return an error
 	homepath, _ := d.GetHomeDir()
-	h := home.Home(homepath)
-	return claim.NewClaimStore(crud.NewFileSystemStore(h.Claims(), "json"))
+	claimsPath := filepath.Join(homepath, ClaimsDirectory)
+	return claim.NewClaimStore(crud.NewFileSystemStore(claimsPath, "json"))
 }
 
 // FetchClaim fetches a claim from the given CNABProvider's claim store

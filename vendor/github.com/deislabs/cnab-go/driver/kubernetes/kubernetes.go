@@ -120,9 +120,9 @@ func (k *Driver) setClient(conf *rest.Config) error {
 }
 
 // Run executes the operation inside of the invocation image.
-func (k *Driver) Run(op *driver.Operation) error {
+func (k *Driver) Run(op *driver.Operation) (driver.OperationResult, error) {
 	if k.Namespace == "" {
-		return fmt.Errorf("KUBE_NAMESPACE is required")
+		return driver.OperationResult{}, fmt.Errorf("KUBE_NAMESPACE is required")
 	}
 	labelMap := generateLabels(op)
 	meta := metav1.ObjectMeta{
@@ -171,7 +171,7 @@ func (k *Driver) Run(op *driver.Operation) error {
 		secret.ObjectMeta.GenerateName += "env-"
 		envsecret, err := k.secrets.Create(secret)
 		if err != nil {
-			return err
+			return driver.OperationResult{}, err
 		}
 		if !k.SkipCleanup {
 			defer k.deleteSecret(envsecret.ObjectMeta.Name)
@@ -197,7 +197,7 @@ func (k *Driver) Run(op *driver.Operation) error {
 		}
 		secret, err := k.secrets.Create(secret)
 		if err != nil {
-			return err
+			return driver.OperationResult{}, err
 		}
 		if !k.SkipCleanup {
 			defer k.deleteSecret(secret.ObjectMeta.Name)
@@ -217,7 +217,7 @@ func (k *Driver) Run(op *driver.Operation) error {
 	job.Spec.Template.Spec.Containers = []v1.Container{container}
 	job, err := k.jobs.Create(job)
 	if err != nil {
-		return err
+		return driver.OperationResult{}, err
 	}
 	if !k.SkipCleanup {
 		defer k.deleteJob(job.ObjectMeta.Name)
@@ -226,14 +226,14 @@ func (k *Driver) Run(op *driver.Operation) error {
 	// Return early for unit testing purposes (the fake k8s client implementation just
 	// hangs during watch because no events are ever created on the Job)
 	if k.skipJobStatusCheck {
-		return nil
+		return driver.OperationResult{}, nil
 	}
 
 	selector := metav1.ListOptions{
 		LabelSelector: labels.Set(job.ObjectMeta.Labels).String(),
 	}
 
-	return k.watchJobStatusAndLogs(selector, op.Out)
+	return driver.OperationResult{}, k.watchJobStatusAndLogs(selector, op.Out)
 }
 
 func (k *Driver) watchJobStatusAndLogs(selector metav1.ListOptions, out io.Writer) error {
