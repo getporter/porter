@@ -24,7 +24,8 @@ events.on("exec", (e, p) => {
     xbuild(e, p),
     testUnit(e, p),
     testIntegration(e, p),
-    testCLI(e, p)
+    testCLI(e, p),
+    validate(e, p)
   ]);
 });
 
@@ -80,6 +81,21 @@ function build(e, p) {
   );
 
   return goBuild;
+}
+
+function validate(e, p) {
+  var validator = new GoJob(`${projectName}-validate`);
+  // Enable Docker-in-Docker (needed for building bundles)
+  validator.enableDind();
+
+  validator.tasks.push(
+    "apk add --update npm",
+    "npm install -g ajv-cli",
+    "make build install",
+    "make build-bundle validate-bundle"
+  );
+
+  return validator;
 }
 
 function xbuild(e, p) {
@@ -166,8 +182,8 @@ function publishExamples(e, p) {
     `docker login ${p.secrets.dockerhubRegistry} \
     -u ${p.secrets.dockerhubUsername} \
     -p ${p.secrets.dockerhubPassword}`,
-    // now build and publish bundles, using the porter cli
-    `REGISTRY=${p.secrets.dockerhubOrg} make build-bundle publish-bundle`
+    // now build, validate and publish bundles
+    `REGISTRY=${p.secrets.dockerhubOrg} make build-bundle validate-bundle publish-bundle`
   );
 
   return examplePublisher;
@@ -199,6 +215,7 @@ function publish(e, p) {
 checks = {
   "verify": { runFunc: verify, description: "Verify" },
   "build": { runFunc: build, description: "Build" },
+  "validate": { runFunc: validate, description: "Validate" },
   "crossplatformbuild": { runFunc: xbuild, description: "Cross-Platform Build" },
   "unittest": { runFunc: testUnit, description: "Unit Test" },
   "integrationtest": { runFunc: testIntegration, description: "Integration Test" },
