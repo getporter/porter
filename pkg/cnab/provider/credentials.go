@@ -6,7 +6,11 @@ import (
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/credentials"
-	"github.com/deislabs/duffle/pkg/duffle/home"
+)
+
+const (
+	// CredentialsDirectory represents the name of the directory where credentials are stored
+	CredentialsDirectory = "credentials"
 )
 
 func (d *Duffle) loadCredentials(b *bundle.Bundle, files []string) (map[string]string, error) {
@@ -28,7 +32,8 @@ func (d *Duffle) loadCredentials(b *bundle.Bundle, files []string) (map[string]s
 		if !d.isPathy(file) {
 			// TODO: when we export this function, having an instance where we can set home manually
 			// instead of on an env var would be super helpful. I had to inject the homepath instead of using duffle's homepath function.
-			file = filepath.Join(home.Home(homepath).Credentials(), file+".yaml")
+			credsPath := filepath.Join(homepath, CredentialsDirectory)
+			file = filepath.Join(credsPath, file+".yaml")
 		}
 		cset, err := credentials.Load(file)
 		if err != nil {

@@ -1,20 +1,12 @@
-# Stay exactly in step with a specific duffle release
-[[constraint]]
-  name = "github.com/deislabs/duffle"
-  version = "=0.2.0-beta.1"
-
-# TODO: update to actual release of deislabs/cnab-go; rm source
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  source = "github.com/vdice/cnab-go"
-  revision = "a0a0201df5945d48a40c46e1d33b70350aae62d5"
+  version = "v0.3.1-beta1"
 
-# TODO: update to actual release of deislabs/cnab-go; rm source
+# TODO: update to actual release of deislabs/cnab-go
 # override currently needed or else cnab-to-oci dep causes issues
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  source = "github.com/vdice/cnab-go"
-  revision = "a0a0201df5945d48a40c46e1d33b70350aae62d5"
+  version = "v0.3.1-beta1"
 
 # Using master until there is a release of cnab-to-oci
 [[constraint]]

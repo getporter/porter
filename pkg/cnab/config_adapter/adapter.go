@@ -157,17 +157,15 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 	return params
 }
 
-func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) *bundle.OutputsDefinition {
-	var outputs *bundle.OutputsDefinition
+func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) map[string]bundle.Output {
+	var outputs map[string]bundle.Output
 
 	if len(c.Manifest.Outputs) > 0 {
-		outputs = &bundle.OutputsDefinition{
-			Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
-		}
+		outputs = make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
 		for _, output := range c.Manifest.Outputs {
 			fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
-			o := bundle.OutputDefinition{
+			o := bundle.Output{
 				Definition:  output.Name,
 				Description: output.Description,
 				ApplyTo:     output.ApplyTo,
@@ -180,7 +178,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				def := output.Schema
 				(*defs)[output.Name] = &def
 			}
-			outputs.Fields[output.Name] = o
+			outputs[output.Name] = o
 		}
 	}
 	return outputs

@@ -4,14 +4,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/cnab-go/driver"
-	duffledriver "github.com/deislabs/duffle/pkg/driver"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/outputs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/cnab-go/claim"
+	"github.com/deislabs/cnab-go/driver"
+	dockerdriver "github.com/deislabs/cnab-go/driver/docker"
+	"github.com/deislabs/cnab-go/driver/lookup"
+
+	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/outputs"
 )
 
 type Duffle struct {
@@ -25,7 +28,7 @@ func NewDuffle(c *config.Config) *Duffle {
 }
 
 func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) {
-	driverImpl, err := duffledriver.Lookup(driverName)
+	driverImpl, err := lookup.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
 	}
@@ -51,7 +54,7 @@ func (d *Duffle) newDriver(driverName, claimName string) (driver.Driver, error) 
 
 func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) error {
 	// If docker driver, setup host bind mount for outputs
-	if dockerish, ok := driverImpl.(*duffledriver.DockerDriver); ok {
+	if dockerish, ok := driverImpl.(*dockerdriver.Driver); ok {
 		outputsDir, err := d.Config.GetOutputsDir()
 		if err != nil {
 			return errors.Wrap(err, "unable to get outputs directory")
@@ -64,7 +67,7 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 			return errors.Wrapf(err, "could not create outputs directory %s for docker driver bind mount", bundleOutputsDir)
 		}
 
-		var cfgOpt duffledriver.DockerConfigurationOption = func(containerCfg *container.Config, hostCfg *container.HostConfig) error {
+		var cfgOpt dockerdriver.ConfigurationOption = func(containerCfg *container.Config, hostCfg *container.HostConfig) error {
 			outputsMount := mount.Mount{
 				Type:   mount.TypeBind,
 				Source: bundleOutputsDir,
@@ -85,7 +88,7 @@ func (d *Duffle) WriteClaimOutputs(c *claim.Claim) error {
 		return nil
 	}
 
-	for outputName := range c.Bundle.Outputs.Fields {
+	for outputName := range c.Bundle.Outputs {
 		output, err := outputs.ReadBundleOutput(d.Config, outputName, c.Name)
 		if err != nil {
 			return errors.Wrapf(err, "unable to read output %s", outputName)

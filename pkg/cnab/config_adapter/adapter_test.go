@@ -281,20 +281,20 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 
 	outputDefinitions := []config.OutputDefinition{
 		{
-			Name:        "output1",
+			Name: "output1",
 			ApplyTo: []string{
 				"install",
 				"upgrade",
 			},
 			Schema: definition.Schema{
-				Type: "string",
+				Type:        "string",
 				Description: "Description of output1",
 			},
 		},
 		{
-			Name:        "output2",
+			Name: "output2",
 			Schema: definition.Schema{
-				Type: "boolean",
+				Type:        "boolean",
 				Description: "Description of output2",
 			},
 		},
@@ -306,34 +306,32 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	outputs := a.generateBundleOutputs(&defs)
 	require.Len(t, defs, 2)
 
-	wantOutputDefinitions := bundle.OutputsDefinition{
-		Fields: map[string]bundle.OutputDefinition{
-			"output1": {
-				Definition:  "output1",
-				Description: "Description of output1",
-				ApplyTo: []string{
-					"install",
-					"upgrade",
-				},
-				Path: "/cnab/app/outputs/output1",
+	wantOutputDefinitions := map[string]bundle.Output{
+		"output1": {
+			Definition:  "output1",
+			Description: "Description of output1",
+			ApplyTo: []string{
+				"install",
+				"upgrade",
 			},
-			"output2": {
-				Definition:  "output2",
-				Description: "Description of output2",
-				Path:        "/cnab/app/outputs/output2",
-			},
+			Path: "/cnab/app/outputs/output1",
+		},
+		"output2": {
+			Definition:  "output2",
+			Description: "Description of output2",
+			Path:        "/cnab/app/outputs/output2",
 		},
 	}
 
-	require.Equal(t, &wantOutputDefinitions, outputs)
+	require.Equal(t, wantOutputDefinitions, outputs)
 
 	wantDefinitions := definition.Definitions{
 		"output1": &definition.Schema{
-			Type: "string",
+			Type:        "string",
 			Description: "Description of output1",
 		},
 		"output2": &definition.Schema{
-			Type: "boolean",
+			Type:        "boolean",
 			Description: "Description of output2",
 		},
 	}
@@ -355,21 +353,21 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 
 	outputDefinitions := []config.OutputDefinition{
 		{
-			Name:        "output1",
+			Name: "output1",
 			ApplyTo: []string{
 				"install",
 				"upgrade",
 			},
 			Schema: definition.Schema{
-				Type:    "string",
-				Default: "default-output",
+				Type:        "string",
+				Default:     "default-output",
 				Description: "Description of output1",
 			},
 		},
 		{
-			Name:        "output2",
+			Name: "output2",
 			Schema: definition.Schema{
-				Type: "boolean",
+				Type:        "boolean",
 				Description: "Description of output2",
 			},
 		},
@@ -388,26 +386,24 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 	outputs := a.generateBundleOutputs(&defs)
 	require.Len(t, defs, 2)
 
-	wantOutputDefinitions := bundle.OutputsDefinition{
-		Fields: map[string]bundle.OutputDefinition{
-			"output1": {
-				Definition:  "output1",
-				Description: "Description of output1",
-				ApplyTo: []string{
-					"install",
-					"upgrade",
-				},
-				Path: "/cnab/app/outputs/output1",
+	wantOutputDefinitions := map[string]bundle.Output{
+		"output1": {
+			Definition:  "output1",
+			Description: "Description of output1",
+			ApplyTo: []string{
+				"install",
+				"upgrade",
 			},
-			"output2": {
-				Definition:  "output2",
-				Description: "Description of output2",
-				Path:        "/cnab/app/outputs/output2",
-			},
+			Path: "/cnab/app/outputs/output1",
+		},
+		"output2": {
+			Definition:  "output2",
+			Description: "Description of output2",
+			Path:        "/cnab/app/outputs/output2",
 		},
 	}
 
-	require.Equal(t, &wantOutputDefinitions, outputs)
+	require.Equal(t, wantOutputDefinitions, outputs)
 
 	// Here we see that the pre-existing output1 definition is preserved
 	wantDefinitions := definition.Definitions{
@@ -415,7 +411,7 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 			Default: "preexisting-default-output",
 		},
 		"output2": &definition.Schema{
-			Type: "boolean",
+			Type:        "boolean",
 			Description: "Description of output2",
 		},
 	}

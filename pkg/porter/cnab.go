@@ -294,16 +294,15 @@ func (o *sharedOptions) combineParameters() map[string]string {
 	return final
 }
 
-// Validate that the provided driver is supported
+// defaultDriver supplies the default driver if none is specified
 func (o *sharedOptions) defaultDriver() {
 	if o.Driver == "" {
 		o.Driver = DefaultDriver
 	}
 }
 
-// Validate that the provided driver is supported
+// validateDriver validates that the provided driver is supported by Porter
 func (o *sharedOptions) validateDriver() error {
-	// Not using duffle's driver.Lookup() as it currently does not return an error on invalid drivers
 	switch o.Driver {
 	case "docker", "debug":
 		return nil

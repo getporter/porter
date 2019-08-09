@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:80004fcc5cf64e591486b3e11b406f1e0d17bf85d475d64203c8494f5da4fcd1"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  pruneopts = "NUT"
+  revision = "ceeb313ad77b789a7fa5287b36a1d127b69b7093"
+  version = "v0.44.3"
+
+[[projects]]
   branch = "master"
   digest = "1:81f8c061c3d18ed1710957910542bc17d2b789c6cd19e0f654c30b35fd255ca5"
   name = "github.com/Azure/go-ansiterm"
@@ -11,6 +19,18 @@
   ]
   pruneopts = "NUT"
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[projects]]
+  digest = "1:da314556429036001a322965147bf09bfc11604fc5cea8b93f389eaeb4133e46"
+  name = "github.com/Azure/go-autorest"
+  packages = [
+    "autorest",
+    "autorest/adal",
+    "autorest/azure",
+    "autorest/date",
+  ]
+  pruneopts = "NUT"
+  revision = "1ff28809256a84bb6966640ff3d0371af82ccba4"
 
 [[projects]]
   digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
@@ -222,32 +242,33 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:1262059b93a03512c45efcc15f5e4ce6683f619613305eb0739f7e6e80fdc4a1"
+  digest = "1:dc812ff2da93b0847c67cf6e01f1552839531a98b06e77a569bbf3a48dd4e7a5"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
     "bundle",
     "bundle/definition",
+    "bundle/loader",
     "claim",
     "credentials",
     "driver",
+    "driver/command",
+    "driver/docker",
+    "driver/kubernetes",
+    "driver/lookup",
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "a0a0201df5945d48a40c46e1d33b70350aae62d5"
-  source = "github.com/vdice/cnab-go"
+  revision = "1ef7d96a46de6e4205de8eedd80e3cf387fef72b"
+  version = "v0.3.1-beta1"
 
 [[projects]]
-  digest = "1:4f1e6f901178a2f34620772c5431e8cbf157db97e6dc6c663d8ea760e265920c"
-  name = "github.com/deislabs/duffle"
-  packages = [
-    "pkg/driver",
-    "pkg/duffle/home",
-    "pkg/loader",
-  ]
+  digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
   pruneopts = "NUT"
-  revision = "4550d7285b4009cc51b867eb6f437c33d521e717"
-  version = "0.2.0-beta.1"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   digest = "1:4fc9beef384b8f57f5bb5fa8d5b00efa350c21b8ef85d93f4d24ef9c18be812d"
@@ -282,14 +303,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c2ab9eddaa3e77cd550fd7430eb20095a86a8a323590dc581332c35e26bc1415"
+  digest = "1:2e6723f6abfee193fe131bf54b0632161e7a1c0da2d062824d4a6866fdc7afc3"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "c9ffda63d51e790034412d57a3eb7c12c23462d3"
+  revision = "9da25824132d77cbdac5898e1f0812f51d35ce8b"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"
@@ -632,6 +653,22 @@
   pruneopts = "NUT"
   revision = "7c663266750e7d82587642f65e60bc4083f1f84e"
   version = "v0.2.0"
+
+[[projects]]
+  digest = "1:80230022ab481c6688b237550bc45017d9d2abfc19e4916e2ce344d24f613a6d"
+  name = "github.com/gophercloud/gophercloud"
+  packages = [
+    ".",
+    "openstack",
+    "openstack/identity/v2/tenants",
+    "openstack/identity/v2/tokens",
+    "openstack/identity/v3/tokens",
+    "openstack/utils",
+    "pagination",
+  ]
+  pruneopts = "NUT"
+  revision = "0398b0cd16bfffade0883973c745180adbbe8918"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:c01767916c59f084bb7c41a7d5877c0f3099b1595cfa066e84ec6ad6b084dd89"
@@ -1136,6 +1173,20 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:1519760444b90c560eb01373869bc66fd539e6fe1bf77af22047c43edc40ab35"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt",
+  ]
+  pruneopts = "NUT"
+  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
+
+[[projects]]
+  branch = "master"
   digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
@@ -1216,6 +1267,25 @@
   ]
   pruneopts = "NUT"
   revision = "508f945e1a9bd8b5e3a9444bb2cdd13d0896132e"
+
+[[projects]]
+  digest = "1:a4824d8df1fd1f63c6b3690bf4801d6ff1722adcb3e13c0489196a7e248d868a"
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "urlfetch",
+  ]
+  pruneopts = "NUT"
+  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
+  version = "v1.6.1"
 
 [[projects]]
   branch = "master"
@@ -1377,7 +1447,7 @@
   version = "kubernetes-1.11.5"
 
 [[projects]]
-  digest = "1:276fd1cd7407399ad7852ba5fa66fdbce1eb3c26bd3cdbe5cb31d52cbd94bcb5"
+  digest = "1:f1b1ec9662701c6424ec4ce189e1322be99a5bed8a8b0e157547f5ce118168bf"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
@@ -1416,9 +1486,15 @@
     "pkg/apis/clientauthentication/v1alpha1",
     "pkg/apis/clientauthentication/v1beta1",
     "pkg/version",
+    "plugin/pkg/client/auth",
+    "plugin/pkg/client/auth/azure",
     "plugin/pkg/client/auth/exec",
+    "plugin/pkg/client/auth/gcp",
+    "plugin/pkg/client/auth/oidc",
+    "plugin/pkg/client/auth/openstack",
     "rest",
     "rest/watch",
+    "third_party/forked/golang/template",
     "tools/auth",
     "tools/clientcmd",
     "tools/clientcmd/api",
@@ -1432,6 +1508,7 @@
     "util/flowcontrol",
     "util/homedir",
     "util/integer",
+    "util/jsonpath",
   ]
   pruneopts = "NUT"
   revision = "d4cbff6e80d2455e23aeeade2870c62007a7f5b4"
@@ -1457,13 +1534,13 @@
     "github.com/deislabs/cnab-go/action",
     "github.com/deislabs/cnab-go/bundle",
     "github.com/deislabs/cnab-go/bundle/definition",
+    "github.com/deislabs/cnab-go/bundle/loader",
     "github.com/deislabs/cnab-go/claim",
     "github.com/deislabs/cnab-go/credentials",
     "github.com/deislabs/cnab-go/driver",
+    "github.com/deislabs/cnab-go/driver/docker",
+    "github.com/deislabs/cnab-go/driver/lookup",
     "github.com/deislabs/cnab-go/utils/crud",
-    "github.com/deislabs/duffle/pkg/driver",
-    "github.com/deislabs/duffle/pkg/duffle/home",
-    "github.com/deislabs/duffle/pkg/loader",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/config",
     "github.com/docker/cli/cli/flags",
