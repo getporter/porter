@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/deislabs/porter/pkg/config"
+
+	"github.com/deislabs/cnab-go/bundle"
 )
 
 // Output represents a bundle output
@@ -67,4 +69,17 @@ func ReadBundleOutput(c *config.Config, name, claim string) (*Output, error) {
 // JSONMarshal marshals an Output to JSON, returning a byte array or error
 func (o *Output) JSONMarshal() ([]byte, error) {
 	return json.MarshalIndent(o, "", "  ")
+}
+
+// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
+func AppliesTo(action string, output bundle.Output) bool {
+	if len(output.ApplyTo) == 0 {
+		return true
+	}
+	for _, act := range output.ApplyTo {
+		if action == act {
+			return true
+		}
+	}
+	return false
 }

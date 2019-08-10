@@ -69,7 +69,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	runErr := i.Run(&claim, creds, d.Out)
 
 	// Add/update the outputs section of a claim and capture error
-	err = d.WriteClaimOutputs(&claim)
+	err = d.WriteClaimOutputs(&claim, string(config.ActionUpgrade))
 
 	// ALWAYS write out a claim, even if the upgrade fails
 	saveErr := claims.Store(claim)
