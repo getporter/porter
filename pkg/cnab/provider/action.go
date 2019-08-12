@@ -1,15 +1,20 @@
 package cnabprovider
 
+import (
+	"github.com/deislabs/cnab-go/driver"
+)
+
 // Shared arguments for all CNAB actions supported by duffle
 type ActionArguments struct {
 	// Name of the claim.
 	Claim string
 
 	// Either a filepath to the bundle or the name of the bundle.
-	BundleIdentifier string
+	BundlePath string
 
-	// BundleIdentifier is a filepath.
-	BundleIsFile bool
+	// Additional files to copy into the bundle
+	// Target Path => File Contents
+	Files map[string]string
 
 	// Insecure bundle action allowed.
 	Insecure bool
@@ -22,4 +27,12 @@ type ActionArguments struct {
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
+}
+
+func (args ActionArguments) ApplyFiles() func(op *driver.Operation) {
+	return func(op *driver.Operation) {
+		for k, v := range args.Files {
+			op.Files[k] = v
+		}
+	}
 }

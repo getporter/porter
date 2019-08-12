@@ -12,37 +12,37 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	if err != nil {
 		return errors.Wrapf(err, "could not access claim store")
 	}
-	claim, err := claims.Read(args.Claim)
+	c, err := claims.Read(args.Claim)
 	if err != nil {
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)
 	}
 
-	if args.BundleIdentifier != "" {
-		// TODO: handle resolving based on bundle name
-		claim.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
+	if args.BundlePath != "" {
+		c.Bundle, err = d.LoadBundle(args.BundlePath, args.Insecure)
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(args.Params) > 0 {
-		claim.Parameters, err = d.loadParameters(&claim, args.Params, action)
+		c.Parameters, err = d.loadParameters(&c, args.Params, action)
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}
 	}
 
-	driver, err := d.newDriver(args.Driver, claim.Name)
+	driver, err := d.newDriver(args.Driver, c.Name, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
 
 	i := cnabaction.RunCustom{
-		Action: action,
-		Driver: driver,
+		Action:          action,
+		Driver:          driver,
+		OperationConfig: args.ApplyFiles(),
 	}
 
-	creds, err := d.loadCredentials(claim.Bundle, args.CredentialIdentifiers)
+	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}
@@ -54,21 +54,21 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 			credKeys = append(credKeys, k)
 		}
 		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(claim.Parameters))
-		for k := range claim.Parameters {
+		paramKeys := make([]string, 0, len(c.Parameters))
+		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", claim.Bundle.Name, args.BundleIdentifier, action, claim.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Name, paramKeys, credKeys)
 	}
 
 	// Run the action and ALWAYS write out a claim, even if the action fails
-	runErr := i.Run(&claim, creds, d.Out)
+	runErr := i.Run(&c, creds, d.Out)
 
 	// Add/update the outputs section of a claim and capture error
-	err = d.WriteClaimOutputs(&claim, action)
+	err = d.WriteClaimOutputs(&c, action)
 
 	// ALWAYS write out a claim, even if the action fails
-	saveErr := claims.Store(claim)
+	saveErr := claims.Store(c)
 	if runErr != nil {
 		return errors.Wrap(runErr, "failed to invoke the bundle")
 	}

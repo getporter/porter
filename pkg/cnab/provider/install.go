@@ -5,9 +5,8 @@ import (
 
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/pkg/errors"
-
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/pkg/errors"
 )
 
 func (d *Duffle) Install(args ActionArguments) error {
@@ -19,8 +18,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 		return errors.Wrap(err, "invalid claim name")
 	}
 
-	// TODO: handle resolving based on bundle name
-	b, err := d.LoadBundle(args.BundleIdentifier, args.Insecure)
+	b, err := d.LoadBundle(args.BundlePath, args.Insecure)
 	if err != nil {
 		return err
 	}
@@ -37,12 +35,13 @@ func (d *Duffle) Install(args ActionArguments) error {
 	}
 	c.Parameters = params
 
-	driver, err := d.newDriver(args.Driver, c.Name)
+	dvr, err := d.newDriver(args.Driver, c.Name, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
 	i := action.Install{
-		Driver: driver,
+		Driver:          dvr,
+		OperationConfig: args.ApplyFiles(),
 	}
 
 	creds, err := d.loadCredentials(b, args.CredentialIdentifiers)
@@ -61,7 +60,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 		for k := range params {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
 	}
 
 	// Install and capture error

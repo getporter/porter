@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
-
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
@@ -128,17 +129,18 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 }
 
 func TestResolveMapParam(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Parameters: []ParameterDefinition{
-				{
-					Name: "person",
-				},
+	os.Setenv("PERSON", "Ralpha")
+	defer os.Unsetenv("PERSON")
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name: "person",
 			},
 		},
 	}
-
-	os.Setenv("PERSON", "Ralpha")
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 	s := &Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -150,7 +152,7 @@ func TestResolveMapParam(t *testing.T) {
 
 	before, _ := yaml.Marshal(s)
 	t.Logf("Before:\n %s", before)
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	after, _ := yaml.Marshal(s)
 	t.Logf("After:\n %s", after)
@@ -168,11 +170,11 @@ func TestResolveMapParam(t *testing.T) {
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Parameters: []ParameterDefinition{},
-		},
+	c := context.NewTestContext(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -183,21 +185,21 @@ func TestResolveMapParamUnknown(t *testing.T) {
 		},
 	}
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Parameters: []ParameterDefinition{
-				{
-					Name: "name",
-				},
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name: "name",
 			},
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -208,23 +210,25 @@ func TestResolveArrayUnknown(t *testing.T) {
 		},
 	}
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template Arguments:\n- '{{ bundle.parameters.person }}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArray(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Parameters: []ParameterDefinition{
-				{
-					Name: "person",
-				},
+	os.Setenv("PERSON", "Ralpha")
+	defer os.Unsetenv("PERSON")
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name: "person",
 			},
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
-	os.Setenv("PERSON", "Ralpha")
 	s := &Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -234,7 +238,7 @@ func TestResolveArray(t *testing.T) {
 		},
 	}
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
@@ -242,22 +246,25 @@ func TestResolveArray(t *testing.T) {
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Parameters: []ParameterDefinition{
-				{
-					Name:      "sensitive_param",
-					Sensitive: true,
-				},
-				{
-					Name: "regular_param",
-				},
+	os.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	defer os.Unsetenv("SENSITIVE_PARAM")
+	os.Setenv("REGULAR_PARAM", "regular param value")
+	defer os.Unsetenv("REGULAR_PARAM")
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name:      "sensitive_param",
+				Sensitive: true,
+			},
+			{
+				Name: "regular_param",
 			},
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
-	os.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
-	os.Setenv("REGULAR_PARAM", "regular param value")
 	s := &Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -269,9 +276,9 @@ func TestResolveSensitiveParameter(t *testing.T) {
 	}
 
 	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, m.GetSensitiveValues(), []string{})
+	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
@@ -280,22 +287,24 @@ func TestResolveSensitiveParameter(t *testing.T) {
 	assert.Equal(t, "regular param value", args[1])
 
 	// There should now be one sensitive value tracked under the manifest
-	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
+	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
 }
 
 func TestResolveCredential(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Credentials: []CredentialDefinition{
-				{
-					Name:     "password",
-					Location: Location{EnvironmentVariable: "PASSWORD"},
-				},
+	os.Setenv("PASSWORD", "deliciou$dubonnet")
+	defer os.Unsetenv("PASSWORD")
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Credentials: []CredentialDefinition{
+			{
+				Name:     "password",
+				Location: Location{EnvironmentVariable: "PASSWORD"},
 			},
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
-	os.Setenv("PASSWORD", "deliciou$dubonnet")
 	s := &Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -306,33 +315,45 @@ func TestResolveCredential(t *testing.T) {
 	}
 
 	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, m.GetSensitiveValues(), []string{})
+	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, "deliciou$dubonnet", args[0])
 
 	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"deliciou$dubonnet"}, m.GetSensitiveValues())
+	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
 }
 
 func TestResolveStepOutputs(t *testing.T) {
-	t.Skip("Skip while dependencies is being rewritten")
-
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Dependencies: map[string]Dependency{
-				"dep": {
-					Tag: "deislabs/porter-hello",
-				},
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Dependencies: map[string]Dependency{
+			"dep": {
+				Tag: "deislabs/porter-hello",
 			},
 		},
-		outputs: map[string]string{
-			"output": "output_value",
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	rm.bundles = map[string]bundle.Bundle{
+		"dep": {
+			Outputs: map[string]bundle.Output{
+				"dep_output": {
+					Definition: "dep_output",
+				},
+			},
+			Definitions: map[string]*definition.Schema{
+				"dep_output": {WriteOnly: makeBoolPtr(true)},
+			},
 		},
 	}
+	rm.outputs = map[string]string{
+		"output": "output_value",
+	}
+
+	c.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte(`{"value":"dep_output_value"}`), 0644)
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -345,9 +366,9 @@ func TestResolveStepOutputs(t *testing.T) {
 	}
 
 	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, m.GetSensitiveValues(), []string{})
+	assert.Equal(t, rm.GetSensitiveValues(), []string{})
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
@@ -356,7 +377,7 @@ func TestResolveStepOutputs(t *testing.T) {
 	assert.Equal(t, "dep_output_value", args[1].(string))
 
 	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"output_value", "dep_output_value"}, m.GetSensitiveValues())
+	assert.Equal(t, []string{"output_value", "dep_output_value"}, rm.GetSensitiveValues())
 }
 
 func TestResolveInMainDict(t *testing.T) {
@@ -366,7 +387,7 @@ func TestResolveInMainDict(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", Name)
 
 	require.NoError(t, c.LoadManifest())
-	rm := RuntimeManifest{Manifest: c.Manifest}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, c.Manifest)
 
 	installStep := rm.Install[0]
 
@@ -426,20 +447,20 @@ func TestResolveMultipleStepOutputs(t *testing.T) {
 		},
 	}
 
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Mixins: []string{"helm"},
-			Install: Steps{
-				s,
-			},
-		},
-		outputs: map[string]string{
-			"database_url":  databaseURL,
-			"database_port": databasePort,
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	rm.outputs = map[string]string{
+		"database_url":  databaseURL,
+		"database_port": databasePort,
+	}
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	helm, ok := s.Data["helm"].(map[interface{}]interface{})
 	assert.True(t, ok)
@@ -461,22 +482,22 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 		},
 	}
 
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Mixins: []string{"helm"},
-			Install: Steps{
-				s,
-			},
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
 		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"database_url\"", err.Error())
+	assert.Equal(t, "unable to resolve step: unable to render template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
 }
 
 func TestResolveDependencyParam(t *testing.T) {
-	t.Skip("Skip while dependencies is being rewritten")
+	t.Skip("still haven't decided if this is going to be supported")
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -489,22 +510,22 @@ func TestResolveDependencyParam(t *testing.T) {
 		},
 	}
 
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Dependencies: map[string]Dependency{
-				"mysql": {
-					Tag: "deislabs/porter-mysql",
-				},
-			},
-			Mixins: []string{"helm"},
-			Install: Steps{
-				s,
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Dependencies: map[string]Dependency{
+			"mysql": {
+				Tag: "deislabs/porter-mysql",
 			},
 		},
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
 	os.Setenv("DATABASE", "wordpress")
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	helm, ok := s.Data["helm"].(map[interface{}]interface{})
 	assert.True(t, ok)
@@ -514,7 +535,7 @@ func TestResolveDependencyParam(t *testing.T) {
 }
 
 func TestResolveMissingDependencyParam(t *testing.T) {
-	t.Skip("Skip while dependencies is being rewritten")
+	t.Skip("still haven't decided if this is going to be supported")
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -527,32 +548,32 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 		},
 	}
 
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Dependencies: map[string]Dependency{
-				"mysql": {
-					Tag: "deislabs/porter-mysql",
-				},
-			},
-			Mixins: []string{"helm"},
-			Install: Steps{
-				s,
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Dependencies: map[string]Dependency{
+			"mysql": {
+				Tag: "deislabs/porter-mysql",
 			},
 		},
+		Mixins: []string{"helm"},
+		Install: Steps{
+			s,
+		},
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
 	os.Setenv("DATABASE", "wordpress")
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.Error(t, err)
 	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {
-	m := &RuntimeManifest{
-		Manifest: &Manifest{
-			Name: "mybundle",
-		},
+	c := context.NewTestContext(t)
+	m := &Manifest{
+		Name: "mybundle",
 	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
 
 	s := &Step{
 		Data: map[string]interface{}{
@@ -563,7 +584,7 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 		},
 	}
 
-	err := m.ResolveStep(s)
+	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
@@ -650,4 +671,8 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 
 	assert.Contains(t, rm.outputs, "foo")
 	assert.Equal(t, "bar", rm.outputs["foo"])
+}
+
+func makeBoolPtr(value bool) *bool {
+	return &value
 }

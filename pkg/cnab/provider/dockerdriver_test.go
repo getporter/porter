@@ -17,7 +17,7 @@ func TestNewDriver_Docker(t *testing.T) {
 	c := config.NewTestConfig(t)
 	d := NewDuffle(c.Config)
 
-	driver, err := d.newDriver("docker", "myclaim")
+	driver, err := d.newDriver("docker", "myclaim", ActionArguments{})
 	require.NoError(t, err)
 
 	if _, ok := driver.(*docker.Driver); ok {

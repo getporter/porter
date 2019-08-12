@@ -30,7 +30,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 	require.Len(t, locks, 1)
 
 	lock := locks[0]
-	assert.Equal(t, "mysql", lock.Name)
+	assert.Equal(t, "mysql", lock.Alias)
 	assert.Equal(t, "deislabs/mysql:5.7", lock.Tag)
 }
 
