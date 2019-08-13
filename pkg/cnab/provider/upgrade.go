@@ -13,7 +13,10 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Upgrade
 	// we shouldn't be reimplementing calling all these functions all over again
 
-	claims := d.NewClaimStore()
+	claims, err := d.NewClaimStore()
+	if err != nil {
+		return errors.Wrapf(err, "could not access claim store")
+	}
 	claim, err := claims.Read(args.Claim)
 	if err != nil {
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)

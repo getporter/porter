@@ -8,7 +8,10 @@ import (
 )
 
 func (d *Duffle) Invoke(action string, args ActionArguments) error {
-	claims := d.NewClaimStore()
+	claims, err := d.NewClaimStore()
+	if err != nil {
+		return errors.Wrapf(err, "could not access claim store")
+	}
 	claim, err := claims.Read(args.Claim)
 	if err != nil {
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)
