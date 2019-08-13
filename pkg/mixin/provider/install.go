@@ -119,7 +119,7 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool)
 		return errors.Wrapf(err, "unable to check if directory exists %s", parentDir)
 	}
 
-	cleanup := func(){}
+	cleanup := func() {}
 	if !parentDirExists {
 		err = p.FileSystem.MkdirAll(parentDir, 0755)
 		if err != nil {

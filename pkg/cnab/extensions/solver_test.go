@@ -48,7 +48,7 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 			dep:       Dependency{"mysql", &DependencyVersion{nil, true}},
 			wantError: "not implemented"},
 		{name: "unimplemented missing tag",
-			dep:       Dependency{Bundle:"mysql"},
+			dep:       Dependency{Bundle: "mysql"},
 			wantError: "not implemented"},
 	}
 

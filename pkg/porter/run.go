@@ -95,7 +95,7 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
-	err = steps.Validate(p.Manifest)
+	err = steps.Validate(p.Manifest.Manifest)
 	if err != nil {
 		return errors.Wrap(err, "invalid action configuration")
 	}

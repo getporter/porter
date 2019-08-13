@@ -19,7 +19,7 @@ const SchemaVersion = "v1.0.0-WD"
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
 	*context.Context
-	Manifest *config.Manifest
+	Manifest *config.RuntimeManifest
 }
 
 func (c *ManifestConverter) ToBundle() *bundle.Bundle {

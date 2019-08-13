@@ -97,7 +97,7 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
 	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
 	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
-	
+
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
 		SearchDirectory: "bin",

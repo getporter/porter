@@ -42,7 +42,7 @@ var evalSymlinks = filepath.EvalSymlinks
 
 type Config struct {
 	*context.Context
-	Manifest *Manifest
+	Manifest *RuntimeManifest
 
 	porterHome string
 }

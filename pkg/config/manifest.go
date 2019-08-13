@@ -1,28 +1,19 @@
 package config
 
 import (
-	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 
-	"github.com/cbroglie/mustache"
-	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 type Manifest struct {
-	// path where the manifest was loaded, used to resolve local bundle references
-	path            string
-	outputs         map[string]string
-	sensitiveValues []string
-
 	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
 	Version     string `yaml:"version,omitempty"`
@@ -54,6 +45,50 @@ type Manifest struct {
 	// /cnab/app/image-map.json. This data is not used by porter or any of the deislabs mixins, so only populate when you
 	// plan on manually using this data in your own scripts.
 	ImageMap map[string]MappedImage `yaml:"imageMap,omitempty"`
+}
+
+func (m *Manifest) Validate() error {
+	var result error
+
+	if strings.ToLower(m.Dockerfile) == "dockerfile" {
+		return errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
+	}
+
+	if len(m.Mixins) == 0 {
+		result = multierror.Append(result, errors.New("no mixins declared"))
+	}
+
+	if m.Install == nil {
+		result = multierror.Append(result, errors.New("no install action defined"))
+	}
+	err := m.Install.Validate(m)
+	if err != nil {
+		result = multierror.Append(result, err)
+	}
+
+	if m.Uninstall == nil {
+		result = multierror.Append(result, errors.New("no uninstall action defined"))
+	}
+	err = m.Uninstall.Validate(m)
+	if err != nil {
+		result = multierror.Append(result, err)
+	}
+
+	for _, dep := range m.Dependencies {
+		err = dep.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	for _, output := range m.Outputs {
+		err = output.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	return result
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -103,6 +138,18 @@ type Dependency struct {
 	Parameters map[string]string `yaml:"parameters,omitempty"`
 }
 
+func (d *Dependency) Validate() error {
+	if d.Tag == "" {
+		return errors.New("dependency tag is required")
+	}
+
+	if strings.Contains(d.Tag, ":") && len(d.Versions) > 0 {
+		return errors.New("dependency tag can only specify REGISTRY/NAME when version ranges are specified")
+	}
+
+	return nil
+}
+
 type CustomActionDefinition struct {
 	Description       string `yaml:"description,omitempty"`
 	ModifiesResources bool   `yaml:"modifies,omitempty"`
@@ -128,72 +175,84 @@ func (od *OutputDefinition) Validate() error {
 	return nil
 }
 
-func (d *Dependency) Validate() error {
-	if d.Tag == "" {
-		return errors.New("dependency tag is required")
-	}
-
-	if strings.Contains(d.Tag, ":") && len(d.Versions) > 0 {
-		return errors.New("dependency tag can only specify REGISTRY/NAME when version ranges are specified")
-	}
-
-	return nil
-}
-
-func resolveParameter(pd ParameterDefinition) (string, error) {
-	pe := pd.Name
-	if pd.Destination == nil {
-		// Porter by default sets CNAB params to name.ToUpper()
-		return os.Getenv(strings.ToUpper(pe)), nil
-	} else if pd.Destination.EnvironmentVariable != "" {
-		return os.Getenv(pd.Destination.EnvironmentVariable), nil
-	} else if pd.Destination == nil && pd.Destination.Path != "" {
-		return pd.Destination.Path, nil
-	}
-	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
-
-}
-
-func resolveCredential(cd CredentialDefinition) (string, error) {
-	if cd.EnvironmentVariable != "" {
-		return os.Getenv(cd.EnvironmentVariable), nil
-	} else if cd.Path != "" {
-		return cd.Path, nil
-	} else {
-		return "", fmt.Errorf("credential: %s is malformed", cd.Name)
-	}
-}
-
-func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
-	sensitiveStuff := []string{}
-	depVals := make(map[string]interface{})
-
-	params := make(map[string]interface{})
-	depVals["parameters"] = params
-	// TODO: Populate dependency parameters lookup
-
-	creds := make(map[string]interface{})
-	depVals["credentials"] = creds
-	// TODO: Resolve dependency credentials lookup, or remove it from the template language if it shouldn't be accessible
-
-	outputs := make(map[string]interface{})
-	depVals["outputs"] = outputs
-	// TODO: Populate dependency output lookups
-	// TODO: Add outputs onto sensitive stuff
-
-	return depVals, sensitiveStuff, nil
-}
-
 type BundleOutput struct {
 	Name                string `yaml:"name"`
 	Path                string `yaml:"path"`
 	EnvironmentVariable string `yaml:"env"`
 }
 
-type BundleConnection struct {
-	Source      string `yaml:source`
-	Destination string `yaml:destination`
-	// TODO: Need to add type once it's completed in #20
+type Steps []*Step
+
+func (s Steps) Validate(m *Manifest) error {
+	for _, step := range s {
+		if step != nil {
+			err := step.Validate(m)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type Step struct {
+	Data map[string]interface{} `yaml:",inline"`
+}
+
+func (s *Step) Validate(m *Manifest) error {
+	if len(s.Data) == 0 {
+		return errors.New("no mixin specified")
+	}
+	if len(s.Data) > 1 {
+		return errors.New("more than one mixin specified")
+	}
+
+	mixinDeclared := false
+	mixinType := s.GetMixinName()
+	for _, mixin := range m.Mixins {
+		if mixin == mixinType {
+			mixinDeclared = true
+			break
+		}
+	}
+	if !mixinDeclared {
+		return errors.Errorf("mixin (%s) was not declared", mixinType)
+	}
+
+	if _, err := s.GetDescription(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetDescription returns a description of the step.
+// Every step must have this property.
+func (s *Step) GetDescription() (string, error) {
+	if s.Data == nil {
+		return "", errors.New("empty step data")
+	}
+
+	mixinName := s.GetMixinName()
+	children := s.Data[mixinName]
+	d, ok := children.(map[interface{}]interface{})["description"]
+	if !ok {
+		return "", errors.Errorf("mixin step (%s) missing description", mixinName)
+	}
+	desc, ok := d.(string)
+	if !ok {
+		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
+	}
+
+	return desc, nil
+}
+
+func (s *Step) GetMixinName() string {
+	var mixinName string
+	for k := range s.Data {
+		mixinName = k
+	}
+	return mixinName
 }
 
 func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
@@ -265,7 +324,6 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.path = path
 
 	return m, nil
 }
@@ -286,7 +344,6 @@ func (c *Config) readFromURL(path string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.path = path
 
 	return m, nil
 }
@@ -311,269 +368,12 @@ func (c *Config) LoadManifestFrom(file string) error {
 		return err
 	}
 
-	c.Manifest = m
-
-	err = c.Manifest.Validate()
+	err = m.Validate()
 	if err != nil {
 		return err
 	}
 
-	// TODO: Temporarily disable loading dependencies while we rewrite the dependency feature
-	//return c.LoadDependencies()
-	return nil
-}
+	c.Manifest = NewRuntimeManifest(m, file)
 
-// GetManifestDir returns the path to the directory that contains the manifest.
-func (m *Manifest) GetManifestDir() string {
-	return filepath.Dir(m.path)
-}
-
-// GetManifestPath returns the path where the manifest was loaded. May be a URL.
-func (m *Manifest) GetManifestPath() string {
-	return m.path
-}
-
-func (m *Manifest) Validate() error {
-	var result error
-
-	if strings.ToLower(m.Dockerfile) == "dockerfile" {
-		return errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
-	}
-
-	if len(m.Mixins) == 0 {
-		result = multierror.Append(result, errors.New("no mixins declared"))
-	}
-
-	if m.Install == nil {
-		result = multierror.Append(result, errors.New("no install action defined"))
-	}
-	err := m.Install.Validate(m)
-	if err != nil {
-		result = multierror.Append(result, err)
-	}
-
-	if m.Uninstall == nil {
-		result = multierror.Append(result, errors.New("no uninstall action defined"))
-	}
-	err = m.Uninstall.Validate(m)
-	if err != nil {
-		result = multierror.Append(result, err)
-	}
-
-	for _, dep := range m.Dependencies {
-		err = dep.Validate()
-		if err != nil {
-			result = multierror.Append(result, err)
-		}
-	}
-
-	for _, output := range m.Outputs {
-		err = output.Validate()
-		if err != nil {
-			result = multierror.Append(result, err)
-		}
-	}
-
-	return result
-}
-
-func (m *Manifest) GetSensitiveValues() []string {
-	if m.sensitiveValues == nil {
-		return []string{}
-	}
-	return m.sensitiveValues
-}
-
-func (m *Manifest) GetSteps(action Action) (Steps, error) {
-	switch action {
-	case ActionInstall:
-		return m.Install, nil
-	case ActionUninstall:
-		return m.Uninstall, nil
-	case ActionUpgrade:
-		return m.Upgrade, nil
-	default:
-		customAction, ok := m.CustomActions[string(action)]
-		if !ok {
-			actions := make([]string, 0, len(m.CustomActions))
-			for a := range m.CustomActions {
-				actions = append(actions, a)
-			}
-			return nil, errors.Errorf("unsupported action %q, custom actions are defined for: %s", action, strings.Join(actions, ", "))
-		}
-		return customAction, nil
-	}
-}
-
-func (m *Manifest) ApplyStepOutputs(step *Step, assignments map[string]string) error {
-	if m.outputs == nil {
-		m.outputs = map[string]string{}
-	}
-
-	for outvar, outval := range assignments {
-		if _, exists := m.outputs[outvar]; exists {
-			return fmt.Errorf("output already set: %s", outvar)
-		}
-		m.outputs[outvar] = outval
-	}
-	return nil
-}
-
-type Steps []*Step
-
-func (s Steps) Validate(m *Manifest) error {
-	for _, step := range s {
-		if step != nil {
-			err := step.Validate(m)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-type Step struct {
-	Data map[string]interface{} `yaml:",inline"`
-}
-
-// GetDescription returns a description of the step.
-// Every step must have this property.
-func (s *Step) GetDescription() (string, error) {
-	if s.Data == nil {
-		return "", errors.New("empty step data")
-	}
-
-	mixinName := s.GetMixinName()
-	children := s.Data[mixinName]
-	d, ok := children.(map[interface{}]interface{})["description"]
-	if !ok {
-		return "", errors.Errorf("mixin step (%s) missing description", mixinName)
-	}
-	desc, ok := d.(string)
-	if !ok {
-		return "", errors.Errorf("invalid description type (%T) for mixin step (%s)", desc, mixinName)
-	}
-
-	return desc, nil
-}
-
-type StepOutput struct {
-	// The final value of the output returned by the mixin after executing
-	value string
-
-	Name string                 `yaml:"name"`
-	Data map[string]interface{} `yaml:",inline"`
-}
-
-func (s *Step) Validate(m *Manifest) error {
-	if len(s.Data) == 0 {
-		return errors.New("no mixin specified")
-	}
-	if len(s.Data) > 1 {
-		return errors.New("more than one mixin specified")
-	}
-
-	mixinDeclared := false
-	mixinType := s.GetMixinName()
-	for _, mixin := range m.Mixins {
-		if mixin == mixinType {
-			mixinDeclared = true
-			break
-		}
-	}
-	if !mixinDeclared {
-		return errors.Errorf("mixin (%s) was not declared", mixinType)
-	}
-
-	if _, err := s.GetDescription(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Step) GetMixinName() string {
-	var mixinName string
-	for k := range s.Data {
-		mixinName = k
-	}
-	return mixinName
-}
-
-func (m *Manifest) buildSourceData() (map[string]interface{}, error) {
-	data := make(map[string]interface{})
-	m.sensitiveValues = []string{}
-	bundle := make(map[string]interface{})
-	data["bundle"] = bundle
-
-	// Enable interpolation of manifest/bundle name via bundle.name
-	bundle["name"] = m.Name
-
-	params := make(map[string]interface{})
-	bundle["parameters"] = params
-	for _, param := range m.Parameters {
-		//pe := strings.ToUpper(param.Name)
-		pe := param.Name
-		var val string
-		val, err := resolveParameter(param)
-		if err != nil {
-			return nil, err
-		}
-		if param.Sensitive {
-			m.sensitiveValues = append(m.sensitiveValues, val)
-		}
-		params[pe] = val
-	}
-
-	creds := make(map[string]interface{})
-	bundle["credentials"] = creds
-	for _, cred := range m.Credentials {
-		pe := cred.Name
-		val, err := resolveCredential(cred)
-		if err != nil {
-			return nil, err
-		}
-		m.sensitiveValues = append(m.sensitiveValues, val)
-		creds[pe] = val
-	}
-	bundle["outputs"] = m.outputs
-	for _, output := range m.outputs {
-		m.sensitiveValues = append(m.sensitiveValues, output)
-	}
-	deps := make(map[string]interface{})
-	bundle["dependencies"] = deps
-	for name, dependency := range m.Dependencies {
-		dep, sensitives, err := dependency.resolve()
-		if err != nil {
-			return nil, err
-		}
-		deps[name] = dep
-		m.sensitiveValues = append(m.sensitiveValues, sensitives...)
-	}
-	return data, nil
-}
-
-// ResolveStep will walk through the Step's data and resolve any placeholder
-// data using the definitions in the manifest, like parameters or credentials.
-func (m *Manifest) ResolveStep(step *Step) error {
-
-	mustache.AllowMissingVariables = false
-	sourceData, err := m.buildSourceData()
-	if err != nil {
-		return errors.Wrap(err, "unable to resolve step: unable to populate source data")
-	}
-	payload, err := yaml.Marshal(step)
-	if err != nil {
-		return err
-	}
-	rendered, err := mustache.Render(string(payload), sourceData)
-	if err != nil {
-		return errors.Wrap(err, "unable to resolve step: unable to render template values")
-	}
-	err = yaml.Unmarshal([]byte(rendered), step)
-	if err != nil {
-		return errors.Wrap(err, "unable to resolve step: invalid step yaml")
-	}
 	return nil
 }

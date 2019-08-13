@@ -13,16 +13,16 @@ func TestMixinFeed_Search_Latest(t *testing.T) {
 
 	f.Index["helm"] = make(map[string]*MixinFileset)
 	f.Index["helm"]["canary"] = &MixinFileset{
-		Mixin: "helm",
-		Version:"canary",
+		Mixin:   "helm",
+		Version: "canary",
 	}
 	f.Index["helm"]["v1.2.3"] = &MixinFileset{
-		Mixin: "helm",
-		Version:"v1.2.3",
+		Mixin:   "helm",
+		Version: "v1.2.3",
 	}
 	f.Index["helm"]["v1.2.4"] = &MixinFileset{
-		Mixin: "helm",
-		Version:"v1.2.4",
+		Mixin:   "helm",
+		Version: "v1.2.4",
 	}
 
 	result := f.Search("helm", "latest")
@@ -38,12 +38,12 @@ func TestMixinFeed_Search_Canary(t *testing.T) {
 
 	f.Index["helm"] = make(map[string]*MixinFileset)
 	f.Index["helm"]["canary"] = &MixinFileset{
-		Mixin: "helm",
-		Version:"canary",
+		Mixin:   "helm",
+		Version: "canary",
 	}
 	f.Index["helm"]["v1.2.4"] = &MixinFileset{
-		Mixin: "helm",
-		Version:"v1.2.4",
+		Mixin:   "helm",
+		Version: "v1.2.4",
 	}
 
 	result := f.Search("helm", "canary")
