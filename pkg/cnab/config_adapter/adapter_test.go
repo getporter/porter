@@ -432,7 +432,6 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 	}
 
 	deps := a.generateDependencies()
-
 	require.NotNil(t, deps, "Dependencies should not be nil")
 	require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
 
@@ -474,6 +473,23 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			assert.Equal(t, &tc.wantDep, dep)
 		})
 	}
+}
+
+func TestManifestConverter_RequiredExtensions(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	a := ManifestConverter{
+		Context:  c.Context,
+		Manifest: c.Manifest,
+	}
+
+	bun := a.ToBundle()
+
+	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
 }
 
 func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {

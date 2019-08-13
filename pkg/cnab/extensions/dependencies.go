@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DependenciesKey    = "dependencies"
+	DependenciesKey    = "io.cnab.dependencies"
 	DependenciesSchema = "https://cnab.io/specs/v1/dependencies.schema.json"
 )
 
