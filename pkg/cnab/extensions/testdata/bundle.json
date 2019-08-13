@@ -42,9 +42,9 @@
       "env": "equux"
     }
   },
-  "requiredExtensions": {
-    "dependencies": "https://cnab.io/specs/v1/dependencies.schema.json"
-  },
+  "requiredExtensions": [
+    "https://cnab.io/specs/v1/dependencies.schema.json"
+  ],
   "custom": {
     "com.example.duffle-bag": {
       "icon": "https://example.com/icon.png",

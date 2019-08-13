@@ -35,15 +35,15 @@ const (
 // provide the necessary data to upgrade, uninstall, and downgrade
 // a CNAB package.
 type Claim struct {
-	Name          string                    `json:"name"`
-	Revision      string                    `json:"revision"`
-	Created       time.Time                 `json:"created"`
-	Modified      time.Time                 `json:"modified"`
-	Bundle        *bundle.Bundle            `json:"bundle"`
-	Result        Result                    `json:"result"`
-	Parameters    map[string]interface{}    `json:"parameters"`
+	Name       string                 `json:"name"`
+	Revision   string                 `json:"revision"`
+	Created    time.Time              `json:"created"`
+	Modified   time.Time              `json:"modified"`
+	Bundle     *bundle.Bundle         `json:"bundle"`
+	Result     Result                 `json:"result"`
+	Parameters map[string]interface{} `json:"parameters"`
+	// Outputs is a map from the names of outputs (defined in the bundle) to the contents of the files.
 	Outputs       map[string]interface{}    `json:"outputs"`
-	Files         map[string]string         `json:"files"`
 	RelocationMap bundle.ImageRelocationMap `json:"relocationMap"`
 }
 

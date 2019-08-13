@@ -2,7 +2,7 @@ package cnabprovider
 
 import (
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/duffle/pkg/loader"
+	"github.com/deislabs/cnab-go/bundle/loader"
 	"github.com/pkg/errors"
 )
 

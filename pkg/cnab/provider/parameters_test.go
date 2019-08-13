@@ -21,9 +21,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	require.NoError(t, err)
 
 	claim.Bundle = &bundle.Bundle{
-		Parameters: &bundle.ParametersDefinition{
-			Fields: map[string]bundle.ParameterDefinition{},
-		},
+		Parameters: map[string]bundle.Parameter{},
 	}
 
 	overrides := map[string]string{
@@ -42,11 +40,9 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	require.NoError(t, err)
 
 	claim.Bundle = &bundle.Bundle{
-		Parameters: &bundle.ParametersDefinition{
-			Fields: map[string]bundle.ParameterDefinition{
-				"foo": bundle.ParameterDefinition{
-					Definition: "foo",
-				},
+		Parameters: map[string]bundle.Parameter{
+			"foo": bundle.Parameter{
+				Definition: "foo",
 			},
 		},
 	}
@@ -83,22 +79,20 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 				Default: "default-true-value",
 			},
 		},
-		Parameters: &bundle.ParametersDefinition{
-			Fields: map[string]bundle.ParameterDefinition{
-				"foo": bundle.ParameterDefinition{
-					Definition: "foo",
-					ApplyTo: []string{
-						"action",
-					},
+		Parameters: map[string]bundle.Parameter{
+			"foo": bundle.Parameter{
+				Definition: "foo",
+				ApplyTo: []string{
+					"action",
 				},
-				"bar": bundle.ParameterDefinition{
-					Definition: "bar",
-				},
-				"true": bundle.ParameterDefinition{
-					Definition: "true",
-					ApplyTo: []string{
-						"different-action",
-					},
+			},
+			"bar": bundle.Parameter{
+				Definition: "bar",
+			},
+			"true": bundle.Parameter{
+				Definition: "true",
+				ApplyTo: []string{
+					"different-action",
 				},
 			},
 		},
@@ -138,13 +132,11 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 				Default: "foo-default",
 			},
 		},
-		Parameters: &bundle.ParametersDefinition{
-			Fields: map[string]bundle.ParameterDefinition{
-				"foo": bundle.ParameterDefinition{
-					Definition: "foo",
-					ApplyTo: []string{
-						"different-action",
-					},
+		Parameters: map[string]bundle.Parameter{
+			"foo": bundle.Parameter{
+				Definition: "foo",
+				ApplyTo: []string{
+					"different-action",
 				},
 			},
 		},
@@ -175,17 +167,13 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 				Type: "string",
 			},
 		},
-		Parameters: &bundle.ParametersDefinition{
-			Fields: map[string]bundle.ParameterDefinition{
-				"foo": bundle.ParameterDefinition{
-					Definition: "foo",
-					ApplyTo: []string{
-						"different-action",
-					},
+		Parameters: map[string]bundle.Parameter{
+			"foo": bundle.Parameter{
+				Definition: "foo",
+				ApplyTo: []string{
+					"different-action",
 				},
-			},
-			Required: []string{
-				"foo",
+				Required: true,
 			},
 		},
 	}

@@ -119,32 +119,20 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 	}
 }
 
-func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) *bundle.ParametersDefinition {
-	params := &bundle.ParametersDefinition{
-		Fields: make(map[string]bundle.ParameterDefinition, len(c.Manifest.Parameters)),
-	}
+func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) map[string]bundle.Parameter {
+	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
+
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
 		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
-		d := &definition.Schema{
-			Type:             param.Type,
-			Default:          param.Default,
-			Enum:             param.Enum,
-			Minimum:          param.Minimum,
-			Maximum:          param.Maximum,
-			ExclusiveMinimum: param.ExclusiveMinimum,
-			ExclusiveMaximum: param.ExclusiveMaximum,
-			MinLength:        param.MinLength,
-			MaxLength:        param.MaxLength,
-		}
-		p := bundle.ParameterDefinition{
+		p := bundle.Parameter{
 			Definition:  param.Name,
-			Description: param.Description,
 			ApplyTo:     param.ApplyTo,
+			Description: param.Description,
 		}
 
 		// If the default is empty, set required to true.
 		if param.Default == nil {
-			params.Required = append(params.Required, param.Name)
+			p.Required = true
 		}
 
 		if param.Destination != nil {
@@ -161,33 +149,23 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		// Only set definition if it doesn't already exist
 		// (Both Params and Outputs may reference same Definition)
 		if _, exists := (*defs)[param.Name]; !exists {
-			(*defs)[param.Name] = d
+			def := param.Schema
+			(*defs)[param.Name] = &def
 		}
-		params.Fields[param.Name] = p
+		params[param.Name] = p
 	}
 	return params
 }
 
-func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) *bundle.OutputsDefinition {
-	var outputs *bundle.OutputsDefinition
+func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) map[string]bundle.Output {
+	var outputs map[string]bundle.Output
 
 	if len(c.Manifest.Outputs) > 0 {
-		outputs = &bundle.OutputsDefinition{
-			Fields: make(map[string]bundle.OutputDefinition, len(c.Manifest.Outputs)),
-		}
+		outputs = make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
 		for _, output := range c.Manifest.Outputs {
 			fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
-			d := &definition.Schema{
-				Type:      output.Type,
-				Default:   output.Default,
-				Enum:      output.Enum,
-				Minimum:   output.Minimum,
-				Maximum:   output.Maximum,
-				MinLength: output.MinLength,
-				MaxLength: output.MaxLength,
-			}
-			o := bundle.OutputDefinition{
+			o := bundle.Output{
 				Definition:  output.Name,
 				Description: output.Description,
 				ApplyTo:     output.ApplyTo,
@@ -197,9 +175,10 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 			// Only set definition if it doesn't already exist
 			// (Both Params and Outputs may reference same Definition)
 			if _, exists := (*defs)[output.Name]; !exists {
-				(*defs)[output.Name] = d
+				def := output.Schema
+				(*defs)[output.Name] = &def
 			}
-			outputs.Fields[output.Name] = o
+			outputs[output.Name] = o
 		}
 	}
 	return outputs
@@ -208,14 +187,14 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDefinition {
 	return []config.ParameterDefinition{
 		{
-			Name:        "porter-debug",
-			Description: "Print debug information from Porter when executing the bundle",
+			Name: "porter-debug",
 			Destination: &config.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
-			Schema: config.Schema{
-				Type:    "boolean",
-				Default: false,
+			Schema: definition.Schema{
+				Description: "Print debug information from Porter when executing the bundle",
+				Type:        "boolean",
+				Default:     false,
 			},
 		},
 	}

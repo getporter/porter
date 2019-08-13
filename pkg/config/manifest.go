@@ -13,6 +13,8 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 type Manifest struct {
@@ -59,26 +61,12 @@ type ParameterDefinition struct {
 	Name      string `yaml:"name"`
 	Sensitive bool   `yaml:"sensitive"`
 
-	// These could be swapped out with an inline bundle.ParameterDefinition
-	// from cnab-go, e.g. bundle.ParameterDefinition `yaml:",inline"`
-	Description string    `yaml:"description,omitempty"`
-	Destination *Location `yaml:"destination,omitempty"`
+	// These fields represent a subset of bundle.Parameter as defined in deislabs/cnab-go,
+	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
 	ApplyTo     []string  `yaml:"applyTo,omitempty"`
+	Destination *Location `yaml:"destination,omitempty"`
 
-	Schema `yaml:",inline"`
-}
-
-type Schema struct {
-	Type             string        `yaml:"type"`
-	Default          interface{}   `yaml:"default,omitempty"`
-	Enum             []interface{} `yaml:"enum,omitempty"`
-	Required         bool          `yaml:"required"`
-	Minimum          *float64      `yaml:"minimum,omitempty"`
-	ExclusiveMinimum *float64      `yaml:"exclusiveMinimum,omitempty"`
-	Maximum          *float64      `yaml:"maximum,omitempty"`
-	ExclusiveMaximum *float64      `yaml:"exclusiveMaximum,omitempty"`
-	MinLength        *float64      `yaml:"minLength,omitempty"`
-	MaxLength        *float64      `yaml:"maxLength,omitempty"`
+	definition.Schema `yaml:",inline"`
 }
 
 type CredentialDefinition struct {
@@ -89,6 +77,8 @@ type CredentialDefinition struct {
 	Location `yaml:",inline"`
 }
 
+// TODO: use cnab-go's bundle.Location instead, once yaml tags have been added
+// Location represents a Parameter or Credential location in an InvocationImage
 type Location struct {
 	Path                string `yaml:"path,omitempty"`
 	EnvironmentVariable string `yaml:"env,omitempty"`
@@ -121,12 +111,11 @@ type CustomActionDefinition struct {
 
 // OutputDefinition defines a single output for a CNAB
 type OutputDefinition struct {
-	Name        string   `yaml:"name"`
-	ApplyTo     []string `yaml:"applyTo,omitempty"`
-	Description string   `yaml:"description,omitempty"`
-	Sensitive   bool     `yaml:"sensitive"`
+	Name      string   `yaml:"name"`
+	ApplyTo   []string `yaml:"applyTo,omitempty"`
+	Sensitive bool     `yaml:"sensitive"`
 
-	Schema `yaml:",inline"`
+	definition.Schema `yaml:",inline"`
 }
 
 func (od *OutputDefinition) Validate() error {

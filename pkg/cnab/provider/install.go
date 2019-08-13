@@ -68,15 +68,19 @@ func (d *Duffle) Install(args ActionArguments) error {
 	runErr := i.Run(c, creds, d.Out)
 
 	// Add/update the outputs section of a claim and capture error
-	err = d.WriteClaimOutputs(c)
+	writeErr := d.WriteClaimOutputs(c)
 
 	// ALWAYS write out a claim, even if the installation fails
-	saveErr := d.NewClaimStore().Store(*c)
+	claimStore, err := d.NewClaimStore()
+	if err != nil {
+		return errors.Wrap(err, "could not access claim store")
+	}
+	saveErr := claimStore.Store(*c)
 	if runErr != nil {
 		return errors.Wrap(runErr, "failed to install the bundle")
 	}
-	if err != nil {
-		return errors.Wrap(err, "failed to write outputs to the claim")
+	if writeErr != nil {
+		return errors.Wrap(writeErr, "failed to write outputs to the claim")
 	}
 	return errors.Wrap(saveErr, "failed to record the installation for the bundle")
 }

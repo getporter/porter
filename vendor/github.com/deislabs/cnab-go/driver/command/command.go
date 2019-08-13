@@ -18,7 +18,7 @@ type Driver struct {
 }
 
 // Run executes the command
-func (d *Driver) Run(op *driver.Operation) error {
+func (d *Driver) Run(op *driver.Operation) (driver.OperationResult, error) {
 	return d.exec(op)
 }
 
@@ -42,7 +42,7 @@ func (d *Driver) cliName() string {
 	return "cnab-" + strings.ToLower(d.Name)
 }
 
-func (d *Driver) exec(op *driver.Operation) error {
+func (d *Driver) exec(op *driver.Operation) (driver.OperationResult, error) {
 	// We need to do two things here: We need to make it easier for the
 	// command to access data, and we need to make it easy for the command
 	// to pass that data on to the image it invokes. So we do some data
@@ -62,13 +62,13 @@ func (d *Driver) exec(op *driver.Operation) error {
 
 	data, err := json.Marshal(op)
 	if err != nil {
-		return err
+		return driver.OperationResult{}, err
 	}
 	args := []string{}
 	cmd := exec.Command(d.cliName(), args...)
 	cmd.Dir, err = os.Getwd()
 	if err != nil {
-		return err
+		return driver.OperationResult{}, err
 	}
 	cmd.Env = pairs
 	cmd.Stdin = bytes.NewBuffer(data)
@@ -77,7 +77,7 @@ func (d *Driver) exec(op *driver.Operation) error {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("Setting up output handling for driver (%s) failed: %v", d.Name, err)
+		return driver.OperationResult{}, fmt.Errorf("Setting up output handling for driver (%s) failed: %v", d.Name, err)
 	}
 
 	go func() {
@@ -88,7 +88,7 @@ func (d *Driver) exec(op *driver.Operation) error {
 	}()
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("Setting up error output handling for driver (%s) failed: %v", d.Name, err)
+		return driver.OperationResult{}, fmt.Errorf("Setting up error output handling for driver (%s) failed: %v", d.Name, err)
 	}
 	go func() {
 
@@ -98,8 +98,8 @@ func (d *Driver) exec(op *driver.Operation) error {
 	}()
 
 	if err = cmd.Start(); err != nil {
-		return fmt.Errorf("Start of driver (%s) failed: %v", d.Name, err)
+		return driver.OperationResult{}, fmt.Errorf("Start of driver (%s) failed: %v", d.Name, err)
 	}
 
-	return cmd.Wait()
+	return driver.OperationResult{}, cmd.Wait()
 }

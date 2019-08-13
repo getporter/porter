@@ -195,3 +195,11 @@ func (c *Config) GetOutputsDir() (string, error) {
 	}
 	return filepath.Join(home, "outputs"), nil
 }
+
+func (c *Config) GetClaimsDir() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "claims"), nil
+}
