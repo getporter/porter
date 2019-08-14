@@ -68,7 +68,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 	runErr := i.Run(c, creds, d.Out)
 
 	// Add/update the outputs section of a claim and capture error
-	writeErr := d.WriteClaimOutputs(c)
+	writeErr := d.WriteClaimOutputs(c, string(config.ActionInstall))
 
 	// ALWAYS write out a claim, even if the installation fails
 	claimStore, err := d.NewClaimStore()

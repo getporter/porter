@@ -63,7 +63,7 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 	return bundle.ValuesOrDefaults(overrides, bun)
 }
 
-// TODO: pilfered from cnab-go.  PR to export func?
+// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
 func appliesToAction(action string, parameter bundle.Parameter) bool {
 	if len(parameter.ApplyTo) == 0 {
 		return true

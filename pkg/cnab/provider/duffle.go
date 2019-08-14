@@ -83,17 +83,24 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 
 // WriteClaimOutputs writes outputs to a claim, according to the provided bundle
 // and Duffle config
-func (d *Duffle) WriteClaimOutputs(c *claim.Claim) error {
+func (d *Duffle) WriteClaimOutputs(c *claim.Claim, action string) error {
+	if c.Bundle == nil {
+		return errors.New("claim has no bundle")
+	}
+
 	if c.Bundle.Outputs == nil {
 		return nil
 	}
 
-	for outputName := range c.Bundle.Outputs {
-		output, err := outputs.ReadBundleOutput(d.Config, outputName, c.Name)
-		if err != nil {
-			return errors.Wrapf(err, "unable to read output %s", outputName)
+	for name, output := range c.Bundle.Outputs {
+		// TODO: refactor with cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
+		if outputs.AppliesTo(action, output) {
+			output, err := outputs.ReadBundleOutput(d.Config, name, c.Name)
+			if err != nil {
+				return errors.Wrapf(err, "unable to read output %s", name)
+			}
+			c.Outputs[name] = output.Value
 		}
-		c.Outputs[outputName] = output.Value
 	}
 	return nil
 }
