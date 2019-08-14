@@ -62,10 +62,18 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	}
 
 	// Run the action and ALWAYS write out a claim, even if the action fails
-	err = i.Run(&claim, creds, d.Out)
+	runErr := i.Run(&claim, creds, d.Out)
+
+	// Add/update the outputs section of a claim and capture error
+	err = d.WriteClaimOutputs(&claim, action)
+
+	// ALWAYS write out a claim, even if the action fails
 	saveErr := claims.Store(claim)
+	if runErr != nil {
+		return errors.Wrap(runErr, "failed to invoke the bundle")
+	}
 	if err != nil {
-		return errors.Wrap(err, "failed to invoke the bundle")
+		return errors.Wrap(err, "failed to write outputs to the claim")
 	}
 	return errors.Wrap(saveErr, "failed to record the updated claim for the bundle")
 }
