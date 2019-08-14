@@ -128,6 +128,10 @@ define all-bundles
 	@for dir in $$(ls -1 $(1)); do \
 		if [[ -e "$(1)/$$dir/porter.yaml" ]]; then \
 			BUNDLE=$$dir make $(MAKE_OPTS) $(2) ; \
+			exit_code=$$? ; \
+			if [[ $$exit_code -ne 0 ]] ; then \
+				exit $$exit_code ; \
+			fi ; \
 		fi ; \
 	done
 endef
@@ -149,6 +153,20 @@ ifndef BUNDLE
 else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter publish
 endif
+
+BUNDLE_SCHEMA_PATH ?= /tmp/bundle.schema.json
+
+.PHONY: validate-bundle
+validate-bundle: fetch-bundle-schema
+ifndef BUNDLE
+	$(call all-bundles,$(EXAMPLES_DIR),validate-bundle)
+else
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && ajv test -s $(BUNDLE_SCHEMA_PATH) -d .cnab/bundle.json --valid
+endif
+
+fetch-bundle-schema:
+	@curl --fail --silent --show-error -o $(BUNDLE_SCHEMA_PATH) \
+		https://raw.githubusercontent.com/deislabs/cnab-spec/master/schema/bundle.schema.json
 
 install:
 	mkdir -p $(HOME)/.porter
