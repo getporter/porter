@@ -54,7 +54,7 @@
       "enabled": true,
       "frequency": "daily"
     },
-    "dependencies": {
+    "io.cnab.dependencies": {
       "requires": {
         "storage": {
           "bundle": "somecloud/blob-storage"
