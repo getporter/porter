@@ -53,15 +53,15 @@ on these gaps.
 
 Porter is an implementation of the CNAB specification. Cloud Native Application
 Bundles is a different way of answering "_How do I reliably, securely deploy an
-application and its infrastructure?_". It isn't replacing ansible or terraform
-but adding some concepts on top. For example, packaging together the terraform
-binary and your terraform scripts into an immutable bundle with a digest that
+application and its infrastructure?_". It isn't replacing Ansible or Terraform
+but adding some concepts on top. For example, packaging together the Terraform
+binary and your Terraform scripts into an immutable bundle with a digest that
 attests that the contents haven't been altered, that can be distributed via OCI
 (docker) registries or USB sticks to get into air-gapped networks.
 
-The CNAB spec is pretty open ended about how to implement the spec, but Porter
+The CNAB spec is pretty open-ended about how to implement the spec, but Porter
 took the route of making it incredibly easy to take existing tools, like
-kubectl, terraform, the azure/aws/gcloud CLIs, and use them inside a bundle. So
+kubectl, Terraform, the azure/aws/gcloud CLIs, and use them inside a bundle. So
 that you don't need to rewrite existing scripts.
 
 ## Does Porter replace Duffle?
