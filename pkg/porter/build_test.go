@@ -30,11 +30,11 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	require.NoError(t, err)
 
 	wantlines := []string{
-		"FROM quay.io/deis/lightweight-docker-go:v0.2.0",
 		"FROM debian:stretch",
-		"COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt",
 		"",
 		"ARG BUNDLE_DIR",
+		"",
+		"RUN apt-get update && apt-get install -y ca-certificates",
 		"",
 		"COPY .cnab /cnab",
 		"COPY . $BUNDLE_DIR",
@@ -99,11 +99,11 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 
 	wantlines := `
 Generating Dockerfile =======>
-FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ARG BUNDLE_DIR
+
+RUN apt-get update && apt-get install -y ca-certificates
 
 COPY .cnab /cnab
 COPY . $BUNDLE_DIR
