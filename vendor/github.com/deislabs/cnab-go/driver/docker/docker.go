@@ -227,21 +227,21 @@ func (d *Driver) exec(op *driver.Operation) (driver.OperationResult, error) {
 	select {
 	case err := <-errc:
 		if err != nil {
-			opResult, fetchErr := d.fetchOutputs(ctx, resp.ID)
+			opResult, fetchErr := d.fetchOutputs(ctx, resp.ID, op)
 			return opResult, containerError("error in container", err, fetchErr)
 		}
 	case s := <-statusc:
 		if s.StatusCode == 0 {
-			return d.fetchOutputs(ctx, resp.ID)
+			return d.fetchOutputs(ctx, resp.ID, op)
 		}
 		if s.Error != nil {
-			opResult, fetchErr := d.fetchOutputs(ctx, resp.ID)
+			opResult, fetchErr := d.fetchOutputs(ctx, resp.ID, op)
 			return opResult, containerError(fmt.Sprintf("container exit code: %d, message", s.StatusCode), err, fetchErr)
 		}
-		opResult, fetchErr := d.fetchOutputs(ctx, resp.ID)
+		opResult, fetchErr := d.fetchOutputs(ctx, resp.ID, op)
 		return opResult, containerError(fmt.Sprintf("container exit code: %d, message", s.StatusCode), err, fetchErr)
 	}
-	opResult, fetchErr := d.fetchOutputs(ctx, resp.ID)
+	opResult, fetchErr := d.fetchOutputs(ctx, resp.ID, op)
 	if fetchErr != nil {
 		return opResult, fmt.Errorf("fetching outputs failed: %s", fetchErr)
 	}
@@ -259,9 +259,15 @@ func containerError(containerMessage string, containerErr, fetchErr error) error
 // fetchOutputs takes a context and a container ID; it copies the /cnab/app/outputs directory from that container.
 // The goal is to collect all the files in the directory (recursively) and put them in a flat map of path to contents.
 // This map will be inside the OperationResult. When fetchOutputs returns an error, it may also return partial results.
-func (d *Driver) fetchOutputs(ctx context.Context, container string) (driver.OperationResult, error) {
+func (d *Driver) fetchOutputs(ctx context.Context, container string, op *driver.Operation) (driver.OperationResult, error) {
 	opResult := driver.OperationResult{
 		Outputs: map[string]string{},
+	}
+	// The /cnab/app/outputs directory probably only exists if outputs are created. In the
+	// case there are no outputs defined on the operation, there probably are none to copy
+	// and we should return early.
+	if len(op.Outputs) == 0 {
+		return opResult, nil
 	}
 	ioReader, _, err := d.dockerCli.Client().CopyFromContainer(ctx, container, "/cnab/app/outputs")
 	if err != nil {

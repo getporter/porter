@@ -98,11 +98,6 @@ type InvocationImage struct {
 	BaseImage `yaml:",inline"`
 }
 
-// ImageRelocationMap stores the relocated images
-// The key is the Image in bundle.json and the value is the new Image
-// from the relocated registry
-type ImageRelocationMap map[string]string
-
 // Location provides the location where a value should be written in
 // the invocation image.
 //
