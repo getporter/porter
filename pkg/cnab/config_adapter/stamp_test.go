@@ -18,10 +18,7 @@ func TestConfig_ComputeManifestDigest(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 	stamp := a.GenerateStamp()
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 }

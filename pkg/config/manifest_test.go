@@ -3,7 +3,6 @@ package config
 import (
 	"testing"
 
-	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

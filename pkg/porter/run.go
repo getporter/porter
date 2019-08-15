@@ -85,17 +85,18 @@ func (p *Porter) Run(opts RunOptions) error {
 	bundleName := os.Getenv(config.EnvBundleName)
 	fmt.Fprintf(p.Out, "executing %s action from %s (claim: %s) defined in %s\n", opts.parsedAction, bundleName, claimName, opts.File)
 
-	err := p.Config.LoadManifestFrom(opts.File)
+	err := p.LoadManifestFrom(opts.File)
+	if err != nil {
+		return err
+	}
+	runtimeManifest := config.RuntimeManifest{Manifest: p.Manifest}
+
+	steps, err := runtimeManifest.GetSteps(opts.parsedAction)
 	if err != nil {
 		return err
 	}
 
-	steps, err := p.Manifest.GetSteps(opts.parsedAction)
-	if err != nil {
-		return err
-	}
-
-	err = steps.Validate(p.Manifest.Manifest)
+	err = steps.Validate(p.Manifest)
 	if err != nil {
 		return errors.Wrap(err, "invalid action configuration")
 	}
@@ -112,12 +113,12 @@ func (p *Porter) Run(opts RunOptions) error {
 
 	for _, step := range steps {
 		if step != nil {
-			err := p.Manifest.ResolveStep(step)
+			err := runtimeManifest.ResolveStep(step)
 			if err != nil {
 				return errors.Wrap(err, "unable to resolve sourced values")
 			}
 			// Hand over values needing masking in context output streams
-			p.Context.SetSensitiveValues(p.Manifest.GetSensitiveValues())
+			p.Context.SetSensitiveValues(runtimeManifest.GetSensitiveValues())
 
 			runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
 
@@ -138,7 +139,7 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "could not read step outputs")
 			}
 
-			err = p.Manifest.ApplyStepOutputs(step, outputs)
+			err = runtimeManifest.ApplyStepOutputs(step, outputs)
 			if err != nil {
 				return err
 			}

@@ -296,10 +296,7 @@ func (p *Porter) buildInvocationImage(ctx context.Context) error {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	converter := configadapter.ManifestConverter{
-		Manifest: p.Manifest,
-		Context:  p.Context,
-	}
+	converter := configadapter.ManifestConverter{Config: p.Config}
 	bun := converter.ToBundle()
 	return p.writeBundle(bun)
 }

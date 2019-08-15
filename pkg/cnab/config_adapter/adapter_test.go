@@ -18,10 +18,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	bun := a.ToBundle()
 
@@ -55,10 +52,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	defs := make(definition.Definitions, len(c.Manifest.Parameters))
 	params := a.generateBundleParameters(&defs)
@@ -177,10 +171,7 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	defs := make(definition.Definitions, len(c.Manifest.Parameters))
 	params := a.generateBundleParameters(&defs)
@@ -203,10 +194,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	mappedImage := config.MappedImage{
 		Description:   "un petite server",
@@ -246,10 +234,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	mappedImage := config.MappedImage{
 		Description: "un petite server",
@@ -274,10 +259,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	outputDefinitions := []config.OutputDefinition{
 		{
@@ -346,10 +328,7 @@ func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testin
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	outputDefinitions := []config.OutputDefinition{
 		{
@@ -426,10 +405,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	deps := a.generateDependencies()
 	require.NotNil(t, deps, "Dependencies should not be nil")
@@ -482,10 +458,7 @@ func TestManifestConverter_RequiredExtensions(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	bun := a.ToBundle()
 
@@ -499,10 +472,7 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 	err := c.LoadManifest()
 	require.NoError(t, err)
 
-	a := ManifestConverter{
-		Context:  c.Context,
-		Manifest: c.Manifest,
-	}
+	a := ManifestConverter{c.Config}
 
 	defs := a.generateCustomActionDefinitions()
 	require.Len(t, defs, 2, "expected 2 custom action definitions to be generated")

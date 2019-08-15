@@ -45,10 +45,7 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
 
-		converter := configadapter.ManifestConverter{
-			Context:  p.Context,
-			Manifest: p.Manifest,
-		}
+		converter := configadapter.ManifestConverter{Config: p.Config}
 		newStamp := converter.GenerateStamp()
 		return oldStamp.ManifestDigest == newStamp.ManifestDigest, nil
 	}

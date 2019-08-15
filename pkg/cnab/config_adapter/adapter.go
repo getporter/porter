@@ -5,21 +5,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/cnab/extensions"
-
-	"github.com/deislabs/cnab-go/bundle/definition"
-
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/deislabs/porter/pkg/cnab/extensions"
 	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
 )
 
 const SchemaVersion = "v1.0.0-WD"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
-	*context.Context
-	Manifest *config.RuntimeManifest
+	*config.Config
 }
 
 func (c *ManifestConverter) ToBundle() *bundle.Bundle {

@@ -5,9 +5,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestLoadManifest(t *testing.T) {
@@ -73,7 +75,7 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	// Sabotage!
 	c.Manifest.Mixins = []string{}
 
-	err = c.Manifest.Install.Validate(c.Manifest.Manifest)
+	err = c.Manifest.Install.Validate(c.Manifest)
 	assert.EqualError(t, err, "mixin (exec) was not declared")
 }
 
@@ -89,7 +91,7 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 	// Sabotage!
 	c.Manifest.Install[0].Data = nil
 
-	err = c.Manifest.Install.Validate(c.Manifest.Manifest)
+	err = c.Manifest.Install.Validate(c.Manifest)
 	assert.EqualError(t, err, "no mixin specified")
 }
 
@@ -105,7 +107,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	// Sabotage!
 	c.Manifest.Install[0].Data["rando-mixin"] = ""
 
-	err = c.Manifest.Install.Validate(c.Manifest.Manifest)
+	err = c.Manifest.Install.Validate(c.Manifest)
 	assert.EqualError(t, err, "more than one mixin specified")
 }
 
@@ -364,11 +366,12 @@ func TestResolveInMainDict(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", Name)
 
 	require.NoError(t, c.LoadManifest())
+	rm := RuntimeManifest{Manifest: c.Manifest}
 
-	installStep := c.Manifest.Install[0]
+	installStep := rm.Install[0]
 
 	os.Setenv("COMMAND", "echo hello world")
-	err := c.Manifest.ResolveStep(installStep)
+	err := rm.ResolveStep(installStep)
 	assert.NoError(t, err)
 
 	assert.NotNil(t, installStep.Data)
@@ -389,11 +392,12 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	c.TestContext.AddTestFile("testdata/slice-test.yaml", Name)
 
 	require.NoError(t, c.LoadManifest())
+	rm := RuntimeManifest{Manifest: c.Manifest}
 
-	installStep := c.Manifest.Install[0]
+	installStep := rm.Install[0]
 
 	os.Setenv("COMMAND", "echo hello world")
-	err := c.Manifest.ResolveStep(installStep)
+	err := rm.ResolveStep(installStep)
 	assert.NoError(t, err)
 
 	assert.NotNil(t, installStep.Data)
@@ -543,22 +547,6 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
 }
 
-func TestManifest_ApplyBundleOutputs(t *testing.T) {
-	c := NewTestConfig(t)
-	c.SetupPorterHome()
-
-	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
-
-	require.NoError(t, c.LoadManifest())
-
-	depStep := c.Manifest.Install[0]
-	err := c.Manifest.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
-	require.NoError(t, err)
-
-	assert.Contains(t, c.Manifest.outputs, "foo")
-	assert.Equal(t, "bar", c.Manifest.outputs["foo"])
-}
-
 func TestManifest_ResolveBundleName(t *testing.T) {
 	m := &RuntimeManifest{
 		Manifest: &Manifest{
@@ -590,15 +578,15 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 
 	wantOutputs := []OutputDefinition{
 		{
-			Name:        "mysql-root-password",
-			Description: "The root MySQL password",
-			Schema: Schema{
-				Type: "string",
+			Name: "mysql-root-password",
+			Schema: definition.Schema{
+				Description: "The root MySQL password",
+				Type:        "string",
 			},
 		},
 		{
 			Name: "mysql-password",
-			Schema: Schema{
+			Schema: definition.Schema{
 				Type: "string",
 			},
 			ApplyTo: []string{
@@ -645,4 +633,21 @@ func TestDependency_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestManifest_ApplyStepOutputs(t *testing.T) {
+	c := NewTestConfig(t)
+	c.SetupPorterHome()
+
+	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
+
+	require.NoError(t, c.LoadManifest())
+	rm := RuntimeManifest{Manifest: c.Manifest}
+
+	depStep := rm.Install[0]
+	err := rm.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
+	require.NoError(t, err)
+
+	assert.Contains(t, rm.outputs, "foo")
+	assert.Equal(t, "bar", rm.outputs["foo"])
 }

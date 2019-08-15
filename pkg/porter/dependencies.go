@@ -16,7 +16,7 @@ type dependencyExecutioner struct {
 	*context.Context
 	Resolver BundleResolver
 	CNAB     CNABProvider
-	Manifest *config.RuntimeManifest
+	Manifest *config.Manifest
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts

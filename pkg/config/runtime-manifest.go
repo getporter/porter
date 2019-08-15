@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cbroglie/mustache"
@@ -14,17 +13,8 @@ import (
 type RuntimeManifest struct {
 	*Manifest
 
-	// path where the manifest was loaded, used to resolve local bundle references
-	path            string
 	outputs         map[string]string
 	sensitiveValues []string
-}
-
-func NewRuntimeManifest(m *Manifest, path string) *RuntimeManifest {
-	return &RuntimeManifest{
-		Manifest: m,
-		path:     path,
-	}
 }
 
 func resolveParameter(pd ParameterDefinition) (string, error) {
@@ -69,16 +59,6 @@ func (d *Dependency) resolve() (map[string]interface{}, []string, error) {
 	// TODO: Add outputs onto sensitive stuff
 
 	return depVals, sensitiveStuff, nil
-}
-
-// GetManifestDir returns the path to the directory that contains the manifest.
-func (m *RuntimeManifest) GetManifestDir() string {
-	return filepath.Dir(m.path)
-}
-
-// GetManifestPath returns the path where the manifest was loaded. May be a URL.
-func (m *RuntimeManifest) GetManifestPath() string {
-	return m.path
 }
 
 func (m *RuntimeManifest) GetSensitiveValues() []string {

@@ -1,14 +1,14 @@
 package config
 
 import (
-	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
 )
@@ -373,7 +373,8 @@ func (c *Config) LoadManifestFrom(file string) error {
 		return err
 	}
 
-	c.Manifest = NewRuntimeManifest(m, file)
+	c.Manifest = m
+	c.ManifestPath = file
 
 	return nil
 }

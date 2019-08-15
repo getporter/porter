@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	output "github.com/deislabs/porter/pkg/outputs"
-	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 func TestPorter_readMixinOutputs(t *testing.T) {
@@ -107,10 +107,8 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 
 func TestApplyBundleOutputs_None(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.RuntimeManifest{
-		Manifest: &config.Manifest{
-			Name: "mybun",
-		},
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
 	}
 	opts := NewRunOptions(p.Config)
 
@@ -125,24 +123,22 @@ func TestApplyBundleOutputs_None(t *testing.T) {
 
 func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.RuntimeManifest{
-		Manifest: &config.Manifest{
-			Name: "mybun",
-			Outputs: []config.OutputDefinition{
-				{
-					Name: "foo",
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
 				Schema: definition.Schema{
-						Type: "string",
-					},
-					Sensitive: true,
+					Type: "string",
 				},
-				{
-					Name: "123",
+				Sensitive: true,
+			},
+			{
+				Name: "123",
 				Schema: definition.Schema{
-						Type: "string",
-					},
-					Sensitive: false,
+					Type: "string",
 				},
+				Sensitive: false,
 			},
 		},
 	}
@@ -185,16 +181,14 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 
 func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.RuntimeManifest{
-		Manifest: &config.Manifest{
-			Name: "mybun",
-			Outputs: []config.OutputDefinition{
-				{
-					Name: "bar",
-				},
-				{
-					Name: "456",
-				},
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "bar",
+			},
+			{
+				Name: "456",
 			},
 		},
 	}
@@ -218,26 +212,24 @@ func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
 
 func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.RuntimeManifest{
-		Manifest: &config.Manifest{
-			Name: "mybun",
-			Outputs: []config.OutputDefinition{
-				{
-					Name: "foo",
-					ApplyTo: []string{
-						"upgrade",
-					},
+	p.Manifest = &config.Manifest{
+		Name: "mybun",
+		Outputs: []config.OutputDefinition{
+			{
+				Name: "foo",
+				ApplyTo: []string{
+					"upgrade",
 				},
-				{
-					Name: "123",
-					ApplyTo: []string{
-						"install",
-					},
+			},
+			{
+				Name: "123",
+				ApplyTo: []string{
+					"install",
+				},
 				Schema: definition.Schema{
-						Type: "string",
-					},
-					Sensitive: false,
+					Type: "string",
 				},
+				Sensitive: false,
 			},
 		},
 	}
