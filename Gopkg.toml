@@ -1,11 +1,11 @@
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.3.1-beta1"
+  version = "v0.3.2-beta1"
 
 # override currently needed or else cnab-to-oci dep causes issues
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.3.1-beta1"
+  version = "v0.3.2-beta1"
 
 # Using master until there is a release of cnab-to-oci
 [[constraint]]
