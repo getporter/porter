@@ -312,6 +312,9 @@ class GoJob extends Job {
       "mv /src/.git " + localPath,
       "cd " + localPath
     ];
+
+    // Set default job timeout to 1800000 milliseconds / 30 minutes
+    this.timeout = 1800000
   }
 
   // enabledDind enables Docker-in-Docker for this job,
