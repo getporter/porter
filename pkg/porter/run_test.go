@@ -12,11 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	output "github.com/deislabs/porter/pkg/outputs"
-
-	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 func TestPorter_readMixinOutputs(t *testing.T) {

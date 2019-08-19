@@ -123,7 +123,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 
 		// TODO: Do a better merge in case the mixin has a more limited pattern than .*
 		_, hasCustomActions := mixinSchemaMap["patternProperties"]
-		if hasCustomActions{
+		if hasCustomActions {
 			actionRef := fmt.Sprintf("#/mixin.%s/definitions/invokeStep", mixin.Name)
 
 			actionItemSchema, ok := patternPropertiesSchema["items"].(jsonSchema)

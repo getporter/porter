@@ -77,7 +77,7 @@ func (feed *MixinFeed) Load(file string) error {
 				file := &MixinFile{
 					URL:     parsedUrl,
 					Updated: *entry.UpdatedParsed,
-					File: path.Base(parsedUrl.Path),
+					File:    path.Base(parsedUrl.Path),
 				}
 				fileset.Files = append(fileset.Files, file)
 			}

@@ -15,7 +15,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	require.NoError(t, err)
 
 	e := newDependencyExecutioner(p.Porter)
-	
+
 	// Try to call execute without prepare
 	err = e.Execute()
 	require.Error(t, err, "execute before prepare should return an error")
