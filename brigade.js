@@ -176,6 +176,8 @@ function publishExamples(e, p) {
   examplePublisher.enableDind();
 
   examplePublisher.tasks.push(
+    "apk add --update npm",
+    "npm install -g ajv-cli",
     // first, build and install porter
     `make build install`,
     // login to the registry we'll be pushing to
