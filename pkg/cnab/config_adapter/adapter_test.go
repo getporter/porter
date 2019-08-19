@@ -44,10 +44,6 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
 }
 
-func makefloat64(v float64) *float64 {
-	return &v
-}
-
 func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
@@ -78,8 +74,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			definition.Schema{
 				Type:    "integer",
 				Default: 1,
-				Minimum: makefloat64(0),
-				Maximum: makefloat64(10),
+				Minimum: toFloat64(0),
+				Maximum: toFloat64(10),
 			},
 		},
 		{"anumber",
@@ -92,8 +88,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			definition.Schema{
 				Type:             "number",
 				Default:          0.5,
-				ExclusiveMinimum: makefloat64(0),
-				ExclusiveMaximum: makefloat64(1),
+				ExclusiveMinimum: toFloat64(0),
+				ExclusiveMaximum: toFloat64(1),
 			},
 		},
 		{
@@ -121,8 +117,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			},
 			definition.Schema{
 				Type:      "string",
-				MinLength: makefloat64(1),
-				MaxLength: makefloat64(10),
+				MinLength: toFloat64(1),
+				MaxLength: toFloat64(10),
 			},
 		},
 		{
@@ -152,6 +148,20 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			},
 			definition.Schema{
 				Type: "boolean",
+			},
+		},
+		{
+			"sensitive",
+			bundle.Parameter{
+				Definition: "sensitive",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "SENSITIVE",
+				},
+				Required: true,
+			},
+			definition.Schema{
+				Type:      "string",
+				WriteOnly: toBool(true),
 			},
 		},
 	}
@@ -290,6 +300,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 				Type:        "string",
 				Description: "Description of output1",
 			},
+			Sensitive: true,
 		},
 		{
 			Name: "output2",
@@ -329,6 +340,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 		"output1": &definition.Schema{
 			Type:        "string",
 			Description: "Description of output1",
+			WriteOnly:   toBool(true),
 		},
 		"output2": &definition.Schema{
 			Type:        "boolean",
