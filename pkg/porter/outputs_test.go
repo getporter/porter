@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/config"
+
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deislabs/porter/pkg/outputs"
 )
 
 func TestPorter_fetchBundleOutputs_Error(t *testing.T) {
@@ -36,7 +36,7 @@ func TestPorter_fetchBundleOutputs(t *testing.T) {
 	got, err := p.fetchBundleOutputs("test-bundle")
 	require.NoError(t, err)
 
-	want := &outputs.Outputs{
+	want := &config.Outputs{
 		{
 			Name:      "foo",
 			Type:      "string",
@@ -59,7 +59,7 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = NewTestCNABProvider()
 
-	outputs := &outputs.Outputs{
+	outputs := &config.Outputs{
 		{
 			Name:      "foo",
 			Type:      "string",

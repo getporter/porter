@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/deislabs/porter/pkg/config"
+
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/outputs"
 	"github.com/deislabs/porter/pkg/printer"
-	tablewriter "github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -74,7 +75,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	}
 	name := opts.sharedOptions.Name
 
-	output, err := outputs.ReadBundleOutput(p.Config, opts.Output, name)
+	output, err := p.ReadBundleOutput(opts.Output, name)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", opts.Output, name)
 	}
@@ -109,21 +110,21 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
 	}
 }
 
-func (p *Porter) fetchBundleOutputs(claim string) (*outputs.Outputs, error) {
+func (p *Porter) fetchBundleOutputs(claim string) (*config.Outputs, error) {
 	outputsDir, err := p.Config.GetOutputsDir()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get outputs directory")
 	}
 	bundleOutputsDir := filepath.Join(outputsDir, claim)
 
-	var outputList outputs.Outputs
+	var outputList config.Outputs
 	// Walk through bundleOutputsDir, if exists, and read all output filenames.
 	// We truncate actual output values, intending for the full values to be
 	// retrieved by another command.
 	if ok, _ := p.Context.FileSystem.DirExists(bundleOutputsDir); ok {
 		err := p.Context.FileSystem.Walk(bundleOutputsDir, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
-				output, err := outputs.ReadBundleOutput(p.Config, info.Name(), claim)
+				output, err := p.ReadBundleOutput(info.Name(), claim)
 				if err != nil {
 					return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", info.Name(), claim)
 				}
@@ -140,7 +141,7 @@ func (p *Porter) fetchBundleOutputs(claim string) (*outputs.Outputs, error) {
 	return &outputList, nil
 }
 
-func (p *Porter) printOutputsTable(outputs *outputs.Outputs, claim string) error {
+func (p *Porter) printOutputsTable(outputs *config.Outputs, claim string) error {
 	// Get local output directory for this claim
 	outputsDir, err := p.Config.GetOutputsDir()
 	if err != nil {

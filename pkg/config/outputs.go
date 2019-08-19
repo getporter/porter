@@ -1,15 +1,12 @@
-package outputs
+package config
 
 import (
 	"encoding/json"
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/deislabs/porter/pkg/config"
-
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/pkg/errors"
 )
 
 // Output represents a bundle output
@@ -43,7 +40,7 @@ func (l Outputs) Less(i, j int) bool {
 // ReadBundleOutput reads the provided output associated with the provided bundle,
 // via the filesystem provided by the config.Config object,
 // returning the output's full Output representation
-func ReadBundleOutput(c *config.Config, name, claim string) (*Output, error) {
+func (c *Config) ReadBundleOutput(name string, claim string) (*Output, error) {
 	outputsDir, err := c.GetOutputsDir()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get outputs directory")
@@ -72,7 +69,7 @@ func (o *Output) JSONMarshal() ([]byte, error) {
 }
 
 // TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
-func AppliesTo(action string, output bundle.Output) bool {
+func OutputAppliesTo(action string, output bundle.Output) bool {
 	if len(output.ApplyTo) == 0 {
 		return true
 	}

@@ -1,23 +1,21 @@
-package outputs
+package config
 
 import (
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/deislabs/porter/pkg/config"
 )
 
 func TestPorter_ReadBundleOutput(t *testing.T) {
-	c := config.NewTestConfig(t)
+	c := NewTestConfig(t)
 
 	homeDir, err := c.GetHomeDir()
 	require.NoError(t, err)
 
 	c.TestContext.AddTestDirectory("../porter/testdata/outputs", filepath.Join(homeDir, "outputs"))
 
-	got, err := ReadBundleOutput(c.Config, "foo", "test-bundle")
+	got, err := c.ReadBundleOutput("foo", "test-bundle")
 	require.NoError(t, err)
 
 	want := &Output{

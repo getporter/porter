@@ -14,7 +14,6 @@ import (
 	"github.com/deislabs/cnab-go/driver/lookup"
 
 	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/outputs"
 )
 
 type Duffle struct {
@@ -94,8 +93,8 @@ func (d *Duffle) WriteClaimOutputs(c *claim.Claim, action string) error {
 
 	for name, output := range c.Bundle.Outputs {
 		// TODO: refactor with cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
-		if outputs.AppliesTo(action, output) {
-			output, err := outputs.ReadBundleOutput(d.Config, name, c.Name)
+		if config.OutputAppliesTo(action, output) {
+			output, err := d.ReadBundleOutput(name, c.Name)
 			if err != nil {
 				return errors.Wrapf(err, "unable to read output %s", name)
 			}

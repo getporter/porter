@@ -7,15 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
-	output "github.com/deislabs/porter/pkg/outputs"
 )
 
 func TestPorter_readMixinOutputs(t *testing.T) {
@@ -152,7 +150,7 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
 
-	want := map[string]output.Output{
+	want := map[string]config.Output{
 		"foo": {
 			Name:      "foo",
 			Type:      "string",
@@ -171,7 +169,7 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 		bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
 		assert.NoError(t, err)
 
-		var output output.Output
+		var output config.Output
 		err = json.Unmarshal(bytes, &output)
 		assert.NoError(t, err)
 
@@ -252,11 +250,11 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
 
-	var got output.Output
+	var got config.Output
 	err = json.Unmarshal(bytes, &got)
 	assert.NoError(t, err)
 
-	want := output.Output{
+	want := config.Output{
 		Name:      "123",
 		Type:      "string",
 		Sensitive: false,
