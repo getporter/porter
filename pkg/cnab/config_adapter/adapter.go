@@ -139,6 +139,10 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			p.Required = true
 		}
 
+		if param.Sensitive {
+			param.Schema.WriteOnly = toBool(true)
+		}
+
 		if param.Destination != nil {
 			p.Destination = &bundle.Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,
@@ -174,6 +178,10 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				Description: output.Description,
 				ApplyTo:     output.ApplyTo,
 				Path:        filepath.Join(config.BundleOutputsDir, output.Name),
+			}
+
+			if output.Sensitive {
+				output.Schema.WriteOnly = toBool(true)
 			}
 
 			// Only set definition if it doesn't already exist
@@ -268,4 +276,12 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	}
 
 	return deps
+}
+
+func toBool(value bool) *bool {
+	return &value
+}
+
+func toFloat64(v float64) *float64 {
+	return &v
 }

@@ -34,6 +34,9 @@ parameters:
     type: boolean
     applyTo:
       - install
+  - name: sensitive
+    type: string
+    sensitive: true
 
 mixins:
   - exec
