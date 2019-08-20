@@ -1,3 +1,15 @@
 .sidebar ul li a {
     text-transform: none;
 }
+
+.main img.mixin-logo {
+    min-width: 100px;
+    width: 200px;
+    max-width: 300px;
+    float: right;
+    box-shadow: none;
+}
+
+.main img.mixin-logo:hover {
+    box-shadow: none;
+}
