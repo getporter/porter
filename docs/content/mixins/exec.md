@@ -34,3 +34,11 @@ install:
     arguments:
     - ./install-world.sh
 ```
+
+### FAQ
+
+#### How do I use pipes?
+
+If you have a command that pipes, place the command in a script file and then
+use the exec mixin to invoke that script passing in any parameters that the
+script requires as arguments.
