@@ -6,14 +6,12 @@ import (
 	"path/filepath"
 	"strconv"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
-	output "github.com/deislabs/porter/pkg/outputs"
 )
 
 type RunOptions struct {
@@ -268,7 +266,7 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) 
 					}
 
 					// Create data structure with relevant data for use in listing/showing later
-					output := output.Output{
+					output := config.Output{
 						Name:      bundleOutput.Name,
 						Sensitive: bundleOutput.Sensitive,
 						Type:      outputType,
