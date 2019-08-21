@@ -24,9 +24,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 
 	upgradeWordpressBundle(p, namespace)
 
-	upgradeWordpressBundle(p, namespace)
-
-	//invokeWordpressBundle(p, namespace)
+	invokeWordpressBundle(p, namespace)
 
 	uninstallWordpressBundle(p, namespace)
 }
