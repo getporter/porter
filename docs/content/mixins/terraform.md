@@ -3,6 +3,8 @@ title: terraform mixin
 description: Using the terraform mixin
 ---
 
+<img src="/images/mixins/terraform.svg" class="mixin-logo" style="width: 300px" />
+
 Execute Terraform files
 
 Source: https://github.com/deislabs/porter-terraform

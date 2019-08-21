@@ -3,6 +3,8 @@ title: aws mixin
 description: Using the aws mixin
 ---
 
+<img src="/images/mixins/aws.svg" class="mixin-logo"/>
+
 Run an aws command using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/index.html#cli-aws).
 
 Source: https://github.com/deislabs/porter-aws

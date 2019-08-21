@@ -3,6 +3,8 @@ title: helm mixin
 description: Using the helm mixin
 ---
 
+<img src="/images/mixins/helm.svg" class="mixin-logo" style="width: 150px"/>
+
 Manage a Helm release
 
 Source: https://github.com/deislabs/porter-helm

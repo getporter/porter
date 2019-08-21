@@ -3,6 +3,8 @@ title: azure mixin
 description: Using the azure mixin
 ---
 
+<img src="/images/mixins/azure.png" class="mixin-logo" style="width: 300px"/>
+
 Manage Azure resources
 
 https://github.com/deislabs/porter-azure/
