@@ -2,6 +2,7 @@ package exec
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -14,20 +15,20 @@ import (
 )
 
 func TestAction_UnmarshalYAML(t *testing.T) {
-	b, err := ioutil.ReadFile("testdata/install_input.yaml")
+	b, err := ioutil.ReadFile("testdata/install-input.yaml")
 	require.NoError(t, err)
 
 	action := Action{}
 	err = yaml.Unmarshal(b, &action)
 	require.NoError(t, err)
 
-	assert.Len(t, action.Steps, 1)
+	require.Len(t, action.Steps, 1)
 	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Command)
 	assert.Equal(t, "Install Hello World", step.Description)
-	assert.Len(t, step.Arguments, 2)
-	assert.Equal(t, "-c", step.Arguments[0])
-	assert.Equal(t, "echo Hello World", step.Arguments[1])
+	assert.Len(t, step.Flags, 1)
+	assert.Equal(t, NewFlag("c", "echo Hello World"), step.Flags[0])
+	assert.Len(t, step.Arguments, 0)
 }
 
 func TestMixin_ExecuteCommand(t *testing.T) {
@@ -45,6 +46,7 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 	}
 	b, _ := yaml.Marshal(action)
 
+	fmt.Println(string(b))
 	h := NewTestMixin(t)
 	h.In = bytes.NewReader(b)
 
@@ -57,7 +59,7 @@ func TestMixin_Install(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/install_input.yaml")
+	err := h.loadAction("testdata/install-input.yaml")
 	require.NoError(t, err)
 
 	assert.Len(t, h.Mixin.Action.Steps, 1)
@@ -69,7 +71,7 @@ func TestMixin_Upgrade(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/upgrade_input.yaml")
+	err := h.loadAction("testdata/upgrade-input.yaml")
 	require.NoError(t, err)
 
 	assert.Len(t, h.Mixin.Action.Steps, 1)
@@ -81,7 +83,7 @@ func TestMixin_CustomAction(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/status_input.yaml")
+	err := h.loadAction("testdata/invoke-input.yaml")
 	require.NoError(t, err)
 
 	assert.Len(t, h.Mixin.Action.Steps, 1)
@@ -93,7 +95,7 @@ func TestMixin_Uninstall(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/uninstall_input.yaml")
+	err := h.loadAction("testdata/uninstall-input.yaml")
 	require.NoError(t, err)
 
 	assert.Len(t, h.Mixin.Action.Steps, 1)

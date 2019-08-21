@@ -425,10 +425,10 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	t.Logf("install data %v", installStep.Data)
 	exec := installStep.Data["exec"].(map[interface{}]interface{})
 	assert.NotNil(t, exec)
-	args := exec["arguments"].([]interface{})
-	assert.Len(t, args, 2)
-	assert.Equal(t, "echo hello world", args[1].(string))
-	assert.NotNil(t, args)
+	flags := exec["flags"].(map[interface{}]interface{})
+	assert.Len(t, flags, 1)
+	assert.Equal(t, "echo hello world", flags["c"].(string))
+	assert.NotNil(t, flags)
 }
 
 func TestResolveMultipleStepOutputs(t *testing.T) {

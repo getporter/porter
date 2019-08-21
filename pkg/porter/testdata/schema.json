@@ -126,32 +126,41 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+      "exec": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "items": {
+              "minItems": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "flags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "description",
+          "command"
+        ],
+        "type": "object"
+      },
       "installStep": {
         "additionalProperties": false,
         "properties": {
           "exec": {
-            "additionalProperties": false,
-            "properties": {
-              "arguments": {
-                "items": {
-                  "minItems": 1,
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "command": {
-                "type": "string"
-              },
-              "description": {
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "description",
-              "command"
-            ],
-            "type": "object"
+            "$ref": "#/mixin.exec/definitions/exec"
           }
         },
         "required": [
@@ -163,28 +172,7 @@
         "additionalProperties": false,
         "properties": {
           "exec": {
-            "additionalProperties": false,
-            "properties": {
-              "arguments": {
-                "items": {
-                  "minItems": 1,
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "command": {
-                "type": "string"
-              },
-              "description": {
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "description",
-              "command"
-            ],
-            "type": "object"
+            "$ref": "#/mixin.exec/definitions/exec"
           }
         },
         "required": [
@@ -196,28 +184,7 @@
         "additionalProperties": false,
         "properties": {
           "exec": {
-            "additionalProperties": false,
-            "properties": {
-              "arguments": {
-                "items": {
-                  "minItems": 1,
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "command": {
-                "type": "string"
-              },
-              "description": {
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "description",
-              "command"
-            ],
-            "type": "object"
+            "$ref": "#/mixin.exec/definitions/exec"
           }
         },
         "required": [
@@ -229,28 +196,7 @@
         "additionalProperties": false,
         "properties": {
           "exec": {
-            "additionalProperties": false,
-            "properties": {
-              "arguments": {
-                "items": {
-                  "minItems": 1,
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "command": {
-                "type": "string"
-              },
-              "description": {
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "description",
-              "command"
-            ],
-            "type": "object"
+            "$ref": "#/mixin.exec/definitions/exec"
           }
         },
         "required": [
