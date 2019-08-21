@@ -79,11 +79,11 @@ endif
 
 test: clean-last-testrun test-unit test-integration test-cli
 
-test-unit: build
+test-unit:
 	go test ./...
 
 test-integration: build
-	go test -v -timeout 20m -tags=integration ./tests
+	go test -v -timeout 20m -tags=integration ./...
 
 test-cli: clean-last-testrun build init-porter-home-for-ci
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
