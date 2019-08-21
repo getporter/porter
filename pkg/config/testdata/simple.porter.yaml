@@ -10,22 +10,19 @@ install:
 - exec:
     description: "Say Hello"
     command: bash
-    arguments:
-    - -c
-    - echo Hello World
+    flags:
+      c: echo Hello World
 
 status:
 - exec:
     description: "Get World Status"
     command: bash
-    arguments:
-    - -c
-    - echo The world is on fire
+    flags:
+        c: echo The world is on fire
 
 uninstall:
 - exec:
     description: "Say Goodbye"
     command: bash
-    arguments:
-    - -c
-    - echo Goodbye World
+    flags:
+        c: echo Goodbye World

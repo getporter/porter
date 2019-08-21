@@ -27,9 +27,8 @@ install:
   - exec:
       description: "Echo the IP Address"
       command: bash
-      arguments:
-        - -c
-        - "echo 'You will find the service at: {{bundle.outputs.IP_ADDRESS}}'"
+      flags:
+        c: "echo 'You will find the service at: {{bundle.outputs.IP_ADDRESS}}'"
 
 uninstall:
   - kubernetes:

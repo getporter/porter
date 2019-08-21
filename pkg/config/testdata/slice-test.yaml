@@ -15,15 +15,13 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-      arguments:
-        - -c
-        - "{{ bundle.parameters.command }}"
+      flags:
+        c: "{{ bundle.parameters.command }}"
 
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World

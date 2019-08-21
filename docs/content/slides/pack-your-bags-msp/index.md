@@ -473,9 +473,8 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Hello World
+      flags:
+        c: echo Hello World
 ```
 
 ---

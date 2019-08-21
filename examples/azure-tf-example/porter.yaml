@@ -78,9 +78,8 @@ install:
   - exec:
       description: "Emit the key in base64 encoded form"
       command: bash
-      arguments:
-        - -c
-        - echo "Here is a the storage account key (base64 encoded) ==> $(echo {{bundle.outputs.STORAGE_ACCOUNT_KEY}} | base64)"
+      flags:
+        c: echo "Here is a the storage account key (base64 encoded) ==> $(echo {{bundle.outputs.STORAGE_ACCOUNT_KEY}} | base64)"
   
   - terraform:
       description: "Create Azure CosmosDB and Event Hubs"

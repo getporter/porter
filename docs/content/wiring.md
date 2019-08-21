@@ -70,9 +70,8 @@ install:
   - description: "Install Hello World"
     exec:
       command: bash
-      arguments:
-        - -c
-        - "{{ bundle.parameters.command }}"
+      flags:
+        c: "{{ bundle.parameters.command }}"
 ```
 
 NOTE: These references must be quoted, as in the examples above.

@@ -20,14 +20,12 @@ upgrade:
   - exec:
       description: "World 2.0"
       command: bash
-      arguments:
-        - -c
-        - echo World 2.0
+      flags:
+        c: echo World 2.0
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World
