@@ -49,15 +49,15 @@ func (c *Config) ReadBundleOutput(name string, claim string) (*Output, error) {
 
 	outputPath := filepath.Join(bundleOutputsDir, name)
 
-	bytes, err := c.Context.FileSystem.ReadFile(outputPath)
+	bytes, err := c.FileSystem.ReadFile(outputPath)
 	if err != nil {
-		return nil, errors.Errorf("unable to read output '%s' for claim '%s'", name, claim)
+		return nil, errors.Errorf("unable to read output %q for claim %q", name, claim)
 	}
 
 	var output Output
 	err = json.Unmarshal(bytes, &output)
 	if err != nil {
-		return nil, errors.Errorf("unable to unmarshal output '%s' for claim '%s'", name, claim)
+		return nil, errors.Errorf("unable to unmarshal output %q for claim %q", name, claim)
 	}
 
 	return &output, nil

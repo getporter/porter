@@ -24,11 +24,10 @@ func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) erro
 
 // ToDuffleArgs converts this instance of user-provided action options
 // to duffle action arguments.
-func (o *BundleLifecycleOpts) ToDuffleArgs() cnabprovider.ActionArguments {
+func (o *BundleLifecycleOpts) ToDuffleArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
 		Claim:                 o.Name,
-		BundleIdentifier:      o.CNABFile,
-		BundleIsFile:          true,
+		BundlePath:            o.CNABFile,
 		Insecure:              o.Insecure,
 		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
@@ -41,6 +40,8 @@ func (o *BundleLifecycleOpts) ToDuffleArgs() cnabprovider.ActionArguments {
 		args.Params[k] = v
 	}
 	copy(args.CredentialIdentifiers, o.CredentialIdentifiers)
+
+	deperator.ApplyDependencyMappings(&args)
 
 	return args
 }

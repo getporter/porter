@@ -87,16 +87,11 @@ func (p *Porter) Run(opts RunOptions) error {
 	if err != nil {
 		return err
 	}
-	runtimeManifest := config.RuntimeManifest{Manifest: p.Manifest}
+	runtimeManifest := config.NewRuntimeManifest(p.Context, opts.parsedAction, p.Manifest)
 
-	steps, err := runtimeManifest.GetSteps(opts.parsedAction)
+	err = runtimeManifest.Validate()
 	if err != nil {
 		return err
-	}
-
-	err = steps.Validate(p.Manifest)
-	if err != nil {
-		return errors.Wrap(err, "invalid action configuration")
 	}
 
 	mixinsDir, err := p.GetMixinsDir()
@@ -109,12 +104,13 @@ func (p *Porter) Run(opts RunOptions) error {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
 	}
 
-	for _, step := range steps {
+	for _, step := range runtimeManifest.GetSteps() {
 		if step != nil {
 			err := runtimeManifest.ResolveStep(step)
 			if err != nil {
 				return errors.Wrap(err, "unable to resolve sourced values")
 			}
+
 			// Hand over values needing masking in context output streams
 			p.Context.SetSensitiveValues(runtimeManifest.GetSensitiveValues())
 

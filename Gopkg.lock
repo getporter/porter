@@ -242,7 +242,8 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:7b1d8d5afbf6daf84e751156a59aa93c8413b822383a78b5c639300adada011a"
+  branch = "op-config-func"
+  digest = "1:0f0f83ce342a76d4ab1796538f6ffce42d28db1e5c7ab7ef700733a750961d2e"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -259,8 +260,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "0ce7659aab8dbd37cc912ea64cb78f403534de42"
-  version = "v0.3.2-beta1"
+  revision = "55c68212b6d2ac0041f0af9a1753ed7077c00cd3"
+  source = "github.com/carolynvs/cnab-go"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -303,14 +304,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2e6723f6abfee193fe131bf54b0632161e7a1c0da2d062824d4a6866fdc7afc3"
+  digest = "1:a9d1406d7380d50675fddc88442cecdbfbdd069bc24191171ae901719cd4c79b"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "9da25824132d77cbdac5898e1f0812f51d35ce8b"
+  revision = "85061934a54630aec0dd4adbe6427c10bd09a658"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"

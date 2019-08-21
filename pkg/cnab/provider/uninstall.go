@@ -26,10 +26,9 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)
 	}
 
-	if args.BundleIdentifier != "" {
-		// TODO: handle resolving based on bundle name
-		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to unisntall it?
-		c.Bundle, err = d.LoadBundle(args.BundleIdentifier, args.Insecure)
+	if args.BundlePath != "" {
+		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to uninstall it?
+		c.Bundle, err = d.LoadBundle(args.BundlePath, args.Insecure)
 		if err != nil {
 			return err
 		}
@@ -42,12 +41,13 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		}
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Name)
+	driver, err := d.newDriver(args.Driver, c.Name, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
 	i := action.Uninstall{
-		Driver: driver,
+		Driver:          driver,
+		OperationConfig: args.ApplyFiles(),
 	}
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
@@ -66,7 +66,7 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundleIdentifier, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
 	}
 
 	err = i.Run(&c, creds, d.Out)

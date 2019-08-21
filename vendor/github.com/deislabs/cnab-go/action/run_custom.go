@@ -20,6 +20,10 @@ var (
 type RunCustom struct {
 	Driver driver.Driver
 	Action string
+
+	// OperationConfig is an optional handler that applies additional configuration
+	// to the operation before it is executed.
+	OperationConfig func(operation *driver.Operation)
 }
 
 // blockedActions is a list of actions that cannot be run as custom.
@@ -46,6 +50,10 @@ func (i *RunCustom) Run(c *claim.Claim, creds credentials.Set, w io.Writer) erro
 	op, err := opFromClaim(i.Action, actionDef.Stateless, c, invocImage, creds, w)
 	if err != nil {
 		return err
+	}
+
+	if i.OperationConfig != nil {
+		i.OperationConfig(op)
 	}
 
 	opResult, err := i.Driver.Run(op)

@@ -61,3 +61,11 @@ uninstall:
     purge: true
     releases:
       - "{{ bundle.parameters.mysql-name }}"
+
+outputs:
+  - name: mysql-password
+    description: "The mysql database password"
+    type: string
+    applyTo:
+      - install
+    sensitive: true

@@ -42,5 +42,5 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	fmt.Fprintf(p.Out, "installing %s...\n", opts.Name)
-	return p.CNAB.Install(opts.ToDuffleArgs())
+	return p.CNAB.Install(opts.ToDuffleArgs(deperator))
 }

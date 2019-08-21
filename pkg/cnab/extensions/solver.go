@@ -12,8 +12,8 @@ import (
 )
 
 type DependencyLock struct {
-	Name string
-	Tag  string
+	Alias string
+	Tag   string
 }
 
 type DependencySolver struct {
@@ -36,8 +36,8 @@ func (s *DependencySolver) ResolveDependencies(bun *bundle.Bundle) ([]Dependency
 			return nil, err
 		}
 		lock := DependencyLock{
-			Name: alias,
-			Tag:  fmt.Sprintf("%s:%s", bundle, version),
+			Alias: alias,
+			Tag:   fmt.Sprintf("%s:%s", bundle, version),
 		}
 		q = append(q, lock)
 	}

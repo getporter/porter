@@ -24,6 +24,7 @@ type BundleConfig struct {
 	Actions       map[string]bundle.Action     `json:"actions,omitempty" mapstructure:"actions,omitempty"`
 	Definitions   definition.Definitions       `json:"definitions" mapstructure:"definitions"`
 	Parameters    map[string]bundle.Parameter  `json:"parameters" mapstructure:"parameters"`
+	Outputs       map[string]bundle.Output     `json:"outputs" mapstructure:"outputs"`
 	Credentials   map[string]bundle.Credential `json:"credentials" mapstructure:"credentials"`
 	Custom        map[string]interface{}       `json:"custom,omitempty" mapstructure:"custom"`
 }
@@ -44,6 +45,7 @@ func CreateBundleConfig(b *bundle.Bundle) *BundleConfig {
 		Actions:       b.Actions,
 		Definitions:   b.Definitions,
 		Parameters:    b.Parameters,
+		Outputs:       b.Outputs,
 		Credentials:   b.Credentials,
 		Custom:        b.Custom,
 	}
