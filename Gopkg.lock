@@ -636,6 +636,31 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:245625c286175b04907201473b3efea84a4d51201a077cc5e06b4e571cce1ab7"
+  name = "github.com/google/go-containerregistry"
+  packages = [
+    "pkg/authn",
+    "pkg/crane",
+    "pkg/internal/retry",
+    "pkg/logs",
+    "pkg/name",
+    "pkg/v1",
+    "pkg/v1/empty",
+    "pkg/v1/mutate",
+    "pkg/v1/partial",
+    "pkg/v1/random",
+    "pkg/v1/remote",
+    "pkg/v1/remote/transport",
+    "pkg/v1/stream",
+    "pkg/v1/tarball",
+    "pkg/v1/types",
+    "pkg/v1/v1util",
+  ]
+  pruneopts = "NUT"
+  revision = "5d07ccae338dd71d461b7514ce1cad26b0bc4300"
+
+[[projects]]
+  branch = "master"
   digest = "1:52c5834e2bebac9030c97cc0798ac11c3aa8a39f098aeb419f142533da6cd3cc"
   name = "github.com/google/gofuzz"
   packages = ["."]
@@ -1557,6 +1582,7 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/google/go-containerregistry/pkg/crane",
     "github.com/hashicorp/go-multierror",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
