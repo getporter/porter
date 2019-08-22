@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -27,6 +28,14 @@ func (p *Porter) PrintManifestSchema() error {
 }
 
 func (p *Porter) GetManifestSchema() (jsonSchema, error) {
+	replacementSchema, err := p.GetReplacementSchema()
+	if err != nil && p.Debug {
+		fmt.Fprintln(p.Err, errors.Wrap(err, "ignoring replacement schema"))
+	}
+	if replacementSchema != nil {
+		return replacementSchema, nil
+	}
+
 	b, err := p.Templates.GetSchema()
 	if err != nil {
 		return nil, err
@@ -145,4 +154,28 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 	mixinItemSchema["enum"] = mixinEnumSchema
 
 	return manifestSchema, nil
+
+func (p *Porter) GetReplacementSchema() (jsonSchema, error) {
+	home, err := p.GetHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	replacementSchemaPath := filepath.Join(home, "porter.json")
+	if exists, _ := p.FileSystem.Exists(replacementSchemaPath); !exists {
+		return nil, nil
+	}
+
+	b, err := p.FileSystem.ReadFile(replacementSchemaPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not read replacement schema at %s", replacementSchemaPath)
+	}
+
+	replacementSchema := make(jsonSchema)
+	err = json.Unmarshal(b, &replacementSchema)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal replacement schema in %s", replacementSchemaPath)
+	}
+
+	return replacementSchema, nil
 }
