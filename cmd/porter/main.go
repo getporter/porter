@@ -39,19 +39,14 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildVersionCommand(p))
 	cmd.AddCommand(buildSchemaCommand(p))
 	cmd.AddCommand(buildRunCommand(p))
-	cmd.AddCommand(buildBundlesCommand(p))
-	cmd.AddCommand(buildMixinsCommand(p))
-	cmd.AddCommand(buildCredentialsCommand(p))
+	cmd.AddCommand(buildBundleCommands(p))
+	cmd.AddCommand(buildInstanceCommands(p))
+	cmd.AddCommand(buildMixinCommands(p))
+	cmd.AddCommand(buildCredentialsCommands(p))
 
-	for _, alias := range buildBundleAliasCommands(p) {
+	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)
 	}
-
-	// Hide the help command from the help text
-	cmd.SetHelpCommand(&cobra.Command{
-		Use:    "help",
-		Hidden: true,
-	})
 
 	help := newHelptextBox()
 	usage, _ := help.FindString("usage.txt")

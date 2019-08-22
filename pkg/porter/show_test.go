@@ -50,7 +50,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 		t.Fatal("expected p.CNAB to be of type *TestCNABProvider")
 	}
 
-	err = p.ShowBundle(opts)
+	err = p.ShowInstances(opts)
 	require.NoError(t, err)
 
 	wantOutput :=

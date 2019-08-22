@@ -23,11 +23,11 @@ func (d *Duffle) NewClaimStore() (claim.Store, error) {
 func (d *Duffle) FetchClaim(name string) (*claim.Claim, error) {
 	claimStore, err := d.NewClaimStore()
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
+		return nil, errors.Wrapf(err, "could not retrieve bundle instance %s", name)
 	}
 	claim, err := claimStore.Read(name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not retrieve claim %s", name)
+		return nil, errors.Wrapf(err, "could not retrieve bundle instance %s", name)
 	}
 	return &claim, nil
 }

@@ -84,7 +84,7 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 // and Duffle config
 func (d *Duffle) WriteClaimOutputs(c *claim.Claim, action string) error {
 	if c.Bundle == nil {
-		return errors.New("claim has no bundle")
+		return errors.New("bundle instance has no bundle set")
 	}
 
 	if c.Bundle.Outputs == nil {

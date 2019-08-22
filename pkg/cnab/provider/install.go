@@ -15,7 +15,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 
 	c, err := claim.New(args.Claim)
 	if err != nil {
-		return errors.Wrap(err, "invalid claim name")
+		return errors.Wrap(err, "invalid bundle instance name")
 	}
 
 	b, err := d.LoadBundle(args.BundlePath, args.Insecure)
@@ -79,7 +79,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 		return errors.Wrap(runErr, "failed to install the bundle")
 	}
 	if writeErr != nil {
-		return errors.Wrap(writeErr, "failed to write outputs to the claim")
+		return errors.Wrap(writeErr, "failed to write outputs to the bundle instance")
 	}
 	return errors.Wrap(saveErr, "failed to record the installation for the bundle")
 }

@@ -19,7 +19,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	}
 	c, err := claims.Read(args.Claim)
 	if err != nil {
-		return errors.Wrapf(err, "could not load claim %s", args.Claim)
+		return errors.Wrapf(err, "could not load bundle instance %s", args.Claim)
 	}
 
 	if args.BundlePath != "" {
@@ -77,7 +77,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 		return errors.Wrap(runErr, "failed to upgrade the bundle")
 	}
 	if err != nil {
-		return errors.Wrap(err, "failed to write outputs to the claim")
+		return errors.Wrap(err, "failed to write outputs to the bundle instance")
 	}
 	return errors.Wrap(saveErr, "failed to record the upgrade for the bundle")
 }

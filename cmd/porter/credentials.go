@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildCredentialsCommand(p *porter.Porter) *cobra.Command {
+func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "credentials",
 		Aliases:     []string{"credential", "cred", "creds"},

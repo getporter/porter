@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildMixinsCommand(p *porter.Porter) *cobra.Command {
+func buildMixinCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "mixins",
 		Aliases: []string{"mixin"},

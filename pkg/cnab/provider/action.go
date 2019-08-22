@@ -6,7 +6,7 @@ import (
 
 // Shared arguments for all CNAB actions supported by duffle
 type ActionArguments struct {
-	// Name of the claim.
+	// Name of the instance.
 	Claim string
 
 	// Either a filepath to the bundle or the name of the bundle.

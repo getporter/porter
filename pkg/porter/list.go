@@ -37,8 +37,8 @@ func (l CondensedClaimList) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// ListBundles lists installed bundles by their claims.
-func (p *Porter) ListBundles(opts ListOptions) error {
+// ListInstances lists installed bundles by their claims.
+func (p *Porter) ListInstances(opts ListOptions) error {
 	cp := cnab.NewDuffle(p.Config)
 	claimStore, err := cp.NewClaimStore()
 	if err != nil {
@@ -46,7 +46,7 @@ func (p *Porter) ListBundles(opts ListOptions) error {
 	}
 	claims, err := claimStore.ReadAll()
 	if err != nil {
-		return errors.Wrap(err, "could not list claims")
+		return errors.Wrap(err, "could not list bundle instances")
 	}
 
 	var condensedClaims CondensedClaimList

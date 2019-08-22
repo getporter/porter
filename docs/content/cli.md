@@ -4,6 +4,8 @@ description: Porter CLI Commands Explained
 ---
 
 * [Bundle Commands](#bundle-commands)
+* [Instance Commands](#instance-commands)
+* [Instance Outputs Commands](#outputs-commands)
 * [Mixin Commands](#mixin-commands)
 * [Meta Commands](#meta-commands)
 
@@ -56,8 +58,8 @@ and `porter bundle install`.
 $ porter install --help
 Install a bundle.
 
-The first argument is the name of the claim to create for the installation. The
-claim name defaults to the name of the bundle.
+The first argument is the bundle instance name to create for the installation.
+This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's
 invocation image, but an alternate driver may be supplied via '--driver/-d'. For
@@ -65,7 +67,7 @@ instance, the 'debug' driver may be specified, which simply logs the info given
 to it and then exits.
 
 Usage:
-  porter install [CLAIM] [flags]
+  porter install [INSTANCE] [flags]
 
 Examples:
   porter install
@@ -106,8 +108,8 @@ bundle upgrade`.
 $ porter upgrade --help
 Upgrade a bundle.
 
-The first argument is the name of the claim to upgrade. The claim name defaults
-to the name of the bundle.
+The first argument is the bundle instance name to upgrade. This defaults to the
+name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's
 invocation image, but an alternate driver may be supplied via '--driver/-d'. For
@@ -115,7 +117,7 @@ instance, the 'debug' driver may be specified, which simply logs the info given
 to it and then exits.
 
 Usage:
-  porter upgrade [CLAIM] [flags]
+  porter upgrade [INSTANCE] [flags]
 
 Examples:
   porter upgrade
@@ -155,8 +157,8 @@ and `porter bundle invoke`.
 ```console
 Invoke a custom action on a bundle.
 
-The first argument is the name of the claim upon which to invoke the action. The
-claim name defaults to the name of the bundle.
+The first argument is the bundle instance name upon which to invoke the action.
+This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's
 invocation image, but an alternate driver may be supplied via '--driver/-d'. For
@@ -164,7 +166,7 @@ instance, the 'debug' driver may be specified, which simply logs the info given
 to it and then exits.
 
 Usage:
-  porter invoke [CLAIM] --action ACTION [flags]
+  porter invoke [INSTANCE] --action ACTION [flags]
 
 Examples:
   porter invoke --action ACTION
@@ -207,8 +209,8 @@ and `porter bundle uninstall`.
 $ porter uninstall --help
 Uninstall a bundle
 
-The first argument is the name of the claim to uninstall. The claim name
-defaults to the name of the bundle.
+The first argument is the bundle instance name to uninstall. This defaults to
+the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's
 invocation image, but an alternate driver may be supplied via '--driver/-d'. For
@@ -216,7 +218,7 @@ instance, the 'debug' driver may be specified, which simply logs the info given
 to it and then exits.
 
 Usage:
-  porter uninstall [CLAIM] [flags]
+  porter uninstall [INSTANCE] [flags]
 
 Examples:
   porter uninstall
@@ -248,12 +250,14 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
-### Bundle List
+## Instance Commands
 
-This command is available both as `porter bundle list` and `porter bundles list`.
+### Instances List
+
+This command is available both as `porter instance list` and `porter list`.
 
 ```console
-$ porter bundle list --help
+$ porter instance list --help
 List all bundles installed by Porter.
 
 A listing of bundles currently installed by Porter will be provided, along with
@@ -265,8 +269,8 @@ Usage:
   porter bundles list [flags]
 
 Examples:
-  porter bundle list
-  porter bundle list -o json
+  porter instance list
+  porter instance list -o json
 
 Flags:
   -h, --help            help for list
@@ -277,19 +281,19 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
-### Bundle Show
+### Instance Show
 
-This command is available both as `porter bundle show` and `porter bundles show`.
+This command is available both as `porter instance show` and `porter show`.
 
 ```console
-$ porter bundle show --help
-Displays info relating to a bundle claim, including status and a listing of outputs.
+$ porter instance show --help
+Displays info relating to a bundle instance, including status and a listing of outputs.
 
 Usage:
-  porter bundles show [CLAIM] [flags]
+  porter bundles show [INSTANCE] [flags]
 
 Examples:
-  porter bundle show [CLAIM]
+  porter bundle show [INSTANCE]
 
 Optional output formats include json and yaml.
 
@@ -302,24 +306,28 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
-### Bundle Outputs List
+## Instance Outputs Commands
 
-Outputs from a bundle claim can be listed via `porter bundle outputs list`.
+### Instance Outputs List
+
+Outputs from a bundle instance can be listed via `porter instance outputs list`.
 
 ```console
- $ porter bundle outputs list --help
+ $ porter instance outputs list --help
 Displays a listing of bundle outputs.
 
 Usage:
-  porter bundles output list [CLAIM] [flags]
+  porter bundles output list [INSTANCE] [flags]
 
 Examples:
-  porter bundle outputs list [CLAIM]
+  porter instance outputs list
+  porter instance outputs list --instance another-bundle
 
 Optional output formats include json and yaml.
 
 
 Flags:
+  -i, --instance string   Specify the instance to which the output belongs.
   -h, --help            help for list
   -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
 
@@ -327,23 +335,24 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
-### Bundle Outputs Show
+### Instance Outputs Show
 
-An individual output from a bundle claim can be retrieved via `porter bundle output show`.
+An individual output from a bundle instance can be retrieved via `porter instance output show`.
 
 ```console
- $ porter bundle outputs show --help
+ $ porter instance outputs show --help
 Show a bundle output.
 
 Usage:
-  porter bundles output show NAME [--claim|-c CLAIM] [flags]
+  porter bundles output show NAME [--instance|-i INSTANCE] [flags]
 
 Examples:
-  porter bundle output show NAME [--claim|-c CLAIM]
+  porter instance output show kubeconfig
+  porter instance output show subscription-id --instance azure-mysql
 
 Flags:
-  -c, --claim string   Specify a claim that the output belongs to.
-  -h, --help           help for show
+  -i, --instance string   Specify the instance to which the output belongs.
+  -h, --help              help for show
 
 Global Flags:
       --debug   Enable debug logging
