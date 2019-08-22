@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -27,6 +28,14 @@ func (p *Porter) PrintManifestSchema() error {
 }
 
 func (p *Porter) GetManifestSchema() (jsonSchema, error) {
+	replacementSchema, err := p.GetReplacementSchema()
+	if err != nil && p.Debug {
+		fmt.Fprintln(p.Err, errors.Wrap(err, "ignoring replacement schema"))
+	}
+	if replacementSchema != nil {
+		return replacementSchema, nil
+	}
+
 	b, err := p.Templates.GetSchema()
 	if err != nil {
 		return nil, err
@@ -38,14 +47,32 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, errors.Wrap(err, "could not unmarshal the root porter manifest schema")
 	}
 
+	combinedSchema, err := p.injectMixinSchemas(manifestSchema)
+	if err != nil {
+		if p.Debug {
+			fmt.Fprintln(p.Err, err)
+		}
+		// Fallback to the porter schema, without any mixins
+		return manifestSchema, nil
+	}
+
+	return combinedSchema, nil
+}
+
+func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, error) {
 	propertiesSchema, ok := manifestSchema["properties"].(jsonSchema)
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties type, expected map[string]interface{} but got %T", manifestSchema["properties"])
 	}
 
-	patternPropertiesSchema, ok := manifestSchema["patternProperties"].(jsonSchema)[".*"].(jsonSchema)
+	patternProperties, ok := manifestSchema["patternProperties"].(jsonSchema)
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid patternProperties type, expected map[string]interface{} but got %T", manifestSchema["patternProperties"])
+	}
+
+	patternPropertiesSchema, ok := patternProperties[".*"].(jsonSchema)
+	if !ok {
+		return nil, errors.Errorf("root porter manifest schema has invalid patternProperties[.*] type, expected map[string]interface{} but got %T", patternProperties[".*"])
 	}
 
 	mixinSchema, ok := propertiesSchema["mixins"].(jsonSchema)
@@ -78,6 +105,7 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 		return nil, err
 	}
 
+	// If there is an error with any mixin, print a warning and skip the mixin, do not return an error
 	for _, mixin := range mixins {
 		mixinSchema, err := p.Mixins.GetSchema(mixin)
 		if err != nil {
@@ -93,8 +121,9 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema)
+		if err != nil && p.Debug {
+			fmt.Fprintln(p.Err, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema))
+			continue
 		}
 
 		mixinEnumSchema = append(mixinEnumSchema, mixin.Name)
@@ -104,13 +133,17 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 
 		for _, action := range coreActions {
 			actionItemSchema, ok := actionSchemas[string(action)]["items"].(jsonSchema)
-			if err != nil {
-				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"])
+			if err != nil && p.Debug {
+				fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid properties.%s.items type, expected map[string]interface{} but got %T", action, actionSchemas[string(action)]["items"]))
+				continue
 			}
 
 			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
 			if !ok {
-				return nil, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"])
+				if err != nil && p.Debug {
+					fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid properties.%s.items.anyOf type, expected []interface{} but got %T", action, actionItemSchema["anyOf"]))
+					continue
+				}
 			}
 
 			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, action)
@@ -127,13 +160,15 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 			actionRef := fmt.Sprintf("#/mixin.%s/definitions/invokeStep", mixin.Name)
 
 			actionItemSchema, ok := patternPropertiesSchema["items"].(jsonSchema)
-			if err != nil {
-				return nil, errors.Errorf("root porter manifest schema has invalid patternProperties.items type, expected map[string]interface{} but got %T", patternPropertiesSchema["items"])
+			if err != nil && p.Debug {
+				fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid patternProperties.items type, expected map[string]interface{} but got %T", patternPropertiesSchema["items"]))
+				continue
 			}
 
 			actionAnyOfSchema, ok := actionItemSchema["anyOf"].([]interface{})
-			if !ok {
-				return nil, errors.Errorf("root porter manifest schema has invalid patternProperties.items.anyOf type, expected []interface{} but got %T", actionItemSchema["anyOf"])
+			if !ok && p.Debug {
+				fmt.Fprintln(p.Err, errors.Errorf("root porter manifest schema has invalid patternProperties.items.anyOf type, expected []interface{} but got %T", actionItemSchema["anyOf"]))
+				continue
 			}
 
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
@@ -144,5 +179,30 @@ func (p *Porter) GetManifestSchema() (jsonSchema, error) {
 	// Save the updated arrays into the json schema document
 	mixinItemSchema["enum"] = mixinEnumSchema
 
-	return manifestSchema, nil
+	return manifestSchema, err
+}
+
+func (p *Porter) GetReplacementSchema() (jsonSchema, error) {
+	home, err := p.GetHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	replacementSchemaPath := filepath.Join(home, "porter.json")
+	if exists, _ := p.FileSystem.Exists(replacementSchemaPath); !exists {
+		return nil, nil
+	}
+
+	b, err := p.FileSystem.ReadFile(replacementSchemaPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not read replacement schema at %s", replacementSchemaPath)
+	}
+
+	replacementSchema := make(jsonSchema)
+	err = json.Unmarshal(b, &replacementSchema)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal replacement schema in %s", replacementSchemaPath)
+	}
+
+	return replacementSchema, nil
 }
