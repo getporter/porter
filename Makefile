@@ -168,11 +168,15 @@ fetch-bundle-schema:
 	@curl --fail --silent --show-error -o $(BUNDLE_SCHEMA_PATH) \
 		https://raw.githubusercontent.com/deislabs/cnab-spec/master/schema/bundle.schema.json
 
-install:
+install: install-porter install-mixins
+
+install-porter:
 	mkdir -p $(HOME)/.porter
-	cp -R bin/mixins $(HOME)/.porter/
 	cp bin/porter* $(HOME)/.porter/
 	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
+
+install-mixins:
+	cp -R bin/mixins $(HOME)/.porter/
 
 clean: clean-mixins clean-last-testrun
 
