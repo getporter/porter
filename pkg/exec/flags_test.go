@@ -1,11 +1,29 @@
 package exec
 
 import (
+	"io/ioutil"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	yaml "gopkg.in/yaml.v2"
 )
+
+func TestFlags_UnmarshalYAML(t *testing.T) {
+	b, err := ioutil.ReadFile("testdata/flags-input.yaml")
+	require.NoError(t, err, "could not read the input file")
+
+	var flags Flags
+	err = yaml.Unmarshal(b, &flags)
+	require.NoError(t, err, "could not unmarshal the flags")
+
+	assert.Contains(t, flags, NewFlag("int", "1"))
+	assert.Contains(t, flags, NewFlag("bool", "true"))
+	assert.Contains(t, flags, NewFlag("string", "abc"))
+	assert.Contains(t, flags, NewFlag("empty"))
+	assert.Contains(t, flags, NewFlag("repeated", "FOO=BAR", "STUFF=THINGS"))
+}
 
 func TestFlags_Sort(t *testing.T) {
 	flags := Flags{
@@ -38,6 +56,12 @@ func TestFlag_ToSlice(t *testing.T) {
 		f := NewFlag("l")
 		args := f.ToSlice()
 		assert.Equal(t, []string{"-l"}, args)
+	})
+
+	t.Run("repeated flag", func(t *testing.T) {
+		f := NewFlag("repeated", "FOO=BAR", "STUFF=THINGS")
+		args := f.ToSlice()
+		assert.Equal(t, []string{"--repeated", "FOO=BAR", "--repeated", "STUFF=THINGS"}, args)
 	})
 }
 

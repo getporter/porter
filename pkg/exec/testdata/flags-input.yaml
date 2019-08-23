@@ -1,0 +1,7 @@
+int: 1
+bool: true
+string: "abc"
+empty:
+repeated:
+  - FOO=BAR
+  - STUFF=THINGS

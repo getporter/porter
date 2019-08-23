@@ -16,23 +16,32 @@ type Flag struct {
 // NewFlag creates an instance of a Flag.
 func NewFlag(name string, values ...string) Flag {
 	f := Flag{
-		Name:   name,
-		Values: make([]string, len(values)),
+		Name: name,
 	}
-	copy(f.Values, values)
+	if len(values) > 0 {
+		f.Values = make([]string, len(values))
+		copy(f.Values, values)
+	}
 	return f
 }
 
 // ToSlice converts to a string array suitable of command arguments suitable for passing to exec.Command
 func (flag Flag) ToSlice() []string {
-	result := make([]string, 0, len(flag.Values)+1)
+	var flagName string
 	dash := "--"
 	if len(flag.Name) == 1 {
 		dash = "-"
 	}
-	result = append(result, fmt.Sprintf("%s%s", dash, flag.Name))
-	for _, value := range flag.Values {
-		result = append(result, value)
+	flagName = fmt.Sprintf("%s%s", dash, flag.Name)
+
+	result := make([]string, 0, len(flag.Values)+1)
+	if len(flag.Values) == 0 {
+		result = append(result, flagName)
+	} else {
+		for _, value := range flag.Values {
+			result = append(result, flagName)
+			result = append(result, value)
+		}
 	}
 	return result
 }
@@ -56,7 +65,7 @@ func (flags *Flags) ToSlice() []string {
 //   flag1: value
 //   flag2: value
 //   flag3:
-//	 - value1
+//   - value1
 //   - value2
 //
 // and turns it into this:
@@ -107,7 +116,7 @@ func (flags *Flags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 //   flag1: value
 //   flag2: value
 //   flag3:
-//	 - value1
+//   - value1
 //   - value2
 func (flags Flags) MarshalYAML() (interface{}, error) {
 	result := make(map[string]interface{}, len(flags))
