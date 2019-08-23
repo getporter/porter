@@ -42,8 +42,8 @@ echo "${list_outputs}" | grep -q "foo!"
 
 ${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
 
-echo "Verifing bundle output(s) via 'porter bundle output show' after upgrade"
-${PORTER_HOME}/porter bundle output show file_contents | grep -q "bar!"
+echo "Verifying instance output(s) via 'porter instance output show' after upgrade"
+${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'

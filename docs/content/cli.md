@@ -252,7 +252,7 @@ Global Flags:
 
 ## Instance Commands
 
-### Instances List
+### List
 
 This command is available both as `porter instance list` and `porter list`.
 
@@ -281,7 +281,7 @@ Global Flags:
       --debug   Enable debug logging
 ```
 
-### Instance Show
+### Show
 
 This command is available both as `porter instance show` and `porter show`.
 
@@ -317,7 +317,7 @@ Outputs from a bundle instance can be listed via `porter instance outputs list`.
 Displays a listing of bundle outputs.
 
 Usage:
-  porter bundles output list [INSTANCE] [flags]
+  porter instance output list [INSTANCE] [flags]
 
 Examples:
   porter instance outputs list
@@ -344,7 +344,7 @@ An individual output from a bundle instance can be retrieved via `porter instanc
 Show a bundle output.
 
 Usage:
-  porter bundles output show NAME [--instance|-i INSTANCE] [flags]
+  porter instance output show NAME [--instance|-i INSTANCE] [flags]
 
 Examples:
   porter instance output show kubeconfig

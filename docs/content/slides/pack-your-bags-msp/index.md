@@ -701,10 +701,10 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 1. Finally run `porter install --param name=YOUR_NAME` and look for your name in the output.
 
 ---
-### porter bundle list
+### porter list
 
 ```
-$ porter bundle list
+$ porter list
 NAME          CREATED         MODIFIED        LAST ACTION   LAST STATUS
 HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
 HELLO         8 minutes ago   8 minutes ago   install       success
