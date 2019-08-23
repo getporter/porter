@@ -234,6 +234,14 @@
   revision = "2a93cfde8c20b23de8eb84a5adbc234ddf7a9e8d"
 
 [[projects]]
+  digest = "1:7cb4fdca4c251b3ef8027c90ea35f70c7b661a593b9eeae34753c65499098bb1"
+  name = "github.com/cpuguy83/go-md2man"
+  packages = ["md2man"]
+  pruneopts = "NUT"
+  revision = "7762f7e404f8416dfa1d9bb6a8c192aa9acb4d19"
+  version = "v1.0.10"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -1064,6 +1072,14 @@
   version = "v1.3.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:94633b5e99d72403cc38ff783a6d57691ae382f79dee37660fd0aa033b45d10e"
+  name = "github.com/russross/blackfriday"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a925a152c144ea7de0f451eaf2f7db9e52fa005a"
+
+[[projects]]
   digest = "1:d848e2bdc690ea54c4b49894b67a05db318a97ee6561879b814c2c1f82f61406"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -1083,9 +1099,12 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
+  digest = "1:f3cd75f81ee2b143bd354d906370261e94fc58e66dd5d632e1d6cde828338741"
   name = "github.com/spf13/cobra"
-  packages = ["."]
+  packages = [
+    ".",
+    "doc",
+  ]
   pruneopts = "NUT"
   revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
   version = "v0.0.3"
@@ -1590,6 +1609,7 @@
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
+    "github.com/spf13/cobra/doc",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/xeipuuv/gojsonschema",

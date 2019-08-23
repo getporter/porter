@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
-	"github.com/gobuffalo/packr/v2"
-
 	"github.com/deislabs/porter/pkg/porter"
-
+	"github.com/gobuffalo/packr/v2"
 	"github.com/spf13/cobra"
 )
+
+var includeDocsCommand = false
 
 func main() {
 	cmd := buildRootCommand()
@@ -55,6 +55,10 @@ func buildRootCommand() *cobra.Command {
 	cobra.AddTemplateFunc("ShouldShowGroupCommand", ShouldShowGroupCommand)
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommands", ShouldShowUngroupedCommands)
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommand", ShouldShowUngroupedCommand)
+
+	if includeDocsCommand {
+		cmd.AddCommand(buildDocsCommand())
+	}
 
 	return cmd
 }

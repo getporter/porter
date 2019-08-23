@@ -30,7 +30,7 @@ MIXIN_TAG ?= canary
 MIXINS_URL = https://cdn.deislabs.io/porter/mixins
 
 .PHONY: build
-build: build-porter build-mixins clean-packr get-mixins
+build: build-porter docs-gen build-mixins clean-packr get-mixins
 
 build-porter: generate
 	$(MAKE) $(MAKE_OPTS) build MIXIN=porter -f mixin.mk BINDIR=bin
@@ -96,6 +96,9 @@ init-porter-home-for-ci:
 .PHONY: docs
 docs:
 	hugo --source docs/ $(BASEURL_FLAG)
+
+docs-gen:
+	go run --tags=docs ./cmd/porter docs
 
 docs-preview:
 	hugo serve --source docs/
