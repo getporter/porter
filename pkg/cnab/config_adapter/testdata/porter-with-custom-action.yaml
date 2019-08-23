@@ -17,38 +17,33 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Hello World
+      flags:
+        c: echo Hello World
 
 upgrade:
   - exec:
       description: "World 2.0"
       command: bash
-      arguments:
-        - -c
-        - echo World 2.0
+      flags:
+        c: echo World 2.0
 
 status:
   - exec:
       description: "Get World Status"
       command: bash
-      arguments:
-        - -c
-        - echo The world is on fire
+      flags:
+        c: echo The world is on fire
 
 zombies:
   - exec:
       description: "Trigger zombie apocalypse"
       command: bash
-      arguments:
-        - -c
-        - echo oh noes my brains
+      flags:
+        c: echo oh noes my brains
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World

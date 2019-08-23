@@ -8,10 +8,9 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
-
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/gobuffalo/packr/v2"
+	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -22,49 +21,6 @@ type Mixin struct {
 	Action Action
 
 	schemas *packr.Box
-}
-
-type Action struct {
-	Steps []Step // using UnmarshalYAML so that we don't need a custom type per action
-}
-
-// UnmarshalYAML takes any yaml in this form
-// ACTION:
-// - exec: ...
-// and puts the steps into the Action.Steps field
-func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	actionMap := map[interface{}][]interface{}{}
-	err := unmarshal(&actionMap)
-	if err != nil {
-		return errors.Wrap(err, "could not unmarshal yaml into an action map of exec steps")
-	}
-
-	for _, stepMaps := range actionMap {
-		b, err := yaml.Marshal(stepMaps)
-		if err != nil {
-			return err
-		}
-
-		var steps []Step
-		err = yaml.Unmarshal(b, &steps)
-		if err != nil {
-			return err
-		}
-
-		a.Steps = append(a.Steps, steps...)
-	}
-
-	return nil
-}
-
-type Step struct {
-	Instruction `yaml:"exec"`
-}
-
-type Instruction struct {
-	Description string   `yaml:"description"`
-	Command     string   `yaml:"command"`
-	Arguments   []string `yaml:"arguments"`
 }
 
 // New exec mixin client, initialized with useful defaults.
@@ -102,7 +58,12 @@ func (m *Mixin) Execute() error {
 	}
 	step := m.Action.Steps[0]
 
-	cmd := m.NewCommand(step.Command, step.Arguments...)
+	args := make([]string, len(step.Arguments), 1+len(step.Arguments)+len(step.Flags)*2)
+
+	copy(args, step.Arguments)
+	args = append(args, step.Flags.ToSlice()...)
+
+	cmd := m.NewCommand(step.Command, args...)
 	cmd.Stdout = m.Out
 	cmd.Stderr = m.Err
 

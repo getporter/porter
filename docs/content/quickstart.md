@@ -33,17 +33,15 @@ install:
   - description: "Install Hello World"
     exec:
       command: bash
-      arguments:
-        - -c
-        - echo Hello World
+      flags:
+        c: echo Hello World
 
 uninstall:
   - description: "Uninstall Hello World"
     exec:
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World
 ```
 
 ## Build the bundle

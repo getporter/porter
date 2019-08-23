@@ -51,9 +51,8 @@ ping:
   - exec:
       description: "Ping"
       command: "bash"
-      arguments:
-        - -c
-        - echo ping
+      flags:
+        c: echo ping
 
 uninstall:
 - helm:

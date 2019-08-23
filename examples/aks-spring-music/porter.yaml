@@ -91,9 +91,8 @@ uninstall:
   - exec:
       description: "Uninstall Spring Music Demo"
       command: bash
-      arguments:
-        - -c
-        - echo App should be uninstalled here, but it is not
+      flags:
+        c: echo App should be uninstalled here, but it is not
 
 credentials:
 - name: SUBSCRIPTION_ID

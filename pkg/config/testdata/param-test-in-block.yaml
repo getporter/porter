@@ -20,6 +20,5 @@ uninstall:
   - exec:
       description: "Uninstall Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World

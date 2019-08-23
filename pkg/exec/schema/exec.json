@@ -4,30 +4,7 @@
     "installStep": {
       "type": "object",
       "properties": {
-        "exec": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string",
-              "minLength": 1
-            },
-            "command": {
-              "type": "string"
-            },
-            "arguments": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minItems": 1
-              }
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "description",
-            "command"
-          ]
-        }
+        "exec": {"$ref": "#/definitions/exec"}
       },
       "additionalProperties": false,
       "required": [
@@ -37,30 +14,7 @@
     "upgradeStep": {
       "type": "object",
       "properties": {
-        "exec": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string",
-              "minLength": 1
-            },
-            "command": {
-              "type": "string"
-            },
-            "arguments": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minItems": 1
-              }
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "description",
-            "command"
-          ]
-        }
+        "exec": {"$ref": "#/definitions/exec"}
       },
       "additionalProperties": false,
       "required": [
@@ -70,30 +24,7 @@
     "invokeStep": {
       "type": "object",
       "properties": {
-        "exec": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string",
-              "minLength": 1
-            },
-            "command": {
-              "type": "string"
-            },
-            "arguments": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minItems": 1
-              }
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "description",
-            "command"
-          ]
-        }
+        "exec": {"$ref": "#/definitions/exec"}
       },
       "additionalProperties": false,
       "required": [
@@ -103,34 +34,41 @@
     "uninstallStep": {
       "type": "object",
       "properties": {
-        "exec": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string",
-              "minLength": 1
-            },
-            "command": {
-              "type": "string"
-            },
-            "arguments": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "minItems": 1
-              }
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "description",
-            "command"
-          ]
-        }
+        "exec": {"$ref": "#/definitions/exec"}
       },
       "additionalProperties": false,
       "required": [
         "exec"
+      ]
+    },
+    "exec": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minItems": 1
+          }
+        },
+        "flags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "command"
       ]
     }
   },

@@ -11,14 +11,12 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-      arguments:
-      - "-c"
-      - "Hello World!"
+      flags:
+        c: echo Hello World
 
 uninstall:
 - exec:
     description: "Uninstall Hello World"
     command: bash
-    arguments:
-    - -c
-    - echo Goodbye World
+    flags:
+      c: echo Goodbye World

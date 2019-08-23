@@ -27,17 +27,15 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Hello World
+      flags:
+        c: echo Hello World
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
       command: bash
-      arguments:
-        - -c
-        - echo Goodbye World
+      flags:
+        c: echo Goodbye World
 
 #dependencies:
 #  - name: mysql
@@ -270,17 +268,15 @@ install:
 - exec:
     description: "Say Hello"
     command: bash
-    arguments:
-      - -c
-      - echo Hello World
+    flags:
+      c: echo Hello World
 
 uninstall:
 - exec:
     description: "Say Goodbye"
     command: bash
-    arguments:
-      - -c
-      - echo Goodbye World
+    flags:
+      c: echo Goodbye World
 ```
 
 This bundle, for example, declares a dependency on a bundle named `mysql`. The CNAB specification doesn't provide a mechanism for handling dependency resolution. Porter supplements the CNAB spec to support dependencies by resolving any dependencies at build time, including the contents of each dependency in the invocation image. At runtime the contents of that bundle will therefore be in the bundle and the Porter runtime component can execute them successfully.

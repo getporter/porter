@@ -25,9 +25,8 @@ install:
 - exec:
     description: "Say Hello"
     command: bash
-    arguments:
-      - -c
-      - echo Hello World
+    flags:
+      c: echo Hello World
 ```
 
 ## Mixin API

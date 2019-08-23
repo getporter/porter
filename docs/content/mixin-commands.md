@@ -224,9 +224,8 @@ status:
 - exec:
     description: "Run a rando command, don't care what action I'm in"
     command: bash
-    arguments:
-    - -c
-    - echo "Don't mind me, just getting the status of something..."
+    flags:
+      c: echo "Don't mind me, just getting the status of something..."
 ```
 
 # version
