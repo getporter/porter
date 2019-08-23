@@ -23,7 +23,7 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		if err == claim.ErrClaimNotFound {
 			return nil
 		}
-		return errors.Wrapf(err, "could not load claim %s", args.Claim)
+		return errors.Wrapf(err, "could not load bundle instance %s", args.Claim)
 	}
 
 	if args.BundlePath != "" {

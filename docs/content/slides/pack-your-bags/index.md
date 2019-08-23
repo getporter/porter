@@ -733,10 +733,10 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 
 ---
 
-### porter bundle list
+### porter list
 
 ```console
-$ porter bundle list
+$ porter list
 NAME          CREATED         MODIFIED        LAST ACTION   LAST STATUS
 HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
 HELLO         8 minutes ago   8 minutes ago   install       success

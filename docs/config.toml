@@ -82,27 +82,27 @@ defaultContentLanguage = "en"
     weight = 128
     parent = "cli"
   [[menu.main]]
-    name = "porter bundle list"
-    url = "/cli#bundle-list"
-    identifier = "cli-bundle-list"
+    name = "porter list"
+    url = "/cli#list"
+    identifier = "cli-list"
     weight = 129
     parent = "cli"
   [[menu.main]]
-    name = "porter bundle show"
-    url = "/cli#bundle-show"
-    identifier = "cli-bundle-show"
+    name = "porter show"
+    url = "/cli#show"
+    identifier = "cli-show"
     weight = 129
     parent = "cli"
   [[menu.main]]
-    name = "porter bundle outputs list"
-    url = "/cli#bundle-outputs-list"
-    identifier = "cli-bundle-outputs-list"
+    name = "porter instance outputs list"
+    url = "/cli#instance-outputs-list"
+    identifier = "cli-instance-outputs-list"
     weight = 130
     parent = "cli"
   [[menu.main]]
-    name = "porter bundle output show"
-    url = "/cli#bundle-output-show"
-    identifier = "cli-bundle-output-show"
+    name = "porter instance output show"
+    url = "/cli#instance-output-show"
+    identifier = "cli-instance-output-show"
     weight = 131
     parent = "cli"
   [[menu.main]]

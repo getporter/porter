@@ -31,8 +31,8 @@ if ! cat ${porter_output} | grep -q 'content:  "" => "foo!"'; then
   exit 1
 fi
 
-echo "Verifing bundle output(s) via 'porter bundle outputs list' after install"
-list_outputs=$(${PORTER_HOME}/porter bundle outputs list)
+echo "Verifying instance output(s) via 'porter instance outputs list' after install"
+list_outputs=$(${PORTER_HOME}/porter instance outputs list)
 echo "${list_outputs}"
 echo "${list_outputs}" | grep -q "file_contents"
 echo "${list_outputs}" | grep -q "foo!"
@@ -42,8 +42,8 @@ echo "${list_outputs}" | grep -q "foo!"
 
 ${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
 
-echo "Verifing bundle output(s) via 'porter bundle output show' after upgrade"
-${PORTER_HOME}/porter bundle output show file_contents | grep -q "bar!"
+echo "Verifying instance output(s) via 'porter instance output show' after upgrade"
+${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'

@@ -21,7 +21,7 @@ func TestPorter_fetchBundleOutputs_Error(t *testing.T) {
 
 	_, err = p.fetchBundleOutputs("bad-outputs-bundle")
 	require.EqualError(t, err,
-		"unable to read output 'bad-output' for claim 'bad-outputs-bundle': unable to unmarshal output \"bad-output\" for claim \"bad-outputs-bundle\"")
+		"unable to read output 'bad-output' for bundle instance 'bad-outputs-bundle': unable to unmarshal output \"bad-output\" for bundle instance \"bad-outputs-bundle\"")
 }
 
 func TestPorter_fetchBundleOutputs(t *testing.T) {

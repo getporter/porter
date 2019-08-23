@@ -45,5 +45,5 @@ func TestInvokeCustomAction(t *testing.T) {
 	// Verify that the custom action was recorded properly
 	claim, err := p.CNAB.FetchClaim(p.Manifest.Name)
 	require.NoError(t, err, "could not fetch claim")
-	assert.Equal(t, "zombies", claim.Result.Action, "the custom action wasn't recorded in the claim")
+	assert.Equal(t, "zombies", claim.Result.Action, "the custom action wasn't recorded in the bundle instance")
 }

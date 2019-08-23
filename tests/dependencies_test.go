@@ -178,9 +178,9 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 
 	// Verify that the dependency claim is uninstalled
 	_, err = p.CNAB.FetchClaim("wordpress-mysql")
-	assert.EqualError(p.T(), err, "could not retrieve claim wordpress-mysql: Claim does not exist")
+	assert.EqualError(p.T(), err, "could not retrieve bundle instance wordpress-mysql: Claim does not exist")
 
 	// Verify that the bundle claim is uninstalled
 	_, err = p.CNAB.FetchClaim("wordpress")
-	assert.EqualError(p.T(), err, "could not retrieve claim wordpress: Claim does not exist")
+	assert.EqualError(p.T(), err, "could not retrieve bundle instance wordpress: Claim does not exist")
 }

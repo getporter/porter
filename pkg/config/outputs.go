@@ -51,13 +51,13 @@ func (c *Config) ReadBundleOutput(name string, claim string) (*Output, error) {
 
 	bytes, err := c.FileSystem.ReadFile(outputPath)
 	if err != nil {
-		return nil, errors.Errorf("unable to read output %q for claim %q", name, claim)
+		return nil, errors.Errorf("unable to read output %q for bundle instance %q", name, claim)
 	}
 
 	var output Output
 	err = json.Unmarshal(bytes, &output)
 	if err != nil {
-		return nil, errors.Errorf("unable to unmarshal output %q for claim %q", name, claim)
+		return nil, errors.Errorf("unable to unmarshal output %q for bundle instance %q", name, claim)
 	}
 
 	return &output, nil

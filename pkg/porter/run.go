@@ -81,7 +81,7 @@ func (o *RunOptions) defaultDebug() error {
 func (p *Porter) Run(opts RunOptions) error {
 	claimName := os.Getenv(config.EnvClaimName)
 	bundleName := os.Getenv(config.EnvBundleName)
-	fmt.Fprintf(p.Out, "executing %s action from %s (claim: %s) defined in %s\n", opts.parsedAction, bundleName, claimName, opts.File)
+	fmt.Fprintf(p.Out, "executing %s action from %s (bundle instance: %s) defined in %s\n", opts.parsedAction, bundleName, claimName, opts.File)
 
 	err := p.LoadManifestFrom(opts.File)
 	if err != nil {

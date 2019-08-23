@@ -53,7 +53,7 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 type sharedOptions struct {
 	bundleFileOptions
 
-	// Name of the claim. Defaults to the name of the bundle.
+	// Name of the instance. Defaults to the name of the bundle.
 	Name string
 
 	// Insecure bundles allowed.
@@ -87,7 +87,7 @@ type sharedOptions struct {
 func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
 	o.Insecure = true
 
-	err := o.validateClaimName(args)
+	err := o.validateInstanceName(args)
 	if err != nil {
 		return err
 	}
@@ -111,12 +111,12 @@ func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
 	return nil
 }
 
-// validateClaimName grabs the claim name from the first positional argument.
-func (o *sharedOptions) validateClaimName(args []string) error {
+// validateInstanceName grabs the claim name from the first positional argument.
+func (o *sharedOptions) validateInstanceName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the claim name, but multiple were received: %s", args)
+		return errors.Errorf("only one positional argument may be specified, the bundle instance name, but multiple were received: %s", args)
 	}
 
 	return nil

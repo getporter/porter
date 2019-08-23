@@ -77,6 +77,5 @@ func TestFileSystem_GetSchema(t *testing.T) {
 
 	wantSchema, err := ioutil.ReadFile("../../exec/testdata/schema.json")
 	require.NoError(t, err)
-
 	assert.Equal(t, string(wantSchema), string(gotSchema))
 }

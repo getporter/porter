@@ -42,7 +42,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 	if o.sharedOptions.Name == "" {
 		err := o.sharedOptions.defaultBundleFiles(cxt)
 		if err != nil {
-			return errors.New("claim name must be provided via [--claim|-c CLAIM]")
+			return errors.New("bundle instance name must be provided via [--instance|-i INSTANCE]")
 		}
 	}
 
@@ -53,7 +53,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
 	// Ensure only one argument exists (claim name) if args length non-zero
-	err := o.sharedOptions.validateClaimName(args)
+	err := o.sharedOptions.validateInstanceName(args)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 	// Attempt to derive claim name from context
 	err = o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return errors.Wrap(err, "claim name must be provided")
+		return errors.Wrap(err, "bundle instance name must be provided")
 	}
 
 	return o.ParseFormat()
@@ -77,7 +77,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 
 	output, err := p.ReadBundleOutput(opts.Output, name)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", opts.Output, name)
+		return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", opts.Output, name)
 	}
 
 	fmt.Fprintln(p.Out, output.Value)
@@ -126,7 +126,7 @@ func (p *Porter) fetchBundleOutputs(claim string) (*config.Outputs, error) {
 			if !info.IsDir() {
 				output, err := p.ReadBundleOutput(info.Name(), claim)
 				if err != nil {
-					return errors.Wrapf(err, "unable to read output '%s' for claim '%s'", info.Name(), claim)
+					return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", info.Name(), claim)
 				}
 
 				outputList = append(outputList, *output)

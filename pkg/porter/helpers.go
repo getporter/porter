@@ -2,7 +2,6 @@ package porter
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -186,14 +185,13 @@ func (t *TestCNABProvider) Uninstall(arguments cnabprovider.ActionArguments) err
 func (t *TestCNABProvider) FetchClaim(name string) (*claim.Claim, error) {
 	bytes, err := afero.ReadFile(t.FileSystem, name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read claim file for %s", name)
+		return nil, errors.Wrapf(err, "could not read bundle instance file for %s", name)
 	}
 
 	var claim claim.Claim
 	err = json.Unmarshal(bytes, &claim)
 	if err != nil {
-		fmt.Printf("unmarshaled claim: %v", claim)
-		return nil, errors.Wrapf(err, "error encountered unmarshaling claim %s", name)
+		return nil, errors.Wrapf(err, "error encountered unmarshaling bundle instance %s", name)
 	}
 
 	return &claim, nil
@@ -202,7 +200,7 @@ func (t *TestCNABProvider) FetchClaim(name string) (*claim.Claim, error) {
 func (t *TestCNABProvider) CreateClaim(claim *claim.Claim) error {
 	bytes, err := json.Marshal(claim)
 	if err != nil {
-		return errors.Wrapf(err, "error encountered marshaling claim %s", claim.Name)
+		return errors.Wrapf(err, "error encountered marshaling bundle instance %s", claim.Name)
 	}
 
 	return afero.WriteFile(t.FileSystem, claim.Name, bytes, os.ModePerm)

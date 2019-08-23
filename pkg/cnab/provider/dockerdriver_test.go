@@ -42,7 +42,7 @@ func TestWriteClaimOutputs(t *testing.T) {
 
 	// Expect error when claim has no associated bundle
 	err = d.WriteClaimOutputs(claim, "install")
-	require.EqualError(t, err, "claim has no bundle")
+	require.EqualError(t, err, "bundle instance has no bundle set")
 
 	claim.Bundle = &bundle.Bundle{}
 
