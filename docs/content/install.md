@@ -1,49 +1,73 @@
 ---
 title: Install Porter
-description: Installing the Porter client
+description: Installing the Porter client and mixins
 ---
 
 We have a few release types available for you to use:
 
-* **canary**: tip of master
-* **vX.Y.Z**: official release
-* **latest**: most recent release
+* [Latest](#latest)
+* [Canary](#canary)
 
-You can change the URLs below replacing `latest` with `canary` or a version number
-like `v0.1.0-ralpha.1+aviation`.
+# Latest
 
-## MacOS
-```
-curl https://deislabs.blob.core.windows.net/porter/latest/install-mac.sh | bash
-```
+Install the most recent stable release of porter and its default [mixins](#mixins).
 
-## Linux
+## Latest MacOS
 ```
-curl https://deislabs.blob.core.windows.net/porter/latest/install-linux.sh | bash
+curl https://cdn.deislabs.io/porter/latest/install-mac.sh | bash
 ```
 
-## Windows
+## Latest Linux
 ```
-iwr "https://deislabs.blob.core.windows.net/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+curl https://cdn.deislabs.io/porter/latest/install-linux.sh | bash
+```
+
+## Latest Windows
+```
+iwr "https://cdn.deislabs.io/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+```
+
+# Canary
+
+Install the most recent build from master of porter and its [mixins](#mixins).
+
+This saves you the trouble of cloning and building porter and its mixin
+repositories yourself. The build may not be stable but it will have new features
+that we are developing.
+
+## Canary MacOS
+```
+curl https://cdn.deislabs.io/porter/canary/install-mac.sh | bash
+```
+
+## Canary Linux
+```
+curl https://cdn.deislabs.io/porter/canary/install-linux.sh | bash
+```
+
+## Canary Windows
+```
+iwr "https://cdn.deislabs.io/porter/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Mixins
 
-We have a number of [mixins](/mixins) to help you get started. The stable ones are installed
-by default by the script:
+We have a number of [mixins](/mixins) to help you get started. The stable ones
+are installed by default:
 
 * exec
 * kubernetes
 * helm
 * azure
+* terraform
 
-You can install a new version of a mixin, or install a mixin that someone else made
-using the `porter mixin install` command built into porter.
+You can update an existing mixin, or install a new mixin using the `porter mixin
+install` command:
 
 ```console
-$ porter mixin install terraform --feed-url https://deislabs.blob.core.windows.net/porter/atom.xml
+$ porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
 installed terraform mixin
-terraform mixin v0.1.0-ralpha.1+elderflowerspritz (edf8778)
+v0.3.0-beta.1 (0d24b85)
 ```
 
-All of the DeisLabs created mixes are published to the same feed: `https://deislabs.blob.core.windows.net/porter/atom.xml`.
+All of the DeisLabs mixins are published to `https://cdn.deislabs.io/porter/atom.xml`.
