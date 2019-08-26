@@ -37,6 +37,16 @@ parameters:
   - name: sensitive
     type: string
     sensitive: true
+  - name: jsonobject
+    type: string
+    default: '"myobject": {
+        "foo": "true",
+        "bar": [
+          1,
+          2,
+          3
+        ]
+      }'
 
 mixins:
   - exec
