@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -29,6 +28,8 @@ func (o *DocsOptions) Validate() error {
 }
 
 func GenerateCliDocs(opts *DocsOptions) error {
+	opts.RootCommand.DisableAutoGenTag = true
+
 	err := doc.GenMarkdownTreeCustom(opts.RootCommand, opts.Destination, docfileHandler(), doclinkHandler())
 	if err != nil {
 		return errors.Wrap(err, "error generating the markdown documentation from the cli")
@@ -52,7 +53,6 @@ func GenerateCliDocs(opts *DocsOptions) error {
 
 func docfileHandler() func(string) string {
 	const fmTemplate = `---
-date: %s
 title: "%s"
 slug: %s
 url: %s
@@ -60,11 +60,10 @@ url: %s
 `
 
 	filePrepender := func(filename string) string {
-		now := time.Now().Format(time.RFC3339)
 		name := filepath.Base(filename)
 		base := strings.TrimSuffix(name, path.Ext(name))
 		url := "/cli/" + strings.ToLower(base) + "/"
-		return fmt.Sprintf(fmTemplate, now, strings.Replace(base, "_", " ", -1), base, url)
+		return fmt.Sprintf(fmTemplate, strings.Replace(base, "_", " ", -1), base, url)
 	}
 	return filePrepender
 }
