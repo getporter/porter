@@ -47,8 +47,7 @@ func (m *Mixin) getPayloadData() ([]byte, error) {
 	if err != nil {
 		errors.Wrap(err, "could not read payload from STDIN")
 	}
-	err = m.ValidatePayload(data)
-	return data, errors.Wrap(err, "could not validate payload")
+	return data, nil
 }
 
 func (m *Mixin) ValidatePayload(b []byte) error {
