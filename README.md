@@ -23,7 +23,7 @@ _Want to work on Porter with us? See our [Contributing Guide](CONTRIBUTING.md)_
 
 _2019/08/26 Wait where did my summer go?_ 🌦
 
-Porter could go in lots of directions! Here are our top 4 goals right now:
+Porter could go in lots of directions! Here are our top goals right now:
 
 1. CNAB Specification Compliance - Milestone [CNAB 1.0](https://github.com/deislabs/porter/milestone/12)
 
