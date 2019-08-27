@@ -26,6 +26,15 @@ func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+func (a Action) GetSteps() []builder.ExecutableStep {
+	steps := make([]builder.ExecutableStep, len(a.Steps))
+	for i := range a.Steps {
+		steps[i] = a.Steps[i]
+	}
+
+	return steps
+}
+
 type Step struct {
 	Instruction `yaml:"exec"`
 }
@@ -35,4 +44,16 @@ type Instruction struct {
 	Command     string        `yaml:"command"`
 	Arguments   []string      `yaml:"arguments,omitempty"`
 	Flags       builder.Flags `yaml:"flags,omitempty"`
+}
+
+func (s Step) GetCommand() string {
+	return s.Command
+}
+
+func (s Step) GetArguments() []string {
+	return s.Arguments
+}
+
+func (s Step) GetFlags() builder.Flags {
+	return s.Flags
 }

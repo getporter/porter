@@ -1,6 +1,11 @@
 package builder
 
 import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -39,4 +44,48 @@ func UnmarshalAction(unmarshal func(interface{}) error, steps interface{}) ([]in
 	}
 
 	return result, nil
+}
+
+// LoadAction reads input from stdin or a command file and uses the specified unmarshal function
+// to unmarshal it into a typed Action.
+// The unmarshal function is responsible for calling yaml.Unmarshal and passing in a reference to an appropriate
+// Action instance.
+//
+// Example:
+//   var action Action
+//	 err := builder.LoadAction(m.Context, opts.File, func(contents []byte) (interface{}, error) {
+//		 err := yaml.Unmarshal(contents, &action)
+//		 return &action, err
+//	 })
+func LoadAction(cxt *context.Context, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
+	contents, err := readInputFromStdinOrFile(cxt, commandFile)
+	if err != nil {
+		return err
+	}
+
+	result, err := unmarshal(contents)
+	if cxt.Debug {
+		fmt.Fprintf(cxt.Err, "DEBUG Parsed Input:\n%#v\n", result)
+	}
+	return errors.Wrapf(err, "could unmarshal input:\n %s", string(contents))
+}
+
+func readInputFromStdinOrFile(cxt *context.Context, commandFile string) ([]byte, error) {
+	var b []byte
+	var err error
+	if commandFile == "" {
+		reader := bufio.NewReader(cxt.In)
+		b, err = ioutil.ReadAll(reader)
+	} else {
+		b, err = cxt.FileSystem.ReadFile(commandFile)
+	}
+
+	if err != nil {
+		source := "STDIN"
+		if commandFile == "" {
+			source = commandFile
+		}
+		return nil, errors.Wrapf(err, "could not load input from %s", source)
+	}
+	return b, nil
 }

@@ -52,7 +52,7 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 	h := NewTestMixin(t)
 	h.In = bytes.NewReader(b)
 
-	err := h.ExecuteCommand(ExecuteCommandOptions{})
+	err := h.Execute(ExecuteOptions{})
 
 	require.NoError(t, err)
 }
@@ -61,11 +61,11 @@ func TestMixin_Install(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/install-input.yaml")
+	action, err := h.loadAction("testdata/install-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -73,11 +73,11 @@ func TestMixin_Upgrade(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/upgrade-input.yaml")
+	action, err := h.loadAction("testdata/upgrade-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -85,11 +85,11 @@ func TestMixin_CustomAction(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/invoke-input.yaml")
+	action, err := h.loadAction("testdata/invoke-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -97,10 +97,10 @@ func TestMixin_Uninstall(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/uninstall-input.yaml")
+	action, err := h.loadAction("testdata/uninstall-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
