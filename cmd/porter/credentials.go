@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/deislabs/porter/pkg/porter"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +33,7 @@ func buildCredentialsAddCommand(p *porter.Porter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p.PrintVersion()
-			return nil
+			return errors.New("Not implemented")
 		},
 	}
 	return cmd
@@ -48,8 +48,7 @@ func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p.PrintVersion()
-			return nil
+			return errors.New("Not implemented")
 		},
 	}
 	return cmd
@@ -135,8 +134,7 @@ func buildCredentialsRemoveCommand(p *porter.Porter) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p.PrintVersion()
-			return nil
+			return errors.New("Not implemented")
 		},
 	}
 	return cmd
