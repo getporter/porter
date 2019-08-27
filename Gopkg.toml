@@ -91,6 +91,11 @@
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.11.5"
 
+# See https://github.com/shurcooL/github_flavored_markdown/issues/12
+[[override]]
+  name = "github.com/russross/blackfriday"
+  branch = "master"
+
 [prune]
   non-go = true
   go-tests = true

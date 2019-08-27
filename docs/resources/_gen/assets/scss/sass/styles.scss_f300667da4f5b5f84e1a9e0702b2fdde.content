@@ -7512,7 +7512,7 @@ body {
           border-right: 4px solid #277A9F;
           background: #e6f3f9; }
   .sidebar .sidebar-buttons {
-    border-top: 2px solid #E4E4E4;
+    border-top: 2px solid white;
     min-height: 4.75rem;
     background: #d4ebf5; }
     .sidebar .sidebar-buttons .button-wrap {
@@ -7523,7 +7523,7 @@ body {
       display: block;
       padding-top: .5rem;
       padding-bottom: .575rem;
-      background-color: #E4E4E4;
+      background-color: white;
       color: #2090CD; }
       .sidebar .sidebar-buttons .button.expand.small i {
         margin: -0.05em 0.5em 0 -0.667em;

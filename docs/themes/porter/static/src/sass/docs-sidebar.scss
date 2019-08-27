@@ -189,7 +189,7 @@
   }
 
   .sidebar-buttons {
-    border-top: 2px solid $light2;
+    border-top: 2px solid white;
     min-height: 4.75rem;
     background: desaturate(lighten($blue1, 35%), 20%);
 
@@ -203,7 +203,7 @@
       display: block;
       padding-top: .5rem;
       padding-bottom: .575rem;
-      background-color: $light2;
+      background-color: white;
       color: $blue3;
 
       i {
