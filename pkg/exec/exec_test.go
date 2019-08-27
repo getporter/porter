@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/exec/builder"
+
 	"github.com/deislabs/porter/pkg/test"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +29,7 @@ func TestAction_UnmarshalYAML(t *testing.T) {
 	assert.Equal(t, "bash", step.Command)
 	assert.Equal(t, "Install Hello World", step.Description)
 	assert.Len(t, step.Flags, 1)
-	assert.Equal(t, NewFlag("c", "echo Hello World"), step.Flags[0])
+	assert.Equal(t, builder.NewFlag("c", "echo Hello World"), step.Flags[0])
 	assert.Len(t, step.Arguments, 0)
 }
 
