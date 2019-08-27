@@ -158,6 +158,19 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				WriteOnly: toBool(true),
 			},
 		},
+		{
+			"jsonobject",
+			bundle.Parameter{
+				Definition: "jsonobject",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "JSONOBJECT",
+				},
+			},
+			definition.Schema{
+				Type:    "string",
+				Default: `"myobject": { "foo": "true", "bar": [ 1, 2, 3 ] }`,
+			},
+		},
 	}
 
 	for _, tc := range testcases {
