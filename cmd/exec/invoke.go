@@ -6,13 +6,13 @@ import (
 )
 
 func buildInvokeCommand(m *exec.Mixin) *cobra.Command {
-	opts := exec.ExecuteCommandOptions{}
+	opts := exec.ExecuteOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "invoke",
 		Short: "Execute the invoke functionality of this mixin",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.ExecuteCommand(opts)
+			return m.Execute(opts)
 		},
 	}
 	flags := cmd.Flags()

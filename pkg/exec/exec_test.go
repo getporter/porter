@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/exec/builder"
+
 	"github.com/deislabs/porter/pkg/test"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +29,7 @@ func TestAction_UnmarshalYAML(t *testing.T) {
 	assert.Equal(t, "bash", step.Command)
 	assert.Equal(t, "Install Hello World", step.Description)
 	assert.Len(t, step.Flags, 1)
-	assert.Equal(t, NewFlag("c", "echo Hello World"), step.Flags[0])
+	assert.Equal(t, builder.NewFlag("c", "echo Hello World"), step.Flags[0])
 	assert.Len(t, step.Arguments, 0)
 }
 
@@ -50,7 +52,7 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 	h := NewTestMixin(t)
 	h.In = bytes.NewReader(b)
 
-	err := h.ExecuteCommand(ExecuteCommandOptions{})
+	err := h.Execute(ExecuteOptions{})
 
 	require.NoError(t, err)
 }
@@ -59,11 +61,11 @@ func TestMixin_Install(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/install-input.yaml")
+	action, err := h.loadAction("testdata/install-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -71,11 +73,11 @@ func TestMixin_Upgrade(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/upgrade-input.yaml")
+	action, err := h.loadAction("testdata/upgrade-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -83,11 +85,11 @@ func TestMixin_CustomAction(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/invoke-input.yaml")
+	action, err := h.loadAction("testdata/invoke-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
 
@@ -95,10 +97,10 @@ func TestMixin_Uninstall(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")
 
-	err := h.loadAction("testdata/uninstall-input.yaml")
+	action, err := h.loadAction("testdata/uninstall-input.yaml")
 	require.NoError(t, err)
 
-	assert.Len(t, h.Mixin.Action.Steps, 1)
-	step := h.Mixin.Action.Steps[0]
+	assert.Len(t, action.Steps, 1)
+	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
