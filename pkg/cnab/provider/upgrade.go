@@ -42,9 +42,9 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
 	i := action.Upgrade{
-		Driver:          driver,
-		OperationConfig: args.ApplyFiles(),
+		Driver: driver,
 	}
+	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {

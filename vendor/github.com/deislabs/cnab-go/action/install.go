@@ -10,11 +10,8 @@ import (
 
 // Install describes an installation action
 type Install struct {
+	ConfigurableAction
 	Driver driver.Driver // Needs to be more than a string
-
-	// OperationConfig is an optional handler that applies additional configuration
-	// to the operation before it is executed.
-	OperationConfig func(operation *driver.Operation)
 }
 
 // Run performs an installation and updates the Claim accordingly
@@ -29,8 +26,9 @@ func (i *Install) Run(c *claim.Claim, creds credentials.Set, w io.Writer) error 
 		return err
 	}
 
-	if i.OperationConfig != nil {
-		i.OperationConfig(op)
+	err = i.ApplyConfig(op)
+	if err != nil {
+		return err
 	}
 
 	opResult, err := i.Driver.Run(op)

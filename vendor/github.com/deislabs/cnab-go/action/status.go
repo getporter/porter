@@ -10,11 +10,8 @@ import (
 
 // Status runs a status action on a CNAB bundle.
 type Status struct {
+	ConfigurableAction
 	Driver driver.Driver
-
-	// OperationConfig is an optional handler that applies additional configuration
-	// to the operation before it is executed.
-	OperationConfig func(operation *driver.Operation)
 }
 
 // Run executes a status action in an image
@@ -29,8 +26,9 @@ func (i *Status) Run(c *claim.Claim, creds credentials.Set, w io.Writer) error {
 		return err
 	}
 
-	if i.OperationConfig != nil {
-		i.OperationConfig(op)
+	err = i.ApplyConfig(op)
+	if err != nil {
+		return err
 	}
 
 	// Ignore OperationResult because non-modifying actions don't have outputs to save.

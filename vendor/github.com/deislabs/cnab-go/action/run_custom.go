@@ -18,12 +18,9 @@ var (
 
 // RunCustom allows the execution of an arbitrary target in a CNAB bundle.
 type RunCustom struct {
+	ConfigurableAction
 	Driver driver.Driver
 	Action string
-
-	// OperationConfig is an optional handler that applies additional configuration
-	// to the operation before it is executed.
-	OperationConfig func(operation *driver.Operation)
 }
 
 // blockedActions is a list of actions that cannot be run as custom.
@@ -52,8 +49,9 @@ func (i *RunCustom) Run(c *claim.Claim, creds credentials.Set, w io.Writer) erro
 		return err
 	}
 
-	if i.OperationConfig != nil {
-		i.OperationConfig(op)
+	err = i.ApplyConfig(op)
+	if err != nil {
+		return err
 	}
 
 	opResult, err := i.Driver.Run(op)

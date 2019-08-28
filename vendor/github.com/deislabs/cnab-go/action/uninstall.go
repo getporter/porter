@@ -10,11 +10,8 @@ import (
 
 // Uninstall runs an uninstall action
 type Uninstall struct {
+	ConfigurableAction
 	Driver driver.Driver
-
-	// OperationConfig is an optional handler that applies additional configuration
-	// to the operation before it is executed.
-	OperationConfig func(operation *driver.Operation)
 }
 
 // Run performs the uninstall steps and updates the Claim
@@ -29,8 +26,9 @@ func (u *Uninstall) Run(c *claim.Claim, creds credentials.Set, w io.Writer) erro
 		return err
 	}
 
-	if u.OperationConfig != nil {
-		u.OperationConfig(op)
+	err = u.ApplyConfig(op)
+	if err != nil {
+		return err
 	}
 
 	opResult, err := u.Driver.Run(op)

@@ -37,10 +37,10 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	}
 
 	i := cnabaction.RunCustom{
-		Action:          action,
-		Driver:          driver,
-		OperationConfig: args.ApplyFiles(),
+		Action: action,
+		Driver: driver,
 	}
+	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
