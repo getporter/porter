@@ -4,6 +4,7 @@ description: External videos, blog posts and tutorials about CNAB and Porter
 ---
 
 * [Building a Terraform Based Bundle with Porter](#building-a-terraform-based-bundle-with-porter)
+* [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#porter-bundle-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
 * [Porter: An Opinionated CNAB Authoring Experience](#porter-an-opinionated-cnab-authoring-experience)
 * [Free Glue Code - Porter](#free-glue-code-porter)
 
@@ -15,6 +16,11 @@ shows how multiple technologies can be combined into a single bundle, in this
 case both ARM and Terraform.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/LxRvKg3egPc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+### Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo
+Nuno Do Carmo demonstrates how to use Porter and CNAB to install Brigade on a new Kubernetes cluster using k3d and Helm.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9egipQjUgD0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Porter: An Opinionated CNAB Authoring Experience
 
