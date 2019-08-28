@@ -10,11 +10,8 @@ import (
 
 // Upgrade runs an upgrade action
 type Upgrade struct {
+	ConfigurableAction
 	Driver driver.Driver
-
-	// OperationConfig is an optional handler that applies additional configuration
-	// to the operation before it is executed.
-	OperationConfig func(operation *driver.Operation)
 }
 
 // Run performs the upgrade steps and updates the Claim
@@ -29,8 +26,9 @@ func (u *Upgrade) Run(c *claim.Claim, creds credentials.Set, w io.Writer) error 
 		return err
 	}
 
-	if u.OperationConfig != nil {
-		u.OperationConfig(op)
+	err = u.ApplyConfig(op)
+	if err != nil {
+		return err
 	}
 
 	opResult, err := u.Driver.Run(op)

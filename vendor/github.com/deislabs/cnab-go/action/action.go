@@ -246,7 +246,22 @@ func injectParameters(action string, c *claim.Claim, env, files map[string]strin
 			}
 			continue
 		}
-		value := fmt.Sprintf("%v", rawval)
+
+		contents, err := json.Marshal(rawval)
+		if err != nil {
+			return err
+		}
+
+		// In order to preserve the exact string value the user provided
+		// we don't marshal string parameters
+		value := string(contents)
+		if value[0] == '"' {
+			value, ok = rawval.(string)
+			if !ok {
+				return fmt.Errorf("failed to parse parameter %q as string", k)
+			}
+		}
+
 		if param.Destination == nil {
 			// env is a CNAB_P_
 			env[fmt.Sprintf("CNAB_P_%s", strings.ToUpper(k))] = value
