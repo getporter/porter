@@ -29,10 +29,11 @@ type ActionArguments struct {
 	Driver string
 }
 
-func (args ActionArguments) ApplyFiles() func(op *driver.Operation) {
-	return func(op *driver.Operation) {
+func (args ActionArguments) ApplyFiles() func(op *driver.Operation) error {
+	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
+		return nil
 	}
 }

@@ -40,9 +40,9 @@ func (d *Duffle) Install(args ActionArguments) error {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
 	i := action.Install{
-		Driver:          dvr,
-		OperationConfig: args.ApplyFiles(),
+		Driver: dvr,
 	}
+	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(b, args.CredentialIdentifiers)
 	if err != nil {
