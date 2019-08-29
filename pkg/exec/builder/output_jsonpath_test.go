@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"bytes"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -12,7 +11,22 @@ import (
 )
 
 type TestStep struct {
-	Outputs []Output
+	Command   string
+	Arguments []string
+	Flags     Flags
+	Outputs   []Output
+}
+
+func (s TestStep) GetCommand() string {
+	return s.Command
+}
+
+func (s TestStep) GetArguments() []string {
+	return s.Arguments
+}
+
+func (s TestStep) GetFlags() Flags {
+	return s.Flags
 }
 
 func (s TestStep) GetOutputs() []Output {
@@ -41,10 +55,10 @@ func TestJsonPathOutputs(t *testing.T) {
 			TestJsonPathOutput{Name: "names", JsonPath: "$[*].name"},
 		},
 	}
-	output, err := ioutil.ReadFile("testdata/install-output.json")
+	stdout, err := ioutil.ReadFile("testdata/install-output.json")
 	require.NoError(t, err, "could not read testdata")
 
-	err = ProcessJsonPathOutputs(c.Context, step, bytes.NewBuffer(output))
+	err = ProcessJsonPathOutputs(c.Context, step, string(stdout))
 	require.NoError(t, err, "ProcessJsonPathOutputs should not return an error")
 
 	f := filepath.Join(context.MixinOutputsDir, "ids")
@@ -71,6 +85,6 @@ func TestJsonPathOutputs_NoOutput(t *testing.T) {
 		},
 	}
 
-	err := ProcessJsonPathOutputs(c.Context, step, bytes.NewBufferString(""))
+	err := ProcessJsonPathOutputs(c.Context, step, "")
 	require.NoError(t, err, "ProcessJsonPathOutputs should not return an error when the output buffer is empty")
 }

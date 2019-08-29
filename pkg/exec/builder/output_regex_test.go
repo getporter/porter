@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"bytes"
 	"path/filepath"
 	"testing"
 
@@ -32,13 +31,13 @@ func TestTestRegexOutputs(t *testing.T) {
 		},
 	}
 
-	buf := bytes.NewBufferString(`--- FAIL: TestMixin_Install (0.00s)
+	stdout := `--- FAIL: TestMixin_Install (0.00s)
 stuff
 things
 --- FAIL: TestMixin_Upgrade (0.00s)
 more
-logs`)
-	err := ProcessRegexOutputs(c.Context, step, buf)
+logs`
+	err := ProcessRegexOutputs(c.Context, step, stdout)
 	require.NoError(t, err, "ProcessRegexOutputs should not return an error")
 
 	f := filepath.Join(context.MixinOutputsDir, "failed-test")

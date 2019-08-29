@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"bytes"
 	"encoding/json"
 
 	"github.com/PaesslerAG/jsonpath"
@@ -16,21 +15,19 @@ type OutputJsonPath interface {
 
 // ProcessJsonPathOutputs evaluates the specified output buffer as JSON, looks through the outputs for
 // any that implement the OutputJsonPath and extracts their output.
-func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, outputB *bytes.Buffer) error {
+func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout string) error {
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {
 		return nil
 	}
 
-	if outputB.Len() == 0 {
-		return nil
-	}
-
-	var outputJson interface{}
-	err := json.Unmarshal(outputB.Bytes(), &outputJson)
-	if err != nil {
-		return errors.Wrapf(err, "error unmarshaling json %s", outputB.String())
+	var outputJson interface{} = map[string]interface{}{}
+	if stdout != "" {
+		err := json.Unmarshal([]byte(stdout), &outputJson)
+		if err != nil {
+			return errors.Wrapf(err, "error unmarshaling json %s", stdout)
+		}
 	}
 
 	for _, o := range outputs {
@@ -44,7 +41,7 @@ func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, outputB 
 
 		value, err := jsonpath.Get(outputPath, outputJson)
 		if err != nil {
-			return errors.Wrapf(err, "error evaluating jsonpath %q for output %q against %s", outputPath, outputName, outputB.String())
+			return errors.Wrapf(err, "error evaluating jsonpath %q for output %q against %s", outputPath, outputName, stdout)
 		}
 
 		valueB, err := json.Marshal(value)
