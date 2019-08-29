@@ -89,6 +89,22 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
+  digest = "1:06ba0f52b4fee64f54be7583d668feb330cebbbf6eb537287878b3e188ec5640"
+  name = "github.com/PaesslerAG/gval"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0ce847fc5e6163ee05ae770a441ba497fc77dcaa"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:a4bb1187c0770b3f32a9987ecd3cb306998e17dae391d371457621f17651068e"
+  name = "github.com/PaesslerAG/jsonpath"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "c18d0f043db32b5d4295e14c6518fa9160e45d15"
+  version = "0.1.1"
+
+[[projects]]
   digest = "1:d043e5ae59276188d876090c261c311e146792c0908e08e67e766b1020a72d00"
   name = "github.com/PuerkitoBio/goquery"
   packages = ["."]
@@ -1572,6 +1588,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Masterminds/semver",
+    "github.com/PaesslerAG/jsonpath",
     "github.com/carolynvs/datetime-printer",
     "github.com/cbroglie/mustache",
     "github.com/containerd/containerd",

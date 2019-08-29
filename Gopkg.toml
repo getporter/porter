@@ -96,6 +96,10 @@
   name = "github.com/russross/blackfriday"
   branch = "master"
 
+[[constraint]]
+  name = "github.com/PaesslerAG/jsonpath"
+  version = "v0.1.1"
+
 [prune]
   non-go = true
   go-tests = true
