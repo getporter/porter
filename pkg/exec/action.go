@@ -44,6 +44,7 @@ type Instruction struct {
 	Command     string        `yaml:"command"`
 	Arguments   []string      `yaml:"arguments,omitempty"`
 	Flags       builder.Flags `yaml:"flags,omitempty"`
+	Outputs     []Output      `yaml:"outputs,omitempty"`
 }
 
 func (s Step) GetCommand() string {
@@ -56,4 +57,27 @@ func (s Step) GetArguments() []string {
 
 func (s Step) GetFlags() builder.Flags {
 	return s.Flags
+}
+
+type Output struct {
+	Name     string `yaml:"name"`
+	FilePath string `yaml:"path,omitempty"`
+	JsonPath string `yaml:"jsonPath,omitempty"`
+	Regex    string `yaml:"regex,omitempty"`
+}
+
+func (o Output) GetName() string {
+	return o.Name
+}
+
+func (o Output) GetFilePath() string {
+	return o.FilePath
+}
+
+func (o Output) GetJsonPath() string {
+	return o.JsonPath
+}
+
+func (o Output) GetRegex() string {
+	return o.GetRegex()
 }

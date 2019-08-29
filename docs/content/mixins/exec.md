@@ -35,6 +35,83 @@ This is executed as:
 $ cmd arg1 arg2 -a flag-value --long-flag true --repeated-flag flag-value1 --repeated-flag flag-value2
 ```
 
+### Outputs
+
+The mixin supports outputs of various types:
+
+* [JSON Path](#json-path)
+* [Regular Expressions](#regular-expressions)
+* [File Paths](#file-paths)
+
+
+#### JSON Path
+
+The `jsonPath` output treats stdout like a json document and applies the expression, saving the result to the output.
+
+```yaml
+outputs:
+- name: NAME
+  jsonPath: JSONPATH
+```
+
+For example, if the `jsonPath` expression was `$[*].id` and the command sent the following to stdout: 
+
+```json
+[
+  {
+    "id": "1085517466897181794",
+    "name": "my-vm"
+  }
+]
+```
+
+Then then output would have the following contents:
+
+```json
+["1085517466897181794"]
+```
+
+#### Regular Expressions
+
+The `regex` output applies a Go-syntax regular expression to stdout and saves every capture group, one per line, to the output.
+
+
+```yaml
+outputs:
+- name: NAME
+  regex: GOLANG_REGULAR_EXPRESSION
+```
+
+For example, if the `regex` expression was `--- FAIL: (.*) \(.*\)` and the command send the following to stdout:
+
+```
+--- FAIL: TestMixin_Install (0.00s)
+stuff
+things
+--- FAIL: TestMixin_Upgrade (0.00s)
+more
+logs
+```
+
+Then the output would have the following contents:
+
+```
+TestMixin_Install
+TestMixin_Upgrade
+```
+
+#### File Paths
+
+The `path` output saves the content of the specified file path to an output.
+
+```yaml
+outputs:
+- name: kubeconfig
+  path: /root/.kube/config
+```
+
+---
+
 ### Examples
 
 Run a command

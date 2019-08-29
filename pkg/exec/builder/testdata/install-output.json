@@ -1,0 +1,83 @@
+[
+  {
+    "canIpForward": false,
+    "cpuPlatform": "Intel Haswell",
+    "creationTimestamp": "2019-08-10T07:19:58.684-07:00",
+    "deletionProtection": false,
+    "disks": [
+      {
+        "autoDelete": true,
+        "boot": true,
+        "deviceName": "porter-test",
+        "guestOsFeatures": [
+          {
+            "type": "VIRTIO_SCSI_MULTIQUEUE"
+          }
+        ],
+        "index": 0,
+        "interface": "SCSI",
+        "kind": "compute#attachedDisk",
+        "licenses": [
+          "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-9-stretch"
+        ],
+        "mode": "READ_WRITE",
+        "source": "https://www.googleapis.com/compute/v1/projects/porterci/zones/us-central1-a/disks/porter-test",
+        "type": "PERSISTENT"
+      }
+    ],
+    "id": "1085517466897181794",
+    "kind": "compute#instance",
+    "labelFingerprint": "42WmSpB8rSM=",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/porterci/zones/us-central1-a/machineTypes/f1-micro",
+    "metadata": {
+      "fingerprint": "i_jU22MmpMs=",
+      "kind": "compute#metadata"
+    },
+    "name": "porter-test",
+    "networkInterfaces": [
+      {
+        "accessConfigs": [
+          {
+            "kind": "compute#accessConfig",
+            "name": "external-nat",
+            "natIP": "104.155.166.51",
+            "networkTier": "PREMIUM",
+            "type": "ONE_TO_ONE_NAT"
+          }
+        ],
+        "fingerprint": "xkeBXLD6jq0=",
+        "kind": "compute#networkInterface",
+        "name": "nic0",
+        "network": "https://www.googleapis.com/compute/v1/projects/porterci/global/networks/default",
+        "networkIP": "10.128.0.13",
+        "subnetwork": "https://www.googleapis.com/compute/v1/projects/porterci/regions/us-central1/subnetworks/default"
+      }
+    ],
+    "scheduling": {
+      "automaticRestart": true,
+      "onHostMaintenance": "MIGRATE",
+      "preemptible": false
+    },
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/porterci/zones/us-central1-a/instances/porter-test",
+    "serviceAccounts": [
+      {
+        "email": "410833931633-compute@developer.gserviceaccount.com",
+        "scopes": [
+          "https://www.googleapis.com/auth/devstorage.read_only",
+          "https://www.googleapis.com/auth/logging.write",
+          "https://www.googleapis.com/auth/monitoring.write",
+          "https://www.googleapis.com/auth/pubsub",
+          "https://www.googleapis.com/auth/service.management.readonly",
+          "https://www.googleapis.com/auth/servicecontrol",
+          "https://www.googleapis.com/auth/trace.append"
+        ]
+      }
+    ],
+    "startRestricted": false,
+    "status": "RUNNING",
+    "tags": {
+      "fingerprint": "42WmSpB8rSM="
+    },
+    "zone": "https://www.googleapis.com/compute/v1/projects/porterci/zones/us-central1-a"
+  }
+]

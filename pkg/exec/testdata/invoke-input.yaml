@@ -4,3 +4,6 @@ status:
     command: bash
     flags:
       c: echo Hello World
+    outputs:
+      - name: name
+        regex: 'Hello (.*)'
