@@ -148,6 +148,47 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "outputs": {
+            "items": {
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "required": [
+                    "jsonPath"
+                  ]
+                },
+                {
+                  "required": [
+                    "regex"
+                  ]
+                },
+                {
+                  "required": [
+                    "path"
+                  ]
+                }
+              ],
+              "properties": {
+                "jsonPath": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "regex": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [

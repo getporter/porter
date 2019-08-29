@@ -63,6 +63,35 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "jsonPath": {
+                "type": "string"
+              },
+              "regex": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "oneOf": [
+              { "required": [ "jsonPath" ] },
+              { "required": [ "regex" ] },
+              { "required": [ "path" ] }
+            ]
+          }
         }
       },
       "additionalProperties": false,

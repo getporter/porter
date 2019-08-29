@@ -1,6 +1,15 @@
 install:
 - exec:
-    description: "Install Hello World"
-    command: bash
+    description: "Install a VM and collect its ID"
+    command: gcloud
+    arguments:
+      - compute
+      - instances
+      - create
     flags:
-      c: echo Hello World
+      project: porterci
+      zone: us-central1-a
+      machine-type: f1-micro
+    outputs:
+      - name: vms
+        jsonPath: "$[*].id"
