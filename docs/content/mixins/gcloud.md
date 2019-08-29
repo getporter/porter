@@ -56,6 +56,41 @@ gcloud:
       jsonPath: JSONPATH
 ```
 
+
+### Outputs
+
+The mixin supports `jsonpath` outputs.
+
+
+#### JSON Path
+
+The `jsonPath` output treats stdout like a json document and applies the expression, saving the result to the output.
+
+```yaml
+outputs:
+- name: NAME
+  jsonPath: JSONPATH
+```
+
+For example, if the `jsonPath` expression was `$[*].id` and the command sent the following to stdout: 
+
+```json
+[
+  {
+    "id": "1085517466897181794",
+    "name": "my-vm"
+  }
+]
+```
+
+Then then output would have the following contents:
+
+```json
+["1085517466897181794"]
+```
+
+---
+
 ## Examples
 
 The [Compute Example](https://github.com/deislabs/porter-gcloud/tree/master/examples/compute) provides a full working bundle demonstrating how to use this mixin.
