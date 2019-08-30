@@ -1,0 +1,11 @@
+foo:
+  - exec:
+      description: "Do foo"
+      command: foo
+      outputs:
+        - name: file
+          path: config.txt
+        - name: jsonpath
+          jsonPath: '$.*'
+        - name: regex
+          regex: '(.*)'
