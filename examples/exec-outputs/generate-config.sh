@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-echo '{"user": "sally"}' >> config.json
+echo '{"user": "sally"}' > config.json
