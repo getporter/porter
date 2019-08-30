@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -28,8 +29,15 @@ func ProcessRegexOutputs(cxt *context.Context, step StepWithOutputs, stdout stri
 			continue
 		}
 
-		outputRegex := output.GetRegex()
 		outputName := output.GetName()
+		outputRegex := output.GetRegex()
+		if outputRegex == "" {
+			continue
+		}
+
+		if cxt.Debug {
+			fmt.Fprintf(cxt.Err, "Processing regex output %s...", outputName)
+		}
 
 		r, err := regexp.Compile(outputRegex)
 		if err != nil {

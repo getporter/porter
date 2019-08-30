@@ -1,5 +1,6 @@
 [
   {
+    "index": 0,
     "canIpForward": false,
     "cpuPlatform": "Intel Haswell",
     "creationTimestamp": "2019-08-10T07:19:58.684-07:00",

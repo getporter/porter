@@ -2,6 +2,7 @@ package builder
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/deislabs/porter/pkg/context"
@@ -22,13 +23,7 @@ func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout s
 		return nil
 	}
 
-	var outputJson interface{} = map[string]interface{}{}
-	if stdout != "" {
-		err := json.Unmarshal([]byte(stdout), &outputJson)
-		if err != nil {
-			return errors.Wrapf(err, "error unmarshaling json %s", stdout)
-		}
-	}
+	var outputJson interface{}
 
 	for _, o := range outputs {
 		output, ok := o.(OutputJsonPath)
@@ -36,20 +31,47 @@ func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout s
 			continue
 		}
 
-		outputPath := output.GetJsonPath()
 		outputName := output.GetName()
-
-		value, err := jsonpath.Get(outputPath, outputJson)
-		if err != nil {
-			return errors.Wrapf(err, "error evaluating jsonpath %q for output %q against %s", outputPath, outputName, stdout)
+		outputPath := output.GetJsonPath()
+		if outputPath == "" {
+			continue
 		}
 
-		valueB, err := json.Marshal(value)
-		if err != nil {
-			return errors.Wrapf(err, "error marshaling jsonpath result %v for output %q", valueB, outputName)
+		if cxt.Debug {
+			fmt.Fprintf(cxt.Err, "Processing jsonpath output %s...", outputName)
 		}
 
-		err = cxt.WriteMixinOutputToFile(outputName, valueB)
+		var valueB []byte
+
+		if outputJson == nil {
+			if stdout != "" {
+				err := json.Unmarshal([]byte(stdout), &outputJson)
+				if err != nil {
+					return errors.Wrapf(err, "error unmarshaling stdout as json %s", stdout)
+				}
+			}
+		}
+
+		// Always write an output, even when there isn't json output to parse (like when stdout is empty)
+		if outputJson != nil {
+			value, err := jsonpath.Get(outputPath, outputJson)
+			if err != nil {
+				return errors.Wrapf(err, "error evaluating jsonpath %q for output %q against %s", outputPath, outputName, stdout)
+			}
+
+			// Only marshal complex types to json, leave strings, numbers and booleans alone
+			switch t := value.(type) {
+			case map[string]interface{}, []interface{}:
+				valueB, err = json.Marshal(value)
+				if err != nil {
+					return errors.Wrapf(err, "error marshaling jsonpath result %v for output %q", valueB, outputName)
+				}
+			default:
+				valueB = []byte(fmt.Sprintf("%v", t))
+			}
+		}
+
+		err := cxt.WriteMixinOutputToFile(outputName, valueB)
 		if err != nil {
 			return errors.Wrapf(err, "error writing mixin output for %q", outputName)
 		}

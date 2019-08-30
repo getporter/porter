@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"fmt"
+
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 )
@@ -24,8 +26,15 @@ func ProcessFileOutputs(cxt *context.Context, step StepWithOutputs) error {
 			continue
 		}
 
-		outputPath := output.GetFilePath()
 		outputName := output.GetName()
+		outputPath := output.GetFilePath()
+		if outputPath == "" {
+			continue
+		}
+
+		if cxt.Debug {
+			fmt.Fprintf(cxt.Err, "Processing file output %s...", outputName)
+		}
 
 		valueB, err := cxt.FileSystem.ReadFile(outputPath)
 		if err != nil {

@@ -4,6 +4,8 @@ import (
 	"github.com/deislabs/porter/pkg/exec/builder"
 )
 
+var _ builder.ExecutableAction = Action{}
+
 type Action struct {
 	Steps []Step // using UnmarshalYAML so that we don't need a custom type per action
 }
@@ -35,6 +37,9 @@ func (a Action) GetSteps() []builder.ExecutableStep {
 	return steps
 }
 
+var _ builder.ExecutableStep = Step{}
+var _ builder.StepWithOutputs = Step{}
+
 type Step struct {
 	Instruction `yaml:"exec"`
 }
@@ -59,6 +64,18 @@ func (s Step) GetFlags() builder.Flags {
 	return s.Flags
 }
 
+func (s Step) GetOutputs() []builder.Output {
+	outputs := make([]builder.Output, len(s.Outputs))
+	for i := range s.Outputs {
+		outputs[i] = s.Outputs[i]
+	}
+	return outputs
+}
+
+var _ builder.OutputRegex = Output{}
+var _ builder.OutputFile = Output{}
+var _ builder.OutputJsonPath = Output{}
+
 type Output struct {
 	Name     string `yaml:"name"`
 	FilePath string `yaml:"path,omitempty"`
@@ -79,5 +96,5 @@ func (o Output) GetJsonPath() string {
 }
 
 func (o Output) GetRegex() string {
-	return o.GetRegex()
+	return o.Regex
 }
