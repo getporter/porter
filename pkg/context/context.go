@@ -57,7 +57,9 @@ func (cw *CensoredWriter) SetSensitiveValues(vals []string) {
 func (cw *CensoredWriter) Write(b []byte) (int, error) {
 	auditedBytes := b
 	for _, val := range cw.sensitiveValues {
-		auditedBytes = bytes.Replace(auditedBytes, []byte(val), []byte("*******"), -1)
+		if strings.TrimSpace(val) != "" {
+			auditedBytes = bytes.Replace(auditedBytes, []byte(val), []byte("*******"), -1)
+		}
 	}
 
 	_, err := cw.writer.Write(auditedBytes)
