@@ -1,0 +1,59 @@
+name: example-exec-outputs
+version: 0.1.0
+description: "An example Porter bundle demonstrating exec mixin outputs"
+invocationImage: deislabs/porter-example-exec-outputs:0.1.0
+tag: deislabs/porter-example-exec-outputs-bundle:0.1.0
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Create a file"
+      command: bash
+      arguments:
+        - generate-config.sh
+      outputs:
+        - name: config
+          path: config.json
+
+test:
+  - exec:
+      description: "Scrape stdout with regex"
+      command: bash
+      arguments:
+        - run-tests.sh
+      outputs:
+        - name: failed-tests
+          regex: '--- FAIL: (.*) \(.*\)'
+
+status:
+  - exec:
+      description: "Parse stdout as json"
+      command: bash
+      arguments:
+        - dump-config.sh
+      outputs:
+        - name: user
+          jsonPath: '$.user'
+
+uninstall:
+  - exec:
+      description: "Uninstall bundle"
+      command: bash
+      flags:
+        c: echo Goodbye World
+
+outputs:
+  - name: config
+    type: string
+    applyTo:
+      - install
+  - name: failed-tests
+    type: string
+    applyTo:
+      - test
+  - name: user
+    type: string
+    applyTo:
+      - status
