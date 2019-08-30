@@ -18,7 +18,8 @@ porter version [flags]
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help            help for version
+  -o, --output string   Specify an output format.  Allowed values: json, plaintext (default "plaintext")
 ```
 
 ### Options inherited from parent commands
