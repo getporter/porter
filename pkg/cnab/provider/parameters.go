@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -25,7 +26,19 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		value, err := def.ConvertValue(rawValue)
+		unconverted := rawValue
+		// parameter may represent a file on the local filesystem
+		if def.Type == "string" && def.ContentEncoding == "base64" {
+			if _, err := d.FileSystem.Stat(rawValue); err == nil {
+				bytes, err := d.FileSystem.ReadFile(rawValue)
+				if err != nil {
+					return nil, errors.Wrapf(err, "unable to read file parameter %s", key)
+				}
+				unconverted = base64.StdEncoding.EncodeToString(bytes)
+			}
+		}
+
+		value, err := def.ConvertValue(unconverted)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, def.Type)
 		}

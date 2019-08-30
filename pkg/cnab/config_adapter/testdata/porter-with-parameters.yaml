@@ -47,6 +47,9 @@ parameters:
           3
         ]
       }'
+  - name: afile
+    type: file
+    path: /root/.kube/config
 
 mixins:
   - exec

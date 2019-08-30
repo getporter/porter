@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/qri-io/jsonschema"
 )
 
 type Definitions map[string]*Schema
@@ -96,7 +95,7 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 	// Before we unmarshal into the cnab-go bundle/definition/Schema type, unmarshal into
 	// the library struct so we can handle any validation errors in the schema. If there
 	// are any errors, return those.
-	js := new(jsonschema.RootSchema)
+	js := NewRootSchema()
 	if err := js.UnmarshalJSON(data); err != nil {
 		return err
 	}

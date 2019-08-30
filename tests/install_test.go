@@ -41,3 +41,31 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 }
+
+func TestInstall_fileParam(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
+
+	installOpts := porter.InstallOptions{}
+	installOpts.Insecure = true
+	installOpts.Params = []string{"myfile=./myfile"}
+
+	err := installOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err)
+
+	// TODO: We can't check this yet because docker driver is printing directly to stdout instead of to the given writer
+	// output := p.TestConfig.TestContext.GetOutput()
+	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
+
+	claim, err := p.CNAB.FetchClaim(p.Manifest.Name)
+	require.NoError(t, err, "could not fetch claim")
+	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output to match the decoded file contents")
+}

@@ -266,7 +266,8 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:397a47c688355450dd1ea9aea8795b3774d5278c8b37199ad4068758dd075956"
+  branch = "carolynvs-op-config-func-plus-custom-validators"
+  digest = "1:3623d90066a808fc67397b29391c54554639bdbc1c734d093697465e2ad2a8c6"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -283,8 +284,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "93515c713a91d6da48b5a9c68e4b0502d8d39963"
-  version = "v0.4.0-beta1"
+  revision = "d45d5e04f244cc146e16bf947bd7f07a89b145bf"
+  source = "github.com/vdice/cnab-go"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"

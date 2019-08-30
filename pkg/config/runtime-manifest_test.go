@@ -167,6 +167,9 @@ func TestResolveMapParam(t *testing.T) {
 	val, ok := pms["Thing"].(string)
 	assert.True(t, ok)
 	assert.Equal(t, "Ralpha", val)
+
+	err = rm.Prepare()
+	assert.NoError(t, err)
 }
 
 func TestResolvePathParam(t *testing.T) {
@@ -230,6 +233,61 @@ func TestResolveMapParamUnknown(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
 	assert.Equal(t, "unable to resolve step: unable to render template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
+}
+
+func TestPrepare_fileParam(t *testing.T) {
+	c := NewTestConfig(t)
+
+	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
+
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name: "file-param",
+				Destination: Location{
+					Path: "/path/to/file",
+				},
+				Schema: definition.Schema{
+					Type:    "file",
+					Default: "/path/to/file",
+				},
+			},
+		},
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Parameters": map[string]interface{}{
+				"file-param": "{{bundle.parameters.file-param}}",
+			},
+		},
+	}
+
+	before, _ := yaml.Marshal(s)
+	t.Logf("Before:\n %s", before)
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+	assert.NotNil(t, s.Data)
+	t.Logf("Length of data:%d", len(s.Data))
+	assert.NotEmpty(t, s.Data["Parameters"])
+	for k, v := range s.Data {
+		t.Logf("Key %s, value: %s, type: %T", k, v, v)
+	}
+	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	val, ok := pms["file-param"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, "/path/to/file", val)
+
+	err = rm.Prepare()
+	assert.NoError(t, err)
+
+	bytes, err := c.FileSystem.ReadFile("/path/to/file")
+	assert.NoError(t, err)
+	assert.Equal(t, "Hello World!", string(bytes), "expected file contents to equal the decoded parameter value")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {

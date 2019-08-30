@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -83,6 +84,13 @@ func (m *Manifest) Validate() error {
 
 	for _, output := range m.Outputs {
 		err = output.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	for _, parameter := range m.Parameters {
+		err = parameter.Validate()
 		if err != nil {
 			result = multierror.Append(result, err)
 		}
@@ -239,7 +247,39 @@ func (od *OutputDefinition) Validate() error {
 		return errors.New("output name is required")
 	}
 
-	// TODO: Validate inline Schema
+	schemaValidationErrs, err := od.Schema.Validate(od)
+	if err != nil {
+		return errors.Wrapf(err, "encountered error while validating output %s", od.Name)
+	}
+	if len(schemaValidationErrs) != 0 {
+		return errors.Wrapf(err, "encountered validation error(s) for output %s: %v", od.Name, schemaValidationErrs)
+	}
+
+	return nil
+}
+
+func (pd *ParameterDefinition) Validate() error {
+	if pd.Name == "" {
+		return errors.New("parameter name is required")
+	}
+
+	schemaValidationErrs, err := pd.Schema.Validate(pd)
+	if err != nil {
+		// Porter supports declaring a parameter of type: "file",
+		// which we will convert to the appropriate bundle.Parameter type in adapter.go
+		if err.Error() != `unable to build schema: error unmarshaling type from json: "file" is not a valid type` {
+			return errors.Wrapf(err, "encountered error while validating parameter %s", pd.Name)
+		}
+	}
+	if len(schemaValidationErrs) != 0 {
+		return errors.Wrapf(err, "encountered validation error(s) for parameter %s: %v", pd.Name, schemaValidationErrs)
+	}
+
+	if pd.Type == "file" {
+		if pd.Destination.Path == "" {
+			return fmt.Errorf("no destination path supplied for parameter %s", pd.Name)
+		}
+	}
 
 	return nil
 }
