@@ -46,14 +46,17 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 
 	// Supply an CensoredWriter with values needing masking
 	censoredWriter := context.NewCensoredWriter(aggOutput)
-	censoredWriter.SetSensitiveValues([]string{"World"})
+	sensitiveValues := []string{"World"}
+	// Add some whitespace values as well, to be sure writer does not replace
+	sensitiveValues = append(sensitiveValues, " ", "", "\n", "\r", "\t")
+	censoredWriter.SetSensitiveValues(sensitiveValues)
 
 	binDir := context.NewTestContext(t).FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
 	r.Command = "install"
-	r.File = "testdata/exec_input.yaml"
+	r.File = "testdata/exec_input_with_whitespace.yaml"
 
 	// Capture the output
 	r.Out = censoredWriter
@@ -64,5 +67,6 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 
 	err = r.Run()
 	assert.NoError(t, err)
-	assert.Contains(t, string(output.Bytes()), "Hello *******")
+	assert.Equal(t,`Hello ******* 	
+`, string(output.Bytes()))
 }
