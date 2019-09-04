@@ -1,8 +1,6 @@
 package action
 
 import (
-	"io"
-
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/credentials"
 	"github.com/deislabs/cnab-go/driver"
@@ -10,23 +8,22 @@ import (
 
 // Install describes an installation action
 type Install struct {
-	ConfigurableAction
 	Driver driver.Driver // Needs to be more than a string
 }
 
 // Run performs an installation and updates the Claim accordingly
-func (i *Install) Run(c *claim.Claim, creds credentials.Set, w io.Writer) error {
+func (i *Install) Run(c *claim.Claim, creds credentials.Set, opCfgs ...OperationConfigFunc) error {
 	invocImage, err := selectInvocationImage(i.Driver, c)
 	if err != nil {
 		return err
 	}
 
-	op, err := opFromClaim(claim.ActionInstall, stateful, c, invocImage, creds, w)
+	op, err := opFromClaim(claim.ActionInstall, stateful, c, invocImage, creds)
 	if err != nil {
 		return err
 	}
 
-	err = i.ApplyConfig(op)
+	err = OperationConfigs(opCfgs).ApplyConfig(op)
 	if err != nil {
 		return err
 	}

@@ -48,7 +48,6 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 	i := action.Uninstall{
 		Driver: driver,
 	}
-	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
@@ -69,7 +68,7 @@ func (d *Duffle) Uninstall(args ActionArguments) error {
 		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
 	}
 
-	err = i.Run(&c, creds, d.Out)
+	err = i.Run(&c, creds, d.ApplyConfig(args)...)
 	if err != nil {
 		return errors.Wrap(err, "failed to uninstall the bundle")
 	}
