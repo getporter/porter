@@ -157,19 +157,30 @@ else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter publish
 endif
 
-BUNDLE_SCHEMA_PATH ?= /tmp/bundle.schema.json
+BUNDLE_SCHEMA      := bundle.schema.json
+DEFINITIONS_SCHEMA := definitions.schema.json
+
+define fetch-schema
+	@curl --fail --silent --show-error -o /tmp/$(1) \
+		https://raw.githubusercontent.com/deislabs/cnab-spec/master/schema/$(1)
+endef
+
+fetch-schemas: fetch-bundle-schema fetch-definitions-schema
+
+fetch-bundle-schema:
+	$(call fetch-schema,$(BUNDLE_SCHEMA))
+
+fetch-definitions-schema:
+	$(call fetch-schema,$(DEFINITIONS_SCHEMA))
 
 .PHONY: validate-bundle
-validate-bundle: fetch-bundle-schema
+validate-bundle: fetch-schemas
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),validate-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ajv test -s $(BUNDLE_SCHEMA_PATH) -d .cnab/bundle.json --valid
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && \
+		ajv test -s /tmp/$(BUNDLE_SCHEMA) -r /tmp/$(DEFINITIONS_SCHEMA) -d .cnab/bundle.json --valid
 endif
-
-fetch-bundle-schema:
-	@curl --fail --silent --show-error -o $(BUNDLE_SCHEMA_PATH) \
-		https://raw.githubusercontent.com/deislabs/cnab-spec/master/schema/bundle.schema.json
 
 install: install-porter install-mixins
 
