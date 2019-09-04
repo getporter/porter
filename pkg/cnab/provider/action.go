@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/driver"
 )
 
@@ -29,7 +30,21 @@ type ActionArguments struct {
 	Driver string
 }
 
-func (args ActionArguments) ApplyFiles() func(op *driver.Operation) error {
+func (d *Duffle) ApplyConfig(args ActionArguments) action.OperationConfigs {
+	return action.OperationConfigs{
+		d.SetOutput(),
+		d.AddFiles(args),
+	}
+}
+
+func (d *Duffle) SetOutput() action.OperationConfigFunc {
+	return func(op *driver.Operation) error {
+		op.Out = d.Out
+		return nil
+	}
+}
+
+func (d *Duffle) AddFiles(args ActionArguments) action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v

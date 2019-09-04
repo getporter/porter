@@ -44,7 +44,6 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	i := action.Upgrade{
 		Driver: driver,
 	}
-	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
@@ -66,7 +65,7 @@ func (d *Duffle) Upgrade(args ActionArguments) error {
 	}
 
 	// Upgrade and capture error
-	runErr := i.Run(&c, creds, d.Out)
+	runErr := i.Run(&c, creds, d.ApplyConfig(args)...)
 
 	// Add/update the outputs section of a claim and capture error
 	err = d.WriteClaimOutputs(&c, string(config.ActionUpgrade))

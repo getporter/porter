@@ -42,7 +42,6 @@ func (d *Duffle) Install(args ActionArguments) error {
 	i := action.Install{
 		Driver: dvr,
 	}
-	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(b, args.CredentialIdentifiers)
 	if err != nil {
@@ -64,7 +63,7 @@ func (d *Duffle) Install(args ActionArguments) error {
 	}
 
 	// Install and capture error
-	runErr := i.Run(c, creds, d.Out)
+	runErr := i.Run(c, creds, d.ApplyConfig(args)...)
 
 	// Add/update the outputs section of a claim and capture error
 	writeErr := d.WriteClaimOutputs(c, string(config.ActionInstall))

@@ -40,7 +40,6 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 		Action: action,
 		Driver: driver,
 	}
-	i.OperationConfig = args.ApplyFiles()
 
 	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
@@ -62,7 +61,7 @@ func (d *Duffle) Invoke(action string, args ActionArguments) error {
 	}
 
 	// Run the action and ALWAYS write out a claim, even if the action fails
-	runErr := i.Run(&c, creds, d.Out)
+	runErr := i.Run(&c, creds, d.ApplyConfig(args)...)
 
 	// Add/update the outputs section of a claim and capture error
 	err = d.WriteClaimOutputs(&c, action)
