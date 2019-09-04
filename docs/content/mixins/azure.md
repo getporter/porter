@@ -11,7 +11,7 @@ https://github.com/deislabs/porter-azure/
 
 ### Install or Upgrade
 ```
-porter mixin install azure --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install azure
 ```
 
 ### Examples

@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter-helm
 
 ### Install or Upgrade
 ```
-porter mixin install helm --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install helm
 ```
 
 ### Examples

@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter-gcloud
 
 ### Install or Upgrade
 ```
-porter mixin install gcloud --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install gcloud
 ```
 
 ## Mixin Syntax

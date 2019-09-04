@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter-aws
 
 ### Install or Upgrade
 ```
-porter mixin install aws --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install aws
 ```
 
 ### Mixin Syntax

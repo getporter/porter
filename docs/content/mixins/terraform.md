@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter-terraform
 
 ### Install or Upgrade
 ```
-porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install terraform
 ```
 
 ### Examples

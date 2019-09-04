@@ -9,7 +9,7 @@ Source: https://github.com/deislabs/porter/tree/master/pkg/exec
 
 ### Install or Upgrade
 ```
-porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install exec
 ```
 
 ## Mixin Syntax

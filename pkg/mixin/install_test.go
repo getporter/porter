@@ -40,13 +40,14 @@ func TestInstallOptions_Validate_BadFeedURL(t *testing.T) {
 	assert.EqualError(t, err, "invalid --feed-url :#: parse :: missing protocol scheme")
 }
 
-func TestInstallOptions_Validate_MissingURL(t *testing.T) {
+func TestInstallOptions_Validate_DefaultFeedURL(t *testing.T) {
 	opts := InstallOptions{
 		URL: "",
 	}
 
 	err := opts.Validate([]string{"helm"})
-	assert.EqualError(t, err, "either --url or --feed-url is required")
+	require.NoError(t, err)
+	assert.Equal(t, DefaultFeedUrl, opts.FeedURL)
 }
 
 func TestInstallOptions_Validate_FeedUrlSpecified(t *testing.T) {
