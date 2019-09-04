@@ -4,7 +4,7 @@ This example creates an AWS bucket, lists the buckets on your account and then d
 
 Install the aws mixin
 ```
-porter mixin install aws --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install aws
 ```
 
 # Credentials

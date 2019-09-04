@@ -1306,7 +1306,7 @@ Make a new bundle and install the Helm chart for etcd-operator
 
 Anyone can make a mixin and have people install it using Porter
 
-**porter mixin install terraform --feed-url cdn.deislabs.io/porter/atom.xml**
+**porter mixin install terraform**
 
 ---
 
