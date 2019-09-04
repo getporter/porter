@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"strings"
 
@@ -28,7 +27,7 @@ const stateful = false
 // - status
 type Action interface {
 	// Run an action, and record the status in the given claim
-	Run(*claim.Claim, credentials.Set, io.Writer) error
+	Run(*claim.Claim, credentials.Set, ...OperationConfigFunc) error
 }
 
 func golangTypeToJSONType(value interface{}) (string, error) {
@@ -188,7 +187,7 @@ func appliesToAction(action string, parameter bundle.Parameter) bool {
 	return false
 }
 
-func opFromClaim(action string, stateless bool, c *claim.Claim, ii bundle.InvocationImage, creds credentials.Set, w io.Writer) (*driver.Operation, error) {
+func opFromClaim(action string, stateless bool, c *claim.Claim, ii bundle.InvocationImage, creds credentials.Set) (*driver.Operation, error) {
 	env, files, err := creds.Expand(c.Bundle, stateless)
 	if err != nil {
 		return nil, err
@@ -233,7 +232,6 @@ func opFromClaim(action string, stateless bool, c *claim.Claim, ii bundle.Invoca
 		Environment:  env,
 		Files:        files,
 		Outputs:      outputs,
-		Out:          w,
 	}, nil
 }
 
