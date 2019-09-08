@@ -13,13 +13,18 @@ type BundleLifecycleOpts struct {
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) error {
-	if o.Tag != "" {
-		err := o.validateTag()
-		if err != nil {
-			return err
-		}
+	err := o.sharedOptions.Validate(args, cxt)
+	if err != nil {
+		return err
 	}
-	return o.sharedOptions.Validate(args, cxt)
+	if o.Tag != "" {
+		// Ignore anything set based on the bundle directory we are in, go off of the tag
+		o.File = ""
+		o.CNABFile = ""
+
+		return o.validateTag()
+	}
+	return nil
 }
 
 // ToDuffleArgs converts this instance of user-provided action options

@@ -84,3 +84,19 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	assert.Contains(t, err.Error(), "unable to open bundle file")
 
 }
+
+func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+
+	err := p.Create()
+	require.NoError(t, err)
+
+	installOpts := InstallOptions{}
+	installOpts.Tag = "mybun:1.0"
+
+	err = installOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
+}
