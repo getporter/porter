@@ -1,8 +1,10 @@
 package mixin
 
 import (
+	"os"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,4 +38,32 @@ func TestRunner_Validate_MissingExecutable(t *testing.T) {
 	err = r.Validate()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "mixin not found")
+}
+
+func TestRunner_BuildCommand(t *testing.T) {
+	testcases := []struct {
+		name          string
+		runnerCommand string
+		wantCommand   string
+	}{
+		{"build", "build", "/root/.porter/mixins/exec/exec build"},
+		{"install", "install", "/root/.porter/mixins/exec/exec install"},
+		{"upgrade", "upgrade", "/root/.porter/mixins/exec/exec upgrade"},
+		{"uninstall", "uninstall", "/root/.porter/mixins/exec/exec uninstall"},
+		{"invoke", "status", "/root/.porter/mixins/exec/exec invoke --action status"},
+		{"version", "version --output json", "/root/.porter/mixins/exec/exec version --output json"},
+	}
+
+	os.Unsetenv(test.ExpectedCommandEnv)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := NewTestRunner(t, "exec", false)
+			r.Debug = false
+			r.Command = tc.runnerCommand
+			os.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
+
+			err := r.Run()
+			require.NoError(t, err)
+		})
+	}
 }

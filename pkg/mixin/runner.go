@@ -57,16 +57,23 @@ func (r *Runner) Run() error {
 	}
 
 	mixinPath := r.getMixinPath()
-	cmd := r.NewCommand(mixinPath, r.Command)
+	cmdArgs := strings.Split(r.Command, " ")
+	command := cmdArgs[0]
+	cmd := r.NewCommand(mixinPath, cmdArgs...)
 
 	// Pipe the output from the mixin to porter
 	cmd.Stdout = r.Context.Out
 	cmd.Stderr = r.Context.Err
 
-	if !IsCoreMixinCommand(r.Command) {
+	if !IsCoreMixinCommand(command) {
 		// For custom commands, don't call the mixin as "mixin CUSTOM" but as "mixin invoke --action CUSTOM"
-		cmd.Args[1] = "invoke"
-		cmd.Args = append(cmd.Args, "--action", r.Command)
+		for i := range cmd.Args {
+			if cmd.Args[i] == command {
+				cmd.Args[i] = "invoke"
+				break
+			}
+		}
+		cmd.Args = append(cmd.Args, "--action", command)
 	}
 
 	if r.File != "" {
