@@ -48,7 +48,9 @@ generate: packr2
 HAS_PACKR2 := $(shell command -v packr2)
 packr2:
 ifndef HAS_PACKR2
-	go get -u github.com/gobuffalo/packr/v2/packr2
+	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
+	cd /tmp && tar -xzf /tmp/packr.tar.gz
+	install /tmp/packr2 $(go env GOPATH)/bin/
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
