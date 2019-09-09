@@ -230,16 +230,21 @@ status:
 
 # version
 
-The version command (optional) is not used by porter. We encourage you to
-implement it to be consistent with the other mixins and help users know that
-they have the correct version of your mixin installed.
+The version command (optional) is used by porter when listing installed mixins 
+via `porter mixins list`. It should support an `--output|o` flag that accepts
+either `plaintext` or `json` as values, defaulting to `plaintext`.
  
 Example:
 
 ```console
 $ ~/.porter/mixins/exec/exec version
-exec mixin v0.4.0-ralpha.1+dubonnet (2aa921d)
+exec mixin v0.13.1-beta.1 (37f3637)
+
+$ ~/.porter/mixins/exec/exec version --output json
+{
+  "name": "exec",
+  "version": "v0.13.1-beta.1",
+  "commit": "37f3637",
+  "author": "DeisLabs"
+}
 ```
-
-
-
