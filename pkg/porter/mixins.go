@@ -12,7 +12,14 @@ import (
 type MixinProvider interface {
 	List() ([]mixin.Metadata, error)
 	GetSchema(m mixin.Metadata) (string, error)
+
+	// GetVersion is the obsolete form of retrieving mixin version, e.g. exec version, which returned an unstructured
+	// version string. It will be deprecated soon and is replaced by GetVersionMetadata.
 	GetVersion(m mixin.Metadata) (string, error)
+
+	// GetVersionMetadata is the new form of retrieving mixin version, e.g. exec version --output json, which returns
+	// a structured version string. It replaces GetVersion.
+	GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error)
 	Install(opts mixin.InstallOptions) (*mixin.Metadata, error)
 }
 
@@ -22,7 +29,7 @@ type PrintMixinsOptions struct {
 }
 
 func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
-	mixins, err := p.Mixins.List()
+	mixins, err := p.ListMixins()
 	if err != nil {
 		return err
 	}
@@ -35,9 +42,9 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{m.Name}
+				return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 			}
-		return printer.PrintTable(p.Out, mixins, printMixinRow)
+		return printer.PrintTable(p.Out, mixins, printMixinRow, "Name", "Version", "Author")
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, mixins)
 	case printer.FormatYaml:
@@ -45,6 +52,29 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
+	// List out what is installed on the file system
+	mixins, err := p.Mixins.List()
+	if err != nil {
+		return nil, err
+	}
+
+	// Query each mixin and fill out their version metadata, if available
+	for i := range mixins {
+		m := &mixins[i]
+		v, err := p.Mixins.GetVersionMetadata(*m)
+		if err != nil {
+			// For now, while we transition from mixins not supporting version --output json, ignore it if a mixin
+			// doesn't handle this call
+			continue
+		}
+
+		m.VersionInfo = *v
+	}
+
+	return mixins, nil
 }
 
 func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
