@@ -5,7 +5,7 @@ This example creates an Google Cloud VM, labels it and then deletes the test VM.
 Install the gcloud mixin
 
 ```
-porter mixin install gcloud --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install gcloud
 ```
 
 # Credentials

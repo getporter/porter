@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/mixin/feed"
 	"github.com/deislabs/porter/pkg/porter"
@@ -66,7 +68,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	cmd.Flags().StringVar(&opts.URL, "url", "",
 		"URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads")
 	cmd.Flags().StringVar(&opts.FeedURL, "feed-url", "",
-		"URL of an atom feed where the mixin can be downloaded")
+		fmt.Sprintf(`URL of an atom feed where the mixin can be downloaded (default %s)`, mixin.DefaultFeedUrl))
 	return cmd
 }
 

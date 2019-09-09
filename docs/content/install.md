@@ -65,7 +65,7 @@ You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
 
 ```console
-$ porter mixin install terraform --feed-url https://cdn.deislabs.io/porter/atom.xml
+$ porter mixin install terraform
 installed terraform mixin
 v0.3.0-beta.1 (0d24b85)
 ```

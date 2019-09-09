@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter/tree/master/pkg/kubernetes
 
 ### Install or Upgrade
 ```
-porter mixin install kubernetes --feed-url https://cdn.deislabs.io/porter/atom.xml
+porter mixin install kubernete
 ```
 
 ### Examples

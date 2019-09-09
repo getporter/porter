@@ -7,6 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	DefaultFeedUrl = "https://cdn.deislabs.io/porter/atom.xml"
+)
+
 type InstallOptions struct {
 	Name          string
 	URL           string
@@ -47,8 +51,8 @@ func (o *InstallOptions) Validate(args []string) error {
 }
 
 func (o *InstallOptions) validateURL() error {
-	if o.URL == "" && o.FeedURL == "" {
-		return errors.New("either --url or --feed-url is required")
+	if o.URL == "" {
+		return nil
 	}
 
 	parsedURL, err := url.Parse(o.URL)
@@ -61,8 +65,8 @@ func (o *InstallOptions) validateURL() error {
 }
 
 func (o *InstallOptions) validateFeedURL() error {
-	if o.FeedURL == "" {
-		return nil
+	if o.URL == "" && o.FeedURL == "" {
+		o.FeedURL = DefaultFeedUrl
 	}
 
 	parsedFeedURL, err := url.Parse(o.FeedURL)
