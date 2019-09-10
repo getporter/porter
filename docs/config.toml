@@ -152,39 +152,45 @@ defaultContentLanguage = "en"
     url = "/mixins/exec"
     parent = "mixins"
   [[menu.main]]
-    name = "kubernetes"
-    identifier = "kubernetes-mixin"
-    weight = 203
-    url = "/mixins/kubernetes"
-    parent = "mixins"
-  [[menu.main]]
-    name = "gcloud"
-    identifier = "gcloud-mixin"
-    weight = 204
-    url = "/mixins/gcloud"
-    parent = "mixins"
-  [[menu.main]]
     name = "helm"
     identifier = "helm-mixin"
-    weight = 204
+    weight = 203
     url = "/mixins/helm"
     parent = "mixins"
   [[menu.main]]
-    name = "aws"
-    identifier = "aws-mixin"
-    weight = 205
-    url = "/mixins/aws"
+    name = "kubernetes"
+    identifier = "kubernetes-mixin"
+    weight = 204
+    url = "/mixins/kubernetes"
+    parent = "mixins"
+  [[menu.main]]
+    name = "az"
+    identifier = "az-mixin"
+    weight = 210
+    url = "/mixins/az"
     parent = "mixins"
   [[menu.main]]
     name = "azure"
     identifier = "azure-mixin"
-    weight = 205
+    weight = 211
     url = "/mixins/azure"
+    parent = "mixins"
+  [[menu.main]]
+    name = "aws"
+    identifier = "aws-mixin"
+    weight = 212
+    url = "/mixins/aws"
+    parent = "mixins"
+  [[menu.main]]
+    name = "gcloud"
+    identifier = "gcloud-mixin"
+    weight = 213
+    url = "/mixins/gcloud"
     parent = "mixins"
   [[menu.main]]
     name = "terraform"
     identifier = "terraform-mixin"
-    weight = 206
+    weight = 214
     url = "/mixins/terraform"
     parent = "mixins"
 [[menu.main]]

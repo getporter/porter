@@ -7,9 +7,10 @@ layout: single
 Mixins make Porter special, find them, use them, [create your own](/mixin-dev-guide).
 
 * [exec](/mixins/exec)
-* [kubernetes](/mixins/kubernetes)
-* [gcloud](/mixins/gcloud)
 * [helm](/mixins/helm)
-* [aws](/mixins/aws)
+* [kubernetes](/mixins/kubernetes)
+* [az](/mixins/az)
 * [azure](/mixins/azure)
+* [aws](/mixins/aws)
+* [gcloud](/mixins/gcloud)
 * [terraform](/mixins/terraform)
