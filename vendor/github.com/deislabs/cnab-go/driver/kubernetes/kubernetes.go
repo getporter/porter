@@ -12,6 +12,7 @@ import (
 	// Convert transitive deps to direct deps so that we can use constraints in our Gopkg.toml
 	_ "github.com/Azure/go-autorest/autorest"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/driver"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -152,7 +153,7 @@ func (k *Driver) Run(op *driver.Operation) (driver.OperationResult, error) {
 	}
 	container := v1.Container{
 		Name:    k8sContainerName,
-		Image:   op.Image,
+		Image:   imageWithDigest(op.Image),
 		Command: []string{"/cnab/app/run"},
 		Resources: v1.ResourceRequirements{
 			Limits: v1.ResourceList{
@@ -377,4 +378,11 @@ func homeDir() string {
 		return h
 	}
 	return os.Getenv("USERPROFILE") // windows
+}
+
+func imageWithDigest(img bundle.InvocationImage) string {
+	if img.Digest == "" {
+		return img.Image
+	}
+	return img.Image + "@" + img.Digest
 }
