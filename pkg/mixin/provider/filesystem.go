@@ -2,6 +2,7 @@ package mixinprovider
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 
@@ -71,6 +72,8 @@ func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
 	return mixinSchema.String(), nil
 }
 
+// GetVersion is the obsolete form of retrieving mixin version, e.g. exec version, which returned an unstructured
+// version string. It will be deprecated soon and is replaced by GetVersionMetadata.
 func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
 	r := mixin.NewRunner(m.Name, m.Dir, false)
 	r.Command = "version"
@@ -91,4 +94,33 @@ func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
 	}
 
 	return mixinVersion.String(), nil
+}
+
+// GetVersionMetadata is the new form of retrieving mixin version, e.g. exec version --output json, which returns
+// a structured version string. It replaces GetVersion.
+func (p *FileSystem) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error) {
+	r := mixin.NewRunner(m.Name, m.Dir, false)
+	r.Command = "version --output json"
+
+	// Copy the existing context and tweak to pipe the output differently
+	jsonB := &bytes.Buffer{}
+	var mixinContext context.Context
+	mixinContext = *p.Context
+	mixinContext.Out = jsonB
+	if !p.Debug {
+		mixinContext.Err = ioutil.Discard
+	}
+	r.Context = &mixinContext
+
+	err := r.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	var response mixin.VersionInfo
+	err = json.Unmarshal(jsonB.Bytes(), &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }

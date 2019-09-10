@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) {
+func (p *FileSystem) Install(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	if opts.FeedURL != "" {
 		return p.InstallFromFeedURL(opts)
 	}
@@ -22,7 +22,7 @@ func (p *FileSystem) Install(opts mixin.InstallOptions) (mixin.Metadata, error) 
 	return p.InstallFromURL(opts)
 }
 
-func (p *FileSystem) InstallFromURL(opts mixin.InstallOptions) (mixin.Metadata, error) {
+func (p *FileSystem) InstallFromURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	clientUrl := opts.GetParsedURL()
 	clientUrl.Path = path.Join(clientUrl.Path, opts.Version, fmt.Sprintf("%s-%s-%s%s", opts.Name, runtime.GOOS, runtime.GOARCH, mixin.FileExt))
 
@@ -32,62 +32,62 @@ func (p *FileSystem) InstallFromURL(opts mixin.InstallOptions) (mixin.Metadata, 
 	return p.downloadMixin(opts.Name, clientUrl, runtimeUrl)
 }
 
-func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (mixin.Metadata, error) {
+func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	feedUrl := opts.GetParsedFeedURL()
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
-		return mixin.Metadata{}, errors.Wrap(err, "error creating temp directory")
+		return nil, errors.Wrap(err, "error creating temp directory")
 	}
 	defer p.FileSystem.RemoveAll(tmpDir)
 	feedPath := filepath.Join(tmpDir, "atom.xml")
 
 	err = p.downloadFile(feedUrl, feedPath, false)
 	if err != nil {
-		return mixin.Metadata{}, err
+		return nil, err
 	}
 
 	searchFeed := feed.NewMixinFeed(p.Context)
 	err = searchFeed.Load(feedPath)
 	if err != nil {
-		return mixin.Metadata{}, err
+		return nil, err
 	}
 
 	result := searchFeed.Search(opts.Name, opts.Version)
 	if result == nil {
-		return mixin.Metadata{}, errors.Errorf("the mixin feed at %s does not contain an entry for %s @ %s", opts.FeedURL, opts.Name, opts.Version)
+		return nil, errors.Errorf("the mixin feed at %s does not contain an entry for %s @ %s", opts.FeedURL, opts.Name, opts.Version)
 	}
 
 	clientUrl := result.FindDownloadURL(runtime.GOOS, runtime.GOARCH)
 	if clientUrl == nil {
-		return mixin.Metadata{}, errors.Errorf("%s @ %s did not publish a download for %s/%s", opts.Name, opts.Version, runtime.GOOS, runtime.GOARCH)
+		return nil, errors.Errorf("%s @ %s did not publish a download for %s/%s", opts.Name, opts.Version, runtime.GOOS, runtime.GOARCH)
 	}
 
 	runtimeUrl := result.FindDownloadURL("linux", "amd64")
 	if runtimeUrl == nil {
-		return mixin.Metadata{}, errors.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version)
+		return nil, errors.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version)
 	}
 
 	return p.downloadMixin(opts.Name, *clientUrl, *runtimeUrl)
 }
 
-func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl url.URL) (mixin.Metadata, error) {
+func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl url.URL) (*mixin.Metadata, error) {
 	mixinsDir, err := p.GetMixinsDir()
 	if err != nil {
-		return mixin.Metadata{}, err
+		return nil, err
 	}
 	mixinDir := filepath.Join(mixinsDir, name)
 
 	clientPath := filepath.Join(mixinDir, name) + mixin.FileExt
 	err = p.downloadFile(clientUrl, clientPath, true)
 	if err != nil {
-		return mixin.Metadata{}, err
+		return nil, err
 	}
 
 	runtimePath := filepath.Join(mixinDir, name+"-runtime")
 	err = p.downloadFile(runtimeUrl, runtimePath, true)
 	if err != nil {
 		p.FileSystem.RemoveAll(mixinDir) // If the runtime download fails, cleanup the mixin so it's not half installed
-		return mixin.Metadata{}, err
+		return nil, err
 	}
 
 	m := mixin.Metadata{
@@ -95,7 +95,7 @@ func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl ur
 		Dir:        mixinDir,
 		ClientPath: clientPath,
 	}
-	return m, nil
+	return &m, nil
 }
 
 func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool) error {

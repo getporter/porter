@@ -21,9 +21,11 @@ func TestPorter_PrintMixins(t *testing.T) {
 	err := p.PrintMixins(opts)
 
 	require.Nil(t, err)
-	wantOutput := "exec\nhelm\n"
+	wantOutput := `Name   Version   Author
+exec   v1.0      Deis Labs
+`
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Contains(t, wantOutput, gotOutput)
+	assert.Equal(t, wantOutput, gotOutput)
 }
 
 func TestPorter_InstallMixin(t *testing.T) {

@@ -119,8 +119,12 @@ func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
 	return "exec mixin v1.0 (abc123)", nil
 }
 
-func (p *TestMixinProvider) Install(o mixin.InstallOptions) (mixin.Metadata, error) {
-	return mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
+func (p *TestMixinProvider) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error) {
+	return &mixin.VersionInfo{Version: "v1.0", Commit: "abc123", Author: "Deis Labs"}, nil
+}
+
+func (p *TestMixinProvider) Install(o mixin.InstallOptions) (*mixin.Metadata, error) {
+	return &mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }
 
 // If you seek a mock cache for testing, use this

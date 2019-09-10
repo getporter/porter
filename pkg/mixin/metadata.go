@@ -1,16 +1,20 @@
 package mixin
 
-// Metadata about a mixin
+// Metadata about an installed mixin.
 type Metadata struct {
 	// Mixin Name
-	Name string
+	Name string `json:"name"`
 	// Mixin Directory
-	Dir string
+	Dir string `json:"dir,omitempty"`
 	// Path to the client executable
-	ClientPath string
-	// Version
-	// Repository or Source (where did it come from)
-	// Author
-	// Is it up to date
-	// etc
+	ClientPath string `json:"clientPath,omitempty"`
+	// Metadata about the mixin version returned from calling version on the mixin
+	VersionInfo
+}
+
+// Information from running the version command against the mixin.
+type VersionInfo struct {
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	Author  string `json:"author,omitempty"`
 }

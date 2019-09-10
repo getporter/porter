@@ -2,11 +2,12 @@ package main
 
 import (
 	"github.com/deislabs/porter/pkg/porter"
+	"github.com/deislabs/porter/pkg/porter/version"
 	"github.com/spf13/cobra"
 )
 
 func buildVersionCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.VersionOptions{}
+	opts := version.Options{}
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the application version",
@@ -22,7 +23,7 @@ func buildVersionCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.RawFormat, "output", "o", string(porter.DefaultVersionFormat),
+	f.StringVarP(&opts.RawFormat, "output", "o", string(version.DefaultVersionFormat),
 		"Specify an output format.  Allowed values: json, plaintext")
 
 	return cmd

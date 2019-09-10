@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -12,7 +11,6 @@ import (
 func main() {
 	cmd := buildRootCommand(os.Stdin)
 	if err := cmd.Execute(); err != nil {
-		fmt.Printf("err: %s\n", err)
 		os.Exit(1)
 	}
 }
