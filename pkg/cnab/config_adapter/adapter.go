@@ -278,6 +278,6 @@ func toBool(value bool) *bool {
 	return &value
 }
 
-func toFloat64(v float64) *float64 {
+func toInt(v int) *int {
 	return &v
 }

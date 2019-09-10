@@ -68,8 +68,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			definition.Schema{
 				Type:    "integer",
 				Default: 1,
-				Minimum: toFloat64(0),
-				Maximum: toFloat64(10),
+				Minimum: toInt(0),
+				Maximum: toInt(10),
 			},
 		},
 		{"anumber",
@@ -82,8 +82,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			definition.Schema{
 				Type:             "number",
 				Default:          0.5,
-				ExclusiveMinimum: toFloat64(0),
-				ExclusiveMaximum: toFloat64(1),
+				ExclusiveMinimum: toInt(0),
+				ExclusiveMaximum: toInt(1),
 			},
 		},
 		{
@@ -111,8 +111,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			},
 			definition.Schema{
 				Type:      "string",
-				MinLength: toFloat64(1),
-				MaxLength: toFloat64(10),
+				MinLength: toInt(1),
+				MaxLength: toInt(10),
 			},
 		},
 		{
