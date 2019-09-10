@@ -14,6 +14,9 @@ echo "Installed $(& $PORTER_HOME\porter.exe version)"
 & $PORTER_HOME/porter mixin install helm --version $PORTER_VERSION
 & $PORTER_HOME/porter mixin install azure --version $PORTER_VERSION
 & $PORTER_HOME/porter mixin install terraform --version $PORTER_VERSION
+& $PORTER_HOME/porter mixin install az --version $PORTER_VERSION
+& $PORTER_HOME/porter mixin install aws --version $PORTER_VERSION
+& $PORTER_HOME/porter mixin install gcloud --version $PORTER_VERSION
 
 echo "Installation complete."
 echo "Add porter to your path by running:"
