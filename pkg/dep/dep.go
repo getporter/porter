@@ -1,4 +1,4 @@
-package pkg
+package dep
 
 // These imports turn transitive dependencies into direct dependencies
 // so that we can control then using "constraint" in our dep manifest.
