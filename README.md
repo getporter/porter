@@ -4,13 +4,13 @@
 
 # Porter is a Cloud Installer
 
-Porter gives you building blocks to create a cloud installer for your application, handling all the
-necessary infrastructure and configuration setup. It is a declarative authoring experience that lets you
-focus on what you know best: your application.
+Porter gives you the building blocks to create a cloud installer for your
+application, handling all the necessary infrastructure and configuration setup.
+It is based on the Cloud Native Application Bundle Specification
+([CNAB](https://deislabs.io/cnab)). Porter provides a declarative authoring
+experience that lets you focus on what you know best: your application.
 
-Want to start using Porter? Check out the [QuickStart Guide](https://porter.sh/quickstart/) for a brief walkthrough.
-
-Learn more at [porter.sh](https://porter.sh)
+<p align="center">Learn more at <a href="https://porter.sh">porter.sh</a></p>
 
 ---
 

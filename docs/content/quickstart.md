@@ -10,35 +10,44 @@ Please see the [installation instructions](/install/) for more info.
 
 ## Create a new bundle
 Use the `porter create` command to start a new project:
+
 ```
 mkdir -p my-bundle/ && cd my-bundle/
 porter create
 ```
 
-This will create a file called `porter.yaml` which contains the configuration for your bundle.
-Modify and customize this file for your application's needs.
+This will create a file called **porter.yaml** which contains the configuration
+for your bundle. Modify and customize this file for your application's needs.
 
-Here is a very basic `porter.yaml` example:
-```
-name: my-bundle
+Here is a very basic **porter.yaml** file:
+
+```yaml
+name: HELLO
 version: 0.1.0
-description: "this application is extremely important"
-
-invocationImage: my-dockerhub-user/my-bundle:latest
+description: "An example Porter configuration"
+invocationImage: deislabs/porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
 
 mixins:
   - exec
 
 install:
-  - description: "Install Hello World"
-    exec:
+  - exec:
+      description: "Install Hello World"
       command: bash
       flags:
         c: echo Hello World
 
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      flags:
+        c: echo World 2.0
+
 uninstall:
-  - description: "Uninstall Hello World"
-    exec:
+  - exec:
+      description: "Uninstall Hello World"
       command: bash
       flags:
         c: echo Goodbye World
@@ -46,24 +55,66 @@ uninstall:
 
 ## Build the bundle
 
-The `porter build` command will create a
-[CNAB-compliant](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md) `bundle.json`,
-as well as build and push the associated invocation image:
+The `porter build` command will generate the bundle:
+
 ```
 porter build
 ```
 
-Note: Make sure that the `invocationImage` listed in you `porter.yaml`  is a reference that you are
-able to `docker push` to and that your end-users are able to `docker pull` from.
-
 ## Install the bundle
 
-You can then use `porter install` to install your bundle ("demo" is the unique installation name):
+You can then use `porter install` to install your bundle:
+
 ```
-porter install demo
+porter install
 ```
 
 If you wish to uninstall the bundle, you can use `porter uninstall`:
+
+```
+porter uninstall
+```
+
+## Publish the bundle
+
+When you are ready to share your bundle, the next step is publishing it to an
+OCI registry such as Docker Hub or Quay.
+
+You must authenticate with `docker login` before publishing the bundle. Make
+sure that the `invocationImage` and `tag` listed in you `porter.yaml` is a
+reference to which the currently logged in user has write permission.
+
+```yaml
+invocationImage: deislabs/porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
+```
+
+Now run `porter publish` and porter will push the invocation image and bundle to
+the locations specified in the **porter.yaml** file:
+
+```
+porter publish
+```
+
+## Install from the registry
+
+Now that your bundle is in a registry, anyone can use a [CNAB-compliant
+tool][tools], not just Porter, to install the bundle. 
+
+Previously when we use
+`porter install` when we were in the same directory as a porter bundle, we
+didn't specify a bundle instance name to create, so Porter defaulted the
+instance to the name of the bundle. This time we will explicitly name the
+installation "demo".
+
+```
+porter install demo --tag deislabs/porter-hello-bundle:latest
+```
+
+[tools]: https://cnab.io/community-projects/#tools
+
+## Cleanup
+
 ```
 porter uninstall demo
 ```
