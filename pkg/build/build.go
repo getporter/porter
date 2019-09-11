@@ -1,6 +1,8 @@
 package build
 
-import "path/filepath"
+import (
+	"path/filepath"
+)
 
 var (
 	// LOCAL_CNAB is the generated directory where porter stages the /cnab directory.
@@ -14,4 +16,7 @@ var (
 
 	// LOCAL_RUN is the path to the generated CNAB entrypoint script, located at /cnab/app/run.
 	LOCAL_RUN = filepath.Join(LOCAL_APP, "run")
+
+	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
+	BUNDLE_DIR = "/cnab/app"
 )

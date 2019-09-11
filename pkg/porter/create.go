@@ -2,7 +2,9 @@ package porter
 
 import (
 	"fmt"
+
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/pkg/errors"
 )
 
 func (p *Porter) Create() error {
@@ -29,4 +31,17 @@ func (p *Porter) Create() error {
 	}
 
 	return p.CopyTemplate(p.Templates.GetGitignore, ".gitignore")
+}
+
+func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) error {
+	tmpl, err := getTemplate()
+	if err != nil {
+		return err
+	}
+
+	err = p.FileSystem.WriteFile(dest, tmpl, 0644)
+	if err != nil {
+		return errors.Wrapf(err, "failed to write template to %s", dest)
+	}
+	return nil
 }
