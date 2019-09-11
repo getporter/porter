@@ -2,11 +2,8 @@ FROM ubuntu:xenial
 
 ARG BUNDLE_DIR
 
-RUN apt-get update && apt-get install -y ca-certificates apt-transport-https software-properties-common curl
-
-# Install the Service Fabric runtime and the Service Fabric common SDK along with the sfctl CLI
-# https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-get-started-linux
-RUN curl -s https://raw.githubusercontent.com/Azure/service-fabric-scripts-and-templates/master/scripts/SetupServiceFabric/SetupServiceFabric.sh | bash
+RUN apt-get update && apt-get install -y ca-certificates libssl-dev libffi-dev python3 python3-pip
+RUN pip3 install sfctl
 
 # Copy any scripts and local bundle files into the bundle
 COPY . $BUNDLE_DIR
