@@ -31,19 +31,19 @@ type Schema struct {
 	Else                 *Schema                `json:"else,omitempty" yaml:"else,omitempty"`
 	Enum                 []interface{}          `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Examples             []interface{}          `json:"examples,omitempty" yaml:"examples,omitempty"`
-	ExclusiveMaximum     *float64               `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	ExclusiveMinimum     *float64               `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum     *int                   `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	ExclusiveMinimum     *int                   `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
 	Format               string                 `json:"format,omitempty" yaml:"format,omitempty"`
 	If                   *Schema                `json:"if,omitempty" yaml:"if,omitempty"`
 	//Items can be a Schema or an Array of Schema :(
 	Items         interface{} `json:"items,omitempty" yaml:"items,omitempty"`
-	Maximum       *float64    `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MaxLength     *float64    `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MinItems      *float64    `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	MinLength     *float64    `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MinProperties *float64    `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	Minimum       *float64    `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	MultipleOf    *float64    `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Maximum       *int        `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	MaxLength     *int        `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	MinItems      *int        `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MinLength     *int        `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MinProperties *int        `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	Minimum       *int        `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	MultipleOf    *int        `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 	Not           *Schema     `json:"not,omitempty" yaml:"not,omitempty"`
 	OneOf         *Schema     `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
 
@@ -121,12 +121,6 @@ func (s *Schema) ConvertValue(val string) (interface{}, error) {
 	switch dataType {
 	case "string":
 		return val, nil
-	case "number":
-		num, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert %s to number", val)
-		}
-		return num, nil
 	case "integer":
 		return strconv.Atoi(val)
 	case "boolean":

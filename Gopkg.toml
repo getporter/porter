@@ -1,13 +1,10 @@
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  source = "github.com/carolynvs/cnab-go"
-  branch = "op-config-func"
+  version = "v0.4.0-beta1"
 
-# override currently needed or else cnab-to-oci dep causes issues
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  source = "github.com/carolynvs/cnab-go"
-  branch = "op-config-func"
+  version = "v0.4.0-beta1"
 
 # Using master until there is a release of cnab-to-oci
 [[constraint]]

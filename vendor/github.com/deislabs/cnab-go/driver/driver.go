@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/docker/go/canonical/json"
 )
 
@@ -26,9 +27,7 @@ type Operation struct {
 	// Parameters are the parameters to be injected into the container
 	Parameters map[string]interface{} `json:"parameters"`
 	// Image is the invocation image
-	Image string `json:"image"`
-	// ImageType is the type of image.
-	ImageType string `json:"image_type"`
+	Image bundle.InvocationImage `json:"image"`
 	// Environment contains environment variables that should be injected into the invocation image
 	Environment map[string]string `json:"environment"`
 	// Files contains files that should be injected into the invocation image.
