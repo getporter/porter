@@ -1,0 +1,44 @@
+# This is the configuration for Porter
+# You must define steps for each action, but the rest is optional
+# See https://porter.sh/authoring-bundles for documentation on how to configure your bundle
+# Uncomment out the sections below to take full advantage of what Porter can do!
+
+name: porter-example-use-sf-cli
+version: 0.1.0
+description: "An example Porter bundle that uses the service fabric cli"
+invocationImage: deislabs/porter-example-use-sf-cli-installer:0.1.0
+tag: deislabs/porter-example-use-sf-cli:0.1.0
+
+# Use a custom Dockerfile for our invocation image
+dockerfile: Dockerfile.tmpl
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Example"
+      command: bash
+      flags:
+        c: "echo Run 'porter invoke --action=help' next to see sfctl in action"
+
+help:
+  - exec:
+      description: "Show sfctl help"
+      command: sfctl
+      flags:
+        help:
+
+upgrade:
+  - exec:
+      description: "Upgrading to World 2.0"
+      command: bash
+      flags:
+        c: echo World 2.0 is now
+
+uninstall:
+  - exec:
+      description: "Uninstall Example"
+      command: bash
+      flags:
+        c: echo Goodbye World
