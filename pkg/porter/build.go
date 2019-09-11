@@ -35,8 +35,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 	if err := generator.GenerateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-	err = p.Builder.BuildInvocationImage()
-	if err != nil {
+	if err := p.Builder.BuildInvocationImage(); err != nil {
 		return errors.Wrap(err, "unable to build CNAB invocation image")
 	}
 
@@ -44,7 +43,8 @@ func (p *Porter) Build(opts BuildOptions) error {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	converter := configadapter.ManifestConverter{Config: p.Config}
+	imageDigests := map[string]string{invocationImage: digest}
+	converter := configadapter.NewManifestConverter(p.Config, imageDigests)
 	bun := converter.ToBundle()
 	return p.writeBundle(bun)
 }
