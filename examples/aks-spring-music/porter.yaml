@@ -108,25 +108,20 @@ parameters:
 - name: app-resource-group
   type: string
   default: spring-music-demo
-  destination:
-    env: APP_RESOURCE_GROUP
+  env: APP_RESOURCE_GROUP
 - name: aks-resource-group
   type: string
   default: spring-music-demo
-  destination:
-    env: AKS_RESOURCE_GROUP
+  env: AKS_RESOURCE_GROUP
 - name: aks-cluster-name
   type: string
   default: my-aks-spring
-  destination:
-    env: AKS_CLUSTER_NAME
+  env: AKS_CLUSTER_NAME
 - name: cosmosdb-service-name
   type: string
   default: myspringmusic
-  destination:
-    env: COSMOSDB_SERVICE_NAME
+  env: COSMOSDB_SERVICE_NAME
 - name: azure-location
   type: string
   default: eastus
-  destination:
-    env: AZURE_LOCATION
+  env: AZURE_LOCATION

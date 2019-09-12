@@ -18,14 +18,12 @@ parameters:
   - name: my-first-param
     type: int
     default: 9
-    destination:
-      env: MY_FIRST_PARAM
+    env: MY_FIRST_PARAM
   - name: my-second-param
     description: "My second parameter"
     type: string
     default: spring-music-demo
-    destination:
-      path: /path/to/my-second-param
+    path: /path/to/my-second-param
     sensitive: true
 
 outputs:

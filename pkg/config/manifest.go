@@ -98,8 +98,8 @@ type ParameterDefinition struct {
 
 	// These fields represent a subset of bundle.Parameter as defined in deislabs/cnab-go,
 	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
-	ApplyTo     []string  `yaml:"applyTo,omitempty"`
-	Destination *Location `yaml:"destination,omitempty"`
+	ApplyTo     []string `yaml:"applyTo,omitempty"`
+	Destination Location `yaml:",inline,omitempty"`
 
 	definition.Schema `yaml:",inline"`
 }
@@ -117,6 +117,11 @@ type CredentialDefinition struct {
 type Location struct {
 	Path                string `yaml:"path,omitempty"`
 	EnvironmentVariable string `yaml:"env,omitempty"`
+}
+
+func (l Location) IsEmpty() bool {
+	var empty Location
+	return l == empty
 }
 
 type MappedImage struct {

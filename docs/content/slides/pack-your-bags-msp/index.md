@@ -876,8 +876,7 @@ credentials:
 ```yaml
 credentials:
 - name: kubeconfig
-  destination:
-    path: /root/.kube/config
+  path: /root/.kube/config
 ```
 
 ---
