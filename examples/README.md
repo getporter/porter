@@ -4,7 +4,7 @@ This directory contains several example Porter bundles that demonstrate various 
 
 ## Azure Ark
 
-This example creates an Azure storage account using the `azure` and then uses the `helm` mixin to install [Valero](https://github.com/heptio/velero) into an existing Kubernetes cluster. In order to use install this example, you will need an Azure account and a [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest). You'll also need a Kubernetes cluster in Azure, we recommend using AKS.
+This example creates an Azure storage account using the `azure` and then uses the `helm` mixin to install [Velero](https://github.com/heptio/velero) into an existing Kubernetes cluster. In order to use install this example, you will need an Azure account and a [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest). You'll also need a Kubernetes cluster in Azure, we recommend using AKS.
 
 ## Azure MySQL WordPress
 
