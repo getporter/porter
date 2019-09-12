@@ -80,7 +80,7 @@ func resolveParameter(pd ParameterDefinition) (string, error) {
 		return os.Getenv(strings.ToUpper(pe)), nil
 	} else if pd.Destination.EnvironmentVariable != "" {
 		return os.Getenv(pd.Destination.EnvironmentVariable), nil
-	} else if pd.Destination == nil && pd.Destination.Path != "" {
+	} else if pd.Destination.Path != "" {
 		return pd.Destination.Path, nil
 	}
 	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
