@@ -1,6 +1,6 @@
 // +build integration
 
-package mixin
+package mixinprovider
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
@@ -22,8 +23,6 @@ func TestRunner_Run(t *testing.T) {
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
-	r.Command = "install"
-	r.File = "testdata/exec_input.yaml"
 
 	// Capture the output
 	r.Out = output
@@ -32,7 +31,11 @@ func TestRunner_Run(t *testing.T) {
 	err := r.Validate()
 	require.NoError(t, err)
 
-	err = r.Run()
+	cmd := mixin.CommandOptions{
+		Command: "install",
+		File:    "testdata/exec_input.yaml",
+	}
+	err = r.Run(cmd)
 	assert.NoError(t, err)
 	assert.Contains(t, string(output.Bytes()), "Hello World")
 }
@@ -55,8 +58,6 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
-	r.Command = "install"
-	r.File = "testdata/exec_input_with_whitespace.yaml"
 
 	// Capture the output
 	r.Out = censoredWriter
@@ -65,8 +66,12 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 	err := r.Validate()
 	require.NoError(t, err)
 
-	err = r.Run()
+	cmd := mixin.CommandOptions{
+		Command: "install",
+		File:    "testdata/exec_input_with_whitespace.yaml",
+	}
+	err = r.Run(cmd)
 	assert.NoError(t, err)
-	assert.Equal(t,`Hello ******* 	
+	assert.Equal(t, `Hello ******* 	
 `, string(output.Bytes()))
 }

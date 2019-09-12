@@ -22,13 +22,13 @@ type FileSystem struct {
 	*config.Config
 }
 
-func (p *FileSystem) List() ([]mixin.Metadata, error) {
-	mixinsDir, err := p.GetMixinsDir()
+func (fs *FileSystem) List() ([]mixin.Metadata, error) {
+	mixinsDir, err := fs.GetMixinsDir()
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := p.FileSystem.ReadDir(mixinsDir)
+	files, err := fs.FileSystem.ReadDir(mixinsDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list the contents of the mixins directory %q", mixinsDir)
 	}
@@ -50,21 +50,21 @@ func (p *FileSystem) List() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
-	r := mixin.NewRunner(m.Name, m.Dir, false)
-	r.Command = "schema"
+func (fs *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
+	r := NewRunner(m.Name, m.Dir, false)
 
 	// Copy the existing context and tweak to pipe the output differently
 	mixinSchema := &bytes.Buffer{}
 	var mixinContext context.Context
-	mixinContext = *p.Context
+	mixinContext = *fs.Context
 	mixinContext.Out = mixinSchema
-	if !p.Debug {
+	if !fs.Debug {
 		mixinContext.Err = ioutil.Discard
 	}
 	r.Context = &mixinContext
 
-	err := r.Run()
+	cmd := mixin.CommandOptions{Command: "schema"}
+	err := r.Run(cmd)
 	if err != nil {
 		return "", err
 	}
@@ -74,21 +74,21 @@ func (p *FileSystem) GetSchema(m mixin.Metadata) (string, error) {
 
 // GetVersion is the obsolete form of retrieving mixin version, e.g. exec version, which returned an unstructured
 // version string. It will be deprecated soon and is replaced by GetVersionMetadata.
-func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
-	r := mixin.NewRunner(m.Name, m.Dir, false)
-	r.Command = "version"
+func (fs *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
+	r := NewRunner(m.Name, m.Dir, false)
 
 	// Copy the existing context and tweak to pipe the output differently
 	mixinVersion := &bytes.Buffer{}
 	var mixinContext context.Context
-	mixinContext = *p.Context
+	mixinContext = *fs.Context
 	mixinContext.Out = mixinVersion
-	if !p.Debug {
+	if !fs.Debug {
 		mixinContext.Err = ioutil.Discard
 	}
 	r.Context = &mixinContext
 
-	err := r.Run()
+	cmd := mixin.CommandOptions{Command: "version"}
+	err := r.Run(cmd)
 	if err != nil {
 		return "", err
 	}
@@ -98,21 +98,21 @@ func (p *FileSystem) GetVersion(m mixin.Metadata) (string, error) {
 
 // GetVersionMetadata is the new form of retrieving mixin version, e.g. exec version --output json, which returns
 // a structured version string. It replaces GetVersion.
-func (p *FileSystem) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error) {
-	r := mixin.NewRunner(m.Name, m.Dir, false)
-	r.Command = "version --output json"
+func (fs *FileSystem) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error) {
+	r := NewRunner(m.Name, m.Dir, false)
 
 	// Copy the existing context and tweak to pipe the output differently
 	jsonB := &bytes.Buffer{}
 	var mixinContext context.Context
-	mixinContext = *p.Context
+	mixinContext = *fs.Context
 	mixinContext.Out = jsonB
-	if !p.Debug {
+	if !fs.Debug {
 		mixinContext.Err = ioutil.Discard
 	}
 	r.Context = &mixinContext
 
-	err := r.Run()
+	cmd := mixin.CommandOptions{Command: "version --output json"}
+	err := r.Run(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -123,4 +123,21 @@ func (p *FileSystem) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, e
 		return nil, err
 	}
 	return &response, nil
+}
+
+func (fs *FileSystem) Run(mixinContext *context.Context, mixinName string, commandOpts mixin.CommandOptions) error {
+	mixinDir, err := fs.GetMixinDir(mixinName)
+	if err != nil {
+		return err
+	}
+
+	r := NewRunner(mixinName, mixinDir, commandOpts.Runtime)
+	r.Context = mixinContext
+
+	err = r.Validate()
+	if err != nil {
+		return err
+	}
+
+	return r.Run(commandOpts)
 }

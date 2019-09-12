@@ -15,8 +15,8 @@ import (
 	"github.com/deislabs/porter/pkg/cache"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
-	execmixin "github.com/deislabs/porter/pkg/exec"
 	"github.com/deislabs/porter/pkg/mixin"
+	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -39,7 +39,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p := New()
 	p.Config = tc.Config
 	p.CNAB = cnabprovider.NewDuffle(tc.Config)
-	p.Mixins = &TestMixinProvider{}
+	p.Mixins = &mixin.TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
 	return &TestPorter{
@@ -54,6 +54,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
 	p.NewCommand = exec.Command
 	p.Builder = buildprovider.NewDockerBuilder(p.Config)
+	p.Mixins = mixinprovider.NewFileSystem(p.Config)
 
 	// Set up porter and the bundle inside of a temp directory
 	homeDir, err := ioutil.TempDir("/tmp", "porter")
@@ -100,34 +101,6 @@ func (p *TestPorter) CleanupIntegrationTest() {
 	}
 
 	os.Chdir(p.TestDir)
-}
-
-// TODO: use this later to not actually execute a mixin during a unit test
-type TestMixinProvider struct {
-}
-
-func (p *TestMixinProvider) List() ([]mixin.Metadata, error) {
-	mixins := []mixin.Metadata{
-		{Name: "exec"},
-	}
-	return mixins, nil
-}
-
-func (p *TestMixinProvider) GetSchema(m mixin.Metadata) (string, error) {
-	t := execmixin.NewSchemaBox()
-	return t.FindString("exec.json")
-}
-
-func (p *TestMixinProvider) GetVersion(m mixin.Metadata) (string, error) {
-	return "exec mixin v1.0 (abc123)", nil
-}
-
-func (p *TestMixinProvider) GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error) {
-	return &mixin.VersionInfo{Version: "v1.0", Commit: "abc123", Author: "Deis Labs"}, nil
-}
-
-func (p *TestMixinProvider) Install(o mixin.InstallOptions) (*mixin.Metadata, error) {
-	return &mixin.Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }
 
 // If you seek a mock cache for testing, use this

@@ -17,13 +17,15 @@ import (
 
 type DockerfileGenerator struct {
 	*config.Config
-	Templates *templates.Templates
+	*templates.Templates
+	mixin.MixinProvider
 }
 
-func NewDockerfileGenerator(cfg *config.Config, tmpl *templates.Templates) *DockerfileGenerator {
+func NewDockerfileGenerator(cfg *config.Config, tmpl *templates.Templates, mp mixin.MixinProvider) *DockerfileGenerator {
 	return &DockerfileGenerator{
-		Config:    cfg,
-		Templates: tmpl,
+		Config:        cfg,
+		Templates:     tmpl,
+		MixinProvider: mp,
 	}
 }
 
@@ -133,29 +135,16 @@ func (g *DockerfileGenerator) buildCMDSection() string {
 func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 	lines := make([]string, 0)
 	for _, m := range g.Manifest.Mixins {
-		mixinDir, err := g.GetMixinDir(m)
-		if err != nil {
-			return nil, err
-		}
-
-		r := mixin.NewRunner(m, mixinDir, false)
-		r.Command = "build"
-		r.Input = "" // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
-
 		// Copy the existing context and tweak to pipe the output differently
 		mixinStdout := &bytes.Buffer{}
 		var mixinContext context.Context
 		mixinContext = *g.Context
 		mixinContext.Out = mixinStdout   // mixin stdout -> dockerfile lines
 		mixinContext.Err = g.Context.Out // mixin stderr -> logs
-		r.Context = &mixinContext
+		mixinContext.In = nil            // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
 
-		err = r.Validate()
-		if err != nil {
-			return nil, err
-		}
-
-		err = r.Run()
+		cmd := mixin.CommandOptions{Command: "build"}
+		err := g.MixinProvider.Run(&mixinContext, m, cmd)
 		if err != nil {
 			return nil, err
 		}

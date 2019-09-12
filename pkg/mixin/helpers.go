@@ -1,31 +1,43 @@
 package mixin
 
 import (
-	"testing"
+	"io/ioutil"
 
 	"github.com/deislabs/porter/pkg/context"
 )
 
-type TestRunner struct {
-	*Runner
-	TestContext *context.TestContext
+// TestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real mixins on the file system.
+type TestMixinProvider struct {
+	RunAssertions []func(mixinCxt *context.Context, mixinName string, commandOpts CommandOptions)
 }
 
-// NewTestRunner initializes a mixin test runner, with the output buffered, and an in-memory file system.
-func NewTestRunner(t *testing.T, mixin string, runtime bool) *TestRunner {
-	c := context.NewTestContext(t)
-	mixinDir := "/root/.porter/mixins/exec"
-	r := &TestRunner{
-		Runner:      NewRunner(mixin, mixinDir, runtime),
-		TestContext: c,
+func (p *TestMixinProvider) List() ([]Metadata, error) {
+	mixins := []Metadata{
+		{Name: "exec"},
 	}
-	r.Context = c.Context
+	return mixins, nil
+}
 
-	// Setup Mixin Home
-	c.FileSystem.Create("/root/.porter/porter")
-	c.FileSystem.Create("/root/.porter/porter-runtime")
-	c.FileSystem.Create("/root/.porter/mixins/exec/exec")
-	c.FileSystem.Create("/root/.porter/mixins/exec/exec-runtime")
+func (p *TestMixinProvider) GetSchema(m Metadata) (string, error) {
+	b, err := ioutil.ReadFile("../exec/schema/exec.json")
+	return string(b), err
+}
 
-	return r
+func (p *TestMixinProvider) GetVersion(m Metadata) (string, error) {
+	return "exec mixin v1.0 (abc123)", nil
+}
+
+func (p *TestMixinProvider) GetVersionMetadata(m Metadata) (*VersionInfo, error) {
+	return &VersionInfo{Version: "v1.0", Commit: "abc123", Author: "Deis Labs"}, nil
+}
+
+func (p *TestMixinProvider) Install(o InstallOptions) (*Metadata, error) {
+	return &Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
+}
+
+func (p *TestMixinProvider) Run(mixinCxt *context.Context, mixinName string, commandOpts CommandOptions) error {
+	for _, assert := range p.RunAssertions {
+		assert(mixinCxt, mixinName, commandOpts)
+	}
+	return nil
 }

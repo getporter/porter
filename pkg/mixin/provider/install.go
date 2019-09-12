@@ -14,39 +14,39 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *FileSystem) Install(opts mixin.InstallOptions) (*mixin.Metadata, error) {
+func (fs *FileSystem) Install(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	if opts.FeedURL != "" {
-		return p.InstallFromFeedURL(opts)
+		return fs.InstallFromFeedURL(opts)
 	}
 
-	return p.InstallFromURL(opts)
+	return fs.InstallFromURL(opts)
 }
 
-func (p *FileSystem) InstallFromURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
+func (fs *FileSystem) InstallFromURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	clientUrl := opts.GetParsedURL()
 	clientUrl.Path = path.Join(clientUrl.Path, opts.Version, fmt.Sprintf("%s-%s-%s%s", opts.Name, runtime.GOOS, runtime.GOARCH, mixin.FileExt))
 
 	runtimeUrl := opts.GetParsedURL()
 	runtimeUrl.Path = path.Join(runtimeUrl.Path, opts.Version, fmt.Sprintf("%s-linux-amd64", opts.Name))
 
-	return p.downloadMixin(opts.Name, clientUrl, runtimeUrl)
+	return fs.downloadMixin(opts.Name, clientUrl, runtimeUrl)
 }
 
-func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
+func (fs *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
 	feedUrl := opts.GetParsedFeedURL()
-	tmpDir, err := p.FileSystem.TempDir("", "porter")
+	tmpDir, err := fs.FileSystem.TempDir("", "porter")
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating temp directory")
 	}
-	defer p.FileSystem.RemoveAll(tmpDir)
+	defer fs.FileSystem.RemoveAll(tmpDir)
 	feedPath := filepath.Join(tmpDir, "atom.xml")
 
-	err = p.downloadFile(feedUrl, feedPath, false)
+	err = fs.downloadFile(feedUrl, feedPath, false)
 	if err != nil {
 		return nil, err
 	}
 
-	searchFeed := feed.NewMixinFeed(p.Context)
+	searchFeed := feed.NewMixinFeed(fs.Context)
 	err = searchFeed.Load(feedPath)
 	if err != nil {
 		return nil, err
@@ -67,26 +67,26 @@ func (p *FileSystem) InstallFromFeedURL(opts mixin.InstallOptions) (*mixin.Metad
 		return nil, errors.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version)
 	}
 
-	return p.downloadMixin(opts.Name, *clientUrl, *runtimeUrl)
+	return fs.downloadMixin(opts.Name, *clientUrl, *runtimeUrl)
 }
 
-func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl url.URL) (*mixin.Metadata, error) {
-	mixinsDir, err := p.GetMixinsDir()
+func (fs *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl url.URL) (*mixin.Metadata, error) {
+	mixinsDir, err := fs.GetMixinsDir()
 	if err != nil {
 		return nil, err
 	}
 	mixinDir := filepath.Join(mixinsDir, name)
 
 	clientPath := filepath.Join(mixinDir, name) + mixin.FileExt
-	err = p.downloadFile(clientUrl, clientPath, true)
+	err = fs.downloadFile(clientUrl, clientPath, true)
 	if err != nil {
 		return nil, err
 	}
 
 	runtimePath := filepath.Join(mixinDir, name+"-runtime")
-	err = p.downloadFile(runtimeUrl, runtimePath, true)
+	err = fs.downloadFile(runtimeUrl, runtimePath, true)
 	if err != nil {
-		p.FileSystem.RemoveAll(mixinDir) // If the runtime download fails, cleanup the mixin so it's not half installed
+		fs.FileSystem.RemoveAll(mixinDir) // If the runtime download fails, cleanup the mixin so it's not half installed
 		return nil, err
 	}
 
@@ -98,9 +98,9 @@ func (p *FileSystem) downloadMixin(name string, clientUrl url.URL, runtimeUrl ur
 	return &m, nil
 }
 
-func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool) error {
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Downloading %s to %s\n", url.String(), destPath)
+func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool) error {
+	if fs.Debug {
+		fmt.Fprintf(fs.Err, "Downloading %s to %s\n", url.String(), destPath)
 	}
 
 	resp, err := http.Get(url.String())
@@ -114,23 +114,23 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool)
 
 	// Ensure the parent directories exist
 	parentDir := filepath.Dir(destPath)
-	parentDirExists, err := p.FileSystem.DirExists(parentDir)
+	parentDirExists, err := fs.FileSystem.DirExists(parentDir)
 	if err != nil {
 		return errors.Wrapf(err, "unable to check if directory exists %s", parentDir)
 	}
 
 	cleanup := func() {}
 	if !parentDirExists {
-		err = p.FileSystem.MkdirAll(parentDir, 0755)
+		err = fs.FileSystem.MkdirAll(parentDir, 0755)
 		if err != nil {
 			errors.Wrapf(err, "unable to create parent directory %s", parentDir)
 		}
 		cleanup = func() {
-			p.FileSystem.RemoveAll(parentDir) // If we can't download the file, don't leave traces of it
+			fs.FileSystem.RemoveAll(parentDir) // If we can't download the file, don't leave traces of it
 		}
 	}
 
-	destFile, err := p.FileSystem.Create(destPath)
+	destFile, err := fs.FileSystem.Create(destPath)
 	if err != nil {
 		cleanup()
 		return errors.Wrapf(err, "could not create the file at %s", destPath)
@@ -138,7 +138,7 @@ func (p *FileSystem) downloadFile(url url.URL, destPath string, executable bool)
 	defer destFile.Close()
 
 	if executable {
-		err = p.FileSystem.Chmod(destPath, 0755)
+		err = fs.FileSystem.Chmod(destPath, 0755)
 		if err != nil {
 			cleanup()
 			return errors.Wrapf(err, "could not set the file as executable at %s", destPath)

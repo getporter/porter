@@ -1,9 +1,10 @@
-package mixin
+package mixinprovider
 
 import (
 	"os"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,9 +12,6 @@ import (
 
 func TestRunner_Validate(t *testing.T) {
 	r := NewTestRunner(t, "exec", true)
-
-	r.File = "exec_input.yaml"
-	r.TestContext.AddTestFile("testdata/exec_input.yaml", r.File)
 
 	err := r.Validate()
 	require.NoError(t, err)
@@ -59,10 +57,10 @@ func TestRunner_BuildCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := NewTestRunner(t, "exec", false)
 			r.Debug = false
-			r.Command = tc.runnerCommand
 			os.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
 
-			err := r.Run()
+			cmd := mixin.CommandOptions{Command: tc.runnerCommand}
+			err := r.Run(cmd)
 			require.NoError(t, err)
 		})
 	}

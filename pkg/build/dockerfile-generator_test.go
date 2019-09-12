@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,8 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	c.Manifest.Mixins = []string{}
 
-	g := NewDockerfileGenerator(c.Config, tmpl)
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -64,7 +66,8 @@ COPY mybin /cnab/app/
 	// ignore mixins in the unit tests
 	c.Manifest.Mixins = []string{}
 
-	g := NewDockerfileGenerator(c.Config, tmpl)
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -93,7 +96,8 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	// ignore mixins in the unit tests
 	c.Manifest.Mixins = []string{}
 
-	g := NewDockerfileGenerator(c.Config, tmpl)
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -127,7 +131,8 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	c.Manifest.Mixins = []string{}
 
-	g := NewDockerfileGenerator(c.Config, tmpl)
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
 
@@ -152,7 +157,8 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	err = c.LoadManifest()
 	require.NoError(t, err)
 
-	g := NewDockerfileGenerator(c.Config, tmpl)
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
 
