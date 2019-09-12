@@ -139,7 +139,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			param.Schema.WriteOnly = toBool(true)
 		}
 
-		if param.Destination != nil {
+		if !param.Destination.IsEmpty() {
 			p.Destination = &bundle.Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,
 				Path:                param.Destination.Path,
@@ -196,7 +196,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 	return []config.ParameterDefinition{
 		{
 			Name: "porter-debug",
-			Destination: &config.Location{
+			Destination: config.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{

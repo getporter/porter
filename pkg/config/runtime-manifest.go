@@ -75,7 +75,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 
 func resolveParameter(pd ParameterDefinition) (string, error) {
 	pe := pd.Name
-	if pd.Destination == nil {
+	if pd.Destination.IsEmpty() {
 		// Porter by default sets CNAB params to name.ToUpper()
 		return os.Getenv(strings.ToUpper(pe)), nil
 	} else if pd.Destination.EnvironmentVariable != "" {

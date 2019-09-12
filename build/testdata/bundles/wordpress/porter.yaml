@@ -22,8 +22,7 @@ parameters:
 - name: wordpress-name
   type: string
   default: porter-ci-wordpress
-  destination:
-    env: WORDPRESS_NAME
+  env: WORDPRESS_NAME
 - name: wordpress-password
   type: string
   sensitive: true

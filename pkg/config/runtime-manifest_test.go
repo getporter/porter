@@ -176,7 +176,7 @@ func TestResolvePathParam(t *testing.T) {
 		Parameters: []ParameterDefinition{
 			{
 				Name: "person",
-				Destination: &Location{
+				Destination: Location{
 					Path: "person.txt",
 				},
 			},

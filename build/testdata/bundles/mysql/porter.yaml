@@ -15,12 +15,10 @@ parameters:
 - name: database-name
   type: string
   default: mydb
-  destination:
-    env: DATABASE_NAME
+  env: DATABASE_NAME
 - name: mysql-user
   type: string
-  destination:
-    env: MYSQL_USER
+  env: MYSQL_USER
 - name: namespace
   type: string
   default: ''
