@@ -169,6 +169,48 @@ func TestResolveMapParam(t *testing.T) {
 	assert.Equal(t, "Ralpha", val)
 }
 
+func TestResolvePathParam(t *testing.T) {
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Parameters: []ParameterDefinition{
+			{
+				Name: "person",
+				Destination: &Location{
+					Path: "person.txt",
+				},
+			},
+		},
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Parameters": map[string]interface{}{
+				"Thing": "{{bundle.parameters.person}}",
+			},
+		},
+	}
+
+	before, _ := yaml.Marshal(s)
+	t.Logf("Before:\n %s", before)
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+	assert.NotNil(t, s.Data)
+	t.Logf("Length of data:%d", len(s.Data))
+	assert.NotEmpty(t, s.Data["Parameters"])
+	for k, v := range s.Data {
+		t.Logf("Key %s, value: %s, type: %T", k, v, v)
+	}
+	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	val, ok := pms["Thing"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, "person.txt", val)
+}
+
 func TestResolveMapParamUnknown(t *testing.T) {
 	c := context.NewTestContext(t)
 	m := &Manifest{
