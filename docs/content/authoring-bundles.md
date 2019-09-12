@@ -80,15 +80,13 @@ parameters:
 - name: database_name
   type: string
   default: "wordpress"
-  destination:
-    env: MYSQL_DATABASE
+  env: MYSQL_DATABASE
 ```
 
 * `name`: The name of the parameter.
 * `type`: The data type of the parameter: string, integer, number, boolean.
-* `destination`: The destination in the bundle to define the parameter.
-  * `env`: The name for the environment variable. Defaults to the name of the parameter in upper case.
-  * `path`: The path for the file. Required for file paths, there is no default.
+* `env`: The name for the destination environment variable in the bundle. Defaults to the name of the parameter in upper case, if path is not specified.
+* `path`: The destination file path in the bundle.
 * `sensitive`: Optional. Designate this parameter's value as sensitive, for masking in console output.
  
 ## Outputs

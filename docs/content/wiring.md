@@ -175,12 +175,10 @@ parameters:
 - name: database-name
   type: string
   default: mydb
-  destination:
-    env: DATABASE_NAME
+  env: DATABASE_NAME
 - name: mysql-user
   type: string
-  destination:
-    env: MYSQL_USER
+  env: MYSQL_USER
 
 install:
 - description: "Install MySQL"
@@ -226,8 +224,7 @@ parameters:
 - name: wordpress-name
   type: string
   default: porter-ci-wordpress
-  destination:
-    env: WORDPRESS_NAME
+  env: WORDPRESS_NAME
 
 install:
 - description: "Install Wordpress"
