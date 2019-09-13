@@ -148,7 +148,7 @@ build-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),build-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter build
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter build
 endif
 
 .PHONY: publish-bundle
@@ -156,7 +156,7 @@ publish-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && porter publish
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish
 endif
 
 BUNDLE_SCHEMA      := bundle.schema.json
@@ -175,8 +175,14 @@ fetch-bundle-schema:
 fetch-definitions-schema:
 	$(call fetch-schema,$(DEFINITIONS_SCHEMA))
 
+HAS_AJV := $(shell command -v ajv)
+ajv:
+ifndef HAS_AJV
+	npm install -g ajv-cli
+endif
+
 .PHONY: validate-bundle
-validate-bundle: fetch-schemas
+validate-bundle: fetch-schemas ajv
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),validate-bundle)
 else
