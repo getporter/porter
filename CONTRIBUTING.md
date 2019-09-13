@@ -12,6 +12,7 @@
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
 * [Code structure and practices](#code-structure-and-practices)
+  * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
 
 ---
@@ -186,6 +187,47 @@ any files in **cmd/porter** by running `make docs-gen` which is run every time
 you run `make build`.
 
 # Code structure and practices
+
+Carolyn Van Slyck gave a talk about the design of Porter, [Designing
+Command-Line Tools People Love][porter-design] that you may find helpful in
+understanding the why's behind its command grammar, package structure, use of
+dependency injection and testing strategies.
+
+[porter-design]: https://carolynvanslyck.com/talks/#gocli
+
+## What is the general code layout?
+
+* **cmd**: go here to add a new command or flag to porter or one of the mixins in
+  this repository
+* **pkg**
+  * **build**: implements building the invocation image.
+  * **cache**: handles the cache of bundles that have been pulled by commands
+  like `porter install --tag`.
+  * **cnab**: deals with the CNAB spec
+    * **cnab-to-oci**: talking to an OCI registry.
+    * **config_adapter**: converting porter.yaml to bundle.json.
+    * **extensions**: extensions to the CNAB spec, at this point that's just
+  dependencies.
+    * **provider**: the CNAB runtime, i.e. `porter install`.
+* **config**: anything related to `porter.yaml` and `~/.porter`.
+* **context**: essentially dependency injection that's needed throughout Porter,
+  such as stdout, stderr, stdin, filesystem and command execution.
+* **docs**: our website
+* **exec**: the exec mixin
+* **kubernetes**: the kubernetes mixin
+* **mixin**: enums, functions and interfaces for the mixin framework.
+  * **feed**: works with mixin atom feeds
+  * **provider**: handles communicating with mixins
+* **porter**: the implementation of the porter commands. Every command in Porter
+  has a corresponding function in here.
+  * **templates**: files that need to be compiled into the porter binary with
+    packr
+  * **version**: reusable library used by all the mixins for implementing their
+    version command.
+* **scripts**:
+  * **install**: Porter [installation](https://porter.sh/install) scripts
+* **tests** have Go-based integration tests.
+* **vendor** we use dep and check in vendor.
 
 ## Logging
 
