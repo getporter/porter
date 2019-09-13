@@ -176,8 +176,8 @@ If anyone is interested in contributing changes to our makefile to improve the
 authoring experience, such as doing this with Docker so that you don't need Hugo
 installed, it would be a welcome contribution! ❤️
 
-[good-first-issue]: https://waffle.io/deislabs/porter?search=backlog&label=good%20first%20issue
-[help-wanted]: https://waffle.io/deislabs/porter?search=backlog&label=help%20wanted
+[good-first-issue]: https://github.com/deislabs/porter/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
+[help-wanted]: https://github.com/deislabs/porter/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
 
 ## Command Documentation
 
