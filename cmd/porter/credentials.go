@@ -78,8 +78,9 @@ credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
   porter bundle credential generate kubecred --insecure
-  porter bundle credential generate kubecred --file myapp/bundle.json
-  porter bundle credential generate kubecred --file myapp/bundle.json --dry-run
+  porter bundle credential generate kubecred --file myapp/porter.yaml
+  porter bundle credential generate kubecred --tag deislabs/cool-bundle:v1.0.1
+  porter bundle credential generate kubecred --cnab-file myapp/bundle.json --dry-run
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -98,6 +99,8 @@ will then provide it to the bundle in the correct location. `,
 		"Path to the CNAB bundle.json file.")
 	f.BoolVar(&opts.DryRun, "dry-run", false,
 		"Generate credential but do not save it.")
+	f.StringVar(&opts.Tag, "tag", "",
+		"Use a bundle in an OCI registry specified by the given tag.")
 	return cmd
 }
 
