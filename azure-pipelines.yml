@@ -51,14 +51,11 @@ steps:
   workingDirectory: '$(modulePath)'
   displayName: 'Cross Compile'
 
-# TODO: add example bundle validation
-# Currently failing on installing porter (via make install)
-# See https://dev.azure.com/deislabs/porter/_build/results?buildId=2608
-#
-# - script: |
-#      make build install build-bundle validate-bundle
-#   workingDirectory: '$(modulePath)'
-#   displayName: 'Validate Example Bundles'
+- script: |
+    sudo make ajv
+    make build-bundle validate-bundle
+  workingDirectory: '$(modulePath)'
+  displayName: 'Validate Example Bundles'
 
 - task: DownloadSecureFile@1
   inputs:
