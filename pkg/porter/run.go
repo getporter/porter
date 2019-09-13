@@ -6,12 +6,11 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 type RunOptions struct {
@@ -94,11 +93,6 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
-	mixinsDir, err := p.GetMixinsDir()
-	if err != nil {
-		return err
-	}
-
 	err = p.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
@@ -111,19 +105,24 @@ func (p *Porter) Run(opts RunOptions) error {
 				return errors.Wrap(err, "unable to resolve sourced values")
 			}
 
+			description, _ := step.GetDescription()
+			fmt.Fprintln(p.Out, description)
+
 			// Hand over values needing masking in context output streams
 			p.Context.SetSensitiveValues(runtimeManifest.GetSensitiveValues())
 
-			runner := p.loadRunner(step, opts.parsedAction, mixinsDir)
-
-			err = runner.Validate()
-			if err != nil {
-				return errors.Wrap(err, "mixin validation failed")
+			input := &ActionInput{
+				action: opts.parsedAction,
+				Steps:  []*config.Step{step},
 			}
+			inputBytes, _ := yaml.Marshal(input)
 
-			description, _ := step.GetDescription()
-			fmt.Fprintln(p.Out, description)
-			err = runner.Run()
+			cmd := mixin.CommandOptions{
+				Command: string(opts.parsedAction),
+				Input:   string(inputBytes),
+				Runtime: true,
+			}
+			err = p.Mixins.Run(p.Context, step.GetMixinName(), cmd)
 			if err != nil {
 				return errors.Wrap(err, "mixin execution failed")
 			}
@@ -178,24 +177,6 @@ func (a *ActionInput) MarshalYAML() (interface{}, error) {
 		string(a.action): stepMap,
 	}
 	return actionMap, nil
-}
-
-func (p *Porter) loadRunner(s *config.Step, action config.Action, mixinsDir string) *mixin.Runner {
-	name := s.GetMixinName()
-	mixinDir := filepath.Join(mixinsDir, name)
-
-	r := mixin.NewRunner(name, mixinDir, true)
-	r.Command = string(action)
-	r.Context = p.Context
-
-	input := &ActionInput{
-		action: action,
-		Steps:  []*config.Step{s},
-	}
-	inputBytes, _ := yaml.Marshal(input)
-	r.Input = string(inputBytes)
-
-	return r
 }
 
 func (p *Porter) readMixinOutputs() (map[string]string, error) {

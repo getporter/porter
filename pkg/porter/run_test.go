@@ -7,14 +7,38 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	yaml "gopkg.in/yaml.v2"
 )
+
+func TestPorter_Run(t *testing.T) {
+	p := NewTestPorter(t)
+
+	// Mock the mixin test runner and verify that we are calling runtime mixins, e.g. exec-runtime and not exec
+	mp := p.Mixins.(*mixin.TestMixinProvider)
+	mp.RunAssertions = append(mp.RunAssertions, func(mixinCxt *context.Context, mixinName string, commandOpts mixin.CommandOptions) {
+		assert.Equal(t, "exec", mixinName, "expected to call the exec mixin")
+		assert.True(t, commandOpts.Runtime, "the mixin command should be executed in runtime mode")
+		assert.Equal(t, "install", commandOpts.Command, "should have executed the mixin's install command")
+	})
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+	opts := NewRunOptions(p.Config)
+	opts.Action = string(config.ActionInstall)
+	opts.File = "porter.yaml"
+
+	err := opts.Validate()
+	require.NoError(t, err, "could not validate run options")
+
+	err = p.Run(opts)
+	assert.NoError(t, err, "run failed")
+}
 
 func TestPorter_readMixinOutputs(t *testing.T) {
 	p := NewTestPorter(t)

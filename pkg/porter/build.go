@@ -27,7 +27,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return err
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Templates)
+	generator := build.NewDockerfileGenerator(p.Config, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy mixins: %s", err)

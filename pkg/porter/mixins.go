@@ -8,21 +8,6 @@ import (
 	"github.com/deislabs/porter/pkg/printer"
 )
 
-// MixinProvider handles searching, listing and communicating with the mixins.
-type MixinProvider interface {
-	List() ([]mixin.Metadata, error)
-	GetSchema(m mixin.Metadata) (string, error)
-
-	// GetVersion is the obsolete form of retrieving mixin version, e.g. exec version, which returned an unstructured
-	// version string. It will be deprecated soon and is replaced by GetVersionMetadata.
-	GetVersion(m mixin.Metadata) (string, error)
-
-	// GetVersionMetadata is the new form of retrieving mixin version, e.g. exec version --output json, which returns
-	// a structured version string. It replaces GetVersion.
-	GetVersionMetadata(m mixin.Metadata) (*mixin.VersionInfo, error)
-	Install(opts mixin.InstallOptions) (*mixin.Metadata, error)
-}
-
 // PrintMixinsOptions represent options for the PrintMixins function
 type PrintMixinsOptions struct {
 	printer.PrintOptions

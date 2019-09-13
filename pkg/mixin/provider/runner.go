@@ -1,4 +1,4 @@
-package mixin
+package mixinprovider
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 )
 
@@ -15,24 +16,21 @@ type Runner struct {
 	// mixinDir is the absolute path to the directory containing the mixin
 	mixinDir string
 
-	Mixin   string
-	Runtime bool
-	Command string
-	Input   string
-	File    string
+	mixin   string
+	runtime bool
 }
 
 func NewRunner(mixin, mixinDir string, runtime bool) *Runner {
 	return &Runner{
 		Context:  context.New(),
-		Mixin:    mixin,
-		Runtime:  runtime,
+		mixin:    mixin,
+		runtime:  runtime,
 		mixinDir: mixinDir,
 	}
 }
 
 func (r *Runner) Validate() error {
-	if r.Mixin == "" {
+	if r.mixin == "" {
 		return errors.New("mixin not specified")
 	}
 
@@ -48,16 +46,16 @@ func (r *Runner) Validate() error {
 	return nil
 }
 
-func (r *Runner) Run() error {
+func (r *Runner) Run(commandOpts mixin.CommandOptions) error {
 	if r.Debug {
-		fmt.Fprintf(r.Err, "DEBUG mixin:    %s\n", r.Mixin)
+		fmt.Fprintf(r.Err, "DEBUG mixin:    %s\n", r.mixin)
 		fmt.Fprintf(r.Err, "DEBUG mixinDir: %s\n", r.mixinDir)
-		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", r.File)
-		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", r.Input)
+		fmt.Fprintf(r.Err, "DEBUG file:     %s\n", commandOpts.File)
+		fmt.Fprintf(r.Err, "DEBUG stdin:\n%s\n", commandOpts.Input)
 	}
 
 	mixinPath := r.getMixinPath()
-	cmdArgs := strings.Split(r.Command, " ")
+	cmdArgs := strings.Split(commandOpts.Command, " ")
 	command := cmdArgs[0]
 	cmd := r.NewCommand(mixinPath, cmdArgs...)
 
@@ -65,7 +63,7 @@ func (r *Runner) Run() error {
 	cmd.Stdout = r.Context.Out
 	cmd.Stderr = r.Context.Err
 
-	if !IsCoreMixinCommand(command) {
+	if !mixin.IsCoreMixinCommand(command) {
 		// For custom commands, don't call the mixin as "mixin CUSTOM" but as "mixin invoke --action CUSTOM"
 		for i := range cmd.Args {
 			if cmd.Args[i] == command {
@@ -76,22 +74,22 @@ func (r *Runner) Run() error {
 		cmd.Args = append(cmd.Args, "--action", command)
 	}
 
-	if r.File != "" {
-		cmd.Args = append(cmd.Args, "-f", r.File)
+	if commandOpts.File != "" {
+		cmd.Args = append(cmd.Args, "-f", commandOpts.File)
 	}
 
 	if r.Debug {
 		cmd.Args = append(cmd.Args, "--debug")
 	}
 
-	if r.Input != "" {
+	if commandOpts.Input != "" {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
 			return err
 		}
 		go func() {
 			defer stdin.Close()
-			io.WriteString(stdin, r.Input)
+			io.WriteString(stdin, commandOpts.Input)
 		}()
 	}
 
@@ -109,9 +107,9 @@ func (r *Runner) Run() error {
 }
 
 func (r *Runner) getMixinPath() string {
-	path := filepath.Join(r.mixinDir, r.Mixin)
-	if r.Runtime {
+	path := filepath.Join(r.mixinDir, r.mixin)
+	if r.runtime {
 		return path + "-runtime"
 	}
-	return path + FileExt
+	return path + mixin.FileExt
 }
