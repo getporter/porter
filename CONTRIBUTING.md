@@ -1,75 +1,179 @@
+# Contributing Guide
+
+---
+* [How to help](#how-to-help)
+  * [Find an issue](#find-an-issue)
+  * [When to open a pull request](#when-to-open-a-pull-request)
+  * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
+  * [The life of a pull request](#the-life-of-a-pull-request)
+* [Developer Tasks](#developer-tasks)
+  * [Initial setup](#initial-setup)
+  * [Makefile explained](#makefile-explained)
+  * [Install mixins](#install-mixins)
+  * [Preview documentation](#preview-documentation)
+* [Code structure and practices](#code-structure-and-practices)
+  * [Logging](#logging)
+
+---
+
+# How to help
+
+We welcome your pull requests! If you aren't sure what to expect, here are some
+norms for our project so you feel more comfortable with how things will go.
+
+## Find an issue
+
 We have [good first issues][good-first-issue] for new contributors and [help wanted][help-wanted] issues for our other contributors.
 
 * `good first issue` has extra information to help you make your first contribution.
 * `help wanted` are issues suitable for someone who isn't a core maintainer.
 
 Maintainers will do our best regularly make new issues for you to solve and then help out as you work on them. 💖
- 
-# Philosophy
-PRs are most welcome!
 
-* If there isn't an issue for your PR, please make an issue first and explain the problem or motivation for
-the change you are proposing. When the solution isn't straightforward, for example "Implement missing command X",
-then also outline your proposed solution. Your PR will go smoother if the solution is agreed upon before you've
-spent a lot of time implementing it.
-  * It's OK to submit a PR directly for problems such as misspellings or other things where the motivation/problem is
-    unambiguous.
-* If you aren't sure about your solution yet, put WIP in the title so that people know to be nice and 
-wait for you to finish before commenting.
-* Try to keep your PRs to a single task. Please don't tackle multiple things in a single PR if possible. Otherwise, grouping related changes into commits will help us out a bunch when reviewing!
-* We encourage "follow-on PRs". If the core of your changes are good, and it won't hurt to do more of
-the changes later, we like to merge early, and keep working on it in another PR so that others can build
-on top of your work.
+## When to open a pull request
 
-# Client
+It's OK to submit a PR directly for problems such as misspellings or other
+things where the motivation/problem is unambiguous.
 
-1. `make build`, and the resulting binaries are located in `./bin`.
-1. `./bin/porter COMMAND`, such as `./bin/porter build`.
+If there isn't an issue for your PR, please make an issue first and explain the
+problem or motivation for the change you are proposing. When the solution isn't
+straightforward, for example "Implement missing command X", then also outline
+your proposed solution. Your PR will go smoother if the solution is agreed upon
+before you've spent a lot of time implementing it. 
 
-If you would like to install a developer build, run `make install`.
-This copies a dev build (assumed previously built via e.g. `make build`) to `~/.porter` and symlinks it to `/usr/local/bin`.
+Since Porter is a CLI, the "solution" will usually look like this:
 
-# Mixins
+```console
+$ porter newcommand [OPTIONAL] [--someflag VALUE]
+example output
+```
 
-When you run `make build`, the canary\* build of external mixins are automatically installed into your bin directory
-in the root of the repository. If you want to work against a different version of a mixin, then run `make clean build MIXIN_TAG=v1.2.3`.
-or use `latest` for the most recent tagged release.
+## How to get your pull request reviewed fast
+
+🚧 If you aren't done yet, create a draft pull request or put WIP in the title
+so that reviewers wait for you to finish before commenting.
+
+1️⃣ Limit your pull request to a single task. Don't tackle multiple unrelated
+things, especially refactoring. If you need large refactoring for your change,
+chat with a maintainer first, then do it in a separate PR first without any
+functionality changes.
+
+🎳 Group related changes into commits will help us out a bunch when reviewing!
+For example, when you change dependencies and check in vendor, do that in a
+separate commit.
+
+😅 Make requested changes in new commits. Please don't ammend or rebase commits
+that we have already reviewed. When your pull request is ready to merge, you can
+rebase your commits yourself, or we can squash when we merge. Just let us know
+what you are more comfortable with.
+
+🚀 We encourage [follow-on PRs](#follow-on-pr) and a reviewer may let you know in
+their comment if it is okay for their suggestion to be done in a follow-on PR.
+You can decide to make the change in the current PR immediately, or agree to
+tackle it in a reasonable amount of time in a subsequent pull request. If you
+can't get to it soon, please create an issue and link to it from the pull
+request comment so that we don't collectively forget.
+
+## The life of a pull request
+
+1. You create a draft or WIP pull request. Reviewers will ignore it mostly
+   unless you mention someone and ask for help. Feel free to open one and use
+   the pull request to see if the CI passes. Once you are ready for a review,
+   remove the WIP or click "Ready for Review" and leave a comment that it's
+   ready for review.
+
+   If you create a regular pull request, a reviewer won't wait to review it.
+1. A reviewer will assign themselves to the pull request. If you don't see
+   anyone assigned after 3 business days, you can leave a comment asking for a
+   review, or ping in [#porter][slack]. Sometimes we have busy days, sick days,
+   weekends and vacations, so a little patience is appreciated! 🙇‍♀️
+1. The reviewer will leave feedback.
+    * `nits`: These are suggestions that you may decide incorporate into your pull
+      request or not without further comment.
+    * It can help to put a 👍 on comments that you have implemented so that you
+      can keep track.
+    * It is okay to clarify if you are being told to make a change or if it is a
+      suggestion.
+1. After you have made the changes (in new commits please!), leave a comment. If
+   3 business days go by with no review, it is okay to bump.
+1. When a pull request has been approved, the reviewer will squash and merge
+   your commits. If you prefer to rebase your own commits, at any time leave a
+   comment on the pull request to let them know that.
+
+At this point your changes are available in the [canary][canary] release of Porter!
+
+[canary]: https://porter.sh/install/#canary
+
+### Follow-on PR
+
+A follow-on PR is a pull request that finishes up suggestions from another pull
+request.
+
+When the core of your changes are good, and it won't hurt to do more of the
+changes later, our preference is to merge early, and keep working on it in a
+subsequent. This allows us to start testing out the changes in our canary
+builds, and more importantly enables other developers to immediately start
+building their work on top of yours.
+
+This helps us avoid pull requests to rely on other pull requests. It also avoids
+pull requests that last for months, and in general we try to not let "perfect be
+the enemy of the good". It's no fun to watch your work sit in purgatory, and it
+kills contributor momentum.
+
+# Developer Tasks
+
+## Initial setup
+
+Run `make build install`. You now have canary builds of porter and all the
+mixins installed.
+
+## Makefile explained
+
+Here are the most common Makefile tasks
+
+* `build-porter-client` just builds the porter client for your operating
+  system. It does not build the porter-runtime binary. Useful when you just want
+  to do a build and don't remember the proper way to call `go build` yourself.
+* `build-porter` builds both the porter client and runtime.
+* `install-porter` installs just porter from your bin into **/usr/local/bin**.
+* `install-mixins` installs just the mixins from your bin into
+  **/usr/local/bin**. This is useful when you are working on the exec or
+  kubernetes mixin.
+* `install` installs porter _and_ the mixins from your bin into **/usr/local/bin**.
+* `test-unit` runs the unit tests.
+* `test-integration` runs the integration tests. This requires a kubernetes
+  cluster setup with credentials located at **~/.kube/config**. Expect this to
+  take 10 minutes.
+* `test-cli` runs a small test of end-to-end tests that require a kubernetes
+  cluster (same as `test-integration`).
+* `docs-preview` hosts the docs site. See [Preview
+  Documentation](#preview-documentation).
+* `test` runs all the tests.
+* `clean-packr` removes extra packr files that were a side-effect of the build.
+  Normally this is run automatically but if you run into issues with packr and
+  dep, run this commmand.
+
+## Install mixins
+
+When you run `make build`, the canary\* build of mixins are automatically
+installed into your bin directory in the root of the repository. You can use
+`porter mixin install NAME` to install the latest released version of a mixin.
 
 \* canary = most recent successful build of master
 
-# Logging
+## Preview documentation
 
-**Print to the `Out` property for informational messages and send debug messages to the `Err` property.**
-
-Example:
-
-```golang
-fmt.Fprintln(p.Out, "Initiating battlestar protocol"
-fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
-```
-
-Most of the structs in Porter have an embedded `github.com/deislabs/porter/pkg/context.Context` struct. This has both 
-`Out` and `Err` which represent stdout and stderr respectively. You should log to those instead of directly to 
-stdout/stderr because that is how we capture output in our unit tests. That means use `fmt.Fprint*` instead of 
-`fmt.Print*` so that you can pass in `Out` or `Err`.
-
-Some of our commands are designed to be consumed by another tool and intermixing debug lines and the command output 
-would make the resulting output unusable. For example, `porter schema` outputs a json schema
-and if log lines were sent to stdout as well, then the resulting json schema would be unparsable. This is why we send
-regular command output to `Out` and debug information to `Err`. It allows us to then run the command and see the debug 
-output separately, like so `porter schema --debug 2> err.log`.
-
-# Documentation
-
-We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on [Netlify](netlify.com).
+We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
+[Netlify](netlify.com).
 
 1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`, 
 `choco install hugo` or `go get -u github.com/gohugoio/hugo`.
 1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
 1. Open <http://localhost:1313> to preview the site.
 
-If anyone is interested in contributing changes to our makefile to improve the authoring experience, such 
-as doing this with Docker so that you don't need Hugo installed, it would be a welcome contribution! ❤️
+If anyone is interested in contributing changes to our makefile to improve the
+authoring experience, such as doing this with Docker so that you don't need Hugo
+installed, it would be a welcome contribution! ❤️
 
 [good-first-issue]: https://waffle.io/deislabs/porter?search=backlog&label=good%20first%20issue
 [help-wanted]: https://waffle.io/deislabs/porter?search=backlog&label=help%20wanted
@@ -81,62 +185,30 @@ generated by our CLI. You should regenerate that documentation when you change
 any files in **cmd/porter** by running `make docs-gen` which is run every time
 you run `make build`.
 
-# Cutting a Release
+# Code structure and practices
 
-🧀💨
+## Logging
 
-Our CI system watches for tags, and when a tag is pushed, it executes the
-publish target in the Makefile. When you are asked to cut a new release,
-here is the process:
+**Print to the `Out` property for informational messages and send debug messages to the `Err` property.**
 
-1. Figure out the correct version number, we follow [semver](semver.org) and
-    have a funny [release naming scheme][release-name]:
-    * Bump the major segment if there are any breaking changes.
-    * Bump the minor segment if there are new features only.
-    * Bump the patch segment if there are bug fixes only.
-    * Bump the build segment (version-prerelease.BUILDTAG+releasename) if you only
-      fixed something in the build, but the final binaries are the same.
-1. Figure out if the release name (version-prerelease.buildtag+RELEASENAME) should
-    change.
-    
-    * Keep the release name the same if it is just a build tag or patch bump.
-    * It is a new release name for major and minor bumps.
-    
-    If you need a new release name, it must be conversation with the team.
-    [Release naming scheme][release-name] explains the meaning behind the
-    release names.
-1. Ensure that the master CI build is passing, then make the tag and push it.
+Example:
 
-    ```
-    git checkout master
-    git pull
-    git tag VERSION -a -m ""
-    git push --tags
-    ```
+```golang
+fmt.Fprintln(p.Out, "Initiating battlestar protocol"
+fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
+```
 
-1. Generate some release notes and put them into the release on GitHub.
-    The following command gives you a list of all the merged pull requests:
+Most of the structs in Porter have an embedded
+`github.com/deislabs/porter/pkg/context.Context` struct. This has both `Out` and
+`Err` which represent stdout and stderr respectively. You should log to those
+instead of directly to stdout/stderr because that is how we capture output in
+our unit tests. That means use `fmt.Fprint*` instead of `fmt.Print*` so that you
+can pass in `Out` or `Err`.
 
-    ```
-    git log --oneline OLDVERSION..NEWVERSION  | grep "#" > gitlog.txt
-    ```
-
-    You need to go through that and make a bulleted list of features
-    and fixes with the PR titles and links to the PR. If you come up with an
-    easier way of doing this, please submit a PR to update these instructions. 😅
-
-    ```
-    # Features
-    * PR TITLE (#PR NUMBER)
-
-    # Fixes
-    * PR TITLE (#PR NUMBER)
-
-    # Install or Upgrade
-    Run (or re-run) the installation from https://porter.sh/install to get the 
-    latest version of porter.
-    ```
-1. Name the release after the version.
-    
-
-[release-name]: https://porter.sh/faq/#how-does-your-release-naming-scheme-work
+Some of our commands are designed to be consumed by another tool and intermixing
+debug lines and the command output would make the resulting output unusable. For
+example, `porter schema` outputs a json schema and if log lines were sent to
+stdout as well, then the resulting json schema would be unparsable. This is why
+we send regular command output to `Out` and debug information to `Err`. It
+allows us to then run the command and see the debug output separately, like so
+`porter schema --debug 2> err.log`.
