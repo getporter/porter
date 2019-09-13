@@ -31,7 +31,7 @@ type bundleFileOptions struct {
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
 	File string
 
-	// CNABFile is the path to the bundle.json file. Cannot be specified at the same time as the porter manifest.
+	// CNABFile is the path to the bundle.json file. Cannot be specified at the same time as the porter manifest or a tag.
 	CNABFile string
 }
 

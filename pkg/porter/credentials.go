@@ -140,7 +140,7 @@ func (p *Porter) ListCredentials(opts ListOptions) error {
 }
 
 type CredentialOptions struct {
-	sharedOptions
+	BundleLifecycleOpts
 	DryRun bool
 	Silent bool
 }
@@ -170,17 +170,21 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	if err != nil {
+		return errors.Wrap(err, "unable to pull bundle before invoking credentials generate")
+	}
+
+	err = p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
-
 	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
-
 	bundle, err := p.CNAB.LoadBundle(opts.CNABFile, opts.Insecure)
+
 	if err != nil {
 		return err
 	}
