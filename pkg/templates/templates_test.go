@@ -1,4 +1,4 @@
-package porter
+package templates
 
 import (
 	"io/ioutil"
@@ -9,10 +9,9 @@ import (
 )
 
 func TestTemplates_GetManifest(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+	tmpl := NewTemplates()
 
-	gotTmpl, err := p.Templates.GetManifest()
+	gotTmpl, err := tmpl.GetManifest()
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/create/porter.yaml")
@@ -20,10 +19,9 @@ func TestTemplates_GetManifest(t *testing.T) {
 }
 
 func TestTemplates_GetRunScript(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+	tmpl := NewTemplates()
 
-	gotTmpl, err := p.Templates.GetRunScript()
+	gotTmpl, err := tmpl.GetRunScript()
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/build/cnab/app/run")
@@ -31,10 +29,9 @@ func TestTemplates_GetRunScript(t *testing.T) {
 }
 
 func TestTemplates_GetDockerfile(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+	tmpl := NewTemplates()
 
-	gotTmpl, err := p.Templates.GetDockerfile()
+	gotTmpl, err := tmpl.GetDockerfile()
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/build/Dockerfile")

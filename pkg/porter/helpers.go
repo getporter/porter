@@ -11,6 +11,7 @@ import (
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/claim"
+	buildprovider "github.com/deislabs/porter/pkg/build/provider"
 	"github.com/deislabs/porter/pkg/cache"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
@@ -40,6 +41,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.CNAB = cnabprovider.NewDuffle(tc.Config)
 	p.Mixins = &TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
+	p.Builder = NewTestBuildProvider()
 	return &TestPorter{
 		Porter:     p,
 		TestConfig: tc,
@@ -51,6 +53,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
 	p.NewCommand = exec.Command
+	p.Builder = buildprovider.NewDockerBuilder(p.Config)
 
 	// Set up porter and the bundle inside of a temp directory
 	homeDir, err := ioutil.TempDir("/tmp", "porter")
@@ -208,4 +211,13 @@ func (t *TestCNABProvider) CreateClaim(claim *claim.Claim) error {
 	}
 
 	return afero.WriteFile(t.FileSystem, claim.Name, bytes, os.ModePerm)
+}
+
+type TestBuildProvider struct{}
+
+func NewTestBuildProvider() *TestBuildProvider {
+	return &TestBuildProvider{}
+}
+func (t *TestBuildProvider) BuildInvocationImage() error {
+	return nil
 }

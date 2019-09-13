@@ -16,6 +16,14 @@ const SchemaVersion = "v1.0.0-WD"
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
 	*config.Config
+	ImageDigests map[string]string
+}
+
+func NewManifestConverter(cfg *config.Config, imageDigests map[string]string) *ManifestConverter {
+	return &ManifestConverter{
+		Config:       cfg,
+		ImageDigests: imageDigests,
+	}
 }
 
 func (c *ManifestConverter) ToBundle() *bundle.Bundle {
@@ -31,6 +39,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		BaseImage: bundle.BaseImage{
 			Image:     c.Manifest.Image,
 			ImageType: "docker",
+			Digest:    c.ImageDigests[c.Manifest.Image],
 		},
 	}
 

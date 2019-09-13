@@ -3,11 +3,13 @@
 package porter
 
 import (
+	buildprovider "github.com/deislabs/porter/pkg/build/provider"
 	"github.com/deislabs/porter/pkg/cache"
 	cnabtooci "github.com/deislabs/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
+	"github.com/deislabs/porter/pkg/templates"
 )
 
 // Porter is the logic behind the porter client.
@@ -15,7 +17,8 @@ type Porter struct {
 	*config.Config
 	Cache     cache.BundleCache
 	Registry  Registry
-	Templates *Templates
+	Templates *templates.Templates
+	Builder   BuildProvider
 	Mixins    MixinProvider
 	CNAB      CNABProvider
 }
@@ -28,7 +31,8 @@ func New() *Porter {
 		Config:    c,
 		Cache:     cache,
 		Registry:  cnabtooci.NewRegistry(c.Context),
-		Templates: NewTemplates(),
+		Templates: templates.NewTemplates(),
+		Builder:   buildprovider.NewDockerBuilder(c),
 		Mixins:    mixinprovider.NewFileSystem(c),
 		CNAB:      cnabprovider.NewDuffle(c),
 	}

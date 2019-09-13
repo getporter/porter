@@ -1,10 +1,9 @@
 //go:generate packr2
 
-package porter
+package templates
 
 import (
 	"github.com/gobuffalo/packr/v2"
-	"github.com/pkg/errors"
 )
 
 type Templates struct {
@@ -19,7 +18,7 @@ func NewTemplates() *Templates {
 
 // NewSchemas creates or retrieves the packr box with the porter template files.
 func NewTemplatesBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/porter/templates", "./templates")
+	return packr.New("github.com/deislabs/porter/pkg/templates", "./templates")
 }
 
 // GetManifest returns a porter.yaml template file for use in new bundles.
@@ -61,17 +60,4 @@ func (t *Templates) GetSchema() ([]byte, error) {
 // GetDockerfile returns the default Dockerfile for invocation images.
 func (t *Templates) GetDockerfile() ([]byte, error) {
 	return t.box.Find("build/Dockerfile")
-}
-
-func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) error {
-	tmpl, err := getTemplate()
-	if err != nil {
-		return err
-	}
-
-	err = p.FileSystem.WriteFile(dest, tmpl, 0644)
-	if err != nil {
-		return errors.Wrapf(err, "failed to write template to %s", dest)
-	}
-	return nil
 }
