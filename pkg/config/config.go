@@ -40,10 +40,15 @@ const (
 var getExecutable = os.Executable
 var evalSymlinks = filepath.EvalSymlinks
 
+type DataStoreLoaderFunc func(*Config) error
+
 type Config struct {
 	*context.Context
+	Data *Data
+
 	Manifest     *Manifest
 	ManifestPath string
+	DataLoader   DataStoreLoaderFunc
 
 	porterHome string
 }
@@ -51,8 +56,21 @@ type Config struct {
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		Context: context.New(),
+		Context:    context.New(),
+		DataLoader: NoopDataLoader,
 	}
+}
+
+// LoadData from the datastore in PORTER_HOME.
+// This defaults to doing nothing unless DataLoader has been set.
+func (c *Config) LoadData() error {
+	c.Data = nil
+
+	if c.DataLoader == nil {
+		c.DataLoader = NoopDataLoader
+	}
+
+	return c.DataLoader(c)
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
