@@ -49,6 +49,23 @@ $ porter newcommand [OPTIONAL] [--someflag VALUE]
 example output
 ```
 
+## How to test your pull request
+
+We recommend running the following every time:
+
+```
+make verify build test-unit
+```
+
+If your test modified anything related to running a bundle, also run:
+
+```
+make test-integration
+```
+
+If you want to know _all_ the targets that the CI runs, look at
+[azure-pipelines.yml](azure-pipelines.yml).
+
 ## How to get your pull request reviewed fast
 
 🚧 If you aren't done yet, create a draft pull request or put WIP in the title
