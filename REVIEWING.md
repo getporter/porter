@@ -1,33 +1,26 @@
 # Reviewing Guide
-This guide is for reviewers and maintainers.
-
-* Reviewer: Anyone!
-* Maintainer: People with write access to the repository.
-
----
 
 * [Values](#values)
 * [How to review a pull request](#how-to-review-a-pull-request)
   * [Giving feedback](#giving-feedback)
 * [Cut a release](#cut-a-release)
 
----
 
 # Values
 
 Thank you for reviewing pull requests for us! 💖
 
 Here are the values and etiquette that we follow to ensure a welcoming, inclusive
-project that doesn't burn out our contributors or our reviewers. 😅
+project that doesn't burn out our authors or our reviewers. 😅
 
-* We ask that contributors respect reviewers time. Check out the
+* We ask that authors respect reviewers time. Check out the
   [Contributing Guide](CONTRIBUTING.md) and know that you can ask the
-  contributor to do their part to make _your_ part managable.
-* We ask that reviewers respect contributors time. Please do your best to review
+  author to do their part to make _your_ part managable.
+* We ask that reviewers respect authors time. Please do your best to review
   a pull request in a reasonable amount of time once you have assigned it to
   yourself.
 * The definition of "reasonable amount of time" is 3 business days. The ask is
-  that After each trigger "Review Requested", "Changes Incorporated", etc that
+  that after each trigger: "Review Requested", "Changes Incorporated", etc that
   the other person attempt to do their part within 3 business days. If they
   can't, please leave a comment and let the other person know that it will take
   longer. If life comes up, let others know that you need to unassign yourself
@@ -44,7 +37,7 @@ project that doesn't burn out our contributors or our reviewers. 😅
    
    For example, it is missing an agreed upon solution, requires an explanation
    from the author, has a very large set of changes that are not easy to review,
-   etc. Ask the author to correct that up-front.
+   etc., ask the author to correct that up-front.
 1. When you provide feedback, make it clear if the change must be made in order
    for the pull request to be approved, or if it is just a suggestion. Mark
    suggestions with **nit**, for example `nit: I prefer that the bikeshed be
@@ -52,10 +45,26 @@ project that doesn't burn out our contributors or our reviewers. 😅
 1. When the pull request is ready to merge, squash the commits they require
    tidying unless the author asked to do that themselves.
 
-See [The life of a pull request](CONTRIBUTING.md#the-life-of-a-pull-request) for what we expect a pull request to feel like for everyone involved.
+See [The life of a pull request](CONTRIBUTING.md#the-life-of-a-pull-request) for 
+what we expect a pull request to feel like for everyone involved.
+
+## Merge Requirements
+
+* Unit Tests
+* Documentation Updated
+* Passing CI
+
+[Admins][admins] are allowed, at their discretion, to merge administrative pull
+requests without review and before the full CI suite has passed. This is
+sometimes used for typo fixes, updates to markdown files, etc. This is a
+judgement call based on the type of change, risk, and availability of other
+reviewers.
 
 ## Giving feedback
 
+* Be kind. Here is [good article][kind-reviews] with example code reviews and 
+  how to improve your feedback. Giving feedback of this caliber is an requirement 
+  of maintainers and those who cannot do so will have the maintainer role revoked.
 * Request changes for bugs and program correctness.
 * Request changes to be consistent with existing precedent in the codebase.
 * Request tests and documentation in the same pull request.
@@ -63,6 +72,8 @@ See [The life of a pull request](CONTRIBUTING.md#the-life-of-a-pull-request) for
   a reason.
 * Prefer [follow-on PRs](CONTRIBUTING.md#follow-on-pr).
 * Do not ask the author to write in your style.
+
+[kind-reviews]: https://product.voxmedia.com/2018/8/21/17549400/kindness-and-code-reviews-improving-the-way-we-give-feedback
 
 # Cut a Release
 
@@ -110,3 +121,6 @@ here is the process:
     latest version of porter.
     ```
 1. Name the release after the version.
+
+[maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
+[admins]: https://github.com/orgs/deislabs/teams/porter-admins
