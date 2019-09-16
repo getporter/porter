@@ -1,6 +1,9 @@
 mixins:
   - exec
-  - az
+  - az:
+      extensions:
+        - iot
+
 
 install:
   - exec:

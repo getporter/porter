@@ -5,6 +5,6 @@ import (
 )
 
 type BuildInput struct {
-	Config  map[string]interface{}  `yaml:"config"`
+	Config  interface{}             `yaml:"config,omitempty"`
 	Actions map[string]config.Steps `yaml:"actions"`
 }
