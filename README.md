@@ -10,32 +10,28 @@ It is based on the Cloud Native Application Bundle Specification
 ([CNAB](https://deislabs.io/cnab)). Porter provides a declarative authoring
 experience that lets you focus on what you know best: your application.
 
-<p align="center">Learn more at <a href="https://porter.sh">porter.sh</a></p>
+<p align="center">Learn all about Porter at <a href="https://porter.sh">porter.sh</a></p>
 
 ---
 
-_Want to work on Porter with us? See our [Contributing Guide](CONTRIBUTING.md)_
+# Looking for Contributors
+
+Want to work on Porter with us? 💖 We are actively seeking out new contributors
+with the hopes of building up both casual contributors and enticing some of you
+into becoming reviewers and maintainers.
+
+<p align="center">Start with our <a href="CONTRIBUTING.md">Contributing Guide</a>
 
 ---
 
-## Roadmap
+# Roadmap
 
-_2019/08/26 Wait where did my summer go?_ 🌦
+Porter is an open-source project and things get done as quickly as we have
+motivated contributors working on features that interest them. 😉
 
-Porter could go in lots of directions! Here are our top goals right now:
+The roadmap represents what the core maintainers have said that they are
+currently working on and plan to work on over the next few months. We use the
+"on-hold" bucket to communicate items of interest that doesn't have a core
+maintainer who will be working on it.
 
-1. CNAB Specification Compliance - Milestone [CNAB 1.0](https://github.com/deislabs/porter/milestone/12)
-
-    The CNAB Core 1.0 spec has been frozen.
-    
-    Progress Report: 99% there! We have full support for CNAB Core 1.0, just dotting some i's and crossing those t's.
-    
-1. Dependency Distribution - Milestone [Dependencies](https://github.com/deislabs/porter/milestone/8)
-
-    Solve end-to-end how bundle authors use porter to build, publish and then use someone's bundle as a dependency.
-    
-    Progress Report: 75% there! You can make a bundle with a dependency, give it a try. 👍
-
-1. Thick Bundles - Milestone [Thick and Relocated Bundles](https://github.com/deislabs/porter/milestone/13)
-
-    CNAB thick bundles are used for transmitting across air-gapped networks.
+<p align="center">Check out our <a href="https://github.com/deislabs/porter/projects/4">roadmap</a></p>

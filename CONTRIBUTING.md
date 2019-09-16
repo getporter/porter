@@ -29,7 +29,14 @@ We have [good first issues][good-first-issue] for new contributors and [help wan
 * `good first issue` has extra information to help you make your first contribution.
 * `help wanted` are issues suitable for someone who isn't a core maintainer.
 
-Maintainers will do our best regularly make new issues for you to solve and then help out as you work on them. 💖
+Maintainers will do our best regularly make new issues for you to solve and then
+help out as you work on them. 💖
+
+We have a [roadmap](README.md#roadmap) that will give you a good idea of the
+larger features that we are working on right now. That may help you decide what
+you would like to work on after you have tackled an issue or two to learn how to
+contribute to Porter. If you would like to contribute regularly to a larger
+issue on the roadmap, reach out to a maintainer on [Slack][slack].
 
 ## When to open a pull request
 
@@ -103,7 +110,7 @@ request comment so that we don't collectively forget.
    If you create a regular pull request, a reviewer won't wait to review it.
 1. A reviewer will assign themselves to the pull request. If you don't see
    anyone assigned after 3 business days, you can leave a comment asking for a
-   review, or ping in [#porter][slack]. Sometimes we have busy days, sick days,
+   review, or ping in [slack][slack]. Sometimes we have busy days, sick days,
    weekends and vacations, so a little patience is appreciated! 🙇‍♀️
 1. The reviewer will leave feedback.
     * `nits`: These are suggestions that you may decide incorporate into your pull
@@ -271,3 +278,5 @@ stdout as well, then the resulting json schema would be unparsable. This is why
 we send regular command output to `Out` and debug information to `Err`. It
 allows us to then run the command and see the debug output separately, like so
 `porter schema --debug 2> err.log`.
+
+[slack]: https://porter.sh/community#slack
