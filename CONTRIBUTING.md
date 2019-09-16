@@ -22,6 +22,12 @@
 We welcome your pull requests! If you aren't sure what to expect, here are some
 norms for our project so you feel more comfortable with how things will go.
 
+## Code of Conduct
+
+The Porter community is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
+This includes but isn't limited to: the porter and related mixin repositories,
+slack, interactions on social media, project meetings, conferences and meetups.
+
 ## Find an issue
 
 We have [good first issues][good-first-issue] for new contributors and [help wanted][help-wanted] issues for our other contributors.
