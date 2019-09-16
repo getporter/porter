@@ -62,6 +62,16 @@ mixins:
 - helm
 ```
 
+Some mixins allow you to specify configuration data that is provided to the mixin during `porter build`. Each mixin
+has its own format for the configuration. For example, the az mixin allows you to specify extensions to install:
+
+```yaml
+mixins:
+- az:
+    extensions:
+    - azure-cli-iot-ext
+```
+
 See [Using Mixins](/using-mixins) to learn more about how mixins work.
 
 ## Parameters
