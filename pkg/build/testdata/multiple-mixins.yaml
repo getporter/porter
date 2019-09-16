@@ -1,0 +1,55 @@
+mixins:
+  - exec
+  - az
+
+install:
+  - exec:
+      description: Install something
+      command: bash
+      arguments:
+        - install1.sh
+  - az:
+      description: Install something
+      arguments:
+        - login
+  - exec:
+      description: Install something else
+      command: bash
+      arguments:
+        - install2.sh
+
+upgrade:
+  - exec:
+      description: Upgrade it
+      command: bash
+      arguments:
+        - upgrade.sh
+  - az:
+      description: create a vm
+      arguments:
+        - vm
+        - create
+
+status:
+  - exec:
+      description: check the status
+      command: bash
+      arguments:
+        - status.sh
+  - az:
+      description: list the vms
+      arguments:
+        - vm
+        - list
+
+uninstall:
+  - exec:
+      description: uninstall everything
+      command: bash
+      arguments:
+        - uninstall.sh
+  - az:
+      description: delete the vm
+      arguments:
+        - vm
+        - delete

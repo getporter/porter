@@ -155,6 +155,34 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 	return lines, nil
 }
 
+func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
+	input := mixin.BuildInput{
+		Actions: make(map[string]config.Steps, 3),
+	}
+
+	// TODO: populate config once we are storing it in porter.yaml
+
+	filterSteps := func(action config.Action, steps config.Steps) {
+		mixinSteps := config.Steps{}
+		for _, step := range steps {
+			if step.GetMixinName() != m {
+				continue
+			}
+			mixinSteps = append(mixinSteps, step)
+		}
+		input.Actions[string(action)] = mixinSteps
+	}
+	filterSteps(config.ActionInstall, g.Manifest.Install)
+	filterSteps(config.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(config.ActionUninstall, g.Manifest.Uninstall)
+
+	for action, steps := range g.Manifest.CustomActions {
+		filterSteps(config.Action(action), steps)
+	}
+
+	return input
+}
+
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	// clean up previously generated files
 	g.FileSystem.RemoveAll(LOCAL_CNAB)

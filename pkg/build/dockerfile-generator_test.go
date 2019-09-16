@@ -177,3 +177,31 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, execMixinExists, "The exec-runtime mixin wasn't copied into %s", wantExecMixin)
 }
+
+func TestDockerFileGenerator_getMixinBuildInput(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	c.TestContext.AddTestFile("testdata/multiple-mixins.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+
+	input := g.getMixinBuildInput("exec")
+
+	assert.Len(t, input.Actions, 4, "expected 4 actions")
+
+	require.Contains(t, input.Actions, "install")
+	assert.Len(t, input.Actions["install"], 2, "expected 2 exec install steps")
+
+	require.Contains(t, input.Actions, "upgrade")
+	assert.Len(t, input.Actions["upgrade"], 1, "expected 1 exec upgrade steps")
+
+	require.Contains(t, input.Actions, "uninstall")
+	assert.Len(t, input.Actions["uninstall"], 1, "expected 1 exec uninstall steps")
+
+	require.Contains(t, input.Actions, "status")
+	assert.Len(t, input.Actions["status"], 1, "expected 1 exec status steps")
+}
