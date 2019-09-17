@@ -11,7 +11,7 @@ Source: https://github.com/deislabs/porter/tree/master/pkg/kubernetes
 
 ### Install or Upgrade
 ```
-porter mixin install kubernete
+porter mixin install kubernetes
 ```
 
 ### Examples
