@@ -54,11 +54,11 @@ outputs:
   - name: STORAGE_ACCOUNT_KEY
     type: string
 
-imageMap:
+images:
   websvc:
       description: "A simple web service"
       imageType: "docker"
-      image: "jeremyrickard/devops-days-msp@sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
+      repository: "jeremyrickard/devops-days-msp"
       digest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
 
 install:
@@ -102,7 +102,7 @@ install:
       parameters:
         containerName: "{{ bundle.parameters.server-name }}-aci-go"
         location: "{{ bundle.parameters.location }}"
-        imageName: "jeremyrickard/devops-days-msp@sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
+        imageName: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
         mysqlFQDN: "{{bundle.outputs.mysql_fqdn}}"
         port: "8080"
       outputs:

@@ -237,12 +237,16 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 		} else { // default to `latest` if no tag is provided
 			imgRefStr = fmt.Sprintf("%s:latest", imgRefStr)
 		}
+		imgType := refImage.ImageType
+		if imgType == "" {
+			imgType = "docker"
+		}
 		img := bundle.Image{
 			Description: refImage.Description,
 			BaseImage: bundle.BaseImage{
 				Image:     imgRefStr,
 				Digest:    refImage.Digest,
-				ImageType: refImage.ImageType,
+				ImageType: imgType,
 				MediaType: refImage.MediaType,
 				Size:      refImage.Size,
 				Labels:    refImage.Labels,

@@ -234,13 +234,21 @@ dependencies:
     the semantic version of the bundle.
 * `parameters`: Optionally set default values for parameters in the bundle.
 
-## Image Map
+## Images
 
-The Image Map is part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
-The `imageMap` data from the manifest is made available at runtime `/cnab/app/image-map.json` where you may access it
-from a script. 
+The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
 
-Note: Neither porter nor the DeisLabs mixins use this information.
+```yaml
+images:
+  websvc:
+      description: "A simple web service"
+      imageType: "docker"
+      repository: "jeremyrickard/devops-days-msp"
+      digest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
+```
+
+This information is used to generate the corresponding section of the `bundle.json` and can be
+used to in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`.
 
 ## Generated Files
 
@@ -255,4 +263,4 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 * [Using Mixins](/using-mixins/)
 * [Bundle Dependencies](/dependencies/)
-* [Parameters, Credentials and Outputs](/wiring/)
+* [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)

@@ -41,8 +41,8 @@ type Manifest struct {
 	Dependencies map[string]Dependency  `yaml:"dependencies,omitempty"`
 	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
 
-	// ImageMap is a map of images referenced in the bundle. If image relocation mapping occurs, that
-	// file will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
+	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
+	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
 	// TODO: porter should handle the relocation and overwrite the repository and tag (if present), and
 	// populate originalImage
 	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
