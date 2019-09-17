@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/deislabs/porter/pkg/config/datastore"
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ func main() {
 
 func buildRootCommand() *cobra.Command {
 	p := porter.New()
+
 	cmd := &cobra.Command{
 		Use:   "porter",
 		Short: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",
@@ -26,10 +28,18 @@ func buildRootCommand() *cobra.Command {
   porter build
   porter install
   porter uninstall`,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			p.Config.DataLoader = datastore.FromFlagsThenEnvVarsThenConfigFile(cmd)
+			err := p.LoadData()
+			if err != nil {
+				return err
+			}
+
 			// Enable swapping out stdout/stderr for testing
 			p.Out = cmd.OutOrStdout()
 			p.Err = cmd.OutOrStderr()
+
+			return nil
 		},
 		SilenceUsage: true,
 	}

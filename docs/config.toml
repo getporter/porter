@@ -291,8 +291,14 @@ defaultContentLanguage = "en"
   identifier = "references"
   weight = 600
   [[menu.main]]
+    name = "Configuration"
+    url = "/configuration"
+    identifier = "configuration"
+    weight = 601
+    parent = "references"
+  [[menu.main]]
     name = "CNAB Spec"
-    url = "https://cnab.io"
+    url = "https://deislabs.io/cnab"
     identifier = "cnab"
-    weight = 600
+    weight = 610
     parent = "references"
