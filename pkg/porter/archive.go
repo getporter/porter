@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+
 	"github.com/deislabs/porter/pkg/context"
 )
 
@@ -19,5 +21,5 @@ func (o *ArchiveOptions) Validate(args []string, cxt *context.Context) error {
 // any referenced images locally (if needed), export them to individual layers, generate a bundle.json and
 // then generate a gzipped tar archive containing the bundle.json and the images
 func (p *Porter) Archive(opts ArchiveOptions) error {
-	return nil
+	return fmt.Errorf("archive is not yet implemented")
 }
