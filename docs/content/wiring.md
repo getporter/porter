@@ -3,9 +3,9 @@ title: Using Parameters, Credentials and Outputs
 description: How to wire parameters, credentials and outputs into steps
 ---
 
-# Parameters, Credentials and Outputs in Porter
+# Parameters, Credentials, Outputs, and Images in Porter
 
-In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies.
+In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
 
 ## Parameters
 
@@ -152,6 +152,32 @@ For example, given the install step above, we can use the `MYSQL_URL` with the h
 ```
 
 Just like in the case of credentials and parameters, the value of the `bundle.outputs.MYSQL_URL` reference will be rewritten in the YAML before the helm mixin is invoked.
+
+## Wiring Images
+
+In the `porter.yaml`, you can define what images will be used within the bundle with the `images` section:
+
+```yaml
+images:
+  ALIAS:
+    description: A very useful image
+    imageType: docker # porter.yaml can default this to docker if we aren't already
+    repository: gcr.io/mcguffin-co/mcguffin
+    digest: sha256:85b1a9 # this is what bundle.json allows
+    tag: v1.1.0 # we can collect this and make it available but it won't land into bundle.json
+```
+
+These images will be used to build the `bundle.json` images section, but can also be referenced using the same syntax you would use for referencing `parameters`, `credentials`, and `outputs`.
+
+```yaml
+- description: "Helm Install Wordpress"
+    helm:
+      name: porter-ci-wordpress
+      chart: stable/wordpress
+      set:
+        image.repository: "{{ bundle.parameters.ALIAS.repository }}"
+        image.tag: "{{ bundle.parameters.ALIAS.tag }}"
+```
 
 ## Using Parameters, Credentials, and Outputs from Bundle Dependencies
 
