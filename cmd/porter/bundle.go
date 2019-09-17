@@ -23,6 +23,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleInvokeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
+	cmd.AddCommand(buildBundleArchiveCommand(p))
 
 	return cmd
 }
@@ -276,5 +277,30 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false, "Don't require TLS for the registry.")
+	return &cmd
+}
+
+func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
+
+	opts := porter.ArchiveOptions{}
+	cmd := cobra.Command{
+		Hidden: true,
+		Use:    "archive",
+		Short:  "Archive a bundle",
+		Long:   "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
+		Example: `  porter bundle archive [FILENAME]
+  porter bundle archive --file another/porter.yaml [FILENAME]
+  porter bundle archive --cnab-file some/bundle.json [FILENAME]
+		  `,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.Archive(opts)
+		},
+	}
+	f := cmd.Flags()
+	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
 	return &cmd
 }
