@@ -718,3 +718,88 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 func makeBoolPtr(value bool) *bool {
 	return &value
 }
+
+func TestManifest_ResolveImageMap(t *testing.T) {
+	c := NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-images.yaml", Name)
+	c.SetupPorterHome()
+	require.NoError(t, c.LoadManifest())
+	rm := RuntimeManifest{Manifest: c.Manifest}
+	expectedImage, ok := rm.Manifest.ImageMap["something"]
+	require.True(t, ok, "couldn't get expected image")
+	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
+	step := rm.Install[0]
+	err := rm.ResolveStep(step)
+	assert.NoError(t, err, "Should have successfully resolved step")
+	s := step.Data["searcher"].(map[interface{}]interface{})
+	assert.NotNil(t, s)
+	img, ok := s["image"]
+	assert.True(t, ok, "should have found image")
+	val := fmt.Sprintf("%v", img)
+	assert.Equal(t, expectedRef, val)
+
+	repo, ok := s["repo"]
+	assert.True(t, ok, "should have found repo")
+	val = fmt.Sprintf("%v", repo)
+	assert.Equal(t, expectedImage.Repository, val)
+
+	digest, ok := s["digest"]
+	assert.True(t, ok, "should have found digest")
+	val = fmt.Sprintf("%v", digest)
+	assert.Equal(t, expectedImage.Digest, val)
+
+	tag, ok := s["tag"]
+	assert.True(t, ok, "should have found tag")
+	val = fmt.Sprintf("%v", tag)
+	assert.Equal(t, expectedImage.Tag, val)
+}
+
+func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
+
+	c := context.NewTestContext(t)
+	m := &Manifest{
+		Name: "mybundle",
+		ImageMap: map[string]MappedImage{
+			"something": MappedImage{
+				Repository: "blah/blah",
+				Digest:     "sha1234:cafebab",
+			},
+		},
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step exercising bundle image interpolation",
+			"Arguments": []string{
+				"{{ bundle.images.something.Fake }}",
+			},
+		},
+	}
+	err := rm.ResolveStep(s)
+	assert.Error(t, err)
+}
+
+func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
+
+	c := context.NewTestContext(t)
+	m := &Manifest{
+		Name: "mybundle",
+		ImageMap: map[string]MappedImage{
+			"notsomething": MappedImage{
+				Repository: "blah/blah",
+				Digest:     "sha1234:cafebab",
+			},
+		},
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step exercising bundle image interpolation",
+			"Arguments": []string{
+				"{{ bundle.images.something.Fake }}",
+			},
+		},
+	}
+	err := rm.ResolveStep(s)
+	assert.Error(t, err)
+}

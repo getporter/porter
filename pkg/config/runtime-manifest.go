@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/cbroglie/mustache"
@@ -228,6 +229,22 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				m.sensitiveValues = append(m.sensitiveValues, value)
 			}
 		}
+	}
+	images := make(map[string]interface{})
+	bun["images"] = images
+	for alias, image := range m.ImageMap {
+		// just assigning the struct here results in uppercase keys, which would give us
+		// strange things like {{ bundle.images.something.Repository }}
+		// So reflect and walk through the struct (this way we don't need to update this later)
+		val := reflect.ValueOf(image)
+		img := make(map[string]string)
+		typeOfT := val.Type()
+		for i := 0; i < val.NumField(); i++ {
+			f := val.Field(i)
+			name := strings.ToLower(typeOfT.Field(i).Name)
+			img[name] = f.String()
+		}
+		images[alias] = img
 	}
 	return data, nil
 }

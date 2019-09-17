@@ -1,6 +1,7 @@
 package configadapter
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -221,7 +222,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 
 	mappedImage := config.MappedImage{
 		Description:   "un petite server",
-		Image:         "deislabs/myserver:1.0.0",
+		Repository:    "deislabs/myserver",
 		ImageType:     "docker",
 		Digest:        "abc123",
 		Size:          12,
@@ -241,7 +242,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	require.Len(t, images, 1)
 	img := images["server"]
 	assert.Equal(t, mappedImage.Description, img.Description)
-	assert.Equal(t, mappedImage.Image, img.Image)
+	assert.Equal(t, fmt.Sprintf("%s@%s", mappedImage.Repository, mappedImage.Digest), img.Image)
 	assert.Equal(t, mappedImage.ImageType, img.ImageType)
 	assert.Equal(t, mappedImage.Digest, img.Digest)
 	assert.Equal(t, mappedImage.Size, img.Size)
@@ -261,7 +262,8 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 
 	mappedImage := config.MappedImage{
 		Description: "un petite server",
-		Image:       "deislabs/myserver:1.0.0",
+		Repository:  "deislabs/myserver",
+		Tag:         "1.0.0",
 		ImageType:   "docker",
 		Labels:      nil,
 	}
@@ -273,6 +275,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 	require.Len(t, images, 1)
 	img := images["server"]
 	assert.Nil(t, img.Labels)
+	assert.Equal(t, fmt.Sprintf("%s:%s", mappedImage.Repository, mappedImage.Tag), img.Image)
 }
 
 func TestManifestConverter_generateBundleOutputs(t *testing.T) {
