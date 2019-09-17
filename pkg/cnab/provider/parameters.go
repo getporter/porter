@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/pkg/errors"
 )
@@ -26,16 +27,9 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		unconverted := rawValue
-		// parameter may represent a file on the local filesystem
-		if def.Type == "string" && def.ContentEncoding == "base64" {
-			if _, err := d.FileSystem.Stat(rawValue); err == nil {
-				bytes, err := d.FileSystem.ReadFile(rawValue)
-				if err != nil {
-					return nil, errors.Wrapf(err, "unable to read file parameter %s", key)
-				}
-				unconverted = base64.StdEncoding.EncodeToString(bytes)
-			}
+		unconverted, err := d.getUnconvertedValueFromRaw(def, key, rawValue)
+		if err != nil {
+			return nil, err
 		}
 
 		value, err := def.ConvertValue(unconverted)
@@ -74,6 +68,20 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 	}
 
 	return bundle.ValuesOrDefaults(overrides, bun)
+}
+
+func (d *Duffle) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
+		// the parameter value (via rawValue) may represent a file on the local filesystem
+		if def.Type == "string" && def.ContentEncoding == "base64" {
+			if _, err := d.FileSystem.Stat(rawValue); err == nil {
+				bytes, err := d.FileSystem.ReadFile(rawValue)
+				if err != nil {
+					return "", errors.Wrapf(err, "unable to read file parameter %s", key)
+				}
+				return base64.StdEncoding.EncodeToString(bytes), nil
+			}
+		}
+		return rawValue, nil
 }
 
 // TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99

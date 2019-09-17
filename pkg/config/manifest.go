@@ -112,6 +112,47 @@ type ParameterDefinition struct {
 	definition.Schema `yaml:",inline"`
 }
 
+func (pd *ParameterDefinition) Validate() error {
+	var result *multierror.Error
+
+	if pd.Name == "" {
+		result = multierror.Append(result, errors.New("parameter name is required"))
+	}
+
+	// Porter supports declaring a parameter of type: "file",
+	// which we will convert to the appropriate bundle.Parameter type in adapter.go
+	// Here, we copy the ParameterDefinition and make the same modification before validation
+	pdCopy := pd.DeepCopy()
+	if pdCopy.Type == "file" {
+		if pd.Destination.Path == "" {
+			result = multierror.Append(result, fmt.Errorf("no destination path supplied for parameter %s", pd.Name))
+		}
+		pdCopy.Type = "string"
+		pdCopy.ContentEncoding = "base64"
+	}
+
+	schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
+	}
+	for _, schemaValidationErr := range schemaValidationErrs {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered validation error(s) for parameter %s: %v", pdCopy.Name, schemaValidationErr))
+	}
+
+	return result.ErrorOrNil()
+}
+
+// DeepCopy copies a ParameterDefinition and returns the copy
+func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
+	return &ParameterDefinition{
+		Name:        pd.Name,
+		Sensitive:   pd.Sensitive,
+		ApplyTo:     pd.ApplyTo,
+		Destination: pd.Destination,
+		Schema:      pd.Schema,
+	}
+}
+
 type CredentialDefinition struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description,omitempty"`
@@ -253,32 +294,6 @@ func (od *OutputDefinition) Validate() error {
 	}
 	if len(schemaValidationErrs) != 0 {
 		return errors.Wrapf(err, "encountered validation error(s) for output %s: %v", od.Name, schemaValidationErrs)
-	}
-
-	return nil
-}
-
-func (pd *ParameterDefinition) Validate() error {
-	if pd.Name == "" {
-		return errors.New("parameter name is required")
-	}
-
-	schemaValidationErrs, err := pd.Schema.Validate(pd)
-	if err != nil {
-		// Porter supports declaring a parameter of type: "file",
-		// which we will convert to the appropriate bundle.Parameter type in adapter.go
-		if err.Error() != `unable to build schema: error unmarshaling type from json: "file" is not a valid type` {
-			return errors.Wrapf(err, "encountered error while validating parameter %s", pd.Name)
-		}
-	}
-	if len(schemaValidationErrs) != 0 {
-		return errors.Wrapf(err, "encountered validation error(s) for parameter %s: %v", pd.Name, schemaValidationErrs)
-	}
-
-	if pd.Type == "file" {
-		if pd.Destination.Path == "" {
-			return fmt.Errorf("no destination path supplied for parameter %s", pd.Name)
-		}
 	}
 
 	return nil
