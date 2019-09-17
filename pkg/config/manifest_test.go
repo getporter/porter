@@ -55,6 +55,15 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 	assert.Equal(t, map[interface{}]interface{}{"extensions": []interface{}{"iot"}}, m.Mixins[1].Config)
 }
 
+func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
+	c := NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/mixin-with-bad-config.yaml", Name)
+	_, err := c.ReadManifest(Name)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "mixin declaration contained more than one mixin")
+}
+
 func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	m := struct {
 		Mixins []MixinDeclaration

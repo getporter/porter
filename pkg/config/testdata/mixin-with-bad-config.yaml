@@ -1,0 +1,4 @@
+mixins:
+  - name: az
+    extensions:
+    - iot
