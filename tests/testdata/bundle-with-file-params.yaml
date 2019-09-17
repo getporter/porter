@@ -10,8 +10,7 @@ mixins:
 parameters:
   - name: myfile
     type: file
-    destination:
-      path: /root/myfile
+    path: /root/myfile
 
 outputs:
   - name: myfile

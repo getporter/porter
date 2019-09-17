@@ -92,12 +92,9 @@ func TestValidateParameterDefinition(t *testing.T) {
 		},
 	}
 
-	err := pd.Validate()
-	assert.EqualError(t, err, "no destination supplied for parameter myparam")
-
 	pd.Destination = Location{}
 
-	err = pd.Validate()
+	err := pd.Validate()
 	assert.EqualError(t, err, "no destination path supplied for parameter myparam")
 
 	pd.Destination.Path = "/path/to/file"
