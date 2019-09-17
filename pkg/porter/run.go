@@ -93,6 +93,14 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
+	// Prepare prepares the runtime environment prior to step execution.
+	// As an example, for parameters of type "file", we may need to decode file contents
+	// on the filesystem before execution of the step/action
+	err = runtimeManifest.Prepare()
+	if err != nil {
+		return err
+	}
+
 	err = p.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
