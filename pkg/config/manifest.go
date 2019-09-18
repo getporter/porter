@@ -144,13 +144,11 @@ func (pd *ParameterDefinition) Validate() error {
 
 // DeepCopy copies a ParameterDefinition and returns the copy
 func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
-	return &ParameterDefinition{
-		Name:        pd.Name,
-		Sensitive:   pd.Sensitive,
-		ApplyTo:     pd.ApplyTo,
-		Destination: pd.Destination,
-		Schema:      pd.Schema,
-	}
+	var p2 ParameterDefinition
+	p2 = *pd
+	p2.ApplyTo = make([]string, len(pd.ApplyTo))
+	copy(p2.ApplyTo, pd.ApplyTo)
+	return &p2
 }
 
 type CredentialDefinition struct {

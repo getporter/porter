@@ -71,17 +71,17 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 }
 
 func (d *Duffle) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
-		// the parameter value (via rawValue) may represent a file on the local filesystem
-		if def.Type == "string" && def.ContentEncoding == "base64" {
-			if _, err := d.FileSystem.Stat(rawValue); err == nil {
-				bytes, err := d.FileSystem.ReadFile(rawValue)
-				if err != nil {
-					return "", errors.Wrapf(err, "unable to read file parameter %s", key)
-				}
-				return base64.StdEncoding.EncodeToString(bytes), nil
+	// the parameter value (via rawValue) may represent a file on the local filesystem
+	if def.Type == "string" && def.ContentEncoding == "base64" {
+		if _, err := d.FileSystem.Stat(rawValue); err == nil {
+			bytes, err := d.FileSystem.ReadFile(rawValue)
+			if err != nil {
+				return "", errors.Wrapf(err, "unable to read file parameter %s", key)
 			}
+			return base64.StdEncoding.EncodeToString(bytes), nil
 		}
-		return rawValue, nil
+	}
+	return rawValue, nil
 }
 
 // TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
