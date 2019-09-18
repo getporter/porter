@@ -165,7 +165,7 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 
 func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
 	input := mixin.BuildInput{
-		Actions: make(map[string]config.Steps, 3),
+		Actions: make(map[string]interface{}, 3),
 	}
 
 	for _, mixinDecl := range g.Manifest.Mixins {
