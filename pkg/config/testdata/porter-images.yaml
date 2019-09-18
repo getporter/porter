@@ -1,0 +1,30 @@
+name: some-test
+version: 0.3.11
+description: "Test some things"
+invocationImage: deislabs/test-io:v0.3.11
+tag: deislabs/test-bundle:v0.3.11
+
+images:
+  something:
+      description: "Something"
+      imageType: "docker"
+      repository: "deislabs/mcguffin"
+      digest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
+
+mixins:
+- searcher
+
+install:
+  - searcher:
+      description: "A Step"
+      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
+      repo: "{{bundle.images.something.repository}}"
+      digest: "{{bundle.images.something.digest}}"
+      tag: "{{bundle.images.something.tag}}"
+uninstall:
+  - searcher:
+      description: "A Step"
+      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
+      repo: "{{bundle.images.something.repository}}"
+      digest: "{{bundle.images.something.digest}}"
+      tag: "{{bundle.images.something.tag}}"

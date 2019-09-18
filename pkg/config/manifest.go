@@ -41,10 +41,11 @@ type Manifest struct {
 	Dependencies map[string]Dependency  `yaml:"dependencies,omitempty"`
 	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
 
-	// ImageMap is a map of images referenced in the bundle. The mappings are mounted as a file at runtime to
-	// /cnab/app/image-map.json. This data is not used by porter or any of the deislabs mixins, so only populate when you
-	// plan on manually using this data in your own scripts.
-	ImageMap map[string]MappedImage `yaml:"imageMap,omitempty"`
+	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
+	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
+	// TODO: porter should handle the relocation and overwrite the repository and tag (if present), and
+	// populate originalImage
+	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
 }
 
 func (m *Manifest) Validate() error {
@@ -127,12 +128,13 @@ func (l Location) IsEmpty() bool {
 type MappedImage struct {
 	Description   string            `yaml:"description"`
 	ImageType     string            `yaml:"imageType"`
-	Image         string            `yaml:"image"`
+	Repository    string            `yaml:"repository"`
 	OriginalImage string            `yaml:"originalImage,omitempty"`
 	Digest        string            `yaml:"digest,omitempty"`
 	Size          uint64            `yaml:"size,omitempty"`
 	MediaType     string            `yaml:"mediaType,omitempty"`
 	Labels        map[string]string `yaml:"labels,omitempty"`
+	Tag           string            `yaml:"tag,omitempty"`
 }
 
 type Dependency struct {
