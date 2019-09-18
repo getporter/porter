@@ -1,0 +1,43 @@
+name: mybun
+version: 0.1.0
+description: "An example Porter configuration"
+invocationImage: porter-hello:latest
+tag: deislabs/porter-hello-bundle:latest
+
+mixins:
+  - exec
+
+parameters:
+  - name: myfile
+    type: file
+    path: /root/myfile
+
+outputs:
+  - name: myfile
+    type: string
+    applyTo:
+      - install
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+      flags:
+        c: cat /root/myfile
+      outputs:
+        - name: myfile
+          path: /root/myfile
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: bash
+      flags:
+        c: cat /root/myfile
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: cat /root/myfile

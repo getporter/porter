@@ -16,7 +16,7 @@ credentials:
 
 parameters:
   - name: my-first-param
-    type: int
+    type: integer
     default: 9
     env: MY_FIRST_PARAM
   - name: my-second-param

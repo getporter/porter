@@ -163,6 +163,10 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		// (Both Params and Outputs may reference same Definition)
 		if _, exists := (*defs)[param.Name]; !exists {
 			def := param.Schema
+			if def.Type == "file" {
+				def.Type = "string"
+				def.ContentEncoding = "base64"
+			}
 			(*defs)[param.Name] = &def
 		}
 		params[param.Name] = p

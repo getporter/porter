@@ -266,7 +266,8 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:397a47c688355450dd1ea9aea8795b3774d5278c8b37199ad4068758dd075956"
+  branch = "fix/custom-validators"
+  digest = "1:82dc259bd94f991a4908898f18c419ea83618f3e1d0d1e844cd744058c1fb7e5"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -283,8 +284,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "93515c713a91d6da48b5a9c68e4b0502d8d39963"
-  version = "v0.4.0-beta1"
+  revision = "f51437c7d0babe80355d38e3e103a3a720ecaa97"
+  source = "github.com/vdice/cnab-go"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"

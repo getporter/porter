@@ -1,10 +1,12 @@
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.4.0-beta1"
+  source = "github.com/vdice/cnab-go"
+  branch = "fix/custom-validators"
 
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.4.0-beta1"
+  source = "github.com/vdice/cnab-go"
+  branch = "fix/custom-validators"
 
 # Using master until there is a release of cnab-to-oci
 [[constraint]]

@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
@@ -81,4 +82,26 @@ func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	require.NoError(t, err, "could not read testdata")
 
 	assert.Equal(t, string(wantYaml), string(gotYaml))
+}
+
+func TestValidateParameterDefinition(t *testing.T) {
+	pd := ParameterDefinition{
+		Name: "myparam",
+		Schema: definition.Schema{
+			Type: "file",
+		},
+	}
+
+	pd.Destination = Location{}
+
+	err := pd.Validate()
+	assert.EqualError(t, err, `1 error occurred:
+	* no destination path supplied for parameter myparam
+
+`)
+
+	pd.Destination.Path = "/path/to/file"
+
+	err = pd.Validate()
+	assert.NoError(t, err)
 }

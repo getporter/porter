@@ -189,3 +189,40 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 	require.Equal(t, "foo-claim-value", params["foo"], "expected param 'foo' to be the bundle default")
 }
+
+func Test_loadParameters_fileParameter(t *testing.T) {
+	c := config.NewTestConfig(t)
+	d := NewDuffle(c.Config)
+
+	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
+
+	claim, err := claim.New("test")
+	require.NoError(t, err)
+
+	claim.Bundle = &bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": bundle.Parameter{
+				Definition: "foo",
+				Required:   true,
+				Destination: &bundle.Location{
+					Path: "/tmp/foo",
+				},
+			},
+		},
+	}
+
+	overrides := map[string]string{
+		"foo": "/path/to/file",
+	}
+
+	params, err := d.loadParameters(claim, overrides, "action")
+	require.NoError(t, err)
+
+	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
+}

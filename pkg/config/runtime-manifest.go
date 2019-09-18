@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"reflect"
@@ -85,7 +86,6 @@ func resolveParameter(pd ParameterDefinition) (string, error) {
 		return pd.Destination.Path, nil
 	}
 	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
-
 }
 
 func resolveCredential(cd CredentialDefinition) (string, error) {
@@ -273,5 +273,35 @@ func (m *RuntimeManifest) ResolveStep(step *Step) error {
 		return errors.Wrap(err, "unable to resolve step: invalid step yaml")
 	}
 
+	return nil
+}
+
+// Prepare prepares the runtime environment prior to step execution
+func (m *RuntimeManifest) Prepare() error {
+	// For parameters of type "file", we may need to decode files on the filesystem
+	// before execution of the step/action
+	for _, param := range m.Parameters {
+		if param.Type == "file" {
+			if param.Destination.Path == "" {
+				return fmt.Errorf("destination path is not supplied for parameter %s", param.Name)
+			}
+
+			// Porter by default places parameter value into file determined by Destination.Path
+			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
+			if err != nil {
+				return fmt.Errorf("unable to acquire value for parameter %s", param.Name)
+			}
+
+			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
+			if err != nil {
+				return errors.Wrapf(err, "unable to decode parameter %s", param.Name)
+			}
+
+			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, os.ModePerm)
+			if err != nil {
+				return errors.Wrapf(err, "unable to write decoded parameter %s", param.Name)
+			}
+		}
+	}
 	return nil
 }

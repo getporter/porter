@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -88,6 +89,13 @@ func (m *Manifest) Validate() error {
 		}
 	}
 
+	for _, parameter := range m.Parameters {
+		err = parameter.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
 	return result
 }
 
@@ -102,6 +110,45 @@ type ParameterDefinition struct {
 	Destination Location `yaml:",inline,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+}
+
+func (pd *ParameterDefinition) Validate() error {
+	var result *multierror.Error
+
+	if pd.Name == "" {
+		result = multierror.Append(result, errors.New("parameter name is required"))
+	}
+
+	// Porter supports declaring a parameter of type: "file",
+	// which we will convert to the appropriate bundle.Parameter type in adapter.go
+	// Here, we copy the ParameterDefinition and make the same modification before validation
+	pdCopy := pd.DeepCopy()
+	if pdCopy.Type == "file" {
+		if pd.Destination.Path == "" {
+			result = multierror.Append(result, fmt.Errorf("no destination path supplied for parameter %s", pd.Name))
+		}
+		pdCopy.Type = "string"
+		pdCopy.ContentEncoding = "base64"
+	}
+
+	schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
+	}
+	for _, schemaValidationErr := range schemaValidationErrs {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered validation error(s) for parameter %s: %v", pdCopy.Name, schemaValidationErr))
+	}
+
+	return result.ErrorOrNil()
+}
+
+// DeepCopy copies a ParameterDefinition and returns the copy
+func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
+	var p2 ParameterDefinition
+	p2 = *pd
+	p2.ApplyTo = make([]string, len(pd.ApplyTo))
+	copy(p2.ApplyTo, pd.ApplyTo)
+	return &p2
 }
 
 type CredentialDefinition struct {
@@ -239,7 +286,13 @@ func (od *OutputDefinition) Validate() error {
 		return errors.New("output name is required")
 	}
 
-	// TODO: Validate inline Schema
+	schemaValidationErrs, err := od.Schema.Validate(od)
+	if err != nil {
+		return errors.Wrapf(err, "encountered error while validating output %s", od.Name)
+	}
+	if len(schemaValidationErrs) != 0 {
+		return errors.Wrapf(err, "encountered validation error(s) for output %s: %v", od.Name, schemaValidationErrs)
+	}
 
 	return nil
 }

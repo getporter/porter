@@ -172,6 +172,20 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				Default: `"myobject": { "foo": "true", "bar": [ 1, 2, 3 ] }`,
 			},
 		},
+		{
+			"afile",
+			bundle.Parameter{
+				Definition: "afile",
+				Destination: &bundle.Location{
+					Path: "/root/.kube/config",
+				},
+				Required: true,
+			},
+			definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+			},
+		},
 	}
 
 	for _, tc := range testcases {
