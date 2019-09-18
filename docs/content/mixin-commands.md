@@ -24,19 +24,34 @@ recommended so that your mixin has a good user experience.
 # build
 
 The build command (required) is called on the local machine during the `porter
-build` command. The mixin should return lines for the Dockerfile on stdout.
+build` command. Any mixin configuration and all usages of the mixin are passed
+on stdin. The mixin should return lines for the Dockerfile on stdout.
 
 Example:
 
+**stdin**
+
+```yaml
+config:
+  extensions:
+  - iot
+actions:
+  install:
+  - az:
+      arguments:
+      - login
+      description: Login
+  uninstall: []
+  upgrade: []
+```
+
+**stdout**
 ```console
-$ helm build
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v2.12.3-linux-amd64.tar.gz && \
-    tar -xzf helm.tgz && \
-    mv linux-amd64/helm /usr/local/bin && \
-    rm helm.tgz
-RUN helm init --client-only
+RUN apt-get update && apt-get install -y apt-transport-https lsb-release gnupg curl
+RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+RUN echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/azure-cli.list
+RUN apt-get update && apt-get install -y azure-cli
+RUN az extension add --name azure-cli-iot-ext 
 ```
 
 # schema

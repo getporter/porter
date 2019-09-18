@@ -6,11 +6,10 @@ import (
 	"reflect"
 	"strings"
 
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
-
-	"github.com/deislabs/cnab-go/bundle/definition"
 )
 
 type Manifest struct {
@@ -27,7 +26,7 @@ type Manifest struct {
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
 
-	Mixins []string `yaml:"mixins,omitempty"`
+	Mixins []MixinDeclaration `yaml:"mixins,omitempty"`
 
 	Install   Steps `yaml:"install"`
 	Uninstall Steps `yaml:"uninstall"`
@@ -125,6 +124,69 @@ func (l Location) IsEmpty() bool {
 	return l == empty
 }
 
+type MixinDeclaration struct {
+	Name   string
+	Config interface{}
+}
+
+// UnmarshalYAML allows mixin declarations to either be a normal list of strings
+// mixins:
+// - exec
+// - helm
+// or allow some entries to have config data defined
+// - az:
+//     extensions:
+//       - iot
+func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// First try to just read the mixin name
+	var mixinNameOnly string
+	err := unmarshal(&mixinNameOnly)
+	if err == nil {
+		m.Name = mixinNameOnly
+		m.Config = nil
+		return nil
+	}
+
+	// Next try to read a mixin name with config defined
+	mixinWithConfig := map[string]interface{}{}
+	err = unmarshal(&mixinWithConfig)
+	if err != nil {
+		return errors.Wrap(err, "could not unmarshal raw yaml of mixin declarations")
+	}
+
+	if len(mixinWithConfig) == 0 {
+		return errors.New("mixin declaration was empty")
+	} else if len(mixinWithConfig) > 1 {
+		return errors.New("mixin declaration contained more than one mixin")
+	}
+
+	for mixinName, config := range mixinWithConfig {
+		m.Name = mixinName
+		m.Config = config
+		break // There is only one mixin anyway but break for clarity
+	}
+	return nil
+}
+
+// MarshalYAML allows mixin declarations to either be a normal list of strings
+// mixins:
+// - exec
+// - helm
+// or allow some entries to have config data defined
+// - az:
+//     extensions:
+//       - iot
+func (m MixinDeclaration) MarshalYAML() (interface{}, error) {
+	if m.Config == nil {
+		return m.Name, nil
+	}
+
+	raw := map[string]interface{}{
+		m.Name: m.Config,
+	}
+	return raw, nil
+}
+
 type MappedImage struct {
 	Description   string            `yaml:"description"`
 	ImageType     string            `yaml:"imageType"`
@@ -217,7 +279,7 @@ func (s *Step) Validate(m *Manifest) error {
 	mixinDeclared := false
 	mixinType := s.GetMixinName()
 	for _, mixin := range m.Mixins {
-		if mixin == mixinType {
+		if mixin.Name == mixinType {
 			mixinDeclared = true
 			break
 		}

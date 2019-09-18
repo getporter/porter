@@ -13,6 +13,7 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/templates"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 type DockerfileGenerator struct {
@@ -141,10 +142,17 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 		mixinContext = *g.Context
 		mixinContext.Out = mixinStdout   // mixin stdout -> dockerfile lines
 		mixinContext.Err = g.Context.Out // mixin stderr -> logs
-		mixinContext.In = nil            // TODO: let the mixin know about which steps will be executed so that it can be more selective about copying into the invocation image
 
-		cmd := mixin.CommandOptions{Command: "build"}
-		err := g.MixinProvider.Run(&mixinContext, m, cmd)
+		inputB, err := yaml.Marshal(g.getMixinBuildInput(m.Name))
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not marshal mixin build input for %s", m.Name)
+		}
+
+		cmd := mixin.CommandOptions{
+			Command: "build",
+			Input:   string(inputB),
+		}
+		err = g.MixinProvider.Run(&mixinContext, m.Name, cmd)
 		if err != nil {
 			return nil, err
 		}
@@ -153,6 +161,38 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 		lines = append(lines, l...)
 	}
 	return lines, nil
+}
+
+func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
+	input := mixin.BuildInput{
+		Actions: make(map[string]config.Steps, 3),
+	}
+
+	for _, mixinDecl := range g.Manifest.Mixins {
+		if m == mixinDecl.Name {
+			input.Config = mixinDecl.Config
+		}
+	}
+
+	filterSteps := func(action config.Action, steps config.Steps) {
+		mixinSteps := config.Steps{}
+		for _, step := range steps {
+			if step.GetMixinName() != m {
+				continue
+			}
+			mixinSteps = append(mixinSteps, step)
+		}
+		input.Actions[string(action)] = mixinSteps
+	}
+	filterSteps(config.ActionInstall, g.Manifest.Install)
+	filterSteps(config.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(config.ActionUninstall, g.Manifest.Uninstall)
+
+	for action, steps := range g.Manifest.CustomActions {
+		filterSteps(config.Action(action), steps)
+	}
+
+	return input
 }
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
@@ -187,8 +227,8 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 	}
 
 	fmt.Fprintf(g.Out, "Copying mixins ===> \n")
-	for _, mixin := range g.Manifest.Mixins {
-		err := g.copyMixin(mixin)
+	for _, m := range g.Manifest.Mixins {
+		err := g.copyMixin(m.Name)
 		if err != nil {
 			return err
 		}

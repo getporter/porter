@@ -22,7 +22,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []string{}
+	c.Manifest.Mixins = []config.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
 	g := NewDockerfileGenerator(c.Config, tmpl, mp)
@@ -64,7 +64,7 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []string{}
+	c.Manifest.Mixins = []config.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
 	g := NewDockerfileGenerator(c.Config, tmpl, mp)
@@ -94,7 +94,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []string{}
+	c.Manifest.Mixins = []config.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
 	g := NewDockerfileGenerator(c.Config, tmpl, mp)
@@ -129,7 +129,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	require.NoError(t, err)
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []string{}
+	c.Manifest.Mixins = []config.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
 	g := NewDockerfileGenerator(c.Config, tmpl, mp)
@@ -176,4 +176,36 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	execMixinExists, err := c.FileSystem.Exists(wantExecMixin)
 	require.NoError(t, err)
 	assert.True(t, execMixinExists, "The exec-runtime mixin wasn't copied into %s", wantExecMixin)
+}
+
+func TestDockerFileGenerator_getMixinBuildInput(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	c.TestContext.AddTestFile("testdata/multiple-mixins.yaml", config.Name)
+
+	err := c.LoadManifest()
+	require.NoError(t, err)
+
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+
+	input := g.getMixinBuildInput("exec")
+
+	assert.Nil(t, input.Config, "exec mixin should have no config")
+	assert.Len(t, input.Actions, 4, "expected 4 actions")
+
+	require.Contains(t, input.Actions, "install")
+	assert.Len(t, input.Actions["install"], 2, "expected 2 exec install steps")
+
+	require.Contains(t, input.Actions, "upgrade")
+	assert.Len(t, input.Actions["upgrade"], 1, "expected 1 exec upgrade steps")
+
+	require.Contains(t, input.Actions, "uninstall")
+	assert.Len(t, input.Actions["uninstall"], 1, "expected 1 exec uninstall steps")
+
+	require.Contains(t, input.Actions, "status")
+	assert.Len(t, input.Actions["status"], 1, "expected 1 exec status steps")
+
+	input = g.getMixinBuildInput("az")
+	assert.Equal(t, map[interface{}]interface{}{"extensions": []interface{}{"iot"}}, input.Config, "az mixin should have config")
 }

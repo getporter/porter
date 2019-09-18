@@ -22,7 +22,7 @@ func TestLoadManifest(t *testing.T) {
 	require.NoError(t, c.LoadManifest(), "could not load manifest")
 
 	require.NotNil(t, c.Manifest, "manifest was nil")
-	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins, "expected manifest to declare the exec mixin")
+	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, c.Manifest.Mixins, "expected manifest to declare the exec mixin")
 	require.Len(t, c.Manifest.Install, 1, "expected 1 install step")
 
 	installStep := c.Manifest.Install[0]
@@ -53,7 +53,7 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 	require.NoError(t, c.LoadManifest())
 
 	assert.NotNil(t, c.Manifest)
-	assert.Equal(t, []string{"exec"}, c.Manifest.Mixins)
+	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, c.Manifest.Mixins)
 	assert.Len(t, c.Manifest.Install, 1)
 
 	installStep := c.Manifest.Install[0]
@@ -74,7 +74,7 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Sabotage!
-	c.Manifest.Mixins = []string{}
+	c.Manifest.Mixins = []MixinDeclaration{}
 
 	err = c.Manifest.Install.Validate(c.Manifest)
 	assert.EqualError(t, err, "mixin (exec) was not declared")
@@ -491,7 +491,7 @@ func TestResolveMultipleStepOutputs(t *testing.T) {
 
 	c := NewTestConfig(t)
 	m := &Manifest{
-		Mixins: []string{"helm"},
+		Mixins: []MixinDeclaration{{Name: "helm"}},
 		Install: Steps{
 			s,
 		},
@@ -526,7 +526,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 
 	c := NewTestConfig(t)
 	m := &Manifest{
-		Mixins: []string{"helm"},
+		Mixins: []MixinDeclaration{{Name: "helm"}},
 		Install: Steps{
 			s,
 		},
@@ -559,7 +559,7 @@ func TestResolveDependencyParam(t *testing.T) {
 				Tag: "deislabs/porter-mysql",
 			},
 		},
-		Mixins: []string{"helm"},
+		Mixins: []MixinDeclaration{{Name: "helm"}},
 		Install: Steps{
 			s,
 		},
@@ -597,7 +597,7 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 				Tag: "deislabs/porter-mysql",
 			},
 		},
-		Mixins: []string{"helm"},
+		Mixins: []MixinDeclaration{{Name: "helm"}},
 		Install: Steps{
 			s,
 		},

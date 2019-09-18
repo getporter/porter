@@ -1,0 +1,5 @@
+mixins:
+- exec
+- az:
+    extensions:
+    - iot
