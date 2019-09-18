@@ -20,7 +20,7 @@ Want to work on Porter with us? 💖 We are actively seeking out new contributor
 with the hopes of building up both casual contributors and enticing some of you
 into becoming reviewers and maintainers.
 
-<p align="center">Start with our <a href="CONTRIBUTING.md">Contributing Guide</a>
+<p align="center">Start with our <a href="https://porter.sh/contribute/">New Contributors Guide</a>
 
 ---
 
