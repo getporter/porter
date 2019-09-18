@@ -1,4 +1,4 @@
-baseURL = "https://porter.sh"
+baseURL = "https://porter.sh/"
 languageCode = "en-us"
 title = "Porter"
 theme = "porter"
