@@ -26,14 +26,19 @@ func (fs *FileSystem) deleteByName(name string) (*mixin.Metadata, error) {
 	if exists == true {
 		err = fs.FileSystem.RemoveAll(mixinDir)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "could not remove mixin directory %q", mixinDir)
 		}
 
 		m := mixin.Metadata{
 			Name: name,
+			Dir:  mixinsDir,
 		}
 		return &m, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("Could not find %s in the mixin directory.", name))
+	if fs.Debug {
+		fmt.Fprintln(fs.Out, "Unable to find requested mixin.")
+	}
+
+	return nil, nil
 }

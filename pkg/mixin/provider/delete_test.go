@@ -20,7 +20,9 @@ func TestFileSystem_Delete_DeleteMixin(t *testing.T) {
 		Name: "mixxin",
 	}
 
-	p.Delete(opts)
+	_, err := p.Delete(opts)
+
+	assert.Nil(t, err)
 
 	// Make sure the mixin directory was removed
 	mixinDirExists, _ := p.FileSystem.DirExists(mixinDir)
