@@ -21,6 +21,7 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildMixinsListCommand(p))
 	cmd.AddCommand(BuildMixinInstallCommand(p))
+	cmd.AddCommand(BuildMixinDeleteCommand(p))
 	cmd.AddCommand(buildMixinsFeedCommand(p))
 
 	return cmd
@@ -69,6 +70,23 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 		"URL from where the mixin can be downloaded, for example https://github.com/org/proj/releases/downloads")
 	cmd.Flags().StringVar(&opts.FeedURL, "feed-url", "",
 		fmt.Sprintf(`URL of an atom feed where the mixin can be downloaded (default %s)`, mixin.DefaultFeedUrl))
+	return cmd
+}
+
+func BuildMixinDeleteCommand(p *porter.Porter) *cobra.Command {
+	opts := mixin.DeleteOptions{}
+	cmd := &cobra.Command{
+		Use:     "delete NAME",
+		Short:   "Delete a mixin",
+		Example: `  porter mixin delete helm`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.DeleteMixin(opts)
+		},
+	}
+
 	return cmd
 }
 

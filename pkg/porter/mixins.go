@@ -82,6 +82,21 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 	return nil
 }
 
+func (p *Porter) DeleteMixin(opts mixin.DeleteOptions) error {
+	m, err := p.Mixins.Delete(opts)
+	if err != nil {
+		return err
+	}
+
+	if p.Debug {
+		fmt.Fprintf(p.Out, "Deleted %s mixin from %s", m.Name, m.Dir)
+	} else {
+		fmt.Fprintf(p.Out, "Deleted %s mixin %s", m.Name)
+	}
+
+	return nil
+}
+
 func (p *Porter) GenerateMixinFeed(opts feed.GenerateOptions) error {
 	f := feed.NewMixinFeed(p.Context)
 
