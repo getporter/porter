@@ -14,6 +14,25 @@ Source: https://github.com/deislabs/porter-az
 porter mixin install az
 ```
 
+## Mixin Configuration
+
+When you declare the mixin, you can also configure additional extensions to install:
+
+**Use the vanilla az CLI**
+```yaml
+mixins:
+- az
+```
+
+**Install additional extensions**
+
+```yaml
+mixins:
+- az:
+    extensions:
+    - EXTENSION_NAME
+```
+
 ## Mixin Syntax
 
 See the [az CLI Command Reference](https://docs.microsoft.com/en-us/cli/azure/reference-index?view=azure-cli-latest) for the supported commands.
@@ -81,6 +100,15 @@ outputs:
 ---
 
 ## Examples
+
+### Install the Azure IoT Extension
+
+```yaml
+mixins:
+- az:
+    extensions:
+    - azure-cli-iot-ext
+```
 
 ### Authenticate
 
