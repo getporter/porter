@@ -91,7 +91,7 @@ func (p *Porter) DeleteMixin(opts mixin.DeleteOptions) error {
 	if p.Debug {
 		fmt.Fprintf(p.Out, "Deleted %s mixin from %s", m.Name, m.Dir)
 	} else {
-		fmt.Fprintf(p.Out, "Deleted %s mixin %s", m.Name)
+		fmt.Fprintf(p.Out, "Deleted %s mixin", m.Name)
 	}
 
 	return nil

@@ -35,6 +35,10 @@ func (p *TestMixinProvider) Install(o InstallOptions) (*Metadata, error) {
 	return &Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }
 
+func (p *TestMixinProvider) Delete(o DeleteOptions) (*Metadata, error) {
+	return &Metadata{Name: "exec"}, nil
+}
+
 func (p *TestMixinProvider) Run(mixinCxt *context.Context, mixinName string, commandOpts CommandOptions) error {
 	for _, assert := range p.RunAssertions {
 		assert(mixinCxt, mixinName, commandOpts)

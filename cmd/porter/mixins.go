@@ -79,6 +79,9 @@ func BuildMixinDeleteCommand(p *porter.Porter) *cobra.Command {
 		Use:     "delete NAME",
 		Short:   "Delete a mixin",
 		Example: `  porter mixin delete helm`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.DeleteMixin(opts)
 		},

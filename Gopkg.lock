@@ -1694,6 +1694,7 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/google/go-containerregistry/pkg/crane",
     "github.com/hashicorp/go-multierror",
     "github.com/mmcdole/gofeed/atom",
