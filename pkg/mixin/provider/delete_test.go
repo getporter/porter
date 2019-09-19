@@ -19,7 +19,6 @@ func TestFileSystem_Delete_DeleteMixin(t *testing.T) {
 	opts := mixin.DeleteOptions{
 		Name: "mixxin",
 	}
-	opts.Validate([]string{"mixxin"})
 
 	p.Delete(opts)
 
