@@ -376,7 +376,7 @@ dependency injection and testing strategies.
 Example:
 
 ```golang
-fmt.Fprintln(p.Out, "Initiating battlestar protocol"
+fmt.Fprintln(p.Out, "Initiating battlestar protocol")
 fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
 ```
 
