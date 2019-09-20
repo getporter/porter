@@ -64,16 +64,10 @@ func (d *Runtime) Upgrade(args ActionArguments) error {
 	// Upgrade and capture error
 	runErr := i.Run(&c, creds, d.ApplyConfig(args)...)
 
-	// Add/update the outputs section of a claim and capture error
-	err = d.WriteClaimOutputs(&c, string(config.ActionUpgrade))
-
 	// ALWAYS write out a claim, even if the upgrade fails
 	saveErr := claims.Store(c)
 	if runErr != nil {
 		return errors.Wrap(runErr, "failed to upgrade the bundle")
-	}
-	if err != nil {
-		return errors.Wrap(err, "failed to write outputs to the bundle instance")
 	}
 	return errors.Wrap(saveErr, "failed to record the upgrade for the bundle")
 }

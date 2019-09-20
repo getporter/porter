@@ -84,7 +84,7 @@ func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 	return rawValue, nil
 }
 
-// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/99
+// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/129
 func appliesToAction(action string, parameter bundle.Parameter) bool {
 	if len(parameter.ApplyTo) == 0 {
 		return true

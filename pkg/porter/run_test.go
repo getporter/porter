@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -174,30 +173,16 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	err := p.ApplyBundleOutputs(opts, outputs)
 	assert.NoError(t, err)
 
-	want := map[string]config.Output{
-		"foo": {
-			Name:      "foo",
-			Type:      "string",
-			Sensitive: true,
-			Value:     "bar",
-		},
-		"123": {
-			Name:      "123",
-			Type:      "string",
-			Sensitive: false,
-			Value:     "abc",
-		},
+	want := map[string]string{
+		"foo": "bar",
+		"123": "abc",
 	}
 
 	for _, outputName := range []string{"foo", "123"} {
 		bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, outputName))
 		assert.NoError(t, err)
 
-		var output config.Output
-		err = json.Unmarshal(bytes, &output)
-		assert.NoError(t, err)
-
-		assert.Equal(t, want[outputName], output)
+		assert.Equal(t, want[outputName], string(bytes))
 	}
 }
 
@@ -274,15 +259,6 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	bytes, err := p.FileSystem.ReadFile(filepath.Join(config.BundleOutputsDir, "123"))
 	assert.NoError(t, err)
 
-	var got config.Output
-	err = json.Unmarshal(bytes, &got)
-	assert.NoError(t, err)
-
-	want := config.Output{
-		Name:      "123",
-		Type:      "string",
-		Sensitive: false,
-		Value:     "abc",
-	}
-	assert.Equal(t, want, got)
+	want := "abc"
+	assert.Equal(t, want, string(bytes))
 }

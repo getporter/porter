@@ -1,8 +1,6 @@
 package runtime
 
 import (
-	"encoding/json"
-	"fmt"
 	"path/filepath"
 
 	"github.com/deislabs/porter/pkg/context"
@@ -32,16 +30,5 @@ func ReadDependencyOutputValue(c *context.Context, alias string, name string) (s
 		return "", errors.Errorf("unable to read %s", outputFile)
 	}
 
-	var output map[string]interface{}
-	err = json.Unmarshal(b, &output)
-	if err != nil {
-		return "", errors.Wrapf(err, "error unmarshaling output %s.%s from data %q", alias, name, string(b))
-	}
-
-	switch value := output["value"].(type) {
-	case string:
-		return value, nil
-	default:
-		return fmt.Sprintf("%v", value), nil
-	}
+	return string(b), nil
 }

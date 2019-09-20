@@ -7,6 +7,14 @@ tag: deislabs/porter-example-exec-outputs-bundle:0.1.0
 mixins:
   - exec
 
+customActions:
+  status:
+    description: "Parse stdout as json"
+    modifies: true
+  test:
+    description: "Scrape stdout with regex"
+    modifies: true
+
 install:
   - exec:
       description: "Create a file"

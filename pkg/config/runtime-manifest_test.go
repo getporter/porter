@@ -453,7 +453,7 @@ func TestResolveStepOutputs(t *testing.T) {
 		"output": "output_value",
 	}
 
-	c.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte(`{"value":"dep_output_value"}`), 0644)
+	c.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte("dep_output_value"), 0644)
 
 	s := &Step{
 		Data: map[string]interface{}{
