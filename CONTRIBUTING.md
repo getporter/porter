@@ -1,27 +1,26 @@
 # Contributing Guide
 
 ---
-
-- [How to help](#how-to-help)
-  - [Find an issue](#find-an-issue)
-  - [When to open a pull request](#when-to-open-a-pull-request)
-  - [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
-  - [The life of a pull request](#the-life-of-a-pull-request)
-- [Contribution Ladder](#contribution-ladder)
-  - [Contributor](#contributor)
-  - [How to become a contributor](#how-to-become-a-contributor)
-  - [Maintainer](#maintainer)
-  - [How to become a maintainer](#how-to-become-a-maintainer)
-  - [Admin](#admin)
-  - [How to become an admin](#admin)
-- [Developer Tasks](#developer-tasks)
-  - [Initial setup](#initial-setup)
-  - [Makefile explained](#makefile-explained)
-  - [Install mixins](#install-mixins)
-  - [Preview documentation](#preview-documentation)
-- [Code structure and practices](#code-structure-and-practices)
-  - [What is the general code layout?](#what-is-the-general-code-layout)
-  - [Logging](#logging)
+* [How to help](#how-to-help)
+  * [Find an issue](#find-an-issue)
+  * [When to open a pull request](#when-to-open-a-pull-request)
+  * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
+  * [The life of a pull request](#the-life-of-a-pull-request)
+* [Contribution Ladder](#contribution-ladder)
+  * [Contributor](#contributor)
+  * [How to become a contributor](#how-to-become-a-contributor)
+  * [Maintainer](#maintainer)
+  * [How to become a maintainer](#how-to-become-a-maintainer)
+  * [Admin](#admin)
+  * [How to become an admin](#admin)
+* [Developer Tasks](#developer-tasks)
+  * [Initial setup](#initial-setup)
+  * [Makefile explained](#makefile-explained)
+  * [Install mixins](#install-mixins)
+  * [Preview documentation](#preview-documentation)
+* [Code structure and practices](#code-structure-and-practices)
+  * [What is the general code layout?](#what-is-the-general-code-layout)
+  * [Logging](#logging)
 
 ---
 
@@ -42,8 +41,8 @@ slack, interactions on social media, project meetings, conferences and meetups.
 We have [good first issues][good-first-issue] for new contributors and [help
 wanted][help-wanted] issues for our other contributors.
 
-- `good first issue` has extra information to help you make your first contribution.
-- `help wanted` are issues suitable for someone who isn't a core maintainer.
+* `good first issue` has extra information to help you make your first contribution.
+* `help wanted` are issues suitable for someone who isn't a core maintainer.
 
 Maintainers will do our best regularly make new issues for you to solve and then
 help out as you work on them. 💖
@@ -70,7 +69,7 @@ If there isn't an issue for your PR, please make an issue first and explain the
 problem or motivation for the change you are proposing. When the solution isn't
 straightforward, for example "Implement missing command X", then also outline
 your proposed solution. Your PR will go smoother if the solution is agreed upon
-before you've spent a lot of time implementing it.
+before you've spent a lot of time implementing it. 
 
 Since Porter is a CLI, the "solution" will usually look like this:
 
@@ -131,18 +130,17 @@ request comment so that we don't collectively forget.
    ready for review.
 
    If you create a regular pull request, a reviewer won't wait to review it.
-
 1. A reviewer will assign themselves to the pull request. If you don't see
    anyone assigned after 3 business days, you can leave a comment asking for a
    review, or ping in [slack][slack]. Sometimes we have busy days, sick days,
    weekends and vacations, so a little patience is appreciated! 🙇‍♀️
 1. The reviewer will leave feedback.
-   - `nits`: These are suggestions that you may decide incorporate into your pull
-     request or not without further comment.
-   - It can help to put a 👍 on comments that you have implemented so that you
-     can keep track.
-   - It is okay to clarify if you are being told to make a change or if it is a
-     suggestion.
+    * `nits`: These are suggestions that you may decide incorporate into your pull
+      request or not without further comment.
+    * It can help to put a 👍 on comments that you have implemented so that you
+      can keep track.
+    * It is okay to clarify if you are being told to make a change or if it is a
+      suggestion.
 1. After you have made the changes (in new commits please!), leave a comment. If
    3 business days go by with no review, it is okay to bump.
 1. When a pull request has been approved, the reviewer will squash and merge
@@ -182,11 +180,11 @@ Everyone is a community member! 😄 You've read this far so you are already ahe
 
 Here are some ideas for how you can be more involved and participate in the community:
 
-- Comment on an issue that you’re interested in.
-- Submit a pull request to fix an issue.
-- Report a bug.
-- Share a bundle that you made and how it went.
-- Come chat with us in [Slack][slack].
+* Comment on an issue that you’re interested in.
+* Submit a pull request to fix an issue.
+* Report a bug.
+* Share a bundle that you made and how it went.
+* Come chat with us in [Slack][slack].
 
 They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -194,10 +192,10 @@ They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 [Contributors][contributors] have the following capabilities:
 
-- Have issues and pull requests assigned to them
-- Apply labels, milestones and projects
-- [Mark issues as duplicates](https://help.github.com/en/articles/about-duplicate-issues-and-pull-requests)
-- Close, reopen, and assign issues and pull requests
+* Have issues and pull requests assigned to them
+* Apply labels, milestones and projects
+* [Mark issues as duplicates](https://help.github.com/en/articles/about-duplicate-issues-and-pull-requests) 
+* Close, reopen, and assign issues and pull requests
 
 They must agree to and follow this Contributing Guide.
 
@@ -205,10 +203,10 @@ They must agree to and follow this Contributing Guide.
 
 To become a contributor, the maintainers of the project would like to see you:
 
-- Comment on issues with your experiences and opinions.
-- Add your comments and reviews on pull requests.
-- Contribute pull requests.
-- Open issues with bugs, experience reports, and questions.
+* Comment on issues with your experiences and opinions.
+* Add your comments and reviews on pull requests.
+* Contribute pull requests.
+* Open issues with bugs, experience reports, and questions.
 
 Contributors and maintainers will do their best to watch for community members
 who may make good contributors. But don’t be shy, if you feel that this is you,
@@ -218,20 +216,20 @@ please reach out to one or more of the contributors or maintainers.
 
 ## Maintainer
 
-[Maintainers][maintainers] are members with extra capabilities:
+[Maintainers][maintainers] are members with extra capabilities: 
 
-- Be a [Code Owner](.github/CODEOWNERS) and have reviews automatically requested.
-- Review pull requests.
-- Merge pull requests.
+* Be a [Code Owner](.github/CODEOWNERS) and have reviews automatically requested.
+* Review pull requests.
+* Merge pull requests.
 
 Maintainers also have additional responsibilities beyond just merging code:
 
-- Help foster a safe and welcoming environment for all project participants.
+* Help foster a safe and welcoming environment for all project participants. 
   This will include understanding and enforcing our [Code of Conduct](CODE_OF_CONDUCT.md).
-- Organize and promote pull request reviews, e.g. prompting community members,
+* Organize and promote pull request reviews, e.g. prompting community members, 
   contributors, and other maintainers to review.
-- Triage issues, e.g. adding labels, promoting discussions, finalizing decisions.
-- Help organize our development meetings, e.g. schedule, organize and
+* Triage issues, e.g. adding labels, promoting discussions, finalizing decisions.
+* Help organize our development meetings, e.g. schedule, organize and 
   execute agenda.
 
 They must agree to and follow the [Reviewing Guide](REVIEWING.md).
@@ -239,20 +237,20 @@ They must agree to and follow the [Reviewing Guide](REVIEWING.md).
 [maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
 
 ### How to become a maintainer
-
+    
 To become a maintainer, we would like you to see you be an effective
 contributor, and show that you can do some of the things maintainers do.
 Maintainers will do their best to regularly discuss promoting contributors. But
 don’t be shy, if you feel that this is you, please reach out to one or more of
 the maintainers.
-
+    
 ## Admin
 
 [Admins][admins] are maintainers with extra responsibilities:
 
-- Create new mixin repositories
-- Manage porter-\* repositories
-- Manage porter-\* teams
+* Create new mixin repositories
+* Manage porter-* repositories
+* Manage porter-* teams
 
 [admins]: https://github.com/orgs/deislabs/teams/porter-admins
 
@@ -274,25 +272,25 @@ mixins installed.
 
 Here are the most common Makefile tasks
 
-- `build-porter-client` just builds the porter client for your operating
+* `build-porter-client` just builds the porter client for your operating
   system. It does not build the porter-runtime binary. Useful when you just want
   to do a build and don't remember the proper way to call `go build` yourself.
-- `build-porter` builds both the porter client and runtime.
-- `install-porter` installs just porter from your bin into **/usr/local/bin**.
-- `install-mixins` installs just the mixins from your bin into
+* `build-porter` builds both the porter client and runtime.
+* `install-porter` installs just porter from your bin into **/usr/local/bin**.
+* `install-mixins` installs just the mixins from your bin into
   **/usr/local/bin**. This is useful when you are working on the exec or
   kubernetes mixin.
-- `install` installs porter _and_ the mixins from your bin into **/usr/local/bin**.
-- `test-unit` runs the unit tests.
-- `test-integration` runs the integration tests. This requires a kubernetes
+* `install` installs porter _and_ the mixins from your bin into **/usr/local/bin**.
+* `test-unit` runs the unit tests.
+* `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
   take 10 minutes.
-- `test-cli` runs a small test of end-to-end tests that require a kubernetes
+* `test-cli` runs a small test of end-to-end tests that require a kubernetes
   cluster (same as `test-integration`).
-- `docs-preview` hosts the docs site. See [Preview
+* `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
-- `test` runs all the tests.
-- `clean-packr` removes extra packr files that were a side-effect of the build.
+* `test` runs all the tests.
+* `clean-packr` removes extra packr files that were a side-effect of the build.
   Normally this is run automatically but if you run into issues with packr and
   dep, run this commmand.
 
@@ -309,8 +307,8 @@ installed into your bin directory in the root of the repository. You can use
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
 [Netlify](netlify.com).
 
-1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`,
-   `choco install hugo` or `go get -u github.com/gohugoio/hugo`.
+1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`, 
+`choco install hugo` or `go get -u github.com/gohugoio/hugo`.
 1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
 1. Open <http://localhost:1313> to preview the site.
 
@@ -339,37 +337,37 @@ dependency injection and testing strategies.
 
 ## What is the general code layout?
 
-- **cmd**: go here to add a new command or flag to porter or one of the mixins in
+* **cmd**: go here to add a new command or flag to porter or one of the mixins in
   this repository
-- **pkg**
-  - **build**: implements building the invocation image.
-  - **cache**: handles the cache of bundles that have been pulled by commands
-    like `porter install --tag`.
-  - **cnab**: deals with the CNAB spec
-    - **cnab-to-oci**: talking to an OCI registry.
-    - **config_adapter**: converting porter.yaml to bundle.json.
-    - **extensions**: extensions to the CNAB spec, at this point that's just
-      dependencies.
-    - **provider**: the CNAB runtime, i.e. `porter install`.
-- **config**: anything related to `porter.yaml` and `~/.porter`.
-- **context**: essentially dependency injection that's needed throughout Porter,
+* **pkg**
+  * **build**: implements building the invocation image.
+  * **cache**: handles the cache of bundles that have been pulled by commands
+  like `porter install --tag`.
+  * **cnab**: deals with the CNAB spec
+    * **cnab-to-oci**: talking to an OCI registry.
+    * **config_adapter**: converting porter.yaml to bundle.json.
+    * **extensions**: extensions to the CNAB spec, at this point that's just
+  dependencies.
+    * **provider**: the CNAB runtime, i.e. `porter install`.
+* **config**: anything related to `porter.yaml` and `~/.porter`.
+* **context**: essentially dependency injection that's needed throughout Porter,
   such as stdout, stderr, stdin, filesystem and command execution.
-- **docs**: our website
-- **exec**: the exec mixin
-- **kubernetes**: the kubernetes mixin
-- **mixin**: enums, functions and interfaces for the mixin framework.
-  - **feed**: works with mixin atom feeds
-  - **provider**: handles communicating with mixins
-- **porter**: the implementation of the porter commands. Every command in Porter
+* **docs**: our website
+* **exec**: the exec mixin
+* **kubernetes**: the kubernetes mixin
+* **mixin**: enums, functions and interfaces for the mixin framework.
+  * **feed**: works with mixin atom feeds
+  * **provider**: handles communicating with mixins
+* **porter**: the implementation of the porter commands. Every command in Porter
   has a corresponding function in here.
-  - **templates**: files that need to be compiled into the porter binary with
+  * **templates**: files that need to be compiled into the porter binary with
     packr
-  - **version**: reusable library used by all the mixins for implementing their
+  * **version**: reusable library used by all the mixins for implementing their
     version command.
-- **scripts**:
-  - **install**: Porter [installation](https://porter.sh/install) scripts
-- **tests** have Go-based integration tests.
-- **vendor** we use dep and check in vendor.
+* **scripts**:
+  * **install**: Porter [installation](https://porter.sh/install) scripts
+* **tests** have Go-based integration tests.
+* **vendor** we use dep and check in vendor.
 
 ## Logging
 
@@ -378,7 +376,7 @@ dependency injection and testing strategies.
 Example:
 
 ```golang
-fmt.Fprintln(p.Out, "Initiating battlestar protocol")
+fmt.Fprintln(p.Out, "Initiating battlestar protocol"
 fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
 ```
 
