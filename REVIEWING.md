@@ -54,6 +54,14 @@ what we expect a pull request to feel like for everyone involved.
 * Documentation Updated
 * Passing CI
 
+When a pull request impacts code, i.e. it's not a documentation-only change,
+the reviewer should run the manual integration tests afte reviewing the code.
+The tests are triggered with a comment:
+
+```
+/azp run porter-integration
+```
+
 [Admins][admins] are allowed, at their discretion, to merge administrative pull
 requests without review and before the full CI suite has passed. This is
 sometimes used for typo fixes, updates to markdown files, etc. This is a
