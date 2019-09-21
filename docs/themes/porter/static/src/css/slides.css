@@ -33,19 +33,29 @@
     max-width: 40em; /* Don't run into the green stuff on the right from the facet theme */
 }
 
-div.center p {
+.remark-slide-content div.center p {
     max-width: unset; /* If we are centering, limiting the width shoves stuff off to the left */
 }
 
-.footnote {
+.remark-slide-content .footnote {
     color: grey;
     font-size: .7em;
 }
 
-#introductions {
+.remark-slide-content #introductions {
     width: 40em;
 }
-#introductions p {
+.remark-slide-content #introductions p {
     margin-bottom: unset;
     white-space: nowrap;
+}
+
+.remark-slide-content blockquote {
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-top: 1rem;
+}
+
+.remark-slide-content .nudge {
+    margin-top: 12rem;
 }

@@ -1,13 +1,14 @@
 ---
-title: "Understanding CNAB"
+title: "CNAB Unpacked"
 description: |
   Learn what is a Cloud Native Application Bundle and when you would use one.
-url: "/understanding-cnab/"
+url: "/cnab-unpacked/"
 ---
 class: center, middle
 
-# Understanding CNAB
-##  Cloud Native Application Bundles Unpacked
+## Understanding 
+## Cloud Native Application Bundles
+# CNAB Unpacked
 
 ---
 name: introductions
@@ -23,6 +24,134 @@ name: introductions
 </div>
 
 ---
+# What is CNAB?
+
+.nudge[
+> Cloud Native Application Bundles is an open-source packaging and distribution specification for managing distributed applications with a single installable file.
+]
+
+---
+# Where did it come from?
+
+.nudge[
+<img float="left" src="/images/logos/azure.png" />
+<img float="left" src="/images/logos/docker.png"/>
+<img float="left" src="/images/logos/pivotal.png"/>
+]
+
+### We had contributions from other companies and the community! ❤️
+
+---
+# What does CNAB solve?
+
+.nudge[
+### The gap between your application's code and everything 
+### necessary to deploy your application.
+]
+
+---
+# Let's define an app
+
+* Terraform to create the infrastructure
+* Helm to deploy to a kubernetes cluster
+* Obligatory bash script
+
+---
+# Let's find the gap
+
+If I gave this to a customer, IT, friend or enemy to deploy, would they know how?
+--
+
+* Would they clone a repository? The apps or a special devops one?
+--
+
+* Would they have to install specific versions of terraform and helm?
+--
+
+* Would they need to know environment variables to set, and files to save 
+  to special locations?
+--
+
+* Would they need to know how to use helm and terraform, and which flags to use?
+--
+
+* If you made a utility docker container to handle this, would they know what 
+  volumes to mount and env vars to pass through?
+--
+
+* Would they guess all of this correctly... the first time? 😅
+--
+
+* How about at 2am while on-call for an app they didn't write? 😨
+--
+
+* Would you still be friends? 🤔
+--
+
+---
+class: middle
+# Let's try this with a bundle
+
+---
+# Get ready...
+
+```
+$ porter explain --tag deislabs/tron:v1.0
+name: Tron
+description: The classic game of light cycles and disc wars
+version: 1.0.0
+
+Parameters
+-------------------------------------------------------------------- 
+| Name          | Type         | Description   | Default (Required) |  
+-------------------------------------------------------------------- 
+  sparkles        boolean       ✨               false
+
+Credentials
+-------------------------------------------------------------------
+| Name        | Type   | Description        |                      |
+------------------------------------------------------------------- 
+  kubeconfig    string   Path to kubeconfig  
+
+
+Actions
+---------------------------------------------
+| Name | Description | Stateless | Mutating |
+--------------------------------------------- 
+  list   List users     True       False
+
+```
+
+---
+# Get Set...
+
+```
+$ porter credentials generate -t deislabs/tron:v1.0
+
+Generating new credential azure from bundle tron
+==> 1 credentials required for bundle tron
+? How would you like to set credential "kubeconfig" file path
+? Enter the path that will be used to set credential "kubeconfig"
+Saving credential to /Users/carolynvs/.porter/credentials/azure.yaml
+```
+
+# Go!
+```
+$ porter install tron -t deislabs/tron:v1.0 --creds azure --param sparkles=true
+```
+
+---
+## So what was in that bundle?
+
+The application **and everything needed to install it**
+
+* The helm and terraform CLIs.
+* The bash script that orchestrates installing everything.
+* The helm chart.
+* The terraform files.
+
+
+---
 name: use-cases
 # When would you use a bundle?
 
@@ -31,35 +160,57 @@ name: use-cases
 1. Get software and its dependencies into airgapped networks
 1. Manage disparate operational tech: such as Helm, Chef, or Terraform, across teams and departments
 
----
-
-# How to deploy your application
-.center[
-  ![you fight for the users](/images/pack-your-bags/scroll-of-truth.png)
-]
 
 ---
-class: center
-# Docker to the rescue!
+# CNAB Sub Specifications
 
-.center[
-  ![ship it](/images/pack-your-bags/container-ship.jpg)
-]
+## Core
+## Registries 🚧
+## Security 🚧
+## Claims 🚧
+## Dependencies 🚧
 
----
-class: middle
-# How to deploy with docker
-
-.center[
-  ![half way there](/images/pack-your-bags/scroll-of-sad-truth.png)
-]
+🚧 in-progress
 
 ---
-# This is what CNAB solves
+# Core Specification
 
-* Package All The Logic To Make Your App Happen
-* Allow Consumer To Verify Everything They Will Install
-* Distribute Them In Verifiable Way
+* Bundle file format (bundle.json)
+* Invocation image format, aka "the installer"
+* Bundle format (thin or thick)
+* Bundle runtime execution behavior
+
+Version 1.0 was released this month! 🎉
+
+---
+# Registries Specification
+
+Push and pull bundles to OCI (docker) registries
+
+---
+# Security Specification
+
+* Image digests
+* Signing bundles
+* Bundle attestation
+
+---
+# Claims Specification
+
+Record actions performed on a bundle:
+
+* Parameters passed
+* Outputs generated
+* Success/Failure
+
+---
+# Dependencies Specification
+
+Very early stage.
+
+* Require another bundle to be executed.
+* Specify the version of the dependency.
+* Use the outputs from the dependency.
 
 ---
 class: center, middle
@@ -70,13 +221,6 @@ class: center, middle
 ]
 
 .footnote[_http://www.reactiongifs.com/magic-3_]
-
----
-## Try it out: Install a bundle
-
-```
-$ porter install --tag deislabs/porter-hello-devopsdays:latest
-```
 
 ---
 name: anatomy
