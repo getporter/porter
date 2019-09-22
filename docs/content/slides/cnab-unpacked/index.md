@@ -187,6 +187,9 @@ name: use-cases
 
 ## Distribute files in the CNAB invocation image
 
+.center[
+  ![so what is it](/images/pack-your-bags/easy-bake-oven-image.png)
+]
 
 ---
 
@@ -194,6 +197,9 @@ name: use-cases
 
 ## Custom script for the invocation image entrypoint
 
+.center[
+  ![helm, terraform, gcloud, azure logo cloud](/images/porter-mixin-cloud.png)
+]
 
 ---
 
@@ -324,10 +330,16 @@ Very early stage.
 
 ---
 # CNAB Tooling
+--
 
 * Duffle
+--
+
 * Porter
+--
+
 * Docker App
+--
 
 ## 🙋🏻‍♀️ Are all CNAB tools the interchangeable?
 
@@ -336,9 +348,12 @@ Very early stage.
 
 ---
 # Parting Awkward Questions
+--
 
 ## 🙋🏻‍♀️ Is this ready to use?
+--
 
 ## 🙋🏻‍♀️ This is more of a comment really...
+--
 
 ## 🙋🏻‍♀️ Ask me yours!
