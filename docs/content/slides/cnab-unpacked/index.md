@@ -10,16 +10,21 @@ class: center, middle
 ## Cloud Native Application Bundles
 # CNAB Unpacked
 
+<h3 style="margin-top: 3em">
+  <a href="https://porter.sh/cnab-unpacked/">porter.sh/cnab-unpacked</a>
+</h3>
+
 ---
 name: introductions
 # Introductions
 
 <div id="introductions">
   <div class="left">
-    <img src="/images/carolynvs.jpg" width="150px" />
-    <p>Carolyn Van Slyck</p>
+    <img src="/images/carolynvs.jpg" width="150px" style="margin-top: 3em"/>
+    <p style="margin-top:1em; font-weight: bold;">Carolyn Van Slyck</p>
+    <p><a href="https://twitter.com/carolynvs">@carolynvs</a></p>
     <p>Senior Software Engineer</p>
-    <p>Microsoft Azure</p>
+    <p>Microsoft</p>
   </div>
 </div>
 
@@ -59,19 +64,19 @@ name: introductions
 ---
 # Let's find the gap
 
-If I gave this to a customer, IT, friend or enemy to deploy, would they...
+If I gave this to a friend to deploy, would they...
 --
 
-* Clone a repository? The app's or a special devops one?
+* Clone a repository? The app's or a devops one?
 --
 
 * Install specific versions of terraform and helm?
 --
 
-* Set environment variables, and save files to special locations?
+* Set environment variables, and save config files to specific locations?
 --
 
-* Use the right helm and terraform commands?
+* Use specific helm and terraform commands?
 --
 
 * Use a utility docker container that required them to mount volumes from the 
@@ -85,7 +90,7 @@ If I gave this to a customer, IT, friend or enemy to deploy, would they...
 --
 
 * Still be your friend? 🤔
---
+
 
 ---
 class: middle
@@ -96,21 +101,22 @@ class: middle
 
 ```
 $ porter explain --tag deislabs/tron:v1.0
+
 name: Tron
 description: The classic game of light cycles and disc wars
 version: 1.0.0
-
-Parameters
--------------------------------------------------------------------- 
-| Name          | Type         | Description   | Default (Required) |  
--------------------------------------------------------------------- 
-  sparkles        boolean       Moar ✨          false
 
 Credentials
 -------------------------------------------------------------------
 | Name        | Type   | Description        |                      |
 ------------------------------------------------------------------- 
   kubeconfig    string   Path to kubeconfig  
+
+Parameters
+-------------------------------------------------------------------- 
+| Name          | Type         | Description   | Default (Required) |  
+-------------------------------------------------------------------- 
+  sparkles        boolean       Moar ✨          false
 
 ```
 
@@ -134,7 +140,22 @@ $ porter install tron -t deislabs/tron:v1.0 --creds azure --param sparkles=true
 ```
 
 ---
-## So what was in that bundle?
+# Let's Reflect
+--
+
+* Self describing, so it can tell you what you need to install it
+--
+
+* Installed with a single command
+--
+
+* Underlying toolsets and logic were abstracted in the bundle
+--
+
+* Distributed via OCI (Docker) registry
+
+---
+# What was in the bundle?
 
 The application **and everything needed to install it**
 
@@ -143,6 +164,18 @@ The application **and everything needed to install it**
 * Helm chart
 * Terraform files
 
+---
+
+# Awkward Question Time!
+--
+
+## 🙋🏻‍♀️ Does this replace &lt; my favorite tech &gt;?
+--
+
+## 🙋🏻‍♀️ Why wouldn't I just use &lt; my favorite tech &gt;?
+--
+
+## 🙋🏻‍♀️ I don't like the sound of that bash script...
 
 ---
 class: middle
@@ -152,51 +185,33 @@ name: use-cases
 ---
 # Include required tools
 
-.nudge[
+## Distribute files in the CNAB invocation image
 
-  ## Distribute files in the CNAB invocation image
-
-]
 
 ---
 
 # Deploy App's Infrastructure
 
-.nudge[
+## Custom script for the invocation image entrypoint
 
-  ## Custom script for the invocation image entrypoint
-
-]
 
 ---
 
 # Airgapped Networks or Offline
 
-.nudge[
-
-  ## Thick bundles include referenced images
-
-]
+## Thick bundles include referenced images
 
 ---
 
 # Manage multiple tech stacks
 
-.nudge[
-
-  ## Consistent interface regardless horrors inside
-
-]
+## Consistent interface regardless horrors inside
 
 ---
 
 # Immutable, verified installer
 
-.nudge[
-
-  ## Signed bundles referencing image digests
-
-]
+## Signed bundles referencing image digests
 
 ---
 # CNAB Sub Specifications
@@ -314,12 +329,16 @@ Very early stage.
 * Porter
 * Docker App
 
+## 🙋🏻‍♀️ Are all CNAB tools the interchangeable?
+
 ---
 # Demo
 
 ---
-# 
+# Parting Awkward Questions
 
-* Does this replace existing technology?
-* Why wouldn't I just use helm, terraform, etc?
-* Are all CNAB tools the same? Interchangeable?
+## 🙋🏻‍♀️ Is this ready to use?
+
+## 🙋🏻‍♀️ This is more of a comment really...
+
+## 🙋🏻‍♀️ Ask me yours!
