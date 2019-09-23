@@ -242,7 +242,6 @@ name: use-cases
 ## Core
 ## Registries 🚧
 ## Security 🚧
-## Claims 🚧
 ## Dependencies 🚧
 
 ---
@@ -319,15 +318,6 @@ Push and pull bundles to OCI registries
 * Bundle attestation
 
 ---
-# Claims Specification
-
-Record actions performed on a bundle:
-
-* Parameters passed
-* Outputs generated
-* Success/Failure
-
----
 # Dependencies Specification
 
 🚧 Very early stage 
@@ -377,10 +367,10 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 # Parting Awkward Questions
 --
 
-## 🙋🏻‍♀️ Are bundles ready to use?
+## 🙋🏻‍♀️ Is Porter a Microsoft-only tool?
 --
 
-## 🙋🏻‍♀️ Is Porter a Microsoft-only tool?
+## 🙋🏻‍♀️ Are bundles ready to use?
 --
 
 ## 🙋🏻‍♀️ This is more of a comment really...
@@ -395,7 +385,8 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 * [cnab.io/community-meetings/#communications][cnab-slack] - #cnab CNCF Slack
 * [porter.sh][porter]
 * [porter.sh/contribute][contribute] - New Contributor Guide
-* [porter.sh/community][porter-slack] - #porter CNCF Slack
+* [porter.sh/community][porter-slack] - #porter CNCF Slack and Office Hours
+
 
 [cnab]: https://cnab.io
 [cnab-slack]: https://cnab.io/community-meetings/#communications
