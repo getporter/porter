@@ -259,7 +259,9 @@ name: use-cases
   * Uninstall
 * Custom Actions
 
-Version 1.0 was released this month! 🎉
+.center[
+  **Version 1.0 was released this month!** 🎉
+]
 
 ---
 name: anatomy
@@ -341,7 +343,7 @@ Record actions performed on a bundle:
 * Docker App
 * Duffle
 
-Anyone can write their own tool, these are all based on 
+Anyone can write their own too! These are all based on:
 
 https://github.com/deislabs/cnab-go
 --
@@ -390,9 +392,13 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 # Resources
 
 * [cnab.io][cnab]
+* [cnab.io/community-meetings/#communications][cnab-slack] - #cnab CNCF Slack
 * [porter.sh][porter]
 * [porter.sh/contribute][contribute] - New Contributor Guide
+* [porter.sh/community][porter-slack] - #porter CNCF Slack
 
 [cnab]: https://cnab.io
+[cnab-slack]: https://cnab.io/community-meetings/#communications
 [porter]: https://porter.sh
 [contribute]: https://porter.sh/contribute
+[porter-slack]: https://porter.sh/community
