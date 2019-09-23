@@ -11,6 +11,7 @@ import (
 	"github.com/containerd/containerd/remotes"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/docker/cnab-to-oci/converter"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/opencontainers/go-digest"
 	ocischemav1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -21,7 +22,13 @@ import (
 type ManifestOption func(*ocischemav1.Index) error
 
 // Push pushes a bundle as an OCI Image Index manifest
-func Push(ctx context.Context, b *bundle.Bundle, ref reference.Named, resolver remotes.Resolver, allowFallbacks bool, options ...ManifestOption) (ocischemav1.Descriptor, error) {
+func Push(ctx context.Context,
+	b *bundle.Bundle,
+	relocationMap relocation.ImageRelocationMap,
+	ref reference.Named,
+	resolver remotes.Resolver,
+	allowFallbacks bool,
+	options ...ManifestOption) (ocischemav1.Descriptor, error) {
 	log.G(ctx).Debugf("Pushing CNAB Bundle %s", ref)
 
 	confManifestDescriptor, err := pushConfig(ctx, b, ref, resolver, allowFallbacks)
@@ -29,7 +36,7 @@ func Push(ctx context.Context, b *bundle.Bundle, ref reference.Named, resolver r
 		return ocischemav1.Descriptor{}, err
 	}
 
-	indexDescriptor, err := pushIndex(ctx, b, ref, resolver, allowFallbacks, confManifestDescriptor, options...)
+	indexDescriptor, err := pushIndex(ctx, b, relocationMap, ref, resolver, allowFallbacks, confManifestDescriptor, options...)
 	if err != nil {
 		return ocischemav1.Descriptor{}, err
 	}
@@ -46,7 +53,7 @@ func pushConfig(ctx context.Context,
 	logger := log.G(ctx)
 	logger.Debugf("Pushing CNAB Bundle Config")
 
-	bundleConfig, err := converter.CreateBundleConfig(b).PrepareForPush()
+	bundleConfig, err := converter.PrepareForPush(b)
 	if err != nil {
 		return ocischemav1.Descriptor{}, err
 	}
@@ -59,12 +66,12 @@ func pushConfig(ctx context.Context,
 	return confManifestDescriptor, nil
 }
 
-func pushIndex(ctx context.Context, b *bundle.Bundle, ref reference.Named, resolver remotes.Resolver, allowFallbacks bool,
+func pushIndex(ctx context.Context, b *bundle.Bundle, relocationMap relocation.ImageRelocationMap, ref reference.Named, resolver remotes.Resolver, allowFallbacks bool,
 	confManifestDescriptor ocischemav1.Descriptor, options ...ManifestOption) (ocischemav1.Descriptor, error) {
 	logger := log.G(ctx)
 	logger.Debug("Pushing CNAB Index")
 
-	indexDescriptor, indexPayload, err := prepareIndex(b, ref, confManifestDescriptor, options...)
+	indexDescriptor, indexPayload, err := prepareIndex(b, relocationMap, ref, confManifestDescriptor, options...)
 	if err != nil {
 		return ocischemav1.Descriptor{}, err
 	}
@@ -76,21 +83,23 @@ func pushIndex(ctx context.Context, b *bundle.Bundle, ref reference.Named, resol
 
 	if err := pushPayload(ctx, resolver, ref.String(), indexDescriptor, indexPayload); err != nil {
 		if !allowFallbacks {
+			logger.Debug("Not using fallbacks, giving up")
 			return ocischemav1.Descriptor{}, err
 		}
+		logger.Debugf("Unable to push OCI Index: %v", err)
 		// retry with a docker manifestlist
-		return pushDockerManifestList(ctx, b, ref, resolver, confManifestDescriptor, options...)
+		return pushDockerManifestList(ctx, b, relocationMap, ref, resolver, confManifestDescriptor, options...)
 	}
 
 	logger.Debugf("CNAB Index pushed")
 	return indexDescriptor, nil
 }
 
-func pushDockerManifestList(ctx context.Context, b *bundle.Bundle, ref reference.Named, resolver remotes.Resolver,
+func pushDockerManifestList(ctx context.Context, b *bundle.Bundle, relocationMap relocation.ImageRelocationMap, ref reference.Named, resolver remotes.Resolver,
 	confManifestDescriptor ocischemav1.Descriptor, options ...ManifestOption) (ocischemav1.Descriptor, error) {
 	logger := log.G(ctx)
 
-	indexDescriptor, indexPayload, err := prepareIndexNonOCI(b, ref, confManifestDescriptor, options...)
+	indexDescriptor, indexPayload, err := prepareIndexNonOCI(b, relocationMap, ref, confManifestDescriptor, options...)
 	if err != nil {
 		return ocischemav1.Descriptor{}, err
 	}
@@ -99,14 +108,21 @@ func pushDockerManifestList(ctx context.Context, b *bundle.Bundle, ref reference
 	logger.Debug("Manifest list Descriptor")
 	logPayload(logger, indexDescriptor)
 
-	if err := pushPayload(ctx, resolver, ref.String(), indexDescriptor, indexPayload); err != nil {
+	if err := pushPayload(ctx,
+		resolver, ref.String(),
+		indexDescriptor,
+		indexPayload); err != nil {
 		return ocischemav1.Descriptor{}, err
 	}
 	return indexDescriptor, nil
 }
 
-func prepareIndex(b *bundle.Bundle, ref reference.Named, confDescriptor ocischemav1.Descriptor, options ...ManifestOption) (ocischemav1.Descriptor, []byte, error) {
-	ix, err := convertIndexAndApplyOptions(b, ref, confDescriptor, options...)
+func prepareIndex(b *bundle.Bundle,
+	relocationMap relocation.ImageRelocationMap,
+	ref reference.Named,
+	confDescriptor ocischemav1.Descriptor,
+	options ...ManifestOption) (ocischemav1.Descriptor, []byte, error) {
+	ix, err := convertIndexAndApplyOptions(b, relocationMap, ref, confDescriptor, options...)
 	if err != nil {
 		return ocischemav1.Descriptor{}, nil, err
 	}
@@ -127,8 +143,12 @@ type ociIndexWrapper struct {
 	MediaType string `json:"mediaType,omitempty"`
 }
 
-func convertIndexAndApplyOptions(b *bundle.Bundle, ref reference.Named, confDescriptor ocischemav1.Descriptor, options ...ManifestOption) (*ocischemav1.Index, error) {
-	ix, err := converter.ConvertBundleToOCIIndex(b, ref, confDescriptor)
+func convertIndexAndApplyOptions(b *bundle.Bundle,
+	relocationMap relocation.ImageRelocationMap,
+	ref reference.Named,
+	confDescriptor ocischemav1.Descriptor,
+	options ...ManifestOption) (*ocischemav1.Index, error) {
+	ix, err := converter.ConvertBundleToOCIIndex(b, ref, confDescriptor, relocationMap)
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +160,12 @@ func convertIndexAndApplyOptions(b *bundle.Bundle, ref reference.Named, confDesc
 	return ix, nil
 }
 
-func prepareIndexNonOCI(b *bundle.Bundle, ref reference.Named, confDescriptor ocischemav1.Descriptor, options ...ManifestOption) (ocischemav1.Descriptor, []byte, error) {
-	ix, err := convertIndexAndApplyOptions(b, ref, confDescriptor, options...)
+func prepareIndexNonOCI(b *bundle.Bundle,
+	relocationMap relocation.ImageRelocationMap,
+	ref reference.Named,
+	confDescriptor ocischemav1.Descriptor,
+	options ...ManifestOption) (ocischemav1.Descriptor, []byte, error) {
+	ix, err := convertIndexAndApplyOptions(b, relocationMap, ref, confDescriptor, options...)
 	if err != nil {
 		return ocischemav1.Descriptor{}, nil, err
 	}

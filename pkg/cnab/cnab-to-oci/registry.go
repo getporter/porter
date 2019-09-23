@@ -43,7 +43,7 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	bun, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
+	bun, _, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to pull remote bundle")
 	}
@@ -63,11 +63,11 @@ func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry b
 
 	resolver := r.createResolver(insecureRegistries)
 
-	err = remotes.FixupBundle(context.Background(), bun, ref, resolver, remotes.WithEventCallback(r.displayEvent))
+	rm, err := remotes.FixupBundle(context.Background(), bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
 		return err
 	}
-	d, err := remotes.Push(context.Background(), bun, ref, resolver, true)
+	d, err := remotes.Push(context.Background(), bun, rm, ref, resolver, true)
 	if err != nil {
 		return err
 	}

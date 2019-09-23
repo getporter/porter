@@ -8,10 +8,9 @@
   source = "github.com/vdice/cnab-go"
   branch = "fix/custom-validators"
 
-# Using master until there is a release of cnab-to-oci
 [[constraint]]
   name = "github.com/docker/cnab-to-oci"
-  branch = "master"
+  version = "v0.2.0-beta1"
 
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"
