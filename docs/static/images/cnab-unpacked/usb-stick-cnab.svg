@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="385px" height="201px" viewBox="0 0 385 201" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <title>Group 4</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="109.836368%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#817AE1" offset="0%"></stop>
+            <stop stop-color="#4A44BF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Full" transform="translate(-914.000000, -1465.000000)" fill-rule="nonzero">
+            <g id="Feature-Points" transform="translate(-132.000000, 911.000000)">
+                <g id="2" transform="translate(507.000000, 554.000000)">
+                    <g id="Group-4" transform="translate(539.000000, 0.000000)">
+                        <ellipse id="Oval-8" fill="#D3DDF7" opacity="0.255747768" cx="281.5" cy="102.5" rx="103.5" ry="98.5"></ellipse>
+                        <ellipse id="Oval-8" fill-opacity="0.5" fill="url(#linearGradient-1)" cx="281.5" cy="98.5" rx="103.5" ry="98.5"></ellipse>
+                        <g id="usb-key" transform="translate(0.000000, 49.000000)">
+                            <rect id="Rectangle-21" fill="#FFFFFF" x="271" y="15" width="60" height="76"></rect>
+                            <rect id="Rectangle-21" fill="#FFF3E6" x="251" y="26" width="30" height="53"></rect>
+                            <rect id="Rectangle-21" fill="#3731AA" x="289" y="30" width="14" height="16"></rect>
+                            <rect id="Rectangle-21" fill="#3731AA" x="289" y="60" width="14" height="16"></rect>
+                            <rect id="Rectangle-21" fill="#292580" x="0" y="0" width="270" height="110"></rect>
+                            <circle id="Oval-6" fill="#FFFFFF" cx="58" cy="54" r="38"></circle>
+                            <g id="CNAB-Logo" transform="translate(26.000000, 23.000000)">
+                                <rect id="Rectangle" fill="#FFF3E6" x="14" y="35" width="29" height="29"></rect>
+                                <rect id="Rectangle" fill="#2EC4B6" x="34" y="41" width="23" height="24"></rect>
+                                <rect id="Rectangle" fill="#D3DDF7" x="38" y="9" width="21" height="20"></rect>
+                                <polygon id="Triangle" fill="#3731AA" points="28.5 6 43 35 14 35"></polygon>
+                                <circle id="Oval-2" fill="#E83683" cx="14.5" cy="49.5" r="14.5"></circle>
+                                <polygon id="Path-5" fill="#CCFF66" points="22 9 9 34 9 9"></polygon>
+                                <g id="corner" transform="translate(0.000000, 1.000000)" fill="#3731AA">
+                                    <rect id="Rectangle-2" x="0" y="0" width="2.85714286" height="20"></rect>
+                                    <rect id="Rectangle-2" transform="translate(10.000000, 1.428571) rotate(-90.000000) translate(-10.000000, -1.428571) " x="8.57142857" y="-8.57142857" width="2.85714286" height="20"></rect>
+                                </g>
+                                <g id="corner" transform="translate(55.500000, 10.500000) scale(-1, 1) translate(-55.500000, -10.500000) translate(45.000000, 0.000000)" fill="#3731AA">
+                                    <rect id="Rectangle-2" x="0" y="1" width="3" height="20"></rect>
+                                    <rect id="Rectangle-2" transform="translate(10.500000, 2.428571) rotate(-90.000000) translate(-10.500000, -2.428571) " x="9" y="-7.57142857" width="3" height="20"></rect>
+                                </g>
+                                <g id="corner" transform="translate(55.500000, 62.500000) scale(-1, -1) translate(-55.500000, -62.500000) translate(45.000000, 52.000000)" fill="#3731AA">
+                                    <rect id="Rectangle-2" x="0" y="1" width="3" height="20"></rect>
+                                    <rect id="Rectangle-2" transform="translate(10.500000, 2.428571) rotate(-90.000000) translate(-10.500000, -2.428571) " x="9" y="-7.57142857" width="3" height="20"></rect>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

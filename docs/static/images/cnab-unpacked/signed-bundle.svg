@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="438px" height="292px" viewBox="0 0 438 292" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <title>Group 5</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="394" height="220"></rect>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Full" transform="translate(-419.000000, -1769.000000)">
+            <g id="Feature-Points" transform="translate(-132.000000, 911.000000)">
+                <g id="3" transform="translate(551.000000, 858.000000)">
+                    <g id="Group-5">
+                        <circle id="Oval-7" fill="#4C46C7" fill-rule="nonzero" cx="377" cy="238" r="54"></circle>
+                        <g id="Group-3" transform="translate(44.000000, 45.000000)">
+                            <mask id="mask-2" fill="white">
+                                <use xlink:href="#path-1"></use>
+                            </mask>
+                            <use id="Rectangle-22" fill="#D3DDF7" fill-rule="nonzero" xlink:href="#path-1"></use>
+                            <text id="----------------SdIL" mask="url(#mask-2)" font-family="SpaceMono-Bold, Space Mono" font-size="24" font-weight="bold" letter-spacing="-0.1666667" fill="#2EC4B6">
+                                <tspan x="27" y="40">---------------</tspan>
+                                <tspan x="27" y="76">SdILZkhEscXa5QD4UtEbTbI</tspan>
+                                <tspan x="27" y="112">MEz2BcCjLr0P8pzQiGvAUzV</tspan>
+                                <tspan x="27" y="148">MMRR7N8DiJrODuHcrs=Afpp</tspan>
+                                <tspan x="27" y="184">--- END PGP ---</tspan>
+                            </text>
+                        </g>
+                        <circle id="Oval-7" fill="#292580" fill-rule="nonzero" cx="377" cy="227" r="54"></circle>
+                        <rect id="Rectangle-23" fill="#292580" fill-rule="nonzero" x="0" y="14" width="24" height="75"></rect>
+                        <rect id="Rectangle-23" fill="#292580" fill-rule="nonzero" transform="translate(40.000000, 12.000000) rotate(-90.000000) translate(-40.000000, -12.000000) " x="28" y="-28" width="24" height="80"></rect>
+                        <path d="M380.20312,225.28125 C380.77604,223.97916 381.21875,222.63803 381.53125,221.25781 C381.84375,219.8776 382,218.45834 382,217 C382,214.23957 381.47917,211.64845 380.4375,209.22656 C379.39583,206.80468 377.96355,204.69532 376.14062,202.89844 C374.3177,201.10155 372.19532,199.66928 369.77344,198.60156 C367.35155,197.53385 364.76043,197 362,197 C359.23957,197 356.64845,197.53385 354.22656,198.60156 C351.804675,199.66928 349.682301,201.10155 347.859375,202.89844 C346.036449,204.69532 344.604172,206.80468 343.5625,209.22656 C342.520828,211.64845 342,214.23957 342,217 C342,219.76043 342.520828,222.36457 343.5625,224.8125 C344.604172,227.26043 346.036449,229.3828 347.859375,231.17969 C349.682301,232.97657 351.804675,234.39583 354.22656,235.4375 C356.64845,236.47917 359.23957,237 362,237 C363.45834,237 364.8776,236.84375 366.25781,236.53125 C367.63803,236.21875 368.95312,235.80209 370.20312,235.28125 L378.64062,243.71875 L385.35938,243.71875 L385.35938,250.359375 L392,250.359375 L392,257 L405.35938,257 L405.35938,250.359375 L380.20312,225.28125 Z M357,217 C355.59374,217 354.40886,216.51823 353.44531,215.55469 C352.48177,214.59114 352,213.40626 352,212 C352,210.64583 352.48177,209.47396 353.44531,208.48438 C354.40886,207.49479 355.59374,207 357,207 C358.40626,207 359.59114,207.49479 360.55469,208.48438 C361.51823,209.47396 362,210.64583 362,212 C362,213.40626 361.51823,214.59114 360.55469,215.55469 C359.59114,216.51823 358.40626,217 357,217 Z" id="Fill-1" fill="#4C46C7"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
