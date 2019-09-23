@@ -120,6 +120,8 @@ Parameters
 
 ```
 
+🚧 https://github.com/deislabs/porter/issues/635
+
 ---
 # Get Set...
 
@@ -243,8 +245,6 @@ name: use-cases
 ## Claims 🚧
 ## Dependencies 🚧
 
-🚧 in-progress
-
 ---
 # Core Specification
 
@@ -253,7 +253,7 @@ name: use-cases
 * Entrypoint in invocation images
 * Bundle format (thin or thick)
 * Bundle runtime execution behavior
-* Well-defined verbs
+* Well-known Actions
   * Install
   * Upgrade
   * Uninstall
@@ -328,7 +328,7 @@ Record actions performed on a bundle:
 ---
 # Dependencies Specification
 
-Very early stage.
+🚧 Very early stage 
 
 * Require other bundles
 * Specify their version
@@ -340,6 +340,11 @@ Very early stage.
 * Porter
 * Docker App
 * Duffle
+
+Anyone can write their own tool, these are all based on 
+
+https://github.com/deislabs/cnab-go
+--
 
 ## 🙋🏻‍♀️ Are all CNAB tools interchangeable?
 
@@ -362,11 +367,18 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 
 ## Deploy a bundle with Porter
 
+.nudge[.center[
+  https://github.com/jeremyrickard/do-porter
+]]
+
 ---
-# Parting Questions
+# Parting Awkward Questions
 --
 
 ## 🙋🏻‍♀️ Are bundles ready to use?
+--
+
+## 🙋🏻‍♀️ Is Porter a Microsoft-only tool?
 --
 
 ## 🙋🏻‍♀️ This is more of a comment really...
