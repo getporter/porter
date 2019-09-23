@@ -20,3 +20,15 @@ spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
 [issue]: https://github.com/deislabs/porter/issues/new
+
+## Office Hours
+
+We meet the first of every month at 11am Central Time. Please join us and ask
+questions, share how your bundles are going, just 👋 and say _Hi_. 
+
+If there isn't a lot going on, we will find something fun to do, for example
+live code creating a new mixin. Feel free to leave a note on the agenda for our
+next meeting if there's something that you would like to cover!
+
+* [Join on Zoom](https://zoom.us/j/847248814)
+* [Agenda and Notes](https://hackmd.io/@carolynvs/SyHbtYLvH)
