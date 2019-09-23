@@ -336,9 +336,26 @@ Very early stage.
 
 ---
 # CNAB Tooling
---
+
+* Porter
+* Docker App
+* Duffle
 
 ## 🙋🏻‍♀️ Are all CNAB tools interchangeable?
+
+---
+# Porter
+
+The friendly cloud installer that bootstraps your bundles using tools and assets from your current pipeline. ✨
+
+* Doesn't require knowledge of CNAB
+* Uses mixins to include tools into bundles
+* Designed to make bundles easier to manage
+* Community focused
+
+.center[
+  <img src="/images/porter-notext.png" alt="woman in black suit and hat, with cnab logo" width="300px" style="bottom: 0; position: absolute;"/>
+]
 
 ---
 # Demo
@@ -349,7 +366,7 @@ Very early stage.
 # Parting Questions
 --
 
-## 🙋🏻‍♀️ Is this ready to use?
+## 🙋🏻‍♀️ Are bundles ready to use?
 --
 
 ## 🙋🏻‍♀️ This is more of a comment really...
