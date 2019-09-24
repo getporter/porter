@@ -55,7 +55,7 @@ what we expect a pull request to feel like for everyone involved.
 * Passing CI
 
 When a pull request impacts code, i.e. it's not a documentation-only change,
-the reviewer should run the manual integration tests afte reviewing the code.
+the reviewer should run the manual integration tests after reviewing the code.
 The tests are triggered with a comment:
 
 ```
