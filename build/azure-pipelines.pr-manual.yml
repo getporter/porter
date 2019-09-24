@@ -51,6 +51,6 @@ steps:
 
 - script: |
     export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    make test-cli
+    REGISTRY=deislabs make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'CLI Test'
