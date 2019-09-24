@@ -41,9 +41,8 @@ func (system *SystemInfo) printSystemInfo(out io.Writer) error {
 }
 
 func printSectionHeader(out io.Writer, header string){
-	_, _ = fmt.Fprintf(out, "\n%s\n", header)
-
-
+	underline := "-------"
+	_, _ = fmt.Fprintf(out, "\n%s\n%s\n", header, underline)
 
 }
 
