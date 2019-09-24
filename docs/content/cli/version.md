@@ -20,6 +20,7 @@ porter version [flags]
 ```
   -h, --help            help for version
   -o, --output string   Specify an output format.  Allowed values: json, plaintext (default "plaintext")
+  -s, --system          Print system debug information
 ```
 
 ### Options inherited from parent commands

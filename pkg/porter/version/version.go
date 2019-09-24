@@ -14,6 +14,11 @@ type Options struct {
 	printer.PrintOptions
 }
 
+type VersionOpts struct {
+	Options
+	System bool
+}
+
 var DefaultVersionFormat = printer.FormatPlaintext
 var GetExecutable = os.Executable
 
