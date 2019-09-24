@@ -3,6 +3,7 @@
 # Add steps that test, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
+pr: none
 trigger:
   branches:
     include:
@@ -19,18 +20,6 @@ variables:
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
 steps:
-- task: Docker@1
-  displayName: Login
-  inputs:
-    containerRegistryType: Container Registry
-    dockerRegistryEndpoint: deislabs-registry
-    command: login
-
-- task: HelmInstaller@0
-  inputs:
-    helmVersion: '2.11.0'
-    checkLatestHelmVersion: false
-
 - script: |
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
@@ -41,8 +30,29 @@ steps:
     echo '##vso[task.prependpath]$(GOROOT)/bin'
   displayName: 'Set up the Go workspace'
 
+- task: Docker@1
+  displayName: Login
+  inputs:
+    containerRegistryType: Container Registry
+    dockerRegistryEndpoint: deislabs-registry
+    command: login
+
+- task: DownloadSecureFile@1
+  inputs:
+    secureFile: kubeconfig
+
 - script: |
-     make verify build test-unit
+     make verify
+  workingDirectory: '$(modulePath)'
+  displayName: 'Verify'
+
+- script: |
+     make build
+  workingDirectory: '$(modulePath)'
+  displayName: 'Build'
+
+- script: |
+     make test-unit
   workingDirectory: '$(modulePath)'
   displayName: 'Unit Test'
 
@@ -52,16 +62,6 @@ steps:
   displayName: 'Cross Compile'
 
 - script: |
-    sudo make ajv
-    make build-bundle validate-bundle
-  workingDirectory: '$(modulePath)'
-  displayName: 'Validate Example Bundles'
-
-- task: DownloadSecureFile@1
-  inputs:
-    secureFile: kubeconfig
-
-- script: |
     export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
     make test-integration
   workingDirectory: '$(modulePath)'
@@ -69,12 +69,17 @@ steps:
 
 - script: |
     export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    make test-cli
+    REGISTRY=deislabs make test-cli
   workingDirectory: '$(modulePath)'
   displayName: 'CLI Test'
 
 - script: |
+    sudo make ajv
+    make build-bundle validate-bundle publish-bundle
+  workingDirectory: '$(modulePath)'
+  displayName: 'Publish Example Bundles'
+  
+- script: |
     AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make publish
   workingDirectory: '$(modulePath)'
   displayName: 'Publish'
-  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))

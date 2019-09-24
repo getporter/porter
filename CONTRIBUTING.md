@@ -93,7 +93,7 @@ make test-integration
 ```
 
 If you want to know _all_ the targets that the CI runs, look at
-[azure-pipelines.yml](azure-pipelines.yml).
+<build/azure-pipelines.pr-automatic.yml> and <build/azure-pipelines.pr-manual.yml>.
 
 ## How to get your pull request reviewed fast
 
