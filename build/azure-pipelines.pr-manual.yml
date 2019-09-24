@@ -37,7 +37,7 @@ jobs:
   - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
       make test-integration
-    workingDirectory: '$(modulePath)'
+    workingDirectory: '$(MODULE_PATH)'
     displayName: 'Integration Test'
 
 - job: cli_test
@@ -59,11 +59,11 @@ jobs:
 
   - script: |
        make build
-    workingDirectory: '$(modulePath)'
+    workingDirectory: '$(MODULE_PATH)'
     displayName: 'Build'
 
   - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
       REGISTRY=deislabs make test-cli
-    workingDirectory: '$(modulePath)'
+    workingDirectory: '$(MODULE_PATH)'
     displayName: 'CLI Test'
