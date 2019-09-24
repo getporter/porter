@@ -16,7 +16,6 @@ parameters:
 install:
   - terraform:
       description: "Install Terraform assets"
-      autoApprove: true
       vars:
         file_contents: "{{bundle.parameters.file_contents}}"
       outputs:
@@ -25,7 +24,6 @@ install:
 upgrade:
   - terraform:
       description: "Upgrade Terraform assets"
-      autoApprove: true
       vars:
         file_contents: "{{ bundle.parameters.file_contents }}"
       outputs:
@@ -37,7 +35,6 @@ status:
 
 uninstall:
   - terraform:
-      autoApprove: true
       description: "Uninstall Terraform assets"
       vars:
         file_contents: "{{bundle.parameters.file_contents}}"

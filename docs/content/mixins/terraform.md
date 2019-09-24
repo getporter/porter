@@ -20,7 +20,6 @@ porter mixin install terraform
 install:
   - terraform:
       description: "Install Azure Key Vault"
-      autoApprove: true
       input: false
       backendConfig:
         key: "{{ bundle.name }}.tfstate"

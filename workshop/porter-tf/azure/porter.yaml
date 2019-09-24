@@ -67,7 +67,6 @@ install:
         key: "STORAGE_ACCOUNT_KEY"
    - terraform:
       description: "Create Azure MySQL With Terraform"
-      autoApprove: true
       input: false
       backendConfig:
         key: "{{ bundle.name }}.tfstate"
