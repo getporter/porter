@@ -83,7 +83,6 @@ install:
   
   - terraform:
       description: "Create Azure CosmosDB and Event Hubs"
-      autoApprove: true
       input: false
       backendConfig:
         key: "{{ bundle.name }}.tfstate"
@@ -105,7 +104,6 @@ install:
 upgrade:
   - terraform:
       description: "Update Azure CosmosDB and Event Hubs"
-      autoApprove: true
       input: false
       vars:
         subscription_id: "{{bundle.credentials.subscription_id}}"
@@ -124,7 +122,6 @@ upgrade:
 uninstall:
   - terraform:
       description: "Remove Azure CosmosDB and Event Hubs"
-      autoApprove: true
       backendConfig:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"

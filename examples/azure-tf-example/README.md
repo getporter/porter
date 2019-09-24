@@ -85,7 +85,6 @@ Finally, please note how the `porter-terraform` mixin is used:
 ```yaml
 - terraform:
       description: "Create Azure CosmosDB and Event Hubs"
-      autoApprove: true
       input: false
       backendConfig:
         key: "{{ bundle.name }}.tfstate"
