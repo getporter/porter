@@ -1,0 +1,20 @@
+Name: HELLO
+Description: An example Porter configuration
+Version: 0.1.0
+
+No credentials defined
+
+Parameters:
++--------------+--------------------------------+---------+---------+----------+-------------+
+|     NAME     |          DESCRIPTION           |  TYPE   | DEFAULT | REQUIRED | APPLIES TO  |
++--------------+--------------------------------+---------+---------+----------+-------------+
+| porter-debug | Print debug information from   | boolean | false   | false    | All Actions |
+|              | Porter when executing the      |         |         |          |             |
+|              | bundle                         |         |         |          |             |
+| region       |                                | string  | mars    | false    | All Actions |
++--------------+--------------------------------+---------+---------+----------+-------------+
+
+No outputs defined
+
+No custom actions defined
+

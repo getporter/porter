@@ -24,6 +24,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildBundleInvokeCommand(p))
 	cmd.AddCommand(buildBundleUninstallCommand(p))
 	cmd.AddCommand(buildBundleArchiveCommand(p))
+	cmd.AddCommand(buildBundleExplainCommand(p))
 
 	return cmd
 }
