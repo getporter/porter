@@ -47,6 +47,8 @@ func printSectionHeader(out io.Writer, header string){
 }
 
 func (p *Porter) PrintDebugInfo(opts version.Options) error {
+	// force opts to print version as plaintext
+	opts.RawFormat = string(printer.FormatPlaintext)
 	err := p.PrintVersion(opts)
 	if err != nil {
 		return errors.Wrap(err, "Failed to print version")
