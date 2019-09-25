@@ -7,7 +7,7 @@ import (
 )
 
 func buildVersionCommand(m *exec.Mixin) *cobra.Command {
-	opts := version.VersionOpts{}
+	opts := version.Options{}
 
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -16,7 +16,7 @@ func buildVersionCommand(m *exec.Mixin) *cobra.Command {
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return m.PrintVersion(opts.Options)
+			return m.PrintVersion(opts)
 		},
 	}
 
