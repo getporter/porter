@@ -52,6 +52,12 @@ ping:
       flags:
         c: echo ping
 
+upgrade:
+  - helm:
+      description: "Upgrade MySQL"
+      name: "{{ bundle.parameters.mysql-name }}"
+      chart: stable/mysql
+
 uninstall:
 - helm:
     description: "Uninstall MySQL"

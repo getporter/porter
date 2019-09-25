@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/config"
 )
 
 // InstallOptions that may be specified when installing a bundle.
@@ -36,7 +38,7 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		return err
 	}
 
-	err = deperator.Execute()
+	err = deperator.Execute(config.ActionInstall)
 	if err != nil {
 		return err
 	}

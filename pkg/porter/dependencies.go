@@ -70,7 +70,7 @@ func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action c
 	return nil
 }
 
-func (e *dependencyExecutioner) Execute() error {
+func (e *dependencyExecutioner) Execute(action config.Action) error {
 	if e.action == nil {
 		return errors.New("Prepare must be called before Execute")
 	}
@@ -78,7 +78,7 @@ func (e *dependencyExecutioner) Execute() error {
 	// executeDependency the requested action against all of the dependencies
 	parentArgs := e.parentOpts.ToActionArgs(e)
 	for _, dep := range e.deps {
-		err := e.executeDependency(dep, parentArgs)
+		err := e.executeDependency(dep, parentArgs, action)
 		if err != nil {
 			return err
 		}
@@ -220,7 +220,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments) error {
+func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action config.Action) error {
 	depArgs := cnabprovider.ActionArguments{
 		Insecure:   parentArgs.Insecure,
 		BundlePath: dep.CNABFile,
@@ -237,13 +237,16 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		return errors.Wrapf(err, "error executing dependency %s", dep.Alias)
 	}
 
-	// Collect expected outputs via claim
-	c, err := e.CNAB.FetchClaim(depArgs.Claim)
-	if err != nil {
-		return err
-	}
+	// If action is uninstall, no claim will exist
+	if action != config.ActionUninstall {
+		// Collect expected outputs via claim
+		c, err := e.CNAB.FetchClaim(depArgs.Claim)
+		if err != nil {
+			return err
+		}
 
-	dep.outputs = c.Outputs
+		dep.outputs = c.Outputs
+	}
 
 	return nil
 }

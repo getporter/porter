@@ -1,10 +1,12 @@
 package porter
 
 import (
-	"github.com/deislabs/porter/pkg/cnab/provider"
+	"testing"
+
+	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
@@ -17,7 +19,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	e := newDependencyExecutioner(p.Porter)
 
 	// Try to call execute without prepare
-	err = e.Execute()
+	err = e.Execute(config.ActionInstall)
 	require.Error(t, err, "execute before prepare should return an error")
 	assert.EqualError(t, err, "Prepare must be called before Execute")
 
@@ -29,6 +31,6 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err, "prepare should have succeeded")
-	err = e.Execute()
+	err = e.Execute(config.ActionInstall)
 	require.NoError(t, err, "execute should not fail when we have called prepare")
 }
