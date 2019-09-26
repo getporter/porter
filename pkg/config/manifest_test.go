@@ -73,8 +73,9 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 	}
 	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
 		c := NewTestConfig(t)
-		c.TestContext.AddTestFile("testdata/mixin-with-config.yaml", Name)
+		c.TestContext.AddTestFile("testdata/with-credentials.yaml", Name)
 		m, err := c.ReadManifest(Name)
+		t.Logf("%v", m.Credentials)
 		require.NoError(t, err)
 		assertAllCredentialsRequired(t, m.Credentials)
 	})

@@ -3,15 +3,3 @@ mixins:
 - az:
     extensions:
     - iot
-
-credentials:
-- name: SUBSCRIPTION_ID
-  env: AZURE_SUBSCRIPTION_ID
-- name: TENANT_ID
-  env: AZURE_TENANT_ID
-- name: CLIENT_ID
-  env: AZURE_CLIENT_ID
-- name: CLIENT_SECRET
-  env: AZURE_CLIENT_SECRET
-- name: kubeconfig
-  path: /root/.kube/config
