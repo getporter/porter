@@ -97,7 +97,7 @@ func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string
 	cmd.Stderr = m.Err
 	out, err := cmd.Output()
 	if err != nil {
-		prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+		prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 		return nil, errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 	}
 	return out, nil
