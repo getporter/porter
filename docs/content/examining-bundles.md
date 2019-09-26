@@ -3,7 +3,7 @@ title: Examining Bundles
 description: How to figure out how to use a bundle
 ---
 
-Once a bundle has been built, how do users of the bundle figure out how to actually _use_ it? A user could read the `porter.yaml` or the `bundle.json` if they have the bundle locally, but this won't work for a bundle that has been published to an OCI registry. Even when you have them locally, rhe `bundle.json` and `porter.yaml` aren't the best way to figure out how to use a bundle. How should a user examine the bundle then? Porter has a command called `explain` to help with this!
+Once a bundle has been built, how do users of the bundle figure out how to actually _use_ it? A user could read the `porter.yaml` or the `bundle.json` if they have the bundle locally, but this won't work for a bundle that has been published to an OCI registry. Even when you have them locally, the `bundle.json` and `porter.yaml` aren't the best way to figure out how to use a bundle. How should a user examine the bundle then? Porter has a command called `explain` to help with this!
 
 ```bash
 $ porter explain --tag jeremyrickard/porter-do-bundle:v0.4.1
@@ -37,4 +37,5 @@ No custom actions defined
 
 The `porter explain` command will show what credentials and parameters are required for the bundle, what outputs are generated, and what custom actions have been defined. For `parameters`, this command will also show you the default value, if one has been provided. Additionally, the user can quickly see what actions a `parameter` or `output` apply to.
 
-`porter explain` can be used with a published bundle, as show above, or with a local bundle. The command even works with bundles that were not built with Porter, through the use of the `--cnab-file` flag.
+`porter explain` can be used with a published bundle, as show above, or with a local bundle. The command even works with bundles that were not built with Porter, through the use of the `--cnab-file` flag. For all the options, run the command `porter explain --help`.
+
