@@ -7,7 +7,6 @@ import (
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,12 +16,9 @@ func TestExplain_generateActionsTableNoActions(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateActionsTable(&bun)
-	expected := `+------+-------------+-------------------+-----------+
-| NAME | DESCRIPTION | MODIFIES INSTANCE | STATELESS |
-+------+-------------+-------------------+-----------+
-+------+-------------+-------------------+-----------+
-`
+	p.printActionsExplainTable(&bun)
+	expected := "Name   Description   Modifies Instance   Stateless\n"
+
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
 	t.Log(gotOutput)
@@ -33,7 +29,7 @@ func TestExplain_generateActionsBlockNoActions(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateActionsBlock(&bun)
+	p.printActionsExplainBlock(&bun)
 	expected := "No custom actions defined\n\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
@@ -45,12 +41,8 @@ func TestExplain_generateCredentialsTableNoCreds(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateCredentialsTable(&bun)
-	expected := `+------+-------------+----------+
-| NAME | DESCRIPTION | REQUIRED |
-+------+-------------+----------+
-+------+-------------+----------+
-`
+	p.printCredentialsExplainTable(&bun)
+	expected := "Name   Description   Required\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
 	t.Log(gotOutput)
@@ -61,7 +53,7 @@ func TestExplain_generateCredentialsBlockNoCreds(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateCredentialsBlock(&bun)
+	p.printCredentialsExplainBlock(&bun)
 	expected := "No credentials defined\n\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
@@ -73,12 +65,8 @@ func TestExplain_generateOutputsTableNoOutputs(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateOutputsTable(&bun)
-	expected := `+------+-------------+------+------------+
-| NAME | DESCRIPTION | TYPE | APPLIES TO |
-+------+-------------+------+------------+
-+------+-------------+------+------------+
-`
+	p.printOutputsExplainTable(&bun)
+	expected := "Name   Description   Type   Applies To\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
 	t.Log(gotOutput)
@@ -89,7 +77,7 @@ func TestExplain_generateOutputsBlockNoOutputs(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateOutputsBlock(&bun)
+	p.printOutputsExplainBlock(&bun)
 	expected := "No outputs defined\n\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
@@ -101,12 +89,8 @@ func TestExplain_generateParametersTableNoParams(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateParametersTable(&bun)
-	expected := `+------+-------------+------+---------+----------+------------+
-| NAME | DESCRIPTION | TYPE | DEFAULT | REQUIRED | APPLIES TO |
-+------+-------------+------+---------+----------+------------+
-+------+-------------+------+---------+----------+------------+
-`
+	p.printParametersExplainTable(&bun)
+	expected := "Name   Description   Type   Default   Required   Applies To\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
 	t.Log(gotOutput)
@@ -117,7 +101,7 @@ func TestExplain_generateParametersBlockNoParams(t *testing.T) {
 
 	p := NewTestPorter(t)
 
-	p.generateParametersBlock(&bun)
+	p.printParametersExplainBlock(&bun)
 	expected := "No parameters defined\n\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
@@ -137,17 +121,17 @@ func TestExplain_validateBadFormat(t *testing.T) {
 
 func TestExplain_generateTable(t *testing.T) {
 	p := NewTestPorter(t)
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-	p.TestConfig.TestContext.AddTestFile("./testdata/explain/params-bundle.json", "bundle.json")
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
 
+	pb, err := generatePrintable(b)
+	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "table"
-	opts.CNABFile = "bundle.json"
 
-	err := opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.Explain(opts)
+	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output.txt")
@@ -157,17 +141,18 @@ func TestExplain_generateTable(t *testing.T) {
 
 func TestExplain_generateJSON(t *testing.T) {
 	p := NewTestPorter(t)
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-	p.TestConfig.TestContext.AddTestFile("./testdata/explain/params-bundle.json", "bundle.json")
 
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
+
+	pb, err := generatePrintable(b)
+	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
-	opts.CNABFile = "bundle.json"
 
-	err := opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.Explain(opts)
+	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	expected, err := ioutil.ReadFile("testdata/explain/expected-json-output.json")
@@ -177,17 +162,18 @@ func TestExplain_generateJSON(t *testing.T) {
 
 func TestExplain_generateYAML(t *testing.T) {
 	p := NewTestPorter(t)
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-	p.TestConfig.TestContext.AddTestFile("./testdata/explain/params-bundle.json", "bundle.json")
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
+
+	pb, err := generatePrintable(b)
+	require.NoError(t, err)
 
 	opts := ExplainOpts{}
 	opts.RawFormat = "yaml"
-	opts.CNABFile = "bundle.json"
 
-	err := opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.Explain(opts)
+	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	expected, err := ioutil.ReadFile("testdata/explain/expected-yaml-output.yaml")
@@ -215,8 +201,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Parameters))
-	d, ok := pb.Parameters["debug"]
-	assert.True(t, ok)
+	d := pb.Parameters[0]
 	assert.Equal(t, "clippy", fmt.Sprintf("%v", d.Default))
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Credentials))
@@ -242,8 +227,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Outputs))
-	d, ok := pb.Outputs["debug"]
-	assert.True(t, ok)
+	d := pb.Outputs[0]
 	assert.Equal(t, "string", fmt.Sprintf("%v", d.Type))
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Credentials))
@@ -264,8 +248,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Credentials))
-	d, ok := pb.Credentials["debug"]
-	assert.True(t, ok)
+	d := pb.Credentials[0]
 	assert.True(t, d.Required)
 	assert.Equal(t, "a cred", d.Description)
 	assert.Equal(t, 0, len(pb.Parameters))

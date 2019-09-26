@@ -17,8 +17,6 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
   porter bundle explain --tag deislabs/porter-bundle:v0.1.0
-  porter bundle explain --cnab-file some/bundle.json -o json
-  porter bundle explain -o yaml --file another/porter.yaml
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

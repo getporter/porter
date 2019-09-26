@@ -21,6 +21,7 @@ porter explain [flags]
   porter explain
   porter explain --file another/porter.yaml
   porter explain --cnab-file some/bundle.json
+  porter explain --tag deislabs/porter-bundle:v0.1.0
 		  
 ```
 
