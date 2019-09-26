@@ -13,6 +13,11 @@ invocationImage: deislabs/porter-kubernetes:latest
 tag: deislabs/porter-kube-bundle:v0.1.0
 
 install:
+  - exec:
+      description: "cat the file..."
+      command: cat
+      arguments:
+      - "/root/.kube/config"
   - kubernetes:
       description: "Create NGINX Deployment"
       manifests:
@@ -23,7 +28,6 @@ install:
           resourceType: service
           resourceName: nginx-deployment
           jsonPath: "{.spec.clusterIP}"
-
   - exec:
       description: "Echo the IP Address"
       command: bash
