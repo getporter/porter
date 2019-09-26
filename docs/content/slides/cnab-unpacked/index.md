@@ -28,12 +28,21 @@ name: introductions
   </div>
 </div>
 
+???
+* co-creator of porter
+* contribute cnab-spec
+
 ---
 # What is CNAB?
 
 .nudge[
 > Cloud Native Application Bundles is an open-source packaging and distribution specification for managing distributed applications with a single installable file.
 ]
+
+???
+
+* goal: cloud installer
+* don't worry, concrete later
 
 ---
 # Where did it come from?
@@ -60,6 +69,11 @@ name: introductions
 * Terraform to create the infrastructure
 * Helm to deploy to a kubernetes cluster
 * Obligatory bash script
+
+???
+
+* Doesn't have to be these technologies
+* mix of infra, app and glue logic
 
 ---
 # Let's find the gap
@@ -182,6 +196,13 @@ The application **and everything needed to install it**
 
 ## 🙋🏻‍♀️ I don't like the sound of that bash script...
 
+???
+
+* Do you need to learn another tool?
+* Do you need to hire someone who knows another tool?
+* Are you in an environment that uses multiple tools, without a way to rapidly streamline the experience?
+
+
 ---
 class: middle
 name: use-cases
@@ -196,6 +217,11 @@ name: use-cases
   ![so what is it](/images/pack-your-bags/easy-bake-oven-image.png)
 ]
 
+???
+
+* Multiple tooled installations as a composed, logically structured unit. 
+* Never hunting for the right client version
+
 ---
 
 # Deploy App's Infrastructure
@@ -206,6 +232,10 @@ name: use-cases
   <img src="/images/porter-mixin-cloud.png" alt="helm, terraform, gcloud, azure logo cloud" width="400px" />
 ]
 
+???
+* DNS, load balancer, ssl certificat, CDN...
+* Apps have baggage, state and deploying them is more than just code drops
+
 ---
 
 # Airgapped Networks or Offline
@@ -215,6 +245,9 @@ name: use-cases
 .center[
   <img src="/images/cnab-unpacked/usb-stick-cnab.svg" width="300px" />
 ]
+
+???
+* Features work both online and offline, including signatures and attestation validations. 
 
 ---
 
@@ -235,6 +268,11 @@ name: use-cases
 .center[
   <img src="/images/cnab-unpacked/signed-bundle.svg" width="300px" />
 ]
+
+???
+* Each image and installation image has a digest to verify integrity. 
+* Bundles can be signed, giving authority to the verification of images used. 
+* Attestations can be attached, indicating that a bundle has achieved some state or possesses some approval from the supply chain. 
 
 ---
 # CNAB Sub Specifications
@@ -347,7 +385,7 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 
 * Doesn't require knowledge of CNAB
 * Uses mixins to include tools into bundles
-* Designed to make bundles easier to manage
+* Designed to make bundles easier to create and manage
 * Community focused
 
 .center[
@@ -378,6 +416,12 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 
 ## 🙋🏻‍♀️ Ask me yours!
 
+???
+* all clouds, external contributors, love for it to live in a SIG or sub project with the CNCF
+* everything beta, only core done
+* Ready to try, give feedback, start planning
+* Come to cnab meetings, contribute to the spec and porter
+
 ---
 # Resources
 
@@ -387,6 +431,8 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 * [porter.sh/contribute][contribute] - New Contributor Guide
 * [porter.sh/community][porter-slack] - #porter CNCF Slack and Office Hours
 
+???
+* Office hours this Tuesday at 11am Central Time
 
 [cnab]: https://cnab.io
 [cnab-slack]: https://cnab.io/community-meetings/#communications
