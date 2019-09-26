@@ -93,7 +93,7 @@ func (r *Runner) Run(commandOpts mixin.CommandOptions) error {
 		}()
 	}
 
-	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 	if r.Debug {
 		fmt.Fprintln(r.Err, prettyCmd)
 	}

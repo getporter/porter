@@ -62,12 +62,12 @@ func (m *Mixin) Install() error {
 
 		err = cmd.Start()
 		if err != nil {
-			prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+			prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 			return errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 		}
 		err = cmd.Wait()
 		if err != nil {
-			prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+			prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 			return errors.Wrap(err, fmt.Sprintf("error running command %s", prettyCmd))
 		}
 	}

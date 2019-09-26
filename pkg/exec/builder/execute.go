@@ -69,7 +69,7 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	cmd.Stdout = io.MultiWriter(cxt.Out, output)
 	cmd.Stderr = cxt.Err
 
-	prettyCmd := fmt.Sprintf("%s %s", cmd.Path, strings.Join(cmd.Args, " "))
+	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 	if cxt.Debug {
 		fmt.Fprintln(cxt.Out, prettyCmd)
 	}
