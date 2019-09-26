@@ -11,7 +11,7 @@ const (
 	ClaimsDirectory = "claims"
 )
 
-func (d *Duffle) NewClaimStore() (claim.Store, error) {
+func (d *Runtime) NewClaimStore() (claim.Store, error) {
 	claimsPath, err := d.Config.GetClaimsDir()
 	if err != nil {
 		return claim.Store{}, errors.Wrap(err, "could not get path to the claims directory")
@@ -20,7 +20,7 @@ func (d *Duffle) NewClaimStore() (claim.Store, error) {
 }
 
 // FetchClaim fetches a claim from the given CNABProvider's claim store
-func (d *Duffle) FetchClaim(name string) (*claim.Claim, error) {
+func (d *Runtime) FetchClaim(name string) (*claim.Claim, error) {
 	claimStore, err := d.NewClaimStore()
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not retrieve bundle instance %s", name)

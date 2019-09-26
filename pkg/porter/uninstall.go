@@ -37,7 +37,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	err = p.CNAB.Uninstall(opts.ToDuffleArgs(deperator))
+	err = p.CNAB.Uninstall(opts.ToActionArgs(deperator))
 	if err != nil {
 		if len(deperator.deps) > 0 {
 			return errors.Wrapf(err, "failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name)

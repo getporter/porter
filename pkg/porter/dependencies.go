@@ -78,7 +78,7 @@ func (e *dependencyExecutioner) Execute() error {
 	}
 
 	// executeDependency the requested action against all of the dependencies
-	parentArgs := e.parentOpts.ToDuffleArgs(e)
+	parentArgs := e.parentOpts.ToActionArgs(e)
 	for _, dep := range e.deps {
 		err := e.executeDependency(dep, parentArgs)
 		if err != nil {

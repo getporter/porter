@@ -30,21 +30,21 @@ type ActionArguments struct {
 	Driver string
 }
 
-func (d *Duffle) ApplyConfig(args ActionArguments) action.OperationConfigs {
+func (d *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
 	return action.OperationConfigs{
 		d.SetOutput(),
 		d.AddFiles(args),
 	}
 }
 
-func (d *Duffle) SetOutput() action.OperationConfigFunc {
+func (d *Runtime) SetOutput() action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		op.Out = d.Out
 		return nil
 	}
 }
 
-func (d *Duffle) AddFiles(args ActionArguments) action.OperationConfigFunc {
+func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v

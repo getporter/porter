@@ -9,7 +9,7 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 )
 
-func (d *Duffle) Upgrade(args ActionArguments) error {
+func (d *Runtime) Upgrade(args ActionArguments) error {
 	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Upgrade
 	// we shouldn't be reimplementing calling all these functions all over again
 

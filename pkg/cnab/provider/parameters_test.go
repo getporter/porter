@@ -15,7 +15,7 @@ import (
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -34,7 +34,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -57,7 +57,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 
 func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -120,7 +120,7 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -156,7 +156,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -192,7 +192,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 func Test_loadParameters_fileParameter(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 

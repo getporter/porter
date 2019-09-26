@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Duffle) Invoke(action string, args ActionArguments) error {
+func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	claims, err := d.NewClaimStore()
 	if err != nil {
 		return errors.Wrapf(err, "could not access claim store")

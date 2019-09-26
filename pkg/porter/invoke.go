@@ -56,5 +56,5 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 	}
 
 	fmt.Fprintf(p.Out, "invoking custom action %s on %s...\n", opts.Action, opts.Name)
-	return p.CNAB.Invoke(opts.Action, opts.ToDuffleArgs(deperator))
+	return p.CNAB.Invoke(opts.Action, opts.ToActionArgs(deperator))
 }

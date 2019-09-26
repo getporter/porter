@@ -27,9 +27,8 @@ func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) erro
 	return nil
 }
 
-// ToDuffleArgs converts this instance of user-provided action options
-// to duffle action arguments.
-func (o *BundleLifecycleOpts) ToDuffleArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
+// ToActionArgs converts this instance of user-provided action options.
+func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
 		Claim:                 o.Name,
 		BundlePath:            o.CNABFile,

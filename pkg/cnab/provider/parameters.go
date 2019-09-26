@@ -12,7 +12,7 @@ import (
 
 // loadParameters accepts a set of string overrides and combines that with the default parameters to create
 // a full set of parameters.
-func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
+func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
 	overrides := make(map[string]interface{}, len(rawOverrides))
 	bun := claim.Bundle
 
@@ -70,7 +70,7 @@ func (d *Duffle) loadParameters(claim *claim.Claim, rawOverrides map[string]stri
 	return bundle.ValuesOrDefaults(overrides, bun)
 }
 
-func (d *Duffle) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
+func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
 	// the parameter value (via rawValue) may represent a file on the local filesystem
 	if def.Type == "string" && def.ContentEncoding == "base64" {
 		if _, err := d.FileSystem.Stat(rawValue); err == nil {

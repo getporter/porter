@@ -9,7 +9,7 @@ import (
 // TODO: Export everything in this file from duffle cmd/duffle/pull.go
 var ErrNotSigned = errors.New("bundle is not signed")
 
-func (d *Duffle) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
+func (d *Runtime) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
 	// TODO: once we support secure bundles we need more logic here (it's in duffle but I didn't copy it)
 	// I'm hoping we've gotten this code exported from duffle by then though
 	if !insecure {
