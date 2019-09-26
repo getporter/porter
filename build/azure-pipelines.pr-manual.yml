@@ -11,46 +11,59 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  MODULE_PATH: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
-steps:
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
+jobs:
+- job: integration_test
+  steps:
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
 
-- task: Docker@1
-  displayName: Login
-  inputs:
-    containerRegistryType: Container Registry
-    dockerRegistryEndpoint: deislabs-registry
-    command: login
+  - task: Docker@1
+    displayName: Docker Login
+    inputs:
+      containerRegistryType: Container Registry
+      dockerRegistryEndpoint: deislabs-registry
+      command: login
 
-- task: DownloadSecureFile@1
-  inputs:
-    secureFile: kubeconfig
+  - task: DownloadSecureFile@1
+    displayName: Download Kubeconfig
+    inputs:
+      secureFile: kubeconfig
 
-- script: |
-     make build
-  workingDirectory: '$(modulePath)'
-  displayName: 'Build'
+  - script: |
+      export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
+      make test-integration
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Integration Test'
 
-- script: |
-    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    make test-integration
-  workingDirectory: '$(modulePath)'
-  displayName: 'Integration Test'
+- job: cli_test
+  steps:
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
 
-- script: |
-    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    REGISTRY=deislabs make test-cli
-  workingDirectory: '$(modulePath)'
-  displayName: 'CLI Test'
+  - task: Docker@1
+    displayName: Docker Login
+    inputs:
+      containerRegistryType: Container Registry
+      dockerRegistryEndpoint: deislabs-registry
+      command: login
+
+  - task: DownloadSecureFile@1
+    displayName: Download Kubeconfig
+    inputs:
+      secureFile: kubeconfig
+
+  - script: |
+       make build
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Build'
+
+  - script: |
+      export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
+      REGISTRY=deislabs make test-cli
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'CLI Test'

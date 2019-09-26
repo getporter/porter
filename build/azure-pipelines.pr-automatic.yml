@@ -11,44 +11,49 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  MODULE_PATH: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
-steps:
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
+jobs:
+- job: test
+  steps:
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
 
-- script: |
-     make verify
-  workingDirectory: '$(modulePath)'
-  displayName: 'Verify'
+  - script: |
+      make verify
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Verify'
 
-- script: |
-     make build
-  workingDirectory: '$(modulePath)'
-  displayName: 'Build'
+  - script: |
+      make test-unit
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Unit Test'
 
-- script: |
-     make test-unit
-  workingDirectory: '$(modulePath)'
-  displayName: 'Unit Test'
+- job: compile
+  steps:
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
 
-- script: |
-    make xbuild-all
-  workingDirectory: '$(modulePath)'
-  displayName: 'Cross Compile'
+  - script: |
+        make xbuild-all
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Cross Compile'
 
-- script: |
-    sudo make ajv
-    make build-bundle validate-bundle
-  workingDirectory: '$(modulePath)'
-  displayName: 'Validate Example Bundles'
+- job: validate_example_bundles
+  steps:
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
+
+  - script: |
+      make build
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Build'
+
+  - script: |
+      sudo make ajv
+      make build-bundle validate-bundle
+    workingDirectory: '$(MODULE_PATH)'
+    displayName: 'Validate Example Bundles'
