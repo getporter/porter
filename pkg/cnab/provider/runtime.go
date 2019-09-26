@@ -80,8 +80,7 @@ func (d *Runtime) setupOutputsMount(driverImpl driver.Driver, claimName string) 
 	return nil
 }
 
-// WriteClaimOutputs writes outputs to a claim, according to the provided bundle
-// and Duffle config
+// WriteClaimOutputs writes outputs to a claim, according to the provided bundle config.
 func (d *Runtime) WriteClaimOutputs(c *claim.Claim, action string) error {
 	if c.Bundle == nil {
 		return errors.New("bundle instance has no bundle set")

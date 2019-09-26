@@ -26,8 +26,6 @@ func (d *Runtime) loadCredentials(b *bundle.Bundle, files []string) (map[string]
 	// in which they were supplied on the CLI.
 	for _, file := range files {
 		if !d.isPathy(file) {
-			// TODO: when we export this function, having an instance where we can set home manually
-			// instead of on an env var would be super helpful. I had to inject the homepath instead of using duffle's homepath function.
 			credsPath, err := d.Config.GetCredentialsDir()
 			if err != nil {
 				return nil, err

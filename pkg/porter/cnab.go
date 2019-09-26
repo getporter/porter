@@ -186,7 +186,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 
 	originalPath := o.CNABFile
 	if !filepath.IsAbs(o.CNABFile) {
-		// Convert to an absolute filepath because duffle needs it that way
+		// Convert to an absolute filepath because runtime needs it that way
 		pwd, err := os.Getwd()
 		if err != nil {
 			return errors.Wrap(err, "could not get current working directory")

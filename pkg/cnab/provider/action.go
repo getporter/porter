@@ -5,7 +5,7 @@ import (
 	"github.com/deislabs/cnab-go/driver"
 )
 
-// Shared arguments for all CNAB actions supported by duffle
+// Shared arguments for all CNAB actions
 type ActionArguments struct {
 	// Name of the instance.
 	Claim string

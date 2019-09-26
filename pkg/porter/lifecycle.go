@@ -38,7 +38,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 		Driver:                o.Driver,
 	}
 
-	// Do a safe copy so that modifications to the duffle args aren't also made to the
+	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
 	for k, v := range o.combinedParameters {
 		args.Params[k] = v
