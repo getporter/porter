@@ -75,7 +75,6 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 		c := NewTestConfig(t)
 		c.TestContext.AddTestFile("testdata/with-credentials.yaml", Name)
 		m, err := c.ReadManifest(Name)
-		t.Logf("%v", m.Credentials)
 		require.NoError(t, err)
 		assertAllCredentialsRequired(t, m.Credentials)
 	})

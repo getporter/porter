@@ -151,7 +151,7 @@ func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
 	return &p2
 }
 
-// CredentialDefinition are
+// CredentialDefinition represents the structure or fields of a credential parameter
 type CredentialDefinition struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description,omitempty"`
