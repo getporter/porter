@@ -55,6 +55,10 @@ upgrade:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: stable/wordpress
+      outputs:
+        - name: wordpress-password
+          secret: "{{ bundle.parameters.wordpress-name }}"
+          key: wordpress-password
 
 ping:
   - exec:

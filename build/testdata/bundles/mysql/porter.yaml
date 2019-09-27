@@ -57,6 +57,13 @@ upgrade:
       description: "Upgrade MySQL"
       name: "{{ bundle.parameters.mysql-name }}"
       chart: stable/mysql
+      outputs:
+      - name: mysql-root-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-root-password
+      - name: mysql-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-password
 
 uninstall:
 - helm:
@@ -71,4 +78,5 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
     sensitive: true
