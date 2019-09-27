@@ -19,7 +19,7 @@
 
 #
 # SEMVER IS DEAD, LONG LIVE SEMVER
-# Use a very specific version of docker and its libraries because they aren't contained in a release yet, but duffle uses some unreleased feature/code ¯\_(ツ)_/¯
+# Use a very specific version of docker and its libraries because they aren't contained in a release yet, but cnab-go references some unreleased feature/code ¯\_(ツ)_/¯
 #
 [[constraint]]
   name = "github.com/docker/cli"

@@ -14,17 +14,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Duffle struct {
+type Runtime struct {
 	*config.Config
 }
 
-func NewDuffle(c *config.Config) *Duffle {
-	return &Duffle{
+func NewRuntime(c *config.Config) *Runtime {
+	return &Runtime{
 		Config: c,
 	}
 }
 
-func (d *Duffle) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
+func (d *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
 	driverImpl, err := lookup.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
@@ -51,7 +51,7 @@ func (d *Duffle) newDriver(driverName string, claimName string, args ActionArgum
 	return driverImpl, err
 }
 
-func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) error {
+func (d *Runtime) setupOutputsMount(driverImpl driver.Driver, claimName string) error {
 	// If docker driver, setup host bind mount for outputs
 	if dockerish, ok := driverImpl.(*docker.Driver); ok {
 		outputsDir, err := d.Config.GetOutputsDir()
@@ -80,9 +80,8 @@ func (d *Duffle) setupOutputsMount(driverImpl driver.Driver, claimName string) e
 	return nil
 }
 
-// WriteClaimOutputs writes outputs to a claim, according to the provided bundle
-// and Duffle config
-func (d *Duffle) WriteClaimOutputs(c *claim.Claim, action string) error {
+// WriteClaimOutputs writes outputs to a claim, according to the provided bundle config.
+func (d *Runtime) WriteClaimOutputs(c *claim.Claim, action string) error {
 	if c.Bundle == nil {
 		return errors.New("bundle instance has no bundle set")
 	}

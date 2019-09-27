@@ -27,9 +27,8 @@ func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) erro
 	return nil
 }
 
-// ToDuffleArgs converts this instance of user-provided action options
-// to duffle action arguments.
-func (o *BundleLifecycleOpts) ToDuffleArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
+// ToActionArgs converts this instance of user-provided action options.
+func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
 		Claim:                 o.Name,
 		BundlePath:            o.CNABFile,
@@ -39,7 +38,7 @@ func (o *BundleLifecycleOpts) ToDuffleArgs(deperator *dependencyExecutioner) cna
 		Driver:                o.Driver,
 	}
 
-	// Do a safe copy so that modifications to the duffle args aren't also made to the
+	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
 	for k, v := range o.combinedParameters {
 		args.Params[k] = v

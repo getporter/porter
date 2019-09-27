@@ -13,7 +13,7 @@ const (
 	CredentialsDirectory = "credentials"
 )
 
-func (d *Duffle) loadCredentials(b *bundle.Bundle, files []string) (map[string]string, error) {
+func (d *Runtime) loadCredentials(b *bundle.Bundle, files []string) (map[string]string, error) {
 	// TODO: export back outta Compton
 
 	creds := map[string]string{}
@@ -26,8 +26,6 @@ func (d *Duffle) loadCredentials(b *bundle.Bundle, files []string) (map[string]s
 	// in which they were supplied on the CLI.
 	for _, file := range files {
 		if !d.isPathy(file) {
-			// TODO: when we export this function, having an instance where we can set home manually
-			// instead of on an env var would be super helpful. I had to inject the homepath instead of using duffle's homepath function.
 			credsPath, err := d.Config.GetCredentialsDir()
 			if err != nil {
 				return nil, err
@@ -51,7 +49,7 @@ func (d *Duffle) loadCredentials(b *bundle.Bundle, files []string) (map[string]s
 }
 
 // isPathy checks to see if a name looks like a path.
-func (d *Duffle) isPathy(name string) bool {
+func (d *Runtime) isPathy(name string) bool {
 	// TODO: export back outta Compton
 
 	return strings.Contains(name, string(filepath.Separator))

@@ -15,7 +15,7 @@ import (
 
 func TestNewDriver_Docker(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	driver, err := d.newDriver("docker", "myclaim", ActionArguments{})
 	require.NoError(t, err)
@@ -30,7 +30,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 func TestWriteClaimOutputs(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewDuffle(c.Config)
+	d := NewRuntime(c.Config)
 
 	homeDir, err := c.GetHomeDir()
 	require.NoError(t, err)

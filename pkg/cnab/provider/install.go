@@ -9,10 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Duffle) Install(args ActionArguments) error {
-	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Install
-	// we shouldn't be reimplementing calling all these functions all over again
-
+func (d *Runtime) Install(args ActionArguments) error {
 	c, err := claim.New(args.Claim)
 	if err != nil {
 		return errors.Wrap(err, "invalid bundle instance name")

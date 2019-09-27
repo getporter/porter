@@ -35,6 +35,6 @@ func New() *Porter {
 		Templates: templates.NewTemplates(),
 		Builder:   buildprovider.NewDockerBuilder(c),
 		Mixins:    mixinprovider.NewFileSystem(c),
-		CNAB:      cnabprovider.NewDuffle(c),
+		CNAB:      cnabprovider.NewRuntime(c),
 	}
 }

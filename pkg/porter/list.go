@@ -39,7 +39,7 @@ func (l CondensedClaimList) Less(i, j int) bool {
 
 // ListInstances lists installed bundles by their claims.
 func (p *Porter) ListInstances(opts ListOptions) error {
-	cp := cnab.NewDuffle(p.Config)
+	cp := cnab.NewRuntime(p.Config)
 	claimStore, err := cp.NewClaimStore()
 	if err != nil {
 		return errors.Wrapf(err, "could not access claim store")

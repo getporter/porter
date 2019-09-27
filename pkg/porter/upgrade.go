@@ -42,5 +42,5 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 	}
 
 	fmt.Fprintf(p.Out, "upgrading %s...\n", opts.Name)
-	return p.CNAB.Upgrade(opts.ToDuffleArgs(deperator))
+	return p.CNAB.Upgrade(opts.ToActionArgs(deperator))
 }

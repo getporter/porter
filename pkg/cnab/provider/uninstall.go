@@ -9,10 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (d *Duffle) Uninstall(args ActionArguments) error {
-	// TODO: this entire function should be exposed in a duffle sdk package e.g. duffle.Install
-	// we shouldn't be reimplementing calling all these functions all over again
-
+func (d *Runtime) Uninstall(args ActionArguments) error {
 	claims, err := d.NewClaimStore()
 	if err != nil {
 		return errors.Wrapf(err, "could not access claim store")
