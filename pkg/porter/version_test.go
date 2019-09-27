@@ -54,33 +54,6 @@ func TestPrintJsonVersion(t *testing.T) {
 	}
 }
 
-//func TestPrintSystemDebugInfo(t *testing.T) {
-//	pkg.Commit = "abc123"
-//	pkg.Version = "v1.2.3"
-//
-//
-//	p := NewTestPorter(t)
-//
-//	opts := VersionOpts{}
-//	p.TestConfig.SetupPorterHome()
-//	err := opts.Validate()
-//	require.Nil(t, err)
-//	err = p.PrintDebugInfo(p.TestConfig.TestContext, opts, )
-//	require.Nil(t, err)
-//
-//	versionOutput := "porter v1.2.3 (abc123)"
-//	mixinsOutput := `Name   Version   Author
-//exec   v1.0      Deis Labs
-//`
-//	systemOutput := fmt.Sprintf("os: %s\narch: %s", runtime.GOOS, runtime.GOARCH)
-//	gotOutput := p.TestConfig.TestContext.GetOutput()
-//	assert.Contains(t, gotOutput, versionOutput)
-//	assert.Contains(t, gotOutput, mixinsOutput)
-//	assert.Contains(t, gotOutput, systemOutput)
-//
-//
-//}
-
 func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
