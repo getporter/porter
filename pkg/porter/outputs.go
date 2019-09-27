@@ -143,28 +143,37 @@ func (p *Porter) printOutputsTable(outputs map[string]interface{}, claim string)
 	}
 	sort.Strings(keys)
 
-	// Iterate through all Bundle Outputs and add to rows
+	// Iterate through all Bundle Outputs, fetch their metadata
+	// via their corresponding Definitions and add to rows
 	for _, name := range keys {
 		var outputType string
 		valueStr := fmt.Sprintf("%v", outputs[name])
 
-		// Fetch the Output definition from the claim to access metadata, etc.
-		if c.Bundle != nil {
-			if output, exists := c.Bundle.Outputs[name]; exists {
-				def := output.Definition
-				if def, exists := c.Bundle.Definitions[def]; exists {
-					if def.WriteOnly != nil && *def.WriteOnly {
-						valueStr = output.Path
-					}
-					outputType, _, err = def.GetType()
-					if err != nil {
-						return errors.Wrapf(err, "unable to get output type for %s", name)
-					}
-				}
-			}
-			truncatedValue := truncateString(valueStr, 60)
-			rows = append(rows, []string{name, outputType, truncatedValue})
+		if c.Bundle == nil {
+			continue
 		}
+
+		output, exists := c.Bundle.Outputs[name]
+		if !exists {
+			continue
+		}
+
+		def, exists := c.Bundle.Definitions[output.Definition]
+		if !exists {
+			continue
+		}
+
+		if def.WriteOnly != nil && *def.WriteOnly {
+			valueStr = output.Path
+		}
+
+		outputType, _, err = def.GetType()
+		if err != nil {
+			return errors.Wrapf(err, "unable to get output type for %s", name)
+		}
+
+		truncatedValue := truncateString(valueStr, 60)
+		rows = append(rows, []string{name, outputType, truncatedValue})
 	}
 
 	// Build and configure our tablewriter for the outputs

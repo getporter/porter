@@ -51,7 +51,7 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return err
 	}
 
-	err = deperator.Execute(config.ActionCustom)
+	err = deperator.Execute(config.Action(opts.Action))
 	if err != nil {
 		return err
 	}

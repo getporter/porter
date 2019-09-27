@@ -6,7 +6,6 @@ const (
 	ActionInstall   Action = "install"
 	ActionUpgrade   Action = "upgrade"
 	ActionUninstall Action = "uninstall"
-	ActionCustom    Action = "custom"
 )
 
 // IsCoreAction determines if the value is a core action from the CNAB spec.
