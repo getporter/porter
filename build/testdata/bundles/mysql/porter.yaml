@@ -3,9 +3,9 @@ mixins:
 - helm
 
 name: mysql
-version: 0.1.0
-invocationImage: deislabs/porter-mysql:latest
-tag: deislabs/porter-mysql-bundle:v0.1.0
+version: 0.1.1
+invocationImage: deislabs/porter-mysql:v0.1.1
+tag: deislabs/porter-mysql-bundle:v0.1.1
 
 credentials:
 - name: kubeconfig
