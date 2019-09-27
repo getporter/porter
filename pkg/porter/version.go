@@ -1,71 +1,38 @@
 package porter
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/deislabs/porter/pkg"
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/porter/version"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
-	"io"
 	"runtime"
+	"text/template"
 )
 
+type VersionOpts struct {
+	version.Options
+	System bool
+}
+
 type SystemInfo struct {
-	OS string
+	OS   string
 	Arch string
 }
 
-func (p *Porter) PrintVersion(opts version.Options) error {
-	metadata := mixin.Metadata{
-		Name: "porter",
-		VersionInfo: mixin.VersionInfo{
-			Version: pkg.Version,
-			Commit:  pkg.Commit,
-		},
-	}
-	return version.PrintVersion(p.Context, opts, metadata)
+type Mixins []mixin.Metadata
+
+type SystemDebugInfo struct {
+	Version mixin.Metadata   `json:"version"`
+	SysInfo SystemInfo       `json:"system"`
+	Mixins  Mixins `json:"mixins"`
 }
 
-func getSystemInfo() *SystemInfo {
-	return &SystemInfo{
-		OS:            runtime.GOOS,
-		Arch:          runtime.GOARCH,
-	}
-}
-
-func (system *SystemInfo) printSystemInfo(out io.Writer) error {
-	_, err := fmt.Fprintf(out, "os: %s\n", system.OS)
-	_, err = fmt.Fprintf(out, "arch: %s\n", system.Arch)
-	return err
-}
-
-func printSectionHeader(out io.Writer, header string){
-	underline := "-------"
-	_, _ = fmt.Fprintf(out, "\n%s\n%s\n", header, underline)
-
-}
-
-func (p *Porter) PrintDebugInfo(opts version.Options) error {
-	// force opts to print version as plaintext
-	opts.RawFormat = string(printer.FormatPlaintext)
-	err := p.PrintVersion(opts)
-	if err != nil {
-		return errors.Wrap(err, "Failed to print version")
-	}
-
-	printSectionHeader(p.Context.Out, "System")
-	systemInfo := getSystemInfo()
-	err = systemInfo.printSystemInfo(p.Out)
-	if err != nil {
-		return errors.Wrap(err, "Failed to print system information")
-	}
-	printSectionHeader(p.Context.Out, "Mixins")
-
-	mixins, err := p.ListMixins()
-	if err != nil {
-		return err
-	}
+func (mixins Mixins) PrintMixinsTable() string {
+	buffer := &bytes.Buffer{}
 	printMixinRow :=
 		func(v interface{}) []interface{} {
 			m, ok := v.(mixin.Metadata)
@@ -74,7 +41,71 @@ func (p *Porter) PrintDebugInfo(opts version.Options) error {
 			}
 			return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 		}
-	err = printer.PrintTable(p.Out, mixins, printMixinRow, "Name", "Version", "Author")
-	return err
+	err := printer.PrintTable(buffer, mixins, printMixinRow, "Name", "Version", "Author")
+	if err != nil {
+		return ""
+	}
+	return buffer.String()
 }
 
+func (p *Porter) PrintVersion(opts VersionOpts) error {
+	metadata := mixin.Metadata{
+		Name: "porter",
+		VersionInfo: mixin.VersionInfo{
+			Version: pkg.Version,
+			Commit:  pkg.Commit,
+		},
+	}
+
+	if opts.System {
+		return p.PrintDebugInfo(p.Context, opts, metadata)
+	}
+
+	return version.PrintVersion(p.Context, opts.Options, metadata)
+}
+
+func getSystemInfo() *SystemInfo {
+	return &SystemInfo{
+		OS:   runtime.GOOS,
+		Arch: runtime.GOARCH,
+	}
+}
+
+func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, versionMetadata mixin.Metadata) error {
+	opts.RawFormat = string(printer.FormatPlaintext)
+	mixins, err := p.ListMixins()
+	sysInfo := getSystemInfo()
+	if err != nil {
+		_ = errors.Wrap(err, "Failed to get list of mixins")
+	}
+	sysDebugInfo := SystemDebugInfo{
+		Version: versionMetadata,
+		SysInfo: *sysInfo,
+		Mixins:  mixins,
+	}
+
+	switch opts.Format {
+	case printer.FormatJson:
+		return printer.PrintJson(ctx.Out, sysDebugInfo)
+	case printer.FormatPlaintext:
+		plaintextTmpl := `{{.Version.Name}} {{.Version.VersionInfo.Version}} ({{.Version.VersionInfo.Commit}})
+
+System
+-------
+os: {{.SysInfo.OS}}
+arch: {{.SysInfo.Arch}}
+{{if .Mixins}}
+Mixins
+-------
+{{.Mixins.PrintMixinsTable}}{{end}}
+`
+		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)
+		if err != nil {
+			_ = errors.Wrap(err, "Failed to print system debug information")
+		}
+		err = tmpl.Execute(ctx.Out, sysDebugInfo)
+		return err
+	default:
+		return fmt.Errorf("unsupported format: %s", opts.Format)
+	}
+}

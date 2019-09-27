@@ -7,18 +7,15 @@ import (
 )
 
 func buildVersionCommand(p *porter.Porter) *cobra.Command {
-	opts := version.VersionOpts{}
+	opts := porter.VersionOpts{}
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the application version",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Options.Validate()
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opts.System {
-				return p.PrintDebugInfo(opts.Options)
-			}
-			return p.PrintVersion(opts.Options)
+			return p.PrintVersion(opts)
 		},
 	}
 	cmd.Annotations = map[string]string{
