@@ -68,15 +68,15 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	p.PrintVersion(opts)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	wantOutput := `{
+	wantOutput := fmt.Sprintf(`{
   "version": {
     "name": "porter",
     "version": "v1.2.3",
     "commit": "abc123"
   },
   "system": {
-    "OS": "darwin",
-    "Arch": "amd64"
+    "OS": "%s",
+    "Arch": "%s"
   },
   "mixins": [
     {
@@ -87,7 +87,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
     }
   ]
 }
-`
+`, runtime.GOOS, runtime.GOARCH)
 	assert.Equal(t, wantOutput, gotOutput)
 }
 
