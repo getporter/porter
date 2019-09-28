@@ -1,8 +1,10 @@
 package mixinprovider
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,11 +17,74 @@ import (
 )
 
 func (fs *FileSystem) Install(opts mixin.InstallOptions) (*mixin.Metadata, error) {
+	var err error
+	var metadata *mixin.Metadata
 	if opts.FeedURL != "" {
-		return fs.InstallFromFeedURL(opts)
+		metadata, err = fs.InstallFromFeedURL(opts)
+	} else {
+		metadata, err = fs.InstallFromURL(opts)
+	}
+	if err != nil {
+		return nil, err
+	}
+	fs.saveMixinInfo(opts)
+	return metadata, nil
+}
+
+const MixinCacheJSON string = "cache.json"
+
+func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
+	mixinsDir, err := fs.Config.GetMixinsDir()
+	cacheJSONPath := filepath.Join(mixinsDir, "/", MixinCacheJSON)
+	exists, err := fs.FileSystem.Exists(cacheJSONPath)
+	if !exists {
+		_, err := fs.FileSystem.Create(cacheJSONPath)
+		if err != nil {
+			return errors.Wrap(err, "error creating mixin cache.json")
+		}
 	}
 
-	return fs.InstallFromURL(opts)
+	mixinCacheFileContents, err := ioutil.ReadFile(cacheJSONPath)
+	if err != nil {
+		return errors.Wrap(err, "error reading mixin cache.json")
+	}
+
+	mixinsDataJSON := &mixins{}
+	if len(mixinCacheFileContents) > 0 {
+		err = json.Unmarshal(mixinCacheFileContents, &mixinsDataJSON)
+		if err != nil {
+			return errors.Wrap(err, "error unmarshalling from mixin cache.json")
+		}
+	}
+	if len(mixinsDataJSON.Mixins) > 0 {
+		for _, mixin := range mixinsDataJSON.Mixins {
+			if mixin.Name == opts.Name {
+				return nil
+			}
+		}
+	}
+	updatedMixinList := append(mixinsDataJSON.Mixins, mixinInfo{Name: opts.Name, FeedURL: opts.FeedURL, URL: opts.URL})
+	mixinsDataJSON.Mixins = updatedMixinList
+	updatedMixinInfo, err := json.MarshalIndent(&mixinsDataJSON, "", "  ")
+	if err != nil {
+		return errors.Wrap(err, "error marshalling to mixin cache.json")
+	}
+	err = ioutil.WriteFile(cacheJSONPath, updatedMixinInfo, 0644)
+
+	if err != nil {
+		return errors.Wrap(err, "error adding mixin info cache.json")
+	}
+	return nil
+}
+
+type mixinInfo struct {
+	Name    string `json:"name"`
+	FeedURL string `json:"feedURL,omitempty"`
+	URL     string `json:"url,omitempty"`
+}
+
+type mixins struct {
+	Mixins []mixinInfo `json:"mixins"`
 }
 
 func (fs *FileSystem) InstallFromURL(opts mixin.InstallOptions) (*mixin.Metadata, error) {
