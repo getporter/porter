@@ -56,6 +56,7 @@ upgrade:
   - helm:
       description: "Upgrade MySQL"
       name: "{{ bundle.parameters.mysql-name }}"
+      namespace: "{{ bundle.parameters.namespace }}"
       chart: stable/mysql
       outputs:
       - name: mysql-root-password

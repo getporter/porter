@@ -54,6 +54,7 @@ upgrade:
   - helm:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
+      namespace: "{{ bundle.parameters.namespace }}"
       chart: stable/wordpress
       outputs:
         - name: wordpress-password
