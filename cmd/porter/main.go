@@ -1,3 +1,5 @@
+//go:generate packr2
+
 package main
 
 import (
@@ -58,9 +60,10 @@ func buildRootCommand() *cobra.Command {
 		cmd.AddCommand(alias)
 	}
 
-	help := newHelptextBox()
-	usage, _ := help.FindString("usage.txt")
+	tmplBox := newTemplateBox()
+	usage, _ := tmplBox.FindString("usage.txt")
 	cmd.SetUsageTemplate(usage)
+
 	cobra.AddTemplateFunc("ShouldShowGroupCommands", ShouldShowGroupCommands)
 	cobra.AddTemplateFunc("ShouldShowGroupCommand", ShouldShowGroupCommand)
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommands", ShouldShowUngroupedCommands)
@@ -73,8 +76,8 @@ func buildRootCommand() *cobra.Command {
 	return cmd
 }
 
-func newHelptextBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/cmd/porter/helptext", "./helptext")
+func newTemplateBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/cmd/porter/templates", "./templates")
 }
 
 func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
