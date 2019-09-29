@@ -8,6 +8,7 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/porter/version"
 	"github.com/deislabs/porter/pkg/printer"
+	"github.com/pkg/errors"
 	"runtime"
 	"text/template"
 )
@@ -100,7 +101,7 @@ Mixins
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Failed to parse plaintext template")
 		}
 		err = tmpl.Execute(ctx.Out, sysDebugInfo)
 		return err
