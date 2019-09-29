@@ -73,11 +73,15 @@ func getSystemInfo() *SystemInfo {
 
 func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, versionMetadata mixin.Metadata) error {
 	opts.RawFormat = string(printer.FormatPlaintext)
-	mixins, err := p.ListMixins()
 	sysInfo := getSystemInfo()
-	if p.Debug {
-		fmt.Fprint(p.Err, err.Error())
+	mixins, err := p.ListMixins()
+	if err != nil {
+		if p.Debug {
+			fmt.Fprint(p.Err, err.Error())
+		}
+		return nil
 	}
+
 	sysDebugInfo := SystemDebugInfo{
 		Version: versionMetadata,
 		SysInfo: *sysInfo,
