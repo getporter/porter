@@ -8,7 +8,6 @@ import (
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/porter/version"
 	"github.com/deislabs/porter/pkg/printer"
-	"github.com/pkg/errors"
 	"runtime"
 	"text/template"
 )
@@ -75,8 +74,8 @@ func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, versionM
 	opts.RawFormat = string(printer.FormatPlaintext)
 	mixins, err := p.ListMixins()
 	sysInfo := getSystemInfo()
-	if err != nil {
-		_ = errors.Wrap(err, "Failed to get list of mixins")
+	if p.Debug {
+		fmt.Fprint(p.Err, err.Error())
 	}
 	sysDebugInfo := SystemDebugInfo{
 		Version: versionMetadata,
@@ -101,7 +100,7 @@ Mixins
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)
 		if err != nil {
-			_ = errors.Wrap(err, "Failed to print system debug information")
+			return err
 		}
 		err = tmpl.Execute(ctx.Out, sysDebugInfo)
 		return err
