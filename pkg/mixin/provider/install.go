@@ -56,11 +56,10 @@ func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
 			return errors.Wrap(err, "error unmarshalling from mixin cache.json")
 		}
 	}
-	if len(mixinsDataJSON.Mixins) > 0 {
-		for _, mixin := range mixinsDataJSON.Mixins {
-			if mixin.Name == opts.Name {
-				return nil
-			}
+	//if a mixin exists, skip. needs to be handled via "porter mixin update" ?
+	for _, mixin := range mixinsDataJSON.Mixins {
+		if mixin.Name == opts.Name {
+			return nil
 		}
 	}
 	updatedMixinList := append(mixinsDataJSON.Mixins, mixinInfo{Name: opts.Name, FeedURL: opts.FeedURL, URL: opts.URL})
