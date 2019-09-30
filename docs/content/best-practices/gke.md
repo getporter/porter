@@ -83,7 +83,7 @@ does not contain enough information to authenticate to the cluster.
 ## Create a service account
 
 1. [Create a service account][sa].
-1. [Assign the account access to GKE][iam]], such as Kubernetes Engine
+1. [Assign the account access to GKE][iam], such as Kubernetes Engine
    Developer.
 1. Create a service account key file, e.g. service-account.json, and save the
    file locally.
