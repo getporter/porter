@@ -20,16 +20,9 @@ cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .
 sed -i "s/porter-terraform:latest/${REGISTRY}\/porter-terraform:latest/g" porter.yaml
 sed -i "s/deislabs\/porter-terraform-bundle/${REGISTRY}\/porter-terraform-bundle/g" porter.yaml
 
-porter_output=$(mktemp)
-
 ${PORTER_HOME}/porter build
 
-${PORTER_HOME}/porter install --insecure --debug --param file_contents='foo!' 2>&1 | tee ${porter_output}
-
-if ! cat ${porter_output} | grep -q 'content:  "" => "foo!"'; then
-  echo "ERROR: File contents not created properly"
-  exit 1
-fi
+${PORTER_HOME}/porter install --insecure --debug --param file_contents='foo!'
 
 echo "Verifying instance output(s) via 'porter instance outputs list' after install"
 list_outputs=$(${PORTER_HOME}/porter instance outputs list)
