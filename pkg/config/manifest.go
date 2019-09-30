@@ -503,7 +503,7 @@ func (c *Config) LoadManifestFrom(file string) error {
 }
 
 func (m *Manifest) SetDefaults() {
-	if m.Image == "" {
+	if m.Image == "" && m.BundleTag != "" {
 		registry_tag := strings.Split(m.BundleTag, ":")
 		m.Image = strings.Join([]string{registry_tag[0] + "-installer",registry_tag[1]}, ":")
 	}
