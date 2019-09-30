@@ -60,10 +60,9 @@ func buildRootCommand() *cobra.Command {
 		cmd.AddCommand(alias)
 	}
 
-	tmplBox := newTemplateBox()
-	usage, _ := tmplBox.FindString("usage.txt")
+	help := newHelptextBox()
+	usage, _ := help.FindString("usage.txt")
 	cmd.SetUsageTemplate(usage)
-
 	cobra.AddTemplateFunc("ShouldShowGroupCommands", ShouldShowGroupCommands)
 	cobra.AddTemplateFunc("ShouldShowGroupCommand", ShouldShowGroupCommand)
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommands", ShouldShowUngroupedCommands)
@@ -76,8 +75,8 @@ func buildRootCommand() *cobra.Command {
 	return cmd
 }
 
-func newTemplateBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/cmd/porter/templates", "./templates")
+func newHelptextBox() *packr.Box {
+	return packr.New("github.com/deislabs/porter/cmd/porter/helptext", "./helptext")
 }
 
 func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {
