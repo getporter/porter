@@ -7,7 +7,7 @@ import (
 )
 
 func buildVersionCommand(p *porter.Porter) *cobra.Command {
-	opts := version.Options{}
+	opts := porter.VersionOpts{}
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the application version",
@@ -25,6 +25,7 @@ func buildVersionCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", string(version.DefaultVersionFormat),
 		"Specify an output format.  Allowed values: json, plaintext")
+	f.BoolVarP(&opts.System, "system", "s", false, "Print system debug information")
 
 	return cmd
 }
