@@ -37,6 +37,14 @@ func TestReadManifest_File(t *testing.T) {
 	assert.Equal(t, "hello", m.Name)
 }
 
+func TestSetDefaultInvocationImage(t *testing.T) {
+	c := NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/missing-invocation-image.porter.yaml", Name)
+	m, err := c.ReadManifest(Name)
+	require.NoError(t, err)
+	assert.Equal(t, "deislabs/missing-invocation-image-installer:latest", m.Image)
+}
+
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
 	c := NewTestConfig(t)
 	_, err := c.ReadManifest("fake-porter.yaml")

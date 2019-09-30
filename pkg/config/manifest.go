@@ -446,6 +446,7 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
+	m.SetDefaults()
 
 	return m, nil
 }
@@ -499,4 +500,11 @@ func (c *Config) LoadManifestFrom(file string) error {
 	c.ManifestPath = file
 
 	return nil
+}
+
+func (m *Manifest) SetDefaults() {
+	if m.Image == "" {
+		registry_tag := strings.Split(m.BundleTag, ":")
+		m.Image = strings.Join([]string{registry_tag[0] + "-installer",registry_tag[1]}, ":")
+	}
 }
