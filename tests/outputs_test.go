@@ -25,21 +25,21 @@ func TestExecOutputs(t *testing.T) {
 	// Verify that its file output was captured
 	configOutput, err := p.ReadBundleOutput("config", p.Manifest.Name)
 	require.NoError(t, err, "could not read config output")
-	assert.Contains(t, configOutput.Value, `{"user": "sally"}`, "expected the config output to be populated correctly")
+	assert.Equal(t, fmt.Sprintln(`{"user": "sally"}`), configOutput, "expected the config output to be populated correctly")
 
 	invokeExecOutputsBundle(p, "status")
 
 	// Verify that its jsonPath output was captured
 	userOutput, err := p.ReadBundleOutput("user", p.Manifest.Name)
 	require.NoError(t, err, "could not read user output")
-	assert.Equal(t, "sally", userOutput.Value, "expected the user output to be populated correctly")
+	assert.Equal(t, "sally", userOutput, "expected the user output to be populated correctly")
 
 	invokeExecOutputsBundle(p, "test")
 
 	// Verify that its regex output was captured
 	testOutputs, err := p.ReadBundleOutput("failed-tests", p.Manifest.Name)
-	require.NoError(t, err, "could not read user output")
-	assert.Equal(t, "TestInstall\nTestUpgrade", testOutputs.Value, "expected the failed-tests output to be populated correctly")
+	require.NoError(t, err, "could not read failed-tests output")
+	assert.Equal(t, "TestInstall\nTestUpgrade", testOutputs, "expected the failed-tests output to be populated correctly")
 }
 
 func CleanupCurrentBundle(p *porter.TestPorter) {

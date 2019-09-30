@@ -124,7 +124,6 @@ func (p *Porter) Run(opts RunOptions) error {
 				Steps:  []*config.Step{step},
 			}
 			inputBytes, _ := yaml.Marshal(input)
-
 			cmd := mixin.CommandOptions{
 				Command: string(opts.parsedAction),
 				Input:   string(inputBytes),
@@ -219,6 +218,11 @@ func (p *Porter) readMixinOutputs() (map[string]string, error) {
 // ApplyBundleOutputs writes the provided outputs to the proper location
 // in the execution environment
 func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) error {
+	// Ensure outputs directory exists
+	if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
+		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
+	}
+
 	for outputKey, outputValue := range outputs {
 		// Iterate through bundle outputs declared in the manifest
 		for _, bundleOutput := range p.Manifest.Outputs {
@@ -238,32 +242,9 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) 
 				}
 
 				if doApply {
-					// Ensure outputs directory exists
-					if err := p.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
-						return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
-					}
-
 					outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
-					outputType, ok, err := bundleOutput.Schema.GetType()
-					if !ok && err != nil {
-						return errors.Wrap(err, "unable to get output type")
-					}
-
-					// Create data structure with relevant data for use in listing/showing later
-					output := config.Output{
-						Name:      bundleOutput.Name,
-						Sensitive: bundleOutput.Sensitive,
-						Type:      outputType,
-						Value:     outputValue,
-					}
-
-					data, err := output.JSONMarshal()
-					if err != nil {
-						return errors.Wrap(err, "unable to marshal output")
-					}
-
-					err = p.FileSystem.WriteFile(outpath, data, 0755)
+					err := p.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
 					if err != nil {
 						return errors.Wrapf(err, "unable to write output file %s", outpath)
 					}

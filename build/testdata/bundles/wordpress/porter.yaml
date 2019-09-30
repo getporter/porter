@@ -3,13 +3,13 @@ mixins:
 - helm
 
 name: wordpress
-version: 0.1.0
-invocationImage: deislabs/porter-wordpress:latest
-tag: deislabs/porter-wordpress-bundle:v0.1.0
+version: 0.1.1
+invocationImage: deislabs/porter-wordpress:v0.1.1
+tag: deislabs/porter-wordpress-bundle:v0.1.1
 
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql-bundle:v0.1.0
+    tag: deislabs/porter-mysql-bundle:v0.1.1
     parameters:
       database-name: wordpress
       mysql-user: wordpress
@@ -54,7 +54,12 @@ upgrade:
   - helm:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
+      namespace: "{{ bundle.parameters.namespace }}"
       chart: stable/wordpress
+      outputs:
+        - name: wordpress-password
+          secret: "{{ bundle.parameters.wordpress-name }}"
+          key: wordpress-password
 
 ping:
   - exec:

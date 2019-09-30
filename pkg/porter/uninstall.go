@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/config"
 )
 
 // UninstallOptions that may be specified when uninstalling a bundle.
@@ -47,5 +49,5 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
-	return deperator.Execute()
+	return deperator.Execute(config.ActionUninstall)
 }

@@ -305,3 +305,16 @@ func (m *RuntimeManifest) Prepare() error {
 	}
 	return nil
 }
+
+// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/129
+func OutputAppliesTo(action string, output bundle.Output) bool {
+	if len(output.ApplyTo) == 0 {
+		return true
+	}
+	for _, act := range output.ApplyTo {
+		if action == act {
+			return true
+		}
+	}
+	return false
+}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/config"
 )
 
 // UpgradeOptions that may be specified when upgrading a bundle.
@@ -36,7 +38,7 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 		return err
 	}
 
-	err = deperator.Execute()
+	err = deperator.Execute(config.ActionUpgrade)
 	if err != nil {
 		return err
 	}

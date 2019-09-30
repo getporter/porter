@@ -3,9 +3,9 @@ mixins:
 - helm
 
 name: mysql
-version: 0.1.0
-invocationImage: deislabs/porter-mysql:latest
-tag: deislabs/porter-mysql-bundle:v0.1.0
+version: 0.1.1
+invocationImage: deislabs/porter-mysql:v0.1.1
+tag: deislabs/porter-mysql-bundle:v0.1.1
 
 credentials:
 - name: kubeconfig
@@ -52,6 +52,20 @@ ping:
       flags:
         c: echo ping
 
+upgrade:
+  - helm:
+      description: "Upgrade MySQL"
+      name: "{{ bundle.parameters.mysql-name }}"
+      namespace: "{{ bundle.parameters.namespace }}"
+      chart: stable/mysql
+      outputs:
+      - name: mysql-root-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-root-password
+      - name: mysql-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-password
+
 uninstall:
 - helm:
     description: "Uninstall MySQL"
@@ -65,4 +79,5 @@ outputs:
     type: string
     applyTo:
       - install
+      - upgrade
     sensitive: true

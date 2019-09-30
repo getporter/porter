@@ -1,12 +1,13 @@
 package porter
 
 import (
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/porter/pkg/printer"
 )
@@ -15,11 +16,6 @@ func TestPorter_ShowBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = NewTestCNABProvider()
-
-	homeDir, err := p.TestConfig.GetHomeDir()
-	require.NoError(t, err)
-
-	p.TestConfig.TestContext.AddTestDirectory("testdata/outputs", filepath.Join(homeDir, "outputs"))
 
 	opts := ShowOptions{
 		sharedOptions: sharedOptions{
@@ -31,8 +27,29 @@ func TestPorter_ShowBundle(t *testing.T) {
 	}
 
 	// Create test claim
+	writeOnly := true
 	claim := claim.Claim{
-		Name:     "test-bundle",
+		Name: "test-bundle",
+		Bundle: &bundle.Bundle{
+			Definitions: definition.Definitions{
+				"foo": &definition.Schema{
+					Type:      "string",
+					WriteOnly: &writeOnly,
+				},
+				"bar": &definition.Schema{
+					Type: "string",
+				},
+			},
+			Outputs: map[string]bundle.Output{
+				"foo": {
+					Definition: "foo",
+					Path:       "/path/to/foo",
+				},
+				"bar": {
+					Definition: "bar",
+				},
+			},
+		},
 		Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
 		Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
 		Result: claim.Result{
@@ -50,7 +67,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 		t.Fatal("expected p.CNAB to be of type *TestCNABProvider")
 	}
 
-	err = p.ShowInstances(opts)
+	err := p.ShowInstances(opts)
 	require.NoError(t, err)
 
 	wantOutput :=
@@ -61,11 +78,11 @@ Last Action: install
 Last Status: success
 
 Outputs:
------------------------------------------------------
-  Name  Type    Value (Path if sensitive)              
------------------------------------------------------
-  foo   string  /root/.porter/outputs/test-bundle/foo  
-  bar   string  bar-value                              
+-----------------------------------------
+  Name  Type    Value (Path if sensitive)  
+-----------------------------------------
+  bar   string  bar-output                 
+  foo   string  /path/to/foo               
 `
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

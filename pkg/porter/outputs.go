@@ -2,11 +2,7 @@ package porter
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
-
-	"github.com/deislabs/porter/pkg/config"
 
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"
@@ -80,7 +76,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 		return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", opts.Output, name)
 	}
 
-	fmt.Fprintln(p.Out, output.Value)
+	fmt.Fprintln(p.Out, output)
 	return nil
 }
 
@@ -110,56 +106,74 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
 	}
 }
 
-func (p *Porter) fetchBundleOutputs(claim string) (*config.Outputs, error) {
-	outputsDir, err := p.Config.GetOutputsDir()
+// ReadBundleOutput reads a bundle output from a claim
+func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
+	c, err := p.CNAB.FetchClaim(claim)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get outputs directory")
+		return "", err
 	}
-	bundleOutputsDir := filepath.Join(outputsDir, claim)
 
-	var outputList config.Outputs
-	// Walk through bundleOutputsDir, if exists, and read all output filenames.
-	// We truncate actual output values, intending for the full values to be
-	// retrieved by another command.
-	if ok, _ := p.Context.FileSystem.DirExists(bundleOutputsDir); ok {
-		err := p.Context.FileSystem.Walk(bundleOutputsDir, func(path string, info os.FileInfo, err error) error {
-			if !info.IsDir() {
-				output, err := p.ReadBundleOutput(info.Name(), claim)
-				if err != nil {
-					return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", info.Name(), claim)
-				}
-
-				outputList = append(outputList, *output)
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-		sort.Sort(sort.Reverse(outputList))
+	if output, exists := c.Outputs[name]; exists {
+		return fmt.Sprintf("%v", output), nil
 	}
-	return &outputList, nil
+	return "", fmt.Errorf("unable to read output %q for bundle instance %q", name, claim)
 }
 
-func (p *Porter) printOutputsTable(outputs *config.Outputs, claim string) error {
-	// Get local output directory for this claim
-	outputsDir, err := p.Config.GetOutputsDir()
+func (p *Porter) fetchBundleOutputs(claim string) (map[string]interface{}, error) {
+	c, err := p.CNAB.FetchClaim(claim)
 	if err != nil {
-		return errors.Wrap(err, "unable to get outputs directory")
+		return nil, err
 	}
-	claimOutputsDir := filepath.Join(outputsDir, claim)
+
+	return c.Outputs, nil
+}
+
+func (p *Porter) printOutputsTable(outputs map[string]interface{}, claim string) error {
+	c, err := p.CNAB.FetchClaim(claim)
+	if err != nil {
+		return err
+	}
 
 	var rows [][]string
 
-	// Iterate through all Bundle Outputs and add to rows
-	for _, o := range *outputs {
-		value := o.Value
-		// If output is sensitive, substitute local path
-		if o.Sensitive {
-			value = filepath.Join(claimOutputsDir, o.Name)
+	// Get sorted keys for ordered printing
+	keys := make([]string, 0, len(outputs))
+	for k := range outputs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Iterate through all Bundle Outputs, fetch their metadata
+	// via their corresponding Definitions and add to rows
+	for _, name := range keys {
+		var outputType string
+		valueStr := fmt.Sprintf("%v", outputs[name])
+
+		if c.Bundle == nil {
+			continue
 		}
-		truncatedValue := truncateString(value, 60)
-		rows = append(rows, []string{o.Name, o.Type, truncatedValue})
+
+		output, exists := c.Bundle.Outputs[name]
+		if !exists {
+			continue
+		}
+
+		def, exists := c.Bundle.Definitions[output.Definition]
+		if !exists {
+			continue
+		}
+
+		if def.WriteOnly != nil && *def.WriteOnly {
+			valueStr = output.Path
+		}
+
+		outputType, _, err = def.GetType()
+		if err != nil {
+			return errors.Wrapf(err, "unable to get output type for %s", name)
+		}
+
+		truncatedValue := truncateString(valueStr, 60)
+		rows = append(rows, []string{name, outputType, truncatedValue})
 	}
 
 	// Build and configure our tablewriter for the outputs
@@ -181,7 +195,6 @@ func (p *Porter) printOutputsTable(outputs *config.Outputs, claim string) error 
 	return nil
 }
 
-// TODO: refactor to truncate in the middle?  (Handy if paths are long)
 func truncateString(str string, num int) string {
 	truncated := str
 	if len(str) > num {

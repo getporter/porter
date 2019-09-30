@@ -1,13 +1,10 @@
 package cnabprovider
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/driver/docker"
 
 	"github.com/deislabs/porter/pkg/config"
@@ -26,45 +23,4 @@ func TestNewDriver_Docker(t *testing.T) {
 	} else {
 		t.Fatal("expected driver to be of type *dockerdriver.Driver")
 	}
-}
-
-func TestWriteClaimOutputs(t *testing.T) {
-	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
-
-	homeDir, err := c.GetHomeDir()
-	require.NoError(t, err)
-
-	c.TestContext.AddTestDirectory("../../porter/testdata/outputs", filepath.Join(homeDir, "outputs"))
-
-	claim, err := claim.New("test-bundle")
-	require.NoError(t, err)
-
-	// Expect error when claim has no associated bundle
-	err = d.WriteClaimOutputs(claim, "install")
-	require.EqualError(t, err, "bundle instance has no bundle set")
-
-	claim.Bundle = &bundle.Bundle{}
-
-	// Expect no error if Bundle.Outputs is empty
-	err = d.WriteClaimOutputs(claim, "install")
-	require.NoError(t, err)
-
-	claim.Bundle.Outputs = map[string]bundle.Output{
-		"foo": bundle.Output{},
-	}
-
-	// Expect no error; by default, outputs apply to all actions
-	err = d.WriteClaimOutputs(claim, "install")
-	require.NoError(t, err)
-
-	claim.Bundle.Outputs["foo"] = bundle.Output{
-		ApplyTo: []string{
-			"status",
-		},
-	}
-
-	// Expect no error if output does not apply to action
-	err = d.WriteClaimOutputs(claim, "install")
-	require.NoError(t, err)
 }
