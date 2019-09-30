@@ -151,12 +151,31 @@ func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
 	return &p2
 }
 
+// CredentialDefinition represents the structure or fields of a credential parameter
 type CredentialDefinition struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description,omitempty"`
 	Required    bool   `yaml:"required,omitempty"`
 
 	Location `yaml:",inline"`
+}
+
+func (cd *CredentialDefinition) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type rawCreds CredentialDefinition
+	rawCred := rawCreds{
+		Name:        cd.Name,
+		Description: cd.Description,
+		Required:    true,
+		Location:    cd.Location,
+	}
+
+	if err := unmarshal(&rawCred); err != nil {
+		return err
+	}
+
+	*cd = CredentialDefinition(rawCred)
+
+	return nil
 }
 
 // TODO: use cnab-go's bundle.Location instead, once yaml tags have been added

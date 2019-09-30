@@ -65,6 +65,21 @@ func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
 	assert.Contains(t, err.Error(), "mixin declaration contained more than one mixin")
 }
 
+func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
+	assertAllCredentialsRequired := func(t *testing.T, creds []CredentialDefinition) {
+		for _, cred := range creds {
+			assert.EqualValuesf(t, true, cred.Required, "Credential: %s should be required", cred.Name)
+		}
+	}
+	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
+		c := NewTestConfig(t)
+		c.TestContext.AddTestFile("testdata/with-credentials.yaml", Name)
+		m, err := c.ReadManifest(Name)
+		require.NoError(t, err)
+		assertAllCredentialsRequired(t, m.Credentials)
+	})
+}
+
 func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	m := struct {
 		Mixins []MixinDeclaration
