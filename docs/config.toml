@@ -33,12 +33,6 @@ defaultContentLanguage = "en"
     identifier = "quickstart"
     weight = 12
     parent = "getting-started"
-  #[[menu.main]]
-  #  name = "Finding Bundles"
-  #  url = "/finding-bundles"
-  #  identifier = "finding-bundles"
-  #  weight = 16
-  #  parent = "getting-started"
 
 [[menu.main]]
   name = "Porter Commands"
@@ -135,6 +129,7 @@ defaultContentLanguage = "en"
     identifier = "cli-version"
     weight = 199
     parent = "cli"
+
 [[menu.main]]
   name = "Mixins"
   identifier = "mixins"
@@ -193,6 +188,7 @@ defaultContentLanguage = "en"
     weight = 214
     url = "/mixins/terraform"
     parent = "mixins"
+
 [[menu.main]]
   name = "Authoring Bundles"
   identifier = "authoring-bundles"
@@ -221,11 +217,13 @@ defaultContentLanguage = "en"
     identifier = "wiring"
     weight = 303
     parent = "authoring-bundles"
+
 [[menu.main]]
   name = "Examining Bundles"
   identifier = "examining-bundles"
   url = "/examining-bundles"
   weight = 325
+
 [[menu.main]]
   name = "Developing Mixins"
   identifier = "developing-mixins"
@@ -291,18 +289,24 @@ defaultContentLanguage = "en"
   weight = 500
 
 [[menu.main]]
+  name = "Best Practices"
+  url = "/best-practices/"
+  identifier = "best-practices"
+  weight = 600
+
+[[menu.main]]
   name = "References"
   identifier = "references"
-  weight = 600
+  weight = 1000
   [[menu.main]]
     name = "Configuration"
     url = "/configuration"
     identifier = "configuration"
-    weight = 601
+    weight = 1010
     parent = "references"
   [[menu.main]]
     name = "CNAB Spec"
     url = "https://deislabs.io/cnab"
     identifier = "cnab"
-    weight = 610
+    weight = 1020
     parent = "references"

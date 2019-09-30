@@ -1,0 +1,8 @@
+FROM quay.io/deis/lightweight-docker-go:v0.2.0
+FROM debian:stretch
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+ARG BUNDLE_DIR
+ENV GOOGLE_APPLICATION_CREDENTIALS=/root/google-service-account.json
+
+COPY . $BUNDLE_DIR

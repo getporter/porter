@@ -8,14 +8,28 @@
 
       <div class="row">
         <div class="small-1 columns">&nbsp;</div>
-        <div class="small-10 columns content-wrap">
-          {{ range .Data.Pages.ByDate  }}
-            {{ .Render "article"}}
-          {{ end }}
+        <div class="small-10 columns list-wrap">
+          <h1>{{ .Title }}</h1>
+          {{ .Content }}
         </div>
         <div class="small-1 columns">&nbsp;</div>
       </div>
 
+      <div class="row">
+        <div class="small-1 columns">&nbsp;</div>
+        <div class="small-10 columns">
+            {{ range .Paginator.Pages }}
+            <article>
+              <header>
+                <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
+              </header>
+              {{ .Description }}{{ if .Truncated }}...{{ end }}
+            </article>
+    
+          {{ end }}
+        </div>
+        <div class="small-1 columns">&nbsp;</div>
+      </div>
     </div>
 
     {{ partial "footer.html" . }}

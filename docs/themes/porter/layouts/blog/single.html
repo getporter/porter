@@ -1,34 +1,19 @@
 {{ partial "header.html" . }}
 
-<div class="container container-full blog-layout">
+  <div class="container container-full">
+    {{ partial "sidebar.html" . }}
 
-  <div class="main blog blog-single page" id="scrollpane">
-    <h1 class="blog-logo">
-      <a href="/">
-        {{ partial "logo.html" . }}
-      </a>
-      <a href="/blog">
-        <em>Blog</em>
-      </a>
-    </h1>
-    
-    <nav class="top-bar">
-      <ul class="inline right text-right">
-        {{ partial "nav.html" . }}
-      </ul>
-    </nav>
+    <div class="main page" id="scrollpane">
+      {{ partial "topbar.html" . }}
 
-    <div class="row">
-      <div class="small-1 columns">&nbsp;</div>
-      <div class="small-10 columns content-wrap">
-        <article id="content">
+      <div class="row">
+        <div class="small-1 columns">&nbsp;</div>
+        <div class="small-10 columns content-wrap">
           <h1>{{ .Title }}</h1>
           {{ .Content }}
-
-       </article>
+        </div>
+        <div class="small-1 columns">&nbsp;</div>
       </div>
-      <div class="small-1 columns">&nbsp;</div>
     </div>
-  </div>
 
-  {{ partial "footer-blog.html" . }}
+    {{ partial "footer.html" . }}

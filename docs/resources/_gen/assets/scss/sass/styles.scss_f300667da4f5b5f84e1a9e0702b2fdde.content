@@ -8044,6 +8044,19 @@ body {
         font-size: 0.925rem;
         padding: 0 3.5% 1rem; }
 
+.main .list-wrap {
+  padding-top: 1em;
+  padding-bottom: 1em;
+  font-size: 17.92px;
+  font-weight: normal;
+  line-height: 1.5;
+  z-index: 500;
+  position: relative;
+  font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.0075em;
+  -webkit-font-smoothing: antialiased; }
+
 .main .content-wrap {
   padding-top: 1em;
   padding-bottom: 10em;

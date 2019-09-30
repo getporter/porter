@@ -1,3 +1,14 @@
+.main .list-wrap {
+  padding-top: 1em;
+  padding-bottom: 1em;
+  font-size: $scalex5;
+  font-weight: normal;
+  line-height: 1.5;
+  z-index: 500;
+  position: relative;
+  @include klinicReg;
+}
+
 .main .content-wrap {
   padding-top: 1em;
   padding-bottom: 10em;
