@@ -46,6 +46,12 @@ func TestPorter_ValidateManifestSchema(t *testing.T) {
 	schemaLoader := gojsonschema.NewReferenceLoader(filepath.Join("file://", pwd, "testdata/schema.json"))
 
 	// Validate the manifest against the schema
-	_, err = gojsonschema.Validate(schemaLoader, manifestLoader)
+	fails, err := gojsonschema.Validate(schemaLoader, manifestLoader)
 	require.NoError(t, err)
+
+	assert.Empty(t, fails.Errors(), "expected testdata/porter.yaml to validate against the porter schema")
+	// Print it pretty like
+	for _, err := range fails.Errors() {
+		t.Logf("%s", err)
+	}
 }
