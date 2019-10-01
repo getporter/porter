@@ -12,6 +12,7 @@ PORTER_HOME = bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
+CLIENT_GOPATH=$(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
 BASEURL_FLAG ?= 
@@ -50,7 +51,7 @@ packr2:
 ifndef HAS_PACKR2
 	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
 	cd /tmp && tar -xzf /tmp/packr.tar.gz
-	install /tmp/packr2 $(go env GOPATH)/bin/
+	install /tmp/packr2 $(CLIENT_GOPATH)/bin/
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
