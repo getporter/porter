@@ -1,6 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
+  "additionalProperties": {
+    "items": {
+      "anyOf": [
+        {
+          "$ref": "#/mixin.exec/definitions/invokeStep"
+        }
+      ]
+    },
+    "type": "array"
+  },
   "definitions": {
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
@@ -76,7 +85,6 @@
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -92,21 +100,16 @@
           "description": "A user-friendly description of this output",
           "type": "string"
         },
-        "destination": {
-          "properties": {
-            "env": {
-              "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
-              "type": "string"
-            },
-            "path": {
-              "description": "The path inside of the invocation image where parameter data is mounted",
-              "type": "string"
-            }
-          },
-          "type": "object"
+        "env": {
+          "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
+          "type": "string"
         },
         "name": {
           "description": "The name of this parameter",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path inside of the invocation image where parameter data is mounted",
           "type": "string"
         },
         "sensitive": {
@@ -116,7 +119,6 @@
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -276,25 +278,13 @@
     },
     "type": "object"
   },
-  "patternProperties": {
-    ".*": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/mixin.exec/definitions/invokeStep"
-          }
-        ]
-      },
-      "type": "array"
-    }
-  },
   "properties": {
     "credentials": {
-      "additionalProperties": {
+      "description": "Credentials to be injected into the invocation image",
+      "items": {
         "$ref": "#/definitions/credential"
       },
-      "description": "Credentials to be injected into the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "dependencies": {
       "additionalProperties": {
@@ -339,18 +329,18 @@
       "type": "string"
     },
     "outputs": {
-      "additionalProperties": {
+      "description": "Values that are produced by executing the invocation image",
+      "items": {
         "$ref": "#/definitions/output"
       },
-      "description": "Values that are produced by executing the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "parameters": {
-      "additionalProperties": {
+      "description": "Parameters that can be injected into the invocation image",
+      "items": {
         "$ref": "#/definitions/parameter"
       },
-      "description": "Parameters that can be injected into the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "tag": {
       "description": "The tag to use when the bundle is published to an OCI registry",
