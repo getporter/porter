@@ -122,13 +122,10 @@
       }
     }
   },
-  "patternProperties": {
-    ".*": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/invokeStep"
-      }
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/invokeStep"
     }
-  },
-  "additionalProperties": false
+  }
 }

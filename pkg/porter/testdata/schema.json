@@ -129,7 +129,12 @@
   },
   "mixin.exec": {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "additionalProperties": false,
+    "additionalProperties": {
+      "items": {
+        "$ref": "#/mixin.exec/definitions/invokeStep"
+      },
+      "type": "array"
+    },
     "definitions": {
       "exec": {
         "additionalProperties": false,
@@ -249,14 +254,6 @@
           "exec"
         ],
         "type": "object"
-      }
-    },
-    "patternProperties": {
-      ".*": {
-        "items": {
-          "$ref": "#/mixin.exec/definitions/invokeStep"
-        },
-        "type": "array"
       }
     },
     "properties": {
