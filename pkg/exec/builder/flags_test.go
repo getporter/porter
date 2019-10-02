@@ -63,6 +63,13 @@ func TestFlag_ToSlice(t *testing.T) {
 		args := f.ToSlice()
 		assert.Equal(t, []string{"--repeated", "FOO=BAR", "--repeated", "STUFF=THINGS"}, args)
 	})
+
+	t.Run("flag with non-default dash", func(t *testing.T) {
+		f := NewFlag("full", "abc")
+		f.Dash = "---"
+		args := f.ToSlice()
+		assert.Equal(t, []string{"---full", "abc"}, args)
+	})
 }
 
 func TestFlags_ToSlice(t *testing.T) {

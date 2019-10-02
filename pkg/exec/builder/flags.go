@@ -11,6 +11,7 @@ import (
 type Flag struct {
 	Name   string
 	Values []string
+	Dash   string
 }
 
 // NewFlag creates an instance of a Flag.
@@ -28,9 +29,13 @@ func NewFlag(name string, values ...string) Flag {
 // ToSlice converts to a string array suitable of command arguments suitable for passing to exec.Command
 func (flag Flag) ToSlice() []string {
 	var flagName string
-	dash := "--"
-	if len(flag.Name) == 1 {
-		dash = "-"
+	dash := flag.Dash
+
+	if dash == "" {
+		dash = "--"
+		if len(flag.Name) == 1 {
+			dash = "-"
+		}
 	}
 	flagName = fmt.Sprintf("%s%s", dash, flag.Name)
 
