@@ -1,6 +1,3 @@
-mixins:
-  - exec
-
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
@@ -19,6 +16,8 @@ parameters:
     type: integer
     default: 9
     env: MY_FIRST_PARAM
+    applyTo:
+      - "install"
   - name: my-second-param
     description: "My second parameter"
     type: string
@@ -37,6 +36,9 @@ outputs:
     description: "My second output"
     type: boolean
     sensitive: false
+
+mixins:
+  - exec
 
 install:
   - exec:

@@ -22,8 +22,7 @@
               }
             },
             "record": {
-              "type": "boolean",
-              "default":"false"
+              "type": "boolean"
             },
             "selector": {
               "type": "string"
@@ -72,8 +71,7 @@
               }
             },
             "force": {
-              "type": ["boolean","null"],
-              "default":"false"
+              "type": ["boolean","null"]
             },
             "gracePeriod" : {
               "type": "integer"
@@ -87,8 +85,7 @@
               "default":"true"
             },
             "record": {
-              "type": ["boolean","null"],
-              "default":"false"
+              "type": ["boolean","null"]
             },
             "selector": {
               "type": "string"
@@ -140,8 +137,7 @@
               }
             },
             "force": {
-              "type": ["boolean","null"],
-              "default":"false"
+              "type": ["boolean","null"]
             },
             "gracePeriod" : {
               "type": "integer"
@@ -155,8 +151,7 @@
               "default":"true"
             },
             "record": {
-              "type": ["boolean","null"],
-              "default":"false"
+              "type": ["boolean","null"]
             },
             "selector": {
               "type": "string"
@@ -208,8 +203,7 @@
               }
             },
             "force": {
-              "type": ["boolean","null"],
-              "default":"false"
+              "type": ["boolean","null"]
             },
             "gracePeriod" : {
               "type": "integer"
@@ -283,13 +277,10 @@
       }
     }
   },
-  "patternProperties": {
-    ".*": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/invokeStep"
-      }
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/invokeStep"
     }
-  },
-  "additionalProperties": false
+  }
 }

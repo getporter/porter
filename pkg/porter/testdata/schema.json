@@ -1,7 +1,23 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
+  "additionalProperties": {
+    "items": {
+      "anyOf": [
+        {
+          "$ref": "#/mixin.exec/definitions/invokeStep"
+        }
+      ]
+    },
+    "type": "array"
+  },
   "definitions": {
+    "applyTo": {
+      "description": "An optional exhaustive list of actions producing this output",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
       "properties": {
@@ -22,7 +38,6 @@
           "type": "string"
         },
         "required": {
-          "default": false,
           "description": "Indicates whether this credential must be supplied. By default, credentials are optional.",
           "type": "boolean"
         }
@@ -51,11 +66,7 @@
       "description": "A value that is produced by running an invocation image",
       "properties": {
         "applyTo": {
-          "description": "An optional exhaustive list of actions producing this output",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "$ref": "#/definitions/applyTo"
         },
         "definition": {
           "description": "The name of a definition that describes the schema structure of this output",
@@ -70,13 +81,11 @@
           "type": "string"
         },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this output's value is sensitive and should not be logged.",
           "type": "boolean"
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -84,6 +93,9 @@
     "parameter": {
       "description": "A parameter that can be passed into the invocation image",
       "properties": {
+        "applyTo": {
+          "$ref": "#/definitions/applyTo"
+        },
         "definition": {
           "description": "The name of a definition that describes the schema structure of this parameter",
           "type": "string"
@@ -92,31 +104,24 @@
           "description": "A user-friendly description of this output",
           "type": "string"
         },
-        "destination": {
-          "properties": {
-            "env": {
-              "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
-              "type": "string"
-            },
-            "path": {
-              "description": "The path inside of the invocation image where parameter data is mounted",
-              "type": "string"
-            }
-          },
-          "type": "object"
+        "env": {
+          "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
+          "type": "string"
         },
         "name": {
           "description": "The name of this parameter",
           "type": "string"
         },
+        "path": {
+          "description": "The path inside of the invocation image where parameter data is mounted",
+          "type": "string"
+        },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this parameter's value is sensitive and should not be logged.",
           "type": "boolean"
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -124,7 +129,12 @@
   },
   "mixin.exec": {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "additionalProperties": false,
+    "additionalProperties": {
+      "items": {
+        "$ref": "#/mixin.exec/definitions/invokeStep"
+      },
+      "type": "array"
+    },
     "definitions": {
       "exec": {
         "additionalProperties": false,
@@ -246,14 +256,6 @@
         "type": "object"
       }
     },
-    "patternProperties": {
-      ".*": {
-        "items": {
-          "$ref": "#/mixin.exec/definitions/invokeStep"
-        },
-        "type": "array"
-      }
-    },
     "properties": {
       "install": {
         "items": {
@@ -276,25 +278,13 @@
     },
     "type": "object"
   },
-  "patternProperties": {
-    ".*": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/mixin.exec/definitions/invokeStep"
-          }
-        ]
-      },
-      "type": "array"
-    }
-  },
   "properties": {
     "credentials": {
-      "additionalProperties": {
+      "description": "Credentials to be injected into the invocation image",
+      "items": {
         "$ref": "#/definitions/credential"
       },
-      "description": "Credentials to be injected into the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "dependencies": {
       "additionalProperties": {
@@ -339,18 +329,18 @@
       "type": "string"
     },
     "outputs": {
-      "additionalProperties": {
+      "description": "Values that are produced by executing the invocation image",
+      "items": {
         "$ref": "#/definitions/output"
       },
-      "description": "Values that are produced by executing the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "parameters": {
-      "additionalProperties": {
+      "description": "Parameters that can be injected into the invocation image",
+      "items": {
         "$ref": "#/definitions/parameter"
       },
-      "description": "Parameters that can be injected into the invocation image",
-      "type": "object"
+      "type": "array"
     },
     "tag": {
       "description": "The tag to use when the bundle is published to an OCI registry",

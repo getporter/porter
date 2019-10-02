@@ -2,6 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "definitions": {
+    "applyTo": {
+      "description": "An optional exhaustive list of actions producing this output",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
       "properties": {
@@ -22,7 +29,6 @@
           "type": "string"
         },
         "required": {
-          "default": false,
           "description": "Indicates whether this credential must be supplied. By default, credentials are optional.",
           "type": "boolean"
         }
@@ -35,13 +41,7 @@
     "output": {
       "description": "A value that is produced by running an invocation image",
       "properties": {
-        "applyTo": {
-          "description": "An optional exhaustive list of actions producing this output",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
+        "applyTo": { "$ref": "#/definitions/applyTo"},
         "definition": {
           "description": "The name of a definition that describes the schema structure of this output",
           "type": "string"
@@ -55,13 +55,11 @@
           "type": "string"
         },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this output's value is sensitive and should not be logged.",
           "type": "boolean"
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -69,6 +67,7 @@
     "parameter": {
       "description": "A parameter that can be passed into the invocation image",
       "properties": {
+        "applyTo": { "$ref": "#/definitions/applyTo"},
         "definition": {
           "description": "The name of a definition that describes the schema structure of this parameter",
           "type": "string"
@@ -77,31 +76,24 @@
           "description": "A user-friendly description of this output",
           "type": "string"
         },
-        "destination": {
-          "properties": {
-            "env": {
-              "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
-              "type": "string"
-            },
-            "path": {
-              "description": "The path inside of the invocation image where parameter data is mounted",
-              "type": "string"
-            }
-          },
-          "type": "object"
+        "env": {
+          "description": "The environment variable name, such as MY_VALUE, in which the parameter value is stored",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path inside of the invocation image where parameter data is mounted",
+          "type": "string"
         },
         "name": {
           "description": "The name of this parameter",
           "type": "string"
         },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this parameter's value is sensitive and should not be logged.",
           "type": "boolean"
         }
       },
       "required": [
-        "definition",
         "name"
       ],
       "type": "object"
@@ -122,11 +114,11 @@
   },
   "properties": {
     "credentials": {
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "$ref": "#/definitions/credential"
       },
-      "description": "Credentials to be injected into the invocation image",
-      "type": "object"
+      "description": "Credentials to be injected into the invocation image"
     },
     "description": {
       "type": "string",
@@ -158,18 +150,18 @@
       "description": "The name of the bundle"
     },
     "outputs": {
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "$ref": "#/definitions/output"
       },
-      "description": "Values that are produced by executing the invocation image",
-      "type": "object"
+      "description": "Values that are produced by executing the invocation image"
     },
     "parameters": {
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "$ref": "#/definitions/parameter"
       },
-      "description": "Parameters that can be injected into the invocation image",
-      "type": "object"
+      "description": "Parameters that can be injected into the invocation image"
     },
     "dependencies": {
       "additionalProperties": {
@@ -199,14 +191,11 @@
       "description": "The relative path to a Dockerfile to use as a template during porter build"
     }
   },
-  "patternProperties": {
-    ".*": {
-      "type": "array",
-      "items": {
-        "anyOf": []
-      }
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "anyOf": []
     }
   },
-  "additionalProperties": false,
-  "required": ["name","version", "invocationImage", "mixins"]
+  "required": ["name", "version", "invocationImage", "mixins"]
 }

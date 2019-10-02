@@ -2,8 +2,6 @@ package porter
 
 import (
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/ghodss/yaml" // We are not using go-yaml because of serialization problems with jsonschema, don't use this library elsewhere
@@ -42,10 +40,18 @@ func TestPorter_ValidateManifestSchema(t *testing.T) {
 	manifestLoader := gojsonschema.NewGoLoader(m)
 
 	// Load the manifest schema
-	pwd, _ := os.Getwd()
-	schemaLoader := gojsonschema.NewReferenceLoader(filepath.Join("file://", pwd, "testdata/schema.json"))
+	err = p.PrintManifestSchema()
+	require.NoError(t, err, "could not generate schema")
+	schema := p.TestConfig.TestContext.GetOutput()
+	schemaLoader := gojsonschema.NewStringLoader(schema)
 
 	// Validate the manifest against the schema
-	_, err = gojsonschema.Validate(schemaLoader, manifestLoader)
+	fails, err := gojsonschema.Validate(schemaLoader, manifestLoader)
 	require.NoError(t, err)
+
+	assert.Empty(t, fails.Errors(), "expected testdata/porter.yaml to validate against the porter schema")
+	// Print it pretty like
+	for _, err := range fails.Errors() {
+		t.Logf("%s", err)
+	}
 }
