@@ -2,6 +2,13 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "definitions": {
+    "applyTo": {
+      "description": "An optional exhaustive list of actions producing this output",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
       "properties": {
@@ -22,7 +29,6 @@
           "type": "string"
         },
         "required": {
-          "default": false,
           "description": "Indicates whether this credential must be supplied. By default, credentials are optional.",
           "type": "boolean"
         }
@@ -35,13 +41,7 @@
     "output": {
       "description": "A value that is produced by running an invocation image",
       "properties": {
-        "applyTo": {
-          "description": "An optional exhaustive list of actions producing this output",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
+        "applyTo": { "$ref": "#/definitions/applyTo"},
         "definition": {
           "description": "The name of a definition that describes the schema structure of this output",
           "type": "string"
@@ -55,7 +55,6 @@
           "type": "string"
         },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this output's value is sensitive and should not be logged.",
           "type": "boolean"
         }
@@ -68,6 +67,7 @@
     "parameter": {
       "description": "A parameter that can be passed into the invocation image",
       "properties": {
+        "applyTo": { "$ref": "#/definitions/applyTo"},
         "definition": {
           "description": "The name of a definition that describes the schema structure of this parameter",
           "type": "string"
@@ -89,7 +89,6 @@
           "type": "string"
         },
         "sensitive": {
-          "default": false,
           "description": "Indicates where this parameter's value is sensitive and should not be logged.",
           "type": "boolean"
         }
