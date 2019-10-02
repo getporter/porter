@@ -1,6 +1,8 @@
+param([String]$PORTER_VERSION="UNKNOWN")
+
 $PORTER_HOME="$env:USERPROFILE\.porter"
 $PORTER_URL="https://cdn.deislabs.io/porter"
-$PORTER_VERSION="UNKNOWN"
+
 echo "Installing porter to $PORTER_HOME"
 
 mkdir -f $PORTER_HOME
