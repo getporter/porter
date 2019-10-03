@@ -1,6 +1,7 @@
 package mixinprovider
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -163,4 +164,50 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	// Make sure the mixin directory was removed
 	mixinDirExists, _ := p.FileSystem.DirExists(mixinDir)
 	assert.False(t, mixinDirExists)
+}
+
+func TestFileSystem_Install_MixinInfoSavedWhenNoFileExists(t *testing.T) {
+
+	c := config.NewTestConfig(t)
+	c.SetupPorterHome()
+	p := NewFileSystem(c.Config)
+
+	mixinURL := "https://cdn.deislabs.io/porter/mixins/helm"
+	opts := mixin.InstallOptions{
+		Version: "v1.2.4",
+		URL:     mixinURL,
+	}
+	mixinName := "helm"
+	opts.Validate([]string{mixinName})
+
+	//ensure cache.json does not exist (yet)
+	mixinCacheJSONExists, _ := p.FileSystem.Exists("/root/.porter/mixins/cache.json")
+	assert.False(t, mixinCacheJSONExists)
+
+	err := p.saveMixinInfo(opts)
+	require.NoError(t, err)
+
+	//cache.json should have been created
+	mixinCacheJSONExists, _ = p.FileSystem.Exists("/root/.porter/mixins/cache.json")
+	assert.True(t, mixinCacheJSONExists)
+
+	cacheJSONContents, err := p.FileSystem.ReadFile("/root/.porter/mixins/cache.json")
+	require.NoError(t, err)
+
+	//read cache.json
+	var allMixins mixins
+	err = json.Unmarshal(cacheJSONContents, &allMixins)
+	require.NoError(t, err)
+
+	//confirm that the required mixin is present
+	var mixinData mixinInfo
+	for _, mixin := range allMixins.Mixins {
+		if mixin.Name == mixinName {
+			mixinData = mixin
+			break
+		}
+	}
+
+	assert.Equal(t, mixinName, mixinData.Name)
+	assert.Equal(t, mixinURL, mixinData.URL)
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -27,16 +26,19 @@ func (fs *FileSystem) Install(opts mixin.InstallOptions) (*mixin.Metadata, error
 	if err != nil {
 		return nil, err
 	}
-	fs.saveMixinInfo(opts)
+	err = fs.saveMixinInfo(opts)
+	if err != nil {
+		return nil, err
+	}
 	return metadata, nil
 }
 
 const MixinCacheJSON string = "cache.json"
 
 func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
-	mixinsDir, err := fs.Config.GetMixinsDir()
+	mixinsDir, _ := fs.Config.GetMixinsDir()
 	cacheJSONPath := filepath.Join(mixinsDir, "/", MixinCacheJSON)
-	exists, err := fs.FileSystem.Exists(cacheJSONPath)
+	exists, _ := fs.FileSystem.Exists(cacheJSONPath)
 	if !exists {
 		_, err := fs.FileSystem.Create(cacheJSONPath)
 		if err != nil {
@@ -44,7 +46,7 @@ func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
 		}
 	}
 
-	mixinCacheFileContents, err := ioutil.ReadFile(cacheJSONPath)
+	mixinCacheFileContents, err := fs.FileSystem.ReadFile(cacheJSONPath)
 	if err != nil {
 		return errors.Wrap(err, "error reading mixin cache.json")
 	}
@@ -56,7 +58,7 @@ func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
 			return errors.Wrap(err, "error unmarshalling from mixin cache.json")
 		}
 	}
-	//if a mixin exists, skip. needs to be handled via "porter mixin update" ?
+	//if a mixin exists, skip.
 	for _, mixin := range mixinsDataJSON.Mixins {
 		if mixin.Name == opts.Name {
 			return nil
@@ -68,7 +70,7 @@ func (fs *FileSystem) saveMixinInfo(opts mixin.InstallOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "error marshalling to mixin cache.json")
 	}
-	err = ioutil.WriteFile(cacheJSONPath, updatedMixinInfo, 0644)
+	err = fs.FileSystem.WriteFile(cacheJSONPath, updatedMixinInfo, 0644)
 
 	if err != nil {
 		return errors.Wrap(err, "error adding mixin info cache.json")
