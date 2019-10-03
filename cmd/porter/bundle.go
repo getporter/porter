@@ -265,7 +265,9 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
-  porter bundle publish --insecure
+	porter bundle publish --insecure
+	porter bundle publish --archive /tmp/mybuns.tgz
+	porter bundle publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
@@ -278,6 +280,9 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false, "Don't require TLS for the registry.")
+	f.StringVarP(&opts.ArchiveFile, "archive", "a", "", "Path to the bundle archive in .tgz format")
+	f.StringVarP(&opts.Tag, "tag", "t", "", "Bundle tag for newly published bundle")
+
 	return &cmd
 }
 

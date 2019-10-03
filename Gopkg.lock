@@ -284,6 +284,7 @@
     "imagestore/construction",
     "imagestore/ocilayout",
     "imagestore/remote",
+    "packager",
     "utils/crud",
   ]
   pruneopts = "NT"
@@ -1741,6 +1742,7 @@
     "github.com/deislabs/cnab-go/driver/lookup",
     "github.com/deislabs/cnab-go/imagestore",
     "github.com/deislabs/cnab-go/imagestore/construction",
+    "github.com/deislabs/cnab-go/packager",
     "github.com/deislabs/cnab-go/utils/crud",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/config",
