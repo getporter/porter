@@ -1,12 +1,26 @@
-pr: none
 trigger:
   branches:
     include:
       - refs/heads/master
 
-pool:
-  vmImage: 'Ubuntu 16.04'
+jobs:
+- job: linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - bash: scripts/test/test-linux-install.sh
+    displayName: 'Test Install Script'
 
-steps:
-- bash: scripts/test/test-install.sh
-  displayName: 'Test Linux Install Script'
+- job: windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+    - powershell: scripts\test\test-windows-install.ps1
+      displayName: 'Test Install Script'
+
+- job: macos
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+    - bash: scripts/test/test-mac-install.sh
+      displayName: 'Test Install Script'
