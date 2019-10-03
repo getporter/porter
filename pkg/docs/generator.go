@@ -22,7 +22,12 @@ const DefaultDestination = "./docs/content/cli/"
 func (o *DocsOptions) Validate() error {
 	if o.Destination == "" {
 		o.Destination = DefaultDestination
-	}
+    }
+
+    _, err := os.Stat(o.Destination)
+    if err != nil {
+        return errors.New(fmt.Sprintf("error generating the markdown documentation; desitination '%s' doesn't exist", o.Destination))
+    }
 
 	return nil
 }
