@@ -9,9 +9,10 @@ func buildDocsCommand() *cobra.Command {
 	opts := &docs.DocsOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "docs",
-		Short: "Generate markdown docs",
-		Long:  "Generate markdown docs for https://porter.sh/cli",
+		Use:    "docs",
+		Short:  "Generate markdown docs",
+		Long:   "Generate markdown docs for https://porter.sh/cli",
+		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			opts.RootCommand = cmd.Root()
 			return opts.Validate()
