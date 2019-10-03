@@ -214,3 +214,12 @@ func (c *Config) GetClaimsDir() (string, error) {
 	}
 	return filepath.Join(home, "claims"), nil
 }
+
+// GetArchiveLogs locates the output for Bundle Archive Operations.
+func (c *Config) GetBundleArchiveLogs() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "archives"), nil
+}

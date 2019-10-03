@@ -36,6 +36,8 @@ type Operation struct {
 	Outputs []string `json:"outputs"`
 	// Output stream for log messages from the driver
 	Out io.Writer `json:"-"`
+	// Bundle represents the bundle information for use by the operation
+	Bundle *bundle.Bundle
 }
 
 // ResolvedCred is a credential that has been resolved and is ready for injection into the runtime.
