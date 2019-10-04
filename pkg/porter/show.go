@@ -38,18 +38,17 @@ func (p *Porter) ShowInstances(opts ShowOptions) error {
 	if err != nil {
 		return err
 	}
-	name := opts.sharedOptions.Name
 
-	claim, err := p.CNAB.FetchClaim(name)
+	c, err := p.InstanceStorage.Read(opts.sharedOptions.Name)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, claim)
+		return printer.PrintJson(p.Out, c)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, claim)
+		return printer.PrintYaml(p.Out, c)
 	case printer.FormatTable:
 		// Set up human friendly time formatter
 		now := time.Now()
@@ -58,24 +57,18 @@ func (p *Porter) ShowInstances(opts ShowOptions) error {
 		}
 
 		// Print claim details
-		fmt.Fprintf(p.Out, "Name: %s\n", claim.Name)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(claim.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(claim.Modified))
-		fmt.Fprintf(p.Out, "Last Action: %s\n", claim.Result.Action)
-		fmt.Fprintf(p.Out, "Last Status: %s\n", claim.Result.Status)
+		fmt.Fprintf(p.Out, "Name: %s\n", c.Name)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(c.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(c.Modified))
+		fmt.Fprintf(p.Out, "Last Action: %s\n", c.Result.Action)
+		fmt.Fprintf(p.Out, "Last Status: %s\n", c.Result.Status)
 
 		// Print outputs, if any
-		if len(claim.Outputs) > 0 {
+		if len(c.Outputs) > 0 {
 			fmt.Fprintln(p.Out)
 			fmt.Fprint(p.Out, "Outputs:\n")
 
-			// Fetch full Output objects with various metadata fields used for printing
-			outputObjects, err := p.fetchBundleOutputs(name)
-			if err != nil {
-				return err
-			}
-
-			return p.printOutputsTable(outputObjects, claim.Name)
+			return p.printOutputsTable(c)
 		}
 		return nil
 	default:

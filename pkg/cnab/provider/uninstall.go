@@ -10,11 +10,7 @@ import (
 )
 
 func (d *Runtime) Uninstall(args ActionArguments) error {
-	claims, err := d.NewClaimStore()
-	if err != nil {
-		return errors.Wrapf(err, "could not access claim store")
-	}
-	c, err := claims.Read(args.Claim)
+	c, err := d.instanceStorage.Read(args.Claim)
 	if err != nil {
 		// Yay! It's already gone
 		if err == claim.ErrClaimNotFound {
@@ -70,7 +66,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		return errors.Wrap(err, "failed to uninstall the bundle")
 	}
 
-	err = claims.Delete(args.Claim)
+	err = d.instanceStorage.Delete(args.Claim)
 	if err != nil {
 		return errors.Wrap(err, "failed to remove the record of the bundle")
 	}

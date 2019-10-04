@@ -97,6 +97,10 @@
   name = "github.com/PaesslerAG/jsonpath"
   version = "v0.1.1"
 
+[[constraint]]
+  name = "github.com/hashicorp/go-plugin"
+  version = "^v1.0.0"
+
 [prune]
   non-go = true
   go-tests = true

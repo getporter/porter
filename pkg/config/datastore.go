@@ -4,6 +4,7 @@ package config
 type Data struct {
 	// Only define fields here that you need to access from code
 	// Values are dynamically applied to flags and don't need to be defined
+	InstanceStoragePlugin string `mapstructure:"instance-storage-plugin"`
 }
 
 var _ DataStoreLoaderFunc = NoopDataLoader

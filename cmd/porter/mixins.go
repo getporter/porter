@@ -13,7 +13,7 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "mixins",
 		Aliases: []string{"mixin"},
-		Short:   "Mixin commands",
+		Short:   "Mixin commands. Mixins assist with authoring bundles.",
 		Annotations: map[string]string{
 			"group": "resource",
 		},

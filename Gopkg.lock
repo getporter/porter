@@ -769,12 +769,31 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:2d5c50fd90deb2a3f75e344a2363b675999726f8c6ca9d23821ef3caa1e7948e"
+  name = "github.com/hashicorp/go-hclog"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "5ccdce08c75b6c7b37af61159f13f6a4f5e2e928"
+  version = "v0.9.2"
+
+[[projects]]
   digest = "1:2ed138049ab373f696db2081ca48f15c5abdf20893803612a284f2bdce2bf443"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   pruneopts = "NUT"
   revision = "886a7fbe3eb1c874d46f623bfa70af45f425b3d1"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:446e0a4f73191887866ac789d1fd210e3408bb8eb8aeaf199d5f3a73ff63c108"
+  name = "github.com/hashicorp/go-plugin"
+  packages = [
+    ".",
+    "internal/plugin",
+  ]
+  pruneopts = "NUT"
+  revision = "9e3e1c37db188a1acb66561ee0ed4bf4d5e77554"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:0b06ffe0c0764e413a6738e3f045d6bb14117359aef80a09f8c60fbff2ecad6b"
@@ -802,6 +821,14 @@
   pruneopts = "NUT"
   revision = "8cb6e5b959231cc1119e43259c4a608f9c51a241"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:26f63172b8c0484ef9805697291cecd0ea265fbbe088bfeb90fda646d66ba208"
+  name = "github.com/hashicorp/yamux"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "df201c70410deac145ff09e1126f3f8834ead1ec"
 
 [[projects]]
   digest = "1:aaa38889f11896ee3644d77e17dc7764cc47f5f3d3b488268df2af2b52541c5f"
@@ -932,6 +959,14 @@
   revision = "95e2e42e3ece7421c14512f79f796fe3f5d7e5dc"
 
 [[projects]]
+  digest = "1:18b773b92ac82a451c1276bd2776c1e55ce057ee202691ab33c8d6690efcc048"
+  name = "github.com/mitchellh/go-testing-interface"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "6d0b8010fcc857872e42fc6c931227569016843c"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:a45ae66dea4c899d79fceb116accfa1892105c251f0dcd9a217ddc276b42ec68"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
@@ -974,6 +1009,14 @@
   pruneopts = "NUT"
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  digest = "1:3b517122f3aad1ecce45a630ea912b3092b4729f25532a911d0cb2935a1f9352"
+  name = "github.com/oklog/run"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:f2052f4354e87a0ce0b16b55586b8d34d502d164d56d5d4397afae37f3330c42"
@@ -1449,7 +1492,7 @@
   revision = "5fe7a883aa19554f42890211544aa549836af7b7"
 
 [[projects]]
-  digest = "1:2cc1355e3a76eb6f43fb73966ed8ccf194aebbebb008787903f1dbd25e1424fa"
+  digest = "1:8274473795baa9e1fc3b36fae1d8af131a03a7ae2456a8e87a6fda86af019f70"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -1464,6 +1507,7 @@
     "encoding",
     "encoding/proto",
     "grpclog",
+    "health",
     "health/grpc_health_v1",
     "internal",
     "internal/backoff",
@@ -1713,8 +1757,10 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/google/go-containerregistry/pkg/crane",
     "github.com/hashicorp/go-multierror",
+    "github.com/hashicorp/go-plugin",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
     "github.com/pkg/errors",

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/driver/command"
 	"github.com/deislabs/porter/pkg/build"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
@@ -24,7 +23,6 @@ type CNABProvider interface {
 	Upgrade(arguments cnabprovider.ActionArguments) error
 	Invoke(action string, arguments cnabprovider.ActionArguments) error
 	Uninstall(arguments cnabprovider.ActionArguments) error
-	FetchClaim(name string) (*claim.Claim, error)
 }
 
 const DefaultDriver = "docker"

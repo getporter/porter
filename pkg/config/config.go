@@ -204,14 +204,6 @@ func (c *Config) GetCredentialPath(name string) (string, error) {
 	return filepath.Join(credDir, fmt.Sprintf("%s.yaml", name)), nil
 }
 
-func (c *Config) GetClaimsDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "claims"), nil
-}
-
 // GetArchiveLogs locates the output for Bundle Archive Operations.
 func (c *Config) GetBundleArchiveLogs() (string, error) {
 	home, err := c.GetHomeDir()
