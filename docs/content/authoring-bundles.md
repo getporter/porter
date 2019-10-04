@@ -34,10 +34,12 @@ dockerfile: dockerfile.tmpl
 * `name`: The name of the bundle
 * `description`: A description of the bundle
 * `version`: The version of the bundle, uses [semver](https://semver.org)
-* `invocationImage`: The name of the container image to tag the invocation image with when it is built. The format is
-    `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
 * `tag`: The tag to use when the bundle is published to an OCI registry. The format is `REGISTRY/IMAGE:TAG` where TAG is 
     the semantic version of the bundle.
+* `invocationImage`: The name of the container image to tag the invocation image with when it is built. The format is
+    `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
+    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `deislabs/porter-hello:latest`, then the 
+    `invocationImage` will default to `deislabs/porter-hello-installer:latest`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. It is your responsibility
     to provide a suitable base image, for example one that has root ssl certificates installed. When a Dockerfile template is
     not specified, Porter automatically copies the contents of the current directory into `$BUNDLE_DIR` of the invocation image. 
