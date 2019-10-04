@@ -37,7 +37,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 
 	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking credentials generate")
+		return errors.Wrap(err, "unable to pull bundle before building archive")
 	}
 
 	err = p.applyDefaultOptions(&opts.sharedOptions)

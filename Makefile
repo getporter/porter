@@ -210,6 +210,7 @@ clean-last-testrun:
 	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2
+	cd cmd/porter && packr2 clean
 	cd pkg/porter && packr2 clean
 	$(foreach MIXIN, $(INT_MIXINS), \
 		`cd pkg/$(MIXIN) && packr2 clean`; \

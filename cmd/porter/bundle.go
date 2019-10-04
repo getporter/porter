@@ -292,6 +292,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		Example: `  porter bundle archive [FILENAME]
   porter bundle archive --file another/porter.yaml [FILENAME]
   porter bundle archive --cnab-file some/bundle.json [FILENAME]
+  porter bundle archive --tag repo/bundle:tag [FILENAME]
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
