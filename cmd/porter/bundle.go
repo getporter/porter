@@ -292,6 +292,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		Example: `  porter bundle archive [FILENAME]
   porter bundle archive --file another/porter.yaml [FILENAME]
   porter bundle archive --cnab-file some/bundle.json [FILENAME]
+  porter bundle archive --tag repo/bundle:tag [FILENAME]
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -303,5 +304,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
+	f.StringVarP(&opts.Tag, "tag", "t", "",
+		"Use a bundle in an OCI registry specified by the given tag")
 	return &cmd
 }

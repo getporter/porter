@@ -266,8 +266,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "fix/custom-validators"
-  digest = "1:82dc259bd94f991a4908898f18c419ea83618f3e1d0d1e844cd744058c1fb7e5"
+  digest = "1:47771b0b7b6461b5d7e559eb547b81b0a7752d2a90be61af4dcb1dac1f71fe11"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -281,11 +280,15 @@
     "driver/docker",
     "driver/kubernetes",
     "driver/lookup",
+    "imagestore",
+    "imagestore/construction",
+    "imagestore/ocilayout",
+    "imagestore/remote",
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "f51437c7d0babe80355d38e3e103a3a720ecaa97"
-  source = "github.com/vdice/cnab-go"
+  revision = "525007ac513a763cb8fb96ec88f2aa101b791535"
+  version = "v0.5.0-beta1"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -669,7 +672,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:245625c286175b04907201473b3efea84a4d51201a077cc5e06b4e571cce1ab7"
+  digest = "1:b7b03f70c8a3038f5d06dde483dd068e2959b9c0bd82e15d0478b8c075a2a8db"
   name = "github.com/google/go-containerregistry"
   packages = [
     "pkg/authn",
@@ -679,6 +682,7 @@
     "pkg/name",
     "pkg/v1",
     "pkg/v1/empty",
+    "pkg/v1/layout",
     "pkg/v1/mutate",
     "pkg/v1/partial",
     "pkg/v1/random",
@@ -1048,6 +1052,18 @@
   pruneopts = "NUT"
   revision = "5f041e8faa004a95c88a202771f4cc3e991971e6"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:d4496c625b300ea81549bf45b55dae9a7e78d53f6393c12f7a290f99fa6ece16"
+  name = "github.com/pivotal/image-relocation"
+  packages = [
+    "pkg/image",
+    "pkg/registry",
+    "pkg/registry/ggcr",
+  ]
+  pruneopts = "NUT"
+  revision = "28a4e87a740db9ee4e0b105ec6bef4210558df47"
+  version = "v0.5"
 
 [[projects]]
   digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
@@ -1677,6 +1693,8 @@
     "github.com/deislabs/cnab-go/driver",
     "github.com/deislabs/cnab-go/driver/docker",
     "github.com/deislabs/cnab-go/driver/lookup",
+    "github.com/deislabs/cnab-go/imagestore",
+    "github.com/deislabs/cnab-go/imagestore/construction",
     "github.com/deislabs/cnab-go/utils/crud",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/config",
