@@ -82,6 +82,27 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	return lines, nil
 }
 
+func (g *DockerfileGenerator) readAndValidateDockerfile(s *bufio.Scanner) ([]string, error) {
+	buildArg := "ARG BUILD_DIR"
+	foundBuildArg := false
+	var lines []string
+	for s.Scan() {
+		if strings.TrimSpace(s.Text()) == buildArg {
+			foundBuildArg = true
+		}
+		lines = append(lines, s.Text())
+	}
+
+	if !foundBuildArg {
+		errorMessage := fmt.Sprintf(`
+		Dockerfile.tmpl must declare the build argument BUILD_DIR.
+		Add the following line to the file and re-run porter build: %s`, buildArg)
+		return nil, errors.New(errorMessage)
+	}
+
+	return lines, nil
+}
+
 func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	var reader io.Reader
 	if g.Manifest.Dockerfile != "" {
@@ -107,11 +128,10 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 		}
 		reader = bytes.NewReader(contents)
 	}
-
-	var lines []string
 	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	lines, e := g.readAndValidateDockerfile(scanner)
+	if e != nil {
+		return nil, e
 	}
 	return lines, nil
 }
