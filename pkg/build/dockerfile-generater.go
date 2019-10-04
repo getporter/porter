@@ -22,6 +22,7 @@ type DockerfileGenerator struct {
 	*manifest.Manifest
 	*templates.Templates
 	mixin.MixinProvider
+	hasBuildArg bool
 }
 
 func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp mixin.MixinProvider) *DockerfileGenerator {
@@ -30,6 +31,7 @@ func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *t
 		Manifest:      m,
 		Templates:     tmpl,
 		MixinProvider: mp,
+		hasBuildArg:   false,
 	}
 }
 
@@ -82,22 +84,23 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	return lines, nil
 }
 
+// ErrorMessage to be displayed when no ARG BUNDLE_DIR is in Dockerfile
+const ErrorMessage = `
+Dockerfile.tmpl must declare the build argument BUNDLE_DIR.
+Add the following line to the file and re-run porter build: ARG BUNDLE_DIR`
+
 func (g *DockerfileGenerator) readAndValidateDockerfile(s *bufio.Scanner) ([]string, error) {
-	buildArg := "ARG BUILD_DIR"
-	foundBuildArg := false
+	buildArg := "ARG BUNDLE_DIR"
 	var lines []string
 	for s.Scan() {
 		if strings.TrimSpace(s.Text()) == buildArg {
-			foundBuildArg = true
+			g.hasBuildArg = true
 		}
 		lines = append(lines, s.Text())
 	}
 
-	if !foundBuildArg {
-		errorMessage := fmt.Sprintf(`
-		Dockerfile.tmpl must declare the build argument BUILD_DIR.
-		Add the following line to the file and re-run porter build: %s`, buildArg)
-		return nil, errors.New(errorMessage)
+	if !g.hasBuildArg {
+		return nil, errors.New(ErrorMessage)
 	}
 
 	return lines, nil

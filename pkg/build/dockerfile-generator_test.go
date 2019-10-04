@@ -1,6 +1,7 @@
 package build
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -29,6 +30,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
+	fmt.Println(gotlines)
 
 	wantlines := []string{
 		"FROM debian:stretch",
@@ -56,32 +58,64 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	// Use a custom dockerfile template
-	m.Dockerfile = "Dockerfile.template"
-	customFrom := `FROM ubuntu:latest
+	t.Run("build from custom docker without supplying ARG BUNDLE_DIR", func(t *testing.T) {
+
+		// Use a custom dockerfile template
+		c.Manifest.Dockerfile = "Dockerfile.template"
+		customFrom := `FROM ubuntu:latest
 COPY mybin /cnab/app/
 
 `
-	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	// ignore mixins in the unit tests
-	m.Mixins = []manifest.MixinDeclaration{}
+		// ignore mixins in the unit tests
+		c.Manifest.Mixins = []config.MixinDeclaration{}
 
-	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	gotlines, err := g.buildDockerfile()
-	require.NoError(t, err)
+		mp := &mixin.TestMixinProvider{}
+		g := NewDockerfileGenerator(c.Config, tmpl, mp)
+		gotlines, err := g.buildDockerfile()
 
-	wantLines := []string{
-		"FROM ubuntu:latest",
-		"COPY mybin /cnab/app/",
-		"",
-		"COPY .cnab/ /cnab/",
-		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
-		"WORKDIR $BUNDLE_DIR",
-		"CMD [\"/cnab/app/run\"]",
-	}
-	assert.Equal(t, wantLines, gotlines)
+		// We expect an error when ARG BUNDLE_DIR is not in Dockerfile
+		require.EqualError(t, err, ErrorMessage)
+
+		wantLines := []string(nil)
+		assert.Equal(t, wantLines, gotlines)
+
+	})
+
+	t.Run("build from custom docker with ARG BUNDLE_DIR supplied", func(t *testing.T) {
+
+		// Use a custom dockerfile template
+		c.Manifest.Dockerfile = "Dockerfile.template"
+		customFrom := `FROM ubuntu:latest
+ARG BUNDLE_DIR
+COPY mybin /cnab/app/
+
+`
+		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+
+		// ignore mixins in the unit tests
+		c.Manifest.Mixins = []config.MixinDeclaration{}
+
+		mp := &mixin.TestMixinProvider{}
+		g := NewDockerfileGenerator(c.Config, tmpl, mp)
+		gotlines, err := g.buildDockerfile()
+
+		// We expect no error when ARG BUNDLE_DIR is in Dockerfile
+		require.NoError(t, err)
+
+		wantLines := []string{
+			"FROM ubuntu:latest",
+			"ARG BUNDLE_DIR",
+			"COPY mybin /cnab/app/",
+			"",
+			"COPY .cnab/ /cnab/",
+			"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
+			"WORKDIR $BUNDLE_DIR",
+			"CMD [\"/cnab/app/run\"]",
+		}
+		assert.Equal(t, wantLines, gotlines)
+	})
 }
 
 func TestPorter_buildDockerfile_output(t *testing.T) {
