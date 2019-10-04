@@ -11,7 +11,7 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 )
 
-const SchemaVersion = "v1.0.0-WD"
+const SchemaVersion = "v1.0.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
