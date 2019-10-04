@@ -1,3 +1,5 @@
+// +build docs
+
 package main
 
 func init() {

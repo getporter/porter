@@ -33,7 +33,6 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 * [porter bundles](/cli/porter_bundles/)	 - Bundle commands
 * [porter create](/cli/porter_create/)	 - Create a bundle
 * [porter credentials](/cli/porter_credentials/)	 - Credentials commands
-* [porter docs](/cli/porter_docs/)	 - Generate markdown docs
 * [porter explain](/cli/porter_explain/)	 - Explain a bundle
 * [porter install](/cli/porter_install/)	 - Install a new instance of a bundle
 * [porter instances](/cli/porter_instances/)	 - Bundle Instance commands
