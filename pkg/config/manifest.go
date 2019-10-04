@@ -446,7 +446,6 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.SetDefaults()
 
 	return m, nil
 }
@@ -474,11 +473,22 @@ func (c *Config) readFromURL(path string) (*Manifest, error) {
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
 func (c *Config) ReadManifest(path string) (*Manifest, error) {
+	var (
+		m   *Manifest
+		err error
+	)
+
 	if strings.HasPrefix(path, "http") {
-		return c.readFromURL(path)
+		m, err = c.readFromURL(path)
+	} else {
+		m, err = c.readFromFile(path)
 	}
 
-	return c.readFromFile(path)
+	if err != nil {
+		return nil, err
+	}
+	m.SetDefaults()
+	return m, nil
 }
 
 func (c *Config) LoadManifest() error {
@@ -502,7 +512,7 @@ func (c *Config) LoadManifestFrom(file string) error {
 	return nil
 }
 
-func (m *Manifest) SetDefaults(){
+func (m *Manifest) SetDefaults() {
 	if m.Image == "" && m.BundleTag != "" {
 		registry := strings.Split(m.BundleTag, ":")[0]
 		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
