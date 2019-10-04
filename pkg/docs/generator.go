@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -19,15 +20,18 @@ type DocsOptions struct {
 
 const DefaultDestination = "./docs/content/cli/"
 
-func (o *DocsOptions) Validate() error {
+func (o *DocsOptions) Validate(cxt *context.Context) error {
 	if o.Destination == "" {
 		o.Destination = DefaultDestination
-    }
+	}
 
-    _, err := os.Stat(o.Destination)
-    if err != nil {
-        return errors.New(fmt.Sprintf("error generating the markdown documentation; desitination '%s' doesn't exist", o.Destination))
-    }
+	exists, err := cxt.FileSystem.Exists(o.Destination)
+	if err != nil {
+		return errors.Wrapf(err, "error checking if --destination exists: %q", o.Destination)
+	}
+	if !exists {
+		return errors.Errorf("--destination %q doesn't exist", o.Destination)
+	}
 
 	return nil
 }
