@@ -58,6 +58,7 @@ upgrade:
       name: "{{ bundle.parameters.mysql-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
       chart: stable/mysql
+      version: 0.10.2
       outputs:
       - name: mysql-root-password
         secret: "{{ bundle.parameters.mysql-name }}"
