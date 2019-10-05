@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/manifest"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/claim"
 	buildprovider "github.com/deislabs/porter/pkg/build/provider"
@@ -53,7 +55,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
 	p.NewCommand = exec.Command
-	p.Builder = buildprovider.NewDockerBuilder(p.Config)
+	p.Builder = buildprovider.NewDockerBuilder(p.Context)
 	p.Mixins = mixinprovider.NewFileSystem(p.Config)
 
 	// Set up porter and the bundle inside of a temp directory
@@ -191,6 +193,6 @@ type TestBuildProvider struct{}
 func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
-func (t *TestBuildProvider) BuildInvocationImage() error {
+func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }

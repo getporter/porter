@@ -2,13 +2,13 @@ package porter
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/deislabs/porter/pkg"
 	"github.com/deislabs/porter/pkg/printer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 

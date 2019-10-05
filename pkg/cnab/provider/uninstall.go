@@ -5,7 +5,7 @@ import (
 
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -32,7 +32,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		c.Parameters, err = d.loadParameters(&c, args.Params, string(config.ActionUninstall))
+		c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUninstall))
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}

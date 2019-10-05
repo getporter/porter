@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/templates"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +19,14 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	err = c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []config.MixinDeclaration{}
+	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -52,11 +53,11 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	err = c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	// Use a custom dockerfile template
-	c.Manifest.Dockerfile = "Dockerfile.template"
+	m.Dockerfile = "Dockerfile.template"
 	customFrom := `FROM ubuntu:latest
 COPY mybin /cnab/app/
 
@@ -64,10 +65,10 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []config.MixinDeclaration{}
+	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -90,14 +91,14 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	err = c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []config.MixinDeclaration{}
+	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -125,14 +126,14 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	err = c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	// ignore mixins in the unit tests
-	c.Manifest.Mixins = []config.MixinDeclaration{}
+	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
 
@@ -154,11 +155,11 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	err = c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
 
@@ -183,11 +184,11 @@ func TestDockerFileGenerator_getMixinBuildInput(t *testing.T) {
 	tmpl := templates.NewTemplates()
 	c.TestContext.AddTestFile("testdata/multiple-mixins.yaml", config.Name)
 
-	err := c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
 	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	input := g.getMixinBuildInput("exec")
 

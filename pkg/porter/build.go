@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/deislabs/porter/pkg/manifest"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/build"
 	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
@@ -12,7 +14,7 @@ import (
 
 type BuildProvider interface {
 	// BuildInvocationImage using the bundle in the current directory
-	BuildInvocationImage() error
+	BuildInvocationImage(manifest *manifest.Manifest) error
 }
 
 type BuildOptions struct {
@@ -27,7 +29,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return err
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Templates, p.Mixins)
+	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy mixins: %s", err)
@@ -35,16 +37,16 @@ func (p *Porter) Build(opts BuildOptions) error {
 	if err := generator.GenerateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-	if err := p.Builder.BuildInvocationImage(); err != nil {
+	if err := p.Builder.BuildInvocationImage(p.Manifest); err != nil {
 		return errors.Wrap(err, "unable to build CNAB invocation image")
 	}
 
-	return p.buildBundle(p.Config.Manifest.Image, "")
+	return p.buildBundle(p.Manifest.Image, "")
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	imageDigests := map[string]string{invocationImage: digest}
-	converter := configadapter.NewManifestConverter(p.Config, imageDigests)
+	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests)
 	bun := converter.ToBundle()
 	return p.writeBundle(bun)
 }

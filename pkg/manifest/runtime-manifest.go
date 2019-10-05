@@ -1,4 +1,4 @@
-package config
+package manifest
 
 import (
 	"encoding/base64"
@@ -7,17 +7,18 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/context"
+
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/runtime"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type RuntimeManifest struct {
-	*Manifest
 	*context.Context
+	*Manifest
 
 	Action Action
 

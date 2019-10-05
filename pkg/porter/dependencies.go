@@ -5,19 +5,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/context"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/cnab/extensions"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/runtime"
 	"github.com/pkg/errors"
 )
 
 type dependencyExecutioner struct {
-	*config.Config
+	*context.Context
+	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     CNABProvider
-	Manifest *config.Manifest
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
@@ -31,10 +33,10 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		Config:   p.Config,
+		Context:  p.Context,
+		Manifest: p.Manifest,
 		Resolver: resolver,
 		CNAB:     p.CNAB,
-		Manifest: p.Manifest,
 	}
 }
 
@@ -70,7 +72,7 @@ func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action c
 	return nil
 }
 
-func (e *dependencyExecutioner) Execute(action config.Action) error {
+func (e *dependencyExecutioner) Execute(action manifest.Action) error {
 	if e.action == nil {
 		return errors.New("Prepare must be called before Execute")
 	}
@@ -220,7 +222,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action config.Action) error {
+func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
 	depArgs := cnabprovider.ActionArguments{
 		Insecure:   parentArgs.Insecure,
 		BundlePath: dep.CNABFile,
@@ -238,7 +240,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	}
 
 	// If action is uninstall, no claim will exist
-	if action != config.ActionUninstall {
+	if action != manifest.ActionUninstall {
 		// Collect expected outputs via claim
 		c, err := e.CNAB.FetchClaim(depArgs.Claim)
 		if err != nil {

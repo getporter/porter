@@ -9,25 +9,28 @@ import (
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/cnab/extensions"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 )
 
 const SchemaVersion = "v1.0.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
-	*config.Config
+	*context.Context
+	Manifest     *manifest.Manifest
 	ImageDigests map[string]string
 }
 
-func NewManifestConverter(cfg *config.Config, imageDigests map[string]string) *ManifestConverter {
+func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string) *ManifestConverter {
 	return &ManifestConverter{
-		Config:       cfg,
+		Context:      cxt,
+		Manifest:     manifest,
 		ImageDigests: imageDigests,
 	}
 }
 
 func (c *ManifestConverter) ToBundle() *bundle.Bundle {
-	fmt.Fprintf(c.Out, "\nGenerating Bundle File with Invocation Image %s =======> \n", c.Manifest.Image)
 	b := &bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
@@ -132,7 +135,6 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
 
 	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
-		fmt.Fprintf(c.Out, "Generating parameter definition %s ====>\n", param.Name)
 		p := bundle.Parameter{
 			Definition:  param.Name,
 			ApplyTo:     param.ApplyTo,
@@ -181,7 +183,6 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 		outputs = make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
 		for _, output := range c.Manifest.Outputs {
-			fmt.Fprintf(c.Out, "Generating output definition %s ====>\n", output.Name)
 			o := bundle.Output{
 				Definition:  output.Name,
 				Description: output.Description,
@@ -205,11 +206,11 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 	return outputs
 }
 
-func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDefinition {
-	return []config.ParameterDefinition{
+func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterDefinition {
+	return []manifest.ParameterDefinition{
 		{
 			Name: "porter-debug",
-			Destination: config.Location{
+			Destination: manifest.Location{
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{
@@ -224,7 +225,6 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []config.ParameterDef
 func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Credential {
 	params := map[string]bundle.Credential{}
 	for _, cred := range c.Manifest.Credentials {
-		fmt.Fprintf(c.Out, "Generating credential %s ====>\n", cred.Name)
 		l := bundle.Credential{
 			Description: cred.Description,
 			Required:    cred.Required,

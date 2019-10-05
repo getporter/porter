@@ -1,10 +1,11 @@
 package feed
 
 import (
+	"testing"
+
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMixinFeed_Search_Latest(t *testing.T) {

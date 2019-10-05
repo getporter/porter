@@ -9,10 +9,11 @@ import (
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func TestPorter_Run(t *testing.T) {
@@ -29,7 +30,7 @@ func TestPorter_Run(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 	opts := NewRunOptions(p.Config)
-	opts.Action = string(config.ActionInstall)
+	opts.Action = string(manifest.ActionInstall)
 	opts.File = "porter.yaml"
 
 	err := opts.Validate()
@@ -107,7 +108,7 @@ func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
 }
 
 func TestActionInput_MarshalYAML(t *testing.T) {
-	s := &config.Step{
+	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"exec": map[string]interface{}{
 				"command": "echo hi",
@@ -116,8 +117,8 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 	}
 
 	input := &ActionInput{
-		action: config.ActionInstall,
-		Steps:  []*config.Step{s},
+		action: manifest.ActionInstall,
+		Steps:  []*manifest.Step{s},
 	}
 
 	b, err := yaml.Marshal(input)
@@ -128,7 +129,7 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 
 func TestApplyBundleOutputs_None(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.Manifest{
+	p.Manifest = &manifest.Manifest{
 		Name: "mybun",
 	}
 	opts := NewRunOptions(p.Config)
@@ -144,9 +145,9 @@ func TestApplyBundleOutputs_None(t *testing.T) {
 
 func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.Manifest{
+	p.Manifest = &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []config.OutputDefinition{
+		Outputs: []manifest.OutputDefinition{
 			{
 				Name: "foo",
 				Schema: definition.Schema{
@@ -188,9 +189,9 @@ func TestApplyBundleOutputs_Some_Match(t *testing.T) {
 
 func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.Manifest{
+	p.Manifest = &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []config.OutputDefinition{
+		Outputs: []manifest.OutputDefinition{
 			{
 				Name: "bar",
 			},
@@ -219,9 +220,9 @@ func TestApplyBundleOutputs_Some_NoMatch(t *testing.T) {
 
 func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Manifest = &config.Manifest{
+	p.Manifest = &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []config.OutputDefinition{
+		Outputs: []manifest.OutputDefinition{
 			{
 				Name: "foo",
 				ApplyTo: []string{

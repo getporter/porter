@@ -8,6 +8,7 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -18,7 +19,7 @@ type RunOptions struct {
 
 	File         string
 	Action       string
-	parsedAction config.Action
+	parsedAction manifest.Action
 }
 
 func NewRunOptions(c *config.Config) RunOptions {
@@ -49,7 +50,7 @@ func (o *RunOptions) validateAction() error {
 		}
 	}
 
-	o.parsedAction = config.Action(o.Action)
+	o.parsedAction = manifest.Action(o.Action)
 	return nil
 }
 
@@ -86,7 +87,7 @@ func (p *Porter) Run(opts RunOptions) error {
 	if err != nil {
 		return err
 	}
-	runtimeManifest := config.NewRuntimeManifest(p.Context, opts.parsedAction, p.Manifest)
+	runtimeManifest := manifest.NewRuntimeManifest(p.Context, opts.parsedAction, p.Manifest)
 
 	err = runtimeManifest.Validate()
 	if err != nil {
@@ -121,7 +122,7 @@ func (p *Porter) Run(opts RunOptions) error {
 
 			input := &ActionInput{
 				action: opts.parsedAction,
-				Steps:  []*config.Step{step},
+				Steps:  []*manifest.Step{step},
 			}
 			inputBytes, _ := yaml.Marshal(input)
 			cmd := mixin.CommandOptions{
@@ -157,8 +158,8 @@ func (p *Porter) Run(opts RunOptions) error {
 }
 
 type ActionInput struct {
-	action config.Action
-	Steps  []*config.Step `yaml:"steps"`
+	action manifest.Action
+	Steps  []*manifest.Step `yaml:"steps"`
 }
 
 // MarshalYAML marshals the step nested under the action

@@ -42,7 +42,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		}
 	}
 
-	if p.Config.Manifest.BundleTag == "" {
+	if p.Manifest.BundleTag == "" {
 		return errors.New("porter.yaml must specify a `tag` value for this bundle")
 	}
 
@@ -51,7 +51,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return err
 	}
 
-	digest, err := p.Registry.PushInvocationImage(p.Config.Manifest.Image)
+	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)
 	if err != nil {
 		return errors.Wrap(err, "unable to push CNAB invocation image")
 	}
@@ -65,7 +65,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string) (*bundle.Bundle, error) {
-	taggedImage, err := p.rewriteImageWithDigest(p.Config.Manifest.Image, digest)
+	taggedImage, err := p.rewriteImageWithDigest(p.Manifest.Image, digest)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update invocation image reference: %s")
 	}
