@@ -69,7 +69,7 @@ func buildRootCommand() *cobra.Command {
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommand", ShouldShowUngroupedCommand)
 
 	if includeDocsCommand {
-		cmd.AddCommand(buildDocsCommand())
+		cmd.AddCommand(buildDocsCommand(p))
 	}
 
 	return cmd
