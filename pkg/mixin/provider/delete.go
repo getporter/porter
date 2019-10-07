@@ -8,15 +8,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (fs *FileSystem) Delete(opts mixin.DeleteOptions) (*mixin.Metadata, error) {
+func (fs *FileSystem) Uninstall(opts mixin.UninstallOptions) (*mixin.Metadata, error) {
 	if opts.Name != "" {
-		return fs.deleteByName(opts.Name)
+		return fs.uninstallByName(opts.Name)
 	}
 
-	return nil, errors.New("No mixin name was provided for deletion")
+	return nil, errors.New("No mixin name was provided to uninstall")
 }
 
-func (fs *FileSystem) deleteByName(name string) (*mixin.Metadata, error) {
+func (fs *FileSystem) uninstallByName(name string) (*mixin.Metadata, error) {
 	mixinsDir, err := fs.GetMixinsDir()
 	if err != nil {
 		return nil, err

@@ -16,11 +16,11 @@ func TestFileSystem_Delete_DeleteMixin(t *testing.T) {
 	mixinsDir, _ := p.GetMixinsDir()
 	mixinDir := path.Join(mixinsDir, "mixxin")
 
-	opts := mixin.DeleteOptions{
+	opts := mixin.UninstallOptions{
 		Name: "mixxin",
 	}
 
-	_, err := p.Delete(opts)
+	_, err := p.Uninstall(opts)
 
 	assert.Nil(t, err)
 

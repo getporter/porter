@@ -21,7 +21,7 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildMixinsListCommand(p))
 	cmd.AddCommand(BuildMixinInstallCommand(p))
-	cmd.AddCommand(BuildMixinDeleteCommand(p))
+	cmd.AddCommand(BuildMixinUninstallCommand(p))
 	cmd.AddCommand(buildMixinsFeedCommand(p))
 
 	return cmd
@@ -73,17 +73,17 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	return cmd
 }
 
-func BuildMixinDeleteCommand(p *porter.Porter) *cobra.Command {
-	opts := mixin.DeleteOptions{}
+func BuildMixinUninstallCommand(p *porter.Porter) *cobra.Command {
+	opts := mixin.UninstallOptions{}
 	cmd := &cobra.Command{
-		Use:     "delete NAME",
-		Short:   "Delete a mixin",
-		Example: `  porter mixin delete helm`,
+		Use:     "uninstall NAME",
+		Short:   "Uninstall a mixin",
+		Example: `  porter mixin uninstall helm`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.DeleteMixin(opts)
+			return p.UninstallMixin(opts)
 		},
 	}
 

@@ -26,7 +26,7 @@ type MixinProvider interface {
 	// a structured version string. It replaces GetVersion.
 	GetVersionMetadata(Metadata) (*VersionInfo, error)
 	Install(InstallOptions) (*Metadata, error)
-	Delete(DeleteOptions) (*Metadata, error)
+	Uninstall(UninstallOptions) (*Metadata, error)
 
 	// Run a command against the specified mixin
 	Run(mixinContext *context.Context, mixinName string, commandOpts CommandOptions) error

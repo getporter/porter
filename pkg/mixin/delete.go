@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DeleteOptions struct {
+type UninstallOptions struct {
 	Name string
 }
 
-func (o *DeleteOptions) Validate(args []string) error {
+func (o *UninstallOptions) Validate(args []string) error {
 	switch len(args) {
 	case 0:
 		return errors.Errorf("no mixin name was specified")

@@ -35,7 +35,7 @@ func (p *TestMixinProvider) Install(o InstallOptions) (*Metadata, error) {
 	return &Metadata{Name: "exec", Dir: "~/.porter/mixins/exec"}, nil
 }
 
-func (p *TestMixinProvider) Delete(o DeleteOptions) (*Metadata, error) {
+func (p *TestMixinProvider) Uninstall(o UninstallOptions) (*Metadata, error) {
 	return &Metadata{Name: "exec"}, nil
 }
 
