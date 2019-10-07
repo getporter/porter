@@ -3,14 +3,15 @@ package porter
 import (
 	"bytes"
 	"fmt"
+	"runtime"
+	"text/template"
+
 	"github.com/deislabs/porter/pkg"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/porter/version"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
-	"runtime"
-	"text/template"
 )
 
 type VersionOpts struct {
@@ -26,9 +27,9 @@ type SystemInfo struct {
 type Mixins []mixin.Metadata
 
 type SystemDebugInfo struct {
-	Version mixin.Metadata   `json:"version"`
-	SysInfo SystemInfo       `json:"system"`
-	Mixins  Mixins `json:"mixins"`
+	Version mixin.Metadata `json:"version"`
+	SysInfo SystemInfo     `json:"system"`
+	Mixins  Mixins         `json:"mixins"`
 }
 
 func (mixins Mixins) PrintMixinsTable() string {

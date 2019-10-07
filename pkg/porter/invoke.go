@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -51,7 +51,7 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return err
 	}
 
-	err = deperator.Execute(config.Action(opts.Action))
+	err = deperator.Execute(manifest.Action(opts.Action))
 	if err != nil {
 		return err
 	}

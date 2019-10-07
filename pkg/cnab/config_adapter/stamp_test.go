@@ -3,6 +3,8 @@ package configadapter
 import (
 	"testing"
 
+	"github.com/deislabs/porter/pkg/manifest"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
@@ -13,12 +15,12 @@ var simpleManifestDigest = "74ef9c4abc7dfc41566ba28d9fcfab9c70baa0ca5ca434c71298
 
 func TestConfig_ComputeManifestDigest(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../config/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
-	err := c.LoadManifest()
-	require.NoError(t, err)
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Config, nil)
+	a := NewManifestConverter(c.Context, m, nil)
 	stamp := a.GenerateStamp()
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 }

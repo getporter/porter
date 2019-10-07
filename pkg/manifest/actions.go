@@ -1,4 +1,4 @@
-package config
+package manifest
 
 type Action string
 

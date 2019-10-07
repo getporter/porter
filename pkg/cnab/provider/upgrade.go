@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	"github.com/deislabs/cnab-go/action"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/pkg/errors"
-
-	"github.com/deislabs/porter/pkg/config"
 )
 
 func (d *Runtime) Upgrade(args ActionArguments) error {
@@ -28,7 +27,7 @@ func (d *Runtime) Upgrade(args ActionArguments) error {
 	}
 
 	if len(args.Params) > 0 {
-		c.Parameters, err = d.loadParameters(&c, args.Params, string(config.ActionUpgrade))
+		c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUpgrade))
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}

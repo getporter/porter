@@ -1,8 +1,12 @@
-package config
+package manifest
 
 import (
 	"io/ioutil"
 	"testing"
+
+	"github.com/deislabs/porter/pkg/context"
+
+	"github.com/deislabs/porter/pkg/config"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"gopkg.in/yaml.v2"
@@ -12,50 +16,50 @@ import (
 )
 
 func TestReadManifest_URL(t *testing.T) {
-	c := NewTestConfig(t)
-	url := "https://raw.githubusercontent.com/deislabs/porter/master/pkg/config/testdata/simple.porter.yaml"
-	m, err := c.ReadManifest(url)
+	cxt := context.NewTestContext(t)
+	url := "https://raw.githubusercontent.com/deislabs/porter/v0.17.0-beta.1/pkg/config/testdata/simple.porter.yaml"
+	m, err := ReadManifest(cxt.Context, url)
 
 	require.NoError(t, err)
 	assert.Equal(t, "hello", m.Name)
 }
 
 func TestReadManifest_Validate_InvalidURL(t *testing.T) {
-	c := NewTestConfig(t)
-	_, err := c.ReadManifest("http://fake-example-porter")
+	cxt := context.NewTestContext(t)
+	_, err := ReadManifest(cxt.Context, "http://fake-example-porter")
 
 	assert.Error(t, err)
 	assert.Regexp(t, "could not reach url http://fake-example-porter", err)
 }
 
 func TestReadManifest_File(t *testing.T) {
-	c := NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/simple.porter.yaml", Name)
-	m, err := c.ReadManifest(Name)
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
 
 	require.NoError(t, err)
 	assert.Equal(t, "hello", m.Name)
 }
 
 func TestSetDefaultInvocationImage(t *testing.T) {
-	c := NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/missing-invocation-image.porter.yaml", Name)
-	m, err := c.ReadManifest(Name)
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/missing-invocation-image.porter.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err)
-	assert.Equal(t, "deislabs/missing-invocation-image-installer:" + m.Version, m.Image)
+	assert.Equal(t, "deislabs/missing-invocation-image-installer:"+m.Version, m.Image)
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
-	c := NewTestConfig(t)
-	_, err := c.ReadManifest("fake-porter.yaml")
+	cxt := context.NewTestContext(t)
+	_, err := ReadManifest(cxt.Context, "fake-porter.yaml")
 
 	assert.EqualError(t, err, "the specified porter configuration file fake-porter.yaml does not exist")
 }
 
 func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
-	c := NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/mixin-with-config.yaml", Name)
-	m, err := c.ReadManifest(Name)
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-config.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
 
 	require.NoError(t, err)
 	assert.Len(t, m.Mixins, 2, "expected 2 mixins")
@@ -65,9 +69,9 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 }
 
 func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
-	c := NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/mixin-with-bad-config.yaml", Name)
-	_, err := c.ReadManifest(Name)
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/mixin-with-bad-config.yaml", config.Name)
+	_, err := ReadManifest(cxt.Context, config.Name)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "mixin declaration contained more than one mixin")
@@ -80,9 +84,9 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 		}
 	}
 	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
-		c := NewTestConfig(t)
-		c.TestContext.AddTestFile("testdata/with-credentials.yaml", Name)
-		m, err := c.ReadManifest(Name)
+		cxt := context.NewTestContext(t)
+		cxt.AddTestFile("testdata/with-credentials.yaml", config.Name)
+		m, err := ReadManifest(cxt.Context, config.Name)
 		require.NoError(t, err)
 		assertAllCredentialsRequired(t, m.Credentials)
 	})

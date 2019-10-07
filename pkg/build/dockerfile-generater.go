@@ -10,6 +10,7 @@ import (
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/templates"
 	"github.com/pkg/errors"
@@ -18,13 +19,15 @@ import (
 
 type DockerfileGenerator struct {
 	*config.Config
+	*manifest.Manifest
 	*templates.Templates
 	mixin.MixinProvider
 }
 
-func NewDockerfileGenerator(cfg *config.Config, tmpl *templates.Templates, mp mixin.MixinProvider) *DockerfileGenerator {
+func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp mixin.MixinProvider) *DockerfileGenerator {
 	return &DockerfileGenerator{
-		Config:        cfg,
+		Config:        config,
+		Manifest:      m,
 		Templates:     tmpl,
 		MixinProvider: mp,
 	}
@@ -174,8 +177,8 @@ func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
 		}
 	}
 
-	filterSteps := func(action config.Action, steps config.Steps) {
-		mixinSteps := config.Steps{}
+	filterSteps := func(action manifest.Action, steps manifest.Steps) {
+		mixinSteps := manifest.Steps{}
 		for _, step := range steps {
 			if step.GetMixinName() != m {
 				continue
@@ -184,12 +187,12 @@ func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
 		}
 		input.Actions[string(action)] = mixinSteps
 	}
-	filterSteps(config.ActionInstall, g.Manifest.Install)
-	filterSteps(config.ActionUpgrade, g.Manifest.Upgrade)
-	filterSteps(config.ActionUninstall, g.Manifest.Uninstall)
+	filterSteps(manifest.ActionInstall, g.Manifest.Install)
+	filterSteps(manifest.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(manifest.ActionUninstall, g.Manifest.Uninstall)
 
 	for action, steps := range g.Manifest.CustomActions {
-		filterSteps(config.Action(action), steps)
+		filterSteps(manifest.Action(action), steps)
 	}
 
 	return input

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/deislabs/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

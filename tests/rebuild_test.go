@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/deislabs/porter/pkg/manifest"
+
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +52,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
-	m, err := p.ReadManifest(config.Name)
+	m, err := manifest.ReadManifest(p.Context, config.Name)
 	require.NoError(t, err)
 	m.Version = "0.2.0"
 	data, err := yaml.Marshal(m)
@@ -113,7 +115,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
-	m, err := p.ReadManifest(config.Name)
+	m, err := manifest.ReadManifest(p.Context, config.Name)
 	require.NoError(t, err)
 	m.Version = "0.2.0"
 	data, err := yaml.Marshal(m)
@@ -127,7 +129,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 
 	// Re-generate the credentials
 	err = p.GenerateCredentials(credentialOptions)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	buildCount := strings.Count(gotOutput, "Building bundle ===>")

@@ -7,7 +7,8 @@ import (
 	"os"
 
 	"github.com/deislabs/porter/pkg/build"
-	"github.com/deislabs/porter/pkg/config"
+	portercontext "github.com/deislabs/porter/pkg/context"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
@@ -18,16 +19,16 @@ import (
 )
 
 type DockerBuilder struct {
-	*config.Config
+	*portercontext.Context
 }
 
-func NewDockerBuilder(cfg *config.Config) *DockerBuilder {
+func NewDockerBuilder(cxt *portercontext.Context) *DockerBuilder {
 	return &DockerBuilder{
-		Config: cfg,
+		Context: cxt,
 	}
 }
 
-func (b *DockerBuilder) BuildInvocationImage() error {
+func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build =======> \n")
 	path, err := os.Getwd()
 	if err != nil {
@@ -36,7 +37,7 @@ func (b *DockerBuilder) BuildInvocationImage() error {
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
 		PullParent:     false,
-		Tags:           []string{b.Manifest.Image},
+		Tags:           []string{manifest.Image},
 		Dockerfile:     "Dockerfile",
 		BuildArgs: map[string]*string{
 			"BUNDLE_DIR": &build.BUNDLE_DIR,

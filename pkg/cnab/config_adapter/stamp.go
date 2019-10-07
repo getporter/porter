@@ -32,13 +32,13 @@ func (c *ManifestConverter) GenerateStamp() Stamp {
 }
 
 func (c *ManifestConverter) digestManifest() (string, error) {
-	if exists, _ := c.FileSystem.Exists(c.ManifestPath); !exists {
-		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.ManifestPath)
+	if exists, _ := c.FileSystem.Exists(c.Manifest.ManifestPath); !exists {
+		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
 	}
 
-	data, err := c.FileSystem.ReadFile(c.ManifestPath)
+	data, err := c.FileSystem.ReadFile(c.Manifest.ManifestPath)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not read manifest at %q", c.ManifestPath)
+		return "", errors.Wrapf(err, "could not read manifest at %q", c.Manifest.ManifestPath)
 	}
 
 	digest := sha256.Sum256(data)

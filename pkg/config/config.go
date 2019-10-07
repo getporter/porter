@@ -44,11 +44,8 @@ type DataStoreLoaderFunc func(*Config) error
 
 type Config struct {
 	*context.Context
-	Data *Data
-
-	Manifest     *Manifest
-	ManifestPath string
-	DataLoader   DataStoreLoaderFunc
+	Data       *Data
+	DataLoader DataStoreLoaderFunc
 
 	porterHome string
 }

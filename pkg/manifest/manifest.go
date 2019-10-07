@@ -1,4 +1,4 @@
-package config
+package manifest
 
 import (
 	"fmt"
@@ -8,12 +8,16 @@ import (
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type Manifest struct {
+	// ManifestPath is the location from which the manifest was loaded, such as the path on the filesystem or a url.
+	ManifestPath string `yaml:"-"`
+
 	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
 	Version     string `yaml:"version,omitempty"`
@@ -451,12 +455,19 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 	return manifest, nil
 }
 
-func (c *Config) readFromFile(path string) (*Manifest, error) {
-	if exists, _ := c.FileSystem.Exists(path); !exists {
+func (m *Manifest) SetDefaults() {
+	if m.Image == "" && m.BundleTag != "" {
+		registry := strings.Split(m.BundleTag, ":")[0]
+		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
+	}
+}
+
+func readFromFile(cxt *context.Context, path string) (*Manifest, error) {
+	if exists, _ := cxt.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
 	}
 
-	data, err := c.FileSystem.ReadFile(path)
+	data, err := cxt.FileSystem.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
 	}
@@ -469,7 +480,7 @@ func (c *Config) readFromFile(path string) (*Manifest, error) {
 	return m, nil
 }
 
-func (c *Config) readFromURL(path string) (*Manifest, error) {
+func readFromURL(path string) (*Manifest, error) {
 	resp, err := http.Get(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not reach url %s", path)
@@ -491,49 +502,37 @@ func (c *Config) readFromURL(path string) (*Manifest, error) {
 
 // ReadManifest determines if specified path is a URL or a filepath.
 // After reading the data in the path it returns a Manifest and any errors
-func (c *Config) ReadManifest(path string) (*Manifest, error) {
+func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 	var (
 		m   *Manifest
 		err error
 	)
 
 	if strings.HasPrefix(path, "http") {
-		m, err = c.readFromURL(path)
+		m, err = readFromURL(path)
 	} else {
-		m, err = c.readFromFile(path)
+		m, err = readFromFile(cxt, path)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 	m.SetDefaults()
+	m.ManifestPath = path
+
 	return m, nil
 }
 
-func (c *Config) LoadManifest() error {
-	return c.LoadManifestFrom(Name)
-}
-
-func (c *Config) LoadManifestFrom(file string) error {
-	m, err := c.ReadManifest(file)
+func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
+	m, err := ReadManifest(cxt, file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = m.Validate()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	c.Manifest = m
-	c.ManifestPath = file
-
-	return nil
-}
-
-func (m *Manifest) SetDefaults() {
-	if m.Image == "" && m.BundleTag != "" {
-		registry := strings.Split(m.BundleTag, ":")[0]
-		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
-	}
+	return m, nil
 }
