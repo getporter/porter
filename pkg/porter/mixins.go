@@ -82,16 +82,16 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 	return nil
 }
 
-func (p *Porter) DeleteMixin(opts mixin.DeleteOptions) error {
-	m, err := p.Mixins.Delete(opts)
+func (p *Porter) UninstallMixin(opts mixin.UninstallOptions) error {
+	m, err := p.Mixins.Uninstall(opts)
 	if err != nil {
 		return err
 	}
 
 	if p.Debug {
-		fmt.Fprintf(p.Out, "Deleted %s mixin from %s", m.Name, m.Dir)
+		fmt.Fprintf(p.Out, "Uninstalled %s mixin from %s", m.Name, m.Dir)
 	} else {
-		fmt.Fprintf(p.Out, "Deleted %s mixin", m.Name)
+		fmt.Fprintf(p.Out, "Uninstalled %s mixin", m.Name)
 	}
 
 	return nil
