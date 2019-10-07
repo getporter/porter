@@ -10,6 +10,7 @@ import (
 	"github.com/deislabs/cnab-go/bundle/loader"
 	"github.com/deislabs/cnab-go/packager"
 	"github.com/docker/distribution/reference"
+	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pkg/errors"
 
 	"github.com/deislabs/porter/pkg/build"
@@ -103,9 +104,10 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	return p.Registry.PushBundle(bun, tag, opts.InsecureRegistry)
 }
 
-// TODO: tests!
 func (p *Porter) publishFromArchive(opts PublishOptions) error {
-	fmt.Fprintf(p.Out, "Extracting bundle from archive %s...\n", opts.ArchiveFile)
+	if p.Debug {
+		fmt.Fprintf(p.Out, "Extracting bundle from archive %s...\n", opts.ArchiveFile)
+	}
 	source, err := filepath.Abs(opts.ArchiveFile)
 	if err != nil {
 		return errors.Wrapf(err, "could not determine absolute path to archive file %s", opts.ArchiveFile)
@@ -126,29 +128,103 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		return errors.Wrapf(err, "failed to extract bundle from archive %s", opts.ArchiveFile)
 	}
 
-	// TODO: do we want to import bundle into Porter's cache?
-
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
 		return errors.Wrapf(err, "failed to load bundle from archive %s", opts.ArchiveFile)
 	}
 
-	fmt.Fprintf(p.Out, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
-	// TODO: support overriding with new/different registry, etc.?  (image relocation effort?)
-	invocationImage := bun.InvocationImages[0].Image
-	digest, err := p.Registry.PushInvocationImage(invocationImage)
-	if err != nil {
-		return errors.Wrap(err, "unable to push CNAB invocation image")
+	if p.Debug {
+		fmt.Fprintf(p.Out, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
 	}
 
-	// update bundle with digest
-	taggedImage, err := p.rewriteImageWithDigest(invocationImage, digest)
-	if err != nil {
-		return errors.Wrap(err, "unable to update invocation image reference")
+	// Update the bundle with new images (name, digest) based on the original,
+	// using the provided bundle tag to derive registry and org
+	for i, invImg := range bun.InvocationImages {
+		err := p.updateBundleWithNewImage(bun, invImg.Image, opts.Tag, i)
+		if err != nil {
+			return err
+		}
 	}
-	bun.InvocationImages[0].Digest = taggedImage
+	for name, img := range bun.Images {
+		err := p.updateBundleWithNewImage(bun, img.Image, opts.Tag, name)
+		if err != nil {
+			return err
+		}
+	}
 
 	return p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
+}
+
+// updateBundleWithNewImage updates a bundle with a new image at the provided index
+// constructed using the provided original image and new bundle tag
+func (p *Porter) updateBundleWithNewImage(bun *bundle.Bundle, img, tag string, index interface{}) error {
+	newImg, err := getNewImageNameFromBundleTag(img, tag)
+	if err != nil {
+		return err
+	}
+
+	digest, err := p.Registry.Copy(img, newImg)
+	if err != nil {
+		return err
+	}
+
+	taggedImage, err := p.rewriteImageWithDigest(newImg, digest)
+	if err != nil {
+		return errors.Wrapf(err, "unable to update image reference for %s", img)
+	}
+
+	// update bundle with new image
+	switch v := index.(type) {
+	case int: // invocation images is a slice, indexed by an integer
+		i := index.(int)
+		origImg := bun.InvocationImages[i]
+		updatedImg := origImg.DeepCopy()
+		updatedImg.Image = taggedImage
+		updatedImg.Digest = digest
+		bun.InvocationImages[i] = *updatedImg
+	case string: // images is a map, indexed by a string
+		i := index.(string)
+		origImg := bun.Images[i]
+		updatedImg := origImg.DeepCopy()
+		updatedImg.Image = taggedImage
+		updatedImg.Digest = digest
+		bun.Images[i] = *updatedImg
+	default:
+		return fmt.Errorf("unknown image index type: %v", v)
+	}
+
+	return nil
+}
+
+// getNewImageNameFromBundleTag derives a new image name from the provided original
+// using the provided bundleTag to glean registry/org/etc.
+func getNewImageNameFromBundleTag(origImg, bundleTag string) (string, error) {
+	// Convert strings to structured image.Name objects
+	origImgName, err := image.NewName(origImg)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
+	}
+	bundleTagName, err := image.NewName(bundleTag)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
+	}
+
+	// Swap out Host
+	newImg := strings.Replace(origImgName.String(), origImgName.Host(), bundleTagName.Host(), -1)
+
+	// Swap out org (via Path)
+	origPathParts := strings.Split(origImgName.Path(), "/")
+	tagPathParts := strings.Split(bundleTagName.Path(), "/")
+	newOrg := tagPathParts[0]
+	if len(origPathParts) == 1 {
+		// original image has no org, e.g. a library image
+		// so just prepend new org
+		newImg = strings.Join([]string{newOrg, newImg}, "/")
+	} else {
+		newImg = strings.Replace(newImg, origPathParts[0], newOrg, -1)
+	}
+
+	return newImg, nil
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string) (*bundle.Bundle, error) {
