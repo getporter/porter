@@ -211,6 +211,58 @@ func TestResolvePathParam(t *testing.T) {
 	assert.Equal(t, "person.txt", val)
 }
 
+func TestMetadataAvailableForTemplating(t *testing.T) {
+
+	c := NewTestConfig(t)
+	m := &Manifest{
+		Name:        "manifest name",
+		Version:     "1.1.0",
+		Description: "This manifest is for testing",
+		Image:       "deislabs/porter-kubernetes:latest",
+	}
+	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	s := &Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Parameters": map[string]interface{}{
+				"Name":        "{{bundle.name}}",
+				"Version":     "{{bundle.version}}",
+				"Description": "{{bundle.description}}",
+				"Image":       "{{bundle.invocationImage}}",
+			},
+		},
+	}
+
+	before, _ := yaml.Marshal(s)
+	t.Logf("Before:\n %s", before)
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+
+	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	for k, v := range pms {
+		t.Logf("\nKey: %s\nValue: %s\nType: %T", k, v, v)
+	}
+
+	name, ok := pms["Name"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, name, m.Name)
+
+	desc, ok := pms["Description"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, desc, m.Description)
+
+	image, ok := pms["Image"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, image, m.Image)
+
+	version, ok := pms["Version"].(string)
+	assert.True(t, ok)
+	assert.Equal(t, version, m.Version)
+}
+
 func TestResolveMapParamUnknown(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &Manifest{
