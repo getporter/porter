@@ -114,7 +114,7 @@ func (p *Porter) Run(opts RunOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "couldn't load runtime bundle.json")
 	}
-	var reloMap config.RelocationMapping
+	var reloMap manifest.RelocationMapping
 	if _, err := p.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
 		reloBytes, err := p.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
 		if err != nil {

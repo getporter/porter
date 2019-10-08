@@ -319,6 +319,7 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap config.Reloc
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from bundle.json")
 		}
+		m.ImageMap[alias] = manifestImage
 	}
 
 	for alias, reloRef := range reloMap {
@@ -327,6 +328,7 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap config.Reloc
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from relocation mapping")
 		}
+		m.ImageMap[alias] = manifestImage
 	}
 	return nil
 }
@@ -339,8 +341,12 @@ func resolveImage(image *MappedImage, refString string) error {
 	}
 	switch v := ref.(type) {
 	case reference.Canonical:
+		if tagged, ok := ref.(reference.NamedTagged); ok {
+			image.Tag = tagged.Tag()
+		}
 		image.Repository = v.Name()
 		image.Digest = v.Digest().String()
+
 	case reference.NamedTagged:
 		image.Tag = v.Tag()
 		image.Repository = v.Name()

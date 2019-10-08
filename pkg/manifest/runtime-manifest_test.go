@@ -894,12 +894,141 @@ func TestResolveImage(t *testing.T) {
 				Tag:        "latest",
 			},
 		},
+		{
+			name:      "the one with a hostname",
+			reference: "deislabs.io/deislabs/porter-hello",
+			want: MappedImage{
+				Repository: "deislabs.io/deislabs/porter-hello",
+				Tag:        "latest",
+			},
+		},
+		{
+			name:      "the one with a hostname and port",
+			reference: "deislabs.io:9090/deislabs/porter-hello:foo",
+			want: MappedImage{
+				Repository: "deislabs.io:9090/deislabs/porter-hello",
+				Tag:        "foo",
+			},
+		},
+		{
+
+			name:      "tagged and digested",
+			reference: "deislabs/porter-hello:latest@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "latest",
+				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			},
+		},
 	}
 	for _, test := range tests {
 		got := &MappedImage{}
-		resolveImage(got, test.reference)
+		err := resolveImage(got, test.reference)
+		assert.NoError(t, err)
 		assert.Equal(t, test.want.Repository, got.Repository)
 		assert.Equal(t, test.want.Tag, got.Tag)
 		assert.Equal(t, test.want.Digest, got.Digest)
 	}
+}
+
+func TestResolveImageErrors(t *testing.T) {
+	tests := []struct {
+		name      string
+		reference string
+		want      string
+	}{
+		{
+			name:      "no algo digest",
+			reference: "deislabs/porter-hello@8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+		{
+			name:      "bad digest",
+			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f",
+			want:      "unable to parse docker image %s: invalid checksum digest length",
+		},
+		{
+			name:      "bad digest algo",
+			reference: "deislabs/porter-hello@sha356:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want:      "unable to parse docker image %s: unsupported digest algorithm",
+		},
+		{
+			name:      "malformed tagged ref",
+			reference: "deislabs/porter-hello@latest",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+		{
+			name:      "too many ports tagged ref",
+			reference: "deislabs:8080:8080/porter-hello:latest",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+	}
+	for _, test := range tests {
+		got := &MappedImage{}
+		err := resolveImage(got, test.reference)
+		assert.EqualError(t, err, fmt.Sprintf(test.want, test.reference))
+	}
+}
+
+func TestResolveImageWithUpdatedBundle(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "blah/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := RelocationMapping{}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.NoError(t, err)
+	mi := rm.ImageMap["machine"]
+	assert.Equal(t, "blah/ghost", mi.Repository)
+
+}
+func TestResolveImageWithRelo(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "deislabs/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := RelocationMapping{
+		"machine": "cnabio/ghost:latest",
+	}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.NoError(t, err)
+	mi := rm.ImageMap["machine"]
+	assert.Equal(t, "cnabio/ghost", mi.Repository)
+
 }
