@@ -55,11 +55,20 @@ func (d *Driver) Config() map[string]string {
 		"PULL_ALWAYS":         "Always pull image, even if locally available (0|1)",
 		"DOCKER_DRIVER_QUIET": "Make the Docker driver quiet (only print container stdout/stderr)",
 		"OUTPUTS_MOUNT_PATH":  "Absolute path to where Docker driver can create temporary directories to bundle outputs. Defaults to temp dir.",
+		"CLEANUP_CONTAINERS":  "If true, the docker container will be destroyed when it finishes running. If false, it will not be destroyed. The supported values are true and false. Defaults to true.",
 	}
 }
 
 // SetConfig sets Docker driver configuration
 func (d *Driver) SetConfig(settings map[string]string) {
+	// Set default and provide feedback on acceptable input values.
+	value, ok := settings["CLEANUP_CONTAINERS"]
+	if !ok {
+		settings["CLEANUP_CONTAINERS"] = "true"
+	} else if value != "true" && value != "false" {
+		fmt.Printf("CLEANUP_CONTAINERS environment variable has unexpected value %q. Supported values are 'true', 'false', or unset.", value)
+	}
+
 	d.config = settings
 }
 
@@ -175,7 +184,9 @@ func (d *Driver) exec(op *driver.Operation) (driver.OperationResult, error) {
 		return driver.OperationResult{}, fmt.Errorf("cannot create container: %v", err)
 	}
 
-	defer cli.Client().ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+	if d.config["CLEANUP_CONTAINERS"] == "true" {
+		defer cli.Client().ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+	}
 
 	tarContent, err := generateTar(op.Files)
 	if err != nil {

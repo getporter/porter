@@ -38,7 +38,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 		}
 
 		// If this parameter applies to the current action, set the override accordingly
-		if appliesToAction(action, param) {
+		if param.AppliesTo(action) {
 			overrides[key] = value
 		} else {
 			// Otherwise, set to current parameter value on the claim, if exists
@@ -60,7 +60,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	for name, param := range bun.Parameters {
 		if param.Required {
 			if _, exists := rawOverrides[name]; !exists {
-				if !appliesToAction(action, param) {
+				if !param.AppliesTo(action) {
 					overrides[name] = claim.Parameters[name]
 				}
 			}
@@ -82,17 +82,4 @@ func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 		}
 	}
 	return rawValue, nil
-}
-
-// TODO: remove in favor of cnab-go logic: https://github.com/deislabs/cnab-go/pull/129
-func appliesToAction(action string, parameter bundle.Parameter) bool {
-	if len(parameter.ApplyTo) == 0 {
-		return true
-	}
-	for _, act := range parameter.ApplyTo {
-		if action == act {
-			return true
-		}
-	}
-	return false
 }
