@@ -106,7 +106,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 
 func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	if p.Debug {
-		fmt.Fprintf(p.Out, "Extracting bundle from archive %s...\n", opts.ArchiveFile)
+		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", opts.ArchiveFile)
 	}
 	source, err := filepath.Abs(opts.ArchiveFile)
 	if err != nil {
@@ -133,7 +133,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	}
 
 	if p.Debug {
-		fmt.Fprintf(p.Out, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
+		fmt.Fprintf(p.Err, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
 	}
 
 	// Update the bundle with new images (name, digest) based on the original,
