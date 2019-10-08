@@ -11,7 +11,6 @@ import (
 
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/runtime"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -311,7 +310,7 @@ func (m *RuntimeManifest) Prepare() error {
 
 // ResolveImages updates the RuntimeManifest to properly reflect that image map passed to the bundle via the
 // mounted bundle.json and relocation mapping
-func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap config.RelocationMapping) error {
+func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap RelocationMapping) error {
 	for alias, image := range bun.Images {
 		manifestImage := m.ImageMap[alias]
 		manifestImage.Digest = image.Digest
