@@ -61,7 +61,7 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 	t.Run("build from custom docker without supplying ARG BUNDLE_DIR", func(t *testing.T) {
 
 		// Use a custom dockerfile template
-		c.Manifest.Dockerfile = "Dockerfile.template"
+		m.Dockerfile = "Dockerfile.template"
 		customFrom := `FROM ubuntu:latest
 COPY mybin /cnab/app/
 
@@ -69,10 +69,9 @@ COPY mybin /cnab/app/
 		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 		// ignore mixins in the unit tests
-		c.Manifest.Mixins = []config.MixinDeclaration{}
-
+		m.Mixins = []manifest.MixinDeclaration{}
 		mp := &mixin.TestMixinProvider{}
-		g := NewDockerfileGenerator(c.Config, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect an error when ARG BUNDLE_DIR is not in Dockerfile
@@ -86,7 +85,7 @@ COPY mybin /cnab/app/
 	t.Run("build from custom docker with ARG BUNDLE_DIR supplied", func(t *testing.T) {
 
 		// Use a custom dockerfile template
-		c.Manifest.Dockerfile = "Dockerfile.template"
+		m.Dockerfile = "Dockerfile.template"
 		customFrom := `FROM ubuntu:latest
 ARG BUNDLE_DIR
 COPY mybin /cnab/app/
@@ -95,10 +94,9 @@ COPY mybin /cnab/app/
 		c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 		// ignore mixins in the unit tests
-		c.Manifest.Mixins = []config.MixinDeclaration{}
-
+		m.Mixins = []manifest.MixinDeclaration{}
 		mp := &mixin.TestMixinProvider{}
-		g := NewDockerfileGenerator(c.Config, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect no error when ARG BUNDLE_DIR is in Dockerfile
