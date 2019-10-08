@@ -80,9 +80,9 @@ func (p *Porter) Publish(opts PublishOptions) error {
 func (p *Porter) publishFromFile(opts PublishOptions) error {
 	tag := opts.Tag
 	if tag == "" {
-		tag = p.Config.Manifest.BundleTag
+		tag = p.Manifest.BundleTag
 	}
-	if p.Config.Manifest.BundleTag == "" {
+	if p.Manifest.BundleTag == "" {
 		return errors.New("porter.yaml must specify a `tag` value for this bundle")
 	}
 
