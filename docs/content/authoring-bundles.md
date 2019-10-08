@@ -12,7 +12,7 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Credentials](#credentials)
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
-* [Image Map](#image-map)
+* [Images](#images)
 * [Generated Files](#generated-files)
 
 We have full [examples](https://github.com/deislabs/porter/tree/master/examples) of Porter manifests in the Porter repository.
