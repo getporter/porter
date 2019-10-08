@@ -11,7 +11,9 @@ import (
 
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/runtime"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -303,6 +305,48 @@ func (m *RuntimeManifest) Prepare() error {
 				return errors.Wrapf(err, "unable to write decoded parameter %s", param.Name)
 			}
 		}
+	}
+	return nil
+}
+
+// ResolveImages updates the RuntimeManifest to properly reflect that image map passed to the bundle via the
+// mounted bundle.json and relocation mapping
+func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap config.RelocationMapping) error {
+	for alias, image := range bun.Images {
+		manifestImage := m.ImageMap[alias]
+		manifestImage.Digest = image.Digest
+		err := resolveImage(&manifestImage, image.Image)
+		if err != nil {
+			return errors.Wrap(err, "unable to update image map from bundle.json")
+		}
+	}
+
+	for alias, reloRef := range reloMap {
+		manifestImage := m.ImageMap[alias]
+		err := resolveImage(&manifestImage, reloRef)
+		if err != nil {
+			return errors.Wrap(err, "unable to update image map from relocation mapping")
+		}
+	}
+	return nil
+}
+
+func resolveImage(image *MappedImage, refString string) error {
+	//figure out what type of Reference it is so we can extract useful things for our image map
+	ref, err := reference.Parse(refString)
+	if err != nil {
+		return errors.Wrapf(err, "unable to parse docker image %s", refString)
+	}
+	switch v := ref.(type) {
+	case reference.Canonical:
+		image.Repository = v.Name()
+		image.Digest = v.Digest().String()
+	case reference.NamedTagged:
+		image.Tag = v.Tag()
+		image.Repository = v.Name()
+	case reference.Named:
+		image.Repository = v.Name()
+		image.Tag = "latest" //Populate this with latest so that the {{ can reference something }}
 	}
 	return nil
 }

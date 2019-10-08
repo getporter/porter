@@ -863,3 +863,43 @@ func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 	err := rm.ResolveStep(s)
 	assert.Error(t, err)
 }
+
+func TestResolveImage(t *testing.T) {
+	tests := []struct {
+		name      string
+		reference string
+		want      MappedImage
+	}{
+		{
+			name:      "canonical reference",
+			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			},
+		},
+		{
+			name:      "tagged reference",
+			reference: "deislabs/porter-hello:v0.1.10",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "v0.1.10",
+			},
+		},
+		{
+			name:      "named reference",
+			reference: "deislabs/porter-hello",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "latest",
+			},
+		},
+	}
+	for _, test := range tests {
+		got := &MappedImage{}
+		resolveImage(got, test.reference)
+		assert.Equal(t, test.want.Repository, got.Repository)
+		assert.Equal(t, test.want.Tag, got.Tag)
+		assert.Equal(t, test.want.Digest, got.Digest)
+	}
+}

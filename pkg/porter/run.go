@@ -1,11 +1,13 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/deislabs/cnab-go/bundle/loader"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/manifest"
@@ -102,6 +104,31 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
+	//Update the runtimeManifest images with the bundle.json and relocation mapping (if it's there)
+	l := loader.New()
+	bunBytes, err := p.FileSystem.ReadFile("/cnab/bundle.json")
+	if err != nil {
+		return errors.Wrap(err, "couldn't read runtime bundle.json")
+	}
+	rtb, err := l.LoadData(bunBytes)
+	if err != nil {
+		return errors.Wrap(err, "couldn't load runtime bundle.json")
+	}
+	var reloMap config.RelocationMapping
+	if _, err := p.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
+		reloBytes, err := p.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
+		if err != nil {
+			return errors.Wrap(err, "couldn't read relocation file")
+		}
+		err = json.Unmarshal(reloBytes, reloMap)
+		if err != nil {
+			return errors.Wrap(err, "couldn't load relocation file")
+		}
+	}
+	err = runtimeManifest.ResolveImages(rtb, reloMap)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve bundle images")
+	}
 	err = p.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
