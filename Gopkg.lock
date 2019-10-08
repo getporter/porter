@@ -330,15 +330,16 @@
   revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a9d1406d7380d50675fddc88442cecdbfbdd069bc24191171ae901719cd4c79b"
+  digest = "1:51fef110ff737b08bebfa091471714db028ebcbeda6a3cad8ca4512b39b34581"
   name = "github.com/docker/cnab-to-oci"
   packages = [
     "converter",
+    "relocation",
     "remotes",
   ]
   pruneopts = "NUT"
-  revision = "85061934a54630aec0dd4adbe6427c10bd09a658"
+  revision = "c33e316902ce0e44adc6e14731c7241286d17d8e"
+  version = "v0.2.0-beta1"
 
 [[projects]]
   digest = "1:95f17095fc25ae7c9de6adbe34c048ea6102b0a3999c6fcf03fc663ab536c602"

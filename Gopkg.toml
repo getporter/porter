@@ -7,10 +7,9 @@
   version = "v0.5.0-beta1"
 
 
-# Using master until there is a release of cnab-to-oci
 [[constraint]]
   name = "github.com/docker/cnab-to-oci"
-  branch = "master"
+  version = "v0.2.0-beta1"
 
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"

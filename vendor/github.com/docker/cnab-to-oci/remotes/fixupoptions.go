@@ -25,6 +25,7 @@ type fixupConfig struct {
 	resolver                      remotes.Resolver
 	invocationImagePlatformFilter platforms.Matcher
 	componentImagePlatformFilter  platforms.Matcher
+	autoBundleUpdate              bool
 }
 
 // FixupOption is a helper for configuring a FixupBundle
@@ -102,6 +103,14 @@ func WithParallelism(maxConcurrentJobs int, jobsBufferLength int) FixupOption {
 	return func(cfg *fixupConfig) error {
 		cfg.maxConcurrentJobs = maxConcurrentJobs
 		cfg.jobsBufferLength = jobsBufferLength
+		return nil
+	}
+}
+
+// WithAutoBundleUpdate updates the bundle with content digests and size provided by the registry
+func WithAutoBundleUpdate() FixupOption {
+	return func(cfg *fixupConfig) error {
+		cfg.autoBundleUpdate = true
 		return nil
 	}
 }
