@@ -120,8 +120,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	defer p.FileSystem.RemoveAll(tmpDir)
 
 	l := loader.NewLoader()
-	// as of writing, NewImporter always returns nil as error
-	imp, _ := packager.NewImporter(source, tmpDir, l, false)
+	imp := packager.NewImporter(source, tmpDir, l)
 
 	err = imp.Import()
 	if err != nil {

@@ -1,11 +1,14 @@
 [[constraint]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.7.0-beta1"
+  # version = "v0.7.0-beta1"
+  source = "github.com/vdice/cnab-go"
+  branch = "feat/img-deep-copy"
 
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.7.0-beta1"
-
+  # version = "v0.7.0-beta1"
+  source = "github.com/vdice/cnab-go"
+  branch = "feat/img-deep-copy"
 
 [[constraint]]
   name = "github.com/docker/cnab-to-oci"

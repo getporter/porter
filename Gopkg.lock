@@ -266,7 +266,8 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:36efeedc5d1c77d0df776b4e54a12f709ea456ac6d3ccb07a0b9ef0b450dc2e0"
+  branch = "feat/img-deep-copy"
+  digest = "1:76054b7cfb2c0b4ca1ae402342ee9dca63948cc0a3b3d0553c3a4fbe2b00717d"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -288,8 +289,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "26ed63f06aff506ab4bfea63a2a83d341f987580"
-  version = "v0.7.0-beta1"
+  revision = "7f096627f34816259aee1f0136ad157c3db3ab6f"
+  source = "github.com/vdice/cnab-go"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -1759,12 +1760,15 @@
     "github.com/docker/go-metrics",
     "github.com/ghodss/yaml",
     "github.com/gobuffalo/packr/v2",
+    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/google/go-containerregistry/pkg/crane",
     "github.com/hashicorp/go-hclog",
     "github.com/hashicorp/go-multierror",
     "github.com/hashicorp/go-plugin",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
+    "github.com/pivotal/image-relocation/pkg/image",
+    "github.com/pivotal/image-relocation/pkg/registry/ggcr",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
