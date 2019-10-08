@@ -104,6 +104,22 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	return p.Registry.PushBundle(bun, tag, opts.InsecureRegistry)
 }
 
+// publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
+//
+// After the bundle is extracted from the archive, we iterate through all of the images (invocation
+// and application) listed and rename each based on the registry/org values derived from the provided tag.
+//
+// For each new image name, we use a library to copy the old image to the new image repository.
+// (Currently we use the pivotal/image-relocation library for this logic.)
+//
+// Finally, we generate a new bundle from the old, with all image names and digests updated, based
+// on the newly copied images, and then push this new bundle using the provided tag.
+// (Currently we use the docker/cnab-to-oci library for this logic.)
+//
+// In the generation of a new bundle, we therefore don't preserve content digests and can't maintain
+// signature verification throughout the process.  Once we wish to preserve content digest and such verification,
+// this approach will need to be refactored, via preserving the original bundle and employing
+// a relocation mapping approach to associate the bundle's (old) images with the newly copied images.
 func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", opts.ArchiveFile)
