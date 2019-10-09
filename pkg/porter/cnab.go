@@ -2,11 +2,13 @@ package porter
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/claim"
+	"github.com/deislabs/cnab-go/driver/command"
 	"github.com/deislabs/porter/pkg/build"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
@@ -307,6 +309,11 @@ func (o *sharedOptions) validateDriver() error {
 	case "docker", "debug":
 		return nil
 	default:
-		return errors.Errorf("unsupported driver provided: %s", o.Driver)
+		cmddriver := &command.Driver{Name: o.Driver}
+		if cmddriver.CheckDriverExists() {
+			return nil
+		}
+
+		return fmt.Errorf("unsupported driver or driver not found in PATH: %s", o.Driver)
 	}
 }
