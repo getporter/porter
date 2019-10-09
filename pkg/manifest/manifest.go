@@ -47,8 +47,6 @@ type Manifest struct {
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
 	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
-	// TODO: porter should handle the relocation and overwrite the repository and tag (if present), and
-	// populate originalImage
 	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
 }
 
@@ -258,15 +256,14 @@ func (m MixinDeclaration) MarshalYAML() (interface{}, error) {
 }
 
 type MappedImage struct {
-	Description   string            `yaml:"description"`
-	ImageType     string            `yaml:"imageType"`
-	Repository    string            `yaml:"repository"`
-	OriginalImage string            `yaml:"originalImage,omitempty"`
-	Digest        string            `yaml:"digest,omitempty"`
-	Size          uint64            `yaml:"size,omitempty"`
-	MediaType     string            `yaml:"mediaType,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty"`
-	Tag           string            `yaml:"tag,omitempty"`
+	Description string            `yaml:"description"`
+	ImageType   string            `yaml:"imageType"`
+	Repository  string            `yaml:"repository"`
+	Digest      string            `yaml:"digest,omitempty"`
+	Size        uint64            `yaml:"size,omitempty"`
+	MediaType   string            `yaml:"mediaType,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Tag         string            `yaml:"tag,omitempty"`
 }
 
 type Dependency struct {

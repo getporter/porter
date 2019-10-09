@@ -308,7 +308,7 @@ func (m *RuntimeManifest) Prepare() error {
 	return nil
 }
 
-// ResolveImages updates the RuntimeManifest to properly reflect that image map passed to the bundle via the
+// ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the
 // mounted bundle.json and relocation mapping
 func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap RelocationMapping) error {
 	for alias, image := range bun.Images {
