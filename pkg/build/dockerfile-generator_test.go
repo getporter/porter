@@ -1,7 +1,6 @@
 package build
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -30,7 +29,6 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
-	fmt.Println(gotlines)
 
 	wantlines := []string{
 		"FROM debian:stretch",
