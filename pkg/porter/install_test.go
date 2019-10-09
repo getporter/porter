@@ -171,7 +171,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	}{
 		{"debug", "debug", "debug", ""},
 		{"docker", "docker", "docker", ""},
-		{"invalid driver provided", "dbeug", "", "unsupported driver provided: dbeug"},
+		{"invalid driver provided", "dbeug", "", "unsupported driver or driver not found in PATH: dbeug"},
 	}
 
 	for _, tc := range testcases {
