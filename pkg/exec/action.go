@@ -38,6 +38,7 @@ func (a Action) GetSteps() []builder.ExecutableStep {
 }
 
 var _ builder.ExecutableStep = Step{}
+var _ builder.HasCustomDashes = Step{}
 var _ builder.StepWithOutputs = Step{}
 
 type Step struct {
@@ -62,6 +63,10 @@ func (s Step) GetArguments() []string {
 
 func (s Step) GetFlags() builder.Flags {
 	return s.Flags
+}
+
+func (s Step) GetDashes() builder.Dashes {
+	return builder.DefaultFlagDashes
 }
 
 func (s Step) GetOutputs() []builder.Output {
