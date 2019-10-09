@@ -214,53 +214,27 @@ func TestResolvePathParam(t *testing.T) {
 func TestMetadataAvailableForTemplating(t *testing.T) {
 
 	c := NewTestConfig(t)
-	m := &Manifest{
-		Name:        "manifest name",
-		Version:     "1.1.0",
-		Description: "This manifest is for testing",
-		Image:       "deislabs/porter-kubernetes:latest",
-	}
+
+	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", Name)
+	c.LoadManifest()
+	m := c.Manifest
+
 	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
-	s := &Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Parameters": map[string]interface{}{
-				"Name":        "{{bundle.name}}",
-				"Version":     "{{bundle.version}}",
-				"Description": "{{bundle.description}}",
-				"Image":       "{{bundle.invocationImage}}",
-			},
-		},
+
+	before, _ := yaml.Marshal(m.Install[0])
+	t.Logf("Before:\n %s", before)
+	for _, step := range rm.Install {
+		rm.ResolveStep(step)
 	}
 
-	before, _ := yaml.Marshal(s)
-	t.Logf("Before:\n %s", before)
-	err := rm.ResolveStep(s)
-	require.NoError(t, err)
+	s := rm.Install[0]
 	after, _ := yaml.Marshal(s)
 	t.Logf("After:\n %s", after)
 
-	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
-	for k, v := range pms {
-		t.Logf("\nKey: %s\nValue: %s\nType: %T", k, v, v)
-	}
-
-	name, ok := pms["Name"].(string)
-	assert.True(t, ok)
-	assert.Equal(t, name, m.Name)
-
-	desc, ok := pms["Description"].(string)
-	assert.True(t, ok)
-	assert.Equal(t, desc, m.Description)
-
-	image, ok := pms["Image"].(string)
-	assert.True(t, ok)
-	assert.Equal(t, image, m.Image)
-
-	version, ok := pms["Version"].(string)
-	assert.True(t, ok)
-	assert.Equal(t, version, m.Version)
+	cmd := pms["command"].(string)
+	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:latest\"", cmd)
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {

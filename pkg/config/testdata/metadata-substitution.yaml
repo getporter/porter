@@ -1,0 +1,24 @@
+mixins:
+  - exec
+
+name: HELLO
+version: 0.1.0
+description: "An example Porter configuration"
+invocationImage: jeremyrickard/porter-hello:latest
+
+parameters:
+  - name: command
+    type: string
+    default: "echo Hello World"
+
+install:
+  - exec:
+      description: "Debug"
+      command: "echo \"name:{{bundle.name}} version:{{bundle.version}} description:{{ bundle.description}} image:{{ bundle.invocationImage }}\""
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World
