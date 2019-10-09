@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -991,16 +991,78 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 		},
 	}
 
-	reloMap := RelocationMapping{}
+	reloMap := relocation.ImageRelocationMap{}
 
 	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.NoError(t, err)
 	mi := rm.ImageMap["machine"]
 	assert.Equal(t, "blah/ghost", mi.Repository)
+}
+
+func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "blah/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"ghost": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
 
 }
+
 func TestResolveImageWithRelo(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "gabrtv/microservice",
+				Tag:        "latest",
+				Digest:     "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+	img.Digest = "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{
+		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+	}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.NoError(t, err)
+	mi := rm.ImageMap["machine"]
+	assert.Equal(t, "my.registry/microservice", mi.Repository)
+}
+
+func TestResolveImageBadRelocation(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &Manifest{
 		ImageMap: map[string]MappedImage{
@@ -1021,14 +1083,12 @@ func TestResolveImageWithRelo(t *testing.T) {
 		},
 	}
 
-	reloMap := RelocationMapping{
-		"machine": "cnabio/ghost:latest",
+	reloMap := relocation.ImageRelocationMap{
+		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
 	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
-	assert.NoError(t, err)
-	mi := rm.ImageMap["machine"]
-	assert.Equal(t, "cnabio/ghost", mi.Repository)
-
+	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("unable to find relocated image: %s", "deislabs/nogood:latest"))
 }

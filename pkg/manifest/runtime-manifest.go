@@ -7,11 +7,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/context"
-
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/runtime"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -310,19 +310,28 @@ func (m *RuntimeManifest) Prepare() error {
 
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the
 // mounted bundle.json and relocation mapping
-func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap RelocationMapping) error {
+func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.ImageRelocationMap) error {
+	reverseLookup := make(map[string]string)
 	for alias, image := range bun.Images {
-		manifestImage := m.ImageMap[alias]
+		manifestImage, ok := m.ImageMap[alias]
+		if !ok {
+			return fmt.Errorf("unable to find image in porter manifest: %s", alias)
+		}
 		manifestImage.Digest = image.Digest
 		err := resolveImage(&manifestImage, image.Image)
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from bundle.json")
 		}
 		m.ImageMap[alias] = manifestImage
+		reverseLookup[image.Image] = alias
 	}
 
-	for alias, reloRef := range reloMap {
-		manifestImage := m.ImageMap[alias]
+	for oldRef, reloRef := range reloMap {
+		alias := reverseLookup[oldRef]
+		manifestImage, ok := m.ImageMap[alias]
+		if !ok {
+			return fmt.Errorf("unable to find relocated image: %s", oldRef)
+		}
 		err := resolveImage(&manifestImage, reloRef)
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from relocation mapping")

@@ -12,6 +12,7 @@ import (
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -114,7 +115,7 @@ func (p *Porter) Run(opts RunOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "couldn't load runtime bundle.json")
 	}
-	var reloMap manifest.RelocationMapping
+	var reloMap relocation.ImageRelocationMap
 	if _, err := p.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
 		reloBytes, err := p.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
 		if err != nil {
