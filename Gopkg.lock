@@ -266,7 +266,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:b6893d684f9f344938f9e020a2be731e11592e65200e4cfb82425bc4956e1e79"
+  digest = "1:36efeedc5d1c77d0df776b4e54a12f709ea456ac6d3ccb07a0b9ef0b450dc2e0"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -287,8 +287,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "406808480de1f033040608d1924f96dcd662c2d0"
-  version = "v0.6.0-beta1"
+  revision = "26ed63f06aff506ab4bfea63a2a83d341f987580"
+  version = "v0.7.0-beta1"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -1692,6 +1692,7 @@
     "github.com/deislabs/cnab-go/claim",
     "github.com/deislabs/cnab-go/credentials",
     "github.com/deislabs/cnab-go/driver",
+    "github.com/deislabs/cnab-go/driver/command",
     "github.com/deislabs/cnab-go/driver/docker",
     "github.com/deislabs/cnab-go/driver/lookup",
     "github.com/deislabs/cnab-go/imagestore",
