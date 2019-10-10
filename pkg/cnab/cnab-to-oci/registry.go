@@ -3,6 +3,7 @@ package cnabtooci
 import (
 	"context"
 	"fmt"
+
 	"strings"
 
 	containerdRemotes "github.com/containerd/containerd/remotes"
@@ -11,6 +12,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/cnab-to-oci/remotes"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -31,10 +33,10 @@ func NewRegistry(c *portercontext.Context) *Registry {
 }
 
 // PullBundle pulls a bundle from an OCI registry.
-func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, error) {
+func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, relocation.ImageRelocationMap, error) {
 	ref, err := reference.ParseNormalizedNamed(tag)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid bundle tag format, expected REGISTRY/name:tag")
+		return nil, nil, errors.Wrap(err, "invalid bundle tag format, expected REGISTRY/name:tag")
 	}
 
 	var insecureRegistries []string
@@ -43,11 +45,11 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	bun, _, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
+	bun, reloMap, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to pull remote bundle")
+		return nil, nil, errors.Wrap(err, "unable to pull remote bundle")
 	}
-	return bun, nil
+	return bun, reloMap, nil
 }
 
 func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry bool) error {

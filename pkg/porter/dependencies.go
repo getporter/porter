@@ -53,6 +53,8 @@ type queuedDependency struct {
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
+
+	RelocationMapping string
 }
 
 func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action cnabAction) error {
@@ -115,7 +117,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
 	var bun *bundle.Bundle
 	if e.parentOpts.Tag != "" {
-		bunPath, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+		bunPath, _, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
@@ -154,7 +156,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 		Tag:              dep.Tag,
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
 	}
-	dep.CNABFile, err = e.Resolver.Resolve(pullOpts)
+	dep.CNABFile, dep.RelocationMapping, err = e.Resolver.Resolve(pullOpts)
 	if err != nil {
 		return errors.Wrapf(err, "error pulling dependency %s", dep.Alias)
 	}
@@ -226,11 +228,12 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
 	depArgs := cnabprovider.ActionArguments{
-		Insecure:   parentArgs.Insecure,
-		BundlePath: dep.CNABFile,
-		Claim:      fmt.Sprintf("%s-%s", parentArgs.Claim, dep.Alias),
-		Driver:     parentArgs.Driver,
-		Params:     dep.Parameters,
+		Insecure:          parentArgs.Insecure,
+		BundlePath:        dep.CNABFile,
+		Claim:             fmt.Sprintf("%s-%s", parentArgs.Claim, dep.Alias),
+		Driver:            parentArgs.Driver,
+		Params:            dep.Parameters,
+		RelocationMapping: dep.RelocationMapping,
 
 		// For now, assume it's okay to give the dependency the same credentials as the parent
 		CredentialIdentifiers: parentArgs.CredentialIdentifiers,

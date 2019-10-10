@@ -19,6 +19,7 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/mixin"
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -108,17 +109,17 @@ func (p *TestPorter) CleanupIntegrationTest() {
 
 // If you seek a mock cache for testing, use this
 type mockCache struct {
-	findBundleMock        func(string) (string, bool, error)
-	storeBundleMock       func(string, *bundle.Bundle) (string, error)
+	findBundleMock        func(string) (string, string, bool, error)
+	storeBundleMock       func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error)
 	getBundleCacheDirMock func() (string, error)
 }
 
-func (b *mockCache) FindBundle(tag string) (string, bool, error) {
+func (b *mockCache) FindBundle(tag string) (string, string, bool, error) {
 	return b.findBundleMock(tag)
 }
 
-func (b *mockCache) StoreBundle(tag string, bun *bundle.Bundle) (string, error) {
-	return b.storeBundleMock(tag, bun)
+func (b *mockCache) StoreBundle(tag string, bun *bundle.Bundle, relo relocation.ImageRelocationMap) (string, string, error) {
+	return b.storeBundleMock(tag, bun, relo)
 }
 
 func (b *mockCache) GetCacheDir() (string, error) {

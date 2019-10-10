@@ -1,0 +1,4 @@
+{
+    "gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+    "technosophos/helloworld:0.1.0": "my.registry/helloworld:0.1.0"
+  }

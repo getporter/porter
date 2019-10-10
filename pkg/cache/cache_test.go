@@ -2,11 +2,13 @@ package cache
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"testing"
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/config"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +38,7 @@ func TestFindBundleCacheExists(t *testing.T) {
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	c := New(cfg.Config)
 
-	_, ok, err := c.FindBundle("deislabs/kubekahn:latest")
+	_, _, ok, err := c.FindBundle("deislabs/kubekahn:latest")
 	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.False(t, ok, "the bundle shouldn't exist")
 }
@@ -49,7 +51,7 @@ func TestFindBundleCacheDoesNotExist(t *testing.T) {
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	c := New(cfg.Config)
 
-	_, ok, err := c.FindBundle("deislabs/kubekahn:latest")
+	_, _, ok, err := c.FindBundle("deislabs/kubekahn:latest")
 	assert.NoError(t, err, "the cache dir doesn't exist, but this shouldn't be an error")
 	assert.False(t, ok, "the bundle shouldn't exist")
 }
@@ -66,7 +68,7 @@ func TestFindBundleBundleCached(t *testing.T) {
 	foundIt, err := cfg.Config.FileSystem.Exists(expectedCacheFile)
 	require.True(t, foundIt, "test data not loaded")
 	c := New(cfg.Config)
-	path, ok, err := c.FindBundle(kahn1dot01)
+	path, _, ok, err := c.FindBundle(kahn1dot01)
 	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.True(t, ok, "the bundle should exist")
 	assert.Equal(t, expectedCacheFile, path)
@@ -75,7 +77,7 @@ func TestFindBundleBundleCached(t *testing.T) {
 func TestFindBundleBundleNotCached(t *testing.T) {
 	cfg := config.NewTestConfig(t)
 	c := New(cfg.Config)
-	path, ok, err := c.FindBundle(kahnlatest)
+	path, _, ok, err := c.FindBundle(kahnlatest)
 	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.False(t, ok, "the bundle should not exist")
 	assert.Empty(t, path, "should not have a path")
@@ -89,7 +91,8 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 	require.NoError(t, err, "bundle should have been valid")
 
 	c := New(cfg.Config)
-	path, err := c.StoreBundle(kahn1dot01, &bun)
+	var reloMap relocation.ImageRelocationMap
+	path, _, err := c.StoreBundle(kahn1dot01, &bun, reloMap)
 
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -114,7 +117,8 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 	require.NoError(t, err, "bundle should have been valid")
 
 	c := New(cfg.Config)
-	path, err := c.StoreBundle(kahn1dot01, &bun)
+	var reloMap relocation.ImageRelocationMap
+	path, _, err := c.StoreBundle(kahn1dot01, &bun, reloMap)
 
 	expectedCacheDirectory := filepath.Join(cacheDir, kahn1dot0Hash)
 	expectedCacheCNABDirectory := filepath.Join(expectedCacheDirectory, "cnab")
@@ -122,4 +126,45 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 
 	assert.Equal(t, expectedCacheFile, path)
 	assert.NoError(t, err, "storing bundle should have succeeded")
+}
+
+func TestStoreRelocationMapping(t *testing.T) {
+
+	cfg := config.NewTestConfig(t)
+	home, _ := cfg.Config.GetHomeDir()
+	cacheDir := filepath.Join(home, "cache")
+
+	tests := []struct {
+		name              string
+		relocationMapping relocation.ImageRelocationMap
+		tag               string
+		bundle            *bundle.Bundle
+		wantedReloPath    string
+		err               error
+	}{
+		{
+			name:   "relocation file gets a path",
+			bundle: &bundle.Bundle{},
+			tag:    kahn1dot01,
+			relocationMapping: relocation.ImageRelocationMap{
+				"asd": "asdf",
+			},
+			wantedReloPath: filepath.Join(cacheDir, kahn1dot0Hash, "cnab", "relocation-mapping.json"),
+		},
+		{
+			name:           "no relocation file gets no path",
+			tag:            kahnlatest,
+			bundle:         &bundle.Bundle{},
+			wantedReloPath: "",
+		},
+	}
+
+	c := New(cfg.Config)
+	for _, test := range tests {
+		_, reloPath, err := c.StoreBundle(test.tag, test.bundle, test.relocationMapping)
+		assert.NoError(t, err, fmt.Sprintf("didn't expect storage error for test %s", test.name))
+		assert.Equal(t, test.wantedReloPath, reloPath, "didn't get expected path for store on test: %s", test.name)
+		_, fetchedPath, _, err := c.FindBundle(test.tag)
+		assert.Equal(t, test.wantedReloPath, fetchedPath, "didn't get expected path for load on test: %s", test.name)
+	}
 }

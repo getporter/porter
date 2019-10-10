@@ -36,6 +36,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,
+		RelocationMapping:     o.RelocationMapping,
 	}
 
 	// Do a safe copy so that modifications to the args aren't also made to the
@@ -58,11 +59,12 @@ func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
 		return nil
 	}
 
-	bundlePath, err := p.PullBundle(opts.BundlePullOptions)
+	bundlePath, reloPath, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
 		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
 	}
 	opts.CNABFile = bundlePath
+	opts.RelocationMapping = reloPath
 	rdr, err := p.Config.FileSystem.Open(bundlePath)
 	if err != nil {
 		return errors.Wrap(err, "unable to open bundle file")

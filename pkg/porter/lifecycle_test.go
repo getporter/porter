@@ -24,12 +24,12 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	require.True(t, fileExists, "this test requires that the file exist")
 
 	cache := mockCache{
-		findBundleMock: func(tag string) (string, bool, error) {
-			return fullPath, true, nil
+		findBundleMock: func(tag string) (string, string, bool, error) {
+			return fullPath, "", true, nil
 		},
 	}
 	p.Porter.Cache = &cache
-	_, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
+	_, _, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
 	assert.True(t, ok, "should have found the bundle...")
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
@@ -47,8 +47,8 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 
 	cache := mockCache{
-		findBundleMock: func(tag string) (string, bool, error) {
-			return "", false, nil
+		findBundleMock: func(tag string) (string, string, bool, error) {
+			return "", "", false, nil
 		},
 	}
 	p.Porter.Cache = &cache
@@ -69,8 +69,8 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 
 	cache := mockCache{
-		findBundleMock: func(tag string) (string, bool, error) {
-			return "/opt/not/here/bundle.json", true, nil
+		findBundleMock: func(tag string) (string, string, bool, error) {
+			return "/opt/not/here/bundle.json", "", true, nil
 		},
 	}
 	p.Porter.Cache = &cache
