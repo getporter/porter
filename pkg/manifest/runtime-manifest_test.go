@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -862,4 +862,233 @@ func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 	}
 	err := rm.ResolveStep(s)
 	assert.Error(t, err)
+}
+
+func TestResolveImage(t *testing.T) {
+	tests := []struct {
+		name      string
+		reference string
+		want      MappedImage
+	}{
+		{
+			name:      "canonical reference",
+			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			},
+		},
+		{
+			name:      "tagged reference",
+			reference: "deislabs/porter-hello:v0.1.10",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "v0.1.10",
+			},
+		},
+		{
+			name:      "named reference",
+			reference: "deislabs/porter-hello",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "latest",
+			},
+		},
+		{
+			name:      "the one with a hostname",
+			reference: "deislabs.io/deislabs/porter-hello",
+			want: MappedImage{
+				Repository: "deislabs.io/deislabs/porter-hello",
+				Tag:        "latest",
+			},
+		},
+		{
+			name:      "the one with a hostname and port",
+			reference: "deislabs.io:9090/deislabs/porter-hello:foo",
+			want: MappedImage{
+				Repository: "deislabs.io:9090/deislabs/porter-hello",
+				Tag:        "foo",
+			},
+		},
+		{
+
+			name:      "tagged and digested",
+			reference: "deislabs/porter-hello:latest@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want: MappedImage{
+				Repository: "deislabs/porter-hello",
+				Tag:        "latest",
+				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			},
+		},
+	}
+	for _, test := range tests {
+		got := &MappedImage{}
+		err := resolveImage(got, test.reference)
+		assert.NoError(t, err)
+		assert.Equal(t, test.want.Repository, got.Repository)
+		assert.Equal(t, test.want.Tag, got.Tag)
+		assert.Equal(t, test.want.Digest, got.Digest)
+	}
+}
+
+func TestResolveImageErrors(t *testing.T) {
+	tests := []struct {
+		name      string
+		reference string
+		want      string
+	}{
+		{
+			name:      "no algo digest",
+			reference: "deislabs/porter-hello@8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+		{
+			name:      "bad digest",
+			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f",
+			want:      "unable to parse docker image %s: invalid checksum digest length",
+		},
+		{
+			name:      "bad digest algo",
+			reference: "deislabs/porter-hello@sha356:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			want:      "unable to parse docker image %s: unsupported digest algorithm",
+		},
+		{
+			name:      "malformed tagged ref",
+			reference: "deislabs/porter-hello@latest",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+		{
+			name:      "too many ports tagged ref",
+			reference: "deislabs:8080:8080/porter-hello:latest",
+			want:      "unable to parse docker image %s: invalid reference format",
+		},
+	}
+	for _, test := range tests {
+		got := &MappedImage{}
+		err := resolveImage(got, test.reference)
+		assert.EqualError(t, err, fmt.Sprintf(test.want, test.reference))
+	}
+}
+
+func TestResolveImageWithUpdatedBundle(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "blah/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.NoError(t, err)
+	mi := rm.ImageMap["machine"]
+	assert.Equal(t, "blah/ghost", mi.Repository)
+}
+
+func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "blah/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"ghost": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
+
+}
+
+func TestResolveImageWithRelo(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "gabrtv/microservice",
+				Tag:        "latest",
+				Digest:     "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+	img.Digest = "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{
+		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+	}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.NoError(t, err)
+	mi := rm.ImageMap["machine"]
+	assert.Equal(t, "my.registry/microservice", mi.Repository)
+}
+
+func TestResolveImageBadRelocation(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &Manifest{
+		ImageMap: map[string]MappedImage{
+			"machine": MappedImage{
+				Repository: "deislabs/ghost",
+				Tag:        "latest",
+				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+			},
+		},
+	}
+
+	img := bundle.Image{}
+	img.Image = "deislabs/ghost:latest"
+	img.Digest = "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041"
+	bun := &bundle.Bundle{
+		Images: map[string]bundle.Image{
+			"machine": img,
+		},
+	}
+
+	reloMap := relocation.ImageRelocationMap{
+		"deislabs/nogood:latest": "cnabio/ghost:latest",
+	}
+
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	err := rm.ResolveImages(bun, reloMap)
+	assert.Error(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("unable to find relocated image: %s", "deislabs/nogood:latest"))
 }

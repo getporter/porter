@@ -236,13 +236,12 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	a := NewManifestConverter(c.Context, m, nil)
 
 	mappedImage := manifest.MappedImage{
-		Description:   "un petite server",
-		Repository:    "deislabs/myserver",
-		ImageType:     "docker",
-		Digest:        "abc123",
-		Size:          12,
-		MediaType:     "download",
-		OriginalImage: "deis/myserver:1.0.0",
+		Description: "un petite server",
+		Repository:  "deislabs/myserver",
+		ImageType:   "docker",
+		Digest:      "abc123",
+		Size:        12,
+		MediaType:   "download",
 		Labels: map[string]string{
 			"OS":           "linux",
 			"Architecture": "amd64",

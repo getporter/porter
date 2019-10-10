@@ -26,7 +26,7 @@ func TestPorter_Run(t *testing.T) {
 		assert.True(t, commandOpts.Runtime, "the mixin command should be executed in runtime mode")
 		assert.Equal(t, "install", commandOpts.Command, "should have executed the mixin's install command")
 	})
-
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/cnab/bundle.json")
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 	opts := NewRunOptions(p.Config)
