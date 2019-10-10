@@ -16,8 +16,4 @@ type Registry interface {
 	// the expected format of the invocationImage is REGISTRY/NAME:TAG.
 	// Returns the image digest from the registry.
 	PushInvocationImage(invocationImage string) (string, error)
-
-	// Copy copies the original image given by origImg to the new image provided by newImg,
-	// returning the new digest and/or an error
-	Copy(origImg, newImg string) (string, error)
 }

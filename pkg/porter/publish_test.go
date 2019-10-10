@@ -63,7 +63,6 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Registry = NewTestRegistry()
 
 	bun := &bundle.Bundle{
 		Name: "mybuns",

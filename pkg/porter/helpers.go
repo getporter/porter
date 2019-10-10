@@ -170,25 +170,3 @@ func NewTestBuildProvider() *TestBuildProvider {
 func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }
-
-type TestRegistry struct{}
-
-func NewTestRegistry() *TestRegistry {
-	return &TestRegistry{}
-}
-
-func (t *TestRegistry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, error) {
-	return &bundle.Bundle{}, nil
-}
-
-func (t *TestRegistry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry bool) error {
-	return nil
-}
-
-func (t *TestRegistry) PushInvocationImage(invocationImage string) (string, error) {
-	return "fakedigest", nil
-}
-
-func (t *TestRegistry) Copy(origImg, newImg string) (string, error) {
-	return "fakedigest", nil
-}

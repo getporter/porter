@@ -16,8 +16,6 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
-	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
 	"github.com/pkg/errors"
 
 	portercontext "github.com/deislabs/porter/pkg/context"
@@ -163,27 +161,4 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 
 func ParseOCIReference(ociRef string) (reference.Named, error) {
 	return reference.ParseNormalizedNamed(ociRef)
-}
-
-// Copy copies the original image designated by origImg to the newImg designated by newImg,
-// returning the calculated digest or an error
-func (r *Registry) Copy(origImg, newImg string) (string, error) {
-	client := ggcr.NewRegistryClient()
-
-	imgName, err := image.NewName(origImg)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
-	}
-
-	newImgName, err := image.NewName(newImg)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
-	}
-
-	digest, _, err := client.Copy(imgName, newImgName)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to copy original image %s to new image %s", imgName.String(), newImgName.String())
-	}
-
-	return digest.String(), nil
 }
