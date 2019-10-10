@@ -40,15 +40,15 @@ func TestArchive(t *testing.T) {
 
 	// Publish bundle from archive, with new tag
 
-	publishOpts := porter.PublishOptions{
+	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
 			Tag: "deislabs/porter-busybox-from-archive:v0.1.0",
 		},
 	}
-	err = publishOpts.Validate(p.Context)
+	err = publishFromArchiveOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
-	err = p.Publish(publishOpts)
+	err = p.Publish(publishFromArchiveOpts)
 	require.NoError(p.T(), err, "publish of bundle from archive failed")
 }
