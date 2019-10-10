@@ -212,14 +212,11 @@ func TestResolvePathParam(t *testing.T) {
 }
 
 func TestMetadataAvailableForTemplating(t *testing.T) {
+	cxt := context.NewTestContext(t)
 
-	c := NewTestConfig(t)
-
-	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", Name)
-	c.LoadManifest()
-	m := c.Manifest
-
-	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
+	m, _ := LoadManifestFrom(cxt.Context, config.Name)
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
@@ -238,13 +235,12 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
-	c := NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/dep-metadata-substitution.yaml", Name)
-	c.TestContext.AddTestDirectory("testdata/bundles", "bundles")
-	c.LoadManifest()
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
+	cxt.AddTestDirectory("testdata/bundles", "bundles")
 
-	m := c.Manifest
-	rm := NewRuntimeManifest(c.Context, ActionInstall, m)
+	m, _ := LoadManifestFrom(cxt.Context, config.Name)
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
