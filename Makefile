@@ -38,6 +38,7 @@ build-porter: generate
 
 build-porter-client: generate
 	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk BINDIR=bin
+	$(MAKE) $(MAKE_OPTS) clean-packr
 
 build-mixins: $(addprefix build-mixin-,$(INT_MIXINS))
 build-mixin-%: generate
@@ -71,7 +72,10 @@ get-mixins:
 verify: verify-vendor
 
 verify-vendor: clean-packr dep
-	dep check
+	@dep check || printf '\nRun "make dep-ensure" to fix this error\n\n'
+
+dep-ensure: clean-packr
+	dep ensure
 
 HAS_DEP := $(shell command -v dep)
 dep:

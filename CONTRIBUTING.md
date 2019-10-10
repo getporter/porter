@@ -272,10 +272,12 @@ mixins installed.
 
 Here are the most common Makefile tasks
 
+* `build` builds all binaries, porter and internal mixins.
 * `build-porter-client` just builds the porter client for your operating
   system. It does not build the porter-runtime binary. Useful when you just want
   to do a build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime.
+* `build-porter` builds both the porter client and runtime. It does not clean
+   up generated files created by packr, so you usually want to also run `clean-packr`.
 * `install-porter` installs just porter from your bin into **/usr/local/bin**.
 * `install-mixins` installs just the mixins from your bin into
   **/usr/local/bin**. This is useful when you are working on the exec or
@@ -292,7 +294,13 @@ Here are the most common Makefile tasks
 * `test` runs all the tests.
 * `clean-packr` removes extra packr files that were a side-effect of the build.
   Normally this is run automatically but if you run into issues with packr and
-  dep, run this commmand.
+  dep, run this command.
+* `dep-ensure` runs dep ensure for you while taking care of packr properly. Use
+  this if your PRs are often failing on `verify-vendor` because of packr. This
+  can be avoided entirely if you use `make build-porter-client` or `make build`.
+* `verify-vendor` cleans up packr generated files and verifies that dep's Gopkg.lock 
+   and vendor/ are up-to-date. Use this makefile target instead of running 
+   dep check manually.
 
 ## Install mixins
 
