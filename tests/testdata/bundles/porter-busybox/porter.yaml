@@ -11,7 +11,7 @@ images:
   busybox:
       description: "A busybox image"
       imageType: "docker"
-      repository: "busybox"
+      repository: "deislabs/busybox"
       tag: "latest"
 
 install:

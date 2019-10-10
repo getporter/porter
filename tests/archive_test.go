@@ -22,13 +22,17 @@ func TestArchive(t *testing.T) {
 
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/deislabs/porter/issues/697
-	//
-	// This bundle has already been pre-published.
+	publishOpts := porter.PublishOptions{}
+	err := publishOpts.Validate(p.Context)
+	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
+
+	err = p.Publish(publishOpts)
+	require.NoError(p.T(), err, "publish of bundle failed")
 
 	// Archive bundle
 
 	archiveOpts := porter.ArchiveOptions{}
-	err := archiveOpts.Validate([]string{"mybuns.tgz"}, p.Context)
+	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Context)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
 	err = p.Archive(archiveOpts)
