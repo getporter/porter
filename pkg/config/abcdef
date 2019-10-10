@@ -1,0 +1,9 @@
+bundle:
+  credentials: {}
+  dependencies: {}
+  description: ""
+  invocationImage: ""
+  name: ""
+  outputs: {}
+  parameters: {}
+  version: ""

@@ -4,6 +4,7 @@ mixins:
 name: mysql
 version: 0.1.0
 invocationImage: porter-mysql:latest
+description: porter mysql with helm
 
 credentials:
 - name: kubeconfig
