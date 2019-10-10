@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -85,15 +86,24 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	}
 	tag := "myneworg/mynewbuns"
 
+	digest, err := image.NewDigest("sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687")
+	require.NoError(t, err, "should have successfully created a digest")
+
 	// update invocation image
-	err := p.updateBundleWithNewImage(bun, bun.InvocationImages[0].Image, tag, 0)
+	newInvImgName, err := getNewImageNameFromBundleTag(bun.InvocationImages[0].Image, tag)
+	require.NoError(t, err, "should have successfully derived new image name from bundle tag")
+
+	err = p.updateBundleWithNewImage(bun, newInvImgName, digest, 0)
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "docker.io/myneworg/myinvimg@fakedigest", bun.InvocationImages[0].Image)
-	require.Equal(t, "fakedigest", bun.InvocationImages[0].Digest)
+	require.Equal(t, "docker.io/myneworg/myinvimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
+	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Digest)
 
 	// update image
-	err = p.updateBundleWithNewImage(bun, bun.Images["myimg"].Image, tag, "myimg")
+	newImgName, err := getNewImageNameFromBundleTag(bun.Images["myimg"].Image, tag)
+	require.NoError(t, err, "should have successfully derived new image name from bundle tag")
+
+	err = p.updateBundleWithNewImage(bun, newImgName, digest, "myimg")
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "docker.io/myneworg/myimg@fakedigest", bun.Images["myimg"].Image)
-	require.Equal(t, "fakedigest", bun.Images["myimg"].Digest)
+	require.Equal(t, "docker.io/myneworg/myimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
+	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Digest)
 }
