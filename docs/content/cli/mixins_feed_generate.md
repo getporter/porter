@@ -25,7 +25,7 @@ bin/
     ├── mymixin-linux-amd64
     └── mymixin-windows-amd64.exe
 
-See https://porter.sh/mixin-distribution more details.
+See https://porter.sh/mixin-dev-guide/distribution more details.
 
 
 ```

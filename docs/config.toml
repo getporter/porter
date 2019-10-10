@@ -242,25 +242,31 @@ defaultContentLanguage = "en"
   weight = 350
   [[menu.main]]
     name = "Overview"
-    url = "/mixin-dev-guide"
+    url = "/mixin-dev-guide/"
     identifier = "mixin-dev-guide"
     weight = 351
     parent = "developing-mixins"
   [[menu.main]]
     name = "Commands"
-    url = "/mixin-commands"
+    url = "/mixin-dev-guide/commands/"
     identifier = "mixin-commands"
     weight = 353
     parent = "developing-mixins"
   [[menu.main]]
+    name = "Testing"
+    url = "/mixin-dev-guide/testing/"
+    identifier = "mixin-testing"
+    weight = 355
+    parent = "developing-mixins"
+  [[menu.main]]
     name = "Mixin Architecture"
-    url = "/mixin-architecture"
+    url = "/mixin-dev-guide/architecture/"
     identifier = "mixin-architecture"
     weight = 360
     parent = "developing-mixins"
   [[menu.main]]
     name = "Distributing Mixins"
-    url = "/mixin-distribution"
+    url = "/mixin-dev-guide/distribution/"
     identifier = "mixin-distribution"
     weight = 361
     parent = "developing-mixins"
