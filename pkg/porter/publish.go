@@ -109,10 +109,9 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
 //
 // After the bundle is extracted from the archive, we iterate through all of the images (invocation
-// and application) listed and rename each based on the registry/org values derived from the provided tag.
-//
-// For each new image name, we use a library to copy the old image to the new image repository.
-// (Currently we use the pivotal/image-relocation library for this logic.)
+// and application) listed in the bundle, grab their digests by parsing the extracted
+// OCI Layout, rename each based on the registry/org values derived from the provided tag
+// and then push each updated image with the original digests
 //
 // Finally, we generate a new bundle from the old, with all image names and digests updated, based
 // on the newly copied images, and then push this new bundle using the provided tag.
@@ -155,7 +154,6 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 			return err
 		}
 
-		// TODO: could simplify and just return newImgName.WithDigest(digest)
 		digest, err := pushUpdatedImage(layout, invImg.Image, newImgName)
 		if err != nil {
 			return err
@@ -190,8 +188,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	return p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
 }
 
-// extractBundle extracts a bundle using the provided opts,
-// returning the bundle and directory where contents have been extracted
+// extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle
 func (p *Porter) extractBundle(tmpDir, source string) (*bundle.Bundle, error) {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", source)
@@ -213,7 +210,7 @@ func (p *Porter) extractBundle(tmpDir, source string) (*bundle.Bundle, error) {
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
-// gather the pre-existing digest and then push this digest using the newImgName
+// gathers the pre-existing digest and then pushes this digest using the newImgName
 func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.Name) (image.Digest, error) {
 	origImgName, err := image.NewName(origImg)
 	if err != nil {
@@ -230,15 +227,10 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 		return image.EmptyDigest, errors.Wrapf(err, "unable to push image %s", newImgName.String())
 	}
 
-	newDigest, err := layout.Add(newImgName)
-	if err != nil {
-		return image.EmptyDigest, errors.Wrapf(err, "unable to add new image %s to layout", newImgName.String())
-	}
-
-	return newDigest, nil
+	return digest, nil
 }
 
-// updateBundleWithNewImage updates a bundle with a new image at the provided index
+// updateBundleWithNewImage updates a bundle with a new image (with digest) at the provided index
 func (p *Porter) updateBundleWithNewImage(bun *bundle.Bundle, newImg image.Name, digest image.Digest, index interface{}) error {
 	taggedImage, err := p.rewriteImageWithDigest(newImg.String(), digest.String())
 	if err != nil {
