@@ -127,7 +127,7 @@ bin/
     ├── mymixin-linux-amd64
     └── mymixin-windows-amd64.exe
 
-See https://porter.sh/mixin-distribution more details.
+See https://porter.sh/mixin-dev-guide/distribution more details.
 `,
 		Example: `  porter mixin feed generate
   porter mixin feed generate --dir bin --file bin/atom.xml --template porter-atom-template.xml`,

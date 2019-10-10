@@ -17,7 +17,7 @@ if you would like to add content for this page.
 # Next
 
 * [Dependencies](/dependencies/)
-* [Mixin Architecture](/mixin-architecture/)
+* [Mixin Architecture](/mixin-dev-guide/architecture/)
 * [Building the Invocation Image](/build-image/)
 
 [contrib]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md#documentation
