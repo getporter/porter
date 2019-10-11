@@ -22,7 +22,7 @@ func buildRootCommand(in io.Reader) *cobra.Command {
 	mixin.In = in
 	cmd := &cobra.Command{
 		Use:  "kubernetes",
-		Long: "kuberetes is a porter 👩🏽‍✈️ mixin that you can you can use to apply kubernetes manifests in your bundle",
+		Long: "kubernetes is a porter 👩🏽‍✈️ mixin that you can you can use to apply kubernetes manifests in your bundle",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			mixin.Out = cmd.OutOrStdout()
 			mixin.Err = cmd.OutOrStderr()
