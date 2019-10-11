@@ -11,7 +11,7 @@ const PluginKey = "instance-store"
 
 var _ plugin.Plugin = &Plugin{}
 
-// P
+// Plugin is a generic type of plugin for working with any implementation of a claim store.
 type Plugin struct {
 	Impl crud.Store
 }

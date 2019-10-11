@@ -188,6 +188,24 @@ func (c *Config) GetMixinRuntimePath(mixin string) (string, error) {
 	return path + "-runtime", nil
 }
 
+func (c *Config) GetPluginsDir() (string, error) {
+	home, err := c.GetHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, "plugins"), nil
+}
+
+func (c *Config) GetPluginPath(plugin string) (string, error) {
+	pluginsDir, err := c.GetPluginsDir()
+	if err != nil {
+		return "", err
+	}
+
+	executablePath := filepath.Join(pluginsDir, plugin)
+	return executablePath, nil
+}
+
 func (c *Config) GetCredentialsDir() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
