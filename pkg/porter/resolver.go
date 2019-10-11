@@ -22,7 +22,7 @@ func (r *BundleResolver) Resolve(opts BundlePullOptions) (string, error) {
 		return path, nil
 	}
 
-	b, err := r.Registry.PullBundle(opts.Tag, opts.InsecureRegistry)
+	b, _, err := r.Registry.PullBundle(opts.Tag, opts.InsecureRegistry)
 	if err != nil {
 		return "", err
 	}

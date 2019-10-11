@@ -61,7 +61,8 @@ func (p *Porter) Publish(opts PublishOptions) error {
 		return err
 	}
 
-	return p.Registry.PushBundle(bun, p.Manifest.BundleTag, opts.InsecureRegistry)
+	_, err = p.Registry.PushBundle(bun, p.Manifest.BundleTag, opts.InsecureRegistry)
+	return err
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string) (*bundle.Bundle, error) {

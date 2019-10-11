@@ -30,11 +30,11 @@ func NewRegistry(c *portercontext.Context) *Registry {
 	}
 }
 
-// PullBundle pulls a bundle from an OCI registry.
-func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, error) {
+// PullBundle pulls a bundle from an OCI registry and returns a relocation map
+func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, map[string]string, error) {
 	ref, err := reference.ParseNormalizedNamed(tag)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid bundle tag format, expected REGISTRY/name:tag")
+		return nil, nil, errors.Wrap(err, "invalid bundle tag format, expected REGISTRY/name:tag")
 	}
 
 	var insecureRegistries []string
@@ -43,17 +43,13 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
-	bun, _, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to pull remote bundle")
-	}
-	return bun, nil
+	return remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 }
 
-func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry bool) error {
+func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry bool) (map[string]string, error) {
 	ref, err := ParseOCIReference(tag) //tag from manifest
 	if err != nil {
-		return errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
+		return nil, errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
 	}
 	var insecureRegistries []string
 	if insecureRegistry {
@@ -65,14 +61,14 @@ func (r *Registry) PushBundle(bun *bundle.Bundle, tag string, insecureRegistry b
 
 	rm, err := remotes.FixupBundle(context.Background(), bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	d, err := remotes.Push(context.Background(), bun, rm, ref, resolver, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
-	return nil
+	return rm, nil
 }
 
 // PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
