@@ -45,7 +45,7 @@ func NewPluginDelegator(c *config.Config) *PluginDelegator {
 }
 
 func (d *PluginDelegator) connect() (crud.Store, func(), error) {
-	pluginId := d.Config.Data.InstanceStoragePlugin
+	pluginId := d.Config.Data.GetInstanceStoragePlugin()
 	parts := strings.Split(pluginId, ".")
 	isInternal := false
 	if len(parts) == 1 {

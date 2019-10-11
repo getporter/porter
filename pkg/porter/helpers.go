@@ -39,12 +39,11 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	p := New()
 	p.Config = tc.Config
-	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.InstanceStorage)
 	p.Mixins = &mixin.TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
-
 	p.Builder = NewTestBuildProvider()
 	p.InstanceStorage = instancestorage.NewTestInstanceStorageProvider()
+	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.InstanceStorage)
 
 	return &TestPorter{
 		Porter:     p,

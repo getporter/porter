@@ -1,8 +1,8 @@
 package inmemory
 
 import (
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/utils/crud"
-	"github.com/pkg/errors"
 )
 
 var _ crud.Store = &Store{}
@@ -35,11 +35,11 @@ func (s *Store) Store(name string, data []byte) error {
 }
 
 func (s *Store) Read(name string) ([]byte, error) {
-	claim, ok := s.claims[name]
+	c, ok := s.claims[name]
 	if !ok {
-		return nil, errors.Errorf("claim %s not found", name)
+		return nil, claim.ErrClaimNotFound
 	}
-	return claim, nil
+	return c, nil
 }
 
 func (s *Store) Delete(name string) error {

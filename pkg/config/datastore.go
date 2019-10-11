@@ -7,6 +7,14 @@ type Data struct {
 	InstanceStoragePlugin string `mapstructure:"instance-storage-plugin"`
 }
 
+func (d *Data) GetInstanceStoragePlugin() string {
+	if d == nil || d.InstanceStoragePlugin == "" {
+		return "filesystem"
+	}
+
+	return d.InstanceStoragePlugin
+}
+
 var _ DataStoreLoaderFunc = NoopDataLoader
 
 // NoopDataLoader skips loading the datastore.
