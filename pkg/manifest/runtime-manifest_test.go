@@ -237,10 +237,16 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
-	cxt.AddTestDirectory("testdata/bundles", "bundles")
 
 	m, _ := LoadManifestFrom(cxt.Context, config.Name)
 	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	rm.bundles = map[string]bundle.Bundle{
+		"mysql": {
+			Name:        "Azure MySQL",
+			Description: "Azure MySQL database as a service",
+			Version:     "v1.0.0",
+		},
+	}
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
@@ -255,7 +261,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"dep name: mysql dep version: 0.1.0 dep description: porter mysql with helm\"", cmd)
+	assert.Equal(t, "echo \"dep name: Azure MySQL dep version: v1.0.0 dep description: Azure MySQL database as a service\"", cmd)
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {

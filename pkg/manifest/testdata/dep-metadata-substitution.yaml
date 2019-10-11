@@ -1,17 +1,10 @@
 mixins:
   - exec
 
-dependencies:
-  mysql:
-    tag: "deislabs/azure-mysql:5.7"
-    parameters:
-      database-name: wordpress
-
 install:
   - exec:
       description: "Test Dependency Metadata"
       command: "echo \"dep name: {{ bundle.dependencies.mysql.name }} dep version: {{ bundle.dependencies.mysql.version }} dep description: {{ bundle.dependencies.mysql.description }}\""
-
       flags:
         c: echo Hello World
 
