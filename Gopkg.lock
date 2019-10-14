@@ -266,8 +266,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "feat/img-deep-copy"
-  digest = "1:76054b7cfb2c0b4ca1ae402342ee9dca63948cc0a3b3d0553c3a4fbe2b00717d"
+  digest = "1:b4dba577c142a6077b29367af51e56910ae6ca07ec4b02fd7cc051e7fefb5315"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -289,8 +288,8 @@
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "7f096627f34816259aee1f0136ad157c3db3ab6f"
-  source = "github.com/vdice/cnab-go"
+  revision = "a1f17dcdaaff3e06c95ed85c3a34c21c35833831"
+  version = "v0.7.1-beta1"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
