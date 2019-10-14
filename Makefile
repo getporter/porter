@@ -110,15 +110,12 @@ docs-gen:
 docs-preview:
 	hugo serve --source docs/
 
-prep-install-scripts:
+publish:
 	mkdir -p bin/$(VERSION)
-	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-mac.sh > bin/$(VERSION)/install-mac.sh
-	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-linux.sh > bin/$(VERSION)/install-linux.sh
-	sed 's|UNKNOWN|$(PERMALINK)|g' scripts/install/install-windows.ps1 > bin/$(VERSION)/install-windows.ps1
-
-publish: prep-install-scripts
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=kubernetes -f mixin.mk
+
+	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/prep-install-scripts.sh
 
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \

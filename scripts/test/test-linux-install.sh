@@ -2,5 +2,11 @@
 
 set -xeuo pipefail
 
-PORTER_VERSION=canary ./scripts/install/install-linux.sh
-PORTER_VERSION=latest ./scripts/install/install-linux.sh
+export PATH=$PATH:~/.porter
+
+PORTER_PERMALINK=canary ./scripts/install/install-linux.sh
+
+PORTER_PERMALINK=v0.16.0-beta.1 ./scripts/install/install-linux.sh
+porter version | grep v0.16.0-beta.1
+
+PORTER_PERMALINK=latest ./scripts/install/install-linux.sh

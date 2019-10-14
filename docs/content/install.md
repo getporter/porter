@@ -7,6 +7,9 @@ We have a few release types available for you to use:
 
 * [Latest](#latest)
 * [Canary](#canary)
+* [Older Version](#older-version)
+
+You can also install and manage [mixins](#mixins) using porter.
 
 # Latest
 
@@ -50,6 +53,29 @@ curl https://cdn.deislabs.io/porter/canary/install-linux.sh | bash
 iwr "https://cdn.deislabs.io/porter/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
+# Older Version
+
+Install an older version of porter. This also installs the latest version of all the mixins.
+If you need a specific version of a mixin, use the `--version` flag when
+[installing the mixin](#mixin).
+
+See the porter [releases][releases] page for a list of older porter versions.
+
+## Older Version MacOS
+```
+curl https://cdn.deislabs.io/porter/VERSION/install-mac.sh | bash
+```
+
+## Older Version Linux
+```
+curl https://cdn.deislabs.io/porter/VERSION/install-linux.sh | bash
+```
+
+## Older Version Windows
+```
+iwr "https://cdn.deislabs.io/porter/VERSION/install-windows.ps1" -UseBasicParsing | iex
+```
+
 # Mixins
 
 We have a number of [mixins](/mixins) to help you get started. The stable ones
@@ -71,3 +97,5 @@ v0.3.0-beta.1 (0d24b85)
 ```
 
 All of the DeisLabs mixins are published to `https://cdn.deislabs.io/porter/atom.xml`.
+
+[releases]: https://github.com/deislabs/porter/releases
