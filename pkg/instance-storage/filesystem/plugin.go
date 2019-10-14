@@ -25,7 +25,7 @@ func NewPlugin(c config.Config) plugin.Plugin {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   PluginKey,
 		Output: c.Err,
-		Level:  hclog.Warn,
+		Level:  hclog.Error,
 	})
 
 	return &claimstore.Plugin{

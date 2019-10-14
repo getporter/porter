@@ -74,7 +74,7 @@ func (d *PluginDelegator) connect() (crud.Store, func(), error) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "porter",
 		Output: d.Err,
-		Level:  hclog.Debug,
+		Level:  hclog.Error,
 	})
 
 	pluginTypes := map[string]plugin.Plugin{
