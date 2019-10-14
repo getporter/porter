@@ -7,7 +7,6 @@ import (
 
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/deislabs/cnab-go/bundle"
-	portercontext "github.com/deislabs/porter/pkg/context"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
@@ -18,6 +17,8 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
+
+	portercontext "github.com/deislabs/porter/pkg/context"
 )
 
 type Registry struct {

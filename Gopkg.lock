@@ -266,7 +266,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:36efeedc5d1c77d0df776b4e54a12f709ea456ac6d3ccb07a0b9ef0b450dc2e0"
+  digest = "1:b4dba577c142a6077b29367af51e56910ae6ca07ec4b02fd7cc051e7fefb5315"
   name = "github.com/deislabs/cnab-go"
   packages = [
     "action",
@@ -284,11 +284,12 @@
     "imagestore/construction",
     "imagestore/ocilayout",
     "imagestore/remote",
+    "packager",
     "utils/crud",
   ]
   pruneopts = "NT"
-  revision = "26ed63f06aff506ab4bfea63a2a83d341f987580"
-  version = "v0.7.0-beta1"
+  revision = "a1f17dcdaaff3e06c95ed85c3a34c21c35833831"
+  version = "v0.7.1-beta1"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
@@ -1741,6 +1742,7 @@
     "github.com/deislabs/cnab-go/driver/lookup",
     "github.com/deislabs/cnab-go/imagestore",
     "github.com/deislabs/cnab-go/imagestore/construction",
+    "github.com/deislabs/cnab-go/packager",
     "github.com/deislabs/cnab-go/utils/crud",
     "github.com/docker/cli/cli/command",
     "github.com/docker/cli/cli/config",
@@ -1763,6 +1765,9 @@
     "github.com/hashicorp/go-plugin",
     "github.com/mmcdole/gofeed/atom",
     "github.com/olekukonko/tablewriter",
+    "github.com/pivotal/image-relocation/pkg/image",
+    "github.com/pivotal/image-relocation/pkg/registry",
+    "github.com/pivotal/image-relocation/pkg/registry/ggcr",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",

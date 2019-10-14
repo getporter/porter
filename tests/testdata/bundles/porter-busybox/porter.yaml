@@ -1,0 +1,36 @@
+mixins:
+  - exec
+
+name: porter-busybox
+version: 0.1.0
+description: "An example Porter configuration"
+tag: deislabs/porter-busybox:v0.1.0
+dockerfile: Dockerfile.tmpl
+
+images:
+  busybox:
+      description: "A busybox image"
+      imageType: "docker"
+      repository: "deislabs/busybox"
+      tag: "latest"
+
+install:
+  - exec:
+      description: "Install"
+      command: bash
+      flags:
+        c: "echo Hello {{ bundle.images.busybox.repository }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: bash
+      flags:
+        c: "echo Howdy {{ bundle.images.busybox.repository }}"
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: bash
+      flags:
+        c: "echo Goodbye {{ bundle.images.busybox.repository }}"
