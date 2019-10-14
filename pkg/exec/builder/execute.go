@@ -10,6 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var DefaultFlagDashes = Dashes{
+	Long:  "--",
+	Short: "-",
+}
+
 type ExecutableAction interface {
 	GetSteps() []ExecutableStep
 }
@@ -18,6 +23,10 @@ type ExecutableStep interface {
 	GetCommand() string
 	GetArguments() []string
 	GetFlags() Flags
+}
+
+type HasCustomDashes interface {
+	GetDashes() Dashes
 }
 
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
@@ -62,7 +71,11 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args := make([]string, len(arguments), 1+len(arguments)+len(flags)*2)
 
 	copy(args, arguments)
-	args = append(args, flags.ToSlice()...)
+	dashes := DefaultFlagDashes
+	if dashing, ok := step.(HasCustomDashes); ok {
+		dashes = dashing.GetDashes()
+	}
+	args = append(args, flags.ToSlice(dashes)...)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
 	output := &bytes.Buffer{}

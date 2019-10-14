@@ -29,6 +29,10 @@ func (s TestStep) GetFlags() Flags {
 	return s.Flags
 }
 
+func (s TestStep) GetDashes() Dashes {
+	return DefaultFlagDashes
+}
+
 func (s TestStep) GetOutputs() []Output {
 	return s.Outputs
 }

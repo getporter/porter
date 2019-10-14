@@ -10,6 +10,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+var testStep = TestStep{}
+
 func TestFlags_UnmarshalYAML(t *testing.T) {
 	b, err := ioutil.ReadFile("testdata/flags-input.yaml")
 	require.NoError(t, err, "could not read the input file")
@@ -42,26 +44,30 @@ func TestFlags_Sort(t *testing.T) {
 func TestFlag_ToSlice(t *testing.T) {
 	t.Run("short flag", func(t *testing.T) {
 		f := NewFlag("f", "abc")
-		args := f.ToSlice()
+		args := f.ToSlice(testStep.GetDashes())
 		assert.Equal(t, []string{"-f", "abc"}, args)
 	})
 
 	t.Run("long flag", func(t *testing.T) {
 		f := NewFlag("full", "abc")
-		args := f.ToSlice()
+		args := f.ToSlice(testStep.GetDashes())
 		assert.Equal(t, []string{"--full", "abc"}, args)
 	})
 
 	t.Run("valueless flag", func(t *testing.T) {
 		f := NewFlag("l")
-		args := f.ToSlice()
+		args := f.ToSlice(testStep.GetDashes())
 		assert.Equal(t, []string{"-l"}, args)
 	})
 
-	t.Run("repeated flag", func(t *testing.T) {
-		f := NewFlag("repeated", "FOO=BAR", "STUFF=THINGS")
-		args := f.ToSlice()
-		assert.Equal(t, []string{"--repeated", "FOO=BAR", "--repeated", "STUFF=THINGS"}, args)
+	dashes := Dashes{
+		Long:  "---",
+		Short: "-",
+	}
+	t.Run("flag with non-default dashes", func(t *testing.T) {
+		f := NewFlag("full", "abc")
+		args := f.ToSlice(dashes)
+		assert.Equal(t, []string{"---full", "abc"}, args)
 	})
 }
 
@@ -71,7 +77,7 @@ func TestFlags_ToSlice(t *testing.T) {
 		NewFlag("a", "1"),
 	}
 
-	args := flags.ToSlice()
+	args := flags.ToSlice(testStep.GetDashes())
 
 	// Flags should be sorted and sliced up on a platter
 	assert.Equal(t, []string{"-a", "1", "--bull", "2"}, args)
