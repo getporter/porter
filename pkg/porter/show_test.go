@@ -61,14 +61,12 @@ func TestPorter_ShowBundle(t *testing.T) {
 			"bar": "bar-output",
 		},
 	}
-	if testy, ok := p.CNAB.(*TestCNABProvider); ok {
-		testy.CreateClaim(&claim)
-	} else {
-		t.Fatal("expected p.CNAB to be of type *TestCNABProvider")
-	}
 
-	err := p.ShowInstances(opts)
-	require.NoError(t, err)
+	err := p.InstanceStorage.Store(claim)
+	require.NoError(t, err, "could not store claim")
+
+	err = p.ShowInstances(opts)
+	require.NoError(t, err, "ShowInstances failed")
 
 	wantOutput :=
 		`Name: test-bundle

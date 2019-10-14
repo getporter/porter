@@ -3,6 +3,8 @@ package cnabprovider
 import (
 	"testing"
 
+	instancestorageprovider "github.com/deislabs/porter/pkg/instance-storage/provider"
+
 	"github.com/deislabs/cnab-go/bundle/definition"
 
 	"github.com/stretchr/testify/require"
@@ -15,7 +17,8 @@ import (
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -34,7 +37,8 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -57,7 +61,8 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 
 func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -120,7 +125,8 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -156,7 +162,8 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -192,7 +199,8 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 func Test_loadParameters_fileParameter(t *testing.T) {
 	c := config.NewTestConfig(t)
-	d := NewRuntime(c.Config)
+	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	d := NewRuntime(c.Config, instanceStorage)
 
 	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 

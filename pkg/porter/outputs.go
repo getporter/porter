@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/olekukonko/tablewriter"
@@ -87,20 +88,19 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
 	if err != nil {
 		return err
 	}
-	claim := opts.sharedOptions.Name
 
-	outputs, err := p.fetchBundleOutputs(claim)
+	c, err := p.InstanceStorage.Read(opts.sharedOptions.Name)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, outputs)
+		return printer.PrintJson(p.Out, c.Outputs)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, outputs)
+		return printer.PrintYaml(p.Out, c.Outputs)
 	case printer.FormatTable:
-		return p.printOutputsTable(outputs, claim)
+		return p.printOutputsTable(c)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -108,7 +108,7 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
 
 // ReadBundleOutput reads a bundle output from a claim
 func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
-	c, err := p.CNAB.FetchClaim(claim)
+	c, err := p.InstanceStorage.Read(claim)
 	if err != nil {
 		return "", err
 	}
@@ -119,26 +119,12 @@ func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
 	return "", fmt.Errorf("unable to read output %q for bundle instance %q", name, claim)
 }
 
-func (p *Porter) fetchBundleOutputs(claim string) (map[string]interface{}, error) {
-	c, err := p.CNAB.FetchClaim(claim)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Outputs, nil
-}
-
-func (p *Porter) printOutputsTable(outputs map[string]interface{}, claim string) error {
-	c, err := p.CNAB.FetchClaim(claim)
-	if err != nil {
-		return err
-	}
-
+func (p *Porter) printOutputsTable(c claim.Claim) error {
 	var rows [][]string
 
 	// Get sorted keys for ordered printing
-	keys := make([]string, 0, len(outputs))
-	for k := range outputs {
+	keys := make([]string, 0, len(c.Outputs))
+	for k := range c.Outputs {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -147,7 +133,7 @@ func (p *Porter) printOutputsTable(outputs map[string]interface{}, claim string)
 	// via their corresponding Definitions and add to rows
 	for _, name := range keys {
 		var outputType string
-		valueStr := fmt.Sprintf("%v", outputs[name])
+		valueStr := fmt.Sprintf("%v", c.Outputs[name])
 
 		if c.Bundle == nil {
 			continue
@@ -167,7 +153,7 @@ func (p *Porter) printOutputsTable(outputs map[string]interface{}, claim string)
 			valueStr = output.Path
 		}
 
-		outputType, _, err = def.GetType()
+		outputType, _, err := def.GetType()
 		if err != nil {
 			return errors.Wrapf(err, "unable to get output type for %s", name)
 		}

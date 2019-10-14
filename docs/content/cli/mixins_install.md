@@ -41,5 +41,5 @@ porter mixins install NAME [flags]
 
 ### SEE ALSO
 
-* [porter mixins](/cli/porter_mixins/)	 - Mixin commands
+* [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
 

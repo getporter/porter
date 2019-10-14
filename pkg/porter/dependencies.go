@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/context"
-
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/cnab/extensions"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
+	"github.com/deislabs/porter/pkg/context"
+	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/runtime"
 	"github.com/pkg/errors"
@@ -17,9 +17,10 @@ import (
 
 type dependencyExecutioner struct {
 	*context.Context
-	Manifest *manifest.Manifest
-	Resolver BundleResolver
-	CNAB     CNABProvider
+	Manifest        *manifest.Manifest
+	Resolver        BundleResolver
+	CNAB            CNABProvider
+	InstanceStorage instancestorage.Provider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
@@ -33,10 +34,11 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		Context:  p.Context,
-		Manifest: p.Manifest,
-		Resolver: resolver,
-		CNAB:     p.CNAB,
+		Context:         p.Context,
+		Manifest:        p.Manifest,
+		Resolver:        resolver,
+		CNAB:            p.CNAB,
+		InstanceStorage: p.InstanceStorage,
 	}
 }
 
@@ -242,7 +244,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	// If action is uninstall, no claim will exist
 	if action != manifest.ActionUninstall {
 		// Collect expected outputs via claim
-		c, err := e.CNAB.FetchClaim(depArgs.Claim)
+		c, err := e.InstanceStorage.Read(depArgs.Claim)
 		if err != nil {
 			return err
 		}

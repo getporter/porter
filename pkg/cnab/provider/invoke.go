@@ -8,11 +8,7 @@ import (
 )
 
 func (d *Runtime) Invoke(action string, args ActionArguments) error {
-	claims, err := d.NewClaimStore()
-	if err != nil {
-		return errors.Wrapf(err, "could not access claim store")
-	}
-	c, err := claims.Read(args.Claim)
+	c, err := d.instanceStorage.Read(args.Claim)
 	if err != nil {
 		return errors.Wrapf(err, "could not load claim %s", args.Claim)
 	}
@@ -64,7 +60,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	runErr := i.Run(&c, creds, d.ApplyConfig(args)...)
 
 	// ALWAYS write out a claim, even if the action fails
-	saveErr := claims.Store(c)
+	saveErr := d.instanceStorage.Store(c)
 	if runErr != nil {
 		return errors.Wrap(runErr, "failed to invoke the bundle")
 	}

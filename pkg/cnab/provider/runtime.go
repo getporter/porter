@@ -6,15 +6,18 @@ import (
 	"github.com/deislabs/cnab-go/driver"
 	"github.com/deislabs/cnab-go/driver/lookup"
 	"github.com/deislabs/porter/pkg/config"
+	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 )
 
 type Runtime struct {
 	*config.Config
+	instanceStorage instancestorage.Provider
 }
 
-func NewRuntime(c *config.Config) *Runtime {
+func NewRuntime(c *config.Config, instanceStorage instancestorage.Provider) *Runtime {
 	return &Runtime{
-		Config: c,
+		Config:          c,
+		instanceStorage: instanceStorage,
 	}
 }
 

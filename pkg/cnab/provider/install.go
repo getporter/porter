@@ -63,11 +63,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 	runErr := i.Run(c, creds, d.ApplyConfig(args)...)
 
 	// ALWAYS write out a claim, even if the installation fails
-	claimStore, err := d.NewClaimStore()
-	if err != nil {
-		return errors.Wrap(err, "could not access claim store")
-	}
-	saveErr := claimStore.Store(*c)
+	saveErr := d.instanceStorage.Store(*c)
 	if runErr != nil {
 		return errors.Wrap(runErr, "failed to install the bundle")
 	}

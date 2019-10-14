@@ -25,7 +25,7 @@ Feed commands
 
 ### SEE ALSO
 
-* [porter mixins](/cli/porter_mixins/)	 - Mixin commands
+* [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
 * [porter mixins feed generate](/cli/porter_mixins_feed_generate/)	 - Generate an atom feed from the mixins in a directory
 * [porter mixins feed template](/cli/porter_mixins_feed_template/)	 - Create an atom feed template
 

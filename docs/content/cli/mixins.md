@@ -5,11 +5,11 @@ url: /cli/porter_mixins/
 ---
 ## porter mixins
 
-Mixin commands
+Mixin commands. Mixins assist with authoring bundles.
 
 ### Synopsis
 
-Mixin commands
+Mixin commands. Mixins assist with authoring bundles.
 
 ### Options
 

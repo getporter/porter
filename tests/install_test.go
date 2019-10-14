@@ -65,7 +65,7 @@ func TestInstall_fileParam(t *testing.T) {
 	// output := p.TestConfig.TestContext.GetOutput()
 	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	claim, err := p.CNAB.FetchClaim(p.Manifest.Name)
+	claim, err := p.InstanceStorage.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not fetch claim")
 	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output to match the decoded file contents")
 }

@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,17 +8,17 @@ import (
 	"strings"
 	"testing"
 
+	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
+
 	"github.com/deislabs/porter/pkg/manifest"
 
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/claim"
 	buildprovider "github.com/deislabs/porter/pkg/build/provider"
 	"github.com/deislabs/porter/pkg/cache"
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/mixin"
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
-	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -40,10 +39,12 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	p := New()
 	p.Config = tc.Config
-	p.CNAB = cnabprovider.NewRuntime(tc.Config)
 	p.Mixins = &mixin.TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
+	p.InstanceStorage = instancestorage.NewTestInstanceStorageProvider()
+	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.InstanceStorage)
+
 	return &TestPorter{
 		Porter:     p,
 		TestConfig: tc,
@@ -125,13 +126,10 @@ func (b *mockCache) GetCacheDir() (string, error) {
 }
 
 type TestCNABProvider struct {
-	FileSystem afero.Fs
 }
 
 func NewTestCNABProvider() *TestCNABProvider {
-	return &TestCNABProvider{
-		FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
-	}
+	return &TestCNABProvider{}
 }
 
 func (t *TestCNABProvider) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
@@ -162,30 +160,6 @@ func (t *TestCNABProvider) Invoke(action string, arguments cnabprovider.ActionAr
 
 func (t *TestCNABProvider) Uninstall(arguments cnabprovider.ActionArguments) error {
 	return nil
-}
-
-func (t *TestCNABProvider) FetchClaim(name string) (*claim.Claim, error) {
-	bytes, err := afero.ReadFile(t.FileSystem, name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not read bundle instance file for %s", name)
-	}
-
-	var claim claim.Claim
-	err = json.Unmarshal(bytes, &claim)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error encountered unmarshaling bundle instance %s", name)
-	}
-
-	return &claim, nil
-}
-
-func (t *TestCNABProvider) CreateClaim(claim *claim.Claim) error {
-	bytes, err := json.Marshal(claim)
-	if err != nil {
-		return errors.Wrapf(err, "error encountered marshaling bundle instance %s", claim.Name)
-	}
-
-	return afero.WriteFile(t.FileSystem, claim.Name, bytes, os.ModePerm)
 }
 
 type TestBuildProvider struct{}

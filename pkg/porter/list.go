@@ -6,7 +6,6 @@ import (
 	"time"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
-	cnab "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -39,12 +38,7 @@ func (l CondensedClaimList) Less(i, j int) bool {
 
 // ListInstances lists installed bundles by their claims.
 func (p *Porter) ListInstances(opts ListOptions) error {
-	cp := cnab.NewRuntime(p.Config)
-	claimStore, err := cp.NewClaimStore()
-	if err != nil {
-		return errors.Wrapf(err, "could not access claim store")
-	}
-	claims, err := claimStore.ReadAll()
+	claims, err := p.InstanceStorage.ReadAll()
 	if err != nil {
 		return errors.Wrap(err, "could not list bundle instances")
 	}
