@@ -92,7 +92,7 @@ stages:
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
     
-    - script: make xbuild-all
+    - script: make build xbuild-all
       workingDirectory: '$(MODULE_PATH)'
       displayName: 'Cross Compile'
 
@@ -121,7 +121,7 @@ stages:
         dockerRegistryEndpoint: deislabs-registry
         command: login
 
-    - script: publish-bundle
+    - script: make publish-bundle
       workingDirectory: '$(MODULE_PATH)'
       condition: and(and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')),eq(variables['Build.SourceBranch'], 'refs/heads/master'))
       displayName: 'Publish Example Bundles'
