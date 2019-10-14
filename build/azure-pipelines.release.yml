@@ -3,7 +3,6 @@
 # Add steps that test, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
-pr: none
 trigger:
   branches:
     include:
@@ -14,72 +13,115 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  MODULE_PATH: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
-steps:
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
+stages:
+- stage: Test
+  jobs:
+  - job: unit_test
+    steps:
+    - script: build/azure-pipelines.setup-go-workspace.sh
+      displayName: 'Set up the Go workspace'
 
-- task: Docker@1
-  displayName: Login
-  inputs:
-    containerRegistryType: Container Registry
-    dockerRegistryEndpoint: deislabs-registry
-    command: login
+    - script: make verify
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Verify'
 
-- task: DownloadSecureFile@1
-  inputs:
-    secureFile: kubeconfig
+    - script: make test-unit
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Unit Test'
 
-- script: |
-     make verify
-  workingDirectory: '$(modulePath)'
-  displayName: 'Verify'
+  - job: integration_test
+    steps:
+    - script: build/azure-pipelines.setup-go-workspace.sh
+      displayName: 'Set up the Go workspace'
 
-- script: |
-     make build
-  workingDirectory: '$(modulePath)'
-  displayName: 'Build'
+    - task: Docker@1
+      displayName: Docker Login
+      inputs:
+        containerRegistryType: Container Registry
+        dockerRegistryEndpoint: deislabs-registry
+        command: login
 
-- script: |
-     make test-unit
-  workingDirectory: '$(modulePath)'
-  displayName: 'Unit Test'
+    - task: DownloadSecureFile@1
+      displayName: Download Kubeconfig
+      inputs:
+        secureFile: kubeconfig
 
-- script: |
-    make xbuild-all
-  workingDirectory: '$(modulePath)'
-  displayName: 'Cross Compile'
+    - script: |
+        export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
+        make test-integration
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Integration Test'
 
-- script: |
-    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    make test-integration
-  workingDirectory: '$(modulePath)'
-  displayName: 'Integration Test'
+  - job: cli_test
+    steps:
+    - script: build/azure-pipelines.setup-go-workspace.sh
+      displayName: 'Set up the Go workspace'
 
-- script: |
-    export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-    REGISTRY=deislabs make test-cli
-  workingDirectory: '$(modulePath)'
-  displayName: 'CLI Test'
+    - task: Docker@1
+      displayName: Docker Login
+      inputs:
+        containerRegistryType: Container Registry
+        dockerRegistryEndpoint: deislabs-registry
+        command: login
 
-- script: |
-    sudo make ajv
-    make build-bundle validate-bundle publish-bundle
-  workingDirectory: '$(modulePath)'
-  displayName: 'Publish Example Bundles'
-  
-- script: |
-    AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING) make publish
-  workingDirectory: '$(modulePath)'
-  displayName: 'Publish'
+    - task: DownloadSecureFile@1
+      displayName: Download Kubeconfig
+      inputs:
+        secureFile: kubeconfig
+
+    - script: make build
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Build'
+
+    - script: |
+        export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
+        export REGISTRY=deislabs
+        make test-cli
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'CLI Test'
+
+- stage: Publish
+  jobs:
+  - job: publish_binaries
+    steps:
+    - script: build/azure-pipelines.setup-go-workspace.sh
+      displayName: 'Set up the Go workspace'
+    
+    - script: make xbuild-all
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Cross Compile'
+
+    - script: |
+        export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
+        make publish
+      workingDirectory: '$(MODULE_PATH)'
+      condition: and(and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')),eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      displayName: 'Publish Porter Binaries'
+
+  - job: publish_example_bundles
+    steps:
+    - script: build/azure-pipelines.setup-go-workspace.sh
+      displayName: 'Set up the Go workspace'
+
+    - script: |
+        sudo make ajv
+        make build build-bundle validate-bundle
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Validate Example Bundles'
+
+    - task: Docker@1
+      displayName: Docker Login
+      inputs:
+        containerRegistryType: Container Registry
+        dockerRegistryEndpoint: deislabs-registry
+        command: login
+
+    - script: publish-bundle
+      workingDirectory: '$(MODULE_PATH)'
+      condition: and(and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')),eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      displayName: 'Publish Example Bundles'
