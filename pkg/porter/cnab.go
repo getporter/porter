@@ -34,7 +34,7 @@ type bundleFileOptions struct {
 	// CNABFile is the path to the bundle.json file. Cannot be specified at the same time as the porter manifest or a tag.
 	CNABFile string
 
-	// CNABFile is the path to the relocation-mapping.json file, if one exists. Populated only for published bundles
+	// RelocationMapping is the path to the relocation-mapping.json file, if one exists. Populated only for published bundles
 	RelocationMapping string
 }
 
