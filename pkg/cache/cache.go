@@ -31,7 +31,9 @@ func New(cfg *config.Config) BundleCache {
 
 // FindBundle looks for a given bundle tag in the Porter bundle cache and
 // returns the path to the bundle if it exists. If it is not found, an
-// empty string and the boolean false value are returned.
+// empty string and the boolean false value are returned. If the bundle is found,
+// and a relocation mapping file is present, it will be returned as well. If the relocation
+// is not found, an empty string is returned.
 func (c *cache) FindBundle(bundleTag string) (string, string, bool, error) {
 	bid := getBundleID(bundleTag)
 	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
@@ -57,7 +59,9 @@ func (c *cache) FindBundle(bundleTag string) (string, string, bool, error) {
 }
 
 // StoreBundle will write a given bundle to the bundle cache, in a location derived
-// from the bundleTag.
+// from the bundleTag. If a relocation mapping is provided, it will be stored along side
+// the bundle. If successful, returns the path to the bundle, along with the path to a
+// relocation mapping, if provided. Otherwise, returns an error.
 func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle, reloMap relocation.ImageRelocationMap) (string, string, error) {
 	bid := getBundleID(bundleTag)
 	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)

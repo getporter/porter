@@ -318,7 +318,6 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 	}
 	reverseLookup := make(map[string]string)
 	for alias, image := range bun.Images {
-		fmt.Fprintf(m.Out, "alias: %s, image: %s\n", alias, image.Image)
 		manifestImage, ok := m.ImageMap[alias]
 		if !ok {
 			return fmt.Errorf("unable to find image in porter manifest: %s", alias)

@@ -32,7 +32,7 @@ func NewRegistry(c *portercontext.Context) *Registry {
 	}
 }
 
-// PullBundle pulls a bundle from an OCI registry.
+// PullBundle pulls a bundle from an OCI registry. Returns the bundle, and an optional image relocation mapping, if applicable.
 func (r *Registry) PullBundle(tag string, insecureRegistry bool) (*bundle.Bundle, relocation.ImageRelocationMap, error) {
 	ref, err := reference.ParseNormalizedNamed(tag)
 	if err != nil {
