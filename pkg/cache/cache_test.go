@@ -166,5 +166,6 @@ func TestStoreRelocationMapping(t *testing.T) {
 		assert.Equal(t, test.wantedReloPath, reloPath, "didn't get expected path for store on test: %s", test.name)
 		_, fetchedPath, _, err := c.FindBundle(test.tag)
 		assert.Equal(t, test.wantedReloPath, fetchedPath, "didn't get expected path for load on test: %s", test.name)
+
 	}
 }
