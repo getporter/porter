@@ -1062,7 +1062,7 @@ func TestResolveImageWithRelo(t *testing.T) {
 	assert.Equal(t, "my.registry/microservice", mi.Repository)
 }
 
-func TestResolveImageBadRelocation(t *testing.T) {
+func TestResolveImageRelocationNoMatch(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &Manifest{
 		ImageMap: map[string]MappedImage{
@@ -1089,6 +1089,6 @@ func TestResolveImageBadRelocation(t *testing.T) {
 
 	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
-	assert.Error(t, err)
-	assert.EqualError(t, err, fmt.Sprintf("unable to find relocated image: %s", "deislabs/nogood:latest"))
+	assert.NoError(t, err)
+	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
 }
