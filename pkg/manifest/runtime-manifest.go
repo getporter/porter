@@ -333,15 +333,13 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 	}
 	for oldRef, reloRef := range reloMap {
 		alias := reverseLookup[oldRef]
-		manifestImage, ok := m.ImageMap[alias]
-		if !ok {
-			return fmt.Errorf("unable to find relocated image: %s", oldRef)
+		if manifestImage, ok := m.ImageMap[alias]; ok { //note, there might be other images in the relocation mapping, like the invocation image
+			err := resolveImage(&manifestImage, reloRef)
+			if err != nil {
+				return errors.Wrap(err, "unable to update image map from relocation mapping")
+			}
+			m.ImageMap[alias] = manifestImage
 		}
-		err := resolveImage(&manifestImage, reloRef)
-		if err != nil {
-			return errors.Wrap(err, "unable to update image map from relocation mapping")
-		}
-		m.ImageMap[alias] = manifestImage
 	}
 	return nil
 }
