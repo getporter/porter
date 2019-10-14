@@ -74,7 +74,7 @@ func (d *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 			var reloMap relocation.ImageRelocationMap
 			err = json.Unmarshal(b, &reloMap)
 			// If the invocation image is present in the relocation mapping, we need
-			// to update the operation and set the new iamge reference. Unfortunately,
+			// to update the operation and set the new image reference. Unfortunately,
 			// the relocation mapping is just reference => reference, so there isn't a
 			// great way to check for the invocation image.
 			if mappedInvo, ok := reloMap[op.Image.Image]; ok {
