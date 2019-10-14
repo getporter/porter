@@ -311,8 +311,14 @@ func (m *RuntimeManifest) Prepare() error {
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the
 // mounted bundle.json and relocation mapping
 func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.ImageRelocationMap) error {
+	// It only makes sense to process this if the runtime manifest has images defined. If none are defined
+	// return early
+	if len(m.ImageMap) == 0 {
+		return nil
+	}
 	reverseLookup := make(map[string]string)
 	for alias, image := range bun.Images {
+		fmt.Fprintf(m.Out, "alias: %s, image: %s\n", alias, image.Image)
 		manifestImage, ok := m.ImageMap[alias]
 		if !ok {
 			return fmt.Errorf("unable to find image in porter manifest: %s", alias)
@@ -325,7 +331,6 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 		m.ImageMap[alias] = manifestImage
 		reverseLookup[image.Image] = alias
 	}
-
 	for oldRef, reloRef := range reloMap {
 		alias := reverseLookup[oldRef]
 		manifestImage, ok := m.ImageMap[alias]

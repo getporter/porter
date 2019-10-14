@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"github.com/deislabs/cnab-go/bundle"
 	"io/ioutil"
 	"testing"
 
@@ -27,8 +28,12 @@ func TestAddReloccation(t *testing.T) {
 
 	opConf := d.AddRelocation(args)
 
+	invoImage := bundle.InvocationImage{}
+	invoImage.Image = "gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+
 	op := &driver.Operation{
 		Files: make(map[string]string),
+		Image: invoImage,
 	}
 	err = opConf(op)
 	assert.NoError(t, err)
@@ -36,5 +41,6 @@ func TestAddReloccation(t *testing.T) {
 	mapping, ok := op.Files["/cnab/app/relocation-mapping.json"]
 	assert.True(t, ok)
 	assert.Equal(t, string(data), mapping)
+	assert.Equal(t, "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687", op.Image.Image)
 
 }

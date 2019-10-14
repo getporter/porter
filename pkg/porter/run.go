@@ -115,6 +115,7 @@ func (p *Porter) Run(opts RunOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to resolve bundle images")
 	}
+
 	err = p.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)

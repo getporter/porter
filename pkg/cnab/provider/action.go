@@ -1,8 +1,11 @@
 package cnabprovider
 
 import (
+	"encoding/json"
+
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/driver"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
 
@@ -68,6 +71,11 @@ func (d *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 				return errors.Wrap(err, "unable to add relocation mapping")
 			}
 			op.Files["/cnab/app/relocation-mapping.json"] = string(b)
+			var reloMap relocation.ImageRelocationMap
+			err = json.Unmarshal(b, &reloMap)
+			if mappedInvo, ok := reloMap[op.Image.Image]; ok {
+				op.Image.Image = mappedInvo
+			}
 		}
 		return nil
 	}
