@@ -263,3 +263,38 @@ func TestApplyBundleOutputs_ApplyTo_True(t *testing.T) {
 	want := "abc"
 	assert.Equal(t, want, string(bytes))
 }
+
+func TestLoadImageMappingFilesNoRelo(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle-images.json", "/cnab/bundle.json")
+	bun, reloMap, err := p.getImageMappingFiles()
+	assert.NoError(t, err)
+	assert.Empty(t, reloMap)
+	assert.Equal(t, "mysql", bun.Name)
+}
+
+func TestLoadImageMappingFilesNoBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+	_, _, err := p.getImageMappingFiles()
+	assert.EqualError(t, err, "couldn't read runtime bundle.json: open /cnab/bundle.json: file does not exist")
+}
+
+func TestLoadImageMappingFilesBadBundle(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "/cnab/bundle.json")
+	p.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+	_, _, err := p.getImageMappingFiles()
+	assert.EqualError(t, err, "couldn't load runtime bundle.json: invalid character 'a' in literal null (expecting 'u')")
+}
+
+func TestLoadImageMappingFilesGoodFiles(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle-images.json", "/cnab/bundle.json")
+	p.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+
+	bun, reloMap, err := p.getImageMappingFiles()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, reloMap)
+	assert.Equal(t, "mysql", bun.Name)
+}

@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/deislabs/cnab-go/bundle"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -106,25 +107,9 @@ func (p *Porter) Run(opts RunOptions) error {
 	}
 
 	//Update the runtimeManifest images with the bundle.json and relocation mapping (if it's there)
-	l := loader.New()
-	bunBytes, err := p.FileSystem.ReadFile("/cnab/bundle.json")
+	rtb, reloMap, err := p.getImageMappingFiles()
 	if err != nil {
-		return errors.Wrap(err, "couldn't read runtime bundle.json")
-	}
-	rtb, err := l.LoadData(bunBytes)
-	if err != nil {
-		return errors.Wrap(err, "couldn't load runtime bundle.json")
-	}
-	var reloMap relocation.ImageRelocationMap
-	if _, err := p.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
-		reloBytes, err := p.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
-		if err != nil {
-			return errors.Wrap(err, "couldn't read relocation file")
-		}
-		err = json.Unmarshal(reloBytes, reloMap)
-		if err != nil {
-			return errors.Wrap(err, "couldn't load relocation file")
-		}
+		return err
 	}
 	err = runtimeManifest.ResolveImages(rtb, reloMap)
 	if err != nil {
@@ -282,4 +267,28 @@ func (p *Porter) ApplyBundleOutputs(opts RunOptions, outputs map[string]string) 
 		}
 	}
 	return nil
+}
+
+func (p *Porter) getImageMappingFiles() (*bundle.Bundle, relocation.ImageRelocationMap, error) {
+	l := loader.New()
+	bunBytes, err := p.FileSystem.ReadFile("/cnab/bundle.json")
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "couldn't read runtime bundle.json")
+	}
+	rtb, err := l.LoadData(bunBytes)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "couldn't load runtime bundle.json")
+	}
+	var reloMap relocation.ImageRelocationMap
+	if _, err := p.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
+		reloBytes, err := p.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "couldn't read relocation file")
+		}
+		err = json.Unmarshal(reloBytes, &reloMap)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "couldn't load relocation file")
+		}
+	}
+	return rtb, reloMap, nil
 }
