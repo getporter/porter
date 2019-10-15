@@ -11,6 +11,8 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/manifest"
+	"github.com/docker/distribution/reference"
+	"github.com/pkg/errors"
 )
 
 const SchemaVersion = "v1.0.0"
@@ -30,7 +32,7 @@ func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, ima
 	}
 }
 
-func (c *ManifestConverter) ToBundle() *bundle.Bundle {
+func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
 	b := &bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
@@ -52,7 +54,11 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Parameters = c.generateBundleParameters(&b.Definitions)
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
-	b.Images = c.generateBundleImages()
+	bundleImages, err := c.generateBundleImages()
+	if err != nil {
+		return nil, err
+	}
+	b.Images = bundleImages
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
 
 	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
@@ -60,7 +66,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		b.RequiredExtensions = []string{extensions.DependenciesKey}
 	}
 
-	return b
+	return b, nil
 }
 
 func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {
@@ -238,13 +244,18 @@ func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Creden
 	return params
 }
 
-func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
+func (c *ManifestConverter) generateBundleImages() (map[string]bundle.Image, error) {
 	images := make(map[string]bundle.Image, len(c.Manifest.ImageMap))
 
 	for i, refImage := range c.Manifest.ImageMap {
 		imgRefStr := refImage.Repository
 		if refImage.Digest != "" {
 			imgRefStr = fmt.Sprintf("%s@%s", imgRefStr, refImage.Digest)
+			_, err := reference.Parse(imgRefStr)
+			if err != nil {
+				return nil, errors.Wrapf(err, "Digest format for %s is invalid", imgRefStr)
+			}
+
 		} else if refImage.Tag != "" {
 			imgRefStr = fmt.Sprintf("%s:%s", imgRefStr, refImage.Tag)
 		} else { // default to `latest` if no tag is provided
@@ -268,7 +279,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 		images[i] = img
 	}
 
-	return images
+	return images, nil
 }
 
 func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {

@@ -22,7 +22,9 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil)
 
-	bun := a.ToBundle()
+	bun, err := a.ToBundle()
+	// TODO: This might not be true, check the manifest used
+	require.NoError(t, err)
 
 	assert.Equal(t, SchemaVersion, bun.SchemaVersion)
 	assert.Equal(t, "hello", bun.Name)
@@ -251,7 +253,9 @@ func TestManifestConverter_generateImages(t *testing.T) {
 		"server": mappedImage,
 	}
 
-	images := a.generateBundleImages()
+	images, err := a.generateBundleImages()
+	// TODO: This might not be true, check the manifest used
+	require.NoError(t, err)
 
 	require.Len(t, images, 1)
 	img := images["server"]
@@ -285,7 +289,9 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 		"server": mappedImage,
 	}
 
-	images := a.generateBundleImages()
+	images, err := a.generateBundleImages()
+	// TODO: This might not be true, check the manifest used
+	require.NoError(t, err)
 	require.Len(t, images, 1)
 	img := images["server"]
 	assert.Nil(t, img.Labels)
@@ -502,7 +508,9 @@ func TestManifestConverter_RequiredExtensions(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil)
 
-	bun := a.ToBundle()
+	bun, err := a.ToBundle()
+	// TODO: This might not be true, check the manifest used
+	require.NoError(t, err)
 
 	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
 }
