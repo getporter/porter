@@ -92,7 +92,12 @@ stages:
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
     
-    - script: make build xbuild-all
+    # Don't combine with the next step, it messes up the templates in the binaries
+    - script: make build
+      workingDirectory: '$(MODULE_PATH)'
+      displayName: 'Get yourself a porter'
+
+    - script: make xbuild-all
       workingDirectory: '$(MODULE_PATH)'
       displayName: 'Cross Compile'
 
