@@ -254,9 +254,9 @@ func TestPorter_replacePorterMixinTokenWithBuildInstructions(t *testing.T) {
 	// Use a custom dockerfile template
 	m.Dockerfile = "Dockerfile.template"
 	customFrom := `FROM ubuntu:light
-    # PORTER_MIXINS
+ARG BUNDLE_DIR
+# PORTER_MIXINS
 COPY mybin /cnab/app/
-
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
@@ -269,8 +269,8 @@ COPY mybin /cnab/app/
 
 	wantLines := []string{
 		"FROM ubuntu:light",
+		"ARG BUNDLE_DIR",
 		"COPY mybin /cnab/app/",
-		"",
 		"COPY .cnab/ /cnab/",
 		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 		"WORKDIR $BUNDLE_DIR",
