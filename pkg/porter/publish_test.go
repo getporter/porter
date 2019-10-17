@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -140,4 +141,27 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	// Verify mod times differ
 	require.NotEqual(t, updatedBunPathTime, origBunPathTime,
 		"bundle.json file should have an updated mod time per cache refresh")
+}
+
+func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
+	p := NewTestPorter(t)
+	mc := mockCache{
+		findBundleMock: func(tag string) (string, string, bool, error) {
+			return "", "", true, nil
+		},
+		storeBundleMock: func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error) {
+			return "", "", errors.New("error trying to store bundle")
+		},
+	}
+	p.Porter.Cache = &mc
+
+	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	tag := "myreg/mybuns"
+	rm := relocation.ImageRelocationMap{}
+
+	err := p.refreshCachedBundle(bun, tag, rm)
+	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotOutput)
 }

@@ -349,7 +349,7 @@ func (p *Porter) refreshCachedBundle(bun *bundle.Bundle, tag string, rm relocati
 	if _, _, found, _ := p.Cache.FindBundle(tag); found {
 		_, _, err := p.Cache.StoreBundle(tag, bun, rm)
 		if err != nil {
-			return errors.Wrapf(err, "unable to update cache for bundle %s", tag)
+			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", tag, err)
 		}
 	}
 	return nil
