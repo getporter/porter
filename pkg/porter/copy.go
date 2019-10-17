@@ -60,7 +60,7 @@ func (p *Porter) CopyBundle(c *CopyOpts) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before copying")
 	}
-	err = p.Registry.PushBundle(bun, destinationTag, c.InsecureRegistry)
+	_, err = p.Registry.PushBundle(bun, destinationTag, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy bundle to new location")
 	}
