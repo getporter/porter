@@ -229,12 +229,24 @@ defaultContentLanguage = "en"
     identifier = "wiring"
     weight = 303
     parent = "authoring-bundles"
+  [[menu.main]]
+    name = "Distributing Bundles"
+    url = "/distributing-bundles"
+    identifier = "distributing-bundles"
+    weight = 304
+    parent = "authoring-bundles"
 
 [[menu.main]]
   name = "Examining Bundles"
   identifier = "examining-bundles"
   url = "/examining-bundles"
   weight = 325
+
+[[menu.main]]
+  name = "Copying Bundles"
+  identifier = "copying-bundles"
+  url = "/copying-bundles"
+  weight = 326
 
 [[menu.main]]
   name = "Developing Mixins"

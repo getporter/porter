@@ -31,6 +31,7 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 
 * [porter build](/cli/porter_build/)	 - Build a bundle
 * [porter bundles](/cli/porter_bundles/)	 - Bundle commands
+* [porter copy](/cli/porter_copy/)	 - Copy a bundle
 * [porter create](/cli/porter_create/)	 - Create a bundle
 * [porter credentials](/cli/porter_credentials/)	 - Credentials commands
 * [porter explain](/cli/porter_explain/)	 - Explain a bundle
