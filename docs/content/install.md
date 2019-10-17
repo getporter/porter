@@ -55,25 +55,29 @@ iwr "https://cdn.deislabs.io/porter/canary/install-windows.ps1" -UseBasicParsing
 
 # Older Version
 
-Install an older version of porter. This also installs the latest version of all the mixins.
-If you need a specific version of a mixin, use the `--version` flag when
-[installing the mixin](#mixin).
+Install an older version of porter, starting with `v0.18.1-beta.2`. This also
+installs the latest version of all the mixins. If you need a specific version of
+a mixin, use the `--version` flag when [installing the mixin](#mixins).
 
 See the porter [releases][releases] page for a list of older porter versions.
+Set `VERSION` to the version of Porter that you want to install.
 
 ## Older Version MacOS
 ```
-curl https://cdn.deislabs.io/porter/VERSION/install-mac.sh | bash
+VERSION="v0.18.1-beta.2"
+curl https://cdn.deislabs.io/porter/$VERSION/install-mac.sh | bash
 ```
 
 ## Older Version Linux
 ```
-curl https://cdn.deislabs.io/porter/VERSION/install-linux.sh | bash
+VERSION="v0.18.1-beta.2"
+curl https://cdn.deislabs.io/porter/$VERSION/install-linux.sh | bash
 ```
 
 ## Older Version Windows
 ```
-iwr "https://cdn.deislabs.io/porter/VERSION/install-windows.ps1" -UseBasicParsing | iex
+$VERSION="v0.18.1-beta.2"
+iwr "https://cdn.deislabs.io/porter/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Mixins
