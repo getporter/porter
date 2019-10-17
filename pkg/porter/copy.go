@@ -52,7 +52,7 @@ func generateNewBundleRef(source, dest string) string {
 	return dest
 }
 
-// CopyBundle copies a CNAB bundle from one repository to another
+// CopyBundle copies a bundle from one repository to another
 func (p *Porter) CopyBundle(c *CopyOpts) error {
 	destinationTag := generateNewBundleRef(c.Source, c.Destination)
 	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationTag)
