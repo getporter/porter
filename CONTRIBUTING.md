@@ -69,7 +69,7 @@ If there isn't an issue for your PR, please make an issue first and explain the
 problem or motivation for the change you are proposing. When the solution isn't
 straightforward, for example "Implement missing command X", then also outline
 your proposed solution. Your PR will go smoother if the solution is agreed upon
-before you've spent a lot of time implementing it. 
+before you've spent a lot of time implementing it.
 
 Since Porter is a CLI, the "solution" will usually look like this:
 
@@ -194,7 +194,7 @@ They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 * Have issues and pull requests assigned to them
 * Apply labels, milestones and projects
-* [Mark issues as duplicates](https://help.github.com/en/articles/about-duplicate-issues-and-pull-requests) 
+* [Mark issues as duplicates](https://help.github.com/en/articles/about-duplicate-issues-and-pull-requests)
 * Close, reopen, and assign issues and pull requests
 
 They must agree to and follow this Contributing Guide.
@@ -216,7 +216,7 @@ please reach out to one or more of the contributors or maintainers.
 
 ## Maintainer
 
-[Maintainers][maintainers] are members with extra capabilities: 
+[Maintainers][maintainers] are members with extra capabilities:
 
 * Be a [Code Owner](.github/CODEOWNERS) and have reviews automatically requested.
 * Review pull requests.
@@ -224,12 +224,12 @@ please reach out to one or more of the contributors or maintainers.
 
 Maintainers also have additional responsibilities beyond just merging code:
 
-* Help foster a safe and welcoming environment for all project participants. 
+* Help foster a safe and welcoming environment for all project participants.
   This will include understanding and enforcing our [Code of Conduct](CODE_OF_CONDUCT.md).
-* Organize and promote pull request reviews, e.g. prompting community members, 
+* Organize and promote pull request reviews, e.g. prompting community members,
   contributors, and other maintainers to review.
 * Triage issues, e.g. adding labels, promoting discussions, finalizing decisions.
-* Help organize our development meetings, e.g. schedule, organize and 
+* Help organize our development meetings, e.g. schedule, organize and
   execute agenda.
 
 They must agree to and follow the [Reviewing Guide](REVIEWING.md).
@@ -237,13 +237,13 @@ They must agree to and follow the [Reviewing Guide](REVIEWING.md).
 [maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
 
 ### How to become a maintainer
-    
+
 To become a maintainer, we would like you to see you be an effective
 contributor, and show that you can do some of the things maintainers do.
 Maintainers will do their best to regularly discuss promoting contributors. But
 don’t be shy, if you feel that this is you, please reach out to one or more of
 the maintainers.
-    
+
 ## Admin
 
 [Admins][admins] are maintainers with extra responsibilities:
@@ -298,8 +298,8 @@ Here are the most common Makefile tasks
 * `dep-ensure` runs dep ensure for you while taking care of packr properly. Use
   this if your PRs are often failing on `verify-vendor` because of packr. This
   can be avoided entirely if you use `make build-porter-client` or `make build`.
-* `verify-vendor` cleans up packr generated files and verifies that dep's Gopkg.lock 
-   and vendor/ are up-to-date. Use this makefile target instead of running 
+* `verify-vendor` cleans up packr generated files and verifies that dep's Gopkg.lock
+   and vendor/ are up-to-date. Use this makefile target instead of running
    dep check manually.
 
 ## Install mixins
@@ -315,7 +315,7 @@ installed into your bin directory in the root of the repository. You can use
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
 [Netlify](netlify.com).
 
-1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`, 
+1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`,
 `choco install hugo` or `go get -u github.com/gohugoio/hugo`.
 1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
 1. Open <http://localhost:1313> to preview the site.
@@ -347,6 +347,7 @@ dependency injection and testing strategies.
 
 * **cmd**: go here to add a new command or flag to porter or one of the mixins in
   this repository
+* **docs**: our website
 * **pkg**
   * **build**: implements building the invocation image.
   * **cache**: handles the cache of bundles that have been pulled by commands
@@ -357,21 +358,20 @@ dependency injection and testing strategies.
     * **extensions**: extensions to the CNAB spec, at this point that's just
   dependencies.
     * **provider**: the CNAB runtime, i.e. `porter install`.
-* **config**: anything related to `porter.yaml` and `~/.porter`.
-* **context**: essentially dependency injection that's needed throughout Porter,
-  such as stdout, stderr, stdin, filesystem and command execution.
-* **docs**: our website
-* **exec**: the exec mixin
-* **kubernetes**: the kubernetes mixin
-* **mixin**: enums, functions and interfaces for the mixin framework.
-  * **feed**: works with mixin atom feeds
-  * **provider**: handles communicating with mixins
-* **porter**: the implementation of the porter commands. Every command in Porter
-  has a corresponding function in here.
+  * **config**: anything related to `porter.yaml` and `~/.porter`.
+  * **context**: essentially dependency injection that's needed throughout Porter,
+    such as stdout, stderr, stdin, filesystem and command execution.
+  * **exec**: the exec mixin
+  * **kubernetes**: the kubernetes mixin
+  * **mixin**: enums, functions and interfaces for the mixin framework.
+    * **feed**: works with mixin atom feeds
+    * **provider**: handles communicating with mixins
+  * **porter**: the implementation of the porter commands. Every command in Porter
+    has a corresponding function in here.
+      packr
+    * **version**: reusable library used by all the mixins for implementing their
   * **templates**: files that need to be compiled into the porter binary with
-    packr
-  * **version**: reusable library used by all the mixins for implementing their
-    version command.
+      version command.
 * **scripts**:
   * **install**: Porter [installation](https://porter.sh/install) scripts
 * **tests** have Go-based integration tests.
