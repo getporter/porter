@@ -40,6 +40,7 @@ porter invoke [INSTANCE] --action ACTION [flags]
   -c, --cred strings         Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string        Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string          Path to the porter manifest file. Defaults to the bundle in the current directory.
+      --force                Force a fresh pull of the bundle and all dependencies
   -h, --help                 help for invoke
       --insecure-registry    Don't require TLS for the registry
       --param strings        Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.

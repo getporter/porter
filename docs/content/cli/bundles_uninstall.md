@@ -41,6 +41,7 @@ porter bundles uninstall [INSTANCE] [flags]
   -c, --cred strings         Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string        Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string          Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
+      --force                Force a fresh pull of the bundle and all dependencies
   -h, --help                 help for uninstall
       --insecure             Allow working with untrusted bundles (default true)
       --insecure-registry    Don't require TLS for the registry
