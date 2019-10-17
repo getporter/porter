@@ -160,7 +160,7 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	rm := relocation.ImageRelocationMap{}
 
 	err := p.refreshCachedBundle(bun, tag, rm)
-	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
+	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotOutput)
