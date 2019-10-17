@@ -164,6 +164,9 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	// Enable interpolation of manifest/bundle name via bundle.name
 	bun["name"] = m.Name
+	bun["version"] = m.Version
+	bun["description"] = m.Description
+	bun["invocationImage"] = m.Image
 
 	params := make(map[string]interface{})
 	bun["parameters"] = params
@@ -206,6 +209,11 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		// bundle.dependencies.ALIAS.outputs.NAME
 		depBundle := make(map[string]interface{})
 		deps[alias] = depBundle
+
+		depBundle["name"] = bun.Name
+		depBundle["version"] = bun.Version
+		depBundle["description"] = bun.Description
+
 		depOutputs := make(map[string]interface{})
 		depBundle["outputs"] = depOutputs
 

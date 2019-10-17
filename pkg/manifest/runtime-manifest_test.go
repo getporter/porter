@@ -211,6 +211,59 @@ func TestResolvePathParam(t *testing.T) {
 	assert.Equal(t, "person.txt", val)
 }
 
+func TestMetadataAvailableForTemplating(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
+	m, _ := LoadManifestFrom(cxt.Context, config.Name)
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+
+	before, _ := yaml.Marshal(m.Install[0])
+	t.Logf("Before:\n %s", before)
+	for _, step := range rm.Install {
+		rm.ResolveStep(step)
+	}
+
+	s := rm.Install[0]
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+
+	pms, ok := s.Data["exec"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	cmd := pms["command"].(string)
+	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:latest\"", cmd)
+}
+
+func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
+
+	m, _ := LoadManifestFrom(cxt.Context, config.Name)
+	rm := NewRuntimeManifest(cxt.Context, ActionInstall, m)
+	rm.bundles = map[string]bundle.Bundle{
+		"mysql": {
+			Name:        "Azure MySQL",
+			Description: "Azure MySQL database as a service",
+			Version:     "v1.0.0",
+		},
+	}
+
+	before, _ := yaml.Marshal(m.Install[0])
+	t.Logf("Before:\n %s", before)
+	for _, step := range rm.Install {
+		rm.ResolveStep(step)
+	}
+
+	s := rm.Install[0]
+	after, _ := yaml.Marshal(s)
+	t.Logf("After:\n %s", after)
+
+	pms, ok := s.Data["exec"].(map[interface{}]interface{})
+	assert.True(t, ok)
+	cmd := pms["command"].(string)
+	assert.Equal(t, "echo \"dep name: Azure MySQL dep version: v1.0.0 dep description: Azure MySQL database as a service\"", cmd)
+}
+
 func TestResolveMapParamUnknown(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &Manifest{
