@@ -3,6 +3,7 @@ package configadapter
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle"
@@ -244,18 +245,35 @@ func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Creden
 	return params
 }
 
+func (c *ManifestConverter) validateImageDigest(digest string, dRegex *regexp.Regexp) error {
+	anchoredDigestRegex := regexp.MustCompile(`^` + dRegex.String() + `$`)
+	if !anchoredDigestRegex.MatchString(digest) {
+		return reference.ErrDigestInvalidFormat
+	}
+	return nil
+}
+
+func (c *ManifestConverter) validateImageReference(r string) error {
+	if _, err := reference.Parse(r); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *ManifestConverter) generateBundleImages() (map[string]bundle.Image, error) {
 	images := make(map[string]bundle.Image, len(c.Manifest.ImageMap))
 
 	for i, refImage := range c.Manifest.ImageMap {
 		imgRefStr := refImage.Repository
 		if refImage.Digest != "" {
-			imgRefStr = fmt.Sprintf("%s@%s", imgRefStr, refImage.Digest)
-			_, err := reference.Parse(imgRefStr)
-			if err != nil {
-				return nil, errors.Wrapf(err, "Digest format for %s is invalid", imgRefStr)
+			if err := c.validateImageDigest(refImage.Digest, reference.DigestRegexp); err != nil {
+				return nil, errors.Wrapf(err, "Digest format for '%s' is invalid", refImage.Digest)
 			}
 
+			imgRefStr = fmt.Sprintf("%s@%s", imgRefStr, refImage.Digest)
+			if e := c.validateImageReference(imgRefStr); e != nil {
+				return nil, errors.Wrapf(e, "Image reference format for '%s' is invalid", imgRefStr)
+			}
 		} else if refImage.Tag != "" {
 			imgRefStr = fmt.Sprintf("%s:%s", imgRefStr, refImage.Tag)
 		} else { // default to `latest` if no tag is provided
