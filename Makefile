@@ -5,7 +5,7 @@ MAKE_OPTS ?= --no-print-directory
 
 REGISTRY ?= $(USER)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
-PERMALINK ?= $(shell git describe --tags --exact-match 2> /dev/null && echo latest || echo canary)
+PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
 PORTER_HOME = bin
