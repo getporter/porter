@@ -5,7 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -105,4 +107,61 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	require.NoError(t, err, "updating bundle with new image should not have failed")
 	require.Equal(t, "docker.io/myneworg/myimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
 	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Digest)
+}
+
+func TestPublish_RefreshCachedBundle(t *testing.T) {
+	p := NewTestPorter(t)
+
+	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	tag := "myreg/mybuns"
+	rm := relocation.ImageRelocationMap{}
+
+	// No-Op; bundle does not yet exist in cache
+	err := p.refreshCachedBundle(bun, tag, rm)
+	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
+
+	// Store bundle in cache
+	bunPath, _, err := p.Cache.StoreBundle(tag, bun, rm)
+	require.NoError(t, err, "should have successfully stored bundle")
+
+	// Get file mod time
+	file, err := p.FileSystem.Stat(bunPath)
+	require.NoError(t, err)
+	origBunPathTime := file.ModTime()
+
+	// Should refresh cache
+	p.refreshCachedBundle(bun, tag, rm)
+	require.NoError(t, err, "should have successfully updated the cache")
+
+	// Get file mod time
+	file, err = p.FileSystem.Stat(bunPath)
+	require.NoError(t, err)
+	updatedBunPathTime := file.ModTime()
+
+	// Verify mod times differ
+	require.NotEqual(t, updatedBunPathTime, origBunPathTime,
+		"bundle.json file should have an updated mod time per cache refresh")
+}
+
+func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
+	p := NewTestPorter(t)
+	mc := mockCache{
+		findBundleMock: func(tag string) (string, string, bool, error) {
+			return "", "", true, nil
+		},
+		storeBundleMock: func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error) {
+			return "", "", errors.New("error trying to store bundle")
+		},
+	}
+	p.Porter.Cache = &mc
+
+	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	tag := "myreg/mybuns"
+	rm := relocation.ImageRelocationMap{}
+
+	err := p.refreshCachedBundle(bun, tag, rm)
+	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
+
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotOutput)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/loader"
 	"github.com/deislabs/cnab-go/packager"
+	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pivotal/image-relocation/pkg/registry"
@@ -103,7 +104,14 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		return err
 	}
 
-	return p.Registry.PushBundle(bun, tag, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, tag, opts.InsecureRegistry)
+	if err != nil {
+		return err
+	}
+
+	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
+	// If so, replace it, as it is most likely out-of-date per this publish
+	return p.refreshCachedBundle(bun, tag, rm)
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -185,7 +193,14 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		fmt.Fprintf(p.Err, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
 	}
 
-	return p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
+	if err != nil {
+		return err
+	}
+
+	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
+	// If so, replace it, as it is most likely out-of-date per this publish
+	return p.refreshCachedBundle(bun, opts.Tag, rm)
 }
 
 // extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle
@@ -327,4 +342,15 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 		return "", fmt.Errorf("had an issue with the docker image")
 	}
 	return fmt.Sprintf("%s@%s", named.Name(), digest), nil
+}
+
+// refreshCachedBundle will store a bundle anew, if a bundle with the same tag is found in the cache
+func (p *Porter) refreshCachedBundle(bun *bundle.Bundle, tag string, rm relocation.ImageRelocationMap) error {
+	if _, _, found, _ := p.Cache.FindBundle(tag); found {
+		_, _, err := p.Cache.StoreBundle(tag, bun, rm)
+		if err != nil {
+			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", tag, err)
+		}
+	}
+	return nil
 }
