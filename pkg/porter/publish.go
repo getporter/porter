@@ -147,6 +147,8 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		return err
 	}
 
+	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Tag)
+
 	// Use the ggcr client to read the extracted OCI Layout
 	client := ggcr.NewRegistryClient()
 	layout, err := client.ReadLayout(filepath.Join(extractedDir, "artifacts/layout"))
@@ -187,10 +189,6 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if p.Debug {
-		fmt.Fprintf(p.Err, "Publishing bundle %s with tag %s...\n", bun.Name, opts.Tag)
 	}
 
 	rm, err := p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
