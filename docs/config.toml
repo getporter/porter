@@ -130,6 +130,12 @@ defaultContentLanguage = "en"
     weight = 151
     parent = "cli"
   [[menu.main]]
+    name = "porter copy"
+    url = "/cli#porter-copy"
+    identifier = "cli-copy"
+    weight = 160
+    parent = "cli"
+  [[menu.main]]
     name = "porter schema"
     url = "/cli#porter-schema"
     identifier = "cli-schema"
