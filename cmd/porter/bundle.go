@@ -103,6 +103,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle and all dependencies")
 	return cmd
 }
 
@@ -152,6 +154,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle and all dependencies")
 
 	return cmd
 }
@@ -201,6 +205,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle and all dependencies")
 
 	return cmd
 }
@@ -252,6 +258,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
 		"Don't require TLS for the registry")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle and all dependencies")
 
 	return cmd
 }

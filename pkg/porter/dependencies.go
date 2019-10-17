@@ -155,6 +155,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	pullOpts := BundlePullOptions{
 		Tag:              dep.Tag,
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
+		Force:            e.parentOpts.Force,
 	}
 	dep.CNABFile, dep.RelocationMapping, err = e.Resolver.Resolve(pullOpts)
 	if err != nil {
