@@ -237,15 +237,20 @@ defaultContentLanguage = "en"
     parent = "authoring-bundles"
 
 [[menu.main]]
-    name = "Distributing Bundles"
+  name = "Distributing Bundles"
+  identifier = "distributing-bundles"
+  weight = 310
+  [[menu.main]]
+    name = "Overview"
     url = "/distributing-bundles"
-    identifier = "distributing-bundles"
-    weight = 310
+    identifier = "distributing-bundles-overview"
+    weight = 311
+    parent = "distributing-bundles"
   [[menu.main]]
     name = "Copying Bundles"
     identifier = "copying-bundles"
     url = "/copying-bundles"
-    weight = 311
+    weight = 312
     parent = "distributing-bundles"
 
 [[menu.main]]
