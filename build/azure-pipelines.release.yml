@@ -105,7 +105,7 @@ stages:
         export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
         make publish
       workingDirectory: '$(MODULE_PATH)'
-      condition: and(and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')),eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
       displayName: 'Publish Porter Binaries'
 
   - job: publish_example_bundles
@@ -128,5 +128,5 @@ stages:
 
     - script: make publish-bundle
       workingDirectory: '$(MODULE_PATH)'
-      condition: and(and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')),eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
       displayName: 'Publish Example Bundles'
