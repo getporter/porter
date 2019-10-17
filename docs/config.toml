@@ -130,6 +130,12 @@ defaultContentLanguage = "en"
     weight = 151
     parent = "cli"
   [[menu.main]]
+    name = "porter copy"
+    url = "/cli#porter-copy"
+    identifier = "cli-copy"
+    weight = 160
+    parent = "cli"
+  [[menu.main]]
     name = "porter schema"
     url = "/cli#porter-schema"
     identifier = "cli-schema"
@@ -231,10 +237,28 @@ defaultContentLanguage = "en"
     parent = "authoring-bundles"
 
 [[menu.main]]
+  name = "Distributing Bundles"
+  identifier = "distributing-bundles"
+  weight = 310
+  [[menu.main]]
+    name = "Overview"
+    url = "/distributing-bundles"
+    identifier = "distributing-bundles-overview"
+    weight = 311
+    parent = "distributing-bundles"
+  [[menu.main]]
+    name = "Copying Bundles"
+    identifier = "copying-bundles"
+    url = "/copying-bundles"
+    weight = 312
+    parent = "distributing-bundles"
+
+[[menu.main]]
   name = "Examining Bundles"
   identifier = "examining-bundles"
   url = "/examining-bundles"
   weight = 325
+
 
 [[menu.main]]
   name = "Developing Mixins"

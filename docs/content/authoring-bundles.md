@@ -260,7 +260,14 @@ images:
 ```
 
 This information is used to generate the corresponding section of the `bundle.json` and can be
-used to in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`.
+used to in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
+the `repository` and `digest` attributes. For example:
+
+```
+image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
+```
+
+At runtime, these will be updated appropriately if a bundle has been [copied](/copying-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
 
 ## Generated Files
 
