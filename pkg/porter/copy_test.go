@@ -148,3 +148,40 @@ func TestValidateCopyArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestCopyGenerateBundleRef(t *testing.T) {
+	tests := []struct {
+		Name     string
+		Opts     CopyOpts
+		Expected string
+	}{
+		{
+			"tag source and dest repo",
+			CopyOpts{
+				Source:      "deislabs/mybuns:v0.1.0",
+				Destination: "blah.acr.io",
+			},
+			"blah.acr.io/mybuns:v0.1.0",
+		},
+		{
+			"tag source and dest tag",
+			CopyOpts{
+				Source:      "deislabs/mybuns:v0.1.0",
+				Destination: "blah.acr.io/blah:v0.10",
+			},
+			"blah.acr.io/blah:v0.10",
+		},
+		{
+			"valid source digest and tagged destination",
+			CopyOpts{
+				Source:      "deislabs/mybuns@sha256:bb9b47bb07e8c2f62ea1f617351739b35264f8a6121d79e989cd4e81743afe0a",
+				Destination: "blah.acr.io:v0.1.0",
+			},
+			"blah.acr.io:v0.1.0",
+		},
+	}
+	for _, test := range tests {
+		newRef := generateNewBundleRef(test.Opts.Source, test.Opts.Destination)
+		assert.Equal(t, test.Expected, newRef, fmt.Sprintf("%s: expected %s got %s", test.Name, test.Expected, newRef))
+	}
+}
