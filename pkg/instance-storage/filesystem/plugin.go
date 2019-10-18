@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-const PluginKey = claimstore.PluginKey + ".filesystem"
+const PluginKey = claimstore.PluginKey + ".porter.filesystem"
 
 var _ crud.Store = &Plugin{}
 

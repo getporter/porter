@@ -1,14 +1,15 @@
 package porter
 
 import (
-	"errors"
+	"strings"
 
-	"github.com/deislabs/porter/pkg/instance-storage/claimstore"
+	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/instance-storage/filesystem"
-	"github.com/hashicorp/go-plugin"
-
 	"github.com/deislabs/porter/pkg/plugins"
 	"github.com/deislabs/porter/pkg/printer"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+	"github.com/pkg/errors"
 )
 
 // PrintPluginsOptions represent options for the PrintPlugins function
@@ -21,26 +22,54 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 }
 
 type RunInternalPluginOpts struct {
-	Name string
+	Key               string
+	selectedPlugin    plugin.Plugin
+	selectedInterface string
 }
 
-func (o *RunInternalPluginOpts) Validate(args []string) error {
+func (o *RunInternalPluginOpts) Validate(args []string, cfg *config.Config) error {
 	if len(args) == 0 {
-		return errors.New("plugin name argument is required")
+		return errors.New("The positional argument KEY was not specified")
 	}
 	if len(args) > 1 {
-		return errors.New("multiple plugin name arguments were specified")
+		return errors.New("Multiple positional arguments were specified but only one, KEY is expected")
 	}
 
-	o.Name = args[0]
+	o.Key = args[0]
+
+	availableImplementations := getInternalPlugins(cfg)
+	selectedPlugin, ok := availableImplementations[o.Key]
+	if !ok {
+		return errors.Errorf("invalid plugin key specified: %q", o.Key)
+	}
+	o.selectedPlugin = selectedPlugin()
+
+	parts := strings.Split(o.Key, ".")
+	o.selectedInterface = parts[0]
 
 	return nil
 }
 
-func (p *Porter) RunInternalPlugins(opts RunInternalPluginOpts) {
-	// TODO: use opts to pick which plugin implementation to us, for now just use the default implementations
-	internalPlugins := map[string]plugin.Plugin{
-		claimstore.PluginKey: filesystem.NewPlugin(*p.Config),
+func (p *Porter) RunInternalPlugins(args []string) {
+	// We are not following the normal CLI pattern here because
+	// if we write to stdout without the hclog, it will cause the plugin framework to blow up
+	var opts RunInternalPluginOpts
+	err := opts.Validate(args, p.Config)
+	if err != nil {
+		logger := hclog.New(&hclog.LoggerOptions{
+			Name:   "porter",
+			Output: p.Err,
+			Level:  hclog.Error,
+		})
+		logger.Error(err.Error())
+		return
 	}
-	plugins.ServeMany(internalPlugins)
+
+	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
+}
+
+func getInternalPlugins(cfg *config.Config) map[string]func() plugin.Plugin {
+	return map[string]func() plugin.Plugin{
+		filesystem.PluginKey: func() plugin.Plugin { return filesystem.NewPlugin(*cfg) },
+	}
 }

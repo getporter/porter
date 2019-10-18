@@ -1,6 +1,7 @@
 package instancestorageprovider
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -53,21 +54,23 @@ func (d *PluginDelegator) connect() (crud.Store, func(), error) {
 	var pluginCommand *exec.Cmd
 	if isInternal {
 		pluginImpl := parts[0]
+		pluginKey := fmt.Sprintf("%s.porter.%s", claimstore.PluginKey, pluginImpl)
 		porterPath, err := d.GetPorterPath()
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "could not determine the path to the porter client")
 		}
 
-		pluginCommand = d.NewCommand(porterPath, "plugin", "run", pluginImpl)
+		pluginCommand = d.NewCommand(porterPath, "plugin", "run", pluginKey)
 	} else {
 		pluginBinary := parts[0]
 		pluginImpl := parts[1]
+		pluginKey := fmt.Sprintf("%s.%s.%s", claimstore.PluginKey, pluginBinary, pluginImpl)
 		pluginPath, err := d.GetPluginPath(pluginBinary)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		pluginCommand = d.NewCommand(pluginPath, "run", pluginImpl)
+		pluginCommand = d.NewCommand(pluginPath, "run", pluginKey)
 	}
 
 	// Create an hclog.Logger
