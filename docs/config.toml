@@ -136,6 +136,12 @@ defaultContentLanguage = "en"
     weight = 160
     parent = "cli"
   [[menu.main]]
+    name = "porter archive"
+    url = "/cli#porter-archive"
+    identifier = "cli-archive"
+    weight = 161
+    parent = "cli"
+  [[menu.main]]
     name = "porter schema"
     url = "/cli#porter-schema"
     identifier = "cli-schema"
@@ -251,6 +257,12 @@ defaultContentLanguage = "en"
     identifier = "copying-bundles"
     url = "/copying-bundles"
     weight = 312
+    parent = "distributing-bundles"
+  [[menu.main]]
+    name = "Archiving Bundles"
+    identifier = "archiving-bundles"
+    url = "/archiving-bundles"
+    weight = 313
     parent = "distributing-bundles"
 
 [[menu.main]]
