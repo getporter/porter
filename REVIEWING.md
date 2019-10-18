@@ -97,7 +97,10 @@ here is the process:
     * Bump the patch segment if there are bug fixes only.
     * Bump the build segment (version-prerelease.BUILD) if you only
       fixed something in the build, but the final binaries are the same.
-1. Ensure that the master CI build is passing, then make the tag and push it.
+1. First, ensure that the master CI build has already passed for 
+    the [commit that you want to tag][commits], and has published the canary binaries. 
+    
+    Then create the tag and push it:
 
     ```
     git checkout master
@@ -132,3 +135,4 @@ here is the process:
 
 [maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
 [admins]: https://github.com/orgs/deislabs/teams/porter-admins
+[commits]: https://github.com/deislabs/porter/commits/master
