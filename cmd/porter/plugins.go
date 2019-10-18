@@ -44,16 +44,11 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
-	var opts porter.RunInternalPluginOpts
-
 	cmd := &cobra.Command{
-		Use:   "run",
+		Use:   "run KEY",
 		Short: "Serve internal plugins",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
-		},
 		Run: func(cmd *cobra.Command, args []string) {
-			p.RunInternalPlugins(opts)
+			p.RunInternalPlugins(args)
 		},
 		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command
 	}
