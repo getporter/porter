@@ -268,7 +268,6 @@ defaultContentLanguage = "en"
 [[menu.main]]
   name = "Examining Bundles"
   identifier = "examining-bundles"
-  url = "/examining-bundles"
   weight = 325
   [[menu.main]]
     name = "Overview"
@@ -278,8 +277,8 @@ defaultContentLanguage = "en"
     parent = "examining-bundles"
   [[menu.main]]
     name = "Inspecting Bundle Images"
-    url = "/inspect-bundle
-    identifier = "inspect-bundle"
+    url = "/inspect-bundle"
+    identifier = "inspect-bundles"
     weight = 327
     parent = "examining-bundles"
 
