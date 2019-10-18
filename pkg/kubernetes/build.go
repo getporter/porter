@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const kubeVersion = "v1.13.0"
+const kubeVersion = "v1.15.5"
 const dockerFileContents = `RUN apt-get update && \
 apt-get install -y apt-transport-https curl && \
 curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/%s/bin/linux/amd64/kubectl && \
