@@ -10,14 +10,22 @@ import (
 )
 
 type InspectableBundle struct {
-	*PrintableBundle
-	InvocationImages []bundle.InvocationImage `json:"invocationImages" yaml:"invocationImages"`
-	Images           []PrintableImage         `json:"images,omitempty" yaml:"images,omitempty"`
+	Name             string                     `json:"name" yaml:"name"`
+	Description      string                     `json:"description,omitempty" yaml:"description,omitempty"`
+	Version          string                     `json:"version" yaml:"version"`
+	InvocationImages []PrintableInvocationImage `json:"invocationImages" yaml:"invocationImages"`
+	Images           []PrintableImage           `json:"images,omitempty" yaml:"images,omitempty"`
+}
+
+type PrintableInvocationImage struct {
+	bundle.InvocationImage
+	Original string `json:"originalImage" yaml:"originalImage"`
 }
 
 type PrintableImage struct {
 	Name string `json:"name" yaml:"name"`
 	bundle.Image
+	Original string `json:"originalImage" yaml:"originalImage"`
 }
 
 func (p *Porter) Inspect(o ExplainOpts) error {
@@ -38,8 +46,8 @@ func (p *Porter) Inspect(o ExplainOpts) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to load bundle")
 	}
+	var reloMap map[string]string
 	if o.RelocationMapping != "" {
-		var reloMap map[string]string
 		reloBytes, err := p.FileSystem.ReadFile(o.RelocationMapping)
 		if err != nil {
 			return errors.Wrap(err, "unable to read provided relocation mapping")
@@ -48,21 +56,53 @@ func (p *Porter) Inspect(o ExplainOpts) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to load provided relocation mapping")
 		}
-		handleInspectRelocate(bundle, reloMap)
 	}
 
-	pb, err := generatePrintable(bundle)
+	ib, err := generateInspectableBundle(bundle, reloMap)
 	if err != nil {
-		return errors.Wrap(err, "unable to print bundle")
-	}
-
-	printableImages := generateInspectImages(bundle)
-	ib := &InspectableBundle{
-		PrintableBundle:  pb,
-		InvocationImages: bundle.InvocationImages,
-		Images:           printableImages,
+		return errors.Wrap(err, "unable to inspect bundle")
 	}
 	return p.printBundleInspect(o, ib)
+}
+
+func generateInspectableBundle(bun *bundle.Bundle, reloMap map[string]string) (*InspectableBundle, error) {
+	if bun == nil {
+		return nil, fmt.Errorf("expected a bundle")
+	}
+	ib := &InspectableBundle{
+		Name:        bun.Name,
+		Description: bun.Description,
+		Version:     bun.Version,
+	}
+	ib.InvocationImages, ib.Images = handleInspectRelocate(bun, reloMap)
+	return ib, nil
+}
+
+func handleInspectRelocate(bun *bundle.Bundle, reloMap map[string]string) ([]PrintableInvocationImage, []PrintableImage) {
+	invoImages := []PrintableInvocationImage{}
+	for _, invoImage := range bun.InvocationImages {
+		pii := PrintableInvocationImage{
+			InvocationImage: invoImage,
+		}
+		if mappedInvo, ok := reloMap[invoImage.Image]; ok {
+			pii.Original = pii.Image
+			pii.Image = mappedInvo
+		}
+		invoImages = append(invoImages, pii)
+	}
+	images := []PrintableImage{}
+	for alias, image := range bun.Images {
+		pi := PrintableImage{
+			Name:  alias,
+			Image: image,
+		}
+		if mappedImg, ok := reloMap[image.Image]; ok {
+			pi.Original = pi.Image.Image
+			pi.Image.Image = mappedImg
+		}
+		images = append(images, pi)
+	}
+	return invoImages, images
 }
 
 func generateInspectImages(bun *bundle.Bundle) []PrintableImage {
@@ -91,28 +131,14 @@ func (p *Porter) printBundleInspect(o ExplainOpts, ib *InspectableBundle) error 
 }
 
 func (p *Porter) printBundleInspectTable(bun *InspectableBundle) error {
-	err := p.printBundleExplainTable(bun.PrintableBundle)
-	if err != nil {
-		return errors.Wrap(err, "unable to inspect bundle")
-	}
+	fmt.Fprintf(p.Out, "Name: %s\n", bun.Name)
+	fmt.Fprintf(p.Out, "Description: %s\n", bun.Description)
+	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
+	fmt.Fprintln(p.Out, "")
+
 	p.printInvocationImageInspectBlock(bun)
 	p.printImagesInspectBlock(bun)
 	return nil
-}
-
-func handleInspectRelocate(bun *bundle.Bundle, reloMap map[string]string) {
-	for idx, invoImage := range bun.InvocationImages {
-		if mappedInvo, ok := reloMap[invoImage.Image]; ok {
-			invoImage.Image = mappedInvo
-		}
-		bun.InvocationImages[idx] = invoImage
-	}
-	for alias, image := range bun.Images {
-		if mappedImg, ok := reloMap[image.Image]; ok {
-			image.Image = mappedImg
-		}
-		bun.Images[alias] = image
-	}
 }
 
 func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error {
@@ -128,13 +154,13 @@ func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error 
 func (p *Porter) printInvocationImageInspectTable(bun *InspectableBundle) error {
 	printInvocationImageRow :=
 		func(v interface{}) []interface{} {
-			ii, ok := v.(bundle.InvocationImage)
+			ii, ok := v.(PrintableInvocationImage)
 			if !ok {
 				return nil
 			}
-			return []interface{}{ii.Image, ii.ImageType, ii.Digest}
+			return []interface{}{ii.Image, ii.ImageType, ii.Digest, ii.Original}
 		}
-	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Type", "Digest")
+	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Type", "Digest", "Original Image")
 }
 
 func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
@@ -158,7 +184,7 @@ func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []interface{}{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest}
+			return []interface{}{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
-	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest")
+	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
 }

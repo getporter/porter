@@ -11,7 +11,11 @@ func buildBundleInspectCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "inspect",
 		Short: "Inspect a bundle",
-		Long:  "Inspect a bundle by printing the parameters, credentials, outputs, actions and images.",
+		Long: `Inspect a bundle by printing the invocation images and any related images images.
+
+If you would like more information about the bundle, the porter explain command will provide additional information,
+like parameters, credentials, outputs and custom actions available.
+`,
 		Example: `  porter bundle inspect
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json

@@ -9,7 +9,11 @@ Inspect a bundle
 
 ### Synopsis
 
-Inspect a bundle by printing the parameters, credentials, outputs, actions and images.
+Inspect a bundle by printing the invocation images and any related images images.
+
+If you would like more information about the bundle, the porter explain command will provide additional information,
+like parameters, credentials, outputs and custom actions available.
+
 
 ```
 porter bundles inspect [flags]
