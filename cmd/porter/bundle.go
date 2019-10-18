@@ -298,10 +298,9 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
-		Hidden: true,
-		Use:    "archive",
-		Short:  "Archive a bundle",
-		Long:   "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
+		Use:   "archive",
+		Short: "Archive a bundle",
+		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
 		Example: `  porter bundle archive [FILENAME]
   porter bundle archive --file another/porter.yaml [FILENAME]
   porter bundle archive --cnab-file some/bundle.json [FILENAME]

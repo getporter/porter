@@ -75,3 +75,11 @@ Install Hello World App
 ```
 
 The later example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `deislabs/porter-kube-bundle:1.0` can be updated with subsequent `porter publish` commands. However, the digested version `deislabs/porter-kube-bundle@sha256:57c34a53e84607562e396280563186759139454d1704c727180aac1819b75a4f` will not change. If you'd like to publish different version of the bundle, you will need to update both the `invocationImage` and `tag` attributes and run `porter build` before running `porter publish` again.
+
+## Publish Archived Bundles
+
+The `porter publish` command can also be used to publish an [archived](/archiving-bundles) bundle to a registry. To publish an archived bundle, the publish command is used with the `-a <filename>` and `--tag <repo/name:tag>` flags. For example, to publish a bundle in the `mybunz1.1.tgz` file to `deislabs/megabundle:1.1.0`, you would run the following command:
+
+```
+porter publish -a mybunz1.1.tgz --tag deislabs/megabundle:1.1.0
+```
