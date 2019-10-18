@@ -21,6 +21,7 @@ func buildAliasCommands(p *porter.Porter) []*cobra.Command {
 		buildArchiveAlias(p),
 		buildExplainAlias(p),
 		buildCopyAlias(p),
+		buildInspectAlias(p),
 	}
 }
 
@@ -126,6 +127,15 @@ func buildExplainAlias(p *porter.Porter) *cobra.Command {
 func buildCopyAlias(p *porter.Porter) *cobra.Command {
 	cmd := buildBundleCopyCommand(p)
 	cmd.Example = strings.Replace(cmd.Example, "porter bundle copy", "porter copy", -1)
+	cmd.Annotations = map[string]string{
+		"group": "alias",
+	}
+	return cmd
+}
+
+func buildInspectAlias(p *porter.Porter) *cobra.Command {
+	cmd := buildBundleInspectCommand(p)
+	cmd.Example = strings.Replace(cmd.Example, "porter bundle inspect", "porter inspect", -1)
 	cmd.Annotations = map[string]string{
 		"group": "alias",
 	}
