@@ -9,7 +9,7 @@ Explain a bundle
 
 ### Synopsis
 
-Explain how to use a bundle by printing the parameters, credentials, outputs, actions and images.
+Explain how to use a bundle by printing the parameters, credentials, outputs, actions.
 
 ```
 porter bundles explain [flags]

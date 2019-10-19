@@ -39,3 +39,4 @@ The `porter explain` command will show what credentials and parameters are requi
 
 `porter explain` can be used with a published bundle, as show above, or with a local bundle. The command even works with bundles that were not built with Porter, through the use of the `--cnab-file` flag. For all the options, run the command `porter explain --help`.
 
+If you would like to see the invocation images and/or the images the bundle will use, see the [inspect](/inspect-bundle) command.

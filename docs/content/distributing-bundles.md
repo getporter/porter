@@ -83,3 +83,40 @@ The `porter publish` command can also be used to publish an [archived](/archivin
 ```
 porter publish -a mybunz1.1.tgz --tag deislabs/megabundle:1.1.0
 ```
+
+## Image References After Publishing
+
+When a bundle is published, the images that it will use are copied into the location of the published bundle. This simplifies access control and management of artifacts in the repository. Consider the following `porter.yaml` snippet:
+
+```
+name: spring-music
+version: 0.5.0
+description: "Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL"
+invocationImage: jeremyrickard/porter-do:v0.5.0
+tag: jeremyrickard/porter-do-bundle:v0.5.0
+
+images:
+  spring-music:
+      description: "Spring Music Example"
+      imageType: "docker"
+      repository: "jeremyrickard/spring-music"
+      digest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
+```
+
+When this bundle is published, both the invocation image and the `spring-music` will be copied and stored in the context of the bundle. To see this in action, you can use the `porter inspect` command to see what images will actually be used for a given bundle.
+
+```
+Name: spring-music
+Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
+Version: 0.5.0
+
+Invocation Images:
+Image                                                                                                    Type     Digest                                                                    Original Image
+jeremyrickard/porter-do-bundle@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be   docker   sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be   jeremyrickard/porter-do:v0.5.0
+
+Images:
+Name           Type     Image                                                                                                    Digest                                                                    Original Image
+spring-music   docker   jeremyrickard/porter-do-bundle@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f   sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f   jeremyrickard/spring-music@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f
+```
+
+Here, we can see that both images are stored as `jeremyrickard/porter-do-bundle@sha256:SOMEHASH`. The hash of each matches the digest of the original image. In the case of the invocation image, the image originally was available at `jeremyrickard/porter-do:v0.5.0` with a digest of `sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be`. After the bundle was published, it is now stored at `jeremyrickard/porter-do-bundle@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be`. Similarly, the `spring-music` image was originally referenced with `jeremyrickard/spring-music@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f`, but after publish the reference becomes `jeremyrickard/porter-do-bundle@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f`.

@@ -135,7 +135,7 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 func (p *Porter) Explain(o ExplainOpts) error {
 	err := p.prepullBundleByTag(&o.BundleLifecycleOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking credentials generate")
+		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
 	}
 
 	err = p.applyDefaultOptions(&o.sharedOptions)

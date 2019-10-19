@@ -21,6 +21,7 @@ porter archive [flags]
   porter archive [FILENAME]
   porter archive --file another/porter.yaml [FILENAME]
   porter archive --cnab-file some/bundle.json [FILENAME]
+  porter archive --tag repo/bundle:tag [FILENAME]
 		  
 ```
 
@@ -30,6 +31,7 @@ porter archive [flags]
       --cnab-file string   Path to the CNAB bundle.json file.
   -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help               help for archive
+  -t, --tag string         Use a bundle in an OCI registry specified by the given tag
 ```
 
 ### Options inherited from parent commands
