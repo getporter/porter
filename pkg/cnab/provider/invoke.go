@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cnabaction "github.com/deislabs/cnab-go/action"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -56,13 +57,18 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Name, paramKeys, credKeys)
 	}
 
+	var result *multierror.Error
 	// Run the action and ALWAYS write out a claim, even if the action fails
-	runErr := i.Run(&c, creds, d.ApplyConfig(args)...)
+	err = i.Run(&c, creds, d.ApplyConfig(args)...)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
+	}
 
 	// ALWAYS write out a claim, even if the action fails
-	saveErr := d.instanceStorage.Store(c)
-	if runErr != nil {
-		return errors.Wrap(runErr, "failed to invoke the bundle")
+	err = d.instanceStorage.Store(c)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
 	}
-	return errors.Wrap(saveErr, "failed to record the updated claim for the bundle")
+
+	return result.ErrorOrNil()
 }
