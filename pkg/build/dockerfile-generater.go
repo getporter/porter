@@ -67,8 +67,10 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	if mixinsTokenIndex == -1 {
 		lines = append(lines, mixinLines...)
 	} else {
-		postTokenLines := lines[mixinsTokenIndex+1:]
-		lines = append(append(lines[:mixinsTokenIndex], mixinLines...), postTokenLines...)
+		pretoken := make([]string, mixinsTokenIndex)
+		copy(pretoken, lines)
+		posttoken := lines[mixinsTokenIndex+1:]
+		lines = append(pretoken, append(mixinLines, posttoken...)...)
 	}
 
 	// The template dockerfile copies everything by default, but if the user

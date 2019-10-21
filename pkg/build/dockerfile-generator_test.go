@@ -254,13 +254,52 @@ func TestPorter_replacePorterMixinTokenWithBuildInstructions(t *testing.T) {
 	// Use a custom dockerfile template
 	m.Dockerfile = "Dockerfile.template"
 	customFrom := `FROM ubuntu:light
-ARG BUNDLE_DIR
 # PORTER_MIXINS
+ARG BUNDLE_DIR
 COPY mybin /cnab/app/
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	m.Mixins = []manifest.MixinDeclaration{}
+	mp := &mixin.TestMixinProvider{}
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+
+	gotlines, err := g.buildDockerfile()
+	require.NoError(t, err)
+
+	wantLines := []string{
+		"FROM ubuntu:light",
+		"# exec mixin has no buildtime dependencies",
+		"",
+		"ARG BUNDLE_DIR",
+		"COPY mybin /cnab/app/",
+		"COPY .cnab/ /cnab/",
+		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
+		"WORKDIR $BUNDLE_DIR",
+		"CMD [\"/cnab/app/run\"]",
+	}
+	// testcase did not specify build instructions
+	// however, the # PORTER_MIXINS token should be removed
+	assert.Equal(t, wantLines, gotlines)
+}
+
+func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	c.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	// Use a custom dockerfile template
+	m.Dockerfile = "Dockerfile.template"
+	customFrom := `FROM ubuntu:light
+ARG BUNDLE_DIR
+COPY mybin /cnab/app/
+`
+	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
+
 	mp := &mixin.TestMixinProvider{}
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
@@ -271,9 +310,12 @@ COPY mybin /cnab/app/
 		"FROM ubuntu:light",
 		"ARG BUNDLE_DIR",
 		"COPY mybin /cnab/app/",
+		"# exec mixin has no buildtime dependencies",
+		"",
 		"COPY .cnab/ /cnab/",
 		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 		"WORKDIR $BUNDLE_DIR",
+
 		"CMD [\"/cnab/app/run\"]",
 	}
 	// testcase did not specify build instructions
