@@ -47,6 +47,24 @@
       ],
       "type": "object"
     },
+    "customAction": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A description of the custom action",
+          "type": "string"
+        },
+        "modifies": {
+          "description": "Specifies that the action will modify resources in any way.",
+          "type": "boolean"
+        },
+        "stateless": {
+          "description": "Specifies that the action does not act on a claim, and does not require credentials.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "dependency": {
       "additionalProperties": false,
       "properties": {
@@ -285,6 +303,12 @@
         "$ref": "#/definitions/credential"
       },
       "type": "array"
+    },
+    "customActions": {
+      "additionalProperties": {
+        "$ref": "#/definitions/customAction"
+      },
+      "type": "object"
     },
     "dependencies": {
       "additionalProperties": {
