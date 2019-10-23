@@ -67,9 +67,6 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 	}
 
 	err = d.instanceStorage.Delete(args.Claim)
-	if err != nil {
-		return errors.Wrap(err, "failed to remove the record of the bundle")
-	}
 
-	return nil
+	return errors.Wrap(err, "failed to remove the record of the bundle")
 }

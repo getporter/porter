@@ -5,8 +5,10 @@ import (
 
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/manifest"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+
+	"github.com/deislabs/porter/pkg/manifest"
 )
 
 func (d *Runtime) Install(args ActionArguments) error {
@@ -59,13 +61,18 @@ func (d *Runtime) Install(args ActionArguments) error {
 		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
 	}
 
+	var result *multierror.Error
 	// Install and capture error
-	runErr := i.Run(c, creds, d.ApplyConfig(args)...)
+	err = i.Run(c, creds, d.ApplyConfig(args)...)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrap(err, "failed to install the bundle"))
+	}
 
 	// ALWAYS write out a claim, even if the installation fails
-	saveErr := d.instanceStorage.Store(*c)
-	if runErr != nil {
-		return errors.Wrap(runErr, "failed to install the bundle")
+	err = d.instanceStorage.Store(*c)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrap(err, "failed to record the installation for the bundle"))
 	}
-	return errors.Wrap(saveErr, "failed to record the installation for the bundle")
+
+	return result.ErrorOrNil()
 }
