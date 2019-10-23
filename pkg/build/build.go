@@ -19,4 +19,7 @@ var (
 
 	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
 	BUNDLE_DIR = "/cnab/app"
+
+	// INJECT_PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in Dockerfile.
+	INJECT_PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
 )
