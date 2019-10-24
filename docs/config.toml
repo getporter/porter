@@ -224,22 +224,28 @@ defaultContentLanguage = "en"
     weight = 301
     parent = "authoring-bundles"
   [[menu.main]]
+    name = "Custom Dockerfile"
+    url = "/custom-dockerfile/"
+    identifier = "custom-dockerfile"
+    weight = 302
+    parent = "authoring-bundles"
+  [[menu.main]]
     name = "Using Mixins"
     url = "/using-mixins"
     identifier = "using-mixins"
-    weight = 302
+    weight = 303
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Dependencies"
     url = "/dependencies"
     identifier = "dependencies"
-    weight = 303
+    weight = 304
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Using Parameters, Credentials and Outputs"
     url = "/wiring"
     identifier = "wiring"
-    weight = 303
+    weight = 305
     parent = "authoring-bundles"
 
 [[menu.main]]
