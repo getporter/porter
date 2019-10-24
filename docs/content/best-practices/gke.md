@@ -31,7 +31,7 @@ See the [GKE example][example] for a full working example bundle.
     recommended over using a parameter. Using parameters to define environment
     variables is a hack provided only for the purpose of this example.
 
-    * Add the following line to your **Dockerfile.tmpl**:
+    * Add the following line to your [Custom Dockerfile](/custom-dockerfile):
 
         ```
         ENV GOOGLE_APPLICATION_CREDENTIALS=/root/google-service-account.json
