@@ -5,10 +5,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/context"
+	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -93,6 +95,13 @@ func (m *Manifest) Validate() error {
 
 	for _, parameter := range m.Parameters {
 		err = parameter.Validate()
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
+
+	for _, image := range m.ImageMap {
+		err = image.Validate()
 		if err != nil {
 			result = multierror.Append(result, err)
 		}
@@ -264,6 +273,19 @@ type MappedImage struct {
 	MediaType   string            `yaml:"mediaType,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
 	Tag         string            `yaml:"tag,omitempty"`
+}
+
+func (mi *MappedImage) Validate() error {
+	anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
+	if !anchoredDigestRegex.MatchString(mi.Digest) {
+		return reference.ErrDigestInvalidFormat
+	}
+
+	if _, err := reference.Parse(mi.Repository); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Dependency struct {

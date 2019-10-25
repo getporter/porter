@@ -22,8 +22,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil)
 
-	bun, err := a.ToBundle()
-	require.NoError(t, err)
+	bun := a.ToBundle()
 
 	assert.Equal(t, SchemaVersion, bun.SchemaVersion)
 	assert.Equal(t, "hello", bun.Name)
@@ -236,83 +235,34 @@ func TestManifestConverter_generateImages(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil)
 
-	t.Run("with invalid image digest format", func(t *testing.T) {
-		mappedImage := manifest.MappedImage{
-			Description: "un petite server",
-			Repository:  "deislabs/myserver",
-			ImageType:   "docker",
-			Digest:      "abc123",
-			Size:        12,
-			MediaType:   "download",
-			Labels: map[string]string{
-				"OS":           "linux",
-				"Architecture": "amd64",
-			},
-		}
-		a.Manifest.ImageMap = map[string]manifest.MappedImage{
-			"server": mappedImage,
-		}
+	mappedImage := manifest.MappedImage{
+		Description: "un petite server",
+		Repository:  "deislabs/myserver",
+		ImageType:   "docker",
+		Digest:      "abc123",
+		Size:        12,
+		MediaType:   "download",
+		Labels: map[string]string{
+			"OS":           "linux",
+			"Architecture": "amd64",
+		},
+	}
+	a.Manifest.ImageMap = map[string]manifest.MappedImage{
+		"server": mappedImage,
+	}
 
-		_, err := a.generateBundleImages()
-		// Require error due to invalid digest format
-		require.Error(t, err)
-	})
+	images := a.generateBundleImages()
 
-	t.Run("with valid image digest but invalid reference generated", func(t *testing.T) {
-		mappedImage := manifest.MappedImage{
-			Description: "un petite server",
-			Repository:  "deislabs//myserver//",
-			ImageType:   "docker",
-			Digest:      "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
-			Size:        12,
-			MediaType:   "download",
-			Labels: map[string]string{
-				"OS":           "linux",
-				"Architecture": "amd64",
-			},
-		}
-		a.Manifest.ImageMap = map[string]manifest.MappedImage{
-			"server": mappedImage,
-		}
-
-		_, err := a.generateBundleImages()
-		// Reference format invalid due to bad repository name
-		require.Error(t, err)
-	})
-
-	t.Run("with valid image digest and valid image reference", func(t *testing.T) {
-		mappedImage := manifest.MappedImage{
-			Description: "un petite server",
-			Repository:  "deislabs/myserver",
-			ImageType:   "docker",
-			Digest:      "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
-			Size:        12,
-			MediaType:   "download",
-			Labels: map[string]string{
-				"OS":           "linux",
-				"Architecture": "amd64",
-			},
-		}
-		a.Manifest.ImageMap = map[string]manifest.MappedImage{
-			"server": mappedImage,
-		}
-
-		images, err := a.generateBundleImages()
-		// Digest and generated reference formats are valid
-		require.NoError(t, err)
-
-		require.Len(t, images, 1)
-		img := images["server"]
-		assert.Equal(t, mappedImage.Description, img.Description)
-		assert.Equal(t, fmt.Sprintf("%s@%s", mappedImage.Repository, mappedImage.Digest), img.Image)
-		assert.Equal(t, mappedImage.ImageType, img.ImageType)
-		assert.Equal(t, mappedImage.Digest, img.Digest)
-		assert.Equal(t, mappedImage.Size, img.Size)
-		assert.Equal(t, mappedImage.MediaType, img.MediaType)
-		assert.Equal(t, mappedImage.Labels["OS"], img.Labels["OS"])
-		assert.Equal(t, mappedImage.Labels["Architecture"], img.Labels["Architecture"])
-
-	})
+	require.Len(t, images, 1)
+	img := images["server"]
+	assert.Equal(t, mappedImage.Description, img.Description)
+	assert.Equal(t, fmt.Sprintf("%s@%s", mappedImage.Repository, mappedImage.Digest), img.Image)
+	assert.Equal(t, mappedImage.ImageType, img.ImageType)
+	assert.Equal(t, mappedImage.Digest, img.Digest)
+	assert.Equal(t, mappedImage.Size, img.Size)
+	assert.Equal(t, mappedImage.MediaType, img.MediaType)
+	assert.Equal(t, mappedImage.Labels["OS"], img.Labels["OS"])
+	assert.Equal(t, mappedImage.Labels["Architecture"], img.Labels["Architecture"])
 }
 
 func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
@@ -335,8 +285,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 		"server": mappedImage,
 	}
 
-	images, err := a.generateBundleImages()
-	require.NoError(t, err)
+	images := a.generateBundleImages()
 	require.Len(t, images, 1)
 	img := images["server"]
 	assert.Nil(t, img.Labels)
@@ -553,8 +502,7 @@ func TestManifestConverter_RequiredExtensions(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil)
 
-	bun, err := a.ToBundle()
-	require.NoError(t, err)
+	bun := a.ToBundle()
 
 	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
 }

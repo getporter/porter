@@ -47,14 +47,11 @@ func (p *Porter) Build(opts BuildOptions) error {
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	imageDigests := map[string]string{invocationImage: digest}
 	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests)
-	bun, err := converter.ToBundle()
-	return p.writeBundle(bun, err)
+	bun := converter.ToBundle()
+	return p.writeBundle(bun)
 }
 
-func (p Porter) writeBundle(b *bundle.Bundle, e error) error {
-	if e != nil {
-		return e
-	}
+func (p Porter) writeBundle(b *bundle.Bundle) error {
 	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {
