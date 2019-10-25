@@ -276,9 +276,11 @@ type MappedImage struct {
 }
 
 func (mi *MappedImage) Validate() error {
-	anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
-	if !anchoredDigestRegex.MatchString(mi.Digest) {
-		return reference.ErrDigestInvalidFormat
+	if mi.Digest != "" {
+		anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
+		if !anchoredDigestRegex.MatchString(mi.Digest) {
+			return reference.ErrDigestInvalidFormat
+		}
 	}
 
 	if _, err := reference.Parse(mi.Repository); err != nil {

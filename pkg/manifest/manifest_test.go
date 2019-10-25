@@ -145,6 +145,16 @@ func TestValidateImageMap(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("with no image digest supplied and valid repository format", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "deislabs/myserver",
+		}
+
+		err := mi.Validate()
+		// No error should be returned
+		assert.NoError(t, err)
+	})
+
 	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
 		mi := MappedImage{
 			Repository: "deislabs//myserver//",
