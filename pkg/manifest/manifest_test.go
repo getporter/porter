@@ -132,3 +132,36 @@ func TestValidateParameterDefinition(t *testing.T) {
 	err = pd.Validate()
 	assert.NoError(t, err)
 }
+
+func TestValidateImageMap(t *testing.T) {
+	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "deislabs/myserver",
+			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+		}
+
+		err := mi.Validate()
+		// No error should be returned
+		assert.NoError(t, err)
+	})
+
+	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "deislabs//myserver//",
+			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+		}
+
+		err := mi.Validate()
+		assert.Error(t, err)
+	})
+
+	t.Run("with invalid image digest format", func(t *testing.T) {
+		mi := MappedImage{
+			Repository: "deislabs/myserver",
+			Digest:     "abc123",
+		}
+
+		err := mi.Validate()
+		assert.Error(t, err)
+	})
+}
