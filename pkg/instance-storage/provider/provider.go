@@ -1,9 +1,10 @@
 package instancestorageprovider
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"os/exec"
-	"strings"
 
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/utils/crud"
@@ -42,38 +43,27 @@ func NewPluginDelegator(c *config.Config) *PluginDelegator {
 }
 
 func (d *PluginDelegator) connect() (crud.Store, func(), error) {
-	pluginId := d.Config.Data.GetInstanceStoragePlugin()
-	parts := strings.Split(pluginId, ".")
-	isInternal := false
-	if len(parts) == 1 {
-		isInternal = true
-	} else if len(parts) > 2 {
-		return nil, nil, errors.New("invalid config value for instance-storage-plugin, can only have two parts PLUGIN_BINARY.IMPLEMENTATION_KEY")
-	}
+	pluginKey, config, err := d.selectInstanceStoragePlugin()
+	pluginKey.Interface = claimstore.PluginKey
 
 	var pluginCommand *exec.Cmd
-	if isInternal {
-		pluginImpl := parts[0]
-		pluginKey := fmt.Sprintf("%s.porter.%s", claimstore.PluginKey, pluginImpl)
+	if pluginKey.IsInternal {
 		porterPath, err := d.GetPorterPath()
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "could not determine the path to the porter client")
 		}
 
-		pluginCommand = d.NewCommand(porterPath, "plugin", "run", pluginKey)
+		pluginCommand = d.NewCommand(porterPath, "plugin", "run", pluginKey.String())
 	} else {
-		pluginBinary := parts[0]
-		pluginImpl := parts[1]
-		pluginKey := fmt.Sprintf("%s.%s.%s", claimstore.PluginKey, pluginBinary, pluginImpl)
-		pluginPath, err := d.GetPluginPath(pluginBinary)
+		pluginPath, err := d.GetPluginPath(pluginKey.Binary)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		pluginCommand = d.NewCommand(pluginPath, "run", pluginKey)
+		pluginCommand = d.NewCommand(pluginPath, "run", pluginKey.String())
 	}
+	pluginCommand.Stdin = config
 
-	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "porter",
 		Output: d.Err,
@@ -98,21 +88,62 @@ func (d *PluginDelegator) connect() (crud.Store, func(), error) {
 	rpcClient, err := client.Client()
 	if err != nil {
 		cleanup()
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", pluginId)
+		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", pluginKey)
 	}
 
 	// Request the plugin
 	raw, err := rpcClient.Dispense(claimstore.PluginKey)
 	if err != nil {
 		cleanup()
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", pluginId)
+		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", pluginKey)
 	}
 
 	store, ok := raw.(crud.Store)
 	if !ok {
 		cleanup()
-		return nil, nil, errors.Errorf("the interface exposed by the %s plugin was not instancestorage.ClaimStore", pluginId)
+		return nil, nil, errors.Errorf("the interface exposed by the %s plugin was not instancestorage.ClaimStore", pluginKey)
 	}
 
 	return store, cleanup, nil
+}
+
+// selectInstanceStoragePlugin picks the plugin to use and loads its configuration.
+func (d *PluginDelegator) selectInstanceStoragePlugin() (plugins.PluginKey, io.Reader, error) {
+	var pluginId string
+	var config interface{}
+
+	defaultStore := d.Config.Data.GetDefaultInstanceStore()
+	if defaultStore != "" {
+		is, err := d.Config.Data.GetInstanceStore(defaultStore)
+		if err != nil {
+			return plugins.PluginKey{}, nil, err
+		}
+		pluginId = is.PluginSubkey
+		config = is.Config
+	}
+
+	if pluginId == "" {
+		pluginId = d.Config.Data.GetInstanceStoragePlugin()
+	}
+
+	key, err := plugins.ParsePluginKey(pluginId)
+	if err != nil {
+		return plugins.PluginKey{}, nil, err
+	}
+
+	configInput, err := d.writePluginConfig(config)
+	return key, configInput, err
+}
+
+func (d *PluginDelegator) writePluginConfig(config interface{}) (io.Reader, error) {
+	if config == nil {
+		return &bytes.Buffer{}, nil
+	}
+
+	b, err := json.Marshal(config)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", config)
+	}
+
+	return bytes.NewBuffer(b), nil
 }
