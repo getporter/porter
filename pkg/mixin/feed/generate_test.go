@@ -120,6 +120,35 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	assert.Equal(t, wantXml, gotXml)
 }
 
+func TestGenerate_DuplicatesNotIncluded(t *testing.T) {
+	tc := context.NewTestContext(t)
+	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
+
+	tc.FileSystem.Create("bin/a/canary/mixin-darwin-amd64")
+	older, _ := time.Parse("2006-Jan-02", "2000-Jan-01")
+	tc.FileSystem.Chtimes("bin/a/canary/mixin-darwin-amd64", older, older)
+
+	tc.FileSystem.Create("bin/b/canary/mixin-darwin-amd64")
+	newer, _ := time.Parse("2006-Jan-02", "2000-Feb-01")
+	tc.FileSystem.Chtimes("bin/b/canary/mixin-darwin-amd64", newer, newer)
+
+	opts := GenerateOptions{
+		AtomFile:        "atom.xml",
+		SearchDirectory: "bin",
+		TemplateFile:    "template.xml",
+	}
+
+	f := NewMixinFeed(tc.Context)
+
+	err := f.Generate(opts)
+	require.NoError(t, err)
+
+	fileCount := len(f.Index["mixin"]["canary"].Files)
+	expectedCount := 1
+	
+	assert.Equal(t, fileCount, expectedCount)
+}
+
 func TestMixinEntries_Sort(t *testing.T) {
 	up2, _ := time.Parse("2006-Jan-02", "2013-Feb-02")
 	up3, _ := time.Parse("2006-Jan-02", "2013-Feb-03")
