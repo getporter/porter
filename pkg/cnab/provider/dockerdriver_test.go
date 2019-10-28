@@ -14,7 +14,7 @@ import (
 
 func TestNewDriver_Docker(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	instanceStorage := instancestorageprovider.NewPluggableInstanceStorage(c.Config)
 	d := NewRuntime(c.Config, instanceStorage)
 
 	driver, err := d.newDriver("docker", "myclaim", ActionArguments{})

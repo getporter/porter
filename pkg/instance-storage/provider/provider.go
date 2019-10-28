@@ -17,21 +17,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ instancestorage.Provider = &PluginDelegator{}
+var _ instancestorage.Provider = &PluggableInstanceStorage{}
 
 // A sad hack because claim.Store has a method called Store which prevents us from embedding it as a field
 type ClaimStore = claim.Store
 
 // TODO: Move this into pkg/plugins so that every provider backed by plugins can use it
-// PluginDelegator provides access to instance storage (claims) by instantiating plugins that
+// PluggableInstanceStorage provides access to instance storage (claims) by instantiating plugins that
 // implement claim (CRUD) storage.
-type PluginDelegator struct {
+type PluggableInstanceStorage struct {
 	*config.Config
 	ClaimStore
 }
 
-func NewPluginDelegator(c *config.Config) *PluginDelegator {
-	l := &PluginDelegator{
+func NewPluggableInstanceStorage(c *config.Config) *PluggableInstanceStorage {
+	l := &PluggableInstanceStorage{
 		Config: c,
 	}
 
@@ -42,7 +42,7 @@ func NewPluginDelegator(c *config.Config) *PluginDelegator {
 	return l
 }
 
-func (d *PluginDelegator) connect() (crud.Store, func(), error) {
+func (d *PluggableInstanceStorage) connect() (crud.Store, func(), error) {
 	pluginKey, config, err := d.selectInstanceStoragePlugin()
 	pluginKey.Interface = claimstore.PluginKey
 
@@ -108,7 +108,7 @@ func (d *PluginDelegator) connect() (crud.Store, func(), error) {
 }
 
 // selectInstanceStoragePlugin picks the plugin to use and loads its configuration.
-func (d *PluginDelegator) selectInstanceStoragePlugin() (plugins.PluginKey, io.Reader, error) {
+func (d *PluggableInstanceStorage) selectInstanceStoragePlugin() (plugins.PluginKey, io.Reader, error) {
 	var pluginId string
 	var config interface{}
 
@@ -135,7 +135,7 @@ func (d *PluginDelegator) selectInstanceStoragePlugin() (plugins.PluginKey, io.R
 	return key, configInput, err
 }
 
-func (d *PluginDelegator) writePluginConfig(config interface{}) (io.Reader, error) {
+func (d *PluggableInstanceStorage) writePluginConfig(config interface{}) (io.Reader, error) {
 	if config == nil {
 		return &bytes.Buffer{}, nil
 	}

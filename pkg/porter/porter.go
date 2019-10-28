@@ -34,7 +34,7 @@ type Porter struct {
 func New() *Porter {
 	c := config.New()
 	cache := cache.New(c)
-	instanceStorage := instancestorageprovider.NewPluginDelegator(c)
+	instanceStorage := instancestorageprovider.NewPluggableInstanceStorage(c)
 	return &Porter{
 		Config:          c,
 		Cache:           cache,

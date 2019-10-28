@@ -1,9 +1,10 @@
 package cnabprovider
 
 import (
-	"github.com/deislabs/cnab-go/bundle"
 	"io/ioutil"
 	"testing"
+
+	"github.com/deislabs/cnab-go/bundle"
 
 	"github.com/deislabs/cnab-go/driver"
 	"github.com/deislabs/porter/pkg/config"
@@ -17,7 +18,7 @@ func TestAddReloccation(t *testing.T) {
 	require.NoError(t, err)
 
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	instanceStorage := instancestorageprovider.NewPluggableInstanceStorage(c.Config)
 	d := NewRuntime(c.Config, instanceStorage)
 
 	args := ActionArguments{
