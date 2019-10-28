@@ -207,7 +207,6 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
-			fmt.Println(key)
 			paramName := parts[1]
 
 			// Make sure the parameter is defined in the bundle
@@ -220,7 +219,6 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 			}
 			dep.Parameters[paramName] = value
 			delete(e.parentOpts.combinedParameters, key)
-			fmt.Println("added dependency param ", paramName)
 		}
 	}
 
