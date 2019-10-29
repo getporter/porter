@@ -9,7 +9,6 @@ import (
 	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
 	"github.com/deislabs/porter/pkg/config"
 	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
-	instancestorageprovider "github.com/deislabs/porter/pkg/instance-storage/provider"
 	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/deislabs/porter/pkg/mixin"
 	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
@@ -34,7 +33,7 @@ type Porter struct {
 func New() *Porter {
 	c := config.New()
 	cache := cache.New(c)
-	instanceStorage := instancestorageprovider.NewPluggableInstanceStorage(c)
+	instanceStorage := instancestorage.NewPluggableInstanceStorage(c)
 	return &Porter{
 		Config:          c,
 		Cache:           cache,

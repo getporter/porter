@@ -6,10 +6,6 @@ import (
 
 // Provider interface for instance storage (claims).
 type Provider interface {
-	ClaimStore
-}
-
-type ClaimStore interface {
 	List() ([]string, error)
 	Store(claim.Claim) error
 	Read(name string) (claim.Claim, error)
