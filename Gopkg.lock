@@ -786,15 +786,16 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:446e0a4f73191887866ac789d1fd210e3408bb8eb8aeaf199d5f3a73ff63c108"
+  branch = "accept-stdin"
+  digest = "1:366d0ebbb08fe1b0e3b58b871d14b2a72b67fc87da712103c0340651a014cd23"
   name = "github.com/hashicorp/go-plugin"
   packages = [
     ".",
     "internal/plugin",
   ]
   pruneopts = "NUT"
-  revision = "9e3e1c37db188a1acb66561ee0ed4bf4d5e77554"
-  version = "v1.0.1"
+  revision = "8fe113736efa529bc9eb72a46ea2129e9c39011e"
+  source = "github.com/carolynvs/go-plugin"
 
 [[projects]]
   digest = "1:0b06ffe0c0764e413a6738e3f045d6bb14117359aef80a09f8c60fbff2ecad6b"
