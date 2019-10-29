@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Provider = &PluggableInstanceStorage{}
+var _ StorageProvider = &PluggableInstanceStorage{}
 
 // A sad hack because claim.Store has a method called Store which prevents us from embedding it as a field
 type ClaimStore = claim.Store

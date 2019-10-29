@@ -20,7 +20,7 @@ type Porter struct {
 	*config.Config
 
 	Cache           cache.BundleCache
-	InstanceStorage instancestorage.Provider
+	InstanceStorage instancestorage.StorageProvider
 	Registry        Registry
 	Templates       *templates.Templates
 	Builder         BuildProvider

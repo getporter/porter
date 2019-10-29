@@ -4,8 +4,8 @@ import (
 	"github.com/deislabs/cnab-go/claim"
 )
 
-// Provider interface for instance storage (claims).
-type Provider interface {
+// StorageProvider interface for instance storage (claims).
+type StorageProvider interface {
 	List() ([]string, error)
 	Store(claim.Claim) error
 	Read(name string) (claim.Claim, error)
