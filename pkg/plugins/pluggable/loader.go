@@ -6,15 +6,15 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/deislabs/porter/pkg/plugins"
 	"github.com/deislabs/cnab-go/utils/crud"
 	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/instance-storage/claimstore"
+	"github.com/deislabs/porter/pkg/plugins"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"
 )
 
+// PluginLoader handles finding, configuring and loading porter plugins.
 type PluginLoader struct {
 	*config.Config
 
@@ -28,9 +28,12 @@ func NewPluginLoader(c *config.Config) *PluginLoader {
 	}
 }
 
+// Load a plugin, returning the plugin's interface which the caller must then cast to
+// the typed interface, a cleanup function to stop the plugin when finished communicating with it,
+// and an error if the plugin could not be loaded.
 func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), error) {
 	err := l.selectPlugin(pluginType)
-	l.SelectedPluginKey.Interface = pluginType.Name
+	l.SelectedPluginKey.Interface = pluginType.Interface
 
 	var pluginCommand *exec.Cmd
 	if l.SelectedPluginKey.IsInternal {
@@ -57,7 +60,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	})
 
 	pluginTypes := map[string]plugin.Plugin{
-		claimstore.PluginKey: &claimstore.Plugin{},
+		pluginType.Interface: pluginType.Plugin,
 	}
 
 	client := plugin.NewClient(&plugin.ClientConfig{
@@ -78,7 +81,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense(pluginType.Name)
+	raw, err := rpcClient.Dispense(pluginType.Interface)
 	if err != nil {
 		cleanup()
 		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)

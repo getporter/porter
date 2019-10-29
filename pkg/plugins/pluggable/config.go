@@ -15,11 +15,11 @@ type Entry interface {
 // PluginTypeConfig defines a set of functions to access a type of plugin's data in
 // the porter config file.
 type PluginTypeConfig struct {
-	// Name of the plugin interface
-	Name string
+	// Name of the plugin type interface.
+	Interface string
 
-	// PluginInterface to communicate with the plugin
-	PluginInterface plugin.Plugin
+	// Plugin to communicate with the plugin
+	Plugin plugin.Plugin
 
 	// GetDefaultPluggable is the function on porter's config.Data
 	// to retrieve a pluggable configuration value's named default instance to use, e.g. "default-instance-store"
