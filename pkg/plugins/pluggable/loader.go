@@ -6,7 +6,6 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/deislabs/cnab-go/utils/crud"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/plugins"
 	"github.com/hashicorp/go-hclog"
@@ -19,7 +18,7 @@ type PluginLoader struct {
 	*config.Config
 
 	SelectedPluginKey    *plugins.PluginKey
-	SelectedPluginConfig io.Reader
+	SelectedPluginConfig interface{}
 }
 
 func NewPluginLoader(c *config.Config) *PluginLoader {
@@ -33,6 +32,10 @@ func NewPluginLoader(c *config.Config) *PluginLoader {
 // and an error if the plugin could not be loaded.
 func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), error) {
 	err := l.selectPlugin(pluginType)
+	if err != err {
+		return nil, nil, err
+	}
+
 	l.SelectedPluginKey.Interface = pluginType.Interface
 
 	var pluginCommand *exec.Cmd
@@ -51,7 +54,12 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
 	}
-	pluginCommand.Stdin = l.SelectedPluginConfig
+	configReader, err := l.readPluginConfig()
+	if err != err {
+		return nil, nil, err
+	}
+
+	pluginCommand.Stdin = configReader
 
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "porter",
@@ -87,13 +95,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
 	}
 
-	store, ok := raw.(crud.Store)
-	if !ok {
-		cleanup()
-		return nil, nil, errors.Errorf("the interface exposed by the %s plugin was not instancestorage.ClaimStore", l.SelectedPluginKey)
-	}
-
-	return store, cleanup, nil
+	return raw, cleanup, nil
 }
 
 // selectPlugin picks the plugin to use and loads its configuration.
@@ -101,8 +103,7 @@ func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
 	l.SelectedPluginKey = nil
 	l.SelectedPluginConfig = nil
 
-	var pluginId string
-	var config interface{}
+	var pluginKey string
 
 	defaultStore := cfg.GetDefaultPluggable(l.Config.Data)
 	if defaultStore != "" {
@@ -110,37 +111,32 @@ func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
 		if err != nil {
 			return err
 		}
-		pluginId = is.GetPluginSubKey()
-		config = is.GetConfig()
+		pluginKey = is.GetPluginSubKey()
+		l.SelectedPluginConfig = is.GetConfig()
 	}
 
-	if pluginId == "" {
-		pluginId = cfg.GetDefaultPlugin(l.Config.Data)
+	// If there isn't a specific plugin configured for this plugin type, fall back to the default plugin for this type
+	if pluginKey == "" {
+		pluginKey = cfg.GetDefaultPlugin(l.Config.Data)
 	}
 
-	key, err := plugins.ParsePluginKey(pluginId)
+	key, err := plugins.ParsePluginKey(pluginKey)
 	if err != nil {
 		return err
 	}
 	l.SelectedPluginKey = &key
 
-	configInput, err := l.writePluginConfig(config)
-	if err != nil {
-		return err
-	}
-
-	l.SelectedPluginConfig = configInput
 	return nil
 }
 
-func (l *PluginLoader) writePluginConfig(config interface{}) (io.Reader, error) {
-	if config == nil {
+func (l *PluginLoader) readPluginConfig() (io.Reader, error) {
+	if l.SelectedPluginConfig == nil {
 		return &bytes.Buffer{}, nil
 	}
 
-	b, err := json.Marshal(config)
+	b, err := json.Marshal(l.SelectedPluginConfig)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", config)
+		return nil, errors.Wrapf(err, "could not marshal plugin config %#v", l.SelectedPluginConfig)
 	}
 
 	return bytes.NewBuffer(b), nil

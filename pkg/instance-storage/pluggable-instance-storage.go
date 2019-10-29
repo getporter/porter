@@ -33,8 +33,9 @@ func NewPluggableInstanceStorage(c *config.Config) *PluggableInstanceStorage {
 	return l
 }
 
-func (d *PluggableInstanceStorage) connect() (crud.Store, func(), error) {
-	pluginType := pluggable.PluginTypeConfig{
+// NewPluginTypeConfig for instance storage.
+func NewPluginTypeConfig() pluggable.PluginTypeConfig {
+	return pluggable.PluginTypeConfig{
 		Interface: claimstore.PluginInterface,
 		Plugin:    &claimstore.Plugin{},
 		GetDefaultPluggable: func(datastore *config.Data) string {
@@ -47,6 +48,10 @@ func (d *PluggableInstanceStorage) connect() (crud.Store, func(), error) {
 			return datastore.GetInstanceStoragePlugin()
 		},
 	}
+}
+
+func (d *PluggableInstanceStorage) connect() (crud.Store, func(), error) {
+	pluginType := NewPluginTypeConfig()
 
 	l := pluggable.NewPluginLoader(d.Config)
 	raw, cleanup, err := l.Load(pluginType)
