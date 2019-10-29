@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/deislabs/porter/pkg/mixin"
+
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/cnab/extensions"
@@ -20,13 +22,15 @@ type ManifestConverter struct {
 	*context.Context
 	Manifest     *manifest.Manifest
 	ImageDigests map[string]string
+	Mixins       []mixin.Metadata
 }
 
-func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string) *ManifestConverter {
+func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string, mixins []mixin.Metadata) *ManifestConverter {
 	return &ManifestConverter{
 		Context:      cxt,
 		Manifest:     manifest,
 		ImageDigests: imageDigests,
+		Mixins:       mixins,
 	}
 }
 
@@ -53,6 +57,7 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
+
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
 
 	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
