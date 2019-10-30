@@ -89,20 +89,20 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 					Mixin:   mixin,
 					Version: version,
 				}
-				
+
 				feed.Index[mixin][version] = &fileset
 			}
 
-			for file := range feed.Index[mixin][version].Files {
-				if feed.Index[mixin][version].Files[file].File == filename {
-					if feed.Index[mixin][version].Files[file].Updated.Before(updated) {
-						feed.Index[mixin][version].Files[file].Updated = updated
+			for i := range feed.Index[mixin][version].Files {
+				if feed.Index[mixin][version].Files[i].File == filename {
+					if feed.Index[mixin][version].Files[i].Updated.Before(updated) {
+						feed.Index[mixin][version].Files[i].Updated = updated
 					}
-					
+
 					return nil
 				}
 			}
-			
+
 			feed.Index[mixin][version].Files = append(feed.Index[mixin][version].Files, &MixinFile{File: filename, Updated: updated})
 		}
 
