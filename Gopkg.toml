@@ -36,6 +36,11 @@
 [[override]]
   name = "github.com/google/go-containerregistry"
   revision = "ef12d49c8daf6a6d72978966d5945e39bb898b4a"
+
+[[override]]
+  name = "github.com/Microsoft/hcsshim"
+  revision = "2226e083fc390003ae5aa8325c3c92789afa0e7a"
+
 #
 # End Pinning
 #

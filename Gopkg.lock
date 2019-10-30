@@ -55,11 +55,10 @@
   version = "v0.4.14"
 
 [[projects]]
-  digest = "1:3b7289c340e1043e1b826ba201d4d9ed1eb3ec32a5e8600208ec030afa74f458"
+  digest = "1:e893c4b3dd07ff6aadc49350676a98f462815fa63017570adcf8522fd06f0132"
   name = "github.com/Microsoft/hcsshim"
   packages = [
     ".",
-    "internal/guestrequest",
     "internal/guid",
     "internal/hcs",
     "internal/hcserror",
@@ -76,8 +75,7 @@
     "osversion",
   ]
   pruneopts = "NUT"
-  revision = "f92b8fb9c92e17da496af5a69e3ee13fbe9916e1"
-  version = "v0.8.6"
+  revision = "2226e083fc390003ae5aa8325c3c92789afa0e7a"
 
 [[projects]]
   digest = "1:06ba0f52b4fee64f54be7583d668feb330cebbbf6eb537287878b3e188ec5640"
