@@ -18,66 +18,38 @@ package ggcr
 
 import (
 	"fmt"
+
 	"github.com/pivotal/image-relocation/pkg/registry"
-	"os"
+	"github.com/pivotal/image-relocation/pkg/registry/ggcr/path"
 
 	"github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+
 	"github.com/pivotal/image-relocation/pkg/image"
 )
 
-const (
-	outputDirPermissions = 0755
-	refNameAnnotation    = "org.opencontainers.image.ref.name"
-)
-
-func (r *client) NewLayout(path string) (registry.Layout, error) {
-	if _, err := os.Stat(path); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-		if err := os.MkdirAll(path, outputDirPermissions); err != nil {
-			return nil, err
-		}
-	}
-
-	lp, err := layout.Write(path, empty.Index)
-	if err != nil {
-		return nil, err
-	}
-
-	return &imageLayout{
-		registryClient: r,
-		layoutPath:     lp,
-	}, nil
-}
-
-func (r *client) ReadLayout(path string) (registry.Layout, error) {
-	lp, err := layout.FromPath(path)
-	if err != nil {
-		return nil, err
-	}
-	return &imageLayout{
-		registryClient: r,
-		layoutPath:     lp,
-	}, nil
-}
+const refNameAnnotation = "org.opencontainers.image.ref.name"
 
 type imageLayout struct {
-	registryClient *client
-	layoutPath     registry.LayoutPath
+	registryClient RegistryClient
+	layoutPath     path.LayoutPath
 }
 
-func NewImageLayout(registryClient *client, layoutPath registry.LayoutPath) registry.Layout {
+func NewImageLayout(registryClient RegistryClient, layoutPath path.LayoutPath) registry.Layout {
 	return &imageLayout{
 		registryClient: registryClient,
 		layoutPath:     layoutPath,
 	}
 }
 
+// appendable is an interface implemented by types which can be appended to an OCI image layout.
+type appendable interface {
+	// appendToLayout appends the image to a given OCI image layout using the given layout options.
+	appendToLayout(layoutPath path.LayoutPath, options ...layout.Option) error
+}
+
 func (l *imageLayout) Add(n image.Name) (image.Digest, error) {
-	img, err := l.registryClient.readRemoteImage(n)
+	img, err := l.registryClient.ReadRemoteImage(n)
 	if err != nil {
 		return image.EmptyDigest, err
 	}
@@ -85,8 +57,10 @@ func (l *imageLayout) Add(n image.Name) (image.Digest, error) {
 	annotations := map[string]string{
 		refNameAnnotation: n.String(),
 	}
-	if err:= img.AppendToLayout(l.layoutPath, layout.WithAnnotations(annotations)); err != nil {
-		return image.EmptyDigest, err
+	if img, ok := img.(appendable); ok {
+		if err := img.appendToLayout(l.layoutPath, layout.WithAnnotations(annotations)); err != nil {
+			return image.EmptyDigest, err
+		}
 	}
 
 	hash, err := img.Digest()
@@ -98,20 +72,17 @@ func (l *imageLayout) Add(n image.Name) (image.Digest, error) {
 }
 
 func (l *imageLayout) Push(digest image.Digest, n image.Name) error {
-	hash, err := v1.NewHash(digest.String())
-	if err != nil {
-		return err
-	}
-	imageIndex, err := l.layoutPath.ImageIndex()
-	if err != nil {
-		return err
-	}
-	i, err := imageIndex.Image(hash)
+	img, err := l.findByDigest(digest)
 	if err != nil {
 		return err
 	}
 
-	return l.registryClient.writeRemoteImage(i, n)
+	_, _, err = img.Write(n)
+	if err != nil {
+		return fmt.Errorf("failed to write image %v to %v: %v", digest, n, err)
+	}
+
+	return nil
 }
 
 func (l *imageLayout) Find(n image.Name) (image.Digest, error) {
@@ -137,4 +108,27 @@ func (l *imageLayout) Find(n image.Name) (image.Digest, error) {
 	}
 
 	return image.EmptyDigest, fmt.Errorf("image %v not found in layout", n)
+}
+
+func (l *imageLayout) findByDigest(digest image.Digest) (registry.Image, error) {
+	hash, err := v1.NewHash(digest.String())
+	if err != nil {
+		return nil, err
+	}
+	imageIndex, err := l.layoutPath.ImageIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	im, err := imageIndex.Image(hash)
+	if err == nil {
+		return l.registryClient.NewImageFromManifest(im), nil
+	}
+
+	idx, err := imageIndex.ImageIndex(hash)
+	if err == nil {
+		return l.registryClient.NewImageFromIndex(idx), nil
+	}
+
+	return nil, err
 }

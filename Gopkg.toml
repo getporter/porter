@@ -1,14 +1,12 @@
-[[constraint]]
-  name = "github.com/deislabs/cnab-go"
-  version = "v0.7.1-beta1"
-
 [[override]]
   name = "github.com/deislabs/cnab-go"
-  version = "v0.7.1-beta1"
+  # version = "v0.7.1-beta1"
+  source = "github.com/radu-matei/cnab-go"
+  branch = "deps"
 
-[[constraint]]
+[[override]]
   name = "github.com/docker/cnab-to-oci"
-  version = "v0.2.0-beta1"
+  version = "v0.3.0-beta1"
 
 [[constraint]]
   name = "github.com/carolynvs/datetime-printer"
@@ -18,33 +16,26 @@
 # SEMVER IS DEAD, LONG LIVE SEMVER
 # Use a very specific version of docker and its libraries because they aren't contained in a release yet, but cnab-go references some unreleased feature/code ¯\_(ツ)_/¯
 #
-[[constraint]]
-  name = "github.com/docker/cli"
-  revision = "f95ca8e1ba6c22c9abcdbf65e8dcc39c53958bba"
-
-[[constraint]]
-  name = "github.com/docker/docker"
-  revision = "f76d6a078d881f410c00e8d900dcdfc2e026c841"
-
-[[constraint]]
-  name = "github.com/docker/distribution"
-  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
-
-# The tip of master doesn't work well with the other versions
-[[constraint]]
-  name = "github.com/docker/go-metrics"
-  revision = "399ea8c73916000c64c2c76e8da00ca82f8387ab"
-
-# later patch versions (e.g. 1.2.5) of containerd don't compile with these pinned versions of docker
 [[override]]
   name = "github.com/containerd/containerd"
-  source = "github.com/deislabs/containerd"
-  branch = "cnab-to-oci"
+  version = "v1.3.0"
 
-# later patch versions have a breaking change (api.StackVersion is removed)
-[[constraint]]
-  name = "github.com/docker/compose-on-kubernetes"
-  version = "=v0.4.18"
+[[override]]
+  name = "github.com/docker/distribution"
+  #version = "v2.7.1"
+  revision = "0d3efadf0154c2b8a4e7b6621fff9809655cc580"
+
+[[override]]
+  name = "github.com/docker/docker-credential-helpers"
+  version = "v0.6.3"
+
+[[override]]
+  name = "golang.org/x/sys"
+  revision = "f49334f85ddcf0f08d7fb6dd7363e9e6d6b777eb"
+
+[[override]]
+  name = "github.com/google/go-containerregistry"
+  revision = "ef12d49c8daf6a6d72978966d5945e39bb898b4a"
 #
 # End Pinning
 #
@@ -64,28 +55,6 @@
 [[constraint]]
   name = "github.com/ghodss/yaml"
   version = "v1.0.0"
-
-#
-# Anytime K8s is referenced, they all need to be on the same release
-#
-[[constraint]]
-  name = "k8s.io/client-go"
-  version = "kubernetes-1.11.5"
-
-[[constraint]]
-  name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.5"
-
-#
-# Workaround a bug in docker/compose-on-kubernetes Gopkg.toml (they used "revision" instead of "version")
-#
-[[override]]
-  name = "k8s.io/client-go"
-  version = "kubernetes-1.11.5"
-
-[[override]]
-  name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.5"
 
 # See https://github.com/shurcooL/github_flavored_markdown/issues/12
 [[override]]

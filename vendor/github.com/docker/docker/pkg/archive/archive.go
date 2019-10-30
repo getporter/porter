@@ -745,7 +745,7 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 			compressWriter,
 			options.ChownOpts,
 		)
-		ta.WhiteoutConverter = getWhiteoutConverter(options.WhiteoutFormat)
+		ta.WhiteoutConverter = getWhiteoutConverter(options.WhiteoutFormat, options.InUserNS)
 
 		defer func() {
 			// Make sure to check the error on Close.
@@ -903,7 +903,7 @@ func Unpack(decompressedArchive io.Reader, dest string, options *TarOptions) err
 	var dirs []*tar.Header
 	idMapping := idtools.NewIDMappingsFromMaps(options.UIDMaps, options.GIDMaps)
 	rootIDs := idMapping.RootPair()
-	whiteoutConverter := getWhiteoutConverter(options.WhiteoutFormat)
+	whiteoutConverter := getWhiteoutConverter(options.WhiteoutFormat, options.InUserNS)
 
 	// Iterate through the files in the archive.
 loop:
@@ -1134,7 +1134,7 @@ func (archiver *Archiver) CopyFileWithTar(src, dst string) (err error) {
 		dst = filepath.Join(dst, filepath.Base(src))
 	}
 	// Create the holding directory if necessary
-	if err := system.MkdirAll(filepath.Dir(dst), 0700, ""); err != nil {
+	if err := system.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 		return err
 	}
 
@@ -1218,6 +1218,9 @@ func cmdStream(cmd *exec.Cmd, input io.Reader) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Ensure the command has exited before we clean anything up
+	done := make(chan struct{})
+
 	// Copy stdout to the returned pipe
 	go func() {
 		if err := cmd.Wait(); err != nil {
@@ -1225,9 +1228,16 @@ func cmdStream(cmd *exec.Cmd, input io.Reader) (io.ReadCloser, error) {
 		} else {
 			pipeW.Close()
 		}
+		close(done)
 	}()
 
-	return pipeR, nil
+	return ioutils.NewReadCloserWrapper(pipeR, func() error {
+		// Close pipeR, and then wait for the command to complete before returning. We have to close pipeR first, as
+		// cmd.Wait waits for any non-file stdout/stderr/stdin to close.
+		err := pipeR.Close()
+		<-done
+		return err
+	}), nil
 }
 
 // NewTempArchive reads the content of src into a temporary file, and returns the contents

@@ -91,7 +91,7 @@ func makeManifestWalker(ctx context.Context, sourceFetcher remotes.Fetcher,
 	scheduler := newErrgroupScheduler(ctx, cfg.maxConcurrentJobs, cfg.jobsBufferLength)
 	cleaner := func() {
 		cancel()
-		scheduler.drain()
+		scheduler.drain() //nolint:errcheck
 	}
 	walker := newManifestWalker(notifyEvent, scheduler, progress, descriptorContentHandler)
 	return walker.walk(scheduler.ctx(), fixupInfo.resolvedDescriptor, nil), cleaner, nil

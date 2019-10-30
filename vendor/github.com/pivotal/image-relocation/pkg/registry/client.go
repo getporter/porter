@@ -37,4 +37,3 @@ type Client interface {
 	// OCI image layout.
 	ReadLayout(path string) (Layout, error)
 }
-

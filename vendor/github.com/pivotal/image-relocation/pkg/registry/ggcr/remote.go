@@ -67,7 +67,7 @@ func readRemoteImage(mfstWriter manifestWriter, idxWriter indexWriter) func(n im
 			if err != nil {
 				return nil, err
 			}
-			return newImageFromIndex(idx, n, idxWriter), nil
+			return newImageFromIndex(idx, idxWriter), nil
 		default:
 			// assume all other media types are images since some images don't set the media type
 		}
@@ -76,7 +76,7 @@ func readRemoteImage(mfstWriter manifestWriter, idxWriter indexWriter) func(n im
 			return nil, err
 		}
 
-		return newImageFromManifest(img, n, mfstWriter), nil
+		return newImageFromManifest(img, mfstWriter), nil
 	}
 }
 

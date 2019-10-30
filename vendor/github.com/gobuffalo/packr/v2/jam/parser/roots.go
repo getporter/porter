@@ -8,9 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gobuffalo/packr/v2/internal/takeon/github.com/karrick/godirwalk"
 	"github.com/gobuffalo/packr/v2/plog"
-	"github.com/karrick/godirwalk"
-	"github.com/pkg/errors"
 )
 
 type RootsOptions struct {
@@ -57,7 +56,7 @@ func NewFromRoots(roots []string, opts *RootsOptions) (*Parser, error) {
 		plog.Debug(p, "NewFromRoots", "walking", root)
 		err := godirwalk.Walk(root, wopts)
 		if err != nil {
-			return p, errors.WithStack(err)
+			return p, err
 		}
 	}
 
@@ -81,7 +80,7 @@ func NewFromRoots(roots []string, opts *RootsOptions) (*Parser, error) {
 		plog.Debug(p, "NewFromRoots", "reading file", path)
 		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		p.Prospects = append(p.Prospects, NewFile(path, bytes.NewReader(b)))
 	}

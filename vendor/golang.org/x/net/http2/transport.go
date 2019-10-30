@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/http/httpguts"
@@ -96,6 +97,16 @@ type Transport struct {
 	// interprets the highest possible value here (0xffffffff or 1<<32-1)
 	// to mean no limit.
 	MaxHeaderListSize uint32
+
+	// StrictMaxConcurrentStreams controls whether the server's
+	// SETTINGS_MAX_CONCURRENT_STREAMS should be respected
+	// globally. If false, new TCP connections are created to the
+	// server as needed to keep each under the per-connection
+	// SETTINGS_MAX_CONCURRENT_STREAMS limit. If true, the
+	// server's SETTINGS_MAX_CONCURRENT_STREAMS is interpreted as
+	// a global limit and callers of RoundTrip block when needed,
+	// waiting for their turn.
+	StrictMaxConcurrentStreams bool
 
 	// t1, if non-nil, is the standard library Transport using
 	// this transport. Its settings are used (but not its
@@ -189,6 +200,7 @@ type ClientConn struct {
 	t         *Transport
 	tconn     net.Conn             // usually *tls.Conn, except specialized impls
 	tlsState  *tls.ConnectionState // nil only for specialized impls
+	reused    uint32               // whether conn is being reused; atomic
 	singleUse bool                 // whether being used for a single http.Request
 
 	// readLoop goroutine fields:
@@ -430,7 +442,8 @@ func (t *Transport) RoundTripOpt(req *http.Request, opt RoundTripOpt) (*http.Res
 			t.vlogf("http2: Transport failed to get client conn for %s: %v", addr, err)
 			return nil, err
 		}
-		traceGotConn(req, cc)
+		reused := !atomic.CompareAndSwapUint32(&cc.reused, 0, 1)
+		traceGotConn(req, cc, reused)
 		res, gotErrAfterReqBodyWrite, err := cc.roundTrip(req)
 		if err != nil && retry <= 6 {
 			if req, err = shouldRetryRequest(req, err, gotErrAfterReqBodyWrite); err == nil {
@@ -590,7 +603,7 @@ func (t *Transport) expectContinueTimeout() time.Duration {
 }
 
 func (t *Transport) NewClientConn(c net.Conn) (*ClientConn, error) {
-	return t.newClientConn(c, false)
+	return t.newClientConn(c, t.disableKeepAlives())
 }
 
 func (t *Transport) newClientConn(c net.Conn, singleUse bool) (*ClientConn, error) {
@@ -711,8 +724,19 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 	if cc.singleUse && cc.nextStreamID > 1 {
 		return
 	}
-	st.canTakeNewRequest = cc.goAway == nil && !cc.closed && !cc.closing &&
-		int64(cc.nextStreamID)+int64(cc.pendingRequests) < math.MaxInt32
+	var maxConcurrentOkay bool
+	if cc.t.StrictMaxConcurrentStreams {
+		// We'll tell the caller we can take a new request to
+		// prevent the caller from dialing a new TCP
+		// connection, but then we'll block later before
+		// writing it.
+		maxConcurrentOkay = true
+	} else {
+		maxConcurrentOkay = int64(len(cc.streams)+1) < int64(cc.maxConcurrentStreams)
+	}
+
+	st.canTakeNewRequest = cc.goAway == nil && !cc.closed && !cc.closing && maxConcurrentOkay &&
+		int64(cc.nextStreamID)+2*int64(cc.pendingRequests) < math.MaxInt32
 	st.freshConn = cc.nextStreamID == 1 && st.canTakeNewRequest
 	return
 }
@@ -968,7 +992,7 @@ func (cc *ClientConn) roundTrip(req *http.Request) (res *http.Response, gotErrAf
 		req.Method != "HEAD" {
 		// Request gzip only, not deflate. Deflate is ambiguous and
 		// not as universally supported anyway.
-		// See: http://www.gzip.org/zlib/zlib_faq.html#faq38
+		// See: https://zlib.net/zlib_faq.html#faq39
 		//
 		// Note that we don't request this for HEAD requests,
 		// due to a bug in nginx:
@@ -1192,6 +1216,8 @@ var (
 
 	// abort request body write, but send stream reset of cancel.
 	errStopReqBodyWriteAndCancel = errors.New("http2: canceling request")
+
+	errReqBodyTooLong = errors.New("http2: request body larger than specified content length")
 )
 
 func (cs *clientStream) writeRequestBody(body io.Reader, bodyCloser io.Closer) (err error) {
@@ -1214,10 +1240,32 @@ func (cs *clientStream) writeRequestBody(body io.Reader, bodyCloser io.Closer) (
 
 	req := cs.req
 	hasTrailers := req.Trailer != nil
+	remainLen := actualContentLength(req)
+	hasContentLen := remainLen != -1
 
 	var sawEOF bool
 	for !sawEOF {
-		n, err := body.Read(buf)
+		n, err := body.Read(buf[:len(buf)-1])
+		if hasContentLen {
+			remainLen -= int64(n)
+			if remainLen == 0 && err == nil {
+				// The request body's Content-Length was predeclared and
+				// we just finished reading it all, but the underlying io.Reader
+				// returned the final chunk with a nil error (which is one of
+				// the two valid things a Reader can do at EOF). Because we'd prefer
+				// to send the END_STREAM bit early, double-check that we're actually
+				// at EOF. Subsequent reads should return (0, EOF) at this point.
+				// If either value is different, we return an error in one of two ways below.
+				var n1 int
+				n1, err = body.Read(buf[n:])
+				remainLen -= int64(n1)
+			}
+			if remainLen < 0 {
+				err = errReqBodyTooLong
+				cc.writeStreamReset(cs.ID, ErrCodeCancel, err)
+				return err
+			}
+		}
 		if err == io.EOF {
 			sawEOF = true
 			err = nil
@@ -1390,7 +1438,11 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 		// followed by the query production (see Sections 3.3 and 3.4 of
 		// [RFC3986]).
 		f(":authority", host)
-		f(":method", req.Method)
+		m := req.Method
+		if m == "" {
+			m = http.MethodGet
+		}
+		f(":method", m)
 		if req.Method != "CONNECT" {
 			f(":path", path)
 			f(":scheme", req.URL.Scheme)
@@ -1426,7 +1478,29 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 				if vv[0] == "" {
 					continue
 				}
-
+			} else if strings.EqualFold(k, "cookie") {
+				// Per 8.1.2.5 To allow for better compression efficiency, the
+				// Cookie header field MAY be split into separate header fields,
+				// each with one or more cookie-pairs.
+				for _, v := range vv {
+					for {
+						p := strings.IndexByte(v, ';')
+						if p < 0 {
+							break
+						}
+						f("cookie", v[:p])
+						p++
+						// strip space after semicolon if any.
+						for p+1 <= len(v) && v[p] == ' ' {
+							p++
+						}
+						v = v[p:]
+					}
+					if len(v) > 0 {
+						f("cookie", v)
+					}
+				}
+				continue
 			}
 
 			for _, v := range vv {
@@ -2534,15 +2608,15 @@ func traceGetConn(req *http.Request, hostPort string) {
 	trace.GetConn(hostPort)
 }
 
-func traceGotConn(req *http.Request, cc *ClientConn) {
+func traceGotConn(req *http.Request, cc *ClientConn, reused bool) {
 	trace := httptrace.ContextClientTrace(req.Context())
 	if trace == nil || trace.GotConn == nil {
 		return
 	}
 	ci := httptrace.GotConnInfo{Conn: cc.tconn}
+	ci.Reused = reused
 	cc.mu.Lock()
-	ci.Reused = cc.nextStreamID > 1
-	ci.WasIdle = len(cc.streams) == 0 && ci.Reused
+	ci.WasIdle = len(cc.streams) == 0 && reused
 	if ci.WasIdle && !cc.lastActive.IsZero() {
 		ci.IdleTime = time.Now().Sub(cc.lastActive)
 	}

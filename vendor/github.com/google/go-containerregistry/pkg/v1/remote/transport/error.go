@@ -26,10 +26,6 @@ import (
 // https://github.com/docker/distribution/blob/master/docs/spec/api.md#errors
 type Error struct {
 	Errors []Diagnostic `json:"errors,omitempty"`
-	// The http status code returned.
-	StatusCode int
-	// The raw body if we couldn't understand it.
-	rawBody string
 }
 
 // Check that Error implements error
@@ -39,10 +35,7 @@ var _ error = (*Error)(nil)
 func (e *Error) Error() string {
 	switch len(e.Errors) {
 	case 0:
-		if len(e.rawBody) == 0 {
-			return fmt.Sprintf("unsupported status code %d", e.StatusCode)
-		}
-		return fmt.Sprintf("unsupported status code %d; body: %s", e.StatusCode, e.rawBody)
+		return "<empty transport.Error response>"
 	case 1:
 		return e.Errors[0].String()
 	default:
@@ -122,10 +115,11 @@ func CheckError(resp *http.Response, codes ...int) error {
 	}
 
 	// https://github.com/docker/distribution/blob/master/docs/spec/api.md#errors
-	structuredError := &Error{}
-	if err := json.Unmarshal(b, structuredError); err != nil {
-		structuredError.rawBody = string(b)
+	var structuredError Error
+	if err := json.Unmarshal(b, &structuredError); err != nil {
+		// If the response isn't an unstructured error, then return some
+		// reasonable error response containing the response body.
+		return fmt.Errorf("unsupported status code %d; body: %s", resp.StatusCode, string(b))
 	}
-	structuredError.StatusCode = resp.StatusCode
-	return structuredError
+	return &structuredError
 }

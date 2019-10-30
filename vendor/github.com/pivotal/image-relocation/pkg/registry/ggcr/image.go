@@ -18,19 +18,20 @@ package ggcr
 
 import (
 	"fmt"
+
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+
 	"github.com/pivotal/image-relocation/pkg/image"
-	"github.com/pivotal/image-relocation/pkg/registry"
+	"github.com/pivotal/image-relocation/pkg/registry/ggcr/path"
 )
 
-func newImageFromManifest(img v1.Image, nm image.Name, mfstWriter manifestWriter) *imageManifest {
-	return &imageManifest{manifest: img, nm: nm, mfstWriter: mfstWriter}
+func newImageFromManifest(img v1.Image, mfstWriter manifestWriter) *imageManifest {
+	return &imageManifest{manifest: img, mfstWriter: mfstWriter}
 }
 
 type imageManifest struct {
 	manifest   v1.Image
-	nm         image.Name
 	mfstWriter manifestWriter
 }
 
@@ -45,7 +46,7 @@ func (m *imageManifest) Digest() (image.Digest, error) {
 func (m *imageManifest) Write(target image.Name) (image.Digest, int64, error) {
 	dig, err := m.Digest()
 	if err != nil {
-		return image.EmptyDigest, 0, fmt.Errorf("failed to read digest of image %v: %v", m.nm, err)
+		return image.EmptyDigest, 0, fmt.Errorf("failed to read digest of image: %v", err)
 	}
 
 	err = m.mfstWriter(m.manifest, target)
@@ -55,19 +56,18 @@ func (m *imageManifest) Write(target image.Name) (image.Digest, int64, error) {
 
 	rawManifest, err := m.manifest.RawManifest()
 	if err != nil {
-		return image.EmptyDigest, 0, fmt.Errorf("failed to get raw manifest of image %v: %v", m.nm, err)
+		return image.EmptyDigest, 0, fmt.Errorf("failed to get raw manifest of image: %v", err)
 	}
 
 	return dig, int64(len(rawManifest)), nil
 }
 
-func (m *imageManifest) AppendToLayout(layoutPath registry.LayoutPath, options ...layout.Option) error {
+func (m *imageManifest) appendToLayout(layoutPath path.LayoutPath, options ...layout.Option) error {
 	return layoutPath.AppendImage(m.manifest, options...)
 }
 
 type imageIndex struct {
 	index     v1.ImageIndex
-	nm        image.Name
 	idxWriter indexWriter
 }
 
@@ -82,7 +82,7 @@ func (i *imageIndex) Digest() (image.Digest, error) {
 func (i *imageIndex) Write(target image.Name) (image.Digest, int64, error) {
 	dig, err := i.Digest()
 	if err != nil {
-		return image.EmptyDigest, 0, fmt.Errorf("failed to read digest of image index %v: %v", i.nm, err)
+		return image.EmptyDigest, 0, fmt.Errorf("failed to read digest of image index: %v", err)
 	}
 
 	err = i.idxWriter(i.index, target)
@@ -92,16 +92,16 @@ func (i *imageIndex) Write(target image.Name) (image.Digest, int64, error) {
 
 	rawManifest, err := i.index.RawManifest()
 	if err != nil {
-		return image.EmptyDigest, 0, fmt.Errorf("failed to get raw manifest of image index %v: %v", i.nm, err)
+		return image.EmptyDigest, 0, fmt.Errorf("failed to get raw manifest of image index: %v", err)
 	}
 
 	return dig, int64(len(rawManifest)), nil
 }
 
-func (i *imageIndex) AppendToLayout(layoutPath registry.LayoutPath, options ...layout.Option) error {
+func (i *imageIndex) appendToLayout(layoutPath path.LayoutPath, options ...layout.Option) error {
 	return layoutPath.AppendIndex(i.index, options...)
 }
 
-func newImageFromIndex(idx v1.ImageIndex, nm image.Name, idxWriter indexWriter) *imageIndex {
-	return &imageIndex{index: idx, nm: nm, idxWriter: idxWriter}
+func newImageFromIndex(idx v1.ImageIndex, idxWriter indexWriter) *imageIndex {
+	return &imageIndex{index: idx, idxWriter: idxWriter}
 }

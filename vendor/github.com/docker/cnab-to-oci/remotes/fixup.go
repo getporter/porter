@@ -48,12 +48,12 @@ func FixupBundle(ctx context.Context, b *bundle.Bundle, ref reference.Named, res
 	}
 
 	relocationMap := relocation.ImageRelocationMap{}
-	if err := fixupImage(ctx, &b.InvocationImages[0].BaseImage, relocationMap, cfg, events, cfg.invocationImagePlatformFilter); err != nil {
+	if err := fixupImage(ctx, "InvocationImage", &b.InvocationImages[0].BaseImage, relocationMap, cfg, events, cfg.invocationImagePlatformFilter); err != nil {
 		return nil, err
 	}
 	// Fixup images
 	for name, original := range b.Images {
-		if err := fixupImage(ctx, &original.BaseImage, relocationMap, cfg, events, cfg.componentImagePlatformFilter); err != nil {
+		if err := fixupImage(ctx, name, &original.BaseImage, relocationMap, cfg, events, cfg.componentImagePlatformFilter); err != nil {
 			return nil, err
 		}
 		b.Images[name] = original
@@ -63,14 +63,22 @@ func FixupBundle(ctx context.Context, b *bundle.Bundle, ref reference.Named, res
 	return relocationMap, nil
 }
 
-func fixupImage(ctx context.Context, baseImage *bundle.BaseImage, relocationMap relocation.ImageRelocationMap, cfg fixupConfig, events chan<- FixupEvent, platformFilter platforms.Matcher) error {
+func fixupImage(
+	ctx context.Context,
+	name string,
+	baseImage *bundle.BaseImage,
+	relocationMap relocation.ImageRelocationMap,
+	cfg fixupConfig,
+	events chan<- FixupEvent,
+	platformFilter platforms.Matcher) error {
+
 	log.G(ctx).Debugf("Updating entry in relocation map for %q", baseImage.Image)
 	ctx = withMutedContext(ctx)
 	notifyEvent, progress := makeEventNotifier(events, baseImage.Image, cfg.targetRef)
 
 	notifyEvent(FixupEventTypeCopyImageStart, "", nil)
 	// Fixup Base image
-	fixupInfo, err := fixupBaseImage(ctx, baseImage, cfg.targetRef, cfg.resolver)
+	fixupInfo, pushed, err := fixupBaseImage(ctx, name, baseImage, cfg)
 	if err != nil {
 		return notifyError(notifyEvent, err)
 	}
@@ -97,6 +105,11 @@ func fixupImage(ctx context.Context, baseImage *bundle.BaseImage, relocationMap 
 		if baseImage.MediaType != fixupInfo.resolvedDescriptor.MediaType {
 			return fmt.Errorf("image %q media type differs %q after fixup: %q", baseImage.Image, baseImage.MediaType, fixupInfo.resolvedDescriptor.MediaType)
 		}
+	}
+
+	if pushed {
+		notifyEvent(FixupEventTypeCopyImageEnd, "Image has been pushed for service "+name, nil)
+		return nil
 	}
 
 	if fixupInfo.sourceRef.Name() == fixupInfo.targetRepo.Name() {
@@ -181,33 +194,85 @@ func fixupPlatforms(ctx context.Context,
 	return nil
 }
 
-func fixupBaseImage(ctx context.Context,
-	baseImage *bundle.BaseImage,
-	targetRef reference.Named, //nolint: interfacer
-	resolver remotes.Resolver) (imageFixupInfo, error) {
-
+func fixupBaseImage(ctx context.Context, name string, baseImage *bundle.BaseImage, cfg fixupConfig) (imageFixupInfo, bool, error) {
 	// Check image references
 	if err := checkBaseImage(baseImage); err != nil {
-		return imageFixupInfo{}, fmt.Errorf("invalid image %q: %s", baseImage.Image, err)
+		return imageFixupInfo{}, false, fmt.Errorf("invalid image %q for service %q: %s", baseImage.Image, name, err)
 	}
-	targetRepoOnly, err := reference.ParseNormalizedNamed(targetRef.Name())
+	targetRepoOnly, err := reference.ParseNormalizedNamed(cfg.targetRef.Name())
 	if err != nil {
-		return imageFixupInfo{}, err
+		return imageFixupInfo{}, false, err
 	}
-	sourceImageRef, err := reference.ParseNormalizedNamed(baseImage.Image)
-	if err != nil {
-		return imageFixupInfo{}, fmt.Errorf("%q is not a valid image reference for %q: %s", baseImage.Image, targetRef, err)
-	}
-	sourceImageRef = reference.TagNameOnly(sourceImageRef)
 
-	// Try to fetch the image descriptor
-	_, descriptor, err := resolver.Resolve(ctx, sourceImageRef.String())
-	if err != nil {
-		return imageFixupInfo{}, fmt.Errorf("failed to resolve %q, push the image to the registry before pushing the bundle: %s", sourceImageRef, err)
+	var (
+		descriptor     ocischemav1.Descriptor
+		pushed         bool
+		sourceImageRef reference.Named
+	)
+
+	if baseImage.Image == "" && cfg.pushImages {
+		// no image is defined for the service, try to push by digest from local docker image store
+		descriptor, err = pushImageToTarget(ctx, baseImage.Digest, cfg)
+		if err != nil {
+			return imageFixupInfo{}, false, err
+		}
+		pushed = true
+	} else {
+		// try to resolve
+		sourceImageRef, err = reference.ParseNormalizedNamed(baseImage.Image)
+		if err != nil {
+			return imageFixupInfo{}, false, fmt.Errorf("%q is not a valid image reference for %q: %s", baseImage.Image, cfg.targetRef, err)
+		}
+		sourceImageRef = reference.TagNameOnly(sourceImageRef)
+
+		// Try to fetch the image descriptor
+		_, descriptor, err = cfg.resolver.Resolve(ctx, sourceImageRef.String())
+		if err != nil {
+			if cfg.pushImages {
+				// try to push from local docker image store
+				descriptor, err = pushImageToTarget(ctx, baseImage.Image, cfg)
+				if err != nil {
+					return imageFixupInfo{}, false, err
+				}
+				pushed = true
+			} else {
+				return imageFixupInfo{}, false, fmt.Errorf("failed to resolve %q, push the image for service %q to the registry before pushing the bundle: %s", sourceImageRef, name, err)
+			}
+		}
 	}
 	return imageFixupInfo{
-		resolvedDescriptor: descriptor,
-		sourceRef:          sourceImageRef,
 		targetRepo:         targetRepoOnly,
-	}, nil
+		sourceRef:          sourceImageRef,
+		resolvedDescriptor: descriptor,
+	}, pushed, nil
+}
+
+// pushImageToTarget pushes the image from the local docker daemon store to the target defined in the configuration.
+// Docker image cannot be pushed by digest to a registry. So to be able to push the image inside the targeted repository
+// the same behaviour than for multi architecture images is used: all the images are tagged for the targeted repository
+// and then pushed.
+// Every time a new image is pushed under a tag, the previous tagged image will be untagged. But this untagged image
+// remains accessible using its digest. So right after pushing it, the image is resolved to grab its digest from the
+// registry and can be added to the index.
+// The final workflow is then:
+//  - tag the image to push with targeted reference
+//  - push the image using a docker `ImageAPIClient`
+//  - resolve the pushed image to grab its digest
+func pushImageToTarget(ctx context.Context, src string, cfg fixupConfig) (ocischemav1.Descriptor, error) {
+	taggedRef := reference.TagNameOnly(cfg.targetRef)
+
+	if err := cfg.imageClient.ImageTag(ctx, src, cfg.targetRef.String()); err != nil {
+		return ocischemav1.Descriptor{}, fmt.Errorf("failed to push image %q, make sure the image exists locally: %s", src, err)
+	}
+
+	if err := pushTaggedImage(ctx, cfg.imageClient, cfg.targetRef, cfg.pushOut); err != nil {
+		return ocischemav1.Descriptor{}, fmt.Errorf("failed to push image %q: %s", src, err)
+	}
+
+	_, descriptor, err := cfg.resolver.Resolve(ctx, taggedRef.String())
+	if err != nil {
+		return ocischemav1.Descriptor{}, fmt.Errorf("failed to resolve %q after pushing it: %s", taggedRef, err)
+	}
+
+	return descriptor, nil
 }

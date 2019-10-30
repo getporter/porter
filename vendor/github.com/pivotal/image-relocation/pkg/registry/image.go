@@ -17,7 +17,6 @@
 package registry
 
 import (
-	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/pivotal/image-relocation/pkg/image"
 )
 
@@ -28,7 +27,4 @@ type Image interface {
 
 	// Write writes the image to a given reference and returns the image's digest and size.
 	Write(target image.Name) (image.Digest, int64, error)
-
-	// AppendToLayout appends the image to a given OCI image layout using the given layout options.
-	AppendToLayout(layoutPath LayoutPath, options ...layout.Option) error
 }

@@ -17,7 +17,7 @@ import (
 
 const ( // General values
 	// CNABVersion is the currently supported CNAB runtime version
-	CNABVersion = "v1.0.0-WD"
+	CNABVersion = "v1.0.0"
 
 	// OCIIndexSchemaVersion is the currently supported OCI index schema's version
 	OCIIndexSchemaVersion = 2

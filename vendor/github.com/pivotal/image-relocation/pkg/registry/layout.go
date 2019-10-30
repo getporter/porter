@@ -17,12 +17,10 @@
 package registry
 
 import (
-	"github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/pivotal/image-relocation/pkg/image"
 )
 
-// A Layout allows a registry client to interact with an OCI image layout on disk.
+// A Layout abstracts an OCI image layout on disk.
 type Layout interface {
 	// Add adds the image at the given image reference to the layout and returns the image's digest.
 	Add(n image.Name) (image.Digest, error)
@@ -32,11 +30,5 @@ type Layout interface {
 
 	// Find returns the digest of an image in the layout with the given image reference.
 	Find(n image.Name) (image.Digest, error)
-}
-
-type LayoutPath interface {
-	AppendImage(img v1.Image, options ...layout.Option) error
-	AppendIndex(ii v1.ImageIndex, options ...layout.Option) error
-	ImageIndex() (v1.ImageIndex, error)
 }
 
