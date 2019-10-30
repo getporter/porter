@@ -3,8 +3,10 @@ package pluggable
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/plugins"
@@ -60,6 +62,14 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	}
 
 	pluginCommand.Stdin = configReader
+
+	if l.Config.Debug {
+		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
+		if l.SelectedPluginConfig != nil {
+			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
+		}
+		fmt.Fprintln(l.Err, strings.Join(pluginCommand.Args, " "))
+	}
 
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "porter",
