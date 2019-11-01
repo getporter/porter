@@ -1,0 +1,3 @@
+{
+  "go.testEnvVars": {"PORTER_HOME": "/Users/reddy.prasad/.porter"}
+}

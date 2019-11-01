@@ -45,23 +45,32 @@ func (p *Porter) Build(opts BuildOptions) error {
 	return p.buildBundle(p.Manifest.Image, "")
 }
 
-func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	imageDigests := map[string]string{invocationImage: digest}
-
+func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 	installedMixins, err := p.ListMixins()
 
 	if err != nil {
-		return errors.Wrapf(err, "error while listing mixins")
+		return nil, errors.Wrapf(err, "error while listing mixins")
 	}
 
-	mixins := []mixin.Metadata{}
+	usedMixins := []mixin.Metadata{}
 	for _, installedMixin := range installedMixins {
 		for _, m := range p.Manifest.Mixins {
 			if installedMixin.Name == m.Name {
-				fmt.Printf("%s", m.Name)
-				mixins = append(mixins, installedMixin)
+				usedMixins = append(usedMixins, installedMixin)
 			}
 		}
+	}
+
+	return usedMixins, nil
+}
+
+func (p *Porter) buildBundle(invocationImage string, digest string) error {
+	imageDigests := map[string]string{invocationImage: digest}
+
+	mixins, err := p.getUsedMixins()
+
+	if err != nil {
+		return err
 	}
 
 	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)

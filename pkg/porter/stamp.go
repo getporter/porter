@@ -5,7 +5,6 @@ import (
 
 	"github.com/deislabs/cnab-go/bundle"
 	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
-	"github.com/deislabs/porter/pkg/mixin"
 	"github.com/pkg/errors"
 )
 
@@ -46,20 +45,9 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
 
-		installedMixins, err := p.ListMixins()
-
+		mixins, err := p.getUsedMixins()
 		if err != nil {
-			return false, errors.Wrapf(err, "error while listing mixins")
-		}
-
-		mixins := []mixin.Metadata{}
-		for _, installedMixin := range installedMixins {
-			for _, m := range p.Manifest.Mixins {
-				if installedMixin.Name == m.Name {
-					fmt.Printf("%s", m.Name)
-					mixins = append(mixins, installedMixin)
-				}
-			}
+			return false, errors.Wrapf(err, "error while listing used mixins")
 		}
 
 		converter := configadapter.NewManifestConverter(p.Context, p.Manifest, nil, mixins)
