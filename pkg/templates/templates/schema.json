@@ -128,6 +128,51 @@
         }
       },
       "additionalProperties": false
+    },
+    "image" :{
+      "description": "An image represents an application image used in a bundle",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "A user-friendly description of this image",
+          "type": "string"
+        }, 
+        "imageType": {
+          "description": "The type of this image, i.e. docker",
+          "type": "string"
+        }, 
+        "repository": {
+          "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
+          "type": "string"
+        },
+        "digest" :{ 
+          "description": "The digest of the image, i.e. sha256:cafebabe...",
+          "type": "string"
+        },
+        "size" : {
+          "description": "The size of the image",
+          "type": "integer"
+        },
+        "mediaType" : {
+          "description": "The media type of the image",
+          "type": "string"
+        },
+        "tag" : {
+          "description": "The tag the image",
+          "type": "string"
+        },
+        "labels": {
+          "description": "Key/value pairs that used to specify identifying attributes of images",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "description", "imageType", "repository"
+      ],
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -211,6 +256,10 @@
     "customActions": {
       "type": "object",
       "additionalProperties": {"$ref": "#/definitions/customAction"}
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/definitions/image"}
     }
   },
   "additionalProperties": {
