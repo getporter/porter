@@ -13,8 +13,20 @@ type Data struct {
 
 type InstanceStore struct {
 	Name         string                 `mapstructure:"name"`
-	PluginSubkey string                 `mapstructure:"plugin"`
+	PluginSubKey string                 `mapstructure:"plugin"`
 	Config       map[string]interface{} `mapstructure:"config"`
+}
+
+func (is InstanceStore) GetName() string {
+	return is.Name
+}
+
+func (is InstanceStore) GetPluginSubKey() string {
+	return is.PluginSubKey
+}
+
+func (is InstanceStore) GetConfig() interface{} {
+	return is.Config
 }
 
 func (d *Data) GetInstanceStoragePlugin() string {

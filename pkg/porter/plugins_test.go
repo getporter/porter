@@ -29,7 +29,7 @@ func TestRunInternalPluginOpts_Validate(t *testing.T) {
 	t.Run("valid key", func(t *testing.T) {
 		err := opts.Validate([]string{filesystem.PluginKey}, cfg.Config)
 		require.NoError(t, err)
-		assert.Equal(t, opts.selectedInterface, claimstore.PluginKey)
+		assert.Equal(t, opts.selectedInterface, claimstore.PluginInterface)
 		assert.NotNil(t, opts.selectedPlugin)
 	})
 
