@@ -111,6 +111,16 @@ func (m *RuntimeManifest) GetSteps() manifest.Steps {
 	return m.steps
 }
 
+func (m *RuntimeManifest) GetOutputs() map[string]string {
+	outputs := make(map[string]string, len(m.outputs))
+
+	for k, v := range m.outputs {
+		outputs[k] = v
+	}
+
+	return outputs
+}
+
 func (m *RuntimeManifest) setStepsByAction() error {
 	switch m.Action {
 	case manifest.ActionInstall:

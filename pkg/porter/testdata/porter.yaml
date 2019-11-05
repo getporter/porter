@@ -42,6 +42,9 @@ outputs:
     description: "My second output"
     type: boolean
     sensitive: false
+  - name: kubeconfig
+    type: file
+    path: /root/.kube/config
 
 mixins:
   - exec

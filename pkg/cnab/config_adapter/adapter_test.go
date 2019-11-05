@@ -35,7 +35,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
-	assert.Contains(t, bun.Definitions, "porter-debug", "porter-debug definition was not defined")
+	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
 	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Porter stamp was not populated")
 	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
@@ -62,7 +62,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 	}{
 		{"ainteger",
 			bundle.Parameter{
-				Definition: "ainteger",
+				Definition: "ainteger-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "AINTEGER",
 				},
@@ -76,7 +76,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		},
 		{"anumber",
 			bundle.Parameter{
-				Definition: "anumber",
+				Definition: "anumber-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ANUMBER",
 				},
@@ -91,7 +91,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"astringenum",
 			bundle.Parameter{
-				Definition: "astringenum",
+				Definition: "astringenum-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ASTRINGENUM",
 				},
@@ -105,7 +105,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"astring",
 			bundle.Parameter{
-				Definition: "astring",
+				Definition: "astring-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ASTRING",
 				},
@@ -120,7 +120,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"aboolean",
 			bundle.Parameter{
-				Definition: "aboolean",
+				Definition: "aboolean-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "ABOOLEAN",
 				},
@@ -133,7 +133,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"installonly",
 			bundle.Parameter{
-				Definition: "installonly",
+				Definition: "installonly-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "INSTALLONLY",
 				},
@@ -149,7 +149,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"sensitive",
 			bundle.Parameter{
-				Definition: "sensitive",
+				Definition: "sensitive-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "SENSITIVE",
 				},
@@ -163,7 +163,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"jsonobject",
 			bundle.Parameter{
-				Definition: "jsonobject",
+				Definition: "jsonobject-parameter",
 				Destination: &bundle.Location{
 					EnvironmentVariable: "JSONOBJECT",
 				},
@@ -176,7 +176,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 		{
 			"afile",
 			bundle.Parameter{
-				Definition: "afile",
+				Definition: "afile-parameter",
 				Destination: &bundle.Location{
 					Path: "/root/.kube/config",
 				},
@@ -194,7 +194,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			param, ok := params[tc.propname]
 			require.True(t, ok, "parameter definition was not generated")
 
-			def, ok := defs[tc.propname]
+			def, ok := defs[param.Definition]
 			require.True(t, ok, "property definition was not generated")
 
 			assert.Equal(t, tc.wantParam, param)
@@ -217,10 +217,10 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 
 	debugParam, ok := params["porter-debug"]
 	assert.True(t, ok, "porter-debug parameter was not defined")
-	assert.Equal(t, "porter-debug", debugParam.Definition)
+	assert.Equal(t, "porter-debug-parameter", debugParam.Definition)
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
 
-	debugDef, ok := defs["porter-debug"]
+	debugDef, ok := defs["porter-debug-parameter"]
 	require.True(t, ok, "porter-debug definition was not defined")
 	assert.Equal(t, "boolean", debugDef.Type)
 	assert.Equal(t, false, debugDef.Default)
@@ -331,7 +331,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 
 	wantOutputDefinitions := map[string]bundle.Output{
 		"output1": {
-			Definition:  "output1",
+			Definition:  "output1-output",
 			Description: "Description of output1",
 			ApplyTo: []string{
 				"install",
@@ -340,7 +340,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Path: "/cnab/app/outputs/output1",
 		},
 		"output2": {
-			Definition:  "output2",
+			Definition:  "output2-output",
 			Description: "Description of output2",
 			Path:        "/cnab/app/outputs/output2",
 		},
@@ -349,89 +349,12 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	require.Equal(t, wantOutputDefinitions, outputs)
 
 	wantDefinitions := definition.Definitions{
-		"output1": &definition.Schema{
+		"output1-output": &definition.Schema{
 			Type:        "string",
 			Description: "Description of output1",
 			WriteOnly:   toBool(true),
 		},
-		"output2": &definition.Schema{
-			Type:        "boolean",
-			Description: "Description of output2",
-		},
-	}
-
-	require.Equal(t, wantDefinitions, defs)
-}
-
-func TestManifestConverter_generateBundleOutputs_preexistingDefinition(t *testing.T) {
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
-
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	a := NewManifestConverter(c.Context, m, nil)
-
-	outputDefinitions := []manifest.OutputDefinition{
-		{
-			Name: "output1",
-			ApplyTo: []string{
-				"install",
-				"upgrade",
-			},
-			Schema: definition.Schema{
-				Type:        "string",
-				Default:     "default-output",
-				Description: "Description of output1",
-			},
-		},
-		{
-			Name: "output2",
-			Schema: definition.Schema{
-				Type:        "boolean",
-				Description: "Description of output2",
-			},
-		},
-	}
-
-	a.Manifest.Outputs = outputDefinitions
-
-	defs := make(definition.Definitions, len(a.Manifest.Outputs))
-
-	// Create pre-existing definition, for instance, if already created
-	// for a Parameter Definition
-	defs["output1"] = &definition.Schema{
-		Default: "preexisting-default-output",
-	}
-
-	outputs := a.generateBundleOutputs(&defs)
-	require.Len(t, defs, 2)
-
-	wantOutputDefinitions := map[string]bundle.Output{
-		"output1": {
-			Definition:  "output1",
-			Description: "Description of output1",
-			ApplyTo: []string{
-				"install",
-				"upgrade",
-			},
-			Path: "/cnab/app/outputs/output1",
-		},
-		"output2": {
-			Definition:  "output2",
-			Description: "Description of output2",
-			Path:        "/cnab/app/outputs/output2",
-		},
-	}
-
-	require.Equal(t, wantOutputDefinitions, outputs)
-
-	// Here we see that the pre-existing output1 definition is preserved
-	wantDefinitions := definition.Definitions{
-		"output1": &definition.Schema{
-			Default: "preexisting-default-output",
-		},
-		"output2": &definition.Schema{
+		"output2-output": &definition.Schema{
 			Type:        "boolean",
 			Description: "Description of output2",
 		},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/printer"

@@ -241,6 +241,26 @@ func TestValidateParameterDefinition(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestValidateOutputDefinition(t *testing.T) {
+	od := OutputDefinition{
+		Name: "myoutput",
+		Schema: definition.Schema{
+			Type: "file",
+		},
+	}
+
+	err := od.Validate()
+	assert.EqualError(t, err, `1 error occurred:
+	* no path supplied for output myoutput
+
+`)
+
+	od.Path = "/path/to/file"
+
+	err = od.Validate()
+	assert.NoError(t, err)
+}
+
 func TestValidateImageMap(t *testing.T) {
 	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
