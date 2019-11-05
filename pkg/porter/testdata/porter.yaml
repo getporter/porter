@@ -11,6 +11,12 @@ credentials:
     description: "My second cred"
     path: /path/to/my-second-cred
 
+images: 
+   something:
+      description: "an image"
+      imageType: "docker"
+      repository: "deislabs/boo"
+
 parameters:
   - name: my-first-param
     type: integer
