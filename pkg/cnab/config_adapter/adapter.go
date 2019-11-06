@@ -5,14 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/mixin"
-
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/porter/pkg/cnab/extensions"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/manifest"
+	"github.com/deislabs/porter/pkg/mixin"
 )
 
 const SchemaVersion = "v1.0.0"
