@@ -7,3 +7,5 @@
 .cnab
 examples/**/Dockerfile
 workshop/**/Dockerfile
+
+.vscode
