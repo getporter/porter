@@ -56,7 +56,6 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-
 	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
 
 	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
