@@ -275,8 +275,8 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
-	porter bundle publish --insecure
-	porter bundle publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
+  porter bundle publish --insecure
+  porter bundle publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
