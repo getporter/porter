@@ -173,13 +173,13 @@ These images will be used to build the `bundle.json` images section, but can als
       name: porter-ci-wordpress
       chart: stable/wordpress
       set:
-        image.repository: "{{ bundle.parameters.ALIAS.repository }}"
-        image.tag: "{{ bundle.parameters.ALIAS.tag }}"
+        image.repository: "{{ bundle.images.ALIAS.repository }}"
+        image.tag: "{{ bundle.images.ALIAS.tag }}"
 ```
 
 ## Using Parameters, Credentials, and Outputs from Bundle Dependencies
 
-When using a bundle dependency, you can reference parameters, credentials and outputs in a similar way. To reference things from a dependency, you simply need to use another form of the `"{{  bubdle.x.y.z }}"` syntax.
+When using a bundle dependency, you can reference parameters, credentials and outputs in a similar way. To reference things from a dependency, you simply need to use another form of the `"{{  bundle.x.y.z }}"` syntax.
 
 For example, consider a bundle that creates a mysql defined with the following `porter.yaml`:
 
