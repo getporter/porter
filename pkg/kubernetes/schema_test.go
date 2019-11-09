@@ -36,12 +36,17 @@ func TestMixin_ValidatePayload(t *testing.T) {
 		error string
 	}{
 		{"install", "testdata/install-input.yaml", true, ""},
+		{"install", "testdata/install-input-manifests-and-kustomizes.yaml", true, ""},
+		{"install", "testdata/install-input-only-kustomizes.yaml", true, ""},
 		{"upgrade", "testdata/upgrade-input.yaml", true, ""},
 		{"invoke", "testdata/invoke-input.yaml", true, ""},
 		{"uninstall", "testdata/uninstall-input.yaml", true, ""},
+		{"uninstall", "testdata/uninstall-input-only-kustomizes.yaml", true, ""},
+		{"uninstall", "testdata/uninstall-input-manifests-and-kustomizes.yaml", true, ""},
 		{"install-bad-wait-flag", "testdata/install-input-bad-wait-flag.yaml", false, "install.0.kubernetes.wait: Invalid type. Expected: boolean, given: string"},
 		{"install-no-manifests", "testdata/install-input-no-manifests.yaml", false, "install.0.kubernetes: manifests is required"},
 		{"install-bad-outputs", "testdata/install-input-bad-outputs.yaml", false, "install.0.kubernetes.outputs.0: resourceType is required\n\t* install.0.kubernetes.outputs.0: resourceName is required\n\t* install.0.kubernetes.outputs.0: jsonPath is required"},
+		{"install-input-no-description", "testdata/install-input-no-description.yaml", false, "install.0.kubernetes: description is required"},
 	}
 
 	for _, tc := range testcases {

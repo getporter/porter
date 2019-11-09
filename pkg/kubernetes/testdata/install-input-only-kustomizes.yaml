@@ -1,0 +1,7 @@
+install:
+  - kubernetes:
+      description: "Install foo and bar App"
+      kustomizes:
+        - /cnab/app/kustomizes/foo
+        - /cnab/app/kustomizes/bar
+      wait: true

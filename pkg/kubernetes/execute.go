@@ -80,7 +80,16 @@ func (m *Mixin) Execute() error {
 	var commands []*exec.Cmd
 
 	for _, manifestPath := range step.Manifests {
-		commandPayload, err := m.buildExecuteCommand(step.ExecuteInstruction, manifestPath)
+		commandPayload, err := m.buildExecuteCommand(step.ExecuteInstruction, manifestPath, false)
+		if err != nil {
+			return err
+		}
+		cmd := m.NewCommand("kubectl", commandPayload...)
+		commands = append(commands, cmd)
+	}
+
+	for _, kustomize := range step.Kustomizes {
+		commandPayload, err := m.buildExecuteCommand(step.ExecuteInstruction, kustomize, true)
 		if err != nil {
 			return err
 		}
@@ -108,8 +117,8 @@ func (m *Mixin) Execute() error {
 	return err
 }
 
-func (m *Mixin) buildExecuteCommand(args ExecuteInstruction, manifestPath string) ([]string, error) {
-	command, err := m.buildInstallCommand(args.InstallArguments, manifestPath)
+func (m *Mixin) buildExecuteCommand(args ExecuteInstruction, path string, isKustomize bool) ([]string, error) {
+	command, err := m.buildInstallCommand(args.InstallArguments, path, isKustomize)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create upgrade command")
 	}
