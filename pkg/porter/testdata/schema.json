@@ -80,6 +80,53 @@
       ],
       "type": "object"
     },
+    "image": {
+      "additionalProperties": false,
+      "description": "An image represents an application image used in a bundle",
+      "properties": {
+        "description": {
+          "description": "A user-friendly description of this image",
+          "type": "string"
+        },
+        "digest": {
+          "description": "The digest of the image, i.e. sha256:cafebabe...",
+          "type": "string"
+        },
+        "imageType": {
+          "description": "The type of this image, i.e. docker",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Key/value pairs that used to specify identifying attributes of images",
+          "type": "object"
+        },
+        "mediaType": {
+          "description": "The media type of the image",
+          "type": "string"
+        },
+        "repository": {
+          "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
+          "type": "string"
+        },
+        "size": {
+          "description": "The size of the image",
+          "type": "integer"
+        },
+        "tag": {
+          "description": "The tag the image",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "imageType",
+        "repository"
+      ],
+      "type": "object"
+    },
     "output": {
       "description": "A value that is produced by running an invocation image",
       "properties": {
@@ -324,6 +371,12 @@
     "dockerfile": {
       "description": "The relative path to a Dockerfile to use as a template during porter build",
       "type": "string"
+    },
+    "images": {
+      "additionalProperties": {
+        "$ref": "#/definitions/image"
+      },
+      "type": "object"
     },
     "install": {
       "items": {

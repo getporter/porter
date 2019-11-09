@@ -5,7 +5,7 @@ import (
 	inmemory "github.com/deislabs/porter/pkg/instance-storage/in-memory"
 )
 
-var _ Provider = &TestInstanceStorageProvider{}
+var _ StorageProvider = &TestInstanceStorageProvider{}
 
 type TestInstanceStorageProvider struct {
 	ClaimStore

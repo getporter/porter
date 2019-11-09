@@ -7,7 +7,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-const PluginKey = "instance-store"
+// PluginInterface for the instance-store interface.
+const PluginInterface = "instance-store"
 
 var _ plugin.Plugin = &Plugin{}
 

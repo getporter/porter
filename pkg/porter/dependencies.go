@@ -20,7 +20,7 @@ type dependencyExecutioner struct {
 	Manifest        *manifest.Manifest
 	Resolver        BundleResolver
 	CNAB            CNABProvider
-	InstanceStorage instancestorage.Provider
+	InstanceStorage instancestorage.StorageProvider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
