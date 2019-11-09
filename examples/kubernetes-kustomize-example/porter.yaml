@@ -1,0 +1,56 @@
+mixins:
+  - exec
+  - kubernetes
+
+credentials:
+  - name: kubeconfig
+    path: /root/.kube/config
+
+name: PORTER_KUSTOMIZE 
+version: 0.1.0
+description: "An example Porter bundle with Kubernetes Kustomize"
+invocationImage: deislabs/porter-kustomize:latest
+tag: deislabs/porter-kustomize-bundle:v0.1.0
+#dockerfile: Dockerfile.tmpl
+
+install:
+  - kubernetes:
+      description: "Create production and staging apps"
+      kustomizes:
+        - kustomize/overlays/production
+        - kustomize/overlays/staging
+      wait: true
+      outputs:
+        - name: PROD_IP_ADDRESS
+          resourceType: service
+          resourceName: production-the-service 
+          jsonPath: "{.spec.clusterIP}"
+        - name: STAGE_IP_ADDRESS
+          resourceType: service
+          resourceName: staging-the-service 
+          jsonPath: "{.spec.clusterIP}"
+  - exec:
+      description: "Echo the PROD IP Address"
+      command: bash
+      flags:
+        c: "echo 'You will find the production service at: {{bundle.outputs.PROD_IP_ADDRESS}}'"
+
+  - exec:
+      description: "Echo the STAGE IP Address"
+      command: bash
+      flags:
+        c: "echo 'You will find the staging service at: {{bundle.outputs.STAGE_IP_ADDRESS}}'"
+
+uninstall:
+  - kubernetes:
+      description: "Uninstall production and staging apps"
+      kustomizes:
+        - kustomize/overlays/production
+        - kustomize/overlays/staging
+      wait: true
+
+#outputs:
+#  - name: PROD_IP_ADDRESS
+#    type: string
+#  - name: STAGE_IP_ADDRESS
+#    type: string
