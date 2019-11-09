@@ -21,8 +21,9 @@ type UninstallStep struct {
 type UninstallArguments struct {
 	Step `yaml:",inline"`
 
-	Namespace string   `yaml:"namespace"`
-	Manifests []string `yaml:"manifests,omitempty"`
+	Namespace  string   `yaml:"namespace"`
+	Manifests  []string `yaml:"manifests,omitempty"`
+	Kustomizes []string `yaml:"kustomizes,omitempty"`
 
 	Force       *bool  `yaml:force,omitempty"`
 	GracePeriod *int   `yaml:"gracePeriod,omitempty"`
@@ -52,7 +53,16 @@ func (m *Mixin) Uninstall() error {
 	var commands []*exec.Cmd
 
 	for _, manifestPath := range step.Manifests {
-		commandPayload, err := m.buildUninstallCommand(step.UninstallArguments, manifestPath)
+		commandPayload, err := m.buildUninstallCommand(step.UninstallArguments, manifestPath, false)
+		if err != nil {
+			return err
+		}
+		cmd := m.NewCommand("kubectl", commandPayload...)
+		commands = append(commands, cmd)
+	}
+
+	for _, kustomize := range step.Kustomizes {
+		commandPayload, err := m.buildUninstallCommand(step.UninstallArguments, kustomize, true)
 		if err != nil {
 			return err
 		}
@@ -77,8 +87,13 @@ func (m *Mixin) Uninstall() error {
 	return nil
 }
 
-func (m *Mixin) buildUninstallCommand(args UninstallArguments, manifestPath string) ([]string, error) {
-	command := []string{"delete", "-f", manifestPath}
+func (m *Mixin) buildUninstallCommand(args UninstallArguments, path string, isKustomize bool) ([]string, error) {
+	var command []string
+	if isKustomize {
+		command = []string{"delete", "-k", path}
+	} else {
+		command = []string{"delete", "-f", path}
+	}
 	if args.Namespace != "" {
 		command = append(command, "-n", args.Namespace)
 	}

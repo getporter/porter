@@ -21,6 +21,13 @@
                 "minItems": 1
               }
             },
+            "kustomizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
             "record": {
               "type": "boolean"
             },
@@ -40,8 +47,16 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "description", "manifests"
+          "allOf": [
+            {
+              "required": [ "description" ]
+            },
+            {
+              "anyOf": [
+                { "required": [ "manifests" ] },
+                { "required": [ "kustomizes" ] }
+              ]
+            }
           ]
         }
       },
@@ -70,6 +85,13 @@
                 "minItems": 1
               }
             },
+            "kustomizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
             "force": {
               "type": ["boolean","null"]
             },
@@ -106,8 +128,16 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "description", "manifests"
+          "allOf": [
+            {
+              "required": [ "description" ]
+            },
+            {
+              "anyOf": [
+                { "required": [ "manifests" ] },
+                { "required": [ "kustomizes" ] }
+              ]
+            }
           ]
         }
       },
@@ -136,6 +166,13 @@
                 "minItems": 1
               }
             },
+            "kustomizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
             "force": {
               "type": ["boolean","null"]
             },
@@ -172,8 +209,16 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "description", "manifests"
+          "allOf": [
+            {
+              "required": [ "description" ]
+            },
+            {
+              "anyOf": [
+                { "required": [ "manifests" ] },
+                { "required": [ "kustomizes" ] }
+              ]
+            }
           ]
         }
       },
@@ -202,6 +247,13 @@
                 "minItems": 1
               }
             },
+            "kustomizes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
             "force": {
               "type": ["boolean","null"]
             },
@@ -220,8 +272,16 @@
             }
           },
           "additionalProperties": false,
-          "required": [
-            "description", "manifests"
+          "allOf": [
+            {
+              "required": [ "description" ]
+            },
+            {
+              "anyOf": [
+                { "required": [ "manifests" ] },
+                { "required": [ "kustomizes" ] }
+              ]
+            }
           ]
         }
       },

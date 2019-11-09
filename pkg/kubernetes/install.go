@@ -21,12 +21,13 @@ type InstallStep struct {
 type InstallArguments struct {
 	Step `yaml:",inline"`
 
-	Namespace string   `yaml:"namespace"`
-	Manifests []string `yaml:"manifests,omitempty"`
-	Record    *bool    `yaml:"record,omitempty"`
-	Selector  string   `yaml:"selector,omitempty"`
-	Validate  *bool    `yaml:"validate,omitempty"`
-	Wait      *bool    `yaml:"wait,omitempty"`
+	Namespace  string   `yaml:"namespace"`
+	Manifests  []string `yaml:"manifests,omitempty"`
+	Record     *bool    `yaml:"record,omitempty"`
+	Selector   string   `yaml:"selector,omitempty"`
+	Validate   *bool    `yaml:"validate,omitempty"`
+	Wait       *bool    `yaml:"wait,omitempty"`
+	Kustomizes []string `yaml:"kustomizes,omitempty"`
 }
 
 func (m *Mixin) Install() error {
@@ -48,7 +49,16 @@ func (m *Mixin) Install() error {
 	var commands []*exec.Cmd
 
 	for _, manifestPath := range step.Manifests {
-		commandPayload, err := m.buildInstallCommand(step.InstallArguments, manifestPath)
+		commandPayload, err := m.buildInstallCommand(step.InstallArguments, manifestPath, false)
+		if err != nil {
+			return err
+		}
+		cmd := m.NewCommand("kubectl", commandPayload...)
+		commands = append(commands, cmd)
+	}
+
+	for _, kustomize := range step.Kustomizes {
+		commandPayload, err := m.buildInstallCommand(step.InstallArguments, kustomize, true)
 		if err != nil {
 			return err
 		}
@@ -86,8 +96,14 @@ func (m *Mixin) getInstallStep(payload []byte) (*InstallStep, error) {
 	return &step, nil
 }
 
-func (m *Mixin) buildInstallCommand(step InstallArguments, manifestPath string) ([]string, error) {
-	command := []string{"apply", "-f", manifestPath}
+func (m *Mixin) buildInstallCommand(step InstallArguments, path string, isKustomize bool) ([]string, error) {
+	var command []string
+	if isKustomize {
+		command = []string{"apply", "-k", path}
+	} else {
+		command = []string{"apply", "-f", path}
+	}
+
 	if step.Namespace != "" {
 		command = append(command, "-n", step.Namespace)
 	}

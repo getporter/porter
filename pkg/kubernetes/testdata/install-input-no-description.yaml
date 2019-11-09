@@ -1,0 +1,5 @@
+install:
+  - kubernetes:
+      manifests:
+        - /cnab/app/manifests/hello
+      wait: true
