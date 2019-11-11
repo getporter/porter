@@ -192,6 +192,83 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	assert.Equal(t, want, string(bytes))
 }
 
+func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
+	const srcPath = "/root/.kube/config"
+	const outputName = "kubeconfig"
+
+	testcases := []struct {
+		name       string
+		shouldBind bool
+		def        manifest.OutputDefinition
+	}{
+		{name: "file with applyto",
+			shouldBind: true,
+			def: manifest.OutputDefinition{
+				Name: outputName,
+				ApplyTo: []string{
+					"install",
+				},
+				Schema: definition.Schema{
+					Type: "file",
+				},
+				Path: srcPath,
+			},
+		},
+		{name: "file no applyto",
+			shouldBind: true,
+			def: manifest.OutputDefinition{
+				Name: outputName,
+				Schema: definition.Schema{
+					Type: "file",
+				},
+				Path: srcPath,
+			},
+		},
+		{name: "not file",
+			shouldBind: true,
+			def: manifest.OutputDefinition{
+				Name: outputName,
+				Schema: definition.Schema{
+					Type: "string",
+				},
+				Path: srcPath,
+			},
+		},
+		{name: "file no path",
+			shouldBind: false,
+			def: manifest.OutputDefinition{
+				Name: outputName,
+				Schema: definition.Schema{
+					Type: "string",
+				},
+				Path: "",
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := NewTestPorterRuntime(t)
+			m := &manifest.Manifest{
+				Name: "mybun",
+				Outputs: []manifest.OutputDefinition{
+					tc.def,
+				},
+			}
+			r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+
+			_, err := r.FileSystem.Create(srcPath)
+			require.NoError(t, err)
+
+			err = r.applyUnboundBundleOutputs()
+			require.NoError(t, err)
+
+			exists, _ := r.FileSystem.Exists("/cnab/app/outputs/" + outputName)
+			assert.Equal(t, exists, tc.shouldBind)
+		})
+	}
+}
+
 func TestPorterRuntime_LoadImageMappingFilesNoRelo(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	r.TestContext.AddTestFile("testdata/bundle-images.json", "/cnab/bundle.json")

@@ -113,6 +113,11 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		}
 	}
 
+	err = r.applyUnboundBundleOutputs()
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintln(r.Out, "execution completed successfully!")
 	return nil
 }
@@ -151,6 +156,39 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 			}
 		}
 	}
+	return nil
+}
+
+// applyUnboundBundleOutputs find outputs that haven't been bound yet by a step,
+// and if they can be bound, i.e. they grab a file from the bundle's filesystem,
+// apply the output.
+func (r *PorterRuntime) applyUnboundBundleOutputs() error {
+	err := r.createOutputsDir()
+	if err != nil {
+		return err
+	}
+
+	outputs := r.RuntimeManifest.GetOutputs()
+	for _, outputDef := range r.RuntimeManifest.Outputs {
+		// Ignore outputs that have already been set
+		if _, hasOutput := outputs[outputDef.Name]; hasOutput {
+			continue
+		}
+
+		// We can only deal with outputs that are based on a file right now
+		if outputDef.Path == "" {
+			continue
+		}
+
+		if r.shouldApplyOutput(outputDef) {
+			outpath := filepath.Join(config.BundleOutputsDir, outputDef.Name)
+			err = r.CopyFile(outputDef.Path, outpath)
+			if err != nil {
+				return errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath)
+			}
+		}
+	}
+
 	return nil
 }
 

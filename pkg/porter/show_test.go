@@ -76,11 +76,11 @@ Last Action: install
 Last Status: success
 
 Outputs:
------------------------------------------
-  Name  Type    Value (Path if sensitive)  
------------------------------------------
-  bar   string  bar-output                 
-  foo   string  /path/to/foo               
+----------------------------
+  Name  Type    Value         
+----------------------------
+  bar   string  bar-output    
+  foo   string  /path/to/foo  
 `
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

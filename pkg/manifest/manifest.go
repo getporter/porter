@@ -322,23 +322,50 @@ type OutputDefinition struct {
 	ApplyTo   []string `yaml:"applyTo,omitempty"`
 	Sensitive bool     `yaml:"sensitive"`
 
+	// This is not in the CNAB spec, but it allows a mixin to create a file
+	// and porter will take care of making it a proper output.
+	Path string `yaml:"path,omitempty"`
+
 	definition.Schema `yaml:",inline"`
 }
 
+// DeepCopy copies a ParameterDefinition and returns the copy
+func (od *OutputDefinition) DeepCopy() *OutputDefinition {
+	var o2 OutputDefinition
+	o2 = *od
+	o2.ApplyTo = make([]string, len(od.ApplyTo))
+	copy(o2.ApplyTo, od.ApplyTo)
+	return &o2
+}
+
 func (od *OutputDefinition) Validate() error {
+	var result *multierror.Error
+
 	if od.Name == "" {
 		return errors.New("output name is required")
 	}
 
-	schemaValidationErrs, err := od.Schema.Validate(od)
-	if err != nil {
-		return errors.Wrapf(err, "encountered error while validating output %s", od.Name)
-	}
-	if len(schemaValidationErrs) != 0 {
-		return errors.Wrapf(err, "encountered validation error(s) for output %s: %v", od.Name, schemaValidationErrs)
+	// Porter supports declaring an output of type: "file",
+	// which we will convert to the appropriate type in adapter.go
+	// Here, we copy the definition and make the same modification before validation
+	odCopy := od.DeepCopy()
+	if odCopy.Type == "file" {
+		if od.Path == "" {
+			result = multierror.Append(result, fmt.Errorf("no path supplied for output %s", od.Name))
+		}
+		odCopy.Type = "string"
+		odCopy.ContentEncoding = "base64"
 	}
 
-	return nil
+	schemaValidationErrs, err := odCopy.Schema.Validate(od)
+	if err != nil {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating output %s", odCopy.Name))
+	}
+	for _, schemaValidationErr := range schemaValidationErrs {
+		result = multierror.Append(result, errors.Wrapf(err, "encountered validation error(s) for output %s: %v", odCopy.Name, schemaValidationErr))
+	}
+
+	return result.ErrorOrNil()
 }
 
 type BundleOutput struct {
