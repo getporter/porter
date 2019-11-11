@@ -82,26 +82,99 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	return nil
 }
 
+type DisplayOutput struct {
+	Name         string
+	Definition   definition.Schema
+	Value        interface{}
+	DisplayValue string
+	Type         string
+}
+
 // ListBundleOutputs lists the outputs for a given bundle,
 // according to the provided options
-func (p *Porter) ListBundleOutputs(opts *OutputListOptions) error {
+func (p *Porter) ListBundleOutputs(c claim.Claim) []DisplayOutput {
+	// Get sorted keys for ordered printing
+	keys := make([]string, 0, len(c.Outputs))
+	for k := range c.Outputs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	outputs := make([]DisplayOutput, 0, len(c.Outputs))
+	// Iterate through all Bundle Outputs, fetch their metadata
+	// via their corresponding Definitions and add to rows
+	for _, name := range keys {
+		do := DisplayOutput{Name: name}
+
+		var outputType string
+		valueStr := fmt.Sprintf("%v", c.Outputs[name])
+
+		if c.Bundle == nil {
+			continue
+		}
+
+		output, exists := c.Bundle.Outputs[name]
+		if !exists {
+			continue
+		}
+
+		def, exists := c.Bundle.Definitions[output.Definition]
+		if !exists {
+			continue
+		}
+		do.Definition = *def
+
+		if def.WriteOnly != nil && *def.WriteOnly {
+			valueStr = output.Path
+		}
+
+		outputType, _, err := def.GetType()
+		if err != nil {
+			// Do not have the entire listing fail because of one output type error
+			if p.Debug {
+				fmt.Fprintf(p.Err, "unable to get output type for %s\n", name)
+			}
+			outputType = "unknown"
+		}
+		do.Type = outputType
+
+		// Try to figure out if this was originally a file output. Long term, we should find a way to find
+		// and crack open the invocation image to get the porter.yaml
+		if do.Type == "string" && do.Definition.ContentEncoding == "base64" {
+			do.Type = "file"
+		}
+
+		do.DisplayValue = truncateString(valueStr, 60)
+
+		outputs = append(outputs, do)
+	}
+
+	return outputs
+}
+
+func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
 	}
 
-	c, err := p.InstanceStorage.Read(opts.sharedOptions.Name)
+	c, err := p.InstanceStorage.Read(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	outputs := p.ListBundleOutputs(c)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, c.Outputs)
+		return printer.PrintJson(p.Out, outputs)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, c.Outputs)
+		return printer.PrintYaml(p.Out, outputs)
 	case printer.FormatTable:
-		return p.printOutputsTable(c)
+		return p.printOutputsTable(outputs)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -120,49 +193,7 @@ func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
 	return "", fmt.Errorf("unable to read output %q for bundle instance %q", name, claim)
 }
 
-func (p *Porter) printOutputsTable(c claim.Claim) error {
-	var rows [][]string
-
-	// Get sorted keys for ordered printing
-	keys := make([]string, 0, len(c.Outputs))
-	for k := range c.Outputs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	// Iterate through all Bundle Outputs, fetch their metadata
-	// via their corresponding Definitions and add to rows
-	for _, name := range keys {
-		var outputType string
-		valueStr := fmt.Sprintf("%v", c.Outputs[name])
-
-		if c.Bundle == nil {
-			continue
-		}
-
-		output, exists := c.Bundle.Outputs[name]
-		if !exists {
-			continue
-		}
-
-		def, exists := c.Bundle.Definitions[output.Definition]
-		if !exists {
-			continue
-		}
-
-		if def.WriteOnly != nil && *def.WriteOnly {
-			valueStr = output.Path
-		}
-
-		outputType, _, err := def.GetType()
-		if err != nil {
-			return errors.Wrapf(err, "unable to get output type for %s", name)
-		}
-
-		truncatedValue := truncateString(valueStr, 60)
-		rows = append(rows, []string{name, outputType, truncatedValue})
-	}
-
+func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {
 	// Build and configure our tablewriter for the outputs
 	table := tablewriter.NewWriter(p.Out)
 	table.SetCenterSeparator("")
@@ -173,9 +204,9 @@ func (p *Porter) printOutputsTable(c claim.Claim) error {
 	table.SetAutoFormatHeaders(false)
 
 	// Print the outputs table
-	table.SetHeader([]string{"Name", "Type", "Value (Path if sensitive)"})
-	for _, row := range rows {
-		table.Append(row)
+	table.SetHeader([]string{"Name", "Type", "Value"})
+	for _, output := range outputs {
+		table.Append([]string{output.Name, output.Type, output.DisplayValue})
 	}
 	table.Render()
 

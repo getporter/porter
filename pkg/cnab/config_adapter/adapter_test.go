@@ -321,13 +321,21 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 				Description: "Description of output2",
 			},
 		},
+		{
+			Name: "kubeconfig",
+			Path: "/root/.kube/config",
+			Schema: definition.Schema{
+				Type:        "file",
+				Description: "Description of kubeconfig",
+			},
+		},
 	}
 
 	a.Manifest.Outputs = outputDefinitions
 
 	defs := make(definition.Definitions, len(a.Manifest.Outputs))
 	outputs := a.generateBundleOutputs(&defs)
-	require.Len(t, defs, 2)
+	require.Len(t, defs, 3)
 
 	wantOutputDefinitions := map[string]bundle.Output{
 		"output1": {
@@ -344,6 +352,11 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Description: "Description of output2",
 			Path:        "/cnab/app/outputs/output2",
 		},
+		"kubeconfig": {
+			Definition:  "kubeconfig-output",
+			Description: "Description of kubeconfig",
+			Path:        "/cnab/app/outputs/kubeconfig",
+		},
 	}
 
 	require.Equal(t, wantOutputDefinitions, outputs)
@@ -357,6 +370,11 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 		"output2-output": &definition.Schema{
 			Type:        "boolean",
 			Description: "Description of output2",
+		},
+		"kubeconfig-output": &definition.Schema{
+			Type:            "string",
+			ContentEncoding: "base64",
+			Description:     "Description of kubeconfig",
 		},
 	}
 
