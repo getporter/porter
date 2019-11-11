@@ -9,6 +9,7 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Mixins](#mixins)
 * [Parameters](#parameters)
 * [Outputs](#outputs)
+* [Parameter and Output Schema](#parameter-and-output-schema)
 * [Credentials](#credentials)
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
@@ -124,19 +125,40 @@ outputs:
 * `description`: (Optional) A brief description of the given output.
 * `sensitive`: (Optional) Designate an output as sensitive. Defaults to false.
 
-### Definition Schema for Parameters and Outputs
+### Parameter and Output Schema
 
 The [CNAB Spec for definitions](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions)
-applies to both parameters and outputs.  It has full support for [json schema](https://json-schema.org). We aren't
-quite there yet but are working towards it. Here is what Porter supports for defining schema for parameters and outputs
-currently:
+applies to both parameters and outputs.  Parameters and outputs can use [json schema 7](https://json-schema.org) 
+properties to describe acceptable values. Porter uses a slightly [modified schema][json-schema] because CNAB disallows 
+non-integer values.
 
-* `default`: The default value for the parameter. When a default is not provided, the `required` is defaulted to true.
-* `required`: Specify if the parameter must be specified when the bundle is executed.
+Below are a few examples of common json schema properties and how they are used by Porter:
+
+* `default`: The default value for the parameter. When a default is not provided, the parameter is required.
 * `enum`: A list of allowed values.
 * [Numeric Range](https://json-schema.org/understanding-json-schema/reference/numeric.html?highlight=minimum#range) 
     using `minimum`, `maximum`, `exclusiveMinimum` and `exclusiveMaximum`.
 * String length using `minLength` and `maxLength`.
+
+```yaml
+parameters:
+- name: color
+  type: string
+  default: blue
+  enum:
+  - red
+  - green
+  - blue
+- name: size
+  type: integer
+  minimum: 1
+  maximum: 11
+- name: label
+  type: string
+  minLength: 3
+```
+
+[json-schema]: https://github.com/deislabs/cnab-spec/blob/master/schema/definitions.schema.json
 
 ## Credentials
 
