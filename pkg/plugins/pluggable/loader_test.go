@@ -27,7 +27,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("internal plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			InstanceStoragePlugin: "filesystem",
+			StoragePlugin: "filesystem",
 		}
 
 		err := l.selectPlugin(pluginCfg)
@@ -39,7 +39,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("external plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			InstanceStoragePlugin: "azure.blob",
+			StoragePlugin: "azure.blob",
 		}
 
 		err := l.selectPlugin(pluginCfg)

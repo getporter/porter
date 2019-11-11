@@ -1,8 +1,8 @@
-package instancestorage
+package storage
 
 import (
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/instance-storage/claimstore"
+	"get.porter.sh/porter/pkg/storage/claimstore"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/utils/crud"

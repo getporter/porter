@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/stretchr/testify/require"
 )

@@ -1,4 +1,4 @@
-package instancestorage
+package storage
 
 import (
 	"github.com/cnabio/cnab-go/claim"

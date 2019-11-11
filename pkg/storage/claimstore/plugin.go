@@ -7,8 +7,10 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-// PluginInterface for the instance-store interface.
-const PluginInterface = "instance-store"
+// PluginInterface for the claim storage. This first part of the
+// three-part plugin key is only seen/used by the plugins when the host is
+// communicating with the plugin and is not exposed to users.
+const PluginInterface = "storage"
 
 var _ plugin.Plugin = &Plugin{}
 

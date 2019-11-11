@@ -9,9 +9,7 @@ import (
 	"testing"
 
 	instancestorage "get.porter.sh/porter/pkg/instance-storage"
-
 	"get.porter.sh/porter/pkg/manifest"
-
 	buildprovider "get.porter.sh/porter/pkg/build/provider"
 	"get.porter.sh/porter/pkg/cache"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"

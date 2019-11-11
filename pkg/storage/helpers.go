@@ -1,4 +1,4 @@
-package instancestorage
+package storage
 
 import (
 	inmemory "get.porter.sh/porter/pkg/instance-storage/in-memory"

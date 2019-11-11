@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/instance-storage"/filesystem"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/hashicorp/go-hclog"

@@ -30,6 +30,6 @@ type PluginTypeConfig struct {
 	GetPluggable func(datastore *config.Data, name string) (Entry, error)
 
 	// GetDefaultPlugin is the function on porter's config.Data
-	// to retrieve the default plugin to use for a type of plugin, e.g. "instance-storage-plugin"
+	// to retrieve the default plugin to use for a type of plugin, e.g. "storage-plugin"
 	GetDefaultPlugin func(datastore *config.Data) string
 }

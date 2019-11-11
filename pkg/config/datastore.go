@@ -6,9 +6,9 @@ import "errors"
 type Data struct {
 	// Only define fields here that you need to access from code
 	// Values are dynamically applied to flags and don't need to be defined
-	InstanceStoragePlugin string          `mapstructure:"instance-storage-plugin"`
-	DefaultInstanceStore  string          `mapstructure:"default-instance-store"`
-	InstanceStores        []InstanceStore `mapstructure:"instance-store"`
+	StoragePlugin        string          `mapstructure:"storage-plugin"`
+	DefaultInstanceStore string          `mapstructure:"default-instance-store"`
+	InstanceStores       []InstanceStore `mapstructure:"instance-store"`
 }
 
 type InstanceStore struct {
@@ -30,11 +30,11 @@ func (is InstanceStore) GetConfig() interface{} {
 }
 
 func (d *Data) GetInstanceStoragePlugin() string {
-	if d == nil || d.InstanceStoragePlugin == "" {
+	if d == nil || d.StoragePlugin == "" {
 		return "filesystem"
 	}
 
-	return d.InstanceStoragePlugin
+	return d.StoragePlugin
 }
 
 func (d *Data) GetDefaultInstanceStore() string {
