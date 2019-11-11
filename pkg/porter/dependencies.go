@@ -8,9 +8,9 @@ import (
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -19,9 +19,9 @@ type dependencyExecutioner struct {
 	*context.Context
 	// See https://github.com/deislabs/porter/issues/799
 	// Manifest        *manifest.Manifest
-	Resolver        BundleResolver
-	CNAB            CNABProvider
-	InstanceStorage instancestorage.StorageProvider
+	Resolver BundleResolver
+	CNAB     CNABProvider
+	Claims   storage.ClaimProvider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
@@ -38,9 +38,9 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Context: p.Context,
 		// See https://github.com/deislabs/porter/issues/799
 		// Manifest:        p.Manifest,
-		Resolver:        resolver,
-		CNAB:            p.CNAB,
-		InstanceStorage: p.InstanceStorage,
+		Resolver: resolver,
+		CNAB:     p.CNAB,
+		Claims:   p.Claims,
 	}
 }
 
@@ -251,7 +251,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	// If action is uninstall, no claim will exist
 	if action != manifest.ActionUninstall {
 		// Collect expected outputs via claim
-		c, err := e.InstanceStorage.Read(depArgs.Claim)
+		c, err := e.Claims.Read(depArgs.Claim)
 		if err != nil {
 			return err
 		}

@@ -2,10 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"reflect"
-	"sort"
 	"strings"
 	"time"
 
@@ -26,97 +22,18 @@ type CredentialShowOptions struct {
 	Name string
 }
 
-// CredentialsFile represents a CNAB credentials file and corresponding metadata
-type CredentialsFile struct {
-	Name     string
-	Modified time.Time
-}
-
-// CredentialsFileList is a slice of CredentialsFiles
-type CredentialsFileList []CredentialsFile
-
-func (l CredentialsFileList) Len() int {
-	return len(l)
-}
-func (l CredentialsFileList) Swap(i, j int) {
-	l[i], l[j] = l[j], l[i]
-}
-func (l CredentialsFileList) Less(i, j int) bool {
-	return l[i].Modified.Before(l[j].Modified)
-}
-
-// fetchCredential returns a *credentials.CredentialsSet according to the supplied
-// credential name, or an error if encountered
-func (p *Porter) fetchCredential(name string) (*credentials.CredentialSet, error) {
-	credsDir, err := p.Config.GetCredentialsDir()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to determine credentials directory")
-	}
-
-	path := filepath.Join(credsDir, fmt.Sprintf("%s.yaml", name))
-	return p.readCredential(name, path)
-}
-
-// fetchCredentials fetches all credentials in the form of a CredentialsFileList
-// from the designated credentials dir, or an error if encountered
-func (p *Porter) fetchCredentials() (*CredentialsFileList, error) {
-	credsDir, err := p.Config.GetCredentialsDir()
-	if err != nil {
-		return &CredentialsFileList{}, errors.Wrap(err, "unable to determine credentials directory")
-	}
-
-	credentialsFiles := CredentialsFileList{}
-	if ok, _ := p.Context.FileSystem.DirExists(credsDir); ok {
-		p.Context.FileSystem.Walk(credsDir, func(path string, info os.FileInfo, err error) error {
-			if !info.IsDir() {
-				credName := strings.Split(info.Name(), ".")[0]
-				credSet, err := p.readCredential(credName, path)
-				if err != nil {
-					// If an error is encountered while reading, log and move on to the next
-					if p.Debug {
-						fmt.Fprint(p.Err, err.Error())
-					}
-					return nil
-				}
-				credentialsFiles = append(credentialsFiles,
-					CredentialsFile{Name: credSet.Name, Modified: info.ModTime()})
-			}
-			return nil
-		})
-		sort.Sort(sort.Reverse(credentialsFiles))
-	}
-	return &credentialsFiles, nil
-}
-
-// readCredential reads a credential with the given name via the provided path
-// and returns a CredentialSet or an error, if encountered
-func (p *Porter) readCredential(name, path string) (*credentials.CredentialSet, error) {
-	credSet := &credentials.CredentialSet{}
-
-	data, err := p.Context.FileSystem.ReadFile(path)
-	if err != nil {
-		return credSet, errors.Wrapf(err, "unable to load credential %s", name)
-	}
-
-	if err = yaml.Unmarshal(data, credSet); err != nil {
-		return credSet, errors.Wrapf(err, "unable to unmarshal credential %s", name)
-	}
-
-	return credSet, nil
-}
-
 // ListCredentials lists saved credential sets.
 func (p *Porter) ListCredentials(opts ListOptions) error {
-	credentialsFiles, err := p.fetchCredentials()
+	creds, err := p.Credentials.ReadAll()
 	if err != nil {
-		return errors.Wrap(err, "unable to fetch credentials")
+		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, *credentialsFiles)
+		return printer.PrintJson(p.Out, creds)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, *credentialsFiles)
+		return printer.PrintYaml(p.Out, creds)
 	case printer.FormatTable:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
@@ -126,13 +43,13 @@ func (p *Porter) ListCredentials(opts ListOptions) error {
 
 		printCredRow :=
 			func(v interface{}) []interface{} {
-				cr, ok := v.(CredentialsFile)
+				cr, ok := v.(credentials.CredentialSet)
 				if !ok {
 					return nil
 				}
 				return []interface{}{cr.Name, tp.Format(cr.Modified)}
 			}
-		return printer.PrintTable(p.Out, *credentialsFiles, printCredRow,
+		return printer.PrintTable(p.Out, creds, printCredRow,
 			"NAME", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
@@ -205,37 +122,16 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return errors.Wrap(err, "unable to generate credentials")
 	}
 
-	//write the credential out to PORTER_HOME with Porter's Context
-	data, err := yaml.Marshal(cs)
-	if err != nil {
-		return errors.Wrap(err, "unable to generate credentials YAML")
-	}
 	if opts.DryRun {
+		data, err := yaml.Marshal(cs)
+		if err != nil {
+			return errors.Wrap(err, "unable to generate credentials YAML")
+		}
 		fmt.Fprintf(p.Out, "%v", string(data))
 		return nil
 	}
-	credentialsDir, err := p.Config.GetCredentialsDir()
-	if err != nil {
-		return errors.Wrap(err, "unable to get credentials directory")
-	}
-	// Make the credentials path if it doesn't exist. MkdirAll does nothing if it already exists
-	// Readable, writable only by the user
-	err = p.Config.FileSystem.MkdirAll(credentialsDir, 0700)
-	if err != nil {
-		return errors.Wrap(err, "unable to create credentials directory")
-	}
-	dest, err := p.Config.GetCredentialPath(genOpts.Name)
-	if err != nil {
-		return errors.Wrap(err, "unable to determine credentials path")
-	}
-
-	fmt.Fprintf(p.Out, "Saving credential to %s\n", dest)
-
-	err = p.Context.FileSystem.WriteFile(dest, data, 0600)
-	if err != nil {
-		return errors.Wrapf(err, "couldn't write credential file %s", dest)
-	}
-	return nil
+	err = p.Credentials.Save(*cs)
+	return errors.Wrapf(err, "unable to save credentials")
 }
 
 // Validate validates the args provided Porter's credential show command
@@ -255,7 +151,7 @@ func (o *CredentialShowOptions) Validate(args []string) error {
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
-	credSet, err := p.fetchCredential(opts.Name)
+	credSet, err := p.Credentials.Read(opts.Name)
 	if err != nil {
 		return err
 	}
@@ -266,6 +162,12 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, credSet)
 	case printer.FormatTable:
+		// Set up human friendly time formatter
+		now := time.Now()
+		tp := dtprinter.DateTimePrinter{
+			Now: func() time.Time { return now },
+		}
+
 		// Here we use an instance of olekukonko/tablewriter as our table,
 		// rather than using the printer pkg variant, as we wish to decorate
 		// the table a bit differently from the default
@@ -286,8 +188,10 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
 		table.SetAutoFormatHeaders(false)
 
-		// First, print the CredentialSet name
-		fmt.Fprintf(p.Out, "Name: %s\n\n", credSet.Name)
+		// First, print the CredentialSet metadata
+		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Modified))
 
 		// Now print the table
 		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
@@ -301,34 +205,9 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	}
 }
 
-type reflectedStruct struct {
-	Value reflect.Value
-	Type  reflect.Type
-}
-
 // GetCredentialSourceValueAndType takes a given credentials.Source struct and
-// returns the source value itself as well as source type, e.g., 'Path', 'EnvVar', etc.,
+// returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
 // both in their string forms
 func GetCredentialSourceValueAndType(cs credentials.Source) (string, string) {
-	var sourceVal, sourceType string
-
-	// Build a reflected credentials.Source struct
-	reflectedSource := reflectedStruct{
-		Value: reflect.ValueOf(cs),
-		Type:  reflect.TypeOf(cs),
-	}
-
-	// Iterate through all of the fields of a credentials.Source struct
-	for i := 0; i < reflectedSource.Type.NumField(); i++ {
-		// A Field name would be 'Path', 'EnvVar', etc.
-		fieldName := reflectedSource.Type.Field(i).Name
-		// Get the value for said Field
-		fieldValue := reflect.Indirect(reflectedSource.Value).FieldByName(fieldName).String()
-		// If value non-empty, this field value and name represent our source value
-		// and source type, respectively
-		if fieldValue != "" {
-			sourceVal, sourceType = fieldValue, fieldName
-		}
-	}
-	return sourceVal, sourceType
+	return cs.Value, cs.Key
 }

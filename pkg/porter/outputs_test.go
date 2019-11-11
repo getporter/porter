@@ -75,7 +75,7 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 		},
 	}
 
-	err := p.InstanceStorage.Store(claim)
+	err := p.Claims.Save(claim)
 	require.NoError(t, err, "could not store claim")
 
 	opts := OutputListOptions{

@@ -8,10 +8,11 @@ import (
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/templates"
 )
 
@@ -19,30 +20,33 @@ import (
 type Porter struct {
 	*config.Config
 
-	Cache           cache.BundleCache
-	InstanceStorage instancestorage.StorageProvider
-	Registry        Registry
-	Templates       *templates.Templates
-	Builder         BuildProvider
-	Manifest        *manifest.Manifest
-	Mixins          mixin.MixinProvider
-	CNAB            CNABProvider
+	Cache       cache.BundleCache
+	Credentials credentials.CredentialProvider
+	Claims      storage.ClaimProvider
+	Registry    Registry
+	Templates   *templates.Templates
+	Builder     BuildProvider
+	Manifest    *manifest.Manifest
+	Mixins      mixin.MixinProvider
+	CNAB        CNABProvider
 }
 
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
 	cache := cache.New(c)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c)
+	claimStorage := storage.NewClaimStorage(c)
+	credStorage := credentials.NewCredentialStorage(c)
 	return &Porter{
-		Config:          c,
-		Cache:           cache,
-		InstanceStorage: instanceStorage,
-		Registry:        cnabtooci.NewRegistry(c.Context),
-		Templates:       templates.NewTemplates(),
-		Builder:         buildprovider.NewDockerBuilder(c.Context),
-		Mixins:          mixinprovider.NewFileSystem(c),
-		CNAB:            cnabprovider.NewRuntime(c, instanceStorage),
+		Config:      c,
+		Cache:       cache,
+		Claims:      claimStorage,
+		Credentials: credStorage,
+		Registry:    cnabtooci.NewRegistry(c.Context),
+		Templates:   templates.NewTemplates(),
+		Builder:     buildprovider.NewDockerBuilder(c.Context),
+		Mixins:      mixinprovider.NewFileSystem(c),
+		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
 	}
 }
 

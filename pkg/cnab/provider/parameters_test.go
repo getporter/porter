@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -15,8 +16,9 @@ import (
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -35,8 +37,9 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -59,8 +62,9 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 
 func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -123,8 +127,9 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -158,8 +163,9 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -211,8 +217,9 @@ func Test_loadParameters_zeroValues(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.paramType, func(t *testing.T) {
 			c := config.NewTestConfig(t)
-			instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-			d := NewRuntime(c.Config, instanceStorage)
+			claimStorage := storage.NewTestClaimProvider()
+			credentialStorage := credentials.NewTestCredentialProvider(t, c)
+			d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 			claim, err := claim.New("test")
 			require.NoError(t, err)
@@ -247,8 +254,9 @@ func Test_loadParameters_zeroValues(t *testing.T) {
 
 func Test_loadParameters_fileParameter(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
@@ -355,8 +363,9 @@ func Test_Paramapalooza(t *testing.T) {
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
 					c := config.NewTestConfig(t)
-					instanceStorage := instancestorage.NewTestInstanceStorageProvider()
-					d := NewRuntime(c.Config, instanceStorage)
+					claimStorage := storage.NewTestClaimProvider()
+					credentialStorage := credentials.NewTestCredentialProvider(t, c)
+					d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 					bun := &bundle.Bundle{
 						Name:          "mybuns",
@@ -430,7 +439,7 @@ func Test_Paramapalooza(t *testing.T) {
 						require.NoError(t, err)
 
 						claim.Bundle = bun
-						d.instanceStorage.Store(*claim)
+						d.claims.Save(*claim)
 					}
 
 					var err error
@@ -452,7 +461,7 @@ func Test_Paramapalooza(t *testing.T) {
 
 						if action != "uninstall" {
 							// Verify the updated param value on the generated claim
-							updatedClaim, err := d.instanceStorage.Read("test")
+							updatedClaim, err := d.claims.Read("test")
 							require.NoError(t, err)
 							require.Equal(t, tc.expectedVal, updatedClaim.Parameters["my-param"])
 						}

@@ -4,15 +4,17 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewDriver_Docker(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	claimStorage := storage.NewTestClaimProvider()
+	credentialStorage := credentials.NewTestCredentialProvider(t, c)
+	d := NewRuntime(c.Config, claimStorage, credentialStorage)
 
 	driver, err := d.newDriver("docker", "myclaim", ActionArguments{})
 	require.NoError(t, err)

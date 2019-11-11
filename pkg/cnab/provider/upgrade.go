@@ -10,7 +10,7 @@ import (
 )
 
 func (d *Runtime) Upgrade(args ActionArguments) error {
-	c, err := d.instanceStorage.Read(args.Claim)
+	c, err := d.claims.Read(args.Claim)
 	if err != nil {
 		return errors.Wrapf(err, "could not load bundle instance %s", args.Claim)
 	}
@@ -63,7 +63,7 @@ func (d *Runtime) Upgrade(args ActionArguments) error {
 	}
 
 	// ALWAYS write out a claim, even if the upgrade fails
-	err = d.instanceStorage.Store(c)
+	err = d.claims.Save(c)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to record the upgrade for the bundle"))
 	}

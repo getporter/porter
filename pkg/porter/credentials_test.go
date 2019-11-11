@@ -1,10 +1,13 @@
 package porter
 
 import (
+	"path/filepath"
 	"testing"
 
-	printer "get.porter.sh/porter/pkg/printer"
-	credentials "github.com/cnabio/cnab-go/credentials"
+	"get.porter.sh/porter/pkg/printer"
+	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/credentials/host"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,10 +21,8 @@ func TestGenerateNoName(t *testing.T) {
 	}
 	err := p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
-	path, err := p.Porter.Config.GetCredentialPath("testbundle")
-	require.NoError(t, err, "couldn't get credential path")
-	_, err = p.Porter.Context.FileSystem.Stat(path)
-	require.NoError(t, err, "expected the file %s to exist", path)
+	_, err = p.Credentials.Read("testbundle")
+	require.NoError(t, err, "expected credential to have been generated")
 }
 
 func TestGenerateNameProvided(t *testing.T) {
@@ -35,10 +36,8 @@ func TestGenerateNameProvided(t *testing.T) {
 
 	err := p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
-	path, err := p.Porter.Config.GetCredentialPath("kool-kred")
-	require.NoError(t, err, "couldn't get credential path")
-	_, err = p.Porter.Context.FileSystem.Stat(path)
-	require.NoError(t, err, "expected the file %s to exist", path)
+	_, err = p.Credentials.Read("kool-kred")
+	require.NoError(t, err, "expected credential to have been generated")
 }
 
 func TestGenerateBadNameProvided(t *testing.T) {
@@ -52,10 +51,8 @@ func TestGenerateBadNameProvided(t *testing.T) {
 
 	err := p.GenerateCredentials(opts)
 	require.Error(t, err, "name is invalid, we should have had an error")
-	path, err := p.Porter.Config.GetCredentialPath("this.isabadname")
-	require.NoError(t, err, "couldn't get credential path")
-	_, err = p.Porter.Context.FileSystem.Stat(path)
-	require.Error(t, err, "expected the file %s to not exist", path)
+	_, err = p.Credentials.Read("this.isabadname")
+	require.Error(t, err, "expected credential to not exist")
 }
 
 type CredentialsListTest struct {
@@ -96,6 +93,7 @@ func TestCredentialsList_None(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+
 			p.CNAB = &TestCNABProvider{}
 
 			listOpts := ListOptions{}
@@ -120,7 +118,7 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name:         "json",
 			format:       printer.FormatJson,
-			wantContains: []string{`"Name": "kool-kreds"`},
+			wantContains: []string{`"name": "kool-kreds"`},
 			errorMsg:     "",
 		},
 		{
@@ -133,7 +131,7 @@ func TestCredentialsList(t *testing.T) {
 			name:   "table",
 			format: printer.FormatTable,
 			wantContains: []string{`NAME         MODIFIED
-kool-kreds   now`},
+kool-kreds   2019-06-24`},
 			errorMsg: "",
 		},
 		{
@@ -149,51 +147,12 @@ kool-kreds   now`},
 			p := NewTestPorter(t)
 			p.CNAB = &TestCNABProvider{}
 
-			credsDir, err := p.TestConfig.GetCredentialsDir()
-			require.NoError(t, err, "no error should have existed")
-
-			p.TestConfig.TestContext.AddTestDirectory("testdata/test-creds", credsDir)
+			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
 			listOpts := ListOptions{}
 			listOpts.Format = tc.format
-			err = p.ListCredentials(listOpts)
-			require.NoError(t, err, "no error should have existed")
-
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			for _, contains := range tc.wantContains {
-				require.Contains(t, gotOutput, contains)
-			}
-		})
-	}
-}
-
-func TestCredentialsList_BadCred(t *testing.T) {
-	testcases := []CredentialsListTest{
-		{
-			name:   "unmarshal error",
-			format: printer.FormatTable,
-			wantContains: []string{
-				"unable to unmarshal credential bad-creds: yaml: unmarshal errors",
-				`NAME         MODIFIED
-good-creds   now`},
-			errorMsg: "",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			p := NewTestPorter(t)
-			p.CNAB = &TestCNABProvider{}
-
-			credsDir, err := p.TestConfig.GetCredentialsDir()
-			require.NoError(t, err, "no error should have existed")
-
-			p.TestConfig.TestContext.AddTestDirectory("testdata/good-and-bad-test-creds", credsDir)
-
-			listOpts := ListOptions{}
-			listOpts.Format = tc.format
-			err = p.ListCredentials(listOpts)
-			require.NoError(t, err, "no error should have existed")
+			err := p.ListCredentials(listOpts)
+			require.NoError(t, err)
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			for _, contains := range tc.wantContains {
@@ -205,6 +164,13 @@ good-creds   now`},
 
 func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p := NewTestPorter(t)
+	home := p.UseFilesystem()
+
+	// Write credentials to the real file system for this test, not sure if this test is worth keeping
+	fsStore := crud.NewFileSystemStore(home, "json")
+	credStore := credentials.NewCredentialStore(fsStore)
+	p.TestCredentials.CredentialStorage.CredentialsStore = &credStore
+
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = &TestCNABProvider{}
 
@@ -213,27 +179,24 @@ func TestGenerateNoCredentialDirectory(t *testing.T) {
 	}
 	opts.Name = "name"
 
-	//Check if the credentials directory exists in the FS. It shouldn't.
-	credDir, err := p.Config.GetCredentialsDir()
-	require.NoError(t, err, "should have been able to get credentials directory path")
+	// Check if the credentials directory exists in the FS. It shouldn't.
+	credDir := filepath.Join(home, "credentials")
 	credDirExists, err := p.Porter.Context.FileSystem.DirExists(credDir)
 	require.NoError(t, err, "shouldn't have failed on dir exists")
 	require.False(t, credDirExists, "there should not have been a credential directory for this test")
 
-	//Now generate the credentials. After completion, the directory should now exist. It should be
-	//created if it does not exit
+	// Now generate the credentials. After completion, the directory should now exist. It should be
+	// created if it does not exit
 	err = p.GenerateCredentials(opts)
-	assert.NoError(t, err, "credential generation should have been successful")
+	require.NoError(t, err, "credential generation should have been successful")
 	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
-	assert.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
+	require.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
 	assert.True(t, credDirExists, "should have been a credential directory after the generation")
 
-	//Verify that the credential was actually created.
-	path, err := p.Porter.Config.GetCredentialPath("name")
-	assert.NoError(t, err, "couldn't get credential path")
-	credFileExists, err := p.Porter.Context.FileSystem.Exists(path)
-	assert.True(t, credFileExists, "expected the file %s to exist", path)
-	assert.NoError(t, err, "should have been able to check if get credential path exists")
+	// Verify that the credential was actually created.
+	c, err := p.Credentials.Read("name")
+	require.NoError(t, err, "the credential 'name' was not generated")
+	assert.NotNil(t, c, "the credential should have a value after being read")
 }
 
 func TestGenerateCredentialDirectoryExists(t *testing.T) {
@@ -246,30 +209,28 @@ func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	}
 	opts.Name = "name"
 
-	//Create the credentials directory
-	credDir, err := p.Config.GetCredentialsDir()
-	require.NoError(t, err, "should have been able to get credentials directory path")
+	// Create the credentials directory
+	home, err := p.Config.GetHomeDir()
+	require.NoError(t, err, "should have been able to get home directory path")
+	credDir := filepath.Join(home, "credentials")
 	err = p.Config.FileSystem.MkdirAll(credDir, 0600)
 	require.NoError(t, err, "should have been able to make directory path")
 
-	//Verify the directory does in fact, exist.
+	// Verify the directory does in fact, exist.
 	credDirExists, err := p.Porter.Context.FileSystem.DirExists(credDir)
 	require.NoError(t, err, "shouldn't have failed on dir exists")
 	require.True(t, credDirExists, "there should have been a credential directory for this test")
 
-	//Generate the credential now. The directory does exist, so there should be no error.
+	// Generate the credential now. The directory does exist, so there should be no error.
 	err = p.GenerateCredentials(opts)
 	assert.NoError(t, err, "credential generation should have been successful")
 	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
 	assert.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
 	assert.True(t, credDirExists, "should have been a credential directory after the generation")
 
-	//Verify we wrote the credential file.
-	path, err := p.Porter.Config.GetCredentialPath("name")
-	assert.NoError(t, err, "couldn't get credential path")
-	credFileExists, err := p.Porter.Context.FileSystem.Exists(path)
-	assert.True(t, credFileExists, "expected the file %s to exist", path)
-	assert.NoError(t, err, "should have been able to check if get credential path exists")
+	// Verify that the credential was actually created.
+	_, err = p.Credentials.Read("name")
+	assert.NoError(t, err, "the credential 'name' was not generated")
 }
 
 type CredentialShowTest struct {
@@ -292,8 +253,7 @@ func TestShowCredential_NotFound(t *testing.T) {
 
 	err := p.ShowCredential(opts)
 	assert.Error(t, err, "an error should have occurred")
-	assert.EqualError(t, err,
-		"unable to load credential non-existent-cred: open /root/.porter/credentials/non-existent-cred.yaml: file does not exist")
+	assert.EqualError(t, err, "Credential set does not exist")
 }
 
 func TestShowCredential_Found(t *testing.T) {
@@ -303,6 +263,8 @@ func TestShowCredential_Found(t *testing.T) {
 			format: printer.FormatJson,
 			wantOutput: `{
   "name": "kool-kreds",
+  "created": "2019-06-24T16:07:57.415378-05:00",
+  "modified": "2019-06-24T16:07:57.415378-05:00",
   "credentials": [
     {
       "name": "kool-config",
@@ -336,6 +298,8 @@ func TestShowCredential_Found(t *testing.T) {
 			name:   "yaml",
 			format: printer.FormatYaml,
 			wantOutput: `name: kool-kreds
+created: 2019-06-24T16:07:57.415378-05:00
+modified: 2019-06-24T16:07:57.415378-05:00
 credentials:
 - name: kool-config
   source:
@@ -356,14 +320,16 @@ credentials:
 			name:   "table",
 			format: printer.FormatTable,
 			wantOutput: `Name: kool-kreds
+Created: 2019-06-24
+Modified: 2019-06-24
 
 --------------------------------------------------
   Name         Local Source          Source Type  
 --------------------------------------------------
-  kool-config  /path/to/kool-config  Path         
-  kool-envvar  KOOL_ENV_VAR          EnvVar       
-  kool-cmd     echo 'kool'           Command      
-  kool-val     kool                  Value        
+  kool-config  /path/to/kool-config  path         
+  kool-envvar  KOOL_ENV_VAR          env          
+  kool-cmd     echo 'kool'           command      
+  kool-val     kool                  value        
 `,
 		},
 	}
@@ -381,12 +347,9 @@ credentials:
 				Name: "kool-kreds",
 			}
 
-			credsDir, err := p.TestConfig.GetCredentialsDir()
-			require.NoError(t, err, "no error should have existed")
+			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
-			p.TestConfig.TestContext.AddTestDirectory("testdata/test-creds", credsDir)
-
-			err = p.ShowCredential(opts)
+			err := p.ShowCredential(opts)
 			assert.NoError(t, err, "an error should not have occurred")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			assert.Equal(t, tc.wantOutput, gotOutput)
@@ -406,34 +369,38 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 		{
 			name: "Source: EnvVar",
 			source: credentials.Source{
-				EnvVar: "ENVY",
+				Key:   host.SourceEnv,
+				Value: "ENVY",
 			},
 			wantValue: "ENVY",
-			wantType:  "EnvVar",
+			wantType:  "env",
 		},
 		{
 			name: "Source: Path",
 			source: credentials.Source{
-				Path: "/pathy/patheson",
+				Key:   host.SourcePath,
+				Value: "/pathy/patheson",
 			},
 			wantValue: "/pathy/patheson",
-			wantType:  "Path",
+			wantType:  "path",
 		},
 		{
 			name: "Source: Command",
 			source: credentials.Source{
-				Command: "sed s/true/false/g",
+				Key:   host.SourceCommand,
+				Value: "sed s/true/false/g",
 			},
 			wantValue: "sed s/true/false/g",
-			wantType:  "Command",
+			wantType:  "command",
 		},
 		{
 			name: "Source: Value",
 			source: credentials.Source{
+				Key:   host.SourceValue,
 				Value: "abc123",
 			},
 			wantValue: "abc123",
-			wantType:  "Value",
+			wantType:  "value",
 		},
 	}
 
