@@ -38,7 +38,7 @@ func (l CondensedClaimList) Less(i, j int) bool {
 
 // ListInstances lists installed bundles by their claims.
 func (p *Porter) ListInstances(opts ListOptions) error {
-	claims, err := p.InstanceStorage.ReadAll()
+	claims, err := p.Storage.ReadAll()
 	if err != nil {
 		return errors.Wrap(err, "could not list bundle instances")
 	}

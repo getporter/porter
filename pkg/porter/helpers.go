@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
-	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/storage"
+	"github.com/deislabs/porter/pkg/manifest"
 	buildprovider "get.porter.sh/porter/pkg/build/provider"
 	"get.porter.sh/porter/pkg/cache"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
+	"github.com/deislabs/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -41,8 +41,8 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Mixins = &mixin.TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
-	p.InstanceStorage = instancestorage.NewTestInstanceStorageProvider()
-	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.InstanceStorage)
+	p.Storage = storage.NewTestStorageProvider()
+	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.Storage)
 
 	return &TestPorter{
 		Porter:     p,

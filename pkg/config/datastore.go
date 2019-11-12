@@ -29,7 +29,7 @@ func (is InstanceStore) GetConfig() interface{} {
 	return is.Config
 }
 
-func (d *Data) GetInstanceStoragePlugin() string {
+func (d *Data) GetStoragePlugin() string {
 	if d == nil || d.StoragePlugin == "" {
 		return "filesystem"
 	}

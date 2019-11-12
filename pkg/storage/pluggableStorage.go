@@ -9,20 +9,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ StorageProvider = &PluggableInstanceStorage{}
+var _ StorageProvider = &PluggableStorage{}
 
 // A sad hack because claim.Store has a method called Store which prevents us from embedding it as a field
 type ClaimStore = claim.Store
 
-// PluggableInstanceStorage provides access to instance storage (claims) by instantiating plugins that
+// PluggableStorage provides access to instance storage (claims) by instantiating plugins that
 // implement claim (CRUD) storage.
-type PluggableInstanceStorage struct {
+type PluggableStorage struct {
 	*config.Config
 	ClaimStore
 }
 
-func NewPluggableInstanceStorage(c *config.Config) *PluggableInstanceStorage {
-	l := &PluggableInstanceStorage{
+func NewPluggableStorage(c *config.Config) *PluggableStorage {
+	l := &PluggableStorage{
 		Config: c,
 	}
 
@@ -45,12 +45,12 @@ func NewPluginTypeConfig() pluggable.PluginTypeConfig {
 			return datastore.GetInstanceStore(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetInstanceStoragePlugin()
+			return datastore.GetStoragePlugin()
 		},
 	}
 }
 
-func (d *PluggableInstanceStorage) connect() (crud.Store, func(), error) {
+func (d *PluggableStorage) connect() (crud.Store, func(), error) {
 	pluginType := NewPluginTypeConfig()
 
 	l := pluggable.NewPluginLoader(d.Config)

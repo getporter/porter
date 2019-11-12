@@ -21,7 +21,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 			return datastore.GetInstanceStore(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetInstanceStoragePlugin()
+			return datastore.GetStoragePlugin()
 		},
 	}
 

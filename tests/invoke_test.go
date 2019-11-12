@@ -43,7 +43,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	//assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Verify that the custom action was recorded properly
-	claim, err := p.InstanceStorage.Read(p.Manifest.Name)
+	claim, err := p.Storage.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not fetch claim")
 	assert.Equal(t, "zombies", claim.Result.Action, "the custom action wasn't recorded in the bundle instance")
 }

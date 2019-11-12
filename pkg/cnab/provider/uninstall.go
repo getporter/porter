@@ -10,7 +10,7 @@ import (
 )
 
 func (d *Runtime) Uninstall(args ActionArguments) error {
-	c, err := d.instanceStorage.Read(args.Claim)
+	c, err := d.storage.Read(args.Claim)
 	if err != nil {
 		// Yay! It's already gone
 		if err == claim.ErrClaimNotFound {
@@ -64,7 +64,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		return errors.Wrap(err, "failed to uninstall the bundle")
 	}
 
-	err = d.instanceStorage.Delete(args.Claim)
+	err = d.storage.Delete(args.Claim)
 
 	return errors.Wrap(err, "failed to remove the record of the bundle")
 }

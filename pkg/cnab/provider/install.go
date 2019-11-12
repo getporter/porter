@@ -69,7 +69,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 	}
 
 	// ALWAYS write out a claim, even if the installation fails
-	err = d.instanceStorage.Store(*c)
+	err = d.storage.Store(*c)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to record the installation for the bundle"))
 	}

@@ -101,7 +101,8 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
 	}
 
-	err = d.writeClaim(isTemp, c)
+	// ALWAYS write out a claim, even if the action fails
+	err = d.storage.Store(c)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
 	}

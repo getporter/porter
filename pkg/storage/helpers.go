@@ -5,15 +5,15 @@ import (
 	"github.com/cnabio/cnab-go/claim"
 )
 
-var _ StorageProvider = &TestInstanceStorageProvider{}
+var _ StorageProvider = &TestStorageProvider{}
 
-type TestInstanceStorageProvider struct {
+type TestStorageProvider struct {
 	ClaimStore
 }
 
-func NewTestInstanceStorageProvider() TestInstanceStorageProvider {
+func NewTestStorageProvider() TestStorageProvider {
 	crud := inmemory.NewStore()
-	return TestInstanceStorageProvider{
+	return TestStorageProvider{
 		ClaimStore: claim.NewClaimStore(crud),
 	}
 }

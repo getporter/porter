@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
@@ -17,8 +17,8 @@ func TestAddReloccation(t *testing.T) {
 	require.NoError(t, err)
 
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	args := ActionArguments{
 		RelocationMapping: "/cnab/app/relocation-mapping.json",

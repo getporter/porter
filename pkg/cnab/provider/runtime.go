@@ -4,20 +4,21 @@ import (
 	"os"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/lookup"
+	instancestorage "github.com/deislabs/porter/pkg/storage"
 )
 
 type Runtime struct {
 	*config.Config
-	instanceStorage instancestorage.StorageProvider
+	storage storage.StorageProvider
 }
 
-func NewRuntime(c *config.Config, instanceStorage instancestorage.StorageProvider) *Runtime {
+func NewRuntime(c *config.Config, s storage.StorageProvider) *Runtime {
 	return &Runtime{
-		Config:          c,
-		instanceStorage: instanceStorage,
+		Config:  c,
+		storage: s,
 	}
 }
 

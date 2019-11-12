@@ -39,7 +39,7 @@ func (p *Porter) ShowInstances(opts ShowOptions) error {
 		return err
 	}
 
-	c, err := p.InstanceStorage.Read(opts.sharedOptions.Name)
+	c, err := p.Storage.Read(opts.sharedOptions.Name)
 	if err != nil {
 		return err
 	}

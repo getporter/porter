@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -15,8 +15,8 @@ import (
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -35,8 +35,8 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -59,8 +59,8 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 
 func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -123,8 +123,8 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -158,8 +158,8 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -247,8 +247,8 @@ func Test_loadParameters_zeroValues(t *testing.T) {
 
 func Test_loadParameters_fileParameter(t *testing.T) {
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	s := storage.NewPluggableStorage(c.Config)
+	d := NewRuntime(c.Config, s)
 
 	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
