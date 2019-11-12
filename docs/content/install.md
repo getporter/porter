@@ -9,7 +9,11 @@ We have a few release types available for you to use:
 * [Canary](#canary)
 * [Older Version](#older-version)
 
-You can also install and manage [mixins](#mixins) using porter.
+You can also install and manage [mixins](#mixins) using porter,
+and use the [Porter VS Code Extension][vscode-ext] for help
+authoring bundles.
+
+[vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
 
 # Latest
 
