@@ -1,4 +1,4 @@
-package manifest
+package runtime
 
 import (
 	"encoding/base64"
@@ -10,7 +10,7 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/runtime"
+	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -19,20 +19,20 @@ import (
 
 type RuntimeManifest struct {
 	*context.Context
-	*Manifest
+	*manifest.Manifest
 
-	Action Action
+	Action manifest.Action
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
 	bundles map[string]bundle.Bundle
 
-	steps           Steps
+	steps           manifest.Steps
 	outputs         map[string]string
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *context.Context, action Action, manifest *Manifest) RuntimeManifest {
-	return RuntimeManifest{
+func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
+	return &RuntimeManifest{
 		Context:  cxt,
 		Action:   action,
 		Manifest: manifest,
@@ -61,7 +61,7 @@ func (m *RuntimeManifest) Validate() error {
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
 	for alias := range m.Dependencies {
-		bunD, err := runtime.GetDependencyDefinition(m.Context, alias)
+		bunD, err := GetDependencyDefinition(m.Context, alias)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func resolveParameter(pd ParameterDefinition) (string, error) {
+func resolveParameter(pd manifest.ParameterDefinition) (string, error) {
 	pe := pd.Name
 	if pd.Destination.IsEmpty() {
 		// Porter by default sets CNAB params to name.ToUpper()
@@ -90,7 +90,7 @@ func resolveParameter(pd ParameterDefinition) (string, error) {
 	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
 }
 
-func resolveCredential(cd CredentialDefinition) (string, error) {
+func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	if cd.EnvironmentVariable != "" {
 		return os.Getenv(cd.EnvironmentVariable), nil
 	} else if cd.Path != "" {
@@ -107,17 +107,27 @@ func (m *RuntimeManifest) GetSensitiveValues() []string {
 	return m.sensitiveValues
 }
 
-func (m *RuntimeManifest) GetSteps() Steps {
+func (m *RuntimeManifest) GetSteps() manifest.Steps {
 	return m.steps
+}
+
+func (m *RuntimeManifest) GetOutputs() map[string]string {
+	outputs := make(map[string]string, len(m.outputs))
+
+	for k, v := range m.outputs {
+		outputs[k] = v
+	}
+
+	return outputs
 }
 
 func (m *RuntimeManifest) setStepsByAction() error {
 	switch m.Action {
-	case ActionInstall:
+	case manifest.ActionInstall:
 		m.steps = m.Install
-	case ActionUninstall:
+	case manifest.ActionUninstall:
 		m.steps = m.Uninstall
-	case ActionUpgrade:
+	case manifest.ActionUpgrade:
 		m.steps = m.Upgrade
 	default:
 		customAction, ok := m.CustomActions[string(m.Action)]
@@ -134,7 +144,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	return nil
 }
 
-func (m *RuntimeManifest) ApplyStepOutputs(step *Step, assignments map[string]string) error {
+func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[string]string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
@@ -217,7 +227,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		depOutputs := make(map[string]interface{})
 		depBundle["outputs"] = depOutputs
 
-		if bun.Outputs == nil || m.Action == ActionUninstall {
+		if bun.Outputs == nil || m.Action == manifest.ActionUninstall {
 			// uninstalls are done backwards, so we don't have outputs available from dependencies
 			// TODO: validate that they weren't trying to use them at build time so they don't find out at uninstall time
 			continue
@@ -227,7 +237,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				continue
 			}
 
-			value, err := runtime.ReadDependencyOutputValue(m.Context, alias, name)
+			value, err := ReadDependencyOutputValue(m.Context, alias, name)
 			if err != nil {
 				return nil, err
 			}
@@ -261,7 +271,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
-func (m *RuntimeManifest) ResolveStep(step *Step) error {
+func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 	mustache.AllowMissingVariables = false
 	sourceData, err := m.buildSourceData()
 	if err != nil {
@@ -351,7 +361,7 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 	return nil
 }
 
-func resolveImage(image *MappedImage, refString string) error {
+func resolveImage(image *manifest.MappedImage, refString string) error {
 	//figure out what type of Reference it is so we can extract useful things for our image map
 	ref, err := reference.Parse(refString)
 	if err != nil {

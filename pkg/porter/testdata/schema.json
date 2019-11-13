@@ -47,6 +47,24 @@
       ],
       "type": "object"
     },
+    "customAction": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "description": "A description of the custom action",
+          "type": "string"
+        },
+        "modifies": {
+          "description": "Specifies that the action will modify resources in any way.",
+          "type": "boolean"
+        },
+        "stateless": {
+          "description": "Specifies that the action does not act on a claim, and does not require credentials.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "dependency": {
       "additionalProperties": false,
       "properties": {
@@ -59,6 +77,53 @@
       },
       "required": [
         "tag"
+      ],
+      "type": "object"
+    },
+    "image": {
+      "additionalProperties": false,
+      "description": "An image represents an application image used in a bundle",
+      "properties": {
+        "description": {
+          "description": "A user-friendly description of this image",
+          "type": "string"
+        },
+        "digest": {
+          "description": "The digest of the image, i.e. sha256:cafebabe...",
+          "type": "string"
+        },
+        "imageType": {
+          "description": "The type of this image, i.e. docker",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Key/value pairs that used to specify identifying attributes of images",
+          "type": "object"
+        },
+        "mediaType": {
+          "description": "The media type of the image",
+          "type": "string"
+        },
+        "repository": {
+          "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
+          "type": "string"
+        },
+        "size": {
+          "description": "The size of the image",
+          "type": "integer"
+        },
+        "tag": {
+          "description": "The tag the image",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "imageType",
+        "repository"
       ],
       "type": "object"
     },
@@ -286,6 +351,12 @@
       },
       "type": "array"
     },
+    "customActions": {
+      "additionalProperties": {
+        "$ref": "#/definitions/customAction"
+      },
+      "type": "object"
+    },
     "dependencies": {
       "additionalProperties": {
         "$ref": "#/definitions/dependency"
@@ -300,6 +371,12 @@
     "dockerfile": {
       "description": "The relative path to a Dockerfile to use as a template during porter build",
       "type": "string"
+    },
+    "images": {
+      "additionalProperties": {
+        "$ref": "#/definitions/image"
+      },
+      "type": "object"
     },
     "install": {
       "items": {

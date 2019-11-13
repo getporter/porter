@@ -41,61 +41,61 @@ defaultContentLanguage = "en"
   weight = 102
   [[menu.main]]
     name = "porter create"
-    url = "/cli#porter-create"
+    url = "/cli/porter_create"
     identifier = "cli-create"
     weight = 123
     parent = "cli"
   [[menu.main]]
     name = "porter build"
-    url = "/cli#porter-build"
+    url = "/cli/porter_build"
     identifier = "cli-build"
     weight = 124
     parent = "cli"
   [[menu.main]]
     name = "porter install"
-    url = "/cli#porter-install"
+    url = "/cli/porter_install"
     identifier = "cli-install"
     weight = 125
     parent = "cli"
   [[menu.main]]
     name = "porter invoke"
-    url = "/cli#porter-invoke"
+    url = "/cli/porter_invoke"
     identifier = "cli-invoke"
     weight = 126
     parent = "cli"
   [[menu.main]]
     name = "porter upgrade"
-    url = "/cli#porter-upgrade"
+    url = "/cli/porter_upgrade"
     identifier = "cli-upgrade"
     weight = 127
     parent = "cli"
   [[menu.main]]
     name = "porter uninstall"
-    url = "/cli#porter-uninstall"
+    url = "/cli/porter_uninstall"
     identifier = "cli-uninstall"
     weight = 128
     parent = "cli"
   [[menu.main]]
     name = "porter list"
-    url = "/cli#porter-list"
+    url = "/cli/porter_list"
     identifier = "cli-list"
     weight = 129
     parent = "cli"
   [[menu.main]]
     name = "porter show"
-    url = "/cli#porter-show"
+    url = "/cli/porter_show"
     identifier = "cli-show"
     weight = 129
     parent = "cli"
   [[menu.main]]
     name = "porter instances output list"
-    url = "/cli#porter-instances-output-list"
+    url = "/cli/porter_instances_output_list"
     identifier = "cli-instances-output-list"
     weight = 130
     parent = "cli"
   [[menu.main]]
     name = "porter instances output show"
-    url = "/cli#porter-instances-output-show"
+    url = "/cli/porter_instances_output_show"
     identifier = "cli-instances-output-show"
     weight = 131
     parent = "cli"
@@ -119,37 +119,37 @@ defaultContentLanguage = "en"
     parent = "cli"
   [[menu.main]]
     name = "porter mixins feed template"
-    url = "/cli#porter-mixins-feed-template"
+    url = "/cli/porter_mixins_feed_template"
     identifier = "cli-mixins-feed-template"
     weight = 150
     parent = "cli"
   [[menu.main]]
     name = "porter mixins feed generate"
-    url = "/cli#porter-mixins-feed-generate"
+    url = "/cli/porter_mixins_feed_generate"
     identifier = "cli-mixins-feed-generate"
     weight = 151
     parent = "cli"
   [[menu.main]]
     name = "porter copy"
-    url = "/cli#porter-copy"
+    url = "/cli/porter_copy"
     identifier = "cli-copy"
     weight = 160
     parent = "cli"
   [[menu.main]]
     name = "porter archive"
-    url = "/cli#porter-archive"
+    url = "/cli/porter_archive"
     identifier = "cli-archive"
     weight = 161
     parent = "cli"
   [[menu.main]]
     name = "porter schema"
-    url = "/cli#porter-schema"
+    url = "/cli/porter_schema"
     identifier = "cli-schema"
     weight = 198
     parent = "cli"
   [[menu.main]]
     name = "porter version"
-    url = "/cli#porter-version"
+    url = "/cli/porter_version"
     identifier = "cli-version"
     weight = 199
     parent = "cli"
@@ -224,22 +224,28 @@ defaultContentLanguage = "en"
     weight = 301
     parent = "authoring-bundles"
   [[menu.main]]
+    name = "Custom Dockerfile"
+    url = "/custom-dockerfile/"
+    identifier = "custom-dockerfile"
+    weight = 302
+    parent = "authoring-bundles"
+  [[menu.main]]
     name = "Using Mixins"
     url = "/using-mixins"
     identifier = "using-mixins"
-    weight = 302
+    weight = 303
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Dependencies"
     url = "/dependencies"
     identifier = "dependencies"
-    weight = 303
+    weight = 304
     parent = "authoring-bundles"
   [[menu.main]]
     name = "Using Parameters, Credentials and Outputs"
     url = "/wiring"
     identifier = "wiring"
-    weight = 303
+    weight = 305
     parent = "authoring-bundles"
 
 [[menu.main]]

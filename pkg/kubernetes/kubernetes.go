@@ -115,7 +115,10 @@ func (m *Mixin) handleOutputs(outputs []KubernetesOutput) error {
 		if err != nil {
 			return err
 		}
-		m.Context.WriteMixinOutputToFile(output.Name, bytes)
+		err = m.Context.WriteMixinOutputToFile(output.Name, bytes)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

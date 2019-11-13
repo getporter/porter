@@ -17,10 +17,11 @@ import (
 
 type dependencyExecutioner struct {
 	*context.Context
-	Manifest        *manifest.Manifest
+	// See https://github.com/deislabs/porter/issues/799
+	// Manifest        *manifest.Manifest
 	Resolver        BundleResolver
 	CNAB            CNABProvider
-	InstanceStorage instancestorage.Provider
+	InstanceStorage instancestorage.StorageProvider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
@@ -34,8 +35,9 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		Context:         p.Context,
-		Manifest:        p.Manifest,
+		Context: p.Context,
+		// See https://github.com/deislabs/porter/issues/799
+		// Manifest:        p.Manifest,
 		Resolver:        resolver,
 		CNAB:            p.CNAB,
 		InstanceStorage: p.InstanceStorage,
@@ -190,6 +192,8 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	//   DEP:
 	//     parameters:
 	//       PARAM: VALUE
+	/* Disabling this until we have access to the manifest when working with a bundle from a tag
+	   See https://github.com/deislabs/porter/issues/799
 	for paramName, value := range e.Manifest.Dependencies[dep.Alias].Parameters {
 		// Make sure the parameter is defined in the bundle
 		if _, ok := depParams[paramName]; !ok {
@@ -201,13 +205,13 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 		}
 		dep.Parameters[paramName] = value
 	}
+	*/
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
 	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
-			fmt.Println(key)
 			paramName := parts[1]
 
 			// Make sure the parameter is defined in the bundle
@@ -220,7 +224,6 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 			}
 			dep.Parameters[paramName] = value
 			delete(e.parentOpts.combinedParameters, key)
-			fmt.Println("added dependency param ", paramName)
 		}
 	}
 

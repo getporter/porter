@@ -164,16 +164,8 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			}
 		}
 
-		// Only set definition if it doesn't already exist
-		// (Both Params and Outputs may reference same Definition)
-		if _, exists := (*defs)[param.Name]; !exists {
-			def := param.Schema
-			if def.Type == "file" {
-				def.Type = "string"
-				def.ContentEncoding = "base64"
-			}
-			(*defs)[param.Name] = &def
-		}
+		defName := c.addDefinition(param.Name, "parameter", param.Schema, defs)
+		p.Definition = defName
 		params[param.Name] = p
 	}
 	return params
@@ -197,16 +189,26 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				output.Schema.WriteOnly = toBool(true)
 			}
 
-			// Only set definition if it doesn't already exist
-			// (Both Params and Outputs may reference same Definition)
-			if _, exists := (*defs)[output.Name]; !exists {
-				def := output.Schema
-				(*defs)[output.Name] = &def
-			}
+			defName := c.addDefinition(output.Name, "output", output.Schema, defs)
+			o.Definition = defName
 			outputs[output.Name] = o
 		}
 	}
 	return outputs
+}
+
+func (c *ManifestConverter) addDefinition(name string, kind string, def definition.Schema, defs *definition.Definitions) string {
+	defName := name + "-" + kind
+
+	// file is a porter specific type, swap it out for something CNAB understands
+	if def.Type == "file" {
+		def.Type = "string"
+		def.ContentEncoding = "base64"
+	}
+
+	(*defs)[defName] = &def
+
+	return defName
 }
 
 func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterDefinition {

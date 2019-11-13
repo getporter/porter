@@ -98,7 +98,9 @@
 
 [[constraint]]
   name = "github.com/hashicorp/go-plugin"
-  version = "^v1.0.0"
+  #version = "^v1.0.0"
+  source = "github.com/carolynvs/go-plugin"
+  branch = "accept-stdin"
 
 [prune]
   non-go = true

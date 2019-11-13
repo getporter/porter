@@ -11,10 +11,10 @@ import (
 
 type Runtime struct {
 	*config.Config
-	instanceStorage instancestorage.Provider
+	instanceStorage instancestorage.StorageProvider
 }
 
-func NewRuntime(c *config.Config, instanceStorage instancestorage.Provider) *Runtime {
+func NewRuntime(c *config.Config, instanceStorage instancestorage.StorageProvider) *Runtime {
 	return &Runtime{
 		Config:          c,
 		instanceStorage: instanceStorage,

@@ -110,6 +110,69 @@
       },
       "required": ["tag"],
       "additionalProperties": false
+    },
+    "customAction": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A description of the custom action"
+        },
+        "modifies": {
+          "type": "boolean",
+          "description": "Specifies that the action will modify resources in any way."
+        },
+        "stateless": {
+          "type": "boolean",
+          "description": "Specifies that the action does not act on a claim, and does not require credentials."
+        }
+      },
+      "additionalProperties": false
+    },
+    "image" :{
+      "description": "An image represents an application image used in a bundle",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "A user-friendly description of this image",
+          "type": "string"
+        }, 
+        "imageType": {
+          "description": "The type of this image, i.e. docker",
+          "type": "string"
+        }, 
+        "repository": {
+          "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
+          "type": "string"
+        },
+        "digest" :{ 
+          "description": "The digest of the image, i.e. sha256:cafebabe...",
+          "type": "string"
+        },
+        "size" : {
+          "description": "The size of the image",
+          "type": "integer"
+        },
+        "mediaType" : {
+          "description": "The media type of the image",
+          "type": "string"
+        },
+        "tag" : {
+          "description": "The tag the image",
+          "type": "string"
+        },
+        "labels": {
+          "description": "Key/value pairs that used to specify identifying attributes of images",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "description", "imageType", "repository"
+      ],
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -189,6 +252,14 @@
     "dockerfile": {
       "type": "string",
       "description": "The relative path to a Dockerfile to use as a template during porter build"
+    },
+    "customActions": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/definitions/customAction"}
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/definitions/image"}
     }
   },
   "additionalProperties": {

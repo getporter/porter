@@ -62,7 +62,16 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
 	}
-	lines = append(lines, mixinLines...)
+
+	mixinsTokenIndex := g.getIndexOfPorterMixinsToken(lines)
+	if mixinsTokenIndex == -1 {
+		lines = append(lines, mixinLines...)
+	} else {
+		pretoken := make([]string, mixinsTokenIndex)
+		copy(pretoken, lines)
+		posttoken := lines[mixinsTokenIndex+1:]
+		lines = append(pretoken, append(mixinLines, posttoken...)...)
+	}
 
 	// The template dockerfile copies everything by default, but if the user
 	// supplied their own, copy over cnab/ and porter.yaml
@@ -271,4 +280,13 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 
 	err = g.Context.CopyDirectory(mixinDir, filepath.Join(LOCAL_APP, "mixins"), true)
 	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
+}
+
+func (g *DockerfileGenerator) getIndexOfPorterMixinsToken(a []string) int {
+	for i, n := range a {
+		if INJECT_PORTER_MIXINS_TOKEN == strings.TrimSpace(n) {
+			return i
+		}
+	}
+	return -1
 }

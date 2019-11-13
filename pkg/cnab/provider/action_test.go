@@ -1,13 +1,13 @@
 package cnabprovider
 
 import (
-	"github.com/deislabs/cnab-go/bundle"
 	"io/ioutil"
 	"testing"
 
+	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/driver"
 	"github.com/deislabs/porter/pkg/config"
-	instancestorageprovider "github.com/deislabs/porter/pkg/instance-storage/provider"
+	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestAddReloccation(t *testing.T) {
 	require.NoError(t, err)
 
 	c := config.NewTestConfig(t)
-	instanceStorage := instancestorageprovider.NewPluginDelegator(c.Config)
+	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
 	d := NewRuntime(c.Config, instanceStorage)
 
 	args := ActionArguments{

@@ -53,7 +53,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")
 	assert.Equal(t, "PORTER_DEBUG", debugParam.Destination.EnvironmentVariable)
-	debugDef, ok := bun.Definitions["porter-debug"]
+	debugDef, ok := bun.Definitions[debugParam.Definition]
 	require.True(t, ok, "porter-debug definition was not defined")
 	assert.Equal(t, "boolean", debugDef.Type)
 	assert.Equal(t, false, debugDef.Default)

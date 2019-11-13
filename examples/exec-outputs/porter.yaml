@@ -24,6 +24,11 @@ install:
       outputs:
         - name: config
           path: config.json
+  - exec:
+      description: "Create a file to be captured as a bundle-level output"
+      command: bash
+      arguments:
+        - create-cluster.sh
 
 test:
   - exec:
@@ -65,3 +70,8 @@ outputs:
     type: string
     applyTo:
       - status
+  - name: kubeconfig
+    type: file
+    path: /root/.kube/config
+    applyTo:
+      - install

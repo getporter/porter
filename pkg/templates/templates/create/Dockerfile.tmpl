@@ -13,5 +13,9 @@ ARG BUNDLE_DIR
 # Add the following line to porter.yaml to instruct Porter to use this template
 # dockerfile: Dockerfile.tmpl
 
+# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
+# another location in this file. If you remove that line, the mixins generated content is appended to this file.
+# PORTER_MIXINS
+
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 # COPY . $BUNDLE_DIR
