@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/porter/pkg"
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/pkg/errors"
 )
@@ -39,6 +40,13 @@ func (c *ManifestConverter) digestManifest() (string, error) {
 	data, err := c.FileSystem.ReadFile(c.Manifest.ManifestPath)
 	if err != nil {
 		return "", errors.Wrapf(err, "could not read manifest at %q", c.Manifest.ManifestPath)
+	}
+
+	v := pkg.Version
+	data = append(data, v...)
+
+	for _, m := range c.Mixins {
+		data = append(append(data, m.Name...), m.Version...)
 	}
 
 	digest := sha256.Sum256(data)

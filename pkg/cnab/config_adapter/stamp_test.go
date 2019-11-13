@@ -20,7 +20,7 @@ func TestConfig_ComputeManifestDigest(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil)
+	a := NewManifestConverter(c.Context, m, nil, nil)
 	stamp := a.GenerateStamp()
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 }

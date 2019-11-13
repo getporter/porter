@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/deislabs/porter/pkg/manifest"
+	"github.com/deislabs/porter/pkg/mixin"
 
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/porter/pkg/build"
@@ -44,9 +45,35 @@ func (p *Porter) Build(opts BuildOptions) error {
 	return p.buildBundle(p.Manifest.Image, "")
 }
 
+func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
+	installedMixins, err := p.ListMixins()
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "error while listing mixins")
+	}
+
+	usedMixins := []mixin.Metadata{}
+	for _, installedMixin := range installedMixins {
+		for _, m := range p.Manifest.Mixins {
+			if installedMixin.Name == m.Name {
+				usedMixins = append(usedMixins, installedMixin)
+			}
+		}
+	}
+
+	return usedMixins, nil
+}
+
 func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	imageDigests := map[string]string{invocationImage: digest}
-	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests)
+
+	mixins, err := p.getUsedMixins()
+
+	if err != nil {
+		return err
+	}
+
+	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
 	bun := converter.ToBundle()
 	return p.writeBundle(bun)
 }

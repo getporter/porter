@@ -11,6 +11,7 @@ import (
 	"github.com/deislabs/porter/pkg/config"
 	"github.com/deislabs/porter/pkg/context"
 	"github.com/deislabs/porter/pkg/manifest"
+	"github.com/deislabs/porter/pkg/mixin"
 )
 
 const SchemaVersion = "v1.0.0"
@@ -20,13 +21,15 @@ type ManifestConverter struct {
 	*context.Context
 	Manifest     *manifest.Manifest
 	ImageDigests map[string]string
+	Mixins       []mixin.Metadata
 }
 
-func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string) *ManifestConverter {
+func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string, mixins []mixin.Metadata) *ManifestConverter {
 	return &ManifestConverter{
 		Context:      cxt,
 		Manifest:     manifest,
 		ImageDigests: imageDigests,
+		Mixins:       mixins,
 	}
 }
 
