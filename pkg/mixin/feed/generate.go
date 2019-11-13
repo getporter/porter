@@ -94,9 +94,10 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 			}
 
 			for i := range feed.Index[mixin][version].Files {
-				if feed.Index[mixin][version].Files[i].File == filename {
-					if feed.Index[mixin][version].Files[i].Updated.Before(updated) {
-						feed.Index[mixin][version].Files[i].Updated = updated
+				mixinFile := feed.Index[mixin][version].Files[i]
+				if mixinFile.File == filename {
+					if mixinFile.Updated.Before(updated) {
+						mixinFile.Updated = updated
 					}
 
 					return nil
