@@ -1,6 +1,8 @@
 ---
-title: Testing a Mixin
+title: Test a Mixin
 description: How to test a Porter mixin
+aliases:
+- /mixin-dev-guide/testing/
 ---
 
 We are working on filling this doc out more, until then this is more of a FAQ than a proscriptive guide. If you have

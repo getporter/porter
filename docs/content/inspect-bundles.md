@@ -1,9 +1,12 @@
 ---
 title: Inspecting Bundles
 description: Inspect a bundle to see the images that will be used.
+aliases:
+- /inspecting-bundles/
+- /inspect-bundle/
 ---
 
-You've found a bundle that you'd like to use, but you'd like to what images will be used after you install the bundle. You can use the `porter inspect` command to see this information. If you'd like to see additional information, like parameters, credentials, and outputs, see the [explain](/examining-bundles) command.
+You've found a bundle that you'd like to use, but you'd like to what images will be used after you install the bundle. You can use the `porter inspect` command to see this information. If you'd like to see additional information, like parameters, credentials, and outputs, see the [explain](/examine-bundles) command.
 
 When a bundle is published, the images that it will use are copied into the location of the published bundle. This simplifies access control and management of artifacts in the repository. The `inspect` command will show the invocation images, as well as any referenced images, that will be used as a result of performing actions like install nad upgrade. For each image, you will see the image reference that will be used, along with the original image reference that the image was copied from.
 

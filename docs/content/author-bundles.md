@@ -1,6 +1,8 @@
 ---
-title: Authoring Bundles
-description: Authoring Bundles with Porter
+title: Author Bundles
+description: Create a Bundle with Porter
+aliases:
+- /authoring-bundles/
 ---
 
 Porter generates a bundle from its manifest, porter.yaml. The manifest is made up of a few components:
@@ -73,7 +75,7 @@ mixins:
     - azure-cli-iot-ext
 ```
 
-See [Using Mixins](/using-mixins) to learn more about how mixins work.
+See [Using Mixins](/use-mixins) to learn more about how mixins work.
 
 ## Parameters
 
@@ -293,7 +295,7 @@ the `repository` and `digest` attributes. For example:
 image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
 ```
 
-At runtime, these will be updated appropriately if a bundle has been [copied](/copying-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
+At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
 
 ## Generated Files
 
@@ -306,6 +308,6 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 ## See Also
 
-* [Using Mixins](/using-mixins/)
+* [Using Mixins](/use-mixins/)
 * [Bundle Dependencies](/dependencies/)
 * [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)
