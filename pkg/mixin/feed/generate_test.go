@@ -120,6 +120,59 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 	assert.Equal(t, wantXml, gotXml)
 }
 
+func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
+	tc := context.NewTestContext(t)
+	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
+	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
+
+	tc.FileSystem.Create("bin/v1.2.4/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/v1.2.4/helm-linux-amd64")
+	tc.FileSystem.Create("bin/v1.2.4/helm-windows-amd64.exe")
+
+	up4, _ := time.Parse("2006-Jan-02", "2013-Feb-04")
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-darwin-amd64", up4, up4)
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-linux-amd64", up4, up4)
+	tc.FileSystem.Chtimes("bin/v1.2.4/helm-windows-amd64.exe", up4, up4)
+
+	tc.FileSystem.Create("bin/canary/exec-darwin-amd64")
+	tc.FileSystem.Create("bin/canary/exec-linux-amd64")
+	tc.FileSystem.Create("bin/canary/exec-windows-amd64.exe")
+
+	up10, _ := time.Parse("2006-Jan-02", "2013-Feb-10")
+	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
+	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
+
+	opts := GenerateOptions{
+		AtomFile:        "atom.xml",
+		SearchDirectory: "bin",
+		TemplateFile:    "template.xml",
+	}
+	f := NewMixinFeed(tc.Context)
+
+	err := f.Generate(opts)
+	require.NoError(t, err)
+	err = f.Save(opts)
+	require.NoError(t, err)
+
+	// Run the generation again, against the same versions, and make sure they don't insert duplicate files
+	// This mimics what the CI does when we repeat a build, or have multiple canary builds on master
+	err = f.Generate(opts)
+	require.NoError(t, err)
+	err = f.Save(opts)
+	require.NoError(t, err)
+
+	b, err := tc.FileSystem.ReadFile("atom.xml")
+	require.NoError(t, err)
+	gotXml := string(b)
+
+	b, err = ioutil.ReadFile("testdata/atom.xml")
+	require.NoError(t, err)
+	wantXml := string(b)
+
+	assert.Equal(t, wantXml, gotXml)
+}
+
 func TestMixinEntries_Sort(t *testing.T) {
 	up2, _ := time.Parse("2006-Jan-02", "2013-Feb-02")
 	up3, _ := time.Parse("2006-Jan-02", "2013-Feb-03")

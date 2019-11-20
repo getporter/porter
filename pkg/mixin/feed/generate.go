@@ -53,7 +53,6 @@ func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
 }
 
 func (feed *MixinFeed) Generate(opts GenerateOptions) error {
-	// Check if the atom file already exists, and load in the existing data first
 	existingFeed, err := feed.FileSystem.Exists(opts.AtomFile)
 	if err != nil {
 		return err
@@ -79,31 +78,33 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 			filename := info.Name()
 			updated := info.ModTime()
 
-			versions, ok := feed.Index[mixin]
+			_, ok := feed.Index[mixin]
 			if !ok {
-				versions = map[string]*MixinFileset{}
-				feed.Index[mixin] = versions
+				feed.Index[mixin] = map[string]*MixinFileset{}
 			}
 
-			fileset, ok := versions[version]
+			_, ok = feed.Index[mixin][version]
 			if !ok {
-				fileset = &MixinFileset{
+				fileset := MixinFileset{
 					Mixin:   mixin,
 					Version: version,
 				}
-				versions[version] = fileset
+
+				feed.Index[mixin][version] = &fileset
 			}
 
-			// Check if the file is already in the feed
-			for _, file := range fileset.Files {
-				// The file is already in the feed, bump the timestamp and move on
-				if file.File == filename && file.Updated.After(updated) {
-					file.Updated = updated
+			for i := range feed.Index[mixin][version].Files {
+				mixinFile := feed.Index[mixin][version].Files[i]
+				if mixinFile.File == filename {
+					if mixinFile.Updated.Before(updated) {
+						mixinFile.Updated = updated
+					}
+
 					return nil
 				}
 			}
-			// Add the file to the feed's index
-			fileset.Files = append(fileset.Files, &MixinFile{File: filename, Updated: updated})
+
+			feed.Index[mixin][version].Files = append(feed.Index[mixin][version].Files, &MixinFile{File: filename, Updated: updated})
 		}
 
 		return nil
