@@ -1,6 +1,8 @@
 ---
-title: Using Mixins
+title: Use Mixins
 description: Quickly integrate with existing tools using Porter mixins
+aliases:
+- /using-mixins/
 ---
 
 This is a placeholder doc page. See our [contributing guide][contrib] 

@@ -1,6 +1,6 @@
 # This is the configuration for Porter
 # You must define steps for each action, but the rest is optional
-# See https://porter.sh/authoring-bundles for documentation on how to configure your bundle
+# See https://porter.sh/author-bundles for documentation on how to configure your bundle
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
 name: HELLO
@@ -37,7 +37,7 @@ uninstall:
         c: echo Goodbye World
 
 
-# See https://porter.sh/authoring-bundles/#dependencies
+# See https://porter.sh/author-bundles/#dependencies
 #dependencies:
 #  mysql:
 #    tag: deislabs/porter-mysql:latest

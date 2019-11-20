@@ -177,7 +177,7 @@ These images will be used to build the `bundle.json` images section, but can als
         image.tag: "{{ bundle.images.ALIAS.tag }}"
 ```
 
-## Using Parameters, Credentials, and Outputs from Bundle Dependencies
+## Use Parameters, Credentials, and Outputs from Bundle Dependencies
 
 When using a bundle dependency, you can reference parameters, credentials and outputs in a similar way. To reference things from a dependency, you simply need to use another form of the `"{{  bundle.x.y.z }}"` syntax.
 

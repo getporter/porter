@@ -17,22 +17,21 @@ plainIdAnchors = "true"
 defaultContentLanguage = "en"
 
 [[menu.main]]
-  name = "Getting Started"
-  url = "/getting-started"
-  identifier = "getting-started"
+  name = "Get Started"
+  identifier = "get-started"
   weight = 2
   [[menu.main]]
     name = "Install Porter"
     url = "/install"
     identifier = "install"
     weight = 11
-    parent = "getting-started"
+    parent = "get-started"
   [[menu.main]]
     name = "QuickStart"
     url = "/quickstart"
     identifier = "quickstart"
     weight = 12
-    parent = "getting-started"
+    parent = "get-started"
 
 [[menu.main]]
   name = "Porter Commands"
@@ -214,115 +213,115 @@ defaultContentLanguage = "en"
     parent = "mixins"
 
 [[menu.main]]
-  name = "Authoring Bundles"
-  identifier = "authoring-bundles"
+  name = "Author Bundles"
+  identifier = "author-bundles"
   weight = 300
   [[menu.main]]
     name = "Overview"
-    url = "/authoring-bundles"
-    identifier = "authoring-bundles-overview"
+    url = "/author-bundles"
+    identifier = "author-bundles-overview"
     weight = 301
-    parent = "authoring-bundles"
+    parent = "author-bundles"
   [[menu.main]]
     name = "Custom Dockerfile"
     url = "/custom-dockerfile/"
     identifier = "custom-dockerfile"
     weight = 302
-    parent = "authoring-bundles"
+    parent = "author-bundles"
   [[menu.main]]
-    name = "Using Mixins"
-    url = "/using-mixins"
-    identifier = "using-mixins"
+    name = "Mixins"
+    url = "/use-mixins"
+    identifier = "use-mixins"
     weight = 303
-    parent = "authoring-bundles"
+    parent = "author-bundles"
   [[menu.main]]
     name = "Dependencies"
     url = "/dependencies"
     identifier = "dependencies"
     weight = 304
-    parent = "authoring-bundles"
+    parent = "author-bundles"
   [[menu.main]]
-    name = "Using Parameters, Credentials and Outputs"
+    name = "Parameters, Credentials and Outputs"
     url = "/wiring"
     identifier = "wiring"
     weight = 305
-    parent = "authoring-bundles"
+    parent = "author-bundles"
 
 [[menu.main]]
-  name = "Distributing Bundles"
-  identifier = "distributing-bundles"
+  name = "Distribute Bundles"
+  identifier = "distribute-bundles"
   weight = 310
   [[menu.main]]
     name = "Overview"
-    url = "/distributing-bundles"
-    identifier = "distributing-bundles-overview"
+    url = "/distribute-bundles"
+    identifier = "distribute-bundles-overview"
     weight = 311
-    parent = "distributing-bundles"
+    parent = "distribute-bundles"
   [[menu.main]]
-    name = "Copying Bundles"
-    identifier = "copying-bundles"
-    url = "/copying-bundles"
+    name = "Copy Bundles"
+    identifier = "copy-bundles"
+    url = "/copy-bundles"
     weight = 312
-    parent = "distributing-bundles"
+    parent = "distribute-bundles"
   [[menu.main]]
-    name = "Archiving Bundles"
-    identifier = "archiving-bundles"
-    url = "/archiving-bundles"
+    name = "Archive Bundles"
+    identifier = "archive-bundles"
+    url = "/archive-bundles"
     weight = 313
-    parent = "distributing-bundles"
+    parent = "distribute-bundles"
 
 [[menu.main]]
-  name = "Examining Bundles"
-  identifier = "examining-bundles"
+  name = "Examine Bundles"
+  identifier = "examine-bundles"
   weight = 325
   [[menu.main]]
     name = "Overview"
-    url = "/examining-bundles"
-    identifier = "examining-bundles-overview"
+    url = "/examine-bundles"
+    identifier = "examine-bundles-overview"
     weight = 326
-    parent = "examining-bundles"
+    parent = "examine-bundles"
   [[menu.main]]
-    name = "Inspecting Bundle Images"
+    name = "Inspect Bundle Images"
     url = "/inspect-bundle"
     identifier = "inspect-bundles"
     weight = 327
-    parent = "examining-bundles"
+    parent = "examine-bundles"
 
 
 [[menu.main]]
-  name = "Developing Mixins"
-  identifier = "developing-mixins"
+  name = "Develop Mixins"
+  identifier = "develop-mixins"
   weight = 350
   [[menu.main]]
     name = "Overview"
     url = "/mixin-dev-guide/"
     identifier = "mixin-dev-guide"
     weight = 351
-    parent = "developing-mixins"
+    parent = "develop-mixins"
   [[menu.main]]
     name = "Commands"
     url = "/mixin-dev-guide/commands/"
     identifier = "mixin-commands"
     weight = 353
-    parent = "developing-mixins"
+    parent = "develop-mixins"
   [[menu.main]]
-    name = "Testing"
-    url = "/mixin-dev-guide/testing/"
-    identifier = "mixin-testing"
+    name = "Test"
+    url = "/mixin-dev-guide/test/"
+    identifier = "mixin-test"
     weight = 355
-    parent = "developing-mixins"
+    parent = "develop-mixins"
   [[menu.main]]
     name = "Mixin Architecture"
     url = "/mixin-dev-guide/architecture/"
     identifier = "mixin-architecture"
     weight = 360
-    parent = "developing-mixins"
+    parent = "develop-mixins"
   [[menu.main]]
-    name = "Distributing Mixins"
+    name = "Distribute Mixins"
     url = "/mixin-dev-guide/distribution/"
     identifier = "mixin-distribution"
     weight = 361
-    parent = "developing-mixins"
+    parent = "develop-mixins"
 
 [[menu.main]]
   name = "Porter Architecture"

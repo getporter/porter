@@ -1,6 +1,8 @@
 ---
-title: Distributing Bundles
-description: How to distribute your bundles
+title: Distribute Bundles
+description: Share and distribute your bundles with others
+aliases:
+- /distributing-bundles/
 ---
 
 Once you have built a bundle with Porter, the next step is to share the bundle and invocation image so others can use it. Porter uses OCI (Docker) registries to share both CNAB bundle manifest and invocation images.
@@ -78,7 +80,7 @@ The later example ensures immutability for your bundle. After you've initially r
 
 ## Publish Archived Bundles
 
-The `porter publish` command can also be used to publish an [archived](/archiving-bundles) bundle to a registry. To publish an archived bundle, the publish command is used with the `-a <filename>` and `--tag <repo/name:tag>` flags. For example, to publish a bundle in the `mybunz1.1.tgz` file to `deislabs/megabundle:1.1.0`, you would run the following command:
+The `porter publish` command can also be used to publish an [archived](/archive-bundles/) bundle to a registry. To publish an archived bundle, the publish command is used with the `-a <filename>` and `--tag <repo/name:tag>` flags. For example, to publish a bundle in the `mybunz1.1.tgz` file to `deislabs/megabundle:1.1.0`, you would run the following command:
 
 ```
 porter publish -a mybunz1.1.tgz --tag deislabs/megabundle:1.1.0
