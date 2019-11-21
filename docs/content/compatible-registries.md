@@ -9,7 +9,7 @@ tested a bunch of registries for compatibility with CNAB and so far here is what
 we have found.
 
 There is an explicit verification using Porter because we use specific libraries,
-such as cnab-to-oci, and this helps us communicate confidently that we've tested
+such as [cnab-to-oci], and this helps us communicate confidently that we've tested
 out a particular registry and know that it will work for you.
 
 | Registry | CNAB Compatible | Porter Verified |
@@ -25,4 +25,6 @@ out a particular registry and know that it will work for you.
  
  _If you are a registry or user and know that this page is out of date, [please
  let us know!](https://github.com/deislabs/porter/issues/new)_
+ 
+ [cnab-to-oci]: https://github.com/docker/cnab-to-oci
  
