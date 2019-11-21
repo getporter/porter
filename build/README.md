@@ -1,5 +1,8 @@
 These are assets used by the CI build.
 
+* testdata - test data used for the integration tests, such as credentials and test bundles.
+* images - source for any docker images that we publish. 
+
 ## Azure Pipelines
 
 Our pipeline is broken into a few discrete builds so that we can control how and when they are triggered:

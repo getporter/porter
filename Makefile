@@ -110,11 +110,10 @@ docs-gen:
 docs-preview:
 	hugo serve --source docs/
 
-publish:
-	mkdir -p bin/$(VERSION)
-	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) publish MIXIN=kubernetes -f mixin.mk
+publish: publish-bin publish-mixins publish-images
 
+publish-bin:
+	mkdir -p bin/$(VERSION)
 	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/prep-install-scripts.sh
 
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
@@ -123,10 +122,17 @@ publish:
 	fi
 	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION)
 
+publish-mixins:
+	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
+	$(MAKE) $(MAKE_OPTS) publish MIXIN=kubernetes -f mixin.mk
+
 	# Generate the mixin feed
 	az storage blob download -c porter -n atom.xml -f bin/atom.xml
 	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
 	az storage blob upload -c porter -n atom.xml -f bin/atom.xml
+
+publish-images:
+	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
 
 # all-bundles loops through all items under the dir provided by the first argument
 # and if the item is a sub-directory containing a porter.yaml file,
