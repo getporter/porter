@@ -269,6 +269,12 @@ defaultContentLanguage = "en"
     url = "/archive-bundles"
     weight = 313
     parent = "distribute-bundles"
+  [[menu.main]]
+    name = "Compatible Registries"
+    identifier = "compatible-registries"
+    url = "/compatible-registries/"
+    weight = 314
+    parent = "distribute-bundles"
 
 [[menu.main]]
   name = "Examine Bundles"
