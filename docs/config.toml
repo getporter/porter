@@ -381,8 +381,15 @@ defaultContentLanguage = "en"
     weight = 1010
     parent = "references"
   [[menu.main]]
+    name = "Docker Images"
+    url = "/docker-images/"
+    identifer = "docker-images"
+    weight = 1011
+    parent = "references"
+  [[menu.main]]
     name = "CNAB Spec"
     url = "https://deislabs.io/cnab"
     identifier = "cnab"
     weight = 1020
     parent = "references"
+
