@@ -1,9 +1,9 @@
 ---
 title: Porter Client Docker Image
-description: How to use the getporter/porter docker image
+description: How to use the getporter/porter Docker image
 ---
 
-The [getporter/porter][porter] docker image provides the porter client installed in a
+The [getporter/porter][porter] Docker image provides the Porter client installed in a
 container.
 
 It has tags that match what is available from our [install](/install/) page:
@@ -11,17 +11,17 @@ It has tags that match what is available from our [install](/install/) page:
 
 **Notes**
 
-* The docker socket must be mounted to the container in order to execute a
+* The Docker socket must be mounted to the container in order to execute a
   bundle, using `-v /var/run/docker.sock:/var/run/docker.sock`.
 * The `ENTRYPOINT` is set to `porter`, to change that you can use 
   `--entrypoint`, for example `docker run --rm -it --entrypoint /bin/sh porter`. 
-* Don't mount the entire porter home directory, because that's where the porter
+* Don't mount the entire Porter home directory, because that's where the porter
   binary is located, instead mount individual directories such as claims or
   credentials underneath it. Otherwise you will get an error like 
   `exec user process caused "exec format error"`.
 
 ## Examples
-Here are some examples of how to use the porter client docker image.
+Here are some examples of how to use the Porter client Docker image.
 
 ### Create
 ```
@@ -34,10 +34,10 @@ docker run -it --rm \
 
 Breaking down the command, here's what it just did:
 
-* Mount the docker socket
-* Mount a location from our local machine so that we can persist our bundle's files
-* Set the working directory to the bundle directory
-* Run the `porter create` command
+* Mount the Docker socket.
+* Mount a location from our local machine so that we can persist our bundle's files.
+* Set the working directory to the bundle directory.
+* Run the `porter create` command.
 
 After this executes, you should be able to see the bundles files:
 
@@ -74,7 +74,7 @@ execution completed successfully!
 ```
 
 ### List
-We can also ist our installed bundles with their status:
+We can also list our installed bundles with their status:
 
 ```
 $ docker run -it --rm \
