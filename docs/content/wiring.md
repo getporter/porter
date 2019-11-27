@@ -103,7 +103,7 @@ When the bundle is executed, the Porter runtime will locate the parameter defini
 
 ## Outputs
 
-In addition to parameters and credentials, Porter introduces an type called an output. Outputs are values that are generated during the execution of a mixin. These could be things like a hostname for a newly provisioned Azure service or a generated password from something installed with Helm. These often need to be used in subsequent steps so Porter allows you to declare how to reference them after they have been created. The form used to declare these varies by mixin, but might look something like:
+In addition to parameters and credentials, Porter introduces a type called an output. Outputs are values that are generated during the execution of a mixin. These could be things like a hostname for a newly provisioned Azure service or a generated password from something installed with Helm. These often need to be used in subsequent steps so Porter allows you to declare how to reference them after they have been created. The form used to declare these varies by mixin, but might look something like:
 
 ```yaml
 install:
@@ -125,7 +125,7 @@ install:
         key: "MYSQL_HOST"
 ```
 
-In this example, a new output will be created named `MYSQL_URL`. The Azure mixin allows you to specity the key to fetch the output from, in this case it is `MYSQL_HOST`. Each mixin can provide different ways of addressing outputs, so refer to the schema for each mixin. The Porter runtime will keep a map in memory with each of the outputs declared.
+In this example, a new output will be created named `MYSQL_URL`. The Azure mixin allows you to specify the key to fetch the output from, in this case it is `MYSQL_HOST`. Each mixin can provide different ways of addressing outputs, so refer to the schema for each mixin. The Porter runtime will keep a map in memory with each of the outputs declared.
 
 TODO: What happens if someone overwrites one? Should we fail the `porter build`?
 
