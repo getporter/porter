@@ -101,6 +101,13 @@ stages:
       workingDirectory: '$(MODULE_PATH)'
       displayName: 'Cross Compile'
 
+    - task: Docker@1
+      displayName: Docker Login
+      inputs:
+        containerRegistryType: Container Registry
+        dockerRegistryEndpoint: deislabs-registry
+        command: login
+
     - script: |
         export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
         make publish
