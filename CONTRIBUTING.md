@@ -265,8 +265,10 @@ reach out to one or more of the admins.
 
 ## Initial setup
 
-Run `make build install`. You now have canary builds of porter and all the
-mixins installed.
+1. Clone this repository with `go get -u get.porter.sh/porter`. Porter relies on being in the GOPATH.
+1. Run `make build install`.
+
+You now have canary builds of porter and all the mixins installed.
 
 ## Makefile explained
 
