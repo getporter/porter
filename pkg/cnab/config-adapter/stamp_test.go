@@ -3,10 +3,10 @@ package configadapter
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/manifest"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

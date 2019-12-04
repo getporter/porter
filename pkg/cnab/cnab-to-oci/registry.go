@@ -20,7 +20,7 @@ import (
 	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 
-	portercontext "github.com/deislabs/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 )
 
 type Registry struct {

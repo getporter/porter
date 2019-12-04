@@ -1,11 +1,11 @@
 package instancestorage
 
 import (
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/instance-storage/claimstore"
+	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"github.com/deislabs/cnab-go/claim"
 	"github.com/deislabs/cnab-go/utils/crud"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/instance-storage/claimstore"
-	"github.com/deislabs/porter/pkg/plugins/pluggable"
 	"github.com/pkg/errors"
 )
 

@@ -3,8 +3,8 @@ package cnabprovider
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/deislabs/cnab-go/action"
-	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )

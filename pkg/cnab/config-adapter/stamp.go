@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/pkg/errors"
 )
 

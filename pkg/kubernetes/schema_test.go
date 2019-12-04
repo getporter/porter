@@ -7,7 +7,7 @@ import (
 	//"os"
 	"testing"
 
-	//"github.com/deislabs/porter/pkg/test"
+	//"get.porter.sh/porter/pkg/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

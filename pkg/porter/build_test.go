@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"get.porter.sh/porter/pkg/build"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/build"
-	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

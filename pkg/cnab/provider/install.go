@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
-	"github.com/deislabs/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/manifest"
 )
 
 func (d *Runtime) Install(args ActionArguments) error {

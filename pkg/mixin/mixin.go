@@ -1,7 +1,7 @@
 package mixin
 
 import (
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 )
 
 func IsCoreMixinCommand(value string) bool {

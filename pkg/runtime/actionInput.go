@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/deislabs/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/manifest"
 	"gopkg.in/yaml.v2"
 )
 

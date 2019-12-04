@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"

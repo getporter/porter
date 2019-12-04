@@ -3,8 +3,8 @@ package pluggable
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

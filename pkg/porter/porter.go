@@ -3,16 +3,16 @@
 package porter
 
 import (
-	buildprovider "github.com/deislabs/porter/pkg/build/provider"
-	"github.com/deislabs/porter/pkg/cache"
-	cnabtooci "github.com/deislabs/porter/pkg/cnab/cnab-to-oci"
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/config"
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/mixin"
-	mixinprovider "github.com/deislabs/porter/pkg/mixin/provider"
-	"github.com/deislabs/porter/pkg/templates"
+	buildprovider "get.porter.sh/porter/pkg/build/provider"
+	"get.porter.sh/porter/pkg/cache"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/config"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
+	"get.porter.sh/porter/pkg/templates"
 )
 
 // Porter is the logic behind the porter client.

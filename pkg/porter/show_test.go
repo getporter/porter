@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/printer"
 )
 
 func TestPorter_ShowBundle(t *testing.T) {

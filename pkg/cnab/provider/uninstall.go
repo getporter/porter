@@ -3,9 +3,9 @@ package cnabprovider
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/deislabs/cnab-go/action"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 

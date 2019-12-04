@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/test"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/spf13/afero"
 )
 

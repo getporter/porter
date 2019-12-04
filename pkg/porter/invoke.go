@@ -3,9 +3,9 @@ package porter
 import (
 	"fmt"
 
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/manifest"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 

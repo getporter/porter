@@ -3,12 +3,12 @@ package filesystem
 import (
 	"path/filepath"
 
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 
 	"github.com/hashicorp/go-hclog"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/utils/crud"
-	"github.com/deislabs/porter/pkg/config"
 )
 
 var _ crud.Store = &Store{}

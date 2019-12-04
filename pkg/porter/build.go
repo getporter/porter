@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
 
+	"get.porter.sh/porter/pkg/build"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/build"
-	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
 	"github.com/pkg/errors"
 )
 

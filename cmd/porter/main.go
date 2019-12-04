@@ -5,8 +5,8 @@ package main
 import (
 	"os"
 
-	"github.com/deislabs/porter/pkg/config/datastore"
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/config/datastore"
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/spf13/cobra"
 )
@@ -77,7 +77,7 @@ func buildRootCommand() *cobra.Command {
 }
 
 func newHelptextBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/cmd/porter/helptext", "./helptext")
+	return packr.New("get.porter.sh/porter/cmd/porter/helptext", "./helptext")
 }
 
 func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {

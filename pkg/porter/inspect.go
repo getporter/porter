@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 

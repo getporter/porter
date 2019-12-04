@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/deislabs/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/pkg/errors"
 )
 

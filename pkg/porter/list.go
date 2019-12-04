@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/context"
 	"github.com/Masterminds/semver"
-	"github.com/deislabs/porter/pkg/context"
 )
 
 type MixinFeed struct {

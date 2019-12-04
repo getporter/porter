@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/context"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/imagestore"
 	"github.com/deislabs/cnab-go/imagestore/construction"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/pkg/errors"
 )

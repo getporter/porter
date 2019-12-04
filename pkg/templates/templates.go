@@ -18,7 +18,7 @@ func NewTemplates() *Templates {
 
 // NewSchemas creates or retrieves the packr box with the porter template files.
 func NewTemplatesBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/templates", "./templates")
+	return packr.New("get.porter.sh/porter/pkg/templates", "./templates")
 }
 
 // GetManifest returns a porter.yaml template file for use in new bundles.

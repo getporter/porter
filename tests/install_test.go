@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/porter"
 )
 
 func TestInstall_relativePathPorterHome(t *testing.T) {

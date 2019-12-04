@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"get.porter.sh/porter/pkg/context"
 	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"

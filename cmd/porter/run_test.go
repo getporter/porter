@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/require"
 )
 

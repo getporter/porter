@@ -15,7 +15,7 @@ Here is a [full working example][example] of a unit test that validates the comm
 Make sure that your package has a `TestMain` that calls `github.com/deislabs/porter/pkg/test.TestMainWithMockedCommandHandlers`
 
 ```go
-import "github.com/deislabs/porter/pkg/test"
+import "get.porter.sh/porter/pkg/test"
 
 func TestMain(m *testing.M) {
 	test.TestMainWithMockedCommandHandlers(m)

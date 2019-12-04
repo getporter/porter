@@ -3,7 +3,7 @@ package porter
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/manifest"
 
 	"github.com/pkg/errors"
 )

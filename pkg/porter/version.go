@@ -6,11 +6,11 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/deislabs/porter/pkg"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/porter/version"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/porter/version"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/build"
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

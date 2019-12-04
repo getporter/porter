@@ -3,8 +3,8 @@ package porter
 import (
 	"testing"
 
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/manifest"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

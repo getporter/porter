@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/mixin/feed"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/mixin/feed"
 	"github.com/pkg/errors"
 )
 

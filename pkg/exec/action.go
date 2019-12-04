@@ -1,7 +1,7 @@
 package exec
 
 import (
-	"github.com/deislabs/porter/pkg/exec/builder"
+	"get.porter.sh/porter/pkg/exec/builder"
 )
 
 var _ builder.ExecutableAction = Action{}

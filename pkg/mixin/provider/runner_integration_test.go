@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/test"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

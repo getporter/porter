@@ -3,9 +3,9 @@ package porter
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/mixin/feed"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/mixin/feed"
+	"get.porter.sh/porter/pkg/printer"
 )
 
 // PrintMixinsOptions represent options for the PrintMixins function

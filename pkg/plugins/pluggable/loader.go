@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/plugins"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"

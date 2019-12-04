@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/deislabs/porter/pkg/build"
-	portercontext "github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/build"
+	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/docker/cli/cli/command"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"

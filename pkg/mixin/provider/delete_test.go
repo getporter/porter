@@ -4,8 +4,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/stretchr/testify/assert"
 )
 

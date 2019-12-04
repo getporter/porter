@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/context"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/runtime"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/cnab/extensions"
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/context"
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/runtime"
 	"github.com/pkg/errors"
 )
 

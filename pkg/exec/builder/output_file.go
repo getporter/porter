@@ -3,7 +3,7 @@ package builder
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 
