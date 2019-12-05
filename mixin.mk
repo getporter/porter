@@ -1,4 +1,4 @@
-PKG = github.com/deislabs/porter
+PKG = get.porter.sh/porter
 SHELL = bash
 
 # --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
