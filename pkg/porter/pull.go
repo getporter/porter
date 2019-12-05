@@ -1,7 +1,7 @@
 package porter
 
 import (
-	cnabtooci "github.com/deislabs/porter/pkg/cnab/cnab-to-oci"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	"github.com/pkg/errors"
 )
 

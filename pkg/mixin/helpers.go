@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 )
 
 // TestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real mixins on the file system.

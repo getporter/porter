@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/porter"
 )
 
 func buildBundleCommands(p *porter.Porter) *cobra.Command {

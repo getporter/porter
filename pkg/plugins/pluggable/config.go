@@ -1,7 +1,7 @@
 package pluggable
 
 import (
-	"github.com/deislabs/porter/pkg/config"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/hashicorp/go-plugin"
 )
 

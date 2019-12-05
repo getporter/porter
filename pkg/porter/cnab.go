@@ -6,13 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/build"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/driver/command"
-	"github.com/deislabs/porter/pkg/build"
-	cnabprovider "github.com/deislabs/porter/pkg/cnab/provider"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/parameters"
 	"github.com/pkg/errors"
 )
 

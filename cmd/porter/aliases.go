@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
 

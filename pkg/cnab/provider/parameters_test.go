@@ -3,12 +3,12 @@ package cnabprovider
 import (
 	"testing"
 
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
-	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/stretchr/testify/require"
+	"get.porter.sh/porter/pkg/config"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/bundle/definition"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/config"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {

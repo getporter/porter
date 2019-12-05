@@ -1,7 +1,7 @@
 package porter
 
 import (
-	"github.com/deislabs/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/cache"
 	"github.com/pkg/errors"
 )
 

@@ -3,8 +3,8 @@ package porter
 import (
 	"fmt"
 
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"github.com/deislabs/cnab-go/bundle"
-	configadapter "github.com/deislabs/porter/pkg/cnab/config_adapter"
 	"github.com/pkg/errors"
 )
 

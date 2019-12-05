@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/driver"
-	"github.com/deislabs/porter/pkg/config"
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

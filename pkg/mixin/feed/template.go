@@ -3,7 +3,7 @@ package feed
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
 )
@@ -27,5 +27,5 @@ func CreateTemplate(cxt *context.Context) error {
 
 // NewSchemas creates or retrieves the packr box with the porter template files.
 func NewTemplatesBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/mixin/feed/templates", "./templates")
+	return packr.New("get.porter.sh/porter/pkg/mixin/feed/templates", "./templates")
 }

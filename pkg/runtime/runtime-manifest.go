@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"strings"
 
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"

@@ -3,8 +3,8 @@ package runtime
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/mixin"
 )
 
 type TestPorterRuntime struct {

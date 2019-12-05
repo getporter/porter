@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/pkg/errors"
 )
 

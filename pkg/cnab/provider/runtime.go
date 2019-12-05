@@ -3,10 +3,10 @@ package cnabprovider
 import (
 	"os"
 
+	"get.porter.sh/porter/pkg/config"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/deislabs/cnab-go/driver"
 	"github.com/deislabs/cnab-go/driver/lookup"
-	"github.com/deislabs/porter/pkg/config"
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 )
 
 type Runtime struct {

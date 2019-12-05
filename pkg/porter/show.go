@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/printer"
 )
 
 // ShowOptions represent options for showing a particular claim

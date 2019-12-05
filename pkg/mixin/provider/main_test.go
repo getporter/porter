@@ -3,7 +3,7 @@ package mixinprovider
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/test"
+	"get.porter.sh/porter/pkg/test"
 )
 
 func TestMain(m *testing.M) {

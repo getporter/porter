@@ -3,10 +3,10 @@ package porter
 import (
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/instance-storage/filesystem"
-	"github.com/deislabs/porter/pkg/plugins"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"

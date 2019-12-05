@@ -3,7 +3,7 @@ package porter
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/test"
+	"get.porter.sh/porter/pkg/test"
 )
 
 // sad hack: not sure how to make a common test main for all my subpackages

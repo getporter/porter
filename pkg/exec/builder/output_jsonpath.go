@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/context"
 	"github.com/PaesslerAG/jsonpath"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 

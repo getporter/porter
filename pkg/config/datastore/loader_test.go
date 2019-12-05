@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

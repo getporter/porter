@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/runtime"
 	"github.com/pkg/errors"
 )
 

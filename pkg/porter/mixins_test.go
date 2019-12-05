@@ -3,8 +3,8 @@ package porter
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

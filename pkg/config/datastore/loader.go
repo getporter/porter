@@ -3,7 +3,7 @@ package datastore
 import (
 	"fmt"
 
-	"github.com/deislabs/porter/pkg/config"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"

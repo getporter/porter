@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

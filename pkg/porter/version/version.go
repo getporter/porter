@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/printer"
 )
 
 // VersionOptions represent generic options for use by version commands

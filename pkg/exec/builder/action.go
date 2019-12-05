@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )

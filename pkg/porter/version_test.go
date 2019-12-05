@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/deislabs/porter/pkg"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

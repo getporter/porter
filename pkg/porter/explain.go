@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
 

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"get.porter.sh/porter/pkg/context"
 	"github.com/cbroglie/mustache"
-	"github.com/deislabs/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 

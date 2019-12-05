@@ -3,7 +3,7 @@
 package exec
 
 import (
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/gobuffalo/packr/v2"
 )
 
@@ -23,5 +23,5 @@ func New() *Mixin {
 }
 
 func NewSchemaBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/exec/schema", "./schema")
+	return packr.New("get.porter.sh/porter/pkg/exec/schema", "./schema")
 }

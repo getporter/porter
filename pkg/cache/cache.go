@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/porter/pkg/config"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )

@@ -3,9 +3,9 @@ package porter
 import (
 	"testing"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/instance-storage/claimstore"
-	"github.com/deislabs/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/instance-storage/claimstore"
+	"get.porter.sh/porter/pkg/instance-storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

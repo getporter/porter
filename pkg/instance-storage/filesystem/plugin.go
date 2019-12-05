@@ -1,9 +1,9 @@
 package filesystem
 
 import (
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/instance-storage/claimstore"
 	"github.com/deislabs/cnab-go/utils/crud"
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/instance-storage/claimstore"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 )

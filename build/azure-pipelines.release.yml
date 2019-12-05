@@ -16,7 +16,7 @@ variables:
   GOROOT: '/usr/local/go1.11' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
   GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  MODULE_PATH: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
 
 stages:
 - stage: Test

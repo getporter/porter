@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/config"
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/manifest"
-	"github.com/deislabs/porter/pkg/mixin"
-	"github.com/deislabs/porter/pkg/templates"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/templates"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )

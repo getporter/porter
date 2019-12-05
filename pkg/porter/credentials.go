@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deislabs/porter/pkg/context"
-	"github.com/deislabs/porter/pkg/credentialsgenerator"
-	"github.com/deislabs/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/credentialsgenerator"
+	"get.porter.sh/porter/pkg/printer"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/deislabs/cnab-go/credentials"

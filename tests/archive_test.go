@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/deislabs/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/porter"
 )
 
 func TestArchive(t *testing.T) {

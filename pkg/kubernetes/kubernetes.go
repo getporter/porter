@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"github.com/ghodss/yaml"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
@@ -30,7 +30,7 @@ func New() *Mixin {
 }
 
 func NewSchemaBox() *packr.Box {
-	return packr.New("github.com/deislabs/porter/pkg/kubernetes/schema", "./schema")
+	return packr.New("get.porter.sh/porter/pkg/kubernetes/schema", "./schema")
 }
 
 func (m *Mixin) getCommandFile(commandFile string, w io.Writer) ([]byte, error) {

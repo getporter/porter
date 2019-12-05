@@ -16,8 +16,8 @@ import (
 	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
 	"github.com/pkg/errors"
 
-	"github.com/deislabs/porter/pkg/build"
-	portercontext "github.com/deislabs/porter/pkg/context"
+	"get.porter.sh/porter/pkg/build"
+	portercontext "get.porter.sh/porter/pkg/context"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
