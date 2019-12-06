@@ -10,7 +10,6 @@ Mixins make Porter special, find them, use them, [create your own](/mixin-dev-gu
 * [helm](/mixins/helm)
 * [kubernetes](/mixins/kubernetes)
 * [az](/mixins/az)
-* [azure](/mixins/azure)
 * [aws](/mixins/aws)
 * [gcloud](/mixins/gcloud)
 * [terraform](/mixins/terraform)

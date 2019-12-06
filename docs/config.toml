@@ -182,22 +182,22 @@ defaultContentLanguage = "en"
     url = "/mixins/kubernetes"
     parent = "mixins"
   [[menu.main]]
-    name = "az"
-    identifier = "az-mixin"
+    name = "arm"
+    identifier = "arm-mixin"
     weight = 210
-    url = "/mixins/az"
-    parent = "mixins"
-  [[menu.main]]
-    name = "azure"
-    identifier = "azure-mixin"
-    weight = 211
-    url = "/mixins/azure"
+    url = "/mixins/arm"
     parent = "mixins"
   [[menu.main]]
     name = "aws"
     identifier = "aws-mixin"
-    weight = 212
+    weight = 211
     url = "/mixins/aws"
+    parent = "mixins"
+  [[menu.main]]
+    name = "az"
+    identifier = "az-mixin"
+    weight = 212
+    url = "/mixins/az"
     parent = "mixins"
   [[menu.main]]
     name = "gcloud"
