@@ -2,7 +2,7 @@ package configadapter
 
 import (
 	"fmt"
-	"path/filepath"
+	unix_path "path"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -182,7 +182,7 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 				Definition:  output.Name,
 				Description: output.Description,
 				ApplyTo:     output.ApplyTo,
-				Path:        filepath.Join(config.BundleOutputsDir, output.Name),
+				Path:        unix_path.Join(config.BundleOutputsDir, output.Name),
 			}
 
 			if output.Sensitive {
