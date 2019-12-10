@@ -10,6 +10,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// getClaim reads an instance from the runtime's instance storage. If one is not found, the bundle
+// is examined to see if the action is stateless. If the action is stateless, we create a new, temporary, claim
+// Returns a pointer to the claim, a flag to indicate if the claim is temporary, and an error if present.
 func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*claim.Claim, bool, error) {
 	c, err := d.instanceStorage.Read(claimName)
 	if err != nil {
@@ -29,12 +32,15 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 	return &c, false, nil
 }
 
+// writeClaim will attempt to store the provided claim if, and only if, the claim is not
+// a temporary claim
 func (d *Runtime) writeClaim(tempClaim bool, c *claim.Claim) error {
 	if !tempClaim {
 		return d.instanceStorage.Store(*c)
 	}
 	return nil
 }
+
 func (d *Runtime) Invoke(action string, args ActionArguments) error {
 
 	var bun *bundle.Bundle
@@ -46,7 +52,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		}
 	}
 
-	c, tempClaim, err := d.getClaim(bun, action, args.Claim)
+	c, isTemp, err := d.getClaim(bun, action, args.Claim)
 	if len(args.Params) > 0 {
 		c.Parameters, err = d.loadParameters(c, args.Params, action)
 		if err != nil {
@@ -90,7 +96,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
 	}
 
-	err = d.writeClaim(tempClaim, c)
+	err = d.writeClaim(isTemp, c)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
 	}

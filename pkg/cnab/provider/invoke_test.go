@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/claim"
-	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
