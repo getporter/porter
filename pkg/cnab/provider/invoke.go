@@ -4,25 +4,51 @@ import (
 	"fmt"
 
 	cnabaction "github.com/deislabs/cnab-go/action"
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/deislabs/cnab-go/claim"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-func (d *Runtime) Invoke(action string, args ActionArguments) error {
-	c, err := d.instanceStorage.Read(args.Claim)
+func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*claim.Claim, bool, error) {
+	c, err := d.instanceStorage.Read(claimName)
 	if err != nil {
-		return errors.Wrapf(err, "could not load claim %s", args.Claim)
+		if bun != nil {
+			if action, ok := bun.Actions[actionName]; ok {
+				if action.Stateless {
+					c = claim.Claim{
+						Name:   claimName,
+						Bundle: bun,
+					}
+					return &c, true, nil
+				}
+			}
+		}
+		return nil, false, errors.Wrapf(err, "could not load claim %s", claimName)
 	}
+	return &c, false, nil
+}
 
+func (d *Runtime) writeClaim(tempClaim bool, c *claim.Claim) error {
+	if !tempClaim {
+		return d.instanceStorage.Store(*c)
+	}
+	return nil
+}
+func (d *Runtime) Invoke(action string, args ActionArguments) error {
+
+	var bun *bundle.Bundle
+	var err error
 	if args.BundlePath != "" {
-		c.Bundle, err = d.LoadBundle(args.BundlePath, args.Insecure)
+		bun, err = d.LoadBundle(args.BundlePath, args.Insecure)
 		if err != nil {
 			return err
 		}
 	}
 
+	c, tempClaim, err := d.getClaim(bun, action, args.Claim)
 	if len(args.Params) > 0 {
-		c.Parameters, err = d.loadParameters(&c, args.Params, action)
+		c.Parameters, err = d.loadParameters(c, args.Params, action)
 		if err != nil {
 			return errors.Wrap(err, "invalid parameters")
 		}
@@ -59,16 +85,14 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 
 	var result *multierror.Error
 	// Run the action and ALWAYS write out a claim, even if the action fails
-	err = i.Run(&c, creds, d.ApplyConfig(args)...)
+	err = i.Run(c, creds, d.ApplyConfig(args)...)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
 	}
 
-	// ALWAYS write out a claim, even if the action fails
-	err = d.instanceStorage.Store(c)
+	err = d.writeClaim(tempClaim, c)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
 	}
-
 	return result.ErrorOrNil()
 }
