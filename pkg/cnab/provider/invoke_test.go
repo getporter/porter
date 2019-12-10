@@ -3,9 +3,9 @@ package cnabprovider
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/porter/pkg/config"
 	instancestorage "github.com/deislabs/porter/pkg/instance-storage"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
