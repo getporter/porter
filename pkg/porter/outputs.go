@@ -108,6 +108,7 @@ func (p *Porter) ListBundleOutputs(c claim.Claim) []DisplayOutput {
 
 		var outputType string
 		valueStr := fmt.Sprintf("%v", c.Outputs[name])
+		do.Value = valueStr
 
 		if c.Bundle == nil {
 			continue
