@@ -7,10 +7,12 @@ import (
 	"reflect"
 	"strings"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -98,6 +100,33 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	} else {
 		return "", fmt.Errorf("credential: %s is malformed", cd.Name)
 	}
+}
+
+// resolveOutput will attempt to resolve an output value if required by string interpolation
+// e.g. via {{ bundle.outputs.foo }}
+// It looks up the claim for the value written by the last action and, if exists, returns this value
+func (m *RuntimeManifest) resolveOutput(output manifest.OutputDefinition) (string, error) {
+	if m.Action != manifest.ActionInstall {
+		claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to read claim")
+		}
+
+		claim := &claim.Claim{}
+		err = yaml.Unmarshal(claimBytes, claim)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to unmarshal claim")
+		}
+
+		if err == nil {
+			if val := claim.Outputs[output.Name]; val != nil {
+				return fmt.Sprintf("%v", val), nil
+			}
+		}
+	}
+
+	// Action is Install, so no claim is expected to exist yet
+	return "", nil
 }
 
 func (m *RuntimeManifest) GetSensitiveValues() []string {
@@ -206,9 +235,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		creds[pe] = val
 	}
 
-	bun["outputs"] = m.outputs
-	for _, output := range m.outputs {
-		m.sensitiveValues = append(m.sensitiveValues, output)
+	outputs := make(map[string]interface{})
+	bun["outputs"] = outputs
+	for _, outputDef := range m.Outputs {
+		val, err := m.resolveOutput(outputDef)
+		if err != nil {
+			return nil, err
+		}
+		if outputDef.Sensitive {
+			m.sensitiveValues = append(m.sensitiveValues, val)
+		}
+		outputs[outputDef.Name] = val
 	}
 
 	deps := make(map[string]interface{})
