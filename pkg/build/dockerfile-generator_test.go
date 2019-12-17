@@ -38,9 +38,10 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"RUN apt-get update && apt-get install -y ca-certificates",
 		"",
 		"",
-		"COPY .cnab /cnab",
 		"COPY . $BUNDLE_DIR",
+		"COPY .cnab /cnab",
 		"RUN rm -fr $BUNDLE_DIR/.cnab",
+		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 		"WORKDIR $BUNDLE_DIR",
 		"CMD [\"/cnab/app/run\"]",
 	}
@@ -106,7 +107,8 @@ COPY mybin /cnab/app/
 			"ARG BUNDLE_DIR",
 			"COPY mybin /cnab/app/",
 			"",
-			"COPY .cnab/ /cnab/",
+			"COPY .cnab /cnab",
+			"RUN rm -fr $BUNDLE_DIR/.cnab",
 			"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 			"WORKDIR $BUNDLE_DIR",
 			"CMD [\"/cnab/app/run\"]",
@@ -142,9 +144,10 @@ ARG BUNDLE_DIR
 RUN apt-get update && apt-get install -y ca-certificates
 
 
-COPY .cnab /cnab
 COPY . $BUNDLE_DIR
+COPY .cnab /cnab
 RUN rm -fr $BUNDLE_DIR/.cnab
+COPY porter.yaml $BUNDLE_DIR/porter.yaml
 WORKDIR $BUNDLE_DIR
 CMD ["/cnab/app/run"]
 `
@@ -274,7 +277,8 @@ COPY mybin /cnab/app/
 		"",
 		"ARG BUNDLE_DIR",
 		"COPY mybin /cnab/app/",
-		"COPY .cnab/ /cnab/",
+		"COPY .cnab /cnab",
+		"RUN rm -fr $BUNDLE_DIR/.cnab",
 		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 		"WORKDIR $BUNDLE_DIR",
 		"CMD [\"/cnab/app/run\"]",
@@ -314,7 +318,8 @@ COPY mybin /cnab/app/
 		"COPY mybin /cnab/app/",
 		"# exec mixin has no buildtime dependencies",
 		"",
-		"COPY .cnab/ /cnab/",
+		"COPY .cnab /cnab",
+		"RUN rm -fr $BUNDLE_DIR/.cnab",
 		"COPY porter.yaml $BUNDLE_DIR/porter.yaml",
 		"WORKDIR $BUNDLE_DIR",
 
