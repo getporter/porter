@@ -146,9 +146,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 	claim.Parameters = map[string]interface{}{}
 
-	overrides := map[string]string{
-		"foo": "FOO",
-	}
+	overrides := map[string]string{}
 
 	params, err := d.loadParameters(claim, overrides, "action")
 	require.NoError(t, err)
@@ -191,6 +189,58 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "foo-claim-value", params["foo"], "expected param 'foo' to be the bundle default")
+}
+
+func Test_loadParameters_requiredButdoesNotApply_claimValueNonExistent(t *testing.T) {
+	var emptyStruct struct{}
+
+	testcases := []struct {
+		paramType   string
+		expectedVal interface{}
+	}{
+		{"integer", 0},
+		{"number", 0},
+		{"string", ""},
+		{"boolean", false},
+		{"array", []interface{}{}},
+		{"object", emptyStruct},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.paramType, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
+			d := NewRuntime(c.Config, instanceStorage)
+
+			claim, err := claim.New("test")
+			require.NoError(t, err)
+
+			claim.Bundle = &bundle.Bundle{
+				Definitions: definition.Definitions{
+					"foo": &definition.Schema{
+						Type: tc.paramType,
+					},
+				},
+				Parameters: map[string]bundle.Parameter{
+					"foo": bundle.Parameter{
+						Definition: "foo",
+						ApplyTo: []string{
+							"different-action",
+						},
+						Required: true,
+					},
+				},
+			}
+
+			claim.Parameters = map[string]interface{}{}
+			overrides := map[string]string{}
+
+			params, err := d.loadParameters(claim, overrides, "action")
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedVal, params["foo"], "unexpected value for param 'foo")
+		})
+	}
 }
 
 func Test_loadParameters_fileParameter(t *testing.T) {

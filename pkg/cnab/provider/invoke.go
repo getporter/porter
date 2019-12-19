@@ -53,11 +53,16 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	}
 
 	c, isTemp, err := d.getClaim(bun, action, args.Claim)
-	if len(args.Params) > 0 {
-		c.Parameters, err = d.loadParameters(c, args.Params, action)
-		if err != nil {
-			return errors.Wrap(err, "invalid parameters")
-		}
+
+	// Here we need to check this again
+	// If provided, we should set the bundle on the claim accordingly
+	if args.BundlePath != "" {
+		c.Bundle = bun
+	}
+
+	c.Parameters, err = d.loadParameters(c, args.Params, action)
+	if err != nil {
+		return errors.Wrap(err, "invalid parameters")
 	}
 
 	driver, err := d.newDriver(args.Driver, c.Name, args)

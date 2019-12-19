@@ -37,31 +37,33 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, def.Type)
 		}
 
-		// If this parameter applies to the current action, set the override accordingly
-		if param.AppliesTo(action) {
-			overrides[key] = value
-		} else {
-			// Otherwise, set to current parameter value on the claim, if exists
+		overrides[key] = value
+		// If this parameter does not apply to the current action, defer to the claim value, if exists
+		if !param.AppliesTo(action) {
 			if _, exists := claim.Parameters[key]; exists {
 				overrides[key] = claim.Parameters[key]
-			}
-			if d.Debug {
-				fmt.Fprintf(d.Err,
-					"override supplied for '%s', but this parameter is not configured to apply for action '%s'; skipping\n",
-					key, action)
 			}
 		}
 	}
 
 	// rawOverrides may supply no entry for a parameter designated as required
-	// *but* should not apply to this action.
-	// When this occurs, we set an override to the current value in the claim such that
-	// bundle.ValuesOrDefaults does not return an error
+	// *but* that does not apply to this action.
+	//
+	// When this occurs, we set an override to either the default value or the current value in the claim.
+	// If neither exists, the zero value according to the parameter type will be used.
+	// Otherwise, if unset/nil, json validation in bundle.ValuesOrDefaults would return an error
 	for name, param := range bun.Parameters {
+		def, ok := bun.Definitions[param.Definition]
+		if !ok {
+			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+		}
+
 		if param.Required {
 			if _, exists := rawOverrides[name]; !exists {
-				if !param.AppliesTo(action) {
-					overrides[name] = claim.Parameters[name]
+				if def.Default != nil {
+					overrides[name] = def.Default
+				} else if !param.AppliesTo(action) {
+					overrides[name] = getClaimValueOrZeroValue(name, def, claim)
 				}
 			}
 		}
@@ -82,4 +84,27 @@ func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 		}
 	}
 	return rawValue, nil
+}
+
+// getClaimValueOrZeroValue returns a
+func getClaimValueOrZeroValue(name string, def *definition.Schema, claim *claim.Claim) interface{} {
+	if claim.Parameters[name] != nil {
+		return claim.Parameters[name]
+	}
+
+	switch def.Type {
+	case "integer", "number":
+		return 0
+	case "string":
+		return ""
+	case "boolean":
+		return false
+	case "array":
+		return []interface{}{}
+	case "object":
+		var emptyStruct struct{}
+		return emptyStruct
+	default:
+		return nil
+	}
 }
