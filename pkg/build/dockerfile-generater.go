@@ -73,12 +73,8 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 		lines = append(pretoken, append(mixinLines, posttoken...)...)
 	}
 
-	// The template dockerfile copies everything by default, but if the user
-	// supplied their own, copy over cnab/ and porter.yaml
-	if g.Manifest.Dockerfile != "" {
-		lines = append(lines, g.buildCNABSection()...)
-		lines = append(lines, g.buildPorterSection()...)
-	}
+	lines = append(lines, g.buildCNABSection()...)
+	lines = append(lines, g.buildPorterSection()...)
 	lines = append(lines, g.buildWORKDIRSection())
 	lines = append(lines, g.buildCMDSection())
 
@@ -155,7 +151,9 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
 	return []string{
-		`COPY .cnab/ /cnab/`,
+		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
+		`RUN rm -fr $BUNDLE_DIR/.cnab`,
+		`COPY .cnab /cnab`,
 	}
 }
 
