@@ -151,8 +151,9 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
 	return []string{
-		`COPY .cnab /cnab`,
+		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
 		`RUN rm -fr $BUNDLE_DIR/.cnab`,
+		`COPY .cnab /cnab`,
 	}
 }
 
