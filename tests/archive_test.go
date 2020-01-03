@@ -3,6 +3,7 @@
 package tests
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -37,6 +38,10 @@ func TestArchive(t *testing.T) {
 
 	err = p.Archive(archiveOpts)
 	require.NoError(p.T(), err, "archival of bundle failed")
+
+	info, err := p.FileSystem.Stat("mybuns.tgz")
+	require.NoError(p.T(), err)
+	require.Equal(p.T(), os.FileMode(0644), info.Mode())
 
 	// Publish bundle from archive, with new tag
 

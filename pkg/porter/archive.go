@@ -59,7 +59,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return err
 	}
 
-	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0644)
 
 	exp := &exporter{
 		out:                   p.Config.Out,
@@ -93,7 +93,7 @@ func (ex *exporter) export() error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(archiveDir, 0755); err != nil {
+	if err := os.MkdirAll(archiveDir, 0644); err != nil {
 		return err
 	}
 	defer os.RemoveAll(archiveDir)
