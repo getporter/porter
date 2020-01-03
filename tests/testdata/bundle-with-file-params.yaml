@@ -11,6 +11,12 @@ parameters:
   - name: myfile
     type: file
     path: /root/myfile
+  # This is added to cover bug fix for https://github.com/deislabs/porter/issues/835
+  # It will be inherently exercised in install_test.go via a default bundle installation
+  - name: onlyUpgrade
+    type: string
+    applyTo:
+      - upgrade
 
 outputs:
   - name: myfile

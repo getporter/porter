@@ -27,11 +27,9 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		}
 	}
 
-	if len(args.Params) > 0 {
-		c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUninstall))
-		if err != nil {
-			return errors.Wrap(err, "invalid parameters")
-		}
+	c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUninstall))
+	if err != nil {
+		return errors.Wrap(err, "invalid parameters")
 	}
 
 	driver, err := d.newDriver(args.Driver, c.Name, args)
