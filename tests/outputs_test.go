@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestExecOutputs(t *testing.T) {
 	// Verify that its bundle level file output was captured
 	c, err := p.InstanceStorage.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not read claim")
-	outputs := p.ListBundleOutputs(c)
+	outputs := p.ListBundleOutputs(c, printer.FormatJSON)
 	var kubeconfigOutput *porter.DisplayOutput
 	for _, o := range outputs {
 		if o.Name == "kubeconfig" {

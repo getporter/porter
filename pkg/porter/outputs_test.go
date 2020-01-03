@@ -24,8 +24,8 @@ func TestPorter_printOutputsTable(t *testing.T) {
 `
 
 	outputs := []DisplayOutput{
-		{Name: "bar", Type: "string", DisplayValue: "bar-value"},
-		{Name: "foo", Type: "string", DisplayValue: "/path/to/foo"},
+		{Name: "bar", Type: "string", Value: "bar-value"},
+		{Name: "foo", Type: "string", Value: "/path/to/foo"},
 	}
 	err := p.printOutputsTable(outputs)
 	require.NoError(t, err)
@@ -96,7 +96,6 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
       "type": "string"
     },
     "Value": "bar-output",
-    "DisplayValue": "bar-output",
     "Type": "string"
   },
   {
@@ -106,7 +105,6 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
       "writeOnly": true
     },
     "Value": "foo-output",
-    "DisplayValue": "/path/to/foo",
     "Type": "string"
   }
 ]
@@ -114,4 +112,69 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 
 	got := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, want, got)
+}
+
+func TestPorter_ListOutputs_Truncation(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+	p.CNAB = NewTestCNABProvider()
+
+	fullOutputValue := "this-lengthy-output-will-be-truncated-if-the-output-format-is-table"
+
+	claim, err := claim.New("test")
+	require.NoError(t, err)
+
+	claim.Bundle = &bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type: "string",
+			},
+		},
+		Outputs: map[string]bundle.Output{
+			"foo": bundle.Output{
+				Definition: "foo",
+			},
+		},
+	}
+	claim.Outputs = map[string]interface{}{
+		"foo": fullOutputValue,
+	}
+
+	testcases := []struct {
+		name          string
+		format        printer.Format
+		expectedValue string
+	}{
+		{
+			"format Table",
+			printer.FormatTable,
+			"this-lengthy-output-will-be-truncated-if-the-output-forma...",
+		},
+		{
+			"format YAML",
+			printer.FormatYaml,
+			fullOutputValue,
+		},
+		{
+			"format JSON",
+			printer.FormatJson,
+			fullOutputValue,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotOutputs := p.ListBundleOutputs(*claim, tc.format)
+
+			wantOutputs := []DisplayOutput{
+				{
+					Name:       "foo",
+					Definition: *claim.Bundle.Definitions["foo"],
+					Type:       "string",
+					Value:      tc.expectedValue,
+				},
+			}
+			require.Equal(t, wantOutputs, gotOutputs)
+		})
+	}
 }

@@ -68,7 +68,7 @@ func (p *Porter) ShowInstances(opts ShowOptions) error {
 			fmt.Fprintln(p.Out)
 			fmt.Fprint(p.Out, "Outputs:\n")
 
-			outputs := p.ListBundleOutputs(c)
+			outputs := p.ListBundleOutputs(c, opts.Format)
 			return p.printOutputsTable(outputs)
 		}
 		return nil
