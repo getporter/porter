@@ -31,7 +31,7 @@ func TestExecOutputs(t *testing.T) {
 	// Verify that its bundle level file output was captured
 	c, err := p.InstanceStorage.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not read claim")
-	outputs := p.ListBundleOutputs(c, printer.FormatJSON)
+	outputs := p.ListBundleOutputs(c, printer.FormatJson)
 	var kubeconfigOutput *porter.DisplayOutput
 	for _, o := range outputs {
 		if o.Name == "kubeconfig" {
@@ -41,7 +41,7 @@ func TestExecOutputs(t *testing.T) {
 	}
 	require.NotNil(t, kubeconfigOutput, "could not find kubeconfig output")
 	assert.Equal(t, "file", kubeconfigOutput.Type)
-	assert.Contains(t, kubeconfigOutput.DisplayValue, "apiVersion")
+	assert.Contains(t, kubeconfigOutput.Value, "apiVersion")
 
 	invokeExecOutputsBundle(p, "status")
 
