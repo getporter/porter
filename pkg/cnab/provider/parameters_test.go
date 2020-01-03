@@ -447,13 +447,15 @@ func Test_Paramapalooza(t *testing.T) {
 
 					if tc.expectedErr != "" {
 						require.EqualError(t, err, tc.expectedErr)
-					} else if action != "uninstall" {
+					} else {
 						require.NoError(t, err)
 
-						// Verify the updated param value on the generated claim
-						updatedClaim, err := d.instanceStorage.Read("test")
-						require.NoError(t, err)
-						require.Equal(t, tc.expectedVal, updatedClaim.Parameters["my-param"])
+						if action != "uninstall" {
+							// Verify the updated param value on the generated claim
+							updatedClaim, err := d.instanceStorage.Read("test")
+							require.NoError(t, err)
+							require.Equal(t, tc.expectedVal, updatedClaim.Parameters["my-param"])
+						}
 					}
 				})
 			}

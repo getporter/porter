@@ -55,7 +55,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	for name, param := range bun.Parameters {
 		def, ok := bun.Definitions[param.Definition]
 		if !ok {
-			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+			return nil, fmt.Errorf("parameter definition %s not defined in bundle", param.Definition)
 		}
 		if param.Required {
 			if _, exists := rawOverrides[name]; !exists {
@@ -68,7 +68,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 						overrides[name] = def.Default
 					} else {
 						// Finally, use a zero value if no other option exists
-						overrides[name] = getZeroValue(name, def, claim)
+						overrides[name] = getZeroValue(name, def)
 					}
 				}
 			}
@@ -93,7 +93,7 @@ func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 }
 
 // getZeroValue returns the zero value for a parameter according to its type
-func getZeroValue(name string, def *definition.Schema, claim *claim.Claim) interface{} {
+func getZeroValue(name string, def *definition.Schema) interface{} {
 	switch def.Type {
 	case "integer", "number":
 		return 0
