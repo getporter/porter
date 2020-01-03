@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	printer "get.porter.sh/porter/pkg/printer"
-	credentials "github.com/deislabs/cnab-go/credentials"
+	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,7 +1,7 @@
 package porter
 
 import (
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/docker/cnab-to-oci/relocation"
 )
 

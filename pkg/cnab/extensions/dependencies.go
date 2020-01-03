@@ -3,7 +3,7 @@ package extensions
 import (
 	"encoding/json"
 
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 

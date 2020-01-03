@@ -6,8 +6,8 @@ import (
 
 	"strings"
 
+	"github.com/cnabio/cnab-go/bundle"
 	containerdRemotes "github.com/containerd/containerd/remotes"
-	"github.com/deislabs/cnab-go/bundle"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"

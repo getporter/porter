@@ -11,7 +11,7 @@ import (
 	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 

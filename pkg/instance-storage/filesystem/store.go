@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 
 	"get.porter.sh/porter/pkg/config"
-	"github.com/deislabs/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/utils/crud"
 )
 
 var _ crud.Store = &Store{}

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,8 +1,8 @@
 package cnabprovider
 
 import (
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/bundle/loader"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/pkg/errors"
 )
 

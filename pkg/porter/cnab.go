@@ -11,8 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/driver/command"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/pkg/errors"
 )
 

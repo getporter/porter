@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/deislabs/cnab-go/action"
+	"github.com/cnabio/cnab-go/action"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )

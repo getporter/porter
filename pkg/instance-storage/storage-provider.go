@@ -1,7 +1,7 @@
 package instancestorage
 
 import (
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 // StorageProvider interface for instance storage (claims).

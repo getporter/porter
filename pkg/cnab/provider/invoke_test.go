@@ -5,8 +5,8 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	instancestorage "get.porter.sh/porter/pkg/instance-storage"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"

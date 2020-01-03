@@ -6,7 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
-	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"

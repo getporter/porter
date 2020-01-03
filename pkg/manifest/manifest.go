@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
-	"github.com/deislabs/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -115,7 +115,7 @@ type ParameterDefinition struct {
 	Name      string `yaml:"name"`
 	Sensitive bool   `yaml:"sensitive"`
 
-	// These fields represent a subset of bundle.Parameter as defined in deislabs/cnab-go,
+	// These fields represent a subset of bundle.Parameter as defined in cnabio/cnab-go,
 	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
 	ApplyTo     []string `yaml:"applyTo,omitempty"`
 	Destination Location `yaml:",inline,omitempty"`

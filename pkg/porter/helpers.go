@@ -18,7 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"

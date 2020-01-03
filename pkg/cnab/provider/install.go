@@ -3,8 +3,8 @@ package cnabprovider
 import (
 	"fmt"
 
-	"github.com/deislabs/cnab-go/action"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 

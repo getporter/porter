@@ -6,8 +6,8 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	instancestorage "get.porter.sh/porter/pkg/instance-storage"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/driver"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
