@@ -16,9 +16,9 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = NewTestCNABProvider()
 
-	want := `----------------------------
+	want := `------------------------------
   Name  Type    Value         
-----------------------------
+------------------------------
   bar   string  bar-value     
   foo   string  /path/to/foo  
 `

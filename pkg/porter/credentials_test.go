@@ -357,9 +357,9 @@ credentials:
 			format: printer.FormatTable,
 			wantOutput: `Name: kool-kreds
 
-------------------------------------------------
+--------------------------------------------------
   Name         Local Source          Source Type  
-------------------------------------------------
+--------------------------------------------------
   kool-config  /path/to/kool-config  Path         
   kool-envvar  KOOL_ENV_VAR          EnvVar       
   kool-cmd     echo 'kool'           Command      
