@@ -95,6 +95,10 @@ func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 // getZeroValue returns the zero value for a parameter according to its type
 func getZeroValue(name string, def *definition.Schema) interface{} {
 	switch def.Type {
+	// Technically, only integer types are supported by CNAB/cnab-go
+	// to represent numbers, due to limitations in the canonical json library used.
+	// However, we have support for the number type (decimal numbers) here as well,
+	// just in case. See also https://github.com/cnabio/cnab-go/issues/115
 	case "integer", "number":
 		return 0
 	case "string":
