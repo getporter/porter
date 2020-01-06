@@ -13,7 +13,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOROOT: '/usr/local/go1.11' # Go installation path
+  GOROOT: '/usr/local/go1.13' # Go installation path
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
   GOBIN:  '$(GOPATH)/bin' # Go binaries path
   MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
