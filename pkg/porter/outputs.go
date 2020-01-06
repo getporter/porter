@@ -83,16 +83,15 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 }
 
 type DisplayOutput struct {
-	Name         string
-	Definition   definition.Schema
-	Value        interface{}
-	DisplayValue string
-	Type         string
+	Name       string
+	Definition definition.Schema
+	Value      string
+	Type       string
 }
 
 // ListBundleOutputs lists the outputs for a given bundle,
-// according to the provided options
-func (p *Porter) ListBundleOutputs(c claim.Claim) []DisplayOutput {
+// according to the provided claim and display format
+func (p *Porter) ListBundleOutputs(c claim.Claim, format printer.Format) []DisplayOutput {
 	// Get sorted keys for ordered printing
 	keys := make([]string, 0, len(c.Outputs))
 	for k := range c.Outputs {
@@ -108,6 +107,7 @@ func (p *Porter) ListBundleOutputs(c claim.Claim) []DisplayOutput {
 
 		var outputType string
 		valueStr := fmt.Sprintf("%v", c.Outputs[name])
+		do.Value = valueStr
 
 		if c.Bundle == nil {
 			continue
@@ -144,7 +144,10 @@ func (p *Porter) ListBundleOutputs(c claim.Claim) []DisplayOutput {
 			do.Type = "file"
 		}
 
-		do.DisplayValue = truncateString(valueStr, 60)
+		// If table output is desired, truncate the value to a reasonable length
+		if format == printer.FormatTable {
+			do.Value = truncateString(valueStr, 60)
+		}
 
 		outputs = append(outputs, do)
 	}
@@ -163,7 +166,7 @@ func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
 		return err
 	}
 
-	outputs := p.ListBundleOutputs(c)
+	outputs := p.ListBundleOutputs(c, opts.Format)
 	if err != nil {
 		return err
 	}
@@ -206,7 +209,7 @@ func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {
 	// Print the outputs table
 	table.SetHeader([]string{"Name", "Type", "Value"})
 	for _, output := range outputs {
-		table.Append([]string{output.Name, output.Type, output.DisplayValue})
+		table.Append([]string{output.Name, output.Type, output.Value})
 	}
 	table.Render()
 
