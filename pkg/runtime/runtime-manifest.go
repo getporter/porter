@@ -102,30 +102,28 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	}
 }
 
-// resolveOutput will attempt to resolve an output value if required by string interpolation
-// e.g. via {{ bundle.outputs.foo }}
-// It looks up the claim for the value written by the last action and, if exists, returns this value
-func (m *RuntimeManifest) resolveOutput(output manifest.OutputDefinition) (string, error) {
-	if m.Action != manifest.ActionInstall {
-		claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to read claim")
-		}
+// resolveBundleOutput will attempt to resolve a bundle output value if required
+// by string interpolation, e.g. via {{ bundle.outputs.foo }}
+// It first checks the outputs field on the RuntimeManifest struct and, if non-existent,
+// attempts to pull a value from the claim, if exists
+func (m *RuntimeManifest) resolveBundleOutput(output manifest.OutputDefinition) (string, error) {
+	if m.outputs[output.Name] != "" {
+		return m.outputs[output.Name], nil
+	}
 
+	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
 		claim := &claim.Claim{}
 		err = yaml.Unmarshal(claimBytes, claim)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to unmarshal claim")
 		}
 
-		if err == nil {
-			if val := claim.Outputs[output.Name]; val != nil {
-				return fmt.Sprintf("%v", val), nil
-			}
+		if val := claim.Outputs[output.Name]; val != nil {
+			return fmt.Sprintf("%v", val), nil
 		}
 	}
 
-	// Action is Install, so no claim is expected to exist yet
+	// No claim exists, so no previous output value to return
 	return "", nil
 }
 
@@ -179,10 +177,9 @@ func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[
 	}
 
 	for outvar, outval := range assignments {
-		if _, exists := m.outputs[outvar]; exists {
-			return fmt.Errorf("output already set: %s", outvar)
+		if _, exists := m.outputs[outvar]; !exists {
+			m.outputs[outvar] = outval
 		}
-		m.outputs[outvar] = outval
 	}
 	return nil
 }
@@ -237,14 +234,21 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	outputs := make(map[string]interface{})
 	bun["outputs"] = outputs
+	// iterate through internal outputs struct (shared between steps of an action
+	// but not necessarily a bundle-wide output)
+	for _, output := range m.outputs {
+		m.sensitiveValues = append(m.sensitiveValues, output)
+	}
+	// interate through outputs declared at the bundle level
 	for _, outputDef := range m.Outputs {
-		val, err := m.resolveOutput(outputDef)
+		val, err := m.resolveBundleOutput(outputDef)
 		if err != nil {
 			return nil, err
 		}
 		if outputDef.Sensitive {
 			m.sensitiveValues = append(m.sensitiveValues, val)
 		}
+
 		outputs[outputDef.Name] = val
 	}
 
