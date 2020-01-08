@@ -99,7 +99,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	// TODO: add output that is both step and bundle level
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/porter.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/dump-config.sh"), "dump-config.sh")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/Dockerfile"), "Dockerfile")
