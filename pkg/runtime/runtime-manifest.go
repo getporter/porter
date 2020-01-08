@@ -134,6 +134,19 @@ func (m *RuntimeManifest) GetSensitiveValues() []string {
 	return m.sensitiveValues
 }
 
+func (m *RuntimeManifest) setSensitiveValue(val string) {
+	exists := false
+	for _, item := range m.sensitiveValues {
+		if item == val {
+			exists = true
+		}
+	}
+
+	if !exists {
+		m.sensitiveValues = append(m.sensitiveValues, val)
+	}
+}
+
 func (m *RuntimeManifest) GetSteps() manifest.Steps {
 	return m.steps
 }
@@ -177,9 +190,7 @@ func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[
 	}
 
 	for outvar, outval := range assignments {
-		if _, exists := m.outputs[outvar]; !exists {
-			m.outputs[outvar] = outval
-		}
+		m.outputs[outvar] = outval
 	}
 	return nil
 }
@@ -215,7 +226,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			return nil, err
 		}
 		if param.Sensitive {
-			m.sensitiveValues = append(m.sensitiveValues, val)
+			m.setSensitiveValue(val)
 		}
 		params[pe] = val
 	}
@@ -228,28 +239,31 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.sensitiveValues = append(m.sensitiveValues, val)
+		m.setSensitiveValue(val)
 		creds[pe] = val
 	}
 
-	outputs := make(map[string]interface{})
-	bun["outputs"] = outputs
-	// iterate through internal outputs struct (shared between steps of an action
-	// but not necessarily a bundle-wide output)
-	for _, output := range m.outputs {
-		m.sensitiveValues = append(m.sensitiveValues, output)
+	bun["outputs"] = m.outputs
+	// Iterate through the runtime manifest's step outputs and mask by default
+	for _, stepOutput := range m.outputs {
+		// TODO: check if output declared sensitive or not; currently we default always sensitive
+		m.setSensitiveValue(stepOutput)
 	}
-	// interate through outputs declared at the bundle level
+	// Iterate through the bundle-level manifests and resolve for interpolation
 	for _, outputDef := range m.Outputs {
 		val, err := m.resolveBundleOutput(outputDef)
 		if err != nil {
 			return nil, err
 		}
 		if outputDef.Sensitive {
-			m.sensitiveValues = append(m.sensitiveValues, val)
+			m.setSensitiveValue(val)
 		}
 
-		outputs[outputDef.Name] = val
+		if m.outputs == nil {
+			m.outputs = map[string]string{}
+		}
+		m.outputs[outputDef.Name] = val
+		bun["outputs"] = m.outputs
 	}
 
 	deps := make(map[string]interface{})
@@ -287,7 +301,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 			def := bun.Definitions[output.Definition]
 			if def.WriteOnly != nil && *def.WriteOnly == true {
-				m.sensitiveValues = append(m.sensitiveValues, value)
+				m.setSensitiveValue(value)
 			}
 		}
 	}
