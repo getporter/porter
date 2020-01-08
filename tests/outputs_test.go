@@ -92,3 +92,41 @@ func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 	err = p.InvokeBundle(statusOpts)
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
 }
+
+func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	// TODO: add output that is both step and bundle level
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/porter.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/dump-config.sh"), "dump-config.sh")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-outputs/Dockerfile"), "Dockerfile")
+
+	// Install the bundle
+	// A step-level output will be used during this action
+	installOpts := porter.InstallOptions{}
+	err := installOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err, "install should have succeeded")
+
+	// Upgrade the bundle
+	// A bundle-level output will be produced during this action
+	upgradeOpts := porter.UpgradeOptions{}
+	upgradeOpts.Insecure = true
+	err = upgradeOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+	err = p.UpgradeBundle(upgradeOpts)
+	require.NoError(t, err, "upgrade should have succeeded")
+
+	// Uninstall the bundle
+	// A bundle-level output will be used during this action
+	uninstallOpts := porter.UninstallOptions{}
+	uninstallOpts.Insecure = true
+	err = uninstallOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+	err = p.UninstallBundle(uninstallOpts)
+	require.NoError(t, err, "uninstall should have succeeded")
+}
