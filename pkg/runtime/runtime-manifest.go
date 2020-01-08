@@ -275,22 +275,22 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 	mustache.AllowMissingVariables = false
 	sourceData, err := m.buildSourceData()
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step: unable to populate source data")
+		return errors.Wrap(err, "unable to build step template data")
 	}
 
 	payload, err := yaml.Marshal(step)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "invalid step data %v", step)
 	}
 
 	rendered, err := mustache.Render(string(payload), sourceData)
 	if err != nil {
-		return errors.Wrapf(err, "unable to resolve step: unable to render template %s", string(payload))
+		return errors.Wrapf(err, "unable to render step template %s", string(payload))
 	}
 
 	err = yaml.Unmarshal([]byte(rendered), step)
 	if err != nil {
-		return errors.Wrap(err, "unable to resolve step: invalid step yaml")
+		return errors.Wrapf(err, "invalid step yaml\n%s", rendered)
 	}
 
 	return nil

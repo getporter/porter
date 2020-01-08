@@ -71,7 +71,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		if step != nil {
 			err := r.RuntimeManifest.ResolveStep(step)
 			if err != nil {
-				return errors.Wrap(err, "unable to resolve sourced values")
+				return errors.Wrap(err, "unable to resolve step")
 			}
 
 			description, _ := step.GetDescription()

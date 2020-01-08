@@ -172,7 +172,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to render step template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
 }
 
 func TestPrepare_fileParam(t *testing.T) {
@@ -252,7 +252,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template Arguments:\n- '{{ bundle.parameters.person }}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
+	assert.Equal(t, "unable to render step template Arguments:\n- '{{ bundle.parameters.person }}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
 }
 
 func TestResolveArray(t *testing.T) {
@@ -535,7 +535,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
+	assert.Equal(t, "unable to render step template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
 }
 
 func TestResolveDependencyParam(t *testing.T) {
