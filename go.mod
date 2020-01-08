@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.8.0-beta1
+	github.com/cnabio/cnab-go v0.8.1-beta1
 	github.com/containerd/containerd v1.3.0
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
 	github.com/docker/cnab-to-oci v0.3.0-beta3
