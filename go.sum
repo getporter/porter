@@ -97,6 +97,8 @@ github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:ea
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
 github.com/cnabio/cnab-go v0.8.1-beta1 h1:+UCpSdayWYdNS5Cm2VRtiJ38hhsnvngRI5aiBg9GdoU=
 github.com/cnabio/cnab-go v0.8.1-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
+github.com/cnabio/cnab-go v0.8.2-beta1 h1:pJfXR9w0G1m3sFE3yp+ImAKeaBUwa2OviE9f+PnpMnM=
+github.com/cnabio/cnab-go v0.8.2-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
 github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc h1:Euk3pMvf7cw8tKEi8ZlMHCrnd5iBlz8hWBUVNL44hmQ=
 github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc/go.mod h1:6KyBUkSDshoWUZPkqlFXQzOMWNtlcJ1stduPAd2MRes=
 github.com/containerd/containerd v1.2.7/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
