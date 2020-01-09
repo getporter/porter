@@ -298,7 +298,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```console
-$ porter install --tag deislabs/porter-hello-velocity:latest
+$ porter install --tag getporter/porter-hello-velocity:latest
 ```
 
 ---
@@ -1265,8 +1265,7 @@ Use  `porter publish` to share bundles:
 ```yaml
 name: porter-azure-wordpress
 version: 0.1.0
-invocationImage: deislabs/porter-azure-wordpress:latest
-tag: deislabs/porter-azure-wordpress-bundle:latest
+tag: getporter/porter-azure-wordpress:latest
 ```
 
 ---

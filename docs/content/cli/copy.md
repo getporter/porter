@@ -23,8 +23,8 @@ porter copy [flags]
 
 ```
   porter copy
-  porter copy --source deislabs/porter-bundle:v0.1.0 --destination portersh
-  porter copy --source deislabs/porter-bundle:v0.1.0 --destination portersh --insecure-registry
+  porter copy --source getporter/porter-bundle:v0.1.0 --destination portersh
+  porter copy --source getporter/porter-bundle:v0.1.0 --destination portersh --insecure-registry
 		  
 ```
 

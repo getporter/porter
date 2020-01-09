@@ -16,9 +16,8 @@ cp -r ${REPO_DIR}/build/testdata/bundles/terraform/terraform .
 # Copy in the terraform porter manifest
 cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .
 
-# Substitute REGISTRY in for invocation image and bundle tag
-sed -i "s/porter-terraform:latest/${REGISTRY}\/porter-terraform:latest/g" porter.yaml
-sed -i "s/deislabs\/porter-terraform-bundle/${REGISTRY}\/porter-terraform-bundle/g" porter.yaml
+# Substitute REGISTRY in for the bundle tag
+sed -i "s/getporterci\/porter-terraform/${REGISTRY}\/porter-terraform/g" porter.yaml
 
 ${PORTER_HOME}/porter build
 

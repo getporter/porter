@@ -4,8 +4,7 @@ mixins:
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
-invocationImage: porter-hello-custom:latest
-tag: deislabs/porter-hello-custom-bundle:latest
+tag: getporter/porter-hello-custom-bundle:latest
 
 install:
   - exec:

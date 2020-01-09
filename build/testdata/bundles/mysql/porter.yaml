@@ -4,8 +4,7 @@ mixins:
 
 name: mysql
 version: 0.1.1
-invocationImage: deislabs/porter-mysql:v0.1.1
-tag: deislabs/porter-mysql-bundle:v0.1.1
+tag: getporter/porter-mysql:v0.1.1
 
 credentials:
 - name: kubeconfig

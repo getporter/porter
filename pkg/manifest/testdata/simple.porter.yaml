@@ -4,7 +4,7 @@ mixins:
 name: hello
 description: "An example Porter configuration"
 version: 0.1.0
-invocationImage: porter-hello:latest
+tag: getporter/porter-hello:latest
 
 install:
 - exec:

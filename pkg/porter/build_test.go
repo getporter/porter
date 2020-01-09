@@ -48,7 +48,7 @@ func TestPorter_buildBundle(t *testing.T) {
 
 	stamp, err := configadapter.LoadStamp(bun)
 	require.NoError(t, err)
-	assert.Equal(t, "a9e5334dbb25b74b2a9d9cb5936465b9d82e73cdb50740589906011f30f2376c", stamp.ManifestDigest)
+	assert.Equal(t, "ee81cb99fe3864440362332d12f460914f93258b20884dfb56b648faf7bbb2e5", stamp.ManifestDigest)
 
 	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")

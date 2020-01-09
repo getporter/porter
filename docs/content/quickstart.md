@@ -25,8 +25,8 @@ Here is a very basic **porter.yaml** file:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-invocationImage: deislabs/porter-hello:latest
-tag: deislabs/porter-hello-bundle:latest
+invocationImage: getporter/porter-hello:latest
+tag: getporter/porter-hello-bundle:latest
 
 mixins:
   - exec
@@ -85,8 +85,8 @@ sure that the `invocationImage` and `tag` listed in you `porter.yaml` is a
 reference to which the currently logged in user has write permission.
 
 ```yaml
-invocationImage: deislabs/porter-hello:latest
-tag: deislabs/porter-hello-bundle:latest
+invocationImage: getporter/porter-hello:latest
+tag: getporter/porter-hello-bundle:latest
 ```
 
 Now run `porter publish` and porter will push the invocation image and bundle to
@@ -108,7 +108,7 @@ instance to the name of the bundle. This time we will explicitly name the
 installation "demo".
 
 ```
-porter install demo --tag deislabs/porter-hello-bundle:latest
+porter install demo --tag getporter/porter-hello-bundle:latest
 ```
 
 [tools]: https://cnab.io/community-projects/#tools

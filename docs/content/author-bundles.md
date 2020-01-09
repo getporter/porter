@@ -29,8 +29,8 @@ although Porter does have extra fields that are specific to making Porter bundle
 name: porter-azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
-invocationImage: deislabs/porter-azure-wordpress:v0.1.0
-tag: deislabs/porter-azure-wordpress-bundle:v0.1.0
+invocationImage: getporter/porter-azure-wordpress:v0.1.0
+tag: getporter/porter-azure-wordpress-bundle:v0.1.0
 dockerfile: dockerfile.tmpl
 ```
 
@@ -39,10 +39,10 @@ dockerfile: dockerfile.tmpl
 * `version`: The version of the bundle, uses [semver](https://semver.org)
 * `tag`: The tag to use when the bundle is published to an OCI registry. The format is `REGISTRY/IMAGE:TAG` where TAG is 
     the semantic version of the bundle.
-* `invocationImage`: The name of the container image to tag the invocation image with when it is built. The format is
+* `invocationImage`: OPTIONAL. The name of the container image to tag the invocation image with when it is built. The format is
     `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
-    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `deislabs/porter-hello:latest`, then the 
-    `invocationImage` will default to `deislabs/porter-hello-installer:latest`
+    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `getporter/porter-hello:latest`, then the 
+    `invocationImage` will default to `getporter/porter-hello-installer:latest`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 
@@ -264,7 +264,7 @@ See [dependencies](/dependencies/) for more details on how Porter handles depend
 ```yaml
 dependencies:
   mysql:
-    tag: deislabs/porter-wordpress-bundle:v0.1.0
+    tag: getporter/porter-wordpress:v0.1.0
     parameters:
       database_name: wordpress
       mysql_user: wordpress

@@ -27,15 +27,15 @@ Finally, the `porter.yaml` also defines an `imageMap`. In this section, you can 
 Now, update the `porter.yaml` and change the following values:
 
 ```
-invocationImage: deislabs/porter-workshop-tf-aci:v0.1.0
-tag: deislabs/porter-workshop-tf-bundle-aci:v0.1.0
+invocationImage: getporter/porter-workshop-tf-aci-installer:v0.1.0
+tag: getporter/porter-workshop-tf-aci:v0.1.0
 ```
 
 For each of these, change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-invocationImage: jeremyrickard/porter-workshop-tf-aci:v0.1.0
-tag: jeremyrickard/porter-workshop-tf-bundle-aci:v0.1.0
+invocationImage: jeremyrickard/porter-workshop-tf-aci-installer:v0.1.0
+tag: jeremyrickard/porter-workshop-tf-aci:v0.1.0
 ```
 
 ## Build The Bundle!

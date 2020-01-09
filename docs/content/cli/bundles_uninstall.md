@@ -29,7 +29,7 @@ porter bundles uninstall [INSTANCE] [flags]
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
-  porter bundle uninstall MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
+  porter bundle uninstall MyAppFromTag --tag getporter/porter-kubernetes:v1.0
 
 
 ```

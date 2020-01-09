@@ -237,7 +237,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 
 	mappedImage := manifest.MappedImage{
 		Description: "un petite server",
-		Repository:  "deislabs/myserver",
+		Repository:  "getporter/myserver",
 		ImageType:   "docker",
 		Digest:      "abc123",
 		Size:        12,
@@ -276,7 +276,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 
 	mappedImage := manifest.MappedImage{
 		Description: "un petite server",
-		Repository:  "deislabs/myserver",
+		Repository:  "getporter/myserver",
 		Tag:         "1.0.0",
 		ImageType:   "docker",
 		Labels:      nil,
@@ -399,16 +399,16 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 		wantDep extensions.Dependency
 	}{
 		{"no-version", extensions.Dependency{
-			Bundle: "deislabs/azure-mysql:5.7",
+			Bundle: "getporter/azure-mysql:5.7",
 		}},
 		{"no-ranges", extensions.Dependency{
-			Bundle: "deislabs/azure-active-directory",
+			Bundle: "getporter/azure-active-directory",
 			Version: &extensions.DependencyVersion{
 				AllowPrereleases: true,
 			},
 		}},
 		{"with-ranges", extensions.Dependency{
-			Bundle: "deislabs/azure-blob-storage",
+			Bundle: "getporter/azure-blob-storage",
 			Version: &extensions.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2",

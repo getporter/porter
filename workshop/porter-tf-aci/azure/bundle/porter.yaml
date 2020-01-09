@@ -6,8 +6,8 @@ mixins:
 name: porter-workshop-tf-aci
 version: 0.1.0
 description: "An example using Porter to build the a TF bundle and use ACI"
-invocationImage: porter-workshop-tf-aci:latest
-tag: deislabs/porter-workshop-tf-bundle-aci:latest
+invocationImage: getporter/porter-workshop-tf-aci-installer:latest
+tag: getporter/porter-workshop-tf-aci:latest
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.

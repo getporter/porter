@@ -28,7 +28,7 @@ porter bundles invoke [INSTANCE] --action ACTION [flags]
   porter bundle invoke --action ACTION --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
   porter bundle invoke --action ACTION --driver debug
-  porter bundle invoke --action ACTION MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
+  porter bundle invoke --action ACTION MyAppFromTag --tag getporter/porter-kubernetes:v1.0
 
 ```
 

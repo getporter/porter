@@ -251,7 +251,7 @@ parameters:
 
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql:latest
+    tag: getporter/porter-mysql:latest
     parameters:
       database_name: wordpress
 

@@ -22,7 +22,7 @@ outputs via `{{ bundle.dependencies.KEY.outputs }}`.
 ```yaml
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql-bundle:v0.1.0
+    tag: getporter/porter-mysql:v0.1.0
 ```
 
 ## Defaulting Parameters
@@ -35,7 +35,7 @@ to specific values, so that the user isn't required to provide values for those 
 ```yaml
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql-bundle:v0.1.0
+    tag: getporter/porter-mysql:v0.1.0
     parameters:
       database_name: wordpress
       mysql_user: wordpress
@@ -55,7 +55,7 @@ You can specifying parameters for a dependent bundle on the command-line using t
 For example, to override the default parameter `database_name` when installing the wordpress bundle the comand would be
 
 ```
-$ porter install --tag deislabs/porter-mysql-bundle:v0.1.0 --param mysql#database_name=mywordpress
+$ porter install --tag getporter/porter-mysql:v0.1.0 --param mysql#database_name=mywordpress
 ```
 
 * `KEY`: The dependency key used in the `dependencies` section of the porter manifest. From the example above, the key is "mysql".
@@ -72,7 +72,7 @@ A parameter for a dependency can be set in a few places, here is the order of pr
     ```yaml
     dependencies:
       mysql:
-        tag: deislabs/porter-mysql-bundle:v0.1.0
+        tag: getporter/porter-mysql:v0.1.0
         parameters:
           database_name: wordpress
     ```

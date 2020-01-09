@@ -6,8 +6,7 @@
 name: porter-example-use-sf-cli
 version: 0.1.0
 description: "An example Porter bundle that uses the service fabric cli"
-invocationImage: deislabs/porter-example-use-sf-cli-installer:0.1.0
-tag: deislabs/porter-example-use-sf-cli:0.1.0
+tag: getporter/porter-example-use-sf-cli:0.1.0
 
 # Use a custom Dockerfile for our invocation image
 dockerfile: Dockerfile.tmpl

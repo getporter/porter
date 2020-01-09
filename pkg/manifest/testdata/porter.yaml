@@ -3,7 +3,7 @@ mixins:
 
 dependencies:
   mysql:
-    tag: "deislabs/azure-mysql:5.7"
+    tag: "getporter/azure-mysql:5.7"
     parameters:
       database-name: wordpress
 

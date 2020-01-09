@@ -27,7 +27,7 @@ mixins:
 
 name: mydb
 version: 0.1.0
-invocationImage: deislabs/porter-mysql:latest
+tag: getporter/porter-mysql:latest
 
 credentials:
 - name: kubeconfig

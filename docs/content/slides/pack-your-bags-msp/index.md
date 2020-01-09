@@ -300,7 +300,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```
-$ porter install --tag deislabs/porter-hello-devopsdays:latest
+$ porter install --tag getporter/porter-hello-devopsdays:latest
 ```
 
 ---
@@ -467,7 +467,7 @@ name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
 invocationImage: porter-hello:latest
-tag: deislabs/porter-hello-bundle:latest
+tag: getporter/porter-hello-bundle:latest
 
 install:
   - exec:
@@ -576,7 +576,7 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
     "description": "An example Porter bundle",
     "invocationImages": [
         {
-            "image": "deislabs/porter-hello-devopsdays-installer:latest",
+            "image": "getporter/porter-hello-devopsdays-installer:latest",
             "imageType": "docker"
         }
     ],
@@ -953,8 +953,7 @@ name: manifest
 name: porter-workshop-tf 
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"
-invocationImage: porter-workshop-tf:latest
-tag: deislabs/porter-workshop-tf-bundle:latest
+tag: getporter/porter-workshop-tf:latest
 ```
 
 ---

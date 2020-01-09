@@ -29,7 +29,7 @@ porter bundles upgrade [INSTANCE] [flags]
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
-  porter bundle upgrade MyAppFromTag --tag deislabs/porter-kube-bundle:v1.0
+  porter bundle upgrade MyAppFromTag --tag getporter/porter-kubernetes:v1.0
 
 ```
 

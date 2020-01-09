@@ -19,8 +19,8 @@ Destination can be either a registry, a registry/repository, or a fully tagged b
 If the source bundle is a digest reference, destination must be a tagged reference.
 `,
 		Example: `  porter bundle copy
-  porter bundle copy --source deislabs/porter-bundle:v0.1.0 --destination portersh
-  porter bundle copy --source deislabs/porter-bundle:v0.1.0 --destination portersh --insecure-registry
+  porter bundle copy --source getporter/porter-bundle:v0.1.0 --destination portersh
+  porter bundle copy --source getporter/porter-bundle:v0.1.0 --destination portersh --insecure-registry
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()

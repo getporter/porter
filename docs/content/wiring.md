@@ -235,7 +235,7 @@ invocationImage: porter-wordpress:latest
 
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql:latest
+    tag: getporter/porter-mysql:latest
     parameters:
       database_name: wordpress
       mysql_user: wordpress

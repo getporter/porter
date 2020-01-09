@@ -7,11 +7,10 @@ mixins:
 ## This section defines the metadata that defines the bundle. This includes the name of the generated
 ## invocation image as well as the tag that will be applied to the bundle when it is published.
 
-name: porter-terraform-example
+name: porter-azure-terraform
 version: 1.0.0
 description: "An example Porter Bundle using Terraform and Azure"
-invocationImage: deislabs/porter-terraform-invocation:latest
-tag: deislabs/porter-terraform:v1.0
+tag: getporter/porter-azure-terraform:v1.0
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
