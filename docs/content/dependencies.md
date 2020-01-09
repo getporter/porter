@@ -7,7 +7,7 @@ In the Porter manifest you can [define a dependency](#define-a-dependency) on an
 bundle. The dependent bundle is executed _before_ the bundle is installed, updated, or a custom action is invoked.
 The dependent bundle is uninstalled _after_ the root bundle is uninstalled.
 
-Dependencies are an extension of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md).
+Dependencies are an extension of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md).
 The Dependency specification is still evolving and we are using Porter to act as an initial implementation. So other CNAB 
 tools may not support dependencies initially.
 

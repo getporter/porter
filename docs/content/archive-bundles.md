@@ -25,7 +25,7 @@ porter archive --tag jeremyrickard/porter-do-bundle:v0.5.0 do-porter.tgz
 
 ## Bundle Archive Format
 
-The generated bundle archive is a CNAB [thick bundle](https://github.com/deislabs/cnab-spec/blob/master/104-bundle-formats.md#formatting-and-transmitting-thick-bundles). Once you have a bundle archive, you can use the `tar` command to examine the contents. If we examine the `do-porter.tgz` generated above, we would see:
+The generated bundle archive is a CNAB [thick bundle](https://github.com/cnabio/cnab-spec/blob/master/104-bundle-formats.md#formatting-and-transmitting-thick-bundles). Once you have a bundle archive, you can use the `tar` command to examine the contents. If we examine the `do-porter.tgz` generated above, we would see:
 
 ```
 $ tar tvf do-porter.tgz

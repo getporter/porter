@@ -42,7 +42,7 @@ credentials for a Kubernetes cluster.
 ## Does Porter fully implement the CNAB specification?
 
 Porter currently implements much of the CNAB spec, however, as the [CNAB
-specification](https://github.com/deislabs/cnab-spec) moves toward 1.0, some
+specification](https://github.com/cnabio/cnab-spec) moves toward 1.0, some
 gaps have emerged. Currently, if you build a bundle with Porter, you'll be able
 to install it with Porter. There are some gaps with the spec that limit
 compatibility with other CNAB tooling. See the [CNAB 1.0

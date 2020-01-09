@@ -13,7 +13,7 @@ const (
 )
 
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
-// https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md
+// https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md
 type Dependencies struct {
 	// Requires is a list of bundles required by this bundle
 	Requires map[string]Dependency `json:"requires,omitempty" mapstructure:"requires"`

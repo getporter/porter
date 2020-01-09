@@ -17,7 +17,7 @@ parameters:
 
 This is the minimum required to create a parameter in Porter. Porter will specify an environment variable destination that defaults to the upper-cased name of the parameter.
 
-You can also provide any other attributes, as specified by the CNAB [parameters](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#parameters) specification. To specify a default value, for example, you could provide the following parameter definition:
+You can also provide any other attributes, as specified by the CNAB [parameters](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#parameters) specification. To specify a default value, for example, you could provide the following parameter definition:
 
 ```yaml
 - name: database_name

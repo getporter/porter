@@ -92,7 +92,7 @@ func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.
 }
 
 func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
-	// See https://github.com/deislabs/cnab-spec/blob/master/804-well-known-custom-actions.md
+	// See https://github.com/cnabio/cnab-spec/blob/master/804-well-known-custom-actions.md
 	switch action {
 	case "dry-run", "io.cnab.dry-run":
 		return bundle.Action{

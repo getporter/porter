@@ -22,7 +22,7 @@ We have full [examples](https://github.com/deislabs/porter/tree/master/examples)
 
 ## Bundle Metadata
 
-A lot of the metadata is defined by the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md)
+A lot of the metadata is defined by the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md)
 although Porter does have extra fields that are specific to making Porter bundles.
 
 ```yaml
@@ -79,7 +79,7 @@ See [Using Mixins](/use-mixins) to learn more about how mixins work.
 
 ## Parameters
 
-Parameters are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#parameters) and
+Parameters are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#parameters) and
 allow you to pass in configuration values when you execute the bundle.
 
 ```yaml
@@ -104,7 +104,7 @@ parameters:
  
 ## Outputs
 
-Outputs are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#outputs) to
+Outputs are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#outputs) to
 allow access to outputs generated during the course of executing a bundle.  These are global/bundle-wide outputs,
 as opposed to step outputs described in [Parameters, Credentials and Outputs](/wiring/).
 
@@ -135,7 +135,7 @@ it must define a `path` where the output file can be located on the filesystem.
 
 ### Parameter and Output Schema
 
-The [CNAB Spec for definitions](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions)
+The [CNAB Spec for definitions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#definitions)
 applies to both parameters and outputs.  Parameters and outputs can use [json schema 7](https://json-schema.org) 
 properties to describe acceptable values. Porter uses a slightly [modified schema][json-schema] because CNAB disallows 
 non-integer values.
@@ -166,11 +166,11 @@ parameters:
   minLength: 3
 ```
 
-[json-schema]: https://github.com/deislabs/cnab-spec/blob/master/schema/definitions.schema.json
+[json-schema]: https://github.com/cnabio/cnab-spec/blob/master/schema/definitions.schema.json
 
 ## Credentials
 
-Credentials are part of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/802-credential-sets.md) and allow
+Credentials are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/802-credential-sets.md) and allow
 you to pass in sensitive data when you execute the bundle, such as passwords or configuration files.
 
 When the bundle is executed, for example when you run `porter install`, the installer will look on your local system
@@ -254,11 +254,11 @@ customActions:
    and that Porter should not keep track of when this action was last executed.
 * `modifies`: Indicates whether this action modifies resources managed by the bundle.
 
-[well-known-actions]: https://github.com/deislabs/cnab-spec/blob/master/804-well-known-custom-actions.md
+[well-known-actions]: https://github.com/cnabio/cnab-spec/blob/master/804-well-known-custom-actions.md
 
 ## Dependencies
 
-Dependencies are an extension of the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/500-CNAB-dependencies.md).
+Dependencies are an extension of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md).
 See [dependencies](/dependencies/) for more details on how Porter handles dependencies.
 
 ```yaml
@@ -276,7 +276,7 @@ dependencies:
 
 ## Images
 
-The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
+The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
 
 ```yaml
 images:
