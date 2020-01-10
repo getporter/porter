@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/pkg/errors"
 )

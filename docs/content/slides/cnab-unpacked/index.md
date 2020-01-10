@@ -373,7 +373,7 @@ Push and pull bundles to OCI registries
 
 Anyone can write their own too! These are all based on:
 
-https://github.com/deislabs/cnab-go
+https://github.com/cnabio/cnab-go
 --
 
 ## 🙋🏻‍♀️ Are all CNAB tools interchangeable?

@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/credentials"
 )
 
 const (

@@ -2,7 +2,7 @@ package instancestorage
 
 import (
 	inmemory "get.porter.sh/porter/pkg/instance-storage/in-memory"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 var _ StorageProvider = &TestInstanceStorageProvider{}

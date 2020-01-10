@@ -4,8 +4,8 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/instance-storage/claimstore"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
-	"github.com/deislabs/cnab-go/claim"
-	"github.com/deislabs/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/pkg/errors"
 )
 

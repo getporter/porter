@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/deislabs/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 

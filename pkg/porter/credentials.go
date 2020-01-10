@@ -14,7 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
-	credentials "github.com/deislabs/cnab-go/credentials"
+	credentials "github.com/cnabio/cnab-go/credentials"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"

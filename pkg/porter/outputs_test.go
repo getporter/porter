@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,9 +16,9 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 	p.CNAB = NewTestCNABProvider()
 
-	want := `----------------------------
+	want := `------------------------------
   Name  Type    Value         
-----------------------------
+------------------------------
   bar   string  bar-value     
   foo   string  /path/to/foo  
 `

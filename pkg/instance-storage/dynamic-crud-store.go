@@ -1,7 +1,7 @@
 package instancestorage
 
 import (
-	"github.com/deislabs/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/pkg/errors"
 )
 

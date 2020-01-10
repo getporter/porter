@@ -17,6 +17,8 @@ RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
 BASEURL_FLAG ?= 
 
+GO = GO111MODULE=on go
+
 ifeq ($(CLIENT_PLATFORM),windows)
 FILE_EXT=.exe
 else ifeq ($(RUNTIME_PLATFORM),windows)
@@ -45,7 +47,7 @@ build-mixin-%: generate
 	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
 
 generate: packr2
-	go generate ./...
+	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
 packr2:
@@ -69,28 +71,16 @@ get-mixins:
 		bin/porter mixin install $(MIXIN) --version $(MIXIN_TAG) --url $(MIXINS_URL)/$(MIXIN); \
 	)
 
-verify: verify-vendor
-
-verify-vendor: clean-packr dep
-	@dep check || printf '\nRun "make dep-ensure" to fix this error\n\n'
-
-dep-ensure: clean-packr
-	dep ensure
-
-HAS_DEP := $(shell command -v dep)
-dep:
-ifndef HAS_DEP
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-endif
-	dep version
+verify:
+	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
 
 test: clean-last-testrun test-unit test-integration test-cli
 
 test-unit:
-	go test ./...
+	$(GO) test ./...
 
 test-integration: build
-	go test -timeout 20m -tags=integration ./...
+	$(GO) test -timeout 20m -tags=integration ./...
 
 test-cli: clean-last-testrun build init-porter-home-for-ci
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
@@ -105,7 +95,7 @@ docs:
 	hugo --source docs/ $(BASEURL_FLAG)
 
 docs-gen:
-	go run --tags=docs ./cmd/porter docs
+	$(GO) run --tags=docs ./cmd/porter docs
 
 docs-preview:
 	hugo serve --source docs/

@@ -9,7 +9,8 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
-XBUILD = CGO_ENABLED=0 go build -a -tags netgo -ldflags '$(LDFLAGS)'
+GO = GO111MODULE=on go
+XBUILD = CGO_ENABLED=0 GO111MODULE=on $(GO) build -a -tags netgo -ldflags '$(LDFLAGS)'
 BINDIR ?= bin/mixins/$(MIXIN)
 
 CLIENT_PLATFORM ?= $(shell go env GOOS)
@@ -37,7 +38,7 @@ build-runtime:
 
 build-client:
 	mkdir -p $(BINDIR)
-	go build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
+	$(GO) build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
 
 xbuild-all:
 	$(foreach OS, $(SUPPORTED_PLATFORMS), \

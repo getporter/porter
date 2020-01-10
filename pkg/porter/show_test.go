@@ -4,12 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/deislabs/cnab-go/bundle/definition"
-	"github.com/deislabs/cnab-go/claim"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPorter_ShowBundle(t *testing.T) {
@@ -76,9 +75,9 @@ Last Action: install
 Last Status: success
 
 Outputs:
-----------------------------
+------------------------------
   Name  Type    Value         
-----------------------------
+------------------------------
   bar   string  bar-output    
   foo   string  /path/to/foo  
 `

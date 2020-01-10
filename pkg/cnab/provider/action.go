@@ -3,8 +3,8 @@ package cnabprovider
 import (
 	"encoding/json"
 
-	"github.com/deislabs/cnab-go/action"
-	"github.com/deislabs/cnab-go/driver"
+	"github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/driver"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	printer "get.porter.sh/porter/pkg/printer"
-	credentials "github.com/deislabs/cnab-go/credentials"
+	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -357,9 +357,9 @@ credentials:
 			format: printer.FormatTable,
 			wantOutput: `Name: kool-kreds
 
-------------------------------------------------
+--------------------------------------------------
   Name         Local Source          Source Type  
-------------------------------------------------
+--------------------------------------------------
   kool-config  /path/to/kool-config  Path         
   kool-envvar  KOOL_ENV_VAR          EnvVar       
   kool-cmd     echo 'kool'           Command      
