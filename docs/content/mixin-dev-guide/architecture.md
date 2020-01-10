@@ -52,7 +52,7 @@ In this case, the `helm` mixin will first run apt-get update and then install `c
 
 ### Run Time
 
-The [CNAB specification](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md) specifies three actions that an invocation image should support:
+The [CNAB specification](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md) specifies three actions that an invocation image should support:
 
 * install
 * upgrade

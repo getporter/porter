@@ -17,7 +17,7 @@ export REGISTRY=<yourusername>
 
 Start with the `cnab\app\terraform` directory. This directory contains a set of Terraform configurations that will utilize the Azure provider to create an Azure MySQL instance and store the TF state file in an Azure storage account. The files in here aren't special for use with CNAB or Porter.
 
-Next, review the `cnab\app\run` script. This script serves as the CNAB [run tool](https://github.com/deislabs/cnab-spec/blob/master/103-bundle-runtime.md#the-run-tool-main-entry-point). In this bash script, you'll see some special things like:
+Next, review the `cnab\app\run` script. This script serves as the CNAB [run tool](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#the-run-tool-main-entry-point). In this bash script, you'll see some special things like:
 
 ```
 action=$CNAB_ACTION
@@ -193,7 +193,7 @@ Finally, you're ready to complete the CNAB! To do this, open up the `bundle.json
 	}
 ```
 
-JSON Schema is used to define the data type for each parameter. A `bundle.json` will normally have 1 or more `definitions`. Each of these `definitions` is referenced in the `parameters` section. Parameters and credentials have some similarities, but CNAB uses them in different ways. Check out the [cnab-spec](https://github.com/deislabs/cnab-spec/blob/master/101-bundle-json.md#definitions) for more information on definitions, parameters and credentials.
+JSON Schema is used to define the data type for each parameter. A `bundle.json` will normally have 1 or more `definitions`. Each of these `definitions` is referenced in the `parameters` section. Parameters and credentials have some similarities, but CNAB uses them in different ways. Check out the [cnab-spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#definitions) for more information on definitions, parameters and credentials.
 
 In order to produce a valid `bundle.json` using your new invocation image, you'll need to change the following inside the `bundle.json`:
 

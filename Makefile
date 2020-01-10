@@ -162,7 +162,7 @@ DEFINITIONS_SCHEMA := definitions.schema.json
 
 define fetch-schema
 	@curl --fail --silent --show-error -o /tmp/$(1) \
-		https://raw.githubusercontent.com/deislabs/cnab-spec/master/schema/$(1)
+		https://raw.githubusercontent.com/cnabio/cnab-spec/master/schema/$(1)
 endef
 
 fetch-schemas: fetch-bundle-schema fetch-definitions-schema
