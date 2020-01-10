@@ -130,11 +130,7 @@ publish-images:
 define all-bundles
 	@for dir in $$(ls -1 $(1)); do \
 		if [[ -e "$(1)/$$dir/porter.yaml" ]]; then \
-			BUNDLE=$$dir make $(MAKE_OPTS) $(2) ; \
-			exit_code=$$? ; \
-			if [[ $$exit_code -ne 0 ]] ; then \
-				exit $$exit_code ; \
-			fi ; \
+			BUNDLE=$$dir make $(MAKE_OPTS) $(2) || exit $$? ; \
 		fi ; \
 	done
 endef
