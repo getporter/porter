@@ -455,7 +455,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -706,7 +706,7 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 
 	depStep := rm.Install[0]
 	err = rm.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
@@ -727,7 +727,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
