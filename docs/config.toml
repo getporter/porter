@@ -365,6 +365,12 @@ defaultContentLanguage = "en"
   weight = 500
 
 [[menu.main]]
+  name = "Troubleshooting"
+  identifier = "troubleshooting"
+  url = "/troubleshooting"
+  weight = 501
+
+[[menu.main]]
   name = "Best Practices"
   url = "/best-practices/"
   identifier = "best-practices"
