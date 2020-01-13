@@ -1035,3 +1035,30 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
 }
+
+func TestResolveStepEncoding(t *testing.T) {
+	wantValue := `{"test":"value"}`
+	os.Setenv("TEST", wantValue)
+	defer os.Unsetenv("TEST")
+
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{
+		Parameters: []manifest.ParameterDefinition{
+			{Name: "test"},
+		},
+	}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Flags": map[string]string{
+				"c": "{{bundle.parameters.test}}",
+			},
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+	flags := s.Data["Flags"].(map[interface{}]interface{})
+	assert.Equal(t, flags["c"], wantValue)
+}

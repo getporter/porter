@@ -278,14 +278,26 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 		return errors.Wrap(err, "unable to build step template data")
 	}
 
+	if m.Debug {
+		fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
+	}
+
 	payload, err := yaml.Marshal(step)
 	if err != nil {
 		return errors.Wrapf(err, "invalid step data %v", step)
 	}
 
-	rendered, err := mustache.Render(string(payload), sourceData)
+	if m.Debug {
+		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", string(payload))
+	}
+
+	rendered, err := mustache.RenderRaw(string(payload), true, sourceData)
 	if err != nil {
 		return errors.Wrapf(err, "unable to render step template %s", string(payload))
+	}
+
+	if m.Debug {
+		fmt.Fprintf(m.Err, "=== Rendered Step ===\n%s\n", rendered)
 	}
 
 	err = yaml.Unmarshal([]byte(rendered), step)
