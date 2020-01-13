@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/instance-storage/claimstore"
-	"get.porter.sh/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/storage/claimstore"
+	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

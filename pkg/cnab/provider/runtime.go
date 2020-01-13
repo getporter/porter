@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/lookup"
-	instancestorage "github.com/deislabs/porter/pkg/storage"
 )
 
 type Runtime struct {

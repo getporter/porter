@@ -5,11 +5,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/runtime"
+	"github.com/cnabio/cnab-go/bundle"
+
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +36,7 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		Context:         p.Context,
+		Context: p.Context,
 		// See https://github.com/deislabs/porter/issues/799
 		// Manifest:        p.Manifest,
 		Resolver: resolver,

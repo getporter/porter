@@ -1,7 +1,7 @@
 package storage
 
 import (
-	inmemory "get.porter.sh/porter/pkg/instance-storage/in-memory"
+	inmemory "get.porter.sh/porter/pkg/storage/in-memory"
 	"github.com/cnabio/cnab-go/claim"
 )
 

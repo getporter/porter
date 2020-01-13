@@ -14,7 +14,7 @@ import (
 // is examined to see if the action is stateless. If the action is stateless, we create a new, temporary, claim
 // Returns a pointer to the claim, a flag to indicate if the claim is temporary, and an error if present.
 func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*claim.Claim, bool, error) {
-	c, err := d.instanceStorage.Read(claimName)
+	c, err := d.storage.Read(claimName)
 	if err != nil {
 		if bun != nil {
 			if action, ok := bun.Actions[actionName]; ok {
@@ -36,7 +36,7 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 // a temporary claim
 func (d *Runtime) writeClaim(tempClaim bool, c *claim.Claim) error {
 	if !tempClaim {
-		return d.instanceStorage.Store(*c)
+		return d.storage.Store(*c)
 	}
 	return nil
 }
@@ -101,10 +101,13 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
 	}
 
-	// ALWAYS write out a claim, even if the action fails
-	err = d.storage.Store(c)
-	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
+	if !isTemp {
+		// ALWAYS write out a claim, even if the action fails
+		// We don't persist temporary claims generated for stateless actions.
+		err = d.storage.Store(*c)
+		if err != nil {
+			result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
+		}
 	}
 	return result.ErrorOrNil()
 }

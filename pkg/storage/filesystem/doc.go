@@ -1,1 +1,1 @@
-package filesystem // import "get.porter.sh/porter/pkg/instance-storage/filesystem"
+package filesystem // import "get.porter.sh/porter/pkg/storage/filesystem"
