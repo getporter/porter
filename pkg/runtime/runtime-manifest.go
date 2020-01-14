@@ -31,6 +31,7 @@ type RuntimeManifest struct {
 	steps           manifest.Steps
 	outputs         map[string]string
 	sensitiveValues []string
+	claim           *claim.Claim
 }
 
 func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
@@ -57,6 +58,11 @@ func (m *RuntimeManifest) Validate() error {
 		return errors.Wrap(err, "invalid action configuration")
 	}
 
+	err = m.loadClaim()
+	if err != nil {
+		return errors.Wrap(err, "unable to load claim")
+	}
+
 	return nil
 }
 
@@ -76,6 +82,18 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 		m.bundles[alias] = *bun
 	}
 
+	return nil
+}
+
+func (m *RuntimeManifest) loadClaim() error {
+	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
+		claim := &claim.Claim{}
+		err = yaml.Unmarshal(claimBytes, claim)
+		if err != nil {
+			return errors.Wrap(err, "unable to unmarshal claim")
+		}
+		m.claim = claim
+	}
 	return nil
 }
 
@@ -111,14 +129,8 @@ func (m *RuntimeManifest) resolveBundleOutput(output manifest.OutputDefinition) 
 		return m.outputs[output.Name], nil
 	}
 
-	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
-		claim := &claim.Claim{}
-		err = yaml.Unmarshal(claimBytes, claim)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to unmarshal claim")
-		}
-
-		if val := claim.Outputs[output.Name]; val != nil {
+	if m.claim != nil {
+		if val := m.claim.Outputs[output.Name]; val != nil {
 			return fmt.Sprintf("%v", val), nil
 		}
 	}
@@ -247,6 +259,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	// Iterate through the runtime manifest's step outputs and mask by default
 	for _, stepOutput := range m.outputs {
 		// TODO: check if output declared sensitive or not; currently we default always sensitive
+		// See https://github.com/deislabs/porter/issues/855
 		m.setSensitiveValue(stepOutput)
 	}
 	// Iterate through the bundle-level manifests and resolve for interpolation

@@ -421,8 +421,6 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	// Create a claim and store it in the expected location of the execution environment
-	// It holds the output value for 'output', from the previous action
 	claim, err := claim.New("test")
 	require.NoError(t, err)
 
@@ -551,8 +549,7 @@ func TestResolveMultipleStepOutputsFromPreexistingClaim(t *testing.T) {
 	databaseURL := "localhost"
 	databasePort := "3303"
 
-	// Create a claim and store it in the expected location of the execution environment
-	// It holds the output value for 'output', from the previous action
+	// Create a claim to hold the output value for 'output', from the previous action
 	claim, err := claim.New("test")
 	require.NoError(t, err)
 
@@ -560,10 +557,6 @@ func TestResolveMultipleStepOutputsFromPreexistingClaim(t *testing.T) {
 		"database_url":  databaseURL,
 		"database_port": databasePort,
 	}
-
-	bytes, err := yaml.Marshal(claim)
-	require.NoError(t, err)
-	cxt.FileSystem.WriteFile("/cnab/claim.json", bytes, 0644)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -591,6 +584,7 @@ func TestResolveMultipleStepOutputsFromPreexistingClaim(t *testing.T) {
 		},
 	}
 	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
+	rm.claim = claim
 
 	err = rm.ResolveStep(s)
 	require.NoError(t, err)
@@ -1151,4 +1145,39 @@ func TestResolveStepEncoding(t *testing.T) {
 	require.NoError(t, err)
 	flags := s.Data["Flags"].(map[interface{}]interface{})
 	assert.Equal(t, flags["c"], wantValue)
+}
+
+func TestLoadClaim(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"helm": map[interface{}]interface{}{
+				"description": "install wordpress",
+			},
+		},
+	}
+	m := &manifest.Manifest{
+		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
+		Install: manifest.Steps{
+			s,
+		},
+	}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
+
+	// Create a claim and store it in the expected location of the execution environment
+	// It holds the output value for 'output', from the previous action
+	claim, err := claim.New("test")
+	require.NoError(t, err)
+
+	// loadClaim should not error out if the claim does not exist
+	err = rm.loadClaim()
+	require.NoError(t, err)
+
+	bytes, err := yaml.Marshal(claim)
+	require.NoError(t, err)
+	cxt.FileSystem.WriteFile("/cnab/claim.json", bytes, 0644)
+
+	err = rm.loadClaim()
+	require.NoError(t, err)
 }
