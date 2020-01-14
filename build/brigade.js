@@ -5,7 +5,6 @@ const { events, Job, Group } = require("brigadier");
 // **********************************************
 
 const projectName = "porter";
-const projectOrg = "deislabs";
 
 // **********************************************
 // Event Handlers
@@ -301,7 +300,7 @@ class GoJob extends Job {
     super(name);
 
     const gopath = "/go";
-    const localPath = gopath + `/src/github.com/${projectOrg}/${projectName}`;
+    const localPath = gopath + `/src/get.porter.sh/${projectName}`;
 
     this.image = "quay.io/vdice/go-dind:v0.1.0";
 

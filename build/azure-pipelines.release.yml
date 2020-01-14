@@ -80,7 +80,7 @@ stages:
 
     - script: |
         export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-        export REGISTRY=deislabs
+        export REGISTRY=getporterci
         make test-cli
       workingDirectory: '$(MODULE_PATH)'
       displayName: 'CLI Test'

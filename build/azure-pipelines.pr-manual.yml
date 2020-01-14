@@ -64,6 +64,6 @@ jobs:
 
   - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-      REGISTRY=deislabs make test-cli
+      REGISTRY=getporterci make test-cli
     workingDirectory: '$(MODULE_PATH)'
     displayName: 'CLI Test'
