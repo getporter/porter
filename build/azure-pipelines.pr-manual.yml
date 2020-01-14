@@ -26,7 +26,7 @@ jobs:
     displayName: Docker Login
     inputs:
       containerRegistryType: Container Registry
-      dockerRegistryEndpoint: deislabs-registry
+      dockerRegistryEndpoint: getporter-registry
       command: login
 
   - task: DownloadSecureFile@1
@@ -49,7 +49,7 @@ jobs:
     displayName: Docker Login
     inputs:
       containerRegistryType: Container Registry
-      dockerRegistryEndpoint: deislabs-registry
+      dockerRegistryEndpoint: getporter-registry
       command: login
 
   - task: DownloadSecureFile@1
