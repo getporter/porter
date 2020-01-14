@@ -441,7 +441,7 @@ func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
 		},
 		Dependencies: map[string]manifest.Dependency{
 			"dep": {
-				Tag: "deislabs/porter-hello",
+				Tag: "getporter/porter-hello",
 			},
 		},
 	}

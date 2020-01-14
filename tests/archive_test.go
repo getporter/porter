@@ -48,7 +48,7 @@ func TestArchive(t *testing.T) {
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
-			Tag: "getporter/porter-busybox-from-archive:v0.1.0",
+			Tag: "getporterci/porter-busybox-from-archive:v0.1.0",
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)
