@@ -1263,9 +1263,9 @@ Use  `porter publish` to share bundles:
 * Uses Docker tags for both
 
 ```yaml
-name: porter-azure-wordpress
+name: azure-wordpress
 version: 0.1.0
-tag: getporter/porter-azure-wordpress:latest
+tag: getporter/azure-wordpress:v0.1.0
 ```
 
 ---

@@ -26,11 +26,11 @@ A lot of the metadata is defined by the [CNAB Spec](https://github.com/cnabio/cn
 although Porter does have extra fields that are specific to making Porter bundles.
 
 ```yaml
-name: porter-azure-wordpress
+name: azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
-invocationImage: getporter/porter-azure-wordpress:v0.1.0
-tag: getporter/porter-azure-wordpress-bundle:v0.1.0
+invocationImage: getporter/azure-wordpress:v0.1.0
+tag: getporter/azure-wordpress-bundle:v0.1.0
 dockerfile: dockerfile.tmpl
 ```
 

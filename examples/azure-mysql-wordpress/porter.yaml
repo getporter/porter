@@ -2,9 +2,9 @@ mixins:
   - azure
   - helm
  
-name: porter-azure-wordpress 
+name: azure-wordpress
 version: 0.1.0
-tag: getporter/porter-azure-wordpress:v0.1.0
+tag: getporter/azure-wordpress:v0.1.0
 
 credentials:
 - name: SUBSCRIPTION_ID
