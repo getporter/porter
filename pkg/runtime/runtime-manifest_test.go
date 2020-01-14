@@ -455,7 +455,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -706,7 +706,7 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 
 	depStep := rm.Install[0]
 	err = rm.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
@@ -727,7 +727,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := RuntimeManifest{Manifest: m}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
@@ -1034,4 +1034,31 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 	err := rm.ResolveImages(bun, reloMap)
 	assert.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
+}
+
+func TestResolveStepEncoding(t *testing.T) {
+	wantValue := `{"test":"value"}`
+	os.Setenv("TEST", wantValue)
+	defer os.Unsetenv("TEST")
+
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{
+		Parameters: []manifest.ParameterDefinition{
+			{Name: "test"},
+		},
+	}
+	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Flags": map[string]string{
+				"c": "{{bundle.parameters.test}}",
+			},
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+	flags := s.Data["Flags"].(map[interface{}]interface{})
+	assert.Equal(t, flags["c"], wantValue)
 }
