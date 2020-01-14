@@ -3,10 +3,12 @@ package cnabprovider
 import (
 	"encoding/json"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 // Shared arguments for all CNAB actions
@@ -57,6 +59,18 @@ func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
+
+		// Add claim.json to file list as well, if exists
+		claimName := args.Claim
+		claim, err := d.instanceStorage.Read(claimName)
+		if err == nil {
+			claimBytes, err := yaml.Marshal(claim)
+			if err != nil {
+				return errors.Wrapf(err, "could not marshal claim %s", claimName)
+			}
+			op.Files[config.ClaimFilepath] = string(claimBytes)
+		}
+
 		return nil
 	}
 }

@@ -7,10 +7,12 @@ import (
 	"reflect"
 	"strings"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -29,6 +31,7 @@ type RuntimeManifest struct {
 	steps           manifest.Steps
 	outputs         map[string]string
 	sensitiveValues []string
+	claim           *claim.Claim
 }
 
 func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
@@ -55,6 +58,11 @@ func (m *RuntimeManifest) Validate() error {
 		return errors.Wrap(err, "invalid action configuration")
 	}
 
+	err = m.loadClaim()
+	if err != nil {
+		return errors.Wrap(err, "unable to load claim")
+	}
+
 	return nil
 }
 
@@ -74,6 +82,18 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 		m.bundles[alias] = *bun
 	}
 
+	return nil
+}
+
+func (m *RuntimeManifest) loadClaim() error {
+	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
+		claim := &claim.Claim{}
+		err = yaml.Unmarshal(claimBytes, claim)
+		if err != nil {
+			return errors.Wrap(err, "unable to unmarshal claim")
+		}
+		m.claim = claim
+	}
 	return nil
 }
 
@@ -100,11 +120,43 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	}
 }
 
+// resolveBundleOutput will attempt to resolve a bundle output value if required
+// by string interpolation, e.g. via {{ bundle.outputs.foo }}
+// It first checks the outputs field on the RuntimeManifest struct and, if non-existent,
+// attempts to pull a value from the claim, if exists
+func (m *RuntimeManifest) resolveBundleOutput(output manifest.OutputDefinition) (string, error) {
+	if m.outputs[output.Name] != "" {
+		return m.outputs[output.Name], nil
+	}
+
+	if m.claim != nil {
+		if val := m.claim.Outputs[output.Name]; val != nil {
+			return fmt.Sprintf("%v", val), nil
+		}
+	}
+
+	// No claim exists, so no previous output value to return
+	return "", nil
+}
+
 func (m *RuntimeManifest) GetSensitiveValues() []string {
 	if m.sensitiveValues == nil {
 		return []string{}
 	}
 	return m.sensitiveValues
+}
+
+func (m *RuntimeManifest) setSensitiveValue(val string) {
+	exists := false
+	for _, item := range m.sensitiveValues {
+		if item == val {
+			exists = true
+		}
+	}
+
+	if !exists {
+		m.sensitiveValues = append(m.sensitiveValues, val)
+	}
 }
 
 func (m *RuntimeManifest) GetSteps() manifest.Steps {
@@ -150,9 +202,6 @@ func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[
 	}
 
 	for outvar, outval := range assignments {
-		if _, exists := m.outputs[outvar]; exists {
-			return fmt.Errorf("output already set: %s", outvar)
-		}
 		m.outputs[outvar] = outval
 	}
 	return nil
@@ -189,7 +238,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			return nil, err
 		}
 		if param.Sensitive {
-			m.sensitiveValues = append(m.sensitiveValues, val)
+			m.setSensitiveValue(val)
 		}
 		params[pe] = val
 	}
@@ -202,13 +251,32 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.sensitiveValues = append(m.sensitiveValues, val)
+		m.setSensitiveValue(val)
 		creds[pe] = val
 	}
 
 	bun["outputs"] = m.outputs
-	for _, output := range m.outputs {
-		m.sensitiveValues = append(m.sensitiveValues, output)
+	// Iterate through the runtime manifest's step outputs and mask by default
+	for _, stepOutput := range m.outputs {
+		// TODO: check if output declared sensitive or not; currently we default always sensitive
+		// See https://github.com/deislabs/porter/issues/855
+		m.setSensitiveValue(stepOutput)
+	}
+	// Iterate through the bundle-level manifests and resolve for interpolation
+	for _, outputDef := range m.Outputs {
+		val, err := m.resolveBundleOutput(outputDef)
+		if err != nil {
+			return nil, err
+		}
+		if outputDef.Sensitive {
+			m.setSensitiveValue(val)
+		}
+
+		if m.outputs == nil {
+			m.outputs = map[string]string{}
+		}
+		m.outputs[outputDef.Name] = val
+		bun["outputs"] = m.outputs
 	}
 
 	deps := make(map[string]interface{})
@@ -246,7 +314,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 			def := bun.Definitions[output.Definition]
 			if def.WriteOnly != nil && *def.WriteOnly == true {
-				m.sensitiveValues = append(m.sensitiveValues, value)
+				m.setSensitiveValue(value)
 			}
 		}
 	}

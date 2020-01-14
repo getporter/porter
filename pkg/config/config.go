@@ -33,6 +33,9 @@ const (
 	// BundleOutputsDir is the directory where outputs are expected to be placed
 	// during the execution of a bundle action.
 	BundleOutputsDir = "/cnab/app/outputs"
+
+	// ClaimFilepath is the filepath to the claim.json inside of an invocation image
+	ClaimFilepath = "/cnab/claim.json"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the

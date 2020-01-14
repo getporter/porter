@@ -171,7 +171,7 @@ func (r *PorterRuntime) applyUnboundBundleOutputs() error {
 	outputs := r.RuntimeManifest.GetOutputs()
 	for _, outputDef := range r.RuntimeManifest.Outputs {
 		// Ignore outputs that have already been set
-		if _, hasOutput := outputs[outputDef.Name]; hasOutput {
+		if output := outputs[outputDef.Name]; output != "" {
 			continue
 		}
 

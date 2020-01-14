@@ -1,0 +1,55 @@
+name: mybun
+version: 0.1.0
+description: "An example Porter configuration"
+tag: deislabs/porter-outputs:latest
+
+mixins:
+  - exec
+
+outputs:
+  - name: user-output
+    type: string
+    sensitive: true
+    applyTo:
+      - upgrade
+
+install:
+  - exec:
+      description: "Produce step-level output"
+      command: bash
+      arguments:
+        - dump-config.sh
+      outputs:
+        - name: user
+          sensitive: false
+          jsonPath: '$.user'
+  # This step tests successful interpolation of a step-level output
+  - exec:
+      description: "Echo step-level output"
+      command: bash
+      flags:
+        c: echo "{{ bundle.outputs.user }}"
+
+upgrade:
+  - exec:
+      description: "Produce bundle-level output"
+      command: bash
+      arguments:
+        - dump-config.sh
+      outputs:
+        - name: user-output
+          jsonPath: '$.user'
+  # This step tests successful interpolation of a bundle-level output in the same action
+  - exec:
+      description: "Echo bundle-level output in same action as it was produced"
+      command: bash
+      flags:
+        c: echo "{{ bundle.outputs.user-output }}"
+
+uninstall:
+  # This step tests successful interpolation of a bundle-level output across actions  
+  - exec:
+      description: "Echo bundle-level output"
+      command: bash
+      flags:
+        c: echo "{{ bundle.outputs.user-output }}"
