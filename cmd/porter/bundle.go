@@ -76,7 +76,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
-  porter bundle install MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -127,7 +127,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
-  porter bundle upgrade MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter bundle upgrade MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -178,7 +178,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle invoke --action ACTION --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
   porter bundle invoke --action ACTION --driver debug
-  porter bundle invoke --action ACTION MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter bundle invoke --action ACTION MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -230,7 +230,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
-  porter bundle uninstall MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter bundle uninstall MyAppFromTag --tag getporter/kubernetes:v0.1.0
 
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

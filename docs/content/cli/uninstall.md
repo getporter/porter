@@ -29,7 +29,7 @@ porter uninstall [INSTANCE] [flags]
   porter uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter uninstall --cred azure --cred kubernetes
   porter uninstall --driver debug
-  porter uninstall MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter uninstall MyAppFromTag --tag getporter/kubernetes:v0.1.0
 
 
 ```

@@ -28,7 +28,7 @@ porter invoke [INSTANCE] --action ACTION [flags]
   porter invoke --action ACTION --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter invoke --action ACTION --cred azure --cred kubernetes
   porter invoke --action ACTION --driver debug
-  porter invoke --action ACTION MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter invoke --action ACTION MyAppFromTag --tag getporter/kubernetes:v0.1.0
 
 ```
 

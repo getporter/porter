@@ -29,7 +29,7 @@ porter install [INSTANCE] [flags]
   porter install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter install --cred azure --cred kubernetes
   porter install --driver debug
-  porter install MyAppFromTag --tag getporter/porter-kubernetes:v1.0
+  porter install MyAppFromTag --tag getporter/kubernetes:v0.1.0
 
 ```
 
