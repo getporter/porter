@@ -13,11 +13,11 @@ When you run `porter create` template Dockerfile is created for you
 in the current directory named **Dockerfile.tmpl**:
 
 ```Dockerfile
-FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ARG BUNDLE_DIR
+
+RUN apt-get update && apt-get install -y ca-certificates
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
@@ -33,7 +33,8 @@ ARG BUNDLE_DIR
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-# COPY . $BUNDLE_DIR
+COPY . $BUNDLE_DIR
+
 ```
 
 Add the following line to your **porter.yaml** file to instruct porter to use
@@ -44,9 +45,13 @@ dockerfile: Dockerfile.tmpl
 ```
 
 It is your responsibility to provide a suitable base image, for example one that
-has root ssl certificates installed. When using a Dockerfile template, you must
-manually copy any files you need in your bundle using COPY statements. A few
-conventions are followed by Porter to help with this task:
+has root ssl certificates installed. *You must use a base image that is
+debian-based, such as `debian` or `ubuntu` with apt installed.* Mixins assume
+that apt is available to install packages.
+
+When using a Dockerfile template, you must manually copy any files you need in
+your bundle using COPY statements. A few conventions are followed by Porter to
+help with this task:
 
 ## BUNDLE_DIR
 

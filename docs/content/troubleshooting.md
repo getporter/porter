@@ -6,6 +6,7 @@ description: Error messages you may see from Porter and how to handle them
 With any porter error, it can really help to re-run the command again with the `--debug` flag.
 
 * [mapping values are not allowed in this context](#mapping-values-are-not-allowed-in-this-context)
+* [you see apt errors when you use a custom Dockerfile](#)
 
 ## mapping values are not allowed in this context
 
@@ -79,3 +80,16 @@ install:
       flags:
         c: "echo {{ bundle.parameters.test}}"
 ```
+
+## you see apt errors when you use a custom Dockerfile
+
+When you use a custom Dockerfile you see `apt` errors even though you did not use apt in your Dockerfile. This is because
+Porter assumes a debian-based base image that has apt available. Many of the mixins use apt to install the dependencies
+and the binary that they shim.
+
+```
+Starting Invocation Image Build =======>
+Error: unable to build CNAB invocation image: failed to stream docker build output: The command '/bin/sh -c apt-get update && apt-get install -y apt-transport-https curl && curl -o kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.5/bin/linux/amd64/kubectl && mv kubectl /usr/local/bin && chmod a+x /usr/local/bin/kubectl' returned a non-zero code: 127
+```
+
+For now you must base your custom Dockerfile on debian or ubuntu.
