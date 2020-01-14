@@ -1,7 +1,7 @@
 name: hello
 description: "An example Porter configuration"
 version: 0.1.0
-tag: getporter/porter-hello:latest
+tag: getporter/hello:v0.1.0
 
 dependencies:
   mysql:

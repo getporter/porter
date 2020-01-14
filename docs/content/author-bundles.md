@@ -41,7 +41,7 @@ dockerfile: dockerfile.tmpl
     the semantic version of the bundle.
 * `invocationImage`: OPTIONAL. The name of the container image to tag the invocation image with when it is built. The format is
     `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
-    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `getporter/porter-hello:latest`, then the 
+    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `getporter/hello:v0.1.0`, then the
     `invocationImage` will default to `getporter/porter-hello-installer:latest`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.

@@ -25,7 +25,7 @@ Here is a very basic **porter.yaml** file:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-invocationImage: getporter/porter-hello:latest
+invocationImage: getporter/hello:v0.1.0
 tag: getporter/porter-hello-bundle:latest
 
 mixins:
@@ -85,7 +85,7 @@ sure that the `invocationImage` and `tag` listed in you `porter.yaml` is a
 reference to which the currently logged in user has write permission.
 
 ```yaml
-invocationImage: getporter/porter-hello:latest
+invocationImage: getporter/hello:v0.1.0
 tag: getporter/porter-hello-bundle:latest
 ```
 

@@ -3,10 +3,10 @@
 # See https://porter.sh/author-bundles for documentation on how to configure your bundle
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
-name: porter-example-use-sf-cli
+name: example-use-sf-cli
 version: 0.1.0
 description: "An example Porter bundle that uses the service fabric cli"
-tag: getporter/porter-example-use-sf-cli:0.1.0
+tag: getporter/example-use-sf-cli:v0.1.0
 
 # Use a custom Dockerfile for our invocation image
 dockerfile: Dockerfile.tmpl
