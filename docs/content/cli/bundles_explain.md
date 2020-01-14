@@ -21,7 +21,7 @@ porter bundles explain [flags]
   porter bundle explain
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
-  porter bundle explain --tag getporter/porter-bundle:v0.1.0
+  porter bundle explain --tag getporter/hello:v0.1.0
 		  
 ```
 
