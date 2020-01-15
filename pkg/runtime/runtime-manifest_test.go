@@ -907,7 +907,7 @@ func TestResolveImage(t *testing.T) {
 		},
 		{
 			name:      "tagged reference",
-			reference: "getporter/hello:v0.1.10",
+			reference: "getporter/porter-hello:v0.1.10",
 			want: manifest.MappedImage{
 				Repository: "getporter/porter-hello",
 				Tag:        "v0.1.10",
@@ -931,7 +931,7 @@ func TestResolveImage(t *testing.T) {
 		},
 		{
 			name:      "the one with a hostname and port",
-			reference: "deislabs.io:9090/getporter/hello:foo",
+			reference: "deislabs.io:9090/getporter/porter-hello:foo",
 			want: manifest.MappedImage{
 				Repository: "deislabs.io:9090/getporter/porter-hello",
 				Tag:        "foo",
@@ -940,7 +940,7 @@ func TestResolveImage(t *testing.T) {
 		{
 
 			name:      "tagged and digested",
-			reference: "getporter/hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
 				Repository: "getporter/porter-hello",
 				Tag:        "latest",

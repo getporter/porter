@@ -56,9 +56,29 @@ parameters:
 
   - name: tf_storage_account_key
     type: string
-    default: ""
     applyTo:
       - upgrade
+      - uninstall
+
+## Here we designate outputs at the top level that we wish
+## to see after an action has completed (via `porter instance outputs list`)
+## and/or utilize in a subsequent action.
+## Note that currently, outputs don't persist across more than one action unless
+## all of the actions traversed (re-)state the output value.
+outputs:
+  - name: STORAGE_ACCOUNT_KEY
+    type: string
+    sensitive: true
+    applyTo:
+      - install
+  - name: cosmos-db-uri
+    type: string
+    applyTo:
+      - install
+  - name: eventhubs_connection_string
+    type: string
+    sensitive: true
+    applyTo:
       - install
 
 install:
@@ -79,7 +99,7 @@ install:
       description: "Emit the key in base64 encoded form"
       command: bash
       flags:
-        c: echo "Here is the storage account key (base64 encoded) ==> $(echo {{bundle.outputs.STORAGE_ACCOUNT_KEY}} | base64)"
+        c: echo "Here is a the storage account key (base64 encoded) ==> $(echo {{bundle.outputs.STORAGE_ACCOUNT_KEY}} | base64)"
   
   - terraform:
       description: "Create Azure CosmosDB and Event Hubs"
@@ -135,6 +155,7 @@ uninstall:
         database_name: "{{bundle.parameters.database-name}}"
         resource_group_name: "{{bundle.parameters.resource_group_name}}"
         resource_group_location: "{{bundle.parameters.location}}"
+
   - azure:
       description: "Remove the Azure Storage Account"
       name: porter-tf-storage

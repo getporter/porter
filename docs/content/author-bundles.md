@@ -29,8 +29,8 @@ although Porter does have extra fields that are specific to making Porter bundle
 name: azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
-invocationImage: getporter/azure-wordpress:v0.1.0
-tag: getporter/azure-wordpress-bundle:v0.1.0
+tag: getporter/azure-wordpress:v0.1.0
+invocationImage: getporter/azure-wordpress-installer:v0.1.0
 dockerfile: dockerfile.tmpl
 ```
 
@@ -41,8 +41,7 @@ dockerfile: dockerfile.tmpl
     the semantic version of the bundle.
 * `invocationImage`: OPTIONAL. The name of the container image to tag the invocation image with when it is built. The format is
     `REGISTRY/IMAGE:TAG`. Porter will push to this location during `porter publish` so select a location that you have access to.
-    The `invocationImage` defaults to `tag`-installer. For example if the `tag` is `getporter/hello:v0.1.0`, then the
-    `invocationImage` will default to `getporter/porter-hello-installer:latest`
+    The `invocationImage` name defaults to `tag`-installer, with the `version` as its image tag. For example if the bundle `tag` is `getporter/porter-hello:v0.1.0` and the `version` is `0.1.0`, then the `invocationImage` will default to `getporter/porter-hello-installer:0.1.0`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 
@@ -264,7 +263,7 @@ See [dependencies](/dependencies/) for more details on how Porter handles depend
 ```yaml
 dependencies:
   mysql:
-    tag: getporter/porter-wordpress:v0.1.0
+    tag: getporter/wordpress:v0.1.0
     parameters:
       database_name: wordpress
       mysql_user: wordpress
@@ -301,9 +300,9 @@ At runtime, these will be updated appropriately if a bundle has been [copied](/c
 
 In addition to the porter manifest, Porter generates a few files for you to create a compliant CNAB Spec bundle.
 
-* `cnab/`: This directory structure is created during `porter init`. You can add files to this directory and they will
+* `.cnab/`: This directory structure is created during `porter init`. You can add files to this directory and they will
 be copied into the final bundle so that you can access them at runtime. The path to this directory at runtime is `/cnab`.
-* `cnab/app/run`: This file is created during `porter init` and should not be modified.
+* `.cnab/app/run`: This file is created during `porter init` and should not be modified.
 * `Dockerfile`: This file is generated during `porter build` and cannot be modified.
 
 ## See Also

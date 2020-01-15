@@ -19,7 +19,7 @@ like parameters, credentials, outputs and custom actions available.
 		Example: `  porter bundle inspect
   porter bundle inspect --file another/porter.yaml
   porter bundle inspect --cnab-file some/bundle.json
-  porter bundle inspect --tag getporter/hello:v0.1.0
+  porter bundle inspect --tag getporter/porter-hello:v0.1.0
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

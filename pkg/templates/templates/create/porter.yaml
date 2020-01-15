@@ -6,10 +6,10 @@
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/hello:v0.1.0
+tag: getporter/porter-hello:v0.1.0
 
 # Uncomment the line below to set a specific name for the invocation image
-# invocationImage: getporter/porter-hello-installer:latest
+#invocationImage: getporter/porter-hello-installer:0.1.0
 
 # Uncomment the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl

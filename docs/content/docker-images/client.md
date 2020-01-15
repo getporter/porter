@@ -64,7 +64,7 @@ Finally let's install a bundle:
 $ docker run -it --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $HOME/.porter/claims:/root/.porter/claims \
-    getporter/porter install -t getporter/hello:0.1.0
+    getporter/porter install -t getporter/porter-hello:0.1.0
 
 installing hello...
 executing install action from hello (bundle instance: hello)
