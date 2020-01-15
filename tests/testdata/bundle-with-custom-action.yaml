@@ -4,7 +4,7 @@ mixins:
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
-tag: getporter/porter-hello-custom:latest
+tag: getporter/porter-hello:latest
 
 install:
   - exec:
