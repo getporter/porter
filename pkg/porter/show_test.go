@@ -18,7 +18,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 
 	opts := ShowOptions{
 		sharedOptions: sharedOptions{
-			Name: "test-bundle",
+			Name: "test",
 		},
 		PrintOptions: printer.PrintOptions{
 			Format: printer.FormatTable,
@@ -28,7 +28,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 	// Create test claim
 	writeOnly := true
 	claim := claim.Claim{
-		Name: "test-bundle",
+		Name: "test",
 		Bundle: &bundle.Bundle{
 			Definitions: definition.Definitions{
 				"foo": &definition.Schema{
@@ -68,7 +68,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 	require.NoError(t, err, "ShowInstances failed")
 
 	wantOutput :=
-		`Name: test-bundle
+		`Name: test
 Created: 1983-04-18
 Modified: 1983-04-18
 Last Action: install

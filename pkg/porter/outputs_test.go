@@ -42,7 +42,7 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 	// Create test claim
 	writeOnly := true
 	claim := claim.Claim{
-		Name: "test-bundle",
+		Name: "test",
 		Bundle: &bundle.Bundle{
 			Definitions: definition.Definitions{
 				"foo": &definition.Schema{
@@ -80,7 +80,7 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 
 	opts := OutputListOptions{
 		sharedOptions: sharedOptions{
-			Name: "test-bundle",
+			Name: "test",
 		},
 		PrintOptions: printer.PrintOptions{
 			Format: printer.FormatJson,

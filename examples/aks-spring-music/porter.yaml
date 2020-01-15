@@ -1,4 +1,4 @@
-name: spring-music-bundle
+name: spring-music
 version: 0.1.0
 description: "Spring Music Demo app with Azure Cosmos DB"
 dockerfile: Dockerfile.tmpl

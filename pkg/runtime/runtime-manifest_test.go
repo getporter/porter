@@ -943,7 +943,7 @@ func TestResolveImage(t *testing.T) {
 			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
 				Repository: "getporter/porter-hello",
-				Tag:        "latest",
+				Tag:        "v0.1.0",
 				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},

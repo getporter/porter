@@ -25,8 +25,7 @@ Here is a very basic **porter.yaml** file:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-invocationImage: getporter/porter-hello:v0.1.0
-tag: getporter/porter-hello-bundle:latest
+tag: getporter/porter-hello:v0.1.0
 
 mixins:
   - exec
@@ -81,12 +80,11 @@ When you are ready to share your bundle, the next step is publishing it to an
 OCI registry such as Docker Hub or Quay.
 
 You must authenticate with `docker login` before publishing the bundle. Make
-sure that the `invocationImage` and `tag` listed in you `porter.yaml` is a
-reference to which the currently logged in user has write permission.
+sure that the `tag` listed in your `porter.yaml` is a reference to which the
+currently logged in user has write permission.
 
 ```yaml
-invocationImage: getporter/porter-hello:v0.1.0
-tag: getporter/porter-hello-bundle:latest
+tag: myregistry/porter-hello:v0.1.0
 ```
 
 Now run `porter publish` and porter will push the invocation image and bundle to
@@ -108,7 +106,7 @@ instance to the name of the bundle. This time we will explicitly name the
 installation "demo".
 
 ```
-porter install demo --tag getporter/porter-hello-bundle:latest
+porter install demo --tag getporter/porter-hello:v0.1.0
 ```
 
 [tools]: https://cnab.io/community-projects/#tools
