@@ -1,8 +1,8 @@
 name: porter-aws-bucket
 version: 0.1.0
 description: "An example Porter AWS bundle that plays with buckets"
-invocationImage: getporter/porter-aws-bucket-installer:latest
-tag: getporter/porter-aws-bucket:latest
+invocationImage: deislabs/porter-aws-bucket-installer:latest
+tag: deislabs/porter-aws-bucket:latest
 
 mixins:
   - aws

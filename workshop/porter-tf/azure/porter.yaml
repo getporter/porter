@@ -6,8 +6,8 @@ mixins:
 name: porter-workshop-tf 
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"
-invocationImage: getporter/porter-workshop-tf-installer:v0.1.0
-tag: getporter/porter-workshop-tf:v0.1.0
+invocationImage: deislabs/porter-workshop-tf:v0.1.0
+tag: deislabs/porter-workshop-tf-bundle:v0.1.0
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
