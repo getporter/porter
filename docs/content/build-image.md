@@ -23,9 +23,6 @@ description: "An example Porter configuration"
 # TODO: update the registry to your own, e.g. myregistry/porter-hello:v0.1.0
 tag: getporter/porter-hello:v0.1.0
 
-# Uncomment the line below to set a specific name for the invocation image
-#invocationImage: getporter/porter-hello-installer:0.1.0
-
 # Uncomment the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl
 

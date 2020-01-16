@@ -8,7 +8,7 @@ using Porter or CNAB that you'd like to share? [Open up a pull request][pr]
 and show it off! ✨
 
 * [Porter: Digital Ocean, Terraform, Kubernetes](#porter-digital-ocean-terraform-kubernetes)
-* [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#hello-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
+* [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#porter-bundle-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
 * [Porter: An Opinionated CNAB Authoring Experience](#porter-an-opinionated-cnab-authoring-experience)
 * [Free Glue Code - Porter](#free-glue-code-porter)
 
