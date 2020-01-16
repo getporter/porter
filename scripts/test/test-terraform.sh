@@ -40,7 +40,7 @@ ${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'
 
-cat ${PORTER_HOME}/claims/porter-terraform.json
+cat ${PORTER_HOME}/claims/terraform.json
 
 ${PORTER_HOME}/porter uninstall --insecure --debug
 

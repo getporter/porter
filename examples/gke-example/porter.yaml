@@ -1,7 +1,7 @@
 name: gke-example
 version: 0.1.0
 description: "An example Porter bundle with Kubernetes"
-tag: getporter/porter-gke-example:v0.1.0
+tag: getporter/gke-example:v0.1.0
 dockerfile: Dockerfile.tmpl
 
 credentials:

@@ -25,9 +25,9 @@ Here's a sample Porter manifest:
 mixins:
 - helm
 
-name: mydb
+name: mysql
 version: 0.1.0
-tag: getporter/porter-mysql:latest
+tag: getporter/mysql:v0.1.0
 
 credentials:
 - name: kubeconfig

@@ -158,7 +158,7 @@ uninstall:
 
   - azure:
       description: "Remove the Azure Storage Account"
-      name: porter-tf-storage
+      name: "{{ bundle.parameters.storage_account_name }}"
       resourceGroup: "{{ bundle.parameters.storage_rg }}"
       type: storage
       parameters:

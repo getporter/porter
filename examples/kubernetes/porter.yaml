@@ -6,7 +6,7 @@ credentials:
   - name: kubeconfig
     path: /root/.kube/config
 
-name: PORTER_KUBE 
+name: kubernetes 
 version: 0.1.0
 description: "An example Porter bundle with Kubernetes"
 tag: getporter/kubernetes:v0.1.0

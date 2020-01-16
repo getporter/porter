@@ -1,7 +1,7 @@
 name: mybun
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporterci/porter-outputs:latest
+tag: getporterci/outputs-example:latest
 
 mixins:
   - exec

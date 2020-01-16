@@ -7,7 +7,7 @@ To use this bundle, you will need an existing Kuberentes cluster and a kubeconfi
 ```
 porter build
 porter credentials generate
-porter install -c PORTER_KUBE
+porter install -c kubernetes
 ```
 
 🚨 GKE requires additional credentials and parameters in order to [connect to a cluster][gke-connect], so use the [GKE Example](/examples/gke-example) instead.
