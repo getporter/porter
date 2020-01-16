@@ -6,6 +6,7 @@
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
+# TODO: update the registry to your own, e.g. myregistry/porter-hello:v0.1.0
 tag: getporter/porter-hello:v0.1.0
 
 # Uncomment the line below to use a template Dockerfile for your invocation image
