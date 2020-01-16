@@ -19,15 +19,14 @@ Once you are satisfied with the bundle, the next step is to publish the bundle! 
 name: kube-example
 version: 0.1.0
 description: "An example Porter bundle using Kubernetes"
-invocationImage: getporter/kubernetes-installer:latest
 tag: getporter/kubernetes:v0.1.0
 ```
 
-This YAML snippet indicates that the invocation image will be built and tagged as `getporter/kubernetes:latest`. The first part of this reference, `getporter` indicates the registry that the invocation image should eventually be published to. The `kubernetes` segment identifies the image, while the `:latest` portion denotes a specific version. Note that the `invocationImage` field is optional and may be omitted entirely.  If so, its value will be derived from the required `tag` value, which we'll discuss next.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the image, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for both the bundle.
 
-Much like the `invocationImage` attribute is used to control the name of resulting Docker invocation image, the `tag` attribute is used to specify the name and location of the resulting CNAB bundle. In both cases, when you are ready to publish your bundle, it would be a good idea to provide specific versions for both of these, such as `v1.0.0`. We recommend using [semantic versioning](https://semver.org/) for both the invocation image and the bundle. We also recommend specifying the same registry for both, in order to simplify access to your bundle and invocation image by end users.
+The generated invocation image name will be auto-derived from a combination of `tag` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
 
-Once you have provided values for these, run the `porter build` command one last time to verify that your invocation image can be successfully built and to ensure that the value you specified in `invocationImage` is correct.
+Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built and to ensure that the value you specified in `invocationImage` is correct.
 
 Next, run the `porter publish` command in order to push the invocation image to the specified repository and to regenerate a CNAB bundle manifest using this newly pushed image. You should see output like the following:
 
@@ -51,11 +50,11 @@ a6afb08c6a1c: Pushed
 0f4d408243ab: Pushed
 6573f19b0ef5: Pushed
 3ae25590a14a: Pushed
-latest: digest: sha256:5e49e21be75fa940d74fbadac02af9cb31cf7f9147c336e8ce1b42a0537aa7f7 size: 1793
+0.1.0: digest: sha256:5e49e21be75fa940d74fbadac02af9cb31cf7f9147c336e8ce1b42a0537aa7f7 size: 1793
 
 Rewriting CNAB bundle.json...
-Starting to copy image getporter/kubernetes-installer:latest...
-Completed image getporter/kubernetes-installer:latest copy
+Starting to copy image getporter/kubernetes-installer:0.1.0...
+Completed image getporter/kubernetes-installer:0.1.0 copy
 Bundle tag docker.io/getporter/kubernetes:v0.1.0 pushed successfully, with digest "sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456"
 ```
 
