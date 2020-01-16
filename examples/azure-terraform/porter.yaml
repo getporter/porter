@@ -7,11 +7,10 @@ mixins:
 ## This section defines the metadata that defines the bundle. This includes the name of the generated
 ## invocation image as well as the tag that will be applied to the bundle when it is published.
 
-name: porter-terraform-example
+name: azure-terraform
 version: 1.0.0
 description: "An example Porter Bundle using Terraform and Azure"
-invocationImage: deislabs/porter-terraform-invocation:latest
-tag: deislabs/porter-terraform:v1.0
+tag: getporter/azure-terraform:v1.0.0
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
@@ -55,11 +54,32 @@ parameters:
     type: string
     default: "porter-terraform"
 
-# Note, this is only used for upgrade and uninstall. Porter doesn't have
-# applyTo yet though, so that is missing from here.
   - name: tf_storage_account_key
     type: string
-    default: ""
+    applyTo:
+      - upgrade
+      - uninstall
+
+## Here we designate outputs at the top level that we wish
+## to see after an action has completed (via `porter instance outputs list`)
+## and/or utilize in a subsequent action.
+## Note that currently, outputs don't persist across more than one action unless
+## all of the actions traversed (re-)state the output value.
+outputs:
+  - name: STORAGE_ACCOUNT_KEY
+    type: string
+    sensitive: true
+    applyTo:
+      - install
+  - name: cosmos-db-uri
+    type: string
+    applyTo:
+      - install
+  - name: eventhubs_connection_string
+    type: string
+    sensitive: true
+    applyTo:
+      - install
 
 install:
   - azure:
@@ -135,9 +155,10 @@ uninstall:
         database_name: "{{bundle.parameters.database-name}}"
         resource_group_name: "{{bundle.parameters.resource_group_name}}"
         resource_group_location: "{{bundle.parameters.location}}"
+
   - azure:
       description: "Remove the Azure Storage Account"
-      name: porter-tf-storage
+      name: "{{ bundle.parameters.storage_account_name }}"
       resourceGroup: "{{ bundle.parameters.storage_rg }}"
       type: storage
       parameters:

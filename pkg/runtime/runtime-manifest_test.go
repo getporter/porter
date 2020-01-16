@@ -122,7 +122,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:latest\"", cmd)
+	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:0.1.0\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
@@ -374,7 +374,7 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	m := &manifest.Manifest{
 		Dependencies: map[string]manifest.Dependency{
 			"dep": {
-				Tag: "deislabs/porter-hello",
+				Tag: "getporter/porter-hello",
 			},
 		},
 	}
@@ -441,7 +441,7 @@ func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
 		},
 		Dependencies: map[string]manifest.Dependency{
 			"dep": {
-				Tag: "deislabs/porter-hello",
+				Tag: "getporter/porter-hello",
 			},
 		},
 	}
@@ -640,7 +640,7 @@ func TestResolveDependencyParam(t *testing.T) {
 	m := &manifest.Manifest{
 		Dependencies: map[string]manifest.Dependency{
 			"mysql": {
-				Tag: "deislabs/porter-mysql",
+				Tag: "getporter/porter-mysql",
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
@@ -678,7 +678,7 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 	m := &manifest.Manifest{
 		Dependencies: map[string]manifest.Dependency{
 			"mysql": {
-				Tag: "deislabs/porter-mysql",
+				Tag: "getporter/porter-mysql",
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
@@ -899,51 +899,51 @@ func TestResolveImage(t *testing.T) {
 	}{
 		{
 			name:      "canonical reference",
-			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "getporter/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "deislabs/porter-hello",
+				Repository: "getporter/porter-hello",
 				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},
 		{
 			name:      "tagged reference",
-			reference: "deislabs/porter-hello:v0.1.10",
+			reference: "getporter/porter-hello:v0.1.10",
 			want: manifest.MappedImage{
-				Repository: "deislabs/porter-hello",
+				Repository: "getporter/porter-hello",
 				Tag:        "v0.1.10",
 			},
 		},
 		{
 			name:      "named reference",
-			reference: "deislabs/porter-hello",
+			reference: "getporter/porter-hello",
 			want: manifest.MappedImage{
-				Repository: "deislabs/porter-hello",
+				Repository: "getporter/porter-hello",
 				Tag:        "latest",
 			},
 		},
 		{
 			name:      "the one with a hostname",
-			reference: "deislabs.io/deislabs/porter-hello",
+			reference: "deislabs.io/getporter/porter-hello",
 			want: manifest.MappedImage{
-				Repository: "deislabs.io/deislabs/porter-hello",
+				Repository: "deislabs.io/getporter/porter-hello",
 				Tag:        "latest",
 			},
 		},
 		{
 			name:      "the one with a hostname and port",
-			reference: "deislabs.io:9090/deislabs/porter-hello:foo",
+			reference: "deislabs.io:9090/getporter/porter-hello:foo",
 			want: manifest.MappedImage{
-				Repository: "deislabs.io:9090/deislabs/porter-hello",
+				Repository: "deislabs.io:9090/getporter/porter-hello",
 				Tag:        "foo",
 			},
 		},
 		{
 
 			name:      "tagged and digested",
-			reference: "deislabs/porter-hello:latest@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "deislabs/porter-hello",
-				Tag:        "latest",
+				Repository: "getporter/porter-hello",
+				Tag:        "v0.1.0",
 				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},
@@ -966,22 +966,22 @@ func TestResolveImageErrors(t *testing.T) {
 	}{
 		{
 			name:      "no algo digest",
-			reference: "deislabs/porter-hello@8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "getporter/porter-hello@8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want:      "unable to parse docker image %s: invalid reference format",
 		},
 		{
 			name:      "bad digest",
-			reference: "deislabs/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f",
+			reference: "getporter/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f",
 			want:      "unable to parse docker image %s: invalid checksum digest length",
 		},
 		{
 			name:      "bad digest algo",
-			reference: "deislabs/porter-hello@sha356:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "getporter/porter-hello@sha356:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want:      "unable to parse docker image %s: unsupported digest algorithm",
 		},
 		{
 			name:      "malformed tagged ref",
-			reference: "deislabs/porter-hello@latest",
+			reference: "getporter/porter-hello@latest",
 			want:      "unable to parse docker image %s: invalid reference format",
 		},
 		{

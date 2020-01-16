@@ -18,8 +18,8 @@ func TestArchive(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-busybox/porter.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/porter-busybox/Dockerfile.tmpl"), "Dockerfile.tmpl")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/busybox-example/porter.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/busybox-example/Dockerfile.tmpl"), "Dockerfile.tmpl")
 
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/deislabs/porter/issues/697
@@ -48,7 +48,7 @@ func TestArchive(t *testing.T) {
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
-			Tag: "deislabs/porter-busybox-from-archive:v0.1.0",
+			Tag: "getporterci/busybox-from-archive:v0.1.0",
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)

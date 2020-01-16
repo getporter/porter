@@ -1,10 +1,10 @@
 mixins:
   - exec
 
-name: porter-busybox
+name: busybox-example
 version: 0.1.0
 description: "An example Porter configuration"
-tag: deislabs/porter-busybox:v0.1.0
+tag: getporterci/busybox-example:v0.1.0
 dockerfile: Dockerfile.tmpl
 
 images:

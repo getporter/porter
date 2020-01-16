@@ -25,7 +25,7 @@ porter inspect [flags]
   porter inspect
   porter inspect --file another/porter.yaml
   porter inspect --cnab-file some/bundle.json
-  porter inspect --tag deislabs/porter-bundle:v0.1.0
+  porter inspect --tag getporter/porter-hello:v0.1.0
 		  
 ```
 

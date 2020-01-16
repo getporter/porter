@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "74ef9c4abc7dfc41566ba28d9fcfab9c70baa0ca5ca434c71298689487f554e8"
+var simpleManifestDigest = "6154be0570d30a2b654d02258d9fa3004a72df9d5b70dafc0efce73c6818dc8f"
 
 func TestConfig_ComputeManifestDigest(t *testing.T) {
 	c := config.NewTestConfig(t)

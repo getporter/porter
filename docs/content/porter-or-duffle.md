@@ -98,7 +98,7 @@ The porter manifest and runtime handles interpreting and executing the logical p
 ```yaml
 name: wordpress
 version: 0.1.0
-invocationImage: deislabs/wordpress:latest
+tag: getporter/wordpress:v0.1.0
 
 mixins:
   - helm
@@ -202,7 +202,7 @@ The MySQL author indicates that the bundle can provide credentials for connectin
 ```yaml
 name: mysql
 version: 0.1.0
-invocationImage: deislabs/mysql:latest
+tag: getporter/mysql:v0.1.0
 
 mixins:
   - helm
@@ -242,7 +242,7 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-invocationImage: deislabs/wordpress:latest
+tag: porter/wordpress:v0.1.0
 
 parameters:
   - name: wordpress_name
@@ -251,7 +251,7 @@ parameters:
 
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql:latest
+    tag: getporter/mysql:v0.1.0
     parameters:
       database_name: wordpress
 

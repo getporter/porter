@@ -154,7 +154,7 @@ func TestSetDefaultInvocationImage(t *testing.T) {
 	cxt.AddTestFile("testdata/missing-invocation-image.porter.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err)
-	assert.Equal(t, "deislabs/missing-invocation-image-installer:"+m.Version, m.Image)
+	assert.Equal(t, "getporter/missing-invocation-image-installer:"+m.Version, m.Image)
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
@@ -264,7 +264,7 @@ func TestValidateOutputDefinition(t *testing.T) {
 func TestValidateImageMap(t *testing.T) {
 	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "deislabs/myserver",
+			Repository: "getporter/myserver",
 			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
 		}
 
@@ -275,7 +275,7 @@ func TestValidateImageMap(t *testing.T) {
 
 	t.Run("with no image digest supplied and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "deislabs/myserver",
+			Repository: "getporter/myserver",
 		}
 
 		err := mi.Validate()
@@ -285,7 +285,7 @@ func TestValidateImageMap(t *testing.T) {
 
 	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "deislabs//myserver//",
+			Repository: "getporter//myserver//",
 			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
 		}
 
@@ -295,7 +295,7 @@ func TestValidateImageMap(t *testing.T) {
 
 	t.Run("with invalid image digest format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "deislabs/myserver",
+			Repository: "getporter/myserver",
 			Digest:     "abc123",
 		}
 

@@ -6,11 +6,10 @@ credentials:
   - name: kubeconfig
     path: /root/.kube/config
 
-name: PORTER_KUBE 
+name: kubernetes 
 version: 0.1.0
 description: "An example Porter bundle with Kubernetes"
-invocationImage: deislabs/porter-kubernetes:latest
-tag: deislabs/porter-kube-bundle:v0.1.0
+tag: getporter/kubernetes:v0.1.0
 
 install:
   - kubernetes:
@@ -27,7 +26,7 @@ install:
       description: "Echo the IP Address"
       command: bash
       flags:
-        c: "echo 'You will find the service at: {{bundle.outputs.IP_ADDRESS}}'"
+        c: "echo 'You will find the service at {{bundle.outputs.IP_ADDRESS}}'"
 
 uninstall:
   - kubernetes:

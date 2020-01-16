@@ -189,7 +189,7 @@ mixins:
 
 name: mysql
 version: 0.1.0
-invocationImage: porter-mysql:latest
+tag: getporter/mysql:v0.1.0
 
 credentials:
 - name: kubeconfig
@@ -231,11 +231,11 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-invocationImage: porter-wordpress:latest
+tag: getporter/wordpress:v0.1.0
 
 dependencies:
   mysql:
-    tag: deislabs/porter-mysql:latest
+    tag: getporter/mysql:v0.1.0
     parameters:
       database_name: wordpress
       mysql_user: wordpress

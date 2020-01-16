@@ -37,7 +37,7 @@ porter credentials generate [NAME] [flags]
   porter credential generate
   porter bundle credential generate kubecred --insecure
   porter bundle credential generate kubecred --file myapp/porter.yaml
-  porter bundle credential generate kubecred --tag deislabs/cool-bundle:v1.0.1
+  porter bundle credential generate kubecred --tag getporter/porter-hello:v0.1.0
   porter bundle credential generate kubecred --cnab-file myapp/bundle.json --dry-run
 
 ```

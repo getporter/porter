@@ -16,7 +16,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 			DependenciesKey: Dependencies{
 				Requires: map[string]Dependency{
 					"mysql": {
-						Bundle: "deislabs/mysql:5.7",
+						Bundle: "getporter/mysql:5.7",
 					},
 				},
 			},
@@ -31,7 +31,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 
 	lock := locks[0]
 	assert.Equal(t, "mysql", lock.Alias)
-	assert.Equal(t, "deislabs/mysql:5.7", lock.Tag)
+	assert.Equal(t, "getporter/mysql:5.7", lock.Tag)
 }
 
 func TestDependencySolver_ResolveVersion(t *testing.T) {
@@ -48,19 +48,19 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 			dep:       Dependency{"mysql", &DependencyVersion{Ranges: []string{"1 - 1.5"}}},
 			wantError: "not implemented"},
 		{name: "default tag to latest",
-			dep:         Dependency{Bundle: "deislabs/porter-test-only-latest"},
+			dep:         Dependency{Bundle: "getporterci/porter-test-only-latest"},
 			wantVersion: "latest"},
 		{name: "no default tag",
-			dep:       Dependency{Bundle: "deislabs/porter-test-no-default-tag"},
+			dep:       Dependency{Bundle: "getporterci/porter-test-no-default-tag"},
 			wantError: "no tag was specified"},
 		{name: "default tag to highest semver",
-			dep:         Dependency{"deislabs/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: true}},
+			dep:         Dependency{"getporterci/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: true}},
 			wantVersion: "v1.3-beta1"},
 		{name: "default tag to highest semver, explicitly excluding prereleases",
-			dep:         Dependency{"deislabs/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: false}},
+			dep:         Dependency{"getporterci/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: false}},
 			wantVersion: "v1.2"},
 		{name: "default tag to highest semver, excluding prereleases by default",
-			dep:         Dependency{Bundle: "deislabs/porter-test-with-versions"},
+			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions"},
 			wantVersion: "v1.2"},
 	}
 

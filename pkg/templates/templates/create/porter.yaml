@@ -6,10 +6,10 @@
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-invocationImage: porter-hello:latest
-tag: deislabs/porter-hello-bundle:latest
+# TODO: update the registry to your own, e.g. myregistry/porter-hello:v0.1.0
+tag: getporter/porter-hello:v0.1.0
 
-# Uncomment out the line below to use a template Dockerfile for your invocation image
+# Uncomment the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl
 
 mixins:
@@ -40,7 +40,7 @@ uninstall:
 # See https://porter.sh/author-bundles/#dependencies
 #dependencies:
 #  mysql:
-#    tag: deislabs/porter-mysql:latest
+#    tag: getporter/mysql:v0.1.1
 #    parameters:
 #      database-name: wordpress
 

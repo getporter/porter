@@ -3,8 +3,7 @@ mixins:
 
 name: outputs
 version: 0.1.0
-invocationImage: porter-outputs:latest
-tag: deislabs/porter-outputs-bundle:v0.1.0
+tag: getporter/outputs-example:v0.1.0
 
 credentials:
 - name: kubeconfig

@@ -1,9 +1,8 @@
-name: spring-music-bundle
+name: aks-spring-music
 version: 0.1.0
 description: "Spring Music Demo app with Azure Cosmos DB"
-invocationImage: deislabs/spring-music-installer:latest
 dockerfile: Dockerfile.tmpl
-tag: deislabs/spring-music-bundle:v0.1.0
+tag: getporter/aks-spring-music:v0.1.0
 
 mixins:
   - exec
@@ -65,7 +64,7 @@ install:
   - azure:
       description: "Create Azure Cosmos DB"
       type: cosmosdb
-      name: spring-music-cosmos
+      name: aks-spring-music-cosmos
       resourceGroup: "{{ bundle.parameters.app-resource-group }}"
       parameters:
         name: "{{ bundle.parameters.cosmosdb-service-name }}"
@@ -81,8 +80,8 @@ install:
           
   - helm:
       description: "Helm Install Spring Music Demo App"
-      name: spring-music-helm
-      chart: /cnab/app/charts/spring-music
+      name: aks-spring-music-helm
+      chart: /cnab/app/charts/aks-spring-music
       replace: true
       set:
         deploy.cosmosConnectString: $COSMOSDB_CONNECTION_STRING
@@ -107,11 +106,11 @@ credentials:
 parameters:
 - name: app-resource-group
   type: string
-  default: spring-music-demo
+  default: aks-spring-music-demo
   env: APP_RESOURCE_GROUP
 - name: aks-resource-group
   type: string
-  default: spring-music-demo
+  default: aks-spring-music-demo
   env: AKS_RESOURCE_GROUP
 - name: aks-cluster-name
   type: string

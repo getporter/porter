@@ -4,7 +4,7 @@ mixins:
 name: hello
 description: "An example Porter with missing Invocation Image"
 version: 0.1.0
-tag: deislabs/missing-invocation-image:latest
+tag: getporter/missing-invocation-image:v0.1.0
 
 install:
   - exec:

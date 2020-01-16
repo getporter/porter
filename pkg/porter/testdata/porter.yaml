@@ -1,8 +1,8 @@
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
-invocationImage: porter-hello-custom:latest
-tag: deislabs/porter-hello-custom-bundle:latest
+tag: getporter/porter-hello:v0.1.0
+invocationImage: getporter/porter-hello-installer:0.1.0
 
 credentials:
   - name: my-first-cred
@@ -15,7 +15,7 @@ images:
    something:
       description: "an image"
       imageType: "docker"
-      repository: "deislabs/boo"
+      repository: "getporter/boo"
 
 parameters:
   - name: my-first-param

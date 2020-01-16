@@ -157,8 +157,8 @@ Before you can install the bundle, you'll need to generate a credential set. Thi
 
 ```bash
 $ porter credentials generate
-Generating new credential porter-terraform-example from bundle porter-terraform-example
-==> 4 credentials required for bundle porter-terraform-example
+Generating new credential azure-terraform from bundle azure-terraform
+==> 4 credentials required for bundle azure-terraform
 ? How would you like to set credential "client_id"  [Use arrows to move, space to select, type to filter]
   specific value
 > environment variable
@@ -170,8 +170,8 @@ For each of the credentials, provide the corresponding environment variable that
 
 ```bash
 $ porter credentials generate
-Generating new credential porter-terraform-example from bundle porter-terraform-example
-==> 4 credentials required for bundle porter-terraform-example
+Generating new credential azure-terraform from bundle azure-terraform
+==> 4 credentials required for bundle azure-terraform
 ? How would you like to set credential "client_id" environment variable
 ? Enter the environment variable that will be used to set credential "client_id" AZURE_CLIENT_ID
 ? How would you like to set credential "client_secret" environment variable
@@ -180,7 +180,7 @@ Generating new credential porter-terraform-example from bundle porter-terraform-
 ? Enter the environment variable that will be used to set credential "subscription_id" AZURE_SUBSCRIPTION_ID
 ? How would you like to set credential "tenant_id" environment variable
 ? Enter the environment variable that will be used to set credential "tenant_id" AZURE_TENANT_ID
-Saving credential to /Users/jeremyrickard/.porter/credentials/porter-terraform-example.yaml
+Saving credential to /Users/jeremyrickard/.porter/credentials/azure-terraform.yaml
 ```
 
 ## Installing the Bundle
@@ -188,8 +188,8 @@ Saving credential to /Users/jeremyrickard/.porter/credentials/porter-terraform-e
 Once you have built the bundle and generated a credential set, you're ready to install the bundle! To do that, you'll use the `porter install` command:
 
 ```bash
-$ porter install -c porter-terraform-example
-installing porter-terraform-example...
+$ porter install -c azure-terraform
+installing azure-terraform...
 executing porter install configuration from /cnab/app/porter.yaml
 Create an Azure Storage Account
 Starting deployment operations...
@@ -198,7 +198,7 @@ Emit the key in base64 encoded form
 Here is a the storage account key (base64 encoded) ==> %%A KEY%%
 Create Azure CosmosDB and Event Hubs
 Initializing Terraform...
-/usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=porter-terraform-example.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
+/usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=porter-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
 
 Initializing the backend...
 
@@ -231,12 +231,12 @@ You can also obtain the value from the Azure portal.
 When you're ready to uninstall the bundle, simply run the `porter uninstall` command and provide the storage account key:
 
 ```bash
-$ porter uninstall -c porter-terraform-example --param tf_storage_account_key=%%YOUR KEY VALUE%%
-uninstalling porter-terraform-example...
+$ porter uninstall -c azure-terraform --param tf_storage_account_key=%%YOUR KEY VALUE%%
+uninstalling azure-terraform...
 executing porter uninstall configuration from /cnab/app/porter.yaml
 Remove Azure CosmosDB and Event Hubs
 Initializing Terraform...
-/usr/bin/terraform terraform init -backend=true -backend-config=access_key=<A GENERATED KEY> -backend-config=container_name=portertf -backend-config=key=porter-terraform-example.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
+/usr/bin/terraform terraform init -backend=true -backend-config=access_key=<A GENERATED KEY> -backend-config=container_name=portertf -backend-config=key=porter-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
 
 Initializing the backend...
 

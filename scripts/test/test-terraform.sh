@@ -16,9 +16,8 @@ cp -r ${REPO_DIR}/build/testdata/bundles/terraform/terraform .
 # Copy in the terraform porter manifest
 cp ${REPO_DIR}/build/testdata/bundles/terraform/porter.yaml .
 
-# Substitute REGISTRY in for invocation image and bundle tag
-sed -i "s/porter-terraform:latest/${REGISTRY}\/porter-terraform:latest/g" porter.yaml
-sed -i "s/deislabs\/porter-terraform-bundle/${REGISTRY}\/porter-terraform-bundle/g" porter.yaml
+# Substitute REGISTRY in for the bundle tag
+sed -i "s/getporterci\/porter-terraform/${REGISTRY}\/porter-terraform/g" porter.yaml
 
 ${PORTER_HOME}/porter build
 
@@ -41,7 +40,7 @@ ${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'
 
-cat ${PORTER_HOME}/claims/porter-terraform.json
+cat ${PORTER_HOME}/claims/terraform.json
 
 ${PORTER_HOME}/porter uninstall --insecure --debug
 

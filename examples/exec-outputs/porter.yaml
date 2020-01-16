@@ -1,8 +1,7 @@
-name: example-exec-outputs
+name: exec-outputs
 version: 0.1.0
 description: "An example Porter bundle demonstrating exec mixin outputs"
-invocationImage: deislabs/porter-example-exec-outputs:0.1.0
-tag: deislabs/porter-example-exec-outputs-bundle:0.1.0
+tag: getporter/exec-outputs:v0.1.0
 
 mixins:
   - exec
