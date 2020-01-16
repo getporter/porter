@@ -39,7 +39,7 @@ uninstall:
 # See https://porter.sh/author-bundles/#dependencies
 #dependencies:
 #  mysql:
-#    tag: getporter/porter-mysql:latest
+#    tag: getporter/mysql:v0.1.1
 #    parameters:
 #      database-name: wordpress
 

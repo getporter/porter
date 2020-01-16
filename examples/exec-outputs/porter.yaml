@@ -1,7 +1,7 @@
 name: exec-outputs
 version: 0.1.0
 description: "An example Porter bundle demonstrating exec mixin outputs"
-tag: getporter/exec-outputs:0.1.0
+tag: getporter/exec-outputs:v0.1.0
 
 mixins:
   - exec
