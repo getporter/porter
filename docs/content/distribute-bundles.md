@@ -22,7 +22,7 @@ description: "An example Porter bundle using Kubernetes"
 tag: getporter/kubernetes:v0.1.0
 ```
 
-This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the image, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for both the bundle.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the image, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
 The generated invocation image name will be auto-derived from a combination of `tag` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
 
