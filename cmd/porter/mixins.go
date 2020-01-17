@@ -53,7 +53,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 		Use:   "install NAME",
 		Short: "Install a mixin",
 		Example: `  porter mixin install helm --url https://cdn.porter.sh/mixins/helm
-  porter mixin install helm --feed-url https://cdn.porter.sh/atom.xml
+  porter mixin install helm --feed-url https://cdn.porter.sh/mixins/atom.xml
   porter mixin install azure --version v0.4.0-ralpha.1+dubonnet --url https://cdn.porter.sh/mixins/azure
   porter mixin install kubernetes --version canary --url https://cdn.porter.sh/mixins/kubernetes`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

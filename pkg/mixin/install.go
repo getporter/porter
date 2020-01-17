@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DefaultFeedUrl = "https://cdn.porter.sh/atom.xml"
+	DefaultFeedUrl = "https://cdn.porter.sh/mixins/atom.xml"
 )
 
 type InstallOptions struct {
