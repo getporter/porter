@@ -260,6 +260,6 @@ $ ~/.porter/mixins/exec/exec version --output json
   "name": "exec",
   "version": "v0.13.1-beta.1",
   "commit": "37f3637",
-  "author": "DeisLabs"
+  "author": "Porter Authors"
 }
 ```

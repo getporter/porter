@@ -9,7 +9,7 @@ RUN apk add bash \
             bash-completion \
             jq \
             ca-certificates && \
-    curl https://cdn.deislabs.io/porter/${PERMALINK}/install-linux.sh | bash && \
+    curl https://cdn.porter.sh/${PERMALINK}/install-linux.sh | bash && \
     ln -s /root/.porter/porter /usr/local/bin/porter && \
     curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v${HELM_VER}-linux-amd64.tar.gz && \
     tar -xzf helm.tgz && \

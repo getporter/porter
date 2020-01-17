@@ -21,17 +21,17 @@ Install the most recent stable release of porter and its default [mixins](#mixin
 
 ## Latest MacOS
 ```
-curl https://cdn.deislabs.io/porter/latest/install-mac.sh | bash
+curl https://cdn.porter.sh/latest/install-mac.sh | bash
 ```
 
 ## Latest Linux
 ```
-curl https://cdn.deislabs.io/porter/latest/install-linux.sh | bash
+curl https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
 ## Latest Windows
 ```
-iwr "https://cdn.deislabs.io/porter/latest/install-windows.ps1" -UseBasicParsing | iex
+iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Canary
@@ -44,17 +44,17 @@ that we are developing.
 
 ## Canary MacOS
 ```
-curl https://cdn.deislabs.io/porter/canary/install-mac.sh | bash
+curl https://cdn.porter.sh/canary/install-mac.sh | bash
 ```
 
 ## Canary Linux
 ```
-curl https://cdn.deislabs.io/porter/canary/install-linux.sh | bash
+curl https://cdn.porter.sh/canary/install-linux.sh | bash
 ```
 
 ## Canary Windows
 ```
-iwr "https://cdn.deislabs.io/porter/canary/install-windows.ps1" -UseBasicParsing | iex
+iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Older Version
@@ -69,19 +69,19 @@ Set `VERSION` to the version of Porter that you want to install.
 ## Older Version MacOS
 ```
 VERSION="v0.18.1-beta.2"
-curl https://cdn.deislabs.io/porter/$VERSION/install-mac.sh | bash
+curl https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 ## Older Version Linux
 ```
 VERSION="v0.18.1-beta.2"
-curl https://cdn.deislabs.io/porter/$VERSION/install-linux.sh | bash
+curl https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 ## Older Version Windows
 ```
 $VERSION="v0.18.1-beta.2"
-iwr "https://cdn.deislabs.io/porter/$VERSION/install-windows.ps1" -UseBasicParsing | iex
+iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 ```
 
 # Mixins
@@ -104,6 +104,6 @@ installed terraform mixin
 v0.3.0-beta.1 (0d24b85)
 ```
 
-All of the DeisLabs mixins are published to `https://cdn.deislabs.io/porter/atom.xml`.
+All of the Porter mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
 
 [releases]: https://github.com/deislabs/porter/releases

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DefaultFeedUrl = "https://cdn.deislabs.io/porter/atom.xml"
+	DefaultFeedUrl = "https://cdn.porter.sh/atom.xml"
 )
 
 type InstallOptions struct {

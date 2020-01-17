@@ -56,7 +56,7 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 		if strings.HasSuffix(r.RequestURI, "atom.xml") {
 			// swap out the urls in the test atom feed to match the test http server here so that porter downloads
 			// the mixin binaries from the fake server
-			testAtom := strings.Replace(string(feed), "https://porter.sh", testURL, -1)
+			testAtom := strings.Replace(string(feed), "https://cdn.porter.sh", testURL, -1)
 			fmt.Fprintln(w, testAtom)
 		} else {
 			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am the helm mixin\n")
@@ -172,7 +172,7 @@ func TestFileSystem_Install_MixinInfoSavedWhenNoFileExists(t *testing.T) {
 	c.SetupPorterHome()
 	p := NewFileSystem(c.Config)
 
-	mixinURL := "https://cdn.deislabs.io/porter/mixins/helm"
+	mixinURL := "https://cdn.porter.sh/mixins/helm"
 	opts := mixin.InstallOptions{
 		Version: "v1.2.4",
 		URL:     mixinURL,

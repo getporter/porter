@@ -1,24 +1,24 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://porter.sh/mixins</id>
-    <title>DeisLabs Mixins</title>
+    <title>Porter Mixins</title>
     <updated>{{Updated}}</updated>
-    <link rel="self" href="https://porter.sh/mixins/atom.xml"/>
+    <link rel="self" href="https://cdn.porter.sh/mixins/atom.xml"/>
     <author>
-        <name>DeisLabs</name>
-        <uri>https://deislabs.io</uri>
+        <name>Porter Authors</name>
+        <uri>https://porter.sh/mixins</uri>
     </author>
     {{#Mixins}}
     <category term="{{.}}"/>
     {{/Mixins}}
     {{#Entries}}
     <entry>
-        <id>https://porter.sh/mixins/{{Version}}/{{Mixin}}</id>
+        <id>https://cdn.porter.sh/mixins/{{Version}}/{{Mixin}}</id>
         <title>{{Mixin}} @ {{Version}}</title>
         <updated>{{Updated}}</updated>
         <category term="{{Mixin}}"/>
         <content>{{Version}}</content>
         {{#Files}}
-        <link rel="download" href="https://porter.sh/mixins/{{Version}}/{{File}}" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/{{Version}}/{{File}}" />
         {{/Files}}
     </entry>
     {{/Entries}}
