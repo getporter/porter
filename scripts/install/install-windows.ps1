@@ -1,7 +1,7 @@
 param([String]$PORTER_PERMALINK='latest', [String]$MIXIN_PERMALINK='latest')
 
 $PORTER_HOME="$env:USERPROFILE\.porter"
-$PORTER_URL="https://cdn.deislabs.io/porter"
+$PORTER_URL="https://cdn.porter.sh"
 
 echo "Installing porter to $PORTER_HOME"
 

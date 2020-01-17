@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORTER_HOME=~/.porter
-PORTER_URL=https://deislabs.blob.core.windows.net/porter
+PORTER_URL=https://cdn.porter.sh
 PORTER_PERMALINK=${PORTER_PERMALINK:-latest}
 MIXIN_PERMALINK=${MIXIN_PERMALINK:-latest}
 echo "Installing porter to $PORTER_HOME"

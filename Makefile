@@ -30,7 +30,7 @@ endif
 INT_MIXINS = exec kubernetes
 EXT_MIXINS = helm azure terraform
 MIXIN_TAG ?= canary
-MIXINS_URL = https://cdn.deislabs.io/porter/mixins
+MIXINS_URL = https://cdn.porter.sh/mixins
 
 .PHONY: build
 build: build-porter docs-gen build-mixins clean-packr get-mixins

@@ -21,7 +21,7 @@ systems:
 * GOARCH: amd64
 
 If you are creating your mixin in Go, you may find the [Makefile][mk] that we use
-for our DeisLabs mixins helpful as a starting point.
+for our Porter mixins helpful as a starting point.
 
 ## Publish
 
@@ -64,8 +64,8 @@ When `--version` is not specified, it is defaulted to `latest` which should
 represent the most recent version of the mixin.
 
 You may also choose to publish `canary` versions of the mixin, which are
-unpublished builds from the master branch. Porter and the official DeisLabs
-mixins follow this pattern. If you have other published tagged builds of your
-mixin, porter can handle installing them as well.
+unpublished builds from the master branch. The official Porter mixins follow
+this pattern. If you have other published tagged builds of your mixin, porter
+can handle installing them as well.
 
 [mk]: https://github.com/deislabs/porter/blob/master/mixin.mk
