@@ -17,6 +17,7 @@ parameters:
   env: DATABASE_NAME
 - name: mysql-user
   type: string
+  default: mysql-admin
   env: MYSQL_USER
 - name: namespace
   type: string
@@ -30,7 +31,6 @@ install:
     description: "Install MySQL"
     name: "{{ bundle.parameters.mysql-name }}"
     chart: stable/mysql
-    version: 0.10.2
     namespace: "{{ bundle.parameters.namespace }}"
     replace: true
     set:
@@ -57,7 +57,6 @@ upgrade:
       name: "{{ bundle.parameters.mysql-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
       chart: stable/mysql
-      version: 0.10.2
       outputs:
       - name: mysql-root-password
         secret: "{{ bundle.parameters.mysql-name }}"
