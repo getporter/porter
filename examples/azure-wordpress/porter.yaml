@@ -1,5 +1,5 @@
 mixins:
-  - azure
+  - arm
   - helm
  
 name: azure-wordpress
@@ -34,12 +34,17 @@ parameters:
 - name: server_name
   type: string
 
+- name: resource_group
+  type: string
+  default: "porter-test"
+
 install:
-  - azure:
+  - arm:
       description: "Create Azure MySQL"
-      type: mysql
+      type: arm
+      template: "arm/mysql.json"
       name: mysql-azure-porter-demo-wordpress
-      resourceGroup: "porter-test"
+      resourceGroup: "{{ bundle.parameters.resource_group }}"
       parameters:
         administratorLogin: "{{ bundle.parameters.mysql_user }}"
         administratorLoginPassword: "{{ bundle.parameters.mysql_password }}"
@@ -67,8 +72,8 @@ install:
         externalDatabase.database: "{{ bundle.parameters.database_name }}"
 
 uninstall:
-  # TODO: enable once the porter-azure mixin supports this action
-  # - azure:
+  # TODO: enable once the porter-arm mixin supports this action
+  # - arm:
   #     description: "Uninstall Mysql"
   #     name: mysql-azure-porter-demo-wordpress
   - helm:
