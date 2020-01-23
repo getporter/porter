@@ -31,8 +31,8 @@ Once a parameter has been declared in the `porter.yaml`, Porter provides a simpl
 
 ```yaml
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
     version: 0.10.2
@@ -108,11 +108,11 @@ In addition to parameters and credentials, Porter introduces a type called an ou
 ```yaml
 install:
   - arm:
-    description: "Create Azure MySQL"
-    type: arm
-    template: "arm/mysql.json"
-    name: demo-mysql-azure-porter-demo-wordpress
-    resourceGroup: "porter-test"
+      description: "Create Azure MySQL"
+      type: arm
+      template: "arm/mysql.json"
+      name: demo-mysql-azure-porter-demo-wordpress
+      resourceGroup: "porter-test"
       parameters:
         administratorLogin: "{{ bundle.parameters.mysql_user}}"
         administratorLoginPassword: "{{ bundle.parameters.mysql_password }}"
@@ -121,9 +121,9 @@ install:
         version: "5.7"
         sslEnforcement: "Disabled"
         databaseName: "{{ bundle.parameters.database_name }}"
-    outputs:
-      - name: "MYSQL_URL"
-        key: "MYSQL_HOST"
+      outputs:
+        - name: "MYSQL_URL"
+          key: "MYSQL_HOST"
 ```
 
 In this example, a new output will be created named `MYSQL_URL`. The Azure mixin allows you to specify the key to fetch the output from, in this case it is `MYSQL_HOST`. Each mixin can provide different ways of addressing outputs, so refer to the schema for each mixin. The Porter runtime will keep a map in memory with each of the outputs declared.
@@ -137,8 +137,8 @@ Once an output has been declared, it can be referenced in the same way as parame
 For example, given the install step above, we can use the `MYSQL_URL` with the helm mixin in the following way:
 
 ```yaml
-  - description: "Helm Install Wordpress"
-    helm:
+  - helm:
+      description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: stable/wordpress
       set:
@@ -169,8 +169,8 @@ images:
 These images will be used to build the `bundle.json` images section, but can also be referenced using the same syntax you would use for referencing `parameters`, `credentials`, and `outputs`.
 
 ```yaml
-- description: "Helm Install Wordpress"
-    helm:
+  - helm:
+      description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: stable/wordpress
       set:
@@ -206,22 +206,22 @@ parameters:
   env: MYSQL_USER
 
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: porter-ci-mysql
     chart: stable/mysql
-    version: 0.10.2
+    version: 1.6.2
     replace: true
     set:
       mysqlDatabase: "{{ bundle.parameters.database-name }}"
       mysqlUser: "{{ bundle.parameters.mysql-user }}"
-  outputs:
-  - name: mysql-root-password
-    secret: porter-ci-mysql
-    key: mysql-root-password
-  - name: mysql-password
-    secret: porter-ci-mysql
-    key: mysql-password
+    outputs:
+    - name: mysql-root-password
+      secret: porter-ci-mysql
+      key: mysql-root-password
+    - name: mysql-password
+      secret: porter-ci-mysql
+      key: mysql-password
 ```
 
 In this bundle, we see the normal declaration of credentials, parameters and outputs, along with the use of `"{{  bundle.x.y.z }}"` to use these. With this bundle definition, we can build a second bundle to install wordpress and declare a dependency on this bundle. The `porter.yaml` for this might look something like:
@@ -252,8 +252,8 @@ parameters:
   env: WORDPRESS_NAME
 
 install:
-- description: "Install Wordpress"
-  helm:
+- helm:
+    description: "Install Wordpress"
     name: "{{ bundle.parameters.wordpress-name }}"
     chart: stable/wordpress
     replace: true
@@ -267,8 +267,8 @@ The wordpress bundle declares a dependency on the `mysql` bundle, which we saw a
 
 ```yaml
 install:
-- description: "Install Wordpress"
-  helm:
+- helm:
+    description: "Install Wordpress"
     name: "{{ bundle.parameters.wordpress-name }}"
     chart: stable/wordpress
     replace: true
@@ -288,8 +288,8 @@ It is possible to reference multiple parameters, credentials and/or outputs in a
 
 ```yaml
 install:
-- description: "Install Java App"
-  helm:
+- helm:
+    description: "Install Java App"
     name: "{{ bundle.parameters.cool-app}}"
     chart: stable/wordpress
     replace: true
