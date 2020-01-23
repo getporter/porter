@@ -1,6 +1,6 @@
 # Using Porter with Azure and Terraform
 
-This bundle provides an example of how you can use Porter to build Terraform-based bundles. The example provided here will create Azure CosmosDB and Azure EventHubs objects using Terraform configurations and the [porter-terraform](https://github.com/deislabs/porter-terraform/) mixin. This sample also shows how the Terraform mixin can be used with other mixins, in this case the Azure mixin. The Azure mixin is first used to create an Azure storage account that will be used to configure the Terraform `azurerm` backend. It is possible to build bundles using just the [porter-terraform](https://github.com/deislabs/porter-terraform) mixin, but this example shows you how to use outputs between steps as well.
+This bundle provides an example of how you can use Porter to build Terraform-based bundles. The example provided here will create Azure CosmosDB and Azure EventHubs objects using Terraform configurations and the [porter-terraform](https://github.com/deislabs/porter-terraform/) mixin. This sample also shows how the Terraform mixin can be used with other mixins, in this case the ARM mixin. The ARM mixin is first used to create an Azure storage account that will be used to configure the Terraform `azurerm` backend. It is possible to build bundles using just the [porter-terraform](https://github.com/deislabs/porter-terraform) mixin, but this example shows you how to use outputs between steps as well.
 
 ## Setup
 
@@ -132,20 +132,27 @@ Once this command has finished, you will see some additional resources in your w
 
 ```bash
 $ more Dockerfile
-FROM quay.io/deis/lightweight-docker-go:v0.2.0
 FROM debian:stretch
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY . /cnab/app
-RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
+ARG BUNDLE_DIR
+
+RUN apt-get update && apt-get install -y ca-certificates
 
 # exec mixin has no buildtime dependencies
 
-ENV TERRAFORM_VERSION=0.11.11
+ENV TERRAFORM_VERSION=0.12.17
 RUN apt-get update && apt-get install -y wget unzip && \
  wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
  unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
-WORKDIR /cnab/app
+COPY . $BUNDLE_DIR
+RUN cd /cnab/app/terraform && terraform init -backend=false
+
+
+COPY . $BUNDLE_DIR
+RUN rm -fr $BUNDLE_DIR/.cnab
+COPY .cnab /cnab
+COPY porter.yaml $BUNDLE_DIR/porter.yaml
+WORKDIR $BUNDLE_DIR
 CMD ["/cnab/app/run"]
 ```
 
@@ -190,15 +197,16 @@ Once you have built the bundle and generated a credential set, you're ready to i
 ```bash
 $ porter install -c azure-terraform
 installing azure-terraform...
-executing porter install configuration from /cnab/app/porter.yaml
+executing install action from azure-terraform (bundle instance: azure-terraform)
 Create an Azure Storage Account
 Starting deployment operations...
 Finished deployment operations...
 Emit the key in base64 encoded form
-Here is a the storage account key (base64 encoded) ==> %%A KEY%%
+Here is a the storage account key (base64 encoded) ==> cFNZNExabEg1eGkzSkgrdU5HcFZyek94WmEyYXRRa1Z6WWtFVjZGamg5aU5wcjRVVjROVFBmSXJH
+UXNpTVpLQS9FYWVWanF1WkhhMFg5TE9IMERRY2c9PQo=
 Create Azure CosmosDB and Event Hubs
 Initializing Terraform...
-/usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=porter-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
+/usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=azure-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
 
 Initializing the backend...
 
@@ -206,8 +214,19 @@ Successfully configured the backend "azurerm"! Terraform will automatically
 use this backend unless the backend configuration changes.
 
 Initializing provider plugins...
-- Checking for available provider plugins on https://releases.hashicorp.com...
-- Downloading plugin for provider "azurerm" (1.31.0)...
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+/usr/bin/terraform terraform apply -auto-approve -input=false -var client_id=******* -var client_secret=******* -var database_name=porter-terraform -var resource_group_location=EastUS -var resource_group_name=porter-terraform -var subscription_id=******* -var tenant_id=*******
+Acquiring state lock. This may take a few moments...
+azurerm_resource_group.rg: Creating...
 
 < OUTPUT TRUNCATED>
 ```
@@ -233,10 +252,10 @@ When you're ready to uninstall the bundle, simply run the `porter uninstall` com
 ```bash
 $ porter uninstall -c azure-terraform --param tf_storage_account_key=%%YOUR KEY VALUE%%
 uninstalling azure-terraform...
-executing porter uninstall configuration from /cnab/app/porter.yaml
+executing uninstall action from azure-terraform (bundle instance: azure-terraform)
 Remove Azure CosmosDB and Event Hubs
 Initializing Terraform...
-/usr/bin/terraform terraform init -backend=true -backend-config=access_key=<A GENERATED KEY> -backend-config=container_name=portertf -backend-config=key=porter-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
+/usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=azure-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
 
 Initializing the backend...
 
@@ -244,8 +263,18 @@ Successfully configured the backend "azurerm"! Terraform will automatically
 use this backend unless the backend configuration changes.
 
 Initializing provider plugins...
-- Checking for available provider plugins on https://releases.hashicorp.com...
-- Downloading plugin for provider "azurerm" (1.31.0)...
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+/usr/bin/terraform terraform destroy -auto-approve -var client_id=******* -var client_secret=******* -var database_name=porter-terraform -var resource_group_location=EastUS -var resource_group_name=porter-terraform -var subscription_id=******* -var tenant_id=*******
+Acquiring state lock. This may take a few moments...
 
 < OUTPUT TRUNCATED>
 ```
