@@ -107,11 +107,12 @@ In addition to parameters and credentials, Porter introduces a type called an ou
 
 ```yaml
 install:
-  - description: "Create Azure MySQL"
-    azure:
-      type: mysql
-      name: demo-mysql-azure-porter-demo-wordpress
-      resourceGroup: "porter-test"
+  - arm:
+    description: "Create Azure MySQL"
+    type: arm
+    template: "arm/mysql.json"
+    name: demo-mysql-azure-porter-demo-wordpress
+    resourceGroup: "porter-test"
       parameters:
         administratorLogin: "{{ bundle.parameters.mysql_user}}"
         administratorLoginPassword: "{{ bundle.parameters.mysql_password }}"
