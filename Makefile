@@ -28,7 +28,7 @@ FILE_EXT=
 endif
 
 INT_MIXINS = exec kubernetes
-EXT_MIXINS = helm azure terraform
+EXT_MIXINS = helm arm terraform
 MIXIN_TAG ?= canary
 MIXINS_URL = https://cdn.porter.sh/mixins
 
