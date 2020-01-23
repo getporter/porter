@@ -3,11 +3,10 @@ mixins:
   - exec
   - terraform 
 
-name: porter-workshop-tf 
+name: workshop-tf 
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"
-invocationImage: deislabs/porter-workshop-tf:v0.1.0
-tag: deislabs/porter-workshop-tf-bundle:v0.1.0
+tag: getporter/workshop-tf:v0.1.0
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
@@ -36,26 +35,26 @@ parameters:
 
   - name: backend_storage_container
     type: string
-    default: "portertf"
 
   - name: backend_storage_resource_group
     type: string
-    default: "devops-days-msp"
 
-  - name: server-name
+  - name: server_name
     type: string
 
-  - name: database-name
+  - name: database_name
     type: string
 
 outputs:
   - name: STORAGE_ACCOUNT_KEY
     type: string
+    sensitive: true
 
 install:
-   - azure:
+   - arm:
       description: "Create an Azure Storage Account"
-      type: storage
+      type: arm
+      template: "arm/storage.json"
       name: "{{ bundle.parameters.backend_storage_account }}"
       resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
       parameters:
@@ -74,13 +73,13 @@ install:
         container_name: "{{ bundle.parameters.backend_storage_container }}"
         access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
       vars:
-        backend_storage_account: "{{ bundle.parameters.backend_storage_account }}"
+        backend_storage_resource_group: "{{ bundle.parameters.backend_storage_resource_group }}"
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"
         client_id: "{{bundle.credentials.client_id}}"
         client_secret: "{{bundle.credentials.client_secret}}" 
-        server-name: "{{bundle.parameters.server-name}}"
-        database-name: "{{bundle.parameters.database-name}}"
+        server_name: "{{bundle.parameters.server_name}}"
+        database_name: "{{bundle.parameters.database_name}}"
 
 upgrade:
   - exec: 
