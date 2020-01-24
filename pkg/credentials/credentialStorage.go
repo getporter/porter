@@ -23,9 +23,8 @@ type CredentialStorage struct {
 	SecretsStore
 }
 
-func NewCredentialStorage(c *config.Config) *CredentialStorage {
-	// TODO: inject the crudplugins and use the same one between both secrets and credentials
-	migration:= newMigrateCredentialsWrapper(c, crudplugins.NewStore(c))
+func NewCredentialStorage(c *config.Config, storagePlugin *crudplugins.Store) *CredentialStorage {
+	migration := newMigrateCredentialsWrapper(c, storagePlugin)
 	credStore := credentials.NewCredentialStore(migration)
 	return &CredentialStorage{
 		Config:           c,

@@ -15,10 +15,9 @@ type ClaimStorage struct {
 	claim.Store
 }
 
-func NewClaimStorage(c *config.Config) *ClaimStorage {
-	crud := pluginstore.NewStore(c)
+func NewClaimStorage(c *config.Config, storagePlugin *pluginstore.Store) *ClaimStorage {
 	return &ClaimStorage{
 		Config: c,
-		Store:  claim.NewClaimStore(crud),
+		Store:  claim.NewClaimStore(storagePlugin),
 	}
 }

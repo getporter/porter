@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 )
 
@@ -35,8 +36,9 @@ type Porter struct {
 func New() *Porter {
 	c := config.New()
 	cache := cache.New(c)
-	claimStorage := storage.NewClaimStorage(c)
-	credStorage := credentials.NewCredentialStorage(c)
+	storagePlugin := pluginstore.NewStore(c)
+	claimStorage := storage.NewClaimStorage(c, storagePlugin)
+	credStorage := credentials.NewCredentialStorage(c, storagePlugin)
 	return &Porter{
 		Config:      c,
 		Cache:       cache,
