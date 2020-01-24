@@ -19,9 +19,16 @@ import (
 // switch and making people do the migration themselves.
 type credentialsMigration struct {
 	*context.Context
+	migrated []string
 }
 
-func (m credentialsMigration) Migrate(credsDir string) error {
+func NewCredentialsMigration(c *context.Context) *credentialsMigration {
+	return &credentialsMigration{Context: c}
+}
+
+// Migrate accepts a path to a credential set directory and migrates every yaml file to json that doesn't already
+// have a matching destination file (NAME.json).
+func (m *credentialsMigration) Migrate(credsDir string) error {
 	if hasCreds, _ := m.FileSystem.Exists(credsDir); !hasCreds {
 		return nil
 	}
@@ -54,7 +61,8 @@ func (m credentialsMigration) Migrate(credsDir string) error {
 	return convertErrs
 }
 
-func (m credentialsMigration) ConvertToJson(path string) error {
+// ConvertToJson accepts a path to a credential set formatted as yaml, and migrates it to json.
+func (m *credentialsMigration) ConvertToJson(path string) error {
 	if m.Debug {
 		credName := filepath.Base(path)
 		fmt.Fprintf(m.Err, "Converting credential %s from yaml to json. The old file is left next to it so you can remove it when you are sure you don't need it anymore.", credName)
@@ -92,5 +100,9 @@ func (m credentialsMigration) ConvertToJson(path string) error {
 	dest := filepath.Join(destDir, destName)
 
 	err = m.FileSystem.WriteFile(dest, b, 0644)
-	return errors.Wrapf(err, "could not save migrated credentials to %s", dest)
+	if err != nil {
+		errors.Wrapf(err, "could not save migrated credentials to %s", dest)
+	}
+	m.migrated = append(m.migrated, path)
+	return nil
 }

@@ -1,10 +1,11 @@
 package credentials
 
 import (
+	"path/filepath"
+
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/pkg/errors"
-	"path/filepath"
 )
 
 // Wrapper lets us shim in the migration of the credentials from yaml to json
@@ -18,11 +19,11 @@ type migrateCredentialsWrapper struct {
 	wrappedStore crud.Store
 }
 
-func newMigrateCredentialsWrapper(c *config.Config, wrappedStore crud.Store) *migrateCredentialsWrapper{
+func newMigrateCredentialsWrapper(c *config.Config, wrappedStore crud.Store) *migrateCredentialsWrapper {
 	return &migrateCredentialsWrapper{
-		Config: c,
+		Config:       c,
 		wrappedStore: wrappedStore,
-	}	
+	}
 }
 
 func (w *migrateCredentialsWrapper) Connect() error {
@@ -30,14 +31,14 @@ func (w *migrateCredentialsWrapper) Connect() error {
 		return nil
 	}
 
-	home, err :=w.GetHomeDir()
+	home, err := w.GetHomeDir()
 	if err != nil {
 		return errors.Wrap(err, "could not migrate credentials directory")
 	}
 
 	credsDir := filepath.Join(home, "credentials")
 
-	migration := credentialsMigration{Context:w.Context}
+	migration := NewCredentialsMigration(w.Context)
 	err = migration.Migrate(credsDir)
 	if err != nil {
 		errors.Wrap(err, "conversion of the credentials directory failed")
