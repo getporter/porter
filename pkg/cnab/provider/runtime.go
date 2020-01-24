@@ -3,9 +3,9 @@ package cnabprovider
 import (
 	"os"
 
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/lookup"
 )
@@ -13,10 +13,10 @@ import (
 type Runtime struct {
 	*config.Config
 	credentials credentials.CredentialProvider
-	claims      storage.ClaimProvider
+	claims      claims.ClaimProvider
 }
 
-func NewRuntime(c *config.Config, claims storage.ClaimProvider, credentials credentials.CredentialProvider) *Runtime {
+func NewRuntime(c *config.Config, claims claims.ClaimProvider, credentials credentials.CredentialProvider) *Runtime {
 	return &Runtime{
 		Config:      c,
 		claims:      claims,

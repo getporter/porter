@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -21,7 +21,7 @@ type dependencyExecutioner struct {
 	// Manifest        *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     CNABProvider
-	Claims   storage.ClaimProvider
+	Claims   claims.ClaimProvider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts

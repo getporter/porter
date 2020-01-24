@@ -1,4 +1,4 @@
-package storage
+package claims
 
 import (
 	"get.porter.sh/porter/pkg/config"

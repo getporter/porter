@@ -10,6 +10,7 @@ import (
 
 	buildprovider "get.porter.sh/porter/pkg/build/provider"
 	"get.porter.sh/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/claims"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
@@ -18,7 +19,6 @@ import (
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/host"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/docker/cnab-to-oci/relocation"
@@ -48,7 +48,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Mixins = &mixin.TestMixinProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
-	p.Claims = storage.NewTestClaimProvider()
+	p.Claims = claims.NewTestClaimProvider()
 	p.Credentials = testCredentials
 	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.Claims, p.Credentials)
 

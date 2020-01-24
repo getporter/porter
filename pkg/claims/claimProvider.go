@@ -1,4 +1,4 @@
-package storage
+package claims
 
 import (
 	"github.com/cnabio/cnab-go/claim"

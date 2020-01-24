@@ -5,6 +5,7 @@ package porter
 import (
 	buildprovider "get.porter.sh/porter/pkg/build/provider"
 	"get.porter.sh/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/claims"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
@@ -12,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 )
@@ -23,7 +23,7 @@ type Porter struct {
 
 	Cache       cache.BundleCache
 	Credentials credentials.CredentialProvider
-	Claims      storage.ClaimProvider
+	Claims      claims.ClaimProvider
 	Registry    Registry
 	Templates   *templates.Templates
 	Builder     BuildProvider
@@ -37,7 +37,7 @@ func New() *Porter {
 	c := config.New()
 	cache := cache.New(c)
 	storagePlugin := pluginstore.NewStore(c)
-	claimStorage := storage.NewClaimStorage(c, storagePlugin)
+	claimStorage := claims.NewClaimStorage(c, storagePlugin)
 	credStorage := credentials.NewCredentialStorage(c, storagePlugin)
 	return &Porter{
 		Config:      c,

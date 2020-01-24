@@ -1,4 +1,4 @@
-package storage
+package claims
 
 import (
 	inmemory "get.porter.sh/porter/pkg/storage/in-memory"
