@@ -5,9 +5,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -15,10 +12,7 @@ import (
 )
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -36,10 +30,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 }
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -61,10 +52,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 }
 
 func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -126,10 +114,7 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 }
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -162,10 +147,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 }
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -216,10 +198,7 @@ func Test_loadParameters_zeroValues(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.paramType, func(t *testing.T) {
-			c := config.NewTestConfig(t)
-			claimStorage := storage.NewTestClaimProvider()
-			credentialStorage := credentials.NewTestCredentialProvider(t, c)
-			d := NewRuntime(c.Config, claimStorage, credentialStorage)
+			d := NewTestRuntime(t)
 
 			claim, err := claim.New("test")
 			require.NoError(t, err)
@@ -253,12 +232,9 @@ func Test_loadParameters_zeroValues(t *testing.T) {
 }
 
 func Test_loadParameters_fileParameter(t *testing.T) {
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credentialStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credentialStorage)
+	d := NewTestRuntime(t)
 
-	c.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
+	d.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
 	claim, err := claim.New("test")
 	require.NoError(t, err)
@@ -362,10 +338,7 @@ func Test_Paramapalooza(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					c := config.NewTestConfig(t)
-					claimStorage := storage.NewTestClaimProvider()
-					credentialStorage := credentials.NewTestCredentialProvider(t, c)
-					d := NewRuntime(c.Config, claimStorage, credentialStorage)
+					d := NewTestRuntime(t)
 
 					bun := &bundle.Bundle{
 						Name:          "mybuns",

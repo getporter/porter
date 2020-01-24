@@ -3,9 +3,6 @@ package cnabprovider
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
@@ -27,16 +24,13 @@ func Test_ClaimWriting(t *testing.T) {
 		want   bool
 	}
 
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credStorage)
+	d := NewTestRuntime(t)
 
 	eClaim, err := claim.New("exists")
 	require.NoError(t, err)
 	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
 
-	err = claimStorage.Save(*eClaim)
+	err = d.claims.Save(*eClaim)
 	require.NoError(t, err)
 
 	bun := &bundle.Bundle{
@@ -137,12 +131,9 @@ func Test_ClaimLoading(t *testing.T) {
 	require.NoError(t, err)
 	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
 
-	c := config.NewTestConfig(t)
-	claimStorage := storage.NewTestClaimProvider()
-	credStorage := credentials.NewTestCredentialProvider(t, c)
-	d := NewRuntime(c.Config, claimStorage, credStorage)
+	d := NewTestRuntime(t)
 
-	err = claimStorage.Save(*eClaim)
+	err = d.claims.Save(*eClaim)
 	require.NoError(t, err)
 
 	tests := []test{
