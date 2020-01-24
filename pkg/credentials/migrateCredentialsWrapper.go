@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Wrapper lets us shim in the migration of the credentials from yaml to json
-// transparently for a period of time transparently.
+// migrateCredentialsWrapper lets us shim in the migration of the credentials from yaml to json
+// transparently for a period of time.
 // When we are ready to remove this we can remove the wrapper and go back to directly
 // giving the CredentialStore the wrappedStore.
 type migrateCredentialsWrapper struct {

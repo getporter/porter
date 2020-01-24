@@ -6,11 +6,12 @@ import (
 
 // CredentialProvider interface for managing sets of credentials.
 type CredentialProvider interface {
-	ICredentialStore
+	CredentialStore
 	ResolveAll(creds credentials.CredentialSet) (credentials.Set, error)
 }
 
-type ICredentialStore interface {
+// CredentialStore is an interface representing cnab-go's credentials.Store
+type CredentialStore interface {
 	List() ([]string, error)
 	Save(credentials.CredentialSet) error
 	Read(name string) (credentials.CredentialSet, error)

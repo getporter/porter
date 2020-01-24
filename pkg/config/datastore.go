@@ -20,21 +20,21 @@ type Data struct {
 	// SecretsPlugin is the plugin to use when no plugin is specified.
 	SecretsPlugin string `mapstructure:"secrets-plugin"`
 
-	// DefaultCredentialSource to use when one is not specified by a flag.
+	// DefaultSecrets to use when one is not specified by a flag.
 	DefaultSecrets string `mapstructure:"default-secrets"`
 
-	// CredentialSources defined in the configuration file.
+	// SecretSources defined in the configuration file.
 	SecretSources []SecretSource `mapstructure:"secrets"`
 }
 
 // SecretSource is the plugin stanza for secrets.
 type SecretSource struct {
-	PluginConfig    `mapstructure:",squash"`
+	PluginConfig `mapstructure:",squash"`
 }
 
 // CrudStore is the plugin stanza for storage.
 type CrudStore struct {
-	PluginConfig     `mapstructure:",squash"`
+	PluginConfig `mapstructure:",squash"`
 }
 
 func (d *Data) GetStoragePlugin() string {

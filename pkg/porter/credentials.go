@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	credentials "github.com/cnabio/cnab-go/credentials"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
@@ -123,9 +123,9 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	}
 
 	if opts.DryRun {
-		data, err := yaml.Marshal(cs)
+		data, err := json.Marshal(cs)
 		if err != nil {
-			return errors.Wrap(err, "unable to generate credentials YAML")
+			return errors.Wrap(err, "unable to generate credentials JSON")
 		}
 		fmt.Fprintf(p.Out, "%v", string(data))
 		return nil
