@@ -124,9 +124,9 @@ func (p *Porter) ListBundleOutputs(c claim.Claim, format printer.Format) []Displ
 		}
 		do.Definition = *def
 
-		if def.WriteOnly != nil && *def.WriteOnly {
-			valueStr = output.Path
-		}
+		// if def.WriteOnly != nil && *def.WriteOnly {
+		// 	valueStr = output.Path
+		// }
 
 		outputType, _, err := def.GetType()
 		if err != nil {

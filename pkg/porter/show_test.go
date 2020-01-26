@@ -75,13 +75,12 @@ Last Action: install
 Last Status: success
 
 Outputs:
-------------------------------
-  Name  Type    Value         
-------------------------------
-  bar   string  bar-output    
-  foo   string  /path/to/foo  
+----------------------------
+  Name  Type    Value       
+----------------------------
+  bar   string  bar-output  
+  foo   string  foo-output  
 `
-
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, wantOutput, gotOutput)
 }
