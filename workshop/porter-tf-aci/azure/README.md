@@ -1,6 +1,6 @@
 # Advanced Azure + Terraform Cloud Native Application Bundle Using Porter
 
-This exercise extends the [porter-tf](https://github.com/deislabs/porter/tree/master/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `azure` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `azure` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure. 
+This exercise extends the [porter-tf](https://github.com/deislabs/porter/tree/master/workshop/porter-tf) example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `azure` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `azure` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
 
 ## Prerequisites
 
@@ -72,9 +72,9 @@ Copy these values and move on to setting up your environment variables.
 
 You'll need the following Service Principal information, along with an Azure Subscription ID:
 
-* Client ID (also called AppId)
-* Client Secret (also called Password)
-* Tenant Id (also called Tenant)
+- Client ID (also called AppId)
+- Client Secret (also called Password)
+- Tenant Id (also called Tenant)
 
 These will need to be in a set of environment variables for use in generating a CNAB credential set. Set them like this:
 
@@ -120,7 +120,7 @@ Last Status: success
 
 Outputs:
 -----------------------------------------------
-  Name        Type    Value (Path if sensitive)
+  Name        Type    Value
 -----------------------------------------------
   IP_ADDRESS  string  20.42.26.66
 ```
