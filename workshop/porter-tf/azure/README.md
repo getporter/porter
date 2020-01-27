@@ -22,18 +22,16 @@ Review the `porter.yaml` to see what each of these sections looks like.
 
 ## Update the porter.yaml
 
-Now, update the `porter.yaml` and change the following values:
+Now, update the `porter.yaml` and change the following value:
 
 ```
-invocationImage: deislabs/porter-workshop-tf:v0.1.0
-tag: deislabs/porter-workshop-tf-bundle:v0.1.0
+tag: getporter/orkshop-tf:v0.1.0
 ```
 
-For each of these, change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
+Change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-invocationImage: jeremyrickard/porter-workshop-tf:v0.1.0
-tag: jeremyrickard/porter-workshop-tf-bundle:v0.1.0
+tag: jeremyrickard/workshop-tf:v0.1.0
 ```
 
 ## Build The Bundle!
@@ -98,16 +96,18 @@ This command will generate a new `credential set` that maps our environment vari
 Now, you're ready to install the bundle. Replace `<your-name>` with a username like `carolynvs`.
 
 ```
-porter install -c porter-workshop-tf \
-    --param server-name=<your-name>sql \
-    --param backend_storage_account=<your-name>storage \
-    --param database-name=testworkshop
+porter install -c workshop-tf \
+    --param server_name=<your-name>sql \
+    --param database_name=testworkshop \
+    --param backend_storage_account=<your-name>storagetf \
+    --param backend_storage_container=<your-name>-workshop-tf \
+    --param backend_storage_resource_group=<your-name>-workshop-tf
 ```
 
 ### View the Outputs
 
-Now that you've installed the bundle, you can view any outputs that were created with the `porter bundle` command.
+Now that you've installed the bundle, you can view any outputs that were created with the `porter instance show` command.
 
 ```
-porter bundle show porter-workshop-tf
+porter instance show workshop-tf
 ```
