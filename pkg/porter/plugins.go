@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
@@ -18,7 +19,55 @@ type PrintPluginsOptions struct {
 }
 
 func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	return errors.New("not implemented")
+	pluginsMetadata, err := p.Plugins.GetMetadataAll()
+	if err != nil {
+		return err
+	}
+
+	implementations := []map[string]string{}
+
+	for _, plugin := range *pluginsMetadata {
+		if len(plugin.Implementations) != 0 {
+			for _, implementation := range plugin.Implementations {
+				implementations = append(implementations, map[string]string{
+					"Name":           plugin.Name,
+					"Type":           implementation.Type,
+					"Implementation": implementation.Implementation,
+					"Version":        plugin.Version,
+					"Author":         plugin.Author,
+				})
+			}
+		} else {
+			// old `plugin version` command don't return implementation details
+			implementations = append(implementations, map[string]string{
+				"Name":           plugin.Name,
+				"Type":           "N/A",
+				"Implementation": "N/A",
+				"Version":        plugin.Version,
+				"Author":         plugin.Author,
+			})
+		}
+	}
+
+	switch opts.Format {
+	case printer.FormatTable:
+		printMixinRow :=
+			func(v interface{}) []interface{} {
+				m, ok := v.(map[string]string)
+				if !ok {
+					return nil
+				}
+				return []interface{}{m["Name"], m["Type"], m["Implementation"], m["Version"], m["Author"]}
+			}
+		return printer.PrintTable(p.Out, implementations, printMixinRow, "Name", "Type", "Implementation", "Version", "Author")
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, pluginsMetadata)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, pluginsMetadata)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+
 }
 
 type RunInternalPluginOpts struct {

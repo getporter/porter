@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
+	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/templates"
 )
 
@@ -26,6 +27,7 @@ type Porter struct {
 	Builder         BuildProvider
 	Manifest        *manifest.Manifest
 	Mixins          mixin.MixinProvider
+	Plugins         plugins.PluginProvider
 	CNAB            CNABProvider
 }
 
