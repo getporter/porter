@@ -2,38 +2,38 @@ package filesystem
 
 import (
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
+	"github.com/pkg/errors"
 )
 
 var _ crud.Store = &Store{}
 
 // Store is a local filesystem store that stores data in the porter home directory.
 type Store struct {
-	*storage.DynamicCrudStore
+	crud.Store
 	config.Config
 	logger hclog.Logger
 }
 
-func NewStore(c config.Config, l hclog.Logger) *Store {
-	s := &Store{
+func NewStore(c config.Config, l hclog.Logger) crud.Store {
+	// Wrapping ourselves in a backing store so that our Connect is used.
+	return crud.NewBackingStore(&Store{
 		Config: c,
 		logger: l,
-	}
-
-	s.DynamicCrudStore = storage.NewDynamicCrudStore(s.init)
-
-	return s
+	})
 }
 
-func (s *Store) init() (crud.Store, func(), error) {
-	home, err := s.Config.GetHomeDir()
-	if err != nil {
-		return nil, nil, err
+func (s *Store) Connect() error {
+	if s.Store != nil {
+		return nil
 	}
 
-	store := crud.NewFileSystemStore(home, "json")
+	home, err := s.Config.GetHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "could not determine home directory for filesystem storage")
+	}
 
-	return store, nil, nil
+	s.Store = crud.NewFileSystemStore(home, "json")
+	return nil
 }

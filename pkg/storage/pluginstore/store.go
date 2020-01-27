@@ -50,7 +50,7 @@ func (s *Store) Connect() error {
 	l := pluggable.NewPluginLoader(s.Config)
 	raw, cleanup, err := l.Load(pluginType)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "could not load %s plugin", pluginType.Interface)
 	}
 	s.cleanup = cleanup
 
