@@ -6,6 +6,7 @@ import (
 
 var _ crud.Store = &Store{}
 
+// Store is an in-memory backed data store.
 type Store struct {
 	data map[string]map[string][]byte
 }

@@ -6,7 +6,7 @@ import (
 
 var _ Store = &SecretStore{}
 
-// SecretStore wraps another store that may have Connect/Close methods that need to be called.
+// SecretStore wraps a source of secrets, that may have Connect/Close methods.
 type SecretStore struct {
 	backingStore Store
 }

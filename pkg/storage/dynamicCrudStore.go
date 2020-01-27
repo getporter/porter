@@ -20,6 +20,8 @@ func NewDynamicCrudStore(builder DynamicCrudStoreBuilder) *DynamicCrudStore {
 	}
 }
 
+// init is called before each interface method, returning the store interface,
+// cleanup function and error.
 func (s DynamicCrudStore) init() (crud.Store, func(), error) {
 	crud, cleanup, err := s.crudBuilder()
 	if err != nil {

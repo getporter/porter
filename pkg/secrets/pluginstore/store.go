@@ -9,7 +9,9 @@ import (
 
 var _ secrets.Store = &Store{}
 
-// Store is a plugin backed source of secrets.
+// Store is a plugin-backed source of secrets. It resolves the appropriate
+// plugin based on Porter's config and implements the secrets.Store interface
+// using the backing plugin.
 type Store struct {
 	*config.Config
 	*secrets.SecretStore
