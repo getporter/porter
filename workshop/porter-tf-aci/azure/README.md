@@ -123,7 +123,7 @@ Outputs:
   Name        Type    Value
 -----------------------------------------------
   IP_ADDRESS           string  40.88.49.175
-  STORAGE_ACCOUNT_KEY  string  /cnab/app/outputs/STORAGE_ACCOUNT_KEY
+  STORAGE_ACCOUNT_KEY  string  <your storage account key>
 ```
 
 Note that sensitive outputs (`STORAGE_ACCOUNT_KEY` in this example) are replaced by their runtime path
