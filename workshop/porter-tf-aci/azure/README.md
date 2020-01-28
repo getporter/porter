@@ -70,9 +70,9 @@ Copy these values and move on to setting up your environment variables.
 
 You'll need the following Service Principal information, along with an Azure Subscription ID:
 
-* Client ID (also called AppId)
-* Client Secret (also called Password)
-* Tenant Id (also called Tenant)
+- Client ID (also called AppId)
+- Client Secret (also called Password)
+- Tenant Id (also called Tenant)
 
 These will need to be in a set of environment variables for use in generating a CNAB credential set. Set them like this:
 
@@ -120,10 +120,10 @@ Last Status: success
 
 Outputs:
 -----------------------------------------------
-  Name        Type    Value (Path if sensitive)
+  Name        Type    Value
 -----------------------------------------------
   IP_ADDRESS           string  40.88.49.175
-  STORAGE_ACCOUNT_KEY  string  /cnab/app/outputs/STORAGE_ACCOUNT_KEY
+  STORAGE_ACCOUNT_KEY  string  <your storage account key>
 ```
 
 Note that sensitive outputs (`STORAGE_ACCOUNT_KEY` in this example) are replaced by their runtime path
