@@ -1,6 +1,6 @@
 # Advanced Azure + Terraform Cloud Native Application Bundle Using Porter
 
-This exercise extends the [porter-tf](https://github.com/deislabs/porter/tree/master/workshop/porter-tf) example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `azure` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `azure` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
+This exercise extends the [porter-tf](https://github.com/deislabs/porter/tree/master/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `arm` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `arm` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
 
 ## Prerequisites
 
@@ -24,18 +24,16 @@ Finally, the `porter.yaml` also defines an `imageMap`. In this section, you can 
 
 ## Update the porter.yaml
 
-Now, update the `porter.yaml` and change the following values:
+Now, update the `porter.yaml` and change the following value:
 
 ```
-invocationImage: deislabs/porter-workshop-tf-aci:v0.1.0
-tag: deislabs/porter-workshop-tf-bundle-aci:v0.1.0
+tag: getporter/workshop-tf-aci:v0.1.0
 ```
 
-For each of these, change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
+Change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-invocationImage: jeremyrickard/porter-workshop-tf-aci:v0.1.0
-tag: jeremyrickard/porter-workshop-tf-bundle-aci:v0.1.0
+tag: jeremyrickard/workshop-tf-aci:v0.1.0
 ```
 
 ## Build The Bundle!
@@ -100,19 +98,21 @@ This command will generate a new `credential set` that maps our environment vari
 Now, you're ready to install the bundle. Replace `<your-name>` with a username like `carolynvs`.
 
 ```
-porter install -c porter-workshop-tf \
-    --param server-name=<your-name>sql \
-    --param backend_storage_account=<your-name>storage \
-    --param database-name=testworkshop
+porter install -c workshop-tf-aci \
+    --param server_name=<your-name>sql \
+    --param database_name=testworkshop \
+    --param backend_storage_account=<your-name>storagetfaci \
+    --param backend_storage_container=<your-name>-workshop-tf-aci \
+    --param backend_storage_resource_group=<your-name>-workshop-tf-aci
 ```
 
 ### View The Outputs
 
-Once the bundle has been installed, you can use `porter bundle show` to see the outputs:
+Once the bundle has been installed, you can use `porter instance show` to see the outputs:
 
 ```
-$ porter bundle show
-Name: porter-workshop-tf-aci
+$ porter instance show
+Name: workshop-tf-aci
 Created: 2 minutes ago
 Modified: 4 seconds ago
 Last Action: install
@@ -122,8 +122,12 @@ Outputs:
 -----------------------------------------------
   Name        Type    Value
 -----------------------------------------------
-  IP_ADDRESS  string  20.42.26.66
+  IP_ADDRESS           string  40.88.49.175
+  STORAGE_ACCOUNT_KEY  string  /cnab/app/outputs/STORAGE_ACCOUNT_KEY
 ```
+
+Note that sensitive outputs (`STORAGE_ACCOUNT_KEY` in this example) are replaced by their runtime path
+in the default output format (`-o table`), but their values can be seen via `-o json` or `-o yaml`.
 
 This is the IP address of the new ACI container. You can test it out now with `curl`:
 

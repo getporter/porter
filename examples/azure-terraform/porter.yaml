@@ -1,6 +1,6 @@
 ## This section defines which Mixins will be used by the bundle.
 mixins:
-  - azure
+  - arm
   - exec
   - terraform
 
@@ -82,9 +82,10 @@ outputs:
       - install
 
 install:
-  - azure:
+  - arm:
       description: "Create an Azure Storage Account"
-      type: storage
+      type: arm
+      template: "arm/storage.json"
       name: "{{ bundle.parameters.storage_account_name }}"
       resourceGroup: "{{ bundle.parameters.storage_rg }}"
       parameters:
@@ -156,11 +157,12 @@ uninstall:
         resource_group_name: "{{bundle.parameters.resource_group_name}}"
         resource_group_location: "{{bundle.parameters.location}}"
 
-  - azure:
+  - arm:
       description: "Remove the Azure Storage Account"
+      type: arm
+      template: "arm/storage.json"
       name: "{{ bundle.parameters.storage_account_name }}"
       resourceGroup: "{{ bundle.parameters.storage_rg }}"
-      type: storage
       parameters:
         location: "{{ bundle.parameters.location }}"
         storageAccountName: "{{ bundle.parameters.storage_account_name }}"

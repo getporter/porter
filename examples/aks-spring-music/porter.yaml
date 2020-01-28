@@ -7,13 +7,14 @@ tag: getporter/aks-spring-music:v0.1.0
 mixins:
   - exec
   - helm
-  - azure
+  - arm
   - kubernetes
 
 install:
-  - azure:
+  - arm:
       description: "Create AKS"
-      type: aks
+      type: arm
+      template: "arm/aks.json"
       name: "{{ bundle.parameters.aks-cluster-name }}"
       resourceGroup: "{{ bundle.parameters.aks-resource-group }}"
       parameters:
@@ -34,6 +35,15 @@ install:
         - "{{ bundle.credentials.CLIENT_SECRET}}"
         - "--tenant" 
         - "{{ bundle.credentials.TENANT_ID}}"
+
+  - exec:
+      description: "Azure CLI set subscription"
+      command: "az"
+      arguments: 
+        - "account" 
+        - "set"
+        - "-s"
+        - "{{ bundle.credentials.SUBSCRIPTION_ID}}"
 
   - exec: 
       description: "Azure CLI AKS get-credentials"
@@ -61,9 +71,10 @@ install:
         - "tiller" 
         - "--upgrade"
 
-  - azure:
+  - arm:
       description: "Create Azure Cosmos DB"
-      type: cosmosdb
+      type: arm
+      template: "arm/cosmosdb.json"
       name: aks-spring-music-cosmos
       resourceGroup: "{{ bundle.parameters.app-resource-group }}"
       parameters:
@@ -81,10 +92,10 @@ install:
   - helm:
       description: "Helm Install Spring Music Demo App"
       name: aks-spring-music-helm
-      chart: /cnab/app/charts/aks-spring-music
+      chart: /cnab/app/charts/spring-music
       replace: true
       set:
-        deploy.cosmosConnectString: $COSMOSDB_CONNECTION_STRING
+        deploy.cosmosConnectString: "{{ bundle.outputs.COSMOSDB_CONNECTION_STRING }}"
 
 uninstall:
   - exec:
