@@ -37,7 +37,7 @@ func NewSecretsPluginConfig() pluggable.PluginTypeConfig {
 			return datastore.GetSecretSource(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetSecretsPlugin()
+			return datastore.GetDefaultSecretsPlugin()
 		},
 	}
 }

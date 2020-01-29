@@ -8,17 +8,17 @@ type Data struct {
 	// Only define fields here that you need to access from code
 	// Values are dynamically applied to flags and don't need to be defined
 
-	// StoragePlugin is the storage plugin to use when no instance store is specified.
-	StoragePlugin string `mapstructure:"storage-plugin"`
+	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
+	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
 
-	// DefaultStorage to use when one is not specified by a flag.
+	// DefaultStorage to use when a named storage is not specified by a flag.
 	DefaultStorage string `mapstructure:"default-storage"`
 
 	// CrudStores defined in the configuration file.
 	CrudStores []CrudStore `mapstructure:"storage"`
 
-	// SecretsPlugin is the plugin to use when no plugin is specified.
-	SecretsPlugin string `mapstructure:"secrets-plugin"`
+	// DefaultSecretsPlugin is the plugin to use when no plugin is specified.
+	DefaultSecretsPlugin string `mapstructure:"default-secrets-plugin"`
 
 	// DefaultSecrets to use when one is not specified by a flag.
 	DefaultSecrets string `mapstructure:"default-secrets"`
@@ -37,12 +37,12 @@ type CrudStore struct {
 	PluginConfig `mapstructure:",squash"`
 }
 
-func (d *Data) GetStoragePlugin() string {
-	if d == nil || d.StoragePlugin == "" {
+func (d *Data) GetDefaultStoragePlugin() string {
+	if d == nil || d.DefaultStoragePlugin == "" {
 		return "filesystem"
 	}
 
-	return d.StoragePlugin
+	return d.DefaultStoragePlugin
 }
 
 func (d *Data) GetDefaultStorage() string {
@@ -65,12 +65,12 @@ func (d *Data) GetStorage(name string) (CrudStore, error) {
 	return CrudStore{}, errors.New("store %q not defined")
 }
 
-func (d *Data) GetSecretsPlugin() string {
-	if d == nil || d.SecretsPlugin == "" {
+func (d *Data) GetDefaultSecretsPlugin() string {
+	if d == nil || d.DefaultSecretsPlugin == "" {
 		return "host"
 	}
 
-	return d.SecretsPlugin
+	return d.DefaultSecretsPlugin
 }
 
 func (d *Data) GetDefaultSecretSource() string {

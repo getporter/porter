@@ -21,13 +21,13 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 			return datastore.GetStorage(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetStoragePlugin()
+			return datastore.GetDefaultStoragePlugin()
 		},
 	}
 
 	t.Run("internal plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			StoragePlugin: "filesystem",
+			DefaultStoragePlugin: "filesystem",
 		}
 
 		err := l.selectPlugin(pluginCfg)
@@ -39,7 +39,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("external plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			StoragePlugin: "azure.blob",
+			DefaultStoragePlugin: "azure.blob",
 		}
 
 		err := l.selectPlugin(pluginCfg)

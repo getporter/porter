@@ -1,1 +1,11 @@
 debug = true
+
+default-storage-plugin = "azure"
+default-storage = "dev"
+
+[[storage]]
+  name = "dev"
+  plugin = "azure.blob"
+
+  [storage.config]
+    env = "DEV_AZURE_STORAGE_CONNECTION_STRING"

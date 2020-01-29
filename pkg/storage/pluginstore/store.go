@@ -35,7 +35,7 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 			return datastore.GetStorage(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetStoragePlugin()
+			return datastore.GetDefaultStoragePlugin()
 		},
 	}
 }
