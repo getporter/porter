@@ -3,7 +3,7 @@ title: Parameters, Credentials, Outputs, and Images in Porter
 description: How to wire parameters, credentials and outputs into steps
 ---
 
-In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins](/mixin-architecture). This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
+In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins][mixin-architecture]. This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
 
 ## Parameters
 
@@ -99,7 +99,7 @@ credentials:
 
 The same mechanism for declaring how to use a parameter can be used for credentials. To declare a credential usage, references are defined with the following syntax: `"{{ bundle.credentials.CREDENTIAL_NAME}}"`.
 
-When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin.
+When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. To understand how credentials work, see [how credentials work][how-credentials-work] page.
 
 ## Outputs
 
@@ -296,3 +296,6 @@ install:
     set:
       jdbc_url: "jdbc:mysql://{{ bundle.outputs.mysql_host }}:{{ bundle.outputs.mysql_port }}/{{ bundle.parameters.database_name }}"
 ```
+
+[mixin-architecture]: /mixin-dev-guide/architecture/
+[how-credentials-work]: /how-credentials-work/
