@@ -1,17 +1,17 @@
 package secrets
 
 import (
-	"github.com/cnabio/cnab-go/credentials"
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 )
 
-var _ Store = &SecretStore{}
+var _ cnabsecrets.Store = &SecretStore{}
 
 // SecretStore wraps a source of secrets, that may have Connect/Close methods.
 type SecretStore struct {
-	backingStore Store
+	backingStore cnabsecrets.Store
 }
 
-func NewSecretStore(store Store) *SecretStore {
+func NewSecretStore(store cnabsecrets.Store) *SecretStore {
 	return &SecretStore{
 		backingStore: store,
 	}
@@ -33,11 +33,11 @@ func (s SecretStore) Close() error {
 	return err
 }
 
-func (s SecretStore) Resolve(cred credentials.Source) (string, error) {
+func (s SecretStore) Resolve(keyName string, keyValue string) (string, error) {
 	err := s.Connect()
 	if err != nil {
 		return "", err
 	}
 
-	return s.backingStore.Resolve(cred)
+	return s.backingStore.Resolve(keyName, keyValue)
 }

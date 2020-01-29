@@ -18,9 +18,9 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/secrets/host"
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -65,7 +65,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.NewCommand = exec.Command
 	p.Builder = buildprovider.NewDockerBuilder(p.Context)
 	p.Mixins = mixinprovider.NewFileSystem(p.Config)
-	p.TestCredentials.SecretsStore = secrets.NewSecretStore(host.NewStore())
+	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
 	homeDir := p.UseFilesystem()
 	p.TestConfig.SetupIntegrationTest(homeDir)

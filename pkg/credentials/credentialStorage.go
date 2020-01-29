@@ -6,12 +6,13 @@ import (
 	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
 	crudplugins "get.porter.sh/porter/pkg/storage/pluginstore"
 	"github.com/cnabio/cnab-go/credentials"
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
 type CredentialsStore = credentials.Store
-type SecretsStore = secrets.Store
+type SecretsStore = cnabsecrets.Store
 
 var _ CredentialProvider = &CredentialStorage{}
 
@@ -38,7 +39,7 @@ func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (credenti
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {
-		value, err := s.Resolve(cred.Source)
+		value, err := s.Resolve(cred.Source.Key, cred.Source.Value)
 		if err != nil {
 			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve credential %s.%s from %s %s", creds.Name, cred.Name, cred.Source.Key, cred.Source.Value))
 		}

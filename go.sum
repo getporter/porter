@@ -79,6 +79,10 @@ github.com/bugsnag/panicwrap v1.2.0 h1:OzrKrRvXis8qEvOkfcxNcYbOd2O7xXS2nnKMEMABF
 github.com/bugsnag/panicwrap v1.2.0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
 github.com/carolynvs/cnab-go v0.0.0-20200116210330-60b3c613dd4f h1:zo0hri1VK2RjOnGn7bLeBN9bqngnpRddesX95FV2DAE=
 github.com/carolynvs/cnab-go v0.0.0-20200116210330-60b3c613dd4f/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
+github.com/carolynvs/cnab-go v0.0.0-20200129203223-c14a51d94d08 h1:xm93UVx8YcFEesw0rtP78C6gI4lru3bOg6xgtYaHjsU=
+github.com/carolynvs/cnab-go v0.0.0-20200129203223-c14a51d94d08/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
+github.com/carolynvs/cnab-go v0.0.0-20200129213214-320e82d9048c h1:mRKA+jHFc8uAdoE2kUZri09xWHR+bZkVYDnEmvlnTjU=
+github.com/carolynvs/cnab-go v0.0.0-20200129213214-320e82d9048c/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/go-plugin v1.0.1-acceptstdin h1:8JccOWqcZoqCILz191C0D6RTnz/DKfNcY8+T6F3/G9g=

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/credentials/host"
+	"github.com/cnabio/cnab-go/secrets/host"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 

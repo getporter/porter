@@ -3,6 +3,7 @@ package secrets
 import (
 	"net/rpc"
 
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -15,7 +16,7 @@ var _ plugin.Plugin = &Plugin{}
 
 // Plugin is a generic type of plugin for working with any implementation of a secret store.
 type Plugin struct {
-	Impl Store
+	Impl cnabsecrets.Store
 }
 
 func (p *Plugin) Server(*plugin.MuxBroker) (interface{}, error) {

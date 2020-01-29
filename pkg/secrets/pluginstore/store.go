@@ -4,10 +4,11 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets"
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/pkg/errors"
 )
 
-var _ secrets.Store = &Store{}
+var _ cnabsecrets.Store = &Store{}
 
 // Store is a plugin-backed source of secrets. It resolves the appropriate
 // plugin based on Porter's config and implements the secrets.Store interface
@@ -55,7 +56,7 @@ func (s *Store) Connect() error {
 	}
 	s.cleanup = cleanup
 
-	store, ok := raw.(secrets.Store)
+	store, ok := raw.(cnabsecrets.Store)
 	if !ok {
 		cleanup()
 		return errors.Errorf("the interface exposed by the %s plugin was not secrets.Store", l.SelectedPluginKey)

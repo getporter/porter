@@ -1,34 +1,33 @@
 package secrets
 
 import (
-	"encoding/gob"
 	"net/rpc"
 
-	"github.com/cnabio/cnab-go/credentials"
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 )
 
-var _ Store = &Client{}
+var _ cnabsecrets.Store = &Client{}
 
 type Client struct {
 	client *rpc.Client
 }
 
-func init() {
-	gob.Register(credentials.Source{})
-}
-
-func (g *Client) Resolve(source credentials.Source) (string, error) {
+func (g *Client) Resolve(keyName string, keyValue string) (string, error) {
+	args := map[string]interface{}{
+		"keyName":  keyName,
+		"keyValue": keyValue,
+	}
 	var resp string
-	err := g.client.Call("Plugin.Resolve", source, &resp)
+	err := g.client.Call("Plugin.Resolve", args, &resp)
 	return resp, err
 }
 
 type Server struct {
-	Impl Store
+	Impl cnabsecrets.Store
 }
 
-func (s *Server) Resolve(source credentials.Source, resp *string) error {
+func (s *Server) Resolve(args map[string]interface{}, resp *string) error {
 	var err error
-	*resp, err = s.Impl.Resolve(source)
+	*resp, err = s.Impl.Resolve(args["keyName"].(string), args["keyValue"].(string))
 	return err
 }

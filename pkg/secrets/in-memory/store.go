@@ -2,10 +2,10 @@ package inmemory
 
 import (
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/credentials"
+	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 )
 
-var _ secrets.Store = &Store{}
+var _ cnabsecrets.Store = &Store{}
 
 // Store implements an in-memory secrets store for testing.
 type Store struct {
@@ -20,8 +20,8 @@ func NewStore() *Store {
 	return s
 }
 
-func (s *Store) Resolve(cred credentials.Source) (string, error) {
-	value, ok := s.Secrets[cred.Value]
+func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
+	value, ok := s.Secrets[keyValue]
 	if ok {
 		return value, nil
 	}

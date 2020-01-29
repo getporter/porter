@@ -6,7 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/credentials/host"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
