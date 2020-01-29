@@ -10,8 +10,6 @@ if you would like to add content for this page.
 
 # TODO
 
-* What is a mixin
-* Snippet of yaml
 * How to install and find mixins
 * Mixin Schema and autocomplete
 
