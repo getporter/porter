@@ -21,6 +21,8 @@
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
+* [Infrastructure](#infrastructure)
+  * [CDN Setup](#cdn-setup)
 
 ---
 
@@ -404,5 +406,16 @@ stdout as well, then the resulting json schema would be unparsable. This is why
 we send regular command output to `Out` and debug information to `Err`. It
 allows us to then run the command and see the debug output separately, like so
 `porter schema --debug 2> err.log`.
+
+# Infrastructure
+
+This section includes overviews of infrastructure Porter relies on, mostly intended
+for maintainers.
+
+## CDN Setup
+
+See the [CDN Setup Doc](infra/cdn.md) for details on the services Porter uses to
+host and distribute its release binaries.
+
 
 [slack]: https://porter.sh/community#slack
