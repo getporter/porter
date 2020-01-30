@@ -19,7 +19,6 @@ type TestCredentialProvider struct {
 	T          *testing.T
 	TestConfig *config.TestConfig
 	*CredentialStorage
-	Secrets map[string]string
 }
 
 func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredentialProvider {
@@ -33,7 +32,6 @@ func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredenti
 			CredentialsStore: &credStore,
 			SecretsStore:     secrets.NewSecretStore(backingSecrets),
 		},
-		Secrets: backingSecrets.Secrets,
 	}
 }
 
