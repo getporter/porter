@@ -2,13 +2,12 @@ package host
 
 import (
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage/crudstore"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-plugin"
 )
 
-const PluginKey = crudstore.PluginInterface + ".porter.host"
+const PluginKey = secrets.PluginInterface + ".porter.host"
 
 var _ cnabsecrets.Store = &Plugin{}
 
