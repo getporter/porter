@@ -1,13 +1,12 @@
 mixins:
-  - azure
+  - arm
   - exec
   - terraform 
 
-name: porter-workshop-tf-aci
+name: workshop-tf-aci
 version: 0.1.0
-description: "An example using Porter to build the a TF bundle and use ACI"
-invocationImage: porter-workshop-tf-aci:latest
-tag: deislabs/porter-workshop-tf-bundle-aci:latest
+description: "An example using Porter to build a TF bundle and use ACI"
+tag: getporter/workshop-tf-aci:v0.1.0
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
@@ -36,16 +35,14 @@ parameters:
 
   - name: backend_storage_container
     type: string
-    default: "portertf"
 
   - name: backend_storage_resource_group
     type: string
-    default: "devops-days-msp"
 
-  - name: server-name
+  - name: server_name
     type: string
 
-  - name: database-name
+  - name: database_name
     type: string
 
 outputs:
@@ -53,6 +50,7 @@ outputs:
     type: string
   - name: STORAGE_ACCOUNT_KEY
     type: string
+    sensitive: true
 
 images:
   websvc:
@@ -62,9 +60,11 @@ images:
       digest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
 
 install:
-   - azure:
+  # TODO: utilize the workshop-tf bundle as a dependency?
+   - arm:
       description: "Create an Azure Storage Account"
-      type: storage
+      type: arm
+      template: "arm/storage.json"
       name: "{{ bundle.parameters.backend_storage_account }}"
       resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
       parameters:
@@ -83,23 +83,23 @@ install:
         container_name: "{{ bundle.parameters.backend_storage_container }}"
         access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
       vars:
-        backend_storage_account: "{{ bundle.parameters.backend_storage_account }}"
+        backend_storage_resource_group: "{{ bundle.parameters.backend_storage_resource_group }}"
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"
         client_id: "{{bundle.credentials.client_id}}"
         client_secret: "{{bundle.credentials.client_secret}}" 
-        server-name: "{{bundle.parameters.server-name}}"
-        database-name: "{{bundle.parameters.database-name}}"
+        server_name: "{{bundle.parameters.server_name}}"
+        database_name: "{{bundle.parameters.database_name}}"
       outputs:
       - name: "mysql_fqdn"
-   - azure:
+   - arm:
       description: "Create an ACI Instance"
       type: arm
       template: "arm/aci.json"
-      name: "{{ bundle.parameters.server-name }}-aci"
+      name: "{{ bundle.parameters.server_name }}-aci"
       resourceGroup: "{{ bundle.parameters.backend_storage_resource_group }}"
       parameters:
-        containerName: "{{ bundle.parameters.server-name }}-aci-go"
+        containerName: "{{ bundle.parameters.server_name }}-aci-go"
         location: "{{ bundle.parameters.location }}"
         imageName: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
         mysqlFQDN: "{{bundle.outputs.mysql_fqdn}}"

@@ -1071,7 +1071,7 @@ $ porter bundle show
 
 Outputs:
 -------------------------------------------------------------------------------------------
-  Name                 Type    Value (Path if sensitive)
+  Name                 Type    Value
 -------------------------------------------------------------------------------------------
   STORAGE_ACCOUNT_KEY  string  JKb9C+J+nFtGrDyBW4Y0zaIK5hzIvi2gW3SfnmnkcunyXSYV3HucQGNIo...
 ```
