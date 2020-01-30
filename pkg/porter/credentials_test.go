@@ -3,6 +3,7 @@ package porter
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/credentials"
@@ -21,8 +22,11 @@ func TestGenerateNoName(t *testing.T) {
 	}
 	err := p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
-	_, err = p.Credentials.Read("testbundle")
+	creds, err := p.Credentials.Read("testbundle")
 	require.NoError(t, err, "expected credential to have been generated")
+	var zero time.Time
+	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
+	assert.True(t, creds.Created.Equal(creds.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
 }
 
 func TestGenerateNameProvided(t *testing.T) {

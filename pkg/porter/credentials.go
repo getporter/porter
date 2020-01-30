@@ -122,6 +122,9 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return errors.Wrap(err, "unable to generate credentials")
 	}
 
+	cs.Created = time.Now()
+	cs.Modified = cs.Created
+
 	if opts.DryRun {
 		data, err := json.Marshal(cs)
 		if err != nil {
