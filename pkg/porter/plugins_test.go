@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/instance-storage/claimstore"
-	"get.porter.sh/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/storage/crudstore"
+	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +29,7 @@ func TestRunInternalPluginOpts_Validate(t *testing.T) {
 	t.Run("valid key", func(t *testing.T) {
 		err := opts.Validate([]string{filesystem.PluginKey}, cfg.Config)
 		require.NoError(t, err)
-		assert.Equal(t, opts.selectedInterface, claimstore.PluginInterface)
+		assert.Equal(t, opts.selectedInterface, crudstore.PluginInterface)
 		assert.NotNil(t, opts.selectedPlugin)
 	})
 

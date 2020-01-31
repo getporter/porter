@@ -120,7 +120,7 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	err := p.refreshCachedBundle(bun, tag, rm)
 	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
 
-	// Store bundle in cache
+	// Save bundle in cache
 	bunPath, _, err := p.Cache.StoreBundle(tag, bun, rm)
 	require.NoError(t, err, "should have successfully stored bundle")
 

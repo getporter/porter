@@ -29,7 +29,7 @@ func TestExecOutputs(t *testing.T) {
 	assert.Equal(t, fmt.Sprintln(`{"user": "sally"}`), configOutput, "expected the config output to be populated correctly")
 
 	// Verify that its bundle level file output was captured
-	c, err := p.InstanceStorage.Read(p.Manifest.Name)
+	c, err := p.Claims.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not read claim")
 	outputs := p.ListBundleOutputs(c, printer.FormatJson)
 	var kubeconfigOutput *porter.DisplayOutput

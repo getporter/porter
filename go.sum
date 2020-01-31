@@ -77,6 +77,12 @@ github.com/bugsnag/bugsnag-go v1.5.0 h1:tP8hiPv1pGGW3LA6LKy5lW6WG+y9J2xWUdPd3WC4
 github.com/bugsnag/bugsnag-go v1.5.0/go.mod h1:2oa8nejYd4cQ/b0hMIopN0lCRxU0bueqREvZLWFrtK8=
 github.com/bugsnag/panicwrap v1.2.0 h1:OzrKrRvXis8qEvOkfcxNcYbOd2O7xXS2nnKMEMABFQA=
 github.com/bugsnag/panicwrap v1.2.0/go.mod h1:D/8v3kj0zr8ZAKg1AQ6crr+5VwKN5eIywRkfhyM/+dE=
+github.com/carolynvs/cnab-go v0.0.0-20200116210330-60b3c613dd4f h1:zo0hri1VK2RjOnGn7bLeBN9bqngnpRddesX95FV2DAE=
+github.com/carolynvs/cnab-go v0.0.0-20200116210330-60b3c613dd4f/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
+github.com/carolynvs/cnab-go v0.0.0-20200129203223-c14a51d94d08 h1:xm93UVx8YcFEesw0rtP78C6gI4lru3bOg6xgtYaHjsU=
+github.com/carolynvs/cnab-go v0.0.0-20200129203223-c14a51d94d08/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
+github.com/carolynvs/cnab-go v0.0.0-20200129213214-320e82d9048c h1:mRKA+jHFc8uAdoE2kUZri09xWHR+bZkVYDnEmvlnTjU=
+github.com/carolynvs/cnab-go v0.0.0-20200129213214-320e82d9048c/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
 github.com/carolynvs/go-plugin v1.0.1-acceptstdin h1:8JccOWqcZoqCILz191C0D6RTnz/DKfNcY8+T6F3/G9g=
@@ -95,10 +101,6 @@ github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiK
 github.com/cloudflare/cfssl v1.4.1/go.mod h1:KManx/OJPb5QY+y0+o/898AMcM128sF0bURvoVUSjTo=
 github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:eaZPlJWD+G9wseg1BuRXlHnjntPMrywMsyxf+LTOdP4=
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
-github.com/cnabio/cnab-go v0.8.1-beta1 h1:+UCpSdayWYdNS5Cm2VRtiJ38hhsnvngRI5aiBg9GdoU=
-github.com/cnabio/cnab-go v0.8.1-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
-github.com/cnabio/cnab-go v0.8.2-beta1 h1:pJfXR9w0G1m3sFE3yp+ImAKeaBUwa2OviE9f+PnpMnM=
-github.com/cnabio/cnab-go v0.8.2-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
 github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc h1:Euk3pMvf7cw8tKEi8ZlMHCrnd5iBlz8hWBUVNL44hmQ=
 github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc/go.mod h1:6KyBUkSDshoWUZPkqlFXQzOMWNtlcJ1stduPAd2MRes=
 github.com/containerd/containerd v1.2.7/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=

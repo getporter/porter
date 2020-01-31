@@ -3,11 +3,8 @@ package cnabprovider
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
-
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,15 +24,13 @@ func Test_ClaimWriting(t *testing.T) {
 		want   bool
 	}
 
-	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewTestInstanceStorageProvider()
-	d := NewRuntime(c.Config, instanceStorage)
+	d := NewTestRuntime(t)
 
 	eClaim, err := claim.New("exists")
 	require.NoError(t, err)
 	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
 
-	err = instanceStorage.Store(*eClaim)
+	err = d.claims.Save(*eClaim)
 	require.NoError(t, err)
 
 	bun := &bundle.Bundle{
@@ -91,7 +86,7 @@ func Test_ClaimWriting(t *testing.T) {
 		err = d.writeClaim(temp, c)
 		assert.NoError(t, err)
 
-		fc, err := d.instanceStorage.Read(in.claim)
+		fc, err := d.claims.Read(in.claim)
 		if tc.want {
 			assert.NoErrorf(t, err, "expected claim for %s", tc.name)
 			assert.Equalf(t, in.action, fc.Result.Action, "expected action=%s for %s", in.action, tc.name)
@@ -136,11 +131,9 @@ func Test_ClaimLoading(t *testing.T) {
 	require.NoError(t, err)
 	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
 
-	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewTestInstanceStorageProvider()
-	d := NewRuntime(c.Config, instanceStorage)
+	d := NewTestRuntime(t)
 
-	err = instanceStorage.Store(*eClaim)
+	err = d.claims.Save(*eClaim)
 	require.NoError(t, err)
 
 	tests := []test{

@@ -10,11 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// getClaim reads an instance from the runtime's instance storage. If one is not found, the bundle
+// getClaim reads an instance from the runtime's claim storage. If one is not found, the bundle
 // is examined to see if the action is stateless. If the action is stateless, we create a new, temporary, claim
 // Returns a pointer to the claim, a flag to indicate if the claim is temporary, and an error if present.
 func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*claim.Claim, bool, error) {
-	c, err := d.instanceStorage.Read(claimName)
+	c, err := d.claims.Read(claimName)
 	if err != nil {
 		if bun != nil {
 			if action, ok := bun.Actions[actionName]; ok {
@@ -36,7 +36,7 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 // a temporary claim
 func (d *Runtime) writeClaim(tempClaim bool, c *claim.Claim) error {
 	if !tempClaim {
-		return d.instanceStorage.Store(*c)
+		return d.claims.Save(*c)
 	}
 	return nil
 }
