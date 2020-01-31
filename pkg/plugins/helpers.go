@@ -2,11 +2,11 @@ package plugins
 
 import "fmt"
 
-// TestPluginProvider helps us test Porter.Mixins in our unit tests without actually hitting any real mixins on the file system.
+// TestPluginProvider helps us test Porter.Plugins in our unit tests without actually hitting any real plugins on the file system.
 type TestPluginProvider struct{}
 
 func (p *TestPluginProvider) List() ([]string, error) {
-	mixins := []string{"plugin1", "plugin2", "plugin3", "unknown"}
+	mixins := []string{"plugin1", "plugin2", "unknown"}
 	return mixins, nil
 }
 

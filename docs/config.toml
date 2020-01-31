@@ -147,6 +147,12 @@ defaultContentLanguage = "en"
     weight = 198
     parent = "cli"
   [[menu.main]]
+    name = "porter plugins list"
+    url = "/cli/porter_plugins_list/"
+    identifier = "cli-plugins-list"
+    weight = 165
+    parent = "cli"
+  [[menu.main]]
     name = "porter version"
     url = "/cli/porter_version"
     identifier = "cli-version"

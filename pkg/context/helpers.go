@@ -111,6 +111,10 @@ func (c *TestContext) GetOutput() string {
 	return string(c.output.Bytes())
 }
 
+func (c *TestContext) ResetOutput() {
+	c.output.Reset()
+}
+
 func (c *TestContext) FindBinDir() string {
 	var binDir string
 	d, err := os.Getwd()

@@ -45,23 +45,69 @@ func TestPorter_PrintPlugins(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	opts := PrintPluginsOptions{
-		PrintOptions: printer.PrintOptions{
-			Format: printer.FormatTable,
-		},
-	}
-	err := p.PrintPlugins(opts)
+	t.Run("Plugin List - Table Format", func(t *testing.T) {
 
-	require.Nil(t, err)
-	wantOutput := `Name      Type               Implementation   Version   Author
+		opts := PrintPluginsOptions{
+			PrintOptions: printer.PrintOptions{
+				Format: printer.FormatTable,
+			},
+		}
+		err := p.PrintPlugins(opts)
+
+		require.Nil(t, err)
+		expected := `Name      Type               Implementation   Version   Author
 plugin1   instance-storage   blob             v1.0      Deis Labs
 plugin1   instance-storage   mongo            v1.0      Deis Labs
 plugin2   instance-storage   blob             v1.0      Deis Labs
 plugin2   instance-storage   mongo            v1.0      Deis Labs
-plugin3   instance-storage   blob             v1.0      Deis Labs
-plugin3   instance-storage   mongo            v1.0      Deis Labs
 unknown   N/A                N/A              v1.0      Deis Labs
 `
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, wantOutput, gotOutput)
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("Plugin List - YAML Format", func(t *testing.T) {
+		p.TestConfig.TestContext.ResetOutput()
+		opts := PrintPluginsOptions{
+			PrintOptions: printer.PrintOptions{
+				Format: printer.FormatYaml,
+			},
+		}
+		err := p.PrintPlugins(opts)
+
+		require.Nil(t, err)
+		expected := `- name: plugin1
+  clientpath: /home/porter/.porter/plugins/plugin1
+  implementations:
+  - type: instance-storage
+    name: blob
+  - type: instance-storage
+    name: mongo
+  versioninfo:
+    version: v1.0
+    commit: abc123
+    author: Deis Labs
+- name: plugin2
+  clientpath: /home/porter/.porter/plugins/plugin2
+  implementations:
+  - type: instance-storage
+    name: blob
+  - type: instance-storage
+    name: mongo
+  versioninfo:
+    version: v1.0
+    commit: abc123
+    author: Deis Labs
+- name: unknown
+  clientpath: /home/porter/.porter/plugins/unknown
+  implementations: []
+  versioninfo:
+    version: v1.0
+    commit: abc123
+    author: Deis Labs
+
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
 }
