@@ -16,7 +16,7 @@ type SecretsStore = cnabsecrets.Store
 
 var _ CredentialProvider = &CredentialStorage{}
 
-// Credentials provides access to credential sets by instantiating plugins that
+// CredentialStorage provides access to credential sets by instantiating plugins that
 // implement CRUD storage.
 type CredentialStorage struct {
 	*config.Config

@@ -7,6 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestData_GetDefaultStoragePlugin(t *testing.T) {
+	var d Data
+	assert.Equal(t, "filesystem", d.GetDefaultStoragePlugin(), "Built-in filesystem plugin should be used when config is missing")
+}
+
 func TestData_StorageAccessors(t *testing.T) {
 	d := Data{
 		DefaultStoragePlugin: "blorpy",
@@ -27,6 +32,11 @@ func TestData_StorageAccessors(t *testing.T) {
 	require.NotNil(t, store, "GetStorage returned a nil CrudStore")
 	assert.Equal(t, "dev", store.Name, "CrudStore.Name returned the wrong value")
 	assert.Equal(t, "hashicorp.vault", store.PluginSubKey, "CrudStore.PluginSubKey returned the wrong value")
+}
+
+func TestData_GetDefaultSecretsPlugin(t *testing.T) {
+	var d Data
+	assert.Equal(t, "host", d.GetDefaultSecretsPlugin(), "Built-in host plugin should be used when config is missing")
 }
 
 func TestData_SecretAccessors(t *testing.T) {

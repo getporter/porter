@@ -1,7 +1,9 @@
 debug = true
 
-default-storage-plugin = "azure"
+default-storage-plugin = "azure.blob"
 default-storage = "dev"
+default-secrets-plugin = "azure.keyvault"
+default-secrets = "red-team"
 
 [[storage]]
   name = "dev"
@@ -9,3 +11,10 @@ default-storage = "dev"
 
   [storage.config]
     env = "DEV_AZURE_STORAGE_CONNECTION_STRING"
+
+[[secrets]]
+  name = "red-team"
+  plugin = "azure.keyvault"
+
+  [secrets.config]
+    vault = "teamsekrets"
