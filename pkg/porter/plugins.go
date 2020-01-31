@@ -29,6 +29,9 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 		metadata, err := p.Plugins.GetMetadata(plugin)
 		// lets not break everything just because one plugin failed
 		if err != nil {
+			if p.Debug {
+				fmt.Fprintln(p.Err, "DEBUG Failed to get metadata for ", plugin)
+			}
 			continue
 		}
 		pluginsMetadata = append(pluginsMetadata, *metadata)

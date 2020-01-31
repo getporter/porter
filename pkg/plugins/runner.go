@@ -48,13 +48,13 @@ func (r *PluginRunner) Validate() error {
 
 func (r *PluginRunner) Run(commandOpts CommandOptions) error {
 	if r.Debug {
-		fmt.Fprintf(r.Err, "DEBUG Plugin:    %s\n", r.pluginName)
-		fmt.Fprintf(r.Err, "DEBUG Command:     %s\n", commandOpts.Command)
+		fmt.Fprintln(r.Err, "DEBUG Plugin Name: ", r.pluginName)
+		fmt.Fprintln(r.Err, "DEBUG Plugin Command: ", commandOpts.Command)
 	}
 
 	pluginPath, err := config.New().GetPluginPath(r.pluginName)
 	if r.Debug {
-		fmt.Fprintf(r.Err, "DEBUG PluginPath:    %s\n", pluginPath)
+		fmt.Fprintln(r.Err, "DEBUG Plugin Path: ", pluginPath)
 	}
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get plugin path for %s", r.pluginName)
@@ -64,12 +64,12 @@ func (r *PluginRunner) Run(commandOpts CommandOptions) error {
 	cmd := r.NewCommand(pluginPath, cmdArgs...)
 
 	// Pipe the output from the mixin to porter
-	cmd.Stdout = r.Context.Out
-	cmd.Stderr = r.Context.Err
+	cmd.Stdout = r.Out
+	cmd.Stderr = r.Err
 
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 	if r.Debug {
-		fmt.Fprintln(r.Err, prettyCmd)
+		fmt.Fprintln(r.Err, "DEBUG Plugin Full Command: ", prettyCmd)
 	}
 
 	err = cmd.Start()

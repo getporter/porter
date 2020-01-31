@@ -109,6 +109,11 @@ func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// make json.Marshal return `[]` instead of `nil` for not having implementations
+	if len(mtd.Implementations) == 0 {
+		mtd.Implementations = make([]Implementaion, 0)
+	}
 	return &mtd, nil
 }
 
