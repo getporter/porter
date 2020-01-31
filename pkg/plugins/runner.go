@@ -63,7 +63,7 @@ func (r *PluginRunner) Run(commandOpts CommandOptions) error {
 	cmdArgs := strings.Split(commandOpts.Command, " ")
 	cmd := r.NewCommand(pluginPath, cmdArgs...)
 
-	// Pipe the output from the mixin to porter
+	// Pipe the output from the plugin to porter
 	cmd.Stdout = r.Out
 	cmd.Stderr = r.Err
 
