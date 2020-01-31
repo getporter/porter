@@ -104,23 +104,25 @@ func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 		return nil, err
 	}
 
-	var mtd PluginMetadata
-	err = json.Unmarshal(jsonB.Bytes(), &mtd)
+	var metadata PluginMetadata
+	err = json.Unmarshal(jsonB.Bytes(), &metadata)
 	if err != nil {
 		return nil, err
 	}
 
 	// make json.Marshal return `[]` instead of `nil` for not having implementations
-	if len(mtd.Implementations) == 0 {
-		mtd.Implementations = make([]Implementaion, 0)
+	if len(metadata.Implementations) == 0 {
+		metadata.Implementations = make([]Implementaion, 0)
 	}
-	return &mtd, nil
+	return &metadata, nil
 }
 
-// PrintVersion writes plugin metadata to `ctx.Out` as plaintext or as json format based on `opts`
-func PrintVersion(ctx *context.Context, opts version.Options, metadata PluginMetadata) error {
+// PrintMetadata writes plugin metadata to `ctx.Out` as plaintext|json|yaml format based on `opts`
+func PrintMetadata(ctx *context.Context, opts version.Options, metadata PluginMetadata) error {
 	switch opts.Format {
 	case printer.FormatJson:
+		return printer.PrintJson(ctx.Out, metadata)
+	case printer.FormatYaml:
 		return printer.PrintJson(ctx.Out, metadata)
 	case printer.FormatPlaintext:
 		authorship := ""
