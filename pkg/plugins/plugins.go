@@ -35,8 +35,8 @@ type Implementaion struct {
 	Name string `json:"implementation"`
 }
 
-// PluginMetadata about an installed plugin.
-type PluginMetadata struct {
+// Metadata about an installed plugin.
+type Metadata struct {
 	Name            string          `json:"name"`
 	ClientPath      string          `json:"clientPath,omitempty"`
 	Implementations []Implementaion `json:"implementations"`
@@ -52,7 +52,7 @@ type VersionInfo struct {
 
 type PluginProvider interface {
 	List() ([]string, error)
-	GetMetadata(string) (*PluginMetadata, error)
+	GetMetadata(string) (*Metadata, error)
 }
 
 func NewFileSystem(config *config.Config) *fileSystem {
@@ -85,7 +85,7 @@ func (fs *fileSystem) List() ([]string, error) {
 
 	return plugins, nil
 }
-func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
+func (fs *fileSystem) GetMetadata(pluginName string) (*Metadata, error) {
 	r := NewRunner(pluginName)
 
 	// Copy the existing context and tweak to pipe the output differently
@@ -104,7 +104,7 @@ func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 		return nil, err
 	}
 
-	var metadata PluginMetadata
+	var metadata Metadata
 	err = json.Unmarshal(jsonB.Bytes(), &metadata)
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 }
 
 // PrintMetadata writes plugin metadata to `ctx.Out` as plaintext|json|yaml format based on `opts`
-func PrintMetadata(ctx *context.Context, opts version.Options, metadata PluginMetadata) error {
+func PrintMetadata(ctx *context.Context, opts version.Options, metadata Metadata) error {
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(ctx.Out, metadata)

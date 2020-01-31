@@ -10,7 +10,7 @@ func (p *TestPluginProvider) List() ([]string, error) {
 	return mixins, nil
 }
 
-func (p *TestPluginProvider) GetMetadata(pluginName string) (*PluginMetadata, error) {
+func (p *TestPluginProvider) GetMetadata(pluginName string) (*Metadata, error) {
 	var impl []Implementaion
 	if pluginName != "unknown" {
 		impl = []Implementaion{
@@ -18,7 +18,7 @@ func (p *TestPluginProvider) GetMetadata(pluginName string) (*PluginMetadata, er
 			{Type: "instance-storage", Name: "mongo"},
 		}
 	}
-	return &PluginMetadata{
+	return &Metadata{
 		Name:            pluginName,
 		ClientPath:      fmt.Sprintf("/home/porter/.porter/plugins/%s", pluginName),
 		Implementations: impl,

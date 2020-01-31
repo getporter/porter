@@ -24,7 +24,7 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 		return errors.Wrapf(err, "Failed to get list of installed plugins")
 	}
 
-	var pluginsMetadata []plugins.PluginMetadata
+	var pluginsMetadata []plugins.Metadata
 	for _, plugin := range installedPlugins {
 		metadata, err := p.Plugins.GetMetadata(plugin)
 		// lets not break everything just because one plugin failed
