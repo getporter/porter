@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/instance-storage/claimstore"
 	"get.porter.sh/porter/pkg/instance-storage/filesystem"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,4 +39,29 @@ func TestRunInternalPluginOpts_Validate(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, err.Error(), `invalid plugin key specified: "foo"`)
 	})
+}
+
+func TestPorter_PrintPlugins(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.SetupPorterHome()
+
+	opts := PrintPluginsOptions{
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatTable,
+		},
+	}
+	err := p.PrintPlugins(opts)
+
+	require.Nil(t, err)
+	wantOutput := `Name      Type               Implementation   Version   Author
+plugin1   instance-storage   blob             v1.0      Deis Labs
+plugin1   instance-storage   mongo            v1.0      Deis Labs
+plugin2   instance-storage   blob             v1.0      Deis Labs
+plugin2   instance-storage   mongo            v1.0      Deis Labs
+plugin3   instance-storage   blob             v1.0      Deis Labs
+plugin3   instance-storage   mongo            v1.0      Deis Labs
+unknown   N/A                N/A              v1.0      Deis Labs
+`
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Equal(t, wantOutput, gotOutput)
 }

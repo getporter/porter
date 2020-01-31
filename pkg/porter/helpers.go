@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	instancestorage "get.porter.sh/porter/pkg/instance-storage"
+	"get.porter.sh/porter/pkg/plugins"
 
 	"get.porter.sh/porter/pkg/manifest"
 
@@ -41,6 +42,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p := New()
 	p.Config = tc.Config
 	p.Mixins = &mixin.TestMixinProvider{}
+	p.Plugins = &plugins.TestPluginProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
 	p.InstanceStorage = instancestorage.NewTestInstanceStorageProvider()

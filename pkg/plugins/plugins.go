@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Common handshake config between Porter and its plugins.
+// HandshakeConfig is common handshake config between Porter and its plugins.
 var HandshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   "PORTER",
@@ -29,16 +29,17 @@ type PluginKey struct {
 	IsInternal     bool
 }
 
-type implementaion struct {
-	Type           string `json:"type"`
-	Implementation string `json:"implementation"`
+// Implementaion stores implementation type (e.g. instance-storage) and its name (e.g. s3, mongo)
+type Implementaion struct {
+	Type string `json:"type"`
+	Name string `json:"implementation"`
 }
 
 // PluginMetadata about an installed plugin.
 type PluginMetadata struct {
 	Name            string          `json:"name"`
 	ClientPath      string          `json:"clientPath,omitempty"`
-	Implementations []implementaion `json:"implementations"`
+	Implementations []Implementaion `json:"implementations"`
 	VersionInfo
 }
 
@@ -52,20 +53,19 @@ type VersionInfo struct {
 type PluginProvider interface {
 	List() ([]string, error)
 	GetMetadata(string) (*PluginMetadata, error)
-	GetMetadataAll() (*[]PluginMetadata, error)
 }
 
-func NewFileSystem(config *config.Config) *FileSystem {
-	return &FileSystem{
+func NewFileSystem(config *config.Config) *fileSystem {
+	return &fileSystem{
 		Config: config,
 	}
 }
 
-type FileSystem struct {
+type fileSystem struct {
 	*config.Config
 }
 
-func (fs *FileSystem) List() ([]string, error) {
+func (fs *fileSystem) List() ([]string, error) {
 	pluginsDir, err := fs.GetPluginsDir()
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (fs *FileSystem) List() ([]string, error) {
 
 	return plugins, nil
 }
-func (fs *FileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
+func (fs *fileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 	r := NewRunner(pluginName)
 
 	// Copy the existing context and tweak to pipe the output differently
@@ -112,25 +112,7 @@ func (fs *FileSystem) GetMetadata(pluginName string) (*PluginMetadata, error) {
 	return &mtd, nil
 }
 
-func (fs *FileSystem) GetMetadataAll() (*[]PluginMetadata, error) {
-
-	installedPlugins, err := fs.List()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to get list of installed plugins")
-	}
-
-	var mtds []PluginMetadata
-	for _, plugin := range installedPlugins {
-		mtd, err := fs.GetMetadata(plugin)
-		if err != nil {
-			continue
-		}
-		mtds = append(mtds, *mtd)
-	}
-
-	return &mtds, nil
-}
-
+// PrintVersion writes plugin metadata to `ctx.Out` as plaintext or as json format based on `opts`
 func PrintVersion(ctx *context.Context, opts version.Options, metadata PluginMetadata) error {
 	switch opts.Format {
 	case printer.FormatJson:

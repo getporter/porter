@@ -19,20 +19,30 @@ type PrintPluginsOptions struct {
 }
 
 func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	pluginsMetadata, err := p.Plugins.GetMetadataAll()
+	installedPlugins, err := p.Plugins.List()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to get list of installed plugins")
+	}
+
+	var pluginsMetadata []plugins.PluginMetadata
+	for _, plugin := range installedPlugins {
+		metadata, err := p.Plugins.GetMetadata(plugin)
+		// lets not break everything just because one plugin failed
+		if err != nil {
+			continue
+		}
+		pluginsMetadata = append(pluginsMetadata, *metadata)
 	}
 
 	implementations := []map[string]string{}
 
-	for _, plugin := range *pluginsMetadata {
+	for _, plugin := range pluginsMetadata {
 		if len(plugin.Implementations) != 0 {
 			for _, implementation := range plugin.Implementations {
 				implementations = append(implementations, map[string]string{
 					"Name":           plugin.Name,
 					"Type":           implementation.Type,
-					"Implementation": implementation.Implementation,
+					"Implementation": implementation.Name,
 					"Version":        plugin.Version,
 					"Author":         plugin.Author,
 				})
