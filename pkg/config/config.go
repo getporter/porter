@@ -166,7 +166,7 @@ func (c *Config) GetPluginPath(plugin string) (string, error) {
 		return "", err
 	}
 
-	executablePath := filepath.Join(pluginsDir, plugin)
+	executablePath := filepath.Join(pluginsDir, plugin, plugin)
 	return executablePath, nil
 }
 
