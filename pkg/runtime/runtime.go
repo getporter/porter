@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/docker/cnab-to-oci/relocation"
@@ -20,11 +20,11 @@ import (
 // PorterRuntime orchestrates executing a bundle and managing state.
 type PorterRuntime struct {
 	*context.Context
-	mixins          mixin.MixinProvider
+	mixins          pkgmgmt.PackageManager
 	RuntimeManifest *RuntimeManifest
 }
 
-func NewPorterRuntime(cxt *context.Context, mixins mixin.MixinProvider) *PorterRuntime {
+func NewPorterRuntime(cxt *context.Context, mixins pkgmgmt.PackageManager) *PorterRuntime {
 	return &PorterRuntime{
 		Context: cxt,
 		mixins:  mixins,
@@ -85,7 +85,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 				Steps:  []*manifest.Step{step},
 			}
 			inputBytes, _ := yaml.Marshal(input)
-			cmd := mixin.CommandOptions{
+			cmd := pkgmgmt.CommandOptions{
 				Command: string(r.RuntimeManifest.Action),
 				Input:   string(inputBytes),
 				Runtime: true,

@@ -55,12 +55,10 @@ func TestPorter_PrintPlugins(t *testing.T) {
 		err := p.PrintPlugins(opts)
 
 		require.Nil(t, err)
-		expected := `Name      Type               Implementation   Version   Author
-plugin1   instance-storage   blob             v1.0      Porter Authors
-plugin1   instance-storage   mongo            v1.0      Porter Authors
-plugin2   instance-storage   blob             v1.0      Porter Authors
-plugin2   instance-storage   mongo            v1.0      Porter Authors
-unknown   N/A                N/A              v1.0      Porter Authors
+		expected := `Name      Version   Author
+plugin1   v1.0      Porter Authors
+plugin2   v1.0      Porter Authors
+unknown   v1.0      Porter Authors
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
@@ -77,35 +75,88 @@ unknown   N/A                N/A              v1.0      Porter Authors
 
 		require.Nil(t, err)
 		expected := `- name: plugin1
-  clientpath: /home/porter/.porter/plugins/plugin1
-  implementations:
-  - type: instance-storage
-    name: blob
-  - type: instance-storage
-    name: mongo
   versioninfo:
     version: v1.0
     commit: abc123
     author: Porter Authors
+  implementations:
+  - type: storage
+    name: blob
+  - type: storage
+    name: mongo
 - name: plugin2
-  clientpath: /home/porter/.porter/plugins/plugin2
+  versioninfo:
+    version: v1.0
+    commit: abc123
+    author: Porter Authors
   implementations:
-  - type: instance-storage
+  - type: storage
     name: blob
-  - type: instance-storage
+  - type: storage
     name: mongo
-  versioninfo:
-    version: v1.0
-    commit: abc123
-    author: Porter Authors
 - name: unknown
-  clientpath: /home/porter/.porter/plugins/unknown
-  implementations: []
   versioninfo:
     version: v1.0
     commit: abc123
     author: Porter Authors
+  implementations: []
 
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("Plugin List - JSON Format", func(t *testing.T) {
+		p.TestConfig.TestContext.ResetOutput()
+		opts := PrintPluginsOptions{
+			PrintOptions: printer.PrintOptions{
+				Format: printer.FormatJson,
+			},
+		}
+		err := p.PrintPlugins(opts)
+
+		require.Nil(t, err)
+		expected := `[
+  {
+    "name": "plugin1",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": [
+      {
+        "type": "storage",
+        "implementation": "blob"
+      },
+      {
+        "type": "storage",
+        "implementation": "mongo"
+      }
+    ]
+  },
+  {
+    "name": "plugin2",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": [
+      {
+        "type": "storage",
+        "implementation": "blob"
+      },
+      {
+        "type": "storage",
+        "implementation": "mongo"
+      }
+    ]
+  },
+  {
+    "name": "unknown",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": null
+  }
+]
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)

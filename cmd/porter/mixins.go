@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/mixin/feed"
+	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -74,7 +75,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 }
 
 func BuildMixinUninstallCommand(p *porter.Porter) *cobra.Command {
-	opts := mixin.UninstallOptions{}
+	opts := pkgmgmt.UninstallOptions{}
 	cmd := &cobra.Command{
 		Use:     "uninstall NAME",
 		Short:   "Uninstall a mixin",

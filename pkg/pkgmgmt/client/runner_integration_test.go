@@ -1,6 +1,6 @@
 // +build integration
 
-package mixinprovider
+package client
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ func TestRunner_Run(t *testing.T) {
 	err := r.Validate()
 	require.NoError(t, err)
 
-	cmd := mixin.CommandOptions{
+	cmd := pkgmgmt.CommandOptions{
 		Command: "install",
 		File:    "testdata/exec_input.yaml",
 	}
@@ -66,7 +66,7 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 	err := r.Validate()
 	require.NoError(t, err)
 
-	cmd := mixin.CommandOptions{
+	cmd := pkgmgmt.CommandOptions{
 		Command: "install",
 		File:    "testdata/exec_input_with_whitespace.yaml",
 	}

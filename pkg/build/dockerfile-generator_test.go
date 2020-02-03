@@ -25,7 +25,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ COPY mybin /cnab/app/
 
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
-		mp := &mixin.TestMixinProvider{}
+		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
@@ -95,7 +95,7 @@ COPY mybin /cnab/app/
 
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
-		mp := &mixin.TestMixinProvider{}
+		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
@@ -130,7 +130,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
@@ -222,7 +222,7 @@ func TestDockerFileGenerator_getMixinBuildInput(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	input := g.getMixinBuildInput("exec")
@@ -265,7 +265,7 @@ COPY mybin /cnab/app/
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
@@ -306,7 +306,7 @@ COPY mybin /cnab/app/
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	mp := &mixin.TestMixinProvider{}
+	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()

@@ -55,5 +55,5 @@ func TestBuildMixinInstallCommand_NoMixinName(t *testing.T) {
 	cmd := BuildMixinInstallCommand(p.Porter)
 
 	err := cmd.PreRunE(cmd, []string{})
-	require.EqualError(t, err, "no mixin name was specified")
+	require.EqualError(t, err, "no name was specified")
 }

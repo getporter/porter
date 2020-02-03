@@ -1,4 +1,4 @@
-package mixinprovider
+package mixin
 
 import (
 	"testing"
