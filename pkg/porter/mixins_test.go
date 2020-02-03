@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/mixin"
-
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,6 @@ import (
 
 func TestPorter_PrintMixins(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	opts := PrintMixinsOptions{
 		PrintOptions: printer.PrintOptions{
@@ -31,7 +30,6 @@ exec   v1.0      Porter Authors
 
 func TestPorter_InstallMixin(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	opts := mixin.InstallOptions{}
 	opts.Name = "exec"
@@ -44,4 +42,19 @@ func TestPorter_InstallMixin(t *testing.T) {
 	wantOutput := "installed exec mixin v1.0 (abc123)"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
+}
+
+func TestPorter_UninstallMixin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := pkgmgmt.UninstallOptions{}
+	err := opts.Validate([]string{"exec"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.UninstallMixin(opts)
+	require.NoError(t, err, "UninstallMixin failed")
+
+	wantOutput := "Uninstalled exec mixin"
+	gotoutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotoutput)
 }

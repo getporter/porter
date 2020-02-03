@@ -3,7 +3,10 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/plugins"
+
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage/crudstore"
 	"get.porter.sh/porter/pkg/storage/filesystem"
@@ -161,4 +164,35 @@ unknown   v1.0      Porter Authors
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
 	})
+}
+
+func TestPorter_InstallPlugin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := plugins.InstallOptions{}
+	opts.URL = "https://example.com"
+	err := opts.Validate([]string{"plugin1"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.InstallPlugin(opts)
+	require.NoError(t, err, "InstallPlugin failed")
+
+	wantOutput := "installed plugin1 plugin v1.0 (abc123)"
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotOutput)
+}
+
+func TestPorter_UninstallPlugin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := pkgmgmt.UninstallOptions{}
+	err := opts.Validate([]string{"plugin1"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.UninstallPlugin(opts)
+	require.NoError(t, err, "UninstallPlugin failed")
+
+	wantOutput := "Uninstalled plugin1 plugin"
+	gotoutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotoutput)
 }

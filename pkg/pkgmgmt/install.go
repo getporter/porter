@@ -67,12 +67,15 @@ func (o *InstallOptions) validateFeedURL() error {
 		o.FeedURL = o.DefaultFeedURL
 	}
 
-	parsedFeedURL, err := url.Parse(o.FeedURL)
-	if err != nil {
-		return errors.Wrapf(err, "invalid --feed-url %s", o.FeedURL)
+	if o.FeedURL != "" {
+		parsedFeedURL, err := url.Parse(o.FeedURL)
+		if err != nil {
+			return errors.Wrapf(err, "invalid --feed-url %s", o.FeedURL)
+		}
+
+		o.parsedFeedURL = parsedFeedURL
 	}
 
-	o.parsedFeedURL = parsedFeedURL
 	return nil
 }
 

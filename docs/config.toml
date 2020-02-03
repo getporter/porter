@@ -141,6 +141,18 @@ defaultContentLanguage = "en"
     weight = 161
     parent = "cli"
   [[menu.main]]
+    name = "porter plugins install"
+    url = "/cli/porter_plugins_install"
+    identifider = "cli-porter-plugins-install"
+    weight = 170
+    parent = "cli"
+  [[menu.main]]
+    name = "porter plugins uninstall"
+    url = "/cli/porter_plugins_uninstall"
+    identifider = "cli-porter-plugins-uninstall"
+    weight = 171
+    parent = "cli"
+  [[menu.main]]
     name = "porter schema"
     url = "/cli/porter_schema"
     identifier = "cli-schema"

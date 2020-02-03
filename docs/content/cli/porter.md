@@ -42,6 +42,7 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 * [porter invoke](/cli/porter_invoke/)	 - Invoke a custom action on a bundle instance
 * [porter list](/cli/porter_list/)	 - list instances of installed bundles
 * [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
+* [porter plugins](/cli/porter_plugins/)	 - Plugin commands. Plugins enable Porter to work on different cloud providers and systems.
 * [porter publish](/cli/porter_publish/)	 - Publish a bundle
 * [porter schema](/cli/porter_schema/)	 - Print the JSON schema for the Porter manifest
 * [porter show](/cli/porter_show/)	 - Show an instance of a bundle
