@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
+	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 )
@@ -29,6 +30,7 @@ type Porter struct {
 	Builder     BuildProvider
 	Manifest    *manifest.Manifest
 	Mixins      mixin.MixinProvider
+	Plugins     plugins.PluginProvider
 	CNAB        CNABProvider
 }
 
@@ -48,6 +50,7 @@ func New() *Porter {
 		Templates:   templates.NewTemplates(),
 		Builder:     buildprovider.NewDockerBuilder(c.Context),
 		Mixins:      mixinprovider.NewFileSystem(c),
+		Plugins:     plugins.NewFileSystem(c),
 		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
 	}
 }

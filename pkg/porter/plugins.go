@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
@@ -19,7 +20,68 @@ type PrintPluginsOptions struct {
 }
 
 func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	return errors.New("not implemented")
+	installedPlugins, err := p.Plugins.List()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get list of installed plugins")
+	}
+
+	var pluginsMetadata []plugins.Metadata
+	for _, plugin := range installedPlugins {
+		metadata, err := p.Plugins.GetMetadata(plugin)
+		// lets not break everything just because one plugin failed
+		if err != nil {
+			if p.Debug {
+				fmt.Fprintln(p.Err, "DEBUG Failed to get metadata for ", plugin)
+			}
+			continue
+		}
+		pluginsMetadata = append(pluginsMetadata, *metadata)
+	}
+
+	implementations := []map[string]string{}
+
+	for _, plugin := range pluginsMetadata {
+		if len(plugin.Implementations) != 0 {
+			for _, implementation := range plugin.Implementations {
+				implementations = append(implementations, map[string]string{
+					"Name":           plugin.Name,
+					"Type":           implementation.Type,
+					"Implementation": implementation.Name,
+					"Version":        plugin.Version,
+					"Author":         plugin.Author,
+				})
+			}
+		} else {
+			// old `plugin version` command don't return implementation details
+			implementations = append(implementations, map[string]string{
+				"Name":           plugin.Name,
+				"Type":           "N/A",
+				"Implementation": "N/A",
+				"Version":        plugin.Version,
+				"Author":         plugin.Author,
+			})
+		}
+	}
+
+	switch opts.Format {
+	case printer.FormatTable:
+		printMixinRow :=
+			func(v interface{}) []interface{} {
+				m, ok := v.(map[string]string)
+				if !ok {
+					return nil
+				}
+				return []interface{}{m["Name"], m["Type"], m["Implementation"], m["Version"], m["Author"]}
+			}
+		return printer.PrintTable(p.Out, implementations, printMixinRow, "Name", "Type", "Implementation", "Version", "Author")
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, pluginsMetadata)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, pluginsMetadata)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+
 }
 
 type RunInternalPluginOpts struct {

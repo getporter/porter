@@ -17,6 +17,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
+	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
@@ -46,6 +47,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p := New()
 	p.Config = tc.Config
 	p.Mixins = &mixin.TestMixinProvider{}
+	p.Plugins = &plugins.TestPluginProvider{}
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
 	p.Claims = claims.NewTestClaimProvider()
