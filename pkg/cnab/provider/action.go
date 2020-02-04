@@ -62,7 +62,7 @@ func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 
 		// Add claim.json to file list as well, if exists
 		claimName := args.Claim
-		claim, err := d.instanceStorage.Read(claimName)
+		claim, err := d.claims.Read(claimName)
 		if err == nil {
 			claimBytes, err := yaml.Marshal(claim)
 			if err != nil {

@@ -4,8 +4,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
-	instancestorage "get.porter.sh/porter/pkg/instance-storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/stretchr/testify/assert"
@@ -16,15 +14,13 @@ func TestAddReloccation(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/relocation-mapping.json")
 	require.NoError(t, err)
 
-	c := config.NewTestConfig(t)
-	instanceStorage := instancestorage.NewPluggableInstanceStorage(c.Config)
-	d := NewRuntime(c.Config, instanceStorage)
+	d := NewTestRuntime(t)
 
 	args := ActionArguments{
 		RelocationMapping: "/cnab/app/relocation-mapping.json",
 	}
 
-	c.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+	d.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 
 	opConf := d.AddRelocation(args)
 

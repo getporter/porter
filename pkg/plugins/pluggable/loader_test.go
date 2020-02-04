@@ -15,19 +15,19 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	pluginCfg := PluginTypeConfig{
 		GetDefaultPluggable: func(datastore *config.Data) string {
-			return datastore.GetDefaultInstanceStore()
+			return datastore.GetDefaultStorage()
 		},
 		GetPluggable: func(datastore *config.Data, name string) (Entry, error) {
-			return datastore.GetInstanceStore(name)
+			return datastore.GetStorage(name)
 		},
 		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetInstanceStoragePlugin()
+			return datastore.GetDefaultStoragePlugin()
 		},
 	}
 
 	t.Run("internal plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			InstanceStoragePlugin: "filesystem",
+			DefaultStoragePlugin: "filesystem",
 		}
 
 		err := l.selectPlugin(pluginCfg)
@@ -39,7 +39,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("external plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			InstanceStoragePlugin: "azure.blob",
+			DefaultStoragePlugin: "azure.blob",
 		}
 
 		err := l.selectPlugin(pluginCfg)
@@ -51,13 +51,15 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("configured plugin", func(t *testing.T) {
 		c.Data = &config.Data{
-			DefaultInstanceStore: "azure",
-			InstanceStores: []config.InstanceStore{
+			DefaultStorage: "azure",
+			CrudStores: []config.CrudStore{
 				{
-					Name:         "azure",
-					PluginSubKey: "azure.blob",
-					Config: map[string]interface{}{
-						"env": "MyAzureConnString",
+					config.PluginConfig{
+						Name:         "azure",
+						PluginSubKey: "azure.blob",
+						Config: map[string]interface{}{
+							"env": "MyAzureConnString",
+						},
 					},
 				},
 			},
@@ -67,6 +69,6 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
-		assert.Equal(t, c.Data.InstanceStores[0].Config, l.SelectedPluginConfig)
+		assert.Equal(t, c.Data.CrudStores[0].Config, l.SelectedPluginConfig)
 	})
 }

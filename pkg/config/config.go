@@ -45,6 +45,13 @@ var evalSymlinks = filepath.EvalSymlinks
 
 type DataStoreLoaderFunc func(*Config) error
 
+var _ DataStoreLoaderFunc = NoopDataLoader
+
+// NoopDataLoader skips loading the datastore.
+func NoopDataLoader(config *Config) error {
+	return nil
+}
+
 type Config struct {
 	*context.Context
 	Data       *Data
@@ -207,22 +214,6 @@ func (c *Config) GetPluginPath(plugin string) (string, error) {
 
 	executablePath := filepath.Join(pluginsDir, plugin)
 	return executablePath, nil
-}
-
-func (c *Config) GetCredentialsDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "credentials"), nil
-}
-
-func (c *Config) GetCredentialPath(name string) (string, error) {
-	credDir, err := c.GetCredentialsDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(credDir, fmt.Sprintf("%s.yaml", name)), nil
 }
 
 // GetArchiveLogs locates the output for Bundle Archive Operations.

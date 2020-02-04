@@ -393,7 +393,7 @@ fmt.Fprintln(p.Err, "DEBUG: loading plans from r2d2...")
 ```
 
 Most of the structs in Porter have an embedded
-`github.com/deislabs/porter/pkg/context.Context` struct. This has both `Out` and
+`get.porter.sh/porter/pkg/context.Context` struct. This has both `Out` and
 `Err` which represent stdout and stderr respectively. You should log to those
 instead of directly to stdout/stderr because that is how we capture output in
 our unit tests. That means use `fmt.Fprint*` instead of `fmt.Print*` so that you

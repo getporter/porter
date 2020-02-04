@@ -157,7 +157,7 @@ func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
 		return err
 	}
 
-	c, err := p.InstanceStorage.Read(opts.Name)
+	c, err := p.Claims.Read(opts.Name)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
 
 // ReadBundleOutput reads a bundle output from a claim
 func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
-	c, err := p.InstanceStorage.Read(claim)
+	c, err := p.Claims.Read(claim)
 	if err != nil {
 		return "", err
 	}

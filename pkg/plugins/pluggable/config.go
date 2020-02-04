@@ -22,14 +22,14 @@ type PluginTypeConfig struct {
 	Plugin plugin.Plugin
 
 	// GetDefaultPluggable is the function on porter's config.Data
-	// to retrieve a pluggable configuration value's named default instance to use, e.g. "default-instance-store"
+	// to retrieve a pluggable configuration value's named default instance to use, e.g. "default-storage"
 	GetDefaultPluggable func(datastore *config.Data) string
 
 	// GetPluggable is the function on porter's config.Data
-	// to retrieve a named pluggable instance, e.g. an instance-store named "azure"
+	// to retrieve a named pluggable instance, e.g. a storage named "azure"
 	GetPluggable func(datastore *config.Data, name string) (Entry, error)
 
 	// GetDefaultPlugin is the function on porter's config.Data
-	// to retrieve the default plugin to use for a type of plugin, e.g. "instance-storage-plugin"
+	// to retrieve the default plugin to use for a type of plugin, e.g. "storage-plugin"
 	GetDefaultPlugin func(datastore *config.Data) string
 }

@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/instance-storage/claimstore"
-	"get.porter.sh/porter/pkg/instance-storage/filesystem"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/storage/crudstore"
+	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +30,7 @@ func TestRunInternalPluginOpts_Validate(t *testing.T) {
 	t.Run("valid key", func(t *testing.T) {
 		err := opts.Validate([]string{filesystem.PluginKey}, cfg.Config)
 		require.NoError(t, err)
-		assert.Equal(t, opts.selectedInterface, claimstore.PluginInterface)
+		assert.Equal(t, opts.selectedInterface, crudstore.PluginInterface)
 		assert.NotNil(t, opts.selectedPlugin)
 	})
 
@@ -56,11 +56,11 @@ func TestPorter_PrintPlugins(t *testing.T) {
 
 		require.Nil(t, err)
 		expected := `Name      Type               Implementation   Version   Author
-plugin1   instance-storage   blob             v1.0      Deis Labs
-plugin1   instance-storage   mongo            v1.0      Deis Labs
-plugin2   instance-storage   blob             v1.0      Deis Labs
-plugin2   instance-storage   mongo            v1.0      Deis Labs
-unknown   N/A                N/A              v1.0      Deis Labs
+plugin1   instance-storage   blob             v1.0      Porter Authors
+plugin1   instance-storage   mongo            v1.0      Porter Authors
+plugin2   instance-storage   blob             v1.0      Porter Authors
+plugin2   instance-storage   mongo            v1.0      Porter Authors
+unknown   N/A                N/A              v1.0      Porter Authors
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
@@ -86,7 +86,7 @@ unknown   N/A                N/A              v1.0      Deis Labs
   versioninfo:
     version: v1.0
     commit: abc123
-    author: Deis Labs
+    author: Porter Authors
 - name: plugin2
   clientpath: /home/porter/.porter/plugins/plugin2
   implementations:
@@ -97,14 +97,14 @@ unknown   N/A                N/A              v1.0      Deis Labs
   versioninfo:
     version: v1.0
     commit: abc123
-    author: Deis Labs
+    author: Porter Authors
 - name: unknown
   clientpath: /home/porter/.porter/plugins/unknown
   implementations: []
   versioninfo:
     version: v1.0
     commit: abc123
-    author: Deis Labs
+    author: Porter Authors
 
 `
 		actual := p.TestConfig.TestContext.GetOutput()
