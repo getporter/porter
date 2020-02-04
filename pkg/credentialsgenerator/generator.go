@@ -30,6 +30,7 @@ type credentialAnswers struct {
 }
 
 const (
+	questionSecret  = "secret"
 	questionValue   = "specific value"
 	questionEnvVar  = "environment variable"
 	questionPath    = "file path"
@@ -93,7 +94,7 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set credential %q", name),
-		Options: []string{questionValue, questionEnvVar, questionPath, questionCommand},
+		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
 		Default: "environment variable",
 	}
 
@@ -108,6 +109,8 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 
 	promptMsg := ""
 	switch source {
+	case questionSecret:
+		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "secret", name)
 	case questionValue:
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "value", name)
 	case questionEnvVar:
@@ -128,6 +131,9 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 	}
 
 	switch source {
+	case questionSecret:
+		c.Source.Key = "secret"
+		c.Source.Value = value
 	case questionValue:
 		c.Source.Key = host.SourceValue
 		c.Source.Value = value
