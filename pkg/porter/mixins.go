@@ -64,6 +64,37 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
+func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
+	remoteMixins, err := mixin.Search(opts)
+	if err != nil {
+		return err
+	}
+
+	if len(remoteMixins) == 0 && opts.Name != "" {
+		fmt.Fprintf(p.Out, "No mixins found for %s\n", opts.Name)
+		return nil
+	}
+
+	switch opts.Format {
+	case printer.FormatTable:
+		printMixinRow :=
+			func(v interface{}) []interface{} {
+				m, ok := v.(mixin.PackageListing)
+				if !ok {
+					return nil
+				}
+				return []interface{}{m.Name, m.Description, m.Author, m.SourceURL, m.FeedURL}
+			}
+		return printer.PrintTable(p.Out, remoteMixins, printMixinRow, "Name", "Description", "Author", "Source URL", "Feed URL")
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, remoteMixins)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, remoteMixins)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+}
+
 func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 	err := p.Mixins.Install(opts.InstallOptions)
 	if err != nil {

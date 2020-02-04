@@ -1,0 +1,86 @@
+[
+  {
+    "name": "arm",
+    "author": "Porter Authors",
+    "description": "A mixin for deploying ARM templates on Azure",
+    "sourceURL": "https://cdn.porter.sh/mixins/arm",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "aws",
+    "author": "Porter Authors",
+    "description": "A mixin for using the aws cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/aws",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "az",
+    "author": "Porter Authors",
+    "description": "A mixin for using the az cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/az",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "cowsay",
+    "author": "Porter Authors",
+    "description": "A mixin for using the cowsay cli",
+    "sourceURL": "https://github.com/deislabs/porter-cowsay/releases/download",
+    "feedURL": ""
+  },
+  {
+    "name": "exec",
+    "author": "Porter Authors",
+    "description": "A mixin for executing shell commands",
+    "sourceURL": "https://cdn.porter.sh/mixins/exec",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "gcloud",
+    "author": "Porter Authors",
+    "description": "A mixin for using the gcloud cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/gcloud",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "helm",
+    "author": "Porter Authors",
+    "description": "A mixin for using the helm cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/helm",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name":"helm3",
+    "author": "Ralph Squillace",
+    "description": "A mixin for using the helm 3 cli",
+    "sourceURL": "https://github.com/squillace/porter-helm3/releases/download",
+    "feedURL": ""
+  },
+  {
+    "name": "kubernetes",
+    "author": "Porter Authors",
+    "description": "A mixin for using the kubectl cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/kubernetes",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  },
+  {
+    "name": "kustomize",
+    "author": "Don Stewart",
+    "description": "A mixin for using the kustomize cli",
+    "sourceURL": "https://github.com/donmstewart/porter-kustomize/releases/download",
+    "feedURL": ""
+  },
+  {
+    "name": "packer",
+    "author": "Vaughn Dice",
+    "description": "A mixin for using the packer cli",
+    "sourceURL": "https://github.com/vdice/porter-packer/releases/download",
+    "feedURL": ""
+  },
+  {
+    "name": "terraform",
+    "author": "Porter Authors",
+    "description": "A mixin for using the terraform cli",
+    "sourceURL": "https://cdn.porter.sh/mixins/terraform",
+    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+  }
+]

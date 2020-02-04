@@ -21,6 +21,7 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildMixinsListCommand(p))
+	cmd.AddCommand(buildMixinsSearchCommand(p))
 	cmd.AddCommand(BuildMixinInstallCommand(p))
 	cmd.AddCommand(BuildMixinUninstallCommand(p))
 	cmd.AddCommand(buildMixinsFeedCommand(p))
@@ -47,6 +48,30 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 
 	return cmd
 }
+
+func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
+	opts := mixin.SearchOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "search [NAME]",
+		Short: "Search available mixins",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.SearchMixins(opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json, yaml")
+
+	return cmd
+}
+
+// TODO:
+// porter mixin show NAME (gives full deets for a mixin; maybe shows if installed or not)
+// porter mixin install NAME (support not supplying url/feed-url, uses default in mixins list)
 
 func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := mixin.InstallOptions{}

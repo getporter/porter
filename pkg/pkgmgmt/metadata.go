@@ -36,3 +36,11 @@ type PackageMetadata interface {
 	// GetVersionInfo for the installed package.
 	GetVersionInfo() VersionInfo
 }
+
+// PackageListing represents discovery information for a package
+type PackageListing struct {
+	Name        string `json:"name"`
+	Author      string `json:"author"`
+	Description string `json:"description"`
+	URL         string `json:"URL"`
+}
