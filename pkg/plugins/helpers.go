@@ -11,9 +11,9 @@ func (p *TestPluginProvider) List() ([]string, error) {
 }
 
 func (p *TestPluginProvider) GetMetadata(pluginName string) (*Metadata, error) {
-	var impl []Implementaion
+	var impl []Implementation
 	if pluginName != "unknown" {
-		impl = []Implementaion{
+		impl = []Implementation{
 			{Type: "instance-storage", Name: "blob"},
 			{Type: "instance-storage", Name: "mongo"},
 		}
@@ -22,6 +22,6 @@ func (p *TestPluginProvider) GetMetadata(pluginName string) (*Metadata, error) {
 		Name:            pluginName,
 		ClientPath:      fmt.Sprintf("/home/porter/.porter/plugins/%s", pluginName),
 		Implementations: impl,
-		VersionInfo:     VersionInfo{Version: "v1.0", Commit: "abc123", Author: "Deis Labs"},
+		VersionInfo:     VersionInfo{Version: "v1.0", Commit: "abc123", Author: "Porter Authors"},
 	}, nil
 }

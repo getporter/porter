@@ -29,17 +29,17 @@ type PluginKey struct {
 	IsInternal     bool
 }
 
-// Implementaion stores implementation type (e.g. instance-storage) and its name (e.g. s3, mongo)
-type Implementaion struct {
+// Implementation stores implementation type (e.g. instance-storage) and its name (e.g. s3, mongo)
+type Implementation struct {
 	Type string `json:"type"`
 	Name string `json:"implementation"`
 }
 
 // Metadata about an installed plugin.
 type Metadata struct {
-	Name            string          `json:"name"`
-	ClientPath      string          `json:"clientPath,omitempty"`
-	Implementations []Implementaion `json:"implementations"`
+	Name            string           `json:"name"`
+	ClientPath      string           `json:"clientPath,omitempty"`
+	Implementations []Implementation `json:"implementations"`
 	VersionInfo
 }
 
@@ -112,7 +112,7 @@ func (fs *fileSystem) GetMetadata(pluginName string) (*Metadata, error) {
 
 	// make json.Marshal return `[]` instead of `nil` for not having implementations
 	if len(metadata.Implementations) == 0 {
-		metadata.Implementations = make([]Implementaion, 0)
+		metadata.Implementations = make([]Implementation, 0)
 	}
 	return &metadata, nil
 }
