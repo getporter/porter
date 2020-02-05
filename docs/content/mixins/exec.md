@@ -1,9 +1,9 @@
 ---
 title: exec mixin
-description: Using the exec mixin
+description: Run a command or script
 ---
 
-Run a command or script
+Run a command or script.
 
 Source: https://github.com/deislabs/porter/tree/master/pkg/exec
 

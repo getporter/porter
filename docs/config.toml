@@ -164,59 +164,40 @@ defaultContentLanguage = "en"
   identifier = "mixins"
   weight = 200
   [[menu.main]]
-  name = "Overview"
-  identifier = "mixins-overview"
-  weight = 201
-  url = "/mixins"
-  parent = "mixins"
+    name = "Overview"
+    identifier = "mixins-overview"
+    weight = 201
+    url = "/mixins"
+    parent = "mixins"
   [[menu.main]]
-    name = "exec"
-    identifier = "exec-mixin"
+    name = "Develop Mixins"
+    url = "/mixin-dev-guide/"
+    identifier = "mixin-dev-guide"
     weight = 202
-    url = "/mixins/exec"
     parent = "mixins"
   [[menu.main]]
-    name = "helm"
-    identifier = "helm-mixin"
+    name = "Distribute Mixins"
+    url = "/mixin-dev-guide/distribution/"
+    identifier = "mixin-distribution"
     weight = 203
-    url = "/mixins/helm"
     parent = "mixins"
   [[menu.main]]
-    name = "kubernetes"
-    identifier = "kubernetes-mixin"
+    name = "Mixin Architecture"
+    url = "/mixin-dev-guide/architecture/"
+    identifier = "mixin-architecture"
     weight = 204
-    url = "/mixins/kubernetes"
     parent = "mixins"
+
+[[menu.main]]
+  name = "Plugins"
+  identifier = "plugins"
+  weight = 250
   [[menu.main]]
-    name = "arm"
-    identifier = "arm-mixin"
-    weight = 210
-    url = "/mixins/arm"
-    parent = "mixins"
-  [[menu.main]]
-    name = "aws"
-    identifier = "aws-mixin"
-    weight = 211
-    url = "/mixins/aws"
-    parent = "mixins"
-  [[menu.main]]
-    name = "az"
-    identifier = "az-mixin"
-    weight = 212
-    url = "/mixins/az"
-    parent = "mixins"
-  [[menu.main]]
-    name = "gcloud"
-    identifier = "gcloud-mixin"
-    weight = 213
-    url = "/mixins/gcloud"
-    parent = "mixins"
-  [[menu.main]]
-    name = "terraform"
-    identifier = "terraform-mixin"
-    weight = 214
-    url = "/mixins/terraform"
-    parent = "mixins"
+    name = "Overview"
+    identifier = "plugins-overview"
+    weight = 251
+    url = "/plugins"
+    parent = "plugins"
 
 [[menu.main]]
   name = "Author Bundles"
@@ -298,42 +279,6 @@ defaultContentLanguage = "en"
     identifier = "inspect-bundles"
     weight = 327
     parent = "examine-bundles"
-
-
-[[menu.main]]
-  name = "Develop Mixins"
-  identifier = "develop-mixins"
-  weight = 350
-  [[menu.main]]
-    name = "Overview"
-    url = "/mixin-dev-guide/"
-    identifier = "mixin-dev-guide"
-    weight = 351
-    parent = "develop-mixins"
-  [[menu.main]]
-    name = "Commands"
-    url = "/mixin-dev-guide/commands/"
-    identifier = "mixin-commands"
-    weight = 353
-    parent = "develop-mixins"
-  [[menu.main]]
-    name = "Test"
-    url = "/mixin-dev-guide/test/"
-    identifier = "mixin-test"
-    weight = 355
-    parent = "develop-mixins"
-  [[menu.main]]
-    name = "Mixin Architecture"
-    url = "/mixin-dev-guide/architecture/"
-    identifier = "mixin-architecture"
-    weight = 360
-    parent = "develop-mixins"
-  [[menu.main]]
-    name = "Distribute Mixins"
-    url = "/mixin-dev-guide/distribution/"
-    identifier = "mixin-distribution"
-    weight = 361
-    parent = "develop-mixins"
 
 [[menu.main]]
   name = "Porter Architecture"

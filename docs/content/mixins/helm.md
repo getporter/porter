@@ -1,11 +1,11 @@
 ---
 title: helm mixin
-description: Using the helm mixin
+description: Manage a Helm release with the helm CLI
 ---
 
 <img src="/images/mixins/helm.svg" class="mixin-logo" style="width: 150px"/>
 
-Manage a Helm release
+Manage a Helm release with the [helm CLI](https://helm.sh).
 
 Source: https://github.com/deislabs/porter-helm
 
