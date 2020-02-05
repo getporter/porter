@@ -68,4 +68,43 @@ unpublished builds from the master branch. The official Porter mixins follow
 this pattern. If you have other published tagged builds of your mixin, porter
 can handle installing them as well.
 
+## Search
+
+Porter maintains a list of remote mixins that users can search via
+`porter mixins search [NAME]`. If no name is supplied, the full listing will be
+returned.  See the help menu for all command options: `porter mixins search -h`.
+
+For example, here we search for a `cowsay` mixin:
+
+```console
+$ porter mixins search cowsay
+Name     Description                        Author           Source URL                                                    Feed URL
+cowsay   A mixin for using the cowsay cli   Porter Authors   https://github.com/deislabs/porter-cowsay/releases/download
+```
+
+## Broadcast
+
+To add your mixin to the list, add an entry to the remote mixin
+[list](https://github.com/deislabs/porter/blob/master/pkg/mixin/remote-mixins/index.json)
+with all the pertinent informational fields filled out.
+
+For instance, a new entry might look like:
+
+```json
+  {
+    "name": "mymixin",
+    "author": "My Name",
+    "description": "A mixin for doing great things",
+    "sourceURL": "https://github.com/org/project/releases/download",
+    "feedURL": "https://my.domain.com/mixins/atom.xml"
+  },
+```
+
+It is okay to leave `feedURL` empty if no atom feed yet exists.
+
+With this change pushed to a branch on your fork of this repo, you're
+now ready to open up a [Pull Request](https://github.com/deislabs/porter/pulls).
+After the changes are approved, merged and included in the next release, your
+mixin will start to show up in the official listing!
+
 [mk]: https://github.com/deislabs/porter/blob/master/mixin.mk

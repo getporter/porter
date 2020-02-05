@@ -72,10 +72,6 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 	return cmd
 }
 
-// TODO:
-// porter mixin show NAME (gives full deets for a mixin; maybe shows if installed or not)
-// porter mixin install NAME (support not supplying url/feed-url, uses default in mixins list)
-
 func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := mixin.InstallOptions{}
 	cmd := &cobra.Command{

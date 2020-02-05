@@ -19,9 +19,8 @@ type VersionInfo struct {
 	Author  string `json:"author,omitempty"`
 }
 
-// RemoteMixinListing represents an information listing for a remote mixin
+// RemoteMixinListing represents an informational listing for a remote mixin
 type RemoteMixinListing struct {
-	// TODO: perhaps can refactor structs to share fields, etc.
 	Name        string `json:"name"`
 	Author      string `json:"author"`
 	Description string `json:"description"`
@@ -29,7 +28,7 @@ type RemoteMixinListing struct {
 	FeedURL     string `json:"feedURL"`
 }
 
-// RemoteMixinList is a slice of RemoteMixinListing structs
+// RemoteMixinList is a collection of RemoteMixinListings
 type RemoteMixinList []RemoteMixinListing
 
 func (rms RemoteMixinList) Len() int {

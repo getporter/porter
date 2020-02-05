@@ -70,13 +70,6 @@
     "feedURL": ""
   },
   {
-    "name": "packer",
-    "author": "Vaughn Dice",
-    "description": "A mixin for using the packer cli",
-    "sourceURL": "https://github.com/vdice/porter-packer/releases/download",
-    "feedURL": ""
-  },
-  {
     "name": "terraform",
     "author": "Porter Authors",
     "description": "A mixin for using the terraform cli",
