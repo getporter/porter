@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/gobuffalo/packr/v2"
 )
 
 // PrintMixinsOptions represent options for the PrintMixins function
@@ -64,8 +65,12 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
+// SearchMixins searches the internal remote mixins list according to the provided options
 func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
-	remoteMixins, err := mixin.Search(opts)
+	box := packr.New("get.porter.sh/porter/pkg/mixin/remote-mixins", "./remote-mixins")
+	mixinSearcher := mixin.NewSearcher(box)
+
+	remoteMixins, err := mixinSearcher.Search(opts)
 	if err != nil {
 		return err
 	}

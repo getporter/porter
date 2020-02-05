@@ -15,6 +15,14 @@ Search available mixins
 porter mixins search [NAME] [flags]
 ```
 
+### Examples
+
+```
+  porter mixin search
+	porter mixin search helm
+	porter mixin search helm -o json
+```
+
 ### Options
 
 ```

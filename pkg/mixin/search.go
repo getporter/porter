@@ -15,6 +15,19 @@ type SearchOptions struct {
 	printer.PrintOptions
 }
 
+// Searcher contains a packr.Box containing a searchable list of mixins
+type Searcher struct {
+	Box *packr.Box
+}
+
+// NewSearcher returns a Searcher with the provided packr.Box
+func NewSearcher(box *packr.Box) Searcher {
+	return Searcher{
+		Box: box,
+	}
+}
+
+// Validate validates the arguments provided to a search command
 func (o *SearchOptions) Validate(args []string) error {
 	err := o.validateMixinName(args)
 	if err != nil {
@@ -24,7 +37,7 @@ func (o *SearchOptions) Validate(args []string) error {
 	return o.ParseFormat()
 }
 
-// validateMixinName grabs the mixin name from the first positional argument.
+// validateMixinName validates either no mixin name is provided or only one is
 func (o *SearchOptions) validateMixinName(args []string) error {
 	switch len(args) {
 	case 0:
@@ -39,9 +52,8 @@ func (o *SearchOptions) validateMixinName(args []string) error {
 
 // Search searches for mixins matching the optional provided name,
 // returning the full list if none is provided
-func Search(opts SearchOptions) ([]PackageListing, error) {
-	box := packr.New("get.porter.sh/porter/pkg/mixin/remote-mixins", "./remote-mixins")
-	data, err := box.Find("index.json")
+func (m *Searcher) Search(opts SearchOptions) ([]RemoteMixinInfo, error) {
+	data, err := m.Box.Find("index.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading remote mixin list")
 	}
@@ -55,8 +67,6 @@ func Search(opts SearchOptions) ([]PackageListing, error) {
 	results := make([]PackageListing, len(rmis))
 	copy(results, rmis)
 
-	// Return full list if opts.Name empty
-	// Else, return any matching opts.Name
 	if opts.Name != "" {
 		results = []PackageListing{}
 		for _, rmi := range rmis {

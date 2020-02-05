@@ -55,6 +55,9 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "search [NAME]",
 		Short: "Search available mixins",
+		Example: `  porter mixin search
+	porter mixin search helm
+	porter mixin search helm -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
