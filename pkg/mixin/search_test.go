@@ -23,21 +23,8 @@ func TestSearchOptions_Validate_MixinName(t *testing.T) {
 	require.EqualError(t, err, "only one positional argument may be specified, the mixin name, but multiple were received: [helm nstuff]")
 }
 
-func TestSearch_AllResults(t *testing.T) {
-	opts := SearchOptions{}
-
-	box := packr.Folder("./remote-mixins")
-	searcher := NewSearcher(box)
-
-	// Not sure if this is valuable to track the number of results
-	// Wanted to be sure we are somehow testing the 'prod' listing
-	result, err := searcher.Search(opts)
-	require.NoError(t, err)
-	require.Equal(t, 12, len(result))
-}
-
 func TestSearch_TestBox(t *testing.T) {
-	fullListing := []RemoteMixinInfo{
+	fullList := RemoteMixinList{
 		{
 			Name:        "az",
 			Author:      "Porter Authors",
@@ -64,23 +51,23 @@ func TestSearch_TestBox(t *testing.T) {
 	testcases := []struct {
 		name      string
 		opts      SearchOptions
-		wantItems []RemoteMixinInfo
+		wantItems RemoteMixinList
 	}{
 		{"no args",
 			SearchOptions{},
-			fullListing,
+			fullList,
 		},
 		{"mixin name single match",
 			SearchOptions{Name: "az"},
-			[]RemoteMixinInfo{fullListing[0]},
+			RemoteMixinList{fullList[0]},
 		},
 		{"mixin name multiple match",
 			SearchOptions{Name: "cowsay"},
-			[]RemoteMixinInfo{fullListing[1], fullListing[2]},
+			RemoteMixinList{fullList[1], fullList[2]},
 		},
 		{"mixin name no match",
 			SearchOptions{Name: "ottersay"},
-			[]RemoteMixinInfo{},
+			RemoteMixinList{},
 		},
 	}
 

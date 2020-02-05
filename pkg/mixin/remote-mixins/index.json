@@ -49,7 +49,7 @@
     "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
   },
   {
-    "name":"helm3",
+    "name": "helm3",
     "author": "Ralph Squillace",
     "description": "A mixin for using the helm 3 cli",
     "sourceURL": "https://github.com/squillace/porter-helm3/releases/download",

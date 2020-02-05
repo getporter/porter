@@ -67,7 +67,7 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 
 // SearchMixins searches the internal remote mixins list according to the provided options
 func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
-	box := packr.New("get.porter.sh/porter/pkg/mixin/remote-mixins", "./remote-mixins")
+	box := packr.New("get.porter.sh/porter/pkg/mixin/remote-mixins", "../mixin/remote-mixins")
 	mixinSearcher := mixin.NewSearcher(box)
 
 	remoteMixins, err := mixinSearcher.Search(opts)

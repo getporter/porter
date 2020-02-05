@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/printer"
@@ -52,8 +53,8 @@ func (o *SearchOptions) validateMixinName(args []string) error {
 
 // Search searches for mixins matching the optional provided name,
 // returning the full list if none is provided
-func (m *Searcher) Search(opts SearchOptions) ([]RemoteMixinInfo, error) {
-	data, err := m.Box.Find("index.json")
+func (s *Searcher) Search(opts SearchOptions) (RemoteMixinList, error) {
+	data, err := s.Box.Find("index.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading remote mixin list")
 	}
@@ -76,5 +77,6 @@ func (m *Searcher) Search(opts SearchOptions) ([]RemoteMixinInfo, error) {
 		}
 	}
 
+	sort.Sort(results)
 	return results, nil
 }
