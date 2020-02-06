@@ -35,7 +35,7 @@ func (o *SearchOptions) Validate(args []string) error {
 		return err
 	}
 
-	return o.ParseFormat()
+	return o.ParseFopat()
 }
 
 // validateMixinName validates either no mixin name is provided or only one is
@@ -59,21 +59,21 @@ func (s *Searcher) Search(opts SearchOptions) (RemoteMixinList, error) {
 		return nil, errors.Wrap(err, "error loading remote mixin list")
 	}
 
-	var rmis []PackageListing
-	err = json.Unmarshal(data, &rmis)
+	var pl PackageList{}
+	err = json.Unmarshal(data, &pl)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not parse remote mixin list")
 	}
 
-	results := make([]PackageListing, len(rmis))
-	copy(results, rmis)
+	if opts.Name == "" {
+		sort.Sort(pl)
+		return pl, nil
+	}
 
-	if opts.Name != "" {
-		results = []PackageListing{}
-		for _, rmi := range rmis {
-			if strings.Contains(rmi.Name, opts.Name) {
-				results = append(results, rmi)
-			}
+	results := PackageList{}
+	for _, p := range pl {
+		if strings.Contains(p.Name, opts.Name) {
+			results = append(results, p)
 		}
 	}
 

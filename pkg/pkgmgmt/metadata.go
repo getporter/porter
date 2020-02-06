@@ -44,3 +44,18 @@ type PackageListing struct {
 	Description string `json:"description"`
 	URL         string `json:"URL"`
 }
+
+// PackageList is a collection of PackageListings
+type PackageList []PackageListing
+
+// PackageList implements the sort.Interface for []PackageListing
+// based on the Name field.
+func (rml PackageList) Len() int {
+	return len(rml)
+}
+func (rml PackageList) Swap(i, j int) {
+	rml[i], rml[j] = rml[j], rml[i]
+}
+func (rml PackageList) Less(i, j int) bool {
+	return rml[i].Name < rml[j].Name
+}

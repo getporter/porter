@@ -76,7 +76,7 @@ func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
 	}
 
 	if len(remoteMixins) == 0 && opts.Name != "" {
-		fmt.Fprintf(p.Out, "No mixins found for %s\n", opts.Name)
+		fmt.Fprintf(p.Err, "No mixins found for %s\n", opts.Name)
 		return nil
 	}
 

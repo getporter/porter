@@ -31,12 +31,14 @@ type RemoteMixinListing struct {
 // RemoteMixinList is a collection of RemoteMixinListings
 type RemoteMixinList []RemoteMixinListing
 
-func (rms RemoteMixinList) Len() int {
-	return len(rms)
+// RemoteMixinList implements the sort.Interface for []RemoteMixinListing
+// based on the Name field.
+func (rml RemoteMixinList) Len() int {
+	return len(rml)
 }
-func (rms RemoteMixinList) Swap(i, j int) {
-	rms[i], rms[j] = rms[j], rms[i]
+func (rml RemoteMixinList) Swap(i, j int) {
+	rml[i], rml[j] = rml[j], rml[i]
 }
-func (rms RemoteMixinList) Less(i, j int) bool {
-	return rms[i].Name < rms[j].Name
+func (rml RemoteMixinList) Less(i, j int) bool {
+	return rml[i].Name < rml[j].Name
 }
