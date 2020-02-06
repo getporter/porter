@@ -17,7 +17,7 @@ imagination.
 
 [Plugins](/plugins/) **extend** the Porter client itself, **reimplementing**
 Porter's default functionality. There are fixed extension points in Porter with
-a defined interface. For example, Porter saves claims and credential sets local
+a defined interface. For example, Porter saves claims and credential sets using the local
 filesystem to ~/.porter by default. A plugin can change that behavior to save
 them to cloud storage instead.
 
