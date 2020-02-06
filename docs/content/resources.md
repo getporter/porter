@@ -7,12 +7,25 @@ Do you have a blog post, video, tutorial, demo, or some other neat thing
 using Porter or CNAB that you'd like to share? [Open up a pull request][pr] 
 and show it off! ✨
 
+* [Understanding Cloud Native Application Bundles](#understanding-cloud-native-application-bundles)
 * [Porter: Digital Ocean, Terraform, Kubernetes](#porter-digital-ocean-terraform-kubernetes)
 * [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#porter-bundle-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
 * [Porter: An Opinionated CNAB Authoring Experience](#porter-an-opinionated-cnab-authoring-experience)
 * [Free Glue Code - Porter](#free-glue-code-porter)
 
 [pr]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md
+
+### Understanding Cloud Native Application Bundles
+
+CNCF Webinar where Carolyn Van Slyck, the co-creator of Porter, the friendly cloud installer that gives you building blocks to create CNAB bundles from your existing pipeline, will demonstrate real world bundles, answering common questions:
+
+* What is a bundle?
+* When are bundles useful?
+* Does this replace existing technology?
+* Why wouldn’t I just use helm, terraform, etc?
+* Are all CNAB tools the same? Interchangeable?
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/1FGMrv_xfqY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Porter: Digital Ocean, Terraform, Kubernetes
 
