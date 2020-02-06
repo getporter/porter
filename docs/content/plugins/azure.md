@@ -19,7 +19,7 @@ porter plugin install azure
 
 ### Storage
 
-Storage plugins allow Porter to store data, such as claims and credentials, in the Azure's cloud.
+Storage plugins allow Porter to store data, such as claims and credentials, in Azure cloud.
 
 #### Blob
 

@@ -4,11 +4,11 @@ description: What is the difference between a Porter mixin and a plugin? When wo
 ---
 
 [Mixins](/mixins/) are the building blocks for authoring bundles. They
-understand both Porter and CNAB, so you don't have to, and ideally have built in
-extra logic to make your bundles easier to author and more robust.  They
-involved when the bundle is built, assisting with generating the Dockerfile for
-the invocation image. Most importantly they are responsible for handling the
-actions in your porter.yaml when your bundle is run.
+understand both Porter and CNAB, so you don't have to, and ideally have built-in
+logic to make your bundles easier to author and more robust.  They are involved
+when the bundle is built, assisting with generating the Dockerfile for the
+invocation image. Most importantly they are responsible for handling the actions
+in your porter.yaml when your bundle is run.
 
 I like to think of mixins as paint colors on your paint palette 🎨 that you use
 to **create** your bundle. Like paints, mixins are **composable** and let you
@@ -17,12 +17,12 @@ imagination.
 
 [Plugins](/plugins/) **extend** the Porter client itself, **reimplementing**
 Porter's default functionality. There are fixed extension points in Porter with
-a defined interface. For example by default Porter saves claims and credential
-sets on the local filesystem to ~/.porter. A plugin can change that behavior to
-save them to cloud storage instead.
+a defined interface. For example, Porter saves claims and credential sets local
+filesystem to ~/.porter by default. A plugin can change that behavior to save
+them to cloud storage instead.
 
 What both mixins and plugins have in common is that anyone can create their own
 and distribute them, just like the ones that we install with Porter by default.
 The Porter team is committed to making our plugin and mixin ecosystem a level
-playing field with a low barrier to entry. Check our out [Mixin Developer
+playing field with a low barrier to entry. Check out the [Mixin Developer
 Guide](/mixin-dev-guide) to get started.
