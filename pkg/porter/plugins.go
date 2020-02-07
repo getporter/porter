@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -21,13 +22,13 @@ type PrintPluginsOptions struct {
 	printer.PrintOptions
 }
 
-// PrintPluginOptions represent options for showing a particular plugin.
-type PrintPluginOptions struct {
+// ShowPluginOptions represent options for showing a particular plugin.
+type ShowPluginOptions struct {
 	printer.PrintOptions
 	Name string
 }
 
-func (o *PrintPluginOptions) Validate(args []string) error {
+func (o *ShowPluginOptions) Validate(args []string) error {
 	err := o.validateName(args)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func (o *PrintPluginOptions) Validate(args []string) error {
 }
 
 // validateName grabs the name from the first positional argument.
-func (o *PrintPluginOptions) validateName(args []string) error {
+func (o *ShowPluginOptions) validateName(args []string) error {
 	switch len(args) {
 	case 0:
 		return errors.Errorf("no name was specified")
@@ -98,6 +99,60 @@ func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
 	}
 
 	return installedPlugins, nil
+}
+
+func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
+	plugin, err := p.GetPlugin(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	switch opts.Format {
+	case printer.FormatTable:
+		// Build and configure our tablewriter
+		// TODO: make this a function and reuse it in printer/table.go
+		table := tablewriter.NewWriter(p.Out)
+		table.SetCenterSeparator("")
+		table.SetColumnSeparator("")
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
+		table.SetAutoFormatHeaders(false)
+
+		// First, print the plugin metadata
+		fmt.Fprintf(p.Out, "Name: %s\n", plugin.Name)
+		fmt.Fprintf(p.Out, "Version: %s\n", plugin.Version)
+		fmt.Fprintf(p.Out, "Commit: %s\n", plugin.Commit)
+		fmt.Fprintf(p.Out, "Author: %s\n\n", plugin.Author)
+
+		table.SetHeader([]string{"Type", "Implementation"})
+		for _, row := range plugin.Implementations {
+			table.Append([]string{row.Type, row.Name})
+		}
+		table.Render()
+		return nil
+
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, plugin)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, plugin)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+}
+
+func (p *Porter) GetPlugin(name string) (*plugins.Metadata, error) {
+	meta, err := p.Plugins.GetMetadata(name)
+	if err != nil {
+		return nil, err
+	}
+
+	plugin, ok := meta.(*plugins.Metadata)
+	if !ok {
+		return nil, errors.Errorf("could not cast plugin %s to plugins.Metadata", name)
+	}
+
+	return plugin, nil
 }
 
 func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {

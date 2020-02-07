@@ -20,6 +20,7 @@ func buildPluginsCommands(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildPluginsListCommand(p))
+	cmd.AddCommand(buildPluginShowCommand(p))
 	cmd.AddCommand(BuildPluginInstallCommand(p))
 	cmd.AddCommand(BuildPluginUninstallCommand(p))
 	cmd.AddCommand(buildPluginRunCommand(p))
@@ -31,14 +32,33 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.PrintPluginsOptions{}
 
 	cmd := &cobra.Command{
-		Use:    "list",
-		Short:  "List installed plugins",
-		Hidden: true,
+		Use:   "list",
+		Short: "List installed plugins",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.PrintPlugins(opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json, yaml")
+
+	return cmd
+}
+
+func buildPluginShowCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ShowPluginOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Show details about an installed plugin",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ShowPlugin(opts)
 		},
 	}
 
