@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This pretends to create a kuberentes cluster
+# This pretends to create a kubernetes cluster
 # by generating a dummy kubeconfig file
 mkdir -p /root/.kube
 cat <<EOF >> /root/.kube/config

@@ -31,7 +31,7 @@ have everything you need inside of it:
 
 The installer would take care of:
 
-1. Requesting credentials for an existing Kuberentes cluster.
+1. Requesting credentials for an existing Kubernetes cluster.
 1. Provisioning an Azure MySQL database.
 1. Collecting the database credentials.
 1. Installing the Wordpress chart and passing in the database credentials.
