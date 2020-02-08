@@ -1,5 +1,5 @@
 ---
-title: Kuberentes Mixin 
+title: Kubernetes Mixin 
 description: The Porter Kubernetes Mixin 
 ---
 
@@ -84,7 +84,7 @@ The mixin allows bundle authors to specify the following parameters on delete:
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `namespace` | string | The namespace in which to create resources. | `default` |
-| `manifests` | string | The path to the manifests. Can be a file or directory. | `/cnab/app/kuberentes` |
+| `manifests` | string | The path to the manifests. Can be a file or directory. | `/cnab/app/kubernetes` |
 | `force` | boolean | If true, immediately remove resources from API and bypass graceful deletion. Note that immediate deletion of some resources may result in inconsistency or data loss and requires confirmation. Sets grace period to `0`. | `false` |
 | `gracePeriod` | integer | Period of time in seconds given to the resource to terminate gracefully. Ignored if negative. Set to 1 for immediate shutdown. | `-1` |
 | `timeout` | integer | The length of time (in seconds) to wait before giving up on a delete, zero means determine a timeout from the size of the object. | 0 |
