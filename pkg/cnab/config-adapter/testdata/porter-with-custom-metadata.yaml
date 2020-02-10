@@ -1,0 +1,24 @@
+name: hello
+description: "An example Porter configuration"
+version: 0.1.0
+tag: getporter/porter-hello:v0.1.0
+
+custom:
+  foo: bar
+  
+mixins:
+- exec
+
+install:
+- exec:
+    description: "Say Hello"
+    command: bash
+    flags:
+      c: echo Hello World
+
+uninstall:
+- exec:
+    description: "Say Goodbye"
+    command: bash
+    flags:
+      c: echo Goodbye World

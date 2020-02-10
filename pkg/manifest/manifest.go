@@ -39,6 +39,7 @@ type Manifest struct {
 	Uninstall Steps `yaml:"uninstall"`
 	Upgrade   Steps `yaml:"upgrade"`
 
+	Custom 								  map[string]interface{}  					`yaml:"custom,omitempty"`
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 

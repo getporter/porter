@@ -44,6 +44,7 @@ dockerfile: dockerfile.tmpl
     The `invocationImage` name defaults to `tag`-installer, with the `version` as its image tag. For example if the bundle `tag` is `getporter/porter-hello:v0.1.0` and the `version` is `0.1.0`, then the `invocationImage` will default to `getporter/porter-hello-installer:0.1.0`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
+* `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
 
 ## Mixins
 

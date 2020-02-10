@@ -515,3 +515,19 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 		})
 	}
 }
+
+func TestManifestConverter_generateCustomMetadata(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("./testdata/porter-with-custom-metadata.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	bun := a.ToBundle()
+	assert.Len(t, bun.Custom, 3)
+	
+	fooCustomData := bun.Custom["foo"]
+	assert.Equal(t, "bar", fooCustomData)
+}
