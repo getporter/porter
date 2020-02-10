@@ -30,7 +30,7 @@ Porter is an open-source project and things get done as quickly as we have
 motivated contributors working on features that interest them. 😉
 
 We use a single [project board][board] across all of our repositories to track
-open issues and pull requests. See Find an Issue
+open issues and pull requests.
 
 The roadmap represents what the core maintainers have said that they are
 currently working on and plan to work on over the next few months. We use the
