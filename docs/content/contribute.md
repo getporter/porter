@@ -52,7 +52,8 @@ contributing to our repositories. The guide also covers the project's code
 structure, makefile commands, how to preview documentation and other useful
 things to know.
 
-There are [good first issues][good-first-issue] for new contributors and [help
+The contributing guide explains how to [find an issue][find-an-issue]. We do use
+two labels: [good first issues][good-first-issue] for new contributors and [help
 wanted][help-wanted] issues for our other contributors.
 
 * `good first issue` has extra information to help you make your first contribution.
@@ -61,8 +62,9 @@ wanted][help-wanted] issues for our other contributors.
 
 [conduct]: https://github.com/deislabs/porter/blob/master/CODE_OF_CONDUCT.md
 [contributing]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md
-[good-first-issue]: https://github.com/deislabs/porter/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
-[help-wanted]: https://github.com/deislabs/porter/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
+[find-an-issue]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md#find-an-issue
+[good-first-issue]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22good+first+issue%22
+[help-wanted]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22help+wanted%22
 
 ## What can you work on?
 

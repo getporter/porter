@@ -41,10 +41,15 @@ slack, interactions on social media, project meetings, conferences and meetups.
 ## Find an issue
 
 We have [good first issues][good-first-issue] for new contributors and [help
-wanted][help-wanted] issues for our other contributors.
+wanted][help-wanted] issues for our other contributors. When you have been
+contributing for a while, take a look at the "Backlog" column on our [project
+board][board] for high priority issues.
 
 * `good first issue` has extra information to help you make your first contribution.
 * `help wanted` are issues suitable for someone who isn't a core maintainer.
+* `hmm 🛑🤔` issues should be avoided. They are not ready to be worked on yet
+  because they are not finished being designed or we aren't sure if we want the
+  feature, etc.
 
 Maintainers will do our best regularly make new issues for you to solve and then
 help out as you work on them. 💖
@@ -61,6 +66,9 @@ Another great way to contribute is to create a mixin! You can start use the
 
 [skeletor]: https://github.com/deislabs/porter-skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
+[good-first-issue]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22good+first+issue%22
+[help-wanted]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22help+wanted%22
+[board]: https://github.com/orgs/deislabs/projects/2
 
 ## When to open a pull request
 
@@ -327,9 +335,6 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
 If anyone is interested in contributing changes to our makefile to improve the
 authoring experience, such as doing this with Docker so that you don't need Hugo
 installed, it would be a welcome contribution! ❤️
-
-[good-first-issue]: https://github.com/deislabs/porter/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
-[help-wanted]: https://github.com/deislabs/porter/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
 
 ## Command Documentation
 

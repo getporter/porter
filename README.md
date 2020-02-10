@@ -29,9 +29,14 @@ into becoming reviewers and maintainers.
 Porter is an open-source project and things get done as quickly as we have
 motivated contributors working on features that interest them. 😉
 
+We use a single [project board][board] across all of our repositories to track
+open issues and pull requests.
+
 The roadmap represents what the core maintainers have said that they are
 currently working on and plan to work on over the next few months. We use the
 "on-hold" bucket to communicate items of interest that doesn't have a core
 maintainer who will be working on it.
 
 <p align="center">Check out our <a href="https://github.com/deislabs/porter/projects/4">roadmap</a></p>
+
+[board]: https://github.com/orgs/deislabs/projects/2
