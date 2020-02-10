@@ -28,3 +28,9 @@ and distribute them, just like the ones that we install with Porter by default.
 The Porter team is committed to making our plugin and mixin ecosystem a level
 playing field with a low barrier to entry. Check out the [Mixin Developer
 Guide](/mixin-dev-guide) to get started.
+
+## See Also
+
+* [Available Mixins](/mixins/)
+* [Available Plugins](/plugins/)
+* [Types of Plugins](/plugins/types/)

@@ -198,6 +198,12 @@ defaultContentLanguage = "en"
     weight = 251
     url = "/plugins"
     parent = "plugins"
+  [[menu.main]]
+    name = "Types"
+    identifier = "plugin-types"
+    weight = 252
+    url = "/plugins/types"
+    parent = "plugins"
 
 [[menu.main]]
   name = "Author Bundles"
@@ -307,6 +313,12 @@ defaultContentLanguage = "en"
     url = "/build-image"
     identifier = "build-image"
     weight = 404
+    parent = "porter-architecture"
+  [[menu.main]]
+    name = "Credentials"
+    url = "/how-credentials-work/"
+    identifier = "how-credentials-work"
+    weight = 405
     parent = "porter-architecture"
 
 [[menu.main]]
