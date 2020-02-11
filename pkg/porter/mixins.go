@@ -76,7 +76,7 @@ func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
 	}
 
 	v := mixin.GetVersionInfo()
-	fmt.Fprintf(p.Out, "installed %s mixin %s (%s)", opts.Name, v.Version, v.Commit)
+	fmt.Fprintf(p.Out, "installed %s mixin %s (%s)\n", opts.Name, v.Version, v.Commit)
 
 	return nil
 }
