@@ -361,6 +361,15 @@ Modified: 2019-06-24
 	}
 }
 
+func TestShowCredential_PreserveCase(t *testing.T) {
+	opts := CredentialShowOptions{}
+	opts.RawFormat = string(printer.FormatTable)
+
+	err := opts.Validate([]string{"HELLO"})
+	require.NoError(t, err, "Validate failed")
+	assert.Equal(t, "HELLO", opts.Name, "Validate should preserve the credential set name case")
+}
+
 type SourceTest struct {
 	name      string
 	source    credentials.Source
