@@ -8056,6 +8056,77 @@ body {
   font-weight: 400;
   letter-spacing: 0.0075em;
   -webkit-font-smoothing: antialiased; }
+  .main .list-wrap h1 {
+    text-transform: none;
+    letter-spacing: 0.03em;
+    margin-top: 1em; }
+  .main .list-wrap h2 {
+    color: #595959;
+    font-size: 24px;
+    letter-spacing: 0.05em;
+    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    -webkit-font-smoothing: antialiased;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    letter-spacing: 0.125em;
+    margin: 0em 0 0.875em;
+    padding-top: 3.5em; }
+  .main .list-wrap h3 {
+    color: #333333;
+    font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    -webkit-font-smoothing: antialiased;
+    margin: 1.825em 0 1.825em; }
+  .main .list-wrap h4 {
+    font-size: 17.92px; }
+  .main .list-wrap p {
+    color: #333333;
+    line-height: 1.725;
+    margin: 0.825rem 0 1.667rem;
+    font-size: 17.92px; }
+    .main .list-wrap p:first-child {
+      font-size: 20px;
+      color: #333333;
+      line-height: 1.636;
+      margin-bottom: 1.925rem;
+      padding-right: 7.5%; }
+    .main .list-wrap p a {
+      padding-left: 0.25em;
+      padding-right: 0.25em; }
+  .main .list-wrap a {
+    color: #1b79ac;
+    background-color: #f6fbfe;
+    transition: all 0.3s ease-in-out; }
+    .main .list-wrap a:hover {
+      color: #2790be;
+      border-bottom: 2px solid #2DAFE9;
+      background: white; }
+  .main .list-wrap .header-link {
+    position: absolute;
+    left: -0.4em;
+    opacity: 0;
+    font-size: 1rem;
+    padding-top: 0.333em;
+    transition: all 0.3s ease-in-out; }
+    .main .list-wrap .header-link:hover {
+      border-bottom: none;
+      background-color: transparent; }
+  .main .list-wrap h2:hover,
+  .main .list-wrap h3:hover,
+  .main .list-wrap h4:hover,
+  .main .list-wrap h5:hover,
+  .main .list-wrap h6:hover {
+    color: #277A9F; }
+    .main .list-wrap h2:hover .header-link,
+    .main .list-wrap h3:hover .header-link,
+    .main .list-wrap h4:hover .header-link,
+    .main .list-wrap h5:hover .header-link,
+    .main .list-wrap h6:hover .header-link {
+      opacity: 1;
+      left: -0.825em; }
 
 .main .content-wrap {
   padding-top: 1em;

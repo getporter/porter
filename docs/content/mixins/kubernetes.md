@@ -1,11 +1,11 @@
 ---
 title: kubernetes mixin
-description: Using the kubernetes mixin
+description: Manage a set of Kubernetes manifests using the kubectl CLI
 ---
 
 <img src="/images/mixins/kubernetes.svg" class="mixin-logo" style="width: 150px"/>
 
-Apply a set of Kubernetes manifests
+Manage a set of Kubernetes manifests using the [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/).
 
 Source: https://github.com/deislabs/porter/tree/master/pkg/kubernetes
 

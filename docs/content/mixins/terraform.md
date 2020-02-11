@@ -1,11 +1,11 @@
 ---
 title: terraform mixin
-description: Using the terraform mixin
+description: Execute Terraform files using the terraform CLI
 ---
 
 <img src="/images/mixins/terraform.svg" class="mixin-logo" style="width: 300px" />
 
-Execute Terraform files
+Execute Terraform files using the [terraform CLI](https://www.terraform.io/)
 
 Source: https://github.com/deislabs/porter-terraform
 

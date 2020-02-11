@@ -171,10 +171,9 @@ parameters:
 ## Credentials
 
 Credentials are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/802-credential-sets.md) and allow
-you to pass in sensitive data when you execute the bundle, such as passwords or configuration files.
+you to pass in sensitive data when you execute the bundle, such as passwords or configuration files. 
 
-When the bundle is executed, for example when you run `porter install`, the installer will look on your local system
-for the named credential and then place the value or file found in the bundle as either an environment variable or file.
+Learn more about [how credentials work in Porter](/how-credentials-work/).
 
 By default, all credential values are considered sensitive and will be masked in console output.
 
@@ -195,6 +194,11 @@ credentials:
 * `name`: The name of the credential on the local system.
 * `env`: The name of the environment variable to create with the value from the credential.
 * `path`: The file path to create with the file from the credential.
+
+### See Also
+* [porter credentials generate](/cli/porter_credentials_generate/)
+* [How Credentials Work](/how-credentials-work/)
+* [Wiring Credentials](/wiring/)
 
 ## Bundle Actions
 

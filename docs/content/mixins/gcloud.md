@@ -1,11 +1,11 @@
 ---
 title: gcloud mixin
-description: Using the gcloud mixin
+description: Run a Google command with the gcloud CLI
 ---
 
 <img src="/images/mixins/google.png" class="mixin-logo" />
 
-Run a command using the [gcloud CLI](https://cloud.google.com/sdk/gcloud/reference/).
+Run a Google command using the [gcloud CLI](https://cloud.google.com/sdk/gcloud/reference/).
 
 Source: https://github.com/deislabs/porter-gcloud
 

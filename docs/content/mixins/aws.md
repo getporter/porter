@@ -1,11 +1,11 @@
 ---
 title: aws mixin
-description: Using the aws mixin
+description: Run Amazon commands using the aws CLI.
 ---
 
 <img src="/images/mixins/aws.svg" class="mixin-logo"/>
 
-Run an aws command using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/index.html#cli-aws).
+Run Amazon commands using the [aws CLI](https://docs.aws.amazon.com/cli/latest/reference/index.html#cli-aws).
 
 Source: https://github.com/deislabs/porter-aws
 

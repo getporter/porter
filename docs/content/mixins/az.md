@@ -1,11 +1,11 @@
 ---
 title: az mixin
-description: Using the Azure CLI (az) mixin
+description: Run Azure commands using the az CLI
 ---
 
 <img src="/images/mixins/azure.png" class="mixin-logo" style="width: 300px"/>
 
-This is a mixin for Porter that provides the Azure (az) CLI.
+Run Azure commands using the az CLI.
 
 Source: https://github.com/deislabs/porter-az
 
