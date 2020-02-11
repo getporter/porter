@@ -16,7 +16,6 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
@@ -46,8 +45,8 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
 	p := New()
 	p.Config = tc.Config
-	p.Mixins = &mixin.TestMixinProvider{}
-	p.Plugins = &plugins.TestPluginProvider{}
+	p.Mixins = mixin.NewTestMixinProvider()
+	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = cache.New(tc.Config)
 	p.Builder = NewTestBuildProvider()
 	p.Claims = claims.NewTestClaimProvider()
@@ -66,7 +65,8 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	p.NewCommand = exec.Command
 	p.Builder = buildprovider.NewDockerBuilder(p.Context)
-	p.Mixins = mixinprovider.NewFileSystem(p.Config)
+	p.Mixins = mixin.NewPackageManager(p.Config)
+	p.Plugins = plugins.NewPackageManager(p.Config)
 	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
 	homeDir := p.UseFilesystem()

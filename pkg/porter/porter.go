@@ -12,7 +12,6 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
-	mixinprovider "get.porter.sh/porter/pkg/mixin/provider"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
@@ -49,8 +48,8 @@ func New() *Porter {
 		Registry:    cnabtooci.NewRegistry(c.Context),
 		Templates:   templates.NewTemplates(),
 		Builder:     buildprovider.NewDockerBuilder(c.Context),
-		Mixins:      mixinprovider.NewFileSystem(c),
-		Plugins:     plugins.NewFileSystem(c),
+		Mixins:      mixin.NewPackageManager(c),
+		Plugins:     plugins.NewPackageManager(c),
 		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
 	}
 }

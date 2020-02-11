@@ -33,7 +33,7 @@ func (c *TestConfig) SetupPorterHome() {
 	c.FileSystem.Create(filepath.Join(home, "porter"))
 	c.FileSystem.Create(filepath.Join(home, "porter-runtime"))
 
-	mixinsDir, _ := c.GetMixinsDir()
+	mixinsDir := filepath.Join(home, "mixins")
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec-runtime"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm"))

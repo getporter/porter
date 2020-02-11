@@ -108,25 +108,25 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 		if err != nil {
 			// if a mixin can't report its schema, don't include it and keep going
 			if p.Debug {
-				fmt.Fprintln(p.Err, errors.Wrapf(err, "could not query mixin %s for its schema", mixin.Name))
+				fmt.Fprintln(p.Err, errors.Wrapf(err, "could not query mixin %s for its schema", mixin))
 			}
 			continue
 		}
 
 		// Update relative refs with the new location and reload
-		mixinSchema = strings.Replace(mixinSchema, "#/", fmt.Sprintf("#/mixin.%s/", mixin.Name), -1)
+		mixinSchema = strings.Replace(mixinSchema, "#/", fmt.Sprintf("#/mixin.%s/", mixin), -1)
 
 		mixinSchemaMap := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinSchema), &mixinSchemaMap)
 		if err != nil && p.Debug {
-			fmt.Fprintln(p.Err, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin.Name, mixinSchema))
+			fmt.Fprintln(p.Err, errors.Wrapf(err, "could not unmarshal mixin schema for %s, %q", mixin, mixinSchema))
 			continue
 		}
 
-		mixinEnumSchema = append(mixinEnumSchema, mixin.Name)
+		mixinEnumSchema = append(mixinEnumSchema, mixin)
 
 		// embed the entire mixin schema in the root
-		manifestSchema["mixin."+mixin.Name] = mixinSchemaMap
+		manifestSchema["mixin."+mixin] = mixinSchemaMap
 
 		for _, action := range coreActions {
 			actionItemSchema, ok := actionSchemas[action]["items"].(jsonSchema)
@@ -143,7 +143,7 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 				}
 			}
 
-			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin.Name, action)
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/%sStep", mixin, action)
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
 			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}
@@ -164,7 +164,7 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 				continue
 			}
 
-			actionRef := fmt.Sprintf("#/mixin.%s/definitions/invokeStep", mixin.Name)
+			actionRef := fmt.Sprintf("#/mixin.%s/definitions/invokeStep", mixin)
 			actionAnyOfSchema = append(actionAnyOfSchema, jsonObject{"$ref": actionRef})
 			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}

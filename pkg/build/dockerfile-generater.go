@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/pkgmgmt"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
@@ -21,15 +23,15 @@ type DockerfileGenerator struct {
 	*config.Config
 	*manifest.Manifest
 	*templates.Templates
-	mixin.MixinProvider
+	Mixins pkgmgmt.PackageManager
 }
 
-func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp mixin.MixinProvider) *DockerfileGenerator {
+func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager) *DockerfileGenerator {
 	return &DockerfileGenerator{
-		Config:        config,
-		Manifest:      m,
-		Templates:     tmpl,
-		MixinProvider: mp,
+		Config:    config,
+		Manifest:  m,
+		Templates: tmpl,
+		Mixins:    mp,
 	}
 }
 
@@ -180,11 +182,11 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 			return nil, errors.Wrapf(err, "could not marshal mixin build input for %s", m.Name)
 		}
 
-		cmd := mixin.CommandOptions{
+		cmd := pkgmgmt.CommandOptions{
 			Command: "build",
 			Input:   string(inputB),
 		}
-		err = g.MixinProvider.Run(&mixinContext, m.Name, cmd)
+		err = g.Mixins.Run(&mixinContext, m.Name, cmd)
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +273,7 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 
 func (g *DockerfileGenerator) copyMixin(mixin string) error {
 	fmt.Fprintf(g.Out, "Copying mixin %s ===> \n", mixin)
-	mixinDir, err := g.GetMixinDir(mixin)
+	mixinDir, err := g.Mixins.GetPackageDir(mixin)
 	if err != nil {
 		return err
 	}

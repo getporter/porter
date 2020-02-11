@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/porter/version"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
@@ -27,9 +28,9 @@ type SystemInfo struct {
 type Mixins []mixin.Metadata
 
 type SystemDebugInfo struct {
-	Version mixin.Metadata `json:"version"`
-	SysInfo SystemInfo     `json:"system"`
-	Mixins  Mixins         `json:"mixins"`
+	Version pkgmgmt.PackageMetadata `json:"version"`
+	SysInfo SystemInfo              `json:"system"`
+	Mixins  Mixins                  `json:"mixins"`
 }
 
 func (mixins Mixins) PrintMixinsTable() string {
@@ -50,9 +51,9 @@ func (mixins Mixins) PrintMixinsTable() string {
 }
 
 func (p *Porter) PrintVersion(opts VersionOpts) error {
-	metadata := mixin.Metadata{
+	metadata := pkgmgmt.Metadata{
 		Name: "porter",
-		VersionInfo: mixin.VersionInfo{
+		VersionInfo: pkgmgmt.VersionInfo{
 			Version: pkg.Version,
 			Commit:  pkg.Commit,
 		},
@@ -72,7 +73,7 @@ func getSystemInfo() *SystemInfo {
 	}
 }
 
-func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, versionMetadata mixin.Metadata) error {
+func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
 	opts.RawFormat = string(printer.FormatPlaintext)
 	sysInfo := getSystemInfo()
 	mixins, err := p.ListMixins()
@@ -84,7 +85,7 @@ func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, versionM
 	}
 
 	sysDebugInfo := SystemDebugInfo{
-		Version: versionMetadata,
+		Version: metadata,
 		SysInfo: *sysInfo,
 		Mixins:  mixins,
 	}

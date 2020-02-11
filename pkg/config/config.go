@@ -152,52 +152,6 @@ func (c *Config) GetBundlesCache() (string, error) {
 	return filepath.Join(home, "bundles"), nil
 }
 
-func (c *Config) GetMixinsDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "mixins"), nil
-}
-
-func (c *Config) GetMixinDir(mixin string) (string, error) {
-	mixinsDir, err := c.GetMixinsDir()
-	if err != nil {
-		return "", err
-	}
-
-	mixinDir := filepath.Join(mixinsDir, mixin)
-
-	dirExists, err := c.FileSystem.DirExists(mixinDir)
-	if err != nil {
-		return "", errors.Wrapf(err, "mixin %s not accessible at %s", mixin, mixinDir)
-	}
-	if !dirExists {
-		return "", fmt.Errorf("mixin %s not installed in PORTER_HOME", mixin)
-	}
-
-	return mixinDir, nil
-}
-
-func (c *Config) GetMixinPath(mixin string) (string, error) {
-	mixinDir, err := c.GetMixinDir(mixin)
-	if err != nil {
-		return "", err
-	}
-
-	executablePath := filepath.Join(mixinDir, mixin)
-	return executablePath, nil
-}
-
-func (c *Config) GetMixinRuntimePath(mixin string) (string, error) {
-	path, err := c.GetMixinPath(mixin)
-	if err != nil {
-		return "", nil
-	}
-
-	return path + "-runtime", nil
-}
-
 func (c *Config) GetPluginsDir() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
@@ -212,7 +166,7 @@ func (c *Config) GetPluginPath(plugin string) (string, error) {
 		return "", err
 	}
 
-	executablePath := filepath.Join(pluginsDir, plugin)
+	executablePath := filepath.Join(pluginsDir, plugin, plugin)
 	return executablePath, nil
 }
 

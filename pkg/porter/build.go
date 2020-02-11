@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/mixin"
-
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -52,7 +51,7 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 		return nil, errors.Wrapf(err, "error while listing mixins")
 	}
 
-	usedMixins := []mixin.Metadata{}
+	var usedMixins []mixin.Metadata
 	for _, installedMixin := range installedMixins {
 		for _, m := range p.Manifest.Mixins {
 			if installedMixin.Name == m.Name {

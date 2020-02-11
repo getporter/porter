@@ -1,42 +1,14 @@
-package mixinprovider
+package mixin
 
 import (
 	"os"
 	"testing"
 
-	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/pkgmgmt/client"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestRunner_Validate(t *testing.T) {
-	r := NewTestRunner(t, "exec", true)
-
-	err := r.Validate()
-	require.NoError(t, err)
-}
-
-func TestRunner_Validate_MissingName(t *testing.T) {
-	// Setup failure: empty mixin name
-	r := NewTestRunner(t, "", true)
-
-	err := r.Validate()
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "mixin not specified")
-}
-
-func TestRunner_Validate_MissingExecutable(t *testing.T) {
-	r := NewTestRunner(t, "exec", true)
-
-	// Setup failure: Don't copy the mixin binary into the test context
-	err := r.FileSystem.Remove(r.getMixinPath())
-	require.NoError(t, err)
-
-	err = r.Validate()
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "mixin not found")
-}
 
 func TestRunner_BuildCommand(t *testing.T) {
 	testcases := []struct {
@@ -55,11 +27,12 @@ func TestRunner_BuildCommand(t *testing.T) {
 	os.Unsetenv(test.ExpectedCommandEnv)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := NewTestRunner(t, "exec", false)
+			r := client.NewTestRunner(t, "exec", "mixins", false)
 			r.Debug = false
 			os.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
 
-			cmd := mixin.CommandOptions{Command: tc.runnerCommand}
+			mgr := PackageManager{}
+			cmd := pkgmgmt.CommandOptions{Command: tc.runnerCommand, PreRun: mgr.PreRunMixinCommandHandler}
 			err := r.Run(cmd)
 			require.NoError(t, err)
 		})

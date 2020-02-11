@@ -1,4 +1,4 @@
-package mixin
+package plugins
 
 import (
 	"testing"
@@ -12,5 +12,5 @@ func TestInstallOptions_Validate(t *testing.T) {
 	opts := InstallOptions{}
 	err := opts.Validate([]string{"pkg1"})
 	require.NoError(t, err, "Validate failed")
-	assert.Equal(t, DefaultFeedUrl, opts.FeedURL, "Feed URL was not defaulted to the mixin feed URL")
+	assert.Equal(t, DefaultFeedUrl, opts.FeedURL, "Feed URL was not defaulted to the plugins feed URL")
 }

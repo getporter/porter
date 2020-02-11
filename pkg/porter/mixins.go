@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/mixin/feed"
+
+	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"get.porter.sh/porter/pkg/printer"
 )
 
@@ -41,58 +43,51 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 
 func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	// List out what is installed on the file system
-	mixins, err := p.Mixins.List()
+	names, err := p.Mixins.List()
 	if err != nil {
 		return nil, err
 	}
 
-	// Query each mixin and fill out their version metadata, if available
-	for i := range mixins {
-		m := &mixins[i]
-		v, err := p.Mixins.GetVersionMetadata(*m)
+	// Query each mixin and fill out their metadata
+	mixins := make([]mixin.Metadata, len(names))
+	for i, name := range names {
+		m, err := p.Mixins.GetMetadata(name)
 		if err != nil {
-			// For now, while we transition from mixins not supporting version --output json, ignore it if a mixin
-			// doesn't handle this call
+			fmt.Fprintf(p.Err, "could not get version from mixin %s: %s\n ", name, err.Error())
 			continue
 		}
 
-		m.VersionInfo = *v
+		meta, _ := m.(*mixin.Metadata)
+		mixins[i] = *meta
 	}
 
 	return mixins, nil
 }
 
 func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
-	m, err := p.Mixins.Install(opts)
+	err := p.Mixins.Install(opts.InstallOptions)
 	if err != nil {
 		return err
 	}
 
-	// TODO: Once we can extract the version from the mixin with json (#263), then we can print it out as installed mixin @v1.0.0
-	confirmedVersion, err := p.Mixins.GetVersion(*m)
+	mixin, err := p.Mixins.GetMetadata(opts.Name)
 	if err != nil {
 		return err
 	}
-	if p.Debug {
-		fmt.Fprintf(p.Out, "installed %s mixin to %s\n%s", m.Name, m.Dir, confirmedVersion)
-	} else {
-		fmt.Fprintf(p.Out, "installed %s mixin\n%s", m.Name, confirmedVersion)
-	}
+
+	v := mixin.GetVersionInfo()
+	fmt.Fprintf(p.Out, "installed %s mixin %s (%s)", opts.Name, v.Version, v.Commit)
 
 	return nil
 }
 
-func (p *Porter) UninstallMixin(opts mixin.UninstallOptions) error {
-	m, err := p.Mixins.Uninstall(opts)
+func (p *Porter) UninstallMixin(opts pkgmgmt.UninstallOptions) error {
+	err := p.Mixins.Uninstall(opts)
 	if err != nil {
 		return err
 	}
 
-	if p.Debug {
-		fmt.Fprintf(p.Out, "Uninstalled %s mixin from %s", m.Name, m.Dir)
-	} else {
-		fmt.Fprintf(p.Out, "Uninstalled %s mixin", m.Name)
-	}
+	fmt.Fprintf(p.Out, "Uninstalled %s mixin", opts.Name)
 
 	return nil
 }

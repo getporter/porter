@@ -83,7 +83,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
       "name": "exec",
       "version": "v1.0",
       "commit": "abc123",
-      "author": "Deis Labs"
+      "author": "Porter Authors"
     }
   ]
 }
@@ -104,7 +104,7 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 	p.PrintVersion(opts)
 
 	versionOutput := "porter v1.2.3 (abc123)"
-	mixinsOutput := "exec   v1.0      Deis Labs"
+	mixinsOutput := "exec   v1.0      Porter Authors"
 	systemOutput := fmt.Sprintf("os: %s\narch: %s", runtime.GOOS, runtime.GOARCH)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

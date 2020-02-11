@@ -1,10 +1,10 @@
-package mixin
+package plugins
 
 import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 )
 
-const DefaultFeedUrl = "https://cdn.porter.sh/mixins/atom.xml"
+const DefaultFeedUrl = "https://cdn.porter.sh/plugins/atom.xml"
 
 type InstallOptions struct {
 	pkgmgmt.InstallOptions

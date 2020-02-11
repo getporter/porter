@@ -1,5 +1,5 @@
 // +build windows
 
-package mixin
+package pkgmgmt
 
 const FileExt = ".exe"

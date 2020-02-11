@@ -1,24 +1,24 @@
 ---
-title: "porter plugins list"
-slug: porter_plugins_list
-url: /cli/porter_plugins_list/
+title: "porter plugins show"
+slug: porter_plugins_show
+url: /cli/porter_plugins_show/
 ---
-## porter plugins list
+## porter plugins show
 
-List installed plugins
+Show details about an installed plugin
 
 ### Synopsis
 
-List installed plugins
+Show details about an installed plugin
 
 ```
-porter plugins list [flags]
+porter plugins show [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help            help for list
+  -h, --help            help for show
   -o, --output string   Output format, allowed values are: table, json, yaml (default "table")
 ```
 

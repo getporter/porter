@@ -14,7 +14,7 @@ type TestPorterRuntime struct {
 
 func NewTestPorterRuntime(t *testing.T) *TestPorterRuntime {
 	cxt := context.NewTestContext(t)
-	mixins := &mixin.TestMixinProvider{}
+	mixins := mixin.NewTestMixinProvider()
 	pr := NewPorterRuntime(cxt.Context, mixins)
 
 	return &TestPorterRuntime{

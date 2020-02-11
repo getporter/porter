@@ -2,15 +2,18 @@ package porter
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets/host"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -19,69 +22,165 @@ type PrintPluginsOptions struct {
 	printer.PrintOptions
 }
 
-func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
-	installedPlugins, err := p.Plugins.List()
+// ShowPluginOptions represent options for showing a particular plugin.
+type ShowPluginOptions struct {
+	printer.PrintOptions
+	Name string
+}
+
+func (o *ShowPluginOptions) Validate(args []string) error {
+	err := o.validateName(args)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get list of installed plugins")
+		return err
 	}
 
-	var pluginsMetadata []plugins.Metadata
-	for _, plugin := range installedPlugins {
-		metadata, err := p.Plugins.GetMetadata(plugin)
-		// lets not break everything just because one plugin failed
-		if err != nil {
-			if p.Debug {
-				fmt.Fprintln(p.Err, "DEBUG Failed to get metadata for ", plugin)
-			}
-			continue
-		}
-		pluginsMetadata = append(pluginsMetadata, *metadata)
+	return o.ParseFormat()
+}
+
+// validateName grabs the name from the first positional argument.
+func (o *ShowPluginOptions) validateName(args []string) error {
+	switch len(args) {
+	case 0:
+		return errors.Errorf("no name was specified")
+	case 1:
+		o.Name = strings.ToLower(args[0])
+		return nil
+	default:
+		return errors.Errorf("only one positional argument may be specified, the name, but multiple were received: %s", args)
+
 	}
+}
 
-	implementations := []map[string]string{}
-
-	for _, plugin := range pluginsMetadata {
-		if len(plugin.Implementations) != 0 {
-			for _, implementation := range plugin.Implementations {
-				implementations = append(implementations, map[string]string{
-					"Name":           plugin.Name,
-					"Type":           implementation.Type,
-					"Implementation": implementation.Name,
-					"Version":        plugin.Version,
-					"Author":         plugin.Author,
-				})
-			}
-		} else {
-			// old `plugin version` command don't return implementation details
-			implementations = append(implementations, map[string]string{
-				"Name":           plugin.Name,
-				"Type":           "N/A",
-				"Implementation": "N/A",
-				"Version":        plugin.Version,
-				"Author":         plugin.Author,
-			})
-		}
+func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
+	installedPlugins, err := p.ListPlugins()
+	if err != nil {
+		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatTable:
-		printMixinRow :=
+		printRow :=
 			func(v interface{}) []interface{} {
-				m, ok := v.(map[string]string)
+				m, ok := v.(plugins.Metadata)
 				if !ok {
 					return nil
 				}
-				return []interface{}{m["Name"], m["Type"], m["Implementation"], m["Version"], m["Author"]}
+				return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 			}
-		return printer.PrintTable(p.Out, implementations, printMixinRow, "Name", "Type", "Implementation", "Version", "Author")
+		return printer.PrintTable(p.Out, installedPlugins, printRow, "Name", "Version", "Author")
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, pluginsMetadata)
+		return printer.PrintJson(p.Out, installedPlugins)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, pluginsMetadata)
+		return printer.PrintYaml(p.Out, installedPlugins)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
 
+func (p *Porter) ListPlugins() ([]plugins.Metadata, error) {
+	// List out what is installed on the file system
+	names, err := p.Plugins.List()
+	if err != nil {
+		return nil, err
+	}
+
+	// Query each plugin and fill out their metadata, handle the
+	// cast from the PackageMetadata interface to the concrete type
+	installedPlugins := make([]plugins.Metadata, len(names))
+	for i, name := range names {
+		plugin, err := p.Plugins.GetMetadata(name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "could not get version from plugin %s: %s\n ", name, err.Error())
+			continue
+		}
+
+		meta, _ := plugin.(*plugins.Metadata)
+		installedPlugins[i] = *meta
+	}
+
+	return installedPlugins, nil
+}
+
+func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
+	plugin, err := p.GetPlugin(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	switch opts.Format {
+	case printer.FormatTable:
+		// Build and configure our tablewriter
+		// TODO: make this a function and reuse it in printer/table.go
+		table := tablewriter.NewWriter(p.Out)
+		table.SetCenterSeparator("")
+		table.SetColumnSeparator("")
+		table.SetAlignment(tablewriter.ALIGN_LEFT)
+		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+		table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
+		table.SetAutoFormatHeaders(false)
+
+		// First, print the plugin metadata
+		fmt.Fprintf(p.Out, "Name: %s\n", plugin.Name)
+		fmt.Fprintf(p.Out, "Version: %s\n", plugin.Version)
+		fmt.Fprintf(p.Out, "Commit: %s\n", plugin.Commit)
+		fmt.Fprintf(p.Out, "Author: %s\n\n", plugin.Author)
+
+		table.SetHeader([]string{"Type", "Implementation"})
+		for _, row := range plugin.Implementations {
+			table.Append([]string{row.Type, row.Name})
+		}
+		table.Render()
+		return nil
+
+	case printer.FormatJson:
+		return printer.PrintJson(p.Out, plugin)
+	case printer.FormatYaml:
+		return printer.PrintYaml(p.Out, plugin)
+	default:
+		return fmt.Errorf("invalid format: %s", opts.Format)
+	}
+}
+
+func (p *Porter) GetPlugin(name string) (*plugins.Metadata, error) {
+	meta, err := p.Plugins.GetMetadata(name)
+	if err != nil {
+		return nil, err
+	}
+
+	plugin, ok := meta.(*plugins.Metadata)
+	if !ok {
+		return nil, errors.Errorf("could not cast plugin %s to plugins.Metadata", name)
+	}
+
+	return plugin, nil
+}
+
+func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {
+	err := p.Plugins.Install(opts.InstallOptions)
+	if err != nil {
+		return err
+	}
+
+	plugin, err := p.Plugins.GetMetadata(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	v := plugin.GetVersionInfo()
+	fmt.Fprintf(p.Out, "installed %s plugin %s (%s)", opts.Name, v.Version, v.Commit)
+
+	return nil
+}
+
+func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
+	err := p.Plugins.Uninstall(opts)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(p.Out, "Uninstalled %s plugin", opts.Name)
+
+	return nil
 }
 
 type RunInternalPluginOpts struct {
@@ -134,6 +233,6 @@ func (p *Porter) RunInternalPlugins(args []string) {
 func getInternalPlugins(cfg *config.Config) map[string]func() plugin.Plugin {
 	return map[string]func() plugin.Plugin{
 		filesystem.PluginKey: func() plugin.Plugin { return filesystem.NewPlugin(*cfg) },
-		host.PluginKey: func() plugin.Plugin { return host.NewPlugin() },
+		host.PluginKey:       func() plugin.Plugin { return host.NewPlugin() },
 	}
 }

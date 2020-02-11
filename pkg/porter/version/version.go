@@ -2,10 +2,9 @@ package version
 
 import (
 	"fmt"
-	"os"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
 )
 
@@ -15,9 +14,7 @@ type Options struct {
 }
 
 var DefaultVersionFormat = printer.FormatPlaintext
-var GetExecutable = os.Executable
 
-//
 func (o *Options) Validate() error {
 	if o.RawFormat == "" {
 		o.RawFormat = string(DefaultVersionFormat)
@@ -37,17 +34,18 @@ func (o *Options) Validate() error {
 }
 
 // PrintVersion prints the version based on the version flags using the binary's metadata.
-// Suitable for any mixin to use to implement its version command.
-func PrintVersion(cxt *context.Context, opts Options, metadata mixin.Metadata) error {
+// Suitable for any mixin or plugin to use to implement its version command.
+func PrintVersion(cxt *context.Context, opts Options, metadata pkgmgmt.PackageMetadata) error {
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(cxt.Out, metadata)
 	case printer.FormatPlaintext:
+		vi := metadata.GetVersionInfo()
 		authorship := ""
-		if metadata.VersionInfo.Author != "" {
-			authorship = " by " + metadata.VersionInfo.Author
+		if vi.Author != "" {
+			authorship = " by " + vi.Author
 		}
-		_, err := fmt.Fprintf(cxt.Out, "%s %s (%s)%s\n", metadata.Name, metadata.VersionInfo.Version, metadata.VersionInfo.Commit, authorship)
+		_, err := fmt.Fprintf(cxt.Out, "%s %s (%s)%s\n", metadata.GetName(), vi.Version, vi.Commit, authorship)
 		return err
 	default:
 		return fmt.Errorf("unsupported format: %s", opts.Format)

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage/crudstore"
 	"get.porter.sh/porter/pkg/storage/filesystem"
@@ -42,11 +44,8 @@ func TestRunInternalPluginOpts_Validate(t *testing.T) {
 }
 
 func TestPorter_PrintPlugins(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-
-	t.Run("Plugin List - Table Format", func(t *testing.T) {
-
+	t.Run("table", func(t *testing.T) {
+		p := NewTestPorter(t)
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
 				Format: printer.FormatTable,
@@ -55,19 +54,17 @@ func TestPorter_PrintPlugins(t *testing.T) {
 		err := p.PrintPlugins(opts)
 
 		require.Nil(t, err)
-		expected := `Name      Type               Implementation   Version   Author
-plugin1   instance-storage   blob             v1.0      Porter Authors
-plugin1   instance-storage   mongo            v1.0      Porter Authors
-plugin2   instance-storage   blob             v1.0      Porter Authors
-plugin2   instance-storage   mongo            v1.0      Porter Authors
-unknown   N/A                N/A              v1.0      Porter Authors
+		expected := `Name      Version   Author
+plugin1   v1.0      Porter Authors
+plugin2   v1.0      Porter Authors
+unknown   v1.0      Porter Authors
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
 	})
 
-	t.Run("Plugin List - YAML Format", func(t *testing.T) {
-		p.TestConfig.TestContext.ResetOutput()
+	t.Run("yaml", func(t *testing.T) {
+		p := NewTestPorter(t)
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
 				Format: printer.FormatYaml,
@@ -77,37 +74,196 @@ unknown   N/A                N/A              v1.0      Porter Authors
 
 		require.Nil(t, err)
 		expected := `- name: plugin1
-  clientpath: /home/porter/.porter/plugins/plugin1
-  implementations:
-  - type: instance-storage
-    name: blob
-  - type: instance-storage
-    name: mongo
   versioninfo:
     version: v1.0
     commit: abc123
     author: Porter Authors
+  implementations:
+  - type: storage
+    name: blob
+  - type: storage
+    name: mongo
 - name: plugin2
-  clientpath: /home/porter/.porter/plugins/plugin2
+  versioninfo:
+    version: v1.0
+    commit: abc123
+    author: Porter Authors
   implementations:
-  - type: instance-storage
+  - type: storage
     name: blob
-  - type: instance-storage
+  - type: storage
     name: mongo
-  versioninfo:
-    version: v1.0
-    commit: abc123
-    author: Porter Authors
 - name: unknown
-  clientpath: /home/porter/.porter/plugins/unknown
-  implementations: []
   versioninfo:
     version: v1.0
     commit: abc123
     author: Porter Authors
+  implementations: []
 
 `
 		actual := p.TestConfig.TestContext.GetOutput()
 		assert.Equal(t, expected, actual)
 	})
+
+	t.Run("json", func(t *testing.T) {
+		p := NewTestPorter(t)
+		opts := PrintPluginsOptions{
+			PrintOptions: printer.PrintOptions{
+				Format: printer.FormatJson,
+			},
+		}
+		err := p.PrintPlugins(opts)
+
+		require.Nil(t, err)
+		expected := `[
+  {
+    "name": "plugin1",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": [
+      {
+        "type": "storage",
+        "implementation": "blob"
+      },
+      {
+        "type": "storage",
+        "implementation": "mongo"
+      }
+    ]
+  },
+  {
+    "name": "plugin2",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": [
+      {
+        "type": "storage",
+        "implementation": "blob"
+      },
+      {
+        "type": "storage",
+        "implementation": "mongo"
+      }
+    ]
+  },
+  {
+    "name": "unknown",
+    "version": "v1.0",
+    "commit": "abc123",
+    "author": "Porter Authors",
+    "implementations": null
+  }
+]
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestPorter_ShowPlugin(t *testing.T) {
+	t.Run("table", func(t *testing.T) {
+		p := NewTestPorter(t)
+		opts := ShowPluginOptions{Name: "plugin1"}
+		opts.Format = printer.FormatTable
+		err := p.ShowPlugin(opts)
+		require.NoError(t, err, "ShowPlugin failed")
+
+		expected := `Name: plugin1
+Version: v1.0
+Commit: abc123
+Author: Porter Authors
+
+---------------------------
+  Type     Implementation  
+---------------------------
+  storage  blob            
+  storage  mongo           
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("yaml", func(t *testing.T) {
+		p := NewTestPorter(t)
+		opts := ShowPluginOptions{Name: "plugin1"}
+		opts.Format = printer.FormatYaml
+		err := p.ShowPlugin(opts)
+		require.NoError(t, err, "ShowPlugin failed")
+
+		expected := `name: plugin1
+versioninfo:
+  version: v1.0
+  commit: abc123
+  author: Porter Authors
+implementations:
+- type: storage
+  name: blob
+- type: storage
+  name: mongo
+
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("json", func(t *testing.T) {
+		p := NewTestPorter(t)
+		opts := ShowPluginOptions{Name: "plugin1"}
+		opts.Format = printer.FormatJson
+		err := p.ShowPlugin(opts)
+		require.NoError(t, err, "ShowPlugin failed")
+
+		expected := `{
+  "name": "plugin1",
+  "version": "v1.0",
+  "commit": "abc123",
+  "author": "Porter Authors",
+  "implementations": [
+    {
+      "type": "storage",
+      "implementation": "blob"
+    },
+    {
+      "type": "storage",
+      "implementation": "mongo"
+    }
+  ]
+}
+`
+		actual := p.TestConfig.TestContext.GetOutput()
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestPorter_InstallPlugin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := plugins.InstallOptions{}
+	opts.URL = "https://example.com"
+	err := opts.Validate([]string{"plugin1"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.InstallPlugin(opts)
+	require.NoError(t, err, "InstallPlugin failed")
+
+	wantOutput := "installed plugin1 plugin v1.0 (abc123)"
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotOutput)
+}
+
+func TestPorter_UninstallPlugin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	opts := pkgmgmt.UninstallOptions{}
+	err := opts.Validate([]string{"plugin1"})
+	require.NoError(t, err, "Validate failed")
+
+	err = p.UninstallPlugin(opts)
+	require.NoError(t, err, "UninstallPlugin failed")
+
+	wantOutput := "Uninstalled plugin1 plugin"
+	gotoutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotoutput)
 }
