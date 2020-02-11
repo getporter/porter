@@ -303,3 +303,19 @@ func TestValidateImageMap(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestLoadManifestWithCustomData(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/porter.yaml", config.Name)
+
+	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	assert.NotNil(t, m)
+	assert.Equal(t, map[string]interface{}{"foo": "bar"}, m.Custom)
+
+	custom := m.Custom
+	fooCustomField, _ := custom["foo"]
+	assert.Equal(t, "bar", fooCustomField)
+}

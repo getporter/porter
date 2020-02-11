@@ -20,3 +20,7 @@ uninstall:
     command: bash
     flags:
       c: echo Goodbye World
+
+custom:
+  foo: bar
+
