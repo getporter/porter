@@ -1,0 +1,28 @@
+mixins:
+  - exec
+  -
+  - az:
+      extensions:
+        - iot
+
+
+install:
+  - exec:
+      description: Install something
+      command: bash
+      arguments:
+        - install1.sh
+  -
+  - exec:
+      description: Install something else
+      command: bash
+      arguments:
+        - install2.sh
+
+uninstall:
+  - exec:
+      description: uninstall everything
+      command: bash
+      arguments:
+        - uninstall.sh
+  -
