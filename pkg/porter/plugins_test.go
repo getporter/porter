@@ -248,7 +248,7 @@ func TestPorter_InstallPlugin(t *testing.T) {
 	err = p.InstallPlugin(opts)
 	require.NoError(t, err, "InstallPlugin failed")
 
-	wantOutput := "installed plugin1 plugin v1.0 (abc123)"
+	wantOutput := "installed plugin1 plugin v1.0 (abc123)\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
 }

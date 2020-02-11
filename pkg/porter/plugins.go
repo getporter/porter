@@ -167,7 +167,7 @@ func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {
 	}
 
 	v := plugin.GetVersionInfo()
-	fmt.Fprintf(p.Out, "installed %s plugin %s (%s)", opts.Name, v.Version, v.Commit)
+	fmt.Fprintf(p.Out, "installed %s plugin %s (%s)\n", opts.Name, v.Version, v.Commit)
 
 	return nil
 }

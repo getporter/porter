@@ -39,7 +39,7 @@ func TestPorter_InstallMixin(t *testing.T) {
 
 	require.NoError(t, err)
 
-	wantOutput := "installed exec mixin v1.0 (abc123)"
+	wantOutput := "installed exec mixin v1.0 (abc123)\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
 }
