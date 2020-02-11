@@ -35,7 +35,7 @@ func TestInstallOptions_DefaultVersion(t *testing.T) {
 	t.Run("version specified", func(t *testing.T) {
 		opts := InstallOptions{Version: "canary"}
 		opts.defaultVersion()
-		assert.Equal(t, "canary", opts.Version, "defaultVersion should not overwrite the user's choid")
+		assert.Equal(t, "canary", opts.Version, "defaultVersion should not overwrite the user's choice")
 	})
 }
 

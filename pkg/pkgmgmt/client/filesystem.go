@@ -29,7 +29,7 @@ type FileSystem struct {
 	*config.Config
 
 	// PackageType is the type of package managed by this instance of the
-	// package manager It must also correspond to the directory name in
+	// package manager. It must also correspond to the directory name in
 	// PORTER_HOME.
 	PackageType string
 

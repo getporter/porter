@@ -100,7 +100,7 @@ func BuildPluginUninstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "uninstall NAME",
 		Short:   "Uninstall a plugin",
-		Example: `  porter mixin uninstall azure`,
+		Example: `  porter plugin uninstall azure`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
