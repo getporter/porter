@@ -3,7 +3,6 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
@@ -143,7 +142,7 @@ func (o *CredentialShowOptions) Validate(args []string) error {
 	case 0:
 		return errors.Errorf("no credential name was specified")
 	case 1:
-		o.Name = strings.ToLower(args[0])
+		o.Name = args[0]
 	default:
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
