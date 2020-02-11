@@ -527,7 +527,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	bun := a.ToBundle()
 	assert.Len(t, bun.Custom, 3)
-	
+
 	fooCustomData := bun.Custom["foo"]
 	assert.Equal(t, "bar", fooCustomData)
 }

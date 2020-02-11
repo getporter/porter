@@ -313,7 +313,7 @@ func TestLoadManifestWithCustomData(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 
 	assert.NotNil(t, m)
-	assert.Equal(t, map[string]interface {}{"foo":"bar"}, m.Custom)
+	assert.Equal(t, map[string]interface{}{"foo": "bar"}, m.Custom)
 
 	custom := m.Custom
 	fooCustomField, _ := custom["foo"]
