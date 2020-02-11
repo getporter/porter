@@ -17,7 +17,7 @@ echo Installed `$PORTER_HOME/porter version`
 $PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install kubernetes --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install helm --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install azure --version $PKG_PERMALINK
+$PORTER_HOME/porter mixin install arm --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install terraform --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install az --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install aws --version $PKG_PERMALINK
