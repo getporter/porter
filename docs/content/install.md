@@ -97,7 +97,7 @@ $ porter mixin install terraform
 installed terraform mixin v0.3.0-beta.1 (0d24b85)
 ```
 
-All of the Porter authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
+All of the Porter-authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
 
 # Plugins
 
@@ -105,14 +105,14 @@ We are working on building out [plugins](/plugins) to extend Porter and the stab
 plugins are installed by default.
 
 You can update an existing plugin, or install a new plugin using the `porter plugin
-plugin` command:
+install` command:
 
 ```console
 $ porter plugin install azure --version canary
 installed azure plugin v0.1.1-10-g7071451 (7071451)
 ```
 
-All of the Porter authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
+All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
 
 
 [releases]: https://github.com/deislabs/porter/releases
