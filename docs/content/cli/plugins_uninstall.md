@@ -18,7 +18,7 @@ porter plugins uninstall NAME [flags]
 ### Examples
 
 ```
-  porter mixin uninstall azure
+  porter plugin uninstall azure
 ```
 
 ### Options
