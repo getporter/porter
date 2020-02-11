@@ -86,24 +86,33 @@ iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 
 # Mixins
 
-We have a number of [mixins](/mixins) to help you get started. The stable ones
-are installed by default:
-
-* exec
-* kubernetes
-* helm
-* azure
-* terraform
+We have a number of [mixins](/mixins) to help you get started, and stable mixins
+are installed by default.
 
 You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
 
 ```console
 $ porter mixin install terraform
-installed terraform mixin
-v0.3.0-beta.1 (0d24b85)
+installed terraform mixin v0.3.0-beta.1 (0d24b85)
 ```
 
-All of the Porter mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
+All of the Porter authored mixins are published to `https://cdn.porter.sh/mixins/atom.xml`.
+
+# Plugins
+
+We are working on building out [plugins](/plugins) to extend Porter and the stable
+plugins are installed by default.
+
+You can update an existing plugin, or install a new plugin using the `porter plugin
+plugin` command:
+
+```console
+$ porter plugin install azure --version canary
+installed azure plugin v0.1.1-10-g7071451 (7071451)
+```
+
+All of the Porter authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
+
 
 [releases]: https://github.com/deislabs/porter/releases
