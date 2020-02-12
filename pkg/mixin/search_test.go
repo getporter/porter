@@ -72,7 +72,7 @@ func TestSearch_TestBox(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			box := packr.Folder("./testdata/remote-mixins")
+			box := packr.Folder("./testdata/directory")
 			searcher := NewSearcher(box)
 
 			result, err := searcher.Search(tc.opts)

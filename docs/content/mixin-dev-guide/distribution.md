@@ -85,7 +85,7 @@ az     A mixin for using the az cli   Porter Authors   https://cdn.porter.sh/mix
 ## Broadcast
 
 To add your mixin to the list, add an entry to the remote mixin
-[list](https://github.com/deislabs/porter/blob/master/pkg/mixin/remote-mixins/index.json)
+[list](https://github.com/deislabs/porter/blob/master/pkg/mixin/directory/index.json)
 with all the pertinent informational fields filled out.
 
 For instance, a new entry might look like:

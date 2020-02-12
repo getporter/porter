@@ -68,14 +68,18 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 
 // SearchMixins searches the internal remote mixins list according to the provided options
 func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
-	box := packr.New("get.porter.sh/porter/pkg/mixin/remote-mixins", "../mixin/remote-mixins")
+	box := packr.New("get.porter.sh/porter/pkg/mixin/directory", "../mixin/directory")
 	mixinSearcher := mixin.NewSearcher(box)
 
-	remoteMixins, err := mixinSearcher.Search(opts)
+	mixinList, err := mixinSearcher.Search(opts)
 	if err != nil {
 		return err
 	}
+	return p.PrintPackages(opts, mixinList)
+}
 
+// PrintPackages prints the provided package list according to the provided options
+func (p *Porter) PrintPackages(opts mixin.SearchOptions, list pkgmgmt.PackageList) error {
 	switch opts.Format {
 	case printer.FormatTable:
 		printMixinRow :=
@@ -95,11 +99,11 @@ func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
 				}
 				return []interface{}{m.Name, m.Description, m.Author, m.URL, urlType}
 			}
-		return printer.PrintTable(p.Out, remoteMixins, printMixinRow, "Name", "Description", "Author", "URL", "URL Type")
+		return printer.PrintTable(p.Out, list, printMixinRow, "Name", "Description", "Author", "URL", "URL Type")
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, remoteMixins)
+		return printer.PrintJson(p.Out, list)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, remoteMixins)
+		return printer.PrintYaml(p.Out, list)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
