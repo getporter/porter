@@ -73,7 +73,7 @@ func (s *Searcher) Search(opts SearchOptions) (pkgmgmt.PackageList, error) {
 
 	results := pkgmgmt.PackageList{}
 	for _, p := range pl {
-		if strings.Contains(p.Name, opts.Name) {
+		if strings.HasPrefix(p.Name, opts.Name) {
 			results = append(results, p)
 		}
 	}
