@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/mixin"
 
@@ -88,9 +89,18 @@ func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{m.Name, m.Description, m.Author, m.SourceURL, m.FeedURL}
+
+				var urlType string
+				if strings.Contains(m.URL, ".xml") {
+					urlType = "Atom Feed"
+				} else if strings.Contains(m.URL, "download") {
+					urlType = "Download"
+				} else {
+					urlType = "Unknown"
+				}
+				return []interface{}{m.Name, m.Description, m.Author, m.URL, urlType}
 			}
-		return printer.PrintTable(p.Out, remoteMixins, printMixinRow, "Name", "Description", "Author", "Source URL", "Feed URL")
+		return printer.PrintTable(p.Out, remoteMixins, printMixinRow, "Name", "Description", "Author", "URL", "URL Type")
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, remoteMixins)
 	case printer.FormatYaml:

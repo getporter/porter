@@ -82,17 +82,16 @@ func TestPorter_SearchMixins(t *testing.T) {
 			`- name: az
   author: Porter Authors
   description: A mixin for using the az cli
-  sourceurl: https://cdn.porter.sh/mixins/az
-  feedurl: https://cdn.porter.sh/mixins/atom.xml
+  url: https://cdn.porter.sh/mixins/atom.xml
 
 `,
 		},
 		{"mixin name multiple match",
 			"ku",
 			printer.FormatTable,
-			`Name         Description                           Author           Source URL                                                          Feed URL
-kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/kubernetes                             https://cdn.porter.sh/mixins/atom.xml
-kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   
+			`Name         Description                           Author           URL                                                                 URL Type
+kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/atom.xml                               Atom Feed
+kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   Download
 `,
 		},
 		{"mixin name no match",

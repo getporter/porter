@@ -77,9 +77,9 @@ returned.  See the help menu for all command options: `porter mixins search -h`.
 For example, here we search for a `cowsay` mixin:
 
 ```console
-$ porter mixins search cowsay
-Name     Description                        Author           Source URL                                                    Feed URL
-cowsay   A mixin for using the cowsay cli   Porter Authors   https://github.com/deislabs/porter-cowsay/releases/download
+$ porter mixin search az
+Name   Description                    Author           URL                                     URL Type
+az     A mixin for using the az cli   Porter Authors   https://cdn.porter.sh/mixins/atom.xml   Atom Feed
 ```
 
 ## Broadcast
@@ -95,12 +95,14 @@ For instance, a new entry might look like:
     "name": "mymixin",
     "author": "My Name",
     "description": "A mixin for doing great things",
-    "sourceURL": "https://github.com/org/project/releases/download",
-    "feedURL": "https://my.domain.com/mixins/atom.xml"
+    "URL": "https://github.com/org/project/releases/download",
   },
 ```
 
-It is okay to leave `feedURL` empty if no atom feed yet exists.
+The `URL` field should either be an Atom Feed URL (for example, Porter uses
+the following for its stable mixins: `https://cdn.porter.sh/mixins/atom.xml`) or
+a download URL (like the GitHub download URL shown above:
+`https://github.com/org/project/releases/download`)
 
 With this change pushed to a branch on your fork of this repo, you're
 now ready to open up a [Pull Request](https://github.com/deislabs/porter/pulls).

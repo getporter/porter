@@ -24,8 +24,7 @@ type RemoteMixinListing struct {
 	Name        string `json:"name"`
 	Author      string `json:"author"`
 	Description string `json:"description"`
-	SourceURL   string `json:"sourceURL"`
-	FeedURL     string `json:"feedURL"`
+	URL         string `json:"URL"`
 }
 
 // RemoteMixinList is a collection of RemoteMixinListings

@@ -29,22 +29,19 @@ func TestSearch_TestBox(t *testing.T) {
 			Name:        "az",
 			Author:      "Porter Authors",
 			Description: "A mixin for using the az cli",
-			SourceURL:   "https://cdn.porter.sh/mixins/az",
-			FeedURL:     "https://cdn.porter.sh/mixins/atom.xml",
+			URL:         "https://cdn.porter.sh/mixins/atom.xml",
 		},
 		{
 			Name:        "cowsay",
 			Author:      "Porter Authors",
 			Description: "A mixin for using the cowsay cli",
-			SourceURL:   "https://github.com/deislabs/porter-cowsay/releases/download",
-			FeedURL:     "",
+			URL:         "https://github.com/deislabs/porter-cowsay/releases/download",
 		},
 		{
 			Name:        "cowsayeth",
 			Author:      "Udder Geniuses",
 			Description: "A mixin for using the cowsayeth cli",
-			SourceURL:   "https://cdn.uddergenius.es/mixins/cowsayeth",
-			FeedURL:     "https://cdn.uddergenius.es/mixins/atom.xml",
+			URL:         "https://cdn.uddergenius.es/mixins/atom.xml",
 		},
 	}
 

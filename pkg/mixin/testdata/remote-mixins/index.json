@@ -3,21 +3,18 @@
     "name": "az",
     "author": "Porter Authors",
     "description": "A mixin for using the az cli",
-    "sourceURL": "https://cdn.porter.sh/mixins/az",
-    "feedURL": "https://cdn.porter.sh/mixins/atom.xml"
+    "URL": "https://cdn.porter.sh/mixins/atom.xml"
   },
   {
     "name": "cowsay",
     "author": "Porter Authors",
     "description": "A mixin for using the cowsay cli",
-    "sourceURL": "https://github.com/deislabs/porter-cowsay/releases/download",
-    "feedURL": ""
+    "URL": "https://github.com/deislabs/porter-cowsay/releases/download"
   },
   {
     "name": "cowsayeth",
     "author": "Udder Geniuses",
     "description": "A mixin for using the cowsayeth cli",
-    "sourceURL": "https://cdn.uddergenius.es/mixins/cowsayeth",
-    "feedURL": "https://cdn.uddergenius.es/mixins/atom.xml"
+    "URL": "https://cdn.uddergenius.es/mixins/atom.xml"
   }
 ]
