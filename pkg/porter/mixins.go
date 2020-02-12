@@ -85,7 +85,7 @@ func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
 	case printer.FormatTable:
 		printMixinRow :=
 			func(v interface{}) []interface{} {
-				m, ok := v.(mixin.PackageListing)
+				m, ok := v.(pkgmgmt.PackageListing)
 				if !ok {
 					return nil
 				}

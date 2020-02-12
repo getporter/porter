@@ -3,6 +3,7 @@ package mixin
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func TestSearchOptions_Validate_MixinName(t *testing.T) {
 }
 
 func TestSearch_TestBox(t *testing.T) {
-	fullList := RemoteMixinList{
+	fullList := pkgmgmt.PackageList{
 		{
 			Name:        "az",
 			Author:      "Porter Authors",
@@ -48,7 +49,7 @@ func TestSearch_TestBox(t *testing.T) {
 	testcases := []struct {
 		name      string
 		opts      SearchOptions
-		wantItems RemoteMixinList
+		wantItems pkgmgmt.PackageList
 	}{
 		{"no args",
 			SearchOptions{},
@@ -56,15 +57,15 @@ func TestSearch_TestBox(t *testing.T) {
 		},
 		{"mixin name single match",
 			SearchOptions{Name: "az"},
-			RemoteMixinList{fullList[0]},
+			pkgmgmt.PackageList{fullList[0]},
 		},
 		{"mixin name multiple match",
 			SearchOptions{Name: "cowsay"},
-			RemoteMixinList{fullList[1], fullList[2]},
+			pkgmgmt.PackageList{fullList[1], fullList[2]},
 		},
 		{"mixin name no match",
 			SearchOptions{Name: "ottersay"},
-			RemoteMixinList{},
+			pkgmgmt.PackageList{},
 		},
 	}
 

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
@@ -35,7 +36,7 @@ func (o *SearchOptions) Validate(args []string) error {
 		return err
 	}
 
-	return o.ParseFopat()
+	return o.ParseFormat()
 }
 
 // validateMixinName validates either no mixin name is provided or only one is
@@ -53,13 +54,13 @@ func (o *SearchOptions) validateMixinName(args []string) error {
 
 // Search searches for mixins matching the optional provided name,
 // returning the full list if none is provided
-func (s *Searcher) Search(opts SearchOptions) (RemoteMixinList, error) {
+func (s *Searcher) Search(opts SearchOptions) (pkgmgmt.PackageList, error) {
 	data, err := s.Box.Find("index.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading remote mixin list")
 	}
 
-	var pl PackageList{}
+	var pl pkgmgmt.PackageList
 	err = json.Unmarshal(data, &pl)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not parse remote mixin list")
@@ -70,7 +71,7 @@ func (s *Searcher) Search(opts SearchOptions) (RemoteMixinList, error) {
 		return pl, nil
 	}
 
-	results := PackageList{}
+	results := pkgmgmt.PackageList{}
 	for _, p := range pl {
 		if strings.Contains(p.Name, opts.Name) {
 			results = append(results, p)
