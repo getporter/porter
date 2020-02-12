@@ -2,15 +2,16 @@ package porter
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"get.porter.sh/porter/pkg/printer"
 )
 
 func TestGenerateNoName(t *testing.T) {
@@ -422,6 +423,40 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 			sv, st := GetCredentialSourceValueAndType(tc.source)
 			assert.Equal(t, tc.wantValue, sv)
 			assert.Equal(t, tc.wantType, st)
+		})
+	}
+}
+
+func TestCredentialsDelete(t *testing.T) {
+	testcases := []struct {
+		name       string
+		credName   string
+		wantOutput string
+	}{{
+		name:     "delete",
+		credName: "kool-kreds",
+	}, {
+		name:       "error",
+		credName:   "noop-kreds",
+		wantOutput: "credential set does not exist",
+	}}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.CNAB = &TestCNABProvider{}
+
+			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+
+			opts := CredentialDeleteOptions{Name: tc.credName}
+			err := p.DeleteCredential(opts)
+			require.NoError(t, err, "no error should have existed")
+
+			_, err = p.TestCredentials.Read(tc.credName)
+			assert.Error(t, err, "credential set still exists")
+
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			assert.Equal(t, tc.wantOutput, strings.TrimSpace(gotOutput))
 		})
 	}
 }

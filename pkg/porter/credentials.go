@@ -11,6 +11,7 @@ import (
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/utils/crud"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -138,15 +139,10 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 
 // Validate validates the args provided Porter's credential show command
 func (o *CredentialShowOptions) Validate(args []string) error {
-	switch len(args) {
-	case 0:
-		return errors.Errorf("no credential name was specified")
-	case 1:
-		o.Name = args[0]
-	default:
-		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+	if err := validateCredentialName(args); err != nil {
+		return err
 	}
-
+	o.Name = args[0]
 	return o.ParseFormat()
 }
 
@@ -210,6 +206,44 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 // GetCredentialSourceValueAndType takes a given credentials.Source struct and
 // returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
 // both in their string forms
-func GetCredentialSourceValueAndType(cs credentials.Source) (string, string) {
+func GetCredentialSourceValueAndType(cs credentials.Source) (value string, key string) {
 	return cs.Value, cs.Key
+}
+
+// CredentialDeleteOptions represent options for Porter's credential delete command
+type CredentialDeleteOptions struct {
+	Name string
+}
+
+// DeleteCredential deletes the credential set corresponding to the provided
+// names.
+func (p *Porter) DeleteCredential(opts CredentialDeleteOptions) error {
+	err := p.Credentials.Delete(opts.Name)
+	if err == crud.ErrRecordDoesNotExist {
+		if p.Debug {
+			fmt.Fprintln(p.Err, "credential set does not exist")
+		}
+		return nil
+	}
+	return errors.Wrapf(err, "unable to delete credential")
+}
+
+// Validate validates the args provided Porter's credential delete command
+func (o *CredentialDeleteOptions) Validate(args []string) error {
+	if err := validateCredentialName(args); err != nil {
+		return err
+	}
+	o.Name = args[0]
+	return nil
+}
+
+func validateCredentialName(args []string) error {
+	switch len(args) {
+	case 0:
+		return errors.Errorf("no credential name was specified")
+	case 1:
+		return nil
+	default:
+		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
+	}
 }

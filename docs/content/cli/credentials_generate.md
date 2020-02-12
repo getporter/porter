@@ -12,18 +12,18 @@ Generate Credential Set
 Generate a named set of credentials.
 
 The first argument is the name of credential set you wish to generate. If not
-provided, this will default to the bundle name. By default, Porter will 
+provided, this will default to the bundle name. By default, Porter will
 generate a credential set for the bundle in the current directory. You may also
 specify a bundle with --file.
 
-Bundles define 1 or more credential(s) that are required to interact with a 
+Bundles define 1 or more credential(s) that are required to interact with a
 bundle. The bundle definition defines where the credential should be delivered
-to the bundle, i.e. at /root/.kube. A credential set, on the other hand, 
-represents the source data that you wish to use when interacting with the 
-bundle. These will typically be environment variables or files on your local 
-file system. 
+to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+represents the source data that you wish to use when interacting with the
+bundle. These will typically be environment variables or files on your local
+file system.
 
-When you wish to install, upgrade or delete a bundle, Porter will use the 
+When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. 
 

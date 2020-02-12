@@ -18,7 +18,7 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildCredentialsEditCommand(p))
 	cmd.AddCommand(buildCredentialsGenerateCommand(p))
 	cmd.AddCommand(buildCredentialsListCommand(p))
-	cmd.AddCommand(buildCredentialsRemoveCommand(p))
+	cmd.AddCommand(buildCredentialsDeleteCommand(p))
 	cmd.AddCommand(buildCredentialsShowCommand(p))
 
 	return cmd
@@ -62,18 +62,18 @@ func buildCredentialsGenerateCommand(p *porter.Porter) *cobra.Command {
 		Long: `Generate a named set of credentials.
 
 The first argument is the name of credential set you wish to generate. If not
-provided, this will default to the bundle name. By default, Porter will 
+provided, this will default to the bundle name. By default, Porter will
 generate a credential set for the bundle in the current directory. You may also
 specify a bundle with --file.
 
-Bundles define 1 or more credential(s) that are required to interact with a 
+Bundles define 1 or more credential(s) that are required to interact with a
 bundle. The bundle definition defines where the credential should be delivered
-to the bundle, i.e. at /root/.kube. A credential set, on the other hand, 
-represents the source data that you wish to use when interacting with the 
-bundle. These will typically be environment variables or files on your local 
-file system. 
+to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+represents the source data that you wish to use when interacting with the
+bundle. These will typically be environment variables or files on your local
+file system.
 
-When you wish to install, upgrade or delete a bundle, Porter will use the 
+When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
@@ -128,19 +128,20 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 	return cmd
 }
 
-func buildCredentialsRemoveCommand(p *porter.Porter) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:    "remove",
-		Short:  "Remove a Credential",
-		Hidden: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+func buildCredentialsDeleteCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.CredentialDeleteOptions{}
+
+	return &cobra.Command{
+		Use:   "delete NAME",
+		Short: "Delete a Credential",
+		Long:  `Delete a named credential set.`,
+		PreRunE: func(_ *cobra.Command, args []string) error {
+			return opts.Validate(args)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("Not implemented")
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return p.DeleteCredential(opts)
 		},
 	}
-	return cmd
 }
 
 func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
