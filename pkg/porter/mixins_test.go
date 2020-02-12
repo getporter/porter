@@ -70,36 +70,36 @@ func TestPorter_SearchMixins(t *testing.T) {
 		mixin      string
 		format     printer.Format
 		wantOutput string
-	}{
-		{"no name provided",
-			"",
-			printer.FormatJson,
-			fmt.Sprintf("%s\n", string(fullList)),
-		},
-		{"mixin name single match",
-			"az",
-			printer.FormatYaml,
-			`- name: az
+		wantErr    string
+	}{{
+		name:       "no name provided",
+		mixin:      "",
+		format:     printer.FormatJson,
+		wantOutput: fmt.Sprintf("%s\n", string(fullList)),
+	}, {
+		name:   "mixin name single match",
+		mixin:  "az",
+		format: printer.FormatYaml,
+		wantOutput: `- name: az
   author: Porter Authors
   description: A mixin for using the az cli
   url: https://cdn.porter.sh/mixins/atom.xml
 
 `,
-		},
-		{"mixin name multiple match",
-			"ku",
-			printer.FormatTable,
-			`Name         Description                           Author           URL                                                                 URL Type
+	}, {
+		name:   "mixin name multiple match",
+		mixin:  "ku",
+		format: printer.FormatTable,
+		wantOutput: `Name         Description                           Author           URL                                                                 URL Type
 kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/atom.xml                               Atom Feed
 kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   Download
 `,
-		},
-		{"mixin name no match",
-			"ottersay",
-			printer.FormatYaml,
-			"No mixins found for ottersay\n",
-		},
-	}
+	}, {
+		name:    "mixin name no match",
+		mixin:   "ottersay",
+		format:  printer.FormatYaml,
+		wantErr: "no mixins found for ottersay",
+	}}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -114,7 +114,11 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 			}
 
 			err := p.SearchMixins(opts)
-			require.NoError(t, err)
+			if tc.wantErr != "" {
+				require.EqualError(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			require.Equal(t, tc.wantOutput, gotOutput)

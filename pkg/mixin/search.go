@@ -57,13 +57,13 @@ func (o *SearchOptions) validateMixinName(args []string) error {
 func (s *Searcher) Search(opts SearchOptions) (pkgmgmt.PackageList, error) {
 	data, err := s.Box.Find("index.json")
 	if err != nil {
-		return nil, errors.Wrap(err, "error loading remote mixin list")
+		return pkgmgmt.PackageList{}, errors.Wrap(err, "error loading remote mixin list")
 	}
 
 	var pl pkgmgmt.PackageList
 	err = json.Unmarshal(data, &pl)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not parse remote mixin list")
+		return pkgmgmt.PackageList{}, errors.Wrapf(err, "could not parse remote mixin list")
 	}
 
 	if opts.Name == "" {
@@ -76,6 +76,10 @@ func (s *Searcher) Search(opts SearchOptions) (pkgmgmt.PackageList, error) {
 		if strings.HasPrefix(p.Name, opts.Name) {
 			results = append(results, p)
 		}
+	}
+
+	if results.Len() == 0 {
+		return pkgmgmt.PackageList{}, errors.Errorf("no mixins found for %s", opts.Name)
 	}
 
 	sort.Sort(results)

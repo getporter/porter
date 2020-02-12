@@ -50,24 +50,25 @@ func TestSearch_TestBox(t *testing.T) {
 		name      string
 		opts      SearchOptions
 		wantItems pkgmgmt.PackageList
-	}{
-		{"no args",
-			SearchOptions{},
-			fullList,
-		},
-		{"mixin name single match",
-			SearchOptions{Name: "az"},
-			pkgmgmt.PackageList{fullList[0]},
-		},
-		{"mixin name multiple match",
-			SearchOptions{Name: "cowsay"},
-			pkgmgmt.PackageList{fullList[1], fullList[2]},
-		},
-		{"mixin name no match",
-			SearchOptions{Name: "ottersay"},
-			pkgmgmt.PackageList{},
-		},
-	}
+		wantError string
+	}{{
+		name:      "no args",
+		opts:      SearchOptions{},
+		wantItems: fullList,
+	}, {
+		name:      "mixin name single match",
+		opts:      SearchOptions{Name: "az"},
+		wantItems: pkgmgmt.PackageList{fullList[0]},
+	}, {
+		name:      "mixin name multiple match",
+		opts:      SearchOptions{Name: "cowsay"},
+		wantItems: pkgmgmt.PackageList{fullList[1], fullList[2]},
+	}, {
+		name:      "mixin name no match",
+		opts:      SearchOptions{Name: "ottersay"},
+		wantItems: pkgmgmt.PackageList{},
+		wantError: "no mixins found for ottersay",
+	}}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -75,7 +76,11 @@ func TestSearch_TestBox(t *testing.T) {
 			searcher := NewSearcher(box)
 
 			result, err := searcher.Search(tc.opts)
-			require.NoError(t, err)
+			if tc.wantError != "" {
+				require.EqualError(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err)
+			}
 			require.Equal(t, tc.wantItems, result)
 		})
 	}
