@@ -12,6 +12,12 @@ them to a file server:
 * [Publish](#publish)
 * [Install](#install)
 
+You can also search for other mixins and add your published mixin to Porter's
+directory:
+
+* [Search](#search)
+* [Broadcast](#broadcast)
+
 ## Prepare
 
 Your mixin should be compatible with the following architectures and operating
