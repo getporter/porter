@@ -63,7 +63,7 @@ func TestPorter_UninstallMixin(t *testing.T) {
 
 func TestPorter_SearchMixins(t *testing.T) {
 	fullList, err := ioutil.ReadFile("../mixin/directory/index.json")
-	require.NoError(t, err, "could not read remote mixin list")
+	require.NoError(t, err, "could not read mixin directory")
 
 	testcases := []struct {
 		name       string

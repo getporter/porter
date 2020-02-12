@@ -57,13 +57,13 @@ func (o *SearchOptions) validateMixinName(args []string) error {
 func (s *Searcher) Search(opts SearchOptions) (pkgmgmt.PackageList, error) {
 	data, err := s.Box.Find("index.json")
 	if err != nil {
-		return pkgmgmt.PackageList{}, errors.Wrap(err, "error loading remote mixin list")
+		return pkgmgmt.PackageList{}, errors.Wrap(err, "error loading mixin directory")
 	}
 
 	var pl pkgmgmt.PackageList
 	err = json.Unmarshal(data, &pl)
 	if err != nil {
-		return pkgmgmt.PackageList{}, errors.Wrapf(err, "could not parse remote mixin list")
+		return pkgmgmt.PackageList{}, errors.Wrapf(err, "could not parse mixin directory")
 	}
 
 	if opts.Name == "" {
