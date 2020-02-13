@@ -32,7 +32,6 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 	args := cnabprovider.ActionArguments{
 		Claim:                 o.Name,
 		BundlePath:            o.CNABFile,
-		Insecure:              o.Insecure,
 		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,

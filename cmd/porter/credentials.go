@@ -77,7 +77,6 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
-  porter bundle credential generate kubecred --insecure
   porter bundle credential generate kubecred --file myapp/porter.yaml
   porter bundle credential generate kubecred --tag getporter/porter-hello:v0.1.0
   porter bundle credential generate kubecred --cnab-file myapp/bundle.json --dry-run
@@ -91,8 +90,6 @@ will then provide it to the bundle in the correct location. `,
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", true,
-		"Allow working with untrusted bundles.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",

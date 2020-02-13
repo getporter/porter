@@ -18,7 +18,7 @@ import (
 
 // CNABProvider
 type CNABProvider interface {
-	LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error)
+	LoadBundle(bundleFile string) (*bundle.Bundle, error)
 	Install(arguments cnabprovider.ActionArguments) error
 	Upgrade(arguments cnabprovider.ActionArguments) error
 	Invoke(action string, arguments cnabprovider.ActionArguments) error
@@ -59,9 +59,6 @@ type sharedOptions struct {
 	// Name of the instance. Defaults to the name of the bundle.
 	Name string
 
-	// Insecure bundles allowed.
-	Insecure bool
-
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
 	Params []string
 
@@ -88,8 +85,6 @@ type sharedOptions struct {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
-	o.Insecure = true
-
 	err := o.validateInstanceName(args)
 	if err != nil {
 		return err

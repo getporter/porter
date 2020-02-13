@@ -71,7 +71,6 @@ The first argument is the bundle instance name to create for the installation. T
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
-  porter bundle install --insecure
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
@@ -87,8 +86,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", true,
-		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -122,7 +119,6 @@ The first argument is the bundle instance name to upgrade. This defaults to the 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade
-  porter bundle upgrade --insecure
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
@@ -138,8 +134,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", true,
-		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -225,7 +219,6 @@ The first argument is the bundle instance name to uninstall. This defaults to th
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
-  porter bundle uninstall --insecure
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
@@ -242,8 +235,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&opts.Insecure, "insecure", true,
-		"Allow working with untrusted bundles")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -275,7 +266,6 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
-  porter bundle publish --insecure
   porter bundle publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

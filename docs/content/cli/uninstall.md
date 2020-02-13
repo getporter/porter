@@ -24,7 +24,6 @@ porter uninstall [INSTANCE] [flags]
 
 ```
   porter uninstall
-  porter uninstall --insecure
   porter uninstall MyAppInDev --file myapp/bundle.json
   porter uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter uninstall --cred azure --cred kubernetes
@@ -43,7 +42,6 @@ porter uninstall [INSTANCE] [flags]
   -f, --file string          Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
       --force                Force a fresh pull of the bundle and all dependencies
   -h, --help                 help for uninstall
-      --insecure             Allow working with untrusted bundles (default true)
       --insecure-registry    Don't require TLS for the registry
       --param strings        Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.
       --param-file strings   Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.

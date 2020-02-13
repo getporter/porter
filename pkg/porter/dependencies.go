@@ -124,12 +124,12 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
-		bun, err = e.CNAB.LoadBundle(bunPath, e.parentOpts.Insecure)
+		bun, err = e.CNAB.LoadBundle(bunPath)
 		if err != nil {
 			return errors.Wrap(err, "could not load bundle from cache")
 		}
 	} else {
-		bun, _ = e.CNAB.LoadBundle(e.parentOpts.CNABFile, e.parentOpts.Insecure)
+		bun, _ = e.CNAB.LoadBundle(e.parentOpts.CNABFile)
 	}
 
 	solver := &extensions.DependencySolver{}
@@ -165,7 +165,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	}
 
 	// Load and validate it
-	depBun, err := e.CNAB.LoadBundle(dep.CNABFile, e.parentOpts.Insecure)
+	depBun, err := e.CNAB.LoadBundle(dep.CNABFile)
 	if err != nil {
 		return errors.Wrapf(err, "could not load bundle %s", dep.Alias)
 	}
@@ -232,7 +232,6 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
 	depArgs := cnabprovider.ActionArguments{
-		Insecure:          parentArgs.Insecure,
 		BundlePath:        dep.CNABFile,
 		Claim:             fmt.Sprintf("%s-%s", parentArgs.Claim, dep.Alias),
 		Driver:            parentArgs.Driver,

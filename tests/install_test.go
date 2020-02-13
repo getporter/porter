@@ -33,7 +33,6 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
 
 	installOpts := porter.InstallOptions{}
-	installOpts.Insecure = true
 	err = installOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
@@ -52,7 +51,6 @@ func TestInstall_fileParam(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
 
 	installOpts := porter.InstallOptions{}
-	installOpts.Insecure = true
 	installOpts.Params = []string{"myfile=./myfile"}
 
 	err := installOpts.Validate([]string{}, p.Context)

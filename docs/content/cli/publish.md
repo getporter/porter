@@ -20,7 +20,6 @@ porter publish [flags]
 ```
   porter publish
   porter publish --file myapp/porter.yaml
-  porter publish --insecure
   porter publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
 		
 ```

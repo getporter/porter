@@ -121,7 +121,7 @@ func TestExplain_validateBadFormat(t *testing.T) {
 
 func TestExplain_generateTable(t *testing.T) {
 	p := NewTestPorter(t)
-	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json")
 
 	pb, err := generatePrintable(b)
 	require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestExplain_generateTable(t *testing.T) {
 func TestExplain_generateJSON(t *testing.T) {
 	p := NewTestPorter(t)
 
-	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json")
 
 	pb, err := generatePrintable(b)
 	require.NoError(t, err)
@@ -162,7 +162,7 @@ func TestExplain_generateJSON(t *testing.T) {
 
 func TestExplain_generateYAML(t *testing.T) {
 	p := NewTestPorter(t)
-	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json", true)
+	b, err := p.CNAB.LoadBundle("./testdata/explain/params-bundle.json")
 
 	pb, err := generatePrintable(b)
 	require.NoError(t, err)

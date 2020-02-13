@@ -17,11 +17,11 @@ ${PORTER_HOME}/porter create
 sed -i "s/getporter\/porter-hello/${REGISTRY}\/porter-hello/g" porter.yaml
 
 ${PORTER_HOME}/porter build
-${PORTER_HOME}/porter install --insecure --debug
+${PORTER_HOME}/porter install --debug
 cat ${PORTER_HOME}/claims/HELLO.json
-${PORTER_HOME}/porter upgrade --insecure --debug
+${PORTER_HOME}/porter upgrade --debug
 cat ${PORTER_HOME}/claims/HELLO.json
-${PORTER_HOME}/porter uninstall --insecure --debug
+${PORTER_HOME}/porter uninstall --debug
 
 # Publish bundle
 ${PORTER_HOME}/porter publish

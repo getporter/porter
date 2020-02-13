@@ -16,8 +16,7 @@ func (d *Runtime) Upgrade(args ActionArguments) error {
 	}
 
 	if args.BundlePath != "" {
-		// TODO: if they installed an insecure bundle, do they really need to do --insecure again to upgrade it?
-		c.Bundle, err = d.LoadBundle(args.BundlePath, args.Insecure)
+		c.Bundle, err = d.LoadBundle(args.BundlePath)
 		if err != nil {
 			return err
 		}
