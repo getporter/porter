@@ -50,7 +50,10 @@ func (s *Store) Read(itemType string, name string) ([]byte, error) {
 
 func (s *Store) Delete(itemType string, name string) error {
 	if _, ok := s.data[itemType]; !ok {
-		return nil
+		return crud.ErrRecordDoesNotExist
+	}
+	if _, ok := s.data[itemType][name]; !ok {
+		return crud.ErrRecordDoesNotExist
 	}
 	delete(s.data[itemType], name)
 	return nil
