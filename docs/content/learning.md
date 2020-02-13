@@ -1,6 +1,8 @@
 ---
-title: Resources
+title: Learning
 description: External videos, blog posts and tutorials about CNAB and Porter
+aliases:
+- /resources/
 ---
 
 Do you have a blog post, video, tutorial, demo, or some other neat thing 
