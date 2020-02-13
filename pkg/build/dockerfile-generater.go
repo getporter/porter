@@ -209,12 +209,6 @@ func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
 	filterSteps := func(action manifest.Action, steps manifest.Steps) {
 		mixinSteps := manifest.Steps{}
 		for _, step := range steps {
-			if step == nil {
-				if g.Debug {
-					fmt.Fprintln(g.Err, "Found an empty step. Ignoring...")
-				}
-				continue
-			}
 			if step.GetMixinName() != m {
 				continue
 			}

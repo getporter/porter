@@ -182,20 +182,6 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	}
 }
 
-func TestPorter_generateDockerfile_Empty_Steps(t *testing.T) {
-	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
-	c.TestContext.AddTestFile("testdata/empty-steps.yaml", config.Name)
-
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err)
-
-	mp := &mixin.TestMixinProvider{}
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	err = g.GenerateDockerFile()
-	require.NoError(t, err)
-}
-
 func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.SetupPorterHome()
