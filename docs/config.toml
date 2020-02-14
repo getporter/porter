@@ -105,16 +105,22 @@ defaultContentLanguage = "en"
     weight = 140
     parent = "cli"
   [[menu.main]]
+    name = "porter mixins search"
+    url = "/cli/porter_mixins_search/"
+    identifier = "cli-mixins-search"
+    weight = 141
+    parent = "cli"
+  [[menu.main]]
     name = "porter mixins install"
     url = "/cli/porter_mixins_install/"
     identifier = "cli-mixins-install"
-    weight = 141
+    weight = 142
     parent = "cli"
   [[menu.main]]
     name = "porter mixins uninstall"
     url = "/cli/porter_mixins_uninstall/"
     identifier = "cli-mixins-uninstall"
-    weight = 142
+    weight = 143
     parent = "cli"
   [[menu.main]]
     name = "porter mixins feed template"

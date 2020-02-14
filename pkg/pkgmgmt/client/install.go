@@ -75,7 +75,7 @@ func (fs *FileSystem) savePackageInfo(opts pkgmgmt.InstallOptions) error {
 
 type PackageInfo struct {
 	Name    string `json:"name"`
-	FeedURL string `json:"feedURL,omitempty"`
+	FeedURL string `json:"URL,omitempty"`
 	URL     string `json:"url,omitempty"`
 }
 

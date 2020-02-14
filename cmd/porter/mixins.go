@@ -21,6 +21,7 @@ func buildMixinCommands(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildMixinsListCommand(p))
+	cmd.AddCommand(buildMixinsSearchCommand(p))
 	cmd.AddCommand(BuildMixinInstallCommand(p))
 	cmd.AddCommand(BuildMixinUninstallCommand(p))
 	cmd.AddCommand(buildMixinsFeedCommand(p))
@@ -39,6 +40,29 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.PrintMixins(opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json, yaml")
+
+	return cmd
+}
+
+func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
+	opts := mixin.SearchOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "search [NAME]",
+		Short: "Search available mixins",
+		Example: `  porter mixin search
+	porter mixin search helm
+	porter mixin search helm -o json`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.SearchMixins(opts)
 		},
 	}
 

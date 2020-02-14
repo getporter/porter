@@ -12,6 +12,12 @@ them to a file server:
 * [Publish](#publish)
 * [Install](#install)
 
+You can also search for other mixins and add your published mixin to Porter's
+directory:
+
+* [Search](#search)
+* [Broadcast](#broadcast)
+
 ## Prepare
 
 Your mixin should be compatible with the following architectures and operating
@@ -67,5 +73,46 @@ You may also choose to publish `canary` versions of the mixin, which are
 unpublished builds from the master branch. The official Porter mixins follow
 this pattern. If you have other published tagged builds of your mixin, porter
 can handle installing them as well.
+
+## Search
+
+Porter maintains a list of remote mixins that users can search via
+`porter mixins search [NAME]`. If no name is supplied, the full listing will be
+returned.  See the help menu for all command options: `porter mixins search -h`.
+
+For example, here we search for a `cowsay` mixin:
+
+```console
+$ porter mixin search az
+Name   Description                    Author           URL                                     URL Type
+az     A mixin for using the az cli   Porter Authors   https://cdn.porter.sh/mixins/atom.xml   Atom Feed
+```
+
+## Broadcast
+
+To add your mixin to the list, add an entry to the mixin directory
+[list](https://github.com/deislabs/porter/blob/master/pkg/mixin/directory/index.json)
+with all the pertinent informational fields filled out.
+
+For instance, a new entry might look like:
+
+```json
+  {
+    "name": "mymixin",
+    "author": "My Name",
+    "description": "A mixin for doing great things",
+    "URL": "https://github.com/org/project/releases/download",
+  },
+```
+
+The `URL` field should either be an Atom Feed URL (for example, Porter uses
+the following for its stable mixins: `https://cdn.porter.sh/mixins/atom.xml`) or
+a download URL (like the GitHub download URL shown above:
+`https://github.com/org/project/releases/download`)
+
+With this change pushed to a branch on your fork of this repo, you're
+now ready to open up a [Pull Request](https://github.com/deislabs/porter/pulls).
+After the changes are approved, merged and included in the next release, your
+mixin will start to show up in the official listing!
 
 [mk]: https://github.com/deislabs/porter/blob/master/mixin.mk
