@@ -6,7 +6,7 @@
     <div class="main page" id="scrollpane">
       {{ partial "topbar.html" . }}
 
-      <div class="row">
+      <div class="row full-width">
         <div class="small-1 columns">&nbsp;</div>
         <div class="small-10 columns list-wrap">
           <h1>{{ .Title }}</h1>
@@ -15,7 +15,7 @@
         <div class="small-1 columns">&nbsp;</div>
       </div>
 
-      <div class="row">
+      <div class="row full-width">
         <div class="small-1 columns">&nbsp;</div>
         <div class="small-10 columns">
             {{ range .Paginator.Pages }}

@@ -1,0 +1,38 @@
+name: plugins-tutorial
+version: 0.1.0
+description: "Example of porter resolving credentials from a secrets store using
+a plugin. This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/."
+tag: getporter/plugins-tutorial:v0.1.0
+
+credentials:
+- name: password
+  description: "Password for installing the world. We recommend getting this
+  from a secret store."
+  env: PASSWORD
+  type: string
+  applyTo:
+  - install
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install World"
+      command: bash
+      flags:
+        c: "echo Using Magic Password: {{ bundle.credentials.password }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade to World 2.0"
+      command: bash
+      flags:
+        c: echo World is now at 2.0
+
+uninstall:
+  - exec:
+      description: "Uninstall World"
+      command: bash
+      flags:
+        c: echo Goodbye World
