@@ -49,7 +49,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return err
 	}
 
-	bun, err := p.CNAB.LoadBundle(opts.CNABFile, true)
+	bun, err := p.CNAB.LoadBundle(opts.CNABFile)
 	if err != nil {
 		return errors.Wrap(err, "couldn't open bundle for archiving")
 	}

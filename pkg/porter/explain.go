@@ -146,7 +146,7 @@ func (p *Porter) Explain(o ExplainOpts) error {
 	if err != nil {
 		return err
 	}
-	bundle, err := p.CNAB.LoadBundle(o.CNABFile, o.Insecure)
+	bundle, err := p.CNAB.LoadBundle(o.CNABFile)
 	// Print Bundle Details
 
 	pb, err := generatePrintable(bundle)

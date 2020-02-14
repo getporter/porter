@@ -46,7 +46,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	var bun *bundle.Bundle
 	var err error
 	if args.BundlePath != "" {
-		bun, err = d.LoadBundle(args.BundlePath, args.Insecure)
+		bun, err = d.LoadBundle(args.BundlePath)
 		if err != nil {
 			return err
 		}

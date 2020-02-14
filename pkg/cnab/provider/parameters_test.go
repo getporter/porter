@@ -381,9 +381,8 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
-						Claim:    "test",
-						Insecure: true,
-						Driver:   "debug",
+						Claim:  "test",
+						Driver: "debug",
 					}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args

@@ -114,7 +114,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Upgrade the bundle
 	// A bundle-level output will be produced during this action
 	upgradeOpts := porter.UpgradeOptions{}
-	upgradeOpts.Insecure = true
 	err = upgradeOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)
@@ -123,7 +122,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Uninstall the bundle
 	// A bundle-level output will be used during this action
 	uninstallOpts := porter.UninstallOptions{}
-	uninstallOpts.Insecure = true
 	err = uninstallOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 	err = p.UninstallBundle(uninstallOpts)

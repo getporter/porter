@@ -21,7 +21,7 @@ sed -i "s/getporterci\/porter-terraform/${REGISTRY}\/porter-terraform/g" porter.
 
 ${PORTER_HOME}/porter build
 
-${PORTER_HOME}/porter install --insecure --debug --param file_contents='foo!'
+${PORTER_HOME}/porter install --debug --param file_contents='foo!'
 
 echo "Verifying instance output(s) via 'porter instance outputs list' after install"
 list_outputs=$(${PORTER_HOME}/porter instance outputs list)
@@ -32,7 +32,7 @@ echo "${list_outputs}" | grep -q "foo!"
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = foo!'
 
-${PORTER_HOME}/porter upgrade --insecure --debug --param file_contents='bar!'
+${PORTER_HOME}/porter upgrade --debug --param file_contents='bar!'
 
 echo "Verifying instance output(s) via 'porter instance output show' after upgrade"
 ${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
@@ -42,6 +42,6 @@ ${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
 
 cat ${PORTER_HOME}/claims/terraform.json
 
-${PORTER_HOME}/porter uninstall --insecure --debug
+${PORTER_HOME}/porter uninstall --debug
 
 ${PORTER_HOME}/porter publish

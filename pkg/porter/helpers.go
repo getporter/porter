@@ -150,7 +150,7 @@ func NewTestCNABProvider() *TestCNABProvider {
 	return &TestCNABProvider{}
 }
 
-func (t *TestCNABProvider) LoadBundle(bundleFile string, insecure bool) (*bundle.Bundle, error) {
+func (t *TestCNABProvider) LoadBundle(bundleFile string) (*bundle.Bundle, error) {
 	b := &bundle.Bundle{
 		Name: "testbundle",
 		Credentials: map[string]bundle.Credential{

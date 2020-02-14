@@ -17,7 +17,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 		return errors.Wrap(err, "invalid bundle instance name")
 	}
 
-	b, err := d.LoadBundle(args.BundlePath, args.Insecure)
+	b, err := d.LoadBundle(args.BundlePath)
 	if err != nil {
 		return err
 	}

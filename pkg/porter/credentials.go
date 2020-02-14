@@ -100,7 +100,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	if err != nil {
 		return err
 	}
-	bundle, err := p.CNAB.LoadBundle(opts.CNABFile, opts.Insecure)
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
 
 	if err != nil {
 		return err

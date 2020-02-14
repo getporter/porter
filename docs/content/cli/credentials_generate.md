@@ -35,7 +35,6 @@ porter credentials generate [NAME] [flags]
 
 ```
   porter credential generate
-  porter bundle credential generate kubecred --insecure
   porter bundle credential generate kubecred --file myapp/porter.yaml
   porter bundle credential generate kubecred --tag getporter/porter-hello:v0.1.0
   porter bundle credential generate kubecred --cnab-file myapp/bundle.json --dry-run
@@ -49,7 +48,6 @@ porter credentials generate [NAME] [flags]
       --dry-run            Generate credential but do not save it.
   -f, --file string        Path to the porter manifest file. Defaults to the bundle in the current directory.
   -h, --help               help for generate
-      --insecure           Allow working with untrusted bundles. (default true)
       --tag string         Use a bundle in an OCI registry specified by the given tag.
 ```
 

@@ -23,9 +23,6 @@ type ActionArguments struct {
 	// Target Path => File Contents
 	Files map[string]string
 
-	// Insecure bundle action allowed.
-	Insecure bool
-
 	// Params is the set of parameters to pass to the bundle.
 	Params map[string]string
 

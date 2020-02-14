@@ -28,7 +28,6 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 
 	// Install a bundle without building first
 	installOpts := porter.InstallOptions{}
-	installOpts.Insecure = true
 	err = installOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
@@ -45,7 +44,6 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 	installOpts := porter.InstallOptions{}
-	installOpts.Insecure = true
 	err = installOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
@@ -62,7 +60,6 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 
 	// Upgrade the bundle
 	upgradeOpts := porter.UpgradeOptions{}
-	upgradeOpts.Insecure = true
 	err = upgradeOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)
@@ -86,7 +83,6 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
 
 	credentialOptions := porter.CredentialOptions{}
-	credentialOptions.Insecure = true
 	credentialOptions.Silent = true
 	err := credentialOptions.Validate([]string{}, p.Context)
 	require.NoError(t, err)
@@ -107,7 +103,6 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
 
 	credentialOptions := porter.CredentialOptions{}
-	credentialOptions.Insecure = true
 	credentialOptions.Silent = true
 	err := credentialOptions.Validate([]string{}, p.Context)
 	require.NoError(t, err)

@@ -42,7 +42,7 @@ func (p *Porter) Inspect(o ExplainOpts) error {
 	if err != nil {
 		return err
 	}
-	bundle, err := p.CNAB.LoadBundle(o.CNABFile, o.Insecure)
+	bundle, err := p.CNAB.LoadBundle(o.CNABFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load bundle")
 	}
