@@ -1,0 +1,35 @@
+mixins:
+  - exec
+  -
+  - az:
+      extensions:
+        - iot
+
+install:
+  - exec:
+      description: Install something
+      command: bash
+      arguments:
+        - install1.sh
+  -
+  - exec:
+      description: Install something else
+      command: bash
+      arguments:
+        - install2.sh
+
+status:
+  -
+  - exec:
+      description: "Get World Status"
+      command: bash
+      flags:
+          c: echo The world is on fire
+
+uninstall:
+  - exec:
+      description: uninstall everything
+      command: bash
+      arguments:
+        - uninstall.sh
+  -

@@ -108,6 +108,15 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 	assert.EqualError(t, err, "more than one mixin specified")
 }
 
+func TestManifest_Empty_Steps(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/empty-steps.yaml", config.Name)
+
+	_, err := LoadManifestFrom(cxt.Context, config.Name)
+	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step\n\t* validation of action \"uninstall\" failed: found an empty step\n\t* validation of action \"status\" failed: found an empty step\n\n")
+}
+
 func TestManifest_Validate_Dockerfile(t *testing.T) {
 	cxt := context.NewTestContext(t)
 

@@ -16,6 +16,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const invalidStepErrorFormat = "validation of action \"%s\" failed"
+
 type Manifest struct {
 	// ManifestPath is the location from which the manifest was loaded, such as the path on the filesystem or a url.
 	ManifestPath string `yaml:"-"`
@@ -69,7 +71,7 @@ func (m *Manifest) Validate() error {
 	}
 	err := m.Install.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, err)
+		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "install")))
 	}
 
 	if m.Uninstall == nil {
@@ -77,7 +79,14 @@ func (m *Manifest) Validate() error {
 	}
 	err = m.Uninstall.Validate(m)
 	if err != nil {
-		result = multierror.Append(result, err)
+		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "uninstall")))
+	}
+
+	for actionName, steps := range m.CustomActions {
+		err := steps.Validate(m)
+		if err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, actionName)))
+		}
 	}
 
 	for _, dep := range m.Dependencies {
@@ -379,11 +388,9 @@ type Steps []*Step
 
 func (s Steps) Validate(m *Manifest) error {
 	for _, step := range s {
-		if step != nil {
-			err := step.Validate(m)
-			if err != nil {
-				return err
-			}
+		err := step.Validate(m)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -394,6 +401,9 @@ type Step struct {
 }
 
 func (s *Step) Validate(m *Manifest) error {
+	if s == nil {
+		return errors.New("found an empty step")
+	}
 	if len(s.Data) == 0 {
 		return errors.New("no mixin specified")
 	}
