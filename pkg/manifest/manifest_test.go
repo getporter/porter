@@ -114,7 +114,7 @@ func TestManifest_Empty_Steps(t *testing.T) {
 	cxt.AddTestFile("testdata/empty-steps.yaml", config.Name)
 
 	_, err := LoadManifestFrom(cxt.Context, config.Name)
-	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step. probably you forgot to mention it\n\t* validation of action \"uninstall\" failed: found an empty step. probably you forgot to mention it\n\t* validation of action \"status\" failed: found an empty step. probably you forgot to mention it\n\n")
+	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step\n\t* validation of action \"uninstall\" failed: found an empty step\n\t* validation of action \"status\" failed: found an empty step\n\n")
 }
 
 func TestManifest_Validate_Dockerfile(t *testing.T) {

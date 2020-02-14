@@ -401,7 +401,7 @@ type Step struct {
 
 func (s *Step) Validate(m *Manifest) error {
 	if s == nil {
-		return errors.New("found an empty step. probably you forgot to mention it")
+		return errors.New("found an empty step")
 	}
 	if len(s.Data) == 0 {
 		return errors.New("no mixin specified")
