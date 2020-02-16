@@ -14,28 +14,12 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 		Short:       "Credentials commands",
 	}
 
-	cmd.AddCommand(buildCredentialsAddCommand(p))
 	cmd.AddCommand(buildCredentialsEditCommand(p))
 	cmd.AddCommand(buildCredentialsGenerateCommand(p))
 	cmd.AddCommand(buildCredentialsListCommand(p))
 	cmd.AddCommand(buildCredentialsDeleteCommand(p))
 	cmd.AddCommand(buildCredentialsShowCommand(p))
 
-	return cmd
-}
-
-func buildCredentialsAddCommand(p *porter.Porter) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:    "add",
-		Short:  "Add Credential",
-		Hidden: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("Not implemented")
-		},
-	}
 	return cmd
 }
 
