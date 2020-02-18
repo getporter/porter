@@ -17,7 +17,15 @@ variables:
   MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
 
 jobs:
+- job: setup
+  steps:
+  - script: ./build/doc-only-build.sh
+    name: BUILD
+    displayName: 'Check Doc Only Build'
+
 - job: test
+  dependsOn: setup
+  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
@@ -33,6 +41,8 @@ jobs:
     displayName: 'Unit Test'
 
 - job: compile
+  dependsOn: setup
+  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
@@ -43,6 +53,8 @@ jobs:
     displayName: 'Cross Compile'
 
 - job: validate_example_bundles
+  dependsOn: setup
+  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
