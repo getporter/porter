@@ -29,7 +29,7 @@ You can also provide any other attributes, as specified by the CNAB [parameters]
 
 Porter also enables the use of file parameters in a bundle.
 
-For instance, a bundle might declare a parameter `mytar` of type `file`, to exist at `/root/mytar` in the runtime container:
+For instance, a bundle might declare a parameter `mytar` of type `file`, to exist at `/root/mytar` in the execution environment:
 
 ```yaml
 - name: mytar
@@ -48,7 +48,7 @@ install:
         c: tar zxvf /root/mytar
 ```
 
-Passing in the local file representing the `mytar` parameter is done similarly to any other parameter:
+The syntax to pass a parameter to porter is the same for both regular and file parameters:
 
 ```console
 $ porter install --param mytar=./my.tar.gz
