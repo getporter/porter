@@ -25,6 +25,35 @@ You can also provide any other attributes, as specified by the CNAB [parameters]
   default: "wordpress"
 ```
 
+### File Parameters
+
+Porter also enables the use of file parameters in a bundle.
+
+For instance, a bundle might declare a parameter `mytar` of type `file`, to exist at `/root/mytar` in the runtime container:
+
+```yaml
+- name: mytar
+  type: file
+  path: /root/mytar
+```
+
+which can be used in a step like `install`:
+
+```yaml
+install:
+  - exec:
+      description: "Install"
+      command: bash
+      flags:
+        c: tar zxvf /root/mytar
+```
+
+Passing in the local file representing the `mytar` parameter is done similarly to any other parameter:
+
+```console
+$ porter install --param mytar=./my.tar.gz
+```
+
 ## Wiring Parameters
 
 Once a parameter has been declared in the `porter.yaml`, Porter provides a simple mechanism for specifying how the parameter value should be wired into the mixin. To reference a parameter in the bundle, you use a notation of the form `"{{ bundle.parameters.PARAM_NAME }}"`. This can be used anywhere within step definition. For example, to use the `database_name` parameter defined above in the `set` block of the helm mixin:
@@ -56,7 +85,7 @@ install:
       command: "{{ bundle.parameters.command }}"
 ```
 
-This syntax is used in dictionary, as above, or in an list:
+This syntax is used in dictionary, as above, or in a list:
 
 ```yaml
 parameters:
