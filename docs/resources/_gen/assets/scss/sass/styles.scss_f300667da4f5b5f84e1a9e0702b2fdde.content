@@ -8200,7 +8200,8 @@ body {
     .main .content-wrap pre code {
       padding: 0;
       background-color: #e4f3f9;
-      font-size: 1rem; }
+      font-size: 1rem;
+      white-space: pre; }
   .main .content-wrap .code-box {
     margin: 0px;
     width: 100%;
