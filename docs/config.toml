@@ -340,8 +340,8 @@ defaultContentLanguage = "en"
     parent = "porter-architecture"
   [[menu.main]]
     name = "Credentials"
-    url = "/how-credentials-work/"
-    identifier = "how-credentials-work"
+    url = "/credentials/"
+    identifier = "credentials"
     weight = 405
     parent = "porter-architecture"
 

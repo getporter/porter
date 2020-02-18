@@ -8214,7 +8214,8 @@ body {
     padding: 0.5em 0.5em;
     background-color: #e4f3f9;
     border: none;
-    font-size: 1rem; }
+    font-size: 1rem;
+    white-space: nowrap; }
   .main .content-wrap.markdown ul,
   .main .content-wrap.markdown ol,
   .main .content-wrap ul,
