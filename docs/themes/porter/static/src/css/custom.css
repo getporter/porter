@@ -13,3 +13,7 @@
 .main img.mixin-logo:hover {
     box-shadow: none;
 }
+
+.main .content-wrapper h2 {
+    float: none;
+}
