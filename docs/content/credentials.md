@@ -39,7 +39,7 @@ later using `porter instances show NAME --output json`.
 
 ### Why can't the credential source be defined in porter.yaml?
 
-The source of the credentials is specific to each installation of the bundle. An
+The source of a credential is specific to each installation of the bundle. An
 author writes the bundle and defines what credentials are needed by the bundle
 and where each credential should be put, for example a certain environment
 variable.
