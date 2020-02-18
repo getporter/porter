@@ -128,7 +128,7 @@ credentials:
 
 The same mechanism for declaring how to use a parameter can be used for credentials. To declare a credential usage, references are defined with the following syntax: `"{{ bundle.credentials.CREDENTIAL_NAME}}"`.
 
-When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. To understand how credentials work, see [how credentials work][how-credentials-work] page.
+When the bundle is executed, the Porter runtime will locate the parameter definition in the `porter.yaml` to determine where the parameter value has been stored. The Porter runtime will then rewrite the YAML block before it is passed to the mixin. See [Credentials][credentials] to learn how credentials work.
 
 ## Outputs
 
@@ -327,4 +327,4 @@ install:
 ```
 
 [mixin-architecture]: /mixin-dev-guide/architecture/
-[how-credentials-work]: /how-credentials-work/
+[credentials]: /credentials/

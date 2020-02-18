@@ -173,7 +173,7 @@ parameters:
 Credentials are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/802-credential-sets.md) and allow
 you to pass in sensitive data when you execute the bundle, such as passwords or configuration files. 
 
-Learn more about [how credentials work in Porter](/how-credentials-work/).
+Learn more about [how credentials work in Porter](/credentials/).
 
 By default, all credential values are considered sensitive and will be masked in console output.
 

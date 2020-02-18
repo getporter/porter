@@ -1,6 +1,8 @@
 ---
-title: How credentials work
-description: How credentials work
+title: Credentials
+description: The lifecycle of a credential from definition, to resolution, and finally injection at runtime
+aliases:
+- /how-credentials-work/
 ---
 
 When you are authoring a bundle, you can define what credentials your bundle
@@ -32,3 +34,20 @@ before executing the step.
 Once the bundle finishes executing, the credentials are NOT recorded in the
 bundle instance (claim). Parameters are recorded there so that you can view them
 later using `porter instances show NAME --output json`.
+
+## Q & A
+
+### Why can't the credential source be defined in porter.yaml?
+
+The source of a credential is specific to each installation of the bundle. An
+author writes the bundle and defines what credentials are needed by the bundle
+and where each credential should be put, for example a certain environment
+variable.
+
+When a person installs that bundle only they know where that credential's value
+should be resolved from. Perhaps they put it in a environment variable named
+after the production environment, or in a file under /tmp, or in their team’s
+key vault. This is why the author of the bundle can’t guess and put it in
+porter.yaml up front.
+
+[generate]: /cli/porter_credentials_generate/
