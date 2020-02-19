@@ -8,5 +8,9 @@ Porter. [Plugins are very different from mixins][vs], which give you building
 blocks for authoring bundles. There are a couple [types of plugins][types] and
 each plugin binary may contain multiple implementations.
 
+See the [Discoverability Guide][discoverability] on how to search for available plugins and/or
+add your own to the list.
+
 [vs]: /mixins-vs-plugins/
 [types]: /plugins/types/
+[discoverability]: /plugins/discoverability.md

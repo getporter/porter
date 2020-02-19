@@ -20,6 +20,7 @@ func buildPluginsCommands(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildPluginsListCommand(p))
+	cmd.AddCommand(buildPluginSearchCommand(p))
 	cmd.AddCommand(buildPluginShowCommand(p))
 	cmd.AddCommand(BuildPluginInstallCommand(p))
 	cmd.AddCommand(BuildPluginUninstallCommand(p))
@@ -39,6 +40,31 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.PrintPlugins(opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Output format, allowed values are: table, json, yaml")
+
+	return cmd
+}
+
+func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.SearchOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "search [NAME]",
+		Short: "Search available plugins",
+		Example: `  porter plugin search
+  porter plugin search azure
+  porter plugin search azure -o json`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.Type = "plugin"
+			opts.List = plugins.GetDirectoryListings()
+			return p.SearchPackages(opts)
 		},
 	}
 

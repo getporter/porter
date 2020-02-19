@@ -80,7 +80,7 @@ Porter maintains a list of remote mixins that users can search via
 `porter mixins search [NAME]`. If no name is supplied, the full listing will be
 returned.  See the help menu for all command options: `porter mixins search -h`.
 
-For example, here we search for a `cowsay` mixin:
+For example, here we search for an `az` mixin:
 
 ```console
 $ porter mixin search az

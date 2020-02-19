@@ -1,0 +1,8 @@
+[
+  {
+    "name": "azure",
+    "author": "Porter Authors",
+    "description": "A plugin for utilizing Azure cloud resources",
+    "URL": "https://cdn.porter.sh/plugins/atom.xml"
+  }
+]

@@ -19,8 +19,8 @@ porter mixins search [NAME] [flags]
 
 ```
   porter mixin search
-	porter mixin search helm
-	porter mixin search helm -o json
+  porter mixin search helm
+  porter mixin search helm -o json
 ```
 
 ### Options
