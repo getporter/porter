@@ -1,31 +1,14 @@
-package mixin
+package pkgmgmt
 
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/gobuffalo/packr/v2"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSearchOptions_Validate_MixinName(t *testing.T) {
-	opts := SearchOptions{}
-
-	err := opts.validateMixinName([]string{})
-	require.NoError(t, err)
-	assert.Equal(t, "", opts.Name)
-
-	err = opts.validateMixinName([]string{"helm"})
-	require.NoError(t, err)
-	assert.Equal(t, "helm", opts.Name)
-
-	err = opts.validateMixinName([]string{"helm", "nstuff"})
-	require.EqualError(t, err, "only one positional argument may be specified, the mixin name, but multiple were received: [helm nstuff]")
-}
-
 func TestSearch_TestBox(t *testing.T) {
-	fullList := pkgmgmt.PackageList{
+	fullList := PackageList{
 		{
 			Name:        "az",
 			Author:      "Porter Authors",
@@ -48,25 +31,25 @@ func TestSearch_TestBox(t *testing.T) {
 
 	testcases := []struct {
 		name      string
-		opts      SearchOptions
-		wantItems pkgmgmt.PackageList
+		pkg       string
+		wantItems PackageList
 		wantError string
 	}{{
 		name:      "no args",
-		opts:      SearchOptions{},
+		pkg:       "",
 		wantItems: fullList,
 	}, {
-		name:      "mixin name single match",
-		opts:      SearchOptions{Name: "az"},
-		wantItems: pkgmgmt.PackageList{fullList[0]},
+		name:      "package name single match",
+		pkg:       "az",
+		wantItems: PackageList{fullList[0]},
 	}, {
-		name:      "mixin name multiple match",
-		opts:      SearchOptions{Name: "cowsay"},
-		wantItems: pkgmgmt.PackageList{fullList[1], fullList[2]},
+		name:      "package name multiple match",
+		pkg:       "cowsay",
+		wantItems: PackageList{fullList[1], fullList[2]},
 	}, {
-		name:      "mixin name no match",
-		opts:      SearchOptions{Name: "ottersay"},
-		wantItems: pkgmgmt.PackageList{},
+		name:      "package name no match",
+		pkg:       "ottersay",
+		wantItems: PackageList{},
 		wantError: "no mixins found for ottersay",
 	}}
 
@@ -75,7 +58,7 @@ func TestSearch_TestBox(t *testing.T) {
 			box := packr.Folder("./testdata/directory")
 			searcher := NewSearcher(box)
 
-			result, err := searcher.Search(tc.opts)
+			result, err := searcher.Search(tc.pkg, "mixin")
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {

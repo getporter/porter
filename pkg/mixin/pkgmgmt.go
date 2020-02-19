@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
+	"github.com/gobuffalo/packr/v2"
 )
 
 const (
@@ -77,3 +78,9 @@ var _ pkgmgmt.PackageMetadata = Metadata{}
 
 // Metadata about an installed mixin.
 type Metadata = pkgmgmt.Metadata
+
+// GetMixinDirectory returns a directory/list of mixins available to install
+func GetMixinDirectory() *packr.Box {
+	// TODO: Decouple listing from CLI: https://github.com/deislabs/porter/issues/908
+	return packr.New("get.porter.sh/porter/pkg/mixin/directory", "./directory")
+}
