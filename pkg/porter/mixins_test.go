@@ -112,7 +112,7 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 				},
 				Name: tc.mixin,
 				Type: "mixin",
-				List: mixin.GetMixinDirectory(),
+				List: mixin.GetDirectoryListings(),
 			}
 
 			err := p.SearchPackages(opts)

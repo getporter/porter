@@ -43,6 +43,10 @@ func TestSearch_TestBox(t *testing.T) {
 		pkg:       "az",
 		wantItems: PackageList{fullList[0]},
 	}, {
+		name:      "package name case insensitive",
+		pkg:       "AZ",
+		wantItems: PackageList{fullList[0]},
+	}, {
 		name:      "package name multiple match",
 		pkg:       "cowsay",
 		wantItems: PackageList{fullList[1], fullList[2]},

@@ -41,8 +41,9 @@ func (s *Searcher) Search(name, pkgType string) (PackageList, error) {
 	}
 
 	results := PackageList{}
+	query := strings.ToLower(name)
 	for _, p := range pl {
-		if strings.HasPrefix(p.Name, name) {
+		if strings.Contains(p.Name, query) {
 			results = append(results, p)
 		}
 	}

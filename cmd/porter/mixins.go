@@ -63,7 +63,7 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Type = "mixin"
-			opts.List = mixin.GetMixinDirectory()
+			opts.List = mixin.GetDirectoryListings()
 			return p.SearchPackages(opts)
 		},
 	}

@@ -79,8 +79,8 @@ var _ pkgmgmt.PackageMetadata = Metadata{}
 // Metadata about an installed mixin.
 type Metadata = pkgmgmt.Metadata
 
-// GetMixinDirectory returns a directory/list of mixins available to install
-func GetMixinDirectory() *packr.Box {
+// GetDirectoryListings returns the directory listings for mixins available to install
+func GetDirectoryListings() *packr.Box {
 	// TODO: Decouple listing from CLI: https://github.com/deislabs/porter/issues/908
 	return packr.New("get.porter.sh/porter/pkg/mixin/directory", "./directory")
 }
