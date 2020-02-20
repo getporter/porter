@@ -2,7 +2,7 @@
   {
     "name": "azure",
     "author": "Porter Authors",
-    "description": "A plugin for utilizing Azure cloud resources",
+    "description": "Integrate Porter with Azure. Store Porter's data in Azure Cloud and secure your bundle's secrets in Azure Key Vault.",
     "URL": "https://cdn.porter.sh/plugins/atom.xml"
   }
 ]
