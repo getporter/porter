@@ -22,6 +22,7 @@ type GenerateOptions struct {
 
 	//Should we survey?
 	Silent bool
+	DryRun bool
 }
 
 type credentialAnswers struct {

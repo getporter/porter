@@ -100,11 +100,12 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	if err != nil {
 		return err
 	}
-	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
 
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
 	if err != nil {
 		return err
 	}
+
 	name := opts.Name
 	if name == "" {
 		name = bundle.Name
@@ -113,9 +114,15 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		Name:        name,
 		Credentials: bundle.Credentials,
 		Silent:      opts.Silent,
+		DryRun:      opts.DryRun,
 	}
+
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
-	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
+	fmt.Fprintf(p.Out, "%d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
+	return p.generateAndSaveCredentialSetForCNABFile(opts.CNABFile, genOpts)
+}
+
+func (p *Porter) generateAndSaveCredentialSetForCNABFile(CNABFile string, genOpts credentialsgenerator.GenerateOptions) error {
 
 	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
 	if err != nil {
@@ -125,7 +132,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	cs.Created = time.Now()
 	cs.Modified = cs.Created
 
-	if opts.DryRun {
+	if genOpts.DryRun {
 		data, err := json.Marshal(cs)
 		if err != nil {
 			return errors.Wrap(err, "unable to generate credentials JSON")
@@ -134,7 +141,11 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return nil
 	}
 	err = p.Credentials.Save(*cs)
-	return errors.Wrapf(err, "unable to save credentials")
+	if err != nil {
+		return errors.Wrapf(err, "unable to save credentials")
+	}
+
+	return nil
 }
 
 // Validate validates the args provided Porter's credential show command

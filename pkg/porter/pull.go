@@ -8,7 +8,7 @@ import (
 type BundlePullOptions struct {
 	Tag              string
 	InsecureRegistry bool
-	Force            bool
+	Force            bool // Force tells pull bundle from registry even if it is in cache
 }
 
 func (b BundlePullOptions) validateTag() error {
