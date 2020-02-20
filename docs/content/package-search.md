@@ -1,16 +1,15 @@
 ---
 title: Mixin and Plugin Search
-description: Learn more about searching and broadcasting available mixins and plugins for Porter
+description: Find a plugin for Porter and list your own plugin in our search results
 ---
 
 ## Search
 
-Porter maintains lists of mixins and plugins that users can search via
-`porter mixin search [QUERY]` or `porter plugin search [QUERY]`.
-If no query is supplied, the full listing will be returned.  See the
-help menu for all command options, e.g. `porter mixin search -h`.
+Porter maintains lists for mixins and plugins available for users to install.
+These can be searched via [porter mixin search](/cli/porter_mixin_search/) or
+[porter plugin search](/cli/porter_plugin_search/).
 
-For example, here we search for an `az` mixin:
+For example, here we search for mixins with the term `az` in the name:
 
 ```console
 $ porter mixin search az
@@ -18,7 +17,9 @@ Name   Description                    Author           URL                      
 az     A mixin for using the az cli   Porter Authors   https://cdn.porter.sh/mixins/atom.xml   Atom Feed
 ```
 
-And here we search for all plugins, specifying `yaml` output:
+If no query is supplied, the full listing will be returned.
+
+For example, here we search for all plugins, specifying `yaml` output:
 
 ```console
 $ porter plugin search -o yaml
@@ -27,12 +28,13 @@ $ porter plugin search -o yaml
   description: Integrate Porter with Azure. Store Porter's data in Azure Cloud and
     secure your bundle's secrets in Azure Key Vault.
   url: https://cdn.porter.sh/plugins/atom.xml
+...
 ```
 
-## Broadcast
+## List
 
-To add your mixin or plugin to the respective directory, create a new entry
-structured as below, with all the pertinent informational fields filled out.
+To add your mixin or plugin to the respective directory, create a new
+structured JSON entry and include it in the respective list.
 
 For example, a new plugin entry would look like:
 
@@ -55,7 +57,6 @@ Then, add the entry to the respective directory.
 * [Mixin Directory](https://github.com/deislabs/porter/blob/master/pkg/mixins/directory/index.json)
 * [Plugin Directory](https://github.com/deislabs/porter/blob/master/pkg/plugins/directory/index.json)
 
-With this change pushed to a branch on your fork of this repo, you're
-now ready to open up a pull request.  Once merged it, your mixin or plugin
-will be broadcast to the world!
+Open up a pull request with the updated directory.  Once merged, your mixin or
+plugin will be broadcast to the world!
 
