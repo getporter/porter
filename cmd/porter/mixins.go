@@ -50,7 +50,7 @@ func buildMixinsListCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
-	opts := mixin.SearchOptions{}
+	opts := porter.SearchOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "search [NAME]",
@@ -62,7 +62,9 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.SearchMixins(opts)
+			opts.Type = "mixin"
+			opts.List = mixin.GetDirectoryListings()
+			return p.SearchPackages(opts)
 		},
 	}
 

@@ -106,14 +106,16 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 			p := NewTestPorter(t)
 			p.TestConfig.SetupPorterHome()
 
-			opts := mixin.SearchOptions{
+			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
 				},
 				Name: tc.mixin,
+				Type: "mixin",
+				List: mixin.GetDirectoryListings(),
 			}
 
-			err := p.SearchMixins(opts)
+			err := p.SearchPackages(opts)
 			if tc.wantErr != "" {
 				require.EqualError(t, err, tc.wantErr)
 			} else {
