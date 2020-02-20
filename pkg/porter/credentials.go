@@ -3,11 +3,13 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/printer"
+	"gopkg.in/AlecAivazis/survey.v1"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
@@ -19,6 +21,10 @@ import (
 // CredentialShowOptions represent options for Porter's credential show command
 type CredentialShowOptions struct {
 	printer.PrintOptions
+	Name string
+}
+
+type CredentialEditOptions struct {
 	Name string
 }
 
@@ -137,13 +143,71 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	return errors.Wrapf(err, "unable to save credentials")
 }
 
-// Validate validates the args provided Porter's credential show command
+// Validate validates the args provided to Porter's credential show command
 func (o *CredentialShowOptions) Validate(args []string) error {
 	if err := validateCredentialName(args); err != nil {
 		return err
 	}
 	o.Name = args[0]
 	return o.ParseFormat()
+}
+
+// Validate validates the args provided to Porter's credential edit command
+func (o *CredentialEditOptions) Validate(args []string) error {
+	if err := validateCredentialName(args); err != nil {
+		return err
+	}
+	o.Name = args[0]
+	return nil
+}
+
+// EditCredential edits the credentials of the provided name.
+// TODO: Allow piping in a credential from stdin?
+// TODO: Allow passing another flag for the specific credential in the set instead of surveying?
+func (p *Porter) EditCredential(opts CredentialEditOptions) error {
+	credSet, err := p.Credentials.Read(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(credSet.Credentials) == 0 {
+		return errors.New("no credentials exist in this set")
+	}
+
+	names := []string{}
+	for _, cs := range credSet.Credentials {
+		names = append(names, cs.Name)
+	}
+
+	selectedName := names[0]
+	if len(names) > 1 {
+		prompt := &survey.Select{
+			Message: "Which credential would you like to edit?",
+			Options: names,
+			Default: names[0],
+		}
+		err = survey.AskOne(prompt, &selectedName, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	for i, cs := range credSet.Credentials {
+		if cs.Name != selectedName {
+			continue
+		}
+		input := []byte(cs.Source.Value)
+		output, err := RunEditor(input)
+		if err != nil {
+			return err
+		}
+		cs.Source.Value = strings.TrimRight(string(output), "\r\n")
+		credSet.Credentials[i] = cs
+	}
+
+	p.Credentials.Save(credSet)
+
+	return nil
 }
 
 // ShowCredential shows the credential set corresponding to the provided name, using
