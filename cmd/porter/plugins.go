@@ -53,11 +53,12 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.SearchOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "search [NAME]",
+		Use:   "search [QUERY]",
 		Short: "Search available plugins",
+		Long:  "Search available plugins. You can specify an optional plugin name query, where the results are filtered by plugins whose name contains the query term.",
 		Example: `  porter plugin search
   porter plugin search azure
-  porter plugin search azure -o json`,
+  porter plugin search -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},

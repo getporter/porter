@@ -9,10 +9,10 @@ Search available plugins
 
 ### Synopsis
 
-Search available plugins
+Search available plugins. You can specify an optional plugin name query, where the results are filtered by plugins whose name contains the query term.
 
 ```
-porter plugins search [NAME] [flags]
+porter plugins search [QUERY] [flags]
 ```
 
 ### Examples
@@ -20,7 +20,7 @@ porter plugins search [NAME] [flags]
 ```
   porter plugin search
   porter plugin search azure
-  porter plugin search azure -o json
+  porter plugin search -o json
 ```
 
 ### Options

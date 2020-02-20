@@ -9,10 +9,10 @@ Search available mixins
 
 ### Synopsis
 
-Search available mixins
+Search available mixins. You can specify an optional mixin name query, where the results are filtered by mixins whose name contains the query term.
 
 ```
-porter mixins search [NAME] [flags]
+porter mixins search [QUERY] [flags]
 ```
 
 ### Examples
@@ -20,7 +20,7 @@ porter mixins search [NAME] [flags]
 ```
   porter mixin search
   porter mixin search helm
-  porter mixin search helm -o json
+  porter mixin search -o json
 ```
 
 ### Options
