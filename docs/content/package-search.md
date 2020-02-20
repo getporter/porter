@@ -36,7 +36,7 @@ $ porter plugin search -o yaml
 Porter maintains a list each for mixins and plugins available for installation.
 They are represented in JSON:
 
-* [Mixin Directory](https://github.com/deislabs/porter/blob/master/pkg/mixins/directory/index.json)
+* [Mixin Directory](https://github.com/deislabs/porter/blob/master/pkg/mixin/directory/index.json)
 * [Plugin Directory](https://github.com/deislabs/porter/blob/master/pkg/plugins/directory/index.json)
 
 To list your mixin or plugin for others to see, create a new JSON entry just
