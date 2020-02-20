@@ -56,6 +56,6 @@ Then, add the entry to the respective directory.
 * [Plugin Directory](https://github.com/deislabs/porter/blob/master/pkg/plugins/directory/index.json)
 
 With this change pushed to a branch on your fork of this repo, you're
-now ready to open up a pull request and broadcast your mixin or plugin
-to the world!
+now ready to open up a pull request.  Once merged it, your mixin or plugin
+will be broadcast to the world!
 
