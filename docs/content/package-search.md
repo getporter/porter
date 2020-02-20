@@ -33,8 +33,14 @@ $ porter plugin search -o yaml
 
 ## List
 
-To add your mixin or plugin to the respective directory, create a new
-structured JSON entry and include it in the respective list.
+Porter maintains a list each for mixins and plugins available for installation.
+They are represented in JSON:
+
+* [Mixin Directory](https://github.com/deislabs/porter/blob/master/pkg/mixins/directory/index.json)
+* [Plugin Directory](https://github.com/deislabs/porter/blob/master/pkg/plugins/directory/index.json)
+
+To list your mixin or plugin for others to see, create a new JSON entry just
+like the others, with details updated to reflect your offering.
 
 For example, a new plugin entry would look like:
 
@@ -52,11 +58,6 @@ The `URL` field should be one of the following:
 * **Atom Feed URL:** Porter uses the following for its stable plugins: `https://cdn.porter.sh/plugin/atom.xml`
 * **Download URL:** Directory where binaries are hosted, such as GitHub releases: `https://github.com/org/project/releases/download`
 
-Then, add the entry to the respective directory.
-
-* [Mixin Directory](https://github.com/deislabs/porter/blob/master/pkg/mixins/directory/index.json)
-* [Plugin Directory](https://github.com/deislabs/porter/blob/master/pkg/plugins/directory/index.json)
-
 Open up a pull request with the updated directory.  Once merged, your mixin or
-plugin will be broadcast to the world!
+plugin listing will be broadcast to the world!
 
