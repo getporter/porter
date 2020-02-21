@@ -207,11 +207,11 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 
 	newCredentials := []credentials.CredentialStrategy{}
 	// todo: validate for correct source types
-	for _, cse := range tempSet.Credentials {
+	for _, tcs := range tempSet.Credentials {
 		cs := credentials.CredentialStrategy{}
-		cs.Name = cse.Name
-		cs.Source.Key = cse.SourceType
-		cs.Source.Value = cse.SourceValue
+		cs.Name = tcs.Name
+		cs.Source.Key = tcs.SourceType
+		cs.Source.Value = tcs.SourceValue
 		newCredentials = append(newCredentials, cs)
 	}
 

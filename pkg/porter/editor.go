@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	defaultEditorWindows = "notepad"
 )
 
-func editorCommand() string {
+func editorArgs() []string {
 	editor := defaultEditor
 	if runtime.GOOS == "windows" {
 		editor = defaultEditorWindows
@@ -20,7 +21,19 @@ func editorCommand() string {
 	if os.Getenv("EDITOR") != "" {
 		editor = os.Getenv("EDITOR")
 	}
-	return editor
+
+	args := []string{}
+
+	// any spaces need to be considered a separate argument passed to exec.
+	// An example of where this would be needed is using "code.exe --wait"
+	// for the EDITOR environment variable.
+	if strings.ContainsAny(editor, "\"'\\") {
+		args = strings.Split(editor, " ")
+	} else {
+		args = append(args, editor)
+	}
+
+	return args
 }
 
 // RunEditor displays content to a user using an external text editor, like vi or notepad.
@@ -47,8 +60,9 @@ func RunEditor(data []byte) ([]byte, error) {
 	// close here without defer so the next command can grab the file
 	tempFile.Close()
 
-	// todo: ensure editor command with spaces works here, e.g. "C:\Program Files\Visual Studio Code\code.exe --wait"
-	cmd := exec.Command(editorCommand(), tempFile.Name())
+	args := editorArgs()
+	args = append(args, tempFile.Name())
+	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
