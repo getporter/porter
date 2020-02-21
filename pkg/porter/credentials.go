@@ -3,13 +3,12 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/printer"
-	"gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/yaml.v2"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
@@ -162,8 +161,6 @@ func (o *CredentialEditOptions) Validate(args []string) error {
 }
 
 // EditCredential edits the credentials of the provided name.
-// TODO: Allow piping in a credential from stdin?
-// TODO: Allow passing another flag for the specific credential in the set instead of surveying?
 func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 	credSet, err := p.Credentials.Read(opts.Name)
 	if err != nil {
@@ -174,38 +171,56 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.New("no credentials exist in this set")
 	}
 
-	names := []string{}
+	// use a flattened data structure for the credentials, so when we marshal
+	// the structure to yaml it's easier for the user to edit.
+	type tempStrategy struct {
+		Name        string `yaml:"name"`
+		SourceType  string `yaml:"type"`
+		SourceValue string `yaml:"value"`
+	}
+	type tempCredSet struct {
+		Credentials []tempStrategy `yaml:"credentials"`
+	}
+	tempSet := &tempCredSet{}
 	for _, cs := range credSet.Credentials {
-		names = append(names, cs.Name)
+		tempSet.Credentials = append(tempSet.Credentials, tempStrategy{
+			Name:        cs.Name,
+			SourceType:  cs.Source.Key,
+			SourceValue: cs.Source.Value,
+		})
 	}
 
-	selectedName := names[0]
-	if len(names) > 1 {
-		prompt := &survey.Select{
-			Message: "Which credential would you like to edit?",
-			Options: names,
-			Default: names[0],
-		}
-		err = survey.AskOne(prompt, &selectedName, nil)
-		if err != nil {
-			return err
-		}
+	data, err := yaml.Marshal(tempSet)
+	if err != nil {
+		return err
 	}
 
-	for i, cs := range credSet.Credentials {
-		if cs.Name != selectedName {
-			continue
-		}
-		input := []byte(cs.Source.Value)
-		output, err := RunEditor(input)
-		if err != nil {
-			return err
-		}
-		cs.Source.Value = strings.TrimRight(string(output), "\r\n")
-		credSet.Credentials[i] = cs
+	output, err := RunEditor([]byte(data))
+	if err != nil {
+		return err
 	}
 
-	p.Credentials.Save(credSet)
+	err = yaml.Unmarshal(output, tempSet)
+	if err != nil {
+		return err
+	}
+
+	newCredentials := []credentials.CredentialStrategy{}
+	// todo: validate for correct source types
+	for _, cse := range tempSet.Credentials {
+		cs := credentials.CredentialStrategy{}
+		cs.Name = cse.Name
+		cs.Source.Key = cse.SourceType
+		cs.Source.Value = cse.SourceValue
+		newCredentials = append(newCredentials, cs)
+	}
+
+	credSet.Credentials = newCredentials
+	credSet.Modified = time.Now()
+	err = p.Credentials.Save(credSet)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
