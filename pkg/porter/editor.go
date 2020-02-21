@@ -40,10 +40,6 @@ func editorArgs() []string {
 	}
 
 	args := []string{}
-
-	// any spaces need to be considered a separate argument passed to exec.
-	// An example of where this would be needed is using "code.exe --wait"
-	// for the EDITOR environment variable.
 	if strings.ContainsAny(editor, "\"'\\") {
 		args = strings.Split(editor, " ")
 	} else {

@@ -445,6 +445,22 @@ func TestCredentialsEdit(t *testing.T) {
 	require.NoError(t, err, "no error should have existed")
 }
 
+func TestCredentialsEditEditorPathWithSpaces(t *testing.T) {
+	os.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
+	os.Setenv(test.ExpectedCommandEnv, "C:\\Program Files\\Visual Studio Code\\code.exe --wait /tmp/porter-kool-kreds")
+	defer os.Unsetenv("EDITOR")
+	defer os.Unsetenv(test.ExpectedCommandEnv)
+
+	p := NewTestPorter(t)
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialEditOptions{Name: "kool-kreds"}
+
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+	err := p.EditCredential(opts)
+	require.NoError(t, err, "no error should have existed")
+}
+
 func TestCredentialsDelete(t *testing.T) {
 	testcases := []struct {
 		name       string
