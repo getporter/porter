@@ -195,7 +195,13 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return err
 	}
 
-	output, err := RunEditor([]byte(data))
+	editor := &Editor{
+		Data:     []byte(data),
+		Filename: fmt.Sprintf("porter-%s", credSet.Name),
+		Context:  p.Context,
+	}
+
+	output, err := editor.Run()
 	if err != nil {
 		return err
 	}
