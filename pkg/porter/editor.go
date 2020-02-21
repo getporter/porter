@@ -17,11 +17,14 @@ func editorCommand() string {
 	if runtime.GOOS == "windows" {
 		editor = defaultEditorWindows
 	}
+	if os.Getenv("EDITOR") != "" {
+		editor = os.Getenv("EDITOR")
+	}
 	return editor
 }
 
 // RunEditor displays content to a user using an external text editor, like vi or notepad.
-// The content is captured and returned during `Run()`
+// The content is captured and returned.
 //
 // The `EDITOR` environment variable is checked to find an editor.
 // Failing that, use some sensible default depending on the operating system.
@@ -44,9 +47,7 @@ func RunEditor(data []byte) ([]byte, error) {
 	// close here without defer so the next command can grab the file
 	tempFile.Close()
 
-	// todo: ensure editor command with spaces works here
-	// todo: other editors like Visual Studio Code don't seem to work with this, and don't block execution until the
-	// editor has been saved like Notepad or vi do.
+	// todo: ensure editor command with spaces works here, e.g. "C:\Program Files\Visual Studio Code\code.exe --wait"
 	cmd := exec.Command(editorCommand(), tempFile.Name())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
