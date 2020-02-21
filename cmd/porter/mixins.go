@@ -53,11 +53,12 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.SearchOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "search [NAME]",
+		Use:   "search [QUERY]",
 		Short: "Search available mixins",
+		Long:  "Search available mixins. You can specify an optional mixin name query, where the results are filtered by mixins whose name contains the query term.",
 		Example: `  porter mixin search
-	porter mixin search helm
-	porter mixin search helm -o json`,
+  porter mixin search helm
+  porter mixin search -o json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
