@@ -6630,12 +6630,10 @@ nav.home-nav {
     #helm.home .helm-features .columns {
       position: relative; }
     #helm.home .helm-features img {
-      position: absolute;
       top: 0;
-      left: 50%;
-      margin-left: -29px; }
+      left: 50%; }
     #helm.home .helm-features p {
-      font-size: 0.925rem;
+      font-size: 1em;
       padding: 0 5%; }
       #helm.home .helm-features p code {
         border: none; }
@@ -7833,7 +7831,7 @@ body {
       .home #helm .billboard h2 {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         color: #277A9F;
-        font-size: 1rem;
+        font-size: 1.4rem;
         margin-bottom: 30px; }
       .home #helm .billboard .helm-logo {
         position: absolute;
