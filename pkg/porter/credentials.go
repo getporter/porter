@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentialsgenerator"
+	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/printer"
 	"gopkg.in/yaml.v2"
 
@@ -171,61 +172,26 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.New("no credentials exist in this set")
 	}
 
-	// use a flattened data structure for the credentials, so when we marshal
-	// the structure to yaml it's easier for the user to edit.
-	type tempStrategy struct {
-		Name        string `yaml:"name"`
-		SourceType  string `yaml:"type"`
-		SourceValue string `yaml:"value"`
-	}
-	type tempCredSet struct {
-		Credentials []tempStrategy `yaml:"credentials"`
-	}
-	tempSet := &tempCredSet{}
-	for _, cs := range credSet.Credentials {
-		tempSet.Credentials = append(tempSet.Credentials, tempStrategy{
-			Name:        cs.Name,
-			SourceType:  cs.Source.Key,
-			SourceValue: cs.Source.Value,
-		})
-	}
-
-	data, err := yaml.Marshal(tempSet)
+	data, err := yaml.Marshal(credSet)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to load credentials")
 	}
 
-	editor := &Editor{
-		Data:     []byte(data),
-		Filename: fmt.Sprintf("porter-%s", credSet.Name),
-		Context:  p.Context,
-	}
-
+	editor := editor.New(p.Context, fmt.Sprintf("porter-%s", credSet.Name), []byte(data))
 	output, err := editor.Run()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to open editor to edit credentials")
 	}
 
-	err = yaml.Unmarshal(output, tempSet)
+	err = yaml.Unmarshal(output, &credSet)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to load credentials")
 	}
 
-	newCredentials := []credentials.CredentialStrategy{}
-	// todo: validate for correct source types
-	for _, tcs := range tempSet.Credentials {
-		cs := credentials.CredentialStrategy{}
-		cs.Name = tcs.Name
-		cs.Source.Key = tcs.SourceType
-		cs.Source.Value = tcs.SourceValue
-		newCredentials = append(newCredentials, cs)
-	}
-
-	credSet.Credentials = newCredentials
 	credSet.Modified = time.Now()
 	err = p.Credentials.Save(credSet)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "unable to save credentials")
 	}
 
 	return nil
