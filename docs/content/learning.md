@@ -15,7 +15,7 @@ and show it off! ✨
 * [Porter: An Opinionated CNAB Authoring Experience](#porter-an-opinionated-cnab-authoring-experience)
 * [Free Glue Code - Porter](#free-glue-code-porter)
 
-[pr]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md
+[pr]: /src/CONTRIBUTING.md
 
 ### Understanding Cloud Native Application Bundles
 

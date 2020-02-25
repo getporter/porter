@@ -74,5 +74,5 @@ can handle installing them as well.
 See the [Search Guide][search-guide] on how to search for available mixins and/or
 add your own to the list.
 
-[mk]: https://github.com/deislabs/porter/blob/master/mixin.mk
+[mk]: /src/mixin.mk
 [search-guide]: /package-search

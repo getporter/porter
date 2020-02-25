@@ -37,6 +37,6 @@ currently working on and plan to work on over the next few months. We use the
 "on-hold" bucket to communicate items of interest that doesn't have a core
 maintainer who will be working on it.
 
-<p align="center">Check out our <a href="https://github.com/deislabs/porter/projects/4">roadmap</a></p>
+<p align="center">Check out our <a href="https://porter.sh/roadmap">roadmap</a></p>
 
-[board]: https://github.com/orgs/deislabs/projects/2
+[board]: https://porter.sh/board
