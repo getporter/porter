@@ -173,7 +173,7 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrapf(err, "unable to load credentials")
 	}
 
-	editor := editor.New(p.Context, fmt.Sprintf("porter-%s", credSet.Name), []byte(data))
+	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), []byte(data))
 	output, err := editor.Run()
 	if err != nil {
 		return errors.Wrapf(err, "unable to open editor to edit credentials")
