@@ -168,10 +168,6 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return err
 	}
 
-	if len(credSet.Credentials) == 0 {
-		return errors.New("no credentials exist in this set")
-	}
-
 	data, err := yaml.Marshal(credSet)
 	if err != nil {
 		return errors.Wrapf(err, "unable to load credentials")
