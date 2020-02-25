@@ -1,9 +1,9 @@
 package editor
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"get.porter.sh/porter/pkg/context"
 )
@@ -32,27 +32,23 @@ func New(context *context.Context, tempFilename string, data []byte) *Editor {
 	}
 }
 
-func editorArgs() []string {
+func editorArgs(filename string) []string {
+	shell := defaultShell
+	if os.Getenv("SHELL") != "" {
+		shell = os.Getenv("SHELL")
+	}
 	editor := defaultEditor
 	if os.Getenv("EDITOR") != "" {
 		editor = os.Getenv("EDITOR")
 	}
 
-	args := []string{}
-	// split any spaces in the editor command into separate arguments, otherwise
-	// exec will treat the entire EDITOR value as one filename.
-	// for example: EDITOR set as "/tmp/myeditor --wait" will be split into "/tmp/myeditor" and
-	// "--wait" as the second argument.
-	// another example: "C:\Program Files\Visual Studio Code\Code.exe --wait" will
-	// be split into "C:\Program", "Files\Visual", "Studio", "Code\Code.exe", "--wait"
-	// but this works correctly with exec.Command() despite looking a bit strange.
-	if strings.ContainsAny(editor, " ") {
-		args = strings.Split(editor, " ")
-	} else {
-		args = append(args, editor)
-	}
-
-	return args
+	// Example of what will be run:
+	// on *nix: sh -c "vi /tmp/test.txt"
+	// on windows: cmd /C "C:\Program Files\Visual Studio Code\Code.exe --wait C:\somefile.txt"
+	//
+	// Passing the editor command that could possibly have an argument (e.g. --wait for VSCode) to the
+	// shell means we don't have do parse this ourselves, like split on spaces.
+	return []string{shell, shellCommandFlag, fmt.Sprintf("%s %s", editor, filename)}
 }
 
 // Run opens the editor, displaying the content through a temporary file.
@@ -72,8 +68,7 @@ func (e *Editor) Run() ([]byte, error) {
 	// close here without defer so cmd can grab the file
 	tempFile.Close()
 
-	args := editorArgs()
-	args = append(args, tempFile.Name())
+	args := editorArgs(tempFile.Name())
 	cmd := e.NewCommand(args[0], args[1:]...)
 	cmd.Stdout = e.Out
 	cmd.Stderr = e.Err
