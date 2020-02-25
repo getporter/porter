@@ -181,12 +181,12 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 
 	err = yaml.Unmarshal(output, &credSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load credentials")
+		return errors.Wrap(err, "unable to process credentials")
 	}
 
 	err = p.Credentials.Validate(credSet)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "credentials are invalid")
 	}
 
 	credSet.Modified = time.Now()
