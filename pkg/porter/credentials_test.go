@@ -430,8 +430,10 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 }
 
 func TestCredentialsEdit(t *testing.T) {
+	os.Setenv("SHELL", "bash")
 	os.Setenv("EDITOR", "vi")
-	os.Setenv(test.ExpectedCommandEnv, "vi "+filepath.Join(os.TempDir(), "porter-kool-kreds"))
+	os.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds"))
+	defer os.Unsetenv("SHELL")
 	defer os.Unsetenv("EDITOR")
 	defer os.Unsetenv(test.ExpectedCommandEnv)
 
@@ -445,9 +447,11 @@ func TestCredentialsEdit(t *testing.T) {
 	require.NoError(t, err, "no error should have existed")
 }
 
-func TestCredentialsEditEditorPathWithSpaces(t *testing.T) {
+func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
+	os.Setenv("SHELL", "something")
 	os.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-	os.Setenv(test.ExpectedCommandEnv, "C:\\Program Files\\Visual Studio Code\\code.exe --wait /tmp/porter-kool-kreds")
+	os.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait /tmp/porter-kool-kreds")
+	defer os.Unsetenv("SHELL")
 	defer os.Unsetenv("EDITOR")
 	defer os.Unsetenv(test.ExpectedCommandEnv)
 
