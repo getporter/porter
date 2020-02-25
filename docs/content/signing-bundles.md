@@ -10,4 +10,4 @@ if you would like to add content for this page.
 
 * This needs to wait until we wrap duffle commands with porter
 
-[contrib]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md#documentation
+[contrib]: /src/CONTRIBUTING.md#documentation
