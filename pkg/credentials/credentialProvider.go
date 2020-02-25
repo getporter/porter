@@ -8,6 +8,7 @@ import (
 type CredentialProvider interface {
 	CredentialStore
 	ResolveAll(creds credentials.CredentialSet) (credentials.Set, error)
+	Validate(credentials.CredentialSet) error
 }
 
 // CredentialStore is an interface representing cnab-go's credentials.Store

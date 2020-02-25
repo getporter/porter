@@ -184,6 +184,11 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrap(err, "unable to load credentials")
 	}
 
+	err = p.Credentials.Validate(credSet)
+	if err != nil {
+		return err
+	}
+
 	credSet.Modified = time.Now()
 	err = p.Credentials.Save(credSet)
 	if err != nil {
