@@ -19,16 +19,16 @@ import (
 // from the remote store, edited locally, then saved back.
 type Editor struct {
 	*context.Context
-	data         []byte
+	contents     []byte
 	tempFilename string
 }
 
-// New returns a new editor with the temp filename and data provided.
-func New(context *context.Context, tempFilename string, data []byte) *Editor {
+// New returns a new Editor with the temp filename and contents provided.
+func New(context *context.Context, tempFilename string, contents []byte) *Editor {
 	return &Editor{
 		Context:      context,
 		tempFilename: tempFilename,
-		data:         data,
+		contents:     contents,
 	}
 }
 
@@ -51,7 +51,7 @@ func editorArgs(filename string) []string {
 	return []string{shell, shellCommandFlag, fmt.Sprintf("%s %s", editor, filename)}
 }
 
-// Run opens the editor, displaying the content through a temporary file.
+// Run opens the editor, displaying the contents through a temporary file.
 // The content is returned once the editor closes.
 func (e *Editor) Run() ([]byte, error) {
 	tempFile, err := e.FileSystem.OpenFile(filepath.Join(os.TempDir(), e.tempFilename), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
@@ -60,7 +60,7 @@ func (e *Editor) Run() ([]byte, error) {
 	}
 	defer e.FileSystem.Remove(tempFile.Name())
 
-	_, err = tempFile.Write(e.data)
+	_, err = tempFile.Write(e.contents)
 	if err != nil {
 		return nil, err
 	}
@@ -78,10 +78,10 @@ func (e *Editor) Run() ([]byte, error) {
 		return nil, err
 	}
 
-	data, err := e.FileSystem.ReadFile(tempFile.Name())
+	contents, err := e.FileSystem.ReadFile(tempFile.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return contents, nil
 }

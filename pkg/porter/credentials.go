@@ -168,26 +168,26 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(credSet)
+	contents, err := yaml.Marshal(credSet)
 	if err != nil {
-		return errors.Wrapf(err, "unable to load credentials")
+		return errors.Wrap(err, "unable to load credentials")
 	}
 
-	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), []byte(data))
+	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), contents)
 	output, err := editor.Run()
 	if err != nil {
-		return errors.Wrapf(err, "unable to open editor to edit credentials")
+		return errors.Wrap(err, "unable to open editor to edit credentials")
 	}
 
 	err = yaml.Unmarshal(output, &credSet)
 	if err != nil {
-		return errors.Wrapf(err, "unable to load credentials")
+		return errors.Wrap(err, "unable to load credentials")
 	}
 
 	credSet.Modified = time.Now()
 	err = p.Credentials.Save(credSet)
 	if err != nil {
-		return errors.Wrapf(err, "unable to save credentials")
+		return errors.Wrap(err, "unable to save credentials")
 	}
 
 	return nil
