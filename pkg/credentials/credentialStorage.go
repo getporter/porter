@@ -56,6 +56,7 @@ func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (credenti
 
 func (s CredentialStorage) Validate(creds credentials.CredentialSet) error {
 	validSources := []string{"secret", host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
+	var errors error
 
 	for _, cs := range creds.Credentials {
 		valid := false
@@ -66,13 +67,13 @@ func (s CredentialStorage) Validate(creds credentials.CredentialSet) error {
 			}
 		}
 		if valid == false {
-			return fmt.Errorf(
+			errors = multierror.Append(errors, fmt.Errorf(
 				"%s is not a valid source. Valid sources are: %s",
 				cs.Source.Key,
 				strings.Join(validSources, ", "),
-			)
+			))
 		}
 	}
 
-	return nil
+	return errors
 }
