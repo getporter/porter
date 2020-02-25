@@ -46,8 +46,9 @@ func editorArgs(filename string) []string {
 	// on *nix: sh -c "vi /tmp/test.txt"
 	// on windows: cmd /C "C:\Program Files\Visual Studio Code\Code.exe --wait C:\somefile.txt"
 	//
+	// Pass the editor command to the shell so we don't have to parse the command ourselves.
 	// Passing the editor command that could possibly have an argument (e.g. --wait for VSCode) to the
-	// shell means we don't have do parse this ourselves, like split on spaces.
+	// shell means we don't have to parse this ourselves, like splitting on spaces.
 	return []string{shell, shellCommandFlag, fmt.Sprintf("%s %s", editor, filename)}
 }
 
