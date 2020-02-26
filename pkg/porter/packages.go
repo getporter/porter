@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/pkg/errors"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -15,12 +14,15 @@ import (
 type SearchOptions struct {
 	Name string
 	Type string
-	List *packr.Box
 	printer.PrintOptions
 }
 
 // Validate validates the arguments provided to a search command
 func (o *SearchOptions) Validate(args []string) error {
+	if o.Type != "mixin" && o.Type != "plugin" {
+		return fmt.Errorf("unsupported package type: %s", o.Type)
+	}
+
 	err := o.validatePackageName(args)
 	if err != nil {
 		return err
@@ -44,8 +46,13 @@ func (o *SearchOptions) validatePackageName(args []string) error {
 
 // SearchPackages searches the provided package list according to the provided options
 func (p *Porter) SearchPackages(opts SearchOptions) error {
-	pkgSearcher := pkgmgmt.NewSearcher(opts.List)
+	url := pkgmgmt.GetPackageListURL(opts.Type)
+	list, err := pkgmgmt.GetPackageListings(url)
+	if err != nil {
+		return err
+	}
 
+	pkgSearcher := pkgmgmt.NewSearcher(list)
 	mixinList, err := pkgSearcher.Search(opts.Name, opts.Type)
 	if err != nil {
 		return err

@@ -1,13 +1,17 @@
 package pkgmgmt
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSearch_TestBox(t *testing.T) {
+func TestSearch(t *testing.T) {
 	fullList := PackageList{
 		{
 			Name:        "az",
@@ -59,8 +63,14 @@ func TestSearch_TestBox(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			box := packr.Folder("./testdata/directory")
-			searcher := NewSearcher(box)
+			data, err := ioutil.ReadFile("testdata/directory/index.json")
+			require.NoError(t, err)
+
+			var pkgList PackageList
+			err = json.Unmarshal(data, &pkgList)
+			require.NoError(t, err)
+
+			searcher := NewSearcher(pkgList)
 
 			result, err := searcher.Search(tc.pkg, "mixin")
 			if tc.wantError != "" {
@@ -71,4 +81,49 @@ func TestSearch_TestBox(t *testing.T) {
 			require.Equal(t, tc.wantItems, result)
 		})
 	}
+}
+
+func TestGetPackageListings_404(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+	}))
+	defer ts.Close()
+
+	_, err := GetPackageListings(ts.URL)
+	require.EqualError(t, err,
+		fmt.Sprintf("unable to fetch package list via %s: Not Found", ts.URL))
+}
+
+func TestGetPackageListings_UnmarshalErr(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "foo")
+	}))
+	defer ts.Close()
+
+	_, err := GetPackageListings(ts.URL)
+	require.EqualError(t, err,
+		"unable to unmarshal package list: invalid character 'o' in literal false (expecting 'a')")
+}
+
+func TestGetPackageListings_Success(t *testing.T) {
+	packageList := PackageList{
+		{
+			Name:        "quokkasay",
+			Author:      "Setonix Inc.",
+			Description: "A mixin for using the quokkasay CLI",
+			URL:         "https://cdn.quokkas.au/mixins/atom.xml",
+		},
+	}
+
+	bytes, err := json.Marshal(packageList)
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, string(bytes))
+	}))
+	defer ts.Close()
+
+	list, err := GetPackageListings(ts.URL)
+	require.NoError(t, err)
+	require.Equal(t, packageList, list)
 }

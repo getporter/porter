@@ -1,6 +1,7 @@
 package pkgmgmt
 
 import (
+	"fmt"
 	"os/exec"
 
 	"get.porter.sh/porter/pkg/context"
@@ -38,4 +39,9 @@ type CommandOptions struct {
 	// This is only necessary if being called directly from a runner, if
 	// using a PackageManager, this is set for you.
 	PreRun PreRunHandler
+}
+
+// GetPackageListURL returns the URL for package listings of the provided type
+func GetPackageListURL(pkgType string) string {
+	return fmt.Sprintf("https://cdn.porter.sh/%ss/index.json", pkgType)
 }

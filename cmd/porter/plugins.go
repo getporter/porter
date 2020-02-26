@@ -64,7 +64,6 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Type = "plugin"
-			opts.List = plugins.GetDirectoryListings()
 			return p.SearchPackages(opts)
 		},
 	}

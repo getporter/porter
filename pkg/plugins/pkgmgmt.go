@@ -4,7 +4,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
-	"github.com/gobuffalo/packr/v2"
 )
 
 const (
@@ -42,10 +41,4 @@ type Metadata struct {
 type Implementation struct {
 	Type string `json:"type" yaml:"type"`
 	Name string `json:"implementation" yaml:"name"`
-}
-
-// GetDirectoryListings returns a directory/list of plugins available to install
-func GetDirectoryListings() *packr.Box {
-	// TODO: Decouple listing from CLI: https://github.com/deislabs/porter/issues/908
-	return packr.New("get.porter.sh/porter/pkg/plugins/directory", "./directory")
 }
