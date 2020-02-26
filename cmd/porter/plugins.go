@@ -50,7 +50,9 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 }
 
 func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.SearchOptions{}
+	opts := porter.SearchOptions{
+		Type: "plugin",
+	}
 
 	cmd := &cobra.Command{
 		Use:   "search [QUERY]",
@@ -63,8 +65,6 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.Type = "plugin"
-			opts.List = plugins.GetDirectoryListings()
 			return p.SearchPackages(opts)
 		},
 	}

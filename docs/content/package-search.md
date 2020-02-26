@@ -33,31 +33,15 @@ $ porter plugin search -o yaml
 
 ## List
 
-Porter maintains a list each for mixins and plugins available for installation.
-They are represented in JSON:
+Porter maintains lists for mixins and plugins available for installation.
+They are represented in JSON and hosted in the [porter-packages][porter-packages]
+GitHub repository:
 
-* [Mixin Directory](/src/pkg/mixin/directory/index.json)
-* [Plugin Directory](/src/pkg/plugins/directory/index.json)
+* [Mixin Directory](https://github.com/deislabs/porter-packages/blob/master/mixins/index.json)
+* [Plugin Directory](https://github.com/deislabs/porter-packages/blob/master/plugins/index.json)
 
-To list your mixin or plugin for others to see, create a new JSON entry just
-like the others, with details updated to reflect your offering.
+To add a listing for your mixin or plugin for others to see, follow the
+instructions in the [repository README][porter-packages-readme].
 
-For example, a new plugin entry would look like:
-
-```json
-  {
-    "name": "myplugin",
-    "author": "My Name",
-    "description": "A plugin for doing great things",
-    "URL": "https://github.com/org/project/releases/download",
-  },
-```
-
-The `URL` field should be one of the following:
-
-* **Atom Feed URL:** Porter uses the following for its stable plugins: `https://cdn.porter.sh/plugin/atom.xml`
-* **Download URL:** Directory where binaries are hosted, such as GitHub releases: `https://github.com/org/project/releases/download`
-
-Open up a pull request with the updated directory.  Once merged, your mixin or
-plugin listing will be broadcast to the world!
-
+[porter-packages]: https://github.com/deislabs/porter-packages
+[porter-packages-readme]: https://github.com/deislabs/porter-packages/blob/master/README.md
