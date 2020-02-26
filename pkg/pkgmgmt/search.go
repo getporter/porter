@@ -51,22 +51,22 @@ func (s *Searcher) Search(name, pkgType string) (PackageList, error) {
 func GetPackageListings(url string) (PackageList, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to fetch package list via %s", url)
+		return PackageList{}, errors.Wrapf(err, "unable to fetch package list via %s", url)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(resp.StatusCode))
+		return PackageList{}, fmt.Errorf("unable to fetch package list via %s: %s", url, http.StatusText(resp.StatusCode))
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read package list via %s", url)
+		return PackageList{}, errors.Wrapf(err, "unable to read package list via %s", url)
 	}
 
 	list := PackageList{}
 	err = json.Unmarshal(data, &list)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to unmarshal package list")
+		return PackageList{}, errors.Wrap(err, "unable to unmarshal package list")
 	}
 
 	return list, nil

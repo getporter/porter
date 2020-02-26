@@ -48,15 +48,12 @@ func TestSearchOptions_Validate_PackageName(t *testing.T) {
 }
 
 func TestPorter_SearchPackages_Mixins(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-
 	// Grab the full mixin list to compare to one of the test cases
 	url := pkgmgmt.GetPackageListURL("mixin")
 	mixinList, err := pkgmgmt.GetPackageListings(url)
 	require.NoError(t, err)
 
-	fullList, err := json.Marshal(mixinList)
+	fullList, err := json.MarshalIndent(mixinList, "", "  ")
 	require.NoError(t, err)
 
 	testcases := []struct {
@@ -97,6 +94,9 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.TestConfig.SetupPorterHome()
+
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
@@ -119,15 +119,12 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 }
 
 func TestPorter_SearchPackages_Plugins(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-
 	// Grab the full plugin list to compare to one of the test cases
 	url := pkgmgmt.GetPackageListURL("plugin")
 	pluginList, err := pkgmgmt.GetPackageListings(url)
 	require.NoError(t, err)
 
-	fullList, err := json.Marshal(pluginList)
+	fullList, err := json.MarshalIndent(pluginList, "", "  ")
 	require.NoError(t, err)
 
 	testcases := []struct {
@@ -161,6 +158,9 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.TestConfig.SetupPorterHome()
+
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
