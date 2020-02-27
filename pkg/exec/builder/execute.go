@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"strings"
@@ -77,6 +78,11 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	}
 	args = append(args, flags.ToSlice(dashes)...)
 
+	// Split up any arguments or flags that have spaces so that we pass them as separate array elements
+	// It doesn't show up any differently in the printed command, but it matters to how the command
+	// it executed against the system.
+	args = expandOnWhitespace(args)
+
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
 	output := &bytes.Buffer{}
 	cmd.Stdout = io.MultiWriter(cxt.Out, output)
@@ -98,4 +104,28 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	}
 
 	return output.String(), nil
+}
+
+// expandOnWhitespace finds elements with multiple words that are not "glued" together with quotes
+// and splits them into separate elements in the slice
+func expandOnWhitespace(slice []string) []string {
+	expandedSlice := make([]string, 0, len(slice))
+	for _, chunk := range slice {
+		r := csv.NewReader(strings.NewReader(chunk))
+		r.Comma = ' '
+		r.LazyQuotes = true
+		group, err := r.Read()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			expandedSlice = append(expandedSlice, chunk)
+		} else {
+			for _, chunkette := range group {
+				expandedSlice = append(expandedSlice, chunkette)
+			}
+		}
+	}
+
+	return expandedSlice
 }

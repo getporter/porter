@@ -59,3 +59,25 @@ func TestExecuteSingleStepAction(t *testing.T) {
 	exists, _ = c.FileSystem.Exists("/cnab/app/porter/outputs/jsonpath")
 	assert.True(t, exists, "jsonpath output was not evaluated")
 }
+
+func Test_expandOnWhitespace(t *testing.T) {
+	t.Run("split whitespace", func(t *testing.T) {
+		result := expandOnWhitespace([]string{"cmd", "--myarg", "val1 val2"})
+		assert.Equal(t, []string{"cmd", "--myarg", "val1", "val2"}, result)
+	})
+
+	t.Run("keep double quoted whitespace", func(t *testing.T) {
+		result := expandOnWhitespace([]string{"cmd", "--myarg", "\"val1 val2\" val3"})
+		assert.Equal(t, []string{"cmd", "--myarg", "val1 val2", "val3"}, result)
+	})
+
+	t.Run("embedded single quote", func(t *testing.T) {
+		result := expandOnWhitespace([]string{"cmd", "--myarg", `"Patty O'Brien" true`})
+		assert.Equal(t, []string{"cmd", "--myarg", "Patty O'Brien", "true"}, result)
+	})
+
+	t.Run("embedded double quote", func(t *testing.T) {
+		result := expandOnWhitespace([]string{"cmd", "--myarg", `"Patty O"Brien" true`})
+		assert.Equal(t, []string{"cmd", "--myarg", "Patty O\"Brien", "true"}, result)
+	})
+}

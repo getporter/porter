@@ -3,4 +3,4 @@ install:
     description: "Say Hello"
     command: bash
     flags:
-        c: "printf \"Hello World \t\n\""
+        c: "\"printf \"Hello World \t\n\"\""
