@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -48,12 +49,8 @@ func TestSearchOptions_Validate_PackageName(t *testing.T) {
 }
 
 func TestPorter_SearchPackages_Mixins(t *testing.T) {
-	// Grab the full mixin list to compare to one of the test cases
-	url := pkgmgmt.GetPackageListURL("mixin")
-	mixinList, err := pkgmgmt.GetPackageListings(url)
-	require.NoError(t, err)
-
-	fullList, err := json.MarshalIndent(mixinList, "", "  ")
+	// Fetch the full mixin list for comparison in test case(s)
+	fullList, err := fetchFullListBytes("mixin")
 	require.NoError(t, err)
 
 	testcases := []struct {
@@ -119,12 +116,8 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 }
 
 func TestPorter_SearchPackages_Plugins(t *testing.T) {
-	// Grab the full plugin list to compare to one of the test cases
-	url := pkgmgmt.GetPackageListURL("plugin")
-	pluginList, err := pkgmgmt.GetPackageListings(url)
-	require.NoError(t, err)
-
-	fullList, err := json.MarshalIndent(pluginList, "", "  ")
+	// Fetch the full plugin list for comparison in test case(s)
+	fullList, err := fetchFullListBytes("plugin")
 	require.NoError(t, err)
 
 	testcases := []struct {
@@ -180,4 +173,22 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 			require.Equal(t, tc.wantOutput, gotOutput)
 		})
 	}
+}
+
+// fetchFullListBytes fetches the full package list according to the
+// provided package type, sorts the list, and returns its marshaled byte form
+func fetchFullListBytes(pkgType string) ([]byte, error) {
+	url := pkgmgmt.GetPackageListURL(pkgType)
+	packageList, err := pkgmgmt.GetPackageListings(url)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Sort(packageList)
+	bytes, err := json.MarshalIndent(packageList, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
