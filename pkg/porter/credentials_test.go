@@ -1,17 +1,19 @@
 package porter
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"get.porter.sh/porter/pkg/printer"
 )
 
 func TestGenerateNoName(t *testing.T) {
@@ -425,6 +427,42 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 			assert.Equal(t, tc.wantType, st)
 		})
 	}
+}
+
+func TestCredentialsEdit(t *testing.T) {
+	os.Setenv("SHELL", "bash")
+	os.Setenv("EDITOR", "vi")
+	os.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	defer os.Unsetenv("SHELL")
+	defer os.Unsetenv("EDITOR")
+	defer os.Unsetenv(test.ExpectedCommandEnv)
+
+	p := NewTestPorter(t)
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialEditOptions{Name: "kool-kreds"}
+
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+	err := p.EditCredential(opts)
+	require.NoError(t, err, "no error should have existed")
+}
+
+func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
+	os.Setenv("SHELL", "something")
+	os.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
+	os.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	defer os.Unsetenv("SHELL")
+	defer os.Unsetenv("EDITOR")
+	defer os.Unsetenv(test.ExpectedCommandEnv)
+
+	p := NewTestPorter(t)
+	p.CNAB = &TestCNABProvider{}
+
+	opts := CredentialEditOptions{Name: "kool-kreds"}
+
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+	err := p.EditCredential(opts)
+	require.NoError(t, err, "no error should have existed")
 }
 
 func TestCredentialsDelete(t *testing.T) {

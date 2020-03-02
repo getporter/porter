@@ -7,7 +7,9 @@ import (
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentialsgenerator"
+	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/printer"
+	"gopkg.in/yaml.v2"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
@@ -19,6 +21,10 @@ import (
 // CredentialShowOptions represent options for Porter's credential show command
 type CredentialShowOptions struct {
 	printer.PrintOptions
+	Name string
+}
+
+type CredentialEditOptions struct {
 	Name string
 }
 
@@ -137,13 +143,59 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	return errors.Wrapf(err, "unable to save credentials")
 }
 
-// Validate validates the args provided Porter's credential show command
+// Validate validates the args provided to Porter's credential show command
 func (o *CredentialShowOptions) Validate(args []string) error {
 	if err := validateCredentialName(args); err != nil {
 		return err
 	}
 	o.Name = args[0]
 	return o.ParseFormat()
+}
+
+// Validate validates the args provided to Porter's credential edit command
+func (o *CredentialEditOptions) Validate(args []string) error {
+	if err := validateCredentialName(args); err != nil {
+		return err
+	}
+	o.Name = args[0]
+	return nil
+}
+
+// EditCredential edits the credentials of the provided name.
+func (p *Porter) EditCredential(opts CredentialEditOptions) error {
+	credSet, err := p.Credentials.Read(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	contents, err := yaml.Marshal(credSet)
+	if err != nil {
+		return errors.Wrap(err, "unable to load credentials")
+	}
+
+	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", credSet.Name), contents)
+	output, err := editor.Run()
+	if err != nil {
+		return errors.Wrap(err, "unable to open editor to edit credentials")
+	}
+
+	err = yaml.Unmarshal(output, &credSet)
+	if err != nil {
+		return errors.Wrap(err, "unable to process credentials")
+	}
+
+	err = p.Credentials.Validate(credSet)
+	if err != nil {
+		return errors.Wrap(err, "credentials are invalid")
+	}
+
+	credSet.Modified = time.Now()
+	err = p.Credentials.Save(credSet)
+	if err != nil {
+		return errors.Wrap(err, "unable to save credentials")
+	}
+
+	return nil
 }
 
 // ShowCredential shows the credential set corresponding to the provided name, using
