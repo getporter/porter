@@ -63,21 +63,27 @@ func TestExecuteSingleStepAction(t *testing.T) {
 func Test_expandOnWhitespace(t *testing.T) {
 	t.Run("split whitespace", func(t *testing.T) {
 		result := expandOnWhitespace([]string{"cmd", "--myarg", "val1 val2"})
-		assert.Equal(t, []string{"cmd", "--myarg", "val1", "val2"}, result)
+		assert.Equal(t, []string{"cmd", "--myarg", "val1", "val2"}, result, "strings not enclosed should be split apart")
 	})
 
 	t.Run("keep double quoted whitespace", func(t *testing.T) {
-		result := expandOnWhitespace([]string{"cmd", "--myarg", "\"val1 val2\" val3"})
-		assert.Equal(t, []string{"cmd", "--myarg", "val1 val2", "val3"}, result)
+		result := expandOnWhitespace([]string{"cmd", "--myarg", `"val1 val2" val3`})
+		assert.Equal(t, []string{"cmd", "--myarg", "val1 val2", "val3"}, result, "strings in the enclosing quotes should be grouped together")
 	})
 
 	t.Run("embedded single quote", func(t *testing.T) {
 		result := expandOnWhitespace([]string{"cmd", "--myarg", `"Patty O'Brien" true`})
-		assert.Equal(t, []string{"cmd", "--myarg", "Patty O'Brien", "true"}, result)
+		assert.Equal(t, []string{"cmd", "--myarg", "Patty O'Brien", "true"}, result, "single quotes should be included in the enclosing quotes")
 	})
 
+	// This test case could go either way, depending on what works better.
 	t.Run("embedded double quote", func(t *testing.T) {
 		result := expandOnWhitespace([]string{"cmd", "--myarg", `"Patty O"Brien" true`})
-		assert.Equal(t, []string{"cmd", "--myarg", "Patty O\"Brien", "true"}, result)
+		assert.Equal(t, []string{"cmd", "--myarg", "Patty O\"Brien", "true"}, result, "unmatched single quotes should be included in the enclosing quotes")
+	})
+
+	t.Run("escaped quotes", func(t *testing.T) {
+		result := expandOnWhitespace([]string{"c", `"echo { \"test\": \"myvalue\" }"`})
+		assert.Equal(t, []string{"c", `echo { \"test\": \"myvalue\" }`}, result, "escaped quotes should be included in the enclosing quotes")
 	})
 }
