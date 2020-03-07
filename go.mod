@@ -37,6 +37,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/yaml.v2 v2.2.4
+	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309

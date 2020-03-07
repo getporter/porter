@@ -3,9 +3,7 @@ package porter
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/manifest"
-	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/pkg/errors"
 )
@@ -38,72 +36,11 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	if len(opts.CredentialIdentifiers) == 0 {
-		var credSetNames []string
-		credSets, err := p.Credentials.ReadAll()
+		credName, err := p.generateCredentials(opts.CNABFile, "", false, false)
 		if err != nil {
-			return errors.Wrap(err, "failed to read exisiting credential sets")
+			return err
 		}
-
-		shouldGenerateCred := false
-		var selectedOption string
-		if len(credSets) > 0 {
-			for _, credSet := range credSets {
-				credSetNames = append(credSetNames, credSet.Name)
-			}
-
-			selectCredPrompt := &survey.Select{
-				Message: "Choose a set of credentials to use while installing this bundle",
-				Options: append(credSetNames, generateCredCode, quitGenerateCode),
-				Default: credSetNames[0],
-			}
-			survey.AskOne(selectCredPrompt, &selectedOption, nil)
-
-			switch selectedOption {
-			case generateCredCode:
-				shouldGenerateCred = true
-			case quitGenerateCode:
-				return nil
-			default:
-				opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, selectedOption)
-			}
-		} else {
-			shouldGenerateCredPrompt := &survey.Confirm{
-				Message: "No credential identifier given. Generate one ?",
-			}
-			survey.AskOne(shouldGenerateCredPrompt, &shouldGenerateCred, nil)
-			if !shouldGenerateCred {
-				fmt.Fprintln(p.Out, "Credentials are mandatory to install this bundle")
-				return nil
-			}
-		}
-
-		if shouldGenerateCred {
-			bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
-			if err != nil {
-				return errors.Wrap(err, "failed to load bundle while generating credentials")
-			}
-
-			var credIdentifierName string
-			inputCredNamePrompt := &survey.Input{
-				Message: "Enter credential identifier name",
-				Default: bundle.Name,
-			}
-			survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
-
-			genOpts := credentialsgenerator.GenerateOptions{
-				Name:        credIdentifierName,
-				Credentials: bundle.Credentials,
-			}
-
-			err = p.generateAndSaveCredentialSetForCNABFile(opts.CNABFile, genOpts)
-			if err != nil {
-				return errors.Wrap(err, "failed to generate credentials")
-			}
-			fmt.Fprintln(p.Out, "Credentials generated and saved successfully for future use")
-
-			opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credIdentifierName)
-		}
-
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName)
 	}
 
 	deperator := newDependencyExecutioner(p)

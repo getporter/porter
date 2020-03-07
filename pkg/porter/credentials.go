@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/printer"
+	"gopkg.in/AlecAivazis/survey.v1"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
@@ -101,25 +102,80 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return err
 	}
 
-	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
+	_, err = p.generateCredentials(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
+	return err
+}
+
+func (p *Porter) generateCredentials(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
+	var credSetNames []string
+	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
-		return err
+		return "", errors.Wrap(err, "failed to read exisiting credential sets")
 	}
 
-	name := opts.Name
-	if name == "" {
-		name = bundle.Name
+	shouldGenerateCred := false
+	var selectedOption string
+	if len(credSets) > 0 {
+		for _, credSet := range credSets {
+			credSetNames = append(credSetNames, credSet.Name)
+		}
+
+		selectCredPrompt := &survey.Select{
+			Message: "Choose a set of credentials to use while installing this bundle",
+			Options: append(credSetNames, generateCredCode, quitGenerateCode),
+			Default: credSetNames[0],
+		}
+		survey.AskOne(selectCredPrompt, &selectedOption, nil)
+
+		switch selectedOption {
+		case generateCredCode:
+			shouldGenerateCred = true
+		case quitGenerateCode:
+			return "", errors.New("Credentials are mandatory to install this bundle")
+		default:
+			return selectedOption, nil
+		}
+	} else {
+		shouldGenerateCredPrompt := &survey.Confirm{
+			Message: "No credential identifier given. Generate one ?",
+		}
+		survey.AskOne(shouldGenerateCredPrompt, &shouldGenerateCred, nil)
 	}
+
+	if !shouldGenerateCred {
+		return "", errors.New("Credentials are mandatory to install this bundle")
+	}
+
+	bundle, err := p.CNAB.LoadBundle(CNABFile)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to load bundle while generating credentials")
+	}
+
+	if credIdentifierName == "" {
+		inputCredNamePrompt := &survey.Input{
+			Message: "Enter credential identifier name",
+			Default: bundle.Name,
+		}
+		survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
+	}
+
 	genOpts := credentialsgenerator.GenerateOptions{
-		Name:        name,
+		Name:        credIdentifierName,
 		Credentials: bundle.Credentials,
-		Silent:      opts.Silent,
-		DryRun:      opts.DryRun,
+		Silent:      silent,
+		DryRun:      dryRun,
 	}
 
-	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
-	fmt.Fprintf(p.Out, "%d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
-	return p.generateAndSaveCredentialSetForCNABFile(opts.CNABFile, genOpts)
+	fmt.Fprintf(p.Out, "  Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
+	fmt.Fprintf(p.Out, "  %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
+	err = p.generateAndSaveCredentialSetForCNABFile(CNABFile, genOpts)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate credentials")
+	}
+	fmt.Fprintln(p.Out, "Credentials generated and saved successfully for future use")
+
+	return credIdentifierName, nil
+
 }
 
 func (p *Porter) generateAndSaveCredentialSetForCNABFile(CNABFile string, genOpts credentialsgenerator.GenerateOptions) error {
