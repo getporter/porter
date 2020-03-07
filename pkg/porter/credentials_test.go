@@ -23,6 +23,7 @@ func TestGenerateNoName(t *testing.T) {
 	opts := CredentialOptions{
 		Silent: true,
 	}
+
 	err := p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
 	creds, err := p.Credentials.Read("testbundle")

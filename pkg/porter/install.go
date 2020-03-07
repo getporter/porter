@@ -36,7 +36,7 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	if len(opts.CredentialIdentifiers) == 0 {
-		credName, err := p.generateCredentialsForCNABFile(opts.CNABFile, "", false, false)
+		credName, err := p.chooseCredentialSet(opts.CNABFile)
 		if err != nil {
 			return err
 		}

@@ -108,11 +108,11 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return err
 	}
 
-	_, err = p.generateCredentialsForCNABFile(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
+	_, err = p.generateNewCredentialSet(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
 	return err
 }
 
-func (p *Porter) generateCredentialsForCNABFile(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
+func (p *Porter) chooseCredentialSet(CNABFile string) (string, error) {
 	var credSetNames []string
 	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
@@ -152,17 +152,25 @@ func (p *Porter) generateCredentialsForCNABFile(CNABFile string, credIdentifierN
 		return "", errors.New("Credentials are mandatory to install this bundle")
 	}
 
+	return p.generateNewCredentialSet(CNABFile, "", false, false)
+}
+
+func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
 	bundle, err := p.CNAB.LoadBundle(CNABFile)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to load bundle while generating credentials")
 	}
 
 	if credIdentifierName == "" {
-		inputCredNamePrompt := &survey.Input{
-			Message: "Enter credential identifier name",
-			Default: bundle.Name,
+		if !silent {
+			inputCredNamePrompt := &survey.Input{
+				Message: "Enter credential identifier name",
+				Default: bundle.Name,
+			}
+			survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
+		} else {
+			credIdentifierName = bundle.Name
 		}
-		survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
 	}
 
 	genOpts := credentialsgenerator.GenerateOptions{
@@ -181,7 +189,6 @@ func (p *Porter) generateCredentialsForCNABFile(CNABFile string, credIdentifierN
 	fmt.Fprintln(p.Out, "Credentials generated and saved successfully for future use")
 
 	return credIdentifierName, nil
-
 }
 
 func (p *Porter) generateAndSaveCredentialSet(genOpts credentialsgenerator.GenerateOptions) error {
