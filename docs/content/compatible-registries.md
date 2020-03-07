@@ -17,7 +17,7 @@ out a particular registry and know that it will work for you.
 | ACR | Yes | Yes |
 | Artifactory | No |  |
 | Docker Hub | Yes | Yes |
-| Digital Ocean |  | |
+| Digital Ocean | Yes | Yes |
 | ECR | No |  |
 | GCR | Yes |  |
 | Nexus | No |  |

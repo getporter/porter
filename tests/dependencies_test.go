@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/cnabio/cnab-go/claim"
@@ -30,6 +31,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 }
 
 func randomString(len int) string {
+	rand.Seed(time.Now().UnixNano())
 	bytes := make([]byte, len)
 	for i := 0; i < len; i++ {
 		//A=97 and Z = 97+25

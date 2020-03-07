@@ -8072,7 +8072,7 @@ body {
     letter-spacing: 0.25em;
     letter-spacing: 0.125em;
     margin: 0em 0 0.875em;
-    padding-top: 3.5em; }
+    padding-top: 1em; }
   .main .list-wrap h3 {
     color: #333333;
     font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -8164,7 +8164,7 @@ body {
     letter-spacing: 0.25em;
     letter-spacing: 0.125em;
     margin: 0em 0 0.875em;
-    padding-top: 3.5em; }
+    padding-top: 1em; }
   .main .content-wrap h3 {
     color: #333333;
     font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -8200,7 +8200,8 @@ body {
     .main .content-wrap pre code {
       padding: 0;
       background-color: #e4f3f9;
-      font-size: 1rem; }
+      font-size: 1rem;
+      white-space: pre; }
   .main .content-wrap .code-box {
     margin: 0px;
     width: 100%;
@@ -8214,7 +8215,8 @@ body {
     padding: 0.5em 0.5em;
     background-color: #e4f3f9;
     border: none;
-    font-size: 1rem; }
+    font-size: 1rem;
+    white-space: nowrap; }
   .main .content-wrap.markdown ul,
   .main .content-wrap.markdown ol,
   .main .content-wrap ul,

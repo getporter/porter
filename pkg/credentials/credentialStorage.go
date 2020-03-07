@@ -1,12 +1,16 @@
 package credentials
 
 import (
+	"fmt"
+	"strings"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
 	crudplugins "get.porter.sh/porter/pkg/storage/pluginstore"
 	"github.com/cnabio/cnab-go/credentials"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -48,4 +52,28 @@ func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (credenti
 	}
 
 	return resolvedCreds, resolveErrors
+}
+
+func (s CredentialStorage) Validate(creds credentials.CredentialSet) error {
+	validSources := []string{"secret", host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
+	var errors error
+
+	for _, cs := range creds.Credentials {
+		valid := false
+		for _, validSource := range validSources {
+			if cs.Source.Key == validSource {
+				valid = true
+				break
+			}
+		}
+		if valid == false {
+			errors = multierror.Append(errors, fmt.Errorf(
+				"%s is not a valid source. Valid sources are: %s",
+				cs.Source.Key,
+				strings.Join(validSources, ", "),
+			))
+		}
+	}
+
+	return errors
 }

@@ -90,4 +90,4 @@ At this time Porter only supports direct dependencies. Dependencies of dependenc
 transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) 
 for our backlog item tracking this feature. We do plan to support it!
 
-[example]: https://github.com/deislabs/porter/blob/master/build/testdata/bundles/wordpress/porter.yaml
+[example]: /src/build/testdata/bundles/wordpress/porter.yaml

@@ -165,16 +165,22 @@ defaultContentLanguage = "en"
     weight = 172
     parent = "cli"
   [[menu.main]]
+    name = "porter plugins list"
+    url = "/cli/porter_plugins_list/"
+    identifier = "cli-plugins-list"
+    weight = 173
+    parent = "cli"
+  [[menu.main]]
+    name = "porter plugins search"
+    url = "/cli/porter_plugins_search/"
+    identifier = "cli-plugins-search"
+    weight = 174
+    parent = "cli"
+  [[menu.main]]
     name = "porter schema"
     url = "/cli/porter_schema"
     identifier = "cli-schema"
     weight = 198
-    parent = "cli"
-  [[menu.main]]
-    name = "porter plugins list"
-    url = "/cli/porter_plugins_list/"
-    identifier = "cli-plugins-list"
-    weight = 165
     parent = "cli"
   [[menu.main]]
     name = "porter version"
@@ -340,8 +346,8 @@ defaultContentLanguage = "en"
     parent = "porter-architecture"
   [[menu.main]]
     name = "Credentials"
-    url = "/how-credentials-work/"
-    identifier = "how-credentials-work"
+    url = "/credentials/"
+    identifier = "credentials"
     weight = 405
     parent = "porter-architecture"
 

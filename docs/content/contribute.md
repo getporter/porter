@@ -60,11 +60,11 @@ wanted][help-wanted] issues for our other contributors.
 * `help wanted` are issues suitable for someone who isn't a maintainer and usually 
    also has extra guidance.
 
-[conduct]: https://github.com/deislabs/porter/blob/master/CODE_OF_CONDUCT.md
-[contributing]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md
-[find-an-issue]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md#find-an-issue
-[good-first-issue]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22good+first+issue%22
-[help-wanted]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22help+wanted%22
+[conduct]: /src/CODE_OF_CONDUCT.md
+[contributing]: /src/CONTRIBUTING.md
+[find-an-issue]: /src/CONTRIBUTING.md#find-an-issue
+[good-first-issue]: /board/good+first+issue
+[help-wanted]: /board/help+wanted
 
 ## What can you work on?
 
@@ -88,7 +88,7 @@ reach out to a maintainer on [Slack][slack].
 
 [skeletor]: https://github.com/deislabs/porter-skeletor
 [mixin-dev-guide]: /mixin-dev-guide/
-[roadmap]: https://github.com/deislabs/porter/projects/4
+[roadmap]: /roadmap
 
 ## Who can be a maintainer?
 
@@ -98,5 +98,5 @@ maintainer to admin.
 
 <p align="center">Sound like fun? 🙋🏽‍♀️ Join us!</p>
 
-[ladder]: https://github.com/deislabs/porter/blob/master/CONTRIBUTING.md#contribution-ladder
+[ladder]: /src/CONTRIBUTING.md#contribution-ladder
 [slack]: /community#slack

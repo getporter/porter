@@ -1,0 +1,4 @@
+/board              https://github.com/orgs/deislabs/projects/2
+/board/*            https://github.com/orgs/deislabs/projects/2?card_filter_query=label:":splat"
+/roadmap            https://github.com/deislabs/porter/projects/4
+/src/*              https://github.com/deislabs/porter/blob/master/:splat

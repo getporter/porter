@@ -2,7 +2,6 @@ package main
 
 import (
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +13,6 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 		Short:       "Credentials commands",
 	}
 
-	cmd.AddCommand(buildCredentialsAddCommand(p))
 	cmd.AddCommand(buildCredentialsEditCommand(p))
 	cmd.AddCommand(buildCredentialsGenerateCommand(p))
 	cmd.AddCommand(buildCredentialsListCommand(p))
@@ -24,31 +22,18 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 	return cmd
 }
 
-func buildCredentialsAddCommand(p *porter.Porter) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:    "add",
-		Short:  "Add Credential",
-		Hidden: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("Not implemented")
-		},
-	}
-	return cmd
-}
-
 func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.CredentialEditOptions{}
+
 	cmd := &cobra.Command{
-		Use:    "edit",
-		Short:  "Edit Credential",
-		Hidden: true,
+		Use:   "edit",
+		Short: "Edit Credential",
+		Long:  `Edit a named credential set.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("Not implemented")
+			return p.EditCredential(opts)
 		},
 	}
 	return cmd

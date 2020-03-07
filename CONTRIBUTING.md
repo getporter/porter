@@ -66,9 +66,9 @@ Another great way to contribute is to create a mixin! You can start use the
 
 [skeletor]: https://github.com/deislabs/porter-skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
-[good-first-issue]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22good+first+issue%22
-[help-wanted]: https://github.com/orgs/deislabs/projects/2?card_filter_query=label%3A%22help+wanted%22
-[board]: https://github.com/orgs/deislabs/projects/2
+[good-first-issue]: https://porter.sh/board/good+first+issue
+[help-wanted]: https://porter.sh/board/help+wanted
+[board]: https://porter.sh/board
 
 ## When to open a pull request
 

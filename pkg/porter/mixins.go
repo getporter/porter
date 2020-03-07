@@ -2,14 +2,12 @@ package porter
 
 import (
 	"fmt"
-	"strings"
 
 	"get.porter.sh/porter/pkg/mixin"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/gobuffalo/packr/v2"
 )
 
 // PrintMixinsOptions represent options for the PrintMixins function
@@ -64,49 +62,6 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	}
 
 	return mixins, nil
-}
-
-// SearchMixins searches the internal remote mixins list according to the provided options
-func (p *Porter) SearchMixins(opts mixin.SearchOptions) error {
-	box := packr.New("get.porter.sh/porter/pkg/mixin/directory", "../mixin/directory")
-	mixinSearcher := mixin.NewSearcher(box)
-
-	mixinList, err := mixinSearcher.Search(opts)
-	if err != nil {
-		return err
-	}
-	return p.PrintPackages(opts, mixinList)
-}
-
-// PrintPackages prints the provided package list according to the provided options
-func (p *Porter) PrintPackages(opts mixin.SearchOptions, list pkgmgmt.PackageList) error {
-	switch opts.Format {
-	case printer.FormatTable:
-		printMixinRow :=
-			func(v interface{}) []interface{} {
-				m, ok := v.(pkgmgmt.PackageListing)
-				if !ok {
-					return nil
-				}
-
-				var urlType string
-				if strings.Contains(m.URL, ".xml") {
-					urlType = "Atom Feed"
-				} else if strings.Contains(m.URL, "download") {
-					urlType = "Download"
-				} else {
-					urlType = "Unknown"
-				}
-				return []interface{}{m.Name, m.Description, m.Author, m.URL, urlType}
-			}
-		return printer.PrintTable(p.Out, list, printMixinRow, "Name", "Description", "Author", "URL", "URL Type")
-	case printer.FormatJson:
-		return printer.PrintJson(p.Out, list)
-	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, list)
-	default:
-		return fmt.Errorf("invalid format: %s", opts.Format)
-	}
 }
 
 func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {

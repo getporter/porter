@@ -27,6 +27,7 @@ Credentials commands
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 * [porter credentials delete](/cli/porter_credentials_delete/)	 - Delete a Credential
+* [porter credentials edit](/cli/porter_credentials_edit/)	 - Edit Credential
 * [porter credentials generate](/cli/porter_credentials_generate/)	 - Generate Credential Set
 * [porter credentials list](/cli/porter_credentials_list/)	 - List credentials
 * [porter credentials show](/cli/porter_credentials_show/)	 - Show a Credential

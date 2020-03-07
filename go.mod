@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.8.2-beta1
+	github.com/cnabio/cnab-go v0.9.0-beta1
 	github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc // indirect
 	github.com/containerd/containerd v1.3.0
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
@@ -45,5 +45,3 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 
 replace github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-acceptstdin
-
-replace github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.0.0-20200129213214-320e82d9048c
