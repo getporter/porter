@@ -102,11 +102,11 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return err
 	}
 
-	_, err = p.generateCredentials(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
+	_, err = p.generateCredentialsForCNABFile(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
 	return err
 }
 
-func (p *Porter) generateCredentials(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
+func (p *Porter) generateCredentialsForCNABFile(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
 	var credSetNames []string
 	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
@@ -168,7 +168,7 @@ func (p *Porter) generateCredentials(CNABFile string, credIdentifierName string,
 
 	fmt.Fprintf(p.Out, "  Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "  %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
-	err = p.generateAndSaveCredentialSetForCNABFile(CNABFile, genOpts)
+	err = p.generateAndSaveCredentialSet(genOpts)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate credentials")
 	}
@@ -178,7 +178,7 @@ func (p *Porter) generateCredentials(CNABFile string, credIdentifierName string,
 
 }
 
-func (p *Porter) generateAndSaveCredentialSetForCNABFile(CNABFile string, genOpts credentialsgenerator.GenerateOptions) error {
+func (p *Porter) generateAndSaveCredentialSet(genOpts credentialsgenerator.GenerateOptions) error {
 
 	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
 	if err != nil {
