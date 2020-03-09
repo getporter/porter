@@ -5,6 +5,8 @@ description: Run a command or script
 
 Run a command or script.
 
+✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/best-practices/exec-mixin/)
+
 Source: https://github.com/deislabs/porter/tree/master/pkg/exec
 
 ### Install or Upgrade
@@ -114,14 +116,16 @@ outputs:
 
 ### Examples
 
+See [exec outputs][exec-outputs] for a full working example.
+
 Run a command
 ```yaml
 install:
 - exec:
     description: "Install Hello World"
-    command: bash
-    flags:
-      c: echo Hello World
+    command: make
+    arguments:
+    - install
 ```
 
 Run a script
@@ -129,10 +133,10 @@ Run a script
 install:
 - exec:
     description: "Install Hello World"
-    command: bash
-    arguments:
-    - ./install-world.sh
+    command: ./install-world.sh
 ```
+
+[exec-outputs]: https://porter.sh/src/examples/exec-outputs/
 
 ### FAQ
 
