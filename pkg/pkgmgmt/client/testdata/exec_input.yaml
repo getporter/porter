@@ -3,4 +3,4 @@ install:
     description: "Say Hello"
     command: bash
     flags:
-        c: echo Hello World
+        c: '"echo Hello World"'
