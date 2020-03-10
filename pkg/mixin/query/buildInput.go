@@ -1,4 +1,4 @@
-package mixin
+package query
 
 type BuildInput struct {
 	Config  interface{}            `yaml:"config,omitempty"`
