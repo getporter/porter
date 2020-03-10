@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+create-cluster() {
+echo "Creating the cluster..."
 # This pretends to create a kubernetes cluster
 # by generating a dummy kubeconfig file
 mkdir -p /root/.kube
@@ -24,3 +26,15 @@ users:
     client-certificate-data: abc123=
     client-key-data: abc123==
 EOF
+}
+
+generate-config() {
+    echo '{"user": "sally"}' > config.json
+}
+
+dump-config() {
+    echo '{"user": "sally"}'
+}
+
+# Call the requested function and pass the arguments as-is
+"$@"
