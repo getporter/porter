@@ -7,7 +7,9 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"github.com/cnabio/cnab-go/driver"
+	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-go/driver/lookup"
+	"github.com/docker/docker/api/types/container"
 )
 
 type Runtime struct {
@@ -28,6 +30,15 @@ func (d *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	driverImpl, err := lookup.Lookup(driverName)
 	if err != nil {
 		return driverImpl, err
+	}
+
+	if driverName == "docker" {
+		dockerDriver := &docker.Driver{}
+		dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			hostCfg.Privileged = true
+			return nil
+		})
+		driverImpl = driver.Driver(dockerDriver)
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
