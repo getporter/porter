@@ -27,18 +27,23 @@ func NewRuntime(c *config.Config, claims claims.ClaimProvider, credentials crede
 }
 
 func (d *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
-	driverImpl, err := lookup.Lookup(driverName)
-	if err != nil {
-		return driverImpl, err
-	}
+	var driverImpl driver.Driver
 
+	// TODO: Remove once this PR is merged: https://github.com/cnabio/cnab-go/pull/199
 	if driverName == "docker" {
 		dockerDriver := &docker.Driver{}
-		dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
-			hostCfg.Privileged = true
-			return nil
-		})
+		if val, ok := os.LookupEnv("PRIVILEGED"); ok && val == "1" {
+			dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+				hostCfg.Privileged = true
+				return nil
+			})
+		}
 		driverImpl = driver.Driver(dockerDriver)
+	} else {
+		driverImpl, err := lookup.Lookup(driverName)
+		if err != nil {
+			return driverImpl, err
+		}
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
@@ -53,5 +58,5 @@ func (d *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 		configurable.SetConfig(driverCfg)
 	}
 
-	return driverImpl, err
+	return driverImpl, nil
 }
