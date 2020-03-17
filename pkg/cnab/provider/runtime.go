@@ -10,6 +10,7 @@ import (
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-go/driver/lookup"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 )
 
 type Runtime struct {
@@ -29,18 +30,11 @@ func NewRuntime(c *config.Config, claims claims.ClaimProvider, credentials crede
 func (d *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
 	var driverImpl driver.Driver
 
-	// TODO: Remove once this PR is merged: https://github.com/cnabio/cnab-go/pull/199
-	if driverName == "docker" {
-		dockerDriver := &docker.Driver{}
-		if val, ok := os.LookupEnv("PRIVILEGED"); ok && val == "1" {
-			dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
-				hostCfg.Privileged = true
-				return nil
-			})
-		}
-		driverImpl = driver.Driver(dockerDriver)
+	if d.Dind && driverName == "docker" {
+		driverImpl = dockerDindDriver()
 	} else {
-		driverImpl, err := lookup.Lookup(driverName)
+		var err error
+		driverImpl, err = lookup.Lookup(driverName)
 		if err != nil {
 			return driverImpl, err
 		}
@@ -59,4 +53,27 @@ func (d *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	}
 
 	return driverImpl, nil
+}
+
+// If Dind support is enabled ("Docker-in-Docker"), set
+// the equivalent of the following "docker run" options:
+// 1.) -v /var/run/docker.sock:/var/run/docker.sock
+// 2.) --privileged
+func dockerDindDriver() driver.Driver {
+	dockerDriver := &docker.Driver{}
+	dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+		dockerSockMount := mount.Mount{
+			Source:   "/var/run/docker.sock",
+			Target:   "/var/run/docker.sock",
+			Type:     "bind",
+			ReadOnly: false,
+		}
+		if hostCfg.Mounts == nil {
+			hostCfg.Mounts = []mount.Mount{}
+		}
+		hostCfg.Mounts = append(hostCfg.Mounts, dockerSockMount)
+		hostCfg.Privileged = true
+		return nil
+	})
+	return driver.Driver(dockerDriver)
 }

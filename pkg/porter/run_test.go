@@ -61,3 +61,25 @@ func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
 
 	assert.True(t, p.Config.Debug)
 }
+
+func TestPorter_defaultDindToOff(t *testing.T) {
+	p := New()
+	opts := NewRunOptions(p.Config)
+
+	err := opts.defaultDind()
+	require.NoError(t, err)
+	assert.False(t, p.Config.Dind)
+}
+
+func TestPorter_defaultDindUsesEnvVar(t *testing.T) {
+	os.Setenv(config.EnvDIND, "true")
+	defer os.Unsetenv(config.EnvDIND)
+
+	p := New() // Don't use the test porter, it has debug on by default
+	opts := NewRunOptions(p.Config)
+
+	err := opts.defaultDind()
+	require.NoError(t, err)
+
+	assert.True(t, p.Config.Dind)
+}
