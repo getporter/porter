@@ -162,6 +162,6 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	err := p.refreshCachedBundle(bun, tag, rm)
 	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
 
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotOutput)
+	gotStderr := p.TestConfig.TestContext.GetError()
+	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotStderr)
 }

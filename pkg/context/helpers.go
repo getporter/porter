@@ -18,31 +18,32 @@ import (
 type TestContext struct {
 	*Context
 
-	input  *bytes.Buffer
-	output *bytes.Buffer
-	T      *testing.T
+	capturedErr *bytes.Buffer
+	capturedOut *bytes.Buffer
+	T           *testing.T
 }
 
 // NewTestContext initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
 func NewTestContext(t *testing.T) *TestContext {
 	// Provide a way for tests to provide and capture stdin and stdout
-	input := &bytes.Buffer{}
-	output := &bytes.Buffer{}
-
 	// Copy output to the test log simultaneously, use go test -v to see the output
-	aggOutput := io.MultiWriter(output, test.Logger{T: t})
+	err := &bytes.Buffer{}
+	aggErr := io.MultiWriter(err, test.Logger{T: t})
+	out := &bytes.Buffer{}
+	aggOut := io.MultiWriter(out, test.Logger{T: t})
 
 	c := &TestContext{
 		Context: &Context{
 			Debug:      true,
 			FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
-			In:         input,
-			Out:        aggOutput,
-			Err:        aggOutput,
+			In:         &bytes.Buffer{},
+			Out:        aggOut,
+			Err:        aggErr,
 			NewCommand: NewTestCommand(),
 		},
-		output: output,
-		T:      t,
+		capturedOut: out,
+		capturedErr: err,
+		T:           t,
 	}
 
 	return c
@@ -107,12 +108,14 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	}
 }
 
+// GetOutput returns all text printed to stdout.
 func (c *TestContext) GetOutput() string {
-	return string(c.output.Bytes())
+	return string(c.capturedOut.Bytes())
 }
 
-func (c *TestContext) ResetOutput() {
-	c.output.Reset()
+// GetError returns all text printed to stderr.
+func (c *TestContext) GetError() string {
+	return string(c.capturedErr.Bytes())
 }
 
 func (c *TestContext) FindBinDir() string {
