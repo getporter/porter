@@ -1,0 +1,22 @@
+name: mybun
+version: 0.1.0
+description: "An example Porter configuration"
+tag: getporter/porter-hello:v0.1.0
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install"
+      command: bash
+      flags:
+        c: '"echo Hello World"'
+      suppress-output: true
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: bash
+      flags:
+        c: '"echo Goodbye World"'

@@ -45,11 +45,12 @@ type Step struct {
 }
 
 type Instruction struct {
-	Description string        `yaml:"description"`
-	Command     string        `yaml:"command"`
-	Arguments   []string      `yaml:"arguments,omitempty"`
-	Flags       builder.Flags `yaml:"flags,omitempty"`
-	Outputs     []Output      `yaml:"outputs,omitempty"`
+	Description    string        `yaml:"description"`
+	Command        string        `yaml:"command"`
+	Arguments      []string      `yaml:"arguments,omitempty"`
+	Flags          builder.Flags `yaml:"flags,omitempty"`
+	Outputs        []Output      `yaml:"outputs,omitempty"`
+	SuppressOutput bool          `yaml:"suppress-output,omitempty"`
 }
 
 func (s Step) GetCommand() string {
@@ -62,6 +63,10 @@ func (s Step) GetArguments() []string {
 
 func (s Step) GetFlags() builder.Flags {
 	return s.Flags
+}
+
+func (s Step) SuppressesOutput() bool {
+	return s.SuppressOutput
 }
 
 func (s Step) GetOutputs() []builder.Output {

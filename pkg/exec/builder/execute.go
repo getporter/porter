@@ -29,6 +29,10 @@ type HasCustomDashes interface {
 	GetDashes() Dashes
 }
 
+type SuppressesOutput interface {
+	SuppressesOutput() bool
+}
+
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
 // a single step is allowed to be defined in the Action (which is what happens when Porter
 // executes steps one at a time).
@@ -83,14 +87,26 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args = splitCommand(args)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
-	output := &bytes.Buffer{}
-	cmd.Stdout = io.MultiWriter(cxt.Out, output)
-	cmd.Stderr = cxt.Err
 
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 	if cxt.Debug {
 		fmt.Fprintln(cxt.Out, prettyCmd)
 	}
+
+	// Setup output stream for command
+	// If Step suppresses output, update stream accordingly
+	output := &bytes.Buffer{}
+	out := io.MultiWriter(cxt.Out, output)
+	if suppressable, ok := step.(SuppressesOutput); ok {
+		if suppressable.SuppressesOutput() {
+			out = nil
+			if cxt.Debug {
+				fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
+			}
+		}
+	}
+	cmd.Stdout = out
+	cmd.Stderr = cxt.Err
 
 	err := cmd.Start()
 	if err != nil {
