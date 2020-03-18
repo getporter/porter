@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"get.porter.sh/porter/pkg/mixin"
+
+	"get.porter.sh/porter/pkg/linter"
+
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
@@ -57,6 +61,45 @@ func TestPorter_buildBundle(t *testing.T) {
 	require.True(t, ok, "porter-debug definition was not defined")
 	assert.Equal(t, "boolean", debugDef.Type)
 	assert.Equal(t, false, debugDef.Default)
+}
+
+func TestPorter_LintDuringBuild(t *testing.T) {
+	lintResults := linter.Results{
+		{
+			Level: linter.LevelError,
+			Code:  "exec-100",
+		},
+	}
+
+	t.Run("failing lint should stop build", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.TestConfig.SetupPorterHome()
+		testMixins := p.Mixins.(*mixin.TestMixinProvider)
+		testMixins.LintResults = lintResults
+
+		err := p.Create()
+		require.NoError(t, err, "Create failed")
+
+		opts := BuildOptions{NoLint: false}
+		err = p.Build(opts)
+		require.Errorf(t, err, "Build should have been aborted with lint errors")
+		assert.Contains(t, err.Error(), "Lint errors were detected")
+	})
+
+	t.Run("ignores lint error with --no-lint", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.TestConfig.SetupPorterHome()
+		testMixins := p.Mixins.(*mixin.TestMixinProvider)
+		testMixins.LintResults = lintResults
+
+		err := p.Create()
+		require.NoError(t, err, "Create failed")
+
+		opts := BuildOptions{NoLint: true}
+		err = p.Build(opts)
+		require.NoError(t, err, "Build failed but should have not run lint")
+	})
+
 }
 
 func TestPorter_paramRequired(t *testing.T) {
