@@ -1,0 +1,12 @@
+error(exec-100) - bash -c argument missing wrapping quotes
+install: 2nd step in the exec mixin (Install Hello World)
+The bash -c flag argument must be wrapped in quotes, for example
+exec:
+  description: Say Hello
+  command: bash
+  flags:
+    c: '"echo Hello World"'
+
+See https://porter.sh/best-practices/exec-mixin/#quoting-escaping-bash-and-yaml for more information
+---
+

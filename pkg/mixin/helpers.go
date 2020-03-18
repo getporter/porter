@@ -1,6 +1,7 @@
 package mixin
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
@@ -11,6 +12,10 @@ import (
 
 type TestMixinProvider struct {
 	client.TestPackageManager
+
+	// LintResults allows you to provide linter.Results for your unit tests.
+	// It isn't of type linter.Results directly to avoid package cycles
+	LintResults interface{}
 }
 
 // NewTestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real plugins on the file system.
@@ -41,8 +46,12 @@ func NewTestMixinProvider() *TestMixinProvider {
 }
 
 func (p *TestMixinProvider) PrintExecOutput(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) {
-	if commandOpts.Command == "build" {
+	switch commandOpts.Command {
+	case "build":
 		fmt.Fprintln(pkgContext.Out, "# exec mixin has no buildtime dependencies")
+	case "lint":
+		b, _ := json.Marshal(p.LintResults)
+		fmt.Fprintln(pkgContext.Out, string(b))
 	}
 }
 

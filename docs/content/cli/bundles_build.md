@@ -19,6 +19,7 @@ porter bundles build [flags]
 
 ```
   -h, --help      help for build
+      --no-lint   Do not run the linter
   -v, --verbose   Enable verbose logging
 ```
 

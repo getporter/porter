@@ -22,28 +22,45 @@ import (
 //		step := result.(*[]Step)
 //		a.Steps = append(a.Steps, *step...)
 //	}
-func UnmarshalAction(unmarshal func(interface{}) error, steps interface{}) ([]interface{}, error) {
+func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction) (map[string][]interface{}, error) {
 	actionMap := map[interface{}][]interface{}{}
 	err := unmarshal(&actionMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not unmarshal yaml into an action map of exec steps")
 	}
 
-	var result []interface{}
-	for _, stepMaps := range actionMap {
+	return unmarshalActionMap(actionMap, builder)
+}
+
+func unmarshalActionMap(actionMap map[interface{}][]interface{}, builder BuildableAction) (map[string][]interface{}, error) {
+	results := make(map[string][]interface{})
+	for actionIndex, stepMaps := range actionMap {
+		// Figure out the string representation of the action
+		// examples:
+		//   install: -> "install"
+		//   true: -> "true" YAML is weird, this is why we use Sprintf and not .(string)
+		name := fmt.Sprintf("%v", actionIndex)
+
+		// Unmarshal the steps
 		b, err := yaml.Marshal(stepMaps)
 		if err != nil {
 			return nil, err
 		}
 
+		steps := builder.MakeSteps()
 		err = yaml.Unmarshal(b, steps)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, steps)
+
+		result, ok := results[name]
+		if !ok {
+			result = make([]interface{}, 0, 1)
+		}
+		results[name] = append(result, steps)
 	}
 
-	return result, nil
+	return results, nil
 }
 
 // LoadAction reads input from stdin or a command file and uses the specified unmarshal function

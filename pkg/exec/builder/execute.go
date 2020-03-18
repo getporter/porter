@@ -15,6 +15,12 @@ var DefaultFlagDashes = Dashes{
 	Short: "-",
 }
 
+// BuildableAction is an Action that can be marshaled and unmarshaled "generically"
+type BuildableAction interface {
+	// MakeSteps returns a Steps struct to unmarshal into.
+	MakeSteps() interface{}
+}
+
 type ExecutableAction interface {
 	GetSteps() []ExecutableStep
 }
