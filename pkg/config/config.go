@@ -28,9 +28,6 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	// EnvDIND is a custom porter parameter that signals to enable "Docker-in-Docker" support.
-	EnvDIND = "PORTER_DIND"
-
 	CustomBundleKey = "sh.porter"
 
 	// BundleOutputsDir is the directory where outputs are expected to be placed

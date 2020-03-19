@@ -31,11 +31,6 @@ func (o *RunOptions) Validate() error {
 		return err
 	}
 
-	err = o.defaultDind()
-	if err != nil {
-		return err
-	}
-
 	err = o.validateAction()
 	if err != nil {
 		return err
@@ -75,30 +70,6 @@ func (o *RunOptions) defaultDebug() error {
 	if debug {
 		fmt.Fprintf(o.config.Err, "DEBUG: defaulting debug to %s (%t)\n", config.EnvDEBUG, debug)
 		o.config.Debug = debug
-	}
-
-	return nil
-}
-
-func (o *RunOptions) defaultDind() error {
-	// if dind was manually set, leave it
-	if o.config.Dind {
-		return nil
-	}
-
-	rawDind, set := os.LookupEnv(config.EnvDIND)
-	if !set {
-		return nil
-	}
-
-	dind, err := strconv.ParseBool(rawDind)
-	if err != nil {
-		return errors.Wrapf(err, "invalid PORTER_DIND, expected a bool (true/false) but got %s", rawDind)
-	}
-
-	if dind {
-		fmt.Fprintf(o.config.Err, "DEBUG: defaulting dind to %s (%t)\n", config.EnvDIND, dind)
-		o.config.Dind = dind
 	}
 
 	return nil

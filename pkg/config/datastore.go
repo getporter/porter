@@ -8,6 +8,8 @@ type Data struct {
 	// Only define fields here that you need to access from code
 	// Values are dynamically applied to flags and don't need to be defined
 
+	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
+
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
 

@@ -30,7 +30,7 @@ func NewRuntime(c *config.Config, claims claims.ClaimProvider, credentials crede
 func (d *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
 	var driverImpl driver.Driver
 
-	if d.Dind && driverName == "docker" {
+	if d.Data.AllowDockerHostAccess && driverName == "docker" {
 		driverImpl = dockerDindDriver()
 	} else {
 		var err error

@@ -21,7 +21,6 @@ type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
 	Debug      bool
-	Dind       bool // "Docker-in-Docker" support
 	verbose    bool
 	FileSystem *afero.Afero
 	In         io.Reader
@@ -71,12 +70,8 @@ func New() *Context {
 	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
 	_, debug := os.LookupEnv("PORTER_DEBUG")
 
-	// Default to respecting the PORTER_DIND env variable
-	_, dind := os.LookupEnv("PORTER_DIND")
-
 	return &Context{
 		Debug:      debug,
-		Dind:       dind,
 		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
 		In:         os.Stdin,
 		Out:        NewCensoredWriter(os.Stdout),
