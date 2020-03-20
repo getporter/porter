@@ -29,7 +29,7 @@ const (
 	// DockerDriver is the name of the Docker driver.
 	DockerDriver = cnabprovider.DriverNameDocker
 
-	// DebugDriver is the name of the Docker driver.
+	// DebugDriver is the name of the Debug driver.
 	DebugDriver = cnabprovider.DriverNameDebug
 
 	// DefaultDriver is the name of the default driver (Docker).
