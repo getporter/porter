@@ -24,9 +24,9 @@ install:
           jsonPath: "{.spec.clusterIP}"
   - exec:
       description: "Echo the IP Address"
-      command: bash
-      flags:
-        c: "echo 'You will find the service at {{bundle.outputs.IP_ADDRESS}}'"
+      command: ./helpers.sh
+      arguments:
+        - "dump-ip {{bundle.outputs.IP_ADDRESS}}"
 
 uninstall:
   - kubernetes:
