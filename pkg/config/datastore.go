@@ -1,6 +1,11 @@
 package config
 
-import "github.com/pkg/errors"
+import (
+	"os"
+	"strconv"
+
+	"github.com/pkg/errors"
+)
 
 // Data is the data stored in PORTER_HOME/porter.toml|yaml|json.
 // Use the accessor functions to ensure default values are handled properly.
@@ -37,6 +42,24 @@ type SecretSource struct {
 // CrudStore is the plugin stanza for storage.
 type CrudStore struct {
 	PluginConfig `mapstructure:",squash"`
+}
+
+func (d *Data) GetAllowDockerHostAccess() (bool, error) {
+	var allowDockerHostAccess bool
+
+	// Load/validate the PORTER_ALLOW_DOCKER_HOST_ACCESS environment variable
+	if rawEnvVal, set := os.LookupEnv(EnvAllowDockerHostAccess); set {
+		var err error
+		allowDockerHostAccess, err = strconv.ParseBool(rawEnvVal)
+		if err != nil {
+			return false, errors.Wrapf(err,
+				"invalid %s, expected a bool (true/false) but got %s",
+				EnvAllowDockerHostAccess, rawEnvVal)
+		}
+	}
+
+	// Command-line takes highest precedence, then environment. Default to false.
+	return (d != nil && d.AllowDockerHostAccess) || allowDockerHostAccess, nil
 }
 
 func (d *Data) GetDefaultStoragePlugin() string {
