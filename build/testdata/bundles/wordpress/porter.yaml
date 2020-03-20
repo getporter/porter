@@ -3,12 +3,12 @@ mixins:
 - helm
 
 name: wordpress
-version: 0.1.1
-tag: getporter/wordpress:v0.1.1
+version: 0.1.2
+tag: getporter/wordpress:v0.1.2
 
 dependencies:
   mysql:
-    tag: getporter/mysql:v0.1.1
+    tag: getporter/mysql:v0.1.2
     parameters:
       database-name: wordpress
       mysql-user: wordpress
@@ -63,9 +63,9 @@ upgrade:
 ping:
   - exec:
       description: "Ping"
-      command: "bash"
-      flags:
-        c: echo ping
+      command: ./helpers.sh
+      arguments:
+        - ping
 
 uninstall:
   - helm:

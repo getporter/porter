@@ -2,6 +2,8 @@ package porter
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"get.porter.sh/porter/pkg/config"
 	"github.com/pkg/errors"
@@ -11,6 +13,11 @@ func (p *Porter) Create() error {
 	fmt.Fprintln(p.Out, "creating porter configuration in the current directory")
 
 	err := p.CopyTemplate(p.Templates.GetManifest, config.Name)
+	if err != nil {
+		return err
+	}
+
+	err = p.CopyTemplate(p.Templates.GetManifestHelpers, "helpers.sh")
 	if err != nil {
 		return err
 	}
@@ -39,7 +46,12 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		return err
 	}
 
-	err = p.FileSystem.WriteFile(dest, tmpl, 0644)
+	var mode os.FileMode = 0644
+	if filepath.Ext(dest) == ".sh" {
+		mode = 0755
+	}
+
+	err = p.FileSystem.WriteFile(dest, tmpl, mode)
 	if err != nil {
 		return errors.Wrapf(err, "failed to write template to %s", dest)
 	}

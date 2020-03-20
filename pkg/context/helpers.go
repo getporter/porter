@@ -65,6 +65,8 @@ func NewTestCommand() CommandBuilder {
 
 // TODO: Replace these functions with a union file system for test data
 func (c *TestContext) AddTestFile(src, dest string) []byte {
+	c.T.Helper()
+
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(err)
@@ -83,6 +85,8 @@ func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
 }
 
 func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
+	c.T.Helper()
+
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

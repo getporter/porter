@@ -36,5 +36,9 @@ dump-config() {
     echo '{"user": "sally"}'
 }
 
+uninstall() {
+  echo 'Uninstalling Cluster...'
+}
+
 # Call the requested function and pass the arguments as-is
 "$@"

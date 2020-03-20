@@ -10,6 +10,11 @@ This is the porter manifest. See https://porter.sh/author-bundles/ for
 details on every field and how to configure your bundle. This is a required
 file.
 
+## helpers.sh
+
+This is a bash script where you can place helper functions that you can call
+from your porter.yaml file.
+
 ## README.md
 
 This explains the files created by `porter create`. It is not used by porter and

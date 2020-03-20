@@ -1,35 +1,35 @@
-mixins:
-  - exec
-
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
 tag: getporter/porter-hello:v0.1.0
 
+mixins:
+  - exec
+
 install:
   - exec:
       description: "Install Hello World"
-      command: bash
-      flags:
-        c: echo Hello World
+      command: ./helpers.sh
+      arguments:
+        - install
 
 upgrade:
   - exec:
-      description: "World 2.0"
-      command: bash
-      flags:
-        c: echo World 2.0
+      description: "Upgrade Hello World"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 zombies:
   - exec:
       description: "Trigger zombie apocalypse"
-      command: bash
-      flags:
-        c: echo oh noes my brains
+      command: ./helpers.sh
+      arguments:
+        - zombies
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./helpers.sh
+      arguments:
+        - uninstall

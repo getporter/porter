@@ -26,9 +26,9 @@ outputs:
 install:
   - exec:
       description: "Install Hello World"
-      command: bash
-      flags:
-        c: cat /root/myfile
+      command: ./helpers.sh
+      arguments:
+        - dump-myfile
       outputs:
         - name: myfile
           path: /root/myfile
@@ -36,13 +36,13 @@ install:
 upgrade:
   - exec:
       description: "World 2.0"
-      command: bash
-      flags:
-        c: cat /root/myfile
+      command: ./helpers.sh
+      arguments:
+        - dump-myfile
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
-      command: bash
-      flags:
-        c: cat /root/myfile
+      command: ./helpers.sh
+      arguments:
+        - dump-myfile

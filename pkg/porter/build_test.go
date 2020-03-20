@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"get.porter.sh/porter/pkg/mixin"
-
-	"get.porter.sh/porter/pkg/linter"
-
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/mixin"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,7 +50,7 @@ func TestPorter_buildBundle(t *testing.T) {
 
 	stamp, err := configadapter.LoadStamp(bun)
 	require.NoError(t, err)
-	assert.Equal(t, "cf9472c4f17e8dc0c700ba1ac6a71a5d0759731cfa5f21aa92e125026c21c1b7", stamp.ManifestDigest)
+	assert.Equal(t, "262ed16849e1b2321c26624224cb5666a80a60dc6c92a2e469c83b159537652b", stamp.ManifestDigest)
 
 	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")
