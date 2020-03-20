@@ -15,7 +15,7 @@ const (
 	// DriverNameDocker is the name of the CNAB Docker driver.
 	DriverNameDocker = "docker"
 
-	// DriverNameDocker is the name of the CNAB debug driver.
+	// DriverNameDebug is the name of the CNAB debug driver.
 	DriverNameDebug = "debug"
 )
 
