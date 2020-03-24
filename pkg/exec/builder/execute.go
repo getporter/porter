@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
@@ -87,26 +88,29 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args = splitCommand(args)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
-
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	if cxt.Debug {
-		fmt.Fprintln(cxt.Out, prettyCmd)
+
+	// Setup output streams for command
+	// If Step suppresses output, update streams accordingly
+	output := &bytes.Buffer{}
+	suppressOutput := false
+	if suppressable, ok := step.(SuppressesOutput); ok {
+		suppressOutput = suppressable.SuppressesOutput()
 	}
 
-	// Setup output stream for command
-	// If Step suppresses output, update stream accordingly
-	output := &bytes.Buffer{}
-	out := io.MultiWriter(cxt.Out, output)
-	if suppressable, ok := step.(SuppressesOutput); ok {
-		if suppressable.SuppressesOutput() {
-			out = nil
-			if cxt.Debug {
-				fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
-			}
+	if suppressOutput {
+		cmd.Stdout = io.MultiWriter(ioutil.Discard, output)
+		cmd.Stderr = ioutil.Discard
+		if cxt.Debug {
+			fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
+		}
+	} else {
+		cmd.Stdout = io.MultiWriter(cxt.Out, output)
+		cmd.Stderr = cxt.Err
+		if cxt.Debug {
+			fmt.Fprintln(cxt.Out, prettyCmd)
 		}
 	}
-	cmd.Stdout = out
-	cmd.Stderr = cxt.Err
 
 	err := cmd.Start()
 	if err != nil {
