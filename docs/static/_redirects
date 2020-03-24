@@ -1,4 +1,13 @@
 /board              https://github.com/orgs/deislabs/projects/2
 /board/*            https://github.com/orgs/deislabs/projects/2?card_filter_query=label:":splat"
 /roadmap            https://github.com/deislabs/porter/projects/4
+
+# Redirect source code links
 /src/*              https://github.com/deislabs/porter/blob/master/:splat
+
+
+# Redirect 
+/twitter            https://twitter.com/get_porter
+/slack              https://app.slack.com/client/T08PSQ7BQ/CN8NA4F8V
+/mailing-list       https://groups.io/g/porter
+/blog               https://deislabs.io/
