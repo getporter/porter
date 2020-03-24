@@ -8,9 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const generateCredCode = "generate new credential set"
-const quitGenerateCode = "quit"
-
 // InstallOptions that may be specified when installing a bundle.
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
@@ -36,11 +33,11 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	if len(opts.CredentialIdentifiers) == 0 {
-		credName, err := p.chooseCredentialSet(opts.CNABFile)
+		credName, err := p.chooseOrGenerate(opts.CNABFile)
 		if err != nil {
 			return err
 		}
-		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName)
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName...)
 	}
 
 	deperator := newDependencyExecutioner(p)

@@ -43,6 +43,14 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return err
 	}
 
+	if len(opts.CredentialIdentifiers) == 0 {
+		credName, err := p.chooseOrGenerate(opts.CNABFile)
+		if err != nil {
+			return err
+		}
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName...)
+	}
+
 	deperator := newDependencyExecutioner(p)
 	err = deperator.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {
 		return p.CNAB.Invoke(opts.Action, args)

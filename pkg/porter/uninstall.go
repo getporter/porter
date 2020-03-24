@@ -32,6 +32,14 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
+	if len(opts.CredentialIdentifiers) == 0 {
+		credName, err := p.chooseOrGenerate(opts.CNABFile)
+		if err != nil {
+			return err
+		}
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName...)
+	}
+
 	deperator := newDependencyExecutioner(p)
 	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Uninstall)
 	if err != nil {

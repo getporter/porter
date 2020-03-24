@@ -32,6 +32,14 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 		return err
 	}
 
+	if len(opts.CredentialIdentifiers) == 0 {
+		credName, err := p.chooseOrGenerate(opts.CNABFile)
+		if err != nil {
+			return err
+		}
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName...)
+	}
+
 	deperator := newDependencyExecutioner(p)
 	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Upgrade)
 	if err != nil {

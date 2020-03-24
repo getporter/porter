@@ -19,6 +19,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const chooseCode = "choose credential set"
+const generateCode = "generate new credential set"
+const quitCode = "quit"
+
 // CredentialShowOptions represent options for Porter's credential show command
 type CredentialShowOptions struct {
 	printer.PrintOptions
@@ -112,47 +116,59 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	return err
 }
 
-func (p *Porter) chooseCredentialSet(CNABFile string) (string, error) {
+func (p *Porter) chooseOrGenerate(CNABFile string) ([]string, error) {
+	var chooseOrGenerate string
+
+	selectChooseOrGeneratePrompt := &survey.Select{
+		Message: "Choose an option",
+		Options: []string{chooseCode, generateCode, quitCode},
+		Default: chooseCode,
+	}
+	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil)
+
+	switch chooseOrGenerate {
+	case generateCode:
+		newCredSet, err := p.generateNewCredentialSet(CNABFile, "", false, false)
+		return []string{newCredSet}, err
+	case quitCode:
+		return []string{}, errors.New("Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
+	case chooseCode:
+		return p.chooseCredentialSet(CNABFile)
+	default:
+		return []string{}, errors.New("Unknow option")
+	}
+}
+
+func (p *Porter) chooseCredentialSet(CNABFile string) ([]string, error) {
+
 	var credSetNames []string
 	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read exisiting credential sets")
+		return []string{}, errors.Wrap(err, "failed to read exisiting credential sets")
 	}
 
-	shouldGenerateCred := false
-	var selectedOption string
+	var selectedOption []string
 	if len(credSets) > 0 {
 		for _, credSet := range credSets {
 			credSetNames = append(credSetNames, credSet.Name)
 		}
 
-		selectCredPrompt := &survey.Select{
+		selectCredPrompt := &survey.MultiSelect{
 			Message: "Choose a set of credentials to use while installing this bundle",
-			Options: append(credSetNames, generateCredCode, quitGenerateCode),
-			Default: credSetNames[0],
+			Options: credSetNames,
+			Default: []string{credSetNames[0]},
 		}
-		survey.AskOne(selectCredPrompt, &selectedOption, nil)
 
-		switch selectedOption {
-		case generateCredCode:
-			shouldGenerateCred = true
-		case quitGenerateCode:
-			return "", errors.New("Credentials are mandatory to install this bundle")
-		default:
-			return selectedOption, nil
+		err := survey.AskOne(selectCredPrompt, &selectedOption, nil)
+		if err != nil {
+			return []string{}, errors.New("no credential set selected")
 		}
-	} else {
-		shouldGenerateCredPrompt := &survey.Confirm{
-			Message: "No credential identifier given. Generate one ?",
-		}
-		survey.AskOne(shouldGenerateCredPrompt, &shouldGenerateCred, nil)
+
+		return selectedOption, nil
 	}
 
-	if !shouldGenerateCred {
-		return "", errors.New("Credentials are mandatory to install this bundle")
-	}
+	return []string{}, errors.New("no existing credentials found")
 
-	return p.generateNewCredentialSet(CNABFile, "", false, false)
 }
 
 func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
@@ -162,14 +178,14 @@ func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName st
 	}
 
 	if credIdentifierName == "" {
-		if !silent {
+		if silent {
+			credIdentifierName = bundle.Name
+		} else {
 			inputCredNamePrompt := &survey.Input{
 				Message: "Enter credential identifier name",
 				Default: bundle.Name,
 			}
 			survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
-		} else {
-			credIdentifierName = bundle.Name
 		}
 	}
 
@@ -180,13 +196,14 @@ func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName st
 		DryRun:      dryRun,
 	}
 
+	// two extra spaces to align with survey prompts
 	fmt.Fprintf(p.Out, "  Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "  %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
 	err = p.generateAndSaveCredentialSet(genOpts)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate credentials")
 	}
-	fmt.Fprintln(p.Out, "Credentials generated and saved successfully for future use")
+	fmt.Fprintf(p.Out, "Credentials saved as %s\n", credIdentifierName)
 
 	return credIdentifierName, nil
 }
@@ -211,7 +228,7 @@ func (p *Porter) generateAndSaveCredentialSet(genOpts credentialsgenerator.Gener
 	}
 	err = p.Credentials.Save(*cs)
 	if err != nil {
-		return errors.Wrapf(err, "unable to save credentials")
+		return errors.Wrap(err, "unable to save credentials")
 	}
 
 	return nil
