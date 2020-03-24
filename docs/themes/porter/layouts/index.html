@@ -51,49 +51,34 @@
 
           <section class="billboard">
             <div class="container">
-              <h1>A Friendly Cloud Installer <br/>for Cloud Native Application Bundles</h1>
-              <h2>Clouds are messy things. Porter is here to pack <em>and</em> carry your bags.</h2>
+              <h1>Your application and everything you need to deploy<br/>Together 💝</h1>
+              <h2>Package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command</h2>
             </div>
           </section>
 
           <div class="container content">
             <div class="row">
-              <div class="small-12 medium-6 columns">
+              <div class="small-12 columns">
                 <h2>What is Porter?</h2>
+                <p>Take everything you need to do a deployment, the application itself and the entire process 
+                  to deploy it: command-line tools, configuration files, secrets, and bash scripts to glue it all together. 
+                  Package that into a versioned bundle distributed over standard Docker registries or plain tgz files.</p>
+                <p>Now anyone can install your application without deep knowledge of your deployment process,
+                   or following a step-by-step deployment doc, regardless of the tech stack.
+                </p>
 
-                <p>When we deploy to the cloud, most of us aren’t dealing with just a single cloud provider or toolchain.
-                  The simplest of applications today need a load balancer, SSL certificate, persistent file storage, DNS, and
-                  somewhere in there is your application. One app is installed with Helm, another with the cloud provider’s cli
-                  and it is all glued together with magic bash scripts.
-
-                <p>That is a lot to figure out! 😅</p>
-
-                <p>Porter is a cloud installer based on the Cloud Native Application Bundle (<a href="https://cnab.io">CNAB</a>)
-                  spec that helps you manage everything together in a single bundle, focusing on what you know best: your application.</p>
-              </div>
-
-              <div class="hide-for-small-down medium-6 columns">
-                <img src="{{ .Site.BaseURL }}images/porter-mixin-cloud.png" alt="Porter Mixin Cloud" class="helm-overview-img">
-              </div>
-            </div>
-            <div class="row">
-              <div class="small=1 columns">
-                  <h2>When would I use a bundle?</h2>
-
-                  <ul>
-                    <li>Install the tools to manage your application: helm, aws/azure/gcloud, terraform</li>
-                    <li>Deploy an application along with its infrastructure: cloud storage, dns entry, load balancer, ssl cert</li>
-                    <li>Get software and its dependencies into airgapped networks</li>
-                    <li>Manage disparate operational tech, such as Helm, Chef, or Terraform, across teams and departments</li>
-                  </ul>
+                <h2>Why Porter?</h2>
+                <ul>
+                  <li>Single command to find and deploy any application, regardless of the tech stack. No knowledge of the deployment process necessary.</li>
+                  <li>Secure handling of secrets and credentials, integrated with industry standard secret stores.</li>
+                  <li>Share the operational load of managing your team's deployments.</li>
+                  <li>Works with and improves existing tools, such as bash, cloud CLIs, terraform and helm. You don't rewrite your existing deployments to start using Porter.</li>
+                  <li>Reliable deployments because the client environment: cli versions, installed commands, configuration... is dependable and consistent.</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          <div class="container content" style="background-color: #1e2022;">
-            <img src="/images/bundle-manifest-wide.png" width="2500px" style="display: block; margin-left: auto; margin-right: auto;"/>
-          </div>
-          
           <div class="container helm-features">
             <div class="row ">
               <div class="small-12 columns">
@@ -102,21 +87,36 @@
             </div>
 
             <div class="row">
-              <div class="small-12 medium-6 large-4 columns">
-                <span style="font-size: 5em">👜 🧳 </span>
-                <h3>Your app and its baggage:<br/>installed</h3>
-                <p>Bundle up not just your application, but everything it needs to run in the cloud.
-                </p>
+              <div class="small-12 columns">
+                <h3>Credentials and Secrets <span style="font-size: 1.5em">🔐</span></h3>
+                <figure>
+                  <figcaption>
+                    <p>
+                      Credentials and secrets are retrieved from industry standard secret stores and securely injected.
+                    </p>
+                  </figcaption>
+                  <img src="/images/inject-credentials.png" width=800px />
+                </figure>
               </div>
-              <div class="small-12 medium-6 large-4 columns">
-                <span style="font-size: 5em">👩🏾‍🔬 🧬 </span>
-                <h3>Smart bundles:<br/>out-of-the-box</h3>
-                <p>Use mixins for common tools and clouds, and depend on existing bundles.</p>
+              <div class="small-12 columns">
+                <h3>Parameterized Bundles <span style="font-size: 1.5em">👩🏽‍🔬🧬</span></h3>
+                <figure>
+                  <figcaption>
+                    <p>
+                      Use different configuration for production and staging, toggle feature switches and customize each installation of a bundle with parameters.
+                    </p>
+                  </figcaption>
+                  <img src="/images/parameterize.png" width=800px />
               </div>
-              <div class="small-12 medium-6 large-4 columns">
-                <span style="font-size: 5em">🚂 📦 </span>
-                <h3>Bundle management:<br/>simplified</h3>
-                <p>Package and version your bundle, and then distribute it to others just like Docker images.</p>
+              <div class="small-12 columns">
+                <h3>Connect Action Inputs and Outputs<span style="font-size: 1.5em">🧩</span></h3>
+                <figure>
+                  <figcaption>
+                    <p>
+                      Wire together tools that were not designed to integrate and seamlessly pass data between them.
+                    </p>
+                  </figcaption>
+                  <img src="/images/wire-outputs-to-inputs.png" width=800px />
               </div>
             </div>
           </div>
