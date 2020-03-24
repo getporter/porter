@@ -23,14 +23,18 @@ func TestSuppressOutput(t *testing.T) {
 	// Currently, the default docker driver prints directly to stdout instead of to the given writer
 	// Hence, the need to swap out stdout/stderr just for this test, to capture output under test
 	stdout := os.Stdout
+	stderr := os.Stderr
 	defer func() {
 		os.Stdout = stdout
+		os.Stderr = stderr
 	}()
 	r, w, _ := os.Pipe()
 	os.Stdout = w
+	os.Stderr = w
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-suppressed-output.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/suppressed-output-example"), ".")
 
+	// Install (Output suppressed)
 	installOpts := porter.InstallOptions{}
 	err := installOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
@@ -38,6 +42,20 @@ func TestSuppressOutput(t *testing.T) {
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
+	// Verify that the bundle output was captured (despite stdout/err of command being suppressed)
+	bundleOutput, err := p.ReadBundleOutput("greeting", p.Manifest.Name)
+	require.NoError(t, err, "could not read config output")
+	require.Equal(t, "Hello World!", bundleOutput, "expected the bundle output to be populated correctly")
+
+	// Invoke - Log Error (Output suppressed)
+	invokeOpts := porter.InvokeOptions{Action: "log-error"}
+	err = invokeOpts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.InvokeBundle(invokeOpts)
+	require.NoError(t, err)
+
+	// Uninstall
 	uninstallOpts := porter.UninstallOptions{}
 	err = uninstallOpts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
@@ -53,10 +71,11 @@ func TestSuppressOutput(t *testing.T) {
 		outC <- buf.String()
 	}()
 
-	// Read our faked stdout
+	// Read our faked cmd output
 	w.Close()
-	gotstdout := <-outC
+	gotCmdOutput := <-outC
 
-	require.NotContains(t, gotstdout, "Hello World", "expected output to be suppressed from Install step")
-	require.Contains(t, gotstdout, "Goodbye World", "expected output to be present from Uninstall step")
+	require.NotContains(t, gotCmdOutput, "Hello World!", "expected command output to be suppressed from Install step")
+	require.NotContains(t, gotCmdOutput, "Error!", "expected command output to be suppressed from Invoke step")
+	require.Contains(t, gotCmdOutput, "Farewell World!", "expected command output to be present from Uninstall step")
 }
