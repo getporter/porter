@@ -10,7 +10,7 @@ import (
 func TestNewDriver_Docker(t *testing.T) {
 	d := NewTestRuntime(t)
 
-	driver, err := d.newDriver("docker", "myclaim", ActionArguments{})
+	driver, err := d.newDriver(DriverNameDocker, "myclaim", ActionArguments{})
 	require.NoError(t, err)
 
 	if _, ok := driver.(*docker.Driver); ok {

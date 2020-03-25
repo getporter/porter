@@ -25,7 +25,16 @@ type CNABProvider interface {
 	Uninstall(arguments cnabprovider.ActionArguments) error
 }
 
-const DefaultDriver = "docker"
+const (
+	// DockerDriver is the name of the Docker driver.
+	DockerDriver = cnabprovider.DriverNameDocker
+
+	// DebugDriver is the name of the Debug driver.
+	DebugDriver = cnabprovider.DriverNameDebug
+
+	// DefaultDriver is the name of the default driver (Docker).
+	DefaultDriver = DockerDriver
+)
 
 type bundleFileOptions struct {
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
@@ -302,7 +311,7 @@ func (o *sharedOptions) defaultDriver() {
 // validateDriver validates that the provided driver is supported by Porter
 func (o *sharedOptions) validateDriver() error {
 	switch o.Driver {
-	case "docker", "debug":
+	case DockerDriver, DebugDriver:
 		return nil
 	default:
 		cmddriver := &command.Driver{Name: o.Driver}

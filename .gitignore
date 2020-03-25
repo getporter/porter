@@ -9,3 +9,4 @@ examples/**/Dockerfile
 workshop/**/Dockerfile
 
 .vscode
+.idea
