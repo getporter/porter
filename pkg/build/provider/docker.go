@@ -10,6 +10,7 @@ import (
 	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/docker/cli/cli/command"
+	clibuild "github.com/docker/cli/cli/command/image/build"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
@@ -43,7 +44,12 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 			"BUNDLE_DIR": &build.BUNDLE_DIR,
 		},
 	}
-	tar, err := archive.TarWithOptions(path, &archive.TarOptions{})
+
+	excludes, err := clibuild.ReadDockerignore(path)
+	if err != nil {
+		return err
+	}
+	tar, err := archive.TarWithOptions(path, &archive.TarOptions{ExcludePatterns: excludes})
 	if err != nil {
 		return err
 	}
