@@ -10,7 +10,7 @@ type BundleResolver struct {
 	Registry Registry
 }
 
-// Resolve resolves a bundle from the cache, or pulls it and caches it
+// Resolve a bundle from the cache, or pulls it and caches it
 // Returns path of the bundle, path of relocation mapping file or an error
 func (r *BundleResolver) Resolve(opts BundlePullOptions) (string, string, error) {
 	path, rm, ok, err := r.Cache.FindBundle(opts.Tag)
