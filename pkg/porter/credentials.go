@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
+	"github.com/cnabio/cnab-go/bundle"
 	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/utils/crud"
 	tablewriter "github.com/olekukonko/tablewriter"
@@ -112,70 +113,83 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		return err
 	}
 
-	_, err = p.generateNewCredentialSet(opts.CNABFile, opts.Name, opts.Silent, opts.DryRun)
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to load bundle while generating new credentials")
+	}
+	_, err = p.generateNewCredentialSet(bundle, opts.Name, opts.Silent, opts.DryRun)
 	return err
 }
 
-func (p *Porter) chooseOrGenerate(CNABFile string) ([]string, error) {
-	var chooseOrGenerate string
+func (p *Porter) chooseOrGenerateCredentialSet(CNABFile string) ([]string, error) {
 
-	selectChooseOrGeneratePrompt := &survey.Select{
-		Message: "Choose an option",
-		Options: []string{chooseCode, generateCode, quitCode},
-		Default: chooseCode,
-	}
-	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil)
-
-	switch chooseOrGenerate {
-	case generateCode:
-		newCredSet, err := p.generateNewCredentialSet(CNABFile, "", false, false)
-		return []string{newCredSet}, err
-	case quitCode:
-		return []string{}, errors.New("Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
-	case chooseCode:
-		return p.chooseCredentialSet(CNABFile)
-	default:
-		return []string{}, errors.New("Unknow option")
-	}
-}
-
-func (p *Porter) chooseCredentialSet(CNABFile string) ([]string, error) {
-
-	var credSetNames []string
 	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
 		return []string{}, errors.Wrap(err, "failed to read exisiting credential sets")
 	}
 
-	var selectedOption []string
-	if len(credSets) > 0 {
-		for _, credSet := range credSets {
-			credSetNames = append(credSetNames, credSet.Name)
-		}
-
-		selectCredPrompt := &survey.MultiSelect{
-			Message: "Choose a set of credentials to use while installing this bundle",
-			Options: credSetNames,
-			Default: []string{credSetNames[0]},
-		}
-
-		err := survey.AskOne(selectCredPrompt, &selectedOption, nil)
-		if err != nil {
-			return []string{}, errors.New("no credential set selected")
-		}
-
-		return selectedOption, nil
+	var credSetNames []string
+	for _, credSet := range credSets {
+		credSetNames = append(credSetNames, credSet.Name)
 	}
 
-	return []string{}, errors.New("no existing credentials found")
+	selectOptions := []string{generateCode, quitCode}
+	if len(credSetNames) > 0 {
+		selectOptions = append([]string{chooseCode}, selectOptions...)
+	}
+
+	var chooseOrGenerate string
+	selectChooseOrGeneratePrompt := &survey.Select{
+		Message: "Choose an option",
+		Options: selectOptions,
+		Default: selectOptions[0],
+	}
+
+	fmt.Fprintln(p.Out, "No credential set name passed")
+	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil)
+
+	bundle, err := p.CNAB.LoadBundle(CNABFile)
+	if err != nil {
+		return []string{}, errors.Wrap(err, "failed to load bundle while choosing credentials")
+	}
+
+	switch chooseOrGenerate {
+	case generateCode:
+		newCredSet, err := p.generateNewCredentialSet(bundle, "", false, false)
+		return []string{newCredSet}, err
+	case quitCode:
+		return []string{}, errors.New("Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
+	case chooseCode:
+		return p.chooseCredentialSet(bundle, credSetNames)
+	default:
+		return []string{}, errors.New("Unknow option")
+	}
+}
+
+func (p *Porter) chooseCredentialSet(bundle *bundle.Bundle, credSetNames []string) ([]string, error) {
+
+	var selectedCredSets []string
+
+	selectCredPrompt := &survey.MultiSelect{
+		Message: "Choose a set of credentials to use while installing this bundle",
+		Options: credSetNames,
+		Default: []string{bundle.Name},
+	}
+
+	err := survey.AskOne(selectCredPrompt, &selectedCredSets, nil)
+	if err != nil {
+		return []string{}, errors.New("no credential set selected")
+	}
+
+	if len(selectedCredSets) == 0 {
+		return []string{}, errors.New("no credential set selected")
+	}
+
+	return selectedCredSets, nil
 
 }
 
-func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName string, silent bool, dryRun bool) (string, error) {
-	bundle, err := p.CNAB.LoadBundle(CNABFile)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to load bundle while generating credentials")
-	}
+func (p *Porter) generateNewCredentialSet(bundle *bundle.Bundle, credIdentifierName string, silent bool, dryRun bool) (string, error) {
 
 	if credIdentifierName == "" {
 		if silent {
@@ -199,7 +213,7 @@ func (p *Porter) generateNewCredentialSet(CNABFile string, credIdentifierName st
 	// two extra spaces to align with survey prompts
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "%d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
-	err = p.generateAndSaveCredentialSet(genOpts)
+	err := p.generateAndSaveCredentialSet(genOpts)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate credentials")
 	}
