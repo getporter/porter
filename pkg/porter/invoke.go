@@ -43,12 +43,17 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return err
 	}
 
-	if len(opts.CredentialIdentifiers) == 0 {
-		credName, err := p.chooseOrGenerateCredentialSet(opts.CNABFile)
+	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to load bundle while invoking action")
+	}
+
+	if len(bundle.Credentials) > 0 && len(opts.CredentialIdentifiers) == 0 {
+		selectedCredSets, err := p.chooseOrGenerateCredentialSet(bundle)
 		if err != nil {
 			return err
 		}
-		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, credName...)
+		opts.CredentialIdentifiers = append(opts.CredentialIdentifiers, selectedCredSets...)
 	}
 
 	deperator := newDependencyExecutioner(p)

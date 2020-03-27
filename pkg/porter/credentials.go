@@ -121,7 +121,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	return err
 }
 
-func (p *Porter) chooseOrGenerateCredentialSet(CNABFile string) ([]string, error) {
+func (p *Porter) chooseOrGenerateCredentialSet(bundle *bundle.Bundle) ([]string, error) {
 
 	credSets, err := p.Credentials.ReadAll()
 	if err != nil {
@@ -147,11 +147,6 @@ func (p *Porter) chooseOrGenerateCredentialSet(CNABFile string) ([]string, error
 
 	fmt.Fprintln(p.Out, "No credential set name passed")
 	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil)
-
-	bundle, err := p.CNAB.LoadBundle(CNABFile)
-	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to load bundle while choosing credentials")
-	}
 
 	switch chooseOrGenerate {
 	case generateCode:
