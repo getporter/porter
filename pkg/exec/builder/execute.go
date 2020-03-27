@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
@@ -33,6 +34,10 @@ type ExecutableStep interface {
 
 type HasCustomDashes interface {
 	GetDashes() Dashes
+}
+
+type SuppressesOutput interface {
+	SuppressesOutput() bool
 }
 
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
@@ -89,13 +94,28 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args = splitCommand(args)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
-	output := &bytes.Buffer{}
-	cmd.Stdout = io.MultiWriter(cxt.Out, output)
-	cmd.Stderr = cxt.Err
-
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
-	if cxt.Debug {
-		fmt.Fprintln(cxt.Out, prettyCmd)
+
+	// Setup output streams for command
+	// If Step suppresses output, update streams accordingly
+	output := &bytes.Buffer{}
+	suppressOutput := false
+	if suppressable, ok := step.(SuppressesOutput); ok {
+		suppressOutput = suppressable.SuppressesOutput()
+	}
+
+	if suppressOutput {
+		cmd.Stdout = io.MultiWriter(ioutil.Discard, output)
+		cmd.Stderr = ioutil.Discard
+		if cxt.Debug {
+			fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
+		}
+	} else {
+		cmd.Stdout = io.MultiWriter(cxt.Out, output)
+		cmd.Stderr = cxt.Err
+		if cxt.Debug {
+			fmt.Fprintln(cxt.Out, prettyCmd)
+		}
 	}
 
 	err := cmd.Start()
