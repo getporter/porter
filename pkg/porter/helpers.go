@@ -35,6 +35,9 @@ type TestPorter struct {
 	// original directory where the test was being executed
 	TestDir string
 
+	// directory where the integration test is being executed
+	BundleDir string
+
 	// tempDirectories that need to be cleaned up at the end of the testRun
 	cleanupDirs []string
 }
@@ -74,6 +77,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	bundleDir, err := ioutil.TempDir("", "bundle")
 	require.NoError(t, err)
+	p.BundleDir = bundleDir
 	p.cleanupDirs = append(p.cleanupDirs, homeDir)
 
 	p.TestDir, _ = os.Getwd()

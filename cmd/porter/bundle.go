@@ -19,6 +19,7 @@ func buildBundleCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildBundleCreateCommand(p))
 	cmd.AddCommand(buildBundleBuildCommand(p))
+	cmd.AddCommand(buildBundleLintCommand(p))
 	cmd.AddCommand(buildBundleInstallCommand(p))
 	cmd.AddCommand(buildBundleUpgradeCommand(p))
 	cmd.AddCommand(buildBundleInvokeCommand(p))
@@ -54,7 +55,36 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
+	f := cmd.Flags()
+	f.BoolVar(&opts.NoLint, "no-lint", false, "Do not run the linter")
+	f.BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
+
+	return cmd
+}
+
+func buildBundleLintCommand(p *porter.Porter) *cobra.Command {
+	var opts porter.LintOptions
+	cmd := &cobra.Command{
+		Use:   "lint",
+		Short: "Lint a bundle",
+		Long: `Check the bundle for problems and adherence to best practices by running linters for porter and the mixins used in the bundle.
+
+The lint command is run automatically when you build a bundle. The command is available separately so that you can just lint your bundle without also building it.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.PrintLintResults(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.File, "file", "f", "",
+		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
+	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Specify an output format.  Allowed values: "+porter.AllowedLintFormats.String())
+	f.BoolVarP(&opts.Verbose, "verbose", "v", false,
+		"Enable verbose logging")
 
 	return cmd
 }

@@ -40,7 +40,8 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 * [porter install](/cli/porter_install/)	 - Install a new instance of a bundle
 * [porter instances](/cli/porter_instances/)	 - Bundle Instance commands
 * [porter invoke](/cli/porter_invoke/)	 - Invoke a custom action on a bundle instance
-* [porter list](/cli/porter_list/)	 - list instances of installed bundles
+* [porter lint](/cli/porter_lint/)	 - Lint a bundle
+* [porter list](/cli/porter_list/)	 - List instances of installed bundles
 * [porter mixins](/cli/porter_mixins/)	 - Mixin commands. Mixins assist with authoring bundles.
 * [porter plugins](/cli/porter_plugins/)	 - Plugin commands. Plugins enable Porter to work on different cloud providers and systems.
 * [porter publish](/cli/porter_publish/)	 - Publish a bundle

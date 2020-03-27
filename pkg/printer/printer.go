@@ -1,6 +1,10 @@
 package printer
 
-import "github.com/pkg/errors"
+import (
+	"strings"
+
+	"github.com/pkg/errors"
+)
 
 type Format string
 
@@ -11,6 +15,19 @@ const (
 	FormatPlaintext Format = "plaintext"
 )
 
+type Formats []Format
+
+func (f Formats) String() string {
+	var buf strings.Builder
+	for i, format := range f {
+		buf.WriteString(string(format))
+		if i < len(f)-1 {
+			buf.WriteString(", ")
+		}
+	}
+	return buf.String()
+}
+
 func (p *PrintOptions) ParseFormat() error {
 	format := Format(p.RawFormat)
 	switch format {
@@ -20,6 +37,22 @@ func (p *PrintOptions) ParseFormat() error {
 	default:
 		return errors.Errorf("invalid format: %s", p.RawFormat)
 	}
+}
+
+func (p *PrintOptions) Validate(allowedFormats []Format) error {
+	// Default unspecified to plaintext
+	if p.RawFormat == "" {
+		p.RawFormat = string(FormatPlaintext)
+	}
+
+	format := Format(p.RawFormat)
+	for _, f := range allowedFormats {
+		if f == format {
+			p.Format = format
+			return nil
+		}
+	}
+	return errors.Errorf("invalid format: %s", p.RawFormat)
 }
 
 type PrintOptions struct {

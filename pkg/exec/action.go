@@ -5,9 +5,26 @@ import (
 )
 
 var _ builder.ExecutableAction = Action{}
+var _ builder.BuildableAction = Action{}
 
 type Action struct {
+	Name  string
 	Steps []Step // using UnmarshalYAML so that we don't need a custom type per action
+}
+
+// MarshalYAML converts the action back to a YAML representation
+// install:
+//   exec:
+//     ...
+//   helm:
+//     ...
+func (a Action) MarshalYAML() (interface{}, error) {
+	return map[string]interface{}{a.Name: a.Steps}, nil
+}
+
+// MakeSteps builds a slice of Steps for data to be unmarshaled into.
+func (a Action) MakeSteps() interface{} {
+	return &[]Step{}
 }
 
 // UnmarshalYAML takes any yaml in this form
@@ -15,15 +32,18 @@ type Action struct {
 // - exec: ...
 // and puts the steps into the Action.Steps field
 func (a *Action) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var steps []Step
-	results, err := builder.UnmarshalAction(unmarshal, &steps)
+	results, err := builder.UnmarshalAction(unmarshal, a)
 	if err != nil {
 		return err
 	}
 
-	for _, result := range results {
-		step := result.(*[]Step)
-		a.Steps = append(a.Steps, *step...)
+	for actionName, action := range results {
+		a.Name = actionName
+		for _, result := range action {
+			step := result.(*[]Step)
+			a.Steps = append(a.Steps, *step...)
+		}
+		break // There is only 1 action
 	}
 	return nil
 }
@@ -35,6 +55,37 @@ func (a Action) GetSteps() []builder.ExecutableStep {
 	}
 
 	return steps
+}
+
+// Actions is a set of actions, and the steps, passed from Porter.
+type Actions []Action
+
+// UnmarshalYAML takes chunks of a porter.yaml file associated with this mixin
+// and populates it on the current action set.
+// install:
+//   exec:
+//     ...
+//   exec:
+//     ...
+// upgrade:
+//   exec:
+//     ...
+func (a *Actions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	results, err := builder.UnmarshalAction(unmarshal, Action{})
+	if err != nil {
+		return err
+	}
+
+	for actionName, action := range results {
+		for _, result := range action {
+			s := result.(*[]Step)
+			*a = append(*a, Action{
+				Name:  actionName,
+				Steps: *s,
+			})
+		}
+	}
+	return nil
 }
 
 var _ builder.ExecutableStep = Step{}

@@ -55,6 +55,9 @@ func New() *Porter {
 }
 
 func (p *Porter) LoadManifest() error {
+	if p.Manifest != nil {
+		return nil
+	}
 	return p.LoadManifestFrom(config.Name)
 }
 

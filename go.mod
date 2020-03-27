@@ -15,7 +15,7 @@ require (
 	github.com/docker/cnab-to-oci v0.3.0-beta3
 	github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/docker/docker v1.4.2-0.20181229214054-f76d6a078d88
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobuffalo/packr/v2 v2.7.1
 	github.com/google/go-containerregistry v0.0.0-20191015185424-71da34e4d9b3
@@ -35,6 +35,7 @@ require (
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.4.0
 	github.com/xeipuuv/gojsonschema v1.2.0
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/yaml.v2 v2.2.4
 )

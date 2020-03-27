@@ -18,6 +18,11 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, configFileExists)
 
+	// Verify that helpers is present and executable
+	helperFileStats, err := p.FileSystem.Stat("helpers.sh")
+	require.NoError(t, err)
+	assert.Equal(t, "-rwxr-xr-x", helperFileStats.Mode().String())
+
 	dockerfileExists, err := p.FileSystem.Exists("Dockerfile.tmpl")
 	require.NoError(t, err)
 	assert.True(t, dockerfileExists)

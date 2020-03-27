@@ -29,7 +29,7 @@ func buildInstancesListCommand(p *porter.Porter) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "list instances of installed bundles",
+		Short: "List instances of installed bundles",
 		Long: `List instances of all bundles installed by Porter.
 
 A listing of instances of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.

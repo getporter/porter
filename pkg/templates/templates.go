@@ -26,6 +26,11 @@ func (t *Templates) GetManifest() ([]byte, error) {
 	return t.box.Find("create/porter.yaml")
 }
 
+// GetHelpers returns a helpers.sh template file for use in new bundles.
+func (t *Templates) GetManifestHelpers() ([]byte, error) {
+	return t.box.Find("create/helpers.sh")
+}
+
 // GetReadme returns a README.md file for use in new bundles.
 func (t *Templates) GetReadme() ([]byte, error) {
 	return t.box.Find("create/README.md")

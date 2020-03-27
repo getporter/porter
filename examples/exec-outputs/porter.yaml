@@ -50,9 +50,9 @@ status:
 uninstall:
   - exec:
       description: "Uninstall bundle"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./cluster.sh
+      arguments:
+        - uninstall
 
 outputs:
   - name: config

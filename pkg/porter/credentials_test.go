@@ -469,14 +469,14 @@ func TestCredentialsDelete(t *testing.T) {
 	testcases := []struct {
 		name       string
 		credName   string
-		wantOutput string
+		wantStderr string
 	}{{
 		name:     "delete",
 		credName: "kool-kreds",
 	}, {
 		name:       "error",
 		credName:   "noop-kreds",
-		wantOutput: "credential set does not exist",
+		wantStderr: "credential set does not exist",
 	}}
 
 	for _, tc := range testcases {
@@ -493,8 +493,8 @@ func TestCredentialsDelete(t *testing.T) {
 			_, err = p.TestCredentials.Read(tc.credName)
 			assert.Error(t, err, "credential set still exists")
 
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			assert.Equal(t, tc.wantOutput, strings.TrimSpace(gotOutput))
+			gotOutput := p.TestConfig.TestContext.GetError()
+			assert.Equal(t, tc.wantStderr, strings.TrimSpace(gotOutput))
 		})
 	}
 }

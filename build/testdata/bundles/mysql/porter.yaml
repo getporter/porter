@@ -3,8 +3,8 @@ mixins:
 - helm
 
 name: mysql
-version: 0.1.1
-tag: getporter/mysql:v0.1.1
+version: 0.1.2
+tag: getporter/mysql:v0.1.2
 
 credentials:
 - name: kubeconfig
@@ -48,9 +48,9 @@ install:
 ping:
   - exec:
       description: "Ping"
-      command: "bash"
-      flags:
-        c: echo ping
+      command: ./helpers.sh
+      arguments:
+        - ping
 
 upgrade:
   - helm:
