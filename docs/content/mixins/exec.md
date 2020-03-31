@@ -29,6 +29,7 @@ exec:
     repeated-flag:
     - flag-value1
     - flag-value2
+  suppress-output: false
 ```
 
 This is executed as:
@@ -36,6 +37,18 @@ This is executed as:
 ```
 $ cmd arg1 arg2 -a flag-value --long-flag true --repeated-flag flag-value1 --repeated-flag flag-value2
 ```
+
+### Suppress Output
+
+The `suppress-output` field controls whether output from the mixin should be
+prevented from printing to the console. By default this value is false, using
+Porter's default behavior of hiding known sensitive values, all credentials,
+outputs and parameters with `sensitive: true`. When `suppress-output: true` all
+output from the mixin (stderr and stdout) are hidden.
+
+Step outputs (below) are still collected when output is suppressed. This allows
+you to prevent sensitive data from being exposed while still collecting it from
+a command and using it in your bundle.
 
 ### Outputs
 
