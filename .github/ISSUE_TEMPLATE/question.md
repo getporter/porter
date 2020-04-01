@@ -16,5 +16,5 @@ If you've already tried making this work, please share your `porter.yaml` and an
 **Where have you looked already to figure this out?**
 Help us improve our documentation! Let us know what pages you looked at first to find this information so that we can put the answer where people are looking.
 
-**Was the existing documentation unclear or have gaps?**
+**Was the existing documentation unclear or had gaps?**
 If you found a page that should have answered your question but didn't, let us know what would have been helpful to have on that page so we can improve it.
