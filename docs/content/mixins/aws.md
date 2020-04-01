@@ -31,11 +31,22 @@ aws:
     REPEATED_FLAG:
     - FLAGVALUE1
     - FLAGVALUE2
+  suppress-output: false
   outputs:
   - name: NAME
     jsonPath: JSONPATH
 ```
 
+### Suppress Output
+
+The `suppress-output` field controls whether output from the mixin should be
+prevented from printing to the console. By default this value is false, using
+Porter's default behavior of hiding known sensitive values. When 
+`suppress-output: true` all output from the mixin (stderr and stdout) are hidden.
+
+Step outputs (below) are still collected when output is suppressed. This allows
+you to prevent sensitive data from being exposed while still collecting it from
+a command and using it in your bundle.
 
 ### Outputs
 
