@@ -87,12 +87,12 @@ func TestGenerate_RegexMatch(t *testing.T) {
 		wantError: `failed to traverse the bin directory: open bin: file does not exist`,
 	}, {
 		name:      "valid mixin name",
-		mixinName: "my42ndmixin",
+		mixinName: "my-42nd-mixin",
 		wantError: "",
 	}, {
 		name:      "invalid mixin name",
-		mixinName: "my42ndmixin!",
-		wantError: `no mixin binaries found in bin matching the regex "(.*/)?(.+)/([a-z0-9]+)-(linux|windows|darwin)-(amd64)(\\.exe)?"`,
+		mixinName: "my-42nd-mixin!",
+		wantError: `no mixin binaries found in bin matching the regex "(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\\.exe)?"`,
 	}}
 
 	for _, tc := range testcases {

@@ -64,7 +64,7 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		}
 	}
 
-	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z0-9]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
+	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
 	err = feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
