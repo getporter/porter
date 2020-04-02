@@ -153,12 +153,13 @@ else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish
 endif
 
+SCHEMA_VERSION     := cnab-core-1.0.1
 BUNDLE_SCHEMA      := bundle.schema.json
 DEFINITIONS_SCHEMA := definitions.schema.json
 
 define fetch-schema
-	@curl --fail --silent --show-error -o /tmp/$(1) \
-		https://raw.githubusercontent.com/cnabio/cnab-spec/master/schema/$(1)
+	@curl -L --fail --silent --show-error -o /tmp/$(1) \
+		https://cnab.io/schema/$(SCHEMA_VERSION)/$(1)
 endef
 
 fetch-schemas: fetch-bundle-schema fetch-definitions-schema
