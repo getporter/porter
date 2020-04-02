@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/config"
 	"github.com/pkg/errors"
@@ -21,8 +22,9 @@ func FromFlagsThenEnvVarsThenConfigFile(cmd *cobra.Command) config.DataStoreLoad
 
 		// Apply the configuration file value to the flag when the flag is not set
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
-			if !f.Changed && v.IsSet(f.Name) {
-				val := v.Get(f.Name)
+			viperName := strings.ReplaceAll(f.Name, "-", "_")
+			if !f.Changed && v.IsSet(viperName) {
+				val := v.Get(viperName)
 				cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
 			}
 		})
