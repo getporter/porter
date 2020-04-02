@@ -11,3 +11,6 @@
 /slack              https://app.slack.com/client/T08PSQ7BQ/CN8NA4F8V
 /mailing-list       https://groups.io/g/porter
 /blog               https://deislabs.io/
+
+# Moved Links
+/configuration/#porter-allow-docker-host-access /configuration/#allow-docker-host-access

@@ -10,6 +10,7 @@ import (
 type BundleLifecycleOpts struct {
 	sharedOptions
 	BundlePullOptions
+	AllowAccessToDockerHost bool
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) error {
@@ -36,6 +37,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,
 		RelocationMapping:     o.RelocationMapping,
+		AllowDockerHostAccess: o.AllowAccessToDockerHost,
 	}
 
 	// Do a safe copy so that modifications to the args aren't also made to the

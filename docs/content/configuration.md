@@ -15,7 +15,7 @@ both in a particular command with a flag.
 
 * [Enable Debug Output](#debug)
 * [Output Formatting](#output)
-* [Allow Docker Host Access](#porter-allow-docker-host-access)
+* [Allow Docker Host Access](#allow-docker-host-access)
 
 ## Flags
 
@@ -33,6 +33,23 @@ to the developers.
 supports a different set of allowed outputs though usually there is some
 combination of: `table`, `json` and `yaml`.
 
+### Allow Docker Host Access
+
+`--allow-docker-host-access` controls whether or not the local Docker daemon
+should be made available to executing bundles. This flag is available for the
+following commands: [install], [upgrade], [invoke] and [uninstall]. When this
+value is set to true, bundles are executed in a privileged container with the
+docker socket mounted. This allows you to use Docker from within your bundle,
+such as `docker push`, `docker-compose`, or docker-in-docker.
+
+🚨 **There are security implications to enabling access! You should trust any
+bundles that you execute with this setting enabled as it gives them elevated 
+access to the host machine.**
+
+⚠️️ This configuration setting is only available when you are in an environment 
+that provides access to the local docker daemon. Therefore it does not work with
+the Azure Cloud Shell driver.
+
 ## Environment Variables
 
 Flags have corresponding environment variables that you can use so that you
@@ -43,25 +60,6 @@ value of the environment variable, when defined.
 
 For example, you can set `PORTER_DEBUG=true` and then all subsequent porter
 commands will act as though the `--debug` flag was passed.
-
-### PORTER_ALLOW_DOCKER_HOST_ACCESS
-
-The `PORTER_ALLOW_DOCKER_HOST_ACCESS` environment variable is not exposed as a
-flag yet. 
-
-It controls whether or not the local Docker daemon should be made available to
-executing bundles. When this value is set to true, bundles are executed in
-a privileged container with the docker socket mounted.
-This allows you to use Docker from within your bundle, such as `docker push`,
-`docker-compose`, or docker-in-docker.
-
-🚨 **There are security implications to enabling access! You should trust any
-bundles that you execute with this setting enabled as it gives them elevated 
-access to the host machine.**
-
-⚠️️ This configuration setting is only available when you are in an environment 
-that provides access to the local docker daemon. Therefore it does not work with
-the Azure Cloud Shell driver.
 
 ## Config File
 
@@ -78,3 +76,8 @@ debug = true
 output = "json"
 allow-docker-host-access = true
 ```
+
+[install]: /cli/porter_install/
+[upgrade]: /cli/porter_upgrade/
+[invoke]: /cli/porter_invoke/
+[uninstall]: /cli/porter_uninstall/

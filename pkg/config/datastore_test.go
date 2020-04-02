@@ -1,52 +1,11 @@
 package config
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestData_GetAllowDockerHostAccess(t *testing.T) {
-	var d Data
-
-	// Default should be false
-	allowDockerHostAccess, err := d.GetAllowDockerHostAccess()
-	require.NoError(t, err, "GetAllowDockerHostAccess failed")
-	assert.Equal(t, false, allowDockerHostAccess, "Allow docker host access should be false if config is missing")
-
-	// Unset the env var we are about to mess with after this test is done
-	defer os.Unsetenv(EnvAllowDockerHostAccess)
-
-	// Env var - invalid
-	os.Setenv(EnvAllowDockerHostAccess, "sureenableitplz")
-	_, err = d.GetAllowDockerHostAccess()
-	require.Error(t, err, "GetAllowDockerHostAccess did not return error with invalid env var value")
-
-	// Env var - "true"
-	os.Setenv(EnvAllowDockerHostAccess, "true")
-	allowDockerHostAccess, err = d.GetAllowDockerHostAccess()
-	require.NoError(t, err, "GetAllowDockerHostAccess failed")
-	assert.Equal(t, true, allowDockerHostAccess, "Allow docker host access should be true if %s is \"true\"", EnvAllowDockerHostAccess)
-
-	// Env var - "false"
-	os.Setenv(EnvAllowDockerHostAccess, "false")
-	allowDockerHostAccess, err = d.GetAllowDockerHostAccess()
-	require.NoError(t, err, "GetAllowDockerHostAccess failed")
-	assert.Equal(t, false, allowDockerHostAccess, "Allow docker host access should be false if %s is \"false\"", EnvAllowDockerHostAccess)
-
-	// If set to true ahead of time, takes precedence even when env var is "false"
-	d.AllowDockerHostAccess = true
-	allowDockerHostAccess, err = d.GetAllowDockerHostAccess()
-	require.NoError(t, err, "GetAllowDockerHostAccess failed")
-	assert.Equal(t, true, allowDockerHostAccess, "Allow docker host access should be true if set to true ahead of time")
-
-	// If set to true ahead of time, but the env var is invalid, still bubble up the error
-	os.Setenv(EnvAllowDockerHostAccess, "doctorseuss")
-	_, err = d.GetAllowDockerHostAccess()
-	require.Error(t, err, "GetAllowDockerHostAccess did not return error with invalid env var value when set to true ahead of time")
-}
 
 func TestData_GetDefaultStoragePlugin(t *testing.T) {
 	var d Data

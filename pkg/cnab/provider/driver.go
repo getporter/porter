@@ -19,25 +19,20 @@ const (
 	DriverNameDebug = "debug"
 )
 
-func (d *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
+func (r *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
 	var driverImpl driver.Driver
+	var err error
 
-	allowDockerHostAccess, err := d.Data.GetAllowDockerHostAccess()
+	if args.AllowDockerHostAccess {
+		if driverName != DriverNameDocker {
+			return nil, errors.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
+		}
+		driverImpl, err = r.dockerDriverWithHostAccess()
+	} else {
+		driverImpl, err = lookup.Lookup(driverName)
+	}
 	if err != nil {
 		return nil, err
-	}
-
-	if allowDockerHostAccess {
-		if driverName != DriverNameDocker {
-			return nil, errors.Wrapf(err, "Docker host access was enabled, but the driver is %s.", driverName)
-		}
-		driverImpl = dockerDriverWithHostAccess()
-	} else {
-		var err error
-		driverImpl, err = lookup.Lookup(driverName)
-		if err != nil {
-			return driverImpl, err
-		}
 	}
 
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
@@ -55,7 +50,13 @@ func (d *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	return driverImpl, nil
 }
 
-func dockerDriverWithHostAccess() driver.Driver {
+func (r *Runtime) dockerDriverWithHostAccess() (driver.Driver, error) {
+	const dockerSock = "/var/run/docker.sock"
+
+	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {
+		return nil, errors.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
+	}
+
 	d := &docker.Driver{}
 	d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
 
@@ -78,5 +79,5 @@ func dockerDriverWithHostAccess() driver.Driver {
 
 		return nil
 	})
-	return driver.Driver(d)
+	return driver.Driver(d), nil
 }
