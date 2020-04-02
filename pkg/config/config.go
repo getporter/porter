@@ -31,7 +31,9 @@ const (
 	// EnvAllowDockerHostAccess is the name of the environment variable indicating access to Docker daemon and host.
 	EnvAllowDockerHostAccess = "PORTER_ALLOW_DOCKER_HOST_ACCESS"
 
-	CustomBundleKey = "sh.porter"
+	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
+	// It holds all the metadta that porter includes that is specific to Porter about the bundle.
+	CustomPorterKey = "sh.porter"
 
 	// BundleOutputsDir is the directory where outputs are expected to be placed
 	// during the execution of a bundle action.

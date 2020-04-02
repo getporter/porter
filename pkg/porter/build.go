@@ -107,7 +107,10 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	}
 
 	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
-	bun := converter.ToBundle()
+	bun, err := converter.ToBundle()
+	if err != nil {
+		return err
+	}
 	return p.writeBundle(bun)
 }
 

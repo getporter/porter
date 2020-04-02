@@ -2,24 +2,77 @@ package configadapter
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
+// Stamp contains Porter specific metadata about a bundle that we can place
+// in the custom section of a bundle.json
 type Stamp struct {
+	// ManifestDigest takes into account all unique data that goes into a
+	// porter build to help determine if the last build is stale.
+	// * manifest
+	// * mixins
+	// * (TODO) files in current directory
 	ManifestDigest string `json:"manifestDigest"`
+
+	// Mixins used in the bundle.
+	Mixins map[string]MixinRecord `json:"mixins"`
+
+	// Manifest is the base64 encoded porter.yaml.
+	EncodedManifest string `json:"manifest"`
 }
 
-func (c *ManifestConverter) GenerateStamp() Stamp {
+// DecodeManifest base64 decodes the manifest stored in the stamp
+func (s Stamp) DecodeManifest() ([]byte, error) {
+	resultB, err := base64.StdEncoding.DecodeString(s.EncodedManifest)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not base64 decode the manifest in the stamp\n%s", s.EncodedManifest)
+	}
+
+	return resultB, nil
+}
+
+func (s Stamp) WriteManifest(cxt *context.Context, path string) error {
+	manifestB, err := s.DecodeManifest()
+	if err != nil {
+		return err
+	}
+
+	err = cxt.FileSystem.WriteFile(path, manifestB, 0644)
+	return errors.Wrapf(err, "could not save decoded manifest to %s", path)
+}
+
+// MixinRecord contains information about a mixin used in a bundle
+// For how it is a placeholder for data that we would like to include in the future.
+type MixinRecord struct{}
+
+func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
 
-	digest, err := c.digestManifest()
+	// Remember the original porter.yaml, base64 encoded to avoid canonical json shenanigans
+	rawManifest, err := manifest.ReadManifestData(c.Context, c.Manifest.ManifestPath)
+	if err != nil {
+		return Stamp{}, err
+	}
+	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
+
+	// Remember the mixins used in the bundle
+	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
+	for _, m := range c.Manifest.Mixins {
+		stamp.Mixins[m.Name] = MixinRecord{}
+	}
+
+	digest, err := c.DigestManifest()
 	if err != nil {
 		// The digest is only used to decide if we need to rebuild, it is not an error condition to not
 		// have a digest.
@@ -29,10 +82,10 @@ func (c *ManifestConverter) GenerateStamp() Stamp {
 		stamp.ManifestDigest = digest
 	}
 
-	return stamp
+	return stamp, nil
 }
 
-func (c *ManifestConverter) digestManifest() (string, error) {
+func (c *ManifestConverter) DigestManifest() (string, error) {
 	if exists, _ := c.FileSystem.Exists(c.Manifest.ManifestPath); !exists {
 		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
 	}
@@ -53,8 +106,16 @@ func (c *ManifestConverter) digestManifest() (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
+func IsPorterBundle(bun *bundle.Bundle) bool {
+	_, ok := bun.Custom[config.CustomPorterKey]
+	return ok
+}
+
 func LoadStamp(bun *bundle.Bundle) (*Stamp, error) {
-	data := bun.Custom[config.CustomBundleKey]
+	data, ok := bun.Custom[config.CustomPorterKey]
+	if !ok {
+		return nil, errors.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)
+	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {

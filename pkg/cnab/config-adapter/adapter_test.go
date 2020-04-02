@@ -22,7 +22,8 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	bun := a.ToBundle()
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
 
 	assert.Equal(t, SchemaVersion, bun.SchemaVersion)
 	assert.Equal(t, "hello", bun.Name)
@@ -30,14 +31,13 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Equal(t, "An example Porter configuration", bun.Description)
 
 	stamp, err := LoadStamp(bun)
-	assert.NoError(t, err, "could not load porter's stamp")
+	require.NoError(t, err, "could not load porter's stamp")
 	assert.NotNil(t, stamp)
 
 	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
-	assert.Contains(t, bun.Custom, config.CustomBundleKey, "Porter stamp was not populated")
 	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
 
 	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
@@ -443,8 +443,8 @@ func TestManifestConverter_RequiredExtensions(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	bun := a.ToBundle()
-
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
 	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
 }
 
@@ -525,7 +525,8 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	bun := a.ToBundle()
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
 	assert.Len(t, bun.Custom, 3)
 
 	fooCustomData := bun.Custom["foo"]

@@ -521,25 +521,16 @@ func (m *Manifest) SetDefaults() {
 	}
 }
 
-func readFromFile(cxt *context.Context, path string) (*Manifest, error) {
+func readFromFile(cxt *context.Context, path string) ([]byte, error) {
 	if exists, _ := cxt.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
 	}
 
 	data, err := cxt.FileSystem.ReadFile(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
-	}
-
-	m, err := UnmarshalManifest(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
+	return data, errors.Wrapf(err, "could not read manifest at %q", path)
 }
 
-func readFromURL(path string) (*Manifest, error) {
+func readFromURL(path string) ([]byte, error) {
 	resp, err := http.Get(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not reach url %s", path)
@@ -547,8 +538,23 @@ func readFromURL(path string) (*Manifest, error) {
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
+	return data, errors.Wrapf(err, "could not read from url %s", path)
+}
+
+func ReadManifestData(cxt *context.Context, path string) ([]byte, error) {
+	if strings.HasPrefix(path, "http") {
+		return readFromURL(path)
+	} else {
+		return readFromFile(cxt, path)
+	}
+}
+
+// ReadManifest determines if specified path is a URL or a filepath.
+// After reading the data in the path it returns a Manifest and any errors
+func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
+	data, err := ReadManifestData(cxt, path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read from url %s", path)
+		return nil, err
 	}
 
 	m, err := UnmarshalManifest(data)
@@ -556,26 +562,6 @@ func readFromURL(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	return m, nil
-}
-
-// ReadManifest determines if specified path is a URL or a filepath.
-// After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
-	var (
-		m   *Manifest
-		err error
-	)
-
-	if strings.HasPrefix(path, "http") {
-		m, err = readFromURL(path)
-	} else {
-		m, err = readFromFile(cxt, path)
-	}
-
-	if err != nil {
-		return nil, err
-	}
 	m.SetDefaults()
 	m.ManifestPath = path
 
