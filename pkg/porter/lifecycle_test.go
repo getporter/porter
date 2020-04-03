@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/context"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,4 +101,71 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
+}
+
+func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/install/base-params.txt", "base-params.txt")
+
+	deps := &dependencyExecutioner{}
+
+	t.Run("porter.yaml set", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.File = "porter.yaml"
+		cxt.AddTestFile("testdata/porter.yaml", "porter.yaml")
+		cxt.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, ".cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
+	})
+
+	// Just do a quick check that things are populated correctly when a bundle.json is passed
+	t.Run("bundle.json set", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.CNABFile = "/bundle.json"
+		cxt.AddTestFile("testdata/bundle.json", "/bundle.json")
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, opts.CNABFile, args.BundlePath, "BundlePath was not populated correctly")
+	})
+
+	t.Run("remaining fields", func(t *testing.T) {
+		opts := BundleLifecycleOpts{
+			sharedOptions: sharedOptions{
+				bundleFileOptions: bundleFileOptions{
+					RelocationMapping: "relocation-mapping.json",
+				},
+				Name: "MyClaim",
+				Params: []string{
+					"PARAM1=VALUE1",
+				},
+				ParamFiles: []string{
+					"base-params.txt",
+				},
+				CredentialIdentifiers: []string{
+					"mycreds",
+				},
+				Driver: "docker",
+			},
+			AllowAccessToDockerHost: true,
+		}
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
+		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
+		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
+		assert.Equal(t, opts.combinedParameters, args.Params, "Params not populated correctly")
+		assert.Equal(t, opts.Name, args.Claim, "Claim not populated correctly")
+		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
+	})
 }

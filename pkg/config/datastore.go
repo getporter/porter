@@ -1,9 +1,6 @@
 package config
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/pkg/errors"
 )
 
@@ -12,8 +9,6 @@ import (
 type Data struct {
 	// Only define fields here that you need to access from code
 	// Values are dynamically applied to flags and don't need to be defined
-
-	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
 
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
@@ -42,24 +37,6 @@ type SecretSource struct {
 // CrudStore is the plugin stanza for storage.
 type CrudStore struct {
 	PluginConfig `mapstructure:",squash"`
-}
-
-func (d *Data) GetAllowDockerHostAccess() (bool, error) {
-	var allowDockerHostAccess bool
-
-	// Load/validate the PORTER_ALLOW_DOCKER_HOST_ACCESS environment variable
-	if rawEnvVal, set := os.LookupEnv(EnvAllowDockerHostAccess); set {
-		var err error
-		allowDockerHostAccess, err = strconv.ParseBool(rawEnvVal)
-		if err != nil {
-			return false, errors.Wrapf(err,
-				"invalid %s, expected a bool (true/false) but got %s",
-				EnvAllowDockerHostAccess, rawEnvVal)
-		}
-	}
-
-	// Command-line takes highest precedence, then environment. Default to false.
-	return (d != nil && d.AllowDockerHostAccess) || allowDockerHostAccess, nil
 }
 
 func (d *Data) GetDefaultStoragePlugin() string {

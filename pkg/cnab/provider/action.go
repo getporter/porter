@@ -34,6 +34,9 @@ type ActionArguments struct {
 
 	// Path to an optional relocation mapping file
 	RelocationMapping string
+
+	// Give the bundle privileged access to the docker daemon.
+	AllowDockerHostAccess bool
 }
 
 func (d *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
