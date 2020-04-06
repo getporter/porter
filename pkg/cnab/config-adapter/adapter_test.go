@@ -527,7 +527,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Len(t, bun.Custom, 3)
+	assert.Len(t, bun.Custom, 2)
 
 	fooCustomData := bun.Custom["foo"]
 	assert.Equal(t, "bar", fooCustomData)

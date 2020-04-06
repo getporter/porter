@@ -66,11 +66,14 @@ func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
 		b.Custom[key] = value
 	}
 
-	b.Custom[config.CustomPorterKey] = stamp
-	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
-	if len(c.Manifest.Dependencies) > 0 {
+	deps := c.generateDependencies()
+	if deps != nil && len(deps.Requires) > 0 {
+		b.Custom[extensions.DependenciesKey] = deps
 		b.RequiredExtensions = []string{extensions.DependenciesKey}
+
 	}
+
+	b.Custom[config.CustomPorterKey] = stamp
 
 	return b, nil
 }
