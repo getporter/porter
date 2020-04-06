@@ -4,9 +4,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/docker/cnab-to-oci/relocation"
@@ -36,7 +38,11 @@ func New(cfg *config.Config) BundleCache {
 // is not found, an empty string is returned.
 func (c *cache) FindBundle(bundleTag string) (string, string, bool, error) {
 	bid := getBundleID(bundleTag)
-	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
+	bundleCnabDir, err := c.getBundleCacheDir(bid)
+	if err != nil {
+		return "", "", false, err
+	}
+
 	cachedBundlePath := filepath.Join(bundleCnabDir, "bundle.json")
 	cachedReloPath := filepath.Join(bundleCnabDir, "relocation-mapping.json")
 	bExists, err := c.FileSystem.Exists(cachedBundlePath)
@@ -64,7 +70,12 @@ func (c *cache) FindBundle(bundleTag string) (string, string, bool, error) {
 // relocation mapping, if provided. Otherwise, returns an error.
 func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle, reloMap relocation.ImageRelocationMap) (string, string, error) {
 	bid := getBundleID(bundleTag)
-	bundleCnabDir, err := c.getCachedBundleCNABDir(bid)
+	bundleCacheDir, err := c.getBundleCacheDir(bid)
+	if err != nil {
+		return "", "", err
+	}
+
+	bundleCnabDir := filepath.Join(bundleCacheDir, "cnab")
 	cachedBundlePath := filepath.Join(bundleCnabDir, "bundle.json")
 	err = c.FileSystem.MkdirAll(bundleCnabDir, os.ModePerm)
 	if err != nil {
@@ -79,6 +90,12 @@ func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle, reloMap reloca
 	if err != nil {
 		return "", "", errors.Wrapf(err, "error writing to cnab/bundle.json for %s", bundleTag)
 	}
+
+	err = c.cacheManifest(bundleTag, bun, bundleCacheDir)
+	if err != nil {
+		return "", "", err
+	}
+
 	// we wrote the bundle, now lets store a relocation mapping in cnab/ and return the path
 	if len(reloMap) > 0 {
 		cachedReloPath := filepath.Join(bundleCnabDir, "relocation-mapping.json")
@@ -95,9 +112,31 @@ func (c *cache) StoreBundle(bundleTag string, bun *bundle.Bundle, reloMap reloca
 		if err != nil {
 			return "", "", errors.Wrapf(err, "couldn't write relocation mapping for %s", bundleTag)
 		}
+
 		return cachedBundlePath, cachedReloPath, nil
 	}
+
 	return cachedBundlePath, "", nil
+}
+
+// cacheManifest extracts the porter.yaml from the bundle, if present and caches it
+// in the same cache directory as the rest of the bundle.
+func (c *cache) cacheManifest(bundleTag string, bun *bundle.Bundle, cacheDir string) error {
+	if configadapter.IsPorterBundle(bun) {
+		stamp, err := configadapter.LoadStamp(bun)
+		if err != nil {
+			fmt.Fprintf(c.Err, "WARNING: Bundle %s was created by porter but could not find a porter manifest embedded. This may be because it was create by an older version of Porter.\n", bundleTag)
+			return nil
+		}
+
+		cachedManifestPath := filepath.Join(cacheDir, config.Name)
+		err = stamp.WriteManifest(c.Context, cachedManifestPath)
+		if err != nil {
+			return errors.Wrapf(err, "error writing to %s for %s", cachedManifestPath, bundleTag)
+		}
+	}
+
+	return nil
 }
 
 func (c *cache) GetCacheDir() (string, error) {
@@ -108,15 +147,13 @@ func (c *cache) GetCacheDir() (string, error) {
 	return filepath.Join(home, "cache"), nil
 }
 
-func (c *cache) getCachedBundleCNABDir(bid string) (string, error) {
+func (c *cache) getBundleCacheDir(bundleID string) (string, error) {
 	cacheDir, err := c.GetCacheDir()
 	if err != nil {
 		return "", err
 	}
-	bundleDir := filepath.Join(cacheDir, string(bid))
-	bundleCNABPath := filepath.Join(bundleDir, "cnab")
-	return bundleCNABPath, nil
-
+	bundleCacheDir := filepath.Join(cacheDir, bundleID)
+	return bundleCacheDir, nil
 }
 
 func getBundleID(bundleTag string) string {

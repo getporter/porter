@@ -169,3 +169,52 @@ func TestStoreRelocationMapping(t *testing.T) {
 
 	}
 }
+
+func TestStoreManifest(t *testing.T) {
+
+	cfg := config.NewTestConfig(t)
+	home, _ := cfg.Config.GetHomeDir()
+	cacheDir := filepath.Join(home, "cache")
+	cachedManifestPath := filepath.Join(cacheDir, kahn1dot0Hash, "porter.yaml")
+
+	tests := []struct {
+		name                string
+		tag                 string
+		bundle              *bundle.Bundle
+		shouldCacheManifest bool
+		err                 error
+	}{
+		{
+			name: "embedded manifest",
+			bundle: &bundle.Bundle{
+				Custom: map[string]interface{}{
+					"sh.porter": map[string]interface{}{
+						"manifest": "abc123",
+					},
+				},
+			},
+			tag:                 kahn1dot01,
+			shouldCacheManifest: true,
+		},
+		{
+			name:   "no embedded manifest",
+			tag:    kahnlatest,
+			bundle: &bundle.Bundle{},
+		},
+	}
+
+	c := New(cfg.Config)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, _, err := c.StoreBundle(test.tag, test.bundle, nil)
+			require.NoError(t, err, "StoreBundle failed")
+
+			cachedManifestExists, _ := cfg.FileSystem.Exists(cachedManifestPath)
+			if test.shouldCacheManifest {
+				assert.True(t, cachedManifestExists, "Expected the porter.yaml manifest to be cached but it wasn't")
+			} else {
+				assert.False(t, cachedManifestExists, "Expected no porter.yaml manifest to be cached but one was cached anyway. Not sure what happened there...")
+			}
+		})
+	}
+}
