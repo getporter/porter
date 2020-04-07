@@ -53,6 +53,8 @@ type Manifest struct {
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
 	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
 	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
+
+	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
 func (m *Manifest) Validate() error {
@@ -580,4 +582,65 @@ func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
 	}
 
 	return m, nil
+}
+
+// RequiredExtension represents a custom extension that is required
+// in order for a bundle to work correctly
+type RequiredExtension struct {
+	Name   string
+	Config interface{}
+}
+
+// UnmarshalYAML allows required extensions to either be a normal list of strings
+// required:
+// - docker
+// or allow some entries to have config data defined
+// - vpn:
+//     name: mytrustednetwork
+func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// First try to just read the mixin name
+	var extNameOnly string
+	err := unmarshal(&extNameOnly)
+	if err == nil {
+		r.Name = extNameOnly
+		r.Config = nil
+		return nil
+	}
+
+	// Next try to read a required extension with config defined
+	extWithConfig := map[string]interface{}{}
+	err = unmarshal(&extWithConfig)
+	if err != nil {
+		return errors.Wrap(err, "could not unmarshal raw yaml of required extensions")
+	}
+
+	if len(extWithConfig) == 0 {
+		return errors.New("required extension was empty")
+	} else if len(extWithConfig) > 1 {
+		return errors.New("required extension contained more than one extension")
+	}
+
+	for extName, config := range extWithConfig {
+		r.Name = extName
+		r.Config = config
+		break // There is only one extension anyway but break for clarity
+	}
+	return nil
+}
+
+// MarshalYAML allows required extensions to either be a normal list of strings
+// required:
+// - docker
+// or allow some entries to have config data defined
+// - vpn:
+//     name: mytrustednetwork
+func (r RequiredExtension) MarshalYAML() (interface{}, error) {
+	if r.Config == nil {
+		return r.Name, nil
+	}
+
+	raw := map[string]interface{}{
+		r.Name: r.Config,
+	}
+	return raw, nil
 }

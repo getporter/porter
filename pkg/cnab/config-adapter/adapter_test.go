@@ -434,7 +434,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 	}
 }
 
-func TestManifestConverter_RequiredExtensions(t *testing.T) {
+func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 
@@ -446,6 +446,38 @@ func TestManifestConverter_RequiredExtensions(t *testing.T) {
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
 	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
+}
+
+func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-required-extensions.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
+
+	expected := []string{"requiredExtension1", "requiredExtension2"}
+	assert.Equal(t, expected, bun.RequiredExtensions)
+}
+
+func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-required-extensions.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
+	assert.Contains(t, bun.Custom, "requiredExtension1")
+	assert.Contains(t, bun.Custom, "requiredExtension2")
+	assert.Equal(t, map[interface{}]interface{}{"config": true}, bun.Custom["requiredExtension2"])
 }
 
 func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {

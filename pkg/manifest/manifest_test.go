@@ -328,3 +328,27 @@ func TestLoadManifestWithCustomData(t *testing.T) {
 	fooCustomField, _ := custom["foo"]
 	assert.Equal(t, "bar", fooCustomField)
 }
+
+func TestLoadManifestWithRequiredExtensions(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/porter.yaml", config.Name)
+
+	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	expected := []RequiredExtension{
+		RequiredExtension{
+			Name: "requiredExtension1",
+		},
+		RequiredExtension{
+			Name: "requiredExtension2",
+			Config: map[interface{}]interface{}{
+				"config": true,
+			},
+		},
+	}
+
+	assert.NotNil(t, m)
+	assert.Equal(t, expected, m.Required)
+}
