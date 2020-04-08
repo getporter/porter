@@ -19,7 +19,7 @@ type dependencyExecutioner struct {
 	*context.Context
 	Manifest *manifest.Manifest
 	Resolver BundleResolver
-	CNAB     CNABProvider
+	CNAB     cnabprovider.CNABProvider
 	Claims   claims.ClaimProvider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
@@ -117,17 +117,18 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
 	var bun *bundle.Bundle
 	if e.parentOpts.Tag != "" {
-		bunPath, _, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
-		bun, err = e.CNAB.LoadBundle(bunPath)
-		if err != nil {
-			return errors.Wrap(err, "could not load bundle from cache")
-		}
+		bun = &cachedBundle.Bundle
 	} else {
-		bun, _ = e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+		if err != nil {
+			return err
+		}
+		bun = bundle
 	}
 
 	solver := &extensions.DependencySolver{}
@@ -157,18 +158,14 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
 		Force:            e.parentOpts.Force,
 	}
-	dep.CNABFile, dep.RelocationMapping, err = e.Resolver.Resolve(pullOpts)
+	cachedDep, err := e.Resolver.Resolve(pullOpts)
 	if err != nil {
 		return errors.Wrapf(err, "error pulling dependency %s", dep.Alias)
 	}
+	dep.CNABFile = cachedDep.BundlePath
+	dep.RelocationMapping = cachedDep.RelocationFilePath
 
-	// Load and validate it
-	depBun, err := e.CNAB.LoadBundle(dep.CNABFile)
-	if err != nil {
-		return errors.Wrapf(err, "could not load bundle %s", dep.Alias)
-	}
-
-	err = depBun.Validate()
+	err = cachedDep.Bundle.Validate()
 	if err != nil {
 		return errors.Wrapf(err, "invalid bundle %s", dep.Alias)
 	}
@@ -181,7 +178,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Make a lookup of which parameters are defined in the dependent bundle
 	depParams := map[string]struct{}{}
-	for paramName := range depBun.Parameters {
+	for paramName := range cachedDep.Bundle.Parameters {
 		depParams[paramName] = struct{}{}
 	}
 
@@ -190,16 +187,18 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	//   DEP:
 	//     parameters:
 	//       PARAM: VALUE
-	for paramName, value := range e.Manifest.Dependencies[dep.Alias].Parameters {
-		// Make sure the parameter is defined in the bundle
-		if _, ok := depParams[paramName]; !ok {
-			return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
-		}
+	if depDef, ok := e.Manifest.Dependencies[dep.Alias]; ok {
+		for paramName, value := range depDef.Parameters {
+			// Make sure the parameter is defined in the bundle
+			if _, ok := depParams[paramName]; !ok {
+				return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
+			}
 
-		if dep.Parameters == nil {
-			dep.Parameters = make(map[string]string, 1)
+			if dep.Parameters == nil {
+				dep.Parameters = make(map[string]string, 1)
+			}
+			dep.Parameters[paramName] = value
 		}
-		dep.Parameters[paramName] = value
 	}
 
 	// Handle any parameter overrides for the dependency defined on the command line
