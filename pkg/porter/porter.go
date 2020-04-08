@@ -30,12 +30,16 @@ type Porter struct {
 	Manifest    *manifest.Manifest
 	Mixins      mixin.MixinProvider
 	Plugins     plugins.PluginProvider
-	CNAB        CNABProvider
+	CNAB        cnabprovider.CNABProvider
 }
 
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
+	return NewWithConfig(c)
+}
+
+func NewWithConfig(c *config.Config) *Porter {
 	cache := cache.New(c)
 	storagePlugin := pluginstore.NewStore(c)
 	claimStorage := claims.NewClaimStorage(c, storagePlugin)

@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cache"
 	"github.com/docker/cnab-to-oci/relocation"
-	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pkg/errors"
+	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -144,18 +145,17 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	p := NewTestPorter(t)
-	mc := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "", "", true, nil
-		},
-		storeBundleMock: func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error) {
-			return "", "", errors.New("error trying to store bundle")
-		},
-	}
-	p.Porter.Cache = &mc
-
 	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
+
+	p.TestCache.FindBundleMock = func(s string) (cachedBundle cache.CachedBundle, found bool, err error) {
+		// force the bundle to be found
+		return cache.CachedBundle{}, true, nil
+	}
+	p.TestCache.StoreBundleMock = func(s string, b bundle.Bundle, relocationMap *relocation.ImageRelocationMap) (cachedBundle cache.CachedBundle, err error) {
+		// sabotage the bundle refresh
+		return cache.CachedBundle{}, errors.New("error trying to store bundle")
+	}
 
 	err := p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")

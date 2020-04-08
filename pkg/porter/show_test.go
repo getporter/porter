@@ -14,8 +14,6 @@ import (
 func TestPorter_ShowBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = NewTestCNABProvider()
-
 	opts := ShowOptions{
 		sharedOptions: sharedOptions{
 			Name: "test",
