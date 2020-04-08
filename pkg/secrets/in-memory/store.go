@@ -14,6 +14,10 @@ const (
 	// MockStoreType is a bucket where Connect and Close calls are recorded.
 	MockStoreType = "mock-store"
 
+	// SecretType is a bucket for the actual secrets.
+	// This avoids a circular import, this const should really be defined in cnab-go...
+	SecretType = "secret"
+
 	// ConnectCount records the number of times Connect has been called.
 	ConnectCount = "connect-count"
 
@@ -111,4 +115,11 @@ func (s *Store) GetCloseCount() (int, error) {
 	}
 
 	return count, nil
+}
+
+func (s *Store) AddSecret(key string, value string) {
+	if _, ok := s.Secrets[SecretType]; !ok {
+		s.Secrets[SecretType] = make(map[string]string, 1)
+	}
+	s.Secrets[SecretType][key] = value
 }
