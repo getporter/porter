@@ -205,7 +205,6 @@ func (p *Porter) generateNewCredentialSet(bundle *bundle.Bundle, credIdentifierN
 		DryRun:      dryRun,
 	}
 
-	// two extra spaces to align with survey prompts
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "%d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
 	err := p.generateAndSaveCredentialSet(genOpts)
