@@ -30,7 +30,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Equal(t, "0.1.0", bun.Version)
 	assert.Equal(t, "An example Porter configuration", bun.Description)
 
-	stamp, err := LoadStamp(bun)
+	stamp, err := LoadStamp(*bun)
 	require.NoError(t, err, "could not load porter's stamp")
 	assert.NotNil(t, stamp)
 

@@ -46,7 +46,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 		},
 	}
 
-	stamp, err := LoadStamp(bun)
+	stamp, err := LoadStamp(*bun)
 	require.NoError(t, err)
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
@@ -62,8 +62,8 @@ func TestConfig_LoadStamp_Invalid(t *testing.T) {
 		},
 	}
 
-	stamp, err := LoadStamp(bun)
+	stamp, err := LoadStamp(*bun)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not unmarshal the porter stamp")
-	assert.Nil(t, stamp)
+	assert.Equal(t, Stamp{}, stamp)
 }

@@ -106,26 +106,26 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func IsPorterBundle(bun *bundle.Bundle) bool {
+func IsPorterBundle(bun bundle.Bundle) bool {
 	_, ok := bun.Custom[config.CustomPorterKey]
 	return ok
 }
 
-func LoadStamp(bun *bundle.Bundle) (*Stamp, error) {
+func LoadStamp(bun bundle.Bundle) (Stamp, error) {
 	data, ok := bun.Custom[config.CustomPorterKey]
 	if !ok {
-		return nil, errors.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)
+		return Stamp{}, errors.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)
 	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not marshal the porter stamp %q", string(dataB))
+		return Stamp{}, errors.Wrapf(err, "could not marshal the porter stamp %q", string(dataB))
 	}
 
-	stamp := &Stamp{}
-	err = json.Unmarshal(dataB, stamp)
+	stamp := Stamp{}
+	err = json.Unmarshal(dataB, &stamp)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal the porter stamp %q", string(dataB))
+		return Stamp{}, errors.Wrapf(err, "could not unmarshal the porter stamp %q", string(dataB))
 	}
 
 	return stamp, nil

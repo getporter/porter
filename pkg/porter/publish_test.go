@@ -66,7 +66,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
 
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Name: "mybuns",
 		InvocationImages: []bundle.InvocationImage{
 			{
@@ -112,12 +112,11 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 func TestPublish_RefreshCachedBundle(t *testing.T) {
 	p := NewTestPorter(t)
 
-	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
-	rm := relocation.ImageRelocationMap{}
 
 	// No-Op; bundle does not yet exist in cache
-	err := p.refreshCachedBundle(bun, tag, rm)
+	err := p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
 
 	// Save bundle in cache
@@ -155,11 +154,10 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	}
 	p.Porter.Cache = &mc
 
-	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
-	rm := relocation.ImageRelocationMap{}
 
-	err := p.refreshCachedBundle(bun, tag, rm)
+	err := p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
 
 	gotStderr := p.TestConfig.TestContext.GetError()

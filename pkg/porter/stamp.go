@@ -40,7 +40,7 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
 		}
 
-		oldStamp, err := configadapter.LoadStamp(bun)
+		oldStamp, err := configadapter.LoadStamp(*bun)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
