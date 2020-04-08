@@ -157,7 +157,7 @@ func (p *Porter) chooseOrGenerateCredentialSet(bundle *bundle.Bundle) ([]string,
 	case chooseCode:
 		return p.chooseCredentialSet(bundle, credSetNames)
 	default:
-		return []string{}, errors.New("Unknow option")
+		return []string{}, errors.New("Unknown option")
 	}
 }
 
@@ -173,7 +173,7 @@ func (p *Porter) chooseCredentialSet(bundle *bundle.Bundle, credSetNames []strin
 
 	err := survey.AskOne(selectCredPrompt, &selectedCredSets, nil)
 	if err != nil {
-		return []string{}, errors.New("no credential set selected")
+		return []string{}, errors.Wrapf(err, "no credential set selected")
 	}
 
 	if len(selectedCredSets) == 0 {
