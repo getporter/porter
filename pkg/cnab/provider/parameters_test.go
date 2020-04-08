@@ -362,9 +362,12 @@ func Test_Paramapalooza(t *testing.T) {
 							},
 						},
 						Parameters: map[string]bundle.Parameter{
-							"my-param": bundle.Parameter{
+							"my-param": {
 								Definition: "my-param",
 								Required:   tc.required,
+								Destination: &bundle.Location{
+									EnvironmentVariable: "MY_PARAM",
+								},
 							},
 						},
 					}

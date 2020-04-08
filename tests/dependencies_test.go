@@ -113,6 +113,12 @@ func cleanupWordpressBundle(p *porter.TestPorter) {
 func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.UpgradeOptions{}
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
+	upgradeOpts.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+		"wordpress-password=mypassword",
+		"namespace=" + namespace,
+		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#mysql-name=porter-ci-mysql-" + namespace,
+	}
 	err := upgradeOpts.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of upgrade opts for root bundle failed")
 
@@ -135,6 +141,12 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.InvokeOptions{Action: "ping"}
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
+	invokeOpts.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+		"wordpress-password=mypassword",
+		"namespace=" + namespace,
+		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#mysql-name=porter-ci-mysql-" + namespace,
+	}
 	err := invokeOpts.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of invoke opts for root bundle failed")
 
@@ -157,6 +169,12 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.UninstallOptions{}
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
+	uninstallOptions.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+		"wordpress-password=mypassword",
+		"namespace=" + namespace,
+		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#mysql-name=porter-ci-mysql-" + namespace,
+	}
 	err := uninstallOptions.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 

@@ -10,7 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
 

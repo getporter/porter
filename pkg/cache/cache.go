@@ -9,7 +9,7 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
 

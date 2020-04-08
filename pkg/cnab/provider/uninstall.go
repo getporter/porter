@@ -31,7 +31,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Name, args)
+	driver, err := d.newDriver(args.Driver, c.Installation, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -55,7 +55,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "uninstalling bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Installation, paramKeys, credKeys)
 	}
 
 	err = i.Run(&c, creds, d.ApplyConfig(args)...)

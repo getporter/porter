@@ -2,7 +2,7 @@ package porter
 
 import (
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 )
 
 // Registry handles talking with an OCI registry.

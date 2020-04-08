@@ -11,7 +11,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"

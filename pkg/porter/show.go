@@ -57,7 +57,7 @@ func (p *Porter) ShowInstances(opts ShowOptions) error {
 		}
 
 		// Print claim details
-		fmt.Fprintf(p.Out, "Name: %s\n", c.Name)
+		fmt.Fprintf(p.Out, "Name: %s\n", c.Installation)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(c.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(c.Modified))
 		fmt.Fprintf(p.Out, "Last Action: %s\n", c.Result.Action)

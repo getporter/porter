@@ -34,7 +34,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 	}
 	c.Parameters = params
 
-	dvr, err := d.newDriver(args.Driver, c.Name, args)
+	dvr, err := d.newDriver(args.Driver, c.Installation, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -58,7 +58,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 		for k := range params {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Installation, paramKeys, credKeys)
 	}
 
 	var result *multierror.Error

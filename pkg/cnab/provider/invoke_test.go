@@ -148,8 +148,8 @@ func Test_ClaimLoading(t *testing.T) {
 				temp: true,
 				err:  nil,
 				claim: &claim.Claim{
-					Name:   "nonexistent",
-					Bundle: bun,
+					Installation: "nonexistent",
+					Bundle:       bun,
 				},
 			},
 		},

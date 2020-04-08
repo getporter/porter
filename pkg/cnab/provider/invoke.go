@@ -20,8 +20,8 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 			if action, ok := bun.Actions[actionName]; ok {
 				if action.Stateless {
 					c = claim.Claim{
-						Name:   claimName,
-						Bundle: bun,
+						Installation: claimName,
+						Bundle:       bun,
 					}
 					return &c, true, nil
 				}
@@ -65,7 +65,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Name, args)
+	driver, err := d.newDriver(args.Driver, c.Installation, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -91,7 +91,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Installation, paramKeys, credKeys)
 	}
 
 	var result *multierror.Error

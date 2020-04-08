@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/stretchr/testify/assert"
