@@ -343,9 +343,9 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 }
 
 // refreshCachedBundle will store a bundle anew, if a bundle with the same tag is found in the cache
-func (p *Porter) refreshCachedBundle(bun *bundle.Bundle, tag string, rm relocation.ImageRelocationMap) error {
-	if _, _, found, _ := p.Cache.FindBundle(tag); found {
-		_, _, err := p.Cache.StoreBundle(tag, bun, rm)
+func (p *Porter) refreshCachedBundle(bun bundle.Bundle, tag string, rm *relocation.ImageRelocationMap) error {
+	if _, found, _ := p.Cache.FindBundle(tag); found {
+		_, err := p.Cache.StoreBundle(tag, bun, rm)
 		if err != nil {
 			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", tag, err)
 		}

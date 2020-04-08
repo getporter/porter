@@ -121,20 +121,20 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
 
 	// Save bundle in cache
-	bunPath, _, err := p.Cache.StoreBundle(tag, bun, rm)
+	cachedBundle, err := p.Cache.StoreBundle(tag, bun, nil)
 	require.NoError(t, err, "should have successfully stored bundle")
 
 	// Get file mod time
-	file, err := p.FileSystem.Stat(bunPath)
+	file, err := p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	origBunPathTime := file.ModTime()
 
 	// Should refresh cache
-	p.refreshCachedBundle(bun, tag, rm)
+	err = p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have successfully updated the cache")
 
 	// Get file mod time
-	file, err = p.FileSystem.Stat(bunPath)
+	file, err = p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	updatedBunPathTime := file.ModTime()
 

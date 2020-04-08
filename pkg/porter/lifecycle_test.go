@@ -11,7 +11,6 @@ import (
 )
 
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
-
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
@@ -22,16 +21,9 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	t.Logf("cache dir is: %s", cacheDir)
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 	fullPath := filepath.Join(cacheDir, "887e7e65e39277f8744bd00278760b06/cnab/bundle.json")
-	fileExists, err := p.TestConfig.TestContext.FileSystem.Exists(fullPath)
+	fileExists, err := p.FileSystem.Exists(fullPath)
 	require.True(t, fileExists, "this test requires that the file exist")
-
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return fullPath, "", true, nil
-		},
-	}
-	p.Porter.Cache = &cache
-	_, _, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
+	_, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
 	assert.True(t, ok, "should have found the bundle...")
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
@@ -47,14 +39,6 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "", "", false, nil
-		},
-	}
-	p.Porter.Cache = &cache
-
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
 			Tag: "deislabs/kubekahn:latest",
@@ -70,21 +54,18 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "/opt/not/here/bundle.json", "", true, nil
-		},
-	}
-	p.Porter.Cache = &cache
+	// mess up the cache
+	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
+
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
-			Tag: "deislabs/kubekahn:latest",
+			Tag: "deislabs/kubekahn:1.0",
 		},
 	}
+
 	err := p.prepullBundleByTag(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
-	assert.Contains(t, err.Error(), "unable to open bundle file")
-
+	assert.Contains(t, err.Error(), "unable to parse cached bundle file")
 }
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
