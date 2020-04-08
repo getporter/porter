@@ -2,7 +2,6 @@ package cnabprovider
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -381,8 +380,7 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
-						Claim:  "test",
-						Driver: DriverNameDebug,
+						Claim: "test",
 					}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args
@@ -398,12 +396,10 @@ func Test_Paramapalooza(t *testing.T) {
 						bytes, err := json.Marshal(bun)
 						require.NoError(t, err)
 
-						// We currently need to read/write from the same file on disk
-						// as cnab-go's bundle loader still makes raw os calls for loading a bundle
-						err = ioutil.WriteFile("testdata/bundle.json", bytes, 0644)
+						err = d.FileSystem.WriteFile("bundle.json", bytes, 0644)
 						require.NoError(t, err)
 
-						args.BundlePath = "testdata/bundle.json"
+						args.BundlePath = "bundle.json"
 					} else {
 						// For all other actions, a claim is expected to exist
 						// so we create one here and add the bundle to the claim
