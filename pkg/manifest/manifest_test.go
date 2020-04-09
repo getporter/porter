@@ -343,7 +343,7 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 		},
 		RequiredExtension{
 			Name: "requiredExtension2",
-			Config: map[interface{}]interface{}{
+			Config: map[string]interface{}{
 				"config": true,
 			},
 		},

@@ -332,7 +332,7 @@ func (c *ManifestConverter) generateCustomExtensions() map[string]interface{} {
 
 	// Add entries for each required extension
 	for _, ext := range c.Manifest.Required {
-		customExtensions[ext.Name] = ext.Config
+		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
 	}
 
 	return customExtensions
@@ -348,8 +348,20 @@ func (c *ManifestConverter) generateRequiredExtensions() []string {
 
 	// Add all under required section of manifest
 	for _, ext := range c.Manifest.Required {
-		requiredExtensions = append(requiredExtensions, ext.Name)
+		requiredExtensions = append(requiredExtensions, lookupExtensionKey(ext.Name))
 	}
 
 	return requiredExtensions
+}
+
+// lookupExtensionKey is a helper method to return a full key matching a
+// supported extension, if applicable
+func lookupExtensionKey(name string) string {
+	key := name
+	// If an official supported extension, we grab the full key
+	// TODO: Do we want to error out here if unsupported?
+	if supportedExt, _ := extensions.GetSupportedExtension(name); supportedExt != nil {
+		key = supportedExt.Key
+	}
+	return key
 }

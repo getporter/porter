@@ -8,9 +8,19 @@ import (
 )
 
 const (
-	DependenciesKey    = "io.cnab.dependencies"
+	// DependenciesKey represents the full key for the Dependencies Extension
+	DependenciesKey = "io.cnab.dependencies"
+	// DependenciesSchema represents the schema for the Dependencies Extension
 	DependenciesSchema = "https://cnab.io/specs/v1/dependencies.schema.json"
 )
+
+// DependenciesExtension represents the required extension to enable dependencies
+var DependenciesExtension = RequiredExtension{
+	Shorthand: "dependencies",
+	Key:       DependenciesKey,
+	Schema:    DependenciesSchema,
+	Reader:    DependencyReader,
+}
 
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
 // https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md
@@ -37,9 +47,30 @@ type DependencyVersion struct {
 	AllowPrereleases bool `json:"prereleases" mapstructure:"prereleases"`
 }
 
+// ReadDependencies is a convenience method for returning a bonafide
+// Dependencies reference after reading from the applicable section from
+// the provided bundle
 func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
+	raw, err := DependencyReader(bun)
+	if err != nil {
+		return nil, err
+	}
+
+	deps, ok := raw.(*Dependencies)
+	if !ok {
+		return nil, errors.New("unable to read dependencies extension data")
+	}
+
+	return deps, nil
+}
+
+// DependencyReader is a Reader for the DependenciesExtension, which reads
+// from the applicable section in the provided bundle and returns a the raw
+// data in the form of an interface
+func DependencyReader(bun *bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DependenciesKey]
 	if !ok {
+		// TODO: we should error out here, right?
 		return nil, nil
 	}
 

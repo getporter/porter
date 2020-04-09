@@ -477,7 +477,7 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 	assert.Contains(t, bun.Custom, "requiredExtension1")
 	assert.Contains(t, bun.Custom, "requiredExtension2")
-	assert.Equal(t, map[interface{}]interface{}{"config": true}, bun.Custom["requiredExtension2"])
+	assert.Equal(t, map[string]interface{}{"config": true}, bun.Custom["requiredExtension2"])
 }
 
 func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {

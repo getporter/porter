@@ -588,7 +588,7 @@ func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
 // in order for a bundle to work correctly
 type RequiredExtension struct {
 	Name   string
-	Config interface{}
+	Config map[string]interface{}
 }
 
 // UnmarshalYAML allows required extensions to either be a normal list of strings
@@ -608,7 +608,7 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 	}
 
 	// Next try to read a required extension with config defined
-	extWithConfig := map[string]interface{}{}
+	extWithConfig := map[string]map[string]interface{}{}
 	err = unmarshal(&extWithConfig)
 	if err != nil {
 		return errors.Wrap(err, "could not unmarshal raw yaml of required extensions")

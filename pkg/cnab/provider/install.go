@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/manifest"
 )
 
@@ -27,6 +28,12 @@ func (d *Runtime) Install(args ActionArguments) error {
 		return errors.Wrap(err, "invalid bundle")
 	}
 	c.Bundle = b
+
+	exts, err := extensions.ProcessRequiredExtensions(b)
+	if err != nil {
+		return errors.Wrap(err, "unable to process required extensions")
+	}
+	d.Extensions = exts
 
 	params, err := d.loadParameters(c, args.Params, string(manifest.ActionInstall))
 	if err != nil {

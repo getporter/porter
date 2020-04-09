@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
@@ -59,6 +60,12 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	if args.BundlePath != "" {
 		c.Bundle = bun
 	}
+
+	exts, err := extensions.ProcessRequiredExtensions(c.Bundle)
+	if err != nil {
+		return errors.Wrap(err, "unable to process required extensions")
+	}
+	d.Extensions = exts
 
 	c.Parameters, err = d.loadParameters(c, args.Params, action)
 	if err != nil {
