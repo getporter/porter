@@ -53,7 +53,7 @@ func (s Stamp) WriteManifest(cxt *context.Context, path string) error {
 }
 
 // MixinRecord contains information about a mixin used in a bundle
-// For how it is a placeholder for data that we would like to include in the future.
+// For now it is a placeholder for data that we would like to include in the future.
 type MixinRecord struct{}
 
 func (c *ManifestConverter) GenerateStamp() (Stamp, error) {

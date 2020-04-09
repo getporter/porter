@@ -54,7 +54,7 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			if p.Debug {
-				fmt.Fprintln(p.Err, errors.Wrap(err, "could to determine if the bundle is up-to-date so will rebuild just in case"))
+				fmt.Fprintln(p.Err, errors.Wrap(err, "could not determine if the bundle is up-to-date so will rebuild just in case"))
 			}
 			return false, nil
 		}
