@@ -627,20 +627,3 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 	}
 	return nil
 }
-
-// MarshalYAML allows required extensions to either be a normal list of strings
-// required:
-// - docker
-// or allow some entries to have config data defined
-// - vpn:
-//     name: mytrustednetwork
-func (r RequiredExtension) MarshalYAML() (interface{}, error) {
-	if r.Config == nil {
-		return r.Name, nil
-	}
-
-	raw := map[string]interface{}{
-		r.Name: r.Config,
-	}
-	return raw, nil
-}

@@ -11,7 +11,7 @@ const (
 	// DockerHostAccessKey represents the full key for the DockerHostAccess Extension
 	DockerHostAccessKey = "io.cnab.docker-host-access"
 	// DockerHostAccessSchema represents the schema for the DockerHostAccess Extension
-	DockerHostAccessSchema = "TODO"
+	DockerHostAccessSchema = "schema/io-cnab-docker-host-access.schema.json"
 )
 
 // DockerHostAccessExtension represents a required extension enabling access to the host Docker daemon

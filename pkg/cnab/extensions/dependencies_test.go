@@ -17,6 +17,7 @@ func TestReadDependencyProperties(t *testing.T) {
 	require.NoError(t, err, "could not unmarshal the bundle")
 
 	deps, err := ReadDependencies(bun)
+
 	assert.NotNil(t, deps, "Dependencies was not populated")
 	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")
 

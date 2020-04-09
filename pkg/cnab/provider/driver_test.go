@@ -12,10 +12,10 @@ import (
 func TestNewDriver_Docker(t *testing.T) {
 	t.Run("vanilla docker", func(t *testing.T) {
 		d := NewTestRuntime(t)
-		mydriver, err := d.newDriver(DriverNameDocker, "myclaim", ActionArguments{})
+		driver, err := d.newDriver(DriverNameDocker, "myclaim", ActionArguments{})
 
 		require.NoError(t, err)
-		assert.IsType(t, mydriver, &docker.Driver{})
+		assert.IsType(t, driver, &docker.Driver{})
 	})
 
 	t.Run("docker with host access", func(t *testing.T) {
@@ -52,6 +52,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		assert.EqualError(t, err, "allow-docker-host-access was specified but could not detect a local docker daemon running by checking for /var/run/docker.sock")
 	})
 
-	// TODO: add tests that check the Docker configuration options based on the extension config
-	// requires changes in cnab-go (export of field on Driver struct in docker.go)
+	// TODO: add tests that check the Docker configuration options based on the provided required extension config.
+	// Requires changes in cnab-go (export of configurationOptions field on Driver struct in docker.go)
 }
