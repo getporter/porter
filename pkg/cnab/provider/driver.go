@@ -33,7 +33,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 		}
 		// Parse extension config to inform setup
 		config, ok := ext.(*extensions.DockerHostAccess)
-		if !ok {
+		if !ok && extensionIsRequired {
 			return nil, errors.Errorf("unable to parse extension config: %+v", config)
 		}
 		driverImpl, err = r.dockerDriverWithHostAccess(config)

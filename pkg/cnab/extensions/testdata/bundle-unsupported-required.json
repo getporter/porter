@@ -43,7 +43,7 @@
     }
   },
   "requiredExtensions": [
-    "io.cnab.dependencies"
+    "donuts"
   ],
   "custom": {
     "com.example.duffle-bag": {

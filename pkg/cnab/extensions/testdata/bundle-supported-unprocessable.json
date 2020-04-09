@@ -43,7 +43,7 @@
     }
   },
   "requiredExtensions": [
-    "io.cnab.dependencies"
+    "io.cnab.docker-host-access"
   ],
   "custom": {
     "com.example.duffle-bag": {
@@ -53,22 +53,6 @@
     "com.example.backup-preferences": {
       "enabled": true,
       "frequency": "daily"
-    },
-    "io.cnab.dependencies": {
-      "requires": {
-        "storage": {
-          "bundle": "somecloud/blob-storage"
-        },
-        "mysql": {
-          "bundle": "somecloud/mysql",
-          "version": {
-            "prereleases": true,
-            "ranges": [
-              "5.7.x"
-            ]
-          }
-        }
-      }
     }
   },
   "definitions": {

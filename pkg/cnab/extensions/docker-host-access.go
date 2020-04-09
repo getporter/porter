@@ -34,8 +34,7 @@ type DockerHostAccess struct {
 func DockerHostAccessReader(bun *bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DockerHostAccessKey]
 	if !ok {
-		// TODO: we should error out here, right?
-		return nil, nil
+		return nil, errors.New("no custom extension configuration found")
 	}
 
 	dataB, err := json.Marshal(data)
