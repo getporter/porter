@@ -3,7 +3,7 @@
   "type": "object",
   "properties": {
     "privileged": {
-      "description": "Option to set the --priviliged flag when running the Docker container",
+      "description": "Option to set the --privileged flag when running the Docker container",
       "type": "boolean"
     }
   },
