@@ -358,8 +358,10 @@ func (c *ManifestConverter) generateRequiredExtensions() []string {
 func lookupExtensionKey(name string) string {
 	key := name
 	// If an official supported extension, we grab the full key
-	// TODO: Do we want to error out here if unsupported?
-	if supportedExt, _ := extensions.GetSupportedExtension(name); supportedExt != nil {
+	supportedExt, err := extensions.GetSupportedExtension(name)
+	if err != nil {
+		// TODO: Issue linter warning
+	} else {
 		key = supportedExt.Key
 	}
 	return key

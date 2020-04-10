@@ -70,8 +70,7 @@ func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
 func DependencyReader(bun *bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DependenciesKey]
 	if !ok {
-		// TODO: we should error out here, right?
-		return nil, nil
+		return nil, errors.New("no custom extension configuration found")
 	}
 
 	dataB, err := json.Marshal(data)
