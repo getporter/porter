@@ -16,6 +16,8 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
 * [Images](#images)
+* [Custom](#custom)
+* [Required](#required)
 * [Generated Files](#generated-files)
 
 We have full [examples](https://github.com/deislabs/porter/tree/master/examples) of Porter manifests in the Porter repository.
@@ -208,8 +210,8 @@ Each step has a mixin, a `description`, and optionally `outputs`.
 
 ```yaml
 install:
-- description: "Install MySQL"
-  helm:
+- helm:
+    description: "Install MySQL"
     name: mydb
     chart: stable/mysql
     version: 0.10.2
@@ -225,8 +227,8 @@ install:
     key: mysql-password
 ```
 
-* `description`: A description of the step, used for logging.
 * `MIXIN`: The name of the mixin that will handle this step. In the example above, `helm` is the mixin.
+* `description`: A description of the step, used for logging.
 * `outputs`: Any outputs provided by the steps. The `name` is required but the rest of the the schema for the 
 output is specific to the mixin. In the example above, the mixin will make the Kubernetes secret data available as outputs.
 By default, all output values are considered sensitive and will be masked in console output.
@@ -300,6 +302,53 @@ image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
 ```
 
 At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
+
+## Custom
+
+The Custom section of a Porter manifest is intended for bundle authors to capture custom data used by the bundle.
+Porter passes all custom data through to the resulting `bundle.json` as-is, without attempting to parse or otherwise
+understand the data.
+
+```yaml
+custom:
+  - some-custom-config:
+      item: value
+  - more-custom-config:
+      enabled: true
+      succeed: please!
+```
+
+See the [Custom Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions)
+section of the CNAB Specification for more details.
+
+## Required
+
+The `required` section of a Porter manifest is intended for bundle authors to declare which
+[Required Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#required-extensions)
+known and supported by Porter are needed to run the bundle.  Hence, all extension configuration data in this section
+is processed by Porter at runtime; if unsupported extension configuration exists, Porter will error out accordingly.
+
+Currently, Porter supports the following required extensions and configuration:
+
+### Docker
+
+Access to the host Docker daemon is necessary to run this bundle.
+
+When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the
+[Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
+
+**Name:** `docker`
+
+**Configuration:**
+  * `Privileged: boolean` - Whether or not the `--privileged` flag should be set on the container run invocation
+
+Example:
+
+```yaml
+required:
+  - docker:
+      privileged: false
+```
 
 ## Generated Files
 

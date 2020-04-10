@@ -129,7 +129,7 @@
       },
       "additionalProperties": false
     },
-    "image" :{
+    "image": {
       "description": "An image represents an application image used in a bundle",
       "type": "object",
       "properties": {
@@ -232,6 +232,13 @@
       },
       "description": "Dependent bundles that must be executed with the bundle",
       "type": "object"
+    },
+    "required": {
+      "description": "Required extensions for this bundle",
+      "type": "array",
+      "items": {
+        "anyOf": []
+      }
     },
     "uninstall": {
       "type": "array",

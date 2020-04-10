@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/claim"
@@ -25,6 +26,12 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 			return err
 		}
 	}
+
+	exts, err := extensions.ProcessRequiredExtensions(c.Bundle)
+	if err != nil {
+		return errors.Wrap(err, "unable to process required extensions")
+	}
+	d.Extensions = exts
 
 	c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUninstall))
 	if err != nil {

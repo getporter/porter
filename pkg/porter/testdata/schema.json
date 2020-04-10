@@ -419,6 +419,13 @@
       },
       "type": "array"
     },
+    "required": {
+      "description": "Required extensions for this bundle",
+      "items": {
+        "anyOf": []
+      },
+      "type": "array"
+    },
     "tag": {
       "description": "The tag to use when the bundle is published to an OCI registry",
       "type": "string"

@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"os"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/cnabio/cnab-go/driver/lookup"
@@ -23,12 +24,24 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	var driverImpl driver.Driver
 	var err error
 
+	// Pull applicable extension from list of processed extensions
+	ext, extensionIsRequired := r.Extensions[extensions.DockerExtensionKey]
+
 	if args.AllowDockerHostAccess {
 		if driverName != DriverNameDocker {
 			return nil, errors.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
 		}
-		driverImpl, err = r.dockerDriverWithHostAccess()
+		// Parse extension config to inform setup
+		config, ok := ext.(*extensions.Docker)
+		if !ok && extensionIsRequired {
+			return nil, errors.Errorf("unable to parse extension config: %+v", config)
+		}
+		driverImpl, err = r.dockerDriverWithHostAccess(config)
 	} else {
+		if extensionIsRequired {
+			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
+				extensions.DockerExtensionKey)
+		}
 		driverImpl, err = lookup.Lookup(driverName)
 	}
 	if err != nil {
@@ -50,7 +63,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	return driverImpl, nil
 }
 
-func (r *Runtime) dockerDriverWithHostAccess() (driver.Driver, error) {
+func (r *Runtime) dockerDriverWithHostAccess(config *extensions.Docker) (driver.Driver, error) {
 	const dockerSock = "/var/run/docker.sock"
 
 	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {
@@ -62,7 +75,7 @@ func (r *Runtime) dockerDriverWithHostAccess() (driver.Driver, error) {
 
 		// Equivalent of using: --privileged
 		// Required for DinD, or "Docker-in-Docker"
-		hostCfg.Privileged = true
+		hostCfg.Privileged = config.Privileged
 
 		// Equivalent of using: -v /var/run/docker.sock:/var/run/docker.sock
 		// Required for DooD, or "Docker-out-of-Docker"

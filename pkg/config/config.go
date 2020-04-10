@@ -28,9 +28,6 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	// EnvAllowDockerHostAccess is the name of the environment variable indicating access to Docker daemon and host.
-	EnvAllowDockerHostAccess = "PORTER_ALLOW_DOCKER_HOST_ACCESS"
-
 	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
 	// It holds all the metadata that Porter includes that is specific to Porter about the bundle.
 	CustomPorterKey = "sh.porter"

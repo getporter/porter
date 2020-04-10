@@ -24,3 +24,8 @@ uninstall:
 custom:
   foo: bar
 
+required:
+  - requiredExtension1
+  - requiredExtension2:
+      config: true
+

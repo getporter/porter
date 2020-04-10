@@ -51,4 +51,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		_, err := d.newDriver(DriverNameDocker, "myclaim", args)
 		assert.EqualError(t, err, "allow-docker-host-access was specified but could not detect a local docker daemon running by checking for /var/run/docker.sock")
 	})
+
+	// TODO: add tests that check the Docker configuration options based on the provided required extension config.
+	// Requires changes in cnab-go (export of configurationOptions field on Driver struct in docker.go)
 }
