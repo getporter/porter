@@ -323,7 +323,8 @@ section of the CNAB Specification for more details.
 
 ## Required
 
-The `required` section of a Porter manifest is intended for bundle authors to declare which [Required Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#required-extensions)
+The `required` section of a Porter manifest is intended for bundle authors to declare which
+[Required Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#required-extensions)
 known and supported by Porter are needed to run the bundle.  Hence, all extension configuration data in this section
 is processed by Porter at runtime; if unsupported extension configuration exists, Porter will error out accordingly.
 
@@ -345,9 +346,6 @@ required:
   - docker-host-access:
       privileged: false
 ```
-
-See the [Required Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#required-extensions)
-section of the CNAB Specification for more details.
 
 ## Generated Files
 
