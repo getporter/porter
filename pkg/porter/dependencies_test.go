@@ -11,9 +11,8 @@ import (
 
 func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.TestContext.AddTestFile("../../build/testdata/bundles/wordpress/porter.yaml", "porter.yaml")
-
-	err := p.LoadManifest()
+	p.TestConfig.TestContext.AddTestDirectory("../../build/testdata/bundles/mysql", "/")
+	err := p.LoadManifestFrom("/porter.yaml")
 	require.NoError(t, err)
 
 	e := newDependencyExecutioner(p.Porter)
@@ -25,6 +24,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 
 	// Now make sure execute passes now that we have called execute
 	opts := InstallOptions{}
+	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err, "opts validate failed")
 	err = e.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {

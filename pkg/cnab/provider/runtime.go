@@ -6,6 +6,8 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 )
 
+var _ CNABProvider = &Runtime{}
+
 type Runtime struct {
 	*config.Config
 	credentials credentials.CredentialProvider

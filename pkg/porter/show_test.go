@@ -14,8 +14,6 @@ import (
 func TestPorter_ShowBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = NewTestCNABProvider()
-
 	opts := ShowOptions{
 		sharedOptions: sharedOptions{
 			Name: "test",
@@ -28,7 +26,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 	// Create test claim
 	writeOnly := true
 	claim := claim.Claim{
-		Name: "test",
+		Installation: "test",
 		Bundle: &bundle.Bundle{
 			Definitions: definition.Definitions{
 				"foo": &definition.Schema{

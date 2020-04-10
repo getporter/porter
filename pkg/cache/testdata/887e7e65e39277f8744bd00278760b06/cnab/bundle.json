@@ -1,0 +1,67 @@
+{
+  "credentials": {
+    "kubeconfig": {
+      "path": "/root/.kube/config"
+    }
+  },
+  "custom": {
+    "sh.porter":{
+      "manifest": "bmFtZTogSEVMTE9fQ1VTVE9NCnZlcnNpb246IDAuMS4wCmRlc2NyaXB0aW9uOiAiQSBidW5kbGUgd2l0aCBhIGN1c3RvbSBhY3Rpb24iCnRhZzogZ2V0cG9ydGVyL3BvcnRlci1oZWxsbzp2MC4xLjAKaW52b2NhdGlvbkltYWdlOiBnZXRwb3J0ZXIvcG9ydGVyLWhlbGxvLWluc3RhbGxlcjowLjEuMAoKY3JlZGVudGlhbHM6CiAgLSBuYW1lOiBteS1maXJzdC1jcmVkCiAgICBlbnY6IE1ZX0ZJUlNUX0NSRUQKICAtIG5hbWU6IG15LXNlY29uZC1jcmVkCiAgICBkZXNjcmlwdGlvbjogIk15IHNlY29uZCBjcmVkIgogICAgcGF0aDogL3BhdGgvdG8vbXktc2Vjb25kLWNyZWQKCmltYWdlczogCiAgIHNvbWV0aGluZzoKICAgICAgZGVzY3JpcHRpb246ICJhbiBpbWFnZSIKICAgICAgaW1hZ2VUeXBlOiAiZG9ja2VyIgogICAgICByZXBvc2l0b3J5OiAiZ2V0cG9ydGVyL2JvbyIKCnBhcmFtZXRlcnM6CiAgLSBuYW1lOiBteS1maXJzdC1wYXJhbQogICAgdHlwZTogaW50ZWdlcgogICAgZGVmYXVsdDogOQogICAgZW52OiBNWV9GSVJTVF9QQVJBTQogICAgYXBwbHlUbzoKICAgICAgLSAiaW5zdGFsbCIKICAtIG5hbWU6IG15LXNlY29uZC1wYXJhbQogICAgZGVzY3JpcHRpb246ICJNeSBzZWNvbmQgcGFyYW1ldGVyIgogICAgdHlwZTogc3RyaW5nCiAgICBkZWZhdWx0OiBzcHJpbmctbXVzaWMtZGVtbwogICAgcGF0aDogL3BhdGgvdG8vbXktc2Vjb25kLXBhcmFtCiAgICBzZW5zaXRpdmU6IHRydWUKCm91dHB1dHM6CiAgLSBuYW1lOiBteS1maXJzdC1vdXRwdXQKICAgIHR5cGU6IHN0cmluZwogICAgYXBwbHlUbzoKICAgICAgLSAiaW5zdGFsbCIKICAgICAgLSAidXBncmFkZSIKICAgIHNlbnNpdGl2ZTogdHJ1ZQogIC0gbmFtZTogbXktc2Vjb25kLW91dHB1dAogICAgZGVzY3JpcHRpb246ICJNeSBzZWNvbmQgb3V0cHV0IgogICAgdHlwZTogYm9vbGVhbgogICAgc2Vuc2l0aXZlOiBmYWxzZQogIC0gbmFtZToga3ViZWNvbmZpZwogICAgdHlwZTogZmlsZQogICAgcGF0aDogL3Jvb3QvLmt1YmUvY29uZmlnCgptaXhpbnM6CiAgLSBleGVjCgppbnN0YWxsOgogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJJbnN0YWxsIEhlbGxvIFdvcmxkIgogICAgICBjb21tYW5kOiBiYXNoCiAgICAgIGZsYWdzOgogICAgICAgIGM6IGVjaG8gSGVsbG8gV29ybGQKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIldvcmxkIDIuMCIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIFdvcmxkIDIuMAoKem9tYmllczoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiVHJpZ2dlciB6b21iaWUgYXBvY2FseXBzZSIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIG9oIG5vZXMgbXkgYnJhaW5zCgp1bmluc3RhbGw6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIlVuaW5zdGFsbCBIZWxsbyBXb3JsZCIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIEdvb2RieWUgV29ybGQK"
+    }
+  },
+  "description": "",
+  "images": {
+    "my-microservice":{
+      "contentDigest":"sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+      "description":"my microservice",
+      "image":"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"
+    }
+  },
+  "invocationImages": [{
+    "digest": "sha256:f858bc025ad34099fe67ebe6152e03b4c91b34cc7a77d1aa10aaf1dc1389c2c2",
+    "image": "jeremyrickard/porter-mysql@sha256:f858bc025ad34099fe67ebe6152e03b4c91b34cc7a77d1aa10aaf1dc1389c2c2",
+    "imageType": "docker"
+  }],
+  "name": "mysql",
+  "parameters": {
+    "database-name": {
+      "defaultValue": "mydb",
+      "destination": {
+        "env": "DATABASE_NAME"
+      },
+      "type": "string"
+    },
+    "mysql-name": {
+      "defaultValue": "porter-ci-mysql",
+      "destination": {
+        "env": "MYSQL-NAME"
+      },
+      "type": "string"
+    },
+    "mysql-user": {
+      "destination": {
+        "env": "MYSQL_USER"
+      },
+      "required": true,
+      "type": "string"
+    },
+    "namespace": {
+      "defaultValue": "",
+      "destination": {
+        "env": "NAMESPACE"
+      },
+      "type": "string"
+    },
+    "porter-debug": {
+      "defaultValue": false,
+      "destination": {
+        "env": "PORTER_DEBUG"
+      },
+      "metadata": {
+        "description": "Print debug information from Porter when executing the bundle"
+      },
+      "type": "bool"
+    }
+  },
+  "version": "0.1.0"
+}

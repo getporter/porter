@@ -18,6 +18,8 @@ var _ CredentialProvider = &TestCredentialProvider{}
 type TestCredentialProvider struct {
 	T          *testing.T
 	TestConfig *config.TestConfig
+	// TestSecrets allows you to set up secrets for unit testing
+	TestSecrets *inmemorysecrets.Store
 	*CredentialStorage
 }
 
@@ -26,8 +28,9 @@ func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredenti
 	backingCreds := inmemorystorage.NewStore()
 	credStore := credentials.NewCredentialStore(backingCreds)
 	return TestCredentialProvider{
-		T:          t,
-		TestConfig: tc,
+		T:           t,
+		TestConfig:  tc,
+		TestSecrets: backingSecrets,
 		CredentialStorage: &CredentialStorage{
 			CredentialsStore: &credStore,
 			SecretsStore:     secrets.NewSecretStore(backingSecrets),

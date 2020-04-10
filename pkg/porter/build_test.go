@@ -48,7 +48,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	assert.Equal(t, bun.Version, "0.1.0")
 	assert.Equal(t, bun.Description, "An example Porter configuration")
 
-	stamp, err := configadapter.LoadStamp(bun)
+	stamp, err := configadapter.LoadStamp(*bun)
 	require.NoError(t, err)
 	assert.Equal(t, "262ed16849e1b2321c26624224cb5666a80a60dc6c92a2e469c83b159537652b", stamp.ManifestDigest)
 

@@ -46,7 +46,7 @@ func (p *Porter) ListInstances(opts ListOptions) error {
 	var condensedClaims CondensedClaimList
 	for _, claim := range claims {
 		condensedClaim := CondensedClaim{
-			Name:     claim.Name,
+			Name:     claim.Installation,
 			Created:  claim.Created,
 			Modified: claim.Modified,
 			Action:   claim.Result.Action,

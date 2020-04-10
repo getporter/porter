@@ -27,7 +27,7 @@ func TestPorter_Run(t *testing.T) {
 	})
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/cnab/bundle.json")
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
-	p.TestConfig.TestContext.FileSystem.Create("/root/.kube/config")
+	p.FileSystem.Create("/root/.kube/config")
 
 	opts := NewRunOptions(p.Config)
 	opts.Action = string(manifest.ActionInstall)

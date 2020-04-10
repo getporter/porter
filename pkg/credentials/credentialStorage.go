@@ -55,7 +55,7 @@ func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (credenti
 }
 
 func (s CredentialStorage) Validate(creds credentials.CredentialSet) error {
-	validSources := []string{"secret", host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
+	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
 	for _, cs := range creds.Credentials {

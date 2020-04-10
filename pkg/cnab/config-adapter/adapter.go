@@ -33,7 +33,12 @@ func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, ima
 	}
 }
 
-func (c *ManifestConverter) ToBundle() *bundle.Bundle {
+func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
+	stamp, err := c.GenerateStamp()
+	if err != nil {
+		return nil, err
+	}
+
 	b := &bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
@@ -61,14 +66,16 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 		b.Custom[key] = value
 	}
 
-	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
-
-	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
-	if len(c.Manifest.Dependencies) > 0 {
+	deps := c.generateDependencies()
+	if deps != nil && len(deps.Requires) > 0 {
+		b.Custom[extensions.DependenciesKey] = deps
 		b.RequiredExtensions = []string{extensions.DependenciesKey}
+
 	}
 
-	return b
+	b.Custom[config.CustomPorterKey] = stamp
+
+	return b, nil
 }
 
 func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {

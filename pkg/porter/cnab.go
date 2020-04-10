@@ -11,19 +11,9 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/pkg/errors"
 )
-
-// CNABProvider
-type CNABProvider interface {
-	LoadBundle(bundleFile string) (*bundle.Bundle, error)
-	Install(arguments cnabprovider.ActionArguments) error
-	Upgrade(arguments cnabprovider.ActionArguments) error
-	Invoke(action string, arguments cnabprovider.ActionArguments) error
-	Uninstall(arguments cnabprovider.ActionArguments) error
-}
 
 const (
 	// DockerDriver is the name of the Docker driver.

@@ -41,9 +41,6 @@ dependencies:
       mysql_user: wordpress
 ```
 
-There is a bug with defaulting parameters from the manifest right now so it's turned off but we plan on adding that back soon.
-Watch [#800](https://github.com/deislabs/porter/issues/800) for when it's available again.
-
 ## Specifying parameters
 
 You can specifying parameters for a dependent bundle on the command-line using the following syntax

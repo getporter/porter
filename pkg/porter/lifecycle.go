@@ -3,7 +3,6 @@ package porter
 import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -60,20 +59,21 @@ func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
 		return nil
 	}
 
-	bundlePath, reloPath, err := p.PullBundle(opts.BundlePullOptions)
+	cachedBundle, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
 		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
 	}
-	opts.CNABFile = bundlePath
-	opts.RelocationMapping = reloPath
-	rdr, err := p.Config.FileSystem.Open(bundlePath)
-	if err != nil {
-		return errors.Wrap(err, "unable to open bundle file")
-	}
-	defer rdr.Close()
-	bun, err := bundle.ParseReader(rdr)
+
+	opts.CNABFile = cachedBundle.BundlePath
+	opts.RelocationMapping = cachedBundle.RelocationFilePath
+
 	if opts.Name == "" {
-		opts.Name = bun.Name
+		opts.Name = cachedBundle.Bundle.Name
 	}
+
+	if cachedBundle.Manifest != nil {
+		p.Manifest = cachedBundle.Manifest
+	}
+
 	return nil
 }
