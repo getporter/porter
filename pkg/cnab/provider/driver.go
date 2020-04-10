@@ -25,14 +25,14 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	var err error
 
 	// Pull applicable extension from list of processed extensions
-	ext, extensionIsRequired := r.Extensions[extensions.DockerHostAccessKey]
+	ext, extensionIsRequired := r.Extensions[extensions.DockerExtensionKey]
 
 	if args.AllowDockerHostAccess {
 		if driverName != DriverNameDocker {
 			return nil, errors.Errorf("allow-docker-host-access was enabled, but the driver is %s", driverName)
 		}
 		// Parse extension config to inform setup
-		config, ok := ext.(*extensions.DockerHostAccess)
+		config, ok := ext.(*extensions.Docker)
 		if !ok && extensionIsRequired {
 			return nil, errors.Errorf("unable to parse extension config: %+v", config)
 		}
@@ -40,7 +40,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	} else {
 		if extensionIsRequired {
 			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
-				extensions.DockerHostAccessKey)
+				extensions.DockerExtensionKey)
 		}
 		driverImpl, err = lookup.Lookup(driverName)
 	}
@@ -63,7 +63,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	return driverImpl, nil
 }
 
-func (r *Runtime) dockerDriverWithHostAccess(config *extensions.DockerHostAccess) (driver.Driver, error) {
+func (r *Runtime) dockerDriverWithHostAccess(config *extensions.Docker) (driver.Driver, error) {
 	const dockerSock = "/var/run/docker.sock"
 
 	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {

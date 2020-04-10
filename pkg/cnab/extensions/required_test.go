@@ -46,7 +46,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		require.NoError(t, err, "could not unmarshal the bundle")
 
 		_, err = ProcessRequiredExtensions(bun)
-		require.EqualError(t, err, "unable to process extension: io.cnab.docker-host-access: no custom extension configuration found")
+		require.EqualError(t, err, "unable to process extension: io.cnab.docker: no custom extension configuration found")
 	})
 
 	t.Run("unsupported", func(t *testing.T) {
@@ -63,15 +63,15 @@ func TestProcessRequiredExtensions(t *testing.T) {
 
 func TestGetSupportedExtension(t *testing.T) {
 	t.Run("supported via shorthand", func(t *testing.T) {
-		ext, err := GetSupportedExtension("docker-host-access")
+		ext, err := GetSupportedExtension("docker")
 		require.NoError(t, err)
-		require.Equal(t, DockerHostAccessExtension.Key, ext.Key)
+		require.Equal(t, DockerExtension.Key, ext.Key)
 	})
 
 	t.Run("supported via full key", func(t *testing.T) {
-		ext, err := GetSupportedExtension("io.cnab.docker-host-access")
+		ext, err := GetSupportedExtension("io.cnab.docker")
 		require.NoError(t, err)
-		require.Equal(t, DockerHostAccessExtension.Key, ext.Key)
+		require.Equal(t, DockerExtension.Key, ext.Key)
 	})
 
 	t.Run("unsupported", func(t *testing.T) {

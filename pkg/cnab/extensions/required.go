@@ -17,7 +17,7 @@ type RequiredExtension struct {
 // that Porter supports
 var SupportedExtensions = []RequiredExtension{
 	DependenciesExtension,
-	DockerHostAccessExtension,
+	DockerExtension,
 }
 
 // ProcessedExtensions represents a map of the extension name to the

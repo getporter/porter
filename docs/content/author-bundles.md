@@ -330,20 +330,23 @@ is processed by Porter at runtime; if unsupported extension configuration exists
 
 Currently, Porter supports the following required extensions and configuration:
 
-### Docker Host Access
+### Docker
 
 Access to the host Docker daemon is necessary to run this bundle.
 
-Name: `docker-host-access`
+When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the
+[Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
 
-Configuration:
+**Name:** `docker`
+
+**Configuration:**
   * `Privileged: boolean` - Whether or not the `--privileged` flag should be set on the container run invocation
 
 Example:
 
 ```yaml
 required:
-  - docker-host-access:
+  - docker:
       privileged: false
 ```
 
