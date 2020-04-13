@@ -116,19 +116,29 @@ func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.Actio
 func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
 	var bun *bundle.Bundle
-	if e.parentOpts.Tag != "" {
+	if e.parentOpts.CNABFile != "" {
+		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+		if err != nil {
+			return err
+		}
+		bun = bundle
+	} else if e.parentOpts.Tag != "" {
 		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
 		bun = &cachedBundle.Bundle
-	} else {
-		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+	} else if e.parentOpts.Name != "" {
+		c, err := e.Claims.Read(e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
-		bun = bundle
+
+		bun = c.Bundle
+	} else {
+		// If we hit here, there is a bug somewhere
+		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/deislabs/porter/issues/new/choose")
 	}
 
 	solver := &extensions.DependencySolver{}

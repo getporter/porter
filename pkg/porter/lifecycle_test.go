@@ -150,3 +150,30 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
 	})
 }
+
+func TestInstallFromTag_ManageFromClaim(t *testing.T) {
+	p := NewTestPorter(t)
+
+	installOpts := InstallOptions{}
+	installOpts.Name = "hello"
+	installOpts.Tag = "getporter/porter-hello:v0.1.0"
+	err := installOpts.Validate(nil, p.Context)
+	require.NoError(t, err, "InstallOptions.Validate failed")
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err, "InstallBundle failed")
+
+	upgradeOpts := UpgradeOptions{}
+	upgradeOpts.Name = installOpts.Name
+	err = upgradeOpts.Validate(nil, p.Context)
+
+	err = p.UpgradeBundle(upgradeOpts)
+	require.NoError(t, err, "UpgradeBundle failed")
+
+	uninstallOpts := UninstallOptions{}
+	uninstallOpts.Name = installOpts.Name
+	err = uninstallOpts.Validate(nil, p.Context)
+
+	err = p.UninstallBundle(uninstallOpts)
+	require.NoError(t, err, "UninstallBundle failed")
+}
