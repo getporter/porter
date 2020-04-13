@@ -67,3 +67,42 @@ func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	assert.Contains(t, err.Error(), "could not unmarshal the porter stamp")
 	assert.Equal(t, Stamp{}, stamp)
 }
+
+func TestStamp_DecodeManifest(t *testing.T) {
+	t.Run("manifest populated", func(t *testing.T) {
+		s := Stamp{
+			EncodedManifest: "bmFtZTogaGVsbG8=", // name: hello
+		}
+
+		data, err := s.DecodeManifest()
+		require.NoError(t, err, "DecodeManifest failed")
+
+		m, err := manifest.UnmarshalManifest(data)
+		require.NoError(t, err, "UnmarshalManifest failed")
+
+		require.NotNil(t, m, "expected manifest to be populated")
+		assert.Equal(t, "hello", m.Name, "expected the manifest name to be populated")
+	})
+
+	t.Run("manifest empty", func(t *testing.T) {
+		s := Stamp{}
+
+		data, err := s.DecodeManifest()
+		require.EqualError(t, err, "no Porter manifest was embedded in the bundle")
+
+		assert.Nil(t, data, "No manifest data should be returned")
+	})
+
+	t.Run("manifest invalid", func(t *testing.T) {
+		s := Stamp{
+			EncodedManifest: "name: hello", // this should be base64 encoded
+		}
+
+		data, err := s.DecodeManifest()
+		require.Error(t, err, "DecodeManifest should fail for invalid data")
+
+		assert.Contains(t, err.Error(), "could not base64 decode the manifest in the stamp")
+		assert.Nil(t, data, "No manifest data should be returned")
+	})
+
+}
