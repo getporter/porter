@@ -34,6 +34,10 @@ type Stamp struct {
 
 // DecodeManifest base64 decodes the manifest stored in the stamp
 func (s Stamp) DecodeManifest() ([]byte, error) {
+	if s.EncodedManifest == "" {
+		return nil, errors.New("no Porter manifest was embedded in the bundle")
+	}
+
 	resultB, err := base64.StdEncoding.DecodeString(s.EncodedManifest)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not base64 decode the manifest in the stamp\n%s", s.EncodedManifest)

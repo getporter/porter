@@ -127,6 +127,11 @@ func (c *Cache) cacheManifest(cb *CachedBundle) error {
 	if configadapter.IsPorterBundle(cb.Bundle) {
 		stamp, err := configadapter.LoadStamp(cb.Bundle)
 		if err != nil {
+			fmt.Fprintf(c.Err, "WARNING: Bundle %s was created by porter but could not load the Porter stamp. This may be because it was created by an older version of Porter.\n", cb.Tag)
+			return nil
+		}
+
+		if stamp.EncodedManifest == "" {
 			fmt.Fprintf(c.Err, "WARNING: Bundle %s was created by porter but could not find a porter manifest embedded. This may be because it was created by an older version of Porter.\n", cb.Tag)
 			return nil
 		}
