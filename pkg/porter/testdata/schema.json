@@ -475,7 +475,6 @@
   "required": [
     "name",
     "version",
-    "invocationImage",
     "mixins"
   ],
   "type": "object"
