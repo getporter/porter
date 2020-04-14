@@ -292,5 +292,5 @@
       "anyOf": []
     }
   },
-  "required": ["name", "version", "invocationImage", "mixins"]
+  "required": ["name", "version", "mixins"]
 }
