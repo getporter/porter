@@ -43,12 +43,25 @@ func DockerExtensionReader(bun *bundle.Bundle) (interface{}, error) {
 			DockerExtensionKey, string(dataB))
 	}
 
-	dha := &Docker{}
-	err = json.Unmarshal(dataB, dha)
+	dha := Docker{}
+	err = json.Unmarshal(dataB, &dha)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal the %q extension %q",
 			DockerExtensionKey, string(dataB))
 	}
 
 	return dha, nil
+}
+
+// GetDockerExtension checks if the docker extension is present and returns its
+// extension configuration.
+func (e ProcessedExtensions) GetDockerExtension() (dockerExt Docker, dockerRequired bool, err error) {
+	ext, extensionRequired := e[DockerExtensionKey]
+
+	dockerExt, ok := ext.(Docker)
+	if !ok && extensionRequired {
+		return Docker{}, extensionRequired, errors.Errorf("unable to parse Docker extension config: %+v", dockerExt)
+	}
+
+	return dockerExt, extensionRequired, nil
 }
