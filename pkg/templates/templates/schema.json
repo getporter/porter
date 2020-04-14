@@ -238,7 +238,7 @@
       "type": "array",
       "items": [
         {
-          "type": "object",
+          "type": ["string","object"],
           "properties": {
             "docker": {
               "$schema": "http://json-schema.org/draft-07/schema#",

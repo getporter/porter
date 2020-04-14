@@ -437,7 +437,10 @@
               "type": "object"
             }
           },
-          "type": "object"
+          "type": [
+            "string",
+            "object"
+          ]
         }
       ],
       "type": "array",
