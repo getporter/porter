@@ -16,8 +16,9 @@ type ClaimStorage struct {
 }
 
 func NewClaimStorage(c *config.Config, storagePlugin *pluginstore.Store) *ClaimStorage {
+	migration := newMigrateClaimsWrapper(c.Context, storagePlugin)
 	return &ClaimStorage{
 		Config: c,
-		Store:  claim.NewClaimStore(storagePlugin),
+		Store:  claim.NewClaimStore(migration),
 	}
 }
