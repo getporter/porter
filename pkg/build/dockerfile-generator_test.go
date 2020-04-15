@@ -297,3 +297,22 @@ COPY mybin /cnab/app/
 	// however, the # PORTER_MIXINS token should be removed
 	assert.Equal(t, wantLines, gotlines)
 }
+
+func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	c.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	m.Mixins = []manifest.MixinDeclaration{{Name: "exec"}}
+
+	mp := mixin.NewTestMixinProvider()
+	mp.ReturnBuildError = true
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	_, err = g.buildMixinsSection()
+	require.EqualError(t, err, "1 error occurred:\n\t* error encountered from mixin \"exec\": encountered build error\n\n")
+}
