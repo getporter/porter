@@ -3,6 +3,7 @@ package claims
 import (
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
@@ -56,8 +57,9 @@ func TestMigrateClaimsWrapper_List(t *testing.T) {
 	loadTestClaim(t, "migrated", dataStore)
 
 	names, err := claimStore.List()
+	sort.Strings(names)
 	require.NoError(t, err, "could not list claims")
-	assert.Equal(t, []string{"unmigrated", "migrated"}, names, "unexpected list of claim installation names")
+	assert.Equal(t, []string{"migrated", "unmigrated"}, names, "unexpected list of claim installation names")
 }
 
 func loadTestClaim(t *testing.T, claimName string, store crud.Store) {
