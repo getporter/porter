@@ -110,20 +110,21 @@ func (q *MixinQuery) Execute(cmd string, inputGenerator MixinInputGenerator) (ma
 		if response.runErr == nil {
 			results[response.mixinName] = response.output
 		} else {
-			runErr = multierror.Append(runErr, response.runErr)
+			runErr = multierror.Append(runErr,
+				errors.Wrapf(response.runErr, "error encountered from mixin %q", response.mixinName))
 		}
 	}
 
 	if runErr != nil {
 		if q.RequireAllMixinResponses {
-			return nil, err
+			return nil, runErr
 		}
 
 		// This is a debug because we expect not all mixins to implement some
 		// optional commands, like lint and don't want to print their error
 		// message when we query them with a command they don't support.
 		if q.Debug {
-			fmt.Fprintln(q.Err, errors.Wrap(err, "not all mixins responded successfully"))
+			fmt.Fprintln(q.Err, errors.Wrap(runErr, "not all mixins responded successfully"))
 		}
 	}
 

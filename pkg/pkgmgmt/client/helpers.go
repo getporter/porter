@@ -16,7 +16,7 @@ var _ pkgmgmt.PackageManager = &TestPackageManager{}
 type TestPackageManager struct {
 	PkgType       string
 	Packages      []pkgmgmt.PackageMetadata
-	RunAssertions []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions)
+	RunAssertions []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error
 }
 
 func (p *TestPackageManager) List() ([]string, error) {
@@ -52,7 +52,10 @@ func (p *TestPackageManager) Uninstall(o pkgmgmt.UninstallOptions) error {
 
 func (p *TestPackageManager) Run(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	for _, assert := range p.RunAssertions {
-		assert(pkgContext, name, commandOpts)
+		err := assert(pkgContext, name, commandOpts)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
