@@ -17,7 +17,7 @@ require (
 	github.com/containerd/ttrpc v1.0.0 // indirect
 	github.com/containerd/typeurl v1.0.0 // indirect
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
-	github.com/docker/cnab-to-oci v0.3.0-beta4
+	github.com/docker/cnab-to-oci v0.3.0-beta4 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20181229214054-f76d6a078d88
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -58,3 +58,5 @@ replace github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-
 // See https://github.com/containerd/containerd/issues/3031
 // When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 replace github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+
+replace github.com/cnabio/cnab-go => github.com/vdice/cnab-go v0.0.0-20200416174429-5ab209b0f008
