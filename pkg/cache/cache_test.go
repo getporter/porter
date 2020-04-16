@@ -222,3 +222,36 @@ func TestStoreManifest(t *testing.T) {
 		})
 	}
 }
+
+func TestCache_StoreBundle_Overwrite(t *testing.T) {
+	cfg := config.NewTestConfig(t)
+	home, _ := cfg.Config.GetHomeDir()
+	cacheDir := filepath.Join(home, "cache")
+	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
+	c := New(cfg.Config)
+
+	// Setup an existing bundle with some extraneous junk that would not
+	// be overwritten
+	cb := CachedBundle{Tag: kahn1dot01}
+	cb.SetCacheDir(cacheDir)
+	cfg.FileSystem.Create(cb.BuildManifestPath())
+	cfg.FileSystem.Create(cb.BuildRelocationFilePath())
+	junkPath := filepath.Join(cb.cacheDir, "junk.txt")
+	cfg.FileSystem.Create(junkPath)
+
+	// Refresh the cache
+	cb, err := c.StoreBundle(cb.Tag, bundle.Bundle{}, nil)
+	require.NoError(t, err, "StoreBundle failed")
+
+	exists, _ := cfg.FileSystem.Exists(cb.BuildBundlePath())
+	assert.True(t, exists, "bundle.json should have been written in the refreshed cache")
+
+	exists, _ = cfg.FileSystem.Exists(cb.BuildManifestPath())
+	assert.False(t, exists, "porter.yaml should have been deleted from the bundle cache")
+
+	exists, _ = cfg.FileSystem.Exists(cb.BuildRelocationFilePath())
+	assert.False(t, exists, "relocation-mapping.json should have been deleted from the bundle cache")
+
+	exists, _ = cfg.FileSystem.Exists(junkPath)
+	assert.False(t, exists, "the random file should have been deleted from the bundle cache")
+}

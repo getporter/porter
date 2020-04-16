@@ -75,6 +75,12 @@ func (c *Cache) StoreBundle(bundleTag string, bun bundle.Bundle, reloMap *reloca
 	}
 	cb.SetCacheDir(cacheDir)
 
+	// Remove any previously cached bundle files
+	err = c.FileSystem.RemoveAll(cb.cacheDir)
+	if err != nil {
+		return CachedBundle{}, errors.Wrapf(err, "cannot remove existing cache directory %s", cb.BundlePath)
+	}
+
 	cb.BundlePath = cb.BuildBundlePath()
 	err = c.FileSystem.MkdirAll(filepath.Dir(cb.BundlePath), os.ModePerm)
 	if err != nil {
