@@ -23,6 +23,8 @@ import (
 	portercontext "get.porter.sh/porter/pkg/context"
 )
 
+var _ RegistryProvider = &Registry{}
+
 type Registry struct {
 	*portercontext.Context
 }

@@ -1,4 +1,4 @@
-package porter
+package cnabtooci
 
 import (
 	"github.com/cnabio/cnab-go/bundle"
@@ -6,7 +6,7 @@ import (
 )
 
 // Registry handles talking with an OCI registry.
-type Registry interface {
+type RegistryProvider interface {
 	// PullBundle pulls a bundle from an OCI registry.
 	PullBundle(tag string, insecureRegistry bool) (bundle.Bundle, *relocation.ImageRelocationMap, error)
 
