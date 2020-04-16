@@ -24,7 +24,7 @@ type Porter struct {
 	Cache       cache.BundleCache
 	Credentials credentials.CredentialProvider
 	Claims      claims.ClaimProvider
-	Registry    Registry
+	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
 	Builder     BuildProvider
 	Manifest    *manifest.Manifest

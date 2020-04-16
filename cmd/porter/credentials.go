@@ -83,6 +83,9 @@ will then provide it to the bundle in the correct location. `,
 		"Generate credential but do not save it.")
 	f.StringVar(&opts.Tag, "tag", "",
 		"Use a bundle in an OCI registry specified by the given tag.")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle")
+
 	return cmd
 }
 
