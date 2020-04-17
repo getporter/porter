@@ -28,7 +28,7 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 				}
 			}
 		}
-		return nil, false, errors.Wrapf(err, "could not load claim %s", claimName)
+		return nil, false, errors.Wrapf(err, "could not load bundle instance %s", claimName)
 	}
 	return &c, false, nil
 }
@@ -54,6 +54,9 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	}
 
 	c, isTemp, err := d.getClaim(bun, action, args.Claim)
+	if err != nil {
+		return err
+	}
 
 	// Here we need to check this again
 	// If provided, we should set the bundle on the claim accordingly
