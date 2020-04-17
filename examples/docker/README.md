@@ -30,7 +30,7 @@ required:
 - docker
 ```
 
-Porter requires elevated privileges are explicitly granted to the bundle in
+Porter requires that elevated privileges are explicitly granted to the bundle in
 order to run them. You can do that in one of three ways using the [Allow Docker
 Host Access setting](https://porter.sh/configuration/#allow-docker-host-access):
 
