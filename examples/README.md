@@ -14,6 +14,10 @@ This bundle provides an example of how you can use Porter to build Terraform-bas
 
 This example creates an Azure MySQL database using the `azure` mixin and then uses the `helm` mixin to install WordPress into an existing Kubernetes cluster. In order to use install this example, you will need an Azure account and a [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest). You'll also need a Kubernetes cluster in Azure, we recommend using AKS.
 
+## Docker Example
+
+This bundle demonstrates how to use Docker inside of a bundle! 🐳
+
 ## Exec Outputs
 
 This bundle demonstrates how to use outputs with the exec mixin. Most mixins are based on the exec mixin, so you can use what you learn here with them.
