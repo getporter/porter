@@ -9,11 +9,16 @@ import (
 
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
+	"github.com/Netflix/go-expect"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/AlecAivazis/survey.v1/core"
+	"gopkg.in/AlecAivazis/survey.v1/terminal"
 )
 
 func TestGenerateNoName(t *testing.T) {
@@ -31,6 +36,46 @@ func TestGenerateNoName(t *testing.T) {
 	var zero time.Time
 	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
 	assert.True(t, creds.Created.Equal(creds.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
+}
+func TestGenerateNotSilent(t *testing.T) {
+	p := NewTestPorter(t)
+	p.CNAB = &TestCNABProvider{}
+
+	core.DisableColor = true
+	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout())
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	opts := CredentialOptions{
+		Silent: false,
+	}
+
+	donec := make(chan struct{})
+
+	go func() {
+		defer close(donec)
+
+		c.ExpectString("Enter credential identifier name (testbundle) ")
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectString("How would you like to set credential \"name\"")
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectString("Enter the environment variable that will be used to set credential \"name\" ")
+		c.SendLine("ENV_NAME")
+
+		c.ExpectEOF()
+	}()
+
+	err = p.GenerateCredentials(opts)
+
+	c.Tty().Close()
+	<-donec
+
+	require.NoError(t, err, "no error should have existed")
+	_, err = p.Credentials.Read("testbundle")
+	require.NoError(t, err, "expected credential to have been generated")
 }
 
 func TestGenerateNameProvided(t *testing.T) {

@@ -146,7 +146,8 @@ func (p *Porter) chooseOrGenerateCredentialSet(bundle *bundle.Bundle) ([]string,
 	}
 
 	fmt.Fprintln(p.Out, "No credential set name passed")
-	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil)
+
+	survey.AskOne(selectChooseOrGeneratePrompt, &chooseOrGenerate, nil, p.SurveyAskOpts)
 
 	switch chooseOrGenerate {
 	case generateCode:
@@ -171,7 +172,7 @@ func (p *Porter) chooseCredentialSet(bundle *bundle.Bundle, credSetNames []strin
 		Default: []string{bundle.Name},
 	}
 
-	err := survey.AskOne(selectCredPrompt, &selectedCredSets, nil)
+	err := survey.AskOne(selectCredPrompt, &selectedCredSets, nil, p.SurveyAskOpts)
 	if err != nil {
 		return []string{}, errors.Wrapf(err, "no credential set selected")
 	}
@@ -194,7 +195,7 @@ func (p *Porter) generateNewCredentialSet(bundle *bundle.Bundle, credIdentifierN
 				Message: "Enter credential identifier name",
 				Default: bundle.Name,
 			}
-			survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil)
+			survey.AskOne(inputCredNamePrompt, &credIdentifierName, nil, p.SurveyAskOpts)
 		}
 	}
 
@@ -218,7 +219,7 @@ func (p *Porter) generateNewCredentialSet(bundle *bundle.Bundle, credIdentifierN
 
 func (p *Porter) generateAndSaveCredentialSet(genOpts credentialsgenerator.GenerateOptions) error {
 
-	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
+	cs, err := credentialsgenerator.GenerateCredentials(genOpts, p.SurveyAskOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to generate credentials")
 	}
