@@ -98,5 +98,5 @@ maintainer to admin.
 
 <p align="center">Sound like fun? 🙋🏽‍♀️ Join us!</p>
 
-[ladder]: /src/CONTRIBUTING.md#contribution-ladder
+[ladder]: /src/CONTRIBUTION_LADDER.md
 [slack]: /community#slack
