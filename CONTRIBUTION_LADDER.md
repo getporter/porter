@@ -1,12 +1,13 @@
 # Contribution Ladder
 
 ---
+* [Community Member](#community-member)
 * [Contributor](#contributor)
-* [How to become a contributor](#how-to-become-a-contributor)
+  * [How to become a contributor](#how-to-become-a-contributor)
 * [Maintainer](#maintainer)
-* [How to become a maintainer](#how-to-become-a-maintainer)
+  * [How to become a maintainer](#how-to-become-a-maintainer)
 * [Admin](#admin)
-* [How to become an admin](#admin)
+  * [How to become an admin](#admin)
 ---
 
 Our ladder defines the roles and responsibilities on this project and how to
@@ -14,7 +15,7 @@ participate with the goal of moving from a user to a maintainer. You will need
 to gain people's trust, demonstrate your competence and understanding, and meet
 the requirements of the role.
 
-## Community Members
+## Community Member
 
 Everyone is a community member! 😄 You've read this far so you are already ahead. 💯
 
@@ -27,6 +28,8 @@ Here are some ideas for how you can be more involved and participate in the comm
 * Come chat with us in [Slack][slack].
 
 They must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+[slack]: https://porter.sh/community#slack
 
 ## Contributor
 
