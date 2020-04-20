@@ -305,14 +305,8 @@ Here are the most common Makefile tasks
   Documentation](#preview-documentation).
 * `test` runs all the tests.
 * `clean-packr` removes extra packr files that were a side-effect of the build.
-  Normally this is run automatically but if you run into issues with packr and
-  dep, run this command.
-* `dep-ensure` runs dep ensure for you while taking care of packr properly. Use
-  this if your PRs are often failing on `verify-vendor` because of packr. This
-  can be avoided entirely if you use `make build-porter-client` or `make build`.
-* `verify-vendor` cleans up packr generated files and verifies that dep's Gopkg.lock
-   and vendor/ are up-to-date. Use this makefile target instead of running
-   dep check manually.
+  Normally this is run automatically but if you run into issues with packr, 
+  run this command.
 
 ## Install mixins
 
@@ -384,7 +378,6 @@ dependency injection and testing strategies.
 * **scripts**:
   * **install**: Porter [installation](https://porter.sh/install) scripts
 * **tests** have Go-based integration tests.
-* **vendor** we use dep and check in vendor.
 
 ## Logging
 
