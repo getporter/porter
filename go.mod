@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.10.1-beta1
+	github.com/cnabio/cnab-go v0.11.0-beta1
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc // indirect
 	github.com/containerd/containerd v1.3.0
@@ -17,7 +17,7 @@ require (
 	github.com/containerd/ttrpc v1.0.0 // indirect
 	github.com/containerd/typeurl v1.0.0 // indirect
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
-	github.com/docker/cnab-to-oci v0.3.0-beta4
+	github.com/docker/cnab-to-oci v0.3.0-beta4 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20181229214054-f76d6a078d88
 	github.com/docker/go-metrics v0.0.1 // indirect
