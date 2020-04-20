@@ -41,11 +41,11 @@ const (
 type credentialGenerator func(name string) (credentials.CredentialStrategy, error)
 
 // GenerateCredentials will generate a credential set based on the given options
-func GenerateCredentials(opts GenerateOptions) (*credentials.CredentialSet, error) {
+func GenerateCredentials(opts GenerateOptions, surveyAskOpt survey.AskOpt) (*credentials.CredentialSet, error) {
 	if opts.Name == "" {
 		return nil, errors.New("credentialset name is required")
 	}
-	generator := genCredentialSurvey
+	generator := getCredentialSurveyor(surveyAskOpt)
 	if opts.Silent {
 		generator = genEmptyCredentials
 	}
@@ -91,7 +91,12 @@ func genEmptyCredentials(name string) (credentials.CredentialStrategy, error) {
 	}, nil
 }
 
-func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
+func getCredentialSurveyor(surveyAskOpt survey.AskOpt) func(name string) (credentials.CredentialStrategy, error) {
+	return func(name string) (credentials.CredentialStrategy, error) {
+		return genCredentialSurvey(name, surveyAskOpt)
+	}
+}
+func genCredentialSurvey(name string, surveyAskOpt survey.AskOpt) (credentials.CredentialStrategy, error) {
 
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set credential %q", name),
@@ -104,7 +109,7 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 	c := credentials.CredentialStrategy{Name: name}
 
 	source := ""
-	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {
+	if err := survey.AskOne(sourceTypePrompt, &source, nil, surveyAskOpt); err != nil {
 		return c, err
 	}
 
@@ -127,7 +132,7 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 	}
 
 	value := ""
-	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
+	if err := survey.AskOne(sourceValuePrompt, &value, nil, surveyAskOpt); err != nil {
 		return c, err
 	}
 
