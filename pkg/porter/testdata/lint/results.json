@@ -1,11 +1,10 @@
 [
   {
     "Level": 0,
+    "Key": "echo Hello World",
     "Location": {
-      "Action": "install",
-      "Mixin": "exec",
-      "StepNumber": 2,
-      "StepDescription": "Install Hello World"
+      "Line": 57,
+      "Column": 12
     },
     "Code": "exec-100",
     "Title": "bash -c argument missing wrapping quotes",

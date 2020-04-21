@@ -30,9 +30,11 @@ func TestLinter_Lint(t *testing.T) {
 
 	t.Run("has results", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
+		cxt.AddTestFile("./testdata/porter.yaml", "porter.yaml")
 		mixins := mixin.NewTestMixinProvider()
 		l := New(cxt.Context, mixins)
 		m := &manifest.Manifest{
+			ManifestPath: "porter.yaml",
 			Mixins: []manifest.MixinDeclaration{
 				{
 					Name: "exec",
@@ -44,6 +46,11 @@ func TestLinter_Lint(t *testing.T) {
 				Level: LevelWarning,
 				Code:  "exec-101",
 				Title: "warning stuff isn't working",
+				Key:   "echo Hello World",
+				Location: Location{
+					Line:   9,
+					Column: 12,
+				},
 			},
 		}
 

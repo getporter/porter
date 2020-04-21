@@ -46,7 +46,7 @@ func (m *Mixin) Lint() (linter.Results, error) {
 	results := make(linter.Results, 0)
 
 	for _, action := range input.Actions {
-		for stepNumber, step := range action.Steps {
+		for _, step := range action.Steps {
 			if step.Command != "bash" {
 				continue
 			}
@@ -63,17 +63,20 @@ func (m *Mixin) Lint() (linter.Results, error) {
 				continue
 			}
 
+			// Derive key to be used to locate coordinates in the manifest.
+			// The embedded bash flag, 'c' is not unique enough,
+			// so set to the unique step description, or, if values non-empty,
+			// the first value
+			key := step.Description
+			if len(embeddedBashFlag.Values) > 0 {
+				key = embeddedBashFlag.Values[0]
+			}
 			// Found embedded bash 🚨
 			// Check for wrapping quotes, if missing -> hard error, otherwise just warn
 			result := linter.Result{
-				Level: linter.LevelWarning,
-				Code:  CodeEmbeddedBash,
-				Location: linter.Location{
-					Action:          action.Name,
-					Mixin:           "exec",
-					StepNumber:      stepNumber + 1, // We index from 1 for natural counting, 1st, 2nd, etc.
-					StepDescription: step.Description,
-				},
+				Level:   linter.LevelWarning,
+				Code:    CodeEmbeddedBash,
+				Key:     key,
 				Title:   "Best Practice: Avoid Embedded Bash",
 				Message: "",
 				URL:     "https://porter.sh/best-practices/exec-mixin/#use-scripts",
@@ -86,12 +89,7 @@ func (m *Mixin) Lint() (linter.Results, error) {
 					result := linter.Result{
 						Level: linter.LevelError,
 						Code:  CodeBashCArgMissingQuotes,
-						Location: linter.Location{
-							Action:          action.Name,
-							Mixin:           "exec",
-							StepNumber:      stepNumber + 1,
-							StepDescription: step.Description,
-						},
+						Key:   bashCmd,
 						Title: "bash -c argument missing wrapping quotes",
 						Message: `The bash -c flag argument must be wrapped in quotes, for example
 exec:

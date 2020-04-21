@@ -34,12 +34,7 @@ func TestPorter_PrintLintResults(t *testing.T) {
 	lintResults := linter.Results{
 		{
 			Level: linter.LevelError,
-			Location: linter.Location{
-				Action:          "install",
-				Mixin:           "exec",
-				StepNumber:      2,
-				StepDescription: "Install Hello World",
-			},
+			Key:   "echo Hello World",
 			Code:  "exec-100",
 			Title: "bash -c argument missing wrapping quotes",
 			Message: `The bash -c flag argument must be wrapped in quotes, for example

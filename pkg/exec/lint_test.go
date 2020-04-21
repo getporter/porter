@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMixin_Lint(t *testing.T) {
+func TestMixin_LintError(t *testing.T) {
 	m := NewTestMixin(t)
 
 	input, err := ioutil.ReadFile("testdata/lint-input.yaml")
@@ -21,20 +21,22 @@ func TestMixin_Lint(t *testing.T) {
 	require.NoError(t, err, "Lint failed")
 	assert.Len(t, results, 2, "Unexpected number of lint results generated")
 
-	var gotInstallError linter.Result
-	for _, r := range results {
-		if r.Location.Action == "install" && r.Code == CodeBashCArgMissingQuotes {
-			gotInstallError = r
-		}
+	// We expect a warning and an error
+	gotInstallWarning := results[0]
+	wantInstallWarning := linter.Result{
+		Level:   linter.LevelWarning,
+		Key:     "echo Hello World",
+		Code:    CodeEmbeddedBash,
+		Title:   "Best Practice: Avoid Embedded Bash",
+		Message: "",
+		URL:     "https://porter.sh/best-practices/exec-mixin/#use-scripts",
 	}
+	assert.Equal(t, wantInstallWarning, gotInstallWarning)
+
+	gotInstallError := results[1]
 	wantInstallError := linter.Result{
 		Level: linter.LevelError,
-		Location: linter.Location{
-			Action:          "install",
-			Mixin:           "exec",
-			StepNumber:      2,
-			StepDescription: "Install Hello World",
-		},
+		Key:   "echo Hello World",
 		Code:  CodeBashCArgMissingQuotes,
 		Title: "bash -c argument missing wrapping quotes",
 		Message: `The bash -c flag argument must be wrapped in quotes, for example

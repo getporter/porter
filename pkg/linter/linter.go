@@ -1,6 +1,8 @@
 package linter
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
-	"github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 )
 
@@ -48,7 +49,10 @@ type Result struct {
 	// Level of severity
 	Level Level
 
-	// Location of the problem in the manifest.
+	// Key locates the problem in the manifest.
+	Key string
+
+	// Location is the location of the problem in the manifest.
 	Location Location
 
 	// Code uniquely identifying the type of problem.
@@ -62,6 +66,16 @@ type Result struct {
 
 	// URL that provides additional assistance with this problem.
 	URL string
+}
+
+type Location struct {
+	Line   int
+	Column int
+}
+
+func (l Location) String() string {
+	return fmt.Sprintf("Location in manifest: Line: %d, Column: %d",
+		l.Line, l.Column)
 }
 
 func (r Result) String() string {
@@ -79,39 +93,6 @@ func (r Result) String() string {
 
 	buffer.WriteString("---\n")
 	return buffer.String()
-}
-
-// Location identifies the offending mixin step within a manifest.
-type Location struct {
-	// Action containing the step, e.g. Install.
-	Action string
-
-	// Mixin name, e.g. exec.
-	Mixin string
-
-	// StepNumber is the position of the step, starting from 1, within the action.
-	// Example
-	// install:
-	//  - exec: (1)
-	//     ...
-	//  - helm: (2)
-	//     ...
-	//  - exec: (3)
-	//     ...
-	StepNumber int
-
-	// StepDescription is the description of the step provided in the manifest.
-	// Example
-	// install:
-	//  - exec:
-	//      description: THIS IS THE STEP DESCRIPTION
-	//      command: ./helper.sh
-	StepDescription string
-}
-
-func (l Location) String() string {
-	return fmt.Sprintf("%s: %s step in the %s mixin (%s)",
-		l.Action, humanize.Ordinal(l.StepNumber), l.Mixin, l.StepDescription)
 }
 
 // Results is a set of items identified by the linter.
@@ -152,6 +133,7 @@ func New(cxt *context.Context, mixins pkgmgmt.PackageManager) *Linter {
 }
 
 func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
+
 	// TODO: perform any porter level linting
 	// e.g. metadata, credentials, properties, outputs, dependencies, etc
 
@@ -166,6 +148,12 @@ func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
 	}
 
 	var results Results
+	// Read manifest data.  This will be used to determine locations of results
+	manifestData, err := manifest.ReadManifestData(l.Context, m.ManifestPath)
+	if err != nil {
+		return results, errors.New("unable to read manifest data")
+	}
+
 	for mixin, response := range responses {
 		var r Results
 		err = json.Unmarshal([]byte(response), &r)
@@ -173,8 +161,43 @@ func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
 			return nil, errors.Wrapf(err, "unable to parse lint response from mixin %q", mixin)
 		}
 
+		// Derive location of result
+		for i, result := range r {
+			location, err := getLocation(manifestData, result.Key)
+			if err != nil {
+				return results, errors.Wrap(err, "unable to resolve location of result in manifest")
+			}
+			result.Location = location
+			r[i] = result
+		}
+
 		results = append(results, r...)
 	}
 
 	return results, nil
+}
+
+func getLocation(contents []byte, key string) (Location, error) {
+	r := bytes.NewReader(contents)
+	// Splits on newlines by default.
+	scanner := bufio.NewScanner(r)
+
+	line := 1
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.Contains(text, key) {
+			col := strings.Index(text, key) + 1
+			return Location{Line: line, Column: col}, nil
+		}
+
+		line++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return Location{}, err
+	}
+	// TODO: should we actively error out here?
+	// Currently, this supports unit tests with no real manifest data, etc.
+	// return Location{}, fmt.Errorf("unable to determine line and column coordinates for string %q", key)
+	return Location{}, nil
 }

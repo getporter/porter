@@ -1,5 +1,5 @@
 error(exec-100) - bash -c argument missing wrapping quotes
-install: 2nd step in the exec mixin (Install Hello World)
+Location in manifest: Line: 57, Column: 12
 The bash -c flag argument must be wrapped in quotes, for example
 exec:
   description: Say Hello
