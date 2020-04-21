@@ -63,6 +63,7 @@ Another great way to contribute is to create a mixin! You can start use the
 [good-first-issue]: https://porter.sh/board/good+first+issue
 [help-wanted]: https://porter.sh/board/help+wanted
 [board]: https://porter.sh/board
+[slack]: https://porter.sh/community#slack
 
 ## When to open a pull request
 
@@ -322,6 +323,3 @@ for maintainers.
 
 See the [CDN Setup Doc](infra/cdn.md) for details on the services Porter uses to
 host and distribute its release binaries.
-
-
-[slack]: https://porter.sh/community#slack
