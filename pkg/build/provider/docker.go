@@ -38,6 +38,7 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
 		PullParent:     false,
+		Remove:         true,
 		Tags:           []string{manifest.Image},
 		Dockerfile:     "Dockerfile",
 		BuildArgs: map[string]*string{
