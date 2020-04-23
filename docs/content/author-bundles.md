@@ -337,17 +337,20 @@ Access to the host Docker daemon is necessary to run this bundle.
 When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the
 [Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
 
-**Name:** `docker`
+**Name:** 
+
+`docker`
 
 **Configuration:**
-  * `Privileged: boolean` - Whether or not the `--privileged` flag should be set on the container run invocation
+
+  * `privileged: BOOLEAN` - OPTIONAL. Whether or not the `--privileged` flag should be set when the bundle's invocation image runs. Defaults to false.
 
 Example:
 
 ```yaml
 required:
   - docker:
-      privileged: false
+      privileged: true
 ```
 
 ## Generated Files
