@@ -1,7 +1,7 @@
 name: whalesay
-version: 0.1.0
+version: 0.1.1
 description: "An example bundle that uses docker through the magic of whalespeak"
-tag: getporter/whalesay:v0.1.0
+tag: getporter/whalesay:v0.1.1
 
 dockerfile: Dockerfile.tmpl
 
@@ -35,7 +35,7 @@ upgrade:
 
 say:
   - exec:
-      description: "Install Hello World"
+      description: "Say Something"
       command: ./helpers.sh
       arguments:
         - whalesay
