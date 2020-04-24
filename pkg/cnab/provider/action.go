@@ -6,7 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -34,6 +34,9 @@ type ActionArguments struct {
 
 	// Path to an optional relocation mapping file
 	RelocationMapping string
+
+	// Give the bundle privileged access to the docker daemon.
+	AllowDockerHostAccess bool
 }
 
 func (d *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {

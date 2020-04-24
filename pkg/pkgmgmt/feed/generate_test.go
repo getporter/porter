@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"fmt"
 	"io/ioutil"
 	"sort"
 	"testing"
@@ -73,6 +74,52 @@ func TestGenerate(t *testing.T) {
 	wantXml := string(b)
 
 	assert.Equal(t, wantXml, gotXml)
+}
+
+func TestGenerate_RegexMatch(t *testing.T) {
+	testcases := []struct {
+		name      string
+		mixinName string
+		wantError string
+	}{{
+		name:      "no bins",
+		mixinName: "",
+		wantError: `failed to traverse the bin directory: open bin: file does not exist`,
+	}, {
+		name:      "valid mixin name",
+		mixinName: "my-42nd-mixin",
+		wantError: "",
+	}, {
+		name:      "invalid mixin name",
+		mixinName: "my-42nd-mixin!",
+		wantError: `no mixin binaries found in bin matching the regex "(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\\.exe)?"`,
+	}}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.NewTestContext(t)
+			ctx.AddTestFile("testdata/atom-template.xml", "template.xml")
+
+			if tc.mixinName != "" {
+				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-darwin-amd64", tc.mixinName))
+				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-linux-amd64", tc.mixinName))
+				ctx.FileSystem.Create(fmt.Sprintf("bin/v1.2.3/%s-windows-amd64.exe", tc.mixinName))
+			}
+
+			opts := GenerateOptions{
+				AtomFile:        "atom.xml",
+				SearchDirectory: "bin",
+				TemplateFile:    "template.xml",
+			}
+			f := NewMixinFeed(ctx.Context)
+			err := f.Generate(opts)
+			if tc.wantError != "" {
+				require.EqualError(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGenerate_ExistingFeed(t *testing.T) {

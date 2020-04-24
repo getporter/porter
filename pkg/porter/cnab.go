@@ -11,21 +11,20 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/pkg/errors"
 )
 
-// CNABProvider
-type CNABProvider interface {
-	LoadBundle(bundleFile string) (*bundle.Bundle, error)
-	Install(arguments cnabprovider.ActionArguments) error
-	Upgrade(arguments cnabprovider.ActionArguments) error
-	Invoke(action string, arguments cnabprovider.ActionArguments) error
-	Uninstall(arguments cnabprovider.ActionArguments) error
-}
+const (
+	// DockerDriver is the name of the Docker driver.
+	DockerDriver = cnabprovider.DriverNameDocker
 
-const DefaultDriver = "docker"
+	// DebugDriver is the name of the Debug driver.
+	DebugDriver = cnabprovider.DriverNameDebug
+
+	// DefaultDriver is the name of the default driver (Docker).
+	DefaultDriver = DockerDriver
+)
 
 type bundleFileOptions struct {
 	// File path to the porter manifest. Defaults to the bundle in the current directory.
@@ -302,7 +301,7 @@ func (o *sharedOptions) defaultDriver() {
 // validateDriver validates that the provided driver is supported by Porter
 func (o *sharedOptions) validateDriver() error {
 	switch o.Driver {
-	case "docker", "debug":
+	case DockerDriver, DebugDriver:
 		return nil
 	default:
 		cmddriver := &command.Driver{Name: o.Driver}

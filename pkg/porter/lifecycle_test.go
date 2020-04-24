@@ -4,12 +4,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/context"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
-
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
@@ -20,16 +21,9 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	t.Logf("cache dir is: %s", cacheDir)
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 	fullPath := filepath.Join(cacheDir, "887e7e65e39277f8744bd00278760b06/cnab/bundle.json")
-	fileExists, err := p.TestConfig.TestContext.FileSystem.Exists(fullPath)
+	fileExists, err := p.FileSystem.Exists(fullPath)
 	require.True(t, fileExists, "this test requires that the file exist")
-
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return fullPath, "", true, nil
-		},
-	}
-	p.Porter.Cache = &cache
-	_, _, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
+	_, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
 	assert.True(t, ok, "should have found the bundle...")
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
@@ -45,14 +39,6 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "", "", false, nil
-		},
-	}
-	p.Porter.Cache = &cache
-
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
 			Tag: "deislabs/kubekahn:latest",
@@ -68,21 +54,18 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
 
-	cache := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "/opt/not/here/bundle.json", "", true, nil
-		},
-	}
-	p.Porter.Cache = &cache
+	// mess up the cache
+	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
+
 	b := &BundleLifecycleOpts{
 		BundlePullOptions: BundlePullOptions{
-			Tag: "deislabs/kubekahn:latest",
+			Tag: "deislabs/kubekahn:1.0",
 		},
 	}
+
 	err := p.prepullBundleByTag(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
-	assert.Contains(t, err.Error(), "unable to open bundle file")
-
+	assert.Contains(t, err.Error(), "unable to parse cached bundle file")
 }
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
@@ -99,4 +82,98 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
+}
+
+func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/install/base-params.txt", "base-params.txt")
+
+	deps := &dependencyExecutioner{}
+
+	t.Run("porter.yaml set", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.File = "porter.yaml"
+		cxt.AddTestFile("testdata/porter.yaml", "porter.yaml")
+		cxt.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, ".cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
+	})
+
+	// Just do a quick check that things are populated correctly when a bundle.json is passed
+	t.Run("bundle.json set", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.CNABFile = "/bundle.json"
+		cxt.AddTestFile("testdata/bundle.json", "/bundle.json")
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, opts.CNABFile, args.BundlePath, "BundlePath was not populated correctly")
+	})
+
+	t.Run("remaining fields", func(t *testing.T) {
+		opts := BundleLifecycleOpts{
+			sharedOptions: sharedOptions{
+				bundleFileOptions: bundleFileOptions{
+					RelocationMapping: "relocation-mapping.json",
+				},
+				Name: "MyClaim",
+				Params: []string{
+					"PARAM1=VALUE1",
+				},
+				ParamFiles: []string{
+					"base-params.txt",
+				},
+				CredentialIdentifiers: []string{
+					"mycreds",
+				},
+				Driver: "docker",
+			},
+			AllowAccessToDockerHost: true,
+		}
+
+		err := opts.Validate(nil, cxt.Context)
+		require.NoError(t, err, "Validate failed")
+		args := opts.ToActionArgs(deps)
+
+		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
+		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
+		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
+		assert.Equal(t, opts.combinedParameters, args.Params, "Params not populated correctly")
+		assert.Equal(t, opts.Name, args.Claim, "Claim not populated correctly")
+		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
+	})
+}
+
+func TestInstallFromTag_ManageFromClaim(t *testing.T) {
+	p := NewTestPorter(t)
+
+	installOpts := InstallOptions{}
+	installOpts.Name = "hello"
+	installOpts.Tag = "getporter/porter-hello:v0.1.0"
+	err := installOpts.Validate(nil, p.Context)
+	require.NoError(t, err, "InstallOptions.Validate failed")
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err, "InstallBundle failed")
+
+	upgradeOpts := UpgradeOptions{}
+	upgradeOpts.Name = installOpts.Name
+	err = upgradeOpts.Validate(nil, p.Context)
+
+	err = p.UpgradeBundle(upgradeOpts)
+	require.NoError(t, err, "UpgradeBundle failed")
+
+	uninstallOpts := UninstallOptions{}
+	uninstallOpts.Name = installOpts.Name
+	err = uninstallOpts.Validate(nil, p.Context)
+
+	err = p.UninstallBundle(uninstallOpts)
+	require.NoError(t, err, "UninstallBundle failed")
 }

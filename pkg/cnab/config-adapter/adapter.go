@@ -33,7 +33,12 @@ func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, ima
 	}
 }
 
-func (c *ManifestConverter) ToBundle() *bundle.Bundle {
+func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
+	stamp, err := c.GenerateStamp()
+	if err != nil {
+		return nil, err
+	}
+
 	b := &bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
@@ -56,19 +61,12 @@ func (c *ManifestConverter) ToBundle() *bundle.Bundle {
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
+	b.RequiredExtensions = c.generateRequiredExtensions()
+	b.Custom = c.generateCustomExtensions()
 
-	for key, value := range c.Manifest.Custom {
-		b.Custom[key] = value
-	}
+	b.Custom[config.CustomPorterKey] = stamp
 
-	b.Custom[config.CustomBundleKey] = c.GenerateStamp()
-
-	b.Custom[extensions.DependenciesKey] = c.generateDependencies()
-	if len(c.Manifest.Dependencies) > 0 {
-		b.RequiredExtensions = []string{extensions.DependenciesKey}
-	}
-
-	return b
+	return b, nil
 }
 
 func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {
@@ -317,4 +315,54 @@ func toBool(value bool) *bool {
 
 func toInt(v int) *int {
 	return &v
+}
+
+func (c *ManifestConverter) generateCustomExtensions() map[string]interface{} {
+	customExtensions := map[string]interface{}{}
+
+	for key, value := range c.Manifest.Custom {
+		customExtensions[key] = value
+	}
+
+	deps := c.generateDependencies()
+	if deps != nil && len(deps.Requires) > 0 {
+		customExtensions[extensions.DependenciesKey] = deps
+	}
+
+	// Add entries for each required extension
+	for _, ext := range c.Manifest.Required {
+		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
+	}
+
+	return customExtensions
+}
+
+func (c *ManifestConverter) generateRequiredExtensions() []string {
+	requiredExtensions := []string{}
+
+	// Add the appropriate dependencies key if applicable
+	if len(c.Manifest.Dependencies) > 0 {
+		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
+	}
+
+	// Add all under required section of manifest
+	for _, ext := range c.Manifest.Required {
+		requiredExtensions = append(requiredExtensions, lookupExtensionKey(ext.Name))
+	}
+
+	return requiredExtensions
+}
+
+// lookupExtensionKey is a helper method to return a full key matching a
+// supported extension, if applicable
+func lookupExtensionKey(name string) string {
+	key := name
+	// If an official supported extension, we grab the full key
+	supportedExt, err := extensions.GetSupportedExtension(name)
+	if err != nil {
+		// TODO: Issue linter warning
+	} else {
+		key = supportedExt.Key
+	}
+	return key
 }

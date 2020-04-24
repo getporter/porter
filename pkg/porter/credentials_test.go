@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,15 +24,19 @@ import (
 
 func TestGenerateNoName(t *testing.T) {
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	opts := CredentialOptions{
 		Silent: true,
 	}
+	opts.CNABFile = "/bundle.json"
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
-	err := p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
-	creds, err := p.Credentials.Read("testbundle")
+
+	creds, err := p.Credentials.Read("HELLO_CUSTOM")
 	require.NoError(t, err, "expected credential to have been generated")
 	var zero time.Time
 	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
@@ -39,10 +44,15 @@ func TestGenerateNoName(t *testing.T) {
 }
 func TestGenerateNotSilent(t *testing.T) {
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	core.DisableColor = true
-	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout())
+
+	logFileName := fmt.Sprintf("%s.log", t.Name())
+	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	require.NoError(t, err)
+	defer logFile.Close()
+	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout(logFile))
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -50,20 +60,30 @@ func TestGenerateNotSilent(t *testing.T) {
 	opts := CredentialOptions{
 		Silent: false,
 	}
+	opts.CNABFile = "/bundle.json"
+	err = opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
 	donec := make(chan struct{})
 
 	go func() {
 		defer close(donec)
 
-		c.ExpectString("Enter credential identifier name (testbundle) ")
+		c.ExpectString("Enter credential identifier name ")
 		c.Send(string(terminal.KeyEnter))
 
-		c.ExpectString("How would you like to set credential \"name\"")
+		c.ExpectString("How would you like to set credential \"my-first-cred\"")
 		c.Send(string(terminal.KeyEnter))
 
-		c.ExpectString("Enter the environment variable that will be used to set credential \"name\" ")
+		c.ExpectString("Enter the environment variable that will be used to set credential \"my-first-cred\" ")
 		c.SendLine("ENV_NAME")
+
+		c.ExpectString("How would you like to set credential \"my-second-cred\"")
+		c.Send(string(terminal.KeyArrowDown))
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectString("Enter the path that will be used to set credential \"my-second-cred\" ")
+		c.SendLine("~/somepath/somefile")
 
 		c.ExpectEOF()
 	}()
@@ -74,20 +94,23 @@ func TestGenerateNotSilent(t *testing.T) {
 	<-donec
 
 	require.NoError(t, err, "no error should have existed")
-	_, err = p.Credentials.Read("testbundle")
+	_, err = p.Credentials.Read("HELLO_CUSTOM")
 	require.NoError(t, err, "expected credential to have been generated")
 }
 
 func TestGenerateNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	opts := CredentialOptions{
 		Silent: true,
 	}
 	opts.Name = "kool-kred"
+	opts.CNABFile = "/bundle.json"
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
-	err := p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
 	_, err = p.Credentials.Read("kool-kred")
 	require.NoError(t, err, "expected credential to have been generated")
@@ -95,14 +118,17 @@ func TestGenerateNameProvided(t *testing.T) {
 
 func TestGenerateBadNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	opts := CredentialOptions{
 		Silent: true,
 	}
 	opts.Name = "this.isabadname"
+	opts.CNABFile = "/bundle.json"
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
-	err := p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(opts)
 	require.Error(t, err, "name is invalid, we should have had an error")
 	_, err = p.Credentials.Read("this.isabadname")
 	require.Error(t, err, "expected credential to not exist")
@@ -146,8 +172,6 @@ func TestCredentialsList_None(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-
-			p.CNAB = &TestCNABProvider{}
 
 			listOpts := ListOptions{}
 			listOpts.Format = tc.format
@@ -198,8 +222,6 @@ kool-kreds   2019-06-24`},
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			p.CNAB = &TestCNABProvider{}
-
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
 			listOpts := ListOptions{}
@@ -218,6 +240,8 @@ kool-kreds   2019-06-24`},
 func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p := NewTestPorter(t)
 	home := p.UseFilesystem()
+	p.CreateBundleDir()
+	p.TestConfig.TestContext.CopyFile("testdata/bundle.json", filepath.Join(p.BundleDir, "bundle.json"))
 
 	// Write credentials to the real file system for this test, not sure if this test is worth keeping
 	fsStore := crud.NewFileSystemStore(home, "json")
@@ -225,12 +249,14 @@ func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p.TestCredentials.CredentialStorage.CredentialsStore = &credStore
 
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = &TestCNABProvider{}
-
 	opts := CredentialOptions{
 		Silent: true,
 	}
 	opts.Name = "name"
+	opts.CNABFile = filepath.Join(p.BundleDir, "bundle.json")
+
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
 	// Check if the credentials directory exists in the FS. It shouldn't.
 	credDir := filepath.Join(home, "credentials")
@@ -255,12 +281,16 @@ func TestGenerateNoCredentialDirectory(t *testing.T) {
 func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = &TestCNABProvider{}
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	opts := CredentialOptions{
 		Silent: true,
 	}
 	opts.Name = "name"
+	opts.CNABFile = "/bundle.json"
+
+	err := opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate failed")
 
 	// Create the credentials directory
 	home, err := p.Config.GetHomeDir()
@@ -276,14 +306,14 @@ func TestGenerateCredentialDirectoryExists(t *testing.T) {
 
 	// Generate the credential now. The directory does exist, so there should be no error.
 	err = p.GenerateCredentials(opts)
-	assert.NoError(t, err, "credential generation should have been successful")
+	require.NoError(t, err, "credential generation should have been successful")
 	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
-	assert.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
+	require.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
 	assert.True(t, credDirExists, "should have been a credential directory after the generation")
 
 	// Verify that the credential was actually created.
 	_, err = p.Credentials.Read("name")
-	assert.NoError(t, err, "the credential 'name' was not generated")
+	require.NoError(t, err, "the credential 'name' was not generated")
 }
 
 type CredentialShowTest struct {
@@ -295,8 +325,6 @@ type CredentialShowTest struct {
 func TestShowCredential_NotFound(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = &TestCNABProvider{}
-
 	opts := CredentialShowOptions{
 		PrintOptions: printer.PrintOptions{
 			Format: printer.FormatTable,
@@ -391,8 +419,6 @@ Modified: 2019-06-24
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
 			p.TestConfig.SetupPorterHome()
-			p.CNAB = &TestCNABProvider{}
-
 			opts := CredentialShowOptions{
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
@@ -484,8 +510,6 @@ func TestCredentialsEdit(t *testing.T) {
 	defer os.Unsetenv(test.ExpectedCommandEnv)
 
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
-
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
@@ -502,8 +526,6 @@ func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 	defer os.Unsetenv(test.ExpectedCommandEnv)
 
 	p := NewTestPorter(t)
-	p.CNAB = &TestCNABProvider{}
-
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
@@ -515,21 +537,19 @@ func TestCredentialsDelete(t *testing.T) {
 	testcases := []struct {
 		name       string
 		credName   string
-		wantOutput string
+		wantStderr string
 	}{{
 		name:     "delete",
 		credName: "kool-kreds",
 	}, {
 		name:       "error",
 		credName:   "noop-kreds",
-		wantOutput: "credential set does not exist",
+		wantStderr: "credential set does not exist",
 	}}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			p.CNAB = &TestCNABProvider{}
-
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
 			opts := CredentialDeleteOptions{Name: tc.credName}
@@ -539,8 +559,8 @@ func TestCredentialsDelete(t *testing.T) {
 			_, err = p.TestCredentials.Read(tc.credName)
 			assert.Error(t, err, "credential set still exists")
 
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			assert.Equal(t, tc.wantOutput, strings.TrimSpace(gotOutput))
+			gotOutput := p.TestConfig.TestContext.GetError()
+			assert.Equal(t, tc.wantStderr, strings.TrimSpace(gotOutput))
 		})
 	}
 }

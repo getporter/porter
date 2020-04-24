@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -138,7 +139,7 @@ func genCredentialSurvey(name string, surveyAskOpt survey.AskOpt) (credentials.C
 
 	switch source {
 	case questionSecret:
-		c.Source.Key = "secret"
+		c.Source.Key = secrets.SourceSecret
 		c.Source.Value = value
 	case questionValue:
 		c.Source.Key = host.SourceValue

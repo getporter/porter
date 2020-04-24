@@ -13,6 +13,10 @@ You may set a default value for a configuration value in the config file,
 override it in a shell session with an environment variable and then override
 both in a particular command with a flag.
 
+* [Enable Debug Output](#debug)
+* [Output Formatting](#output)
+* [Allow Docker Host Access](#allow-docker-host-access)
+
 ## Flags
 
 ### Debug
@@ -29,6 +33,23 @@ to the developers.
 supports a different set of allowed outputs though usually there is some
 combination of: `table`, `json` and `yaml`.
 
+### Allow Docker Host Access
+
+`--allow-docker-host-access` controls whether or not the local Docker daemon
+should be made available to executing bundles. This flag is available for the
+following commands: [install], [upgrade], [invoke] and [uninstall]. When this
+value is set to true, bundles are executed in a privileged container with the
+docker socket mounted. This allows you to use Docker from within your bundle,
+such as `docker push`, `docker-compose`, or docker-in-docker.
+
+🚨 **There are security implications to enabling access! You should trust any
+bundles that you execute with this setting enabled as it gives them elevated 
+access to the host machine.**
+
+⚠️️ This configuration setting is only available when you are in an environment 
+that provides access to the local docker daemon. Therefore it does not work with
+the Azure Cloud Shell driver.
+
 ## Environment Variables
 
 Flags have corresponding environment variables that you can use so that you
@@ -42,7 +63,7 @@ commands will act as though the `--debug` flag was passed.
 
 ## Config File
 
-Common flags can be defaulted in the config file. The config file is located in
+Common settings can be defaulted in the config file. The config file is located in
 the PORTER_HOME directory (**~/.porter**), is named **config** and can be in any
 of the following file types: JSON, TOML, YAML, HCL, envfile and Java Properties
 files.
@@ -53,4 +74,10 @@ Below is an example configuration file in TOML
 ```toml
 debug = true
 output = "json"
+allow-docker-host-access = true
 ```
+
+[install]: /cli/porter_install/
+[upgrade]: /cli/porter_upgrade/
+[invoke]: /cli/porter_invoke/
+[uninstall]: /cli/porter_uninstall/

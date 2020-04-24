@@ -14,8 +14,6 @@ import (
 func TestPorter_printOutputsTable(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = NewTestCNABProvider()
-
 	want := `------------------------------
   Name  Type    Value         
 ------------------------------
@@ -37,12 +35,10 @@ func TestPorter_printOutputsTable(t *testing.T) {
 func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = NewTestCNABProvider()
-
 	// Create test claim
 	writeOnly := true
 	claim := claim.Claim{
-		Name: "test",
+		Installation: "test",
 		Bundle: &bundle.Bundle{
 			Definitions: definition.Definitions{
 				"foo": &definition.Schema{
@@ -117,8 +113,6 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 func TestPorter_ListOutputs_Truncation(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.CNAB = NewTestCNABProvider()
-
 	fullOutputValue := "this-lengthy-output-will-be-truncated-if-the-output-format-is-table"
 
 	claim, err := claim.New("test")

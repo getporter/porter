@@ -19,20 +19,20 @@ mixins:
 install:
   - exec:
       description: "Install World"
-      command: bash
-      flags:
-        c: "echo Using Magic Password: {{ bundle.credentials.password }}"
+      command: ./helpers.sh
+      arguments:
+        - "install {{ bundle.credentials.password }}"
 
 upgrade:
   - exec:
       description: "Upgrade to World 2.0"
-      command: bash
-      flags:
-        c: echo World is now at 2.0
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 uninstall:
   - exec:
       description: "Uninstall World"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./helpers.sh
+      arguments:
+        - uninstall

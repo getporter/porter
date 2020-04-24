@@ -64,9 +64,9 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		}
 	}
 
-	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
+	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
 
-	return feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
+	err = feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -109,6 +109,16 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 
 		return nil
 	})
+
+	if err != nil {
+		return errors.Wrapf(err, "failed to traverse the %s directory", opts.SearchDirectory)
+	}
+
+	if len(feed.Index) == 0 {
+		return fmt.Errorf("no mixin binaries found in %s matching the regex %q", opts.SearchDirectory, mixinRegex)
+	}
+
+	return nil
 }
 
 func (feed *MixinFeed) Save(opts GenerateOptions) error {

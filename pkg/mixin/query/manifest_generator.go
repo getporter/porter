@@ -1,0 +1,66 @@
+package query
+
+import (
+	"get.porter.sh/porter/pkg/manifest"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+)
+
+// ManifestGenerator generates mixin input from the manifest contents associated with each mixin.
+type ManifestGenerator struct {
+	Manifest *manifest.Manifest
+}
+
+func NewManifestGenerator(m *manifest.Manifest) *ManifestGenerator {
+	return &ManifestGenerator{
+		Manifest: m,
+	}
+}
+
+var _ MixinInputGenerator = &ManifestGenerator{}
+
+func (g ManifestGenerator) ListMixins() []string {
+	mixinNames := make([]string, len(g.Manifest.Mixins))
+	for i, mixin := range g.Manifest.Mixins {
+		mixinNames[i] = mixin.Name
+	}
+	return mixinNames
+}
+
+func (g ManifestGenerator) BuildInput(mixinName string) ([]byte, error) {
+	input := g.buildInputForMixin(mixinName)
+	inputB, err := yaml.Marshal(input)
+	return inputB, errors.Wrapf(err, "could not marshal mixin build input for %s", mixinName)
+}
+
+func (g ManifestGenerator) buildInputForMixin(mixinName string) BuildInput {
+	input := BuildInput{
+		Actions: make(map[string]interface{}, 3),
+	}
+
+	for _, mixinDecl := range g.Manifest.Mixins {
+		if mixinName == mixinDecl.Name {
+			input.Config = mixinDecl.Config
+		}
+	}
+
+	filterSteps := func(action manifest.Action, steps manifest.Steps) {
+		mixinSteps := manifest.Steps{}
+		for _, step := range steps {
+			if step.GetMixinName() != mixinName {
+				continue
+			}
+			mixinSteps = append(mixinSteps, step)
+		}
+		input.Actions[string(action)] = mixinSteps
+	}
+	filterSteps(manifest.ActionInstall, g.Manifest.Install)
+	filterSteps(manifest.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(manifest.ActionUninstall, g.Manifest.Uninstall)
+
+	for action, steps := range g.Manifest.CustomActions {
+		filterSteps(manifest.Action(action), steps)
+	}
+
+	return input
+}

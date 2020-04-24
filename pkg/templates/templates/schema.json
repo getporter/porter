@@ -129,7 +129,7 @@
       },
       "additionalProperties": false
     },
-    "image" :{
+    "image": {
       "description": "An image represents an application image used in a bundle",
       "type": "object",
       "properties": {
@@ -233,6 +233,30 @@
       "description": "Dependent bundles that must be executed with the bundle",
       "type": "object"
     },
+    "required": {
+      "description": "Required extensions for this bundle",
+      "type": "array",
+      "items": [
+        {
+          "type": ["string","object"],
+          "properties": {
+            "docker": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "type": "object",
+              "properties": {
+                "privileged": {
+                  "description": "Option to set the --privileged flag when running the Docker container",
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "uniqueItems": true,
+      "additionalItems": true
+    },
     "uninstall": {
       "type": "array",
       "items": {
@@ -268,5 +292,5 @@
       "anyOf": []
     }
   },
-  "required": ["name", "version", "invocationImage", "mixins"]
+  "required": ["name", "version", "mixins"]
 }

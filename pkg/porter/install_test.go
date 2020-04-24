@@ -3,6 +3,11 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/manifest"
+
+	"get.porter.sh/porter/pkg/secrets"
+
+	"github.com/cnabio/cnab-go/credentials"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +35,9 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
-	assert.Equal(t, p.Manifest.Name, opts.Name)
+	assert.NotNil(t, p.Manifest, "Manifest should be loaded")
+	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
+	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
 
 	debug, set := opts.combinedParameters["porter-debug"]
 	assert.True(t, set)
@@ -47,7 +54,8 @@ func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
-	assert.Equal(t, "", opts.Name)
+	assert.Equal(t, "", opts.Name, "opts.Name should be empty because the manifest was not available to default from")
+	assert.Equal(t, &manifest.Manifest{}, p.Manifest, "p.Manifest should be initialized to an empty manifest")
 }
 
 func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
@@ -169,8 +177,8 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		wantDriver string
 		wantError  string
 	}{
-		{"debug", "debug", "debug", ""},
-		{"docker", "docker", "docker", ""},
+		{"debug", "debug", DebugDriver, ""},
+		{"docker", "docker", DockerDriver, ""},
 		{"invalid driver provided", "dbeug", "", "unsupported driver or driver not found in PATH: dbeug"},
 	}
 
@@ -193,4 +201,38 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
+	p := NewTestPorter(t)
+
+	cacheDir, _ := p.Cache.GetCacheDir()
+	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
+
+	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
+	cs := credentials.CredentialSet{
+		Name: "wordpress",
+		Credentials: []credentials.CredentialStrategy{
+			{
+				Name: "kubeconfig",
+				Source: credentials.Source{
+					Key:   secrets.SourceSecret,
+					Value: "kubeconfig",
+				},
+			},
+		},
+	}
+	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
+	err := p.Credentials.Save(cs)
+	require.NoError(t, err, "Credentials.Save failed")
+
+	opts := InstallOptions{}
+	opts.Tag = "getporter/wordpress:v0.1.2"
+	opts.CredentialIdentifiers = []string{"wordpress"}
+	opts.Params = []string{"wordpress-password=mypassword"}
+	err = opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate install options failed")
+
+	err = p.InstallBundle(opts)
+	require.NoError(t, err, "InstallBundle failed")
 }

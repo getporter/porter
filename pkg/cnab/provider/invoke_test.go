@@ -148,8 +148,8 @@ func Test_ClaimLoading(t *testing.T) {
 				temp: true,
 				err:  nil,
 				claim: &claim.Claim{
-					Name:   "nonexistent",
-					Bundle: bun,
+					Installation: "nonexistent",
+					Bundle:       bun,
 				},
 			},
 		},
@@ -189,21 +189,32 @@ func Test_ClaimLoading(t *testing.T) {
 			want: result{
 				claim: eClaim,
 				temp:  false,
-				err:   errors.Wrap(claim.ErrClaimNotFound, "could not load claim nonexist"),
+				err:   errors.Wrap(claim.ErrClaimNotFound, "could not load bundle instance nonexist"),
 			},
 		},
 	}
 
 	for _, tc := range tests {
-		in := tc.in
-		want := tc.want
-		_, temp, err := d.getClaim(in.bun, in.action, in.claim)
-		assert.Equalf(t, want.temp, temp, "%s: expected temp=want.temp", tc.name)
-		if want.err == nil {
-			assert.NoErrorf(t, err, "%s: expected no error", tc.name)
-		} else {
-			assert.Errorf(t, err, "%s: expected error", tc.name)
-			assert.EqualErrorf(t, want.err, err.Error(), "%s: expected error %s, got %s", tc.name, want.err, err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			in := tc.in
+			want := tc.want
+			_, temp, err := d.getClaim(in.bun, in.action, in.claim)
+			assert.Equalf(t, want.temp, temp, "getClaim returned an unexpected temporary flag")
+			if want.err == nil {
+				assert.NoErrorf(t, err, "getClaim failed")
+			} else {
+				assert.EqualErrorf(t, err, want.err.Error(), "getClaim returned an unexpected error")
+			}
+		})
 	}
+}
+
+func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
+	r := NewTestRuntime(t)
+
+	args := ActionArguments{
+		Claim: "mybuns",
+	}
+	err := r.Invoke("custom-action", args)
+	require.EqualError(t, err, "could not load bundle instance mybuns: Claim does not exist")
 }

@@ -19,7 +19,8 @@ out a particular registry and know that it will work for you.
 | Docker Hub | Yes | Yes |
 | Digital Ocean | Yes | Yes |
 | ECR | No |  |
-| GCR | Yes |  |
+| GCR | Yes |  
+| GitHub Packages | No |  | 
 | Nexus | No |  |
 | Quay | No | No
  

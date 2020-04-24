@@ -50,6 +50,7 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 		},
 	}
 	action := Action{
+		Name:  "install",
 		Steps: []Step{step},
 	}
 	b, _ := yaml.Marshal(action)

@@ -17,24 +17,22 @@ customActions:
 install:
   - exec:
       description: "Create a file"
-      command: bash
+      command: ./cluster.sh
       arguments:
-        - generate-config.sh
+        - generate-config
       outputs:
         - name: config
           path: config.json
   - exec:
       description: "Create a file to be captured as a bundle-level output"
-      command: bash
+      command: ./cluster.sh
       arguments:
-        - create-cluster.sh
+        - create-cluster
 
 test:
   - exec:
       description: "Scrape stdout with regex"
-      command: bash
-      arguments:
-        - run-tests.sh
+      command: ./run-tests.sh
       outputs:
         - name: failed-tests
           regex: '--- FAIL: (.*) \(.*\)'
@@ -42,9 +40,9 @@ test:
 status:
   - exec:
       description: "Parse stdout as json"
-      command: bash
+      command: ./cluster.sh
       arguments:
-        - dump-config.sh
+        - dump-config
       outputs:
         - name: user
           jsonPath: '$.user'
@@ -52,9 +50,9 @@ status:
 uninstall:
   - exec:
       description: "Uninstall bundle"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./cluster.sh
+      arguments:
+        - uninstall
 
 outputs:
   - name: config

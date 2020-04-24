@@ -5,6 +5,8 @@ description: Run a command or script
 
 Run a command or script.
 
+✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/best-practices/exec-mixin/)
+
 Source: https://github.com/deislabs/porter/tree/master/pkg/exec
 
 ### Install or Upgrade
@@ -27,6 +29,14 @@ exec:
     repeated-flag:
     - flag-value1
     - flag-value2
+  suppress-output: false
+  outputs:
+  - name: NAME
+    jsonPath: JSONPATH
+  - name: NAME
+    regex: GOLANG_REGULAR_EXPRESSION
+  - name: NAME
+    path: FILEPATH
 ```
 
 This is executed as:
@@ -34,6 +44,17 @@ This is executed as:
 ```
 $ cmd arg1 arg2 -a flag-value --long-flag true --repeated-flag flag-value1 --repeated-flag flag-value2
 ```
+
+### Suppress Output
+
+The `suppress-output` field controls whether output from the mixin should be
+prevented from printing to the console. By default this value is false, using
+Porter's default behavior of hiding known sensitive values. When 
+`suppress-output: true` all output from the mixin (stderr and stdout) are hidden.
+
+Step outputs (below) are still collected when output is suppressed. This allows
+you to prevent sensitive data from being exposed while still collecting it from
+a command and using it in your bundle.
 
 ### Outputs
 
@@ -75,7 +96,6 @@ Then then output would have the following contents:
 
 The `regex` output applies a Go-syntax regular expression to stdout and saves every capture group, one per line, to the output.
 
-
 ```yaml
 outputs:
 - name: NAME
@@ -114,14 +134,16 @@ outputs:
 
 ### Examples
 
+See [exec outputs][exec-outputs] for a full working example.
+
 Run a command
 ```yaml
 install:
 - exec:
     description: "Install Hello World"
-    command: bash
-    flags:
-      c: echo Hello World
+    command: make
+    arguments:
+    - install
 ```
 
 Run a script
@@ -129,10 +151,10 @@ Run a script
 install:
 - exec:
     description: "Install Hello World"
-    command: bash
-    arguments:
-    - ./install-world.sh
+    command: ./install-world.sh
 ```
+
+[exec-outputs]: https://porter.sh/src/examples/exec-outputs/
 
 ### FAQ
 

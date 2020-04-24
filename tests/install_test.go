@@ -31,6 +31,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 
 	// Bring in a porter manifest that has an install action defined
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 
 	installOpts := porter.InstallOptions{}
 	err = installOpts.Validate([]string{}, p.Context)
@@ -48,6 +49,7 @@ func TestInstall_fileParam(t *testing.T) {
 	p.Debug = false
 
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
 
 	installOpts := porter.InstallOptions{}

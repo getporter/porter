@@ -18,12 +18,12 @@ func TestArchive(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/busybox-example/porter.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundles/busybox-example/Dockerfile.tmpl"), "Dockerfile.tmpl")
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), ".")
 
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/deislabs/porter/issues/697
 	publishOpts := porter.PublishOptions{}
+	publishOpts.Tag = "getporterci/mysql:v0.1.2"
 	err := publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
@@ -31,7 +31,6 @@ func TestArchive(t *testing.T) {
 	require.NoError(p.T(), err, "publish of bundle failed")
 
 	// Archive bundle
-
 	archiveOpts := porter.ArchiveOptions{}
 	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Context)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
@@ -44,11 +43,10 @@ func TestArchive(t *testing.T) {
 	require.Equal(p.T(), os.FileMode(0644), info.Mode())
 
 	// Publish bundle from archive, with new tag
-
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
-			Tag: "getporterci/busybox-from-archive:v0.1.0",
+			Tag: "getporterci/mysql-from-archive:v0.1.2",
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)

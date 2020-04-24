@@ -8,6 +8,7 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -19,6 +20,7 @@ type BuildProvider interface {
 
 type BuildOptions struct {
 	contextOptions
+	NoLint bool
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
@@ -27,6 +29,13 @@ func (p *Porter) Build(opts BuildOptions) error {
 	err := p.LoadManifest()
 	if err != nil {
 		return err
+	}
+
+	if !opts.NoLint {
+		err = p.preLint()
+		if err != nil {
+			return err
+		}
 	}
 
 	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
@@ -42,6 +51,31 @@ func (p *Porter) Build(opts BuildOptions) error {
 	}
 
 	return p.buildBundle(p.Manifest.Image, "")
+}
+
+func (p *Porter) preLint() error {
+	lintOpts := LintOptions{}
+	lintOpts.RawFormat = string(printer.FormatPlaintext)
+	err := lintOpts.Validate(p.Context)
+	if err != nil {
+		return err
+	}
+
+	results, err := p.Lint(lintOpts)
+	if err != nil {
+		return err
+	}
+
+	if len(results) > 0 {
+		fmt.Fprintln(p.Out, results.String())
+	}
+
+	if results.HasError() {
+		// An error was found during linting, stop and let the user correct it
+		return errors.New("Lint errors were detected. Rerun with --no-lint ignore the errors.")
+	}
+
+	return nil
 }
 
 func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
@@ -73,7 +107,10 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	}
 
 	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
-	bun := converter.ToBundle()
+	bun, err := converter.ToBundle()
+	if err != nil {
+		return err
+	}
 	return p.writeBundle(bun)
 }
 

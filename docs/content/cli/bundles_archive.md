@@ -30,6 +30,7 @@ porter bundles archive [flags]
 ```
       --cnab-file string   Path to the CNAB bundle.json file.
   -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force              Force a fresh pull of the bundle
   -h, --help               help for archive
   -t, --tag string         Use a bundle in an OCI registry specified by the given tag
 ```

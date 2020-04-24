@@ -16,4 +16,4 @@ _Put any questions or notes for the reviewer here._
 # Checklist
 - [ ] Unit Tests
 - [ ] Documentation
-  - [ ] Documentation Not Impacted
+- [ ] Schema (porter.yaml)

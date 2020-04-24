@@ -2,7 +2,6 @@ package cnabprovider
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -51,7 +50,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
-func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
+func Test_loadParameters_applyTo(t *testing.T) {
 	d := NewTestRuntime(t)
 
 	claim, err := claim.New("test")
@@ -110,7 +109,7 @@ func Test_loadParameters_applyToClaimDefaults(t *testing.T) {
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
 	require.Equal(t, 456, params["bar"], "expected param 'bar' to be updated")
-	require.Equal(t, true, params["true"], "expected param 'true' to represent the preexisting claim value")
+	require.Equal(t, nil, params["true"], "expected param 'true' to be nil as it does not apply")
 }
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
@@ -143,7 +142,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	params, err := d.loadParameters(claim, overrides, "action")
 	require.NoError(t, err)
 
-	require.Equal(t, "foo-default", params["foo"], "expected param 'foo' to be the bundle default")
+	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
 }
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
@@ -178,57 +177,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	params, err := d.loadParameters(claim, overrides, "action")
 	require.NoError(t, err)
 
-	require.Equal(t, "foo-claim-value", params["foo"], "expected param 'foo' to be the previous value from the claim")
-}
-
-func Test_loadParameters_zeroValues(t *testing.T) {
-	var emptyStruct struct{}
-
-	testcases := []struct {
-		paramType   string
-		expectedVal interface{}
-	}{
-		{"integer", 0},
-		{"number", 0},
-		{"string", ""},
-		{"boolean", false},
-		{"array", []interface{}{}},
-		{"object", emptyStruct},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.paramType, func(t *testing.T) {
-			d := NewTestRuntime(t)
-
-			claim, err := claim.New("test")
-			require.NoError(t, err)
-
-			claim.Bundle = &bundle.Bundle{
-				Definitions: definition.Definitions{
-					"foo": &definition.Schema{
-						Type: tc.paramType,
-					},
-				},
-				Parameters: map[string]bundle.Parameter{
-					"foo": bundle.Parameter{
-						Definition: "foo",
-						ApplyTo: []string{
-							"different-action",
-						},
-						Required: true,
-					},
-				},
-			}
-
-			claim.Parameters = map[string]interface{}{}
-			overrides := map[string]string{}
-
-			params, err := d.loadParameters(claim, overrides, "action")
-			require.NoError(t, err)
-
-			require.Equal(t, tc.expectedVal, params["foo"], "unexpected value for param 'foo")
-		})
-	}
+	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
 }
 
 func Test_loadParameters_fileParameter(t *testing.T) {
@@ -287,13 +236,13 @@ func Test_Paramapalooza(t *testing.T) {
 					true, true, true, true, "my-param-value", "",
 				},
 				{"required, provided, default exists, does not apply to action",
-					true, true, true, false, "my-param-value", "",
+					true, true, true, false, nil, "",
 				},
 				{"required, provided, default does not exist, applies to action",
 					true, true, false, true, "my-param-value", "",
 				},
 				{"required, provided, default does not exist, does not apply to action",
-					true, true, false, false, "my-param-value", "",
+					true, true, false, false, nil, "",
 				},
 				// As of writing, bundle.ValuesOrDefaults in cnab-go requires a specific override
 				// be provided if applicable to an action.
@@ -302,31 +251,31 @@ func Test_Paramapalooza(t *testing.T) {
 					true, false, true, true, nil, "invalid parameters: parameter \"my-param\" is required",
 				},
 				{"required, not provided, default exists, does not apply to action",
-					true, false, true, false, "my-param-default", "",
+					true, false, true, false, nil, "",
 				},
 				{"required, not provided, default does not exist, applies to action",
 					true, false, false, true, nil, "invalid parameters: parameter \"my-param\" is required",
 				},
 				{"required, not provided, default does not exist, does not apply to action",
-					true, false, false, false, "", "",
+					true, false, false, false, nil, "",
 				},
 				{"not required, provided, default exists, applies to action",
 					false, true, true, true, "my-param-value", "",
 				},
 				{"not required, provided, default exists, does not apply to action",
-					false, true, true, false, "my-param-value", "",
+					false, true, true, false, nil, "",
 				},
 				{"not required, provided, default does not exist, applies to action",
 					false, true, false, true, "my-param-value", "",
 				},
 				{"not required, provided, default does not exist, does not apply to action",
-					false, true, false, false, "my-param-value", "",
+					false, true, false, false, nil, "",
 				},
 				{"not required, not provided, default exists, applies to action",
 					false, false, true, true, "my-param-default", "",
 				},
 				{"not required, not provided, default exists, does not apply to action",
-					false, false, true, false, "my-param-default", "",
+					false, false, true, false, nil, "",
 				},
 				{"not required, not provided, default does not exist, applies to action",
 					false, false, false, true, nil, "",
@@ -363,9 +312,12 @@ func Test_Paramapalooza(t *testing.T) {
 							},
 						},
 						Parameters: map[string]bundle.Parameter{
-							"my-param": bundle.Parameter{
+							"my-param": {
 								Definition: "my-param",
 								Required:   tc.required,
+								Destination: &bundle.Location{
+									EnvironmentVariable: "MY_PARAM",
+								},
 							},
 						},
 					}
@@ -381,8 +333,7 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
-						Claim:  "test",
-						Driver: "debug",
+						Claim: "test",
 					}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args
@@ -398,12 +349,10 @@ func Test_Paramapalooza(t *testing.T) {
 						bytes, err := json.Marshal(bun)
 						require.NoError(t, err)
 
-						// We currently need to read/write from the same file on disk
-						// as cnab-go's bundle loader still makes raw os calls for loading a bundle
-						err = ioutil.WriteFile("testdata/bundle.json", bytes, 0644)
+						err = d.FileSystem.WriteFile("bundle.json", bytes, 0644)
 						require.NoError(t, err)
 
-						args.BundlePath = "testdata/bundle.json"
+						args.BundlePath = "bundle.json"
 					} else {
 						// For all other actions, a claim is expected to exist
 						// so we create one here and add the bundle to the claim

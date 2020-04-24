@@ -53,6 +53,8 @@ type Manifest struct {
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
 	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
 	ImageMap map[string]MappedImage `yaml:"images,omitempty"`
+
+	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
 func (m *Manifest) Validate() error {
@@ -521,25 +523,16 @@ func (m *Manifest) SetDefaults() {
 	}
 }
 
-func readFromFile(cxt *context.Context, path string) (*Manifest, error) {
+func readFromFile(cxt *context.Context, path string) ([]byte, error) {
 	if exists, _ := cxt.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
 	}
 
 	data, err := cxt.FileSystem.ReadFile(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not read manifest at %q", path)
-	}
-
-	m, err := UnmarshalManifest(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
+	return data, errors.Wrapf(err, "could not read manifest at %q", path)
 }
 
-func readFromURL(path string) (*Manifest, error) {
+func readFromURL(path string) ([]byte, error) {
 	resp, err := http.Get(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not reach url %s", path)
@@ -547,8 +540,23 @@ func readFromURL(path string) (*Manifest, error) {
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
+	return data, errors.Wrapf(err, "could not read from url %s", path)
+}
+
+func ReadManifestData(cxt *context.Context, path string) ([]byte, error) {
+	if strings.HasPrefix(path, "http") {
+		return readFromURL(path)
+	} else {
+		return readFromFile(cxt, path)
+	}
+}
+
+// ReadManifest determines if specified path is a URL or a filepath.
+// After reading the data in the path it returns a Manifest and any errors
+func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
+	data, err := ReadManifestData(cxt, path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read from url %s", path)
+		return nil, err
 	}
 
 	m, err := UnmarshalManifest(data)
@@ -556,26 +564,6 @@ func readFromURL(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	return m, nil
-}
-
-// ReadManifest determines if specified path is a URL or a filepath.
-// After reading the data in the path it returns a Manifest and any errors
-func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
-	var (
-		m   *Manifest
-		err error
-	)
-
-	if strings.HasPrefix(path, "http") {
-		m, err = readFromURL(path)
-	} else {
-		m, err = readFromFile(cxt, path)
-	}
-
-	if err != nil {
-		return nil, err
-	}
 	m.SetDefaults()
 	m.ManifestPath = path
 
@@ -594,4 +582,48 @@ func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
 	}
 
 	return m, nil
+}
+
+// RequiredExtension represents a custom extension that is required
+// in order for a bundle to work correctly
+type RequiredExtension struct {
+	Name   string
+	Config map[string]interface{}
+}
+
+// UnmarshalYAML allows required extensions to either be a normal list of strings
+// required:
+// - docker
+// or allow some entries to have config data defined
+// - vpn:
+//     name: mytrustednetwork
+func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// First try to just read the mixin name
+	var extNameOnly string
+	err := unmarshal(&extNameOnly)
+	if err == nil {
+		r.Name = extNameOnly
+		r.Config = nil
+		return nil
+	}
+
+	// Next try to read a required extension with config defined
+	extWithConfig := map[string]map[string]interface{}{}
+	err = unmarshal(&extWithConfig)
+	if err != nil {
+		return errors.Wrap(err, "could not unmarshal raw yaml of required extensions")
+	}
+
+	if len(extWithConfig) == 0 {
+		return errors.New("required extension was empty")
+	} else if len(extWithConfig) > 1 {
+		return errors.New("required extension contained more than one extension")
+	}
+
+	for extName, config := range extWithConfig {
+		r.Name = extName
+		r.Config = config
+		break // There is only one extension anyway but break for clarity
+	}
+	return nil
 }

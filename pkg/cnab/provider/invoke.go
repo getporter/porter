@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
@@ -20,14 +21,14 @@ func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*c
 			if action, ok := bun.Actions[actionName]; ok {
 				if action.Stateless {
 					c = claim.Claim{
-						Name:   claimName,
-						Bundle: bun,
+						Installation: claimName,
+						Bundle:       bun,
 					}
 					return &c, true, nil
 				}
 			}
 		}
-		return nil, false, errors.Wrapf(err, "could not load claim %s", claimName)
+		return nil, false, errors.Wrapf(err, "could not load bundle instance %s", claimName)
 	}
 	return &c, false, nil
 }
@@ -53,6 +54,9 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	}
 
 	c, isTemp, err := d.getClaim(bun, action, args.Claim)
+	if err != nil {
+		return err
+	}
 
 	// Here we need to check this again
 	// If provided, we should set the bundle on the claim accordingly
@@ -60,12 +64,18 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		c.Bundle = bun
 	}
 
+	exts, err := extensions.ProcessRequiredExtensions(c.Bundle)
+	if err != nil {
+		return errors.Wrap(err, "unable to process required extensions")
+	}
+	d.Extensions = exts
+
 	c.Parameters, err = d.loadParameters(c, args.Params, action)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Name, args)
+	driver, err := d.newDriver(args.Driver, c.Installation, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -91,7 +101,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		for k := range c.Parameters {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Installation, paramKeys, credKeys)
 	}
 
 	var result *multierror.Error

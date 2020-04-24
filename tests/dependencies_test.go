@@ -4,6 +4,7 @@ package tests
 
 import (
 	"math/rand"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -41,11 +42,13 @@ func randomString(len int) string {
 }
 
 func publishMySQLBundle(p *porter.TestPorter) {
-	mysqlBundlePath := filepath.Join(p.TestDir, "../build/testdata/bundles/mysql/porter.yaml")
-	p.CopyFile(mysqlBundlePath, "porter.yaml")
+	mysqlBundlePath := filepath.Join(p.TestDir, "../build/testdata/bundles/mysql")
+	err := os.Chdir(mysqlBundlePath)
+	require.NoError(p.T(), err, "could not change into the test mysql bundle directory")
+	defer os.Chdir(p.BundleDir)
 
 	publishOpts := porter.PublishOptions{}
-	err := publishOpts.Validate(p.Context)
+	err = publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(publishOpts)
@@ -57,7 +60,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	publishMySQLBundle(p)
 
 	// Install the bundle that has dependencies
-	p.CopyFile(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress/porter.yaml"), "porter.yaml")
+	p.CopyDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress"), ".", false)
 
 	namespace = randomString(10)
 	installOpts := porter.InstallOptions{}
@@ -67,8 +70,6 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-		// TODO: Remove this once we put back in dependency parameter defaults in #800
-		"mysql#mysql-user=wordpress",
 	}
 	err := installOpts.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
@@ -117,8 +118,6 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-		// TODO: Remove this once we put back in dependency parameter defaults in #800
-		"mysql#mysql-user=wordpress",
 	}
 	err := upgradeOpts.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of upgrade opts for root bundle failed")
@@ -147,8 +146,6 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-		// TODO: Remove this once we put back in dependency parameter defaults in #800
-		"mysql#mysql-user=wordpress",
 	}
 	err := invokeOpts.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of invoke opts for root bundle failed")
@@ -177,8 +174,6 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-		// TODO: Remove this once we put back in dependency parameter defaults in #800
-		"mysql#mysql-user=wordpress",
 	}
 	err := uninstallOptions.Validate([]string{}, p.Context)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")

@@ -17,9 +17,9 @@ mixins:
 install:
   - exec:
       description: "Install Example"
-      command: bash
-      flags:
-        c: "echo Run 'porter invoke --action=help' next to see sfctl in action"
+      command: ./helpers.sh
+      arguments:
+        - install
 
 help:
   - exec:
@@ -31,13 +31,13 @@ help:
 upgrade:
   - exec:
       description: "Upgrading to World 2.0"
-      command: bash
-      flags:
-        c: echo World 2.0 is now
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 uninstall:
   - exec:
       description: "Uninstall Example"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./helpers.sh
+      arguments:
+        - uninstall

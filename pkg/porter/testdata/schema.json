@@ -419,6 +419,33 @@
       },
       "type": "array"
     },
+    "required": {
+      "additionalItems": true,
+      "description": "Required extensions for this bundle",
+      "items": [
+        {
+          "properties": {
+            "docker": {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "additionalProperties": false,
+              "properties": {
+                "privileged": {
+                  "description": "Option to set the --privileged flag when running the Docker container",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": [
+            "string",
+            "object"
+          ]
+        }
+      ],
+      "type": "array",
+      "uniqueItems": true
+    },
     "tag": {
       "description": "The tag to use when the bundle is published to an OCI registry",
       "type": "string"
@@ -451,7 +478,6 @@
   "required": [
     "name",
     "version",
-    "invocationImage",
     "mixins"
   ],
   "type": "object"

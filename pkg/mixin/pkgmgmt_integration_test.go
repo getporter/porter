@@ -9,8 +9,8 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func TestPackageManager_GetSchema(t *testing.T) {

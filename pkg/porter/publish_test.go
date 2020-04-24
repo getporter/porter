@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/docker/cnab-to-oci/relocation"
-	"github.com/pivotal/image-relocation/pkg/image"
+	"get.porter.sh/porter/pkg/cache"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
+	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -66,7 +67,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
 
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Name: "mybuns",
 		InvocationImages: []bundle.InvocationImage{
 			{
@@ -112,29 +113,28 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 func TestPublish_RefreshCachedBundle(t *testing.T) {
 	p := NewTestPorter(t)
 
-	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
-	rm := relocation.ImageRelocationMap{}
 
 	// No-Op; bundle does not yet exist in cache
-	err := p.refreshCachedBundle(bun, tag, rm)
+	err := p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
 
 	// Save bundle in cache
-	bunPath, _, err := p.Cache.StoreBundle(tag, bun, rm)
+	cachedBundle, err := p.Cache.StoreBundle(tag, bun, nil)
 	require.NoError(t, err, "should have successfully stored bundle")
 
 	// Get file mod time
-	file, err := p.FileSystem.Stat(bunPath)
+	file, err := p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	origBunPathTime := file.ModTime()
 
 	// Should refresh cache
-	p.refreshCachedBundle(bun, tag, rm)
+	err = p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have successfully updated the cache")
 
 	// Get file mod time
-	file, err = p.FileSystem.Stat(bunPath)
+	file, err = p.FileSystem.Stat(cachedBundle.BundlePath)
 	require.NoError(t, err)
 	updatedBunPathTime := file.ModTime()
 
@@ -145,23 +145,21 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	p := NewTestPorter(t)
-	mc := mockCache{
-		findBundleMock: func(tag string) (string, string, bool, error) {
-			return "", "", true, nil
-		},
-		storeBundleMock: func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error) {
-			return "", "", errors.New("error trying to store bundle")
-		},
-	}
-	p.Porter.Cache = &mc
-
-	bun := &bundle.Bundle{Name: "myreg/mybuns"}
+	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
-	rm := relocation.ImageRelocationMap{}
 
-	err := p.refreshCachedBundle(bun, tag, rm)
+	p.TestCache.FindBundleMock = func(s string) (cachedBundle cache.CachedBundle, found bool, err error) {
+		// force the bundle to be found
+		return cache.CachedBundle{}, true, nil
+	}
+	p.TestCache.StoreBundleMock = func(s string, b bundle.Bundle, relocationMap *relocation.ImageRelocationMap) (cachedBundle cache.CachedBundle, err error) {
+		// sabotage the bundle refresh
+		return cache.CachedBundle{}, errors.New("error trying to store bundle")
+	}
+
+	err := p.refreshCachedBundle(bun, tag, nil)
 	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
 
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotOutput)
+	gotStderr := p.TestConfig.TestContext.GetError()
+	require.Equal(t, "warning: unable to update cache for bundle myreg/mybuns: error trying to store bundle\n", gotStderr)
 }

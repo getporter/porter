@@ -8,15 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/pkgmgmt"
-
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/mixin/query"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/templates"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type DockerfileGenerator struct {
@@ -168,65 +165,20 @@ func (g *DockerfileGenerator) buildCMDSection() string {
 }
 
 func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
+	q := query.New(g.Context, g.Mixins)
+	q.RequireAllMixinResponses = true
+	q.LogMixinErrors = true
+	results, err := q.Execute("build", query.NewManifestGenerator(g.Manifest))
+	if err != nil {
+		return nil, err
+	}
+
 	lines := make([]string, 0)
-	for _, m := range g.Manifest.Mixins {
-		// Copy the existing context and tweak to pipe the output differently
-		mixinStdout := &bytes.Buffer{}
-		var mixinContext context.Context
-		mixinContext = *g.Context
-		mixinContext.Out = mixinStdout   // mixin stdout -> dockerfile lines
-		mixinContext.Err = g.Context.Out // mixin stderr -> logs
-
-		inputB, err := yaml.Marshal(g.getMixinBuildInput(m.Name))
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not marshal mixin build input for %s", m.Name)
-		}
-
-		cmd := pkgmgmt.CommandOptions{
-			Command: "build",
-			Input:   string(inputB),
-		}
-		err = g.Mixins.Run(&mixinContext, m.Name, cmd)
-		if err != nil {
-			return nil, err
-		}
-
-		l := strings.Split(mixinStdout.String(), "\n")
+	for _, result := range results {
+		l := strings.Split(result, "\n")
 		lines = append(lines, l...)
 	}
 	return lines, nil
-}
-
-func (g *DockerfileGenerator) getMixinBuildInput(m string) mixin.BuildInput {
-	input := mixin.BuildInput{
-		Actions: make(map[string]interface{}, 3),
-	}
-
-	for _, mixinDecl := range g.Manifest.Mixins {
-		if m == mixinDecl.Name {
-			input.Config = mixinDecl.Config
-		}
-	}
-
-	filterSteps := func(action manifest.Action, steps manifest.Steps) {
-		mixinSteps := manifest.Steps{}
-		for _, step := range steps {
-			if step.GetMixinName() != m {
-				continue
-			}
-			mixinSteps = append(mixinSteps, step)
-		}
-		input.Actions[string(action)] = mixinSteps
-	}
-	filterSteps(manifest.ActionInstall, g.Manifest.Install)
-	filterSteps(manifest.ActionUpgrade, g.Manifest.Upgrade)
-	filterSteps(manifest.ActionUninstall, g.Manifest.Uninstall)
-
-	for action, steps := range g.Manifest.CustomActions {
-		filterSteps(manifest.Action(action), steps)
-	}
-
-	return input
 }
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {

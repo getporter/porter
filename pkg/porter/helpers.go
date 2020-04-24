@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	buildprovider "get.porter.sh/porter/pkg/build/provider"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
@@ -18,10 +17,8 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/docker/cnab-to-oci/relocation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -31,9 +28,13 @@ type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
 	TestCredentials *credentials.TestCredentialProvider
+	TestCache       *cache.TestCache
 
 	// original directory where the test was being executed
 	TestDir string
+
+	// directory where the integration test is being executed
+	BundleDir string
 
 	// tempDirectories that need to be cleaned up at the end of the testRun
 	cleanupDirs []string
@@ -43,41 +44,41 @@ type TestPorter struct {
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
+	testCache := cache.NewTestCache(cache.New(tc.Config))
+	testClaims := claims.NewTestClaimProvider()
+
 	p := New()
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
-	p.Cache = cache.New(tc.Config)
+	p.Cache = testCache
 	p.Builder = NewTestBuildProvider()
-	p.Claims = claims.NewTestClaimProvider()
+	p.Claims = testClaims
 	p.Credentials = testCredentials
-	p.CNAB = cnabprovider.NewRuntime(tc.Config, p.Claims, p.Credentials)
+	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials)
 
 	return &TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
 		TestCredentials: &testCredentials,
+		TestCache:       testCache,
 	}
 }
 
 func (p *TestPorter) SetupIntegrationTest() {
 	t := p.TestConfig.TestContext.T
 
+	// Undo changes above to make a unit test friendly Porter, so we hit the host
+	p.Porter = NewWithConfig(p.Config)
 	p.NewCommand = exec.Command
-	p.Builder = buildprovider.NewDockerBuilder(p.Context)
-	p.Mixins = mixin.NewPackageManager(p.Config)
-	p.Plugins = plugins.NewPackageManager(p.Config)
 	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
 	homeDir := p.UseFilesystem()
 	p.TestConfig.SetupIntegrationTest(homeDir)
-
-	bundleDir, err := ioutil.TempDir("", "bundle")
-	require.NoError(t, err)
-	p.cleanupDirs = append(p.cleanupDirs, homeDir)
+	bundleDir := p.CreateBundleDir()
 
 	p.TestDir, _ = os.Getwd()
-	err = os.Chdir(bundleDir)
+	err := os.Chdir(bundleDir)
 	require.NoError(t, err)
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
@@ -110,6 +111,16 @@ func (p *TestPorter) UseFilesystem() string {
 	return homeDir
 }
 
+func (p *TestPorter) CreateBundleDir() string {
+	bundleDir, err := ioutil.TempDir("", "bundle")
+	require.NoError(p.T(), err)
+
+	p.BundleDir = bundleDir
+	p.cleanupDirs = append(p.cleanupDirs, p.BundleDir)
+
+	return bundleDir
+}
+
 func (p *TestPorter) T() *testing.T {
 	return p.TestConfig.TestContext.T
 }
@@ -122,62 +133,6 @@ func (p *TestPorter) CleanupIntegrationTest() {
 	}
 
 	os.Chdir(p.TestDir)
-}
-
-// If you seek a mock cache for testing, use this
-type mockCache struct {
-	findBundleMock        func(string) (string, string, bool, error)
-	storeBundleMock       func(string, *bundle.Bundle, relocation.ImageRelocationMap) (string, string, error)
-	getBundleCacheDirMock func() (string, error)
-}
-
-func (b *mockCache) FindBundle(tag string) (string, string, bool, error) {
-	return b.findBundleMock(tag)
-}
-
-func (b *mockCache) StoreBundle(tag string, bun *bundle.Bundle, relo relocation.ImageRelocationMap) (string, string, error) {
-	return b.storeBundleMock(tag, bun, relo)
-}
-
-func (b *mockCache) GetCacheDir() (string, error) {
-	return b.GetCacheDir()
-}
-
-type TestCNABProvider struct {
-}
-
-func NewTestCNABProvider() *TestCNABProvider {
-	return &TestCNABProvider{}
-}
-
-func (t *TestCNABProvider) LoadBundle(bundleFile string) (*bundle.Bundle, error) {
-	b := &bundle.Bundle{
-		Name: "testbundle",
-		Credentials: map[string]bundle.Credential{
-			"name": {
-				Location: bundle.Location{
-					EnvironmentVariable: "BLAH",
-				},
-			},
-		},
-	}
-	return b, nil
-}
-
-func (t *TestCNABProvider) Install(arguments cnabprovider.ActionArguments) error {
-	return nil
-}
-
-func (t *TestCNABProvider) Upgrade(arguments cnabprovider.ActionArguments) error {
-	return nil
-}
-
-func (t *TestCNABProvider) Invoke(action string, arguments cnabprovider.ActionArguments) error {
-	return nil
-}
-
-func (t *TestCNABProvider) Uninstall(arguments cnabprovider.ActionArguments) error {
-	return nil
 }
 
 type TestBuildProvider struct{}

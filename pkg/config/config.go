@@ -28,7 +28,9 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	CustomBundleKey = "sh.porter"
+	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
+	// It holds all the metadata that Porter includes that is specific to Porter about the bundle.
+	CustomPorterKey = "sh.porter"
 
 	// BundleOutputsDir is the directory where outputs are expected to be placed
 	// during the execution of a bundle action.

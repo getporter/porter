@@ -1,6 +1,8 @@
 package mixin
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -11,6 +13,14 @@ import (
 
 type TestMixinProvider struct {
 	client.TestPackageManager
+
+	// LintResults allows you to provide linter.Results for your unit tests.
+	// It isn't of type linter.Results directly to avoid package cycles
+	LintResults interface{}
+
+	// ReturnBuildError will force the TestMixinProvider to return a build error
+	// if set to true
+	ReturnBuildError bool
 }
 
 // NewTestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real plugins on the file system.
@@ -33,17 +43,25 @@ func NewTestMixinProvider() *TestMixinProvider {
 		},
 	}
 
-	provider.RunAssertions = []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions){
+	provider.RunAssertions = []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error{
 		provider.PrintExecOutput,
 	}
 
 	return &provider
 }
 
-func (p *TestMixinProvider) PrintExecOutput(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) {
-	if commandOpts.Command == "build" {
+func (p *TestMixinProvider) PrintExecOutput(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+	switch commandOpts.Command {
+	case "build":
+		if p.ReturnBuildError {
+			return errors.New("encountered build error")
+		}
 		fmt.Fprintln(pkgContext.Out, "# exec mixin has no buildtime dependencies")
+	case "lint":
+		b, _ := json.Marshal(p.LintResults)
+		fmt.Fprintln(pkgContext.Out, string(b))
 	}
+	return nil
 }
 
 func (p *TestMixinProvider) GetSchema(name string) (string, error) {

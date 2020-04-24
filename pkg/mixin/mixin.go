@@ -6,7 +6,7 @@ import (
 
 func IsCoreMixinCommand(value string) bool {
 	switch value {
-	case "install", "upgrade", "uninstall", "build", "schema", "version":
+	case "install", "upgrade", "uninstall", "build", "lint", "schema", "version":
 		return true
 	default:
 		return false

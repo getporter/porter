@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/manifest"
 )
 
@@ -28,13 +29,19 @@ func (d *Runtime) Install(args ActionArguments) error {
 	}
 	c.Bundle = b
 
+	exts, err := extensions.ProcessRequiredExtensions(b)
+	if err != nil {
+		return errors.Wrap(err, "unable to process required extensions")
+	}
+	d.Extensions = exts
+
 	params, err := d.loadParameters(c, args.Params, string(manifest.ActionInstall))
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 	c.Parameters = params
 
-	dvr, err := d.newDriver(args.Driver, c.Name, args)
+	dvr, err := d.newDriver(args.Driver, c.Installation, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")
 	}
@@ -58,7 +65,7 @@ func (d *Runtime) Install(args ActionArguments) error {
 		for k := range params {
 			paramKeys = append(paramKeys, k)
 		}
-		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Name, paramKeys, credKeys)
+		fmt.Fprintf(d.Err, "installing bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Installation, paramKeys, credKeys)
 	}
 
 	var result *multierror.Error

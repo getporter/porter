@@ -33,6 +33,8 @@ like parameters, credentials, outputs and custom actions available.
 	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
 	f.StringVarP(&opts.Tag, "tag", "t", "",
 		"Use a bundle in an OCI registry specified by the given tag")
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a fresh pull of the bundle")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 	return &cmd

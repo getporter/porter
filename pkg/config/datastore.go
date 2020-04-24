@@ -1,6 +1,8 @@
 package config
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // Data is the data stored in PORTER_HOME/porter.toml|yaml|json.
 // Use the accessor functions to ensure default values are handled properly.

@@ -1,0 +1,48 @@
+name: mybun
+version: 0.1.0
+description: "An example Porter configuration"
+tag: getporter/porter-hello:v0.1.0
+
+mixins:
+  - exec
+
+customActions:
+  log-error:
+    description: "Log an error"
+    stateless: true
+    modifies: false
+
+install:
+  - exec:
+      description: "Install"
+      command: ./helpers.sh
+      arguments:
+        - install
+      # Create the bundle output to ensure this is captured
+      outputs:
+        - name: greeting
+          jsonPath: '$.greeting'
+      # Suppress command output from this action
+      suppress-output: true
+
+log-error:
+  - exec:
+      description: "Custom - Error logged to Stderr"
+      command: ./helpers.sh
+      arguments:
+        - log-error
+      # Suppress command output from this action
+      suppress-output: true
+
+uninstall:
+  - exec:
+      description: "Uninstall"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+
+outputs:
+  - name: greeting
+    type: string
+    applyTo:
+      - install

@@ -70,6 +70,7 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 		Command: "install",
 		File:    "testdata/exec_input_with_whitespace.yaml",
 	}
+
 	err = r.Run(cmd)
 	assert.NoError(t, err)
 	assert.Equal(t, `Hello ******* 	

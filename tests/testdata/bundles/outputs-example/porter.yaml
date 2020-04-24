@@ -16,9 +16,9 @@ outputs:
 install:
   - exec:
       description: "Produce step-level output"
-      command: bash
+      command: ./helpers.sh
       arguments:
-        - dump-config.sh
+        - dump-config
       outputs:
         - name: user
           sensitive: false
@@ -26,30 +26,30 @@ install:
   # This step tests successful interpolation of a step-level output
   - exec:
       description: "Echo step-level output"
-      command: bash
-      flags:
-        c: echo "{{ bundle.outputs.user }}"
+      command: ./helpers.sh
+      arguments:
+        - "dump {{ bundle.outputs.user }}"
 
 upgrade:
   - exec:
       description: "Produce bundle-level output"
-      command: bash
+      command: ./helpers.sh
       arguments:
-        - dump-config.sh
+        - dump-config
       outputs:
         - name: user-output
           jsonPath: '$.user'
   # This step tests successful interpolation of a bundle-level output in the same action
   - exec:
       description: "Echo bundle-level output in same action as it was produced"
-      command: bash
-      flags:
-        c: echo "{{ bundle.outputs.user-output }}"
+      command: ./helpers.sh
+      arguments:
+        - "dump {{ bundle.outputs.user-output }}"
 
 uninstall:
   # This step tests successful interpolation of a bundle-level output across actions  
   - exec:
       description: "Echo bundle-level output"
-      command: bash
-      flags:
-        c: echo "{{ bundle.outputs.user-output }}"
+      command: ./helpers.sh
+      arguments:
+        - "dump {{ bundle.outputs.user-output }}"

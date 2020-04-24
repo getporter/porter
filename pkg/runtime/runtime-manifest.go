@@ -13,7 +13,7 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"

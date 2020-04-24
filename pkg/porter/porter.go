@@ -27,19 +27,23 @@ type Porter struct {
 	Cache         cache.BundleCache
 	Credentials   credentials.CredentialProvider
 	Claims        claims.ClaimProvider
-	Registry      Registry
+	Registry      cnabtooci.RegistryProvider
 	Templates     *templates.Templates
 	Builder       BuildProvider
 	Manifest      *manifest.Manifest
 	Mixins        mixin.MixinProvider
 	Plugins       plugins.PluginProvider
-	CNAB          CNABProvider
+	CNAB          cnabprovider.CNABProvider
 	SurveyAskOpts survey.AskOpt
 }
 
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
+	return NewWithConfig(c)
+}
+
+func NewWithConfig(c *config.Config) *Porter {
 	cache := cache.New(c)
 	storagePlugin := pluginstore.NewStore(c)
 	claimStorage := claims.NewClaimStorage(c, storagePlugin)
@@ -60,6 +64,9 @@ func New() *Porter {
 }
 
 func (p *Porter) LoadManifest() error {
+	if p.Manifest != nil {
+		return nil
+	}
 	return p.LoadManifestFrom(config.Name)
 }
 

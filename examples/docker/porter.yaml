@@ -1,0 +1,49 @@
+name: whalesay
+version: 0.1.1
+description: "An example bundle that uses docker through the magic of whalespeak"
+tag: getporter/whalesay:v0.1.1
+
+dockerfile: Dockerfile.tmpl
+
+required:
+  - docker
+
+parameters:
+  - name: msg
+    description: a message for the whales to speak
+    type: string
+    default: "whale hello there!"
+    applyTo:
+      - say
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+say:
+  - exec:
+      description: "Say Something"
+      command: ./helpers.sh
+      arguments:
+        - whalesay
+        - '"{{ bundle.parameters.msg }}"'
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall

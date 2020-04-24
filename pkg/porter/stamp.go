@@ -40,7 +40,7 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
 		}
 
-		oldStamp, err := configadapter.LoadStamp(bun)
+		oldStamp, err := configadapter.LoadStamp(*bun)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
@@ -51,8 +51,14 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 		}
 
 		converter := configadapter.NewManifestConverter(p.Context, p.Manifest, nil, mixins)
-		newStamp := converter.GenerateStamp()
-		return oldStamp.ManifestDigest == newStamp.ManifestDigest, nil
+		newDigest, err := converter.DigestManifest()
+		if err != nil {
+			if p.Debug {
+				fmt.Fprintln(p.Err, errors.Wrap(err, "could not determine if the bundle is up-to-date so will rebuild just in case"))
+			}
+			return false, nil
+		}
+		return oldStamp.ManifestDigest == newDigest, nil
 	}
 
 	return false, nil

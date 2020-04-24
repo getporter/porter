@@ -5,7 +5,7 @@ url: /cli/porter_list/
 ---
 ## porter list
 
-list instances of installed bundles
+List instances of installed bundles
 
 ### Synopsis
 

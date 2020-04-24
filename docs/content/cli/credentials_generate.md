@@ -35,9 +35,9 @@ porter credentials generate [NAME] [flags]
 
 ```
   porter credential generate
-  porter bundle credential generate kubecred --file myapp/porter.yaml
-  porter bundle credential generate kubecred --tag getporter/porter-hello:v0.1.0
-  porter bundle credential generate kubecred --cnab-file myapp/bundle.json --dry-run
+  porter credential generate kubecred --file myapp/porter.yaml
+  porter credential generate kubecred --tag getporter/porter-hello:v0.1.0
+  porter credential generate kubecred --cnab-file myapp/bundle.json --dry-run
 
 ```
 
@@ -47,6 +47,7 @@ porter credentials generate [NAME] [flags]
       --cnab-file string   Path to the CNAB bundle.json file.
       --dry-run            Generate credential but do not save it.
   -f, --file string        Path to the porter manifest file. Defaults to the bundle in the current directory.
+      --force              Force a fresh pull of the bundle
   -h, --help               help for generate
       --tag string         Use a bundle in an OCI registry specified by the given tag.
 ```

@@ -9,7 +9,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
-	"github.com/docker/cnab-to-oci/relocation"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pivotal/image-relocation/pkg/registry"
@@ -202,7 +202,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 }
 
 // extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle
-func (p *Porter) extractBundle(tmpDir, source string) (*bundle.Bundle, error) {
+func (p *Porter) extractBundle(tmpDir, source string) (bundle.Bundle, error) {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", source)
 	}
@@ -211,15 +211,15 @@ func (p *Porter) extractBundle(tmpDir, source string) (*bundle.Bundle, error) {
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
+		return bundle.Bundle{}, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
 	}
 
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to load bundle from archive %s", source)
+		return bundle.Bundle{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
 	}
 
-	return bun, nil
+	return *bun, nil
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
@@ -244,7 +244,7 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 }
 
 // updateBundleWithNewImage updates a bundle with a new image (with digest) at the provided index
-func (p *Porter) updateBundleWithNewImage(bun *bundle.Bundle, newImg image.Name, digest image.Digest, index interface{}) error {
+func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, digest image.Digest, index interface{}) error {
 	taggedImage, err := p.rewriteImageWithDigest(newImg.String(), digest.String())
 	if err != nil {
 		return errors.Wrapf(err, "unable to update image reference for %s", newImg.String())
@@ -309,25 +309,25 @@ func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error)
 	return newImgName, nil
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string) (*bundle.Bundle, error) {
+func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string) (bundle.Bundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(p.Manifest.Image, digest)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to update invocation image reference")
+		return bundle.Bundle{}, errors.Wrap(err, "unable to update invocation image reference")
 	}
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
 	err = p.buildBundle(taggedImage, digest)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
+		return bundle.Bundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
 	}
 
 	b, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to load CNAB bundle")
+		return bundle.Bundle{}, errors.Wrap(err, "unable to load CNAB bundle")
 	}
 
-	return &bun, nil
+	return bun, nil
 }
 
 func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (string, error) {
@@ -343,9 +343,9 @@ func (p *Porter) rewriteImageWithDigest(InvocationImage string, digest string) (
 }
 
 // refreshCachedBundle will store a bundle anew, if a bundle with the same tag is found in the cache
-func (p *Porter) refreshCachedBundle(bun *bundle.Bundle, tag string, rm relocation.ImageRelocationMap) error {
-	if _, _, found, _ := p.Cache.FindBundle(tag); found {
-		_, _, err := p.Cache.StoreBundle(tag, bun, rm)
+func (p *Porter) refreshCachedBundle(bun bundle.Bundle, tag string, rm *relocation.ImageRelocationMap) error {
+	if _, found, _ := p.Cache.FindBundle(tag); found {
+		_, err := p.Cache.StoreBundle(tag, bun, rm)
 		if err != nil {
 			fmt.Fprintf(p.Err, "warning: unable to update cache for bundle %s: %s\n", tag, err)
 		}
