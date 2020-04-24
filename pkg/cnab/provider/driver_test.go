@@ -73,7 +73,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		err = dockerish.ApplyConfigurationOptions()
 		assert.NoError(t, err)
 
-		containerHostCfg := dockerish.GetContainerHostConfig()
+		containerHostCfg, err := dockerish.GetContainerHostConfig()
+		require.NoError(t, err)
 		require.Equal(t, true, containerHostCfg.Privileged)
 	})
 }
