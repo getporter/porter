@@ -53,8 +53,35 @@ func TestNewDriver_Docker(t *testing.T) {
 		assert.EqualError(t, err, "allow-docker-host-access was specified but could not detect a local docker daemon running by checking for /var/run/docker.sock")
 	})
 
+	t.Run("docker with host access, default config", func(t *testing.T) {
+		d := NewTestRuntime(t)
+		// Currently, toggling Privileged is the only config exposed to users
+		// Here we supply no override, so expect Privileged to be false
+		d.Extensions[extensions.DockerExtensionKey] = extensions.Docker{}
+		d.FileSystem.Create("/var/run/docker.sock")
+		args := ActionArguments{
+			AllowDockerHostAccess: true,
+		}
+
+		driver, err := d.newDriver(DriverNameDocker, "myclaim", args)
+		require.NoError(t, err)
+		assert.IsType(t, driver, &docker.Driver{})
+
+		dockerish, ok := driver.(*docker.Driver)
+		assert.True(t, ok)
+
+		err = dockerish.ApplyConfigurationOptions()
+		assert.NoError(t, err)
+
+		containerHostCfg, err := dockerish.GetContainerHostConfig()
+		require.NoError(t, err)
+		require.Equal(t, false, containerHostCfg.Privileged)
+	})
+
 	t.Run("docker with host access, privileged true", func(t *testing.T) {
 		d := NewTestRuntime(t)
+		// Currently, toggling Privileged is the only config exposed to users
+		// Here we supply an override, so expect Privileged to be set to the override
 		d.Extensions[extensions.DockerExtensionKey] = extensions.Docker{
 			Privileged: true,
 		}
