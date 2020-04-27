@@ -77,4 +77,45 @@ func TestLinter_Lint(t *testing.T) {
 		require.Len(t, results, 0, "linter should ignore mixins that doesn't support the lint command")
 	})
 
+	t.Run("multiple results", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.AddTestFile("./testdata/porter-multiple-linter-results.yaml", "porter.yaml")
+		mixins := mixin.NewTestMixinProvider()
+		l := New(cxt.Context, mixins)
+		m := &manifest.Manifest{
+			ManifestPath: "porter.yaml",
+			Mixins: []manifest.MixinDeclaration{
+				{
+					Name: "exec",
+				},
+			},
+		}
+		mixins.LintResults = Results{
+			{
+				Level: LevelWarning,
+				Code:  "exec-101",
+				Title: "warning stuff isn't working",
+				Key:   "echo Hello World",
+				Location: Location{
+					Line:   9,
+					Column: 12,
+				},
+			},
+			{
+				Level: LevelWarning,
+				Code:  "exec-101",
+				Title: "warning stuff isn't working",
+				Key:   "echo Hello World",
+				Location: Location{
+					Line:   14,
+					Column: 12,
+				},
+			},
+		}
+
+		results, err := l.Lint(m)
+		require.NoError(t, err, "Lint failed")
+		require.Len(t, results, 2, "linter should have returned 2 results")
+		require.Equal(t, mixins.LintResults, results, "unexpected lint results")
+	})
 }

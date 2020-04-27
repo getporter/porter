@@ -122,7 +122,8 @@ func (r Results) HasError() bool {
 // the results.
 type Linter struct {
 	*context.Context
-	Mixins pkgmgmt.PackageManager
+	Mixins    pkgmgmt.PackageManager
+	Locations []Location
 }
 
 func New(cxt *context.Context, mixins pkgmgmt.PackageManager) *Linter {
@@ -163,7 +164,7 @@ func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
 
 		// Derive location of result
 		for i, result := range r {
-			location, err := getLocation(manifestData, result.Key)
+			location, err := l.getLocation(manifestData, result.Key)
 			if err != nil {
 				return results, errors.Wrap(err, "unable to resolve location of result in manifest")
 			}
@@ -177,7 +178,9 @@ func (l *Linter) Lint(m *manifest.Manifest) (Results, error) {
 	return results, nil
 }
 
-func getLocation(contents []byte, key string) (Location, error) {
+// getLocation finds the provided key in the provided contents,
+// returning a non-empty Location object if found
+func (l *Linter) getLocation(contents []byte, key string) (Location, error) {
 	r := bytes.NewReader(contents)
 	// Splits on newlines by default.
 	scanner := bufio.NewScanner(r)
@@ -187,7 +190,11 @@ func getLocation(contents []byte, key string) (Location, error) {
 		text := scanner.Text()
 		if strings.Contains(text, key) {
 			col := strings.Index(text, key) + 1
-			return Location{Line: line, Column: col}, nil
+			location := Location{Line: line, Column: col}
+			if !l.isTracked(location) {
+				l.Locations = append(l.Locations, location)
+				return location, nil
+			}
 		}
 
 		line++
@@ -200,4 +207,15 @@ func getLocation(contents []byte, key string) (Location, error) {
 	// Currently, this supports unit tests with no real manifest data, etc.
 	// return Location{}, fmt.Errorf("unable to determine line and column coordinates for string %q", key)
 	return Location{}, nil
+}
+
+// isTracked returns whether or not the provided location is already tracked
+func (l *Linter) isTracked(location Location) bool {
+	tracked := false
+	for _, loc := range l.Locations {
+		if loc.Line == location.Line && loc.Column == location.Column {
+			tracked = true
+		}
+	}
+	return tracked
 }

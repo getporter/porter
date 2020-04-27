@@ -63,14 +63,29 @@ func (m *Mixin) Lint() (linter.Results, error) {
 				continue
 			}
 
+			// TODO: remove these brainstorming notes
+			//
+			// So, we have an embedded bash flag...
+			// We want to find its line number in the manifest
+			//
+			// Current approach is to derive a hopefully unique key,
+			// say, by constructing its string form, for example 'c: "echo foooooo"'
+			// Then we send that back and the Linter can search the manifest for this key,
+			// finding the line number and column number
+			//
+			// If the key is not unique, perhaps this isn't a big deal:
+			// We'll find the first location and associate that with the first linter error
+			// We'll also add this location to the Linter's tracked location list, to know when to skip
+			// Then, the next iteration of this non-unique key will assuredly result in another linter error (embeddedBashFlag)
+			// So, we'll just go thru the motions and hit this same logic, finding the next location
+			// (after potentially skipping the previous, already tracked location)
+			//
+			// End brainstorming notes
+
 			// Derive key to be used to locate coordinates in the manifest.
-			// The embedded bash flag, 'c' is not unique enough,
-			// so set to the unique step description, or, if values non-empty,
-			// the first value
-			key := step.Description
-			if len(embeddedBashFlag.Values) > 0 {
-				key = embeddedBashFlag.Values[0]
-			}
+			// It is constructed by the flag name and flag values
+			key := fmt.Sprintf("%s: %s", embeddedBashFlag.Name, strings.Join(embeddedBashFlag.Values, " "))
+
 			// Found embedded bash 🚨
 			// Check for wrapping quotes, if missing -> hard error, otherwise just warn
 			result := linter.Result{

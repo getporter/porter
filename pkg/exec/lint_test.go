@@ -25,7 +25,7 @@ func TestMixin_LintError(t *testing.T) {
 	gotInstallWarning := results[0]
 	wantInstallWarning := linter.Result{
 		Level:   linter.LevelWarning,
-		Key:     "echo Hello World",
+		Key:     "c: echo Hello World",
 		Code:    CodeEmbeddedBash,
 		Title:   "Best Practice: Avoid Embedded Bash",
 		Message: "",
