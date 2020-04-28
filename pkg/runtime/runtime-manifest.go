@@ -230,7 +230,10 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	params := make(map[string]interface{})
 	bun["parameters"] = params
 	for _, param := range m.Parameters {
-		//pe := strings.ToUpper(param.Name)
+		if !param.AppliesTo(string(m.Action)) {
+			continue
+		}
+
 		pe := param.Name
 		var val string
 		val, err := resolveParameter(param)
@@ -381,6 +384,10 @@ func (m *RuntimeManifest) Prepare() error {
 	// For parameters of type "file", we may need to decode files on the filesystem
 	// before execution of the step/action
 	for _, param := range m.Parameters {
+		if !param.AppliesTo(string(m.Action)) {
+			continue
+		}
+
 		if param.Type == "file" {
 			if param.Destination.Path == "" {
 				return fmt.Errorf("destination path is not supplied for parameter %s", param.Name)
