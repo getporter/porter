@@ -17,13 +17,12 @@ require (
 	github.com/containerd/ttrpc v1.0.0 // indirect
 	github.com/containerd/typeurl v1.0.0 // indirect
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
-	github.com/docker/cnab-to-oci v0.3.0-beta4 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20181229214054-f76d6a078d88
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/gobuffalo/packr/v2 v2.7.1
+	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/gogo/googleapis v1.3.2 // indirect
 	github.com/google/go-containerregistry v0.0.0-20191015185424-71da34e4d9b3
 	github.com/gorilla/mux v1.7.4 // indirect
@@ -39,10 +38,10 @@ require (
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.3.2
-	github.com/stretchr/testify v1.4.0
+	github.com/spf13/viper v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
@@ -58,3 +57,5 @@ replace github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-
 // See https://github.com/containerd/containerd/issues/3031
 // When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 replace github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+
+replace github.com/cnabio/cnab-go => github.com/vdice/cnab-go v0.0.0-20200424180850-5395191c27b9
