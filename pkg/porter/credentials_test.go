@@ -47,7 +47,6 @@ func TestGenerateNotSilent(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	core.DisableColor = true
-
 	logFileName := fmt.Sprintf("%s.log", t.Name())
 	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	require.NoError(t, err)
@@ -65,7 +64,6 @@ func TestGenerateNotSilent(t *testing.T) {
 	require.NoError(t, err, "Validate failed")
 
 	donec := make(chan struct{})
-
 	go func() {
 		defer close(donec)
 

@@ -4,10 +4,14 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/manifest"
+	"gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/AlecAivazis/survey.v1/core"
+	"gopkg.in/AlecAivazis/survey.v1/terminal"
 
 	"get.porter.sh/porter/pkg/secrets"
 
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/hinshun/vt10x"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -234,5 +238,62 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	require.NoError(t, err, "Validate install options failed")
 
 	err = p.InstallBundle(opts)
+	require.NoError(t, err, "InstallBundle failed")
+}
+
+func TestPorter_InstallBundle_Interactive(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
+	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
+
+	core.DisableColor = true
+	c, _, err := vt10x.NewVT10XConsole()
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	opts := InstallOptions{}
+	// opts.Tag = "getporter/wordpress:v0.1.2"
+	opts.CNABFile = "/bundle.json"
+	opts.Name = "HELLO_CUSTOM"
+	// opts.CredentialIdentifiers = []string{"wordpress"}
+	// opts.Params = []string{"wordpress-password=mypassword"}
+	err = opts.Validate(nil, p.Context)
+	require.NoError(t, err, "Validate install options failed")
+
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+
+		c.ExpectString("Choose an option")
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectString("Enter credential identifier name")
+		c.SendLine("credset_for_HELLO_CUSTOM")
+
+		c.ExpectString("How would you like to set credential \"my-first-cred\"")
+		c.Send(string(terminal.KeyArrowUp))
+		c.Send(string(terminal.KeyArrowUp)) // secret
+		c.Send(string(terminal.KeyEnter))
+		c.ExpectString("Enter the secret that will be used to set credential \"my-first-cred\"")
+		c.SendLine("my-first-cred")
+
+		c.ExpectString("How would you like to set credential \"my-second-cred\"")
+		c.Send(string(terminal.KeyArrowUp))
+		c.Send(string(terminal.KeyArrowUp)) // secret
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectString("Enter the secret that will be used to set credential \"my-second-cred\" ")
+		c.SendLine("my-second-cred")
+
+		c.ExpectEOF()
+	}()
+
+	err = p.InstallBundle(opts)
+
+	c.Tty().Close()
+	<-donec
+
 	require.NoError(t, err, "InstallBundle failed")
 }
