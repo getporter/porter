@@ -27,6 +27,10 @@ func TestResolveMapParam(t *testing.T) {
 			{
 				Name: "person",
 			},
+			{
+				Name:    "place",
+				ApplyTo: []string{string(manifest.ActionInstall)},
+			},
 		},
 	}
 	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
@@ -56,6 +60,7 @@ func TestResolveMapParam(t *testing.T) {
 	val, ok := pms["Thing"].(string)
 	assert.True(t, ok)
 	assert.Equal(t, "Ralpha", val)
+	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
 	err = rm.Prepare()
 	assert.NoError(t, err)
@@ -179,18 +184,27 @@ func TestResolveMapParamUnknown(t *testing.T) {
 func TestPrepare_fileParam(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("testdata/file-param", "/path/to/file")
+	cxt.AddTestFile("testdata/file-param", "/cnab/app/install")
 
 	m := &manifest.Manifest{
 		Parameters: []manifest.ParameterDefinition{
 			{
 				Name: "file-param",
 				Destination: manifest.Location{
-					Path: "/path/to/file",
+					Path: "/cnab/app/install",
 				},
 				Schema: definition.Schema{
-					Type:    "file",
-					Default: "/path/to/file",
+					Type: "file",
+				},
+			},
+			{
+				Name:    "upgrade-file-param",
+				ApplyTo: []string{string(manifest.ActionUpgrade)},
+				Destination: manifest.Location{
+					Path: "/cnab/app/upgrade",
+				},
+				Schema: definition.Schema{
+					Type: "file",
 				},
 			},
 		},
@@ -221,14 +235,17 @@ func TestPrepare_fileParam(t *testing.T) {
 	assert.True(t, ok)
 	val, ok := pms["file-param"].(string)
 	assert.True(t, ok)
-	assert.Equal(t, "/path/to/file", val)
+	assert.Equal(t, "/cnab/app/install", val)
 
 	err = rm.Prepare()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	bytes, err := cxt.FileSystem.ReadFile("/path/to/file")
-	assert.NoError(t, err)
+	bytes, err := cxt.FileSystem.ReadFile("/cnab/app/install")
+	require.NoError(t, err)
 	assert.Equal(t, "Hello World!", string(bytes), "expected file contents to equal the decoded parameter value")
+
+	upgradeFileExists, _ := cxt.FileSystem.Exists("/cnab/app/upgrade")
+	assert.False(t, upgradeFileExists, "the file for the parameter that only applies to the upgrade action should not exist")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
