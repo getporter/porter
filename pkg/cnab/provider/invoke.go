@@ -1,119 +1,108 @@
 package cnabprovider
 
 import (
-	"fmt"
-
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-// getClaim reads an installation from the runtime's claim storage. If one is not found, the bundle
+// getClaimForInvoke reads a claim from the runtime's claim storage. If one is not found, the bundle
 // is examined to see if the action is stateless. If the action is stateless, we create a new, temporary, claim
 // Returns a pointer to the claim, a flag to indicate if the claim is temporary, and an error if present.
-func (d *Runtime) getClaim(bun *bundle.Bundle, actionName, claimName string) (*claim.Claim, bool, error) {
-	c, err := d.claims.Read(claimName)
+func (r *Runtime) getClaimForInvoke(bun bundle.Bundle, actionName, installation string) (claim.Claim, bool, error) {
+	c, err := r.claims.ReadLastClaim(installation)
 	if err != nil {
-		if bun != nil {
-			if action, ok := bun.Actions[actionName]; ok {
-				if action.Stateless {
-					c = claim.Claim{
-						Installation: claimName,
-						Bundle:       bun,
-					}
-					return &c, true, nil
+		if action, ok := bun.Actions[actionName]; ok {
+			if action.Stateless {
+				c = claim.Claim{
+					Action:       actionName,
+					Installation: installation,
+					Bundle:       bun,
 				}
+				return c, true, nil
 			}
 		}
-		return nil, false, errors.Wrapf(err, "could not load installation %s", claimName)
+		return claim.Claim{}, false, errors.Wrapf(err, "could not load installation %s", installation)
 	}
-	return &c, false, nil
+	return c, false, nil
 }
 
-// writeClaim will attempt to store the provided claim if, and only if, the claim is not
-// a temporary claim
-func (d *Runtime) writeClaim(tempClaim bool, c *claim.Claim) error {
-	if !tempClaim {
-		return d.claims.Save(*c)
-	}
-	return nil
-}
-
-func (d *Runtime) Invoke(action string, args ActionArguments) error {
-
-	var bun *bundle.Bundle
+func (r *Runtime) Invoke(action string, args ActionArguments) error {
+	var b bundle.Bundle
 	var err error
+
 	if args.BundlePath != "" {
-		bun, err = d.LoadBundle(args.BundlePath)
+		b, err = r.ProcessBundle(args.BundlePath)
 		if err != nil {
 			return err
 		}
 	}
 
-	c, isTemp, err := d.getClaim(bun, action, args.Installation)
+	c, isTempClaim, err := r.getClaimForInvoke(b, action, args.Installation)
 	if err != nil {
 		return err
 	}
 
-	// Here we need to check this again
-	// If provided, we should set the bundle on the claim accordingly
-	if args.BundlePath != "" {
-		c.Bundle = bun
+	// If the user didn't override the bundle definition, use the one
+	// from the existing claim
+	if args.BundlePath == "" {
+		b = c.Bundle
 	}
 
-	exts, err := extensions.ProcessRequiredExtensions(c.Bundle)
-	if err != nil {
-		return errors.Wrap(err, "unable to process required extensions")
-	}
-	d.Extensions = exts
-
-	c.Parameters, err = d.loadParameters(c, args.Params, args.ParameterSets, action)
+	params, err := r.loadParameters(b, args.Params, args.ParameterSets, claim.ActionUpgrade)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Installation, args)
+	// TODO: (carolynvs) this should be consolidated with get claim for invoke, or teh logic in that function simplified
+	c.Parameters, err = r.loadParameters(b, args.Params, args.ParameterSets, action)
 	if err != nil {
-		return errors.Wrap(err, "unable to instantiate driver")
+		return err
 	}
 
-	i := cnabaction.RunCustom{
-		Action: action,
-		Driver: driver,
-	}
-
-	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
+	creds, err := r.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}
 
-	if d.Debug {
-		// only print out the names of the credentials, not the contents, cuz they big and sekret
-		credKeys := make([]string, 0, len(creds))
-		for k := range creds {
-			credKeys = append(credKeys, k)
-		}
-		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(c.Parameters))
-		for k := range c.Parameters {
-			paramKeys = append(paramKeys, k)
-		}
-		fmt.Fprintf(d.Err, "invoking bundle %s (%s) with action %s as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, action, c.Installation, paramKeys, credKeys)
+	driver, err := r.newDriver(args.Driver, args.Installation, args)
+	if err != nil {
+		return errors.Wrap(err, "unable to instantiate driver")
 	}
 
-	var result *multierror.Error
-	// Run the action and ALWAYS write out a claim, even if the action fails
-	err = i.Run(c, creds, d.ApplyConfig(args)...)
+	a := cnabaction.New(driver, r.claims)
+	a.SaveAllOutputs = true
+
+	modifies, err := c.IsModifyingAction()
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "failed to invoke the bundle"))
+		return err
 	}
 
-	err = d.writeClaim(isTemp, c)
-	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "failed to record the updated claim for the bundle"))
+	// Only record runs that modify the bundle, e.g. don't save "logs" or "dry-run"
+	// In theory a custom action shouldn't ever have modifies AND stateless
+	// (which creates a temp claim) but just in case, if it does modify, we must
+	// persist.
+	shouldPersistClaim := modifies || !isTempClaim
+
+	if shouldPersistClaim {
+		err = a.SaveInitialClaim(c, claim.StatusRunning)
+		if err != nil {
+			return err
+		}
 	}
-	return result.ErrorOrNil()
+
+	r.printDebugInfo(creds, params)
+
+	opResult, result, err := a.Run(c, creds, r.ApplyConfig(args)...)
+
+	if shouldPersistClaim {
+		if err != nil {
+			err = r.appendFailedResult(err, c)
+			return errors.Wrap(err, "failed to invoke the bundle")
+		}
+		return a.SaveOperationResult(opResult, c, result)
+	} else {
+		return errors.Wrap(err, "failed to invoke the bundle")
+	}
 }

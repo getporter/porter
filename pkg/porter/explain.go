@@ -169,10 +169,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
-func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
-	if bun == nil {
-		return nil, fmt.Errorf("expected a bundle")
-	}
+func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	pb := PrintableBundle{
 		Name:        bun.Name,
 		Description: bun.Description,

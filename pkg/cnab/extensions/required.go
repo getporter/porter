@@ -10,7 +10,7 @@ type RequiredExtension struct {
 	Shorthand string
 	Key       string
 	Schema    string
-	Reader    func(b *bundle.Bundle) (interface{}, error)
+	Reader    func(b bundle.Bundle) (interface{}, error)
 }
 
 // SupportedExtensions represent a listing of the current required extensions
@@ -32,7 +32,7 @@ type ProcessedExtensions map[string]interface{}
 // For each supported required extension, the configuration for that extension
 // is read and returned in the form of a map of the extension name to
 // the extension configuration
-func ProcessRequiredExtensions(b *bundle.Bundle) (ProcessedExtensions, error) {
+func ProcessRequiredExtensions(b bundle.Bundle) (ProcessedExtensions, error) {
 	processed := ProcessedExtensions{}
 	for _, reqExt := range b.RequiredExtensions {
 		supportedExtension, err := GetSupportedExtension(reqExt)

@@ -30,8 +30,8 @@ type CredentialStorage struct {
 }
 
 func NewCredentialStorage(c *config.Config, storagePlugin *crudplugins.Store) *CredentialStorage {
-	migration := newMigrateCredentialsWrapper(c, storagePlugin)
-	credStore := credentials.NewCredentialStore(migration)
+	//migration := newMigrateCredentialsWrapper(c, storagePlugin)
+	credStore := credentials.NewCredentialStore(storagePlugin)
 	return &CredentialStorage{
 		Config:           c,
 		CredentialsStore: &credStore,

@@ -22,19 +22,21 @@ func (g *Client) Read(itemType string, name string) ([]byte, error) {
 	return resp, err
 }
 
-func (g *Client) List(itemType string) ([]string, error) {
+func (g *Client) List(itemType string, group string) ([]string, error) {
 	var resp []string
 	args := map[string]interface{}{
 		"itemType": itemType,
+		"group":    group,
 	}
 	err := g.client.Call("Plugin.List", args, &resp)
 	return resp, err
 }
 
-func (g *Client) Save(itemType string, name string, data []byte) error {
+func (g *Client) Save(itemType string, group string, name string, data []byte) error {
 	var resp interface{}
 	args := map[string]interface{}{
 		"itemType": itemType,
+		"group":    group,
 		"name":     name,
 		"data":     data,
 	}
@@ -62,12 +64,12 @@ func (s *Server) Read(args map[string]interface{}, resp *[]byte) error {
 
 func (s *Server) List(args map[string]interface{}, resp *[]string) error {
 	var err error
-	*resp, err = s.Impl.List(args["itemType"].(string))
+	*resp, err = s.Impl.List(args["itemType"].(string), args["group"].(string))
 	return err
 }
 
 func (s *Server) Save(args map[string]interface{}, resp *interface{}) error {
-	return s.Impl.Save(args["itemType"].(string), args["name"].(string), args["data"].([]byte))
+	return s.Impl.Save(args["itemType"].(string), args["group"].(string), args["name"].(string), args["data"].([]byte))
 }
 
 func (s *Server) Delete(args map[string]interface{}, resp *interface{}) error {

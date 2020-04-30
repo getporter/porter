@@ -31,7 +31,7 @@ type Docker struct {
 // DockerExtensionReader is a Reader for the DockerExtension,
 // which reads from the applicable section in the provided bundle and
 // returns a the raw data in the form of an interface
-func DockerExtensionReader(bun *bundle.Bundle) (interface{}, error) {
+func DockerExtensionReader(bun bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DockerExtensionKey]
 	if !ok {
 		return nil, errors.New("no custom extension configuration found")

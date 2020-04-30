@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 
 	"get.porter.sh/porter/pkg/config"
-	"github.com/cnabio/cnab-go/action"
-	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+
+	"github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/driver"
 )
 
 // Shared arguments for all CNAB actions
@@ -43,34 +44,33 @@ type ActionArguments struct {
 	AllowDockerHostAccess bool
 }
 
-func (d *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
+func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
 	return action.OperationConfigs{
-		d.SetOutput(),
-		d.AddFiles(args),
-		d.AddRelocation(args),
+		r.SetOutput(),
+		r.AddFiles(args),
+		r.AddRelocation(args),
 	}
 }
 
-func (d *Runtime) SetOutput() action.OperationConfigFunc {
+func (r *Runtime) SetOutput() action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
-		op.Out = d.Out
+		op.Out = r.Out
 		return nil
 	}
 }
 
-func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		for k, v := range args.Files {
 			op.Files[k] = v
 		}
 
 		// Add claim.json to file list as well, if exists
-		claimName := args.Installation
-		claim, err := d.claims.Read(claimName)
+		claim, err := r.claims.ReadLastClaim(args.Installation)
 		if err == nil {
 			claimBytes, err := yaml.Marshal(claim)
 			if err != nil {
-				return errors.Wrapf(err, "could not marshal claim %s", claimName)
+				return errors.Wrapf(err, "could not marshal claim %s for instance %s", claim.ID, args.Installation)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
@@ -81,10 +81,10 @@ func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 
 // AddRelocation operates on an ActionArguments and adds any provided relocation mapping
 // to the operation's files.
-func (d *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc {
+func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		if args.RelocationMapping != "" {
-			b, err := d.FileSystem.ReadFile(args.RelocationMapping)
+			b, err := r.FileSystem.ReadFile(args.RelocationMapping)
 			if err != nil {
 				return errors.Wrap(err, "unable to add relocation mapping")
 			}

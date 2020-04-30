@@ -61,11 +61,13 @@ func (s *Store) Connect() error {
 	}
 
 	s.BackingStore = crud.NewBackingStore(store)
+	s.BackingStore.AutoClose = false
 
 	return nil
 }
 
 func (s *Store) Close() error {
+	return nil
 	if s.cleanup != nil {
 		s.cleanup()
 	}

@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"get.porter.sh/porter/pkg/config"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
@@ -34,6 +35,6 @@ func (s *Store) Connect() error {
 		return errors.Wrap(err, "could not determine home directory for filesystem storage")
 	}
 
-	s.Store = crud.NewFileSystemStore(home, "json")
+	s.Store = crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
 	return nil
 }

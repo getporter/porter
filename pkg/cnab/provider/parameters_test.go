@@ -17,11 +17,7 @@ import (
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
 	d := NewTestRuntime(t)
-
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
 	}
 
@@ -29,19 +25,16 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err = d.loadParameters(claim, overrides, nil, "action")
+	_, err := d.loadParameters(b, overrides, nil, "action")
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	d := NewTestRuntime(t)
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
-			"foo": bundle.Parameter{
+			"foo": {
 				Definition: "foo",
 			},
 		},
@@ -51,19 +44,16 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err = d.loadParameters(claim, overrides, nil, "action")
+	_, err := d.loadParameters(b, overrides, nil, "action")
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
 func Test_loadParameters_applyTo(t *testing.T) {
 	d := NewTestRuntime(t)
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
 	// Here we set default values, but we expect the corresponding
 	// claim values to take precedence when loadParameters is called
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -79,16 +69,16 @@ func Test_loadParameters_applyTo(t *testing.T) {
 			},
 		},
 		Parameters: map[string]bundle.Parameter{
-			"foo": bundle.Parameter{
+			"foo": {
 				Definition: "foo",
 				ApplyTo: []string{
 					"action",
 				},
 			},
-			"bar": bundle.Parameter{
+			"bar": {
 				Definition: "bar",
 			},
-			"true": bundle.Parameter{
+			"true": {
 				Definition: "true",
 				ApplyTo: []string{
 					"different-action",
@@ -97,19 +87,13 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		},
 	}
 
-	claim.Parameters = map[string]interface{}{
-		"foo":  "foo",
-		"bar":  123,
-		"true": true,
-	}
-
 	overrides := map[string]string{
 		"foo":  "FOO",
 		"bar":  "456",
 		"true": "false",
 	}
 
-	params, err := d.loadParameters(claim, overrides, nil, "action")
+	params, err := d.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -120,10 +104,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	d := NewTestRuntime(t)
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -131,7 +112,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 			},
 		},
 		Parameters: map[string]bundle.Parameter{
-			"foo": bundle.Parameter{
+			"foo": {
 				Definition: "foo",
 				ApplyTo: []string{
 					"different-action",
@@ -140,11 +121,9 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 		},
 	}
 
-	claim.Parameters = map[string]interface{}{}
-
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(claim, overrides, nil, "action")
+	params, err := d.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -153,17 +132,14 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	d := NewTestRuntime(t)
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
 			},
 		},
 		Parameters: map[string]bundle.Parameter{
-			"foo": bundle.Parameter{
+			"foo": {
 				Definition: "foo",
 				ApplyTo: []string{
 					"different-action",
@@ -173,13 +149,9 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 		},
 	}
 
-	claim.Parameters = map[string]interface{}{
-		"foo": "foo-claim-value",
-	}
-
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(claim, overrides, nil, "action")
+	params, err := d.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -190,10 +162,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 
 	d.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:            "string",
@@ -215,7 +184,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := d.loadParameters(claim, overrides, nil, "action")
+	params, err := d.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
@@ -227,9 +196,6 @@ func Test_loadParameters_viaPathOrName(t *testing.T) {
 	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	r.TestParameters.TestSecrets.AddSecret("bar_secret", "bar_value")
 	r.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
-
-	claim, err := claim.New("test")
-	require.NoError(t, err)
 
 	ps1 := parameters.ParameterSet{
 		Name:     "mypset",
@@ -245,10 +211,10 @@ func Test_loadParameters_viaPathOrName(t *testing.T) {
 			},
 		},
 	}
-	err = r.parameters.Save(ps1)
+	err := r.parameters.Save(ps1)
 	require.NoError(t, err, "Save parameter set failed")
 
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
@@ -273,7 +239,7 @@ func Test_loadParameters_viaPathOrName(t *testing.T) {
 		},
 	}
 
-	gotParams, err := r.loadParameters(claim, nil, []string{"mypset", "/paramset.json"}, "install")
+	gotParams, err := r.loadParameters(b, nil, []string{"mypset", "/paramset.json"}, "install")
 	require.NoError(t, err, "loadParameters failed")
 
 	wantParams := map[string]interface{}{
@@ -288,10 +254,7 @@ func Test_loadParameters_ParameterSetPrecedence(t *testing.T) {
 	d.TestParameters.AddTestParameters("testdata/paramset.json")
 	d.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -313,28 +276,28 @@ func Test_loadParameters_ParameterSetPrecedence(t *testing.T) {
 	}
 
 	t.Run("no override present, no parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(claim, nil, nil, "action")
+		params, err := d.loadParameters(b, nil, nil, "action")
 		require.NoError(t, err)
 		require.Equal(t, "foo_default", params["foo"],
 			"expected param 'foo' to have default value")
 	})
 
 	t.Run("override present, no parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(claim, overrides, nil, "action")
+		params, err := d.loadParameters(b, overrides, nil, "action")
 		require.NoError(t, err)
 		require.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have override value")
 	})
 
 	t.Run("no override present, parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(claim, nil, []string{"myparameterset"}, "action")
+		params, err := d.loadParameters(b, nil, []string{"myparameterset"}, "action")
 		require.NoError(t, err)
 		require.Equal(t, "foo_value", params["foo"],
 			"expected param 'foo' to have parameter set value")
 	})
 
 	t.Run("override present, parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(claim, overrides, []string{"myparameterset"}, "action")
+		params, err := d.loadParameters(b, overrides, []string{"myparameterset"}, "action")
 		require.NoError(t, err)
 		require.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have override value, which has precedence over the parameter set value")
@@ -414,7 +377,7 @@ func Test_Paramapalooza(t *testing.T) {
 				t.Run(tc.name, func(t *testing.T) {
 					d := NewTestRuntime(t)
 
-					bun := &bundle.Bundle{
+					bun := bundle.Bundle{
 						Name:          "mybuns",
 						Version:       "v1.0.0",
 						SchemaVersion: "v1.0.0",
@@ -481,11 +444,11 @@ func Test_Paramapalooza(t *testing.T) {
 					} else {
 						// For all other actions, a claim is expected to exist
 						// so we create one here and add the bundle to the claim
-						claim, err := claim.New("test")
+						claim, err := claim.New("test", claim.ActionInstall, bun, nil)
 						require.NoError(t, err)
 
-						claim.Bundle = bun
-						d.claims.Save(*claim)
+						err = d.claims.SaveClaim(claim)
+						require.NoError(t, err)
 					}
 
 					var err error
@@ -507,7 +470,7 @@ func Test_Paramapalooza(t *testing.T) {
 
 						if action != "uninstall" {
 							// Verify the updated param value on the generated claim
-							updatedClaim, err := d.claims.Read("test")
+							updatedClaim, err := d.claims.ReadLastClaim("test")
 							require.NoError(t, err)
 							require.Equal(t, tc.expectedVal, updatedClaim.Parameters["my-param"])
 						}

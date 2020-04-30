@@ -7,12 +7,10 @@ import (
 	"reflect"
 	"strings"
 
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -31,7 +29,6 @@ type RuntimeManifest struct {
 	steps           manifest.Steps
 	outputs         map[string]string
 	sensitiveValues []string
-	claim           *claim.Claim
 }
 
 func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
@@ -58,11 +55,6 @@ func (m *RuntimeManifest) Validate() error {
 		return errors.Wrap(err, "invalid action configuration")
 	}
 
-	err = m.loadClaim()
-	if err != nil {
-		return errors.Wrap(err, "unable to load claim")
-	}
-
 	return nil
 }
 
@@ -82,18 +74,6 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 		m.bundles[alias] = *bun
 	}
 
-	return nil
-}
-
-func (m *RuntimeManifest) loadClaim() error {
-	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
-		claim := &claim.Claim{}
-		err = yaml.Unmarshal(claimBytes, claim)
-		if err != nil {
-			return errors.Wrap(err, "unable to unmarshal claim")
-		}
-		m.claim = claim
-	}
 	return nil
 }
 
@@ -120,22 +100,9 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	}
 }
 
-// resolveBundleOutput will attempt to resolve a bundle output value if required
-// by string interpolation, e.g. via {{ bundle.outputs.foo }}
-// It first checks the outputs field on the RuntimeManifest struct and, if non-existent,
-// attempts to pull a value from the claim, if exists
-func (m *RuntimeManifest) resolveBundleOutput(output manifest.OutputDefinition) (string, error) {
-	if m.outputs[output.Name] != "" {
-		return m.outputs[output.Name], nil
-	}
-
-	if m.claim != nil {
-		if val := m.claim.Outputs[output.Name]; val != nil {
-			return fmt.Sprintf("%v", val), nil
-		}
-	}
-
-	// No claim exists, so no previous output value to return
+func (m *RuntimeManifest) resolveBundleOutput(def manifest.OutputDefinition) (string, error) {
+	// TODO: (carolynvs) implement parameter sources custom extenion
+	// We can't grab outputs from claims anymore
 	return "", nil
 }
 

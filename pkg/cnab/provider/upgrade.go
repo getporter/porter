@@ -1,78 +1,72 @@
 package cnabprovider
 
 import (
-	"fmt"
-
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/cnabio/cnab-go/claim"
+
+	"github.com/cnabio/cnab-go/bundle"
+
 	"github.com/cnabio/cnab-go/action"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-func (d *Runtime) Upgrade(args ActionArguments) error {
-	c, err := d.claims.Read(args.Installation)
-	if err != nil {
-		return errors.Wrapf(err, "could not load installation %s", args.Installation)
-	}
+func (r *Runtime) Upgrade(args ActionArguments) error {
+	var b bundle.Bundle
+	var err error
 
 	if args.BundlePath != "" {
-		c.Bundle, err = d.LoadBundle(args.BundlePath)
+		b, err = r.ProcessBundle(args.BundlePath)
 		if err != nil {
 			return err
 		}
 	}
 
-	exts, err := extensions.ProcessRequiredExtensions(c.Bundle)
+	existingClaim, err := r.claims.ReadLastClaim(args.Installation)
 	if err != nil {
-		return errors.Wrap(err, "unable to process required extensions")
+		return errors.Wrapf(err, "could not load installation %s", args.Installation)
 	}
-	d.Extensions = exts
 
-	c.Parameters, err = d.loadParameters(&c, args.Params, args.ParameterSets, string(manifest.ActionUpgrade))
+	// If the user didn't override the bundle definition, use the one
+	// from the existing claim
+	if args.BundlePath == "" {
+		b = existingClaim.Bundle
+	}
+
+	params, err := r.loadParameters(b, args.Params, args.ParameterSets, string(manifest.ActionUpgrade))
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	driver, err := d.newDriver(args.Driver, c.Installation, args)
+	c, err := existingClaim.NewClaim(claim.ActionUpgrade, b, params)
 	if err != nil {
-		return errors.Wrap(err, "unable to instantiate driver")
-	}
-	i := action.Upgrade{
-		Driver: driver,
+		return err
 	}
 
-	creds, err := d.loadCredentials(c.Bundle, args.CredentialIdentifiers)
+	creds, err := r.loadCredentials(c.Bundle, args.CredentialIdentifiers)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}
 
-	if d.Debug {
-		// only print out the names of the credentials, not the contents, cuz they big and sekret
-		credKeys := make([]string, 0, len(creds))
-		for k := range creds {
-			credKeys = append(credKeys, k)
-		}
-		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(c.Parameters))
-		for k := range c.Parameters {
-			paramKeys = append(paramKeys, k)
-		}
-		fmt.Fprintf(d.Err, "upgrading bundle %s (%s) as %s\n\tparams: %v\n\tcreds: %v\n", c.Bundle.Name, args.BundlePath, c.Installation, paramKeys, credKeys)
-	}
-
-	var result *multierror.Error
-	// Upgrade and capture error
-	err = i.Run(&c, creds, d.ApplyConfig(args)...)
+	driver, err := r.newDriver(args.Driver, args.Installation, args)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "failed to upgrade the bundle"))
+		return errors.Wrap(err, "unable to instantiate driver")
 	}
 
-	// ALWAYS write out a claim, even if the upgrade fails
-	err = d.claims.Save(c)
+	a := action.New(driver, r.claims)
+	a.SaveAllOutputs = true
+
+	err = a.SaveInitialClaim(c, claim.StatusRunning)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "failed to record the upgrade for the bundle"))
+		return err
 	}
 
-	return result.ErrorOrNil()
+	r.printDebugInfo(creds, params)
+
+	opResult, result, err := a.Run(c, creds, r.ApplyConfig(args)...)
+	if err != nil {
+		err = r.appendFailedResult(err, c)
+		return errors.Wrap(err, "failed to upgrade the bundle")
+	}
+
+	return a.SaveOperationResult(opResult, c, result)
 }

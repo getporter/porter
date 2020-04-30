@@ -55,9 +55,9 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
 	p.Builder = NewTestBuildProvider()
-	p.Claims = testClaims
+	p.Claims = &testClaims
 	p.Credentials = testCredentials
-	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
+	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, &testClaims, testCredentials, testParameters)
 
 	return &TestPorter{
 		Porter:          p,

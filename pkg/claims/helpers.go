@@ -1,19 +1,19 @@
 package claims
 
 import (
-	inmemory "get.porter.sh/porter/pkg/storage/in-memory"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/utils/crud"
 )
 
-var _ ClaimProvider = &TestClaimProvider{}
+var _ claim.Provider = &TestClaimProvider{}
 
 type TestClaimProvider struct {
 	claim.Store
 }
 
 func NewTestClaimProvider() TestClaimProvider {
-	crud := inmemory.NewStore()
+	crud := crud.NewMockStore()
 	return TestClaimProvider{
-		Store: claim.NewClaimStore(crud),
+		Store: claim.NewClaimStore(crud, nil, nil),
 	}
 }

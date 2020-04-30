@@ -10,8 +10,7 @@ import (
 )
 
 func TestDependencySolver_ResolveDependencies(t *testing.T) {
-
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesKey: Dependencies{
 				Requires: map[string]Dependency{

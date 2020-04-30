@@ -18,7 +18,7 @@ type DependencyLock struct {
 type DependencySolver struct {
 }
 
-func (s *DependencySolver) ResolveDependencies(bun *bundle.Bundle) ([]DependencyLock, error) {
+func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyLock, error) {
 	deps, err := ReadDependencies(bun)
 	if deps == nil {
 		return nil, nil

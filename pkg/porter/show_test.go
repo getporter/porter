@@ -25,42 +25,44 @@ func TestPorter_ShowBundle(t *testing.T) {
 
 	// Create test claim
 	writeOnly := true
-	claim := claim.Claim{
-		Installation: "test",
-		Bundle: &bundle.Bundle{
-			Definitions: definition.Definitions{
-				"foo": &definition.Schema{
-					Type:      "string",
-					WriteOnly: &writeOnly,
-				},
-				"bar": &definition.Schema{
-					Type: "string",
-				},
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
 			},
-			Outputs: map[string]bundle.Output{
-				"foo": {
-					Definition: "foo",
-					Path:       "/path/to/foo",
-				},
-				"bar": {
-					Definition: "bar",
-				},
+			"bar": &definition.Schema{
+				Type: "string",
 			},
 		},
-		Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Result: claim.Result{
-			Action: "install",
-			Status: "success",
-		},
-		Outputs: map[string]interface{}{
-			"foo": "foo-output",
-			"bar": "bar-output",
+		Outputs: map[string]bundle.Output{
+			"foo": {
+				Definition: "foo",
+				Path:       "/path/to/foo",
+			},
+			"bar": {
+				Definition: "bar",
+			},
 		},
 	}
+	c, err := claim.New("test", claim.ActionInstall, b, nil)
+	require.NoError(t, err, "NewClaim failed")
+	c.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
+	err = p.Claims.SaveClaim(c)
+	require.NoError(t, err, "SaveClaim failed")
 
-	err := p.Claims.Save(claim)
-	require.NoError(t, err, "could not store claim")
+	r, err := c.NewResult(claim.StatusSucceeded)
+	require.NoError(t, err, "NewResult failed")
+	err = p.Claims.SaveResult(r)
+	require.NoError(t, err, "SaveResult failed")
+
+	foo := claim.NewOutput(c, r, "foo", []byte("foo-output"))
+	err = p.Claims.SaveOutput(foo)
+	require.NoError(t, err, "SaveOutput failed")
+
+	bar := claim.NewOutput(c, r, "bar", []byte("bar-output"))
+	err = p.Claims.SaveOutput(bar)
+	require.NoError(t, err, "SaveOutput failed")
 
 	err = p.ShowInstallations(opts)
 	require.NoError(t, err, "ShowInstallations failed")
@@ -70,7 +72,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 Created: 1983-04-18
 Modified: 1983-04-18
 Last Action: install
-Last Status: success
+Last Status: succeeded
 
 Outputs:
 ----------------------------

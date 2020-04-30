@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cnabio/cnab-go/utils/crud"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
-	inmemorystorage "get.porter.sh/porter/pkg/storage/in-memory"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/pkg/errors"
 )
@@ -25,7 +26,7 @@ type TestCredentialProvider struct {
 
 func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredentialProvider {
 	backingSecrets := inmemorysecrets.NewStore()
-	backingCreds := inmemorystorage.NewStore()
+	backingCreds := crud.NewMockStore()
 	credStore := credentials.NewCredentialStore(backingCreds)
 	return TestCredentialProvider{
 		T:           t,

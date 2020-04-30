@@ -35,7 +35,7 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintBundleOutputs(&opts)
+			return p.PrintBundleOutputs(opts)
 		},
 	}
 
