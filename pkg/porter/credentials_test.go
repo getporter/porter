@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +9,6 @@ import (
 
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/Netflix/go-expect"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
@@ -47,11 +45,7 @@ func TestGenerateNotSilent(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	core.DisableColor = true
-	logFileName := fmt.Sprintf("%s.log", t.Name())
-	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	require.NoError(t, err)
-	defer logFile.Close()
-	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout(logFile))
+	c, _, err := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -67,20 +61,20 @@ func TestGenerateNotSilent(t *testing.T) {
 	go func() {
 		defer close(donec)
 
-		c.ExpectString("Enter credential identifier name ")
+		c.ExpectString("Enter credential identifier name")
 		c.Send(string(terminal.KeyEnter))
 
 		c.ExpectString("How would you like to set credential \"my-first-cred\"")
 		c.Send(string(terminal.KeyEnter))
 
-		c.ExpectString("Enter the environment variable that will be used to set credential \"my-first-cred\" ")
+		c.ExpectString("Enter the environment variable that will be used to set credential \"my-first-cred\"")
 		c.SendLine("ENV_NAME")
 
 		c.ExpectString("How would you like to set credential \"my-second-cred\"")
 		c.Send(string(terminal.KeyArrowDown))
 		c.Send(string(terminal.KeyEnter))
 
-		c.ExpectString("Enter the path that will be used to set credential \"my-second-cred\" ")
+		c.ExpectString("Enter the path that will be used to set credential \"my-second-cred\"")
 		c.SendLine("~/somepath/somefile")
 
 		c.ExpectEOF()

@@ -247,7 +247,6 @@ func TestPorter_InstallBundle_GenCred(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	core.DisableColor = true
 	c, _, err := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
@@ -301,7 +300,6 @@ func TestPorter_InstallBundle_ChooseCred(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	core.DisableColor = true
 	c, _, err := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
@@ -365,5 +363,28 @@ func TestPorter_InstallBundle_Quit(t *testing.T) {
 	c.Tty().Close()
 	<-donec
 
-	require.Error(t, err, "Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
+	require.EqualError(t, err, "Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
+}
+
+func TestPorter_InstallBundle_CredFlag(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
+	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
+
+	core.DisableColor = true
+	c, _, err := vt10x.NewVT10XConsole()
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	opts := InstallOptions{}
+	opts.CNABFile = "/bundle.json"
+	opts.Name = "HELLO_CUSTOM"
+	opts.CredentialIdentifiers = []string{"cred_set_HELLO_CUSTOM"}
+
+	err = p.InstallBundle(opts)
+
+	require.NoError(t, err, "InstallBundle failed")
 }
