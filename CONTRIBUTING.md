@@ -184,8 +184,10 @@ maintainer.
 
 ## Initial setup
 
-1. Clone this repository with `go get -u get.porter.sh/porter`. Porter relies on being in the GOPATH.
-1. Run `make build install`.
+1. Clone this repository with `git clone https://github.com/deislabs/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
+1. Run `make build install` from within the newly cloned repository.
+
+If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
 
 You now have canary builds of porter and all the mixins installed.
 
@@ -199,11 +201,9 @@ Here are the most common Makefile tasks
   to do a build and don't remember the proper way to call `go build` yourself.
 * `build-porter` builds both the porter client and runtime. It does not clean
    up generated files created by packr, so you usually want to also run `clean-packr`.
-* `install-porter` installs just porter from your bin into **/usr/local/bin**.
-* `install-mixins` installs just the mixins from your bin into
-  **/usr/local/bin**. This is useful when you are working on the exec or
-  kubernetes mixin.
-* `install` installs porter _and_ the mixins from your bin into **/usr/local/bin**.
+* `install-porter` installs porter from source into your home directory and creates a symlink for porter from **$(HOME)/.porter/** into **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be overwritten with the new symlink.
+* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** . This is useful when you are working on the exec or kubernetes mixin.
+* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
