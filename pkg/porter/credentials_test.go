@@ -9,6 +9,8 @@ import (
 
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
+	"github.com/Netflix/go-expect"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
@@ -88,6 +90,44 @@ func TestGenerateNotSilent(t *testing.T) {
 	require.NoError(t, err, "no error should have existed")
 	_, err = p.Credentials.Read("HELLO_CUSTOM")
 	require.NoError(t, err, "expected credential to have been generated")
+}
+
+func Test_Choose_CredIdentifier(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+
+	core.DisableColor = true
+	c, err := expect.NewConsole()
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	bun := &bundle.Bundle{}
+
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+
+		c.ExpectString("Choose an option")
+		c.Send(string(terminal.KeyEnter)) // select "choose credential set"
+
+		c.ExpectString("Choose a set of credentials to use while installing this bundle")
+		c.Send("cred_set_HELLO_CUSTOM")   // search
+		c.Send(string(terminal.KeySpace)) // select
+		c.Send("kool-kreds")              // search
+		c.Send(string(terminal.KeySpace)) // select
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectEOF()
+	}()
+
+	credSets, err := p.chooseOrGenerateCredentialSet(bun)
+
+	c.Tty().Close()
+	<-donec
+
+	require.NoError(t, err)
+	require.ElementsMatch(t, credSets, []string{"kool-kreds", "cred_set_HELLO_CUSTOM"})
 }
 
 func TestGenerateNameProvided(t *testing.T) {

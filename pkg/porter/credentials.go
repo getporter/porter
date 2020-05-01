@@ -219,6 +219,7 @@ func (p *Porter) generateNewCredentialSet(bundle *bundle.Bundle, credIdentifierN
 
 func (p *Porter) generateAndSaveCredentialSet(genOpts credentialsgenerator.GenerateOptions) error {
 
+	// pass survey.AskOpt to `GenerateCredentials` as it is not member of `Porter`
 	cs, err := credentialsgenerator.GenerateCredentials(genOpts, p.SurveyAskOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to generate credentials")
