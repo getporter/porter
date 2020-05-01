@@ -27,7 +27,7 @@ func TestPorter_Invoke_ChooseCred(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -37,7 +37,7 @@ func TestPorter_Invoke_ChooseCred(t *testing.T) {
 	installOpts.Name = "HELLO_CUSTOM"
 	installOpts.CredentialIdentifiers = []string{"cred_set_HELLO_CUSTOM"}
 
-	err = p.InstallBundle(installOpts)
+	err := p.InstallBundle(installOpts)
 
 	require.NoError(t, err, "InstallBundle failed")
 

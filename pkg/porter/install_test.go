@@ -5,7 +5,6 @@ import (
 
 	"get.porter.sh/porter/pkg/manifest"
 	"gopkg.in/AlecAivazis/survey.v1"
-	"gopkg.in/AlecAivazis/survey.v1/core"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -247,7 +246,7 @@ func TestPorter_InstallBundle_GenCred(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -285,7 +284,7 @@ func TestPorter_InstallBundle_GenCred(t *testing.T) {
 		c.ExpectEOF()
 	}()
 
-	err = p.InstallBundle(opts)
+	err := p.InstallBundle(opts)
 
 	c.Tty().Close()
 	<-donec
@@ -300,7 +299,7 @@ func TestPorter_InstallBundle_ChooseCred(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -324,7 +323,7 @@ func TestPorter_InstallBundle_ChooseCred(t *testing.T) {
 		c.ExpectEOF()
 	}()
 
-	err = p.InstallBundle(opts)
+	err := p.InstallBundle(opts)
 
 	c.Tty().Close()
 	<-donec
@@ -337,8 +336,7 @@ func TestPorter_InstallBundle_Quit(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
-	core.DisableColor = true
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -358,7 +356,7 @@ func TestPorter_InstallBundle_Quit(t *testing.T) {
 		c.ExpectEOF()
 	}()
 
-	err = p.InstallBundle(opts)
+	err := p.InstallBundle(opts)
 
 	c.Tty().Close()
 	<-donec
@@ -373,8 +371,7 @@ func TestPorter_InstallBundle_CredFlag(t *testing.T) {
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
 	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
 
-	core.DisableColor = true
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -384,7 +381,7 @@ func TestPorter_InstallBundle_CredFlag(t *testing.T) {
 	opts.Name = "HELLO_CUSTOM"
 	opts.CredentialIdentifiers = []string{"cred_set_HELLO_CUSTOM"}
 
-	err = p.InstallBundle(opts)
+	err := p.InstallBundle(opts)
 
 	require.NoError(t, err, "InstallBundle failed")
 }

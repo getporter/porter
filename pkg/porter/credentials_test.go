@@ -9,7 +9,6 @@ import (
 
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/Netflix/go-expect"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -18,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/AlecAivazis/survey.v1"
-	"gopkg.in/AlecAivazis/survey.v1/core"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"
 )
 
@@ -46,8 +44,7 @@ func TestGenerateNotSilent(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
-	core.DisableColor = true
-	c, _, err := vt10x.NewVT10XConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
@@ -56,7 +53,7 @@ func TestGenerateNotSilent(t *testing.T) {
 		Silent: false,
 	}
 	opts.CNABFile = "/bundle.json"
-	err = opts.Validate(nil, p.Context)
+	err := opts.Validate(nil, p.Context)
 	require.NoError(t, err, "Validate failed")
 
 	donec := make(chan struct{})
@@ -96,8 +93,7 @@ func Test_Choose_CredIdentifier(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
-	core.DisableColor = true
-	c, err := expect.NewConsole()
+	c, _, _ := vt10x.NewVT10XConsole()
 	defer c.Close()
 	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
