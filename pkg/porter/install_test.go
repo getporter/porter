@@ -241,7 +241,7 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	require.NoError(t, err, "InstallBundle failed")
 }
 
-func TestPorter_InstallBundle_Interactive(t *testing.T) {
+func TestPorter_InstallBundle_GenCred(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
@@ -254,20 +254,16 @@ func TestPorter_InstallBundle_Interactive(t *testing.T) {
 	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
 
 	opts := InstallOptions{}
-	// opts.Tag = "getporter/wordpress:v0.1.2"
 	opts.CNABFile = "/bundle.json"
 	opts.Name = "HELLO_CUSTOM"
-	// opts.CredentialIdentifiers = []string{"wordpress"}
-	// opts.Params = []string{"wordpress-password=mypassword"}
-	err = opts.Validate(nil, p.Context)
-	require.NoError(t, err, "Validate install options failed")
 
 	donec := make(chan struct{})
 	go func() {
 		defer close(donec)
 
 		c.ExpectString("Choose an option")
-		c.Send(string(terminal.KeyEnter))
+		// only two options available "generate new credential set" and "quit" becoz cred test dir not added
+		c.Send(string(terminal.KeyEnter)) // select "generate new credential set"
 
 		c.ExpectString("Enter credential identifier name")
 		c.SendLine("credset_for_HELLO_CUSTOM")
@@ -296,4 +292,78 @@ func TestPorter_InstallBundle_Interactive(t *testing.T) {
 	<-donec
 
 	require.NoError(t, err, "InstallBundle failed")
+}
+
+func TestPorter_InstallBundle_ChooseCred(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+	p.TestCredentials.TestSecrets.AddSecret("my-first-cred", "my-first-cred-value")
+	p.TestCredentials.TestSecrets.AddSecret("my-second-cred", "my-second-cred-value")
+
+	core.DisableColor = true
+	c, _, err := vt10x.NewVT10XConsole()
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	opts := InstallOptions{}
+	opts.CNABFile = "/bundle.json"
+	opts.Name = "HELLO_CUSTOM"
+
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+
+		c.ExpectString("Choose an option")
+		c.Send(string(terminal.KeyEnter)) // select "choose credential set"
+
+		c.ExpectString("Choose a set of credentials to use while installing this bundle")
+		c.Send("cred_set_HELLO_CUSTOM")   // search
+		c.Send(string(terminal.KeySpace)) // select
+		c.Send(string(terminal.KeyEnter))
+
+		c.ExpectEOF()
+	}()
+
+	err = p.InstallBundle(opts)
+
+	c.Tty().Close()
+	<-donec
+
+	require.NoError(t, err, "InstallBundle failed")
+}
+
+func TestPorter_InstallBundle_Quit(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
+
+	core.DisableColor = true
+	c, _, err := vt10x.NewVT10XConsole()
+	defer c.Close()
+	tstdio := terminal.Stdio{c.Tty(), c.Tty(), c.Tty()}
+	p.SurveyAskOpts = survey.WithStdio(tstdio.In, tstdio.Out, tstdio.Err)
+
+	opts := InstallOptions{}
+	opts.CNABFile = "/bundle.json"
+	opts.Name = "HELLO_CUSTOM"
+
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+
+		c.ExpectString("Choose an option")
+		c.Send(string(terminal.KeyArrowDown))
+		c.Send(string(terminal.KeyArrowDown))
+		c.Send(string(terminal.KeyEnter)) // select "quit"
+		c.ExpectEOF()
+	}()
+
+	err = p.InstallBundle(opts)
+
+	c.Tty().Close()
+	<-donec
+
+	require.Error(t, err, "Credentials are mandatory to install this bundle but none were provided with the `--cred` flag")
 }
