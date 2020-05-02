@@ -35,8 +35,6 @@ status:
 uninstall:
   - terraform:
       description: "Uninstall Terraform assets"
-      vars:
-        file_contents: "{{bundle.parameters.file_contents}}"
 
 outputs:
   - name: file_contents

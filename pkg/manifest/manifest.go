@@ -174,6 +174,20 @@ func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
 	return &p2
 }
 
+// AppliesTo returns a boolean value specifying whether or not
+// the Parameter applies to the provided action
+func (pd *ParameterDefinition) AppliesTo(action string) bool {
+	if len(pd.ApplyTo) == 0 {
+		return true
+	}
+	for _, act := range pd.ApplyTo {
+		if action == act {
+			return true
+		}
+	}
+	return false
+}
+
 // CredentialDefinition represents the structure or fields of a credential parameter
 type CredentialDefinition struct {
 	Name        string `yaml:"name"`
