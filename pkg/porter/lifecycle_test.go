@@ -165,6 +165,7 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 
 	upgradeOpts := UpgradeOptions{}
 	upgradeOpts.Name = installOpts.Name
+	upgradeOpts.Tag = installOpts.Tag
 	err = upgradeOpts.Validate(nil, p.Context)
 
 	err = p.UpgradeBundle(upgradeOpts)
@@ -172,6 +173,7 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 
 	uninstallOpts := UninstallOptions{}
 	uninstallOpts.Name = installOpts.Name
+	uninstallOpts.Tag = installOpts.Tag
 	err = uninstallOpts.Validate(nil, p.Context)
 
 	err = p.UninstallBundle(uninstallOpts)
