@@ -81,11 +81,13 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		pluginType.Interface: pluginType.Plugin,
 	}
 
+	var errbuf bytes.Buffer
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugins.HandshakeConfig,
 		Plugins:         pluginTypes,
 		Cmd:             pluginCommand,
 		Logger:          logger,
+		Stderr:          &errbuf,
 	})
 	cleanup := func() {
 		client.Kill()
@@ -95,6 +97,9 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	rpcClient, err := client.Client()
 	if err != nil {
 		cleanup()
+		if stderr := errbuf.String(); stderr != "" {
+			err = errors.Wrap(errors.New(stderr), err.Error())
+		}
 		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
 	}
 
