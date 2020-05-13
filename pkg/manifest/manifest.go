@@ -530,16 +530,17 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 	return manifest, nil
 }
 
-func (m *Manifest) SetDefaults() {
+func (m *Manifest) SetDefaults() error {
 	if m.Image == "" && m.BundleTag != "" {
-		tag := m.BundleTag
-		// Derive the last index of ":"
-		// This allows for a registry consisting of a domain:port to be included
-		li := strings.LastIndex(tag, ":")
-		// Split on this last index
-		registry := tag[0:li]
+		ref, err := reference.ParseNormalizedNamed(m.BundleTag)
+		if err != nil {
+			return errors.Wrapf(err, "invalid tag %s", m.BundleTag)
+		}
+
+		registry := reference.FamiliarName(ref)
 		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
 	}
+	return nil
 }
 
 func readFromFile(cxt *context.Context, path string) ([]byte, error) {
@@ -583,7 +584,10 @@ func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	m.SetDefaults()
+	err = m.SetDefaults()
+	if err != nil {
+		return nil, err
+	}
 	m.ManifestPath = path
 
 	return m, nil
