@@ -532,7 +532,12 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 
 func (m *Manifest) SetDefaults() {
 	if m.Image == "" && m.BundleTag != "" {
-		registry := strings.Split(m.BundleTag, ":")[0]
+		tag := m.BundleTag
+		// Derive the last index of ":"
+		// This allows for a registry consisting of a domain:port to be included
+		li := strings.LastIndex(tag, ":")
+		// Split on this last index
+		registry := tag[0:li]
 		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
 	}
 }
