@@ -6,13 +6,12 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/pkg/errors"
 	"github.com/pivotal/image-relocation/pkg/image"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/cnabio/cnab-go/bundle"
 )
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
@@ -62,6 +61,44 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	opts.Tag = "myreg/mybuns:v0.1.0"
 	err = opts.Validate(p.Context)
 	require.NoError(t, err, "validating should not have failed")
+}
+
+func TestPublish_getNewImageNameFromBundleTag(t *testing.T) {
+	t.Run("has registry and org", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("localhost:5000/myorg/apache-installer", "example.com/neworg/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/neworg/apache-installer", newInvImgName.String())
+	})
+
+	t.Run("no registry, has org", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("myorg/apache-installer", "example.com/anotherorg/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/anotherorg/apache-installer", newInvImgName.String())
+	})
+
+	t.Run("org repeated in registry name", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("getporter/whalesayd", "getporter.azurecr.io/neworg/whalegap:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "getporter.azurecr.io/neworg/whalesayd", newInvImgName.String())
+	})
+
+	t.Run("org repeated in image name", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("getporter/getporter-hello-installer", "test.azurecr.io/neworg/hello:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "test.azurecr.io/neworg/getporter-hello-installer", newInvImgName.String())
+	})
+
+	t.Run("src has no org, dst has no org", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("apache", "example.com/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/apache", newInvImgName.String())
+	})
+
+	t.Run("src has no org, dst has org", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("apache", "example.com/neworg/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/neworg/apache", newInvImgName.String())
+	})
 }
 
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
