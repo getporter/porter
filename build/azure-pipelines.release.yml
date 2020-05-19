@@ -13,29 +13,32 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOROOT: '/usr/local/go1.13' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
+  GOVERSION: '1.13.10'
 
 stages:
 - stage: Test
   jobs:
   - job: unit_test
     steps:
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
     - script: make verify
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Verify'
 
     - script: make test-unit
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Unit Test'
 
   - job: integration_test
     steps:
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
@@ -54,11 +57,14 @@ stages:
     - script: |
         export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
         make test-integration
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Integration Test'
 
   - job: cli_test
     steps:
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
@@ -75,30 +81,33 @@ stages:
         secureFile: kubeconfig
 
     - script: make build
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Build'
 
     - script: |
         export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
         export REGISTRY=getporterci
         make test-cli
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'CLI Test'
 
 - stage: Publish
   jobs:
   - job: publish_binaries
     steps:
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
     
     # Don't combine with the next step, it messes up the templates in the binaries
     - script: make build
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Get yourself a porter'
 
     - script: make xbuild-all
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Cross Compile'
 
     - task: Docker@1
@@ -111,19 +120,22 @@ stages:
     - script: |
         export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
         make publish
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
       displayName: 'Publish Porter Binaries'
 
   - job: publish_example_bundles
     steps:
+    - task: GoTool@0
+      inputs:
+        version: '$(GOVERSION)'
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
     - script: |
         sudo make ajv
         make build build-bundle validate-bundle
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Validate Example Bundles'
 
     - task: Docker@1
@@ -134,6 +146,6 @@ stages:
         command: login
 
     - script: make publish-bundle
-      workingDirectory: '$(MODULE_PATH)'
+      workingDirectory: '$(System.DefaultWorkingDirectory)'
       condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
       displayName: 'Publish Example Bundles'
