@@ -51,8 +51,8 @@ func NewTestContext(t *testing.T) *TestContext {
 
 func NewTestCommand() CommandBuilder {
 	return func(command string, args ...string) *exec.Cmd {
-		testArgs := append([]string{command}, args...)
-		cmd := exec.Command(os.Args[0], testArgs...)
+		// testArgs := append([]string{command}, args...)
+		cmd := exec.Command(command, args...)
 
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
