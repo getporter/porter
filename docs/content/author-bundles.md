@@ -92,6 +92,9 @@ parameters:
 - name: mysql_password
   type: string
   sensitive: true
+  applyTo:
+    - install
+    - upgrade
 - name: database_name
   type: string
   default: "wordpress"
@@ -99,10 +102,12 @@ parameters:
 ```
 
 * `name`: The name of the parameter.
-* `type`: The data type of the parameter: string, integer, number, boolean.
-* `env`: The name for the destination environment variable in the bundle. Defaults to the name of the parameter in upper case, if path is not specified.
-* `path`: The destination file path in the bundle.
-* `sensitive`: Optional. Designate this parameter's value as sensitive, for masking in console output.
+* `type`: The data type of the parameter: string, integer, number, boolean or file.
+* `default`: (Optional) The default value for the parameter, which will be used if not supplied elsewhere.
+* `env`: (Optional) The name for the destination environment variable in the bundle. Defaults to the name of the parameter in upper case, if path is not specified.
+* `path`: (Optional) The destination file path in the bundle.
+* `sensitive`: (Optional) Designate this parameter's value as sensitive, for masking in console output.
+* `applyTo`: (Optional) Designate which actions this parameter is applicable. When not supplied, it is assumed the parameter applies to all actions.
  
 ## Outputs
 
