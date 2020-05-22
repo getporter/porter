@@ -54,7 +54,7 @@ The syntax to pass a parameter to porter is the same for both regular and file p
 $ porter install --param mytar=./my.tar.gz
 ```
 
-See the [Parameters section of the Author Bundles doc](author-bundles#Parameters) for additional examples and configuration.
+See the [Parameters section of the Author Bundles doc](/author-bundles#parameters) for additional examples and configuration.
 
 ## Wiring Parameters
 
