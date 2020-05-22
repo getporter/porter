@@ -54,6 +54,8 @@ The syntax to pass a parameter to porter is the same for both regular and file p
 $ porter install --param mytar=./my.tar.gz
 ```
 
+See the [Parameters section of the Author Bundles doc](/author-bundles#parameters) for additional examples and configuration.
+
 ## Wiring Parameters
 
 Once a parameter has been declared in the `porter.yaml`, Porter provides a simple mechanism for specifying how the parameter value should be wired into the mixin. To reference a parameter in the bundle, you use a notation of the form `"{{ bundle.parameters.PARAM_NAME }}"`. This can be used anywhere within step definition. For example, to use the `database_name` parameter defined above in the `set` block of the helm mixin:
