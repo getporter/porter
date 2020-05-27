@@ -25,7 +25,6 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		pluginName := "testplugin"
 
 		err := exec.Command("mkdir", "-p", path.Join(pluginsPath, pluginName)).Run()
-		// err := c.FileSystem.MkdirAll(path.Join(pluginsPath, pluginName), os.ModePerm)
 		require.NoError(t, err, "could not create plugin dir")
 
 		// testplugin binary will be in bin. refer "test-integration" in Makefile
