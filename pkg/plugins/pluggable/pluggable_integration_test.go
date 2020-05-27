@@ -1,8 +1,8 @@
-// +build integration
-
 package pluggable
 
 import (
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"testing"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestPlugins_CatchStderr(t *testing.T) {
-        home, err := ioutil.TempDir("/tmp", "porter")
+	home, err := ioutil.TempDir("/tmp", "porter")
 	require.NoError(t, err, "could not create porter home directory")
 
 	c := config.NewTestConfig(t)
@@ -22,11 +22,14 @@ func TestPlugins_CatchStderr(t *testing.T) {
 
 	t.Run("plugin throws an error", func(t *testing.T) {
 		pluginsPath, _ := c.GetPluginsDir()
-		pluginName := "badplugin"
+		pluginName := "testplugin"
 
-		err := c.FileSystem.MkdirAll(path.Join(pluginsPath, pluginName), 0777)
+		err := exec.Command("mkdir", "-p", path.Join(pluginsPath, pluginName)).Run()
+		// err := c.FileSystem.MkdirAll(path.Join(pluginsPath, pluginName), os.ModePerm)
 		require.NoError(t, err, "could not create plugin dir")
-		err = exec.Command("cp", path.Join("testdata", pluginName), path.Join(pluginsPath, pluginName)).Run()
+
+		// testplugin binary will be in bin. refer "test-integration" in Makefile
+		err = exec.Command("cp", path.Join(os.Getenv("PROJECT_ROOT"), "bin", pluginName), path.Join(pluginsPath, pluginName)).Run()
 		require.NoError(t, err, "could not copy test binary")
 
 		cfg := PluginTypeConfig{
@@ -47,16 +50,16 @@ func TestPlugins_CatchStderr(t *testing.T) {
 			SecretSources: []config.SecretSource{{
 				PluginConfig: config.PluginConfig{
 					Name:         "myplugin",
-					PluginSubKey: "badplugin.vault",
+					PluginSubKey: "testplugin.vault",
 				},
 			}},
 		}
 		ll := NewPluginLoader(c.Config)
 		_, _, err = ll.Load(cfg)
-		require.EqualError(t, err, `could not connect to the secrets.badplugin.vault plugin: Unrecognized remote plugin message: 
+		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 
 
 This usually means that the plugin is either invalid or simply
-needs to be recompiled to support the latest protocol.: invalid plugin key
+needs to be recompiled to support the latest protocol.: i am just test plugin. i don't function
 `)
 	})
 }
