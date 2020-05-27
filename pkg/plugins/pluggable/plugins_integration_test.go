@@ -13,7 +13,11 @@ import (
 )
 
 func TestPlugins_CatchStderr(t *testing.T) {
+        home, err := ioutil.TempDir("/tmp", "porter")
+	require.NoError(t, err, "could not create porter home directory")
+
 	c := config.NewTestConfig(t)
+	c.SetHomeDir(home)
 	c.NewCommand = exec.Command
 
 	t.Run("plugin throws an error", func(t *testing.T) {
