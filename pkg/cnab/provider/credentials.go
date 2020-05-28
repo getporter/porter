@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/pkg/errors"
 )
 
 func (d *Runtime) loadCredentials(b *bundle.Bundle, creds []string) (credentials.Set, error) {

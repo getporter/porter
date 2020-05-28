@@ -29,7 +29,7 @@ func (d *Runtime) Upgrade(args ActionArguments) error {
 	}
 	d.Extensions = exts
 
-	c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUpgrade))
+	c.Parameters, err = d.loadParameters(&c, args.Params, args.ParameterSets, string(manifest.ActionUpgrade))
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}

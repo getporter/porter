@@ -61,8 +61,12 @@ type sharedOptions struct {
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
 	Params []string
 
+	// TODO: remove
 	// ParamFiles is a list of file paths containing lines of NAME=VALUE parameter definitions.
 	ParamFiles []string
+
+	// ParameterSets is a list of parameter sets containing parameter sources
+	ParameterSets []string
 
 	// CredentialIdentifiers is a list of credential names or paths to make available to the bundle.
 	CredentialIdentifiers []string
@@ -73,10 +77,14 @@ type sharedOptions struct {
 	// parsedParams is the parsed set of parameters from Params.
 	parsedParams map[string]string
 
+	// TODO: remove
 	// parsedParamFiles is the parsed set of parameters from Params.
 	parsedParamFiles []map[string]string
 
-	// combinedParameters is parsedParams merged on top of parsedParamFiles.
+	// parsedParameterSets is the parsed set of parameters from ParameterSets.
+	parsedParameterSets []map[string]string
+
+	// combinedParameters is parsedParams merged on top of parsedParamSets.
 	combinedParameters map[string]string
 }
 
@@ -233,6 +241,7 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
+// TODO: remove
 // parseParamFiles parses the variable assignments in ParamFiles.
 func (o *sharedOptions) parseParamFiles(cxt *context.Context) error {
 	o.parsedParamFiles = make([]map[string]string, 0, len(o.ParamFiles))
@@ -247,6 +256,7 @@ func (o *sharedOptions) parseParamFiles(cxt *context.Context) error {
 	return nil
 }
 
+// TODO: remove
 func (o *sharedOptions) parseParamFile(path string, cxt *context.Context) error {
 	f, err := cxt.FileSystem.Open(path)
 	if err != nil {
