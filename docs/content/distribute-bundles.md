@@ -104,7 +104,7 @@ relocated image locations.
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_1_DIGEST**
   * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_2_DIGEST**
 
-NOTE: Digest refers to the the repository digest (not the image id).
+NOTE: Digest refers to the the [repository digest][digest] (not the image id).
 
 Consider the following example:
 
@@ -153,10 +153,11 @@ used in the final bundle. New repositories are created for each image used by
 the bundle on the destination registry. These are a side effect of the publishing
 process and they are not used by the final bundle.
 
-Using the example above, the following repositories are created and should be
+Using the example above, the following repositories are created and can be
 ignored:
 
 * `jeremyrickard/porter-do-bundle/porter-do`
 * `jeremyrickard/porter-do-bundle/spring-music`
 
+[digest]: https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests
 [image-map]: /author-bundles/#images
