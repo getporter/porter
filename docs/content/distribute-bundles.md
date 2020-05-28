@@ -13,7 +13,7 @@ Before you can publish your bundle, you must first run a `porter build` command.
 
 ## Bundle Publish
 
-Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing the both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both invocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
+Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both invocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
 
 ```yaml
 name: kube-example
@@ -22,11 +22,11 @@ description: "An example Porter bundle using Kubernetes"
 tag: getporter/kubernetes:v0.1.0
 ```
 
-This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the image, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the bundle name, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
 The generated invocation image name will be auto-derived from a combination of `tag` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
 
-Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built and to ensure that the value you specified in `invocationImage` is correct.
+Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built.
 
 Next, run the `porter publish` command in order to push the invocation image to the specified repository and to regenerate a CNAB bundle manifest using this newly pushed image. You should see output like the following:
 
@@ -78,7 +78,7 @@ executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
 ```
 
-The later example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.1.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute and optionally the `invocationImage` attribute, before running `porter publish` again.  (Porter will detect the manifest change and automatically run a new bundle and invocation image build prior to publishing.)
+The latter example ensures immutability for your bundle. After you've initially run `porter publish`, your tagged reference, such as `getporter/kubernetes:v0.1.0` can be updated with subsequent `porter publish` commands. However, the digested version `getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456` will not change. If you'd like to publish different version of the bundle, you will need to update minimally the `tag` attribute and optionally the `invocationImage` attribute, before running `porter publish` again.  (Porter will detect the manifest change and automatically run a new bundle and invocation image build prior to publishing.)
 
 ## Publish Archived Bundles
 
