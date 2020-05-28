@@ -96,7 +96,7 @@ porter publish -a mybunz1.1.tgz --tag getporter/megabundle:1.1.0
 ## Image References After Publishing
 
 When a bundle is published, all images [referenced][image-map] by the bundle are
-published **inside** bundle repository. Bundles should be written to use the
+published **inside** the bundle repository. Bundles should be written to use the
 relocated image locations.
 
 * REGISTRY/ORG/BUNDLE:TAG
@@ -150,7 +150,7 @@ Here we can see that the spring-music image was relocated inside the published b
 
 Publishing archived bundles will result in intermediate artifacts that are not
 used in the final bundle. New repositories are created for each image used by
-the bundle on the destination registry. These are a side effect of the publishing
+the bundle on the destination registry. These are side effects of the publishing
 process and they are not used by the final bundle.
 
 Using the example above, the following repositories are created and can be
