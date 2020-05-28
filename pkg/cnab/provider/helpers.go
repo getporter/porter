@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 )
 
@@ -23,14 +24,19 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
 	claimStorage := claims.NewTestClaimProvider()
 	credentialStorage := credentials.NewTestCredentialProvider(t, tc)
-	return NewTestRuntimeWithConfig(tc, claimStorage, credentialStorage)
+	parameterStorage := parameters.NewTestParameterProvider(t, tc)
+	return NewTestRuntimeWithConfig(tc, claimStorage, credentialStorage, parameterStorage)
 }
 
-func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims claims.ClaimProvider, testCredentials credentials.TestCredentialProvider) *TestRuntime {
+func NewTestRuntimeWithConfig(
+	tc *config.TestConfig,
+	testClaims claims.ClaimProvider,
+	testCredentials credentials.TestCredentialProvider,
+	testParameters parameters.TestParameterProvider) *TestRuntime {
 	return &TestRuntime{
 		TestConfig:      tc,
 		TestCredentials: testCredentials,
-		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials),
+		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testParameters),
 	}
 }
 

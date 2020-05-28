@@ -15,6 +15,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
@@ -44,6 +45,7 @@ type TestPorter struct {
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
+	testParameters := parameters.NewTestParameterProvider(t, tc)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProvider()
 
@@ -55,7 +57,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Builder = NewTestBuildProvider()
 	p.Claims = testClaims
 	p.Credentials = testCredentials
-	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials)
+	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
 
 	return &TestPorter{
 		Porter:          p,

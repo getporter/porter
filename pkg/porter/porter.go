@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
@@ -23,6 +24,7 @@ type Porter struct {
 
 	Cache       cache.BundleCache
 	Credentials credentials.CredentialProvider
+	Parameters  parameters.ParameterProvider
 	Claims      claims.ClaimProvider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
@@ -44,17 +46,19 @@ func NewWithConfig(c *config.Config) *Porter {
 	storagePlugin := pluginstore.NewStore(c)
 	claimStorage := claims.NewClaimStorage(c, storagePlugin)
 	credStorage := credentials.NewCredentialStorage(c, storagePlugin)
+	paramStorage := parameters.NewParameterStorage(c, storagePlugin)
 	return &Porter{
 		Config:      c,
 		Cache:       cache,
 		Claims:      claimStorage,
 		Credentials: credStorage,
+		Parameters:  paramStorage,
 		Registry:    cnabtooci.NewRegistry(c.Context),
 		Templates:   templates.NewTemplates(),
 		Builder:     buildprovider.NewDockerBuilder(c.Context),
 		Mixins:      mixin.NewPackageManager(c),
 		Plugins:     plugins.NewPackageManager(c),
-		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
+		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage, paramStorage),
 	}
 }
 

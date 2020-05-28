@@ -33,6 +33,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 		Claim:                 o.Name,
 		BundlePath:            o.CNABFile,
 		Params:                make(map[string]string, len(o.combinedParameters)),
+		ParameterSets:         o.ParameterSets,
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,
 		RelocationMapping:     o.RelocationMapping,
