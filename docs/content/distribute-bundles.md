@@ -7,6 +7,11 @@ aliases:
 
 Once you have built a bundle with Porter, the next step is to share the bundle and invocation image so others can use it. Porter uses OCI (Docker) registries to share both CNAB bundle manifest and invocation images.
 
+* [Preparing For Bundle Publishing](#preparing-for-bundle-publishing)
+* [Bundle Publish](#bundle-publish)
+* [Publish Archived Bundles](#publish-archived-bundles)
+* [Image References After Publishing](#image-references-after-publishing)
+ 
 ## Preparing For Bundle Publishing
 
 Before you can publish your bundle, you must first run a `porter build` command. This will create the invocation image so it can be pushed to an OCI (Docker) registry along with your CNAB bundle manifest. It's a good idea to work with your bundle and test it locally before you publish it to a registry.
@@ -90,7 +95,18 @@ porter publish -a mybunz1.1.tgz --tag getporter/megabundle:1.1.0
 
 ## Image References After Publishing
 
-When a bundle is published, the images that it will use are copied into the location of the published bundle. This simplifies access control and management of artifacts in the repository. Consider the following `porter.yaml` snippet:
+When a bundle is published, all images [referenced][image-map] by the bundle are
+published **inside** the bundle repository. Bundles should be written to use the
+relocated image locations.
+
+* REGISTRY/ORG/BUNDLE:TAG
+  * REGISTRY/ORG/BUNDLE@**INVOCATION_IMAGE_DIGEST**
+  * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_1_DIGEST**
+  * REGISTRY/ORG/BUNDLE@**REFERENCED_IMAGE_2_DIGEST**
+
+NOTE: Digest refers to the the [repository digest][digest] (not the image id).
+
+Consider the following example:
 
 ```
 name: spring-music
@@ -107,7 +123,10 @@ images:
       digest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
 ```
 
-When this bundle is published, both the invocation image and the `spring-music` image will be copied and stored in the context of the bundle. To see this in action, you can use the `porter inspect` command to see what images will actually be used for a given bundle.
+When this bundle is published, both the invocation image and the spring-music
+image will be copied and stored in the context of the bundle. To see this in
+action, you can use the `porter inspect` command to see what images will
+actually be used for a given bundle.
 
 ```
 Name: spring-music
@@ -115,12 +134,30 @@ Description: Run the Spring Music Service on Kubernetes and Digital Ocean Postgr
 Version: 0.5.0
 
 Invocation Images:
-Image                                                                                                    Type     Digest                                                                    Original Image
-jeremyrickard/porter-do-bundle@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be   docker   sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be   jeremyrickard/porter-do:v0.5.0
+Image                                            Type     Digest            Original Image
+jeremyrickard/porter-do-bundle@sha256:74b86...   docker   sha256:74b86...   jeremyrickard/porter-do:v0.5.0
 
 Images:
-Name           Type     Image                                                                                                    Digest                                                                    Original Image
-spring-music   docker   jeremyrickard/porter-do-bundle@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f   sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f   jeremyrickard/spring-music@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f
+Name           Type     Image                                            Digest            Original Image
+spring-music   docker   jeremyrickard/porter-do-bundle@sha256:8f113...   sha256:8f113...   jeremyrickard/spring-music@sha256:8f113...
 ```
 
-Here, we can see that both images are stored as `jeremyrickard/porter-do-bundle@sha256:SOMEHASH`. The hash of each matches the digest of the original image. In the case of the invocation image, the image originally was available at `jeremyrickard/porter-do:v0.5.0` with a digest of `sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be`. After the bundle was published, it is now stored at `jeremyrickard/porter-do-bundle@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be`. Similarly, the `spring-music` image was originally referenced with `jeremyrickard/spring-music@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f`, but after publish the reference becomes `jeremyrickard/porter-do-bundle@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f`.
+Here we can see that the spring-music image was relocated inside the published bundle:
+
+`jeremyrickard/spring-music@sha256:8f113...` → `jeremyrickard/porter-do-bundle@sha256:8f113...`
+
+### Archived Bundle Artifacts
+
+Publishing archived bundles will result in intermediate artifacts that are not
+used in the final bundle. New repositories are created for each image used by
+the bundle on the destination registry. These are side effects of the publishing
+process and they are not used by the final bundle.
+
+Using the example above, the following repositories are created and can be
+ignored:
+
+* `jeremyrickard/porter-do-bundle/porter-do`
+* `jeremyrickard/porter-do-bundle/spring-music`
+
+[digest]: https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests
+[image-map]: /author-bundles/#images
