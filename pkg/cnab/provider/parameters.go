@@ -7,10 +7,8 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
-
-	"get.porter.sh/porter/pkg/parameters"
 )
 
 // loadParameters accepts a set of parameter overrides as well as parameter set
@@ -59,12 +57,8 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (credentials.Set, error) {
-	if len(params) == 0 {
-		return nil, parameters.Validate(nil, b.Parameters)
-	}
-
-	resolvedParameters := credentials.Set{}
+func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (valuesource.Set, error) {
+	resolvedParameters := valuesource.Set{}
 	for _, name := range params {
 		pset, err := d.parameters.Read(name)
 		if err != nil {
@@ -81,7 +75,7 @@ func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (credenti
 		}
 	}
 
-	return resolvedParameters, parameters.Validate(resolvedParameters, b.Parameters)
+	return resolvedParameters, nil
 }
 
 func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {

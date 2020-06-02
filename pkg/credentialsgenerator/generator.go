@@ -10,6 +10,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
+	"github.com/cnabio/cnab-go/valuesource"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -38,7 +39,7 @@ const (
 	questionCommand = "shell command"
 )
 
-type credentialGenerator func(name string) (credentials.CredentialStrategy, error)
+type credentialGenerator func(name string) (valuesource.Strategy, error)
 
 // GenerateCredentials will generate a credential set based on the given options
 func GenerateCredentials(opts GenerateOptions) (*credentials.CredentialSet, error) {
@@ -60,7 +61,7 @@ func genCredentialSet(name string, creds map[string]bundle.Credential, fn creden
 	cs := credentials.CredentialSet{
 		Name: name,
 	}
-	cs.Credentials = []credentials.CredentialStrategy{}
+	cs.Credentials = []valuesource.Strategy{}
 
 	if strings.ContainsAny(name, "./\\") {
 		return cs, fmt.Errorf("credentialset name '%s' cannot contain the following characters: './\\'", name)
@@ -84,14 +85,14 @@ func genCredentialSet(name string, creds map[string]bundle.Credential, fn creden
 	return cs, nil
 }
 
-func genEmptyCredentials(name string) (credentials.CredentialStrategy, error) {
-	return credentials.CredentialStrategy{
+func genEmptyCredentials(name string) (valuesource.Strategy, error) {
+	return valuesource.Strategy{
 		Name:   name,
-		Source: credentials.Source{Value: "TODO"},
+		Source: valuesource.Source{Value: "TODO"},
 	}, nil
 }
 
-func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
+func genCredentialSurvey(name string) (valuesource.Strategy, error) {
 
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set credential %q", name),
@@ -101,7 +102,7 @@ func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 
 	sourceValuePromptTemplate := "Enter the %s that will be used to set credential %q"
 
-	c := credentials.CredentialStrategy{Name: name}
+	c := valuesource.Strategy{Name: name}
 
 	source := ""
 	if err := survey.AskOne(sourceTypePrompt, &source, nil); err != nil {

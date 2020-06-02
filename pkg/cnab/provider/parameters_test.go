@@ -24,7 +24,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err = d.loadParameters(claim, overrides, "action")
+	_, err = d.loadParameters(claim, overrides, nil, "action")
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -46,7 +46,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err = d.loadParameters(claim, overrides, "action")
+	_, err = d.loadParameters(claim, overrides, nil, "action")
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -104,7 +104,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	params, err := d.loadParameters(claim, overrides, "action")
+	params, err := d.loadParameters(claim, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -139,7 +139,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(claim, overrides, "action")
+	params, err := d.loadParameters(claim, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -174,7 +174,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(claim, overrides, "action")
+	params, err := d.loadParameters(claim, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -210,7 +210,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := d.loadParameters(claim, overrides, "action")
+	params, err := d.loadParameters(claim, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
@@ -392,3 +392,5 @@ func Test_Paramapalooza(t *testing.T) {
 		})
 	}
 }
+
+// TODO: test intersection of param overrides and provided parameter sets (currently, overrides should take precedence)

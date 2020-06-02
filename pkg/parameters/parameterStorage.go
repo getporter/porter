@@ -8,9 +8,9 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
 	crudplugins "get.porter.sh/porter/pkg/storage/pluginstore"
-	"github.com/cnabio/cnab-go/credentials"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -40,8 +40,8 @@ func NewParameterStorage(c *config.Config, storagePlugin *crudplugins.Store) *Pa
 	}
 }
 
-func (s ParameterStorage) ResolveAll(params ParameterSet) (credentials.Set, error) {
-	resolvedParams := make(credentials.Set)
+func (s ParameterStorage) ResolveAll(params ParameterSet) (valuesource.Set, error) {
+	resolvedParams := make(valuesource.Set)
 	var resolveErrors error
 
 	for _, param := range params.Parameters {

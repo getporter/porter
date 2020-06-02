@@ -4,21 +4,22 @@ import (
 	"testing"
 
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 	s := CredentialStorage{}
 	testCreds := credentials.CredentialSet{
-		Credentials: []credentials.CredentialStrategy{
+		Credentials: []valuesource.Strategy{
 			{
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   "env",
 					Value: "SOME_ENV",
 				},
 			},
 			{
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   "value",
 					Value: "somevalue",
 				},
@@ -33,15 +34,15 @@ func TestCredentialStorage_Validate_GoodSources(t *testing.T) {
 func TestCredentialStorage_Validate_BadSources(t *testing.T) {
 	s := CredentialStorage{}
 	testCreds := credentials.CredentialSet{
-		Credentials: []credentials.CredentialStrategy{
+		Credentials: []valuesource.Strategy{
 			{
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   "wrongthing",
 					Value: "SOME_ENV",
 				},
 			},
 			{
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   "anotherwrongthing",
 					Value: "somevalue",
 				},

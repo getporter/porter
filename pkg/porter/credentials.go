@@ -14,6 +14,7 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -255,10 +256,10 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	}
 }
 
-// GetCredentialSourceValueAndType takes a given credentials.Source struct and
+// GetCredentialSourceValueAndType takes a given valuesource.Source struct and
 // returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
 // both in their string forms
-func GetCredentialSourceValueAndType(cs credentials.Source) (value string, key string) {
+func GetCredentialSourceValueAndType(cs valuesource.Source) (value string, key string) {
 	return cs.Value, cs.Key
 }
 

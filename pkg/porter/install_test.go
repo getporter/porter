@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -212,10 +213,10 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
 	cs := credentials.CredentialSet{
 		Name: "wordpress",
-		Credentials: []credentials.CredentialStrategy{
+		Credentials: []valuesource.Strategy{
 			{
 				Name: "kubeconfig",
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   secrets.SourceSecret,
 					Value: "kubeconfig",
 				},
