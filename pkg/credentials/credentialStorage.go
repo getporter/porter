@@ -11,6 +11,7 @@ import (
 	"github.com/cnabio/cnab-go/credentials"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -38,8 +39,8 @@ func NewCredentialStorage(c *config.Config, storagePlugin *crudplugins.Store) *C
 	}
 }
 
-func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (credentials.Set, error) {
-	resolvedCreds := make(credentials.Set)
+func (s CredentialStorage) ResolveAll(creds credentials.CredentialSet) (valuesource.Set, error) {
+	resolvedCreds := make(valuesource.Set)
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {

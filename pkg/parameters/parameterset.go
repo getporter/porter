@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets"
+	"github.com/cnabio/cnab-go/valuesource"
 )
 
 // ParameterSet represents a collection of parameters and their
@@ -32,7 +32,7 @@ type ParameterSet struct {
 //	- Validate the parameters against a spec
 //	- Resolve the parameters
 //	- Expand them into bundle values
-func (p *ParameterSet) Resolve(s secrets.Store) (credentials.Set, error) {
+func (p *ParameterSet) Resolve(s secrets.Store) (valuesource.Set, error) {
 	l := len(p.Parameters)
 	res := make(map[string]string, l)
 	for i := 0; i < l; i++ {
@@ -56,7 +56,7 @@ type ParameterStrategy struct {
 	// Source is the location of the parameter.
 	// During resolution, the source will be loaded, and the result temporarily placed
 	// into Value.
-	Source credentials.Source `json:"source,omitempty" yaml:"source,omitempty"`
+	Source valuesource.Source `json:"source,omitempty" yaml:"source,omitempty"`
 	// Value holds the parameter value.
 	// When a parameter is loaded, it is loaded into this field. In all
 	// other cases, it is empty. This field is omitted during serialization.

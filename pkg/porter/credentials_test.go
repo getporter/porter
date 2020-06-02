@@ -12,6 +12,7 @@ import (
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -386,7 +387,7 @@ func TestShowCredential_PreserveCase(t *testing.T) {
 
 type SourceTest struct {
 	name      string
-	source    credentials.Source
+	source    valuesource.Source
 	wantValue string
 	wantType  string
 }
@@ -395,7 +396,7 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 	testcases := []SourceTest{
 		{
 			name: "Source: EnvVar",
-			source: credentials.Source{
+			source: valuesource.Source{
 				Key:   host.SourceEnv,
 				Value: "ENVY",
 			},
@@ -404,7 +405,7 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 		},
 		{
 			name: "Source: Path",
-			source: credentials.Source{
+			source: valuesource.Source{
 				Key:   host.SourcePath,
 				Value: "/pathy/patheson",
 			},
@@ -413,7 +414,7 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 		},
 		{
 			name: "Source: Command",
-			source: credentials.Source{
+			source: valuesource.Source{
 				Key:   host.SourceCommand,
 				Value: "sed s/true/false/g",
 			},
@@ -422,7 +423,7 @@ func TestGetCredentialSourceValueAndType(t *testing.T) {
 		},
 		{
 			name: "Source: Value",
-			source: credentials.Source{
+			source: valuesource.Source{
 				Key:   host.SourceValue,
 				Value: "abc123",
 			},

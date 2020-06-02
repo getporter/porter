@@ -1,8 +1,6 @@
 package parameters
 
-import (
-	"github.com/cnabio/cnab-go/credentials"
-)
+import "github.com/cnabio/cnab-go/valuesource"
 
 // TODO: clone of credentialProvider from credentials pkg
 // Generalize to DRY out?
@@ -10,7 +8,7 @@ import (
 // ParameterProvider interface for managing sets of parameters.
 type ParameterProvider interface {
 	ParameterStore
-	ResolveAll(creds ParameterSet) (credentials.Set, error)
+	ResolveAll(creds ParameterSet) (valuesource.Set, error)
 	Validate(ParameterSet) error
 }
 

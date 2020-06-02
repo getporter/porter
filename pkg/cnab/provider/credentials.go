@@ -7,10 +7,11 @@ import (
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
 )
 
-func (d *Runtime) loadCredentials(b *bundle.Bundle, creds []string) (credentials.Set, error) {
+func (d *Runtime) loadCredentials(b *bundle.Bundle, creds []string) (valuesource.Set, error) {
 	if len(creds) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials)
 	}
@@ -18,7 +19,7 @@ func (d *Runtime) loadCredentials(b *bundle.Bundle, creds []string) (credentials
 	// The strategy here is "last one wins". We loop through each credential file and
 	// calculate its credentials. Then we insert them into the creds map in the order
 	// in which they were supplied on the CLI.
-	resolvedCredentials := credentials.Set{}
+	resolvedCredentials := valuesource.Set{}
 	for _, name := range creds {
 		var cset credentials.CredentialSet
 		var err error
