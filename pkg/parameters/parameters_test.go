@@ -3,6 +3,10 @@ package parameters
 import (
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseVariableAssignments(t *testing.T) {
@@ -41,4 +45,69 @@ func TestParseVariableAssignments_MissingVariableName(t *testing.T) {
 	if err == nil {
 		t.Fatal("should have failed due to a missing variable name")
 	}
+}
+
+func TestLoad(t *testing.T) {
+	t.Run("unsuccessful load", func(t *testing.T) {
+		_, err := Load("paramset.json")
+		require.EqualError(t, err, "open paramset.json: no such file or directory")
+	})
+
+	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {
+		expected := &ParameterSet{}
+
+		pset, err := Load("testdata/paramset_bad.json")
+		require.EqualError(t, err,
+			"yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `myparam...` into parameters.ParameterSet")
+		require.Equal(t, expected, pset)
+	})
+
+	t.Run("successful load, successful unmarshal", func(t *testing.T) {
+		expected := &ParameterSet{
+			Name:     "mybun",
+			Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
+			Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
+			Parameters: []ParameterStrategy{
+				{
+					Name: "param_env",
+					Source: valuesource.Source{
+						Key:   "env",
+						Value: "PARAM_ENV",
+					},
+				},
+				{
+					Name: "param_value",
+					Source: valuesource.Source{
+						Key:   "value",
+						Value: "param_value",
+					},
+				},
+				{
+					Name: "param_command",
+					Source: valuesource.Source{
+						Key:   "command",
+						Value: "echo hello world",
+					},
+				},
+				{
+					Name: "param_path",
+					Source: valuesource.Source{
+						Key:   "path",
+						Value: "/path/to/param",
+					},
+				},
+				{
+					Name: "param_secret",
+					Source: valuesource.Source{
+						Key:   "secret",
+						Value: "param_secret",
+					},
+				},
+			},
+		}
+
+		pset, err := Load("testdata/paramset.json")
+		require.NoError(t, err)
+		require.Equal(t, expected, pset)
+	})
 }
