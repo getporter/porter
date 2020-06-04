@@ -21,7 +21,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	// Loop through each parameter set file and load the parameter values
 	loaded, err := d.loadParameterSets(bun, parameterSets)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to process provided parameter sets")
+		return nil, errors.Wrapf(err, "unable to process provided parameter sets: %v", parameterSets)
 	}
 
 	for key, val := range loaded {

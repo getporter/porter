@@ -24,14 +24,14 @@ type TestParameterProvider struct {
 
 func NewTestParameterProvider(t *testing.T, tc *config.TestConfig) TestParameterProvider {
 	backingSecrets := inmemorysecrets.NewStore()
-	backingCreds := inmemorystorage.NewStore()
-	credStore := NewParameterStore(backingCreds)
+	backingParams := inmemorystorage.NewStore()
+	paramStore := NewParameterStore(backingParams)
 	return TestParameterProvider{
 		T:           t,
 		TestConfig:  tc,
 		TestSecrets: backingSecrets,
 		ParameterStorage: &ParameterStorage{
-			ParametersStore: &credStore,
+			ParametersStore: &paramStore,
 			SecretsStore:    secrets.NewSecretStore(backingSecrets),
 		},
 	}

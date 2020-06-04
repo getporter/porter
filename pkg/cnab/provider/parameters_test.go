@@ -216,6 +216,64 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
 }
 
+func Test_loadParameters_ParameterSetPrecedence(t *testing.T) {
+	d := NewTestRuntime(t)
+	d.TestParameters.AddTestParameters("testdata/paramset.json")
+	d.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
+
+	claim, err := claim.New("test")
+	require.NoError(t, err)
+
+	claim.Bundle = &bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:    "string",
+				Default: "foo_default",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {
+				Definition: "foo",
+				Destination: &bundle.Location{
+					Path: "/tmp/foo",
+				},
+			},
+		},
+	}
+
+	overrides := map[string]string{
+		"foo": "foo_override",
+	}
+
+	t.Run("no override present, no parameter set present", func(t *testing.T) {
+		params, err := d.loadParameters(claim, nil, nil, "action")
+		require.NoError(t, err)
+		require.Equal(t, "foo_default", params["foo"],
+			"expected param 'foo' to have default value")
+	})
+
+	t.Run("override present, no parameter set present", func(t *testing.T) {
+		params, err := d.loadParameters(claim, overrides, nil, "action")
+		require.NoError(t, err)
+		require.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have override value")
+	})
+
+	t.Run("no override present, parameter set present", func(t *testing.T) {
+		params, err := d.loadParameters(claim, nil, []string{"myparameterset"}, "action")
+		require.NoError(t, err)
+		require.Equal(t, "foo_value", params["foo"],
+			"expected param 'foo' to have parameter set value")
+	})
+
+	t.Run("override present, parameter set present", func(t *testing.T) {
+		params, err := d.loadParameters(claim, overrides, []string{"myparameterset"}, "action")
+		require.NoError(t, err)
+		require.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have override value, which has precedence over the parameter set value")
+	})
+}
+
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {
@@ -392,5 +450,3 @@ func Test_Paramapalooza(t *testing.T) {
 		})
 	}
 }
-
-// TODO: test intersection of param overrides and provided parameter sets (currently, overrides should take precedence)

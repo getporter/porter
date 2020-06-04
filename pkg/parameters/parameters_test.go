@@ -67,7 +67,7 @@ func TestLoad(t *testing.T) {
 			Name:     "mybun",
 			Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
 			Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-			Parameters: []ParameterStrategy{
+			Parameters: []valuesource.Strategy{
 				{
 					Name: "param_env",
 					Source: valuesource.Source{
