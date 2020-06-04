@@ -11,8 +11,7 @@ import (
 
 // TODO: very much a clone of cnab-go/credentials/credstore.go
 // Ideas on how to generalize for re-use?
-//
-// TODO: unit tests; depending on ^^
+// Perhaps update methods to all take an additional ItemType param?
 
 // ItemType is the location in the backing store where parameters are persisted.
 const ItemType = "parameters"
