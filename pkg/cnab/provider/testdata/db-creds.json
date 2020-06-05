@@ -1,0 +1,13 @@
+{
+  "name": "db-creds",
+  "created": "0001-01-01T00:00:00Z",
+  "modified": "0001-01-01T00:00:00Z",
+  "credentials": [
+    {
+      "name": "db-password",
+      "source": {
+        "secret": "db-password"
+      }
+    }
+  ]
+}
