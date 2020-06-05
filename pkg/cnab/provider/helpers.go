@@ -3,10 +3,10 @@ package cnabprovider
 import (
 	"testing"
 
-	"github.com/cnabio/cnab-go/bundle"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
+	"github.com/cnabio/cnab-go/bundle"
 )
 
 const debugDriver = "debug"
@@ -15,7 +15,8 @@ var _ CNABProvider = &TestRuntime{}
 
 type TestRuntime struct {
 	*Runtime
-	TestConfig *config.TestConfig
+	TestCredentials credentials.TestCredentialProvider
+	TestConfig      *config.TestConfig
 }
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
@@ -27,8 +28,9 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 
 func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims claims.ClaimProvider, testCredentials credentials.TestCredentialProvider) *TestRuntime {
 	return &TestRuntime{
-		TestConfig: tc,
-		Runtime:    NewRuntime(tc.Config, testClaims, testCredentials),
+		TestConfig:      tc,
+		TestCredentials: testCredentials,
+		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials),
 	}
 }
 
