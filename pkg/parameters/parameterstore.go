@@ -32,7 +32,7 @@ func NewParameterStore(store crud.Store) Store {
 	}
 }
 
-// List lists the names of the stored parameter sets.
+// List the names of the stored parameter sets.
 func (s Store) List() ([]string, error) {
 	return s.backingStore.List(ItemType)
 }
