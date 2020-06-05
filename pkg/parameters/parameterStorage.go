@@ -15,9 +15,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: clone of credentialStorage.go in credentials pkg
-// Can generalize/share/DRY out?
-
 type ParametersStore = Store
 type SecretsStore = cnabsecrets.Store
 

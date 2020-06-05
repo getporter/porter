@@ -2,9 +2,6 @@ package parameters
 
 import "github.com/cnabio/cnab-go/valuesource"
 
-// TODO: clone of credentialProvider from credentials pkg
-// Generalize to DRY out?
-
 // ParameterProvider interface for managing sets of parameters.
 type ParameterProvider interface {
 	ParameterStore
