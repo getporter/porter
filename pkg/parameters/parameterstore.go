@@ -9,10 +9,6 @@ import (
 	"github.com/cnabio/cnab-go/utils/crud"
 )
 
-// TODO: very much a clone of cnab-go/credentials/credstore.go
-// Ideas on how to generalize for re-use?
-// Perhaps update methods to all take an additional ItemType param?
-
 // ItemType is the location in the backing store where parameters are persisted.
 const ItemType = "parameters"
 
