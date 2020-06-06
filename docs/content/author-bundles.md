@@ -86,6 +86,8 @@ See [Using Mixins](/use-mixins) to learn more about how mixins work.
 Parameters are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#parameters) and
 allow you to pass in configuration values when you execute the bundle.
 
+Learn more about [how parameters work in Porter](/parameters/).
+
 ```yaml
 parameters:
 - name: mysql_user
