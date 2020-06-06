@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,10 +24,10 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		Name:     "mycreds",
 		Created:  time.Now(),
 		Modified: time.Now(),
-		Credentials: []credentials.CredentialStrategy{
+		Credentials: []valuesource.Strategy{
 			{
 				Name: "password",
-				Source: credentials.Source{
+				Source: valuesource.Source{
 					Key:   secrets.SourceSecret,
 					Value: "password",
 				},
@@ -54,7 +55,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	gotValues, err := r.loadCredentials(&b, []string{"mycreds", "/db-creds.json"})
 	require.NoError(t, err, "loadCredentials failed")
 
-	wantValues := credentials.Set{
+	wantValues := valuesource.Set{
 		"password":    "mypassword",
 		"db-password": "topsecret",
 	}

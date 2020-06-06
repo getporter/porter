@@ -3,10 +3,15 @@ package cnabprovider
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
+	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -196,7 +201,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 			},
 		},
 		Parameters: map[string]bundle.Parameter{
-			"foo": bundle.Parameter{
+			"foo": {
 				Definition: "foo",
 				Required:   true,
 				Destination: &bundle.Location{
@@ -214,6 +219,68 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
+}
+
+func Test_loadParameters_viaPathOrName(t *testing.T) {
+	r := NewTestRuntime(t)
+
+	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
+	r.TestParameters.TestSecrets.AddSecret("bar_secret", "bar_value")
+	r.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
+
+	claim, err := claim.New("test")
+	require.NoError(t, err)
+
+	ps1 := parameters.ParameterSet{
+		Name:     "mypset",
+		Created:  time.Now(),
+		Modified: time.Now(),
+		Parameters: []valuesource.Strategy{
+			{
+				Name: "bar",
+				Source: valuesource.Source{
+					Key:   secrets.SourceSecret,
+					Value: "bar_secret",
+				},
+			},
+		},
+	}
+	err = r.parameters.Save(ps1)
+	require.NoError(t, err, "Save parameter set failed")
+
+	claim.Bundle = &bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type: "string",
+			},
+			"bar": &definition.Schema{
+				Type: "string",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {
+				Definition: "foo",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "FOO",
+				},
+			},
+			"bar": {
+				Definition: "bar",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "BAR",
+				},
+			},
+		},
+	}
+
+	gotParams, err := r.loadParameters(claim, nil, []string{"mypset", "/paramset.json"}, "install")
+	require.NoError(t, err, "loadParameters failed")
+
+	wantParams := map[string]interface{}{
+		"foo": "foo_value",
+		"bar": "bar_value",
+	}
+	assert.Equal(t, wantParams, gotParams, "resolved unexpected parameter values")
 }
 
 func Test_loadParameters_ParameterSetPrecedence(t *testing.T) {
