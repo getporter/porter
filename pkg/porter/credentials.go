@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/editor"
+	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
 	"gopkg.in/yaml.v2"
 
@@ -116,15 +116,17 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	if name == "" {
 		name = bundle.Name
 	}
-	genOpts := credentialsgenerator.GenerateOptions{
-		Name:        name,
+	genOpts := generator.GenerateCredentialsOptions{
+		GenerateOptions: generator.GenerateOptions{
+			Name:   name,
+			Silent: opts.Silent,
+		},
 		Credentials: bundle.Credentials,
-		Silent:      opts.Silent,
 	}
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
 
-	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
+	cs, err := generator.GenerateCredentials(genOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to generate credentials")
 	}
