@@ -327,13 +327,13 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
-		Use:   "archive",
+		Use:   "archive FILENAME",
 		Short: "Archive a bundle",
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
-		Example: `  porter bundle archive [FILENAME]
-  porter bundle archive --file another/porter.yaml [FILENAME]
-  porter bundle archive --cnab-file some/bundle.json [FILENAME]
-  porter bundle archive --tag repo/bundle:tag [FILENAME]
+		Example: `  porter bundle archive mybun.tgz
+  porter bundle archive mybun.tgz --file another/porter.yaml
+  porter bundle archive mybun.tgz --cnab-file some/bundle.json
+  porter bundle archive mybun.tgz --tag repo/bundle:tag
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)

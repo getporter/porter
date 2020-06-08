@@ -12,10 +12,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOROOT: '/usr/local/go1.13' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
+  GOVERSION: '1.13.10'
 
 jobs:
 - job: setup
@@ -28,45 +25,54 @@ jobs:
   dependsOn: setup
   condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
 
   - script: |
       make verify
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Verify'
 
   - script: |
       make test-unit
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Unit Test'
 
 - job: compile
   dependsOn: setup
   condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
 
   - script: |
         make xbuild-all
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Cross Compile'
 
 - job: validate_example_bundles
   dependsOn: setup
   condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
 
   - script: |
       make build
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Build'
 
   - script: |
       sudo make ajv
       make build-bundle validate-bundle
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Validate Example Bundles'

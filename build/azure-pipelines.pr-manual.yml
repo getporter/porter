@@ -12,10 +12,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  GOROOT: '/usr/local/go1.13' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  MODULE_PATH: '$(GOPATH)/src/get.porter.sh/porter' # Path to the module's code
+  GOVERSION: '1.13.10'
 
 jobs:
 - job: setup
@@ -28,6 +25,9 @@ jobs:
   dependsOn: setup
   condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
 
@@ -44,15 +44,23 @@ jobs:
       secureFile: kubeconfig
 
   - script: |
+      make build
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'Build'
+
+  - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
       make test-integration
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Integration Test'
 
 - job: cli_test
   dependsOn: setup
   condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
   steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
   - script: build/azure-pipelines.setup-go-workspace.sh
     displayName: 'Set up the Go workspace'
 
@@ -70,11 +78,11 @@ jobs:
 
   - script: |
        make build
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Build'
 
   - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
       REGISTRY=getporterci make test-cli
-    workingDirectory: '$(MODULE_PATH)'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'CLI Test'

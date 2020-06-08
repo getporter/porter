@@ -159,11 +159,21 @@ func TestReadManifest_File(t *testing.T) {
 }
 
 func TestSetDefaultInvocationImage(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	cxt.AddTestFile("testdata/missing-invocation-image.porter.yaml", config.Name)
-	m, err := ReadManifest(cxt.Context, config.Name)
-	require.NoError(t, err)
-	assert.Equal(t, "getporter/missing-invocation-image-installer:"+m.Version, m.Image)
+	t.Run("missing invocation image", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.AddTestFile("testdata/missing-invocation-image.porter.yaml", config.Name)
+		m, err := ReadManifest(cxt.Context, config.Name)
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/missing-invocation-image-installer:"+m.Version, m.Image)
+	})
+
+	t.Run("missing invocation image; tag includes registry with port", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.AddTestFile("testdata/missing-invocation-image-tag-has-port.porter.yaml", config.Name)
+		m, err := ReadManifest(cxt.Context, config.Name)
+		require.NoError(t, err)
+		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:"+m.Version, m.Image)
+	})
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {

@@ -3,9 +3,12 @@ package porter
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/build"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
@@ -15,9 +18,6 @@ import (
 	"github.com/pivotal/image-relocation/pkg/registry"
 	"github.com/pivotal/image-relocation/pkg/registry/ggcr"
 	"github.com/pkg/errors"
-
-	"get.porter.sh/porter/pkg/build"
-	portercontext "get.porter.sh/porter/pkg/context"
 )
 
 // PublishOptions are options that may be specified when publishing a bundle.
@@ -287,18 +287,28 @@ func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error)
 	}
 
 	// Swap out Host
-	newImg := strings.Replace(origImgName.String(), origImgName.Host(), bundleTagName.Host(), -1)
+	origHost := origImgName.Host()
+	newHost := bundleTagName.Host()
+	newImg := strings.Replace(origImgName.String(), origHost, newHost, -1)
 
 	// Swap out org (via Path)
 	origPathParts := strings.Split(origImgName.Path(), "/")
 	tagPathParts := strings.Split(bundleTagName.Path(), "/")
-	newOrg := tagPathParts[0]
+	var newOrg string
+	if len(tagPathParts) > 1 {
+		newOrg = tagPathParts[0]
+	}
 	if len(origPathParts) == 1 {
 		// original image has no org, e.g. a library image
 		// so just prepend new org
-		newImg = strings.Join([]string{newOrg, newImg}, "/")
+		newImg = path.Join(newOrg, newImg)
 	} else {
-		newImg = strings.Replace(newImg, origPathParts[0], newOrg, -1)
+		newImgName, err := image.NewName(newImg)
+		if err != nil {
+			return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
+		}
+
+		newImg = path.Join(newImgName.Host(), strings.Replace(newImgName.Path(), origPathParts[0], newOrg, 1))
 	}
 
 	newImgName, err := image.NewName(newImg)

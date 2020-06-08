@@ -2,10 +2,7 @@
 
 set -xeuo pipefail
 
-mkdir -p "$GOBIN"
-mkdir -p "$GOPATH/pkg"
-mkdir -p "$MODULE_PATH"
-shopt -s extglob
-mv !(gopath) "$MODULE_PATH"
-echo "##vso[task.prependpath]$GOBIN"
-echo "##vso[task.prependpath]$GOROOT/bin"
+# Create GOPATH/bin and add it to our PATH so that
+# installed go binaries are available
+mkdir -p /home/vsts/go/bin/
+echo "##vso[task.prependpath]/home/vsts/go/bin/"
