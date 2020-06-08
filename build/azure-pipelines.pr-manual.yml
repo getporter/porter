@@ -44,6 +44,11 @@ jobs:
       secureFile: kubeconfig
 
   - script: |
+      make build
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'Build'
+
+  - script: |
       export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
       make test-integration
     workingDirectory: '$(System.DefaultWorkingDirectory)'

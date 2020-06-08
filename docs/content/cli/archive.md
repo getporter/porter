@@ -12,16 +12,16 @@ Archive a bundle
 Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.
 
 ```
-porter archive [flags]
+porter archive FILENAME [flags]
 ```
 
 ### Examples
 
 ```
-  porter archive [FILENAME]
-  porter archive --file another/porter.yaml [FILENAME]
-  porter archive --cnab-file some/bundle.json [FILENAME]
-  porter archive --tag repo/bundle:tag [FILENAME]
+  porter archive mybun.tgz
+  porter archive mybun.tgz --file another/porter.yaml
+  porter archive mybun.tgz --cnab-file some/bundle.json
+  porter archive mybun.tgz --tag repo/bundle:tag
 		  
 ```
 
