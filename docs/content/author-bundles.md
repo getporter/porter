@@ -288,6 +288,10 @@ dependencies:
 ## Images
 
 The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
+These are images used in the bundle and declaring them enables Porter to manage them for you:
+
+* publishing the bundle [copies referenced images into the published bundle](/distribute-bundles/#image-references-after-publishing).
+* [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
 
 ```yaml
 images:
