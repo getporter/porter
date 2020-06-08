@@ -158,21 +158,62 @@ func TestReadManifest_File(t *testing.T) {
 	assert.Equal(t, "hello", m.Name)
 }
 
-func TestSetDefaultInvocationImage(t *testing.T) {
-	t.Run("missing invocation image", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		cxt.AddTestFile("testdata/missing-invocation-image.porter.yaml", config.Name)
-		m, err := ReadManifest(cxt.Context, config.Name)
+func TestSetDefault(t *testing.T) {
+	t.Run("bundle and invocation image tags set", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Image:     "getporter/mybun-some-installer:v1.2.3-beta.1",
+		}
+		err := m.SetDefaults()
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/missing-invocation-image-installer:"+m.Version, m.Image)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-some-installer:v1.2.3-beta.1", m.Image)
+	})
+
+	t.Run("invocation image missing docker tag", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Image:     "getporter/mybun-some-installer",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-some-installer:v1.2.3", m.Image)
+	})
+
+	t.Run("invocation image missing", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+	})
+
+	t.Run("bundle docker tag not set", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
 	t.Run("missing invocation image; tag includes registry with port", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		cxt.AddTestFile("testdata/missing-invocation-image-tag-has-port.porter.yaml", config.Name)
-		m, err := ReadManifest(cxt.Context, config.Name)
+		m := Manifest{
+			Version:   "0.1.0",
+			BundleTag: "localhost:5000/missing-invocation-image",
+		}
+		err := m.SetDefaults()
 		require.NoError(t, err)
-		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:"+m.Version, m.Image)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.BundleTag)
+		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:v0.1.0", m.Image)
 	})
 }
 

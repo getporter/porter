@@ -1,3 +1,6 @@
+version: 0.1.0
+tag: example.com/mybun
+
 mixins:
   - exec
   - az:
