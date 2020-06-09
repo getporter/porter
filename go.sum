@@ -543,6 +543,10 @@ github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljT
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
+github.com/vdice/cnab-go v0.0.0-20200602210128-57db872f67fa h1:R8sSuj+gKJmFY2jQ2iKVmYc/gw++deNNvAhwyF1AxKc=
+github.com/vdice/cnab-go v0.0.0-20200602210128-57db872f67fa/go.mod h1:KHrNh0073dP3+twrgOo6GLFEXqZcz2Glma7prVRBoBg=
+github.com/vdice/cnab-go v0.0.0-20200604175151-7484e185ff27 h1:1KFDBQCgh+r1L753qX038Hm1MvpGGVK+Ws8eweANP1g=
+github.com/vdice/cnab-go v0.0.0-20200604175151-7484e185ff27/go.mod h1:KHrNh0073dP3+twrgOo6GLFEXqZcz2Glma7prVRBoBg=
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/weppos/publicsuffix-go v0.5.0 h1:rutRtjBJViU/YjcI5d80t4JAVvDltS6bciJg2K1HrLU=
 github.com/weppos/publicsuffix-go v0.5.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=

@@ -102,6 +102,7 @@ Porter uses the Docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
   porter bundle install MyAppInDev --file myapp/bundle.json
+  porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
@@ -122,10 +123,13 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
+	f.StringSliceVarP(&opts.ParameterSets, "parameter-set", "p", nil,
+		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
+	// TODO: remove param-file opt here and in other actions (be sure to remove CLI examples as well)
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file or --parameter-set. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
@@ -152,6 +156,7 @@ Porter uses the Docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
+  porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
@@ -172,10 +177,13 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
+	f.StringSliceVarP(&opts.ParameterSets, "parameter-set", "p", nil,
+		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
+	// TODO: remove param-file opt here and in other actions (be sure to remove CLI examples as well)
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file or --parameter-set. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
@@ -203,6 +211,7 @@ Porter uses the Docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle invoke --action ACTION
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
+  porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
   porter bundle invoke --action ACTION --driver debug
@@ -225,10 +234,13 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
+	f.StringSliceVarP(&opts.ParameterSets, "parameter-set", "p", nil,
+		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
+	// TODO: remove param-file opt here and in other actions (be sure to remove CLI examples as well)
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file or --parameter-set. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
@@ -256,6 +268,7 @@ Porter uses the Docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
+  porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
@@ -277,10 +290,13 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
+	f.StringSliceVarP(&opts.ParameterSets, "parameter-set", "p", nil,
+		"Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.")
+	// TODO: remove param-file opt here and in other actions (be sure to remove CLI examples as well)
 	f.StringSliceVar(&opts.ParamFiles, "param-file", nil,
 		"Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.")
 	f.StringSliceVar(&opts.Params, "param", nil,
-		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file. May be specified multiple times.")
+		"Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file or --parameter-set. May be specified multiple times.")
 	f.StringSliceVarP(&opts.CredentialIdentifiers, "cred", "c", nil,
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,

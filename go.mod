@@ -57,3 +57,5 @@ replace github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-
 // See https://github.com/containerd/containerd/issues/3031
 // When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 replace github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+
+replace github.com/cnabio/cnab-go => github.com/vdice/cnab-go v0.0.0-20200604175151-7484e185ff27

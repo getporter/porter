@@ -2,12 +2,13 @@ package credentials
 
 import (
 	"github.com/cnabio/cnab-go/credentials"
+	"github.com/cnabio/cnab-go/valuesource"
 )
 
 // CredentialProvider interface for managing sets of credentials.
 type CredentialProvider interface {
 	CredentialStore
-	ResolveAll(creds credentials.CredentialSet) (credentials.Set, error)
+	ResolveAll(creds credentials.CredentialSet) (valuesource.Set, error)
 	Validate(credentials.CredentialSet) error
 }
 

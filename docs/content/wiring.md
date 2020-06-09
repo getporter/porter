@@ -105,6 +105,8 @@ install:
 
 NOTE: These references must be quoted, as in the examples above.
 
+See [Parameters][parmeters] to learn how parameters are passed in to Porter prior to bundle execution.
+
 
 ## Credentials
 
@@ -255,7 +257,7 @@ install:
       key: mysql-password
 ```
 
-In this bundle, we see the normal declaration of credentials, parameters and outputs, along with the use of `"{{  bundle.x.y.z }}"` to use these. With this bundle definition, we can build a second bundle to install wordpress and declare a dependency on this bundle. The `porter.yaml` for this might look something like:
+In this bundle, we see the normal declaration of credentials, parameters and outputs, along with the use of `"{{ bundle.x.y.z }}"` to use these. With this bundle definition, we can build a second bundle to install wordpress and declare a dependency on this bundle. The `porter.yaml` for this might look something like:
 
 ```yaml
 mixins:
@@ -330,3 +332,4 @@ install:
 
 [mixin-architecture]: /mixin-dev-guide/architecture/
 [credentials]: /credentials/
+[parameters]: /parameters/
