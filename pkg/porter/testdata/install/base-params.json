@@ -1,0 +1,11 @@
+{
+  "name": "HELLO_CUSTOM",
+  "parameters": [
+    {
+      "name": "A",
+      "source": {
+        "env": "A"
+      }
+    }
+  ]
+}

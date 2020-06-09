@@ -29,11 +29,11 @@ func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
 	//
 	// Default the porter-debug param to --debug
 	//
-	if _, set := opts.combinedParameters["porter-debug"]; !set && p.Debug {
-		if opts.combinedParameters == nil {
-			opts.combinedParameters = make(map[string]string)
+	if _, set := opts.parsedParams["porter-debug"]; !set && p.Debug {
+		if opts.parsedParams == nil {
+			opts.parsedParams = make(map[string]string)
 		}
-		opts.combinedParameters["porter-debug"] = "true"
+		opts.parsedParams["porter-debug"] = "true"
 	}
 
 	return nil

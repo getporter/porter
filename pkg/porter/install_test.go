@@ -9,7 +9,6 @@ import (
 
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +39,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
 	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
 
-	debug, set := opts.combinedParameters["porter-debug"]
+	debug, set := opts.parsedParams["porter-debug"]
 	assert.True(t, set)
 	assert.Equal(t, "true", debug)
 }
@@ -76,7 +75,7 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 
 	assert.Equal(t, p.Manifest.Name, opts.Name)
 
-	_, set := opts.combinedParameters["porter-debug"]
+	_, set := opts.parsedParams["porter-debug"]
 	assert.False(t, set)
 }
 
@@ -96,7 +95,7 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	err = p.applyDefaultOptions(&opts.sharedOptions)
 	require.NoError(t, err)
 
-	debug, set := opts.combinedParameters["porter-debug"]
+	debug, set := opts.parsedParams["porter-debug"]
 	assert.True(t, set)
 	assert.Equal(t, "false", debug)
 }
@@ -137,38 +136,6 @@ func TestInstallOptions_validateInstanceName(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestInstallOptions_combineParameters(t *testing.T) {
-	p := NewTestPorter(t)
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-
-	opts := InstallOptions{
-		BundleLifecycleOpts{
-			sharedOptions: sharedOptions{
-				ParamFiles: []string{
-					"testdata/install/base-params.txt",
-					"testdata/install/dev-params.txt",
-				},
-				Params: []string{"A=true", "E=puppies", "E=kitties"},
-			},
-		},
-	}
-
-	err := opts.validateParams(p.Context)
-	require.NoError(t, err)
-
-	gotParams := opts.combineParameters()
-
-	wantParams := map[string]string{
-		"A": "true",
-		"B": "2",
-		"C": "3",
-		"D": "blue",
-		"E": "kitties",
-	}
-
-	assert.Equal(t, wantParams, gotParams)
 }
 
 func TestInstallOptions_validateDriver(t *testing.T) {
