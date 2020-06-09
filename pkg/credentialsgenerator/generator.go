@@ -93,13 +93,15 @@ func genEmptyCredentials(name string) (credentials.CredentialStrategy, error) {
 
 func genCredentialSurvey(name string) (credentials.CredentialStrategy, error) {
 
+	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
-		Message: fmt.Sprintf("How would you like to set credential %q", name),
+		Message: fmt.Sprintf("How would you like to set credential %q\n ", name),
 		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
 		Default: "environment variable",
 	}
 
-	sourceValuePromptTemplate := "Enter the %s that will be used to set credential %q"
+	// extra space-suffix to align question and answer. Unfortunately misaligns help text
+	sourceValuePromptTemplate := "Enter the %s that will be used to set %q\n "
 
 	c := credentials.CredentialStrategy{Name: name}
 
