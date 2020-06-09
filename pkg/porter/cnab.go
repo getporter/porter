@@ -81,9 +81,6 @@ type sharedOptions struct {
 	// parsedParamFiles is the parsed set of parameters from Params.
 	parsedParamFiles []map[string]string
 
-	// parsedParameterSets is the parsed set of parameters from ParameterSets.
-	parsedParameterSets []map[string]string
-
 	// combinedParameters is parsedParams merged on top of parsedParamSets.
 	combinedParameters map[string]string
 }
