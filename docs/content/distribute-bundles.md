@@ -96,8 +96,9 @@ porter publish -a mybunz1.1.tgz --tag getporter/megabundle:1.1.0
 ## Image References After Publishing
 
 When a bundle is published, all images [referenced][image-map] by the bundle are
-published **inside** the bundle repository. Bundles should be written to use the
-relocated image locations.
+published **inside** the bundle repository. Bundles should not hard-code image
+references and instead should use the [images] section and templating so that they
+are referencing the published location of the image.
 
 * REGISTRY/ORG/BUNDLE:TAG
   * REGISTRY/ORG/BUNDLE@**INVOCATION_IMAGE_DIGEST**
@@ -145,6 +146,8 @@ spring-music   docker   jeremyrickard/porter-do-bundle@sha256:8f113...   sha256:
 Here we can see that the spring-music image was relocated inside the published bundle:
 
 `jeremyrickard/spring-music@sha256:8f113...` → `jeremyrickard/porter-do-bundle@sha256:8f113...`
+
+[images]: /author-bundles/#images
 
 ### Archived Bundle Artifacts
 
