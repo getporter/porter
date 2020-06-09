@@ -1,3 +1,8 @@
+name: HELLO
+version: 0.1.0
+description: "An example Porter configuration"
+tag: jeremyrickard/porter-hello:v0.1.0
+
 mixins:
   - exec
 

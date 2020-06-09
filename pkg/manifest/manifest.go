@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
+	"github.com/Masterminds/semver"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
@@ -60,6 +61,11 @@ type Manifest struct {
 func (m *Manifest) Validate() error {
 	var result error
 
+	err := m.SetDefaults()
+	if err != nil {
+		return err
+	}
+
 	if strings.ToLower(m.Dockerfile) == "dockerfile" {
 		return errors.New("Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
 	}
@@ -71,7 +77,7 @@ func (m *Manifest) Validate() error {
 	if m.Install == nil {
 		result = multierror.Append(result, errors.New("no install action defined"))
 	}
-	err := m.Install.Validate(m)
+	err = m.Install.Validate(m)
 	if err != nil {
 		result = multierror.Append(result, errors.Wrapf(err, fmt.Sprintf(invalidStepErrorFormat, "install")))
 	}
@@ -531,14 +537,61 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 }
 
 func (m *Manifest) SetDefaults() error {
-	if m.Image == "" && m.BundleTag != "" {
-		ref, err := reference.ParseNormalizedNamed(m.BundleTag)
+	bundleRef, err := reference.ParseNormalizedNamed(m.BundleTag)
+	if err != nil {
+		return errors.Wrapf(err, "invalid tag %s", m.BundleTag)
+	}
+
+	var dockerTag string
+	switch v := bundleRef.(type) {
+	case reference.Tagged:
+		dockerTag = v.Tag()
+	case reference.Named:
+		ver, err := semver.NewVersion(m.Version)
 		if err != nil {
-			return errors.Wrapf(err, "invalid tag %s", m.BundleTag)
+			return errors.Wrapf(err, "could not parse %q as a semantic version", m.Version)
 		}
 
-		registry := reference.FamiliarName(ref)
-		m.Image = strings.Join([]string{registry + "-installer", m.Version}, ":")
+		// Tag is missing from the bundle, default it to use the version prefixed with v
+		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
+		dockerTag = fmt.Sprintf("v%s", ver.String())
+		bundleRef, err = reference.WithTag(v, dockerTag)
+		if err != nil {
+			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
+		}
+		m.BundleTag = reference.FamiliarString(bundleRef)
+	case reference.Digested:
+		return errors.New("invalid bundle tag format %q, must be an OCI image tag")
+	}
+
+	if m.Image == "" {
+		imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
+		if err != err {
+			return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
+		}
+		imageRef, err := reference.WithTag(imageName, dockerTag)
+		if err != nil {
+			return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
+		}
+		m.Image = reference.FamiliarString(imageRef)
+	} else {
+		imageRef, err := reference.ParseNormalizedNamed(m.Image)
+		if err != nil {
+			return errors.Wrapf(err, "could not parse invocationImage %q", m.Image)
+		}
+
+		switch v := imageRef.(type) {
+		case reference.Tagged:
+			// Nothing to default, leave this case in, it prevents Named from being triggered
+		case reference.Named:
+			imageRef, err = reference.WithTag(v, dockerTag)
+			if err != nil {
+				return errors.Wrapf(err, "could not set invocationImage tag to %q", dockerTag)
+			}
+			m.Image = reference.FamiliarString(imageRef)
+		case reference.Digested:
+			return errors.New("invalid bundle tag format %q, must be an OCI image tag")
+		}
 	}
 	return nil
 }
@@ -584,10 +637,6 @@ func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	err = m.SetDefaults()
-	if err != nil {
-		return nil, err
-	}
 	m.ManifestPath = path
 
 	return m, nil

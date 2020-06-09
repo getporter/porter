@@ -127,14 +127,15 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:0.1.0\"", cmd)
+	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
-	m, _ := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "LoadManifestFrom failed")
 	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
 	rm.bundles = map[string]bundle.Bundle{
 		"mysql": {
