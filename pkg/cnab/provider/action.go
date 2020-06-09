@@ -70,7 +70,7 @@ func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 		if err == nil {
 			claimBytes, err := yaml.Marshal(claim)
 			if err != nil {
-				return errors.Wrapf(err, "could not marshal claim %s for instance %s", claim.ID, args.Installation)
+				return errors.Wrapf(err, "could not marshal claim %s for installation %s", claim.ID, args.Installation)
 			}
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}

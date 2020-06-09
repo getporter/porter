@@ -39,7 +39,7 @@ func (r *Runtime) Invoke(action string, args ActionArguments) error {
 		}
 	}
 
-	c, isTempClaim, err := r.getClaimForInvoke(b, action, args.Installation)
+	existingClaim, isTempClaim, err := r.getClaimForInvoke(b, action, args.Installation)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (r *Runtime) Invoke(action string, args ActionArguments) error {
 	// If the user didn't override the bundle definition, use the one
 	// from the existing claim
 	if args.BundlePath == "" {
-		b = c.Bundle
+		b = existingClaim.Bundle
 	}
 
 	params, err := r.loadParameters(b, args.Params, args.ParameterSets, claim.ActionUpgrade)
@@ -56,7 +56,7 @@ func (r *Runtime) Invoke(action string, args ActionArguments) error {
 	}
 
 	// TODO: (carolynvs) this should be consolidated with get claim for invoke, or teh logic in that function simplified
-	c.Parameters, err = r.loadParameters(b, args.Params, args.ParameterSets, action)
+	c, err := existingClaim.NewClaim(action, b, params)
 	if err != nil {
 		return err
 	}

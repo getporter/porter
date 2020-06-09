@@ -30,12 +30,12 @@ func (r *Runtime) Uninstall(args ActionArguments) error {
 		b = existingClaim.Bundle
 	}
 
-	params, err := r.loadParameters(b, args.Params, args.ParameterSets, claim.ActionUpgrade)
+	params, err := r.loadParameters(b, args.Params, args.ParameterSets, claim.ActionUninstall)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
-	c, err := existingClaim.NewClaim(claim.ActionUpgrade, b, params)
+	c, err := existingClaim.NewClaim(claim.ActionUninstall, b, params)
 	if err != nil {
 		return err
 	}
