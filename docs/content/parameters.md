@@ -27,8 +27,6 @@ can have a secret source (`secret`).  See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-TODO: add docs on generate when functionality is added.
-
 Now when you execute the bundle you can pass the parameter set to the command
 using the `--parameter-set` or `-p` flag, e.g. `porter install -p myparamset`.
 
