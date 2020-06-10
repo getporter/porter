@@ -29,18 +29,10 @@ echo "${list_outputs}"
 echo "${list_outputs}" | grep -q "file_contents"
 echo "${list_outputs}" | grep -q "foo!"
 
-# TODO: enable when status supported
-# ${PORTER_HOME}/porter status --debug | grep -q 'content = foo!'
-
 ${PORTER_HOME}/porter upgrade --debug --param file_contents='bar!'
 
 echo "Verifying installation output(s) via 'porter installation output show' after upgrade"
 ${PORTER_HOME}/porter installation output show file_contents | grep -q "bar!"
-
-# TODO: enable when status supported
-# ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'
-
-cat ${PORTER_HOME}/claims/terraform.json
 
 ${PORTER_HOME}/porter uninstall --debug
 

@@ -39,7 +39,7 @@ func (p *Porter) ShowInstallations(opts ShowOptions) error {
 		return err
 	}
 
-	installation, err := p.Claims.ReadInstallationStatus(opts.Name)
+	installation, err := p.Claims.ReadInstallation(opts.Name)
 	if err != nil {
 		return err
 	}
