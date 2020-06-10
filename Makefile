@@ -79,8 +79,9 @@ test: clean-last-testrun test-unit test-integration test-cli
 test-unit:
 	$(GO) test ./...
 
-test-integration: build
-	$(GO) test -timeout 20m -tags=integration ./...
+test-integration: 
+	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
+	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
 
 test-cli: clean-last-testrun build init-porter-home-for-ci
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
