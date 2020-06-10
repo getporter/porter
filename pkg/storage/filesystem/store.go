@@ -35,6 +35,8 @@ func (s *Store) Connect() error {
 		return errors.Wrap(err, "could not determine home directory for filesystem storage")
 	}
 
+	s.logger.Debug("PORTER HOME: " + home)
+
 	s.Store = crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
 	return nil
 }
