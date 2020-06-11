@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,10 +60,6 @@ type sharedOptions struct {
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
 	Params []string
 
-	// TODO: remove
-	// ParamFiles is a list of file paths containing lines of NAME=VALUE parameter definitions.
-	ParamFiles []string
-
 	// ParameterSets is a list of parameter sets containing parameter sources
 	ParameterSets []string
 
@@ -76,13 +71,6 @@ type sharedOptions struct {
 
 	// parsedParams is the parsed set of parameters from Params.
 	parsedParams map[string]string
-
-	// TODO: remove
-	// parsedParamFiles is the parsed set of parameters from Params.
-	parsedParamFiles []map[string]string
-
-	// combinedParameters is parsedParams merged on top of parsedParamSets.
-	combinedParameters map[string]string
 }
 
 // Validate prepares for an action and validates the options.
@@ -218,13 +206,6 @@ func (o *sharedOptions) validateParams(cxt *context.Context) error {
 		return err
 	}
 
-	err = o.parseParamFiles(cxt)
-	if err != nil {
-		return err
-	}
-
-	o.combinedParameters = o.combineParameters()
-
 	return nil
 }
 
@@ -236,66 +217,6 @@ func (o *sharedOptions) parseParams() error {
 	}
 	o.parsedParams = p
 	return nil
-}
-
-// TODO: remove
-// parseParamFiles parses the variable assignments in ParamFiles.
-func (o *sharedOptions) parseParamFiles(cxt *context.Context) error {
-	o.parsedParamFiles = make([]map[string]string, 0, len(o.ParamFiles))
-
-	for _, path := range o.ParamFiles {
-		err := o.parseParamFile(path, cxt)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// TODO: remove
-func (o *sharedOptions) parseParamFile(path string, cxt *context.Context) error {
-	f, err := cxt.FileSystem.Open(path)
-	if err != nil {
-		return errors.Wrapf(err, "could not read param file %s", path)
-	}
-	defer f.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return errors.Wrapf(err, "unable to read contents of param file %s", path)
-	}
-
-	p, err := parameters.ParseVariableAssignments(lines)
-	if err != nil {
-		return err
-	}
-
-	o.parsedParamFiles = append(o.parsedParamFiles, p)
-	return nil
-}
-
-// Combine the parameters into a single map
-// The params set on the command line take precedence over the params set in files
-// Anything set multiple times, is decided by "last one set wins"
-func (o *sharedOptions) combineParameters() map[string]string {
-	final := make(map[string]string)
-
-	for _, pf := range o.parsedParamFiles {
-		for k, v := range pf {
-			final[k] = v
-		}
-	}
-
-	for k, v := range o.parsedParams {
-		final[k] = v
-	}
-
-	return final
 }
 
 // defaultDriver supplies the default driver if none is specified

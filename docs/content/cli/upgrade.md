@@ -26,7 +26,6 @@ porter upgrade [INSTANCE] [flags]
   porter upgrade
   porter upgrade MyAppInDev --file myapp/bundle.json
   porter upgrade --parameter-set azure --param test-mode=true --param header-color=blue
-  porter upgrade --param-file base-values.txt --param-file dev-values.txt --param test-mode=true --param header-color=blue
   porter upgrade --cred azure --cred kubernetes
   porter upgrade --driver debug
   porter upgrade MyAppFromTag --tag getporter/kubernetes:v0.1.0
@@ -44,8 +43,7 @@ porter upgrade [INSTANCE] [flags]
       --force                      Force a fresh pull of the bundle and all dependencies
   -h, --help                       help for upgrade
       --insecure-registry          Don't require TLS for the registry
-      --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters set with the same name using --param-file or --parameter-set. May be specified multiple times.
-      --param-file strings         Path to a parameters definition file for the bundle, each line in the form of NAME=VALUE. May be specified multiple times.
+      --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
   -t, --tag string                 Use a bundle in an OCI registry specified by the given tag
 ```

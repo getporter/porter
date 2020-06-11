@@ -87,8 +87,6 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("testdata/install/base-params.txt", "base-params.txt")
-
 	deps := &dependencyExecutioner{}
 
 	t.Run("porter.yaml set", func(t *testing.T) {
@@ -127,8 +125,8 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 				Params: []string{
 					"PARAM1=VALUE1",
 				},
-				ParamFiles: []string{
-					"base-params.txt",
+				ParameterSets: []string{
+					"HELLO_CUSTOM",
 				},
 				CredentialIdentifiers: []string{
 					"mycreds",
@@ -145,7 +143,8 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
 		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
-		assert.Equal(t, opts.combinedParameters, args.Params, "Params not populated correctly")
+		assert.Equal(t, opts.parsedParams, args.Params, "Params not populated correctly")
+		assert.Equal(t, opts.ParameterSets, args.ParameterSets, "Parameter sets not populated correctly")
 		assert.Equal(t, opts.Name, args.Claim, "Claim not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
 	})

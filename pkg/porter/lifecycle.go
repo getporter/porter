@@ -32,7 +32,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 	args := cnabprovider.ActionArguments{
 		Claim:                 o.Name,
 		BundlePath:            o.CNABFile,
-		Params:                make(map[string]string, len(o.combinedParameters)),
+		Params:                make(map[string]string, len(o.parsedParams)),
 		ParameterSets:         o.ParameterSets,
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,
@@ -42,7 +42,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 
 	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
-	for k, v := range o.combinedParameters {
+	for k, v := range o.parsedParams {
 		args.Params[k] = v
 	}
 	copy(args.CredentialIdentifiers, o.CredentialIdentifiers)
