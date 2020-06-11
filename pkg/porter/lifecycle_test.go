@@ -87,8 +87,6 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("testdata/install/base-params.json", "base-params.json")
-
 	deps := &dependencyExecutioner{}
 
 	t.Run("porter.yaml set", func(t *testing.T) {
