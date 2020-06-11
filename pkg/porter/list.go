@@ -29,14 +29,17 @@ type DisplayInstallation struct {
 }
 
 func NewDisplayInstallation(installation claim.Installation) (DisplayInstallation, error) {
-	installTime, err := installation.GetInstallationTimestamp()
+	c, err := installation.GetLastClaim()
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
 
-	c, err := installation.GetLastClaim()
+	installTime, err := installation.GetInstallationTimestamp()
 	if err != nil {
-		return DisplayInstallation{}, err
+		// if we cannot determine when the bundle was installed,
+		// for example it hasn't had install run yet, only an action like dry-run
+		// just use the timestamp from the claim
+		installTime = c.Created
 	}
 
 	return DisplayInstallation{
@@ -73,8 +76,7 @@ func (p *Porter) ListInstallations(opts ListOptions) error {
 	for _, installation := range installations {
 		displayInstallation, err := NewDisplayInstallation(installation)
 		if err != nil {
-			// There isn't an installation for this result
-			continue
+			return err
 		}
 		displayInstallations = append(displayInstallations, displayInstallation)
 	}

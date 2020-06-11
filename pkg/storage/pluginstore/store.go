@@ -67,7 +67,6 @@ func (s *Store) Connect() error {
 }
 
 func (s *Store) Close() error {
-	return nil
 	if s.cleanup != nil {
 		s.cleanup()
 	}
