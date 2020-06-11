@@ -25,8 +25,6 @@ type DisplayInstallation struct {
 	Action   string
 	Status   string
 
-	Claim   claim.Claim
-	Result  claim.Result
 	Outputs DisplayOutputs
 }
 
@@ -35,17 +33,10 @@ func NewDisplayInstallation(installation claim.Installation) (DisplayInstallatio
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
+
 	c, err := installation.GetLastClaim()
 	if err != nil {
 		return DisplayInstallation{}, err
-	}
-
-	var status string
-	r, err := c.GetLastResult()
-	if err == nil {
-		status = r.Status
-	} else {
-		status = claim.StatusUnknown
 	}
 
 	return DisplayInstallation{
@@ -53,9 +44,7 @@ func NewDisplayInstallation(installation claim.Installation) (DisplayInstallatio
 		Created:  installTime,
 		Modified: c.Created,
 		Action:   c.Action,
-		Status:   status,
-		Claim:    c,
-		Result:   r,
+		Status:   installation.GetLastStatus(),
 	}, nil
 }
 
