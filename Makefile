@@ -79,7 +79,7 @@ test: clean-last-testrun test-unit test-integration test-cli
 test-unit:
 	$(GO) test ./...
 
-test-integration: 
+test-integration: build
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
 
