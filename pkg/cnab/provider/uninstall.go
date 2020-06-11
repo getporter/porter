@@ -1,9 +1,8 @@
 package cnabprovider
 
 import (
-	"github.com/cnabio/cnab-go/bundle"
-
 	"github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )

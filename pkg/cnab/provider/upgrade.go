@@ -2,11 +2,9 @@ package cnabprovider
 
 import (
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/cnabio/cnab-go/claim"
-
-	"github.com/cnabio/cnab-go/bundle"
-
 	"github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 

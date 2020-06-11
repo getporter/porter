@@ -16,7 +16,7 @@ import (
 )
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
 	}
@@ -25,12 +25,12 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := d.loadParameters(b, overrides, nil, "action")
+	_, err := r.loadParameters(b, overrides, nil, "action")
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
@@ -44,12 +44,12 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := d.loadParameters(b, overrides, nil, "action")
+	_, err := r.loadParameters(b, overrides, nil, "action")
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
 func Test_loadParameters_applyTo(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 
 	// Here we set default values, but we expect the corresponding
 	// claim values to take precedence when loadParameters is called
@@ -93,7 +93,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	params, err := d.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -102,7 +102,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 }
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -123,14 +123,14 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
 }
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -151,16 +151,16 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := d.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
 }
 
 func Test_loadParameters_fileParameter(t *testing.T) {
-	d := NewTestRuntime(t)
+	r := NewTestRuntime(t)
 
-	d.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
+	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -184,7 +184,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := d.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, nil, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
