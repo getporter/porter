@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/credentialsgenerator"
 	"get.porter.sh/porter/pkg/editor"
+	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
 	"gopkg.in/yaml.v2"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -116,15 +115,17 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	if name == "" {
 		name = bundle.Name
 	}
-	genOpts := credentialsgenerator.GenerateOptions{
-		Name:        name,
+	genOpts := generator.GenerateCredentialsOptions{
+		GenerateOptions: generator.GenerateOptions{
+			Name:   name,
+			Silent: opts.Silent,
+		},
 		Credentials: bundle.Credentials,
-		Silent:      opts.Silent,
 	}
 	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
 
-	cs, err := credentialsgenerator.GenerateCredentials(genOpts)
+	cs, err := generator.GenerateCredentials(genOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to generate credentials")
 	}
@@ -226,8 +227,7 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 
 		// Iterate through all CredentialStrategies and add to rows
 		for _, cs := range credSet.Credentials {
-			sourceVal, sourceType := GetCredentialSourceValueAndType(cs.Source)
-			rows = append(rows, []string{cs.Name, sourceVal, sourceType})
+			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
 		}
 
 		// Build and configure our tablewriter
@@ -254,13 +254,6 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
-}
-
-// GetCredentialSourceValueAndType takes a given valuesource.Source struct and
-// returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
-// both in their string forms
-func GetCredentialSourceValueAndType(cs valuesource.Source) (value string, key string) {
-	return cs.Value, cs.Key
 }
 
 // CredentialDeleteOptions represent options for Porter's credential delete command

@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
@@ -390,55 +389,6 @@ type SourceTest struct {
 	source    valuesource.Source
 	wantValue string
 	wantType  string
-}
-
-func TestGetCredentialSourceValueAndType(t *testing.T) {
-	testcases := []SourceTest{
-		{
-			name: "Source: EnvVar",
-			source: valuesource.Source{
-				Key:   host.SourceEnv,
-				Value: "ENVY",
-			},
-			wantValue: "ENVY",
-			wantType:  "env",
-		},
-		{
-			name: "Source: Path",
-			source: valuesource.Source{
-				Key:   host.SourcePath,
-				Value: "/pathy/patheson",
-			},
-			wantValue: "/pathy/patheson",
-			wantType:  "path",
-		},
-		{
-			name: "Source: Command",
-			source: valuesource.Source{
-				Key:   host.SourceCommand,
-				Value: "sed s/true/false/g",
-			},
-			wantValue: "sed s/true/false/g",
-			wantType:  "command",
-		},
-		{
-			name: "Source: Value",
-			source: valuesource.Source{
-				Key:   host.SourceValue,
-				Value: "abc123",
-			},
-			wantValue: "abc123",
-			wantType:  "value",
-		},
-	}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			sv, st := GetCredentialSourceValueAndType(tc.source)
-			assert.Equal(t, tc.wantValue, sv)
-			assert.Equal(t, tc.wantType, st)
-		})
-	}
 }
 
 func TestCredentialsEdit(t *testing.T) {

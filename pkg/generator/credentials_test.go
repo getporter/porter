@@ -1,19 +1,20 @@
-package credentialsgenerator
+package generator
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestBadName(t *testing.T) {
+func TestBadCredentialsName(t *testing.T) {
 	name := "this.hasadot"
-	opts := GenerateOptions{
-		Name:   name,
-		Silent: true,
+	opts := GenerateCredentialsOptions{
+		GenerateOptions: GenerateOptions{
+			Name:   name,
+			Silent: true,
+		},
 	}
 
 	cs, err := GenerateCredentials(opts)
@@ -22,11 +23,13 @@ func TestBadName(t *testing.T) {
 	require.EqualError(t, err, fmt.Sprintf("credentialset name '%s' cannot contain the following characters: './\\'", name))
 }
 
-func TestGoodName(t *testing.T) {
+func TestGoodCredentialsName(t *testing.T) {
 	name := "this-name-is-valid"
-	opts := GenerateOptions{
-		Name:   name,
-		Silent: true,
+	opts := GenerateCredentialsOptions{
+		GenerateOptions: GenerateOptions{
+			Name:   name,
+			Silent: true,
+		},
 		Credentials: map[string]bundle.Credential{
 			"one": {
 				Location: bundle.Location{
@@ -48,15 +51,17 @@ func TestGoodName(t *testing.T) {
 
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.NotNil(t, cs, "credential set should have been empty")
-	assert.Equal(t, 3, len(cs.Credentials), "should have had a single record")
+	require.NotNil(t, cs, "credential set should have been empty and not nil")
+	require.Equal(t, 3, len(cs.Credentials), "should have had 3 entries")
 }
 
 func TestNoCredentials(t *testing.T) {
 	name := "this-name-is-valid"
-	opts := GenerateOptions{
-		Name:   name,
-		Silent: true,
+	opts := GenerateCredentialsOptions{
+		GenerateOptions: GenerateOptions{
+			Name:   name,
+			Silent: true,
+		},
 	}
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "no credentials should have generated an empty credential set")
@@ -65,20 +70,25 @@ func TestNoCredentials(t *testing.T) {
 
 func TestEmptyCredentials(t *testing.T) {
 	name := "this-name-is-valid"
-	opts := GenerateOptions{
-		Name:        name,
-		Silent:      true,
+	opts := GenerateCredentialsOptions{
+		GenerateOptions: GenerateOptions{
+			Name:   name,
+			Silent: true,
+		},
 		Credentials: map[string]bundle.Credential{},
 	}
 	cs, err := GenerateCredentials(opts)
-	require.NoError(t, err, "no credentials should have generated an empty credential set")
+	require.NoError(t, err, "empty credentials should have generated an empty credential set")
 	require.NotNil(t, cs, "empty credentials should still return an empty credential set")
 }
 
-func TestNoName(t *testing.T) {
-	opts := GenerateOptions{
-		Silent: true,
+func TestNoCredentialsName(t *testing.T) {
+	opts := GenerateCredentialsOptions{
+		GenerateOptions: GenerateOptions{
+			Silent: true,
+		},
 	}
-	_, err := GenerateCredentials(opts)
+	cs, err := GenerateCredentials(opts)
 	require.Error(t, err, "expected an error because name is required")
+	require.Nil(t, cs, "credential set should have been empty")
 }
