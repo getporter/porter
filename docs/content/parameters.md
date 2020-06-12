@@ -27,9 +27,9 @@ can have a secret source (`secret`).  See the [secrets
 plugin docs](/plugins/types/#secrets) to learn how to configure Porter to use
 an external secret store.
 
-Parameter Sets are generated using [porter parameters generate][generate].
-After generation, a parameter set can be [edited][edit], [viewed][show],
-[listed][list] along with others and [deleted][delete].
+Parameter Sets are created using [porter parameters generate][generate].
+Afterwards a parameter set can be [edited][edit] if changes are required.
+See [porter parameters help](/cli/porter_parameters/) for all available commands.
 
 Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.

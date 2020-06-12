@@ -87,7 +87,7 @@ func (g *ParameterOptions) validateParamName(args []string) error {
 	if len(args) == 1 {
 		g.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the parameter name, but multiple were received: %s", args)
+		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 	return nil
 }
@@ -125,12 +125,12 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 		},
 		Parameters: bundle.Parameters,
 	}
-	fmt.Fprintf(p.Out, "Generating new parameter %s from bundle %s\n", genOpts.Name, bundle.Name)
+	fmt.Fprintf(p.Out, "Generating new parameter set %s from bundle %s\n", genOpts.Name, bundle.Name)
 	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", len(genOpts.Parameters), bundle.Name)
 
 	pset, err := generator.GenerateParameters(genOpts)
 	if err != nil {
-		return errors.Wrap(err, "unable to generate parameters")
+		return errors.Wrap(err, "unable to generate parameter set")
 	}
 
 	pset.Created = time.Now()
@@ -145,7 +145,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 		return nil
 	}
 	err = p.Parameters.Save(*pset)
-	return errors.Wrapf(err, "unable to save parameters")
+	return errors.Wrapf(err, "unable to save parameter set")
 }
 
 // Validate validates the args provided to Porter's parameter show command
@@ -175,29 +175,29 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 
 	contents, err := yaml.Marshal(paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to load parameters")
+		return errors.Wrap(err, "unable to load parameter set")
 	}
 
 	editor := editor.New(p.Context, fmt.Sprintf("porter-%s.yaml", paramSet.Name), contents)
 	output, err := editor.Run()
 	if err != nil {
-		return errors.Wrap(err, "unable to open editor to edit parameters")
+		return errors.Wrap(err, "unable to open editor to edit parameter set")
 	}
 
 	err = yaml.Unmarshal(output, &paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to process parameters")
+		return errors.Wrap(err, "unable to process parameter set")
 	}
 
 	err = p.Parameters.Validate(paramSet)
 	if err != nil {
-		return errors.Wrap(err, "parameters are invalid")
+		return errors.Wrap(err, "parameter set is invalid")
 	}
 
 	paramSet.Modified = time.Now()
 	err = p.Parameters.Save(paramSet)
 	if err != nil {
-		return errors.Wrap(err, "unable to save parameters")
+		return errors.Wrap(err, "unable to save parameter set")
 	}
 
 	return nil
@@ -276,16 +276,16 @@ type ParameterDeleteOptions struct {
 // names.
 func (p *Porter) DeleteParameter(opts ParameterDeleteOptions) error {
 	err := p.Parameters.Delete(opts.Name)
-	if err == crud.ErrRecordDoesNotExist {
+	if err != nil && strings.Contains(err.Error(), crud.ErrRecordDoesNotExist) {
 		if p.Debug {
 			fmt.Fprintln(p.Err, "parameter set does not exist")
 		}
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete parameter")
+	return errors.Wrapf(err, "unable to delete parameter set")
 }
 
-// Validate validates the args provided Porter's parameter delete command
+// Validate the args provided to the delete parameter command
 func (o *ParameterDeleteOptions) Validate(args []string) error {
 	if err := validateParameterName(args); err != nil {
 		return err
@@ -297,10 +297,10 @@ func (o *ParameterDeleteOptions) Validate(args []string) error {
 func validateParameterName(args []string) error {
 	switch len(args) {
 	case 0:
-		return errors.Errorf("no parameter name was specified")
+		return errors.Errorf("no parameter set name was specified")
 	case 1:
 		return nil
 	default:
-		return errors.Errorf("only one positional argument may be specified, the parameter name, but multiple were received: %s", args)
+		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
 }

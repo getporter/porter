@@ -10,7 +10,7 @@ func buildParametersCommands(p *porter.Porter) *cobra.Command {
 		Use:         "parameters",
 		Aliases:     []string{"parameter", "param", "params"},
 		Annotations: map[string]string{"group": "resource"},
-		Short:       "Parameters commands",
+		Short:       "Parameter set commands",
 	}
 
 	cmd.AddCommand(buildParametersEditCommand(p))
@@ -80,7 +80,7 @@ will then provide it to the bundle in the correct location. `,
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
 	f.BoolVar(&opts.DryRun, "dry-run", false,
-		"Generate parameter but do not save it.")
+		"Generate parameter set but do not save it.")
 	f.StringVar(&opts.Tag, "tag", "",
 		"Use a bundle in an OCI registry specified by the given tag.")
 	f.BoolVar(&opts.Force, "force", false,
@@ -95,7 +95,7 @@ func buildParametersListCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		Short:   "List parameters",
+		Short:   "List parameter sets",
 		Long:    `List named sets of parameters defined by the user.`,
 		Example: `  porter parameters list [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -118,7 +118,7 @@ func buildParametersDeleteCommand(p *porter.Porter) *cobra.Command {
 
 	return &cobra.Command{
 		Use:   "delete NAME",
-		Short: "Delete a Parameter",
+		Short: "Delete a Parameter Set",
 		Long:  `Delete a named parameter set.`,
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return opts.Validate(args)
@@ -134,8 +134,8 @@ func buildParametersShowCommand(p *porter.Porter) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "show",
-		Short:   "Show a Parameter",
-		Long:    `Show a particular parameter set, including all named parameters and their corresponding mappings.`,
+		Short:   "Show a Parameter Set",
+		Long:    `Show a named parameter set, including all named parameters and their corresponding mappings.`,
 		Example: `  porter parameter show NAME [-o table|json|yaml]`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
