@@ -63,9 +63,6 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 		return c, err
 	}
 
-	// TODO: add 'skip' option *if* surveyType = surveyParameters *and* parameter not required
-	// TODO: if parameter has bundle default, pre-populate answer with the default
-
 	promptMsg := ""
 	switch source {
 	case questionSecret:

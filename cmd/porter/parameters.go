@@ -27,7 +27,7 @@ func buildParametersEditCommand(p *porter.Porter) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "edit",
-		Short: "Edit Parameter",
+		Short: "Edit Parameter Set",
 		Long:  `Edit a named parameter set.`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)

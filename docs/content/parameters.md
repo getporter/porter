@@ -61,6 +61,3 @@ applies to parameter sources as well.
 
 [generate]: /cli/porter_parameters_generate/
 [edit]: /cli/porter_parameters_edit/
-[show]: /cli/porter_parameters_show/
-[list]: /cli/porter_parameters_list/
-[delete]: /cli/porter_parameters_delete/
