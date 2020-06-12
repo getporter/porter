@@ -5,11 +5,11 @@ url: /cli/porter_parameters/
 ---
 ## porter parameters
 
-Parameters commands
+Parameter set commands
 
 ### Synopsis
 
-Parameters commands
+Parameter set commands
 
 ### Options
 
@@ -26,9 +26,9 @@ Parameters commands
 ### SEE ALSO
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
-* [porter parameters delete](/cli/porter_parameters_delete/)	 - Delete a Parameter
-* [porter parameters edit](/cli/porter_parameters_edit/)	 - Edit Parameter
+* [porter parameters delete](/cli/porter_parameters_delete/)	 - Delete a Parameter Set
+* [porter parameters edit](/cli/porter_parameters_edit/)	 - Edit Parameter Set
 * [porter parameters generate](/cli/porter_parameters_generate/)	 - Generate Parameter Set
-* [porter parameters list](/cli/porter_parameters_list/)	 - List parameters
-* [porter parameters show](/cli/porter_parameters_show/)	 - Show a Parameter
+* [porter parameters list](/cli/porter_parameters_list/)	 - List parameter sets
+* [porter parameters show](/cli/porter_parameters_show/)	 - Show a Parameter Set
 

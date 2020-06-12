@@ -3,6 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
@@ -14,7 +15,6 @@ import (
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -230,8 +230,7 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 
 		// Iterate through all ParameterStrategies and add to rows
 		for _, pset := range paramSet.Parameters {
-			sourceVal, sourceType := GetParameterSourceValueAndType(pset.Source)
-			rows = append(rows, []string{pset.Name, sourceVal, sourceType})
+			rows = append(rows, []string{pset.Name, pset.Source.Value, pset.Source.Key})
 		}
 
 		// Build and configure our tablewriter
@@ -260,13 +259,6 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 	}
 }
 
-// GetParameterSourceValueAndType takes a given valuesource.Source struct and
-// returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
-// both in their string forms
-func GetParameterSourceValueAndType(pset valuesource.Source) (value string, key string) {
-	return pset.Value, pset.Key
-}
-
 // ParameterDeleteOptions represent options for Porter's parameter delete command
 type ParameterDeleteOptions struct {
 	Name string
@@ -276,7 +268,7 @@ type ParameterDeleteOptions struct {
 // names.
 func (p *Porter) DeleteParameter(opts ParameterDeleteOptions) error {
 	err := p.Parameters.Delete(opts.Name)
-	if err != nil && strings.Contains(err.Error(), crud.ErrRecordDoesNotExist) {
+	if err != nil && strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
 		if p.Debug {
 			fmt.Fprintln(p.Err, "parameter set does not exist")
 		}

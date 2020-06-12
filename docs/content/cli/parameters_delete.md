@@ -5,7 +5,7 @@ url: /cli/porter_parameters_delete/
 ---
 ## porter parameters delete
 
-Delete a Parameter
+Delete a Parameter Set
 
 ### Synopsis
 
@@ -29,5 +29,5 @@ porter parameters delete NAME [flags]
 
 ### SEE ALSO
 
-* [porter parameters](/cli/porter_parameters/)	 - Parameters commands
+* [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
 

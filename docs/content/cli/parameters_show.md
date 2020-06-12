@@ -5,11 +5,11 @@ url: /cli/porter_parameters_show/
 ---
 ## porter parameters show
 
-Show a Parameter
+Show a Parameter Set
 
 ### Synopsis
 
-Show a particular parameter set, including all named parameters and their corresponding mappings.
+Show a named parameter set, including all named parameters and their corresponding mappings.
 
 ```
 porter parameters show [flags]
@@ -36,5 +36,5 @@ porter parameters show [flags]
 
 ### SEE ALSO
 
-* [porter parameters](/cli/porter_parameters/)	 - Parameters commands
+* [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
 

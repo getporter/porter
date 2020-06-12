@@ -5,7 +5,7 @@ url: /cli/porter_parameters_edit/
 ---
 ## porter parameters edit
 
-Edit Parameter
+Edit Parameter Set
 
 ### Synopsis
 
@@ -29,5 +29,5 @@ porter parameters edit [flags]
 
 ### SEE ALSO
 
-* [porter parameters](/cli/porter_parameters/)	 - Parameters commands
+* [porter parameters](/cli/porter_parameters/)	 - Parameter set commands
 

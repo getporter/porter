@@ -14,7 +14,6 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -228,8 +227,7 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 
 		// Iterate through all CredentialStrategies and add to rows
 		for _, cs := range credSet.Credentials {
-			sourceVal, sourceType := GetCredentialSourceValueAndType(cs.Source)
-			rows = append(rows, []string{cs.Name, sourceVal, sourceType})
+			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
 		}
 
 		// Build and configure our tablewriter
@@ -256,13 +254,6 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
-}
-
-// GetCredentialSourceValueAndType takes a given valuesource.Source struct and
-// returns the source value itself as well as source type, e.g., 'path', 'env', etc.,
-// both in their string forms
-func GetCredentialSourceValueAndType(cs valuesource.Source) (value string, key string) {
-	return cs.Value, cs.Key
 }
 
 // CredentialDeleteOptions represent options for Porter's credential delete command
