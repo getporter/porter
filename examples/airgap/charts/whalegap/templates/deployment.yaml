@@ -29,6 +29,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: DEFAULT_MESSAGE
+            value: "{{ .Values.msg }}"
           ports:
             - name: http
               containerPort: 8080
