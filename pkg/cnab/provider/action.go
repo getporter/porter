@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	cnabaction "github.com/cnabio/cnab-go/action"
+	"github.com/cnabio/cnab-go/bundle"
+
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/claim"
@@ -103,6 +106,104 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 			}
 		}
 		return nil
+	}
+}
+
+func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
+	var b bundle.Bundle
+	var err error
+
+	if args.BundlePath != "" {
+		b, err = r.ProcessBundle(args.BundlePath)
+		if err != nil {
+			return err
+		}
+	}
+
+	existingClaim, err := r.claims.ReadLastClaim(args.Installation)
+	if err != nil {
+		// Only install and stateless actions can execute without an initial installation
+		if !(action == claim.ActionInstall || b.Actions[action].Stateless) {
+			return errors.Wrapf(err, "could not load installation %s", args.Installation)
+		}
+	}
+
+	// If the user didn't override the bundle definition, use the one
+	// from the existing claim
+	if existingClaim.ID != "" && args.BundlePath == "" {
+		b = existingClaim.Bundle
+	}
+
+	params, err := r.loadParameters(b, args.Params, args.ParameterSets, action)
+	if err != nil {
+		return errors.Wrap(err, "invalid parameters")
+	}
+
+	var c claim.Claim
+	if existingClaim.ID == "" {
+		c, err = claim.New(args.Installation, action, b, params)
+	} else {
+		c, err = existingClaim.NewClaim(action, b, params)
+	}
+	if err != nil {
+		return err
+	}
+
+	// Validate the action we are about to perform
+	err = c.Validate()
+	if err != nil {
+		return err
+	}
+
+	creds, err := r.loadCredentials(c.Bundle, args.CredentialIdentifiers)
+	if err != nil {
+		return errors.Wrap(err, "could not load credentials")
+	}
+
+	driver, err := r.newDriver(args.Driver, args.Installation, args)
+	if err != nil {
+		return errors.Wrap(err, "unable to instantiate driver")
+	}
+
+	a := cnabaction.New(driver, r.claims)
+	a.SaveAllOutputs = true
+
+	modifies, err := c.IsModifyingAction()
+	if err != nil {
+		return err
+	}
+
+	// Only record runs that modify the bundle, e.g. don't save "logs" or "dry-run"
+	// In theory a custom action shouldn't ever have modifies AND stateless
+	// (which creates a temp claim) but just in case, if it does modify, we must
+	// persist.
+	shouldPersistClaim := func() bool {
+		stateless := false
+		if customAction, ok := c.Bundle.Actions[action]; ok {
+			stateless = customAction.Stateless
+		}
+		return modifies && !stateless
+	}()
+
+	if shouldPersistClaim {
+		err = a.SaveInitialClaim(c, claim.StatusRunning)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.printDebugInfo(creds, params)
+
+	opResult, result, err := a.Run(c, creds, r.ApplyConfig(args)...)
+
+	if shouldPersistClaim {
+		if err != nil {
+			err = r.appendFailedResult(err, c)
+			return errors.Wrapf(err, "failed to %s the bundle", action)
+		}
+		return a.SaveOperationResult(opResult, c, result)
+	} else {
+		return errors.Wrapf(err, "failed to %s the bundle", action)
 	}
 }
 

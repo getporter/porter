@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Runtime_GetClaimForInvoke(t *testing.T) {
+func TestRuntime_ClaimPersistence(t *testing.T) {
 	type input struct {
-		bun    bundle.Bundle
-		action string
-		claim  string
+		bun          bundle.Bundle
+		action       string
+		installation string
 	}
 
 	type result struct {
@@ -29,7 +29,10 @@ func Test_Runtime_GetClaimForInvoke(t *testing.T) {
 		want result
 	}
 
+	bunV, _ := bundle.GetDefaultSchemaVersion()
 	bun := bundle.Bundle{
+		SchemaVersion:    bunV,
+		InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: "example.com/foo:v1.0.0"}}},
 		Actions: map[string]bundle.Action{
 			"blah": {
 				Stateless: true,
@@ -110,18 +113,29 @@ func Test_Runtime_GetClaimForInvoke(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			in := tc.in
 			want := tc.want
-			c, temp, err := d.getClaimForInvoke(in.bun, in.action, in.claim)
+
+			f, err := d.FileSystem.Create("bundle.json")
+			require.NoError(t, err, "could not open bundle.json")
+			_, err = tc.in.bun.WriteTo(f)
+			require.NoError(t, err, "could not write to bundle.json")
+
+			args := ActionArguments{
+				Installation: in.installation,
+				BundlePath:   "bundle.json",
+			}
+			runErr := d.Invoke(in.action, args)
+			c, claimErr := d.claims.ReadLastClaim(in.installation)
+
 			if want.err == nil {
-				require.NoErrorf(t, err, "getClaimForInvoke failed")
-				assert.Equalf(t, want.temp, temp, "getClaimForInvoke returned an unexpected temporary flag")
-				assert.Equal(t, in.action, c.Action, "getClaimForInvoke returned a claim with an unexpected Action")
-				if temp {
-					assert.NotEqual(t, eClaim.ID, c.ID, "the temporary claim should have a new id")
+				require.NoErrorf(t, runErr, "Invoke failed")
+				if want.temp {
+					require.Error(t, claimErr, "temp claim should not be persisted")
 				} else {
-					assert.Equal(t, eClaim.ID, c.ID, "the claim should be a persisted claim")
+					require.NoError(t, claimErr, "the claim could not be read back")
+					assert.Equal(t, in.action, c.Action, "claim saved with wrong action")
 				}
 			} else {
-				require.EqualErrorf(t, err, want.err.Error(), "getClaimForInvoke returned an unexpected error")
+				require.EqualErrorf(t, runErr, want.err.Error(), "Invoke returned an unexpected error")
 			}
 		})
 	}
