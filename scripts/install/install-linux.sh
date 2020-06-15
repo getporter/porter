@@ -26,5 +26,5 @@ $PORTER_HOME/porter mixin install gcloud --version $PKG_PERMALINK
 $PORTER_HOME/porter plugin install azure --version $PKG_PERMALINK
 
 echo "Installation complete."
-echo "Add porter to your path by adding the following line to your ~/.bash_profile:"
+echo "Add porter to your path by adding the following line to your ~/.profile and open a new terminal:"
 echo "export PATH=\$PATH:~/.porter"

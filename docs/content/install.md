@@ -11,8 +11,7 @@ We have a few release types available for you to use:
 
 You can also install and manage [mixins](#mixins) using porter,
 and use the [Porter VS Code Extension][vscode-ext] for help
-authoring bundles. For Windows installation, you will need to
-create a [PowerShell Profile][ps-link] if you do not have one. 
+authoring bundles. 
 
 [vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
 [ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
@@ -32,6 +31,8 @@ curl https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
 ## Latest Windows
+You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
 ```
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 ```
@@ -55,6 +56,8 @@ curl https://cdn.porter.sh/canary/install-linux.sh | bash
 ```
 
 ## Canary Windows
+You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
 ```
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
@@ -81,6 +84,8 @@ curl https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 ## Older Version Windows
+You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
 ```
 $VERSION="v0.18.1-beta.2"
 iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
