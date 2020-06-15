@@ -11,9 +11,11 @@ We have a few release types available for you to use:
 
 You can also install and manage [mixins](#mixins) using porter,
 and use the [Porter VS Code Extension][vscode-ext] for help
-authoring bundles.
+authoring bundles. For Windows installation, you will need to
+create a [PowerShell Profile][ps-link] if you do not have one. 
 
 [vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
+[ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
 
 # Latest
 
@@ -116,3 +118,4 @@ All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugi
 
 
 [releases]: https://github.com/deislabs/porter/releases
+

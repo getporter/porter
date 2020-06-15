@@ -23,5 +23,5 @@ echo "Installed $(& $PORTER_HOME\porter.exe version)"
 & $PORTER_HOME/porter plugin install azure --version $PKG_PERMALINK
 
 echo "Installation complete."
-echo "Add porter to your path by running:"
+echo "Add porter to your path by adding the following line to your Microsoft.PowerShell_profile.ps1:"
 echo '$env:PATH+=";$env:USERPROFILE\.porter"'
