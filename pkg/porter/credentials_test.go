@@ -180,7 +180,7 @@ kool-kreds   2019-06-24`},
 
 func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p := NewTestPorter(t)
-	home := p.UseFilesystem()
+	home := p.TestConfig.TestContext.UseFilesystem()
 	p.CreateBundleDir()
 	p.TestConfig.TestContext.CopyFile("testdata/bundle.json", filepath.Join(p.BundleDir, "bundle.json"))
 

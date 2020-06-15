@@ -20,7 +20,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -36,9 +35,6 @@ type TestPorter struct {
 
 	// directory where the integration test is being executed
 	BundleDir string
-
-	// tempDirectories that need to be cleaned up at the end of the testRun
-	cleanupDirs []string
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -75,7 +71,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.NewCommand = exec.Command
 	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
-	homeDir := p.UseFilesystem()
+	homeDir := p.TestConfig.TestContext.UseFilesystem()
 	p.TestConfig.SetupIntegrationTest(homeDir)
 	bundleDir := p.CreateBundleDir()
 
@@ -101,24 +97,12 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not save test credentials")
 }
 
-// UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
-// Returns the temp porter home directory created for the test
-func (p *TestPorter) UseFilesystem() string {
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-
-	homeDir, err := ioutil.TempDir("/tmp", "porter")
-	require.NoError(p.T(), err)
-	p.cleanupDirs = append(p.cleanupDirs, homeDir)
-
-	return homeDir
-}
-
 func (p *TestPorter) CreateBundleDir() string {
 	bundleDir, err := ioutil.TempDir("", "bundle")
 	require.NoError(p.T(), err)
 
 	p.BundleDir = bundleDir
-	p.cleanupDirs = append(p.cleanupDirs, p.BundleDir)
+	p.TestConfig.TestContext.AddCleanupDir(p.BundleDir)
 
 	return bundleDir
 }
@@ -130,9 +114,7 @@ func (p *TestPorter) T() *testing.T {
 func (p *TestPorter) CleanupIntegrationTest() {
 	os.Unsetenv(config.EnvHOME)
 
-	for _, dir := range p.cleanupDirs {
-		p.FileSystem.RemoveAll(dir)
-	}
+	p.TestConfig.TestContext.Cleanup()
 
 	os.Chdir(p.TestDir)
 }

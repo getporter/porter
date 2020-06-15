@@ -13,11 +13,13 @@ import (
 
 	"get.porter.sh/porter/pkg/test"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 )
 
 type TestContext struct {
 	*Context
 
+	cleanupDirs []string
 	capturedErr *bytes.Buffer
 	capturedOut *bytes.Buffer
 	T           *testing.T
@@ -63,7 +65,28 @@ func NewTestCommand() CommandBuilder {
 	}
 }
 
-// TODO: Replace these functions with a union file system for test data
+// UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
+// Returns the temp porter home directory created for the test
+func (c *TestContext) UseFilesystem() string {
+	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
+
+	testDir, err := ioutil.TempDir("/tmp", "porter")
+	require.NoError(c.T, err)
+	c.cleanupDirs = append(c.cleanupDirs, testDir)
+
+	return testDir
+}
+
+func (c *TestContext) AddCleanupDir(dir string) {
+	c.cleanupDirs = append(c.cleanupDirs, dir)
+}
+
+func (c *TestContext) Cleanup() {
+	for _, dir := range c.cleanupDirs {
+		c.FileSystem.RemoveAll(dir)
+	}
+}
+
 func (c *TestContext) AddTestFile(src, dest string) []byte {
 	c.T.Helper()
 
