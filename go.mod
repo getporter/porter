@@ -20,7 +20,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.12.1-beta1
+	github.com/cnabio/cnab-go v0.12.1-beta1.0.20200625223724-ed995e63a5e9
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/containerd v1.3.0
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
