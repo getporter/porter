@@ -28,7 +28,7 @@ events.on("exec", (e, p) => {
   ]);
 });
 
-// Although a GH App will trigger 'check_suite:requested' on a push to master event,
+// Although a GH App will trigger 'check_suite:requested' on a push to main branch event,
 // it will not for a tag push, hence the need for this handler
 events.on("push", (e, p) => {
   if (e.revision.ref.startsWith("refs/tags/")) {
@@ -242,7 +242,7 @@ function runSuite(e, p) {
   var checkRuns = new Array();
 
   // Construct Check Run Suite depending on branch
-  if (e.revision.ref == "master" ) {
+  if (e.revision.ref == "main" ) {
     checkRuns = [
       checkRun(e, p, testUnit, "Unit Test"),
       checkRun(e, p, testIntegration, "Integration Test"),

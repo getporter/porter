@@ -39,7 +39,7 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 # Canary
 
-Install the most recent build from master of porter and its [mixins](#mixins).
+Install the most recent build from the "main" branch of porter and its [mixins](#mixins).
 
 This saves you the trouble of cloning and building porter and its mixin
 repositories yourself. The build may not be stable but it will have new features

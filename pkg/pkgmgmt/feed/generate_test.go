@@ -203,7 +203,8 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	require.NoError(t, err)
 
 	// Run the generation again, against the same versions, and make sure they don't insert duplicate files
-	// This mimics what the CI does when we repeat a build, or have multiple canary builds on master
+	// This mimics what the CI does when we repeat a build, or have multiple
+	// canary builds on the "main" branch
 	err = f.Generate(opts)
 	require.NoError(t, err)
 	err = f.Save(opts)

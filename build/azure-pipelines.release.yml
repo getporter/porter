@@ -6,7 +6,7 @@
 trigger:
   branches:
     include:
-      - refs/heads/master
+      - refs/heads/main
       - refs/tags/*
 
 pool:
