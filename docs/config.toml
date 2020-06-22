@@ -57,22 +57,28 @@ defaultContentLanguage = "en"
     weight = 124
     parent = "cli"
   [[menu.main]]
+    name = "Parameters"
+    url = "/cli/porter_parameters"
+    identifier = "cli-parameters"
+    weight = 125
+    parent = "cli"
+  [[menu.main]]
     name = "Instances"
     url = "/cli/porter_instances"
     identifier = "cli-instances"
-    weight = 125
+    weight = 126
     parent = "cli"
   [[menu.main]]
     name = "Mixins"
     url = "/cli/porter_mixins"
     identifier = "cli-mixins"
-    weight = 126
+    weight = 127
     parent = "cli"
   [[menu.main]]
     name = "Plugins"
     url = "/cli/porter_plugins"
     identifier = "cli-plugins"
-    weight = 127
+    weight = 128
     parent = "cli"
 
 [[menu.main]]
@@ -235,6 +241,12 @@ defaultContentLanguage = "en"
     url = "/credentials/"
     identifier = "credentials"
     weight = 405
+    parent = "porter-architecture"
+  [[menu.main]]
+    name = "Parameters"
+    url = "/parameters/"
+    identifier = "parameters"
+    weight = 406
     parent = "porter-architecture"
 
 [[menu.main]]
