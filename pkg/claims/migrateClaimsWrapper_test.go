@@ -5,9 +5,10 @@ import (
 	"sort"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,16 +27,17 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cxt := context.NewTestContext(t)
-			home := cxt.UseFilesystem()
-			defer cxt.Cleanup()
+			config := config.NewTestConfig(t)
+			home := config.TestContext.UseFilesystem()
+			config.SetHomeDir(home)
+			defer config.TestContext.Cleanup()
 
 			claimsDir := filepath.Join(home, "claims")
-			cxt.FileSystem.Mkdir(claimsDir, 0755)
-			cxt.AddTestFile(filepath.Join("testdata", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
+			config.FileSystem.Mkdir(claimsDir, 0755)
+			config.TestContext.AddTestFile(filepath.Join("testdata", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
 
-			dataStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-			wrapper := newMigrateClaimsWrapper(cxt.Context, dataStore)
+			dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+			wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
 			claimStore := claim.NewClaimStore(wrapper, nil, nil)
 
 			c, err := claimStore.ReadLastClaim(installation)
@@ -43,45 +45,53 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 			require.NotNil(t, c, "claim should be populated")
 			assert.Equal(t, installation, c.Installation, "claim.Installation was not populated")
 
-			assert.Contains(t, cxt.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
+			assert.Contains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
 			if tc.migrateName {
-				assert.Contains(t, cxt.GetError(), "claim.Name to claim.Installation", "the claim should have been migrated from Name -> Installation")
+				assert.Contains(t, config.TestContext.GetError(), "claim.Name to claim.Installation", "the claim should have been migrated from Name -> Installation")
 			} else {
-				assert.NotContains(t, cxt.GetError(), "claim.Name to claim.Installation", "the claim should NOT be migrated")
+				assert.NotContains(t, config.TestContext.GetError(), "claim.Name to claim.Installation", "the claim should NOT be migrated")
 			}
+
+			// Read a second time, this time there shouldn't be a migration
+			config.TestContext.ClearOutputs()
+			_, err = claimStore.ReadLastClaim(installation)
+			assert.NotContains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated a second time")
 		})
 	}
 
 	t.Run("no migration", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		home := cxt.UseFilesystem()
-		defer cxt.Cleanup()
+		config := config.NewTestConfig(t)
+		home := config.TestContext.UseFilesystem()
+		config.SetHomeDir(home)
+		defer config.TestContext.Cleanup()
 
-		cxt.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
+		config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
 
-		dataStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-		wrapper := newMigrateClaimsWrapper(cxt.Context, dataStore)
+		dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+		wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
 		claimStore := claim.NewClaimStore(wrapper, nil, nil)
 
 		c, err := claimStore.ReadLastClaim(installation)
 		require.NoError(t, err, "could not read claim")
 		require.NotNil(t, c, "claim should be populated")
 		assert.Equal(t, installation, c.Installation, "claim.Installation was not populated")
-		assert.NotContains(t, cxt.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
+		assert.NotContains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
 	})
 }
 
 func TestMigrateClaimsWrapper_List(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	home := cxt.UseFilesystem()
-	defer cxt.Cleanup()
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
 
 	// Mix up migrated and unmigrated claims
-	cxt.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
-	cxt.AddTestFile(filepath.Join("testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
+	config.TestContext.AddTestFile(filepath.Join("testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	config.FileSystem.Remove(filepath.Join(home, "schema.json")) // trigger a migration
 
-	dataStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-	wrapper := newMigrateClaimsWrapper(cxt.Context, dataStore)
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
 	claimStore := claim.NewClaimStore(wrapper, nil, nil)
 
 	names, err := claimStore.ListInstallations()
@@ -91,21 +101,23 @@ func TestMigrateClaimsWrapper_List(t *testing.T) {
 }
 
 func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	home := cxt.UseFilesystem()
-	defer cxt.Cleanup()
-	dataStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-	wrapper := newMigrateClaimsWrapper(cxt.Context, dataStore)
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
 	claimStore := claim.NewClaimStore(wrapper, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
-	cxt.FileSystem.Mkdir(claimsDir, 0755)
-	cxt.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
+	config.FileSystem.Mkdir(claimsDir, 0755)
+	config.TestContext.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
 
 	err := wrapper.MigrateInstallation("installed")
 	require.NoError(t, err, "MigrateInstallation failed")
 
-	exists, _ := cxt.FileSystem.Exists(filepath.Join(claimsDir, "installed.json"))
+	exists, _ := config.FileSystem.Exists(filepath.Join(claimsDir, "installed.json"))
 	assert.False(t, exists, "the original claim should be removed")
 
 	i, err := claimStore.ReadInstallation("mybun")
@@ -120,21 +132,23 @@ func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
 }
 
 func TestMigrateClaimsWrapper_MigrateUpgrade(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	home := cxt.UseFilesystem()
-	defer cxt.Cleanup()
-	dataStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-	wrapper := newMigrateClaimsWrapper(cxt.Context, dataStore)
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
 	claimStore := claim.NewClaimStore(wrapper, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
-	cxt.FileSystem.Mkdir(claimsDir, 0755)
-	cxt.AddTestFile("testdata/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
+	config.FileSystem.Mkdir(claimsDir, 0755)
+	config.TestContext.AddTestFile("testdata/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
 
 	err := wrapper.MigrateInstallation("upgraded")
 	require.NoError(t, err, "MigrateInstallation failed")
 
-	exists, _ := cxt.FileSystem.Exists(filepath.Join(claimsDir, "upgraded.json"))
+	exists, _ := config.FileSystem.Exists(filepath.Join(claimsDir, "upgraded.json"))
 	assert.False(t, exists, "the original claim should be removed")
 
 	i, err := claimStore.ReadInstallation("mybun")

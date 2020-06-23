@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/storage"
+
 	"get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/schema"
@@ -12,12 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ storeWithConnect = &migrateClaimsWrapper{}
-
-type storeWithConnect interface {
-	crud.Store
-	crud.HasConnect
-}
+var _ crud.Store = &migrateClaimsWrapper{}
 
 // Migrate old claims when they are accessed.
 // OLD FORMAT
@@ -25,6 +22,7 @@ type storeWithConnect interface {
 //   - INSTALLATION.json
 //
 // NEW FORMAT
+// schema.json
 // claims/
 //   - INSTALLATION/
 //       - CLAIMID.json
@@ -35,71 +33,57 @@ type storeWithConnect interface {
 //    - RESULTID/
 //        - RESULTID-OUTPUTNAME
 type migrateClaimsWrapper struct {
+	schemaChecked bool
+	schema        storage.Schema
 	*context.Context
-	storeWithConnect
+	crud.Store
 	claims claim.Store
 }
 
 func newMigrateClaimsWrapper(cxt *context.Context, wrappedStore crud.Store) *migrateClaimsWrapper {
 	backingStore := crud.NewBackingStore(wrappedStore)
 	return &migrateClaimsWrapper{
-		Context:          cxt,
-		storeWithConnect: backingStore,
-		claims:           claim.NewClaimStore(backingStore, nil, nil),
+		Context: cxt,
+		Store:   backingStore,
+		claims:  claim.NewClaimStore(backingStore, nil, nil),
 	}
 }
 
-// Store is the data store being wrapped.
-func (w *migrateClaimsWrapper) Store() crud.Store {
-	return w.storeWithConnect
-}
-
-func (w *migrateClaimsWrapper) List(itemType string, group string) ([]string, error) {
-	names, err := w.Store().List(itemType, group)
-	if err != nil {
-		if strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
-
-			// Proactively migrate all data in the claims/ dir if we detect the layout is old
-			err := w.MigrateAll()
-			if err != nil {
-				return nil, err
+func (w *migrateClaimsWrapper) Connect() error {
+	migrate := false
+	if !w.schemaChecked {
+		w.schemaChecked = true
+		b, err := w.Store.Read("", "schema")
+		if err != nil {
+			if strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
+				// Do a migration if we don't have a schema for the current storage layout
+				migrate = true
+			} else {
+				return errors.Wrapf(err, "could not read storage schema document")
 			}
-
-			return w.Store().List(itemType, group)
-
+		} else {
+			err = json.Unmarshal(b, &w.schema)
+			if string(w.schema.Claims) != claim.CNABSpecVersion {
+				// Do a migration if the current layout doesn't match the supported layout
+				migrate = true
+			}
 		}
 
-		return nil, err
-	}
-
-	return names, nil
-}
-
-func (w *migrateClaimsWrapper) Read(itemType string, name string) ([]byte, error) {
-	data, err := w.Store().Read(itemType, name)
-	if err != nil {
-		// If we can't read the data, check for the data layout migration from rewriting the claims spec
-		if getSchemaVersion(data) != claim.CNABSpecVersion {
-
-			// Proactively migrate all data in the claims/ dir if we detect the layout is old
+		if migrate {
 			err := w.MigrateAll()
 			if err != nil {
-				return nil, err
+				return err
 			}
-
-			return w.Store().Read(itemType, name)
 		}
-
-		return nil, err
 	}
 
-	return data, nil
+	return nil
 }
 
 func (w *migrateClaimsWrapper) MigrateAll() error {
 	fmt.Fprint(w.Err, "!!! Migrating claims data to match the CNAB Claim spec https://cdn.cnab.io/schema/cnab-claim-1.0.0-DRAFT+b5ed2f3/claim.schema.json. This is a one-way migration !!!\n")
 
-	installationNames, err := w.Store().List(claim.ItemTypeClaims, "")
+	installationNames, err := w.Store.List(claim.ItemTypeClaims, "")
 	if err != nil {
 		return errors.Wrapf(err, "!!! Migration failed, unable to list installation names")
 	}
@@ -111,6 +95,17 @@ func (w *migrateClaimsWrapper) MigrateAll() error {
 		}
 	}
 
+	w.schema.Claims = schema.Version(claim.CNABSpecVersion)
+	schemaB, err := json.Marshal(w.schema)
+	if err != nil {
+		return errors.Wrap(err, "!!! Migration failed, unable to marshal storage schema file")
+	}
+
+	err = w.Save("", "", "schema", schemaB)
+	if err != nil {
+		return errors.Wrap(err, "!!! Migration failed, unable to save storage schema file")
+	}
+
 	fmt.Fprintf(w.Err, "!!! Migration complete !!!\n")
 	return nil
 }
@@ -118,7 +113,7 @@ func (w *migrateClaimsWrapper) MigrateAll() error {
 func (w *migrateClaimsWrapper) MigrateInstallation(name string) error {
 	fmt.Fprintf(w.Err, " - Migrating claim %s to the new claim layout...\n", name)
 
-	oldClaimData, err := w.Store().Read(claim.ItemTypeClaims, name)
+	oldClaimData, err := w.Store.Read(claim.ItemTypeClaims, name)
 	if err != nil {
 		return errors.Wrap(err, "could not read claim file")
 	}
