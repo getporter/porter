@@ -18,6 +18,9 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 					"mysql": {
 						Bundle: "getporter/mysql:5.7",
 					},
+					"nginx": {
+						Bundle: "localhost:5000/nginx:1.19",
+					},
 				},
 			},
 		},
@@ -27,11 +30,15 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 	locks, err := s.ResolveDependencies(bun)
 	require.NoError(t, err)
 
-	require.Len(t, locks, 1)
+	require.Len(t, locks, 2)
 
-	lock := locks[0]
-	assert.Equal(t, "mysql", lock.Alias)
-	assert.Equal(t, "getporter/mysql:5.7", lock.Tag)
+	mysql := locks[0]
+	assert.Equal(t, "mysql", mysql.Alias)
+	assert.Equal(t, "getporter/mysql:5.7", mysql.Tag)
+
+	nginx := locks[1]
+	assert.Equal(t, "nginx", nginx.Alias)
+	assert.Equal(t, "localhost:5000/nginx:1.19", nginx.Tag)
 }
 
 func TestDependencySolver_ResolveVersion(t *testing.T) {
@@ -42,10 +49,10 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 		wantError   string
 	}{
 		{name: "pinned version",
-			dep:         Dependency{"mysql:5.7", nil},
+			dep:         Dependency{Bundle: "mysql:5.7"},
 			wantVersion: "5.7"},
 		{name: "unimplemented range",
-			dep:       Dependency{"mysql", &DependencyVersion{Ranges: []string{"1 - 1.5"}}},
+			dep:       Dependency{Bundle: "mysql", Version: &DependencyVersion{Ranges: []string{"1 - 1.5"}}},
 			wantError: "not implemented"},
 		{name: "default tag to latest",
 			dep:         Dependency{Bundle: "getporterci/porter-test-only-latest"},
@@ -54,10 +61,10 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 			dep:       Dependency{Bundle: "getporterci/porter-test-no-default-tag"},
 			wantError: "no tag was specified"},
 		{name: "default tag to highest semver",
-			dep:         Dependency{"getporterci/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: true}},
+			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &DependencyVersion{Ranges: nil, AllowPrereleases: true}},
 			wantVersion: "v1.3-beta1"},
 		{name: "default tag to highest semver, explicitly excluding prereleases",
-			dep:         Dependency{"getporterci/porter-test-with-versions", &DependencyVersion{Ranges: nil, AllowPrereleases: false}},
+			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions", Version: &DependencyVersion{Ranges: nil, AllowPrereleases: false}},
 			wantVersion: "v1.2"},
 		{name: "default tag to highest semver, excluding prereleases by default",
 			dep:         Dependency{Bundle: "getporterci/porter-test-with-versions"},
@@ -75,7 +82,7 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 			} else {
 				require.NoError(t, err, "ResolveVersion should not have returned an error")
 
-				assert.Equal(t, tc.wantVersion, version, "incorrect version resolved")
+				assert.Equal(t, tc.wantVersion, version.Tag(), "incorrect version resolved")
 			}
 		})
 	}
