@@ -31,7 +31,8 @@ curl https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
 ## Latest Windows
-You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
+You need to run this command from PowerShell. You will also need a [PowerShell Profile][ps-link] if you do not have one. The PowerShell Profile customizes your environment each time you start up PowerShell. 
 
 ```
 iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
@@ -56,7 +57,8 @@ curl https://cdn.porter.sh/canary/install-linux.sh | bash
 ```
 
 ## Canary Windows
-You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
+You need to run this command from PowerShell. You will also need a [PowerShell Profile][ps-link] if you do not have one. The PowerShell Profile customizes your environment each time you start up PowerShell. 
 
 ```
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
@@ -84,7 +86,8 @@ curl https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 ## Older Version Windows
-You will need to create a [PowerShell Profile][ps-link] if you do not have one.
+
+You need to run this command from PowerShell. You will also need a [PowerShell Profile][ps-link] if you do not have one. The PowerShell Profile customizes your environment each time you start up PowerShell. 
 
 ```
 $VERSION="v0.18.1-beta.2"
