@@ -59,6 +59,8 @@ func buildRootCommand() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().BoolVar(&p.Debug, "debug", false, "Enable debug logging")
+	cmd.PersistentFlags().BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
+
 	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")
 
 	cmd.AddCommand(buildVersionCommand(p))

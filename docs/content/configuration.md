@@ -14,6 +14,7 @@ override it in a shell session with an environment variable and then override
 both in a particular command with a flag.
 
 * [Enable Debug Output](#debug)
+* [Debug Plugins](#debug-plugins)
 * [Output Formatting](#output)
 * [Allow Docker Host Access](#allow-docker-host-access)
 
@@ -73,8 +74,17 @@ Below is an example configuration file in TOML
 **~/.porter/config.toml**
 ```toml
 debug = true
+debug-plugins = true
 output = "json"
 allow-docker-host-access = true
+```
+
+### Debug Plugins
+
+The `debug-plugins` configuration setting controls if logs related to communication
+between porter and its plugins should be printed when debugging. This can be _very_
+verbose, so it is not turned on by default when debug is true.
+
 ```
 
 [install]: /cli/porter_install/

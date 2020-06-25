@@ -20,9 +20,10 @@ type Plugin struct {
 func NewPlugin(c config.Config) plugin.Plugin {
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   PluginKey,
-		Output: c.Err,
-		Level:  hclog.Error,
+		Name:       PluginKey,
+		Output:     c.Err,
+		Level:      hclog.Debug,
+		JSONFormat: true,
 	})
 
 	return &crudstore.Plugin{

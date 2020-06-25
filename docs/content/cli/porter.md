@@ -27,9 +27,10 @@ porter [flags]
 ### Options
 
 ```
-      --debug     Enable debug logging
-  -h, --help      help for porter
-  -v, --version   Print the application version
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
+  -h, --help            help for porter
+  -v, --version         Print the application version
 ```
 
 ### SEE ALSO
