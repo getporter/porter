@@ -32,7 +32,7 @@ func TestArchive(t *testing.T) {
 
 	// Archive bundle
 	archiveOpts := porter.ArchiveOptions{}
-	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Context)
+	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.CNAB, p.Context)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
 	err = p.Archive(archiveOpts)

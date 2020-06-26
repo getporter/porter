@@ -13,24 +13,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// loadParameters accepts a set of parameter overrides as well as parameter set
-// files and combines both with the default parameters to create a full set
-// of parameters.
-func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, parameterSets []string, action string) (map[string]interface{}, error) {
+// loadParameters accepts a set of parameter overrides and combines them
+// with the default parameters to create a full set of parameters.
+func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
 	overrides := make(map[string]interface{}, len(rawOverrides))
 	bun := claim.Bundle
 
-	// Loop through each parameter set file and load the parameter values
-	loaded, err := d.loadParameterSets(bun, parameterSets)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to process provided parameter sets: %v", parameterSets)
-	}
-
-	for key, val := range loaded {
-		overrides[key] = val
-	}
-
-	// Now give precedence to the raw overrides that came via the CLI
 	for key, rawValue := range rawOverrides {
 		param, ok := bun.Parameters[key]
 		if !ok {
@@ -58,8 +46,8 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	return bundle.ValuesOrDefaults(overrides, bun, action)
 }
 
-// loadParameterSets loads parameter values per their parameter set strategies
-func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (valuesource.Set, error) {
+// LoadParameterSets loads parameter values per their parameter set strategies
+func (d *Runtime) LoadParameterSets(params []string) (valuesource.Set, error) {
 	resolvedParameters := valuesource.Set{}
 	for _, name := range params {
 		var pset parameters.ParameterSet

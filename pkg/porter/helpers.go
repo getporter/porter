@@ -29,6 +29,7 @@ type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
 	TestCredentials *credentials.TestCredentialProvider
+	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
 
 	// original directory where the test was being executed
@@ -57,12 +58,14 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Builder = NewTestBuildProvider()
 	p.Claims = testClaims
 	p.Credentials = testCredentials
+	p.Parameters = testParameters
 	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
 
 	return &TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
 		TestCredentials: &testCredentials,
+		TestParameters:  &testParameters,
 		TestCache:       testCache,
 	}
 }

@@ -17,12 +17,12 @@ type InvokeOptions struct {
 	BundleLifecycleOpts
 }
 
-func (o *InvokeOptions) Validate(args []string, cxt *context.Context) error {
+func (o *InvokeOptions) Validate(args []string, runtime cnabprovider.CNABProvider, cxt *context.Context) error {
 	if o.Action == "" {
 		return errors.New("--action is required")
 	}
 
-	return o.BundleLifecycleOpts.Validate(args, cxt)
+	return o.BundleLifecycleOpts.Validate(args, runtime, cxt)
 }
 
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses

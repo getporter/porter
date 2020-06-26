@@ -36,7 +36,7 @@ func TestSuppressOutput(t *testing.T) {
 
 	// Install (Output suppressed)
 	installOpts := porter.InstallOptions{}
-	err := installOpts.Validate([]string{}, p.Context)
+	err := installOpts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	err = p.InstallBundle(installOpts)
@@ -49,7 +49,7 @@ func TestSuppressOutput(t *testing.T) {
 
 	// Invoke - Log Error (Output suppressed)
 	invokeOpts := porter.InvokeOptions{Action: "log-error"}
-	err = invokeOpts.Validate([]string{}, p.Context)
+	err = invokeOpts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	err = p.InvokeBundle(invokeOpts)
@@ -57,7 +57,7 @@ func TestSuppressOutput(t *testing.T) {
 
 	// Uninstall
 	uninstallOpts := porter.UninstallOptions{}
-	err = uninstallOpts.Validate([]string{}, p.Context)
+	err = uninstallOpts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	err = p.UninstallBundle(uninstallOpts)

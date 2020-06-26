@@ -43,7 +43,9 @@ dependencies:
 
 ## Specifying parameters
 
-You can specifying parameters for a dependent bundle on the command-line using the following syntax
+### Command-line
+
+You can specify parameters for a dependent bundle on the command-line using the following syntax
 
 ```
 --param KEY#NAME=VALUE
@@ -59,12 +61,32 @@ $ porter install --tag getporter/mysql:v0.1.2 --param mysql#database_name=myword
 * `NAME`: The name of the parameter.
 * `VALUE`: The parameter value.
 
+### Parameter Set
+
+The same syntax shown above can be used to specify dependency parameters in a [Parameter Set][parameter-set] file.
+
+Here, the `name` field should be set to the `KEY#NAME` value, or `mysql#database-name` from above.
+
+```json
+{
+  "name": "wordpress",
+  "parameters": [
+    {
+      "name": "mysql#database-name",
+      "source": {
+        "value": "mywordpress"
+      }
+    }
+  ]
+}
+```
+
 ### Parameter Precedence
 
 A parameter for a dependency can be set in a few places, here is the order of precedence:
 
 1. Parameters set directly on the command-line via `--param`
-1. Parameters set in a file via `--param-file`
+1. Parameters set in a [Parameter Set][parameter-set] file via `--parameter-set`
 1. Parameters set using a dependency default, for example 
     ```yaml
     dependencies:
@@ -88,3 +110,4 @@ transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](
 for our backlog item tracking this feature. We do plan to support it!
 
 [example]: /src/build/testdata/bundles/wordpress/porter.yaml
+[parameter-set]: /parameters#parameter-sets

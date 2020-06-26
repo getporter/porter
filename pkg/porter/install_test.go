@@ -28,7 +28,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 			},
 		},
 	}
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = true
@@ -39,7 +39,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
 	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
 
-	debug, set := opts.parsedParams["porter-debug"]
+	debug, set := opts.combinedParameters["porter-debug"]
 	assert.True(t, set)
 	assert.Equal(t, "true", debug)
 }
@@ -48,7 +48,7 @@ func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	p := NewTestPorter(t)
 
 	opts := &InstallOptions{}
-	err := opts.Validate([]string{}, p.Context)
+	err := opts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	err = p.applyDefaultOptions(&opts.sharedOptions)
@@ -66,7 +66,7 @@ func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
 
 	opts := &InstallOptions{}
 	opts.File = "porter.yaml"
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = false
@@ -88,7 +88,7 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	opts := InstallOptions{}
 	opts.Params = []string{"porter-debug=false"}
 
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	p.Debug = true
@@ -105,7 +105,7 @@ func TestInstallOptions_validateParams(t *testing.T) {
 	opts := InstallOptions{}
 	opts.Params = []string{"A=1", "B=2"}
 
-	err := opts.validateParams(p.Context)
+	err := opts.validateParams(p.CNAB, p.Context)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -198,7 +198,7 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	opts.Tag = "getporter/wordpress:v0.1.2"
 	opts.CredentialIdentifiers = []string{"wordpress"}
 	opts.Params = []string{"wordpress-password=mypassword"}
-	err = opts.Validate(nil, p.Context)
+	err = opts.Validate(nil, p.CNAB, p.Context)
 	require.NoError(t, err, "Validate install options failed")
 
 	err = p.InstallBundle(opts)

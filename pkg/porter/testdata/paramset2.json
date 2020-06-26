@@ -1,0 +1,13 @@
+{
+  "name": "HELLO_CUSTOM",
+  "created": "1983-04-18T01:02:03.000000004Z",
+  "modified": "1983-04-18T01:02:03.000000004Z",
+  "parameters": [
+    {
+      "name": "PARAM2",
+      "source": {
+        "secret": "PARAM2_SECRET"
+      }
+    }
+  ]
+}

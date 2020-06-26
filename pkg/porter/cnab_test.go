@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
+	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,4 +88,79 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 	opts.defaultDriver()
 
 	assert.Equal(t, DefaultDriver, opts.Driver)
+}
+
+func TestParseParamSets_viaPathOrName(t *testing.T) {
+	r := cnabprovider.NewTestRuntime(t)
+	cxt := context.NewTestContext(t)
+
+	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
+	r.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+	r.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
+	r.TestParameters.AddTestParameters("testdata/paramset2.json")
+
+	opts := sharedOptions{
+		ParameterSets: []string{
+			"HELLO_CUSTOM",
+			"/paramset.json",
+		},
+	}
+
+	err := opts.parseParamSets(r, cxt.Context)
+	assert.NoError(t, err)
+
+	wantParams := map[string]string{
+		"PARAM2": "VALUE2",
+		"foo":    "foo_value",
+	}
+	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
+}
+
+func TestCombineParameters(t *testing.T) {
+	t.Run("no override present, no parameter set present", func(t *testing.T) {
+		opts := sharedOptions{}
+
+		params := opts.combineParameters()
+		require.Equal(t, map[string]string{}, params,
+			"expected combined params to be empty")
+	})
+
+	t.Run("override present, no parameter set present", func(t *testing.T) {
+		opts := sharedOptions{
+			parsedParams: map[string]string{
+				"foo": "foo_cli_override",
+			},
+		}
+
+		params := opts.combineParameters()
+		require.Equal(t, "foo_cli_override", params["foo"],
+			"expected param 'foo' to have override value")
+	})
+
+	t.Run("no override present, parameter set present", func(t *testing.T) {
+		opts := sharedOptions{
+			parsedParamSets: map[string]string{
+				"foo": "foo_via_paramset",
+			},
+		}
+
+		params := opts.combineParameters()
+		require.Equal(t, "foo_via_paramset", params["foo"],
+			"expected param 'foo' to have parameter set value")
+	})
+
+	t.Run("override present, parameter set present", func(t *testing.T) {
+		opts := sharedOptions{
+			parsedParams: map[string]string{
+				"foo": "foo_cli_override",
+			},
+			parsedParamSets: map[string]string{
+				"foo": "foo_via_paramset",
+			},
+		}
+
+		params := opts.combineParameters()
+		require.Equal(t, "foo_cli_override", params["foo"],
+			"expected param 'foo' to have override value, which has precedence over the parameter set value")
+	})
 }
