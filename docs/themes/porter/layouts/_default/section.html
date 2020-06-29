@@ -18,10 +18,10 @@
       <div class="row full-width">
         <div class="small-1 columns">&nbsp;</div>
         <div class="small-10 columns">
-            {{ range .Paginator.Pages }}
+            {{ range .Pages }}
             <article>
               <header>
-                <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
+                <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
               </header>
               {{ .Description }}
             </article>
