@@ -108,10 +108,10 @@ porter install -c workshop-tf-aci \
 
 ### View The Outputs
 
-Once the bundle has been installed, you can use `porter instance show` to see the outputs:
+Once the bundle has been installed, you can use `porter installation show` to see the outputs:
 
 ```
-$ porter instance show
+$ porter installation show
 Name: workshop-tf-aci
 Created: 2 minutes ago
 Modified: 4 seconds ago

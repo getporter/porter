@@ -52,7 +52,7 @@ func buildRootCommand() *cobra.Command {
 	cmd.AddCommand(buildSchemaCommand(p))
 	cmd.AddCommand(buildRunCommand(p))
 	cmd.AddCommand(buildBundleCommands(p))
-	cmd.AddCommand(buildInstanceCommands(p))
+	cmd.AddCommand(buildInstallationCommands(p))
 	cmd.AddCommand(buildMixinCommands(p))
 	cmd.AddCommand(buildPluginsCommands(p))
 	cmd.AddCommand(buildCredentialsCommands(p))

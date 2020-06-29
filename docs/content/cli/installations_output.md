@@ -1,0 +1,31 @@
+---
+title: "porter installations output"
+slug: porter_installations_output
+url: /cli/porter_installations_output/
+---
+## porter installations output
+
+Output commands
+
+### Synopsis
+
+Output commands
+
+### Options
+
+```
+  -h, --help   help for output
+```
+
+### Options inherited from parent commands
+
+```
+      --debug   Enable debug logging
+```
+
+### SEE ALSO
+
+* [porter installations](/cli/porter_installations/)	 - Bundle Installation commands
+* [porter installations output list](/cli/porter_installations_output_list/)	 - List installation outputs
+* [porter installations output show](/cli/porter_installations_output_show/)	 - Show the output of an installation
+

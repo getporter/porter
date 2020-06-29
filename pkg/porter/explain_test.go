@@ -17,7 +17,7 @@ func TestExplain_generateActionsTableNoActions(t *testing.T) {
 	p := NewTestPorter(t)
 
 	p.printActionsExplainTable(&bun)
-	expected := "Name   Description   Modifies Instance   Stateless\n"
+	expected := "Name   Description   Modifies Installation   Stateless\n"
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)

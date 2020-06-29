@@ -370,5 +370,5 @@ func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 			}
 			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
 		}
-	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Instance", "Stateless")
+	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
 }

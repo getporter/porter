@@ -57,9 +57,9 @@ defaultContentLanguage = "en"
     weight = 124
     parent = "cli"
   [[menu.main]]
-    name = "Instances"
-    url = "/cli/porter_instances"
-    identifier = "cli-instances"
+    name = "Installations"
+    url = "/cli/porter_installations"
+    identifier = "cli-installations"
     weight = 125
     parent = "cli"
   [[menu.main]]

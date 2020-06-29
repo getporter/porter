@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func buildInstanceOutputsCommands(p *porter.Porter) *cobra.Command {
+func buildInstallationOutputsCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "output",
 		Aliases: []string{"outputs"},
@@ -25,11 +25,11 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.OutputListOptions{}
 
 	cmd := cobra.Command{
-		Use:   "list [--instance|i INSTANCE]",
-		Short: "List bundle instance outputs",
-		Long:  "Displays a listing of bundle instance outputs.",
-		Example: `  porter instance outputs list
-    porter instance outputs list --instance another-bundle
+		Use:   "list [--installation|i INSTALLATION]",
+		Short: "List installation outputs",
+		Long:  "Displays a listing of installation outputs.",
+		Example: `  porter installation outputs list
+    porter installation outputs list --installation another-bundle
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -42,8 +42,8 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
-	f.StringVarP(&opts.Name, "instance", "i", "",
-		"Specify the bundle instance to which the output belongs.")
+	f.StringVarP(&opts.Name, "installation", "i", "",
+		"Specify the installation to which the output belongs.")
 
 	return &cmd
 }
@@ -52,11 +52,11 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.OutputShowOptions{}
 
 	cmd := cobra.Command{
-		Use:   "show NAME [--instance|-i INSTANCE]",
-		Short: "Show the output of a bundle instance",
-		Long:  "Show the output of a bundle instance",
-		Example: `  porter instance output show kubeconfig
-    porter instance output show subscription-id --instance azure-mysql`,
+		Use:   "show NAME [--installation|-i INSTALLATION]",
+		Short: "Show the output of an installation",
+		Long:  "Show the output of an installation",
+		Example: `  porter installation output show kubeconfig
+    porter installation output show subscription-id --installation azure-mysql`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
 		},
@@ -66,8 +66,8 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&opts.Name, "instance", "i", "",
-		"Specify the bundle instance to which the output belongs.")
+	f.StringVarP(&opts.Name, "installation", "i", "",
+		"Specify the installation to which the output belongs.")
 
 	return &cmd
 }

@@ -61,7 +61,7 @@ parameters:
       - uninstall
 
 ## Here we designate outputs at the top level that we wish
-## to see after an action has completed (via `porter instance outputs list`)
+## to see after an action has completed (via `porter installation outputs list`)
 ## and/or utilize in a subsequent action.
 ## Note that currently, outputs don't persist across more than one action unless
 ## all of the actions traversed (re-)state the output value.

@@ -13,7 +13,7 @@ import (
 func (d *Runtime) Upgrade(args ActionArguments) error {
 	c, err := d.claims.Read(args.Claim)
 	if err != nil {
-		return errors.Wrapf(err, "could not load bundle instance %s", args.Claim)
+		return errors.Wrapf(err, "could not load installation %s", args.Claim)
 	}
 
 	if args.BundlePath != "" {

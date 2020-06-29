@@ -13,7 +13,7 @@ import (
 
 // Shared arguments for all CNAB actions
 type ActionArguments struct {
-	// Name of the instance.
+	// Name of the installation.
 	Claim string
 
 	// Either a filepath to the bundle or the name of the bundle.

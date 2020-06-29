@@ -189,7 +189,7 @@ func Test_ClaimLoading(t *testing.T) {
 			want: result{
 				claim: eClaim,
 				temp:  false,
-				err:   errors.Wrap(claim.ErrClaimNotFound, "could not load bundle instance nonexist"),
+				err:   errors.Wrap(claim.ErrClaimNotFound, "could not load installation nonexist"),
 			},
 		},
 	}
@@ -216,5 +216,5 @@ func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
 		Claim: "mybuns",
 	}
 	err := r.Invoke("custom-action", args)
-	require.EqualError(t, err, "could not load bundle instance mybuns: Claim does not exist")
+	require.EqualError(t, err, "could not load installation mybuns: Claim does not exist")
 }

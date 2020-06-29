@@ -1,9 +1,9 @@
 ---
-title: "porter show"
-slug: porter_show
-url: /cli/porter_show/
+title: "porter installations show"
+slug: porter_installations_show
+url: /cli/porter_installations_show/
 ---
-## porter show
+## porter installations show
 
 Show an installation of a bundle
 
@@ -12,14 +12,14 @@ Show an installation of a bundle
 Displays info relating to an installation of a bundle, including status and a listing of outputs.
 
 ```
-porter show [INSTALLATION] [flags]
+porter installations show [INSTALLATION] [flags]
 ```
 
 ### Examples
 
 ```
-  porter show
-porter show another-bundle
+  porter installation show
+porter installation show another-bundle
 
 Optional output formats include json and yaml.
 
@@ -40,5 +40,5 @@ Optional output formats include json and yaml.
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter installations](/cli/porter_installations/)	 - Bundle Installation commands
 
