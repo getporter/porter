@@ -114,6 +114,8 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
+var porterInternalParams = []string{"porter-debug"}
+
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 	err := o.sharedOptions.Validate(args, cxt)
 	if err != nil {
@@ -169,6 +171,17 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
+func checkIsInternalParam(param string) bool {
+	isInternalParam := false
+	for _, internalParam := range porterInternalParams {
+		if param == internalParam {
+			isInternalParam = true
+			break
+		}
+	}
+	return isInternalParam
+}
+
 func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
 	if bun == nil {
 		return nil, fmt.Errorf("expected a bundle")
@@ -203,6 +216,9 @@ func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
 
 	params := []PrintableParameter{}
 	for p, v := range bun.Parameters {
+		if checkIsInternalParam(p) {
+			continue
+		}
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
 			return nil, fmt.Errorf("unable to find definition %s", v.Definition)
