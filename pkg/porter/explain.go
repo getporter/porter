@@ -171,10 +171,10 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
-func checkIsInternalParam(param string) bool {
+func checkIsInternalParam(inputParam string) bool {
 	isInternalParam := false
 	for _, internalParam := range porterInternalParams {
-		if param == internalParam {
+		if inputParam == internalParam {
 			isInternalParam = true
 			break
 		}
