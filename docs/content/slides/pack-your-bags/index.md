@@ -442,7 +442,7 @@ class: center, middle
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://github.com/deislabs/porter/tree/master/examples/azure-mysql-wordpress
+  https://github.com/deislabs/porter/tree/main/examples/azure-mysql-wordpress
 ]
 
 ---
@@ -1361,7 +1361,7 @@ your invocation image to pick up your changes.
 * Don't forget to copy your images into your invocation image to /cnab/app/.
 * The command to run is `goasciiart -p=gopher.png -w=100`.
 
-[asciiart]: https://github.com/deislabs/porter/tree/master/workshop/asciiart
+[asciiart]: https://github.com/deislabs/porter/tree/main/workshop/asciiart
 
 ---
 name: break-glass

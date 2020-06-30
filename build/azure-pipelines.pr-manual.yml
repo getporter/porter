@@ -5,7 +5,7 @@
 
 trigger: none
 pr: 
-  - master
+  - main
   - release-*
 
 pool:

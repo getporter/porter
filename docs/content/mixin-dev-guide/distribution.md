@@ -65,7 +65,7 @@ When `--version` is not specified, it is defaulted to `latest` which should
 represent the most recent version of the mixin.
 
 You may also choose to publish `canary` versions of the mixin, which are
-unpublished builds from the master branch. The official Porter mixins follow
+unpublished builds from the "main" branch. The official Porter mixins follow
 this pattern. If you have other published tagged builds of your mixin, porter
 can handle installing them as well.
 

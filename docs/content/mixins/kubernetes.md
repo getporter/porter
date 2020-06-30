@@ -7,7 +7,7 @@ description: Manage a set of Kubernetes manifests using the kubectl CLI
 
 Manage a set of Kubernetes manifests using the [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/).
 
-Source: https://github.com/deislabs/porter/tree/master/pkg/kubernetes
+Source: https://github.com/deislabs/porter/tree/main/pkg/kubernetes
 
 ### Install or Upgrade
 ```

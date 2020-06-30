@@ -79,8 +79,6 @@ will then provide it to the bundle in the correct location. `,
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
 		"Path to the CNAB bundle.json file.")
-	f.BoolVar(&opts.DryRun, "dry-run", false,
-		"Generate parameter set but do not save it.")
 	f.StringVar(&opts.Tag, "tag", "",
 		"Use a bundle in an OCI registry specified by the given tag.")
 	f.BoolVar(&opts.Force, "force", false,
