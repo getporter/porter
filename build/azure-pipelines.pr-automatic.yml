@@ -6,7 +6,9 @@
 trigger: none
 pr: 
   - main
-  - release-*
+  - release/*
+  - feature/*
+  - hotfix/*
 
 pool:
   vmImage: 'Ubuntu 16.04'
