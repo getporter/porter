@@ -26,6 +26,9 @@ var DockerExtension = RequiredExtension{
 type Docker struct {
 	// Privileged represents whether or not the Docker container should run as --privileged
 	Privileged bool `json:"privileged,omitempty"`
+
+	// UseHostNetwork is set to true if the Docker container should use the host network
+	UseHostNetwork bool `json:"useHostNetwork,omitempty"`
 }
 
 // DockerExtensionReader is a Reader for the DockerExtension,

@@ -72,6 +72,10 @@ func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.D
 	d := &docker.Driver{}
 	d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
 
+		if config.UseHostNetwork {
+			hostCfg.NetworkMode = "host"
+		}
+
 		// Equivalent of using: --privileged
 		// Required for DinD, or "Docker-in-Docker"
 		hostCfg.Privileged = config.Privileged

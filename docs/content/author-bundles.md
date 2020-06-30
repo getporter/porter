@@ -357,6 +357,7 @@ When the bundle is executed, this elevated privilege must be explicitly granted 
 **Configuration:**
 
   * `privileged: BOOLEAN` - OPTIONAL. Whether or not the `--privileged` flag should be set when the bundle's invocation image runs. Defaults to false.
+  * `useHostNetwork: BOOLEAN` - OPTIONAL. Whether or not host networking should be used when the bundle's invocation image runs. Defaults to false.
 
 Example:
 

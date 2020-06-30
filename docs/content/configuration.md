@@ -38,9 +38,10 @@ combination of: `table`, `json` and `yaml`.
 `--allow-docker-host-access` controls whether or not the local Docker daemon
 should be made available to executing bundles. This flag is available for the
 following commands: [install], [upgrade], [invoke] and [uninstall]. When this
-value is set to true, bundles are executed in a privileged container with the
-docker socket mounted. This allows you to use Docker from within your bundle,
-such as `docker push`, `docker-compose`, or docker-in-docker.
+value is set to true, bundles will be executed with the docker socket mounted.
+This allows you to use Docker from within your bundle, such as `docker push`,
+`docker-compose`, or docker-in-docker. In addition, configuration may include
+running the container in privileged mode and/or with host networking enabled. 
 
 🚨 **There are security implications to enabling access! You should trust any
 bundles that you execute with this setting enabled as it gives them elevated 

@@ -11,14 +11,15 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 	t.Run("extension present", func(t *testing.T) {
 		ext := ProcessedExtensions{
 			DockerExtensionKey: Docker{
-				Privileged: true,
+				Privileged:     true,
+				UseHostNetwork: true,
 			},
 		}
 
 		dockerExt, dockerRequired, err := ext.GetDockerExtension()
 		require.NoError(t, err, "GetDockerExtension failed")
 		assert.True(t, dockerRequired, "docker should be a required extension")
-		assert.Equal(t, Docker{Privileged: true}, dockerExt, "docker config was not populated properly")
+		assert.Equal(t, Docker{Privileged: true, UseHostNetwork: true}, dockerExt, "docker config was not populated properly")
 	})
 
 	t.Run("extension missing", func(t *testing.T) {
