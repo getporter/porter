@@ -22,6 +22,11 @@ into becoming reviewers and maintainers.
 
 <p align="center">Start with our <a href="https://porter.sh/contribute/">New Contributors Guide</a>
 
+Porter wouldn't be possible without our [contributors][contributors], carrying
+the load and making it better every day! 🙇‍♀️
+
+[contributors]: /CONTRIBUTORS.md
+
 ---
 
 # Roadmap

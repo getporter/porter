@@ -17,3 +17,7 @@ _Put any questions or notes for the reviewer here._
 - [ ] Unit Tests
 - [ ] Documentation
 - [ ] Schema (porter.yaml)
+
+If this is your first pull request, please add your name to the bottom of our [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
+
+[contributors]: /CONTRIBUTORS.md
