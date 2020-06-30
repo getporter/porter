@@ -31,7 +31,7 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	return so.ParseFormat()
 }
 
-// ShowInstances shows a bundle, or more properly a bundle claim, along with any
+// ShowInstallations shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
 func (p *Porter) ShowInstallations(opts ShowOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
