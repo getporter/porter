@@ -9,7 +9,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "installations",
 		Aliases: []string{"inst", "installation"},
-		Short:   "Bundle Installation commands",
+		Short:   "Installation commands",
 		Long:    "Commands for working with installations of a bundle",
 	}
 	cmd.Annotations = map[string]string{

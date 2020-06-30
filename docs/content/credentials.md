@@ -32,7 +32,7 @@ like `{{ bundle.credentials.github_token }}` with the actual credential value
 before executing the step.
 
 Once the bundle finishes executing, the credentials are NOT recorded in the
-installation (claim). Parameters are recorded there so that you can view them
+installation history. Parameters are recorded there so that you can view them
 later using `porter installations show NAME --output json`.
 
 ## Q & A

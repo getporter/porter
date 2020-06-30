@@ -53,7 +53,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 		}
 	}
 
-	c, isTemp, err := d.getClaim(bun, action, args.Claim)
+	c, isTemp, err := d.getClaim(bun, action, args.Installation)
 	if err != nil {
 		return err
 	}

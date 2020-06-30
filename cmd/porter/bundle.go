@@ -92,7 +92,7 @@ The lint command is run automatically when you build a bundle. The command is av
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install [NAME]",
+		Use:   "install [INSTALLATION]",
 		Short: "Create a new installation of a bundle",
 		Long: `Create a new installation of a bundle.
 

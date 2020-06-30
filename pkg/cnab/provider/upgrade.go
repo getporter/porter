@@ -11,9 +11,9 @@ import (
 )
 
 func (d *Runtime) Upgrade(args ActionArguments) error {
-	c, err := d.claims.Read(args.Claim)
+	c, err := d.claims.Read(args.Installation)
 	if err != nil {
-		return errors.Wrapf(err, "could not load installation %s", args.Claim)
+		return errors.Wrapf(err, "could not load installation %s", args.Installation)
 	}
 
 	if args.BundlePath != "" {
