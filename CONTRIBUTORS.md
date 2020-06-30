@@ -1,0 +1,49 @@
+# Porter Contributors
+
+These are the wonderful people who have donated their time and effort to help
+make Porter better for all of us to use. We wouldn't be where we are today
+without your contributions. Thank you! 🙇‍♀️💖
+
+New contributors should add their name to the bottom of this list on their first
+pull request. If you are a contributor in other ways other than code, please
+either submit a pull request adding your name, or mention it to another maintainer
+and we will add you. **All** contributors belong here. 💯
+
+* [Carolyn Van Slyck](https://github.com/carolynvs) (Co-Creator of Porter)
+* [Jeremy Rickard](https://github.com/jeremyrickard) (Co-Creator of Porter)
+* [Vaughn Dice](https://github.com/vdice)
+* [Reddy Prasad](https://github.com/dev-drprasad)
+* [Thorsten Hans](https://github.com/ThorstenHans)
+* [Ronan Flynn-Curran](https://github.com/flynnduism)
+* [Allan Guwatudde](https://github.com/AGMETEOR)
+* [Josh Dolitsky](https://github.com/jdolitsky)
+* [Urvashi Reddy](https://github.com/youreddy)
+* [Jennifer Davis](https://github.com/iennae)
+* [Adam Reese](https://github.com/adamreese)
+* [Simon Davies](https://github.com/simongdavies)
+* [Phillip Ahereza](https://github.com/phillipahereza)
+* [Ivan Towlson](https://github.com/itowlson)
+* [Scott Coulton](https://github.com/scotty-c)
+* [Radu Matei](https://github.com/radu-matei)
+* [Raymond Kao](https://github.com/raykao)
+* [Ryan Moran](https://github.com/ryanmoran)
+* [Sean Harvey](https://github.com/halkyon)
+* [SpiLLeR](https://github.com/SpiLLeR)
+* [Weidong Feng](https://github.com/fenngwd)
+* [Y.Horie](https://github.com/u5surf)
+* [Zhaoyang Jiang](https://github.com/JiangZhaoYang)
+* [Gauri Madhok](https://github.com/gaurimadhok)
+* [Abhishek Gupta](https://github.com/abhirockzz)
+* [Anubhav Mishra](https://github.com/anubhavmishra)
+* [Aravind](https://github.com/scriptonist)
+* [Artem](https://github.com/SuddenGunter)
+* [Ben Wilkinson](https://github.com/brwilkinson)
+* [Brad](https://github.com/bradcypert)
+* [Clarence Bakirtzidis](https://github.com/clarenceb)
+* [Cory O'Daniel](https://github.com/coryodaniel)
+* [Hongchao Deng](https://github.com/hongchaodeng)
+* [John Reese](https://github.com/jpreese)
+* [Lanre Adelowo](https://github.com/adelowo)
+* [Matt Butcher](https://github.com/technosophos)
+* [Michael William Boldt](https://github.com/mboldt)
+* [Mohamed Chorfa](https://github.com/MChorfa)

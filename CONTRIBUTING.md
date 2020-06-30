@@ -58,6 +58,10 @@ Another great way to contribute is to create a mixin! You can start use the
 [Porter Skeletor][skeletor] repository as a template to start, along with the
 [Mixin Developer Guide][mixin-dev-guide].
 
+When you create your first pull request, add your name to the bottom of our 
+[Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
+                                          
+[contributors]: /CONTRIBUTORS.md                                          
 [skeletor]: https://github.com/deislabs/porter-skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
 [good-first-issue]: https://porter.sh/board/good+first+issue
