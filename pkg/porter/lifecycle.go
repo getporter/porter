@@ -30,7 +30,7 @@ func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) erro
 // ToActionArgs converts this instance of user-provided action options.
 func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
-		Claim:                 o.Name,
+		Installation:                 o.Name,
 		BundlePath:            o.CNABFile,
 		Params:                make(map[string]string, len(o.parsedParams)),
 		ParameterSets:         o.ParameterSets,
