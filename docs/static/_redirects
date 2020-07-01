@@ -3,7 +3,7 @@
 /roadmap            https://github.com/deislabs/porter/projects/4
 
 # Redirect source code links
-/src/*              https://github.com/deislabs/porter/blob/master/:splat
+/src/*              https://github.com/deislabs/porter/blob/main/:splat
 
 
 # Redirect 

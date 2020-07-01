@@ -223,7 +223,7 @@ When you run `make build`, the canary\* build of mixins are automatically
 installed into your bin directory in the root of the repository. You can use
 `porter mixin install NAME` to install the latest released version of a mixin.
 
-\* canary = most recent successful build of master
+\* canary = most recent successful build of the "main" branch
 
 ## Preview documentation
 

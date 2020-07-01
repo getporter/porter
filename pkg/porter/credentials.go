@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -64,7 +63,6 @@ func (p *Porter) ListCredentials(opts ListOptions) error {
 
 type CredentialOptions struct {
 	BundleLifecycleOpts
-	DryRun bool
 	Silent bool
 }
 
@@ -133,14 +131,6 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	cs.Created = time.Now()
 	cs.Modified = cs.Created
 
-	if opts.DryRun {
-		data, err := json.Marshal(cs)
-		if err != nil {
-			return errors.Wrap(err, "unable to generate credentials JSON")
-		}
-		fmt.Fprintf(p.Out, "%v", string(data))
-		return nil
-	}
 	err = p.Credentials.Save(*cs)
 	return errors.Wrapf(err, "unable to save credentials")
 }

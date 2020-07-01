@@ -4,7 +4,7 @@ Porter uses a variety of services to distribute its CLI, mixin and plugin binari
 
 ## Azure Storage
 
-Binaries are uploaded to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) upon relevant events in our GitHub repositories, such as merges to master (producing `canary` artifacts) and official releases (producing `latest` and semver-tagged artifacts).
+Binaries are uploaded to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) upon relevant events in our GitHub repositories, such as merges to the "main" branch (producing `canary` artifacts) and official releases (producing `latest` and semver-tagged artifacts).
 
 Although it is possible to provide URLs directly to the stored resources, we'd be tightly coupled to a particular storage account and layout, not to mention ungainly URLs.  Therefore, we utilize the services below to achieve flexibility and control over asset links.
 

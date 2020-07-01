@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - refs/heads/master
+      - refs/heads/main
 
 jobs:
 - job: linux

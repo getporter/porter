@@ -403,7 +403,7 @@ exclude: true
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://github.com/deislabs/porter/tree/master/examples/azure-mysql-wordpress
+  https://github.com/deislabs/porter/tree/main/examples/azure-mysql-wordpress
 ]
 
 ---

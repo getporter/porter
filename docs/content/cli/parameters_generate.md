@@ -45,7 +45,6 @@ porter parameters generate [NAME] [flags]
 
 ```
       --cnab-file string   Path to the CNAB bundle.json file.
-      --dry-run            Generate parameter set but do not save it.
   -f, --file string        Path to the porter manifest file. Defaults to the bundle in the current directory.
       --force              Force a fresh pull of the bundle
   -h, --help               help for generate

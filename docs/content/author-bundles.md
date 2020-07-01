@@ -20,7 +20,7 @@ Porter generates a bundle from its manifest, porter.yaml. The manifest is made u
 * [Required](#required)
 * [Generated Files](#generated-files)
 
-We have full [examples](https://github.com/deislabs/porter/tree/master/examples) of Porter manifests in the Porter repository.
+We have full [examples](https://github.com/deislabs/porter/tree/main/examples) of Porter manifests in the Porter repository.
 
 ## Bundle Metadata
 

@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -67,7 +66,6 @@ func (p *Porter) ListParameters(opts ListOptions) error {
 // ParameterOptions represent generic/base options for a Porter parameters command
 type ParameterOptions struct {
 	BundleLifecycleOpts
-	DryRun bool
 	Silent bool
 }
 
@@ -136,14 +134,6 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 	pset.Created = time.Now()
 	pset.Modified = pset.Created
 
-	if opts.DryRun {
-		data, err := json.Marshal(pset)
-		if err != nil {
-			return errors.Wrap(err, "unable to generate parameters JSON")
-		}
-		fmt.Fprintf(p.Out, "%v", string(data))
-		return nil
-	}
 	err = p.Parameters.Save(*pset)
 	return errors.Wrapf(err, "unable to save parameter set")
 }

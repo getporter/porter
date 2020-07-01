@@ -105,7 +105,7 @@ install:
 
 NOTE: These references must be quoted, as in the examples above.
 
-See [Parameters][parmeters] to learn how parameters are passed in to Porter prior to bundle execution.
+See [Parameters][parameters] to learn how parameters are passed in to Porter prior to bundle execution.
 
 
 ## Credentials
