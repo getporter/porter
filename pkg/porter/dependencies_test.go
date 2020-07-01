@@ -25,7 +25,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	// Now make sure execute passes now that we have called execute
 	opts := InstallOptions{}
 	opts.File = "/porter.yaml"
-	err = opts.Validate([]string{}, p.CNAB, p.Context)
+	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")
 	err = e.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {
 		return nil

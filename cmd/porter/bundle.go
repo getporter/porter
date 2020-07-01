@@ -108,7 +108,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.CNAB, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(opts)
@@ -158,7 +158,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle upgrade MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.CNAB, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UpgradeBundle(opts)
@@ -209,7 +209,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle invoke --action ACTION MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.CNAB, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InvokeBundle(opts)
@@ -263,7 +263,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.CNAB, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UninstallBundle(opts)
@@ -336,7 +336,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
   porter bundle archive mybun.tgz --tag repo/bundle:tag
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.CNAB, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Archive(opts)

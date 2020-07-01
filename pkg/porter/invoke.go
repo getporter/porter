@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
@@ -17,12 +16,12 @@ type InvokeOptions struct {
 	BundleLifecycleOpts
 }
 
-func (o *InvokeOptions) Validate(args []string, runtime cnabprovider.CNABProvider, cxt *context.Context) error {
+func (o *InvokeOptions) Validate(args []string, p *Porter) error {
 	if o.Action == "" {
 		return errors.New("--action is required")
 	}
 
-	return o.BundleLifecycleOpts.Validate(args, runtime, cxt)
+	return o.BundleLifecycleOpts.Validate(args, p)
 }
 
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses

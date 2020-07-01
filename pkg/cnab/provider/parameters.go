@@ -2,14 +2,11 @@ package cnabprovider
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
 )
 
@@ -44,45 +41,6 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	}
 
 	return bundle.ValuesOrDefaults(overrides, bun, action)
-}
-
-// LoadParameterSets loads parameter values per their parameter set strategies
-func (d *Runtime) LoadParameterSets(params []string) (valuesource.Set, error) {
-	resolvedParameters := valuesource.Set{}
-	for _, name := range params {
-		var pset parameters.ParameterSet
-		var err error
-		if d.isPathy(name) {
-			pset, err = d.loadParameterFromFile(name)
-		} else {
-			pset, err = d.parameters.Read(name)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		rc, err := d.parameters.ResolveAll(pset)
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range rc {
-			resolvedParameters[k] = v
-		}
-	}
-
-	return resolvedParameters, nil
-}
-
-func (d *Runtime) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
-	data, err := d.FileSystem.ReadFile(path)
-	if err != nil {
-		return parameters.ParameterSet{}, errors.Wrapf(err, "could not read file %s", path)
-	}
-
-	var cs parameters.ParameterSet
-	err = json.Unmarshal(data, &cs)
-	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
 
 func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {

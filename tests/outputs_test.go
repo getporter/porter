@@ -61,7 +61,7 @@ func TestExecOutputs(t *testing.T) {
 func CleanupCurrentBundle(p *porter.TestPorter) {
 	// Uninstall the bundle
 	uninstallOpts := porter.UninstallOptions{}
-	err := uninstallOpts.Validate([]string{}, p.CNAB, p.Context)
+	err := uninstallOpts.Validate([]string{}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for current bundle")
 
 	err = p.UninstallBundle(uninstallOpts)
@@ -79,7 +79,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	fmt.Println(files)
 
 	installOpts := porter.InstallOptions{}
-	err = installOpts.Validate([]string{}, p.CNAB, p.Context)
+	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InstallBundle(installOpts)
 	require.NoError(p.T(), err)
@@ -87,7 +87,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 
 func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 	statusOpts := porter.InvokeOptions{Action: action}
-	err := statusOpts.Validate([]string{}, p.CNAB, p.Context)
+	err := statusOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InvokeBundle(statusOpts)
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
@@ -104,7 +104,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Install the bundle
 	// A step-level output will be used during this action
 	installOpts := porter.InstallOptions{}
-	err := installOpts.Validate([]string{}, p.CNAB, p.Context)
+	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err, "install should have succeeded")
@@ -112,7 +112,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Upgrade the bundle
 	// A bundle-level output will be produced during this action
 	upgradeOpts := porter.UpgradeOptions{}
-	err = upgradeOpts.Validate([]string{}, p.CNAB, p.Context)
+	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
@@ -120,7 +120,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Uninstall the bundle
 	// A bundle-level output will be used during this action
 	uninstallOpts := porter.UninstallOptions{}
-	err = uninstallOpts.Validate([]string{}, p.CNAB, p.Context)
+	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UninstallBundle(uninstallOpts)
 	require.NoError(t, err, "uninstall should have succeeded")

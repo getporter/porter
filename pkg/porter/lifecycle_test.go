@@ -4,9 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,25 +76,24 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	installOpts := InstallOptions{}
 	installOpts.Tag = "mybun:1.0"
 
-	err = installOpts.Validate([]string{}, p.CNAB, p.Context)
+	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
 }
 
 func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
-	runtime := cnabprovider.NewTestRuntime(t)
-	cxt := context.NewTestContext(t)
+	p := NewTestPorter(t)
 
 	deps := &dependencyExecutioner{}
 
 	t.Run("porter.yaml set", func(t *testing.T) {
 		opts := BundleLifecycleOpts{}
 		opts.File = "porter.yaml"
-		cxt.AddTestFile("testdata/porter.yaml", "porter.yaml")
-		cxt.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
+		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
 
-		err := opts.Validate(nil, runtime, cxt.Context)
+		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args := opts.ToActionArgs(deps)
 
@@ -108,9 +104,9 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 	t.Run("bundle.json set", func(t *testing.T) {
 		opts := BundleLifecycleOpts{}
 		opts.CNABFile = "/bundle.json"
-		cxt.AddTestFile("testdata/bundle.json", "/bundle.json")
+		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
-		err := opts.Validate(nil, runtime, cxt.Context)
+		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args := opts.ToActionArgs(deps)
 
@@ -137,10 +133,10 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 			},
 			AllowAccessToDockerHost: true,
 		}
-		runtime.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
-		runtime.TestParameters.AddTestParameters("testdata/paramset2.json")
+		p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+		p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
-		err := opts.Validate(nil, runtime, cxt.Context)
+		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args := opts.ToActionArgs(deps)
 
@@ -164,7 +160,7 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	installOpts := InstallOptions{}
 	installOpts.Name = "hello"
 	installOpts.Tag = "getporter/porter-hello:v0.1.0"
-	err := installOpts.Validate(nil, p.CNAB, p.Context)
+	err := installOpts.Validate(nil, p.Porter)
 	require.NoError(t, err, "InstallOptions.Validate failed")
 
 	err = p.InstallBundle(installOpts)
@@ -172,14 +168,14 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 
 	upgradeOpts := UpgradeOptions{}
 	upgradeOpts.Name = installOpts.Name
-	err = upgradeOpts.Validate(nil, p.CNAB, p.Context)
+	err = upgradeOpts.Validate(nil, p.Porter)
 
 	err = p.UpgradeBundle(upgradeOpts)
 	require.NoError(t, err, "UpgradeBundle failed")
 
 	uninstallOpts := UninstallOptions{}
 	uninstallOpts.Name = installOpts.Name
-	err = uninstallOpts.Validate(nil, p.CNAB, p.Context)
+	err = uninstallOpts.Validate(nil, p.Porter)
 
 	err = p.UninstallBundle(uninstallOpts)
 	require.NoError(t, err, "UninstallBundle failed")

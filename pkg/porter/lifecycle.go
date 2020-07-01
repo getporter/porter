@@ -2,7 +2,6 @@ package porter
 
 import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 
@@ -12,8 +11,8 @@ type BundleLifecycleOpts struct {
 	AllowAccessToDockerHost bool
 }
 
-func (o *BundleLifecycleOpts) Validate(args []string, runtime cnabprovider.CNABProvider, cxt *context.Context) error {
-	err := o.sharedOptions.Validate(args, runtime, cxt)
+func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
+	err := o.sharedOptions.Validate(args, porter)
 	if err != nil {
 		return err
 	}

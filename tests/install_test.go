@@ -34,7 +34,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 
 	installOpts := porter.InstallOptions{}
-	err = installOpts.Validate([]string{}, p.CNAB, p.Context)
+	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	// Install the bundle, assert no error occurs due to Porter home as relative path
@@ -55,7 +55,7 @@ func TestInstall_fileParam(t *testing.T) {
 	installOpts := porter.InstallOptions{}
 	installOpts.Params = []string{"myfile=./myfile"}
 
-	err := installOpts.Validate([]string{}, p.CNAB, p.Context)
+	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.InstallBundle(installOpts)

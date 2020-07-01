@@ -82,18 +82,18 @@ type sharedOptions struct {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *sharedOptions) Validate(args []string, runtime cnabprovider.CNABProvider, cxt *context.Context) error {
+func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	err := o.validateInstanceName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(cxt)
+	err = o.bundleFileOptions.Validate(p.Context)
 	if err != nil {
 		return err
 	}
 
-	err = o.validateParams(runtime, cxt)
+	err = o.validateParams(p)
 	if err != nil {
 		return err
 	}
@@ -206,13 +206,13 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	return nil
 }
 
-func (o *sharedOptions) validateParams(runtime cnabprovider.CNABProvider, cxt *context.Context) error {
+func (o *sharedOptions) validateParams(p *Porter) error {
 	err := o.parseParams()
 	if err != nil {
 		return err
 	}
 
-	err = o.parseParamSets(runtime, cxt)
+	err = o.parseParamSets(p)
 	if err != nil {
 		return err
 	}
@@ -233,8 +233,8 @@ func (o *sharedOptions) parseParams() error {
 }
 
 // parseParamSets parses the variable assignments in ParameterSets.
-func (o *sharedOptions) parseParamSets(runtime cnabprovider.CNABProvider, cxt *context.Context) error {
-	parsed, err := runtime.LoadParameterSets(o.ParameterSets)
+func (o *sharedOptions) parseParamSets(p *Porter) error {
+	parsed, err := p.loadParameterSets(o.ParameterSets)
 	if err != nil {
 		return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
 	}

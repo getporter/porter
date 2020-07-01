@@ -1,7 +1,9 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -285,4 +288,45 @@ func validateParameterName(args []string) error {
 	default:
 		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
+}
+
+// loadParameterSets loads parameter values per their parameter set strategies
+func (p *Porter) loadParameterSets(params []string) (valuesource.Set, error) {
+	resolvedParameters := valuesource.Set{}
+	for _, name := range params {
+		var pset parameters.ParameterSet
+		var err error
+		// If name looks pathy, attempt to load from a file
+		// Else, read from Porter's parameters store
+		if strings.Contains(name, string(filepath.Separator)) {
+			pset, err = p.loadParameterFromFile(name)
+		} else {
+			pset, err = p.Parameters.Read(name)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		rc, err := p.Parameters.ResolveAll(pset)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range rc {
+			resolvedParameters[k] = v
+		}
+	}
+
+	return resolvedParameters, nil
+}
+
+func (p *Porter) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
+	data, err := p.FileSystem.ReadFile(path)
+	if err != nil {
+		return parameters.ParameterSet{}, errors.Wrapf(err, "could not read file %s", path)
+	}
+
+	var cs parameters.ParameterSet
+	err = json.Unmarshal(data, &cs)
+	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }

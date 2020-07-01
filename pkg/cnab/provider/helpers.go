@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/valuesource"
 )
 
 const debugDriver = "debug"
@@ -45,10 +44,6 @@ func NewTestRuntimeWithConfig(
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (*bundle.Bundle, error) {
 	return t.Runtime.LoadBundle(bundleFile)
-}
-
-func (t *TestRuntime) LoadParameterSets(paramSets []string) (valuesource.Set, error) {
-	return t.Runtime.LoadParameterSets(paramSets)
 }
 
 func (t *TestRuntime) Install(args ActionArguments) error {

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,13 +90,12 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 }
 
 func TestParseParamSets_viaPathOrName(t *testing.T) {
-	r := cnabprovider.NewTestRuntime(t)
-	cxt := context.NewTestContext(t)
+	p := NewTestPorter(t)
 
-	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
-	r.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
-	r.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
-	r.TestParameters.AddTestParameters("testdata/paramset2.json")
+	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
+	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+	p.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
+	p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 	opts := sharedOptions{
 		ParameterSets: []string{
@@ -106,7 +104,7 @@ func TestParseParamSets_viaPathOrName(t *testing.T) {
 		},
 	}
 
-	err := opts.parseParamSets(r, cxt.Context)
+	err := opts.parseParamSets(p.Porter)
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
