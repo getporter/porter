@@ -25,7 +25,7 @@ Output commands
 
 ### SEE ALSO
 
-* [porter installations](/cli/porter_installations/)	 - Bundle Installation commands
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 * [porter installations output list](/cli/porter_installations_output_list/)	 - List installation outputs
 * [porter installations output show](/cli/porter_installations_output_show/)	 - Show the output of an installation
 

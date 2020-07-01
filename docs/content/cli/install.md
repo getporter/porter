@@ -17,7 +17,7 @@ Porter uses the Docker driver as the default runtime for executing a bundle's in
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 ```
-porter install [NAME] [flags]
+porter install [INSTALLATION] [flags]
 ```
 
 ### Examples

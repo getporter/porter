@@ -38,7 +38,7 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 * [porter explain](/cli/porter_explain/)	 - Explain a bundle
 * [porter inspect](/cli/porter_inspect/)	 - Inspect a bundle
 * [porter install](/cli/porter_install/)	 - Create a new installation of a bundle
-* [porter installations](/cli/porter_installations/)	 - Bundle Installation commands
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 * [porter invoke](/cli/porter_invoke/)	 - Invoke a custom action on an installation
 * [porter lint](/cli/porter_lint/)	 - Lint a bundle
 * [porter list](/cli/porter_list/)	 - List installed bundles

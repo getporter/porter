@@ -213,7 +213,7 @@ func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
 	r := NewTestRuntime(t)
 
 	args := ActionArguments{
-		Claim: "mybuns",
+		Installation: "mybuns",
 	}
 	err := r.Invoke("custom-action", args)
 	require.EqualError(t, err, "could not load installation mybuns: Claim does not exist")

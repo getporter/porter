@@ -5,7 +5,7 @@ url: /cli/porter_installations/
 ---
 ## porter installations
 
-Bundle Installation commands
+Installation commands
 
 ### Synopsis
 

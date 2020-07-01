@@ -41,5 +41,5 @@ porter installations list [flags]
 
 ### SEE ALSO
 
-* [porter installations](/cli/porter_installations/)	 - Bundle Installation commands
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 
