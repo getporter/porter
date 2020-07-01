@@ -36,7 +36,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 
 	claimName := os.Getenv(config.EnvClaimName)
 	bundleName := os.Getenv(config.EnvBundleName)
-	fmt.Fprintf(r.Out, "executing %s action from %s (bundle instance: %s)\n", r.RuntimeManifest.Action, bundleName, claimName)
+	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, claimName)
 
 	err := r.RuntimeManifest.Validate()
 	if err != nil {

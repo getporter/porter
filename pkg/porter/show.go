@@ -17,8 +17,8 @@ type ShowOptions struct {
 
 // Validate prepares for a show bundle action and validates the args/options.
 func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
-	// Ensure only one argument exists (instance name) if args length non-zero
-	err := so.sharedOptions.validateInstanceName(args)
+	// Ensure only one argument exists (installation name) if args length non-zero
+	err := so.sharedOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -31,9 +31,9 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	return so.ParseFormat()
 }
 
-// ShowInstances shows a bundle, or more properly a bundle claim, along with any
+// ShowInstallations shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
-func (p *Porter) ShowInstances(opts ShowOptions) error {
+func (p *Porter) ShowInstallations(opts ShowOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err

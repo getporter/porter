@@ -197,7 +197,7 @@ Once you have built the bundle and generated a credential set, you're ready to i
 ```bash
 $ porter install -c azure-terraform
 installing azure-terraform...
-executing install action from azure-terraform (bundle instance: azure-terraform)
+executing install action from azure-terraform (installation: azure-terraform)
 Create an Azure Storage Account
 Starting deployment operations...
 Finished deployment operations...
@@ -252,7 +252,7 @@ When you're ready to uninstall the bundle, simply run the `porter uninstall` com
 ```bash
 $ porter uninstall -c azure-terraform --param tf_storage_account_key=%%YOUR KEY VALUE%%
 uninstalling azure-terraform...
-executing uninstall action from azure-terraform (bundle instance: azure-terraform)
+executing uninstall action from azure-terraform (installation: azure-terraform)
 Remove Azure CosmosDB and Event Hubs
 Initializing Terraform...
 /usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=azure-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure

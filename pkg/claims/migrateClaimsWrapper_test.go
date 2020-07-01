@@ -39,9 +39,9 @@ func TestMigrateClaimsWrapper_Read(t *testing.T) {
 			assert.Equal(t, "example-exec-outputs", c.Installation, "claim.Installation was not populated")
 
 			if tc.shouldMigrate {
-				assert.Contains(t, cxt.GetError(), "Migrating bundle instance", "the claim should have been migrated")
+				assert.Contains(t, cxt.GetError(), "Migrating installation", "the claim should have been migrated")
 			} else {
-				assert.NotContains(t, cxt.GetError(), "Migrating bundle instance", "the claim should NOT be migrated")
+				assert.NotContains(t, cxt.GetError(), "Migrating installation", "the claim should NOT be migrated")
 			}
 		})
 	}

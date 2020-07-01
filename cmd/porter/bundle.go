@@ -92,11 +92,11 @@ The lint command is run automatically when you build a bundle. The command is av
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install [INSTANCE]",
-		Short: "Install a new instance of a bundle",
-		Long: `Install a new instance of a bundle.
+		Use:   "install [INSTALLATION]",
+		Short: "Create a new installation of a bundle",
+		Long: `Create a new installation of a bundle.
 
-The first argument is the bundle instance name to create for the installation. This defaults to the name of the bundle. 
+The first argument is the name of the installation to create. This defaults to the name of the bundle. 
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
@@ -142,11 +142,11 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.UpgradeOptions{}
 	cmd := &cobra.Command{
-		Use:   "upgrade [INSTANCE]",
-		Short: "Upgrade a bundle instance",
-		Long: `Upgrade a bundle instance.
+		Use:   "upgrade [INSTALLATION]",
+		Short: "Upgrade an installation",
+		Long: `Upgrade an installation.
 
-The first argument is the bundle instance name to upgrade. This defaults to the name of the bundle.
+The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
@@ -193,11 +193,11 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InvokeOptions{}
 	cmd := &cobra.Command{
-		Use:   "invoke [INSTANCE] --action ACTION",
-		Short: "Invoke a custom action on a bundle instance",
-		Long: `Invoke a custom action on a bundle instance.
+		Use:   "invoke [INSTALLATION] --action ACTION",
+		Short: "Invoke a custom action on an installation",
+		Long: `Invoke a custom action on an installation.
 
-The first argument is the bundle instance name upon which to invoke the action. This defaults to the name of the bundle.
+The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
@@ -246,11 +246,11 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.UninstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "uninstall [INSTANCE]",
-		Short: "Uninstall a bundle instance",
-		Long: `Uninstall a bundle instance
+		Use:   "uninstall [INSTALLATION]",
+		Short: "Uninstall an installation",
+		Long: `Uninstall an installation
 
-The first argument is the bundle instance name to uninstall. This defaults to the name of the bundle.
+The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,

@@ -23,8 +23,8 @@ ${PORTER_HOME}/porter build
 
 ${PORTER_HOME}/porter install --debug --param file_contents='foo!'
 
-echo "Verifying instance output(s) via 'porter instance outputs list' after install"
-list_outputs=$(${PORTER_HOME}/porter instance outputs list)
+echo "Verifying installation output(s) via 'porter installation outputs list' after install"
+list_outputs=$(${PORTER_HOME}/porter installation outputs list)
 echo "${list_outputs}"
 echo "${list_outputs}" | grep -q "file_contents"
 echo "${list_outputs}" | grep -q "foo!"
@@ -34,8 +34,8 @@ echo "${list_outputs}" | grep -q "foo!"
 
 ${PORTER_HOME}/porter upgrade --debug --param file_contents='bar!'
 
-echo "Verifying instance output(s) via 'porter instance output show' after upgrade"
-${PORTER_HOME}/porter instance output show file_contents | grep -q "bar!"
+echo "Verifying installation output(s) via 'porter installation output show' after upgrade"
+${PORTER_HOME}/porter installation output show file_contents | grep -q "bar!"
 
 # TODO: enable when status supported
 # ${PORTER_HOME}/porter status --debug | grep -q 'content = bar!'

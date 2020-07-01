@@ -40,7 +40,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 	if o.sharedOptions.Name == "" {
 		err := o.sharedOptions.defaultBundleFiles(cxt)
 		if err != nil {
-			return errors.New("bundle instance name must be provided via [--instance|-i INSTANCE]")
+			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
 		}
 	}
 
@@ -51,7 +51,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
 	// Ensure only one argument exists (claim name) if args length non-zero
-	err := o.sharedOptions.validateInstanceName(args)
+	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 	// Attempt to derive claim name from context
 	err = o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return errors.Wrap(err, "bundle instance name must be provided")
+		return errors.Wrap(err, "installation name must be provided")
 	}
 
 	return o.ParseFormat()
@@ -75,7 +75,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 
 	output, err := p.ReadBundleOutput(opts.Output, name)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", opts.Output, name)
+		return errors.Wrapf(err, "unable to read output '%s' for installation '%s'", opts.Output, name)
 	}
 
 	fmt.Fprintln(p.Out, output)
@@ -189,7 +189,7 @@ func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
 	if output, exists := c.Outputs[name]; exists {
 		return fmt.Sprintf("%v", output), nil
 	}
-	return "", fmt.Errorf("unable to read output %q for bundle instance %q", name, claim)
+	return "", fmt.Errorf("unable to read output %q for installation %q", name, claim)
 }
 
 func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {

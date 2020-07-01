@@ -1,9 +1,9 @@
 ---
-title: "porter list"
-slug: porter_list
-url: /cli/porter_list/
+title: "porter installations list"
+slug: porter_installations_list
+url: /cli/porter_installations_list/
 ---
-## porter list
+## porter installations list
 
 List installed bundles
 
@@ -16,14 +16,14 @@ A listing of bundles currently installed by Porter will be provided, along with 
 Optional output formats include json and yaml.
 
 ```
-porter list [flags]
+porter installations list [flags]
 ```
 
 ### Examples
 
 ```
-  porter list
-  porter list -o json
+  porter installations list
+  porter installations list -o json
 ```
 
 ### Options
@@ -41,5 +41,5 @@ porter list [flags]
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter installations](/cli/porter_installations/)	 - Installation commands
 

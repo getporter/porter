@@ -65,7 +65,7 @@ func (w *migrateClaimsWrapper) Migrate(itemType string, name string) ([]byte, er
 	// already been migrated
 	if hasLegacyName && !hasInstallationName {
 		if w.Debug {
-			fmt.Fprintf(w.Err, "Migrating bundle instance %s (Name -> Installation) to match the CNAB Claim spec https://cnab.io/schema/cnab-claim-1.0.0-DRAFT+d7ffba8/claim.schema.json. The Name field will be preserved for compatibility with previous versions of the spec.\n", name)
+			fmt.Fprintf(w.Err, "Migrating installation %s (Name -> Installation) to match the CNAB Claim spec https://cnab.io/schema/cnab-claim-1.0.0-DRAFT+d7ffba8/claim.schema.json. The Name field will be preserved for compatibility with previous versions of the spec.\n", name)
 		}
 		rawData["installation"] = legacyName
 

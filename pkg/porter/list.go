@@ -36,11 +36,11 @@ func (l CondensedClaimList) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// ListInstances lists installed bundles by their claims.
-func (p *Porter) ListInstances(opts ListOptions) error {
+// ListInstallations lists installed bundles by their claims.
+func (p *Porter) ListInstallations(opts ListOptions) error {
 	claims, err := p.Claims.ReadAll()
 	if err != nil {
-		return errors.Wrap(err, "could not list bundle instances")
+		return errors.Wrap(err, "could not list installations")
 	}
 
 	var condensedClaims CondensedClaimList

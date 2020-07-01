@@ -237,7 +237,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
 	depArgs := cnabprovider.ActionArguments{
 		BundlePath:        dep.CNABFile,
-		Claim:             fmt.Sprintf("%s-%s", parentArgs.Claim, dep.Alias),
+		Installation:             fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
 		Driver:            parentArgs.Driver,
 		Params:            dep.Parameters,
 		RelocationMapping: dep.RelocationMapping,
@@ -254,7 +254,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	// If action is uninstall, no claim will exist
 	if action != manifest.ActionUninstall {
 		// Collect expected outputs via claim
-		c, err := e.Claims.Read(depArgs.Claim)
+		c, err := e.Claims.Read(depArgs.Installation)
 		if err != nil {
 			return err
 		}

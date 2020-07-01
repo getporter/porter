@@ -13,8 +13,8 @@ import (
 
 // Shared arguments for all CNAB actions
 type ActionArguments struct {
-	// Name of the instance.
-	Claim string
+	// Name of the installation.
+	Installation string
 
 	// Either a filepath to the bundle or the name of the bundle.
 	BundlePath string
@@ -65,7 +65,7 @@ func (d *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 		}
 
 		// Add claim.json to file list as well, if exists
-		claimName := args.Claim
+		claimName := args.Installation
 		claim, err := d.claims.Read(claimName)
 		if err == nil {
 			claimBytes, err := yaml.Marshal(claim)

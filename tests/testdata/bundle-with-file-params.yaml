@@ -11,7 +11,7 @@ parameters:
     type: file
     path: /root/myfile
   # This is added to cover bug fix for https://github.com/deislabs/porter/issues/835
-  # It will be inherently exercised in install_test.go via a default bundle installation
+  # It will be inherently exercised in install_test.go via a default installation
   - name: onlyUpgrade
     type: string
     applyTo:

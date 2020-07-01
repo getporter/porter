@@ -11,13 +11,13 @@ import (
 )
 
 func (d *Runtime) Uninstall(args ActionArguments) error {
-	c, err := d.claims.Read(args.Claim)
+	c, err := d.claims.Read(args.Installation)
 	if err != nil {
 		// Yay! It's already gone
 		if err == claim.ErrClaimNotFound {
 			return nil
 		}
-		return errors.Wrapf(err, "could not load bundle instance %s", args.Claim)
+		return errors.Wrapf(err, "could not load installation %s", args.Installation)
 	}
 
 	if args.BundlePath != "" {
@@ -70,7 +70,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 		return errors.Wrap(err, "failed to uninstall the bundle")
 	}
 
-	err = d.claims.Delete(args.Claim)
+	err = d.claims.Delete(args.Installation)
 
 	return errors.Wrap(err, "failed to remove the record of the bundle")
 }
