@@ -42,21 +42,10 @@ stages:
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
-    - task: Docker@1
-      displayName: Docker Login
-      inputs:
-        containerRegistryType: Container Registry
-        dockerRegistryEndpoint: getporter-registry
-        command: login
-
-    - task: DownloadSecureFile@1
-      displayName: Download Kubeconfig
-      inputs:
-        secureFile: kubeconfig
-
     - script: |
-        export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-        make test-integration
+        trap 'make -f Makefile.kind delete-kind-cluster' EXIT
+        make -f Makefile.kind install-kind create-kind-cluster
+        make start-local-docker-registry test-integration stop-local-docker-registry
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Integration Test'
 
@@ -68,26 +57,12 @@ stages:
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
-    - task: Docker@1
-      displayName: Docker Login
-      inputs:
-        containerRegistryType: Container Registry
-        dockerRegistryEndpoint: getporter-registry
-        command: login
-
-    - task: DownloadSecureFile@1
-      displayName: Download Kubeconfig
-      inputs:
-        secureFile: kubeconfig
-
     - script: make build
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Build'
 
     - script: |
-        export KUBECONFIG=$DOWNLOADSECUREFILE_SECUREFILEPATH
-        export REGISTRY=getporterci
-        make test-cli
+        make start-local-docker-registry test-cli stop-local-docker-registry
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'CLI Test'
 
