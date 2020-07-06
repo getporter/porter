@@ -29,15 +29,20 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 	s := DependencySolver{}
 	locks, err := s.ResolveDependencies(bun)
 	require.NoError(t, err)
-
 	require.Len(t, locks, 2)
 
-	mysql := locks[0]
-	assert.Equal(t, "mysql", mysql.Alias)
-	assert.Equal(t, "getporter/mysql:5.7", mysql.Tag)
+	var mysql DependencyLock
+	var nginx DependencyLock
+	for _, lock := range locks {
+		switch lock.Alias {
+		case "mysql":
+			mysql = lock
+		case "nginx":
+			nginx = lock
+		}
+	}
 
-	nginx := locks[1]
-	assert.Equal(t, "nginx", nginx.Alias)
+	assert.Equal(t, "getporter/mysql:5.7", mysql.Tag)
 	assert.Equal(t, "localhost:5000/nginx:1.19", nginx.Tag)
 }
 
