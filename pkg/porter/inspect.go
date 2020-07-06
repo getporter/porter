@@ -65,10 +65,7 @@ func (p *Porter) Inspect(o ExplainOpts) error {
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(bun *bundle.Bundle, reloMap map[string]string) (*InspectableBundle, error) {
-	if bun == nil {
-		return nil, fmt.Errorf("expected a bundle")
-	}
+func generateInspectableBundle(bun bundle.Bundle, reloMap map[string]string) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
 		Name:        bun.Name,
 		Description: bun.Description,
@@ -78,7 +75,7 @@ func generateInspectableBundle(bun *bundle.Bundle, reloMap map[string]string) (*
 	return ib, nil
 }
 
-func handleInspectRelocate(bun *bundle.Bundle, reloMap map[string]string) ([]PrintableInvocationImage, []PrintableImage) {
+func handleInspectRelocate(bun bundle.Bundle, reloMap map[string]string) ([]PrintableInvocationImage, []PrintableImage) {
 	invoImages := []PrintableInvocationImage{}
 	for _, invoImage := range bun.InvocationImages {
 		pii := PrintableInvocationImage{
@@ -103,18 +100,6 @@ func handleInspectRelocate(bun *bundle.Bundle, reloMap map[string]string) ([]Pri
 		images = append(images, pi)
 	}
 	return invoImages, images
-}
-
-func generateInspectImages(bun *bundle.Bundle) []PrintableImage {
-	var printableImages []PrintableImage
-	for alias, img := range bun.Images {
-		pi := PrintableImage{
-			Name:  alias,
-			Image: img,
-		}
-		printableImages = append(printableImages, pi)
-	}
-	return printableImages
 }
 
 func (p *Porter) printBundleInspect(o ExplainOpts, ib *InspectableBundle) error {

@@ -184,7 +184,7 @@ func TestExplain_generateYAML(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -211,7 +211,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
@@ -237,7 +237,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"debug": {
 				Required:    true,
@@ -256,11 +256,4 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Actions))
-}
-
-func TestExplain_genratePrintablBundle_empty(t *testing.T) {
-	var bun *bundle.Bundle
-	_, err := generatePrintable(bun)
-	assert.Error(t, err)
-	assert.EqualError(t, err, "expected a bundle")
 }

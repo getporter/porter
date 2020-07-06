@@ -50,7 +50,7 @@ type DependencyVersion struct {
 // ReadDependencies is a convenience method for returning a bonafide
 // Dependencies reference after reading from the applicable section from
 // the provided bundle
-func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
+func ReadDependencies(bun bundle.Bundle) (*Dependencies, error) {
 	raw, err := DependencyReader(bun)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
 // DependencyReader is a Reader for the DependenciesExtension, which reads
 // from the applicable section in the provided bundle and returns a the raw
 // data in the form of an interface
-func DependencyReader(bun *bundle.Bundle) (interface{}, error) {
+func DependencyReader(bun bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DependenciesKey]
 	if !ok {
 		return nil, errors.New("no custom extension configuration found")

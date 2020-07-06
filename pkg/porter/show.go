@@ -39,16 +39,29 @@ func (p *Porter) ShowInstallations(opts ShowOptions) error {
 		return err
 	}
 
-	c, err := p.Claims.Read(opts.sharedOptions.Name)
+	installation, err := p.Claims.ReadInstallation(opts.Name)
 	if err != nil {
 		return err
 	}
 
+	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
+	if err != nil {
+		return err
+	}
+
+	displayInstallation, err := NewDisplayInstallation(installation)
+	if err != nil {
+		// There isn't an installation to display
+		return err
+	}
+
+	displayInstallation.Outputs = NewDisplayOutputs(outputs, opts.Format)
+
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, c)
+		return printer.PrintJson(p.Out, installation)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, c)
+		return printer.PrintYaml(p.Out, installation)
 	case printer.FormatTable:
 		// Set up human friendly time formatter
 		now := time.Now()
@@ -57,19 +70,18 @@ func (p *Porter) ShowInstallations(opts ShowOptions) error {
 		}
 
 		// Print claim details
-		fmt.Fprintf(p.Out, "Name: %s\n", c.Installation)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(c.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(c.Modified))
-		fmt.Fprintf(p.Out, "Last Action: %s\n", c.Result.Action)
-		fmt.Fprintf(p.Out, "Last Status: %s\n", c.Result.Status)
+		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
+		fmt.Fprintf(p.Out, "Last Action: %s\n", displayInstallation.Action)
+		fmt.Fprintf(p.Out, "Last Status: %s\n", displayInstallation.Status)
 
 		// Print outputs, if any
-		if len(c.Outputs) > 0 {
+		if len(displayInstallation.Outputs) > 0 {
 			fmt.Fprintln(p.Out)
 			fmt.Fprint(p.Out, "Outputs:\n")
 
-			outputs := p.ListBundleOutputs(c, opts.Format)
-			return p.printOutputsTable(outputs)
+			return p.printOutputsTable(displayInstallation.Outputs)
 		}
 		return nil
 	default:

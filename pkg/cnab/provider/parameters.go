@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
 )
@@ -16,12 +15,11 @@ import (
 // loadParameters accepts a set of parameter overrides as well as parameter set
 // files and combines both with the default parameters to create a full set
 // of parameters.
-func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, parameterSets []string, action string) (map[string]interface{}, error) {
+func (r *Runtime) loadParameters(bun bundle.Bundle, rawOverrides map[string]string, parameterSets []string, action string) (map[string]interface{}, error) {
 	overrides := make(map[string]interface{}, len(rawOverrides))
-	bun := claim.Bundle
 
 	// Loop through each parameter set file and load the parameter values
-	loaded, err := d.loadParameterSets(bun, parameterSets)
+	loaded, err := r.loadParameterSets(parameterSets)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to process provided parameter sets: %v", parameterSets)
 	}
@@ -42,7 +40,7 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		unconverted, err := d.getUnconvertedValueFromRaw(def, key, rawValue)
+		unconverted, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
 		if err != nil {
 			return nil, err
 		}
@@ -55,25 +53,25 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 		overrides[key] = value
 	}
 
-	return bundle.ValuesOrDefaults(overrides, bun, action)
+	return bundle.ValuesOrDefaults(overrides, &bun, action)
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (valuesource.Set, error) {
+func (r *Runtime) loadParameterSets(params []string) (valuesource.Set, error) {
 	resolvedParameters := valuesource.Set{}
 	for _, name := range params {
 		var pset parameters.ParameterSet
 		var err error
-		if d.isPathy(name) {
-			pset, err = d.loadParameterFromFile(name)
+		if r.isPathy(name) {
+			pset, err = r.loadParameterFromFile(name)
 		} else {
-			pset, err = d.parameters.Read(name)
+			pset, err = r.parameters.Read(name)
 		}
 		if err != nil {
 			return nil, err
 		}
 
-		rc, err := d.parameters.ResolveAll(pset)
+		rc, err := r.parameters.ResolveAll(pset)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +84,8 @@ func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (valuesou
 	return resolvedParameters, nil
 }
 
-func (d *Runtime) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
-	data, err := d.FileSystem.ReadFile(path)
+func (r *Runtime) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
+	data, err := r.FileSystem.ReadFile(path)
 	if err != nil {
 		return parameters.ParameterSet{}, errors.Wrapf(err, "could not read file %s", path)
 	}
@@ -97,11 +95,11 @@ func (d *Runtime) loadParameterFromFile(path string) (parameters.ParameterSet, e
 	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
 
-func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
+func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
 	// the parameter value (via rawValue) may represent a file on the local filesystem
 	if def.Type == "string" && def.ContentEncoding == "base64" {
-		if _, err := d.FileSystem.Stat(rawValue); err == nil {
-			bytes, err := d.FileSystem.ReadFile(rawValue)
+		if _, err := r.FileSystem.Stat(rawValue); err == nil {
+			bytes, err := r.FileSystem.ReadFile(rawValue)
 			if err != nil {
 				return "", errors.Wrapf(err, "unable to read file parameter %s", key)
 			}

@@ -43,7 +43,9 @@ func TestInvokeCustomAction(t *testing.T) {
 	//assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Verify that the custom action was recorded properly
-	claim, err := p.Claims.Read(p.Manifest.Name)
-	require.NoError(t, err, "could not fetch claim")
-	assert.Equal(t, "zombies", claim.Result.Action, "the custom action wasn't recorded in the installation")
+	i, err := p.Claims.ReadInstallationStatus(p.Manifest.Name)
+	require.NoError(t, err, "could not fetch installation")
+	c, err := i.GetLastClaim()
+	require.NoError(t, err, "GetLastClaim failed")
+	assert.Equal(t, "zombies", c.Action, "the custom action wasn't recorded in the installation")
 }

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInstall_relativePathPorterHome(t *testing.T) {
@@ -65,7 +65,7 @@ func TestInstall_fileParam(t *testing.T) {
 	// output := p.TestConfig.TestContext.GetOutput()
 	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	claim, err := p.Claims.Read(p.Manifest.Name)
-	require.NoError(t, err, "could not fetch claim")
-	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output to match the decoded file contents")
+	fileOutput, err := p.Claims.ReadLastOutput(p.Manifest.Name, "myfile")
+	require.NoError(t, err, "ReadLastOutput failed")
+	assert.Equal(t, "Hello World!", string(fileOutput.Value), "expected output to match the decoded file contents")
 }

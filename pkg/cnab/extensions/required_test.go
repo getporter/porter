@@ -16,7 +16,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		bun, err := bundle.Unmarshal(data)
 		require.NoError(t, err, "could not unmarshal the bundle")
 
-		exts, err := ProcessRequiredExtensions(bun)
+		exts, err := ProcessRequiredExtensions(*bun)
 		require.NoError(t, err, "could not process required extensions")
 
 		expected := ProcessedExtensions{
@@ -45,7 +45,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		bun, err := bundle.Unmarshal(data)
 		require.NoError(t, err, "could not unmarshal the bundle")
 
-		_, err = ProcessRequiredExtensions(bun)
+		_, err = ProcessRequiredExtensions(*bun)
 		require.EqualError(t, err, "unable to process extension: io.cnab.docker: no custom extension configuration found")
 	})
 
@@ -56,7 +56,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		bun, err := bundle.Unmarshal(data)
 		require.NoError(t, err, "could not unmarshal the bundle")
 
-		_, err = ProcessRequiredExtensions(bun)
+		_, err = ProcessRequiredExtensions(*bun)
 		require.EqualError(t, err, "unsupported required extension: donuts")
 	})
 }

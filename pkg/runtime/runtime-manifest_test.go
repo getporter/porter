@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -436,78 +435,6 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	assert.Equal(t, []string{"dep_output_value"}, rm.GetSensitiveValues())
 }
 
-func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Outputs = map[string]interface{}{
-		"output": "output_value",
-	}
-
-	bytes, err := yaml.Marshal(claim)
-	require.NoError(t, err)
-	cxt.FileSystem.WriteFile("/cnab/claim.json", bytes, 0644)
-
-	m := &manifest.Manifest{
-		Outputs: []manifest.OutputDefinition{
-			{
-				Name:      "output",
-				Sensitive: true,
-			},
-		},
-		Dependencies: map[string]manifest.Dependency{
-			"dep": {
-				Tag: "getporter/porter-hello",
-			},
-		},
-	}
-
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
-	rm.bundles = map[string]bundle.Bundle{
-		"dep": {
-			Outputs: map[string]bundle.Output{
-				"dep_output": {
-					Definition: "dep_output",
-				},
-			},
-			Definitions: map[string]*definition.Schema{
-				"dep_output": {WriteOnly: makeBoolPtr(true)},
-			},
-		},
-	}
-	rm.outputs = map[string]string{
-		"output": "output_value",
-	}
-
-	cxt.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte("dep_output_value"), 0644)
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.outputs.output }}",
-				"{{ bundle.dependencies.dep.outputs.dep_output }}",
-			},
-		},
-	}
-
-	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, rm.GetSensitiveValues(), []string{})
-
-	err = rm.ResolveStep(s)
-	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, 2, len(args))
-	assert.Equal(t, "output_value", args[0].(string))
-	assert.Equal(t, "dep_output_value", args[1].(string))
-
-	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"output_value", "dep_output_value"}, rm.GetSensitiveValues())
-}
-
 func TestResolveInMainDict(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
@@ -559,58 +486,6 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	assert.Len(t, flags, 1)
 	assert.Equal(t, "echo hello world", flags["c"].(string))
 	assert.NotNil(t, flags)
-}
-
-func TestResolveMultipleStepOutputsFromPreexistingClaim(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	databaseURL := "localhost"
-	databasePort := "3303"
-
-	// Create a claim to hold the output value for 'output', from the previous action
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Outputs = map[string]interface{}{
-		"database_url":  databaseURL,
-		"database_port": databasePort,
-	}
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"helm": map[interface{}]interface{}{
-				"description": "install wordpress",
-				"Arguments": []string{
-					"jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}",
-				},
-			},
-		},
-	}
-
-	m := &manifest.Manifest{
-		Outputs: []manifest.OutputDefinition{
-			{
-				Name: "database_url",
-			},
-			{
-				Name: "database_port",
-			},
-		},
-		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
-		Install: manifest.Steps{
-			s,
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
-	rm.claim = claim
-
-	err = rm.ResolveStep(s)
-	require.NoError(t, err)
-	helm, ok := s.Data["helm"].(map[interface{}]interface{})
-	assert.True(t, ok)
-	args, ok := helm["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, fmt.Sprintf("jdbc://%s:%s", databaseURL, databasePort), args[0].(string))
 }
 
 func TestResolveMissingStepOutputs(t *testing.T) {
@@ -1163,39 +1038,4 @@ func TestResolveStepEncoding(t *testing.T) {
 	require.NoError(t, err)
 	flags := s.Data["Flags"].(map[interface{}]interface{})
 	assert.Equal(t, flags["c"], wantValue)
-}
-
-func TestLoadClaim(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"helm": map[interface{}]interface{}{
-				"description": "install wordpress",
-			},
-		},
-	}
-	m := &manifest.Manifest{
-		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
-		Install: manifest.Steps{
-			s,
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
-
-	// Create a claim and store it in the expected location of the execution environment
-	// It holds the output value for 'output', from the previous action
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	// loadClaim should not error out if the claim does not exist
-	err = rm.loadClaim()
-	require.NoError(t, err)
-
-	bytes, err := yaml.Marshal(claim)
-	require.NoError(t, err)
-	cxt.FileSystem.WriteFile("/cnab/claim.json", bytes, 0644)
-
-	err = rm.loadClaim()
-	require.NoError(t, err)
 }

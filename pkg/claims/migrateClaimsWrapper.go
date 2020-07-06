@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/context"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/pkg/errors"
 )
@@ -45,6 +46,11 @@ func (w *migrateClaimsWrapper) Migrate(itemType string, name string) ([]byte, er
 		return nil, err
 	}
 
+	//  We only migrate claim data, ignore the rest
+	if itemType != claim.ItemTypeClaims {
+		return data, nil
+	}
+
 	// If we can't migrate the data at any point, print an error message and
 	// return the original claim so that the entire operation isn't halted for
 	// remaining claims
@@ -67,7 +73,11 @@ func (w *migrateClaimsWrapper) Migrate(itemType string, name string) ([]byte, er
 		if w.Debug {
 			fmt.Fprintf(w.Err, "Migrating installation %s (Name -> Installation) to match the CNAB Claim spec https://cnab.io/schema/cnab-claim-1.0.0-DRAFT+d7ffba8/claim.schema.json. The Name field will be preserved for compatibility with previous versions of the spec.\n", name)
 		}
-		rawData["installation"] = legacyName
+		installation, ok := legacyName.(string)
+		if !ok {
+			return nil, fmt.Errorf("error parsing name %v, should be type string, but was %T", legacyName, legacyName)
+		}
+		rawData["installation"] = installation
 
 		migratedData, err := json.MarshalIndent(rawData, "", "  ")
 		if err != nil {
@@ -77,7 +87,7 @@ func (w *migrateClaimsWrapper) Migrate(itemType string, name string) ([]byte, er
 			return data, nil
 		}
 
-		err = w.Store().Save(itemType, name, migratedData)
+		err = w.Store().Save(itemType, installation, name, migratedData)
 		if err != nil {
 			// Migration failed, return original claim
 			err = errors.Wrapf(err, "error persisting migrated claim %s", name)

@@ -61,6 +61,7 @@ func (s *Store) Connect() error {
 	}
 
 	s.BackingStore = crud.NewBackingStore(store)
+	s.BackingStore.AutoClose = false
 
 	return nil
 }

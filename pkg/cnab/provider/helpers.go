@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 const debugDriver = "debug"
@@ -26,14 +27,10 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	claimStorage := claims.NewTestClaimProvider()
 	credentialStorage := credentials.NewTestCredentialProvider(t, tc)
 	parameterStorage := parameters.NewTestParameterProvider(t, tc)
-	return NewTestRuntimeWithConfig(tc, claimStorage, credentialStorage, parameterStorage)
+	return NewTestRuntimeWithConfig(tc, &claimStorage, credentialStorage, parameterStorage)
 }
 
-func NewTestRuntimeWithConfig(
-	tc *config.TestConfig,
-	testClaims claims.ClaimProvider,
-	testCredentials credentials.TestCredentialProvider,
-	testParameters parameters.TestParameterProvider) *TestRuntime {
+func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims claim.Provider, testCredentials credentials.TestCredentialProvider, testParameters parameters.TestParameterProvider) *TestRuntime {
 	return &TestRuntime{
 		TestConfig:      tc,
 		TestCredentials: testCredentials,
@@ -42,7 +39,7 @@ func NewTestRuntimeWithConfig(
 	}
 }
 
-func (t *TestRuntime) LoadBundle(bundleFile string) (*bundle.Bundle, error) {
+func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 	return t.Runtime.LoadBundle(bundleFile)
 }
 

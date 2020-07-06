@@ -2,10 +2,10 @@ package porter
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/claims"
+	"github.com/cnabio/cnab-go/claim"
+
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
@@ -20,7 +20,7 @@ type dependencyExecutioner struct {
 	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
-	Claims   claims.ClaimProvider
+	Claims   claim.Provider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
@@ -49,7 +49,7 @@ type queuedDependency struct {
 	CNABFile   string
 	Parameters map[string]string
 
-	outputs map[string]interface{}
+	outputs claim.Outputs
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
@@ -105,17 +105,22 @@ func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.Actio
 		target := runtime.GetDependencyDefinitionPath(dep.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
 
-		// Copy the dependency output files defined from the bundle.json (loaded in prepareDependency)
-		for output, value := range dep.outputs {
-			target := filepath.Join(runtime.GetDependencyOutputsDir(dep.Alias), filepath.Base(output))
-			args.Files[target] = fmt.Sprintf("%v", value)
-		}
+		// TODO: (carolynvs) dependency outputs now need to happen differently through parameter sources
+		// outputs aren't loaded as files anymore
+		/*
+			// Copy the dependency output files defined from the bundle.json (loaded in executeDependency)
+			for i := 0; i < dep.outputs.Len(); i++ {
+				output, _ := dep.outputs.GetByIndex(i)
+				target := filepath.Join(runtime.GetDependencyOutputsDir(dep.Alias), output.Name)
+				args.Files[target] = string(output.Data)
+			}
+		*/
 	}
 }
 
 func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
-	var bun *bundle.Bundle
+	var bun bundle.Bundle
 	if e.parentOpts.CNABFile != "" {
 		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
 		if err != nil {
@@ -128,9 +133,9 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
-		bun = &cachedBundle.Bundle
+		bun = cachedBundle.Bundle
 	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.Read(e.parentOpts.Name)
+		c, err := e.Claims.ReadLastClaim(e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -237,7 +242,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
 	depArgs := cnabprovider.ActionArguments{
 		BundlePath:        dep.CNABFile,
-		Installation:             fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
+		Installation:      fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
 		Driver:            parentArgs.Driver,
 		Params:            dep.Parameters,
 		RelocationMapping: dep.RelocationMapping,
@@ -254,12 +259,12 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	// If action is uninstall, no claim will exist
 	if action != manifest.ActionUninstall {
 		// Collect expected outputs via claim
-		c, err := e.Claims.Read(depArgs.Installation)
+		outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
 		if err != nil {
 			return err
 		}
 
-		dep.outputs = c.Outputs
+		dep.outputs = outputs
 	}
 
 	return nil
