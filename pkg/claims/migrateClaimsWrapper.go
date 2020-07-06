@@ -96,6 +96,7 @@ func (w *migrateClaimsWrapper) MigrateAll() error {
 	}
 
 	w.schema.Claims = schema.Version(claim.CNABSpecVersion)
+	w.schema.Credentials = schema.Version("cnab-credentials-1.0.0-DRAFT-b6c701f")
 	schemaB, err := json.Marshal(w.schema)
 	if err != nil {
 		return errors.Wrap(err, "!!! Migration failed, unable to marshal storage schema file")
@@ -236,7 +237,7 @@ func (w *migrateClaimsWrapper) MigrateUnversionedClaim(name string, data []byte)
 	// already been migrated
 	if hasLegacyName && !hasInstallationName {
 		fmt.Fprintf(w.Err, " - Migrating claim %s from claim.Name to claim.Installation\n", name)
-			fmt.Fprintf(w.Err, "Migrating installation %s (Name -> Installation) to match the CNAB Claim spec https://cnab.io/schema/cnab-claim-1.0.0-DRAFT+d7ffba8/claim.schema.json. The Name field will be preserved for compatibility with previous versions of the spec.\n", name)
+		fmt.Fprintf(w.Err, "Migrating installation %s (Name -> Installation) to match the CNAB Claim spec https://cnab.io/schema/cnab-claim-1.0.0-DRAFT+d7ffba8/claim.schema.json. The Name field will be preserved for compatibility with previous versions of the spec.\n", name)
 		rawData["installation"] = legacyName
 		delete(rawData, "name")
 
