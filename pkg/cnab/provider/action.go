@@ -26,10 +26,6 @@ type ActionArguments struct {
 	// Params is the set of user-specified parameter values to pass to the bundle.
 	Params map[string]string
 
-	// ParameterSets is a list of strings representing either a filepath to a
-	// parameter set file or the name of a set of a parameters.
-	ParameterSets []string
-
 	// Either a filepath to a credential file or the name of a set of a credentials.
 	CredentialIdentifiers []string
 

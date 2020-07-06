@@ -33,7 +33,7 @@ func (d *Runtime) Uninstall(args ActionArguments) error {
 	}
 	d.Extensions = exts
 
-	c.Parameters, err = d.loadParameters(&c, args.Params, args.ParameterSets, string(manifest.ActionUninstall))
+	c.Parameters, err = d.loadParameters(&c, args.Params, string(manifest.ActionUninstall))
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}

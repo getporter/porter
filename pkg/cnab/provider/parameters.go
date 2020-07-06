@@ -2,35 +2,20 @@ package cnabprovider
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
 )
 
-// loadParameters accepts a set of parameter overrides as well as parameter set
-// files and combines both with the default parameters to create a full set
-// of parameters.
-func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, parameterSets []string, action string) (map[string]interface{}, error) {
+// loadParameters accepts a set of parameter overrides and combines them
+// with the default parameters to create a full set of parameters.
+func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
 	overrides := make(map[string]interface{}, len(rawOverrides))
 	bun := claim.Bundle
 
-	// Loop through each parameter set file and load the parameter values
-	loaded, err := d.loadParameterSets(bun, parameterSets)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to process provided parameter sets: %v", parameterSets)
-	}
-
-	for key, val := range loaded {
-		overrides[key] = val
-	}
-
-	// Now give precedence to the raw overrides that came via the CLI
 	for key, rawValue := range rawOverrides {
 		param, ok := bun.Parameters[key]
 		if !ok {
@@ -56,45 +41,6 @@ func (d *Runtime) loadParameters(claim *claim.Claim, rawOverrides map[string]str
 	}
 
 	return bundle.ValuesOrDefaults(overrides, bun, action)
-}
-
-// loadParameterSets loads parameter values per their parameter set strategies
-func (d *Runtime) loadParameterSets(b *bundle.Bundle, params []string) (valuesource.Set, error) {
-	resolvedParameters := valuesource.Set{}
-	for _, name := range params {
-		var pset parameters.ParameterSet
-		var err error
-		if d.isPathy(name) {
-			pset, err = d.loadParameterFromFile(name)
-		} else {
-			pset, err = d.parameters.Read(name)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		rc, err := d.parameters.ResolveAll(pset)
-		if err != nil {
-			return nil, err
-		}
-
-		for k, v := range rc {
-			resolvedParameters[k] = v
-		}
-	}
-
-	return resolvedParameters, nil
-}
-
-func (d *Runtime) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
-	data, err := d.FileSystem.ReadFile(path)
-	if err != nil {
-		return parameters.ParameterSet{}, errors.Wrapf(err, "could not read file %s", path)
-	}
-
-	var cs parameters.ParameterSet
-	err = json.Unmarshal(data, &cs)
-	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
 
 func (d *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {

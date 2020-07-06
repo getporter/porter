@@ -70,7 +70,7 @@ func (d *Runtime) Invoke(action string, args ActionArguments) error {
 	}
 	d.Extensions = exts
 
-	c.Parameters, err = d.loadParameters(c, args.Params, args.ParameterSets, action)
+	c.Parameters, err = d.loadParameters(c, args.Params, action)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}

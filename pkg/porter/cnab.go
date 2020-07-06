@@ -71,23 +71,29 @@ type sharedOptions struct {
 
 	// parsedParams is the parsed set of parameters from Params.
 	parsedParams map[string]string
+
+	// parsedParamSets is the parsed set of parameter from ParameterSets
+	parsedParamSets map[string]string
+
+	// combinedParameters is parsedParams merged on top of parsedParamSets.
+	combinedParameters map[string]string
 }
 
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *sharedOptions) Validate(args []string, cxt *context.Context) error {
+func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	err := o.validateInstanceName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(cxt)
+	err = o.bundleFileOptions.Validate(p.Context)
 	if err != nil {
 		return err
 	}
 
-	err = o.validateParams(cxt)
+	err = o.validateParams(p)
 	if err != nil {
 		return err
 	}
@@ -200,11 +206,18 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	return nil
 }
 
-func (o *sharedOptions) validateParams(cxt *context.Context) error {
+func (o *sharedOptions) validateParams(p *Porter) error {
 	err := o.parseParams()
 	if err != nil {
 		return err
 	}
+
+	err = o.parseParamSets(p)
+	if err != nil {
+		return err
+	}
+
+	o.combinedParameters = o.combineParameters()
 
 	return nil
 }
@@ -217,6 +230,34 @@ func (o *sharedOptions) parseParams() error {
 	}
 	o.parsedParams = p
 	return nil
+}
+
+// parseParamSets parses the variable assignments in ParameterSets.
+func (o *sharedOptions) parseParamSets(p *Porter) error {
+	parsed, err := p.loadParameterSets(o.ParameterSets)
+	if err != nil {
+		return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
+	}
+	o.parsedParamSets = parsed
+	return nil
+}
+
+// Combine the parameters into a single map
+// The params set on the command line take precedence over the params set in
+// parameter set files
+// Anything set multiple times, is decided by "last one set wins"
+func (o *sharedOptions) combineParameters() map[string]string {
+	final := make(map[string]string)
+
+	for k, v := range o.parsedParamSets {
+		final[k] = v
+	}
+
+	for k, v := range o.parsedParams {
+		final[k] = v
+	}
+
+	return final
 }
 
 // defaultDriver supplies the default driver if none is specified

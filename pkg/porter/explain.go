@@ -118,10 +118,16 @@ func (s SortPrintableAction) Swap(i, j int) {
 var porterInternalParams = map[string]struct{}{"porter-debug": {}}
 
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
-	err := o.sharedOptions.Validate(args, cxt)
+	err := o.validateInstanceName(args)
 	if err != nil {
 		return err
 	}
+
+	err = o.bundleFileOptions.Validate(cxt)
+	if err != nil {
+		return err
+	}
+
 	err = o.ParseFormat()
 	if err != nil {
 		return err
