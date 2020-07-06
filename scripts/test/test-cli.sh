@@ -9,4 +9,3 @@ ${PORTER_HOME}/porter help
 ${PORTER_HOME}/porter version
 
 ${DIR}/test-hello.sh
-${DIR}/test-terraform.sh
