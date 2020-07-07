@@ -29,7 +29,7 @@ func TestVersion(t *testing.T) {
 		assert.Contains(t, out.String(), "porter v1.0.0 (abc123)")
 	})
 
-	t.Run("command", func(t *testing.T) {
+	t.Run("flag", func(t *testing.T) {
 		p := buildRootCommand()
 
 		// Capture output
