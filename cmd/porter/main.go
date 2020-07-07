@@ -22,6 +22,7 @@ func main() {
 
 func buildRootCommand() *cobra.Command {
 	p := porter.New()
+	var printVersion bool
 
 	cmd := &cobra.Command{
 		Use:   "porter",
@@ -43,10 +44,22 @@ func buildRootCommand() *cobra.Command {
 
 			return nil
 		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if printVersion {
+				versionCmd := buildVersionCommand(p)
+				err := versionCmd.PreRunE(cmd, args)
+				if err != nil {
+					return err
+				}
+				return versionCmd.RunE(cmd, args)
+			}
+			return nil
+		},
 		SilenceUsage: true,
 	}
 
 	cmd.PersistentFlags().BoolVar(&p.Debug, "debug", false, "Enable debug logging")
+	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")
 
 	cmd.AddCommand(buildVersionCommand(p))
 	cmd.AddCommand(buildSchemaCommand(p))
