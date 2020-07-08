@@ -145,6 +145,11 @@ func (c *TestContext) GetError() string {
 	return string(c.capturedErr.Bytes())
 }
 
+func (c *TestContext) ClearOutputs() {
+	c.capturedOut.Truncate(0)
+	c.capturedErr.Truncate(0)
+}
+
 func (c *TestContext) FindBinDir() string {
 	var binDir string
 	d, err := os.Getwd()
