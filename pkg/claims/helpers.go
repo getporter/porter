@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ claim.Provider = &TestClaimProvider{}
+var _ claim.Provider = TestClaimProvider{}
 
 type TestClaimProvider struct {
 	claim.Store

@@ -43,13 +43,8 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 		},
 	}
 
-	eClaim, err := claim.New("exists", claim.ActionInstall, bun, nil)
-	require.NoError(t, err)
-
 	d := NewTestRuntime(t)
-
-	err = d.claims.SaveClaim(eClaim)
-	require.NoError(t, err)
+	eClaim := d.TestClaims.CreateClaim("exists", claim.ActionInstall, bun, nil)
 
 	tests := []test{
 		{

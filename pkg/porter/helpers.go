@@ -28,6 +28,7 @@ import (
 type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
+	TestClaims      claims.TestClaimProvider
 	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
@@ -53,14 +54,15 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
 	p.Builder = NewTestBuildProvider()
-	p.Claims = &testClaims
+	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
-	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, &testClaims, testCredentials, testParameters)
+	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
 
 	return &TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
+		TestClaims:      testClaims,
 		TestCredentials: &testCredentials,
 		TestParameters:  &testParameters,
 		TestCache:       testCache,

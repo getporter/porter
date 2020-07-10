@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"get.porter.sh/porter/pkg/claims"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -239,10 +238,9 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("only parameter source present", func(t *testing.T) {
-		tc := r.claims.(*claims.TestClaimProvider)
-		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := tc.CreateResult(c, claim.StatusSucceeded)
-		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
 
 		args := ActionArguments{
 			Installation: "mybun",
@@ -255,10 +253,9 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("override > parameter source", func(t *testing.T) {
-		tc := r.claims.(*claims.TestClaimProvider)
-		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := tc.CreateResult(c, claim.StatusSucceeded)
-		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
 
 		args := ActionArguments{
 			Installation: "mybun",
@@ -275,12 +272,11 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		// foo is set by a the user
 		// baz is set by a parameter source
 		// bar is set by the bundle default
-		tc := r.claims.(*claims.TestClaimProvider)
-		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := tc.CreateResult(c, claim.StatusSucceeded)
-		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
-		tc.CreateOutput(c, cr, "bar", []byte("bar_source"))
-		tc.CreateOutput(c, cr, "baz", []byte("baz_source"))
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		r.TestClaims.CreateOutput(c, cr, "bar", []byte("bar_source"))
+		r.TestClaims.CreateOutput(c, cr, "baz", []byte("baz_source"))
 
 		args := ActionArguments{
 			Installation: "mybun",
@@ -472,10 +468,9 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	bun, err := r.ProcessBundle("bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
-	tc := r.claims.(*claims.TestClaimProvider)
-	c := tc.CreateClaim("mybun", claim.ActionInstall, bun, nil)
-	cr := tc.CreateResult(c, claim.StatusSucceeded)
-	tc.CreateOutput(c, cr, "foo", []byte("abc123"))
+	c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, bun, nil)
+	cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	r.TestClaims.CreateOutput(c, cr, "foo", []byte("abc123"))
 
 	args := ActionArguments{
 		Installation: "mybun",
