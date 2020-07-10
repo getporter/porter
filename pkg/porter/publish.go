@@ -276,40 +276,26 @@ func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, 
 // getNewImageNameFromBundleTag derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to glean registry/org/etc.
 func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error) {
-	origImgName, err := image.NewName(origImg)
+	origName, err := image.NewName(origImg)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
 	}
 
-	bundleTagName, err := image.NewName(bundleTag)
+	bundleName, err := image.NewName(bundleTag)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
 	}
+	bundleHost := bundleName.Host() // e.g. docker.io
 
-	// Swap out Host
-	origHost := origImgName.Host()
-	newHost := bundleTagName.Host()
-	newImg := strings.Replace(origImgName.String(), origHost, newHost, -1)
+	// Split up the Path portion of each to derive original image name
+	// and the bundle org/subdir values
+	origPathParts := strings.Split(origName.Path(), "/")                     // e.g. [origOrg, orgSubdir, orgImgName]
+	origImgName := strings.Join(origPathParts[len(origPathParts)-1:], "/")   // e.g. [origImgName]
+	bundlePathParts := strings.Split(bundleName.Path(), "/")                 // e.g. [bundleOrg, bundleSubdir, bundleImgname]
+	bundleOrg := strings.Join(bundlePathParts[:len(bundlePathParts)-1], "/") // e.g. [bundleOrg, bundleSubdir]
 
-	// Swap out org (via Path)
-	origPathParts := strings.Split(origImgName.Path(), "/")
-	tagPathParts := strings.Split(bundleTagName.Path(), "/")
-	var newOrg string
-	if len(tagPathParts) > 1 {
-		newOrg = tagPathParts[0]
-	}
-	if len(origPathParts) == 1 {
-		// original image has no org, e.g. a library image
-		// so just prepend new org
-		newImg = path.Join(newOrg, newImg)
-	} else {
-		newImgName, err := image.NewName(newImg)
-		if err != nil {
-			return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
-		}
-
-		newImg = path.Join(newImgName.Host(), strings.Replace(newImgName.Path(), origPathParts[0], newOrg, 1))
-	}
+	// Join for bundleHost/bundleOrg/bundleSubdir/origImgName
+	newImg := path.Join(bundleHost, bundleOrg, origImgName)
 
 	newImgName, err := image.NewName(newImg)
 	if err != nil {
