@@ -18,6 +18,7 @@ type RequiredExtension struct {
 var SupportedExtensions = []RequiredExtension{
 	DependenciesExtension,
 	DockerExtension,
+	ParameterSourcesExtension,
 }
 
 // ProcessedExtensions represents a map of the extension name to the

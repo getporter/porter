@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
 	testParameters := parameters.NewTestParameterProvider(t, tc)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
-	testClaims := claims.NewTestClaimProvider()
+	testClaims := claims.NewTestClaimProvider(t)
 
 	p := New()
 	p.Config = tc.Config
@@ -122,11 +123,22 @@ func (p *TestPorter) CleanupIntegrationTest() {
 	os.Chdir(p.TestDir)
 }
 
+func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
+	bunD, err := ioutil.ReadFile(path)
+	require.NoError(p.T(), err, "ReadFile failed for %s", path)
+
+	bun, err := bundle.Unmarshal(bunD)
+	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
+
+	return *bun
+}
+
 type TestBuildProvider struct{}
 
 func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
+
 func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }

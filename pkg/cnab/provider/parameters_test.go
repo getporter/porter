@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -199,6 +202,102 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
 }
 
+func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
+	r := NewTestRuntime(t)
+	r.TestParameters.AddTestParameters("testdata/paramset.json")
+	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+	b, err := r.ProcessBundle("bundle.json")
+	require.NoError(t, err, "ProcessBundle failed")
+
+	overrides := map[string]string{
+		"foo": "foo_override",
+	}
+
+	t.Run("nothing present, use default", func(t *testing.T) {
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_default", params["foo"],
+			"expected param 'foo' to have default value")
+	})
+
+	t.Run("only override present", func(t *testing.T) {
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       overrides,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have override value")
+	})
+
+	t.Run("only parameter source present", func(t *testing.T) {
+		tc := r.claims.(*claims.TestClaimProvider)
+		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := tc.CreateResult(c, claim.StatusSucceeded)
+		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_source", params["foo"],
+			"expected param 'foo' to have parameter source value")
+	})
+
+	t.Run("override > parameter source", func(t *testing.T) {
+		tc := r.claims.(*claims.TestClaimProvider)
+		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := tc.CreateResult(c, claim.StatusSucceeded)
+		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       overrides,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have parameter override value")
+	})
+
+	t.Run("merge parameter values", func(t *testing.T) {
+		// foo is set by a the user
+		// baz is set by a parameter source
+		// bar is set by the bundle default
+		tc := r.claims.(*claims.TestClaimProvider)
+		c := tc.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := tc.CreateResult(c, claim.StatusSucceeded)
+		tc.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		tc.CreateOutput(c, cr, "bar", []byte("bar_source"))
+		tc.CreateOutput(c, cr, "baz", []byte("baz_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       map[string]string{"foo": "foo_override"},
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have parameter override value")
+		assert.Equal(t, "bar_source", params["bar"],
+			"expected param 'bar' to have parameter source value")
+		assert.Equal(t, "baz_default", params["baz"],
+			"expected param 'baz' to have bundle default value")
+	})
+}
+
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {
@@ -364,4 +463,26 @@ func Test_Paramapalooza(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRuntime_ResolveParameterSources(t *testing.T) {
+	r := NewTestRuntime(t)
+
+	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+	bun, err := r.ProcessBundle("bundle.json")
+	require.NoError(t, err, "ProcessBundle failed")
+
+	tc := r.claims.(*claims.TestClaimProvider)
+	c := tc.CreateClaim("mybun", claim.ActionInstall, bun, nil)
+	cr := tc.CreateResult(c, claim.StatusSucceeded)
+	tc.CreateOutput(c, cr, "foo", []byte("abc123"))
+
+	args := ActionArguments{
+		Installation: "mybun",
+	}
+	got, err := r.resolveParameterSources(args)
+	require.NoError(t, err, "resolveParameterSources failed")
+
+	want := valuesource.Set{"foo": "abc123"}
+	assert.Equal(t, want, got, "resolved incorrect parameter values")
 }

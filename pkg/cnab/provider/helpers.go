@@ -24,7 +24,7 @@ type TestRuntime struct {
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
-	claimStorage := claims.NewTestClaimProvider()
+	claimStorage := claims.NewTestClaimProvider(t)
 	credentialStorage := credentials.NewTestCredentialProvider(t, tc)
 	parameterStorage := parameters.NewTestParameterProvider(t, tc)
 	return NewTestRuntimeWithConfig(tc, &claimStorage, credentialStorage, parameterStorage)

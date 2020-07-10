@@ -3,9 +3,12 @@ package cnabprovider
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/valuesource"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
@@ -16,6 +19,14 @@ import (
 // of parameters.
 func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
 	mergedParams := make(valuesource.Set, len(args.Params))
+	paramSources, err := r.resolveParameterSources(args)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, val := range paramSources {
+		mergedParams[key] = val
+	}
 
 	// Apply user supplied parameter overrides last
 	for key, rawValue := range args.Params {
@@ -75,4 +86,37 @@ func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 		}
 	}
 	return rawValue, nil
+}
+
+func (r *Runtime) resolveParameterSources(args ActionArguments) (valuesource.Set, error) {
+	parameterSources, required, err := r.Extensions.GetParameterSourcesExtension()
+	if err != nil {
+		return nil, err
+	}
+
+	if !required {
+		return nil, nil
+	}
+
+	values := valuesource.Set{}
+	for parameterName, parameterSource := range parameterSources {
+		for _, rawSource := range parameterSource.ListSourcesByPriority() {
+			switch source := rawSource.(type) {
+			case extensions.OutputParameterSource:
+				output, err := r.claims.ReadLastOutput(args.Installation, source.OutputName)
+				if err != nil {
+					// When we can't find the output, skip it and let the parameter be set another way
+					if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) ||
+						strings.Contains(err.Error(), claim.ErrOutputNotFound.Error()) {
+						continue
+					}
+					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
+					return nil, errors.Wrapf(err, "could not set parameter %s from its parameter source, output %s", parameterName, source.OutputName)
+				}
+				values[parameterName] = string(output.Value)
+			}
+		}
+	}
+
+	return values, nil
 }
