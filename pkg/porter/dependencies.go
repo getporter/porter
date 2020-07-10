@@ -17,6 +17,7 @@ import (
 
 type dependencyExecutioner struct {
 	*context.Context
+	Action   string
 	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
@@ -24,16 +25,16 @@ type dependencyExecutioner struct {
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentOpts BundleLifecycleOpts
-	action     cnabAction
 	deps       []*queuedDependency
 }
 
-func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
+func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
+		Action:   action,
 		Context:  p.Context,
 		Manifest: p.Manifest,
 		Resolver: resolver,
@@ -41,8 +42,6 @@ func newDependencyExecutioner(p *Porter) *dependencyExecutioner {
 		Claims:   p.Claims,
 	}
 }
-
-type cnabAction func(cnabprovider.ActionArguments) error
 
 type queuedDependency struct {
 	extensions.DependencyLock
@@ -57,9 +56,8 @@ type queuedDependency struct {
 	RelocationMapping string
 }
 
-func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action cnabAction) error {
+func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts) error {
 	e.parentOpts = parentOpts
-	e.action = action
 
 	err := e.identifyDependencies()
 	if err != nil {
@@ -76,15 +74,15 @@ func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts, action c
 	return nil
 }
 
-func (e *dependencyExecutioner) Execute(action manifest.Action) error {
-	if e.action == nil {
+func (e *dependencyExecutioner) Execute() error {
+	if e.deps == nil {
 		return errors.New("Prepare must be called before Execute")
 	}
 
 	// executeDependency the requested action against all of the dependencies
 	parentArgs := e.parentOpts.ToActionArgs(e)
 	for _, dep := range e.deps {
-		err := e.executeDependency(dep, parentArgs, action)
+		err := e.executeDependency(dep, parentArgs)
 		if err != nil {
 			return err
 		}
@@ -239,7 +237,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments, action manifest.Action) error {
+func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments) error {
 	depArgs := cnabprovider.ActionArguments{
 		BundlePath:        dep.CNABFile,
 		Installation:      fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
@@ -251,13 +249,13 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		CredentialIdentifiers: parentArgs.CredentialIdentifiers,
 	}
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
-	err := e.action(depArgs)
+	err := e.CNAB.Execute(depArgs)
 	if err != nil {
 		return errors.Wrapf(err, "error executing dependency %s", dep.Alias)
 	}
 
 	// If action is uninstall, no claim will exist
-	if action != manifest.ActionUninstall {
+	if parentArgs.Action != claim.ActionUninstall {
 		// Collect expected outputs via claim
 		outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
 		if err != nil {

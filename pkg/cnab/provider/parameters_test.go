@@ -20,7 +20,11 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	_, err := r.loadParameters(b, args)
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -39,7 +43,11 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	_, err := r.loadParameters(b, args)
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -88,7 +96,11 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -116,9 +128,8 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 		},
 	}
 
-	overrides := map[string]string{}
-
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{Action: "action"}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -144,9 +155,8 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 		},
 	}
 
-	overrides := map[string]string{}
-
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{Action: "action"}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -179,7 +189,11 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
@@ -188,7 +202,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {
-	actions := []string{"install", "upgrade", "uninstall", "invoke"}
+	actions := []string{"install", "upgrade", "uninstall", "zombies"}
 	for _, action := range actions {
 		t.Run(action, func(t *testing.T) {
 			testcases := []struct {
@@ -302,6 +316,7 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
+						Action:       action,
 						Installation: "test",
 					}
 					// If param is provided (via --param/--param-file)
@@ -332,18 +347,7 @@ func Test_Paramapalooza(t *testing.T) {
 						require.NoError(t, err)
 					}
 
-					var err error
-					switch action {
-					case "install":
-						err = d.Install(args)
-					case "upgrade":
-						err = d.Upgrade(args)
-					case "invoke":
-						err = d.Invoke("zombies", args)
-					case "uninstall":
-						err = d.Uninstall(args)
-					}
-
+					err := d.Execute(args)
 					if tc.expectedErr != "" {
 						require.EqualError(t, err, tc.expectedErr)
 					} else {

@@ -4,17 +4,21 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/cnabio/cnab-go/valuesource"
+
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
 )
 
-// loadParameters accepts a set of parameter overrides and combines them
-// with the default parameters to create a full set of parameters.
-func (r *Runtime) loadParameters(bun bundle.Bundle, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
-	overrides := make(map[string]interface{}, len(rawOverrides))
+// loadParameters accepts a set of parameter overrides as well as parameter set
+// files and combines both with the default parameters to create a full set
+// of parameters.
+func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
+	mergedParams := make(valuesource.Set, len(args.Params))
 
-	for key, rawValue := range rawOverrides {
+	// Apply user supplied parameter overrides last
+	for key, rawValue := range args.Params {
 		param, ok := bun.Parameters[key]
 		if !ok {
 			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
@@ -25,20 +29,38 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, rawOverrides map[string]stri
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		unconverted, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
+		// Apply porter specific conversions, like retrieving file contents
+		value, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
 		if err != nil {
 			return nil, err
 		}
 
-		value, err := def.ConvertValue(unconverted)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, def.Type)
-		}
-
-		overrides[key] = value
+		mergedParams[key] = value
 	}
 
-	return bundle.ValuesOrDefaults(overrides, &bun, action)
+	// Now convert all parameters which are currently strings into the
+	// proper type for the parameter, e.g. "false" -> false
+	typedParams := make(map[string]interface{}, len(mergedParams))
+	for key, unconverted := range mergedParams {
+		param, ok := bun.Parameters[key]
+		if !ok {
+			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
+		}
+
+		def, ok := bun.Definitions[param.Definition]
+		if !ok {
+			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+		}
+
+		value, err := def.ConvertValue(unconverted)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+		}
+
+		typedParams[key] = value
+	}
+
+	return bundle.ValuesOrDefaults(typedParams, &bun, args.Action)
 }
 
 func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {

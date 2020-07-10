@@ -43,22 +43,7 @@ func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 	return t.Runtime.LoadBundle(bundleFile)
 }
 
-func (t *TestRuntime) Install(args ActionArguments) error {
+func (t *TestRuntime) Execute(args ActionArguments) error {
 	args.Driver = debugDriver
-	return t.Runtime.Install(args)
-}
-
-func (t *TestRuntime) Upgrade(args ActionArguments) error {
-	args.Driver = debugDriver
-	return t.Runtime.Upgrade(args)
-}
-
-func (t *TestRuntime) Invoke(action string, args ActionArguments) error {
-	args.Driver = debugDriver
-	return t.Runtime.Invoke(action, args)
-}
-
-func (t *TestRuntime) Uninstall(args ActionArguments) error {
-	args.Driver = debugDriver
-	return t.Runtime.Uninstall(args)
+	return t.Runtime.Execute(args)
 }

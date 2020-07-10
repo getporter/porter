@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"github.com/pkg/errors"
 )
@@ -14,9 +13,8 @@ import (
 type RunOptions struct {
 	config *config.Config
 
-	File         string
-	Action       string
-	parsedAction manifest.Action
+	File   string
+	Action string
 }
 
 func NewRunOptions(c *config.Config) RunOptions {
@@ -47,7 +45,6 @@ func (o *RunOptions) validateAction() error {
 		}
 	}
 
-	o.parsedAction = manifest.Action(o.Action)
 	return nil
 }
 
@@ -81,7 +78,7 @@ func (p *Porter) Run(opts RunOptions) error {
 		return err
 	}
 
-	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.parsedAction, p.Manifest)
+	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.Action, p.Manifest)
 	r := runtime.NewPorterRuntime(p.Context, p.Mixins)
 	return r.Execute(runtimeManifest)
 }

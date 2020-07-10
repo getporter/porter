@@ -4,12 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"get.porter.sh/porter/pkg/mixin"
-
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +29,7 @@ func TestPorter_Run(t *testing.T) {
 	p.FileSystem.Create("/root/.kube/config")
 
 	opts := NewRunOptions(p.Config)
-	opts.Action = string(manifest.ActionInstall)
+	opts.Action = claim.ActionInstall
 	opts.File = "porter.yaml"
 
 	err := opts.Validate()
