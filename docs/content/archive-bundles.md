@@ -92,7 +92,6 @@ database_name   Name of database to create                                      
 helm_release    Helm release name                                               string    spring-music-helm   false      All Actions
 namespace       Namespace to install Spring Music app                           string    default             false      All Actions
 node_count      Number of database nodes                                        integer   1                   false      All Actions
-porter-debug    Print debug information from Porter when executing the bundle   boolean   false               false      All Actions
 region          Region to create Database and DO Space                          string    nyc3                false      All Actions
 space_name      Name for DO Space                                               string    jrrportertest       false      All Actions
 

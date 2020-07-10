@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/imagestore"
 	"github.com/cnabio/cnab-go/imagestore/construction"
@@ -22,12 +21,12 @@ type ArchiveOptions struct {
 }
 
 // Validate performs validation on the publish options
-func (o *ArchiveOptions) Validate(args []string, ctx *context.Context) error {
+func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	if len(args) < 1 || args[0] == "" {
 		return errors.New("Destination File is required")
 	}
 	o.ArchiveFile = args[0]
-	return o.BundleLifecycleOpts.Validate(args, ctx)
+	return o.BundleLifecycleOpts.Validate(args, p)
 }
 
 // Archive is a composite function that generates a CNAB thick bundle. It will pull the invocation image, and

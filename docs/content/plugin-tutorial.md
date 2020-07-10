@@ -229,9 +229,7 @@ Credentials:
 Name       Description                                                                         Required
 password   Password for installing the world. We recommend getting this from a secret store.   true
 
-Parameters:
-Name           Description                                                     Type      Default   Required   Applies To
-porter-debug   Print debug information from Porter when executing the bundle   boolean   false     false      All Actions
+No parameters defined
 
 No outputs defined
 

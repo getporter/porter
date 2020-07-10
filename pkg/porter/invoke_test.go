@@ -11,7 +11,7 @@ func TestInvokeOptions_Validate_ActionRequired(t *testing.T) {
 	p := NewTestPorter(t)
 	opts := InvokeOptions{}
 
-	err := opts.Validate(nil, p.Context)
+	err := opts.Validate(nil, p.Porter)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "--action is required")

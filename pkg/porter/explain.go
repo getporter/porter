@@ -114,11 +114,20 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
+// Using empty structs instead of booleans cuz empty structs occupy zero memory
+var porterInternalParams = map[string]struct{}{"porter-debug": {}}
+
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
-	err := o.sharedOptions.Validate(args, cxt)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
+
+	err = o.bundleFileOptions.Validate(cxt)
+	if err != nil {
+		return err
+	}
+
 	err = o.ParseFormat()
 	if err != nil {
 		return err
@@ -169,6 +178,11 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
+func isInternalParam(inputParam string) bool {
+	_, ok := porterInternalParams[inputParam]
+	return ok
+}
+
 func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	pb := PrintableBundle{
 		Name:        bun.Name,
@@ -200,6 +214,9 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 
 	params := []PrintableParameter{}
 	for p, v := range bun.Parameters {
+		if isInternalParam(p) {
+			continue
+		}
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
 			return nil, fmt.Errorf("unable to find definition %s", v.Definition)

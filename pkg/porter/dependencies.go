@@ -218,7 +218,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentOpts.parsedParams {
+	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -232,7 +232,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
-			delete(e.parentOpts.parsedParams, key)
+			delete(e.parentOpts.combinedParameters, key)
 		}
 	}
 

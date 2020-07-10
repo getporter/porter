@@ -11,6 +11,10 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 
 I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 
+```
+porter [flags]
+```
+
 ### Examples
 
 ```
@@ -23,8 +27,9 @@ I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 ### Options
 
 ```
-      --debug   Enable debug logging
-  -h, --help    help for porter
+      --debug     Enable debug logging
+  -h, --help      help for porter
+  -v, --version   Print the application version
 ```
 
 ### SEE ALSO

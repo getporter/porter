@@ -2,7 +2,6 @@ package porter
 
 import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
 	"github.com/pkg/errors"
 )
 
@@ -12,11 +11,12 @@ type BundleLifecycleOpts struct {
 	AllowAccessToDockerHost bool
 }
 
-func (o *BundleLifecycleOpts) Validate(args []string, cxt *context.Context) error {
-	err := o.sharedOptions.Validate(args, cxt)
+func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
+	err := o.sharedOptions.Validate(args, porter)
 	if err != nil {
 		return err
 	}
+
 	if o.Tag != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
 		o.File = ""
@@ -32,8 +32,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 	args := cnabprovider.ActionArguments{
 		Installation:                 o.Name,
 		BundlePath:            o.CNABFile,
-		Params:                make(map[string]string, len(o.parsedParams)),
-		ParameterSets:         o.ParameterSets,
+		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
 		Driver:                o.Driver,
 		RelocationMapping:     o.RelocationMapping,
@@ -42,7 +41,7 @@ func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cna
 
 	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
-	for k, v := range o.parsedParams {
+	for k, v := range o.combinedParameters {
 		args.Params[k] = v
 	}
 	copy(args.CredentialIdentifiers, o.CredentialIdentifiers)

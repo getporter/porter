@@ -3,15 +3,10 @@ package cnabprovider
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
-	"get.porter.sh/porter/pkg/parameters"
-	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +20,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, nil, "action")
+	_, err := r.loadParameters(b, overrides, "action")
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -44,7 +39,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, nil, "action")
+	_, err := r.loadParameters(b, overrides, "action")
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -93,7 +88,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	params, err := r.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -123,7 +118,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := r.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -151,7 +146,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 
 	overrides := map[string]string{}
 
-	params, err := r.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -184,124 +179,10 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := r.loadParameters(b, overrides, nil, "action")
+	params, err := r.loadParameters(b, overrides, "action")
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
-}
-
-func Test_loadParameters_viaPathOrName(t *testing.T) {
-	r := NewTestRuntime(t)
-
-	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
-	r.TestParameters.TestSecrets.AddSecret("bar_secret", "bar_value")
-	r.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
-
-	ps1 := parameters.ParameterSet{
-		Name:     "mypset",
-		Created:  time.Now(),
-		Modified: time.Now(),
-		Parameters: []valuesource.Strategy{
-			{
-				Name: "bar",
-				Source: valuesource.Source{
-					Key:   secrets.SourceSecret,
-					Value: "bar_secret",
-				},
-			},
-		},
-	}
-	err := r.parameters.Save(ps1)
-	require.NoError(t, err, "Save parameter set failed")
-
-	b := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type: "string",
-			},
-			"bar": &definition.Schema{
-				Type: "string",
-			},
-		},
-		Parameters: map[string]bundle.Parameter{
-			"foo": {
-				Definition: "foo",
-				Destination: &bundle.Location{
-					EnvironmentVariable: "FOO",
-				},
-			},
-			"bar": {
-				Definition: "bar",
-				Destination: &bundle.Location{
-					EnvironmentVariable: "BAR",
-				},
-			},
-		},
-	}
-
-	gotParams, err := r.loadParameters(b, nil, []string{"mypset", "/paramset.json"}, "install")
-	require.NoError(t, err, "loadParameters failed")
-
-	wantParams := map[string]interface{}{
-		"foo": "foo_value",
-		"bar": "bar_value",
-	}
-	assert.Equal(t, wantParams, gotParams, "resolved unexpected parameter values")
-}
-
-func Test_loadParameters_ParameterSetPrecedence(t *testing.T) {
-	d := NewTestRuntime(t)
-	d.TestParameters.AddTestParameters("testdata/paramset.json")
-	d.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
-
-	b := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type:    "string",
-				Default: "foo_default",
-			},
-		},
-		Parameters: map[string]bundle.Parameter{
-			"foo": {
-				Definition: "foo",
-				Destination: &bundle.Location{
-					Path: "/tmp/foo",
-				},
-			},
-		},
-	}
-
-	overrides := map[string]string{
-		"foo": "foo_override",
-	}
-
-	t.Run("no override present, no parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(b, nil, nil, "action")
-		require.NoError(t, err)
-		require.Equal(t, "foo_default", params["foo"],
-			"expected param 'foo' to have default value")
-	})
-
-	t.Run("override present, no parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(b, overrides, nil, "action")
-		require.NoError(t, err)
-		require.Equal(t, "foo_override", params["foo"],
-			"expected param 'foo' to have override value")
-	})
-
-	t.Run("no override present, parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(b, nil, []string{"myparameterset"}, "action")
-		require.NoError(t, err)
-		require.Equal(t, "foo_value", params["foo"],
-			"expected param 'foo' to have parameter set value")
-	})
-
-	t.Run("override present, parameter set present", func(t *testing.T) {
-		params, err := d.loadParameters(b, overrides, []string{"myparameterset"}, "action")
-		require.NoError(t, err)
-		require.Equal(t, "foo_override", params["foo"],
-			"expected param 'foo' to have override value, which has precedence over the parameter set value")
-	})
 }
 
 // This is intended to cover the matrix of cases around parameter value resolution.
