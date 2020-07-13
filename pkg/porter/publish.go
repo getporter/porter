@@ -285,17 +285,9 @@ func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
 	}
-	bundleHost := bundleName.Host() // e.g. docker.io
 
-	// Split up the Path portion of each to derive original image name
-	// and the bundle org/subdir values
-	origPathParts := strings.Split(origName.Path(), "/")                     // e.g. [origOrg, orgSubdir, orgImgName]
-	origImgName := strings.Join(origPathParts[len(origPathParts)-1:], "/")   // e.g. [origImgName]
-	bundlePathParts := strings.Split(bundleName.Path(), "/")                 // e.g. [bundleOrg, bundleSubdir, bundleImgname]
-	bundleOrg := strings.Join(bundlePathParts[:len(bundlePathParts)-1], "/") // e.g. [bundleOrg, bundleSubdir]
-
-	// Join for bundleHost/bundleOrg/bundleSubdir/origImgName
-	newImg := path.Join(bundleHost, bundleOrg, origImgName)
+	// Use the image name with the bundle location
+	newImg := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
 
 	newImgName, err := image.NewName(newImg)
 	if err != nil {
