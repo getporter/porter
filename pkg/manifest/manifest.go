@@ -536,35 +536,38 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 	return manifest, nil
 }
 
+// SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	bundleRef, err := reference.ParseNormalizedNamed(m.BundleTag)
+	return m.SetInvocationImageFromBundleTag(m.BundleTag, false)
+}
+
+// SetInvocationImageFromBundleTag sets the invocation image name on the manifest
+// per the provided bundle tag, setting/overriding the original image name if
+// empty or if overrideImage is true and updating the manifest BundleTag value
+// if it initially lacks a Docker tag
+func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideImage bool) error {
+	bundleRef, err := reference.ParseNormalizedNamed(bundleTag)
 	if err != nil {
-		return errors.Wrapf(err, "invalid tag %s", m.BundleTag)
+		return errors.Wrapf(err, "invalid tag %s", bundleTag)
 	}
 
-	var dockerTag string
-	switch v := bundleRef.(type) {
-	case reference.Tagged:
-		dockerTag = v.Tag()
-	case reference.Named:
-		ver, err := semver.NewVersion(m.Version)
-		if err != nil {
-			return errors.Wrapf(err, "could not parse %q as a semantic version", m.Version)
-		}
+	dockerTag, err := m.getDockerTagFromBundleRef(bundleRef)
+	if err != nil {
+		return errors.Wrapf(err, "unable to derive docker tag from bundle tag %q", bundleTag)
+	}
 
-		// Tag is missing from the bundle, default it to use the version prefixed with v
-		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
-		dockerTag = fmt.Sprintf("v%s", ver.String())
+	// If the docker tag is initially missing from bundleTag, update with
+	// returned dockerTag
+	switch v := bundleRef.(type) {
+	case reference.Named:
 		bundleRef, err = reference.WithTag(v, dockerTag)
 		if err != nil {
 			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
 		}
 		m.BundleTag = reference.FamiliarString(bundleRef)
-	case reference.Digested:
-		return errors.New("invalid bundle tag format %q, must be an OCI image tag")
 	}
 
-	if m.Image == "" {
+	if m.Image == "" || overrideImage {
 		imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
 		if err != err {
 			return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
@@ -590,10 +593,34 @@ func (m *Manifest) SetDefaults() error {
 			}
 			m.Image = reference.FamiliarString(imageRef)
 		case reference.Digested:
-			return errors.New("invalid bundle tag format %q, must be an OCI image tag")
+			return errors.New("invalid bundle tag format, must be an OCI image tag")
 		}
 	}
+
 	return nil
+}
+
+// getDockerTagFromBundleRef returns the Docker tag portion of the bundle tag,
+// using the bundle version as a fallback
+func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string, error) {
+	var dockerTag string
+	switch v := bundleRef.(type) {
+	case reference.Tagged:
+		dockerTag = v.Tag()
+	case reference.Named:
+		ver, err := semver.NewVersion(m.Version)
+		if err != nil {
+			return "", errors.Wrapf(err, "could not parse the bundle version %q as a semantic version", m.Version)
+		}
+		// Docker tag is missing from the provided bundle tag, so default it
+		// to use the manifest version prefixed with v
+		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
+		dockerTag = fmt.Sprintf("v%s", ver.String())
+	case reference.Digested:
+		return "", errors.New("invalid bundle tag format, must be an OCI image tag")
+	}
+
+	return dockerTag, nil
 }
 
 func readFromFile(cxt *context.Context, path string) ([]byte, error) {

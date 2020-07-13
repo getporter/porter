@@ -82,7 +82,13 @@ func (p *Porter) Publish(opts PublishOptions) error {
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
 	tag := opts.Tag
-	if tag == "" {
+	if tag != "" {
+		// If tag was supplied, update the invocation image name on the manifest
+		// per the registry, org and docker tag from the value provided
+		if err := p.Manifest.SetInvocationImageFromBundleTag(tag, true); err != nil {
+			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
+		}
+	} else {
 		tag = p.Manifest.BundleTag
 	}
 	if p.Manifest.BundleTag == "" {
@@ -96,7 +102,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 
 	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)
 	if err != nil {
-		return errors.Wrap(err, "unable to push CNAB invocation image")
+		return errors.Wrapf(err, "unable to push CNAB invocation image %q", p.Manifest.Image)
 	}
 
 	bun, err := p.rewriteBundleWithInvocationImageDigest(digest)
