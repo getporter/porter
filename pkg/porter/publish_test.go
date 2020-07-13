@@ -70,6 +70,24 @@ func TestPublish_getNewImageNameFromBundleTag(t *testing.T) {
 		assert.Equal(t, "example.com/neworg/apache-installer", newInvImgName.String())
 	})
 
+	t.Run("has registry and org, bundle tag has subdomain", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("localhost:5000/myorg/apache-installer", "example.com/neworg/bundles/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/neworg/bundles/apache-installer", newInvImgName.String())
+	})
+
+	t.Run("has registry, org and subdomain, bundle tag has subdomain", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("localhost:5000/myorg/myimgs/apache-installer", "example.com/neworg/bundles/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/neworg/bundles/apache-installer", newInvImgName.String())
+	})
+
+	t.Run("has registry, no org", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("localhost:5000/apache-installer", "example.com/neworg/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "example.com/neworg/apache-installer", newInvImgName.String())
+	})
+
 	t.Run("no registry, has org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleTag("myorg/apache-installer", "example.com/anotherorg/apache:v0.1.0")
 		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
@@ -98,6 +116,12 @@ func TestPublish_getNewImageNameFromBundleTag(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleTag("apache", "example.com/neworg/apache:v0.1.0")
 		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
 		assert.Equal(t, "example.com/neworg/apache", newInvImgName.String())
+	})
+
+	t.Run("src has registry, dst has no registry (implicit docker.io)", func(t *testing.T) {
+		newInvImgName, err := getNewImageNameFromBundleTag("oldregistry.com/apache", "neworg/apache:v0.1.0")
+		require.NoError(t, err, "getNewImageNameFromBundleTag failed")
+		assert.Equal(t, "docker.io/neworg/apache", newInvImgName.String())
 	})
 }
 
