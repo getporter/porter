@@ -543,7 +543,8 @@ func (m *Manifest) SetDefaults() error {
 
 // SetInvocationImageFromBundleTag sets the invocation image name on the manifest
 // per the provided bundle tag, setting/overriding the original image name if
-// empty or if overrideImage is true
+// empty or if overrideImage is true and updating the manifest BundleTag value
+// if it initially lacks a Docker tag
 func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideImage bool) error {
 	bundleRef, err := reference.ParseNormalizedNamed(bundleTag)
 	if err != nil {
@@ -553,6 +554,17 @@ func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideIma
 	dockerTag, err := m.getDockerTagFromBundleRef(bundleRef)
 	if err != nil {
 		return errors.Wrapf(err, "unable to derive docker tag from bundle tag %q", bundleTag)
+	}
+
+	// If the docker tag is initially missing from bundleTag, update with
+	// returned dockerTag
+	switch v := bundleRef.(type) {
+	case reference.Named:
+		bundleRef, err = reference.WithTag(v, dockerTag)
+		if err != nil {
+			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
+		}
+		m.BundleTag = reference.FamiliarString(bundleRef)
 	}
 
 	if m.Image == "" || overrideImage {
@@ -589,7 +601,7 @@ func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideIma
 }
 
 // getDockerTagFromBundleRef returns the Docker tag portion of the bundle tag,
-// updating the manifest BundleTag value if it initially lacks a Docker tag
+// using the bundle version as a fallback
 func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string, error) {
 	var dockerTag string
 	switch v := bundleRef.(type) {
@@ -604,11 +616,6 @@ func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string,
 		// to use the manifest version prefixed with v
 		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
 		dockerTag = fmt.Sprintf("v%s", ver.String())
-		bundleRef, err = reference.WithTag(v, dockerTag)
-		if err != nil {
-			return "", errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
-		}
-		m.BundleTag = reference.FamiliarString(bundleRef)
 	case reference.Digested:
 		return "", errors.New("invalid bundle tag format, must be an OCI image tag")
 	}
