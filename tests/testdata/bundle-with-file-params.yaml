@@ -10,6 +10,9 @@ parameters:
   - name: myfile
     type: file
     path: /root/myfile
+  - name: myotherfile
+    type: file
+    path: /root/myotherfile
   # This is added to cover bug fix for https://github.com/deislabs/porter/issues/835
   # It will be inherently exercised in install_test.go via a default bundle installation
   - name: onlyUpgrade
@@ -20,6 +23,11 @@ parameters:
 outputs:
   - name: myfile
     type: string
+    applyTo:
+      - install
+  - name: myotherfile
+    type: file
+    path: /root/myotherfile
     applyTo:
       - install
 

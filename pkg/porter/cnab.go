@@ -234,11 +234,20 @@ func (o *sharedOptions) parseParams() error {
 
 // parseParamSets parses the variable assignments in ParameterSets.
 func (o *sharedOptions) parseParamSets(p *Porter) error {
-	parsed, err := p.loadParameterSets(o.ParameterSets)
-	if err != nil {
-		return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
+	if len(o.ParameterSets) > 0 {
+		// Load the manifest as it may be needed to determine if any
+		// parameters are of the Porter-exclusive type of 'file'
+		err := p.LoadManifestFrom(o.File)
+		if err != nil {
+			return err
+		}
+
+		parsed, err := p.loadParameterSets(o.ParameterSets)
+		if err != nil {
+			return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
+		}
+		o.parsedParamSets = parsed
 	}
-	o.parsedParamSets = parsed
 	return nil
 }
 

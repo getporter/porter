@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,6 +92,10 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 
 func TestParseParamSets_viaPathOrName(t *testing.T) {
 	p := NewTestPorter(t)
+	cxt := p.TestConfig.TestContext
+
+	// Add manifest used to parse parameter sets
+	cxt.AddTestFile("testdata/porter.yaml", config.Name)
 
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
@@ -102,6 +107,9 @@ func TestParseParamSets_viaPathOrName(t *testing.T) {
 			"HELLO_CUSTOM",
 			"/paramset.json",
 		},
+		bundleFileOptions: bundleFileOptions{
+			File: config.Name,
+		},
 	}
 
 	err := opts.parseParamSets(p.Porter)
@@ -110,6 +118,33 @@ func TestParseParamSets_viaPathOrName(t *testing.T) {
 	wantParams := map[string]string{
 		"PARAM2": "VALUE2",
 		"foo":    "foo_value",
+	}
+	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
+}
+
+func TestParseParamSets_FileType(t *testing.T) {
+	p := NewTestPorter(t)
+	cxt := p.TestConfig.TestContext
+
+	// Add manifest used to parse parameter sets
+	cxt.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
+
+	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
+
+	opts := sharedOptions{
+		ParameterSets: []string{
+			"/paramset.json",
+		},
+		bundleFileOptions: bundleFileOptions{
+			File: config.Name,
+		},
+	}
+
+	err := opts.parseParamSets(p.Porter)
+	assert.NoError(t, err)
+
+	wantParams := map[string]string{
+		"my-file-param": "/local/path/to/my-file-param",
 	}
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }

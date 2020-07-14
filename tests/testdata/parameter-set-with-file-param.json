@@ -1,0 +1,13 @@
+{
+  "name": "mybun",
+  "created": "2020-06-23T13:31:06.22727-06:00",
+  "modified": "2020-06-23T13:31:44.692834-06:00",
+  "parameters": [
+    {
+      "name": "myotherfile",
+      "source": {
+        "path": "./myotherfile"
+      }
+    }
+  ]
+}

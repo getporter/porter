@@ -51,9 +51,11 @@ func TestInstall_fileParam(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
 
 	installOpts := porter.InstallOptions{}
 	installOpts.Params = []string{"myfile=./myfile"}
+	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
 
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
@@ -67,5 +69,6 @@ func TestInstall_fileParam(t *testing.T) {
 
 	claim, err := p.Claims.Read(p.Manifest.Name)
 	require.NoError(t, err, "could not fetch claim")
-	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output to match the decoded file contents")
+	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output 'myfile' to match the decoded file contents")
+	require.Equal(t, "Hello Other World!", claim.Outputs["myotherfile"], "expected output 'myotherfile' to match the decoded file contents")
 }
