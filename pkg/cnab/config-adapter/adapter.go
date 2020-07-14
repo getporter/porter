@@ -33,13 +33,13 @@ func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, ima
 	}
 }
 
-func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
+func (c *ManifestConverter) ToBundle() (bundle.Bundle, error) {
 	stamp, err := c.GenerateStamp()
 	if err != nil {
-		return nil, err
+		return bundle.Bundle{}, err
 	}
 
-	b := &bundle.Bundle{
+	b := bundle.Bundle{
 		SchemaVersion: SchemaVersion,
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,
@@ -61,8 +61,8 @@ func (c *ManifestConverter) ToBundle() (*bundle.Bundle, error) {
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-	b.RequiredExtensions = c.generateRequiredExtensions()
 	b.Custom = c.generateCustomExtensions()
+	b.RequiredExtensions = c.generateRequiredExtensions(b)
 
 	b.Custom[config.CustomPorterKey] = stamp
 
@@ -337,12 +337,16 @@ func (c *ManifestConverter) generateCustomExtensions() map[string]interface{} {
 	return customExtensions
 }
 
-func (c *ManifestConverter) generateRequiredExtensions() []string {
-	requiredExtensions := []string{}
+func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string {
+	var requiredExtensions []string
 
 	// Add the appropriate dependencies key if applicable
-	if len(c.Manifest.Dependencies) > 0 {
+	if extensions.HasDependencies(b) {
 		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
+	}
+
+	if extensions.HasParameterSources(b) {
+		requiredExtensions = append(requiredExtensions, extensions.ParameterSourcesKey)
 	}
 
 	// Add all under required section of manifest

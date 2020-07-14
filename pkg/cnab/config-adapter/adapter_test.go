@@ -30,7 +30,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Equal(t, "0.1.0", bun.Version)
 	assert.Equal(t, "An example Porter configuration", bun.Description)
 
-	stamp, err := LoadStamp(*bun)
+	stamp, err := LoadStamp(bun)
 	require.NoError(t, err, "could not load porter's stamp")
 	assert.NotNil(t, stamp)
 
@@ -38,7 +38,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
-	assert.Contains(t, bun.Custom, extensions.DependenciesKey, "Dependencies was not populated")
+	assert.True(t, extensions.HasDependencies(bun), "Dependencies was not populated")
 
 	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
 }

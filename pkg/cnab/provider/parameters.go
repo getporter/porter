@@ -89,7 +89,7 @@ func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 }
 
 func (r *Runtime) resolveParameterSources(args ActionArguments) (valuesource.Set, error) {
-	parameterSources, required, err := r.Extensions.GetParameterSourcesExtension()
+	parameterSources, required, err := r.Extensions.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}

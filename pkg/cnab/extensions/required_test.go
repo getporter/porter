@@ -15,7 +15,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		require.NoError(t, err, "could not process required extensions")
 
 		expected := ProcessedExtensions{
-			"io.cnab.dependencies": &Dependencies{
+			"io.cnab.dependencies": Dependencies{
 				Requires: map[string]Dependency{
 					"storage": Dependency{
 						Bundle: "somecloud/blob-storage",

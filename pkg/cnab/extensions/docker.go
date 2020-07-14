@@ -53,9 +53,9 @@ func DockerExtensionReader(bun bundle.Bundle) (interface{}, error) {
 	return dha, nil
 }
 
-// GetDockerExtension checks if the docker extension is present and returns its
+// GetDocker checks if the docker extension is present and returns its
 // extension configuration.
-func (e ProcessedExtensions) GetDockerExtension() (dockerExt Docker, dockerRequired bool, err error) {
+func (e ProcessedExtensions) GetDocker() (dockerExt Docker, dockerRequired bool, err error) {
 	ext, extensionRequired := e[DockerExtensionKey]
 
 	dockerExt, ok := ext.(Docker)

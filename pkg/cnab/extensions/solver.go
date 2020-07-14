@@ -19,10 +19,11 @@ type DependencySolver struct {
 }
 
 func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyLock, error) {
-	deps, err := ReadDependencies(bun)
-	if deps == nil {
+	if !HasDependencies(bun) {
 		return nil, nil
 	}
+
+	deps, err := ReadDependencies(bun)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
 	}
