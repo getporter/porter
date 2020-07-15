@@ -27,11 +27,12 @@ type Manifest struct {
 	Description string `yaml:"description,omitempty"`
 	Version     string `yaml:"version,omitempty"`
 
-	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
-	Image string `yaml:"invocationImage,omitempty"`
-
 	// BundleTag is the name of the bundle in the format REGISTRY/NAME:TAG
 	BundleTag string `yaml:"tag"`
+
+	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
+	// It doesn't map to any field in the manifest as it isn't meant to be user-specified
+	Image string `yaml:"-"`
 
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
 	Dockerfile string `yaml:"dockerfile,omitempty"`
@@ -514,6 +515,10 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 		if _, found := knownFields[key]; found {
 			delete(unmappedData, key)
 		}
+		// Explicitly error out if deprecated invocationImage is supplied
+		if key == "invocationImage" {
+			return nil, errors.New("the invocationImage field has been deprecated and can no longer be user-specified")
+		}
 	}
 
 	// Marshal the remaining keys in the unmappedData as custom actions and append them to the typed manifest
@@ -538,14 +543,13 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 
 // SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	return m.SetInvocationImageFromBundleTag(m.BundleTag, false)
+	return m.SetInvocationImageFromBundleTag(m.BundleTag)
 }
 
 // SetInvocationImageFromBundleTag sets the invocation image name on the manifest
-// per the provided bundle tag, setting/overriding the original image name if
-// empty or if overrideImage is true and updating the manifest BundleTag value
+// per the provided bundle tag, also updating the manifest BundleTag value
 // if it initially lacks a Docker tag
-func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideImage bool) error {
+func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string) error {
 	bundleRef, err := reference.ParseNormalizedNamed(bundleTag)
 	if err != nil {
 		return errors.Wrapf(err, "invalid tag %s", bundleTag)
@@ -567,35 +571,15 @@ func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string, overrideIma
 		m.BundleTag = reference.FamiliarString(bundleRef)
 	}
 
-	if m.Image == "" || overrideImage {
-		imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
-		if err != err {
-			return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
-		}
-		imageRef, err := reference.WithTag(imageName, dockerTag)
-		if err != nil {
-			return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
-		}
-		m.Image = reference.FamiliarString(imageRef)
-	} else {
-		imageRef, err := reference.ParseNormalizedNamed(m.Image)
-		if err != nil {
-			return errors.Wrapf(err, "could not parse invocationImage %q", m.Image)
-		}
-
-		switch v := imageRef.(type) {
-		case reference.Tagged:
-			// Nothing to default, leave this case in, it prevents Named from being triggered
-		case reference.Named:
-			imageRef, err = reference.WithTag(v, dockerTag)
-			if err != nil {
-				return errors.Wrapf(err, "could not set invocationImage tag to %q", dockerTag)
-			}
-			m.Image = reference.FamiliarString(imageRef)
-		case reference.Digested:
-			return errors.New("invalid bundle tag format, must be an OCI image tag")
-		}
+	imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
+	if err != err {
+		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
 	}
+	imageRef, err := reference.WithTag(imageName, dockerTag)
+	if err != nil {
+		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
+	}
+	m.Image = reference.FamiliarString(imageRef)
 
 	return nil
 }
