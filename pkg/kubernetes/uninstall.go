@@ -27,6 +27,7 @@ type UninstallArguments struct {
 	Force       *bool  `yaml:force,omitempty"`
 	GracePeriod *int   `yaml:"gracePeriod,omitempty"`
 	Selector    string `yaml:"selector,omitempty"`
+	Context  string    `yaml:"context,omitempty"`
 	Timeout     *int   `yaml:"timeout,omitempty"`
 	Wait        *bool  `yaml:"wait,omitempty"`
 }
@@ -109,6 +110,10 @@ func (m *Mixin) buildUninstallCommand(args UninstallArguments, manifestPath stri
 
 	if args.Selector != "" {
 		command = append(command, fmt.Sprintf("--selector=%s", args.Selector))
+	}
+
+	if args.Context != "" {
+		command = append(command, fmt.Sprintf("--context=%s", args.Context))
 	}
 
 	if args.Timeout != nil {

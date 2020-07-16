@@ -27,6 +27,9 @@
             "selector": {
               "type": "string"
             },
+            "context": {
+              "type": "string"
+            },
             "validate": {
               "type": "boolean",
               "default":"true"
@@ -88,6 +91,9 @@
               "type": ["boolean","null"]
             },
             "selector": {
+              "type": "string"
+            },
+            "context": {
               "type": "string"
             },
             "timeout" : {
@@ -156,6 +162,9 @@
             "selector": {
               "type": "string"
             },
+            "context": {
+              "type": "string"
+            },
             "timeout" : {
               "type": "integer"
             },
@@ -209,6 +218,9 @@
               "type": "integer"
             },
             "selector": {
+              "type": "string"
+            },
+            "context": {
               "type": "string"
             },
             "timeout" : {
