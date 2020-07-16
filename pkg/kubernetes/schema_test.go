@@ -22,7 +22,7 @@ func TestMixin_PrintSchema(t *testing.T) {
 
 	gotSchema := m.TestContext.GetOutput()
 
-	wantSchema, err := ioutil.ReadFile("schema/kubernetes.json")
+	wantSchema, err := ioutil.ReadFile("./schema/kubernetes.json")
 	require.NoError(t, err)
 
 	assert.Equal(t, string(wantSchema), gotSchema)
