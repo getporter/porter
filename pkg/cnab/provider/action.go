@@ -20,6 +20,9 @@ import (
 
 // Shared arguments for all CNAB actions
 type ActionArguments struct {
+	// Action to execute, e.g. install, upgrade.
+	Action string
+
 	// Name of the installation.
 	Installation string
 
@@ -105,7 +108,11 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 	}
 }
 
-func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
+func (r *Runtime) Execute(args ActionArguments) error {
+	if args.Action == "" {
+		return errors.New("action is required")
+	}
+
 	var b bundle.Bundle
 	var err error
 
@@ -119,7 +126,7 @@ func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
 	existingClaim, err := r.claims.ReadLastClaim(args.Installation)
 	if err != nil {
 		// Only install and stateless actions can execute without an initial installation
-		if !(action == claim.ActionInstall || b.Actions[action].Stateless) {
+		if !(args.Action == claim.ActionInstall || b.Actions[args.Action].Stateless) {
 			return errors.Wrapf(err, "could not load installation %s", args.Installation)
 		}
 	}
@@ -130,16 +137,16 @@ func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
 		b = existingClaim.Bundle
 	}
 
-	params, err := r.loadParameters(b, args.Params, action)
+	params, err := r.loadParameters(b, args)
 	if err != nil {
 		return errors.Wrap(err, "invalid parameters")
 	}
 
 	var c claim.Claim
 	if existingClaim.ID == "" {
-		c, err = claim.New(args.Installation, action, b, params)
+		c, err = claim.New(args.Installation, args.Action, b, params)
 	} else {
-		c, err = existingClaim.NewClaim(action, b, params)
+		c, err = existingClaim.NewClaim(args.Action, b, params)
 	}
 	if err != nil {
 		return err
@@ -175,7 +182,7 @@ func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
 	// persist.
 	shouldPersistClaim := func() bool {
 		stateless := false
-		if customAction, ok := c.Bundle.Actions[action]; ok {
+		if customAction, ok := c.Bundle.Actions[args.Action]; ok {
 			stateless = customAction.Stateless
 		}
 		return modifies && !stateless
@@ -195,11 +202,11 @@ func (r *Runtime) ExecuteAction(action string, args ActionArguments) error {
 	if shouldPersistClaim {
 		if err != nil {
 			err = r.appendFailedResult(err, c)
-			return errors.Wrapf(err, "failed to %s the bundle", action)
+			return errors.Wrapf(err, "failed to %s the bundle", args.Action)
 		}
 		return a.SaveOperationResult(opResult, c, result)
 	} else {
-		return errors.Wrapf(err, "failed to %s the bundle", action)
+		return errors.Wrapf(err, "failed to %s the bundle", args.Action)
 	}
 }
 

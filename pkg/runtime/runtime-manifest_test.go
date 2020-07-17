@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,11 +29,11 @@ func TestResolveMapParam(t *testing.T) {
 			},
 			{
 				Name:    "place",
-				ApplyTo: []string{string(manifest.ActionInstall)},
+				ApplyTo: []string{claim.ActionInstall},
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -77,7 +78,7 @@ func TestResolvePathParam(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -111,7 +112,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 
 	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
 	m, _ := manifest.LoadManifestFrom(cxt.Context, config.Name)
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
@@ -135,7 +136,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "LoadManifestFrom failed")
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	rm.bundles = map[string]bundle.Bundle{
 		"mysql": {
 			Name:        "Azure MySQL",
@@ -165,7 +166,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 	m := &manifest.Manifest{
 		Parameters: []manifest.ParameterDefinition{},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -199,7 +200,7 @@ func TestPrepare_fileParam(t *testing.T) {
 			},
 			{
 				Name:    "upgrade-file-param",
-				ApplyTo: []string{string(manifest.ActionUpgrade)},
+				ApplyTo: []string{string(claim.ActionUpgrade)},
 				Destination: manifest.Location{
 					Path: "/cnab/app/upgrade",
 				},
@@ -209,7 +210,7 @@ func TestPrepare_fileParam(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
@@ -257,7 +258,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -285,7 +286,7 @@ func TestResolveArray(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -321,7 +322,7 @@ func TestResolveSensitiveParameter(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -361,7 +362,7 @@ func TestResolveCredential(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -396,7 +397,7 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 		},
 	}
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	rm.bundles = map[string]bundle.Bundle{
 		"dep": {
 			Outputs: map[string]bundle.Output{
@@ -443,7 +444,7 @@ func TestResolveInMainDict(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -470,7 +471,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -508,7 +509,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 			s,
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
@@ -541,7 +542,7 @@ func TestResolveDependencyParam(t *testing.T) {
 			s,
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	os.Setenv("DATABASE", "wordpress")
 	err := rm.ResolveStep(s)
@@ -579,7 +580,7 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 			s,
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	os.Setenv("DATABASE", "wordpress")
 	err := rm.ResolveStep(s)
@@ -592,7 +593,7 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 	m := &manifest.Manifest{
 		Name: "mybundle",
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
@@ -683,7 +684,7 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	depStep := rm.Install[0]
 	err = rm.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
@@ -704,7 +705,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
@@ -746,7 +747,7 @@ func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step exercising bundle image interpolation",
@@ -771,7 +772,7 @@ func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 			},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step exercising bundle image interpolation",
@@ -913,7 +914,7 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -943,7 +944,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 
 	reloMap := relocation.ImageRelocationMap{}
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.Error(t, err)
 	assert.EqualError(t, err, fmt.Sprintf("unable to find image in porter manifest: %s", "ghost"))
@@ -975,7 +976,7 @@ func TestResolveImageWithRelo(t *testing.T) {
 		"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 	}
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.NoError(t, err)
 	mi := rm.ImageMap["machine"]
@@ -1007,7 +1008,7 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 		"deislabs/nogood:latest": "cnabio/ghost:latest",
 	}
 
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	err := rm.ResolveImages(bun, reloMap)
 	assert.NoError(t, err)
 	assert.Equal(t, "deislabs/ghost", rm.ImageMap["machine"].Repository)
@@ -1024,7 +1025,7 @@ func TestResolveStepEncoding(t *testing.T) {
 			{Name: "test"},
 		},
 	}
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionInstall, m)
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step",

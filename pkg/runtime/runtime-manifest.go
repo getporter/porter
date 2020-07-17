@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -21,7 +22,7 @@ type RuntimeManifest struct {
 	*context.Context
 	*manifest.Manifest
 
-	Action manifest.Action
+	Action string
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
 	bundles map[string]bundle.Bundle
@@ -31,7 +32,7 @@ type RuntimeManifest struct {
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cxt *context.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
 		Context:  cxt,
 		Action:   action,
@@ -142,11 +143,11 @@ func (m *RuntimeManifest) GetOutputs() map[string]string {
 
 func (m *RuntimeManifest) setStepsByAction() error {
 	switch m.Action {
-	case manifest.ActionInstall:
+	case claim.ActionInstall:
 		m.steps = m.Install
-	case manifest.ActionUninstall:
+	case claim.ActionUninstall:
 		m.steps = m.Uninstall
-	case manifest.ActionUpgrade:
+	case claim.ActionUpgrade:
 		m.steps = m.Upgrade
 	default:
 		customAction, ok := m.CustomActions[string(m.Action)]
@@ -265,7 +266,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		depOutputs := make(map[string]interface{})
 		depBundle["outputs"] = depOutputs
 
-		if bun.Outputs == nil || m.Action == manifest.ActionUninstall {
+		if bun.Outputs == nil || m.Action == claim.ActionUninstall {
 			// uninstalls are done backwards, so we don't have outputs available from dependencies
 			// TODO: validate that they weren't trying to use them at build time so they don't find out at uninstall time
 			continue

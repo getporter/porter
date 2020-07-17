@@ -3,18 +3,33 @@ package cnabprovider
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 
+	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/valuesource"
+
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
 )
 
-// loadParameters accepts a set of parameter overrides and combines them
-// with the default parameters to create a full set of parameters.
-func (r *Runtime) loadParameters(bun bundle.Bundle, rawOverrides map[string]string, action string) (map[string]interface{}, error) {
-	overrides := make(map[string]interface{}, len(rawOverrides))
+// loadParameters accepts a set of parameter overrides as well as parameter set
+// files and combines both with the default parameters to create a full set
+// of parameters.
+func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
+	mergedParams := make(valuesource.Set, len(args.Params))
+	paramSources, err := r.resolveParameterSources(args)
+	if err != nil {
+		return nil, err
+	}
 
-	for key, rawValue := range rawOverrides {
+	for key, val := range paramSources {
+		mergedParams[key] = val
+	}
+
+	// Apply user supplied parameter overrides last
+	for key, rawValue := range args.Params {
 		param, ok := bun.Parameters[key]
 		if !ok {
 			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
@@ -25,20 +40,38 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, rawOverrides map[string]stri
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		unconverted, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
+		// Apply porter specific conversions, like retrieving file contents
+		value, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
 		if err != nil {
 			return nil, err
 		}
 
-		value, err := def.ConvertValue(unconverted)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, rawValue, def.Type)
-		}
-
-		overrides[key] = value
+		mergedParams[key] = value
 	}
 
-	return bundle.ValuesOrDefaults(overrides, &bun, action)
+	// Now convert all parameters which are currently strings into the
+	// proper type for the parameter, e.g. "false" -> false
+	typedParams := make(map[string]interface{}, len(mergedParams))
+	for key, unconverted := range mergedParams {
+		param, ok := bun.Parameters[key]
+		if !ok {
+			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
+		}
+
+		def, ok := bun.Definitions[param.Definition]
+		if !ok {
+			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+		}
+
+		value, err := def.ConvertValue(unconverted)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+		}
+
+		typedParams[key] = value
+	}
+
+	return bundle.ValuesOrDefaults(typedParams, &bun, args.Action)
 }
 
 func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
@@ -53,4 +86,37 @@ func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 		}
 	}
 	return rawValue, nil
+}
+
+func (r *Runtime) resolveParameterSources(args ActionArguments) (valuesource.Set, error) {
+	parameterSources, required, err := r.Extensions.GetParameterSourcesExtension()
+	if err != nil {
+		return nil, err
+	}
+
+	if !required {
+		return nil, nil
+	}
+
+	values := valuesource.Set{}
+	for parameterName, parameterSource := range parameterSources {
+		for _, rawSource := range parameterSource.ListSourcesByPriority() {
+			switch source := rawSource.(type) {
+			case extensions.OutputParameterSource:
+				output, err := r.claims.ReadLastOutput(args.Installation, source.OutputName)
+				if err != nil {
+					// When we can't find the output, skip it and let the parameter be set another way
+					if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) ||
+						strings.Contains(err.Error(), claim.ErrOutputNotFound.Error()) {
+						continue
+					}
+					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
+					return nil, errors.Wrapf(err, "could not set parameter %s from its parameter source, output %s", parameterName, source.OutputName)
+				}
+				values[parameterName] = string(output.Value)
+			}
+		}
+	}
+
+	return values, nil
 }

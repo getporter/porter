@@ -11,7 +11,7 @@ const (
 	// DependenciesKey represents the full key for the Dependencies Extension
 	DependenciesKey = "io.cnab.dependencies"
 	// DependenciesSchema represents the schema for the Dependencies Extension
-	DependenciesSchema = "https://cnab.io/specs/v1/dependencies.schema.json"
+	DependenciesSchema = "https://cnab.io/v1/dependencies.schema.json"
 )
 
 // DependenciesExtension represents the required extension to enable dependencies

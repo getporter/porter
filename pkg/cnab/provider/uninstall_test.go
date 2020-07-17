@@ -21,10 +21,11 @@ func TestRuntime_Uninstall(t *testing.T) {
 		require.NoError(t, err, "SaveClaim failed")
 
 		args := ActionArguments{
+			Action:       claim.ActionUninstall,
 			Installation: "mybuns",
 			BundlePath:   "bundle.json",
 		}
-		err = r.Uninstall(args)
+		err = r.Execute(args)
 		require.NoError(t, err, "Uninstall failed")
 
 		c, err := r.claims.ReadLastClaim(args.Installation)
@@ -39,10 +40,11 @@ func TestRuntime_Uninstall(t *testing.T) {
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
 		args := ActionArguments{
+			Action:       claim.ActionUninstall,
 			Installation: "mybuns",
 			BundlePath:   "bundle.json",
 		}
-		err := r.Uninstall(args)
+		err := r.Execute(args)
 		require.Error(t, err, "Uninstall should have failed")
 		assert.Contains(t, err.Error(), "Installation does not exist")
 	})

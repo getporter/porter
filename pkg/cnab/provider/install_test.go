@@ -13,10 +13,11 @@ func TestRuntime_Install(t *testing.T) {
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
 	args := ActionArguments{
+		Action:       claim.ActionInstall,
 		Installation: "mybuns",
 		BundlePath:   "bundle.json",
 	}
-	err := r.Install(args)
+	err := r.Execute(args)
 	require.NoError(t, err, "Install failed")
 
 	c, err := r.claims.ReadLastClaim(args.Installation)

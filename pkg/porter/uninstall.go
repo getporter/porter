@@ -3,8 +3,7 @@ package porter
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/manifest"
-
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -32,14 +31,14 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
-	deperator := newDependencyExecutioner(p)
-	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Uninstall)
+	deperator := newDependencyExecutioner(p, claim.ActionUninstall)
+	err = deperator.Prepare(opts.BundleLifecycleOpts)
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	err = p.CNAB.Uninstall(opts.ToActionArgs(deperator))
+	err = p.CNAB.Execute(opts.ToActionArgs(deperator))
 	if err != nil {
 		if len(deperator.deps) > 0 {
 			return errors.Wrapf(err, "failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name)
@@ -49,5 +48,5 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
-	return deperator.Execute(manifest.ActionUninstall)
+	return deperator.Execute()
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +22,11 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	_, err := r.loadParameters(b, args)
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -39,7 +45,11 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 		"foo": "bar",
 	}
 
-	_, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	_, err := r.loadParameters(b, args)
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -88,7 +98,11 @@ func Test_loadParameters_applyTo(t *testing.T) {
 		"true": "false",
 	}
 
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -116,9 +130,8 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 		},
 	}
 
-	overrides := map[string]string{}
-
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{Action: "action"}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -144,9 +157,8 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 		},
 	}
 
-	overrides := map[string]string{}
-
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{Action: "action"}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -179,16 +191,113 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 		"foo": "/path/to/file",
 	}
 
-	params, err := r.loadParameters(b, overrides, "action")
+	args := ActionArguments{
+		Action: "action",
+		Params: overrides,
+	}
+	params, err := r.loadParameters(b, args)
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
 }
 
+func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
+	r := NewTestRuntime(t)
+	r.TestParameters.AddTestParameters("testdata/paramset.json")
+	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+	b, err := r.ProcessBundle("bundle.json")
+	require.NoError(t, err, "ProcessBundle failed")
+
+	overrides := map[string]string{
+		"foo": "foo_override",
+	}
+
+	t.Run("nothing present, use default", func(t *testing.T) {
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_default", params["foo"],
+			"expected param 'foo' to have default value")
+	})
+
+	t.Run("only override present", func(t *testing.T) {
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       overrides,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have override value")
+	})
+
+	t.Run("only parameter source present", func(t *testing.T) {
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_source", params["foo"],
+			"expected param 'foo' to have parameter source value")
+	})
+
+	t.Run("override > parameter source", func(t *testing.T) {
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       overrides,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have parameter override value")
+	})
+
+	t.Run("merge parameter values", func(t *testing.T) {
+		// foo is set by a the user
+		// bar is set by a parameter source
+		// baz is set by the bundle default
+		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		r.TestClaims.CreateOutput(c, cr, "bar", []byte("bar_source"))
+		r.TestClaims.CreateOutput(c, cr, "baz", []byte("baz_source"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+			Params:       map[string]string{"foo": "foo_override"},
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "foo_override", params["foo"],
+			"expected param 'foo' to have parameter override value")
+		assert.Equal(t, "bar_source", params["bar"],
+			"expected param 'bar' to have parameter source value")
+		assert.Equal(t, "baz_default", params["baz"],
+			"expected param 'baz' to have bundle default value")
+	})
+}
+
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {
-	actions := []string{"install", "upgrade", "uninstall", "invoke"}
+	actions := []string{"install", "upgrade", "uninstall", "zombies"}
 	for _, action := range actions {
 		t.Run(action, func(t *testing.T) {
 			testcases := []struct {
@@ -302,6 +411,7 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
+						Action:       action,
 						Installation: "test",
 					}
 					// If param is provided (via --param/--param-file)
@@ -332,18 +442,7 @@ func Test_Paramapalooza(t *testing.T) {
 						require.NoError(t, err)
 					}
 
-					var err error
-					switch action {
-					case "install":
-						err = d.Install(args)
-					case "upgrade":
-						err = d.Upgrade(args)
-					case "invoke":
-						err = d.Invoke("zombies", args)
-					case "uninstall":
-						err = d.Uninstall(args)
-					}
-
+					err := d.Execute(args)
 					if tc.expectedErr != "" {
 						require.EqualError(t, err, tc.expectedErr)
 					} else {
@@ -360,4 +459,25 @@ func Test_Paramapalooza(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRuntime_ResolveParameterSources(t *testing.T) {
+	r := NewTestRuntime(t)
+
+	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+	bun, err := r.ProcessBundle("bundle.json")
+	require.NoError(t, err, "ProcessBundle failed")
+
+	c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, bun, nil)
+	cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	r.TestClaims.CreateOutput(c, cr, "foo", []byte("abc123"))
+
+	args := ActionArguments{
+		Installation: "mybun",
+	}
+	got, err := r.resolveParameterSources(args)
+	require.NoError(t, err, "resolveParameterSources failed")
+
+	want := valuesource.Set{"foo": "abc123"}
+	assert.Equal(t, want, got, "resolved incorrect parameter values")
 }

@@ -43,13 +43,8 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 		},
 	}
 
-	eClaim, err := claim.New("exists", claim.ActionInstall, bun, nil)
-	require.NoError(t, err)
-
 	d := NewTestRuntime(t)
-
-	err = d.claims.SaveClaim(eClaim)
-	require.NoError(t, err)
+	eClaim := d.TestClaims.CreateClaim("exists", claim.ActionInstall, bun, nil)
 
 	tests := []test{
 		{
@@ -120,10 +115,11 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 			require.NoError(t, err, "could not write to bundle.json")
 
 			args := ActionArguments{
+				Action:       in.action,
 				Installation: in.installation,
 				BundlePath:   "bundle.json",
 			}
-			runErr := d.Invoke(in.action, args)
+			runErr := d.Execute(args)
 			c, claimErr := d.claims.ReadLastClaim(in.installation)
 
 			if want.err == nil {
@@ -145,8 +141,9 @@ func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
 	r := NewTestRuntime(t)
 
 	args := ActionArguments{
+		Action:       "custom-action",
 		Installation: "mybuns",
 	}
-	err := r.Invoke("custom-action", args)
+	err := r.Execute(args)
 	require.EqualError(t, err, "could not load installation mybuns: Installation does not exist")
 }

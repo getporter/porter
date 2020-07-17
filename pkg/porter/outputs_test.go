@@ -57,24 +57,16 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 			},
 		},
 	}
-	c, err := claim.New("test", claim.ActionInstall, b, nil)
-	require.NoError(t, err, "NewClaim failed")
+
+	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
+	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
+	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
+
+	// Hard code the date so we can compare the command output easily
 	c.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
-	err = p.Claims.SaveClaim(c)
+	err := p.TestClaims.SaveClaim(c)
 	require.NoError(t, err, "could not store claim")
-
-	r, err := c.NewResult(claim.StatusSucceeded)
-	require.NoError(t, err, "NewResult failed")
-	err = p.Claims.SaveResult(r)
-	require.NoError(t, err, "SaveResult failed")
-
-	foo := claim.NewOutput(c, r, "foo", []byte("foo-output"))
-	err = p.Claims.SaveOutput(foo)
-	require.NoError(t, err, "SaveOutput failed")
-
-	bar := claim.NewOutput(c, r, "bar", []byte("bar-output"))
-	err = p.Claims.SaveOutput(bar)
-	require.NoError(t, err, "SaveOutput failed")
 
 	opts := OutputListOptions{
 		sharedOptions: sharedOptions{

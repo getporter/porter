@@ -3,8 +3,7 @@ package porter
 import (
 	"testing"
 
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/manifest"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,10 +14,10 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	err := p.LoadManifestFrom("/porter.yaml")
 	require.NoError(t, err)
 
-	e := newDependencyExecutioner(p.Porter)
+	e := newDependencyExecutioner(p.Porter, claim.ActionInstall)
 
 	// Try to call execute without prepare
-	err = e.Execute(manifest.ActionInstall)
+	err = e.Execute()
 	require.Error(t, err, "execute before prepare should return an error")
 	assert.EqualError(t, err, "Prepare must be called before Execute")
 
@@ -27,10 +26,8 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")
-	err = e.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {
-		return nil
-	})
+	err = e.Prepare(opts.BundleLifecycleOpts)
 	require.NoError(t, err, "prepare should have succeeded")
-	err = e.Execute(manifest.ActionInstall)
+	err = e.Execute()
 	require.NoError(t, err, "execute should not fail when we have called prepare")
 }

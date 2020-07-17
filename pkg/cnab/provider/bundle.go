@@ -14,8 +14,6 @@ func (r *Runtime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 		return bundle.Bundle{}, errors.Wrapf(err, "cannot read bundle at %s", bundleFile)
 	}
 
-	// Issue #439: Errors that come back from the loader can be
-	// pretty opaque.
 	bun, err := l.LoadData(bunD)
 	if err != nil {
 		return bundle.Bundle{}, errors.Wrapf(err, "cannot load bundle")
