@@ -96,8 +96,6 @@ func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 }
 
 func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
-	t.Skip("TODO: Implement parameter sources #1067")
-
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

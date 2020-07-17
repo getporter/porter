@@ -3,6 +3,7 @@ package configadapter
 import (
 	"fmt"
 	"path"
+	"regexp"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -61,7 +62,7 @@ func (c *ManifestConverter) ToBundle() (bundle.Bundle, error) {
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
 	b.Credentials = c.generateBundleCredentials()
 	b.Images = c.generateBundleImages()
-	b.Custom = c.generateCustomExtensions()
+	b.Custom = c.generateCustomExtensions(&b)
 	b.RequiredExtensions = c.generateRequiredExtensions(b)
 
 	b.Custom[config.CustomPorterKey] = stamp
@@ -163,7 +164,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			}
 		} else {
 			p.Destination = &bundle.Location{
-				EnvironmentVariable: strings.ToUpper(param.Name),
+				EnvironmentVariable: ParamToEnvVar(param.Name),
 			}
 		}
 
@@ -224,6 +225,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				EnvironmentVariable: "PORTER_DEBUG",
 			},
 			Schema: definition.Schema{
+				ID:          "https://porter.sh/schema/bundle.json#porter-debug",
 				Description: "Print debug information from Porter when executing the bundle",
 				Type:        "boolean",
 				Default:     false,
@@ -281,12 +283,8 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
-	if len(c.Manifest.Dependencies) == 0 {
-		return nil
-	}
-
-	deps := &extensions.Dependencies{
+func (c *ManifestConverter) generateDependencies() extensions.Dependencies {
+	deps := extensions.Dependencies{
 		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
 	}
 
@@ -309,6 +307,80 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	return deps
 }
 
+func (c *ManifestConverter) generateParameterSources(b *bundle.Bundle) extensions.ParameterSources {
+	ps := extensions.ParameterSources{}
+
+	for _, v := range c.Manifest.TemplateVariables {
+		outputName, ok := c.getTemplateOutputName(v)
+		if !ok {
+			continue
+		}
+
+		// Check if a bundle level output is defined, could be step level
+		if _, ok := b.Outputs[outputName]; !ok {
+			continue
+		}
+
+		wiringName, p, def := c.generateOutputWiringParameter(*b, outputName)
+		if b.Parameters == nil {
+			b.Parameters = make(map[string]bundle.Parameter, 1)
+		}
+		b.Parameters[wiringName] = p
+		b.Definitions[wiringName] = &def
+
+		pso := c.generateParameterSource(outputName)
+		ps[wiringName] = pso
+	}
+
+	return ps
+}
+
+func (c *ManifestConverter) generateOutputWiringParameter(b bundle.Bundle, outputName string) (string, bundle.Parameter, definition.Schema) {
+	wiringName := fmt.Sprintf("porter-%s-output", outputName)
+
+	wiringParam := bundle.Parameter{
+		Definition:  wiringName,
+		Description: fmt.Sprintf("Wires up the %s output for use as a parameter. Porter internal parameter that should not be set manually.", outputName),
+		Required:    false,
+		Destination: &bundle.Location{
+			EnvironmentVariable: fmt.Sprintf("PORTER_%s_OUTPUT", ParamToEnvVar(outputName)),
+		},
+	}
+
+	// Copy the output definition for use with the wiring parameter
+	// and identify the definition as a porter internal structure
+	outputDefName := b.Outputs[outputName].Definition
+	outputDef := b.Definitions[outputDefName]
+	var wiringDef definition.Schema
+	wiringDef = *outputDef
+	wiringDef.ID = "https://porter.sh/schema/bundle.json#porter-parameter-source-definition"
+
+	return wiringName, wiringParam, wiringDef
+}
+
+func (c *ManifestConverter) generateParameterSource(outputName string) extensions.ParameterSource {
+	return extensions.ParameterSource{
+		Priority: []string{extensions.ParameterSourceTypeOutput},
+		Sources: map[string]extensions.ParameterSourceDefinition{
+			extensions.ParameterSourceTypeOutput: extensions.OutputParameterSource{
+				OutputName: outputName,
+			},
+		},
+	}
+}
+
+var outputNameRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
+
+func (c *ManifestConverter) getTemplateOutputName(value string) (string, bool) {
+	matches := outputNameRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
+}
+
 func toBool(value bool) *bool {
 	return &value
 }
@@ -317,19 +389,27 @@ func toInt(v int) *int {
 	return &v
 }
 
-func (c *ManifestConverter) generateCustomExtensions() map[string]interface{} {
+func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[string]interface{} {
 	customExtensions := map[string]interface{}{}
 
+	// Add custom metadata defined in the manifest
 	for key, value := range c.Manifest.Custom {
 		customExtensions[key] = value
 	}
 
+	// Add the dependency extension
 	deps := c.generateDependencies()
-	if deps != nil && len(deps.Requires) > 0 {
+	if len(deps.Requires) > 0 {
 		customExtensions[extensions.DependenciesKey] = deps
 	}
 
-	// Add entries for each required extension
+	// Add the parameter sources extension
+	ps := c.generateParameterSources(b)
+	if len(ps) > 0 {
+		customExtensions[extensions.ParameterSourcesKey] = ps
+	}
+
+	// Add entries for user-specified required extensions, like docker
 	for _, ext := range c.Manifest.Required {
 		customExtensions[lookupExtensionKey(ext.Name)] = ext.Config
 	}
@@ -369,4 +449,12 @@ func lookupExtensionKey(name string) string {
 		key = supportedExt.Key
 	}
 	return key
+}
+
+// Convert a parameter name to an environment variable.
+// Anything more complicated should define the variable explicitly.
+func ParamToEnvVar(name string) string {
+	name = strings.ToUpper(name)
+	fixer := strings.NewReplacer("-", "_", ".", "_")
+	return fixer.Replace(name)
 }

@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
 	"github.com/Masterminds/semver"
+	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
@@ -22,6 +24,9 @@ const invalidStepErrorFormat = "validation of action \"%s\" failed"
 type Manifest struct {
 	// ManifestPath is the location from which the manifest was loaded, such as the path on the filesystem or a url.
 	ManifestPath string `yaml:"-"`
+
+	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
+	TemplateVariables []string `yaml:"-"`
 
 	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
@@ -644,14 +649,54 @@ func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 		return nil, err
 	}
 
+	tmplResult, err := scanManifestTemplating(data)
+	if err != nil {
+		return nil, err
+	}
+
 	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
 		return nil, err
 	}
 
 	m.ManifestPath = path
+	m.TemplateVariables = tmplResult.Variables
 
 	return m, nil
+}
+
+// templateScanResult is the result of parsing the mustache templating used in the manifest.
+type templateScanResult struct {
+	// Variables used in the template, e.g.  {{ bundle.parameters.NAME }}
+	Variables []string
+}
+
+func scanManifestTemplating(data []byte) (templateScanResult, error) {
+	const disableHtmlEscaping = true
+	tmpl, err := mustache.ParseStringRaw(string(data), disableHtmlEscaping)
+	if err != nil {
+		return templateScanResult{}, errors.Wrap(err, "error parsing the templating used in the manifest")
+	}
+
+	tags := tmpl.Tags()
+	vars := map[string]struct{}{} // Keep track of unique variable names
+	for _, tag := range tags {
+		if tag.Type() != mustache.Variable {
+			continue
+		}
+
+		vars[tag.Name()] = struct{}{}
+	}
+
+	result := templateScanResult{
+		Variables: make([]string, 0, len(vars)),
+	}
+	for v := range vars {
+		result.Variables = append(result.Variables, v)
+	}
+
+	sort.Strings(result.Variables)
+	return result, nil
 }
 
 func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {

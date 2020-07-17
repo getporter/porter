@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
@@ -79,11 +80,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 }
 
 func resolveParameter(pd manifest.ParameterDefinition) (string, error) {
-	pe := pd.Name
-	if pd.Destination.IsEmpty() {
-		// Porter by default sets CNAB params to name.ToUpper()
-		return os.Getenv(strings.ToUpper(pe)), nil
-	} else if pd.Destination.EnvironmentVariable != "" {
+	if pd.Destination.EnvironmentVariable != "" {
 		return os.Getenv(pd.Destination.EnvironmentVariable), nil
 	} else if pd.Destination.Path != "" {
 		return pd.Destination.Path, nil
@@ -102,9 +99,13 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 }
 
 func (m *RuntimeManifest) resolveBundleOutput(def manifest.OutputDefinition) (string, error) {
-	// TODO: (carolynvs) implement parameter sources custom extenion
-	// We can't grab outputs from claims anymore
-	return "", nil
+	// Get the output's value from the injected parameter source
+	psParamEnv := fmt.Sprintf("PORTER_%s_OUTPUT", configadapter.ParamToEnvVar(def.Name))
+	outputValue, ok := os.LookupEnv(psParamEnv)
+	if !ok {
+		return "", errors.Errorf("No parameter source was injected for output %s", def.Name)
+	}
+	return outputValue, nil
 }
 
 func (m *RuntimeManifest) GetSensitiveValues() []string {
@@ -164,7 +165,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	return nil
 }
 
-func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[string]string) error {
+func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
@@ -198,7 +199,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	params := make(map[string]interface{})
 	bun["parameters"] = params
 	for _, param := range m.Parameters {
-		if !param.AppliesTo(string(m.Action)) {
+		if !param.AppliesTo(m.Action) {
 			continue
 		}
 
@@ -235,6 +236,9 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 	// Iterate through the bundle-level manifests and resolve for interpolation
 	for _, outputDef := range m.Outputs {
+		// TODO: want only output variables
+		// TODO: look into how applyTo will make this throw errors in some cases
+
 		val, err := m.resolveBundleOutput(outputDef)
 		if err != nil {
 			return nil, err

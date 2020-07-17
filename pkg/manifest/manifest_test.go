@@ -394,3 +394,11 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, expected, m.Required)
 }
+
+func TestReadManifest_WithTemplateVariables(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
+	require.NoError(t, err, "ReadManifest failed")
+	assert.Equal(t, []string{"bundle.outputs.msg", "bundle.outputs.name"}, m.TemplateVariables)
+}
