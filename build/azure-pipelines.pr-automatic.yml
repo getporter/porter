@@ -91,10 +91,7 @@ jobs:
     workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Build'
 
-  - script: |
-      trap 'make -f Makefile.kind delete-kind-cluster' EXIT
-      make -f Makefile.kind install-kind create-kind-cluster
-      make start-local-docker-registry test-integration stop-local-docker-registry
+  - script: ./build/run-integration-tests.sh
     workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Integration Test'
 

@@ -42,10 +42,7 @@ stages:
     - script: build/azure-pipelines.setup-go-workspace.sh
       displayName: 'Set up the Go workspace'
 
-    - script: |
-        trap 'make -f Makefile.kind delete-kind-cluster' EXIT
-        make -f Makefile.kind install-kind create-kind-cluster
-        make start-local-docker-registry test-integration stop-local-docker-registry
+    - script: ./build/run-integration-tests.sh
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'Integration Test'
 
