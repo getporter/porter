@@ -321,13 +321,13 @@ At runtime, these will be updated appropriately if a bundle has been [copied](/c
 Here is a breakdown of all the supported fields on an image in this section of the manifest:
 
 * `description`: a description of the image
-* `imageType`: the type of image (most commonly, `"docker"`)
-* `repository`: the name of the image, of the form `REGISTRY/ORG/IMAGE`
+* `imageType`: the type of image (most commonly, "docker")
+* `repository`: the name of the image, of the form REGISTRY/ORG/IMAGE
 * `digest`: the repository digest of the image (not to be confused with the image id)
 * `size`: the image size in bytes
 * `mediaType`: the media type of the image
 * `labels`: key/value pairs used to specify identifying attributes of the image
-* `tag`: the tag of the image (only recommended when/if `digest` isn't known/available)
+* `tag`: the tag of the image (only recommended when/if digest isn't known/available)
 
 A last note on `digest`.  Taking the example of the library `nginx` Docker image, we can get the repository digest like so:
 
