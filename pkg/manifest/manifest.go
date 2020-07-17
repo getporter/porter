@@ -482,7 +482,7 @@ func (s *Step) GetMixinName() string {
 	return mixinName
 }
 
-func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
+func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, error) {
 	// Unmarshal the manifest into the normal struct
 	manifest := &Manifest{}
 	err := yaml.Unmarshal(manifestData, &manifest)
@@ -515,9 +515,10 @@ func UnmarshalManifest(manifestData []byte) (*Manifest, error) {
 		if _, found := knownFields[key]; found {
 			delete(unmappedData, key)
 		}
-		// Explicitly error out if deprecated invocationImage is supplied
+		// Print deprecation notice for this field
 		if key == "invocationImage" {
-			return nil, errors.New("the invocationImage field has been deprecated and can no longer be user-specified")
+			fmt.Fprintln(cxt.Out, "WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.")
+			delete(unmappedData, key)
 		}
 	}
 
@@ -643,7 +644,7 @@ func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	m, err := UnmarshalManifest(data)
+	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
 		return nil, err
 	}

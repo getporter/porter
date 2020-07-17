@@ -47,14 +47,14 @@ func TestLoadManifest(t *testing.T) {
 	assert.Equal(t, "exec", mixin, "unexpected status step mixin")
 }
 
-func TestLoadManifest_VerifyImageNotSpecifiable(t *testing.T) {
+func TestLoadManifest_DeprecatedFields(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter-with-image.yaml", config.Name)
 
 	m, err := LoadManifestFrom(cxt.Context, config.Name)
-	require.EqualError(t, err, "the invocationImage field has been deprecated and can no longer be user-specified")
-	require.Nil(t, m, "manifest wasn't nil")
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, m, "manifest was nil")
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
