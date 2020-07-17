@@ -193,10 +193,6 @@
         "anyOf": []
       }
     },
-    "invocationImage": {
-      "type": "string",
-      "description": "The name of the container image to tag the invocation image with when it is built"
-    },
     "tag": {
       "type": "string",
       "description": "The tag to use when the bundle is published to an OCI registry"
