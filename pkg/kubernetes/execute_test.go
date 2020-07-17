@@ -32,6 +32,8 @@ func TestMixin_ExecuteStep(t *testing.T) {
 
 	selector := "app=nginx"
 
+	context := "context"
+
 	forceIt := true
 	withGrace := 1
 
@@ -140,6 +142,20 @@ func TestMixin_ExecuteStep(t *testing.T) {
 						},
 						Manifests: []string{manifestDirectory},
 						Selector:  selector,
+					},
+				},
+			},
+		},
+		{
+			expectedCommand: fmt.Sprintf("%s %s --context=%s --wait", upgradeCmd, manifestDirectory, context),
+			executeStep: ExecuteStep{
+				ExecuteInstruction: ExecuteInstruction{
+					InstallArguments: InstallArguments{
+						Step: Step{
+							Description: "Hello",
+						},
+						Manifests: []string{manifestDirectory},
+						Context:  context,
 					},
 				},
 			},

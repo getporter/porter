@@ -15,7 +15,7 @@ CLIENT_ARCH = $(shell go env GOARCH)
 CLIENT_GOPATH = $(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
-BASEURL_FLAG ?= 
+BASEURL_FLAG ?=
 
 GO = GO111MODULE=on go
 
@@ -47,6 +47,7 @@ build-mixin-%: generate
 	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
 
 generate: packr2
+	$(GO) mod tidy
 	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)

@@ -34,7 +34,7 @@ func TestMixin_InstallStep(t *testing.T) {
 	namespace := "meditations"
 
 	selector := "app=nginx"
-
+	context := "context"
 	installTests := []InstallTest{
 		{
 			expectedCommand: fmt.Sprintf("%s %s --wait", installCmd, manifestDirectory),
@@ -110,6 +110,18 @@ func TestMixin_InstallStep(t *testing.T) {
 					},
 					Manifests: []string{manifestDirectory},
 					Selector:  selector,
+				},
+			},
+		},
+		{
+			expectedCommand: fmt.Sprintf("%s %s --context=%s --wait", installCmd, manifestDirectory, context),
+			installStep: InstallStep{
+				InstallArguments: InstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Context:  context,
 				},
 			},
 		},
