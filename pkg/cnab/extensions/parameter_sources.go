@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	// ParameterSourcesExtensionKey represents the full key for the Parameter Sources Extension
+	// ParameterSourcesExtensionKey represents the full key for the Parameter Sources Extension.
 	ParameterSourcesExtensionKey = "io.cnab.parameter-sources"
-	// DockerExtensionSchema represents the schema for the Docker Extension
-	ParameterSourcesExtensionSchema = "https://cnab.io/specs/v1/parameter-sources.schema.json"
-	ParameterSourceTypeOutput       = "output"
+	// ParameterSourcesExtensionSchema represents the schema for the Docker Extension.
+	ParameterSourcesExtensionSchema = "https://cnab.io/v1/parameter-sources.schema.json"
+	// ParameterSourceTypeOutput defines a type of parameter source that is provided by a bundle output.
+	ParameterSourceTypeOutput = "output"
 )
 
 // ParameterSourcesExtension represents a required extension that specifies how
@@ -44,7 +45,7 @@ func (ps *ParameterSources) SetParameterFromOutput(parameter string, output stri
 }
 
 type ParameterSource struct {
-	// Array of source types in the priority order that they should be used to
+	// Priority is an array of source types in the priority order that they should be used to
 	// populated the parameter.
 	Priority []string `json:"priority" mapstructure:"priority"`
 
@@ -139,7 +140,7 @@ func ParameterSourcesExtensionReader(bun bundle.Bundle) (interface{}, error) {
 	return ps, nil
 }
 
-// GetParameterSourcesExtension checks if the docker extension is present and returns its
+// GetParameterSourcesExtension checks if the parameter sources extension is present and returns its
 // extension configuration.
 func (e ProcessedExtensions) GetParameterSourcesExtension() (ParameterSources, bool, error) {
 	rawExt, required := e[ParameterSourcesExtensionKey]

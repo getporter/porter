@@ -36,7 +36,7 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 		}
 
 		ext, required, err := processed.GetParameterSourcesExtension()
-		require.Error(t, err, "GetParameterSourcesExtension failed")
+		require.Error(t, err, "GetParameterSourcesExtension should have failed")
 		assert.True(t, required, "parameter-sources should be a required extension")
 		assert.Empty(t, ext, "parameter-sources should default to empty when not required")
 	})

@@ -270,8 +270,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 
 	t.Run("merge parameter values", func(t *testing.T) {
 		// foo is set by a the user
-		// baz is set by a parameter source
-		// bar is set by the bundle default
+		// bar is set by a parameter source
+		// baz is set by the bundle default
 		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
 		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
 		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))

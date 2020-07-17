@@ -36,7 +36,7 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 		}
 
 		dockerExt, dockerRequired, err := ext.GetDockerExtension()
-		require.Error(t, err, "GetDockerExtension failed")
+		require.Error(t, err, "GetDockerExtension should have failed")
 		assert.True(t, dockerRequired, "docker should be a required extension")
 		assert.Equal(t, Docker{}, dockerExt, "Docker config should default to empty")
 	})
