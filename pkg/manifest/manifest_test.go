@@ -403,3 +403,29 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, expected, m.Required)
 }
+
+func TestSetInvocationImageFromBundleTag(t *testing.T) {
+	t.Run("with image override", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Image:     "portersh/mybun-some-installer:v1.2.3-beta.1",
+		}
+		err := m.SetInvocationImageFromBundleTag(m.BundleTag, true)
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+	})
+
+	t.Run("without image override", func(t *testing.T) {
+		m := Manifest{
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Image:     "portersh/mybun-some-installer:v1.2.3-beta.1",
+		}
+		err := m.SetInvocationImageFromBundleTag(m.BundleTag, false)
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "portersh/mybun-some-installer:v1.2.3-beta.1", m.Image)
+	})
+}

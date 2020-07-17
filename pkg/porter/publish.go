@@ -82,7 +82,13 @@ func (p *Porter) Publish(opts PublishOptions) error {
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
 	tag := opts.Tag
-	if tag == "" {
+	if tag != "" {
+		// If tag was supplied, update the invocation image name on the manifest
+		// per the registry, org and docker tag from the value provided
+		if err := p.Manifest.SetInvocationImageFromBundleTag(tag, true); err != nil {
+			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
+		}
+	} else {
 		tag = p.Manifest.BundleTag
 	}
 	if p.Manifest.BundleTag == "" {
@@ -96,7 +102,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 
 	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)
 	if err != nil {
-		return errors.Wrap(err, "unable to push CNAB invocation image")
+		return errors.Wrapf(err, "unable to push CNAB invocation image %q", p.Manifest.Image)
 	}
 
 	bun, err := p.rewriteBundleWithInvocationImageDigest(digest)
@@ -276,40 +282,18 @@ func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, 
 // getNewImageNameFromBundleTag derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to glean registry/org/etc.
 func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error) {
-	origImgName, err := image.NewName(origImg)
+	origName, err := image.NewName(origImg)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
 	}
 
-	bundleTagName, err := image.NewName(bundleTag)
+	bundleName, err := image.NewName(bundleTag)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
 	}
 
-	// Swap out Host
-	origHost := origImgName.Host()
-	newHost := bundleTagName.Host()
-	newImg := strings.Replace(origImgName.String(), origHost, newHost, -1)
-
-	// Swap out org (via Path)
-	origPathParts := strings.Split(origImgName.Path(), "/")
-	tagPathParts := strings.Split(bundleTagName.Path(), "/")
-	var newOrg string
-	if len(tagPathParts) > 1 {
-		newOrg = tagPathParts[0]
-	}
-	if len(origPathParts) == 1 {
-		// original image has no org, e.g. a library image
-		// so just prepend new org
-		newImg = path.Join(newOrg, newImg)
-	} else {
-		newImgName, err := image.NewName(newImg)
-		if err != nil {
-			return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
-		}
-
-		newImg = path.Join(newImgName.Host(), strings.Replace(newImgName.Path(), origPathParts[0], newOrg, 1))
-	}
+	// Use the image name with the bundle location
+	newImg := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
 
 	newImgName, err := image.NewName(newImg)
 	if err != nil {
