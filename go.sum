@@ -99,9 +99,6 @@ github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiK
 github.com/cloudflare/cfssl v1.4.1/go.mod h1:KManx/OJPb5QY+y0+o/898AMcM128sF0bURvoVUSjTo=
 github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:eaZPlJWD+G9wseg1BuRXlHnjntPMrywMsyxf+LTOdP4=
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
-github.com/cnabio/cnab-go v0.10.0-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
-github.com/cnabio/cnab-go v0.12.1-beta1 h1:rrnuJkd39qzl1DoGLbTjKlQ9KQeiZcRIl035BYXe2fU=
-github.com/cnabio/cnab-go v0.12.1-beta1/go.mod h1:KHrNh0073dP3+twrgOo6GLFEXqZcz2Glma7prVRBoBg=
 github.com/cnabio/cnab-to-oci v0.3.1-beta1 h1:qAuLRt+2J7U7wIB5YG+COtS630NQCf4G1h1p0Yk6llo=
 github.com/cnabio/cnab-to-oci v0.3.1-beta1/go.mod h1:8BomA5Vye+3V/Kd2NSFblCBmp1rJV5NfXBYKbIGT5Rw=
 github.com/containerd/cgroups v0.0.0-20200108155730-918ed86e29cc h1:Euk3pMvf7cw8tKEi8ZlMHCrnd5iBlz8hWBUVNL44hmQ=
@@ -543,8 +540,6 @@ github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljT
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
-github.com/vdice/cnab-go v0.0.0-20200602210128-57db872f67fa h1:R8sSuj+gKJmFY2jQ2iKVmYc/gw++deNNvAhwyF1AxKc=
-github.com/vdice/cnab-go v0.0.0-20200602210128-57db872f67fa/go.mod h1:KHrNh0073dP3+twrgOo6GLFEXqZcz2Glma7prVRBoBg=
 github.com/vdice/cnab-go v0.0.0-20200604175151-7484e185ff27 h1:1KFDBQCgh+r1L753qX038Hm1MvpGGVK+Ws8eweANP1g=
 github.com/vdice/cnab-go v0.0.0-20200604175151-7484e185ff27/go.mod h1:KHrNh0073dP3+twrgOo6GLFEXqZcz2Glma7prVRBoBg=
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
@@ -586,7 +581,6 @@ golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529/go.mod h1:yigFU9vqHzYiE8U
 golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
-golang.org/x/crypto v0.0.0-20191028145041-f83a4685e152/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c h1:/nJuwDLoL/zrqY6gf57vxC+Pi+pZ8bfhpPkicO5H7W4=
 golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=

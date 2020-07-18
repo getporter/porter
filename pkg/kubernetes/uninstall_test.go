@@ -28,6 +28,7 @@ func TestMixin_UninstallStep(t *testing.T) {
 	namespace := "meditations"
 
 	selector := "app=nginx"
+	context := "context"
 	forceIt := true
 	withGrace := 1
 
@@ -79,6 +80,18 @@ func TestMixin_UninstallStep(t *testing.T) {
 					},
 					Manifests: []string{manifestDirectory},
 					Selector:  selector,
+				},
+			},
+		},
+		{
+			expectedCommand: fmt.Sprintf("%s %s --context=%s --wait", deleteCmd, manifestDirectory, context),
+			uninstallStep: UninstallStep{
+				UninstallArguments: UninstallArguments{
+					Step: Step{
+						Description: "Hello",
+					},
+					Manifests: []string{manifestDirectory},
+					Context:  context,
 				},
 			},
 		},

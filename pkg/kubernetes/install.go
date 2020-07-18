@@ -25,6 +25,7 @@ type InstallArguments struct {
 	Manifests []string `yaml:"manifests,omitempty"`
 	Record    *bool    `yaml:"record,omitempty"`
 	Selector  string   `yaml:"selector,omitempty"`
+	Context  string    `yaml:"context,omitempty"`
 	Validate  *bool    `yaml:"validate,omitempty"`
 	Wait      *bool    `yaml:"wait,omitempty"`
 }
@@ -101,6 +102,10 @@ func (m *Mixin) buildInstallCommand(step InstallArguments, manifestPath string) 
 
 	if step.Selector != "" {
 		command = append(command, fmt.Sprintf("--selector=%s", step.Selector))
+	}
+
+	if step.Context != "" {
+		command = append(command, fmt.Sprintf("--context=%s", step.Context))
 	}
 
 	if step.Validate != nil {
