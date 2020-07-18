@@ -10,3 +10,4 @@ workshop/**/Dockerfile
 
 .vscode
 .idea
+kind.config.yaml

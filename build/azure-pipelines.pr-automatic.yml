@@ -75,3 +75,42 @@ jobs:
       make build-bundle validate-bundle
     workingDirectory: '$(System.DefaultWorkingDirectory)'
     displayName: 'Validate Example Bundles'
+
+- job: integration_test
+  dependsOn: setup
+  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
+  steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
+
+  - script: |
+      make build
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'Build'
+
+  - script: ./build/run-integration-tests.sh
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'Integration Test'
+
+- job: cli_test
+  dependsOn: setup
+  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
+  steps:
+  - task: GoTool@0
+    inputs:
+      version: '$(GOVERSION)'
+  - script: build/azure-pipelines.setup-go-workspace.sh
+    displayName: 'Set up the Go workspace'
+
+  - script: |
+       make build
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'Build'
+
+  - script: |
+      make start-local-docker-registry test-cli stop-local-docker-registry
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    displayName: 'CLI Test'

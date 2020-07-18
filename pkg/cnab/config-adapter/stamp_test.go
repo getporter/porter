@@ -3,6 +3,7 @@ package configadapter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/manifest"
 
 	"get.porter.sh/porter/pkg/config"
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "6154be0570d30a2b654d02258d9fa3004a72df9d5b70dafc0efce73c6818dc8f"
+var simpleManifestDigest = "a50e89710dfa2b30a999f8bb7b2801f0a2b97053eb368b01de448f71e712d0ae"
 
 func TestConfig_GenerateStamp(t *testing.T) {
 	c := config.NewTestConfig(t)
@@ -105,4 +106,37 @@ func TestStamp_DecodeManifest(t *testing.T) {
 		assert.Nil(t, data, "No manifest data should be returned")
 	})
 
+}
+
+func TestConfig_DigestManifest(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+
+	t.Run("updated invocation image", func(t *testing.T) {
+		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		require.NoError(t, err, "could not load manifest")
+
+		a := NewManifestConverter(c.Context, m, nil, nil)
+		digest, err := a.DigestManifest()
+		require.NoError(t, err, "DigestManifest failed")
+
+		m.Image = "newpublishregistry/porter-hello:v0.1.0"
+		newDigest, err := a.DigestManifest()
+		require.NoError(t, err, "DigestManifest failed")
+		assert.NotEqual(t, newDigest, digest, "expected the digest to be different due to the updated image")
+	})
+
+	t.Run("updated version", func(t *testing.T) {
+		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		require.NoError(t, err, "could not load manifest")
+
+		a := NewManifestConverter(c.Context, m, nil, nil)
+		digest, err := a.DigestManifest()
+		require.NoError(t, err, "DigestManifest failed")
+
+		pkg.Version = "foo"
+		newDigest, err := a.DigestManifest()
+		require.NoError(t, err, "DigestManifest failed")
+		assert.NotEqual(t, newDigest, digest, "expected the digest to be different due to the updated pkg version")
+	})
 }

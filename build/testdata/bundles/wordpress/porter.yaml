@@ -4,11 +4,11 @@ mixins:
 
 name: wordpress
 version: 0.1.2
-tag: getporter/wordpress:v0.1.2
+tag: localhost:5000/wordpress:v0.1.2
 
 dependencies:
   mysql:
-    tag: getporter/mysql:v0.1.2
+    tag: localhost:5000/mysql:v0.1.2
     parameters:
       database-name: wordpress
       mysql-user: wordpress

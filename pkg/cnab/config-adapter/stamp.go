@@ -102,6 +102,10 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	v := pkg.Version
 	data = append(data, v...)
 
+	// Porter may update the invocation image name on-the-fly
+	// (for instance, during publish), so add this to the data
+	data = append(data, []byte(c.Manifest.Image)...)
+
 	for _, m := range c.Mixins {
 		data = append(append(data, m.Name...), m.Version...)
 	}
