@@ -291,11 +291,13 @@ dependencies:
 
 ## Images
 
-The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
-These are images used in the bundle and declaring them enables Porter to manage them for you:
+The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps)
+section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
 
 * publishing the bundle [copies referenced images into the published bundle](/distribute-bundles/#image-references-after-publishing).
 * [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
+
+Here is an example:
 
 ```yaml
 images:
@@ -307,7 +309,7 @@ images:
 ```
 
 This information is used to generate the corresponding section of the `bundle.json` and can be
-used to in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
+used in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
 the `repository` and `digest` attributes. For example:
 
 ```
@@ -315,6 +317,26 @@ image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
 ```
 
 At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
+
+Here is a breakdown of all the supported fields on an image in this section of the manifest:
+
+* `description`: a description of the image
+* `imageType`: the type of image (most commonly, "docker")
+* `repository`: the name of the image, of the form REGISTRY/ORG/IMAGE
+* `digest`: the repository digest of the image (not to be confused with the image id)
+* `size`: the image size in bytes
+* `mediaType`: the media type of the image
+* `labels`: key/value pairs used to specify identifying attributes of the image
+* `tag`: the tag of the image (only recommended when/if digest isn't known/available)
+
+A last note on `digest`.  Taking the example of the library `nginx` Docker image, we can get the repository digest like so:
+
+```console
+ $ docker inspect nginx | jq -r '.[].RepoDigests'
+[
+  "nginx@sha256:a93c8a0b0974c967aebe868a186e5c205f4d3bcb5423a56559f2f9599074bbcd"
+]
+```
 
 ## Custom
 
