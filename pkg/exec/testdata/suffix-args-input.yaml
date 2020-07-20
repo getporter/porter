@@ -1,0 +1,10 @@
+install:
+  - exec:
+      description: "Build a docker image"
+      command: docker
+      arguments:
+        - build
+      flags:
+        tag: "getporter/porter-hello:latest"
+      suffix-arguments:
+        - .

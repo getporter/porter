@@ -64,6 +64,13 @@
             "type": "string"
           }
         },
+        "suffix-arguments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minItems": 1
+          }
+        },
         "outputs": {
           "type": "array",
           "items": {
