@@ -32,7 +32,6 @@ name: azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
 tag: getporter/azure-wordpress
-invocationImage: getporter/azure-wordpress-installer
 dockerfile: dockerfile.tmpl
 ```
 
@@ -40,12 +39,9 @@ dockerfile: dockerfile.tmpl
 * `description`: A description of the bundle
 * `version`: The version of the bundle, uses [semver](https://semver.org). Should not have a 'v' prefix.
 * `tag`: The tag to use when the bundle is published to a registry. The format is `REGISTRY/IMAGE`, or optionally `REGISTRY/IMAGE:TAG` 
-   if you do not want the default behavior of defaulting the docker image TAG portion to the version of the bundle.
-* `invocationImage`: OPTIONAL. The tag to use when the invocation image is built and published to a registry. The format is
-    `REGISTRY/IMAGE` or optionally `REGISTRY/IMAGE:TAG` if you do not want the default behavior of defaulting the docker image TAG 
-    portion to the version of the bundle. When omitted the `invocationImage` defaults to the value of `tag` with `-installer` suffixed. 
-    For example if the bundle `tag` is `getporter/porter-hello` and the `version` is `0.1.0`, then the `invocationImage` 
-    will default to `getporter/porter-hello-installer:v0.1.0`
+   if you do not want the default behavior of defaulting the docker image TAG portion to the version of the bundle. The invocation
+   image name will be based on this value.  For example, if the bundle `tag` is `getporter/porter-hello` and the `version` is `0.1.0`,
+   then the invocation image name will be `getporter/porter-hello-installer:v0.1.0`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).

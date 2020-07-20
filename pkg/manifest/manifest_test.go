@@ -21,6 +21,11 @@ func TestLoadManifest(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 
 	require.NotNil(t, m, "manifest was nil")
+	require.Equal(t, m.Name, "hello", "manifest has incorrect name")
+	require.Equal(t, m.Description, "An example Porter configuration", "manifest has incorrect description")
+	require.Equal(t, m.Version, "0.1.0", "manifest has incorrect version")
+	require.Equal(t, m.BundleTag, "getporter/porter-hello:v0.1.0", "manifest has incorrect bundle tag")
+
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins, "expected manifest to declare the exec mixin")
 	require.Len(t, m.Install, 1, "expected 1 install step")
 
@@ -40,6 +45,16 @@ func TestLoadManifest(t *testing.T) {
 
 	mixin = statusStep.GetMixinName()
 	assert.Equal(t, "exec", mixin, "unexpected status step mixin")
+}
+
+func TestLoadManifest_DeprecatedFields(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/porter-with-image.yaml", config.Name)
+
+	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, m, "manifest was nil")
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
@@ -134,7 +149,7 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 
 func TestReadManifest_URL(t *testing.T) {
 	cxt := context.NewTestContext(t)
-	url := "https://raw.githubusercontent.com/deislabs/porter/v0.17.0-beta.1/pkg/config/testdata/simple.porter.yaml"
+	url := "https://raw.githubusercontent.com/deislabs/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
 	m, err := ReadManifest(cxt.Context, url)
 
 	require.NoError(t, err)
@@ -159,31 +174,7 @@ func TestReadManifest_File(t *testing.T) {
 }
 
 func TestSetDefault(t *testing.T) {
-	t.Run("bundle and invocation image tags set", func(t *testing.T) {
-		m := Manifest{
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Image:     "getporter/mybun-some-installer:v1.2.3-beta.1",
-		}
-		err := m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
-		assert.Equal(t, "getporter/mybun-some-installer:v1.2.3-beta.1", m.Image)
-	})
-
-	t.Run("invocation image missing docker tag", func(t *testing.T) {
-		m := Manifest{
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Image:     "getporter/mybun-some-installer",
-		}
-		err := m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
-		assert.Equal(t, "getporter/mybun-some-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("invocation image missing", func(t *testing.T) {
+	t.Run("bundle docker tag set", func(t *testing.T) {
 		m := Manifest{
 			Version:   "1.2.3-beta.1",
 			BundleTag: "getporter/mybun:v1.2.3",
@@ -205,7 +196,7 @@ func TestSetDefault(t *testing.T) {
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
-	t.Run("missing invocation image; tag includes registry with port", func(t *testing.T) {
+	t.Run("bundle tag includes registry with port", func(t *testing.T) {
 		m := Manifest{
 			Version:   "0.1.0",
 			BundleTag: "localhost:5000/missing-invocation-image",
@@ -402,30 +393,4 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 
 	assert.NotNil(t, m)
 	assert.Equal(t, expected, m.Required)
-}
-
-func TestSetInvocationImageFromBundleTag(t *testing.T) {
-	t.Run("with image override", func(t *testing.T) {
-		m := Manifest{
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Image:     "portersh/mybun-some-installer:v1.2.3-beta.1",
-		}
-		err := m.SetInvocationImageFromBundleTag(m.BundleTag, true)
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("without image override", func(t *testing.T) {
-		m := Manifest{
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Image:     "portersh/mybun-some-installer:v1.2.3-beta.1",
-		}
-		err := m.SetInvocationImageFromBundleTag(m.BundleTag, false)
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
-		assert.Equal(t, "portersh/mybun-some-installer:v1.2.3-beta.1", m.Image)
-	})
 }

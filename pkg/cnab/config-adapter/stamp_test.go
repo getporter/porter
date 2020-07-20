@@ -70,6 +70,8 @@ func TestConfig_LoadStamp_Invalid(t *testing.T) {
 }
 
 func TestStamp_DecodeManifest(t *testing.T) {
+	c := config.NewTestConfig(t)
+
 	t.Run("manifest populated", func(t *testing.T) {
 		s := Stamp{
 			EncodedManifest: "bmFtZTogaGVsbG8=", // name: hello
@@ -78,7 +80,7 @@ func TestStamp_DecodeManifest(t *testing.T) {
 		data, err := s.DecodeManifest()
 		require.NoError(t, err, "DecodeManifest failed")
 
-		m, err := manifest.UnmarshalManifest(data)
+		m, err := manifest.UnmarshalManifest(c.TestContext.Context, data)
 		require.NoError(t, err, "UnmarshalManifest failed")
 
 		require.NotNil(t, m, "expected manifest to be populated")
