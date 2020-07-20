@@ -93,6 +93,11 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 		return err
 	}
 
+	err = p.applyDefaultOptions(o)
+	if err != nil {
+		return err
+	}
+
 	err = o.validateParams(p)
 	if err != nil {
 		return err
@@ -235,13 +240,6 @@ func (o *sharedOptions) parseParams() error {
 // parseParamSets parses the variable assignments in ParameterSets.
 func (o *sharedOptions) parseParamSets(p *Porter) error {
 	if len(o.ParameterSets) > 0 {
-		// Load the manifest as it may be needed to determine if any
-		// parameters are of the Porter-exclusive type of 'file'
-		err := p.LoadManifestFrom(o.File)
-		if err != nil {
-			return err
-		}
-
 		parsed, err := p.loadParameterSets(o.ParameterSets)
 		if err != nil {
 			return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)

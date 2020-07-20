@@ -22,11 +22,6 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return errors.Wrap(err, "unable to pull bundle before uninstall")
 	}
 
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	if err != nil {
-		return err
-	}
-
 	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
