@@ -67,7 +67,7 @@ Optional output formats include json and yaml.
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowInstallations(opts)
+			return p.ShowInstallation(opts)
 		},
 	}
 

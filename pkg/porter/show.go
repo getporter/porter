@@ -31,9 +31,9 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	return so.ParseFormat()
 }
 
-// ShowInstallations shows a bundle, or more properly a bundle claim, along with any
+// ShowInstallation shows a bundle, or more properly a bundle claim, along with any
 // associated outputs
-func (p *Porter) ShowInstallations(opts ShowOptions) error {
+func (p *Porter) ShowInstallation(opts ShowOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return err
@@ -73,17 +73,29 @@ func (p *Porter) ShowInstallations(opts ShowOptions) error {
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
-		fmt.Fprintf(p.Out, "Last Action: %s\n", displayInstallation.Action)
-		fmt.Fprintf(p.Out, "Last Status: %s\n", displayInstallation.Status)
 
 		// Print outputs, if any
 		if len(displayInstallation.Outputs) > 0 {
 			fmt.Fprintln(p.Out)
-			fmt.Fprint(p.Out, "Outputs:\n")
+			fmt.Fprintln(p.Out, "Outputs:")
 
-			return p.printOutputsTable(displayInstallation.Outputs)
+			err = p.printOutputsTable(displayInstallation.Outputs)
+			if err != nil {
+				return err
+			}
 		}
-		return nil
+
+		fmt.Fprintln(p.Out)
+		fmt.Fprintln(p.Out, "History:")
+		historyRow :=
+			func(v interface{}) []string {
+				a, ok := v.(InstallationAction)
+				if !ok {
+					return nil
+				}
+				return []string{a.Action, tp.Format(a.Timestamp), a.Status}
+			}
+		return printer.PrintTableSection(p.Out, displayInstallation.History, historyRow, "Action", "Timestamp", "Status")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}

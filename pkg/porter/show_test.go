@@ -23,7 +23,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 		},
 	}
 
-	// Create test claim
+	// Create test claims
 	writeOnly := true
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -45,34 +45,27 @@ func TestPorter_ShowBundle(t *testing.T) {
 			},
 		},
 	}
-	c, err := claim.New("test", claim.ActionInstall, b, nil)
-	require.NoError(t, err, "NewClaim failed")
-	c.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
+	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
+	c.Created = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
+	err := p.Claims.SaveClaim(c)
+	require.NoError(t, err, "SaveClaim failed")
+	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
+	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
+
+	c = p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, nil)
+	c.Created = time.Date(2020, time.April, 19, 1, 2, 3, 4, time.UTC)
 	err = p.Claims.SaveClaim(c)
 	require.NoError(t, err, "SaveClaim failed")
+	r = p.TestClaims.CreateResult(c, claim.StatusRunning)
 
-	r, err := c.NewResult(claim.StatusSucceeded)
-	require.NoError(t, err, "NewResult failed")
-	err = p.Claims.SaveResult(r)
-	require.NoError(t, err, "SaveResult failed")
-
-	foo := claim.NewOutput(c, r, "foo", []byte("foo-output"))
-	err = p.Claims.SaveOutput(foo)
-	require.NoError(t, err, "SaveOutput failed")
-
-	bar := claim.NewOutput(c, r, "bar", []byte("bar-output"))
-	err = p.Claims.SaveOutput(bar)
-	require.NoError(t, err, "SaveOutput failed")
-
-	err = p.ShowInstallations(opts)
-	require.NoError(t, err, "ShowInstallations failed")
+	err = p.ShowInstallation(opts)
+	require.NoError(t, err, "ShowInstallation failed")
 
 	wantOutput :=
 		`Name: test
-Created: 1983-04-18
-Modified: 1983-04-18
-Last Action: install
-Last Status: succeeded
+Created: 2020-04-18
+Modified: 2020-04-19
 
 Outputs:
 ----------------------------
@@ -80,6 +73,13 @@ Outputs:
 ----------------------------
   bar   string  bar-output  
   foo   string  foo-output  
+
+History:
+----------------------------------
+  Action   Timestamp   Status     
+----------------------------------
+  install  2020-04-18  succeeded  
+  upgrade  2020-04-19  running    
 `
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, wantOutput, gotOutput)
