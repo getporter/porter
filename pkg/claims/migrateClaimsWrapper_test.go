@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 
 			dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 			wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-			claimStore := claim.NewClaimStore(wrapper, nil, nil)
+			claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 			c, err := claimStore.ReadLastClaim(installation)
 			require.NoError(t, err, "could not read claim")
@@ -69,7 +70,7 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 
 		dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 		wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-		claimStore := claim.NewClaimStore(wrapper, nil, nil)
+		claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 		c, err := claimStore.ReadLastClaim(installation)
 		require.NoError(t, err, "could not read claim")
@@ -92,7 +93,7 @@ func TestMigrateClaimsWrapper_List(t *testing.T) {
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(wrapper, nil, nil)
+	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	names, err := claimStore.ListInstallations()
 	sort.Strings(names)
@@ -130,7 +131,7 @@ func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(wrapper, nil, nil)
+	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
@@ -161,7 +162,7 @@ func TestMigrateClaimsWrapper_MigrateUpgrade(t *testing.T) {
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(wrapper, nil, nil)
+	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)

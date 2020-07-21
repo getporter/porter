@@ -36,7 +36,7 @@ type migrateClaimsWrapper struct {
 	schemaChecked bool
 	schema        storage.Schema
 	*context.Context
-	crud.BackingStore
+	*crud.BackingStore
 	claims claim.Store
 }
 
@@ -44,7 +44,7 @@ func newMigrateClaimsWrapper(cxt *context.Context, wrappedStore crud.Store) *mig
 	backingStore := crud.NewBackingStore(wrappedStore)
 	return &migrateClaimsWrapper{
 		Context:      cxt,
-		BackingStore: *backingStore,
+		BackingStore: backingStore,
 		claims:       claim.NewClaimStore(backingStore, nil, nil),
 	}
 }
