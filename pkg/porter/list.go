@@ -26,6 +26,7 @@ type DisplayInstallation struct {
 	Status   string
 
 	Outputs DisplayOutputs
+	History []InstallationAction
 }
 
 func NewDisplayInstallation(installation claim.Installation) (DisplayInstallation, error) {
@@ -42,12 +43,22 @@ func NewDisplayInstallation(installation claim.Installation) (DisplayInstallatio
 		installTime = c.Created
 	}
 
+	history := make([]InstallationAction, len(installation.Claims))
+	for i, hc := range installation.Claims {
+		history[i] = InstallationAction{
+			Action:    hc.Action,
+			Timestamp: hc.Created,
+			Status:    hc.GetStatus(),
+		}
+	}
+
 	return DisplayInstallation{
 		Name:     installation.Name,
 		Created:  installTime,
 		Modified: c.Created,
 		Action:   c.Action,
 		Status:   installation.GetLastStatus(),
+		History:  history,
 	}, nil
 }
 
@@ -63,6 +74,12 @@ func (l DisplayInstallations) Swap(i, j int) {
 
 func (l DisplayInstallations) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
+}
+
+type InstallationAction struct {
+	Action    string
+	Timestamp time.Time
+	Status    string
 }
 
 // ListInstallations lists installed bundles by their claims.
