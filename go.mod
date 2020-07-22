@@ -2,15 +2,19 @@ module get.porter.sh/porter
 
 go 1.13
 
-replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
+replace (
+	// https://github.com/cnabio/cnab-go/pull/225
+	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.12.1-beta1.0.20200721195107-a83b6fd3ce7a
 
-replace golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
+	// See https://github.com/containerd/containerd/issues/3031
+	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
+	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 
-replace github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-acceptstdin
+	github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-acceptstdin
 
-// See https://github.com/containerd/containerd/issues/3031
-// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
-replace github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
+	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
+)
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -20,6 +24,7 @@ require (
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.13.0-beta1
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
+	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 // indirect
 	github.com/containerd/containerd v1.3.0
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect

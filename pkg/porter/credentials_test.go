@@ -186,7 +186,7 @@ func TestGenerateNoCredentialDirectory(t *testing.T) {
 
 	// Write credentials to the real file system for this test, not sure if this test is worth keeping
 	fsStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
-	credStore := credentials.NewCredentialStore(fsStore)
+	credStore := credentials.NewCredentialStore(crud.NewBackingStore(fsStore))
 	p.TestCredentials.CredentialStorage.CredentialsStore = &credStore
 
 	p.TestConfig.SetupPorterHome()

@@ -40,7 +40,7 @@ Optional output formats include json and yaml.`,
 			return opts.ParseFormat()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListInstallations(opts)
+			return p.PrintInstallations(opts)
 		},
 	}
 

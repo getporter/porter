@@ -5,7 +5,6 @@ import (
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,10 +16,9 @@ type TestClaimProvider struct {
 }
 
 func NewTestClaimProvider(t *testing.T) TestClaimProvider {
-	crud := crud.NewMockStore()
 	return TestClaimProvider{
 		t:     t,
-		Store: claim.NewClaimStore(crud, nil, nil),
+		Store: claim.NewMockStore(nil, nil),
 	}
 }
 

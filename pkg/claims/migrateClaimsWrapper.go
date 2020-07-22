@@ -36,24 +36,29 @@ type migrateClaimsWrapper struct {
 	schemaChecked bool
 	schema        storage.Schema
 	*context.Context
-	crud.Store
+	*crud.BackingStore
 	claims claim.Store
 }
 
 func newMigrateClaimsWrapper(cxt *context.Context, wrappedStore crud.Store) *migrateClaimsWrapper {
 	backingStore := crud.NewBackingStore(wrappedStore)
 	return &migrateClaimsWrapper{
-		Context: cxt,
-		Store:   backingStore,
-		claims:  claim.NewClaimStore(backingStore, nil, nil),
+		Context:      cxt,
+		BackingStore: backingStore,
+		claims:       claim.NewClaimStore(backingStore, nil, nil),
 	}
 }
 
 func (w *migrateClaimsWrapper) Connect() error {
+	err := w.BackingStore.Connect()
+	if err != nil {
+		return err
+	}
+
 	migrate := false
 	if !w.schemaChecked {
-		w.schemaChecked = true
-		b, err := w.Store.Read("", "schema")
+		w.AutoClose = false
+		b, err := w.BackingStore.Read("", "schema")
 		if err != nil {
 			if strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
 				// Do a migration if we don't have a schema for the current storage layout
@@ -75,6 +80,8 @@ func (w *migrateClaimsWrapper) Connect() error {
 				return err
 			}
 		}
+		w.schemaChecked = true
+		w.AutoClose = true
 	}
 
 	return nil
@@ -83,7 +90,7 @@ func (w *migrateClaimsWrapper) Connect() error {
 func (w *migrateClaimsWrapper) MigrateAll() error {
 	fmt.Fprint(w.Err, "!!! Migrating claims data to match the CNAB Claim spec https://cdn.cnab.io/schema/cnab-claim-1.0.0-DRAFT+b5ed2f3/claim.schema.json. This is a one-way migration !!!\n")
 
-	installationNames, err := w.Store.List(claim.ItemTypeClaims, "")
+	installationNames, err := w.BackingStore.List(claim.ItemTypeClaims, "")
 	if err != nil {
 		return errors.Wrapf(err, "!!! Migration failed, unable to list installation names")
 	}
@@ -114,7 +121,7 @@ func (w *migrateClaimsWrapper) MigrateAll() error {
 func (w *migrateClaimsWrapper) MigrateInstallation(name string) error {
 	fmt.Fprintf(w.Err, " - Migrating claim %s to the new claim layout...\n", name)
 
-	oldClaimData, err := w.Store.Read(claim.ItemTypeClaims, name)
+	oldClaimData, err := w.BackingStore.Read(claim.ItemTypeClaims, name)
 	if err != nil {
 		return errors.Wrap(err, "could not read claim file")
 	}
