@@ -103,6 +103,14 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not save test credentials")
 }
 
+func (p *TestPorter) AddTestFile(src string, dest string) {
+	if !filepath.IsAbs(src) {
+		src = filepath.Join(p.TestDir, src)
+	}
+
+	p.TestConfig.TestContext.AddTestFile(src, dest)
+}
+
 func (p *TestPorter) CreateBundleDir() string {
 	bundleDir, err := ioutil.TempDir("", "bundle")
 	require.NoError(p.T(), err)

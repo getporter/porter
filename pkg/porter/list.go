@@ -82,28 +82,38 @@ type InstallationAction struct {
 	Status    string
 }
 
-// ListInstallations lists installed bundles by their claims.
-func (p *Porter) ListInstallations(opts ListOptions) error {
+// ListInstallations lists installed bundles.
+func (p *Porter) ListInstallations() (DisplayInstallations, error) {
 	installations, err := p.Claims.ReadAllInstallationStatus()
 	if err != nil {
-		return errors.Wrap(err, "could not list installations")
+		return nil, errors.Wrap(err, "could not list installations")
 	}
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
 		displayInstallation, err := NewDisplayInstallation(installation)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		displayInstallations = append(displayInstallations, displayInstallation)
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 
+	return displayInstallations, nil
+}
+
+// PrintInstallations prints installed bundles.
+func (p *Porter) PrintInstallations(opts ListOptions) error {
+	displayInstallations, err := p.ListInstallations()
+	if err != nil {
+		return err
+	}
+
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, installations)
+		return printer.PrintJson(p.Out, displayInstallations)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, installations)
+		return printer.PrintYaml(p.Out, displayInstallations)
 	case printer.FormatTable:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
