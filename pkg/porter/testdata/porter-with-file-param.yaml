@@ -1,0 +1,27 @@
+name: HELLO_CUSTOM
+version: 0.1.0
+description: "A bundle with a custom action"
+tag: getporter/porter-hello:v0.1.0
+
+parameters:
+  - name: my-file-param
+    description: "My file param"
+    type: file
+    path: /container/path/to/file
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "cat file"
+      command: bash
+      flags:
+        c: '"cat /container/path/to/file"'
+
+uninstall:
+  - exec:
+      description: "cat file"
+      command: bash
+      flags:
+        c: '"cat /container/path/to/file"'

@@ -16,5 +16,5 @@ func (m *Mixin) PrintSchema() error {
 }
 
 func (m *Mixin) GetSchema() (string, error) {
-	return m.schemas.FindString("kubernetes.json")
+	return m.schemas.FindString("./schema/kubernetes.json")
 }

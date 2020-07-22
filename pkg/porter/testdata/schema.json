@@ -264,6 +264,13 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "suffix-arguments": {
+            "items": {
+              "minItems": 1,
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -387,10 +394,6 @@
         ]
       },
       "type": "array"
-    },
-    "invocationImage": {
-      "description": "The name of the container image to tag the invocation image with when it is built",
-      "type": "string"
     },
     "mixins": {
       "items": {

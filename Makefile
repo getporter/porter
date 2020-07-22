@@ -12,10 +12,10 @@ PORTER_HOME = bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
-CLIENT_GOPATH=$(shell go env GOPATH)
+CLIENT_GOPATH = $(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
-BASEURL_FLAG ?= 
+BASEURL_FLAG ?=
 
 GO = GO111MODULE=on go
 
@@ -47,6 +47,7 @@ build-mixin-%: generate
 	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
 
 generate: packr2
+	$(GO) mod tidy
 	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
@@ -124,6 +125,14 @@ publish-mixins:
 
 publish-images:
 	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
+
+start-local-docker-registry:
+	@docker run -d -p 5000:5000 --name registry registry:2
+
+stop-local-docker-registry:
+	@if $$(docker inspect registry > /dev/null 2>&1); then \
+		docker kill registry && docker rm registry ; \
+	fi
 
 # all-bundles loops through all items under the dir provided by the first argument
 # and if the item is a sub-directory containing a porter.yaml file,

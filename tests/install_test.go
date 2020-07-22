@@ -51,9 +51,11 @@ func TestInstall_fileParam(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
 
 	installOpts := porter.InstallOptions{}
 	installOpts.Params = []string{"myfile=./myfile"}
+	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
 
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
@@ -65,7 +67,13 @@ func TestInstall_fileParam(t *testing.T) {
 	// output := p.TestConfig.TestContext.GetOutput()
 	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	fileOutput, err := p.Claims.ReadLastOutput(p.Manifest.Name, "myfile")
+	outputs, err := p.Claims.ReadLastOutputs(p.Manifest.Name)
 	require.NoError(t, err, "ReadLastOutput failed")
-	assert.Equal(t, "Hello World!", string(fileOutput.Value), "expected output to match the decoded file contents")
+	myfile, ok := outputs.GetByName("myfile")
+	require.True(t, ok, "expected myfile output to be persisted")
+	assert.Equal(t, "Hello World!", string(myfile.Value), "expected output to match the decoded file contents")
+	myotherfile, ok := outputs.GetByName("myotherfile")
+	require.True(t, ok, "expected myotherfile output to be persisted")
+	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
+
 }

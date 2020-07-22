@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,6 +85,10 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 
 func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 	p := NewTestPorter(t)
+	cxt := p.TestConfig.TestContext
+
+	// Add manifest which is used to parse parameter sets
+	cxt.AddTestFile("testdata/porter.yaml", config.Name)
 
 	deps := &dependencyExecutioner{}
 
@@ -118,6 +123,7 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 			sharedOptions: sharedOptions{
 				bundleFileOptions: bundleFileOptions{
 					RelocationMapping: "relocation-mapping.json",
+					File:              config.Name,
 				},
 				Name: "MyClaim",
 				Params: []string{

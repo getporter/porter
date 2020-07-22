@@ -117,3 +117,21 @@ func TestMixin_Uninstall(t *testing.T) {
 	step := action.Steps[0]
 	assert.Equal(t, "bash", step.Instruction.Command)
 }
+
+func TestMixin_SuffixArgs(t *testing.T) {
+	os.Setenv(test.ExpectedCommandEnv, `docker build --tag getporter/porter-hello:latest .`)
+	defer os.Unsetenv(test.ExpectedCommandEnv)
+
+	b, err := ioutil.ReadFile("testdata/suffix-args-input.yaml")
+	require.NoError(t, err, "ReadFile failed")
+
+	var action Action
+	err = yaml.Unmarshal(b, &action)
+	require.NoError(t, err, "Unmarshal failed")
+
+	h := NewTestMixin(t)
+	h.In = bytes.NewReader(b)
+
+	err = h.Execute(ExecuteOptions{})
+	require.NoError(t, err)
+}

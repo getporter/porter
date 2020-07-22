@@ -19,7 +19,7 @@ mixins:
 
 name: hello
 version: 0.1.0
-invocationImage: porter-hello:latest
+tag: porter-hello:v0.1.0
 
 install:
 - exec:

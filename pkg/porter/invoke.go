@@ -30,11 +30,6 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return errors.Wrap(err, "unable to pull bundle before invoking the custom action")
 	}
 
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	if err != nil {
-		return err
-	}
-
 	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err

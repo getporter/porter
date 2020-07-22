@@ -32,7 +32,6 @@ name: azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
 tag: getporter/azure-wordpress
-invocationImage: getporter/azure-wordpress-installer
 dockerfile: dockerfile.tmpl
 ```
 
@@ -40,12 +39,9 @@ dockerfile: dockerfile.tmpl
 * `description`: A description of the bundle
 * `version`: The version of the bundle, uses [semver](https://semver.org). Should not have a 'v' prefix.
 * `tag`: The tag to use when the bundle is published to a registry. The format is `REGISTRY/IMAGE`, or optionally `REGISTRY/IMAGE:TAG` 
-   if you do not want the default behavior of defaulting the docker image TAG portion to the version of the bundle.
-* `invocationImage`: OPTIONAL. The tag to use when the invocation image is built and published to a registry. The format is
-    `REGISTRY/IMAGE` or optionally `REGISTRY/IMAGE:TAG` if you do not want the default behavior of defaulting the docker image TAG 
-    portion to the version of the bundle. When omitted the `invocationImage` defaults to the value of `tag` with `-installer` suffixed. 
-    For example if the bundle `tag` is `getporter/porter-hello` and the `version` is `0.1.0`, then the `invocationImage` 
-    will default to `getporter/porter-hello-installer:v0.1.0`
+   if you do not want the default behavior of defaulting the docker image TAG portion to the version of the bundle. The invocation
+   image name will be based on this value.  For example, if the bundle `tag` is `getporter/porter-hello` and the `version` is `0.1.0`,
+   then the invocation image name will be `getporter/porter-hello-installer:v0.1.0`
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
@@ -291,11 +287,13 @@ dependencies:
 
 ## Images
 
-The `images` section of the Porter manifest corresponds to the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps).
-These are images used in the bundle and declaring them enables Porter to manage them for you:
+The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps)
+section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
 
 * publishing the bundle [copies referenced images into the published bundle](/distribute-bundles/#image-references-after-publishing).
 * [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
+
+Here is an example:
 
 ```yaml
 images:
@@ -307,7 +305,7 @@ images:
 ```
 
 This information is used to generate the corresponding section of the `bundle.json` and can be
-used to in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
+used in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
 the `repository` and `digest` attributes. For example:
 
 ```
@@ -315,6 +313,26 @@ image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
 ```
 
 At runtime, these will be updated appropriately if a bundle has been [copied](/copy-bundles). Note that while `tag` is available, you should prefer the use of `digest`.
+
+Here is a breakdown of all the supported fields on an image in this section of the manifest:
+
+* `description`: a description of the image
+* `imageType`: the type of image (most commonly, "docker")
+* `repository`: the name of the image, of the form REGISTRY/ORG/IMAGE
+* `digest`: the repository digest of the image (not to be confused with the image id)
+* `size`: the image size in bytes
+* `mediaType`: the media type of the image
+* `labels`: key/value pairs used to specify identifying attributes of the image
+* `tag`: the tag of the image (only recommended when/if digest isn't known/available)
+
+A last note on `digest`.  Taking the example of the library `nginx` Docker image, we can get the repository digest like so:
+
+```console
+ $ docker inspect nginx | jq -r '.[].RepoDigests'
+[
+  "nginx@sha256:a93c8a0b0974c967aebe868a186e5c205f4d3bcb5423a56559f2f9599074bbcd"
+]
+```
 
 ## Custom
 

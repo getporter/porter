@@ -28,8 +28,13 @@ type ExecutableAction interface {
 
 type ExecutableStep interface {
 	GetCommand() string
+	//GetArguments() puts the arguments at the beginning of the command
 	GetArguments() []string
 	GetFlags() Flags
+}
+
+type HasOrderedArguments interface {
+	GetSuffixArguments() []string
 }
 
 type HasCustomDashes interface {
@@ -77,11 +82,22 @@ func ExecuteSingleStepAction(cxt *context.Context, action ExecutableAction) (str
 // ExecuteStep runs the command represented by an ExecutableStep, piping stdout/stderr
 // back to the context and returns the buffered output for subsequent processing.
 func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
+	// Identify if any suffix arguments are defined
+	var suffixArgs []string
+	orderedArgs, ok := step.(HasOrderedArguments)
+	if ok {
+		suffixArgs = orderedArgs.GetSuffixArguments()
+	}
+
+	// Preallocate an array big enough to hold all arguments
 	arguments := step.GetArguments()
 	flags := step.GetFlags()
-	args := make([]string, len(arguments), 1+len(arguments)+len(flags)*2)
+	args := make([]string, len(arguments), 1+len(arguments)+len(flags)*2 + len(suffixArgs))
 
+	// Copy all prefix arguments
 	copy(args, arguments)
+
+	// Copy all flags
 	dashes := DefaultFlagDashes
 	if dashing, ok := step.(HasCustomDashes); ok {
 		dashes = dashing.GetDashes()
@@ -92,6 +108,9 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	// It doesn't show up any differently in the printed command, but it matters to how the command
 	// it executed against the system.
 	args = splitCommand(args)
+
+	// Append any final suffix arguments
+	args = append(args, suffixArgs...)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
 	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))

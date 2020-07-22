@@ -1,4 +1,5 @@
 const { events, Job, Group } = require("brigadier");
+const { KindJob } = require("@brigadecore/brigade-utils");
 
 // **********************************************
 // Globals
@@ -18,7 +19,6 @@ events.on("issue_comment:edited", handleIssueComment);
 
 events.on("exec", (e, p) => {
   return Group.runAll([
-    verify(e, p),
     build(e, p),
     xbuild(e, p),
     testUnit(e, p),
@@ -27,6 +27,13 @@ events.on("exec", (e, p) => {
     validate(e, p)
   ]);
 });
+
+events.on("test-integration", (e, p) => {
+  return Group.runAll([
+    testIntegration(e, p),
+    testCLI(e, p)
+  ]);
+})
 
 // Although a GH App will trigger 'check_suite:requested' on a push to main branch event,
 // it will not for a tag push, hence the need for this handler
@@ -62,16 +69,6 @@ events.on("publish-examples", (e, p) => {
 
 // Important: each Job name below must only consist of lowercase
 // alphanumeric characters and hyphens, per K8s resource name restrictions
-function verify(e, p) {
-  var goBuild = new GoJob(`${projectName}-verify`);
-
-  goBuild.tasks.push(
-    "make verify"
-  );
-
-  return goBuild;
-}
-
 function build(e, p) {
   var goBuild = new GoJob(`${projectName}-build`);
 
@@ -120,53 +117,29 @@ function testUnit(e, p) {
 // TODO: we could refactor so that this job shares a mount with the build job above,
 // to remove the need of re-building before running test-cli
 function testIntegration(e, p) {
-  var goTest = new GoJob(`${projectName}-testintegration`);
-  // Enable Docker-in-Docker
-  goTest.enableDind();
+  var testInt = new KindJob(`${projectName}-testintegration`, "vdice/go-dind:kind-v0.7.0");
 
-  goTest.env.kubeconfig = {
-    secretKeyRef: {
-      name: "porter-kubeconfig",
-      key: "kubeconfig"
-    }
-  };
-
-  // Set up kubeconfig, docker login, run tests
-  goTest.tasks.push(
-    "mkdir -p ${HOME}/.kube",
-    'echo "${kubeconfig}" > ${HOME}/.kube/config',
-    `docker login ${p.secrets.dockerhubRegistry} \
-      -u ${p.secrets.dockerhubUsername} \
-      -p ${p.secrets.dockerhubPassword}`,
-    `REGISTRY=${p.secrets.dockerhubOrg} make test-integration`
+  testInt.tasks.push(
+    "mkdir -p /go/bin",
+    "cd /src",
+    "trap 'make -f Makefile.kind delete-kind-cluster' EXIT",
+    `make -f Makefile.kind create-kind-cluster`,
+    "make start-local-docker-registry test-integration stop-local-docker-registry"
   );
 
-  return goTest;
+  return testInt;
 }
 
 function testCLI(e, p) {
-  var goTest = new GoJob(`${projectName}-testcli`);
+  var testCLI = new GoJob(`${projectName}-testcli`);
   // Enable Docker-in-Docker
-  goTest.enableDind();
+  testCLI.enableDind();
 
-  goTest.env.kubeconfig = {
-    secretKeyRef: {
-      name: "porter-kubeconfig",
-      key: "kubeconfig"
-    }
-  };
-
-  // Set up kubeconfig, docker login, run tests
-  goTest.tasks.push(
-    "mkdir -p ${HOME}/.kube",
-    'echo "${kubeconfig}" > ${HOME}/.kube/config',
-    `docker login ${p.secrets.dockerhubRegistry} \
-    -u ${p.secrets.dockerhubUsername} \
-    -p ${p.secrets.dockerhubPassword}`,
-    `REGISTRY=${p.secrets.dockerhubOrg} make test-cli`
+  testCLI.tasks.push(
+    "make start-local-docker-registry test-cli stop-local-docker-registry"
   );
 
-  return goTest;
+  return testCLI;
 }
 
 function publishExamples(e, p) {
@@ -214,7 +187,6 @@ function publish(e, p) {
 // using data supplied by a corresponding GitHub webhook, say, on a
 // check_run:rerequested event (see runCheck below)
 checks = {
-  "verify": { runFunc: verify, description: "Verify" },
   "build": { runFunc: build, description: "Build" },
   "validate": { runFunc: validate, description: "Validate" },
   "crossplatformbuild": { runFunc: xbuild, description: "Cross-Platform Build" },
@@ -302,7 +274,7 @@ class GoJob extends Job {
     const gopath = "/go";
     const localPath = gopath + `/src/get.porter.sh/${projectName}`;
 
-    this.image = "quay.io/vdice/go-dind:v0.1.0";
+    this.image = "quay.io/vdice/go-dind:v0.1.2";
 
     this.tasks = [
       // Need to move the source into GOPATH so vendor/ works as desired.

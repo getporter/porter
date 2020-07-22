@@ -113,7 +113,6 @@ Consider the following example:
 name: spring-music
 version: 0.5.0
 description: "Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL"
-invocationImage: jeremyrickard/porter-do:v0.5.0
 tag: jeremyrickard/porter-do-bundle:v0.5.0
 
 images:
@@ -136,7 +135,7 @@ Version: 0.5.0
 
 Invocation Images:
 Image                                            Type     Digest            Original Image
-jeremyrickard/porter-do-bundle@sha256:74b86...   docker   sha256:74b86...   jeremyrickard/porter-do:v0.5.0
+jeremyrickard/porter-do-bundle@sha256:74b86...   docker   sha256:74b86...   jeremyrickard/porter-do-bundle-installer:v0.5.0
 
 Images:
 Name           Type     Image                                            Digest            Original Image

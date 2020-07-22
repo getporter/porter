@@ -2,15 +2,26 @@
 
 [![Build Status](https://dev.azure.com/deislabs/porter/_apis/build/status/porter-release?branchName=main)](https://dev.azure.com/deislabs/porter/_build/latest?definitionId=23&branchName=main)
 
-# Porter is a Cloud Installer
+# Porter
 
-Porter gives you the building blocks to create a cloud installer for your
-application, handling all the necessary infrastructure and configuration setup.
-It is based on the Cloud Native Application Bundle Specification
-([CNAB](https://deislabs.io/cnab)). Porter provides a declarative authoring
-experience that lets you focus on what you know best: your application.
+Package your application artifact, client tools, configuration and deployment
+logic together as a versioned bundle that you can distribute, and then install
+with a single command. Based on the Cloud Native Application Bundle
+Specification, [CNAB](https://deislabs.io/cnab), Porter provides a declarative
+authoring experience that lets you focus on what you know best: your
+application.
 
 <p align="center">Learn all about Porter at <a href="https://porter.sh">porter.sh</a></p>
+
+# Contact
+
+* [Mailing List] - Great for following the project at a high level because it is low traffic, mostly release notes and blog posts on new features.
+* [Slack] - Discuss #porter or #cnab with other users and the maintainers.
+* [Open an Issue] - If you have a bug, feature request or question about Porter, ask on GitHub so that we can prioritize it and make sure you get an answer. If you ask on Slack, we will probably turn around and make an issue anyway. 😉
+
+[Mailing List]: https://porter.sh/mailing-list
+[Slack]: https://porter.sh/community/#slack
+[Open an Issue]: https://github.com/deislabs/porter/issues/new/choose
 
 ---
 
