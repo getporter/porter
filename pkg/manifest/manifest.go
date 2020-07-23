@@ -134,6 +134,43 @@ func (m *Manifest) Validate() error {
 	return result
 }
 
+var templatedOutputRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
+
+func (m *Manifest) getTemplateOutputName(value string) (string, bool) {
+	matches := templatedOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
+}
+
+// GetTemplatedOutputs returns the output definitions for any bundle level outputs
+// that have been templated.
+func (m *Manifest) GetTemplatedOutputs() []OutputDefinition {
+	// TODO: long term we should use a custom type for m.Outputs with its own
+	// deserialization so we can store it as a map but still support it looking
+	// list a yaml list
+	lookup := make(map[string]OutputDefinition, len(m.Outputs))
+	for _, o := range m.Outputs {
+		lookup[o.Name] = o
+	}
+
+	outputs := make([]OutputDefinition, 0, len(m.TemplateVariables))
+	for _, tmplVar := range m.TemplateVariables {
+		if name, ok := m.getTemplateOutputName(tmplVar); ok {
+			outputDef, ok := lookup[name]
+			if !ok {
+				// Only return bundle level definitions
+				continue
+			}
+			outputs = append(outputs, outputDef)
+		}
+	}
+	return outputs
+}
+
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
 	Name      string          `yaml:"name"`
@@ -760,4 +797,22 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 		break // There is only one extension anyway but break for clarity
 	}
 	return nil
+}
+
+// Convert a parameter name to an environment variable.
+// Anything more complicated should define the variable explicitly.
+func ParamToEnvVar(name string) string {
+	name = strings.ToUpper(name)
+	fixer := strings.NewReplacer("-", "_", ".", "_")
+	return fixer.Replace(name)
+}
+
+// GetParameterSourceName builds the parameter source name used by Porter
+// internally for wiring up an output to a parameter.
+func GetParameterSourceEnvVar(outputName string) string {
+	return fmt.Sprintf("PORTER_%s_OUTPUT", ParamToEnvVar(outputName))
+}
+
+func GetParameterSourceName(outputName string) string {
+	return fmt.Sprintf("porter-%s-output", outputName)
 }

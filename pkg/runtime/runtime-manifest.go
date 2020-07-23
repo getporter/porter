@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
@@ -79,13 +78,15 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func resolveParameter(pd manifest.ParameterDefinition) (string, error) {
+func resolveParameter(pd manifest.ParameterDefinition) string {
 	if pd.Destination.EnvironmentVariable != "" {
-		return os.Getenv(pd.Destination.EnvironmentVariable), nil
-	} else if pd.Destination.Path != "" {
-		return pd.Destination.Path, nil
+		return os.Getenv(pd.Destination.EnvironmentVariable)
 	}
-	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
+	if pd.Destination.Path != "" {
+		return pd.Destination.Path
+	}
+	envVar := manifest.ParamToEnvVar(pd.Name)
+	return os.Getenv(envVar)
 }
 
 func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -100,7 +101,7 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 
 func (m *RuntimeManifest) resolveBundleOutput(def manifest.OutputDefinition) (string, error) {
 	// Get the output's value from the injected parameter source
-	psParamEnv := fmt.Sprintf("PORTER_%s_OUTPUT", configadapter.ParamToEnvVar(def.Name))
+	psParamEnv := manifest.GetParameterSourceEnvVar(def.Name)
 	outputValue, ok := os.LookupEnv(psParamEnv)
 	if !ok {
 		return "", errors.Errorf("No parameter source was injected for output %s", def.Name)
@@ -204,11 +205,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		var val string
-		val, err := resolveParameter(param)
-		if err != nil {
-			return nil, err
-		}
+		val := resolveParameter(param)
 		if param.Sensitive {
 			m.setSensitiveValue(val)
 		}
@@ -234,9 +231,9 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		// See https://github.com/deislabs/porter/issues/855
 		m.setSensitiveValue(stepOutput)
 	}
+
 	// Iterate through the bundle-level manifests and resolve for interpolation
-	for _, outputDef := range m.Outputs {
-		// TODO: want only output variables
+	for _, outputDef := range m.GetTemplatedOutputs() {
 		// TODO: look into how applyTo will make this throw errors in some cases
 
 		val, err := m.resolveBundleOutput(outputDef)

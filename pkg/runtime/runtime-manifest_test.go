@@ -117,7 +117,8 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
 	for _, step := range rm.Install {
-		rm.ResolveStep(step)
+		err := rm.ResolveStep(step)
+		require.NoError(t, err)
 	}
 
 	s := rm.Install[0]
@@ -686,7 +687,6 @@ func TestManifest_ApplyStepOutputs(t *testing.T) {
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
-	depStep := rm.Install[0]
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
 

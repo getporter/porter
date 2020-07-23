@@ -3,8 +3,6 @@ package configadapter
 import (
 	"fmt"
 	"path"
-	"regexp"
-	"strings"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/config"
@@ -164,7 +162,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			}
 		} else {
 			p.Destination = &bundle.Location{
-				EnvironmentVariable: ParamToEnvVar(param.Name),
+				EnvironmentVariable: manifest.ParamToEnvVar(param.Name),
 			}
 		}
 
@@ -322,25 +320,15 @@ func (c *ManifestConverter) generateParameterSources(b *bundle.Bundle) extension
 		ps[p.Name] = pso
 	}
 
-	for _, v := range c.Manifest.TemplateVariables {
-		outputName, ok := c.getTemplateOutputName(v)
-		if !ok {
-			continue
-		}
-
-		// Check if a bundle level output is defined, could be step level
-		if _, ok := b.Outputs[outputName]; !ok {
-			continue
-		}
-
-		wiringName, p, def := c.generateOutputWiringParameter(*b, outputName)
+	for _, outputDef := range c.Manifest.GetTemplatedOutputs() {
+		wiringName, p, def := c.generateOutputWiringParameter(*b, outputDef.Name)
 		if b.Parameters == nil {
 			b.Parameters = make(map[string]bundle.Parameter, 1)
 		}
 		b.Parameters[wiringName] = p
 		b.Definitions[wiringName] = &def
 
-		pso := c.generateParameterSource(outputName)
+		pso := c.generateParameterSource(outputDef.Name)
 		ps[wiringName] = pso
 	}
 
@@ -348,14 +336,14 @@ func (c *ManifestConverter) generateParameterSources(b *bundle.Bundle) extension
 }
 
 func (c *ManifestConverter) generateOutputWiringParameter(b bundle.Bundle, outputName string) (string, bundle.Parameter, definition.Schema) {
-	wiringName := fmt.Sprintf("porter-%s-output", outputName)
+	wiringName := manifest.GetParameterSourceName(outputName)
 
 	wiringParam := bundle.Parameter{
 		Definition:  wiringName,
 		Description: fmt.Sprintf("Wires up the %s output for use as a parameter. Porter internal parameter that should not be set manually.", outputName),
 		Required:    false,
 		Destination: &bundle.Location{
-			EnvironmentVariable: fmt.Sprintf("PORTER_%s_OUTPUT", ParamToEnvVar(outputName)),
+			EnvironmentVariable: manifest.GetParameterSourceEnvVar(outputName),
 		},
 	}
 
@@ -379,18 +367,6 @@ func (c *ManifestConverter) generateParameterSource(outputName string) extension
 			},
 		},
 	}
-}
-
-var outputNameRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
-
-func (c *ManifestConverter) getTemplateOutputName(value string) (string, bool) {
-	matches := outputNameRegex.FindStringSubmatch(value)
-	if len(matches) < 2 {
-		return "", false
-	}
-
-	outputName := matches[1]
-	return outputName, true
 }
 
 func toBool(value bool) *bool {
@@ -461,12 +437,4 @@ func lookupExtensionKey(name string) string {
 		key = supportedExt.Key
 	}
 	return key
-}
-
-// Convert a parameter name to an environment variable.
-// Anything more complicated should define the variable explicitly.
-func ParamToEnvVar(name string) string {
-	name = strings.ToUpper(name)
-	fixer := strings.NewReplacer("-", "_", ".", "_")
-	return fixer.Replace(name)
 }
