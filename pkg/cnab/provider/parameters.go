@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/valuesource"
 
@@ -19,7 +20,7 @@ import (
 // of parameters.
 func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
 	mergedParams := make(valuesource.Set, len(args.Params))
-	paramSources, err := r.resolveParameterSources(args)
+	paramSources, err := r.resolveParameterSources(bun, args)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[s
 
 func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
 	// the parameter value (via rawValue) may represent a file on the local filesystem
-	if def.Type == "string" && def.ContentEncoding == "base64" {
+	if cnab.IsFileType(def) {
 		if _, err := r.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := r.FileSystem.ReadFile(rawValue)
 			if err != nil {
@@ -88,7 +89,7 @@ func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawVal
 	return rawValue, nil
 }
 
-func (r *Runtime) resolveParameterSources(args ActionArguments) (valuesource.Set, error) {
+func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
 	parameterSources, required, err := r.Extensions.GetParameterSources()
 	if err != nil {
 		return nil, err
@@ -113,7 +114,22 @@ func (r *Runtime) resolveParameterSources(args ActionArguments) (valuesource.Set
 					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
 					return nil, errors.Wrapf(err, "could not set parameter %s from its parameter source, output %s", parameterName, source.OutputName)
 				}
-				values[parameterName] = string(output.Value)
+
+				param, ok := bun.Parameters[parameterName]
+				if !ok {
+					return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
+				}
+
+				def, ok := bun.Definitions[param.Definition]
+				if !ok {
+					return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+				}
+
+				if cnab.IsFileType(def) {
+					values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
+				} else {
+					values[parameterName] = string(output.Value)
+				}
 			}
 		}
 	}

@@ -6,6 +6,17 @@ tag: getporter/exec-outputs:v0.1.0
 mixins:
   - exec
 
+parameters:
+  - name: kubeconfig
+    type: file
+    applyTo:
+      - status
+      - test
+      - uninstall
+    path: /root/.kube/config
+    source:
+      output: kubeconfig
+
 customActions:
   status:
     description: "Parse stdout as json"
@@ -16,18 +27,18 @@ customActions:
 
 install:
   - exec:
-      description: "Create a file"
-      command: ./cluster.sh
-      arguments:
-        - generate-config
-      outputs:
-        - name: config
-          path: config.json
-  - exec:
       description: "Create a file to be captured as a bundle-level output"
       command: ./cluster.sh
       arguments:
         - create-cluster
+  - exec:
+      description: "Create a file"
+      command: ./cluster.sh
+      arguments:
+        - generate-users
+      outputs:
+        - name: users
+          path: users.json
 
 test:
   - exec:
@@ -42,7 +53,7 @@ status:
       description: "Parse stdout as json"
       command: ./cluster.sh
       arguments:
-        - dump-config
+        - dump-users
       outputs:
         - name: user
           jsonPath: '$.user'
@@ -55,7 +66,7 @@ uninstall:
         - uninstall
 
 outputs:
-  - name: config
+  - name: users
     type: string
     applyTo:
       - install

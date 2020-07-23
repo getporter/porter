@@ -475,7 +475,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	args := ActionArguments{
 		Installation: "mybun",
 	}
-	got, err := r.resolveParameterSources(args)
+	got, err := r.resolveParameterSources(bun, args)
 	require.NoError(t, err, "resolveParameterSources failed")
 
 	want := valuesource.Set{"foo": "abc123"}

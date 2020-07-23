@@ -28,15 +28,25 @@ users:
 EOF
 }
 
-generate-config() {
-    echo '{"user": "sally"}' > config.json
+ensure-config() {
+    if [ ! -f "/root/.kube/config" ]; then
+      echo "kubeconfig not found"
+      exit 1
+    fi
 }
 
-dump-config() {
+generate-users() {
+    ensure-config
+    echo '{"user": "sally"}' > users.json
+}
+
+dump-users() {
+    ensure-config
     echo '{"user": "sally"}'
 }
 
 uninstall() {
+  ensure-config
   echo 'Uninstalling Cluster...'
 }
 

@@ -24,9 +24,9 @@ func TestExecOutputs(t *testing.T) {
 	defer CleanupCurrentBundle(p)
 
 	// Verify that its file output was captured
-	configOutput, err := p.ReadBundleOutput("config", p.Manifest.Name)
-	require.NoError(t, err, "could not read config output")
-	assert.Equal(t, fmt.Sprintln(`{"user": "sally"}`), configOutput, "expected the config output to be populated correctly")
+	usersOutput, err := p.ReadBundleOutput("users", p.Manifest.Name)
+	require.NoError(t, err, "could not read users output")
+	assert.Equal(t, fmt.Sprintln(`{"user": "sally"}`), usersOutput, "expected the users output to be populated correctly")
 
 	// Verify that its bundle level file output was captured
 	opts := porter.OutputListOptions{}
