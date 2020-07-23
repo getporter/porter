@@ -136,8 +136,9 @@ func (m *Manifest) Validate() error {
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name      string `yaml:"name"`
-	Sensitive bool   `yaml:"sensitive"`
+	Name      string          `yaml:"name"`
+	Sensitive bool            `yaml:"sensitive"`
+	Source    ParameterSource `yaml:"source,omitempty"`
 
 	// These fields represent a subset of bundle.Parameter as defined in cnabio/cnab-go,
 	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
@@ -198,6 +199,10 @@ func (pd *ParameterDefinition) AppliesTo(action string) bool {
 		}
 	}
 	return false
+}
+
+type ParameterSource struct {
+	Output string `yaml:"output"`
 }
 
 // CredentialDefinition represents the structure or fields of a credential parameter

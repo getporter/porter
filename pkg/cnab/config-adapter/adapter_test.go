@@ -458,20 +458,33 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 
 	b, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	ps, err := extensions.ReadParameterSources(b)
+	sources, err := extensions.ReadParameterSources(b)
 	require.NoError(t, err, "ReadParameterSources failed")
 
-	assert.Len(t, ps, 1)
-	require.Contains(t, ps, "porter-msg-output", "expected a msg parameter source")
-	namePs := ps["porter-msg-output"]
-	assert.Equal(t, []string{"output"}, namePs.Priority, "expected output to be the only priority source")
+	assert.Len(t, sources, 2)
 
-	require.Contains(t, namePs.Sources, "output", "expected output to be a source")
-	src := namePs.Sources["output"]
+	require.Contains(t, sources, "porter-msg-output", "expected a porter-msg-output parameter source")
+	msg := sources["porter-msg-output"]
+	assert.Equal(t, []string{"output"}, msg.Priority, "expected output to be the only priority source")
+
+	require.Contains(t, msg.Sources, "output", "expected output to be a source")
+	src := msg.Sources["output"]
 	require.IsType(t, extensions.OutputParameterSource{}, src)
 
 	outputSrc := src.(extensions.OutputParameterSource)
 	assert.Equal(t, "msg", outputSrc.OutputName, "expected msg parameter to be sourced from the msg output")
+
+	require.Contains(t, sources, "tfstate", "expected a tfstate parameter source")
+	tfstate := sources["tfstate"]
+	assert.Equal(t, []string{"output"}, tfstate.Priority, "expected output to be the only priority source")
+
+	require.Contains(t, tfstate.Sources, "output", "expected output to be a source")
+	src = tfstate.Sources["output"]
+	require.IsType(t, extensions.OutputParameterSource{}, src)
+
+	outputSrc = src.(extensions.OutputParameterSource)
+	assert.Equal(t, "tfstate", outputSrc.OutputName, "expected tfstate parameter to be sourced from the tfstate output")
+
 }
 
 func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {

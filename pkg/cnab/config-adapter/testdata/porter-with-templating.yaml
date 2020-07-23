@@ -5,10 +5,20 @@ tag: getporterci/hello-with-templating
 mixins:
   - exec
 
+parameters:
+  - name: tfstate
+    type: file
+    path: /cnab/app/tfstate
+    source:
+      output: tfstate
+
 outputs:
   - name: msg
     type: string
     default: ""
+  - name: tfstate
+    type: file
+    path: /cnab/app/outputs/tfstate
 
 install:
   - exec:
@@ -19,6 +29,8 @@ install:
       outputs:
         - name: name
           regex: Hello (.*)
+        - name: tfstate
+          path: /cnab/app/outputs/tfstate
   - exec:
       description: "Use step output"
       command: ./helpers.sh

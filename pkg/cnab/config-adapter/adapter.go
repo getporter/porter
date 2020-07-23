@@ -310,6 +310,18 @@ func (c *ManifestConverter) generateDependencies() extensions.Dependencies {
 func (c *ManifestConverter) generateParameterSources(b *bundle.Bundle) extensions.ParameterSources {
 	ps := extensions.ParameterSources{}
 
+	// Parameter sources come from two places, indirectly from our template wiring
+	// and directly when they use `source` on a parameter
+
+	for _, p := range c.Manifest.Parameters {
+		if p.Source.Output == "" {
+			continue
+		}
+
+		pso := c.generateParameterSource(p.Source.Output)
+		ps[p.Name] = pso
+	}
+
 	for _, v := range c.Manifest.TemplateVariables {
 		outputName, ok := c.getTemplateOutputName(v)
 		if !ok {
