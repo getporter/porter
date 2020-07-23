@@ -4,8 +4,6 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger: none
-pr: 
-  - "*"
 
 pool:
   vmImage: 'Ubuntu 16.04'

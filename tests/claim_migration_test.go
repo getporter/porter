@@ -24,10 +24,9 @@ func TestClaimMigration_List(t *testing.T) {
 	claimsDir := filepath.Join(home, "claims")
 
 	// Remove any rando stuff copied from the dev bin, you won't find this in CI but a local dev run may have it
-	err = p.FileSystem.RemoveAll(claimsDir)
-	require.NoError(t, err, "error removing existing claims directory before test run")
-	err = p.FileSystem.Remove(filepath.Join(home, "schema.json"))
-	require.NoError(t, err, "error removing existing schema.json")
+	// Not checking for an error, since the files won't be there on CI
+	p.FileSystem.RemoveAll(claimsDir)
+	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 
 	// Create unmigrated claim data
 	p.FileSystem.Mkdir(claimsDir, 0755)
