@@ -54,18 +54,7 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 
 	ps, err := ReadParameterSources(*bun)
 
-	require.NotNil(t, ps, "ParameterSources was not populated")
-	require.Len(t, ps, 1, "ParameterSources is the wrong length")
-
-	tfstate := ps["tfstate"]
-	require.NotNil(t, tfstate, "expected parameter sources to have an entry for 'tfstate'")
-	assert.Equal(t, tfstate.Priority, []string{"output"}, "incorrect tfstate.priority")
-	require.Len(t, tfstate.Sources, 1, "tfstate.sources is the wrong length")
-
-	src := tfstate.Sources["output"]
-	require.NotNil(t, src, "expected tfstate sources to have an entry for output")
-	assert.IsType(t, OutputParameterSource{}, src, "incorrect type for tfstate output source")
-
-	outputSrc := src.(OutputParameterSource)
-	assert.Equal(t, "tfstate", outputSrc.OutputName, "expected tfstate parameter to be sourced from the tfstate output")
+	want := ParameterSources{}
+	want.SetParameterFromOutput("tfstate", "tfstate")
+	assert.Equal(t, want, ps)
 }
