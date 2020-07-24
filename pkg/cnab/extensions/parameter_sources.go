@@ -9,9 +9,9 @@ import (
 
 const (
 	// ParameterSourcesExtensionKey represents the full key for the Parameter Sources Extension.
-	ParameterSourcesExtensionKey = "io.cnab.parameter-sources"
+	ParameterSourcesKey = "io.cnab.parameter-sources"
 	// ParameterSourcesExtensionSchema represents the schema for the Docker Extension.
-	ParameterSourcesExtensionSchema = "https://cnab.io/v1/parameter-sources.schema.json"
+	ParameterSourcesSchema = "https://cnab.io/v1/parameter-sources.schema.json"
 	// ParameterSourceTypeOutput defines a type of parameter source that is provided by a bundle output.
 	ParameterSourceTypeOutput = "output"
 )
@@ -20,9 +20,9 @@ const (
 // to default parameter values.
 var ParameterSourcesExtension = RequiredExtension{
 	Shorthand: "parameter-sources",
-	Key:       ParameterSourcesExtensionKey,
-	Schema:    ParameterSourcesExtensionSchema,
-	Reader:    ParameterSourcesExtensionReader,
+	Key:       ParameterSourcesKey,
+	Schema:    ParameterSourcesSchema,
+	Reader:    ParameterSourcesReader,
 }
 
 // ParameterSources describes the set of custom extension metadata associated
@@ -114,36 +114,52 @@ type OutputParameterSource struct {
 	OutputName string `json:"name" mapstructure:"name"`
 }
 
-// ParameterSourcesExtensionReader is a Reader for the ParameterSourcesExtension,
+// ReadParameterSources is a convenience method for returning a bonafide
+// ParameterSources reference after reading from the applicable section from
+// the provided bundle
+func ReadParameterSources(bun bundle.Bundle) (ParameterSources, error) {
+	raw, err := ParameterSourcesReader(bun)
+	if err != nil {
+		return nil, err
+	}
+
+	ps, ok := raw.(ParameterSources)
+	if !ok {
+		return nil, errors.New("unable to read parameter sources extension data")
+	}
+
+	return ps, nil
+}
+
+// ParameterSourcesReader is a Reader for the ParameterSourcesExtension,
 // which reads from the applicable section in the provided bundle and
 // returns a the raw data in the form of an interface
-func ParameterSourcesExtensionReader(bun bundle.Bundle) (interface{}, error) {
-	data, ok := bun.Custom[ParameterSourcesExtensionKey]
+func ParameterSourcesReader(bun bundle.Bundle) (interface{}, error) {
+	data, ok := bun.Custom[ParameterSourcesKey]
 	if !ok {
-		return nil, errors.Errorf("no custom extension configuration found for %s",
-			ParameterSourcesExtensionKey)
+		return nil, errors.Errorf("attempted to read parameter sources from bundle but none are defined")
 	}
 
 	dataB, err := json.Marshal(data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not marshal the untyped %q extension data %q",
-			ParameterSourcesExtensionKey, string(dataB))
+			ParameterSourcesKey, string(dataB))
 	}
 
 	ps := ParameterSources{}
 	err = json.Unmarshal(dataB, &ps)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal the %q extension %q",
-			ParameterSourcesExtensionKey, string(dataB))
+			ParameterSourcesKey, string(dataB))
 	}
 
 	return ps, nil
 }
 
-// GetParameterSourcesExtension checks if the parameter sources extension is present and returns its
+// GetParameterSources checks if the parameter sources extension is present and returns its
 // extension configuration.
-func (e ProcessedExtensions) GetParameterSourcesExtension() (ParameterSources, bool, error) {
-	rawExt, required := e[ParameterSourcesExtensionKey]
+func (e ProcessedExtensions) GetParameterSources() (ParameterSources, bool, error) {
+	rawExt, required := e[ParameterSourcesKey]
 
 	ext, ok := rawExt.(ParameterSources)
 	if !ok && required {
@@ -151,4 +167,10 @@ func (e ProcessedExtensions) GetParameterSourcesExtension() (ParameterSources, b
 	}
 
 	return ext, required, nil
+}
+
+// HasParameterSources returns whether or not the bundle has parameter sources defined.
+func HasParameterSources(b bundle.Bundle) bool {
+	_, ok := b.Custom[ParameterSourcesKey]
+	return ok
 }

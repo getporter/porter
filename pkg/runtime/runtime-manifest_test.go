@@ -117,7 +117,8 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
 	for _, step := range rm.Install {
-		rm.ResolveStep(step)
+		err := rm.ResolveStep(step)
+		require.NoError(t, err)
 	}
 
 	s := rm.Install[0]
@@ -679,19 +680,18 @@ func TestDependency_Validate(t *testing.T) {
 func TestManifest_ApplyStepOutputs(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("../manifest/testdata/simple.porter.yaml", config.Name)
+	cxt.AddTestFile("../manifest/testdata/porter-with-templating.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
-	depStep := rm.Install[0]
-	err = rm.ApplyStepOutputs(depStep, map[string]string{"foo": "bar"})
+	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
 
-	assert.Contains(t, rm.outputs, "foo")
-	assert.Equal(t, "bar", rm.outputs["foo"])
+	assert.Contains(t, rm.outputs, "name")
+	assert.Equal(t, "world", rm.outputs["name"])
 }
 
 func makeBoolPtr(value bool) *bool {

@@ -78,17 +78,15 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func resolveParameter(pd manifest.ParameterDefinition) (string, error) {
-	pe := pd.Name
-	if pd.Destination.IsEmpty() {
-		// Porter by default sets CNAB params to name.ToUpper()
-		return os.Getenv(strings.ToUpper(pe)), nil
-	} else if pd.Destination.EnvironmentVariable != "" {
-		return os.Getenv(pd.Destination.EnvironmentVariable), nil
-	} else if pd.Destination.Path != "" {
-		return pd.Destination.Path, nil
+func resolveParameter(pd manifest.ParameterDefinition) string {
+	if pd.Destination.EnvironmentVariable != "" {
+		return os.Getenv(pd.Destination.EnvironmentVariable)
 	}
-	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
+	if pd.Destination.Path != "" {
+		return pd.Destination.Path
+	}
+	envVar := manifest.ParamToEnvVar(pd.Name)
+	return os.Getenv(envVar)
 }
 
 func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -102,9 +100,13 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 }
 
 func (m *RuntimeManifest) resolveBundleOutput(def manifest.OutputDefinition) (string, error) {
-	// TODO: (carolynvs) implement parameter sources custom extenion
-	// We can't grab outputs from claims anymore
-	return "", nil
+	// Get the output's value from the injected parameter source
+	psParamEnv := manifest.GetParameterSourceEnvVar(def.Name)
+	outputValue, ok := os.LookupEnv(psParamEnv)
+	if !ok {
+		return "", errors.Errorf("No parameter source was injected for output %s", def.Name)
+	}
+	return outputValue, nil
 }
 
 func (m *RuntimeManifest) GetSensitiveValues() []string {
@@ -164,7 +166,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	return nil
 }
 
-func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[string]string) error {
+func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
@@ -198,16 +200,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	params := make(map[string]interface{})
 	bun["parameters"] = params
 	for _, param := range m.Parameters {
-		if !param.AppliesTo(string(m.Action)) {
+		if !param.AppliesTo(m.Action) {
 			continue
 		}
 
 		pe := param.Name
-		var val string
-		val, err := resolveParameter(param)
-		if err != nil {
-			return nil, err
-		}
+		val := resolveParameter(param)
 		if param.Sensitive {
 			m.setSensitiveValue(val)
 		}
@@ -233,8 +231,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		// See https://github.com/deislabs/porter/issues/855
 		m.setSensitiveValue(stepOutput)
 	}
+
 	// Iterate through the bundle-level manifests and resolve for interpolation
-	for _, outputDef := range m.Outputs {
+	for _, outputDef := range m.GetTemplatedOutputs() {
+		// TODO: ApplyTo can impact if the output is available
+		// See https://github.com/deislabs/porter/issues/1159
+
 		val, err := m.resolveBundleOutput(outputDef)
 		if err != nil {
 			return nil, err

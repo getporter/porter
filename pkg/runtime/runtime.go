@@ -100,7 +100,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 				return errors.Wrap(err, "could not read step outputs")
 			}
 
-			err = r.RuntimeManifest.ApplyStepOutputs(step, outputs)
+			err = r.RuntimeManifest.ApplyStepOutputs(outputs)
 			if err != nil {
 				return err
 			}
