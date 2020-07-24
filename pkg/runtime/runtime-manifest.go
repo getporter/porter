@@ -234,7 +234,8 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	// Iterate through the bundle-level manifests and resolve for interpolation
 	for _, outputDef := range m.GetTemplatedOutputs() {
-		// TODO: look into how applyTo will make this throw errors in some cases
+		// TODO: ApplyTo can impact if the output is available
+		// See https://github.com/deislabs/porter/issues/1159
 
 		val, err := m.resolveBundleOutput(outputDef)
 		if err != nil {

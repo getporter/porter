@@ -125,7 +125,7 @@ func ReadParameterSources(bun bundle.Bundle) (ParameterSources, error) {
 
 	ps, ok := raw.(ParameterSources)
 	if !ok {
-		return nil, errors.New("unable to read dependencies extension data")
+		return nil, errors.New("unable to read parameter sources extension data")
 	}
 
 	return ps, nil
