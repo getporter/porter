@@ -88,6 +88,7 @@ func (a *Actions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+var _ builder.HasOrderedArguments = Step{}
 var _ builder.ExecutableStep = Step{}
 var _ builder.StepWithOutputs = Step{}
 
@@ -96,12 +97,13 @@ type Step struct {
 }
 
 type Instruction struct {
-	Description    string        `yaml:"description"`
-	Command        string        `yaml:"command"`
-	Arguments      []string      `yaml:"arguments,omitempty"`
-	Flags          builder.Flags `yaml:"flags,omitempty"`
-	Outputs        []Output      `yaml:"outputs,omitempty"`
-	SuppressOutput bool          `yaml:"suppress-output,omitempty"`
+	Description     string        `yaml:"description"`
+	Command         string        `yaml:"command"`
+	Arguments       []string      `yaml:"arguments,omitempty"`
+	SuffixArguments []string      `yaml:"suffix-arguments,omitempty"`
+	Flags           builder.Flags `yaml:"flags,omitempty"`
+	Outputs         []Output      `yaml:"outputs,omitempty"`
+	SuppressOutput  bool          `yaml:"suppress-output,omitempty"`
 }
 
 func (s Step) GetCommand() string {
@@ -110,6 +112,10 @@ func (s Step) GetCommand() string {
 
 func (s Step) GetArguments() []string {
 	return s.Arguments
+}
+
+func (s Step) GetSuffixArguments() []string {
+	return s.SuffixArguments
 }
 
 func (s Step) GetFlags() builder.Flags {

@@ -29,6 +29,8 @@ exec:
     repeated-flag:
     - flag-value1
     - flag-value2
+  suffix-arguments:
+  - suffix-arg1
   suppress-output: false
   outputs:
   - name: NAME
@@ -42,7 +44,7 @@ exec:
 This is executed as:
 
 ```
-$ cmd arg1 arg2 -a flag-value --long-flag true --repeated-flag flag-value1 --repeated-flag flag-value2
+$ cmd arg1 arg2 -a flag-value --long-flag true --repeated-flag flag-value1 --repeated-flag flag-value2 suffix-arg1
 ```
 
 ### Suppress Output

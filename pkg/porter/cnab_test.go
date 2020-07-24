@@ -104,12 +104,42 @@ func TestParseParamSets_viaPathOrName(t *testing.T) {
 		},
 	}
 
-	err := opts.parseParamSets(p.Porter)
+	err := opts.Validate([]string{}, p.Porter)
+	assert.NoError(t, err)
+
+	err = opts.parseParamSets(p.Porter)
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
 		"PARAM2": "VALUE2",
 		"foo":    "foo_value",
+	}
+	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
+}
+
+func TestParseParamSets_FileType(t *testing.T) {
+	p := NewTestPorter(t)
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
+
+	opts := sharedOptions{
+		ParameterSets: []string{
+			"/paramset.json",
+		},
+		bundleFileOptions: bundleFileOptions{
+			File: "porter.yaml",
+		},
+	}
+
+	err := opts.Validate([]string{}, p.Porter)
+	assert.NoError(t, err)
+
+	err = opts.parseParamSets(p.Porter)
+	assert.NoError(t, err)
+
+	wantParams := map[string]string{
+		"my-file-param": "/local/path/to/my-file-param",
 	}
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }

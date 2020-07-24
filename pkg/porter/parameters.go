@@ -307,6 +307,23 @@ func (p *Porter) loadParameterSets(params []string) (valuesource.Set, error) {
 			return nil, err
 		}
 
+		// A parameter may correspond to a Porter-specific parameter type of 'file'
+		// If so, add value (filepath) directly to map and remove from pset
+		for _, paramDef := range p.Manifest.Parameters {
+			if paramDef.Type == "file" {
+				for i, param := range pset.Parameters {
+					if param.Name == paramDef.Name {
+						// Pass through value (filepath) directly to resolvedParameters
+						resolvedParameters[param.Name] = param.Source.Value
+						// Eliminate this param from pset to prevent its resolution by
+						// the cnab-go library, which doesn't support this parameter type
+						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]
+						pset.Parameters = pset.Parameters[:len(pset.Parameters)-1]
+					}
+				}
+			}
+		}
+
 		rc, err := p.Parameters.ResolveAll(pset)
 		if err != nil {
 			return nil, err

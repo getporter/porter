@@ -106,3 +106,34 @@ func Test_splitCommand(t *testing.T) {
 		assert.Equal(t, []string{"cmd", "--myarg", `'Patty O'Brien' true`}, result, "unmatched single quotes should cause the grouping to fail")
 	})
 }
+
+var _ HasOrderedArguments = TestOrderedStep{}
+
+type TestOrderedStep struct {
+	TestStep
+	SuffixArguments []string
+}
+
+func (s TestOrderedStep) GetSuffixArguments() []string {
+	return s.SuffixArguments
+}
+
+func TestExecuteStep_HasOrderedArguments(t *testing.T) {
+	c := context.NewTestContext(t)
+	step := TestOrderedStep{
+		TestStep: TestStep{
+			Command:   "docker",
+			Arguments: []string{"build"},
+			Flags: []Flag{
+				NewFlag("t", "getporter/porter-hello:latest"),
+			},
+		},
+		SuffixArguments: []string{"."},
+	}
+
+	os.Setenv(test.ExpectedCommandEnv, "docker build -t getporter/porter-hello:latest .")
+	defer os.Unsetenv(test.ExpectedCommandEnv)
+
+	_, err := ExecuteStep(c.Context, step)
+	require.NoError(t, err, "ExecuteStep failed")
+}
