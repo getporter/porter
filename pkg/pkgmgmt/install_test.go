@@ -1,6 +1,7 @@
 package pkgmgmt
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -75,7 +76,8 @@ func TestInstallOptions_ValidateFeedURL(t *testing.T) {
 			FeedURL: "$://example.com",
 		}
 		err := opts.validateFeedURL()
-		require.EqualError(t, err, "invalid --feed-url $://example.com: parse $://example.com: first path segment in URL cannot contain colon")
+		assert.Contains(t, err.Error(), fmt.Sprintf("invalid --feed-url %s", opts.FeedURL))
+		assert.Contains(t, err.Error(), "first path segment in URL cannot contain colon")
 	})
 }
 
@@ -100,7 +102,8 @@ func TestInstallOptions_ValidateURL(t *testing.T) {
 			URL: "$://example.com",
 		}
 		err := opts.validateURL()
-		require.EqualError(t, err, "invalid --url $://example.com: parse $://example.com: first path segment in URL cannot contain colon")
+		assert.Contains(t, err.Error(), fmt.Sprintf("invalid --url %s", opts.URL))
+		assert.Contains(t, err.Error(), "first path segment in URL cannot contain colon")
 	})
 }
 
