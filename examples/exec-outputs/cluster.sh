@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 create-cluster() {
 echo "Creating the cluster..."
 # This pretends to create a kubernetes cluster
@@ -35,14 +37,30 @@ ensure-config() {
     fi
 }
 
+ensure-users() {
+    if [ ! -f "/cnab/app/users.json" ]; then
+      echo "users.json not found"
+      exit 1
+    fi
+}
+
 generate-users() {
     ensure-config
-    echo '{"user": "sally"}' > users.json
+    echo '{"users": ["sally"]}' > users.json
+    cat users.json
+}
+
+add-user() {
+  ensure-config
+  ensure-users
+  cat users.json | jq ".users += [\"$1\"]" > users.json.new
+  mv users.json.new users.json
 }
 
 dump-users() {
     ensure-config
-    echo '{"user": "sally"}'
+    ensure-users
+    cat users.json
 }
 
 uninstall() {

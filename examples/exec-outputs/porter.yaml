@@ -2,6 +2,7 @@ name: exec-outputs
 version: 0.1.0
 description: "An example Porter bundle demonstrating exec mixin outputs"
 tag: getporter/exec-outputs:v0.1.0
+dockerfile: Dockerfile.tmpl
 
 mixins:
   - exec
@@ -10,35 +11,54 @@ parameters:
   - name: kubeconfig
     type: file
     applyTo:
-      - status
+      - add-user
+      - get-users
       - test
       - uninstall
     path: /root/.kube/config
     source:
       output: kubeconfig
-
-customActions:
-  status:
-    description: "Parse stdout as json"
-    modifies: true
-  test:
-    description: "Scrape stdout with regex"
-    modifies: true
+  - name: users
+    type: file
+    applyTo:
+      - add-user
+      - get-users
+    path: /cnab/app/users.json
+    source:
+      output: users
+  - name: username
+    type: string
+    default: wei
+    applyTo:
+      - add-user
 
 install:
   - exec:
-      description: "Create a file to be captured as a bundle-level output"
+      description: "Create the kubeconfig"
       command: ./cluster.sh
       arguments:
         - create-cluster
   - exec:
-      description: "Create a file"
+      description: "Create users file"
       command: ./cluster.sh
       arguments:
         - generate-users
       outputs:
-        - name: users
-          path: users.json
+        - name: admin
+          jsonPath: "$.users[0]"
+  - exec:
+      description: "Use a step-level output"
+      command: echo
+      arguments:
+        - "The admin user is: {{ bundle.outputs.admin }}"
+      
+add-user:
+  - exec:
+      description: "Edit a bundle-level output passed in as a parameter"
+      command: ./cluster.sh
+      arguments:
+        - add-user
+        - "{{ bundle.parameters.username }}"
 
 test:
   - exec:
@@ -48,15 +68,15 @@ test:
         - name: failed-tests
           regex: '--- FAIL: (.*) \(.*\)'
 
-status:
+get-users:
   - exec:
-      description: "Parse stdout as json"
+      description: "Parse stdout with jsonPath"
       command: ./cluster.sh
       arguments:
         - dump-users
       outputs:
-        - name: user
-          jsonPath: '$.user'
+        - name: user-names
+          jsonPath: '$.users'
 
 uninstall:
   - exec:
@@ -67,17 +87,19 @@ uninstall:
 
 outputs:
   - name: users
-    type: string
+    type: file
+    path: /cnab/app/users.json
     applyTo:
       - install
+      - add-user
   - name: failed-tests
     type: string
     applyTo:
       - test
-  - name: user
+  - name: user-names
     type: string
     applyTo:
-      - status
+      - get-users
   - name: kubeconfig
     type: file
     path: /root/.kube/config

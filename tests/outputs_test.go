@@ -26,7 +26,7 @@ func TestExecOutputs(t *testing.T) {
 	// Verify that its file output was captured
 	usersOutput, err := p.ReadBundleOutput("users", p.Manifest.Name)
 	require.NoError(t, err, "could not read users output")
-	assert.Equal(t, fmt.Sprintln(`{"user": "sally"}`), usersOutput, "expected the users output to be populated correctly")
+	assert.Equal(t, fmt.Sprintln(`{"users": ["sally"]}`), usersOutput, "expected the users output to be populated correctly")
 
 	// Verify that its bundle level file output was captured
 	opts := porter.OutputListOptions{}
@@ -45,12 +45,13 @@ func TestExecOutputs(t *testing.T) {
 	assert.Equal(t, "file", kubeconfigOutput.Type)
 	assert.Contains(t, kubeconfigOutput.Value, "apiVersion")
 
-	invokeExecOutputsBundle(p, "status")
+	invokeExecOutputsBundle(p, "add-user")
+	invokeExecOutputsBundle(p, "get-users")
 
 	// Verify that its jsonPath output was captured
-	userOutput, err := p.ReadBundleOutput("user", p.Manifest.Name)
-	require.NoError(t, err, "could not read user output")
-	assert.Equal(t, "sally", userOutput, "expected the user output to be populated correctly")
+	userOutput, err := p.ReadBundleOutput("user-names", p.Manifest.Name)
+	require.NoError(t, err, "could not read user-names output")
+	assert.Equal(t, `["sally","wei"]`, userOutput, "expected the user-names output to be populated correctly")
 
 	invokeExecOutputsBundle(p, "test")
 
