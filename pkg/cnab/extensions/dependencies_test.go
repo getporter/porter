@@ -33,3 +33,52 @@ func TestReadDependencyProperties(t *testing.T) {
 	assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
 
 }
+
+func TestSortDependenciesBySequence(t *testing.T) {
+
+	bun := &bundle.Bundle{
+		Custom: map[string]interface{}{
+			DependenciesKey: Dependencies{
+				Sequence: []string{"nginx", "storage", "mysql"},
+				Requires: map[string]Dependency{
+					"mysql": Dependency{
+						Bundle: "somecloud/mysql",
+						Version: &DependencyVersion{
+							AllowPrereleases: true,
+							Ranges:           []string{"5.7.x"},
+						},
+					},
+					"storage": Dependency{
+						Bundle: "somecloud/blob-storage",
+					},
+					"nginx": {
+						Bundle: "localhost:5000/nginx:1.19",
+					},
+				},
+			},
+		},
+	}
+
+	deps, err := ReadDependencies(bun)
+	require.NoError(t, err, "unable to read dependencies extension data")
+
+	assert.NotNil(t, deps, "Dependencies was not populated")
+	assert.Len(t, deps.Requires, 3, "Dependencies.Requires is the wrong length")
+
+	dep := deps.Requires["storage"]
+	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
+
+	dep = deps.Requires["mysql"]
+	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
+
+	dep = deps.Requires["nginx"]
+	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'nginx'")
+
+	// Get the keys out of the deps.Requires map
+	keys := make([]string, 0, len(deps.Requires))
+	for k := range deps.Requires {
+		keys = append(keys, k)
+	}
+	// make the bundles are sorted as sequenced
+	assert.EqualValues(t, deps.Sequence, keys)
+}

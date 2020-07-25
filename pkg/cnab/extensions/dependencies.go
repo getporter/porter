@@ -25,6 +25,10 @@ var DependenciesExtension = RequiredExtension{
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
 // https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md
 type Dependencies struct {
+
+	// Sequence is a list to order the dependencies
+	Sequence []string `json:"sequence,omitempty" mapstructure:"sequence"`
+
 	// Requires is a list of bundles required by this bundle
 	Requires map[string]Dependency `json:"requires,omitempty" mapstructure:"requires"`
 }
@@ -59,6 +63,16 @@ func ReadDependencies(bun *bundle.Bundle) (*Dependencies, error) {
 	deps, ok := raw.(*Dependencies)
 	if !ok {
 		return nil, errors.New("unable to read dependencies extension data")
+	}
+
+	if deps.Sequence != nil && len(deps.Sequence) > 0 && len(deps.Sequence) == len(deps.Requires) {
+		sequencedDeps := &Dependencies{}
+		sequencedDeps.Sequence = deps.Sequence
+		sequencedDeps.Requires = make(map[string]Dependency)
+		for _, seq := range sequencedDeps.Sequence {
+			sequencedDeps.Requires[seq] = deps.Requires[seq]
+		}
+		return sequencedDeps, nil
 	}
 
 	return deps, nil
