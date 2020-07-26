@@ -67,8 +67,8 @@ func (m *RuntimeManifest) Validate() error {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
-	for alias := range m.Dependencies {
+	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies.Elements))
+	for alias := range m.Dependencies.Elements {
 		bunD, err := GetDependencyDefinition(m.Context, alias)
 		if err != nil {
 			return err

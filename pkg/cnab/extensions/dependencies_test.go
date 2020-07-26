@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -35,11 +36,12 @@ func TestReadDependencyProperties(t *testing.T) {
 }
 
 func TestSortDependenciesBySequence(t *testing.T) {
+	sequenceMock := []string{"nginx", "storage", "mysql"}
 
 	bun := &bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesKey: Dependencies{
-				Sequence: []string{"nginx", "storage", "mysql"},
+				Sequence: sequenceMock,
 				Requires: map[string]Dependency{
 					"mysql": Dependency{
 						Bundle: "somecloud/mysql",
@@ -75,10 +77,10 @@ func TestSortDependenciesBySequence(t *testing.T) {
 	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'nginx'")
 
 	// Get the keys out of the deps.Requires map
-	keys := make([]string, 0, len(deps.Requires))
-	for k := range deps.Requires {
-		keys = append(keys, k)
-	}
-	// make the bundles are sorted as sequenced
-	assert.EqualValues(t, deps.Sequence, keys)
+	keys := reflect.ValueOf(deps.Requires).MapKeys()
+
+	// assert the bundles are sorted as sequenced
+	assert.EqualValues(t, sequenceMock[0], keys[0].Interface().(string))
+	assert.EqualValues(t, sequenceMock[1], keys[1].Interface().(string))
+	assert.EqualValues(t, sequenceMock[2], keys[2].Interface().(string))
 }
