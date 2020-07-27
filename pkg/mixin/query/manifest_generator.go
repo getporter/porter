@@ -2,6 +2,7 @@ package query
 
 import (
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -44,7 +45,7 @@ func (g ManifestGenerator) buildInputForMixin(mixinName string) BuildInput {
 		}
 	}
 
-	filterSteps := func(action manifest.Action, steps manifest.Steps) {
+	filterSteps := func(action string, steps manifest.Steps) {
 		mixinSteps := manifest.Steps{}
 		for _, step := range steps {
 			if step.GetMixinName() != mixinName {
@@ -52,14 +53,14 @@ func (g ManifestGenerator) buildInputForMixin(mixinName string) BuildInput {
 			}
 			mixinSteps = append(mixinSteps, step)
 		}
-		input.Actions[string(action)] = mixinSteps
+		input.Actions[action] = mixinSteps
 	}
-	filterSteps(manifest.ActionInstall, g.Manifest.Install)
-	filterSteps(manifest.ActionUpgrade, g.Manifest.Upgrade)
-	filterSteps(manifest.ActionUninstall, g.Manifest.Uninstall)
+	filterSteps(claim.ActionInstall, g.Manifest.Install)
+	filterSteps(claim.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(claim.ActionUninstall, g.Manifest.Uninstall)
 
 	for action, steps := range g.Manifest.CustomActions {
-		filterSteps(manifest.Action(action), steps)
+		filterSteps(action, steps)
 	}
 
 	return input

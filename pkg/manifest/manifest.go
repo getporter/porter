@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
 	"github.com/Masterminds/semver"
+	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
@@ -22,6 +24,9 @@ const invalidStepErrorFormat = "validation of action \"%s\" failed"
 type Manifest struct {
 	// ManifestPath is the location from which the manifest was loaded, such as the path on the filesystem or a url.
 	ManifestPath string `yaml:"-"`
+
+	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
+	TemplateVariables []string `yaml:"-"`
 
 	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
@@ -129,10 +134,48 @@ func (m *Manifest) Validate() error {
 	return result
 }
 
+var templatedOutputRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
+
+func (m *Manifest) getTemplateOutputName(value string) (string, bool) {
+	matches := templatedOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	outputName := matches[1]
+	return outputName, true
+}
+
+// GetTemplatedOutputs returns the output definitions for any bundle level outputs
+// that have been templated.
+func (m *Manifest) GetTemplatedOutputs() []OutputDefinition {
+	// TODO: long term we should use a custom type for m.Outputs with its own
+	// deserialization so we can store it as a map but still support it looking
+	// list a yaml list
+	lookup := make(map[string]OutputDefinition, len(m.Outputs))
+	for _, o := range m.Outputs {
+		lookup[o.Name] = o
+	}
+
+	outputs := make([]OutputDefinition, 0, len(m.TemplateVariables))
+	for _, tmplVar := range m.TemplateVariables {
+		if name, ok := m.getTemplateOutputName(tmplVar); ok {
+			outputDef, ok := lookup[name]
+			if !ok {
+				// Only return bundle level definitions
+				continue
+			}
+			outputs = append(outputs, outputDef)
+		}
+	}
+	return outputs
+}
+
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
-	Name      string `yaml:"name"`
-	Sensitive bool   `yaml:"sensitive"`
+	Name      string          `yaml:"name"`
+	Sensitive bool            `yaml:"sensitive"`
+	Source    ParameterSource `yaml:"source,omitempty"`
 
 	// These fields represent a subset of bundle.Parameter as defined in cnabio/cnab-go,
 	// minus the 'Description' field (definition.Schema's will be used) and `Definition` field
@@ -193,6 +236,10 @@ func (pd *ParameterDefinition) AppliesTo(action string) bool {
 		}
 	}
 	return false
+}
+
+type ParameterSource struct {
+	Output string `yaml:"output"`
 }
 
 // CredentialDefinition represents the structure or fields of a credential parameter
@@ -644,14 +691,54 @@ func ReadManifest(cxt *context.Context, path string) (*Manifest, error) {
 		return nil, err
 	}
 
+	tmplResult, err := scanManifestTemplating(data)
+	if err != nil {
+		return nil, err
+	}
+
 	m, err := UnmarshalManifest(cxt, data)
 	if err != nil {
 		return nil, err
 	}
 
 	m.ManifestPath = path
+	m.TemplateVariables = tmplResult.Variables
 
 	return m, nil
+}
+
+// templateScanResult is the result of parsing the mustache templating used in the manifest.
+type templateScanResult struct {
+	// Variables used in the template, e.g.  {{ bundle.parameters.NAME }}
+	Variables []string
+}
+
+func scanManifestTemplating(data []byte) (templateScanResult, error) {
+	const disableHtmlEscaping = true
+	tmpl, err := mustache.ParseStringRaw(string(data), disableHtmlEscaping)
+	if err != nil {
+		return templateScanResult{}, errors.Wrap(err, "error parsing the templating used in the manifest")
+	}
+
+	tags := tmpl.Tags()
+	vars := map[string]struct{}{} // Keep track of unique variable names
+	for _, tag := range tags {
+		if tag.Type() != mustache.Variable {
+			continue
+		}
+
+		vars[tag.Name()] = struct{}{}
+	}
+
+	result := templateScanResult{
+		Variables: make([]string, 0, len(vars)),
+	}
+	for v := range vars {
+		result.Variables = append(result.Variables, v)
+	}
+
+	sort.Strings(result.Variables)
+	return result, nil
 }
 
 func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
@@ -710,4 +797,22 @@ func (r *RequiredExtension) UnmarshalYAML(unmarshal func(interface{}) error) err
 		break // There is only one extension anyway but break for clarity
 	}
 	return nil
+}
+
+// Convert a parameter name to an environment variable.
+// Anything more complicated should define the variable explicitly.
+func ParamToEnvVar(name string) string {
+	name = strings.ToUpper(name)
+	fixer := strings.NewReplacer("-", "_", ".", "_")
+	return fixer.Replace(name)
+}
+
+// GetParameterSourceName builds the parameter source name used by Porter
+// internally for wiring up an output to a parameter.
+func GetParameterSourceEnvVar(outputName string) string {
+	return fmt.Sprintf("PORTER_%s_OUTPUT", ParamToEnvVar(outputName))
+}
+
+func GetParameterSourceName(outputName string) string {
+	return fmt.Sprintf("porter-%s-output", outputName)
 }

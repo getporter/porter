@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -19,7 +20,7 @@ func TestActionInput_MarshalYAML(t *testing.T) {
 	}
 
 	input := &ActionInput{
-		action: manifest.ActionInstall,
+		action: claim.ActionInstall,
 		Steps:  []*manifest.Step{s},
 	}
 

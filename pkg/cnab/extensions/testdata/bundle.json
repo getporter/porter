@@ -43,7 +43,8 @@
     }
   },
   "requiredExtensions": [
-    "io.cnab.dependencies"
+    "io.cnab.dependencies",
+    "io.cnab.parameter-sources"
   ],
   "custom": {
     "com.example.duffle-bag": {
@@ -69,6 +70,16 @@
           }
         }
       }
+    },
+    "io.cnab.parameter-sources": {
+      "tfstate": {
+        "priority": ["output"],
+        "sources": {
+          "output": {
+            "name": "tfstate"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -89,6 +100,10 @@
       "required": [
         "port"
       ]
+    },
+    "tfstate": {
+      "contentEncoding": "base64",
+      "type": "string"
     }
   },
   "parameters": {
@@ -97,6 +112,18 @@
       "destination": {
         "path": "/cnab/is/go"
       }
+    },
+    "tfstate": {
+      "applyTo": [ "upgrade", "uninstall" ],
+      "definition": "tfstate",
+      "required": true
+    }
+  },
+  "outputs": {
+    "tfstate": {
+      "applyTo": [ "install", "upgrade", "uninstall" ],
+      "definition": "tfstate",
+      "path": "/cnab/app/outputs/tfstate"
     }
   }
 }

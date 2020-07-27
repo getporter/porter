@@ -2,12 +2,11 @@ package porter
 
 import (
 	"fmt"
-	"sort"
+
+	"github.com/cnabio/cnab-go/claim"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -40,7 +39,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 	if o.sharedOptions.Name == "" {
 		err := o.sharedOptions.defaultBundleFiles(cxt)
 		if err != nil {
-			return errors.New("bundle instance name must be provided via [--instance|-i INSTANCE]")
+			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
 		}
 	}
 
@@ -51,7 +50,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
 	// Ensure only one argument exists (claim name) if args length non-zero
-	err := o.sharedOptions.validateInstanceName(args)
+	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -59,7 +58,7 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 	// Attempt to derive claim name from context
 	err = o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
-		return errors.Wrap(err, "bundle instance name must be provided")
+		return errors.Wrap(err, "installation name must be provided")
 	}
 
 	return o.ParseFormat()
@@ -75,7 +74,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 
 	output, err := p.ReadBundleOutput(opts.Output, name)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for bundle instance '%s'", opts.Output, name)
+		return errors.Wrapf(err, "unable to read output '%s' for installation '%s'", opts.Output, name)
 	}
 
 	fmt.Fprintln(p.Out, output)
@@ -83,86 +82,76 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 }
 
 type DisplayOutput struct {
-	Name       string
-	Definition definition.Schema
-	Value      string
-	Type       string
+	Name  string
+	Value string
+	Type  string
 }
 
-// ListBundleOutputs lists the outputs for a given bundle,
-// according to the provided claim and display format
-func (p *Porter) ListBundleOutputs(c claim.Claim, format printer.Format) []DisplayOutput {
-	// Get sorted keys for ordered printing
-	keys := make([]string, 0, len(c.Outputs))
-	for k := range c.Outputs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+type DisplayOutputs []DisplayOutput
 
-	outputs := make([]DisplayOutput, 0, len(c.Outputs))
+func NewDisplayOutputs(outputs claim.Outputs, format printer.Format) DisplayOutputs {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
-	for _, name := range keys {
-		do := DisplayOutput{Name: name}
-
-		var outputType string
-		valueStr := fmt.Sprintf("%v", c.Outputs[name])
-		do.Value = valueStr
-
-		if c.Bundle == nil {
-			continue
+	displayOutputs := make(DisplayOutputs, outputs.Len())
+	for i := 0; i < outputs.Len(); i++ {
+		output, _ := outputs.GetByIndex(i)
+		do := DisplayOutput{
+			Name:  output.Name,
+			Value: string(output.Value),
+			Type:  "unknown",
 		}
 
-		output, exists := c.Bundle.Outputs[name]
+		schema, exists := output.GetSchema()
 		if !exists {
 			continue
 		}
 
-		def, exists := c.Bundle.Definitions[output.Definition]
-		if !exists {
-			continue
-		}
-		do.Definition = *def
-
-		outputType, _, err := def.GetType()
+		outputType, _, err := schema.GetType()
 		if err != nil {
-			// Do not have the entire listing fail because of one output type error
-			if p.Debug {
-				fmt.Fprintf(p.Err, "unable to get output type for %s\n", name)
-			}
-			outputType = "unknown"
+			continue
 		}
 		do.Type = outputType
 
 		// Try to figure out if this was originally a file output. Long term, we should find a way to find
 		// and crack open the invocation image to get the porter.yaml
-		if do.Type == "string" && do.Definition.ContentEncoding == "base64" {
+		if do.Type == "string" && schema.ContentEncoding == "base64" {
 			do.Type = "file"
 		}
 
 		// If table output is desired, truncate the value to a reasonable length
 		if format == printer.FormatTable {
-			do.Value = truncateString(valueStr, 60)
+			do.Value = truncateString(do.Value, 60)
 		}
 
-		outputs = append(outputs, do)
+		displayOutputs[i] = do
 	}
 
-	return outputs
+	return displayOutputs
 }
 
-func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
+// ListBundleOutputs lists the outputs for a given bundle,
+// according to the provided claim and display format
+func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	c, err := p.Claims.Read(opts.Name)
+	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	outputs := p.ListBundleOutputs(c, opts.Format)
+	displayOutputs := NewDisplayOutputs(outputs, opts.Format)
+	if err != nil {
+		return nil, err
+	}
+
+	return displayOutputs, nil
+}
+
+func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
+	outputs, err := p.ListBundleOutputs(&opts)
 	if err != nil {
 		return err
 	}
@@ -179,17 +168,14 @@ func (p *Porter) PrintBundleOutputs(opts *OutputListOptions) error {
 	}
 }
 
-// ReadBundleOutput reads a bundle output from a claim
-func (p *Porter) ReadBundleOutput(name, claim string) (string, error) {
-	c, err := p.Claims.Read(claim)
+// ReadBundleOutput reads a bundle output from an installation
+func (p *Porter) ReadBundleOutput(outputName, installation string) (string, error) {
+	o, err := p.Claims.ReadLastOutput(installation, outputName)
 	if err != nil {
 		return "", err
 	}
 
-	if output, exists := c.Outputs[name]; exists {
-		return fmt.Sprintf("%v", output), nil
-	}
-	return "", fmt.Errorf("unable to read output %q for bundle instance %q", name, claim)
+	return fmt.Sprintf("%v", string(o.Value)), nil
 }
 
 func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {

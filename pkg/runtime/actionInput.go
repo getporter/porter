@@ -6,7 +6,7 @@ import (
 )
 
 type ActionInput struct {
-	action manifest.Action
+	action string
 	Steps  []*manifest.Step `yaml:"steps"`
 }
 

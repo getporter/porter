@@ -16,6 +16,8 @@ import (
 )
 
 func TestDependenciesLifecycle(t *testing.T) {
+	t.Skip("TODO: Implement parameter sources #1069")
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -81,16 +83,18 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	require.NoError(p.T(), err, "install of root bundle failed")
 
 	// Verify that the dependency claim is present
-	c, err := p.Claims.Read("wordpress-mysql")
-	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being installed successfully")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
+	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being installed successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), "porter-ci-mysql-"+namespace, c.Parameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
 	assert.Equal(p.T(), "mydb", c.Parameters["database-name"], "the dependency param value for 'dabaase-name' is incorrect")
 
 	// Verify that the bundle claim is present
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being installed successfully")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being installed successfully")
 
 	return namespace
 }
@@ -131,16 +135,20 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
 	// Verify that the dependency claim is upgraded
-	c, err := p.Claims.Read("wordpress-mysql")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), claim.ActionUpgrade, c.Result.Action, "the dependency wasn't recorded as being upgraded")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being upgraded successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUpgrade, c.Action, "the dependency wasn't recorded as being upgraded")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being upgraded successfully")
 
 	// Verify that the bundle claim is upgraded
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), claim.ActionUpgrade, c.Result.Action, "the root bundle wasn't recorded as being upgraded")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being upgraded successfully")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUpgrade, c.Action, "the root bundle wasn't recorded as being upgraded")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being upgraded successfully")
 }
 
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
@@ -159,16 +167,20 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "invoke of root bundle failed")
 
 	// Verify that the dependency claim is invoked
-	c, err := p.Claims.Read("wordpress-mysql")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), "ping", c.Result.Action, "the dependency wasn't recorded as being invoked")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being invoked successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), "ping", c.Action, "the dependency wasn't recorded as being invoked")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being invoked successfully")
 
 	// Verify that the bundle claim is invoked
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), "ping", c.Result.Action, "the root bundle wasn't recorded as being invoked")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being invoked successfully")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), "ping", c.Action, "the root bundle wasn't recorded as being invoked")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being invoked successfully")
 }
 
 func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
@@ -187,10 +199,19 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency claim is uninstalled
-	_, err = p.Claims.Read("wordpress-mysql")
-	assert.EqualError(p.T(), err, "Claim does not exist")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
+	require.NoError(p.T(), err, "could not fetch installation for the dependency")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUninstall, c.Action, "the dependency wasn't recorded as being uninstalled")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being uninstalled successfully")
 
 	// Verify that the bundle claim is uninstalled
-	_, err = p.Claims.Read("wordpress")
-	assert.EqualError(p.T(), err, "Claim does not exist")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
+	require.NoError(p.T(), err, "could not fetch installation for the root bundle")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being uninstalled successfully")
+
 }

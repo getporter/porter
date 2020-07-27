@@ -67,7 +67,7 @@ $ docker run -it --rm \
     getporter/porter install -t getporter/porter-hello:0.1.0
 
 installing hello...
-executing install action from hello (bundle instance: hello)
+executing install action from hello (installation: hello)
 Install Hello World
 Hello World
 execution completed successfully!
