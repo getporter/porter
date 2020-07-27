@@ -27,15 +27,15 @@ for your bundle. This will be the file that you modify and customize for your ap
 
 ## Examine the Porter YAML configuration
 
-Let's look more closely at the bundle manifest, [porter.yaml](quickstart/porter-yaml). 
+Let's look more closely at the bundle manifest, [porter.yaml](porter-yaml). 
 
 ## Build the bundle
 
-Next, build your first bundle, with [porter build](quickstart/build-bundle). 
+Next, build your first bundle, with [porter build](build-bundle). 
 
 ## Bundle actions
 
-Now that you have a bundle, what can you do with it? Let's look more closely at [bundle actions](quickstart/bundle-actions). 
+Now that you have a bundle, what can you do with it? Let's look more closely at [bundle actions](bundle-actions). 
 
 ## Next steps
 
