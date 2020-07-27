@@ -9,7 +9,7 @@ description: "An example Porter configuration"
 # TODO: update the registry to your own, e.g. myregistry/porter-hello
 tag: getporter/porter-hello
 
-# Uncomment the line below to use a template Dockerfile for your invocation image
+# Uncomment the line below to customize the Dockerfile, see https://porter.sh/custom-dockerfile/
 #dockerfile: Dockerfile.tmpl
 
 mixins:
@@ -36,15 +36,17 @@ uninstall:
       arguments:
         - uninstall
 
-
-# See https://porter.sh/author-bundles/#dependencies
-#dependencies:
-#  mysql:
-#    tag: getporter/mysql:v0.1.2
-#    parameters:
-#      database-name: wordpress
-
-# See https://porter.sh/wiring/#credentials
+# Below is an example of how to defined credentials
+# See https://porter.sh/author-bundles/#credentials
 #credentials:
 #  - name: kubeconfig
 #    path: /root/.kube/config
+#  - name: username
+#    env: USERNAME
+
+# Below is an example of how to define parameters
+# See https://porter.sh/author-bundles/#parameters
+#parameters:
+#  - name: mysql_user
+#    type: string
+#    default: wordpress
