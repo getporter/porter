@@ -3,9 +3,6 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
-	// https://github.com/cnabio/cnab-go/pull/225
-	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.12.1-beta1.0.20200721195107-a83b6fd3ce7a
-
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
@@ -22,7 +19,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.13.0-beta1
+	github.com/cnabio/cnab-go v0.13.2
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 // indirect
 	github.com/containerd/containerd v1.3.0
