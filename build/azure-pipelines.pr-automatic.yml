@@ -12,6 +12,7 @@ pool:
 
 variables:
   GOVERSION: '1.13.10'
+  System.Debug: false
 
 jobs:
 - job: setup
