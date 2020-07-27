@@ -22,4 +22,6 @@ Provide other approaches considered prior to deciding on the submitted proposal.
 **Implementation details**
 If applicable, provide potential implementation details assuming the proposal is accepted.
 
-_Note that proposals are expected to remain open for at least one week after being created, to allow time for community feedback._
+# Checklist
+- [ ] An announcement of this proposal has been sent to the Porter mailing list: https://porter.sh/mailing-list
+- [ ] This proposal has remained open for at least one week, to allow time for community feedback.
