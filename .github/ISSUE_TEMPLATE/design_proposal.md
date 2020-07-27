@@ -22,4 +22,4 @@ Provide other approaches considered prior to deciding on the submitted proposal.
 **Implementation details**
 If applicable, provide potential implementation details assuming the proposal is accepted.
 
-_Note that proposals are expected to remain open for one week after being created, to allow time for community feedback._
+_Note that proposals are expected to remain open for at least one week after being created, to allow time for community feedback._
