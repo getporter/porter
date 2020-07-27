@@ -3,7 +3,7 @@ mixins:
 
 name: outputs
 version: 0.1.0
-tag: getporter/outputs-example:v0.1.0
+tag: getporter/outputs-example
 
 credentials:
 - name: kubeconfig

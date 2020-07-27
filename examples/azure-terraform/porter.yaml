@@ -10,7 +10,7 @@ mixins:
 name: azure-terraform
 version: 1.0.0
 description: "An example Porter Bundle using Terraform and Azure"
-tag: getporter/azure-terraform:v1.0.0
+tag: getporter/azure-terraform
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.

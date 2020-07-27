@@ -943,9 +943,8 @@ name: manifest
 
 ```yaml
 name: "azure-wordpress"
-version: "v0.1.0"
-invocationImage: "deislabs/azure-wordpress-ii:v0.1.0"
-tag: "deislabs/azure-wordpress:v0.1.0"
+version: "0.1.0"
+tag: "deislabs/azure-wordpress"
 ```
 
 ---

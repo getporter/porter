@@ -98,7 +98,7 @@ The porter manifest and runtime handles interpreting and executing the logical p
 ```yaml
 name: wordpress
 version: 0.1.0
-tag: getporter/wordpress:v0.1.0
+tag: getporter/wordpress
 
 mixins:
   - helm
@@ -242,7 +242,7 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-tag: porter/wordpress:v0.1.0
+tag: porter/wordpress
 
 parameters:
   - name: wordpress_name
