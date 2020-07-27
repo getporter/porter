@@ -37,9 +37,9 @@ uninstall:
         - uninstall
 ```
 
-This example is directly after running `porter create` and should be modified and customized for your needs. These are not the only configuration options, but let's talk through this example.  
+This example code is created directly after running `porter create` and should be modified and customized for your needs. These are not the only configuration options, but let's talk through this example.  
 
-At the top, specific bundle metadata is defined:
+At the top, the bundle's metadata is defined:
 
 ```yaml
 
@@ -53,7 +53,7 @@ The name configuration is the name of the bundle. This bundle is "HELLO" as in a
 
 The version configuration follows [Semantic Versioning](https://semver.org). A specific version of a bundle provides a set of functionality. 
 
-The description configuration provides addiitonal information about the bundle and its functionality. 
+The description configuration provides insight into what the bundle will install and its capabilities. For example does it install a database server and provide operations for managing it in production including backup and restore?
 
 The tag configuration is used when the bundle is published to a registry in the format of `REGISTRY/IMAGE` or `REGISTRY/IMAGE:TAG`.
 
@@ -75,7 +75,7 @@ mixins:
   - exec:
   ```
 
-The `exec` mixin is used when you want to run shell scripts and commands. 
+The `exec` mixin is used when you want to run shell scripts and commands. Note, that while you can embed bash directly in to the porter.yaml file, it's not a recommended practice as it's not a great experience for the humans who maintain the code. It can be harder to parse for intent, properly escape code within the YAML and test, lint, validate. Check out other [best practices for using the exec mixin](https://porter.sh/best-practices/exec-mixin/).
 
 Each action may have one or more steps to accomplish that action. For the install action:
 
