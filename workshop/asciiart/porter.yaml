@@ -1,11 +1,11 @@
-mixins:
-  - exec
-
 name: asciiart
 version: 0.1.0
 description: "A bundle that turns pictures into ascii art"
-invocationImage: porter-ascii-art:latest
+tag: getporter/porter-ascii-art
 dockerfile: Dockerfile.tmpl
+
+mixins:
+  - exec
 
 install:
   - exec:

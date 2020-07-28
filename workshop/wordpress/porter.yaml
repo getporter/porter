@@ -1,9 +1,9 @@
+name: wordpress
+version: 0.1.0
+tag: getporter/porter-workshop-wordpress
+
 mixins:
   - helm
- 
-name: wordpress 
-version: 0.1.0
-invocationImage: porter-workshop-wordpress:v0.1.0
 
 credentials:
 - name: kubeconfig

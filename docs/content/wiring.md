@@ -223,7 +223,7 @@ mixins:
 
 name: mysql
 version: 0.1.0
-tag: getporter/mysql:v0.1.0
+tag: getporter/mysql
 
 credentials:
 - name: kubeconfig
@@ -265,7 +265,7 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-tag: getporter/wordpress:v0.1.0
+tag: getporter/wordpress
 
 dependencies:
   mysql:

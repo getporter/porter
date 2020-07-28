@@ -27,7 +27,7 @@ mixins:
 
 name: mysql
 version: 0.1.0
-tag: getporter/mysql:v0.1.0
+tag: getporter/mysql
 
 credentials:
 - name: kubeconfig
