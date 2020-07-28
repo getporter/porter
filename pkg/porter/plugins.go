@@ -219,9 +219,10 @@ func (p *Porter) RunInternalPlugins(args []string) {
 	err := opts.Validate(args, p.Config)
 	if err != nil {
 		logger := hclog.New(&hclog.LoggerOptions{
-			Name:   "porter",
-			Output: p.Err,
-			Level:  hclog.Error,
+			Name:       "porter",
+			Output:     p.Err,
+			Level:      hclog.Error,
+			JSONFormat: true,
 		})
 		logger.Error(err.Error())
 		return

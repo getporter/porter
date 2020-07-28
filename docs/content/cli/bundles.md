@@ -20,7 +20,8 @@ Commands for working with bundles. These all have shortcuts so that you can call
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO
