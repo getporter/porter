@@ -4,16 +4,21 @@ description: "An example Porter configuration"
 tag: getporter/porter-hello:v0.1.0
 
 dependencies:
-  mysql:
-    tag: "getporter/azure-mysql:5.7"
-  ad:
-    tag: "getporter/azure-active-directory"
-    prereleases: true
-  storage:
-    tag: "getporter/azure-blob-storage"
-    versions:
-      - 1.x - 2
-      - 2.1 - 3.x
+  sequence: 
+    - "ad"
+    - "storage"
+    - "mysql"
+  elements:
+    mysql:
+      tag: "getporter/azure-mysql:5.7"
+    ad:
+      tag: "getporter/azure-active-directory"
+      prereleases: true
+    storage:
+      tag: "getporter/azure-blob-storage"
+      versions:
+        - 1.x - 2
+        - 2.1 - 3.x
 mixins:
   - exec
 

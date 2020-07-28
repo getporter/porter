@@ -98,7 +98,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 func cleanupWordpressBundle(p *porter.TestPorter) {
 	uninstallOpts := porter.UninstallOptions{}
 	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	uninstallOpts.Tag = p.Manifest.Dependencies["mysql"].Tag
+	uninstallOpts.Tag = p.Manifest.Dependencies.Elements["mysql"].Tag
 	err := uninstallOpts.Validate([]string{"wordpress-mysql"}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
 

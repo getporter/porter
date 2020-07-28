@@ -390,9 +390,12 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
 	m := &manifest.Manifest{
-		Dependencies: map[string]manifest.Dependency{
-			"dep": {
-				Tag: "getporter/porter-hello",
+		Dependencies: manifest.DependenciesDefinition{
+			Sequence: []string{},
+			Elements: map[string]manifest.Dependency{
+				"dep": {
+					Tag: "getporter/porter-hello",
+				},
 			},
 		},
 	}
@@ -457,9 +460,12 @@ func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
 				Sensitive: true,
 			},
 		},
-		Dependencies: map[string]manifest.Dependency{
-			"dep": {
-				Tag: "getporter/porter-hello",
+		Dependencies: manifest.DependenciesDefinition{
+			Sequence: []string{},
+			Elements: map[string]manifest.Dependency{
+				"dep": {
+					Tag: "getporter/porter-hello",
+				},
 			},
 		},
 	}
@@ -656,9 +662,12 @@ func TestResolveDependencyParam(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Dependencies: map[string]manifest.Dependency{
-			"mysql": {
-				Tag: "getporter/porter-mysql",
+		Dependencies: manifest.DependenciesDefinition{
+			Sequence: []string{},
+			Elements: map[string]manifest.Dependency{
+				"dep": {
+					Tag: "getporter/porter-hello",
+				},
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
@@ -694,9 +703,12 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Dependencies: map[string]manifest.Dependency{
-			"mysql": {
-				Tag: "getporter/porter-mysql",
+		Dependencies: manifest.DependenciesDefinition{
+			Sequence: []string{},
+			Elements: map[string]manifest.Dependency{
+				"dep": {
+					Tag: "getporter/porter-hello",
+				},
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
