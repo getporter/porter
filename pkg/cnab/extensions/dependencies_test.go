@@ -38,7 +38,7 @@ func TestReadDependencyProperties(t *testing.T) {
 func TestSortDependenciesBySequence(t *testing.T) {
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 
-	bun := &bundle.Bundle{
+	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesKey: Dependencies{
 				Sequence: sequenceMock,

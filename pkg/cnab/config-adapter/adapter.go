@@ -395,13 +395,13 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 
 	// Add the dependency extension
 	deps := c.generateDependencies()
-	if len(deps.Requires) > 0 {
+	if deps != nil && len(deps.Requires) > 0 {
 		customExtensions[extensions.DependenciesKey] = deps
 	}
 
 	// Add the parameter sources extension
 	ps := c.generateParameterSources(b)
-	if len(ps) > 0 {
+	if ps != nil && len(ps) > 0 {
 		customExtensions[extensions.ParameterSourcesKey] = ps
 	}
 
@@ -413,11 +413,11 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 	return customExtensions
 }
 
-func (c *ManifestConverter) generateRequiredExtensions() []string {
-	requiredExtensions := []string{}
+func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string {
+	var requiredExtensions []string
 
 	// Add the appropriate dependencies key if applicable
-	if len(c.Manifest.Dependencies.Elements) > 0 {
+	if extensions.HasDependencies(b) {
 		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
 	}
 
@@ -432,8 +432,10 @@ func (c *ManifestConverter) generateRequiredExtensions() []string {
 // lookupExtensionKey is a helper method to return a full key matching a
 // supported extension, if applicable
 func lookupExtensionKey(name string) string {
+
 	key := name
 	// If an official supported extension, we grab the full key
+
 	supportedExt, err := extensions.GetSupportedExtension(name)
 	if err != nil {
 		// TODO: Issue linter warning

@@ -68,7 +68,7 @@ func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
 	// Make sure the Sequence is defined and match the number of deps
 	if deps.Sequence != nil && len(deps.Sequence) > 0 && len(deps.Sequence) == len(deps.Requires) {
 		// Copy the original Dependencies
-		sequencedDeps := &Dependencies{}
+		sequencedDeps := Dependencies{}
 		sequencedDeps.Sequence = deps.Sequence
 		sequencedDeps.Requires = make(map[string]Dependency)
 

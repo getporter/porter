@@ -440,81 +440,6 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	assert.Equal(t, []string{"dep_output_value"}, rm.GetSensitiveValues())
 }
 
-func TestResolveStepOutputs_fromPreexistingClaim(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Outputs = map[string]interface{}{
-		"output": "output_value",
-	}
-
-	bytes, err := yaml.Marshal(claim)
-	require.NoError(t, err)
-	cxt.FileSystem.WriteFile("/cnab/claim.json", bytes, 0644)
-
-	m := &manifest.Manifest{
-		Outputs: []manifest.OutputDefinition{
-			{
-				Name:      "output",
-				Sensitive: true,
-			},
-		},
-		Dependencies: manifest.DependenciesDefinition{
-			Sequence: []string{},
-			Elements: map[string]manifest.Dependency{
-				"dep": {
-					Tag: "getporter/porter-hello",
-				},
-			},
-		},
-	}
-
-	rm := NewRuntimeManifest(cxt.Context, manifest.ActionUpgrade, m)
-	rm.bundles = map[string]bundle.Bundle{
-		"dep": {
-			Outputs: map[string]bundle.Output{
-				"dep_output": {
-					Definition: "dep_output",
-				},
-			},
-			Definitions: map[string]*definition.Schema{
-				"dep_output": {WriteOnly: makeBoolPtr(true)},
-			},
-		},
-	}
-	rm.outputs = map[string]string{
-		"output": "output_value",
-	}
-
-	cxt.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte("dep_output_value"), 0644)
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Arguments": []string{
-				"{{ bundle.outputs.output }}",
-				"{{ bundle.dependencies.dep.outputs.dep_output }}",
-			},
-		},
-	}
-
-	// Prior to resolving step values, this method should return an empty string array
-	assert.Equal(t, rm.GetSensitiveValues(), []string{})
-
-	err = rm.ResolveStep(s)
-	require.NoError(t, err)
-	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, 2, len(args))
-	assert.Equal(t, "output_value", args[0].(string))
-	assert.Equal(t, "dep_output_value", args[1].(string))
-
-	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"output_value", "dep_output_value"}, rm.GetSensitiveValues())
-}
-
 func TestResolveInMainDict(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
@@ -614,8 +539,8 @@ func TestResolveDependencyParam(t *testing.T) {
 		Dependencies: manifest.DependenciesDefinition{
 			Sequence: []string{},
 			Elements: map[string]manifest.Dependency{
-				"dep": {
-					Tag: "getporter/porter-hello",
+				"mysql": {
+					Tag: "getporter/porter-mysql",
 				},
 			},
 		},
@@ -655,8 +580,8 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 		Dependencies: manifest.DependenciesDefinition{
 			Sequence: []string{},
 			Elements: map[string]manifest.Dependency{
-				"dep": {
-					Tag: "getporter/porter-hello",
+				"mysql": {
+					Tag: "getporter/porter-mysql",
 				},
 			},
 		},
