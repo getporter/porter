@@ -1,15 +1,11 @@
 package manifest
 
-type Action string
-
-const (
-	ActionInstall   Action = "install"
-	ActionUpgrade   Action = "upgrade"
-	ActionUninstall Action = "uninstall"
+import (
+	"github.com/cnabio/cnab-go/claim"
 )
 
 // IsCoreAction determines if the value is a core action from the CNAB spec.
-func IsCoreAction(value Action) bool {
+func IsCoreAction(value string) bool {
 	for _, a := range GetCoreActions() {
 		if value == a {
 			return true
@@ -18,6 +14,6 @@ func IsCoreAction(value Action) bool {
 	return false
 }
 
-func GetCoreActions() []Action {
-	return []Action{ActionInstall, ActionUpgrade, ActionUninstall}
+func GetCoreActions() []string {
+	return []string{claim.ActionInstall, claim.ActionUpgrade, claim.ActionUninstall}
 }

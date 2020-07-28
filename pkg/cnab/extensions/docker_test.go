@@ -15,8 +15,8 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 			},
 		}
 
-		dockerExt, dockerRequired, err := ext.GetDockerExtension()
-		require.NoError(t, err, "GetDockerExtension failed")
+		dockerExt, dockerRequired, err := ext.GetDocker()
+		require.NoError(t, err, "GetDocker failed")
 		assert.True(t, dockerRequired, "docker should be a required extension")
 		assert.Equal(t, Docker{Privileged: true}, dockerExt, "docker config was not populated properly")
 	})
@@ -24,8 +24,8 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 	t.Run("extension missing", func(t *testing.T) {
 		ext := ProcessedExtensions{}
 
-		dockerExt, dockerRequired, err := ext.GetDockerExtension()
-		require.NoError(t, err, "GetDockerExtension failed")
+		dockerExt, dockerRequired, err := ext.GetDocker()
+		require.NoError(t, err, "GetDocker failed")
 		assert.False(t, dockerRequired, "docker should NOT be a required extension")
 		assert.Equal(t, Docker{}, dockerExt, "Docker config should default to empty when not required")
 	})
@@ -35,8 +35,8 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 			DockerExtensionKey: map[string]string{"ponies": "are great"},
 		}
 
-		dockerExt, dockerRequired, err := ext.GetDockerExtension()
-		require.Error(t, err, "GetDockerExtension failed")
+		dockerExt, dockerRequired, err := ext.GetDocker()
+		require.Error(t, err, "GetDocker should have failed")
 		assert.True(t, dockerRequired, "docker should be a required extension")
 		assert.Equal(t, Docker{}, dockerExt, "Docker config should default to empty")
 	})

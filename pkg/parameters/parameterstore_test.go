@@ -3,18 +3,18 @@ package parameters
 import (
 	"testing"
 
-	inmemorystorage "get.porter.sh/porter/pkg/storage/in-memory"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewParameterStore(t *testing.T) {
-	backingParams := inmemorystorage.NewStore()
+	backingParams := crud.NewMockStore()
 	paramStore := NewParameterStore(backingParams)
 
 	params, err := paramStore.List()
 	require.NoError(t, err)
-	require.Equal(t, []string{}, params, "List should return no entries")
+	require.Empty(t, params, "List should return no entries")
 
 	myParamSet := ParameterSet{
 		Name: "myparams",
@@ -22,7 +22,7 @@ func TestNewParameterStore(t *testing.T) {
 			{
 				Name: "myparam",
 				Source: valuesource.Source{
-					Key: "value",
+					Key:   "value",
 					Value: "myparamvalue",
 				},
 			},
@@ -48,7 +48,7 @@ func TestNewParameterStore(t *testing.T) {
 
 	params, err = paramStore.List()
 	require.NoError(t, err)
-	require.Equal(t, []string{}, params, "List should return no entries")
+	require.Empty(t, params, "List should return no entries")
 
 	pset, err = paramStore.Read("myparams")
 	require.EqualError(t, err, "Parameter set does not exist", "Read should return an error")

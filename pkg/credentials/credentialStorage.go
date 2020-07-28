@@ -11,6 +11,7 @@ import (
 	"github.com/cnabio/cnab-go/credentials"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -30,8 +31,8 @@ type CredentialStorage struct {
 }
 
 func NewCredentialStorage(c *config.Config, storagePlugin *crudplugins.Store) *CredentialStorage {
-	migration := newMigrateCredentialsWrapper(c, storagePlugin)
-	credStore := credentials.NewCredentialStore(migration)
+	backingStore := crud.NewBackingStore(storagePlugin)
+	credStore := credentials.NewCredentialStore(backingStore)
 	return &CredentialStorage{
 		Config:           c,
 		CredentialsStore: &credStore,

@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
-	inmemorystorage "get.porter.sh/porter/pkg/storage/in-memory"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/pkg/errors"
 )
 
@@ -24,7 +24,7 @@ type TestParameterProvider struct {
 
 func NewTestParameterProvider(t *testing.T, tc *config.TestConfig) TestParameterProvider {
 	backingSecrets := inmemorysecrets.NewStore()
-	backingParams := inmemorystorage.NewStore()
+	backingParams := crud.NewMockStore()
 	paramStore := NewParameterStore(backingParams)
 	return TestParameterProvider{
 		T:           t,

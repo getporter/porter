@@ -394,3 +394,30 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.Equal(t, expected, m.Required)
 }
+
+func TestReadManifest_WithTemplateVariables(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
+	require.NoError(t, err, "ReadManifest failed")
+	assert.Equal(t, []string{"bundle.outputs.msg", "bundle.outputs.name"}, m.TemplateVariables)
+}
+
+func TestParamToEnvVar(t *testing.T) {
+	testcases := []struct {
+		name      string
+		paramName string
+		envName   string
+	}{
+		{"no special characters", "myparam", "MYPARAM"},
+		{"dash", "my-param", "MY_PARAM"},
+		{"period", "my.param", "MY_PARAM"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ParamToEnvVar(tc.paramName)
+			assert.Equal(t, tc.envName, got)
+		})
+	}
+}

@@ -79,7 +79,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 type exporter struct {
 	out                   io.Writer
 	logs                  io.Writer
-	bundle                *bundle.Bundle
+	bundle                bundle.Bundle
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
@@ -133,7 +133,7 @@ func (ex *exporter) export() error {
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun *bundle.Bundle) error {
+func (ex *exporter) prepareArtifacts(bun bundle.Bundle) error {
 	for _, image := range bun.Images {
 		if err := ex.addImage(image.BaseImage); err != nil {
 			return err

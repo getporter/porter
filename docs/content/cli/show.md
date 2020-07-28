@@ -5,21 +5,21 @@ url: /cli/porter_show/
 ---
 ## porter show
 
-Show an instance of a bundle
+Show an installation of a bundle
 
 ### Synopsis
 
-Displays info relating to an instance of a bundle, including status and a listing of outputs.
+Displays info relating to an installation of a bundle, including status and a listing of outputs.
 
 ```
-porter show [INSTANCE] [flags]
+porter show [INSTALLATION] [flags]
 ```
 
 ### Examples
 
 ```
-  porter instance show
-porter instance show another-bundle
+  porter show
+porter show another-bundle
 
 Optional output formats include json and yaml.
 

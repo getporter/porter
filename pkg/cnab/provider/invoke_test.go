@@ -10,98 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_ClaimWriting(t *testing.T) {
-
-	type op struct {
-		bun    *bundle.Bundle
-		action string
-		claim  string
-	}
-	type test struct {
-		name   string
-		in     op
-		status string
-		want   bool
-	}
-
-	d := NewTestRuntime(t)
-
-	eClaim, err := claim.New("exists")
-	require.NoError(t, err)
-	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
-
-	err = d.claims.Save(*eClaim)
-	require.NoError(t, err)
-
-	bun := &bundle.Bundle{
-		Actions: map[string]bundle.Action{
-			"blah": bundle.Action{
-				Stateless: true,
-			},
-			"other": bundle.Action{
-				Stateless: false,
-			},
-		},
-	}
-
-	tests := []test{
-		{
-			name: "stateless action, no claim should result in temp claim not written",
-			in: op{
-				bun,
-				"blah",
-				"nonexistent",
-			},
-			status: claim.StatusFailure,
-			want:   false,
-		},
-		{
-			name: "stateless action, existing claim should result in non temp claim and should be written",
-			in: op{
-				bun,
-				"blah",
-				"exists",
-			},
-			status: claim.StatusFailure,
-			want:   true,
-		},
-		{
-			name: "stateful action, existing claim should result in non temp claim and should be written",
-			in: op{
-				bun,
-				"other",
-				"exists",
-			},
-			status: claim.StatusFailure,
-			want:   true,
-		},
-	}
-
-	for _, tc := range tests {
-		in := tc.in
-		c, temp, err := d.getClaim(in.bun, in.action, in.claim)
-		require.NoError(t, err)
-		c.Result.Action = in.action
-		c.Result.Status = tc.status
-		err = d.writeClaim(temp, c)
-		assert.NoError(t, err)
-
-		fc, err := d.claims.Read(in.claim)
-		if tc.want {
-			assert.NoErrorf(t, err, "expected claim for %s", tc.name)
-			assert.Equalf(t, in.action, fc.Result.Action, "expected action=%s for %s", in.action, tc.name)
-			assert.Equalf(t, tc.status, fc.Result.Status, "expected status=%s for %s", tc.status, tc.name)
-		} else {
-			assert.Error(t, err, "expected no claim for %s", tc.name)
-		}
-	}
-}
-
-func Test_ClaimLoading(t *testing.T) {
+func TestRuntime_ClaimPersistence(t *testing.T) {
 	type input struct {
-		bun    *bundle.Bundle
-		action string
-		claim  string
+		bun          bundle.Bundle
+		action       string
+		installation string
 	}
 
 	type result struct {
@@ -116,25 +29,22 @@ func Test_ClaimLoading(t *testing.T) {
 		want result
 	}
 
-	bun := &bundle.Bundle{
+	bunV, _ := bundle.GetDefaultSchemaVersion()
+	bun := bundle.Bundle{
+		SchemaVersion:    bunV,
+		InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: "example.com/foo:v1.0.0"}}},
 		Actions: map[string]bundle.Action{
-			"blah": bundle.Action{
+			"blah": {
 				Stateless: true,
 			},
-			"other": bundle.Action{
+			"other": {
 				Stateless: false,
 			},
 		},
 	}
 
-	eClaim, err := claim.New("exists")
-	require.NoError(t, err)
-	eClaim.Update(claim.ActionInstall, claim.StatusSuccess)
-
 	d := NewTestRuntime(t)
-
-	err = d.claims.Save(*eClaim)
-	require.NoError(t, err)
+	eClaim := d.TestClaims.CreateClaim("exists", claim.ActionInstall, bun, nil)
 
 	tests := []test{
 		{
@@ -157,11 +67,11 @@ func Test_ClaimLoading(t *testing.T) {
 			name: "stateless action, existing claim should result in non temp claim",
 			in: input{
 				bun,
-				"blah",
+				"install",
 				"exists",
 			},
 			want: result{
-				claim: eClaim,
+				claim: &eClaim,
 				temp:  false,
 				err:   nil,
 			},
@@ -170,11 +80,11 @@ func Test_ClaimLoading(t *testing.T) {
 			name: "stateful action, existing claim should result in non temp claim",
 			in: input{
 				bun,
-				"other",
+				"install",
 				"exists",
 			},
 			want: result{
-				claim: eClaim,
+				claim: &eClaim,
 				temp:  false,
 				err:   nil,
 			},
@@ -187,9 +97,9 @@ func Test_ClaimLoading(t *testing.T) {
 				"nonexist",
 			},
 			want: result{
-				claim: eClaim,
+				claim: &eClaim,
 				temp:  false,
-				err:   errors.Wrap(claim.ErrClaimNotFound, "could not load bundle instance nonexist"),
+				err:   errors.Wrap(claim.ErrInstallationNotFound, "could not load installation nonexist"),
 			},
 		},
 	}
@@ -198,12 +108,30 @@ func Test_ClaimLoading(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			in := tc.in
 			want := tc.want
-			_, temp, err := d.getClaim(in.bun, in.action, in.claim)
-			assert.Equalf(t, want.temp, temp, "getClaim returned an unexpected temporary flag")
+
+			f, err := d.FileSystem.Create("bundle.json")
+			require.NoError(t, err, "could not open bundle.json")
+			_, err = tc.in.bun.WriteTo(f)
+			require.NoError(t, err, "could not write to bundle.json")
+
+			args := ActionArguments{
+				Action:       in.action,
+				Installation: in.installation,
+				BundlePath:   "bundle.json",
+			}
+			runErr := d.Execute(args)
+			c, claimErr := d.claims.ReadLastClaim(in.installation)
+
 			if want.err == nil {
-				assert.NoErrorf(t, err, "getClaim failed")
+				require.NoErrorf(t, runErr, "Invoke failed")
+				if want.temp {
+					require.Error(t, claimErr, "temp claim should not be persisted")
+				} else {
+					require.NoError(t, claimErr, "the claim could not be read back")
+					assert.Equal(t, in.action, c.Action, "claim saved with wrong action")
+				}
 			} else {
-				assert.EqualErrorf(t, err, want.err.Error(), "getClaim returned an unexpected error")
+				require.EqualErrorf(t, runErr, want.err.Error(), "Invoke returned an unexpected error")
 			}
 		})
 	}
@@ -213,8 +141,9 @@ func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
 	r := NewTestRuntime(t)
 
 	args := ActionArguments{
-		Claim: "mybuns",
+		Action:       "custom-action",
+		Installation: "mybuns",
 	}
-	err := r.Invoke("custom-action", args)
-	require.EqualError(t, err, "could not load bundle instance mybuns: Claim does not exist")
+	err := r.Execute(args)
+	require.EqualError(t, err, "could not load installation mybuns: Installation does not exist")
 }

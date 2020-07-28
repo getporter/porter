@@ -37,41 +37,35 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 	// Create test claim
 	writeOnly := true
-	claim := claim.Claim{
-		Installation: "test",
-		Bundle: &bundle.Bundle{
-			Definitions: definition.Definitions{
-				"foo": &definition.Schema{
-					Type:      "string",
-					WriteOnly: &writeOnly,
-				},
-				"bar": &definition.Schema{
-					Type: "string",
-				},
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
 			},
-			Outputs: map[string]bundle.Output{
-				"foo": {
-					Definition: "foo",
-					Path:       "/path/to/foo",
-				},
-				"bar": {
-					Definition: "bar",
-				},
+			"bar": &definition.Schema{
+				Type: "string",
 			},
 		},
-		Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Result: claim.Result{
-			Action: "install",
-			Status: "success",
-		},
-		Outputs: map[string]interface{}{
-			"foo": "foo-output",
-			"bar": "bar-output",
+		Outputs: map[string]bundle.Output{
+			"foo": {
+				Definition: "foo",
+				Path:       "/path/to/foo",
+			},
+			"bar": {
+				Definition: "bar",
+			},
 		},
 	}
 
-	err := p.Claims.Save(claim)
+	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
+	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
+	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
+
+	// Hard code the date so we can compare the command output easily
+	c.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
+	err := p.TestClaims.SaveClaim(c)
 	require.NoError(t, err, "could not store claim")
 
 	opts := OutputListOptions{
@@ -82,24 +76,17 @@ func TestPorter_printDisplayOutput_JSON(t *testing.T) {
 			Format: printer.FormatJson,
 		},
 	}
-	err = p.PrintBundleOutputs(&opts)
+	err = p.PrintBundleOutputs(opts)
 	require.NoError(t, err, "could not print bundle outputs")
 
 	want := `[
   {
     "Name": "bar",
-    "Definition": {
-      "type": "string"
-    },
     "Value": "bar-output",
     "Type": "string"
   },
   {
     "Name": "foo",
-    "Definition": {
-      "type": "string",
-      "writeOnly": true
-    },
     "Value": "foo-output",
     "Type": "string"
   }
@@ -115,57 +102,76 @@ func TestPorter_ListOutputs_Truncation(t *testing.T) {
 	p.TestConfig.SetupPorterHome()
 	fullOutputValue := "this-lengthy-output-will-be-truncated-if-the-output-format-is-table"
 
-	claim, err := claim.New("test")
-	require.NoError(t, err)
-
-	claim.Bundle = &bundle.Bundle{
+	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
 			},
 		},
 		Outputs: map[string]bundle.Output{
-			"foo": bundle.Output{
+			"foo": {
 				Definition: "foo",
 			},
 		},
 	}
-	claim.Outputs = map[string]interface{}{
-		"foo": fullOutputValue,
-	}
+
+	c, err := claim.New("test", claim.ActionInstall, b, nil)
+	c.Action = claim.ActionInstall
+	require.NoError(t, err, "NewClaim failed")
+
+	err = p.Claims.SaveClaim(c)
+	require.NoError(t, err, "SaveClaim failed")
+
+	r, err := c.NewResult(claim.StatusSucceeded)
+	require.NoError(t, err, "NewResult failed")
+	err = p.Claims.SaveResult(r)
+	require.NoError(t, err, "SaveResult failed")
+
+	foo := claim.NewOutput(c, r, "foo", []byte(fullOutputValue))
+	err = p.Claims.SaveOutput(foo)
+	require.NoError(t, err, "SaveOutput failed")
 
 	testcases := []struct {
 		name          string
-		format        printer.Format
+		opts          OutputListOptions
 		expectedValue string
 	}{
 		{
 			"format Table",
-			printer.FormatTable,
+			OutputListOptions{
+				sharedOptions: sharedOptions{Name: "test"},
+				PrintOptions:  printer.PrintOptions{Format: printer.FormatTable},
+			},
 			"this-lengthy-output-will-be-truncated-if-the-output-forma...",
 		},
 		{
 			"format YAML",
-			printer.FormatYaml,
+			OutputListOptions{
+				sharedOptions: sharedOptions{Name: "test"},
+				PrintOptions:  printer.PrintOptions{Format: printer.FormatYaml},
+			},
 			fullOutputValue,
 		},
 		{
 			"format JSON",
-			printer.FormatJson,
+			OutputListOptions{
+				sharedOptions: sharedOptions{Name: "test"},
+				PrintOptions:  printer.PrintOptions{Format: printer.FormatJson},
+			},
 			fullOutputValue,
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotOutputs := p.ListBundleOutputs(*claim, tc.format)
+			gotOutputs, err := p.ListBundleOutputs(&tc.opts)
+			require.NoError(t, err, "ListBundleOutputs failed")
 
-			wantOutputs := []DisplayOutput{
+			wantOutputs := DisplayOutputs{
 				{
-					Name:       "foo",
-					Definition: *claim.Bundle.Definitions["foo"],
-					Type:       "string",
-					Value:      tc.expectedValue,
+					Name:  "foo",
+					Type:  "string",
+					Value: tc.expectedValue,
 				},
 			}
 			require.Equal(t, wantOutputs, gotOutputs)

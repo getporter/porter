@@ -56,8 +56,8 @@ See [exec outputs][exec-outputs] for a full working example.
 ```bash
 #!/usr/bin/env bash
 
-generate-config() {
-    echo '{"user": "sally"}' > config.json
+generate-users() {
+    echo '{"user": "sally"}' > users.json
 }
 
 # ... define more functions here
@@ -72,7 +72,7 @@ install:
     description: "Create a file"
     command: ./cluster.sh
     arguments:
-    - generate-config
+    - generate-users
 ```
 
 [exec-outputs]: https://porter.sh/src/examples/exec-outputs/

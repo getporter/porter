@@ -118,7 +118,7 @@ func (s SortPrintableAction) Swap(i, j int) {
 var porterInternalParams = map[string]struct{}{"porter-debug": {}}
 
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
-	err := o.validateInstanceName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -183,10 +183,7 @@ func isInternalParam(inputParam string) bool {
 	return ok
 }
 
-func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
-	if bun == nil {
-		return nil, fmt.Errorf("expected a bundle")
-	}
+func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	pb := PrintableBundle{
 		Name:        bun.Name,
 		Description: bun.Description,
@@ -387,5 +384,5 @@ func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 			}
 			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
 		}
-	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Instance", "Stateless")
+	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
 }

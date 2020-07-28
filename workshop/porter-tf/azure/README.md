@@ -106,8 +106,8 @@ porter install -c workshop-tf \
 
 ### View the Outputs
 
-Now that you've installed the bundle, you can view any outputs that were created with the `porter instance show` command.
+Now that you've installed the bundle, you can view any outputs that were created with the `porter installation show` command.
 
 ```
-porter instance show workshop-tf
+porter installation show workshop-tf
 ```

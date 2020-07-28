@@ -152,7 +152,7 @@ Here we opt-in via the CLI flag, `--allow-docker-host-access`:
 ```shell
 $ porter install --allow-docker-host-access
 
-executing install action from docker-compose (bundle instance: docker-compose)
+executing install action from docker-compose (installation: docker-compose)
 Docker docker-compose up
 app_web_1 is up-to-date
 app_redis_1 is up-to-date

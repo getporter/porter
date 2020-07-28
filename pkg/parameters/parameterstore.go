@@ -30,7 +30,7 @@ func NewParameterStore(store crud.Store) Store {
 
 // List the names of the stored parameter sets.
 func (s Store) List() ([]string, error) {
-	return s.backingStore.List(ItemType)
+	return s.backingStore.List(ItemType, "")
 }
 
 // Save a parameter set. Any previous version of the parameter set is overwritten.
@@ -39,7 +39,7 @@ func (s Store) Save(param ParameterSet) error {
 	if err != nil {
 		return err
 	}
-	return s.backingStore.Save(ItemType, param.Name, bytes)
+	return s.backingStore.Save(ItemType, "", param.Name, bytes)
 }
 
 // Read loads the parameter set with the given name from the store.
@@ -58,7 +58,7 @@ func (s Store) Read(name string) (ParameterSet, error) {
 
 // ReadAll retrieves all the parameter sets.
 func (s Store) ReadAll() ([]ParameterSet, error) {
-	results, err := s.backingStore.ReadAll(ItemType)
+	results, err := s.backingStore.ReadAll(ItemType, "")
 	if err != nil {
 		return nil, err
 	}

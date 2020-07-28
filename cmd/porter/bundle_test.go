@@ -97,15 +97,15 @@ func TestValidateInvokeCommand(t *testing.T) {
 	}
 }
 
-func TestValidateInstanceListCommand(t *testing.T) {
+func TestValidateInstallationListCommand(t *testing.T) {
 	testcases := []struct {
 		name      string
 		args      string
 		wantError string
 	}{
-		{"no args", "instance list", ""},
-		{"output json", "instance list -o json", ""},
-		{"invalid format", "instance list -o wingdings", "invalid format: wingdings"},
+		{"no args", "installation list", ""},
+		{"output json", "installation list -o json", ""},
+		{"invalid format", "installation list -o wingdings", "invalid format: wingdings"},
 	}
 
 	for _, tc := range testcases {

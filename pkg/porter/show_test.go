@@ -23,54 +23,49 @@ func TestPorter_ShowBundle(t *testing.T) {
 		},
 	}
 
-	// Create test claim
+	// Create test claims
 	writeOnly := true
-	claim := claim.Claim{
-		Installation: "test",
-		Bundle: &bundle.Bundle{
-			Definitions: definition.Definitions{
-				"foo": &definition.Schema{
-					Type:      "string",
-					WriteOnly: &writeOnly,
-				},
-				"bar": &definition.Schema{
-					Type: "string",
-				},
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
 			},
-			Outputs: map[string]bundle.Output{
-				"foo": {
-					Definition: "foo",
-					Path:       "/path/to/foo",
-				},
-				"bar": {
-					Definition: "bar",
-				},
+			"bar": &definition.Schema{
+				Type: "string",
 			},
 		},
-		Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-		Result: claim.Result{
-			Action: "install",
-			Status: "success",
-		},
-		Outputs: map[string]interface{}{
-			"foo": "foo-output",
-			"bar": "bar-output",
+		Outputs: map[string]bundle.Output{
+			"foo": {
+				Definition: "foo",
+				Path:       "/path/to/foo",
+			},
+			"bar": {
+				Definition: "bar",
+			},
 		},
 	}
+	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
+	c.Created = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
+	err := p.Claims.SaveClaim(c)
+	require.NoError(t, err, "SaveClaim failed")
+	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
+	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
 
-	err := p.Claims.Save(claim)
-	require.NoError(t, err, "could not store claim")
+	c = p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, nil)
+	c.Created = time.Date(2020, time.April, 19, 1, 2, 3, 4, time.UTC)
+	err = p.Claims.SaveClaim(c)
+	require.NoError(t, err, "SaveClaim failed")
+	r = p.TestClaims.CreateResult(c, claim.StatusRunning)
 
-	err = p.ShowInstances(opts)
-	require.NoError(t, err, "ShowInstances failed")
+	err = p.ShowInstallation(opts)
+	require.NoError(t, err, "ShowInstallation failed")
 
 	wantOutput :=
 		`Name: test
-Created: 1983-04-18
-Modified: 1983-04-18
-Last Action: install
-Last Status: success
+Created: 2020-04-18
+Modified: 2020-04-19
 
 Outputs:
 ----------------------------
@@ -78,6 +73,13 @@ Outputs:
 ----------------------------
   bar   string  bar-output  
   foo   string  foo-output  
+
+History:
+----------------------------------
+  Action   Timestamp   Status     
+----------------------------------
+  install  2020-04-18  succeeded  
+  upgrade  2020-04-19  running    
 `
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, wantOutput, gotOutput)

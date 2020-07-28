@@ -1,9 +1,8 @@
 {
-  "name": "example-exec-outputs",
-  "installation": "example-exec-outputs",
-  "revision": "01DS62VS1F5XFGHWY4MPHBREFQ",
-  "created": "2019-11-08T12:01:44.719151-06:00",
-  "modified": "2019-11-08T12:01:46.287743-06:00",
+  "installation": "mybun",
+  "revision": "01EAX385TG348KSJEZ51GEPEP2",
+  "created": "2019-11-07T12:01:44.719151-06:00",
+  "modified": "2019-11-08T12:01:44.719151-06:00",
   "bundle": {
     "schemaVersion": "v1.0.0",
     "name": "example-exec-outputs",
@@ -93,14 +92,7 @@
   },
   "result": {
     "message": "",
-    "action": "install",
+    "action": "upgrade",
     "status": "success"
-  },
-  "parameters": {
-    "porter-debug": false
-  },
-  "outputs": {
-    "config": "{\"user\": \"sally\"}\n",
-    "kubeconfig": "apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: abc123==\n    server: https://127.0.0.1:8443\n  name: minikube\ncontexts:\n- context:\n    cluster: minikube\n    user: minikube\n  name: minikube\ncurrent-context: minikube\nkind: Config\npreferences: {}\nusers:\n- name: minikube\n  user:\n    client-certificate-data: abc123=\n    client-key-data: abc123==\n"
   }
 }
