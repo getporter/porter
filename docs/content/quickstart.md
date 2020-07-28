@@ -25,7 +25,7 @@ Here is a very basic **porter.yaml** file:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello:v0.1.0
+tag: getporter/porter-hello
 
 mixins:
   - exec

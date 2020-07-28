@@ -1,10 +1,10 @@
-mixins:
-  - exec
-
 name: azure-cli
 version: 0.1.0
 description: "Print the azure cli help text"
-invocationImage: porter-azure-cli:0.1.0
+tag: getporter/porter-azure-cli
+
+mixins:
+  - exec
 
 # Uncomment out the line below to use a template Dockerfile for your invocation image
 dockerfile: Dockerfile.tmpl

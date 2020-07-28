@@ -4,7 +4,7 @@ mixins:
 
 name: wordpress
 version: 0.1.2
-tag: localhost:5000/wordpress:v0.1.2
+tag: localhost:5000/wordpress
 
 dependencies:
   elements:

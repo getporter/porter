@@ -1,10 +1,10 @@
-mixins:
-  - helm
-
 name: etcd-operator
 version: 0.1.0
 description: "An etcd-operator bundle"
-invocationImage: porter-etcd-operator:latest
+tag: getporter/porter-etcd-operator
+
+mixins:
+  - helm
 
 credentials:
 - name: kubeconfig

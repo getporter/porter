@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/storage"
-
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
@@ -85,6 +84,10 @@ func (w *migrateClaimsWrapper) Connect() error {
 	}
 
 	return nil
+}
+
+func (w *migrateClaimsWrapper) Close() error {
+	return w.BackingStore.Close()
 }
 
 func (w *migrateClaimsWrapper) MigrateAll() error {

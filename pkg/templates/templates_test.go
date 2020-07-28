@@ -15,7 +15,7 @@ func TestTemplates_GetManifest(t *testing.T) {
 	require.NoError(t, err)
 
 	wantTmpl, _ := ioutil.ReadFile("./templates/create/porter.yaml")
-	assert.Equal(t, wantTmpl, gotTmpl)
+	assert.Equal(t, string(wantTmpl), string(gotTmpl))
 }
 
 func TestTemplates_GetRunScript(t *testing.T) {

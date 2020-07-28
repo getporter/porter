@@ -1,6 +1,7 @@
 package pluggable
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -74,7 +75,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		pluginCommand.Env = append(pluginCommand.Env, home)
 	}
 
-	if l.Config.Debug {
+	if l.DebugPlugins {
 		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
 		if l.SelectedPluginConfig != nil {
 			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
@@ -82,11 +83,19 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		fmt.Fprintln(l.Err, strings.Join(pluginCommand.Args, " "))
 	}
 
+	pluginOutput := bytes.NewBufferString("")
 	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "porter",
-		Output: l.Err,
-		Level:  hclog.Error,
+		Name:       "porter",
+		Output:     pluginOutput,
+		Level:      hclog.Debug,
+		JSONFormat: true,
 	})
+
+	if l.DebugPlugins {
+		logger.SetLevel(hclog.Info)
+
+		go l.logPluginMessages(pluginOutput)
+	}
 
 	pluginTypes := map[string]plugin.Plugin{
 		pluginType.Interface: pluginType.Plugin,
@@ -122,6 +131,27 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	}
 
 	return raw, cleanup, nil
+}
+
+func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
+	r := bufio.NewReader(pluginOutput)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			continue
+		}
+		if len(line) == 0 {
+			return
+		}
+
+		var pluginLog map[string]string
+		err = json.Unmarshal([]byte(line), &pluginLog)
+		if err != nil {
+			continue
+		}
+
+		fmt.Fprintln(l.Err, pluginLog["@message"])
+	}
 }
 
 // selectPlugin picks the plugin to use and loads its configuration.
