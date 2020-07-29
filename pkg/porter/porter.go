@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 // Porter is the logic behind the porter client.
@@ -25,7 +26,7 @@ type Porter struct {
 	Cache       cache.BundleCache
 	Credentials credentials.CredentialProvider
 	Parameters  parameters.ParameterProvider
-	Claims      claims.ClaimProvider
+	Claims      claim.Provider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
 	Builder     BuildProvider

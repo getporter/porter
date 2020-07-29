@@ -111,7 +111,7 @@ func TestInstallOptions_validateParams(t *testing.T) {
 	assert.Len(t, opts.Params, 2)
 }
 
-func TestInstallOptions_validateInstanceName(t *testing.T) {
+func TestInstallOptions_validateInstallationName(t *testing.T) {
 	testcases := []struct {
 		name      string
 		args      []string
@@ -120,13 +120,13 @@ func TestInstallOptions_validateInstanceName(t *testing.T) {
 	}{
 		{"none", nil, "", ""},
 		{"name set", []string{"wordpress"}, "wordpress", ""},
-		{"too many args", []string{"wordpress", "extra"}, "", "only one positional argument may be specified, the bundle instance name, but multiple were received: [wordpress extra]"},
+		{"too many args", []string{"wordpress", "extra"}, "", "only one positional argument may be specified, the installation name, but multiple were received: [wordpress extra]"},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{}
-			err := opts.validateInstanceName(tc.args)
+			err := opts.validateInstallationName(tc.args)
 
 			if tc.wantError == "" {
 				require.NoError(t, err)
@@ -172,6 +172,8 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 }
 
 func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
+	t.Skip("TODO: Implement parameter sources #1069")
+
 	p := NewTestPorter(t)
 
 	cacheDir, _ := p.Cache.GetCacheDir()

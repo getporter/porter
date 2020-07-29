@@ -5,13 +5,13 @@ url: /cli/porter_list/
 ---
 ## porter list
 
-List instances of installed bundles
+List installed bundles
 
 ### Synopsis
 
-List instances of all bundles installed by Porter.
+List all bundles installed by Porter.
 
-A listing of instances of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
+A listing of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
 
 Optional output formats include json and yaml.
 
@@ -22,8 +22,8 @@ porter list [flags]
 ### Examples
 
 ```
-  porter instances list
-  porter instances list -o json
+  porter list
+  porter list -o json
 ```
 
 ### Options
@@ -36,7 +36,8 @@ porter list [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO

@@ -2,7 +2,7 @@ name: plugins-tutorial
 version: 0.1.0
 description: "Example of porter resolving credentials from a secrets store using
 a plugin. This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/."
-tag: getporter/plugins-tutorial:v0.1.0
+tag: getporter/plugins-tutorial
 
 credentials:
 - name: password

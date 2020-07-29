@@ -156,9 +156,13 @@ request comment so that we don't collectively forget.
    your commits. If you prefer to rebase your own commits, at any time leave a
    comment on the pull request to let them know that.
 
-At this point your changes are available in the [canary][canary] release of Porter!
+At this point your changes are available in the [canary][canary] release of
+Porter! After your first pull request is merged, you will be invited to the
+[Porters team] which you may choose to accept (or not). Joining the team lets
+you have issues in GitHub assigned to you.
 
 [canary]: https://porter.sh/install/#canary
+[Porters team]: https://github.com/orgs/deislabs/teams/porters
 
 ### Follow-on PR
 

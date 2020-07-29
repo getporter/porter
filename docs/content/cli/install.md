@@ -5,19 +5,19 @@ url: /cli/porter_install/
 ---
 ## porter install
 
-Install a new instance of a bundle
+Create a new installation of a bundle
 
 ### Synopsis
 
-Install a new instance of a bundle.
+Create a new installation of a bundle.
 
-The first argument is the bundle instance name to create for the installation. This defaults to the name of the bundle. 
+The first argument is the name of the installation to create. This defaults to the name of the bundle. 
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 ```
-porter install [INSTANCE] [flags]
+porter install [INSTALLATION] [flags]
 ```
 
 ### Examples
@@ -51,7 +51,8 @@ porter install [INSTANCE] [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO

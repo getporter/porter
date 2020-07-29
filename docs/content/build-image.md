@@ -16,7 +16,7 @@ To create a new CNAB with Porter, you first run `porter create`. The generated `
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello:v0.1.0
+tag: getporter/porter-hello
 
 mixins:
   - exec
@@ -43,7 +43,7 @@ uninstall:
         - uninstall
 ```
 
-After the scaffolding is created, you may edit the _porter.yaml_ and modify the `tag: getporter/porter-hello:v0.1.0` element representing the bundle tag to include a Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
+After the scaffolding is created, you may edit the _porter.yaml_ and modify the `tag: getporter/porter-hello` element representing the bundle tag to include a Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
 
 Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--debug` flag to see all of the output:
 
@@ -275,7 +275,7 @@ mixins:
 
 name: mysql
 version: "0.1.0"
-tag: jeremyrickard/mysql:v0.1.0
+tag: jeremyrickard/mysql
 
 credentials:
 - name: kubeconfig

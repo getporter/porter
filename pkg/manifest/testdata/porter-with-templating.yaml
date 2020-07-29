@@ -1,0 +1,44 @@
+name: hello
+version: 0.1.0
+tag: getporterci/hello-with-templating
+
+mixins:
+  - exec
+
+outputs:
+  - name: name
+    type: string
+    default: ""
+
+install:
+  - exec:
+      description: "Say Hello"
+      command: ./helpers.sh
+      arguments:
+        - install
+      outputs:
+        - name: name
+          regex: Hello (.*)
+  - exec:
+      description: "Use step output"
+      command: ./helpers.sh
+      arguments:
+        - debug
+        - "{{ bundle.outputs.name }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+        - "{{ bundle.outputs.msg }}"
+
+uninstall:
+  - exec:
+      description: "Say Goodbye"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+        - "{{ bundle.outputs.msg }}"
+

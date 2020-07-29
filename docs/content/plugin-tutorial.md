@@ -261,13 +261,13 @@ Key Vault into the bundle during install.
 ```console
 $ porter install -t getporter/plugins-tutorial:v0.1.0 -c plugins-tutorial
 installing plugins-tutorial...
-executing install action from plugins-tutorial (bundle instance: plugins-tutorial)
+executing install action from plugins-tutorial (installation: plugins-tutorial)
 Install World
 Using Magic Password: *******
 execution completed successfully!
 ```
 
-The bundle instance is recorded in Azure Blob Storage and read back out again
+The installation is recorded in Azure Blob Storage and read back out again
 by the Azure plugin when we run `porter list`.
 
 ```

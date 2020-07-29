@@ -3,8 +3,6 @@ package porter
 import (
 	"fmt"
 
-	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -37,19 +35,17 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		return err
 	}
 
-	deperator := newDependencyExecutioner(p)
-	err = deperator.Prepare(opts.BundleLifecycleOpts, func(args cnabprovider.ActionArguments) error {
-		return p.CNAB.Invoke(opts.Action, args)
-	})
+	deperator := newDependencyExecutioner(p, opts.Action)
+	err = deperator.Prepare(opts.BundleLifecycleOpts)
 	if err != nil {
 		return err
 	}
 
-	err = deperator.Execute(manifest.Action(opts.Action))
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(p.Out, "invoking custom action %s on %s...\n", opts.Action, opts.Name)
-	return p.CNAB.Invoke(opts.Action, opts.ToActionArgs(deperator))
+	return p.CNAB.Execute(opts.ToActionArgs(deperator))
 }

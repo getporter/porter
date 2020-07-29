@@ -20,13 +20,14 @@ const (
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
-	Debug      bool
-	verbose    bool
-	FileSystem *afero.Afero
-	In         io.Reader
-	Out        io.Writer
-	Err        io.Writer
-	NewCommand CommandBuilder
+	Debug        bool
+	DebugPlugins bool
+	verbose      bool
+	FileSystem   *afero.Afero
+	In           io.Reader
+	Out          io.Writer
+	Err          io.Writer
+	NewCommand   CommandBuilder
 }
 
 func (c *Context) SetVerbose(value bool) {

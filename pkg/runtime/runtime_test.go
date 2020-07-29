@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,7 +62,7 @@ BAZ`,
 func TestPorterRuntime_ApplyStepOutputsToBundle_None(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{Name: "mybun"}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -93,7 +94,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -129,7 +130,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -170,7 +171,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -255,7 +256,7 @@ func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
 					tc.def,
 				},
 			}
-			r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+			r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 			_, err := r.FileSystem.Create(srcPath)
 			require.NoError(t, err)

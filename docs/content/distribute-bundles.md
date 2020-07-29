@@ -24,7 +24,7 @@ Once you are satisfied with the bundle, the next step is to publish the bundle! 
 name: kube-example
 version: 0.1.0
 description: "An example Porter bundle using Kubernetes"
-tag: getporter/kubernetes:v0.1.0
+tag: getporter/kubernetes
 ```
 
 This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the bundle name, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
@@ -113,7 +113,7 @@ Consider the following example:
 name: spring-music
 version: 0.5.0
 description: "Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL"
-tag: jeremyrickard/porter-do-bundle:v0.5.0
+tag: jeremyrickard/porter-do-bundle
 
 images:
   spring-music:

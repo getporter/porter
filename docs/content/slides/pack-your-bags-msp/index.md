@@ -466,8 +466,7 @@ mixins:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-invocationImage: porter-hello:latest
-tag: deislabs/porter-hello-bundle:latest
+tag: getporter/porter-hello
 
 install:
   - exec:
@@ -760,8 +759,7 @@ Use `porter publish` to share bundles:
 name: HELLO-LLAMA
 version: 0.1.0
 description: "An example Porter configuration with moar llamas"
-invocationImage: "YOURNAME/porter-hello-llama:latest"
-tag: "YOURNAME/porter-hello-llama-bundle:latest"
+tag: "YOURNAME/porter-hello-llama"
 ```
 
 ---
@@ -808,7 +806,7 @@ If you run into trouble here, here are a few things to check:
 # Try it out: Install the bundle
 
 ```
-$ porter install --tag YOURNAME/porter-hello-llama:latest --param name=YOURNAME
+$ porter install --tag YOURNAME/porter-hello-llama:v0.1.0 --param name=YOURNAME
 ```
 
 ---
@@ -953,8 +951,7 @@ name: manifest
 name: porter-workshop-tf 
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"
-invocationImage: porter-workshop-tf:latest
-tag: deislabs/porter-workshop-tf-bundle:latest
+tag: getporter/porter-workshop-tf
 ```
 
 ---

@@ -4,14 +4,13 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger: none
-pr: 
-  - "*"
 
 pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
   GOVERSION: '1.13.10'
+  System.Debug: false
 
 jobs:
 - job: setup

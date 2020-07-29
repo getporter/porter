@@ -54,7 +54,7 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 type sharedOptions struct {
 	bundleFileOptions
 
-	// Name of the instance. Defaults to the name of the bundle.
+	// Name of the installation. Defaults to the name of the bundle.
 	Name string
 
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
@@ -83,7 +83,7 @@ type sharedOptions struct {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, p *Porter) error {
-	err := o.validateInstanceName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -112,12 +112,12 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	return nil
 }
 
-// validateInstanceName grabs the claim name from the first positional argument.
-func (o *sharedOptions) validateInstanceName(args []string) error {
+// validateInstallationName grabs the claim name from the first positional argument.
+func (o *sharedOptions) validateInstallationName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the bundle instance name, but multiple were received: %s", args)
+		return errors.Errorf("only one positional argument may be specified, the installation name, but multiple were received: %s", args)
 	}
 
 	return nil

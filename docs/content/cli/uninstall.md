@@ -5,19 +5,19 @@ url: /cli/porter_uninstall/
 ---
 ## porter uninstall
 
-Uninstall a bundle instance
+Uninstall an installation
 
 ### Synopsis
 
-Uninstall a bundle instance
+Uninstall an installation
 
-The first argument is the bundle instance name to uninstall. This defaults to the name of the bundle.
+The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.
 
 ```
-porter uninstall [INSTANCE] [flags]
+porter uninstall [INSTALLATION] [flags]
 ```
 
 ### Examples
@@ -52,7 +52,8 @@ porter uninstall [INSTANCE] [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO

@@ -25,7 +25,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 	var err error
 
 	// Pull applicable extension from list of processed extensions
-	dockerExt, dockerRequired, err := r.Extensions.GetDockerExtension()
+	dockerExt, dockerRequired, err := r.Extensions.GetDocker()
 	if err != nil {
 		return nil, err
 	}

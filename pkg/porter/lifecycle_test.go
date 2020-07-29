@@ -155,7 +155,7 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
 		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
-		assert.Equal(t, opts.Name, args.Claim, "Claim not populated correctly")
+		assert.Equal(t, opts.Name, args.Installation, "Claim not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
 	})
 }

@@ -4,7 +4,7 @@ mixins:
  
 name: azure-wordpress
 version: 0.1.0
-tag: getporter/azure-wordpress:v0.1.0
+tag: getporter/azure-wordpress
 
 credentials:
 - name: SUBSCRIPTION_ID

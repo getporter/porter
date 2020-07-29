@@ -23,7 +23,7 @@ type ArchiveOptions struct {
 // Validate performs validation on the publish options
 func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	if len(args) < 1 || args[0] == "" {
-		return errors.New("Destination File is required")
+		return errors.New("destination file is required")
 	}
 	o.ArchiveFile = args[0]
 	return o.BundleLifecycleOpts.Validate(args, p)
@@ -33,6 +33,10 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 // any referenced images locally (if needed), export them to individual layers, generate a bundle.json and
 // then generate a gzipped tar archive containing the bundle.json and the images
 func (p *Porter) Archive(opts ArchiveOptions) error {
+	dir := filepath.Dir(opts.ArchiveFile)
+	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
+		return fmt.Errorf("parent directory %q does not exist", dir)
+	}
 
 	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
 	if err != nil {
@@ -70,16 +74,14 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 	if err := exp.export(); err != nil {
 		return err
 	}
-	// if ex.verbose {
-	// 	fmt.Fprintf(p.Out, "Export logs: %s\n", exp.Logs())
-	// }
+
 	return nil
 }
 
 type exporter struct {
 	out                   io.Writer
 	logs                  io.Writer
-	bundle                *bundle.Bundle
+	bundle                bundle.Bundle
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
@@ -133,7 +135,7 @@ func (ex *exporter) export() error {
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun *bundle.Bundle) error {
+func (ex *exporter) prepareArtifacts(bun bundle.Bundle) error {
 	for _, image := range bun.Images {
 		if err := ex.addImage(image.BaseImage); err != nil {
 			return err

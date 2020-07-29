@@ -25,7 +25,7 @@ Here is a very basic **porter.yaml** file:
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello:v0.1.0
+tag: getporter/porter-hello
 
 mixins:
   - exec
@@ -101,8 +101,8 @@ tool][tools], not just Porter, to install the bundle.
 
 Previously when we use
 `porter install` when we were in the same directory as a porter bundle, we
-didn't specify a bundle instance name to create, so Porter defaulted the
-instance to the name of the bundle. This time we will explicitly name the
+didn't specify an installation name to create, so Porter defaulted the
+installation to the name of the bundle. This time we will explicitly name the
 installation "demo".
 
 ```

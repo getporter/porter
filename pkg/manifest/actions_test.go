@@ -13,7 +13,7 @@ func TestIsCoreAction(t *testing.T) {
 
 	for action, want := range testcases {
 		t.Run(action, func(t *testing.T) {
-			got := IsCoreAction(Action(action))
+			got := IsCoreAction(action)
 			if want != got {
 				t.Fatalf("IsCoreAction(%q) failed, want %t, got %t", action, want, got)
 			}

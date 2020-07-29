@@ -20,7 +20,8 @@ Commands for working with bundles. These all have shortcuts so that you can call
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO
@@ -32,9 +33,9 @@ Commands for working with bundles. These all have shortcuts so that you can call
 * [porter bundles create](/cli/porter_bundles_create/)	 - Create a bundle
 * [porter bundles explain](/cli/porter_bundles_explain/)	 - Explain a bundle
 * [porter bundles inspect](/cli/porter_bundles_inspect/)	 - Inspect a bundle
-* [porter bundles install](/cli/porter_bundles_install/)	 - Install a new instance of a bundle
-* [porter bundles invoke](/cli/porter_bundles_invoke/)	 - Invoke a custom action on a bundle instance
+* [porter bundles install](/cli/porter_bundles_install/)	 - Create a new installation of a bundle
+* [porter bundles invoke](/cli/porter_bundles_invoke/)	 - Invoke a custom action on an installation
 * [porter bundles lint](/cli/porter_bundles_lint/)	 - Lint a bundle
-* [porter bundles uninstall](/cli/porter_bundles_uninstall/)	 - Uninstall a bundle instance
-* [porter bundles upgrade](/cli/porter_bundles_upgrade/)	 - Upgrade a bundle instance
+* [porter bundles uninstall](/cli/porter_bundles_uninstall/)	 - Uninstall an installation
+* [porter bundles upgrade](/cli/porter_bundles_upgrade/)	 - Upgrade an installation
 

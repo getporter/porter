@@ -1,7 +1,7 @@
 name: HELLO_CUSTOM
 version: 0.1.0
 description: "A bundle with a custom action"
-tag: getporter/porter-hello:v0.1.0
+tag: getporter/porter-hello
 
 credentials:
   - name: my-first-cred

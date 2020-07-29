@@ -2,7 +2,7 @@ name: aks-spring-music
 version: 0.1.0
 description: "Spring Music Demo app with Azure Cosmos DB"
 dockerfile: Dockerfile.tmpl
-tag: getporter/aks-spring-music:v0.1.0
+tag: getporter/aks-spring-music
 
 mixins:
   - exec

@@ -25,13 +25,13 @@ Review the `porter.yaml` to see what each of these sections looks like.
 Now, update the `porter.yaml` and change the following value:
 
 ```
-tag: getporter/orkshop-tf:v0.1.0
+tag: getporter/orkshop-tf
 ```
 
 Change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-tag: jeremyrickard/workshop-tf:v0.1.0
+tag: jeremyrickard/workshop-tf
 ```
 
 ## Build The Bundle!
@@ -106,8 +106,8 @@ porter install -c workshop-tf \
 
 ### View the Outputs
 
-Now that you've installed the bundle, you can view any outputs that were created with the `porter instance show` command.
+Now that you've installed the bundle, you can view any outputs that were created with the `porter installation show` command.
 
 ```
-porter instance show workshop-tf
+porter installation show workshop-tf
 ```

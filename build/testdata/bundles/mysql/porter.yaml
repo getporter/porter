@@ -4,7 +4,7 @@ mixins:
 
 name: mysql
 version: 0.1.2
-tag: localhost:5000/mysql:v0.1.2
+tag: localhost:5000/mysql
 
 credentials:
 - name: kubeconfig
