@@ -282,6 +282,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 }
 
 func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
+
 	if len(c.Manifest.Dependencies.Elements) == 0 {
 		return nil
 	}
@@ -401,7 +402,7 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 
 	// Add the parameter sources extension
 	ps := c.generateParameterSources(b)
-	if ps != nil && len(ps) > 0 {
+	if len(ps) > 0 {
 		customExtensions[extensions.ParameterSourcesKey] = ps
 	}
 
@@ -419,6 +420,11 @@ func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string
 	// Add the appropriate dependencies key if applicable
 	if extensions.HasDependencies(b) {
 		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
+	}
+
+	// Add the appropriate parameter sources key if applicable
+	if extensions.HasParameterSources(b) {
+		requiredExtensions = append(requiredExtensions, extensions.ParameterSourcesKey)
 	}
 
 	// Add all under required section of manifest

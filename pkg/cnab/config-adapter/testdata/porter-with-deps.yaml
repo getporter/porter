@@ -5,9 +5,9 @@ tag: getporter/porter-hello
 
 dependencies:
   sequence: 
-    - "ad"
-    - "storage"
-    - "mysql"
+    - ad
+    - storage
+    - mysql
   elements:
     mysql:
       tag: "getporter/azure-mysql:5.7"

@@ -4,7 +4,7 @@ version: 0.1.0
 tag: getporter/porter-hello
 
 required:
-  - requiredExtension1:
+  - requiredExtension1
   - requiredExtension2:
       config: true
 
