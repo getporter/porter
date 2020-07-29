@@ -83,7 +83,7 @@ parameters:
 
 install:
   - az:
-      description: "Azure ClI login"
+      description: "Azure CLI login"
       arguments:
         - login
       flags:
