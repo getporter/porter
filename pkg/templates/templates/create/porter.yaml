@@ -9,7 +9,8 @@ description: "An example Porter configuration"
 # TODO: update the registry to your own, e.g. myregistry/porter-hello
 tag: getporter/porter-hello
 
-# Uncomment the line below to customize the Dockerfile, see https://porter.sh/custom-dockerfile/
+# If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
+# See https://porter.sh/custom-dockerfile/
 #dockerfile: Dockerfile.tmpl
 
 mixins:
@@ -36,7 +37,7 @@ uninstall:
       arguments:
         - uninstall
 
-# Below is an example of how to defined credentials
+# Below is an example of how to define credentials
 # See https://porter.sh/author-bundles/#credentials
 #credentials:
 #  - name: kubeconfig
