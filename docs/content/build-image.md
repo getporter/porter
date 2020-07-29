@@ -12,19 +12,11 @@ When you create a new bundle with Porter, your project is bootstrapped with a sa
 To create a new CNAB with Porter, you first run `porter create`. The generated `porter.yaml` will look like this:
 
 ```yaml
-# This is the configuration for Porter
-# You must define steps for each action, but the rest is optional
-# See https://porter.sh/author-bundles for documentation on how to configure your bundle
-# Uncomment out the sections below to take full advantage of what Porter can do!
 
 name: HELLO
 version: 0.1.0
 description: "An example Porter configuration"
-# TODO: update the registry to your own, e.g. myregistry/porter-hello
 tag: getporter/porter-hello
-
-# Uncomment the line below to use a template Dockerfile for your invocation image
-#dockerfile: Dockerfile.tmpl
 
 mixins:
   - exec
@@ -32,50 +24,63 @@ mixins:
 install:
   - exec:
       description: "Install Hello World"
-      command: bash
-      flags:
-        c: echo Hello World
+      command: ./helpers.sh
+      arguments:
+        - install
 
 upgrade:
   - exec:
       description: "World 2.0"
-      command: bash
-      flags:
-        c: echo World 2.0
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
-      command: bash
-      flags:
-        c: echo Goodbye World
-
-
-# See https://porter.sh/author-bundles/#dependencies
-#dependencies:
-#  mysql:
-#    tag: getporter/mysql:v0.1.2
-#    parameters:
-#      database-name: wordpress
-
-# See https://porter.sh/wiring/#credentials
-#credentials:
-#  - name: kubeconfig
-#    path: /root/.kube/config
-
+      command: ./helpers.sh
+      arguments:
+        - uninstall
 ```
 
 After the scaffolding is created, you may edit the _porter.yaml_ and modify the `tag: getporter/porter-hello` element representing the bundle tag to include a Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
 
-Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--verbose` flag to see all of the output:
+Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--debug` flag to see all of the output:
 
 ```console
-$ porter build --verbose
+$  porter build --debug
+Resolved porter binary from /usr/local/bin/porter to /Users/sigje/.porter/porter
+Running linters for each mixin used in the manifest...
 Copying porter runtime ===>
 Copying mixins ===>
 Copying mixin exec ===>
 
 Generating Dockerfile =======>
+DEBUG name:    exec
+DEBUG pkgDir: /Users/sigje/.porter/mixins/exec
+DEBUG file:
+DEBUG stdin:
+actions:
+  install:
+  - exec:
+      arguments:
+      - install
+      command: ./helpers.sh
+      description: Install Hello World2
+  uninstall:
+  - exec:
+      arguments:
+      - uninstall
+      command: ./helpers.sh
+      description: Uninstall Hello World
+  upgrade:
+  - exec:
+      arguments:
+      - upgrade
+      command: ./helpers.sh
+      description: World 2.0
+
+/Users/sigje/.porter/mixins/exec/exec build --debug
 FROM debian:stretch
 
 ARG BUNDLE_DIR
@@ -111,30 +116,81 @@ CMD ["/cnab/app/run"]
 
 Starting Invocation Image Build =======>
 Step 1/9 : FROM debian:stretch
- ---> 5c43e435cc11
+ ---> 5738956efb6b
 Step 2/9 : ARG BUNDLE_DIR
  ---> Using cache
- ---> 7b7947fb2576
+ ---> c9d91881dd7c
 Step 3/9 : RUN apt-get update && apt-get install -y ca-certificates
  ---> Using cache
- ---> d60d94e3f701
+ ---> afa85b98ed97
 Step 4/9 : COPY . $BUNDLE_DIR
- ---> 5493aa2241d3
+ ---> Using cache
+ ---> e4057b41978c
 Step 5/9 : RUN rm -fr $BUNDLE_DIR/.cnab
- ---> Running in f8bc113e739a
- ---> 88ea643205d0
+ ---> Using cache
+ ---> ee114d95bc2d
 Step 6/9 : COPY .cnab /cnab
- ---> 9c6c895f590b
+ ---> Using cache
+ ---> 1bb73c63ef65
 Step 7/9 : COPY porter.yaml $BUNDLE_DIR/porter.yaml
- ---> 6f79f7b13e79
+ ---> Using cache
+ ---> 483c6b05a0b7
 Step 8/9 : WORKDIR $BUNDLE_DIR
- ---> Running in 15799ffc05e8
- ---> c40ff2f77f45
+ ---> Using cache
+ ---> 9d2497296f3b
 Step 9/9 : CMD ["/cnab/app/run"]
- ---> Running in 76ff0004ec8e
- ---> e304c0fc1a25
-Successfully built e304c0fc1a25
-Successfully tagged jeremyrickard/porter-hello:0.1.0
+ ---> Using cache
+ ---> 23c208fd5dc7
+Successfully built 23c208fd5dc7
+Successfully tagged getporter/porter-hello-installer:0.1.0
+DEBUG name:    arm
+DEBUG pkgDir: /Users/sigje/.porter/mixins/arm
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/arm/arm version --output json --debug
+DEBUG name:    aws
+DEBUG pkgDir: /Users/sigje/.porter/mixins/aws
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/aws/aws version --output json --debug
+DEBUG name:    az
+DEBUG pkgDir: /Users/sigje/.porter/mixins/az
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/az/az version --output json --debug
+DEBUG name:    exec
+DEBUG pkgDir: /Users/sigje/.porter/mixins/exec
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/exec/exec version --output json --debug
+DEBUG name:    gcloud
+DEBUG pkgDir: /Users/sigje/.porter/mixins/gcloud
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/gcloud/gcloud version --output json --debug
+DEBUG name:    helm
+DEBUG pkgDir: /Users/sigje/.porter/mixins/helm
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/helm/helm version --output json --debug
+DEBUG name:    kubernetes
+DEBUG pkgDir: /Users/sigje/.porter/mixins/kubernetes
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/kubernetes/kubernetes version --output json --debug
+DEBUG name:    terraform
+DEBUG pkgDir: /Users/sigje/.porter/mixins/terraform
+DEBUG file:
+DEBUG stdin:
+
+/Users/sigje/.porter/mixins/terraform/terraform version --output json --debug
 ```
 
 A lot just happened by running that command! Let's walk through the output and discuss what happened.
