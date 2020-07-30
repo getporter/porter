@@ -45,6 +45,8 @@ func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 }
 
 func (t *TestRuntime) Execute(args ActionArguments) error {
-	args.Driver = debugDriver
+	if args.Driver == "" {
+		args.Driver = debugDriver
+	}
 	return t.Runtime.Execute(args)
 }

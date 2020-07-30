@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/hashicorp/go-multierror"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
@@ -248,20 +249,34 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		// For now, assume it's okay to give the dependency the same credentials as the parent
 		CredentialIdentifiers: parentArgs.CredentialIdentifiers,
 	}
+
+	var executeErrs error
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
 	err := e.CNAB.Execute(depArgs)
 	if err != nil {
-		return errors.Wrapf(err, "error executing dependency %s", dep.Alias)
+		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
+
+		if depArgs.Action == claim.ActionUninstall {
+			if e.parentOpts.Delete && !e.parentOpts.ForceDelete {
+				executeErrs = multierror.Append(executeErrs, fmt.Errorf("not deleting installation %s as uninstall was not successful; use --force-delete to override", depArgs.Installation))
+			}
+		}
+
+		if !e.parentOpts.ForceDelete {
+			return executeErrs
+		}
+		// else, we swallow executeErrs as opts.ForceDelete is true
 	}
 
-	// If action is uninstall, no claim will exist
-	if parentArgs.Action != claim.ActionUninstall {
+	if e.parentOpts.Delete || e.parentOpts.ForceDelete {
+		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
+		return e.Claims.DeleteInstallation(depArgs.Installation)
+	} else {
 		// Collect expected outputs via claim
 		outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
 		if err != nil {
 			return err
 		}
-
 		dep.outputs = outputs
 	}
 

@@ -2,8 +2,10 @@ package porter
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -11,6 +13,12 @@ import (
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
 	BundleLifecycleOpts
+}
+
+// UninstallDeleteOptions supply options for deletion on uninstall
+type UninstallDeleteOptions struct {
+	Delete      bool
+	ForceDelete bool
 }
 
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
@@ -32,16 +40,41 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
+	var uninstallErrs error
 	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
 	err = p.CNAB.Execute(opts.ToActionArgs(deperator))
 	if err != nil {
+		uninstallErrs = multierror.Append(uninstallErrs, err)
+		if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) {
+			return uninstallErrs
+		}
+
 		if len(deperator.deps) > 0 {
-			return errors.Wrapf(err, "failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name)
-		} else {
+			uninstallErrs = multierror.Append(uninstallErrs,
+				fmt.Errorf("failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name))
+		}
+
+		if opts.Delete && !opts.ForceDelete {
+			uninstallErrs = multierror.Append(uninstallErrs, fmt.Errorf("not deleting installation %s as uninstall was not successful; use --force-delete to override", opts.Name))
+		}
+		if !opts.ForceDelete {
+			return uninstallErrs
+		}
+		// else, we swallow uninstallErrs as opts.ForceDelete is true
+		// and we wish to pass same option down to deps, if applicable
+	}
+
+	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
+	err = deperator.Execute()
+	if err != nil {
+		if !opts.ForceDelete {
 			return err
 		}
 	}
 
-	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
-	return deperator.Execute()
+	if opts.Delete || opts.ForceDelete {
+		fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
+		return p.Claims.DeleteInstallation(opts.Name)
+	}
+	return nil
 }

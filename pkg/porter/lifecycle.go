@@ -9,6 +9,7 @@ type BundleLifecycleOpts struct {
 	sharedOptions
 	BundlePullOptions
 	AllowAccessToDockerHost bool
+	UninstallDeleteOptions
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {

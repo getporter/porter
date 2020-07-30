@@ -31,6 +31,8 @@ func TestDependenciesLifecycle(t *testing.T) {
 	invokeWordpressBundle(p, namespace)
 
 	uninstallWordpressBundle(p, namespace)
+
+	noReallyUninstallWordpressBundle(p, namespace)
 }
 
 func randomString(len int) string {
@@ -213,5 +215,24 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), claim.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
 	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being uninstalled successfully")
+}
 
+func noReallyUninstallWordpressBundle(p *porter.TestPorter, namespace string) {
+	uninstallOptions := porter.UninstallOptions{}
+	uninstallOptions.Delete = true
+	err := uninstallOptions.Validate([]string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
+
+	err = p.UninstallBundle(uninstallOptions)
+	require.NoError(p.T(), err, "uninstall of root bundle failed")
+
+	// Verify that the dependency installation is deleted
+	i, err := p.Claims.ReadInstallation("wordpress-mysql")
+	require.EqualError(p.T(), err, "Installation not found")
+	require.Equal(p.T(), claim.Installation{}, i)
+
+	// Verify that the root installation is deleted
+	i, err = p.Claims.ReadInstallation("wordpress")
+	require.EqualError(p.T(), err, "Installation not found")
+	require.Equal(p.T(), claim.Installation{}, i)
 }

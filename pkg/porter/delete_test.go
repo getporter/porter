@@ -1,0 +1,64 @@
+package porter
+
+import (
+	"testing"
+
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
+	"github.com/stretchr/testify/require"
+)
+
+func TestDeleteInstallation(t *testing.T) {
+	testcases := []struct {
+		name               string
+		lastAction         string
+		lastActionStatus   string
+		force              bool
+		installationExists bool
+		wantError          string
+	}{
+		{"not yet installed", "", "", false, false, "unable to read last claim for installation test: Installation does not exist"},
+		{"last action not uninstall - no force", "install", claim.StatusSucceeded, false, true, "not deleting installation as the last action was not a successful uninstall; use --force to override"},
+		{"last action failed uninstall - no force", "uninstall", claim.StatusFailed, false, true, "not deleting installation as the last action was not a successful uninstall; use --force to override"},
+		{"last action not uninstall - force", "install", claim.StatusSucceeded, true, false, ""},
+		{"last action failed uninstall - force", "uninstall", claim.StatusFailed, true, false, ""},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			p.TestConfig.SetupPorterHome()
+
+			var err error
+
+			// Create test claim
+			if tc.lastAction != "" {
+				c := p.TestClaims.CreateClaim("test", tc.lastAction, bundle.Bundle{}, nil)
+				err := p.Claims.SaveClaim(c)
+				require.NoError(t, err, "SaveClaim failed")
+				_ = p.TestClaims.CreateResult(c, tc.lastActionStatus)
+			}
+
+			opts := DeleteOptions{
+				sharedOptions: sharedOptions{
+					Name: "test",
+				},
+				Force: tc.force,
+			}
+
+			err = p.DeleteInstallation(opts)
+			if tc.wantError != "" {
+				require.EqualError(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err, "expected DeleteInstallation to succeed")
+			}
+
+			_, err = p.Claims.ReadInstallation("test")
+			if tc.installationExists {
+				require.NoError(t, err, "expected installation to exist")
+			} else {
+				require.EqualError(t, err, "Installation does not exist")
+			}
+		})
+	}
+}
