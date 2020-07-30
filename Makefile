@@ -51,7 +51,7 @@ generate: packr2
 	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
-HAS_GOBIN_IN_PATH := $(shell if [[ "$${PATH}" == ?(*:)"$(CLIENT_GOPATH)/bin"?([:,/:]*) ]];then echo $${GOPATH}/bin;fi)
+HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
 packr2:
 ifndef HAS_PACKR2
 ifndef HAS_GOBIN_IN_PATH
