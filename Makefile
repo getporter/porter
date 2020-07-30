@@ -93,7 +93,7 @@ test-cli: clean-last-testrun build init-porter-home-for-ci
 
 init-porter-home-for-ci:
 	cp -R build/testdata/credentials $(PORTER_HOME)
-	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
+	sed -i.bak 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
 .PHONY: docs
