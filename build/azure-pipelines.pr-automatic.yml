@@ -5,111 +5,21 @@
 
 trigger: none
 
-pool:
-  vmImage: 'Ubuntu 16.04'
-
 variables:
   GOVERSION: '1.13.10'
   System.Debug: false
 
-jobs:
-- job: setup
-  steps:
-  - script: ./build/doc-only-build.sh
-    name: BUILD
-    displayName: 'Check Doc Only Build'
-
-- job: test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make verify
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Verify'
-
-  - script: |
-      make test-unit
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Unit Test'
-
-- job: compile
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-        make xbuild-all
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Cross Compile'
-
-- job: validate_example_bundles
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: |
-      sudo make ajv
-      make build-bundle validate-bundle
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Validate Example Bundles'
-
-- job: integration_test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: ./build/run-integration-tests.sh
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Integration Test'
-
-- job: cli_test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-       make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: |
-      make start-local-docker-registry test-cli stop-local-docker-registry
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'CLI Test'
+  jobs:
+    - template: templates/pr-automatic.yml  
+      parameters:
+        pool:
+          vmImage: 'macOS-10.15'
+        goversion: '$(GOVERSION)'
+        debug: $(System.Debug)
+    
+    - template: templates/pr-automatic.yml  
+      parameters:
+        pool:
+          vmImage: 'ubuntu-18.04'
+        goversion: '$(GOVERSION)'
+        debug: $(System.Debug)
