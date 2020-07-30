@@ -293,20 +293,21 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	}
 
 	for _, dep := range c.Manifest.Dependencies {
-		r := extensions.Dependency{
+		dependencyRef := extensions.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Tag,
 		}
 		if len(dep.Versions) > 0 || dep.AllowPrereleases {
-			r.Version = &extensions.DependencyVersion{
+			dependencyRef.Version = &extensions.DependencyVersion{
 				AllowPrereleases: dep.AllowPrereleases,
 			}
 			if len(dep.Versions) > 0 {
-				r.Version.Ranges = make([]string, len(dep.Versions))
-				copy(r.Version.Ranges, dep.Versions)
+				dependencyRef.Version.Ranges = make([]string, len(dep.Versions))
+				copy(dependencyRef.Version.Ranges, dep.Versions)
 			}
 		}
-		deps.Requires[dep.Name] = r
+		deps.Sequence = append(deps.Sequence, dep.Name)
+		deps.Requires[dep.Name] = dependencyRef
 	}
 
 	return deps

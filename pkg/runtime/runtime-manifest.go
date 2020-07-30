@@ -255,8 +255,6 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	deps := make(map[string]interface{})
 	bun["dependencies"] = deps
 	for alias, bun := range m.bundles {
-		// TODO: Support bundle.dependencies.ALIAS.parameters.NAME
-
 		// bundle.dependencies.ALIAS.outputs.NAME
 		depBundle := make(map[string]interface{})
 		deps[alias] = depBundle
