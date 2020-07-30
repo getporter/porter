@@ -4,10 +4,9 @@ version: 0.1.0
 tag: getporter/porter-hello
 
 dependencies:
-  elements:
-    mysql:
-      tag: "getporter/azure-mysql:5.7"
-
+  - name: mysql
+    tag: "getporter/azure-mysql:5.7"
+    
 mixins:
 - exec
 

@@ -2,7 +2,6 @@ package extensions
 
 import (
 	"io/ioutil"
-	"reflect"
 	"testing"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -21,21 +20,27 @@ func TestReadDependencyProperties(t *testing.T) {
 	deps, err := ReadDependencies(*bun)
 
 	assert.NotNil(t, deps, "Dependencies was not populated")
-	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")
+	assert.Len(t, deps, 2, "Dependencies.Requires is the wrong length")
 
-	dep := deps.Requires["storage"]
-	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
-	assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "Dependency.Bundle is incorrect")
-	assert.Nil(t, dep.Version, "Dependency.Version should be nil")
+	for _, dep := range deps {
+		if dep.Name == "storage" {
 
-	dep = deps.Requires["mysql"]
-	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
-	assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
-	assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
-	assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
+			assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
+			assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "Dependency.Bundle is incorrect")
+			assert.Nil(t, dep.Version, "Dependency.Version should be nil")
+
+		} else if dep.Name == "mysql" {
+
+			assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
+			assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
+			assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
+			assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
+		}
+	}
+
 }
 
-func TestSortDependenciesBySequence(t *testing.T) {
+func TestDependencies_ListBySequence(t *testing.T) {
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 
 	bun := bundle.Bundle{
@@ -44,6 +49,7 @@ func TestSortDependenciesBySequence(t *testing.T) {
 				Sequence: sequenceMock,
 				Requires: map[string]Dependency{
 					"mysql": Dependency{
+						Name:   "mysql",
 						Bundle: "somecloud/mysql",
 						Version: &DependencyVersion{
 							AllowPrereleases: true,
@@ -51,9 +57,11 @@ func TestSortDependenciesBySequence(t *testing.T) {
 						},
 					},
 					"storage": Dependency{
+						Name:   "storage",
 						Bundle: "somecloud/blob-storage",
 					},
-					"nginx": {
+					"nginx": Dependency{
+						Name:   "nginx",
 						Bundle: "localhost:5000/nginx:1.19",
 					},
 				},
@@ -61,26 +69,18 @@ func TestSortDependenciesBySequence(t *testing.T) {
 		},
 	}
 
-	deps, err := ReadDependencies(bun)
+	orderedDeps, err := ReadDependencies(bun)
 	require.NoError(t, err, "unable to read dependencies extension data")
 
-	assert.NotNil(t, deps, "Dependencies was not populated")
-	assert.Len(t, deps.Requires, 3, "Dependencies.Requires is the wrong length")
+	assert.NotNil(t, orderedDeps, "Dependencies was not populated")
+	assert.Len(t, orderedDeps, 3, "Dependencies.Requires is the wrong length")
 
-	dep := deps.Requires["storage"]
-	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
-
-	dep = deps.Requires["mysql"]
-	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
-
-	dep = deps.Requires["nginx"]
-	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'nginx'")
-
-	// Get the keys out of the deps.Requires map
-	keys := reflect.ValueOf(deps.Requires).MapKeys()
+	assert.NotNil(t, orderedDeps[0], "expected Dependencies.Requires to have an entry for 'storage")
+	assert.NotNil(t, orderedDeps[1], "expected Dependencies.Requires to have an entry for 'mysql'")
+	assert.NotNil(t, orderedDeps[2], "expected Dependencies.Requires to have an entry for 'nginx'")
 
 	// assert the bundles are sorted as sequenced
-	assert.EqualValues(t, sequenceMock[0], keys[0].Interface().(string))
-	assert.EqualValues(t, sequenceMock[1], keys[1].Interface().(string))
-	assert.EqualValues(t, sequenceMock[2], keys[2].Interface().(string))
+	assert.Equal(t, sequenceMock[0], orderedDeps[0].Name, "unexpected order of the dependencies")
+	assert.Equal(t, sequenceMock[1], orderedDeps[1].Name, "unexpected order of the dependencies")
+	assert.Equal(t, sequenceMock[2], orderedDeps[2].Name, "unexpected order of the dependencies")
 }

@@ -283,17 +283,18 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 
 func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 
-	if len(c.Manifest.Dependencies.Elements) == 0 {
+	if len(c.Manifest.Dependencies) == 0 {
 		return nil
 	}
 
 	deps := &extensions.Dependencies{
-		Sequence: make([]string, len(c.Manifest.Dependencies.Sequence)),
-		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies.Elements)),
+		Sequence: make([]string, len(c.Manifest.Dependencies)),
+		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
 	}
 
-	for name, dep := range c.Manifest.Dependencies.Elements {
+	for _, dep := range c.Manifest.Dependencies {
 		r := extensions.Dependency{
+			Name:   dep.Name,
 			Bundle: dep.Tag,
 		}
 		if len(dep.Versions) > 0 || dep.AllowPrereleases {
@@ -305,7 +306,7 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 				copy(r.Version.Ranges, dep.Versions)
 			}
 		}
-		deps.Requires[name] = r
+		deps.Requires[dep.Name] = r
 	}
 
 	return deps

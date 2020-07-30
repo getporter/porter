@@ -5,7 +5,7 @@ mixins:
   - exec
 
 dependencies:
-  mysql:
+  - name: mysql
     tag: "getporter/azure-mysql:5.7"
     parameters:
       database-name: wordpress

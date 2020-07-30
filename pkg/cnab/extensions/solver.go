@@ -28,15 +28,15 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
 	}
 
-	q := make([]DependencyLock, 0, len(deps.Requires))
-	for alias, dep := range deps.Requires {
-		ref, err := s.ResolveVersion(alias, dep)
+	q := make([]DependencyLock, 0, len(deps))
+	for _, dep := range deps {
+		ref, err := s.ResolveVersion(dep.Name, dep)
 		if err != nil {
 			return nil, err
 		}
 
 		lock := DependencyLock{
-			Alias: alias,
+			Alias: dep.Name,
 			Tag:   reference.FamiliarString(ref),
 		}
 		q = append(q, lock)

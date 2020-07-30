@@ -24,7 +24,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	p.Debug = false
 
 	namespace := installWordpressBundle(p)
-	defer cleanupWordpressBundle(p)
+	defer cleanupWordpressBundle(p, "mysql")
 
 	upgradeWordpressBundle(p, namespace)
 
@@ -99,10 +99,19 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	return namespace
 }
 
-func cleanupWordpressBundle(p *porter.TestPorter) {
+func cleanupWordpressBundle(p *porter.TestPorter, targetDependencyName string) {
+
+	// TODO: Uninstall Dependencies
+	targetDependency := Dependency{}
+	for _, dep range p.Manifest.Dependencies {
+		if dep.Name == targetDependencyName {
+			targetDependency = dep
+		}
+	}
+
 	uninstallOpts := porter.UninstallOptions{}
 	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	uninstallOpts.Tag = p.Manifest.Dependencies.Elements["mysql"].Tag
+	uninstallOpts.Tag = targetDependency.Tag
 	err := uninstallOpts.Validate([]string{"wordpress-mysql"}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
 

@@ -391,12 +391,10 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
 	m := &manifest.Manifest{
-		Dependencies: manifest.DependenciesDefinition{
-			Sequence: []string{},
-			Elements: map[string]manifest.Dependency{
-				"dep": {
-					Tag: "getporter/porter-hello",
-				},
+		Dependencies: []manifest.Dependency{
+			{
+				Name: "mysql",
+				Tag:  "getporter/porter-mysql",
 			},
 		},
 	}
@@ -536,12 +534,10 @@ func TestResolveDependencyParam(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Dependencies: manifest.DependenciesDefinition{
-			Sequence: []string{},
-			Elements: map[string]manifest.Dependency{
-				"mysql": {
-					Tag: "getporter/porter-mysql",
-				},
+		Dependencies: []manifest.Dependency{
+			{
+				Name: "mysql",
+				Tag:  "getporter/porter-mysql",
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
@@ -577,12 +573,10 @@ func TestResolveMissingDependencyParam(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Dependencies: manifest.DependenciesDefinition{
-			Sequence: []string{},
-			Elements: map[string]manifest.Dependency{
-				"mysql": {
-					Tag: "getporter/porter-mysql",
-				},
+		Dependencies: []manifest.Dependency{
+			{
+				Name: "mysql",
+				Tag:  "getporter/porter-mysql",
 			},
 		},
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
@@ -667,10 +661,10 @@ func TestDependency_Validate(t *testing.T) {
 		dep       manifest.Dependency
 		wantError string
 	}{
-		{"version in tag", manifest.Dependency{Tag: "deislabs/azure-mysql:5.7"}, ""},
-		{"version ranges", manifest.Dependency{Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
-		{"missing tag", manifest.Dependency{Tag: ""}, "dependency tag is required"},
-		{"version double specified", manifest.Dependency{Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
+		{"version in tag", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"version ranges", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
+		{"missing tag", manifest.Dependency{Name: "mysql", Tag: ""}, "dependency tag is required"},
+		{"version double specified", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
 	}
 
 	for _, tc := range testcases {

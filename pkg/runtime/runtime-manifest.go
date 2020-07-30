@@ -60,19 +60,19 @@ func (m *RuntimeManifest) Validate() error {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies.Elements))
-	for alias := range m.Dependencies.Elements {
-		bunD, err := GetDependencyDefinition(m.Context, alias)
+	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
+	for _, dep := range m.Dependencies {
+		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
 		if err != nil {
 			return err
 		}
 
 		bun, err := bundle.Unmarshal(bunD)
 		if err != nil {
-			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", alias)
+			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
 		}
 
-		m.bundles[alias] = *bun
+		m.bundles[dep.Name] = *bun
 	}
 
 	return nil

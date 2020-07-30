@@ -7,12 +7,11 @@ version: 0.1.2
 tag: localhost:5000/wordpress
 
 dependencies:
-  elements:
-    mysql:
-      tag: localhost:5000/mysql:v0.1.2
-      parameters:
-        database-name: wordpress
-        mysql-user: wordpress
+  - name: mysql
+    tag: localhost:5000/mysql:v0.1.2
+    parameters:
+      database-name: wordpress
+      mysql-user: wordpress
 
 credentials:
 - name: kubeconfig

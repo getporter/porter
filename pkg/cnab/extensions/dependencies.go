@@ -25,7 +25,6 @@ var DependenciesExtension = RequiredExtension{
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
 // https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md
 type Dependencies struct {
-
 	// Sequence is a list to order the dependencies
 	Sequence []string `json:"sequence,omitempty" mapstructure:"sequence"`
 
@@ -35,6 +34,9 @@ type Dependencies struct {
 
 // Dependency describes a dependency on another bundle
 type Dependency struct {
+	// Name of the dependency
+	Name string `json:"name" mapstructure:"name"`
+
 	// Bundle is the location of the bundle in a registry, for example REGISTRY/NAME:TAG
 	Bundle string `json:"bundle" mapstructure:"bundle"`
 
@@ -54,34 +56,19 @@ type DependencyVersion struct {
 // ReadDependencies is a convenience method for returning a bonafide
 // Dependencies reference after reading from the applicable section from
 // the provided bundle
-func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
+func ReadDependencies(bun bundle.Bundle) ([]Dependency, error) {
 	raw, err := DependencyReader(bun)
 	if err != nil {
-		return Dependencies{}, err
+		return []Dependency{}, err
 	}
 
 	deps, ok := raw.(Dependencies)
 	if !ok {
-		return Dependencies{}, errors.New("unable to read dependencies extension data")
+		return []Dependency{}, errors.New("unable to read dependencies extension data")
 	}
 
-	// Make sure the Sequence is defined and match the number of deps
-	if deps.Sequence != nil && len(deps.Sequence) > 0 && len(deps.Sequence) == len(deps.Requires) {
-		// Copy the original Dependencies
-		sequencedDeps := Dependencies{}
-		sequencedDeps.Sequence = deps.Sequence
-		sequencedDeps.Requires = make(map[string]Dependency)
-
-		// Copy the dependencies according to the desired sequence
-		for _, seq := range sequencedDeps.Sequence {
-			// Not sure if we need a deep copy of the dependencies here
-			sequencedDeps.Requires[seq] = deps.Requires[seq]
-		}
-		// Return the sequenced dependencies instead
-		return sequencedDeps, nil
-	}
-	// Return the original dependencies
-	return deps, nil
+	// Return the dependencies
+	return deps.ListBySequence(), nil
 }
 
 // DependencyReader is a Reader for the DependenciesExtension, which reads
@@ -111,4 +98,23 @@ func DependencyReader(bun bundle.Bundle) (interface{}, error) {
 func HasDependencies(bun bundle.Bundle) bool {
 	_, ok := bun.Custom[DependenciesKey]
 	return ok
+}
+
+// ListBySequence returns the dependencies by the defined sequence,
+// if none is specified, they are unsorted.
+func (d Dependencies) ListBySequence() []Dependency {
+	deps := make([]Dependency, 0, len(d.Requires))
+	if len(d.Sequence) > 0 && len(d.Sequence) == len(d.Requires) {
+		for _, depName := range d.Sequence {
+			dep := d.Requires[depName]
+			dep.Name = depName
+			deps = append(deps, dep)
+		}
+	} else {
+		for depName, dep := range d.Requires {
+			dep.Name = depName
+			deps = append(deps, dep)
+		}
+	}
+	return deps
 }

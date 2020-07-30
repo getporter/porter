@@ -398,15 +398,18 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 		wantDep extensions.Dependency
 	}{
 		{"no-version", extensions.Dependency{
+			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
 		{"no-ranges", extensions.Dependency{
+			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
 			Version: &extensions.DependencyVersion{
 				AllowPrereleases: true,
 			},
 		}},
 		{"with-ranges", extensions.Dependency{
+			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
 			Version: &extensions.DependencyVersion{
 				Ranges: []string{

@@ -200,11 +200,11 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	//   DEP:
 	//     parameters:
 	//       PARAM: VALUE
-	if depDef, ok := e.Manifest.Dependencies.Elements[dep.Alias]; ok {
-		for paramName, value := range depDef.Parameters {
+	for _, dep := range e.Manifest.Dependencies {
+		for paramName, value := range dep.Parameters {
 			// Make sure the parameter is defined in the bundle
 			if _, ok := depParams[paramName]; !ok {
-				return errors.Errorf("invalid dependencies.elements.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
+				return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Name, paramName)
 			}
 
 			if dep.Parameters == nil {
