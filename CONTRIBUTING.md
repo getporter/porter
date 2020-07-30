@@ -102,7 +102,7 @@ make test-integration
 ```
 
 If you want to know _all_ the targets that the CI runs, look at
-<build/azure-pipelines.pr-automatic.yml> and <build/azure-pipelines.pr-manual.yml>.
+<build/azure-pipelines.pr-automatic.yml>.
 
 ## How to get your pull request reviewed fast
 
@@ -215,9 +215,8 @@ Here are the most common Makefile tasks
 * `test-unit` runs the unit tests.
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
-  take 10 minutes.
-* `test-cli` runs a small test of end-to-end tests that require a kubernetes
-  cluster (same as `test-integration`).
+  take 20 minutes.
+* `test-cli` runs a small suite of end-to-end tests using the Porter CLI.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.

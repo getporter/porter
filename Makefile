@@ -84,11 +84,11 @@ test: clean-last-testrun test-unit test-integration test-cli
 test-unit:
 	$(GO) test ./...
 
-test-integration: build
+test-integration: clean-last-testrun build start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
 
-test-cli: clean-last-testrun build init-porter-home-for-ci
+test-cli: clean-last-testrun build init-porter-home-for-ci start-local-docker-registry
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
@@ -214,7 +214,7 @@ clean: clean-mixins clean-last-testrun
 clean-mixins:
 	-rm -fr bin/
 
-clean-last-testrun:
+clean-last-testrun: stop-local-docker-registry
 	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2
