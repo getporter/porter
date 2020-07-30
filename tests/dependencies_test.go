@@ -101,17 +101,17 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 
 func cleanupWordpressBundle(p *porter.TestPorter, targetDependencyName string) {
 
-	// TODO: Uninstall Dependencies
-	targetDependency := Dependency{}
-	for _, dep range p.Manifest.Dependencies {
+	// Question: Do need we handle the case of uninstalling all the Dependencies
+	targetDependency := p.Manifest.Dependencies
+	for _, dep := range p.Manifest.Dependencies {
 		if dep.Name == targetDependencyName {
-			targetDependency = dep
+			targetDependency[0] = dep
 		}
 	}
 
 	uninstallOpts := porter.UninstallOptions{}
 	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	uninstallOpts.Tag = targetDependency.Tag
+	uninstallOpts.Tag = targetDependency[0].Tag
 	err := uninstallOpts.Validate([]string{"wordpress-mysql"}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
 
