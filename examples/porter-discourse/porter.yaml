@@ -1,186 +1,28 @@
-# This is the configuration for Porter
-# You must define steps for each action, but the rest is optional
-# See https://porter.sh/author-bundles for documentation on how to configure your bundle
-# Uncomment out the sections below to take full advantage of what Porter can do!
-
-name: discourse-azure
+name: HELLO
 version: 0.1.0
-description: "A Porter bundle for Discourse"
-# TODO: update the registry to your own, e.g. myregistry/porter-hello:v0.1.0
-tag: getporter/discourse-azure:v0.1.0
-
-# Uncomment the line below to use a template Dockerfile for your invocation image
-#dockerfile: Dockerfile.tmpl
+description: "An example Porter configuration" 
+tag: getporter/porter-hello:v0.1.0
 
 mixins:
-  - az
   - exec
 
-credentials:
-  - name: sp_client_id
-    env: AZURE_SP_CLIENT_ID
-
-  - name: sp_password
-    env: AZURE_SP_PASSWORD
-
-  - name: tenant
-    env: AZURE_TENANT_ID
-
-  - name: client_secret
-    env: AZURE_CLIENT_SECRET
-
-  - name: client_id
-    env: AZURE_CLIENT_ID
-
-  - name: client_secret
-    env: AZURE_CLIENT_SECRET
-
-  - name: storage_key
-    env: AZURE_STORAGE_KEY
-
-  - name: storage_connection_string
-    env: AZURE_STORAGE_CONNECTION_STRING
-
-parameters:
-  - name: location
-    type: string
-    default: "EastUS"
-
-  - name: resource_group_name
-    type: string
-    default: "porter-discourse"
-
-  - name: storage_account_name
-    type: string
-    default: "porterstorage"
-
-  - name: storage_container_name
-    type: string
-    default: "porterdiscourse"
-
-  - name: database-name
-    type: string
-    default: "porter-discourse"
-
-  - name: discourse_hostname
-    type: string
-    default: ""
-
-  - name: admin_email
-    type: string
-
-  - name: SMTP_server_address
-    type: string
-
-  - name: SMTP_port
-    type: string
-
-  - name: SMTP_user_name
-    type: string
-
-  - name: SMTP_password
-    type: string
-
 install:
-  - az:
-      description: "Azure CLI login"
-      arguments:
-        - login
-      flags:
-        service-principal:
-        username: "{{ bundle.credentials.sp_client_id}}"
-        password: "{{ bundle.credentials.sp_password}}"
-        tenant: "{{ bundle.credentials.tenant}}"
-  - az:
-      description: "Create Azure storage account"
-      arguments:
-        - storage
-        - account
-        - create
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: "{{ bundle.parameters.storage_account_name }}"
-        location: "{{ bundle.parameters.location }}"
-  - az:
-      description: "Create Azure storage container"
-      arguments:
-        - storage
-        - container
-        - create
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: "{{ bundle.parameters.storage_container_name }}"
-        account-name: "{{ bundle.parameters.storage_account_name }}"
-  - az:
-      description: "Create Postgres database on Azure"
-      arguments:
-        - postgres
-        - db
-        - create
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: "{{ bundle.parameters.database-name }}"
-        server-name: myServer
-        location: "{{ bundle.parameters.location }}"
-      # TODO: define an output for the database connection string
-  - az:
-      description: "Create Azure VM"
-      arguments:
-        - vm
-        - create
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: myVM
-        image: UbuntuLTS
-        location: "{{ bundle.parameters.location }}"
-      # TODO: define an output for the IP address of the VM
-      # TODO: define an output for the root password for the VM
   - exec:
-      description: "Run script to install Discourse"
-      command: ./installDiscourse.sh
-      # TODO: pass in arguments from outputs of previous steps - connection string to database, the root password for VM, and the IP address for the VM
-      # TODO: pass in host name for forum (ex. forum.porter.sh)
-      # bash script would automate the process of creating the yaml script, injecting the outputs into the script, and kicking off the setup 
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
 
 upgrade:
   - exec:
-      description: "Run script to upgrade discourse"
-      command: ./upgradeDiscourse.sh
-      # bash script will probably run rebuild from launcher
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 uninstall:
-  - az:
-      description: "Delete Azure storage"
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
       arguments:
-        - storage
-        - account
-        - delete
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: "{{ bundle.parameters.storage_account_name }}"
-  - az:
-      description: "Delete Azure storage container"
-      arguments:
-        - storage
-        - container
-        - delete
-      flags:
-        name: "{{ bundle.parameters.storage_container_name }}"
-  - az:
-      description: "Delete VM"
-      arguments: 
-        - vm
-        - delete
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: myVM
-  - az:
-      description: "Delete Postgres database"
-      arguments:
-        - postgres
-        - db
-        - delete
-      flags:
-        resource-group: "{{ bundle.parameters.resource_group_name }}"
-        name: "{{ bundle.parameters.database-name }}"
-        server-name: myServer
+        - uninstall
