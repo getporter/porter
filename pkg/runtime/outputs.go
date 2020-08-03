@@ -1,34 +1,25 @@
 package runtime
 
 import (
-	"path/filepath"
+	"fmt"
+	"os"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/pkg/errors"
 )
 
-// GetDependencyOutputsDir determines the outputs directory for a dependency
-func GetDependencyOutputsDir(alias string) string {
-	return filepath.Join(BundleDependenciesDir, alias, "outputs")
-}
-
 // ReadDependencyOutputValue reads the dependency's output using the alias for the dependency from the
-// specified output file (name).
-func ReadDependencyOutputValue(c *context.Context, alias string, name string) (string, error) {
-	outputFile := filepath.Join(GetDependencyOutputsDir(alias), name)
-
-	exists, err := c.FileSystem.Exists(outputFile)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to read %s", outputFile)
-	}
-	if !exists {
-		return "", errors.Errorf("outputs file %s does not exist", outputFile)
-	}
-
-	b, err := c.FileSystem.ReadFile(outputFile)
-	if err != nil {
-		return "", errors.Errorf("unable to read %s", outputFile)
+// specified output parameter source (name).
+func (m *RuntimeManifest) ReadDependencyOutputValue(ref manifest.DependencyOutputReference) (string, error) {
+	ps := manifest.GetParameterSourceForDependency(ref)
+	psEnvVar := manifest.ParamToEnvVar(ps)
+	output, ok := os.LookupEnv(psEnvVar)
+	if !ok {
+		err := errors.Errorf("bundle dependency %s output %s was not passed into the runtime", ref.Dependency, ref.Output)
+		fmt.Fprint(m.Err, err)
+		return "", err
 	}
 
-	return string(b), nil
+
+	return output, nil
 }

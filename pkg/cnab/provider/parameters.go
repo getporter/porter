@@ -64,12 +64,17 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[s
 			return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 		}
 
-		value, err := def.ConvertValue(unconverted)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+		if def.Type != nil {
+			value, err := def.ConvertValue(unconverted)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, unconverted, def.Type)
+			}
+			typedParams[key] = value
+		} else {
+			// bundle dependency parameters can be any type, not sure we have a solid way to do a typed conversion
+			typedParams[key] = unconverted
 		}
 
-		typedParams[key] = value
 	}
 
 	return bundle.ValuesOrDefaults(typedParams, &bun, args.Action)
@@ -102,34 +107,46 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 	values := valuesource.Set{}
 	for parameterName, parameterSource := range parameterSources {
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
+			var installation string
+			var outputName string
 			switch source := rawSource.(type) {
 			case extensions.OutputParameterSource:
-				output, err := r.claims.ReadLastOutput(args.Installation, source.OutputName)
-				if err != nil {
-					// When we can't find the output, skip it and let the parameter be set another way
-					if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) ||
-						strings.Contains(err.Error(), claim.ErrOutputNotFound.Error()) {
-						continue
-					}
-					// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
-					return nil, errors.Wrapf(err, "could not set parameter %s from its parameter source, output %s", parameterName, source.OutputName)
-				}
+				installation = args.Installation
+				outputName = source.OutputName
+			case extensions.DependencyOutputParameterSource:
+				installation = fmt.Sprintf("%s-%s", args.Installation, source.Dependency)
+				outputName = source.OutputName
+			}
 
-				param, ok := bun.Parameters[parameterName]
-				if !ok {
-					return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
+			output, err := r.claims.ReadLastOutput(installation, outputName)
+			if err != nil {
+				// When we can't find the output, skip it and let the parameter be set another way
+				if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) ||
+					strings.Contains(err.Error(), claim.ErrOutputNotFound.Error()) {
+					continue
 				}
+				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
+				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
+			}
 
-				def, ok := bun.Definitions[param.Definition]
-				if !ok {
-					return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
-				}
+			param, ok := bun.Parameters[parameterName]
+			if !ok {
+				return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
+			}
 
-				if cnab.IsFileType(def) {
-					values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
-				} else {
-					values[parameterName] = string(output.Value)
-				}
+			def, ok := output.GetSchema()
+			if !ok {
+				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
+			}
+
+			if cnab.IsFileType(&def) {
+				values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
+			} else {
+				values[parameterName] = string(output.Value)
+			}
+
+			if r.Debug {
+				fmt.Fprintf(r.Out, "Injected installation %s output %s as parameter %s\n", installation, outputName, parameterName)
 			}
 		}
 	}

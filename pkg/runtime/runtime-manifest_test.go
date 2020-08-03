@@ -387,7 +387,10 @@ func TestResolveCredential(t *testing.T) {
 	assert.Equal(t, []string{"deliciou$dubonnet"}, rm.GetSensitiveValues())
 }
 
-func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
+func TestResolveStep_DependencyOutput(t *testing.T) {
+	os.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
+	defer os.Unsetenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT")
+
 	cxt := context.NewTestContext(t)
 
 	m := &manifest.Manifest{
@@ -400,25 +403,23 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	rm.bundles = map[string]bundle.Bundle{
-		"dep": {
+		"mysql": {
 			Outputs: map[string]bundle.Output{
-				"dep_output": {
-					Definition: "dep_output",
+				"root-password": {
+					Definition: "root-password",
 				},
 			},
 			Definitions: map[string]*definition.Schema{
-				"dep_output": {WriteOnly: makeBoolPtr(true)},
+				"root-password": {WriteOnly: makeBoolPtr(true)},
 			},
 		},
 	}
-
-	cxt.FileSystem.WriteFile("/cnab/app/dependencies/dep/outputs/dep_output", []byte("dep_output_value"), 0644)
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
-				"{{ bundle.dependencies.dep.outputs.dep_output }}",
+				"{{ bundle.dependencies.mysql.outputs.root-password }}",
 			},
 		},
 	}
@@ -431,10 +432,10 @@ func TestResolveStepOutputs_Install_NoPreexistingClaiml(t *testing.T) {
 	args, ok := s.Data["Arguments"].([]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(args))
-	assert.Equal(t, "dep_output_value", args[0].(string))
+	assert.Equal(t, "mysql-password", args[0].(string))
 
 	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"dep_output_value"}, rm.GetSensitiveValues())
+	assert.Equal(t, []string{"mysql-password"}, rm.GetSensitiveValues())
 }
 
 func TestResolveInMainDict(t *testing.T) {
@@ -515,78 +516,6 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
 	assert.Equal(t, "unable to render step template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
-}
-
-func TestResolveDependencyParam(t *testing.T) {
-	t.Skip("still haven't decided if this is going to be supported")
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"helm": map[interface{}]interface{}{
-				"description": "install wordpress",
-				"Arguments": []string{
-					"{{bundle.dependencies.mysql.parameters.database}}",
-				},
-			},
-		},
-	}
-
-	cxt := context.NewTestContext(t)
-	m := &manifest.Manifest{
-		Dependencies: map[string]manifest.Dependency{
-			"mysql": {
-				Tag: "getporter/porter-mysql",
-			},
-		},
-		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
-		Install: manifest.Steps{
-			s,
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
-
-	os.Setenv("DATABASE", "wordpress")
-	err := rm.ResolveStep(s)
-	require.NoError(t, err)
-	helm, ok := s.Data["helm"].(map[interface{}]interface{})
-	assert.True(t, ok)
-	args, ok := helm["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, "wordpress", args[0].(string))
-}
-
-func TestResolveMissingDependencyParam(t *testing.T) {
-	t.Skip("still haven't decided if this is going to be supported")
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"helm": map[interface{}]interface{}{
-				"description": "install wordpress",
-				"Arguments": []string{
-					"{{bundle.dependencies.mysql.parameters.nope}}",
-				},
-			},
-		},
-	}
-
-	cxt := context.NewTestContext(t)
-	m := &manifest.Manifest{
-		Dependencies: map[string]manifest.Dependency{
-			"mysql": {
-				Tag: "getporter/porter-mysql",
-			},
-		},
-		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
-		Install: manifest.Steps{
-			s,
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
-
-	os.Setenv("DATABASE", "wordpress")
-	err := rm.ResolveStep(s)
-	require.Error(t, err)
-	assert.Equal(t, "unable to resolve step: unable to render template values: Missing variable \"nope\"", err.Error())
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {

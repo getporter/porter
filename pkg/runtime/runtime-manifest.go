@@ -153,7 +153,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	case claim.ActionUpgrade:
 		m.steps = m.Upgrade
 	default:
-		customAction, ok := m.CustomActions[string(m.Action)]
+		customAction, ok := m.CustomActions[m.Action]
 		if !ok {
 			actions := make([]string, 0, len(m.CustomActions))
 			for a := range m.CustomActions {
@@ -255,43 +255,42 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	deps := make(map[string]interface{})
 	bun["dependencies"] = deps
-	for alias, bun := range m.bundles {
-		// TODO: Support bundle.dependencies.ALIAS.parameters.NAME
-
+	for alias, depB := range m.bundles {
 		// bundle.dependencies.ALIAS.outputs.NAME
-		depBundle := make(map[string]interface{})
-		deps[alias] = depBundle
+		depBun := make(map[string]interface{})
+		deps[alias] = depBun
 
-		depBundle["name"] = bun.Name
-		depBundle["version"] = bun.Version
-		depBundle["description"] = bun.Description
+		depBun["name"] = depB.Name
+		depBun["version"] = depB.Version
+		depBun["description"] = depB.Description
 
 		depOutputs := make(map[string]interface{})
-		depBundle["outputs"] = depOutputs
+		depBun["outputs"] = depOutputs
 
-		if bun.Outputs == nil || m.Action == claim.ActionUninstall {
+		if depB.Outputs == nil || m.Action == claim.ActionUninstall {
 			// uninstalls are done backwards, so we don't have outputs available from dependencies
 			// TODO: validate that they weren't trying to use them at build time so they don't find out at uninstall time
 			continue
 		}
-		for name, output := range bun.Outputs {
-			if !output.AppliesTo(string(m.Action)) {
+		for name, output := range depB.Outputs {
+			if !output.AppliesTo(m.Action) {
 				continue
 			}
 
-			value, err := ReadDependencyOutputValue(m.Context, alias, name)
+			value, err := m.ReadDependencyOutputValue(manifest.DependencyOutputReference{Dependency: alias, Output: name})
 			if err != nil {
 				return nil, err
 			}
 
 			depOutputs[name] = value
 
-			def := bun.Definitions[output.Definition]
+			def := depB.Definitions[output.Definition]
 			if def.WriteOnly != nil && *def.WriteOnly == true {
 				m.setSensitiveValue(value)
 			}
 		}
 	}
+
 	images := make(map[string]interface{})
 	bun["images"] = images
 	for alias, image := range m.ImageMap {

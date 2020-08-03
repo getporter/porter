@@ -517,6 +517,29 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	})
 }
 
+func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	t.Run("generate parameter", func(t *testing.T) {
+		ref := manifest.DependencyOutputReference{Dependency: "mysql", Output: "mysql-password"}
+		name, param, paramDef := a.generateDependencyOutputWiringParameter(ref)
+
+		assert.Equal(t, "porter-mysql-mysql-password-dep-output", name, "unexpected parameter name")
+		assert.False(t, param.Required, "wiring parameters should NOT be required")
+		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
+		assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
+
+		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+		assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
+	})
+}
+
 func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
