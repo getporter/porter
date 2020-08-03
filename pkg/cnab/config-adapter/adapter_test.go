@@ -464,6 +464,7 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	want := extensions.ParameterSources{}
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
+	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
 
 	assert.Equal(t, want, sources)
 }
@@ -527,7 +528,7 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Equal(t, []string{"io.cnab.parameter-sources"}, bun.RequiredExtensions)
+	assert.Equal(t, []string{"io.cnab.dependencies", "io.cnab.parameter-sources"}, bun.RequiredExtensions)
 }
 
 func TestManifestConverter_generateRequiredExtensions(t *testing.T) {

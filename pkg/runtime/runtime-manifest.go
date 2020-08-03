@@ -101,7 +101,8 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 
 func (m *RuntimeManifest) resolveBundleOutput(def manifest.OutputDefinition) (string, error) {
 	// Get the output's value from the injected parameter source
-	psParamEnv := manifest.GetParameterSourceEnvVar(def.Name)
+	ps := manifest.GetParameterSourceForOutput(def.Name)
+	psParamEnv := manifest.ParamToEnvVar(ps)
 	outputValue, ok := os.LookupEnv(psParamEnv)
 	if !ok {
 		return "", errors.Errorf("No parameter source was injected for output %s", def.Name)

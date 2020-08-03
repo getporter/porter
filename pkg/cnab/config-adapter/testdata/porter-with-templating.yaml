@@ -5,6 +5,10 @@ tag: getporterci/hello-with-templating
 mixins:
   - exec
 
+dependencies:
+  mysql:
+    tag: getporter/mysql:v0.1.2
+
 parameters:
   - name: tfstate
     type: file
@@ -26,6 +30,7 @@ install:
       command: ./helpers.sh
       arguments:
         - install
+        - "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
       outputs:
         - name: name
           regex: Hello (.*)
