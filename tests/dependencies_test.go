@@ -16,8 +16,6 @@ import (
 )
 
 func TestDependenciesLifecycle(t *testing.T) {
-	t.Skip("TODO: Implement parameter sources #1069")
-
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -161,13 +159,6 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.InvokeOptions{Action: "ping"}
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
-	invokeOpts.Params = []string{
-		"wordpress-password=mypassword",
-		"namespace=" + namespace,
-		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#namespace=" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-	}
 	err := invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of invoke opts for root bundle failed")
 
@@ -195,9 +186,6 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.UninstallOptions{}
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
-		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-	}
 	err := uninstallOptions.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 

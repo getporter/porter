@@ -242,6 +242,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments) error {
 	depArgs := cnabprovider.ActionArguments{
+		Action:            parentArgs.Action,
 		BundlePath:        dep.CNABFile,
 		Installation:      fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
 		Driver:            parentArgs.Driver,

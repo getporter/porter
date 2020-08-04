@@ -172,8 +172,6 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 }
 
 func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
-	t.Skip("TODO: Implement parameter sources #1069")
-
 	p := NewTestPorter(t)
 
 	cacheDir, _ := p.Cache.GetCacheDir()
@@ -197,7 +195,7 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	require.NoError(t, err, "Credentials.Save failed")
 
 	opts := InstallOptions{}
-	opts.Tag = "getporter/wordpress:v0.1.2"
+	opts.Tag = "getporter/wordpress:v0.1.3"
 	opts.CredentialIdentifiers = []string{"wordpress"}
 	opts.Params = []string{"wordpress-password=mypassword"}
 	err = opts.Validate(nil, p.Porter)
