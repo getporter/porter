@@ -18,8 +18,8 @@ func TestDeleteInstallation(t *testing.T) {
 		wantError          string
 	}{
 		{"not yet installed", "", "", false, false, "unable to read last claim for installation test: Installation does not exist"},
-		{"last action not uninstall - no force", "install", claim.StatusSucceeded, false, true, "not deleting installation as the last action was not a successful uninstall; use --force to override"},
-		{"last action failed uninstall - no force", "uninstall", claim.StatusFailed, false, true, "not deleting installation as the last action was not a successful uninstall; use --force to override"},
+		{"last action not uninstall - no force", "install", claim.StatusSucceeded, false, true, ErrUnsafeInstallationDelete.Error()},
+		{"last action failed uninstall - no force", "uninstall", claim.StatusFailed, false, true, ErrUnsafeInstallationDelete.Error()},
 		{"last action not uninstall - force", "install", claim.StatusSucceeded, true, false, ""},
 		{"last action failed uninstall - force", "uninstall", claim.StatusFailed, true, false, ""},
 	}

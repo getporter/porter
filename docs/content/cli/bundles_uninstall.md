@@ -45,7 +45,7 @@ porter bundles uninstall [INSTALLATION] [flags]
   -d, --driver string              Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
       --force                      Force a fresh pull of the bundle
-      --force-delete               Force delete all records associated with the installation, even if the uninstall action does not succeed
+      --force-delete               UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.
   -h, --help                       help for uninstall
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.

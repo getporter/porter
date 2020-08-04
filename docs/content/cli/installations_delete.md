@@ -9,7 +9,7 @@ Delete an installation
 
 ### Synopsis
 
-Deletes an installation, including all claim, result and output records.
+Deletes all records and outputs associated with an installation
 
 ```
 porter installations delete [INSTALLATION] [flags]
@@ -19,7 +19,7 @@ porter installations delete [INSTALLATION] [flags]
 
 ```
   porter installation delete
-porter installation delete another-installation
+porter installation delete wordpress
 porter installation delete --force
 
 ```

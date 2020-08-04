@@ -278,7 +278,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 	f.BoolVar(&opts.Delete, "delete", false,
 		"Delete all records associated with the installation, assuming the uninstall action succeeds")
 	f.BoolVar(&opts.ForceDelete, "force-delete", false,
-		"Force delete all records associated with the installation, even if the uninstall action does not succeed")
+		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd

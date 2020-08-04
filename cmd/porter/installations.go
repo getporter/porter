@@ -85,9 +85,9 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "delete [INSTALLATION]",
 		Short: "Delete an installation",
-		Long:  "Deletes an installation, including all claim, result and output records.",
+		Long:  "Deletes all records and outputs associated with an installation",
 		Example: `  porter installation delete
-porter installation delete another-installation
+porter installation delete wordpress
 porter installation delete --force
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
