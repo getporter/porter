@@ -17,7 +17,7 @@ func TestDeleteInstallation(t *testing.T) {
 		installationExists bool
 		wantError          string
 	}{
-		{"not yet installed", "", "", false, false, "unable to read last claim for installation test: Installation does not exist"},
+		{"not yet installed", "", "", false, false, "unable to read status for installation test: Installation does not exist"},
 		{"last action not uninstall - no force", "install", claim.StatusSucceeded, false, true, ErrUnsafeInstallationDelete.Error()},
 		{"last action failed uninstall - no force", "uninstall", claim.StatusFailed, false, true, ErrUnsafeInstallationDelete.Error()},
 		{"last action not uninstall - force", "install", claim.StatusSucceeded, true, false, ""},
@@ -34,17 +34,12 @@ func TestDeleteInstallation(t *testing.T) {
 			// Create test claim
 			if tc.lastAction != "" {
 				c := p.TestClaims.CreateClaim("test", tc.lastAction, bundle.Bundle{}, nil)
-				err := p.Claims.SaveClaim(c)
-				require.NoError(t, err, "SaveClaim failed")
 				_ = p.TestClaims.CreateResult(c, tc.lastActionStatus)
 			}
 
-			opts := DeleteOptions{
-				sharedOptions: sharedOptions{
-					Name: "test",
-				},
-				Force: tc.force,
-			}
+			opts := DeleteOptions{}
+			opts.Name = "test"
+			opts.Force = tc.force
 
 			err = p.DeleteInstallation(opts)
 			if tc.wantError != "" {

@@ -157,11 +157,21 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 	}
 
 	if len(data) > 0 {
-		newfile.Write(data)
+		_, err := newfile.Write(data)
+		if err != nil {
+			c.T.Fatal(err)
+		}
 	}
 
-	c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
-	newfile.Close()
+	err = c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+	err = newfile.Close()
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
 	path := os.Getenv("PATH")
 	pathlist := []string{dirname, path}
 	newpath := strings.Join(pathlist, string(os.PathListSeparator))

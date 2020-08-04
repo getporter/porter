@@ -37,17 +37,17 @@ func (p *Porter) DeleteInstallation(opts DeleteOptions) error {
 		return err
 	}
 
-	// TODO: do we check to see if the installation claim has required deps
-	// declared and if so, attempt to delete them as well?
-
-	claim, err := p.Claims.ReadLastClaim(opts.Name)
+	installation, err := p.Claims.ReadInstallationStatus(opts.Name)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read last claim for installation %s", opts.Name)
+		return errors.Wrapf(err, "unable to read status for installation %s", opts.Name)
 	}
 
-	result, err := p.Claims.ReadLastResult(claim.ID)
+	claim, err := installation.GetLastClaim()
+	if err != nil {
+		return errors.Wrapf(err, "unable to read most recent record for installation %s", opts.Name)
+	}
 
-	if (claim.Action != claims.ActionUninstall || result.Status != claims.StatusSucceeded) && !opts.Force {
+	if (claim.Action != claims.ActionUninstall || installation.GetLastStatus() != claims.StatusSucceeded) && !opts.Force {
 		return ErrUnsafeInstallationDelete
 	}
 
