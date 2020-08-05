@@ -327,14 +327,10 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
-		Use:   "archive FILENAME",
-		Short: "Archive a bundle",
-		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
-		Example: `  porter bundle archive mybun.tgz
-  porter bundle archive mybun.tgz --file another/porter.yaml
-  porter bundle archive mybun.tgz --cnab-file some/bundle.json
-  porter bundle archive mybun.tgz --tag repo/bundle:tag
-		  `,
+		Use:     "archive FILENAME --tag PUBLISHED_BUNDLE",
+		Short:   "Archive a bundle from a tag",
+		Long:    "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
+		Example: `  porter bundle archive mybun.tgz --tag repo/bundle:tag`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
 		},
@@ -343,8 +339,6 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 	f := cmd.Flags()
-	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
 	f.StringVarP(&opts.Tag, "tag", "t", "",
 		"Use a bundle in an OCI registry specified by the given tag")
 	f.BoolVar(&opts.Force, "force", false,

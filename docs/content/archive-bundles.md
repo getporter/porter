@@ -7,21 +7,19 @@ Porter allows you to share bundles by [publishing](/distribute-bundles) them to 
 
 ## Generating a Bundle Archive With Porter
 
-To generate the archive, you run the `porter archive` command. For example, assume you are working with a local bundle. To generate the archive, you would run the following command:
+In order to generate the archive, all of the images in the bundle **must** have been published to a registry. For this reason, you must first `publish` your bundle to a registry:
 
 ```
-porter archive bundle-archive-file-name.tgz
+porter publish --tag jeremyrickard/porter-do-bundle:v0.5.0
 ```
 
-NOTE: In order to generate the archive, all of the images in the bundle **must** have been published to a registry. For this reason, it is best to first `publish` your bundle to a registry.
-
-This will generate a file in the directory named `bundle-archive-file-name.tgz`.
-
-Porter can generate a bundle archive from a local `porter.yaml` manifest, a local `bundle.json` or a published bundle via a bundle reference, like `deislabs/kubundle:1.5.0`. The recommended way to produce an archive is to first publish the bundle. This will ensure that the invocation image has been pushed to a registry. Once a bundle has been published, to `jeremyrickard/porter-do-bundle:v0.5.0` for example, you can archive it using the following command:
+Now you can run the `porter archive` command and designate the archive file name and bundle tag to use:
 
 ```
 porter archive --tag jeremyrickard/porter-do-bundle:v0.5.0 do-porter.tgz
 ```
+
+This will generate a file in the directory named `do-porter.tgz`.
 
 ## Bundle Archive Format
 

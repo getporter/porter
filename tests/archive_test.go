@@ -32,6 +32,7 @@ func TestArchive(t *testing.T) {
 
 	// Archive bundle
 	archiveOpts := porter.ArchiveOptions{}
+	archiveOpts.Tag = "localhost:5000/mysql:v0.1.2"
 	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 

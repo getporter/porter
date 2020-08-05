@@ -35,7 +35,7 @@ porter [flags]
 
 ### SEE ALSO
 
-* [porter archive](/cli/porter_archive/)	 - Archive a bundle
+* [porter archive](/cli/porter_archive/)	 - Archive a bundle from a tag
 * [porter build](/cli/porter_build/)	 - Build a bundle
 * [porter bundles](/cli/porter_bundles/)	 - Bundle commands
 * [porter copy](/cli/porter_copy/)	 - Copy a bundle
