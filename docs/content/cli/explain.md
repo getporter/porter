@@ -19,21 +19,23 @@ porter explain [flags]
 
 ```
   porter explain
+  porter explain --tag getporter/porter-hello:v0.1.0
+  porter explain --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter explain --file another/porter.yaml
   porter explain --cnab-file some/bundle.json
-  porter explain --tag getporter/porter-hello:v0.1.0
 		  
 ```
 
 ### Options
 
 ```
-      --cnab-file string   Path to the CNAB bundle.json file.
-  -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force              Force a fresh pull of the bundle
-  -h, --help               help for explain
-  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
-  -t, --tag string         Use a bundle in an OCI registry specified by the given tag
+      --cnab-file string    Path to the CNAB bundle.json file.
+  -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+      --force               Force a fresh pull of the bundle
+  -h, --help                help for explain
+      --insecure-registry   Don't require TLS for the registry
+  -o, --output string       Specify an output format.  Allowed values: table, json, yaml (default "table")
+      --tag string          Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands

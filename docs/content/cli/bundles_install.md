@@ -24,11 +24,12 @@ porter bundles install [INSTALLATION] [flags]
 
 ```
   porter bundle install
+  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
+  porter bundle install --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
-  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
 
 ```
 
@@ -40,12 +41,12 @@ porter bundles install [INSTALLATION] [flags]
   -c, --cred strings               Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string              Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                Path to the porter manifest file. Defaults to the bundle in the current directory.
-      --force                      Force a fresh pull of the bundle and all dependencies
+      --force                      Force a fresh pull of the bundle
   -h, --help                       help for install
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
-  -t, --tag string                 Use a bundle in an OCI registry specified by the given tag
+      --tag string                 Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands

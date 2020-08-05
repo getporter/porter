@@ -18,15 +18,18 @@ porter bundles archive FILENAME --tag PUBLISHED_BUNDLE [flags]
 ### Examples
 
 ```
-  porter bundle archive mybun.tgz --tag repo/bundle:tag
+  porter bundle archive mybun.tgz --tag getporter/porter-hello:v0.1.0
+  porter bundle archive mybun.tgz --tag localhost:5000/getporter/porter-hello:v0.1.0 --force
+
 ```
 
 ### Options
 
 ```
-      --force        Force a fresh pull of the bundle
-  -h, --help         help for archive
-  -t, --tag string   Use a bundle in an OCI registry specified by the given tag
+      --force               Force a fresh pull of the bundle
+  -h, --help                help for archive
+      --insecure-registry   Don't require TLS for the registry
+      --tag string          Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands
