@@ -136,7 +136,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
 
-		if manifestExists {
+		if manifestExists && o.CNABFile == "" {
 			o.File = config.Name
 			o.CNABFile = build.LOCAL_BUNDLE
 		}
