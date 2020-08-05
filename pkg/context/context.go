@@ -21,14 +21,17 @@ const (
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
-	Debug        bool
-	DebugPlugins bool
-	verbose      bool
-	FileSystem   *afero.Afero
-	In           io.Reader
-	Out          io.Writer
-	Err          io.Writer
-	NewCommand   CommandBuilder
+	Debug                  bool
+	DebugPlugins           bool
+	RunPlugInInDebugger    string
+	PlugInWorkingDirectory string
+	DebuggerPort           string
+	verbose                bool
+	FileSystem             *afero.Afero
+	In                     io.Reader
+	Out                    io.Writer
+	Err                    io.Writer
+	NewCommand             CommandBuilder
 }
 
 func (c *Context) SetVerbose(value bool) {
@@ -69,19 +72,29 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 }
 
 func New() *Context {
-	c := &Context{
-		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
-		In:         os.Stdin,
-		Out:        NewCensoredWriter(os.Stdout),
-		Err:        NewCensoredWriter(os.Stderr),
-		NewCommand: exec.Command,
-	}
-
 	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
 	debug, _ := strconv.ParseBool(os.Getenv("PORTER_DEBUG"))
-	c.Debug = debug
 
-	return c
+	runPlugInInDebugger := os.Getenv("PORTER_RUN_PLUGIN_IN_DEBUGGER")
+	debuggerPort := os.Getenv("PORTER_DEBUGGER_PORT")
+	debugWorkingDirectory := os.Getenv("PORTER_PLUGIN_WORKING_DIRECTORY")
+
+	port := "2345"
+	if _, err := strconv.ParseInt(debuggerPort, 10, 16); err != nil {
+		port = debuggerPort
+	}
+
+	return &Context{
+		Debug:                  debug,
+		RunPlugInInDebugger:    runPlugInInDebugger,
+		DebuggerPort:           port,
+		PlugInWorkingDirectory: debugWorkingDirectory,
+		FileSystem:             &afero.Afero{Fs: afero.NewOsFs()},
+		In:                     os.Stdin,
+		Out:                    NewCensoredWriter(os.Stdout),
+		Err:                    NewCensoredWriter(os.Stderr),
+		NewCommand:             exec.Command,
+	}
 }
 
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {

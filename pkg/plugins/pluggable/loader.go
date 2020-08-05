@@ -8,7 +8,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
@@ -36,7 +38,7 @@ func NewPluginLoader(c *config.Config) *PluginLoader {
 // and an error if the plugin could not be loaded.
 func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), error) {
 	err := l.selectPlugin(pluginType)
-	if err != err {
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -59,7 +61,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
 	}
 	configReader, err := l.readPluginConfig()
-	if err != err {
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -123,6 +125,11 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
 	}
 
+	cleanup, err = l.setUpDebugger(client, cleanup)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "could not set up debugger for plugin")
+	}
+
 	// Request the plugin
 	raw, err := rpcClient.Dispense(pluginType.Interface)
 	if err != nil {
@@ -131,6 +138,55 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	}
 
 	return raw, cleanup, nil
+}
+
+func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (func(), error) {
+	// TODO check that dlv is installed
+	if len(l.Config.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(l.Config.RunPlugInInDebugger)) {
+		listen := fmt.Sprintf("--listen=127.0.0.1:%s", l.Config.DebuggerPort)
+		if len(l.Config.PlugInWorkingDirectory) == 0 {
+			return cleanup, errors.New("Plugin Working Directory is required for debugging")
+		}
+		wd := fmt.Sprintf("--wd=%s", l.Config.PlugInWorkingDirectory)
+		pid := client.ReattachConfig().Pid
+		dlvCmd := exec.Command("dlv", "attach", strconv.Itoa(pid), "--headless=true", "--api-version=2", "--log", listen, "--accept-multiclient", wd)
+		dlvCmd.Stderr = os.Stderr
+		dlvCmd.Stdout = os.Stdout
+
+		err := dlvCmd.Start()
+		if err != nil {
+			return cleanup, errors.Wrap(err, "Error starting dlv")
+		}
+		dlvCmdTerminated := make(chan error)
+		go func() {
+			dlvCmdTerminated <- dlvCmd.Wait()
+		}()
+
+		// dlv attach does not fail immediately but is common (e.g. if plugin is compiled with ldflags that prevent debugging)
+		// so pause here to make sure that it has attached correctly and not failed
+
+		time.Sleep(2 * time.Second)
+
+		select {
+		case err = <-dlvCmdTerminated:
+			return cleanup, errors.Wrap(err, "dlv exited unexpectedly")
+		default:
+		}
+
+		newcleanup := func() {
+			if dlvCmd.Process != nil {
+				select {
+				case err = <-dlvCmdTerminated:
+				default:
+					_ = dlvCmd.Process.Kill()
+				}
+			}
+			cleanup()
+		}
+		return newcleanup, nil
+
+	}
+	return cleanup, nil
 }
 
 func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
