@@ -402,6 +402,15 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	}
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+	ps := extensions.ParameterSources{}
+	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
+	rm.bundle = bundle.Bundle{
+		Custom: map[string]interface{}{
+			extensions.ParameterSourcesKey: ps,
+		},
+		RequiredExtensions: []string{extensions.ParameterSourcesKey},
+	}
+
 	rm.bundles = map[string]bundle.Bundle{
 		"mysql": {
 			Outputs: map[string]bundle.Output{

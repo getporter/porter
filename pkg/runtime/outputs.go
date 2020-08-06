@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"fmt"
 	"os"
 
 	"get.porter.sh/porter/pkg/manifest"
@@ -16,10 +15,8 @@ func (m *RuntimeManifest) ReadDependencyOutputValue(ref manifest.DependencyOutpu
 	output, ok := os.LookupEnv(psEnvVar)
 	if !ok {
 		err := errors.Errorf("bundle dependency %s output %s was not passed into the runtime", ref.Dependency, ref.Output)
-		fmt.Fprint(m.Err, err)
 		return "", err
 	}
-
 
 	return output, nil
 }
