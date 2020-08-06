@@ -256,29 +256,24 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 
-		if depArgs.Action == claim.ActionUninstall {
-			if e.parentOpts.Delete && !e.parentOpts.ForceDelete {
-				executeErrs = multierror.Append(executeErrs, ErrUnsafeInstallationDeleteRetryForceDelete)
-			}
-		}
-
-		if !e.parentOpts.ForceDelete {
+		// Handle errors when/if the action is uninstall
+		executeErrs = e.parentOpts.handleUninstallErrs(e.Out, executeErrs)
+		if executeErrs != nil {
 			return executeErrs
 		}
-		// else, we swallow executeErrs as opts.ForceDelete is true
 	}
 
-	if e.parentOpts.Delete || e.parentOpts.ForceDelete {
+	if e.parentOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
 		return e.Claims.DeleteInstallation(depArgs.Installation)
-	} else {
-		// Collect expected outputs via claim
-		outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
-		if err != nil {
-			return err
-		}
-		dep.outputs = outputs
 	}
+
+	// Collect expected outputs via claim
+	outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
+	if err != nil {
+		return err
+	}
+	dep.outputs = outputs
 
 	return nil
 }

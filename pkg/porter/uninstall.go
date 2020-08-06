@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/cnabio/cnab-go/claim"
@@ -22,6 +23,30 @@ type UninstallOptions struct {
 type UninstallDeleteOptions struct {
 	Delete      bool
 	ForceDelete bool
+}
+
+func (opts *UninstallDeleteOptions) shouldDelete() bool {
+	return opts.Delete || opts.ForceDelete
+}
+
+func (opts *UninstallDeleteOptions) unsafeDelete() bool {
+	return opts.Delete && !opts.ForceDelete
+}
+
+func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if opts.unsafeDelete() {
+		return multierror.Append(err, ErrUnsafeInstallationDeleteRetryForceDelete)
+	}
+
+	if opts.ForceDelete {
+		fmt.Fprintf(out, "ignoring the following errors as --force-delete is true:\n  %s", err.Error())
+		return nil
+	}
+	return err
 }
 
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
@@ -48,35 +73,30 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	err = p.CNAB.Execute(opts.ToActionArgs(deperator))
 	if err != nil {
 		uninstallErrs = multierror.Append(uninstallErrs, err)
-		// If the installation is not found, bail out now and return this error; no further action needed
+
+		// If the installation is not found, no further action is needed
 		if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) {
 			return uninstallErrs
 		}
 
-		if len(deperator.deps) > 0 {
+		if len(deperator.deps) > 0 && !opts.ForceDelete {
 			uninstallErrs = multierror.Append(uninstallErrs,
 				fmt.Errorf("failed to uninstall the %s bundle, the remaining dependencies were not uninstalled", opts.Name))
 		}
 
-		if opts.Delete && !opts.ForceDelete {
-			uninstallErrs = multierror.Append(uninstallErrs, ErrUnsafeInstallationDeleteRetryForceDelete)
-		}
-		if !opts.ForceDelete {
+		uninstallErrs = opts.handleUninstallErrs(p.Out, uninstallErrs)
+		if uninstallErrs != nil {
 			return uninstallErrs
 		}
-		// else, we swallow uninstallErrs as opts.ForceDelete is true
-		// and we wish to pass same option down to deps, if applicable
 	}
 
 	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
-	err = deperator.Execute()
+	err = opts.handleUninstallErrs(p.Out, deperator.Execute())
 	if err != nil {
-		if !opts.ForceDelete {
-			return err
-		}
+		return err
 	}
 
-	if opts.Delete || opts.ForceDelete {
+	if opts.shouldDelete() {
 		fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
 		return p.Claims.DeleteInstallation(opts.Name)
 	}
