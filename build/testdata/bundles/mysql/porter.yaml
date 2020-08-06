@@ -83,3 +83,10 @@ outputs:
       - install
       - upgrade
     sensitive: true
+  - name: mysql-root-password
+    description: "The mysql root user password"
+    type: string
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true

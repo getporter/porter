@@ -15,6 +15,11 @@ parameters:
     path: /cnab/app/tfstate
     source:
       output: tfstate
+  - name: root-password
+    type: string
+    source:
+      dependency: mysql
+      output: mysql-root-password
 
 outputs:
   - name: msg
@@ -58,4 +63,3 @@ uninstall:
       arguments:
         - uninstall
         - "{{ bundle.outputs.msg }}"
-

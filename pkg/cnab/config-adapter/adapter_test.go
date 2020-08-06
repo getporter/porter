@@ -465,6 +465,7 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
 	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
+	want.SetParameterFromDependencyOutput("root-password", "mysql", "mysql-root-password")
 
 	assert.Equal(t, want, sources)
 }

@@ -313,11 +313,21 @@ func (c *ManifestConverter) generateParameterSources(b *bundle.Bundle) extension
 
 	// Directly wired outputs to parameters
 	for _, p := range c.Manifest.Parameters {
+		// Skip parameters that aren't set from an output
 		if p.Source.Output == "" {
 			continue
 		}
 
-		pso := c.generateOutputParameterSource(p.Source.Output)
+		var pso extensions.ParameterSource
+		if p.Source.Dependency == "" {
+			pso = c.generateOutputParameterSource(p.Source.Output)
+		} else {
+			ref := manifest.DependencyOutputReference{
+				Dependency: p.Source.Dependency,
+				Output:     p.Source.Output,
+			}
+			pso = c.generateDependencyOutputParameterSource(ref)
+		}
 		ps[p.Name] = pso
 	}
 

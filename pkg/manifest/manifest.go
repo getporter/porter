@@ -275,7 +275,8 @@ func (pd *ParameterDefinition) AppliesTo(action string) bool {
 }
 
 type ParameterSource struct {
-	Output string `yaml:"output"`
+	Dependency string `yaml:"dependency,omitempty"`
+	Output     string `yaml:"output"`
 }
 
 // CredentialDefinition represents the structure or fields of a credential parameter
