@@ -10,8 +10,13 @@ import (
 
 const installationDeleteTmpl = "deleting installation records for %s...\n"
 
-// ErrUnsafeInstallationDelete warns the user that deletion of an unsuccessfully uninstalled installation is unsafe
-var ErrUnsafeInstallationDelete = errors.New("it is unsafe to delete an installation when the last action wasn't a successful uninstall; if you are sure it should be deleted, retry the last command with the --force flag")
+var (
+	// ErrUnsafeInstallationDelete warns the user that deletion of an unsuccessfully uninstalled installation is unsafe
+	ErrUnsafeInstallationDelete = errors.New("it is unsafe to delete an installation when the last action wasn't a successful uninstall")
+
+	// ErrUnsafeInstallationDeleteRetryForce presents the ErrUnsafeInstallationDelete error and provides a retry option of --force
+	ErrUnsafeInstallationDeleteRetryForce = fmt.Errorf("%s; if you are sure it should be deleted, retry the last command with the --force flag", ErrUnsafeInstallationDelete)
+)
 
 // DeleteOptions represent options for Porter's installation delete command
 type DeleteOptions struct {
@@ -48,7 +53,7 @@ func (p *Porter) DeleteInstallation(opts DeleteOptions) error {
 	}
 
 	if (claim.Action != claims.ActionUninstall || installation.GetLastStatus() != claims.StatusSucceeded) && !opts.Force {
-		return ErrUnsafeInstallationDelete
+		return ErrUnsafeInstallationDeleteRetryForce
 	}
 
 	fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)

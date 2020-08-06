@@ -3,6 +3,7 @@
 package tests
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,19 +13,36 @@ import (
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
 	testcases := []struct {
-		name               string
-		installed          bool
-		uninstallFails     bool
-		delete             bool
-		forceDelete        bool
-		installationExists bool
-		wantError          string
+		name                string
+		notInstalled        bool
+		uninstallFails      bool
+		delete              bool
+		forceDelete         bool
+		installationRemains bool
+		wantError           string
 	}{
-		{"not yet installed", false, false, false, false, false, "1 error occurred:\n\t* could not load installation HELLO: Installation does not exist\n\n"},
-		{"no delete", true, false, false, false, true, ""},
-		{"delete", true, false, true, false, false, ""},
-		{"uninstall fails - delete", true, true, true, false, true, "2 errors occurred:\n\t* Command driver (uninstall) failed executing bundle: exit status 1\n\t* not deleting installation HELLO as uninstall was not successful; use --force-delete to override\n\n"},
-		{"uninstall fails - force-delete", true, true, false, true, false, ""},
+		{
+			name:         "not yet installed",
+			notInstalled: true,
+			wantError:    "1 error occurred:\n\t* could not load installation HELLO: Installation does not exist\n\n",
+		}, {
+			name:                "no --delete",
+			installationRemains: true,
+		}, {
+			name:      "--delete",
+			delete:    true,
+			wantError: "",
+		}, {
+			name:                "uninstall fails; --delete",
+			uninstallFails:      true,
+			delete:              true,
+			installationRemains: true,
+			wantError:           fmt.Sprintf("2 errors occurred:\n\t* Command driver (uninstall) failed executing bundle: exit status 1\n\t* %s\n\n", porter.ErrUnsafeInstallationDeleteRetryForceDelete.Error()),
+		}, {
+			name:           "uninstall fails; --force-delete",
+			uninstallFails: true,
+			forceDelete:    true,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -39,7 +57,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 			require.NoError(t, err)
 
 			// Install bundle
-			if tc.installed {
+			if !tc.notInstalled {
 				opts := porter.InstallOptions{}
 				opts.Driver = "debug"
 
@@ -81,7 +99,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 			}
 
 			_, err = p.Claims.ReadInstallation(opts.Name)
-			if tc.installationExists {
+			if tc.installationRemains {
 				require.NoError(t, err, "Installation is expected to exist")
 			} else {
 				require.EqualError(t, err, "Installation does not exist")

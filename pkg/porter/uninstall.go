@@ -9,6 +9,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ErrUnsafeInstallationDeleteRetryForceDelete presents the ErrUnsafeInstallationDelete error and provides a retry option of --force-delete
+var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sure it should be deleted, retry the last command with the --force-delete flag", ErrUnsafeInstallationDelete)
+
 // UninstallOptions that may be specified when uninstalling a bundle.
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
@@ -45,6 +48,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	err = p.CNAB.Execute(opts.ToActionArgs(deperator))
 	if err != nil {
 		uninstallErrs = multierror.Append(uninstallErrs, err)
+		// If the installation is not found, bail out now and return this error; no further action needed
 		if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) {
 			return uninstallErrs
 		}
@@ -55,7 +59,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		}
 
 		if opts.Delete && !opts.ForceDelete {
-			uninstallErrs = multierror.Append(uninstallErrs, fmt.Errorf("not deleting installation %s as uninstall was not successful; use --force-delete to override", opts.Name))
+			uninstallErrs = multierror.Append(uninstallErrs, ErrUnsafeInstallationDeleteRetryForceDelete)
 		}
 		if !opts.ForceDelete {
 			return uninstallErrs

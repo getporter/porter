@@ -258,7 +258,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 
 		if depArgs.Action == claim.ActionUninstall {
 			if e.parentOpts.Delete && !e.parentOpts.ForceDelete {
-				executeErrs = multierror.Append(executeErrs, fmt.Errorf("not deleting installation %s as uninstall was not successful; use --force-delete to override", depArgs.Installation))
+				executeErrs = multierror.Append(executeErrs, ErrUnsafeInstallationDeleteRetryForceDelete)
 			}
 		}
 

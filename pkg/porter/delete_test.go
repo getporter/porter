@@ -10,18 +10,39 @@ import (
 
 func TestDeleteInstallation(t *testing.T) {
 	testcases := []struct {
-		name               string
-		lastAction         string
-		lastActionStatus   string
-		force              bool
-		installationExists bool
-		wantError          string
+		name                string
+		lastAction          string
+		lastActionStatus    string
+		force               bool
+		installationRemains bool
+		wantError           string
 	}{
-		{"not yet installed", "", "", false, false, "unable to read status for installation test: Installation does not exist"},
-		{"last action not uninstall - no force", "install", claim.StatusSucceeded, false, true, ErrUnsafeInstallationDelete.Error()},
-		{"last action failed uninstall - no force", "uninstall", claim.StatusFailed, false, true, ErrUnsafeInstallationDelete.Error()},
-		{"last action not uninstall - force", "install", claim.StatusSucceeded, true, false, ""},
-		{"last action failed uninstall - force", "uninstall", claim.StatusFailed, true, false, ""},
+		{
+			name:      "not yet installed",
+			wantError: "unable to read status for installation test: Installation does not exist",
+		}, {
+			name:                "last action not uninstall; no --force",
+			lastAction:          "install",
+			lastActionStatus:    claim.StatusSucceeded,
+			installationRemains: true,
+			wantError:           ErrUnsafeInstallationDeleteRetryForce.Error(),
+		}, {
+			name:                "last action failed uninstall; no --force",
+			lastAction:          "uninstall",
+			lastActionStatus:    claim.StatusFailed,
+			installationRemains: true,
+			wantError:           ErrUnsafeInstallationDeleteRetryForce.Error(),
+		}, {
+			name:             "last action not uninstall; --force",
+			lastAction:       "install",
+			lastActionStatus: claim.StatusSucceeded,
+			force:            true,
+		}, {
+			name:             "last action failed uninstall; --force",
+			lastAction:       "uninstall",
+			lastActionStatus: claim.StatusFailed,
+			force:            true,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -49,7 +70,7 @@ func TestDeleteInstallation(t *testing.T) {
 			}
 
 			_, err = p.Claims.ReadInstallation("test")
-			if tc.installationExists {
+			if tc.installationRemains {
 				require.NoError(t, err, "expected installation to exist")
 			} else {
 				require.EqualError(t, err, "Installation does not exist")
