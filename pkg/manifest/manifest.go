@@ -380,7 +380,7 @@ type Dependency struct {
 
 func (d *Dependency) Validate() error {
 	if d.Name == "" {
-		return errors.New("dependency tag is required")
+		return errors.New("dependency name is required")
 	}
 
 	if d.Tag == "" {

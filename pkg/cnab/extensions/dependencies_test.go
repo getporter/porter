@@ -24,14 +24,10 @@ func TestReadDependencyProperties(t *testing.T) {
 
 	for _, dep := range deps {
 		if dep.Name == "storage" {
-
-			assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
 			assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "Dependency.Bundle is incorrect")
 			assert.Nil(t, dep.Version, "Dependency.Version should be nil")
 
 		} else if dep.Name == "mysql" {
-
-			assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
 			assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
 			assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
 			assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")

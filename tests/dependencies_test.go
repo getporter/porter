@@ -24,7 +24,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	p.Debug = false
 
 	namespace := installWordpressBundle(p)
-	defer cleanupWordpressBundle(p, "mysql")
+	defer cleanupWordpressBundle(p)
 
 	upgradeWordpressBundle(p, namespace)
 
@@ -99,19 +99,11 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	return namespace
 }
 
-func cleanupWordpressBundle(p *porter.TestPorter, targetDependencyName string) {
-
-	// Question: Do need we handle the case of uninstalling all the Dependencies
-	targetDependency := p.Manifest.Dependencies
-	for _, dep := range p.Manifest.Dependencies {
-		if dep.Name == targetDependencyName {
-			targetDependency[0] = dep
-		}
-	}
+func cleanupWordpressBundle(p *porter.TestPorter) {
 
 	uninstallOpts := porter.UninstallOptions{}
 	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	uninstallOpts.Tag = targetDependency[0].Tag
+	uninstallOpts.Tag = p.Manifest.Dependencies[0].Tag
 	err := uninstallOpts.Validate([]string{"wordpress-mysql"}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
 
