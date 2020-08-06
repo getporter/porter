@@ -58,3 +58,13 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 	want.SetParameterFromOutput("tfstate", "tfstate")
 	assert.Equal(t, want, ps)
 }
+
+func TestParameterSource_ListSourcesByPriority(t *testing.T) {
+	ps := ParameterSources{}
+	ps.SetParameterFromOutput("tfstate", "tfstate")
+	got := ps["tfstate"].ListSourcesByPriority()
+	want := []ParameterSourceDefinition{
+		OutputParameterSource{OutputName: "tfstate"},
+	}
+	assert.Equal(t, want, got)
+}

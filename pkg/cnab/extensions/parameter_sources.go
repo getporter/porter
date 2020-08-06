@@ -57,7 +57,7 @@ type ParameterSource struct {
 // ListSourcesByPriority returns the parameter sources by the requested priority,
 // if none is specified, they are unsorted.
 func (s ParameterSource) ListSourcesByPriority() []ParameterSourceDefinition {
-	sources := make([]ParameterSourceDefinition, len(s.Sources))
+	sources := make([]ParameterSourceDefinition, 0, len(s.Sources))
 	if len(s.Priority) == 0 {
 		for _, source := range s.Sources {
 			sources = append(sources, source)

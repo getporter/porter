@@ -24,12 +24,12 @@ porter bundles uninstall [INSTALLATION] [flags]
 
 ```
   porter bundle uninstall
+  porter bundle uninstall --tag getporter/kubernetes:v0.1.0
+  porter bundle uninstall --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
-  porter bundle uninstall MyAppFromTag --tag getporter/kubernetes:v0.1.0
-
 
 ```
 
@@ -41,12 +41,12 @@ porter bundles uninstall [INSTALLATION] [flags]
   -c, --cred strings               Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
   -d, --driver string              Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
-      --force                      Force a fresh pull of the bundle and all dependencies
+      --force                      Force a fresh pull of the bundle
   -h, --help                       help for uninstall
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
-  -t, --tag string                 Use a bundle in an OCI registry specified by the given tag
+      --tag string                 Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands

@@ -59,7 +59,7 @@ stages:
       displayName: 'Build'
 
     - script: |
-        make start-local-docker-registry test-cli stop-local-docker-registry
+        make test-cli
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'CLI Test'
 

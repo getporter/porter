@@ -51,7 +51,7 @@ generate: packr2
 	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
-HAS_GOBIN_IN_PATH := $(shell if [[ "$${PATH}" == ?(*:)"$(CLIENT_GOPATH)/bin"?([:,/:]*) ]];then echo $${GOPATH}/bin;fi)
+HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
 packr2:
 ifndef HAS_PACKR2
 ifndef HAS_GOBIN_IN_PATH
@@ -84,16 +84,16 @@ test: clean-last-testrun test-unit test-integration test-cli
 test-unit:
 	$(GO) test ./...
 
-test-integration: build
+test-integration: clean-last-testrun build start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
 
-test-cli: clean-last-testrun build init-porter-home-for-ci
+test-cli: clean-last-testrun build init-porter-home-for-ci start-local-docker-registry
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
 	cp -R build/testdata/credentials $(PORTER_HOME)
-	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
+	sed -i.bak 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
 .PHONY: docs
@@ -214,7 +214,7 @@ clean: clean-mixins clean-last-testrun
 clean-mixins:
 	-rm -fr bin/
 
-clean-last-testrun:
+clean-last-testrun: stop-local-docker-registry
 	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2

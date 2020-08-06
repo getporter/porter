@@ -5,34 +5,31 @@ url: /cli/porter_archive/
 ---
 ## porter archive
 
-Archive a bundle
+Archive a bundle from a tag
 
 ### Synopsis
 
 Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.
 
 ```
-porter archive FILENAME [flags]
+porter archive FILENAME --tag PUBLISHED_BUNDLE [flags]
 ```
 
 ### Examples
 
 ```
-  porter archive mybun.tgz
-  porter archive mybun.tgz --file another/porter.yaml
-  porter archive mybun.tgz --cnab-file some/bundle.json
-  porter archive mybun.tgz --tag repo/bundle:tag
-		  
+  porter archive mybun.tgz --tag getporter/porter-hello:v0.1.0
+  porter archive mybun.tgz --tag localhost:5000/getporter/porter-hello:v0.1.0 --force
+
 ```
 
 ### Options
 
 ```
-      --cnab-file string   Path to the CNAB bundle.json file.
-  -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-      --force              Force a fresh pull of the bundle
-  -h, --help               help for archive
-  -t, --tag string         Use a bundle in an OCI registry specified by the given tag
+      --force               Force a fresh pull of the bundle
+  -h, --help                help for archive
+      --insecure-registry   Don't require TLS for the registry
+      --tag string          Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands

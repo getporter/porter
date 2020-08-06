@@ -25,7 +25,14 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	if len(args) < 1 || args[0] == "" {
 		return errors.New("destination file is required")
 	}
+	if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, the archive file name, but multiple were received: %s", args)
+	}
 	o.ArchiveFile = args[0]
+
+	if o.Tag == "" {
+		return errors.New("must provide a value for --tag of the form REGISTRY/bundle:tag")
+	}
 	return o.BundleLifecycleOpts.Validate(args, p)
 }
 
@@ -56,7 +63,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 	if err != nil {
 		return errors.Wrap(err, "couldn't open bundle for archiving")
 	}
-	// This allows you to export thin or thick bundles, we only support generting "thick" archives
+	// This allows you to export thin or thick bundles, we only support generating "thick" archives
 	ctor, err := construction.NewConstructor(false)
 	if err != nil {
 		return err

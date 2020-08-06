@@ -28,6 +28,12 @@ may be useful when you think you may have found a bug, when you want to know
 what commands they are executing, or when you need really verbose output to send
 to the developers.
 
+### Debug Plugins
+
+`--debug-plugins` controls if logs related to communication
+between porter and its plugins should be printed when debugging. This can be _very_
+verbose, so it is not turned on by default when debug is true.
+
 ### Output
 
 `--output` controls the format of the output printed by porter. Each command
@@ -79,13 +85,6 @@ output = "json"
 allow-docker-host-access = true
 ```
 
-### Debug Plugins
-
-The `debug-plugins` configuration setting controls if logs related to communication
-between porter and its plugins should be printed when debugging. This can be _very_
-verbose, so it is not turned on by default when debug is true.
-
-```
 
 [install]: /cli/porter_install/
 [upgrade]: /cli/porter_upgrade/

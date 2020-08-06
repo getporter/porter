@@ -35,20 +35,22 @@ porter parameters generate [NAME] [flags]
 
 ```
   porter parameter generate
-  porter parameter generate myparamset --file myapp/porter.yaml
   porter parameter generate myparamset --tag getporter/porter-hello:v0.1.0
-  porter parameter generate myparamset --cnab-file myapp/bundle.json --dry-run
+  porter parameter generate myparamset --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter parameter generate myparamset --file myapp/porter.yaml
+  porter parameter generate myparamset --cnab-file myapp/bundle.json
 
 ```
 
 ### Options
 
 ```
-      --cnab-file string   Path to the CNAB bundle.json file.
-  -f, --file string        Path to the porter manifest file. Defaults to the bundle in the current directory.
-      --force              Force a fresh pull of the bundle
-  -h, --help               help for generate
-      --tag string         Use a bundle in an OCI registry specified by the given tag.
+      --cnab-file string    Path to the CNAB bundle.json file.
+  -f, --file string         Path to the porter manifest file. Defaults to the bundle in the current directory.
+      --force               Force a fresh pull of the bundle
+  -h, --help                help for generate
+      --insecure-registry   Don't require TLS for the registry
+      --tag string          Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands
