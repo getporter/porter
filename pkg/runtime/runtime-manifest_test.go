@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
@@ -23,11 +24,11 @@ func TestResolveMapParam(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"person": {
 				Name: "person",
 			},
-			{
+			"place": {
 				Name:    "place",
 				ApplyTo: []string{claim.ActionInstall},
 			},
@@ -69,8 +70,8 @@ func TestResolveMapParam(t *testing.T) {
 func TestResolvePathParam(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"person": {
 				Name: "person",
 				Destination: manifest.Location{
 					Path: "person.txt",
@@ -165,7 +166,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 func TestResolveMapParamUnknown(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{},
+		Parameters: manifest.ParameterDefinitions{},
 	}
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
@@ -189,8 +190,8 @@ func TestPrepare_fileParam(t *testing.T) {
 	cxt.AddTestFile("testdata/file-param", "/cnab/app/install")
 
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"file-param": {
 				Name: "file-param",
 				Destination: manifest.Location{
 					Path: "/cnab/app/install",
@@ -199,7 +200,7 @@ func TestPrepare_fileParam(t *testing.T) {
 					Type: "file",
 				},
 			},
-			{
+			"upgrade-file-param": {
 				Name:    "upgrade-file-param",
 				ApplyTo: []string{string(claim.ActionUpgrade)},
 				Destination: manifest.Location{
@@ -253,8 +254,8 @@ func TestPrepare_fileParam(t *testing.T) {
 func TestResolveArrayUnknown(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"name": {
 				Name: "name",
 			},
 		},
@@ -281,8 +282,8 @@ func TestResolveArray(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"person": {
 				Name: "person",
 			},
 		},
@@ -313,12 +314,12 @@ func TestResolveSensitiveParameter(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{
+		Parameters: manifest.ParameterDefinitions{
+			"sensitive_param": {
 				Name:      "sensitive_param",
 				Sensitive: true,
 			},
-			{
+			"regular_param": {
 				Name: "regular_param",
 			},
 		},
@@ -356,8 +357,8 @@ func TestResolveCredential(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Credentials: []manifest.CredentialDefinition{
-			{
+		Credentials: manifest.CredentialDefinitions{
+			"password": {
 				Name:     "password",
 				Location: manifest.Location{EnvironmentVariable: "PASSWORD"},
 			},
@@ -555,15 +556,15 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 
 	cxt.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
 
-	wantOutputs := []manifest.OutputDefinition{
-		{
+	wantOutputs := manifest.OutputDefinitions{
+		"mysql-root-password": {
 			Name: "mysql-root-password",
 			Schema: definition.Schema{
 				Description: "The root MySQL password",
 				Type:        "string",
 			},
 		},
-		{
+		"mysql-password": {
 			Name: "mysql-password",
 			Schema: definition.Schema{
 				Type: "string",
@@ -959,8 +960,8 @@ func TestResolveStepEncoding(t *testing.T) {
 
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{
-		Parameters: []manifest.ParameterDefinition{
-			{Name: "test"},
+		Parameters: manifest.ParameterDefinitions{
+			"test": {Name: "test"},
 		},
 	}
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)

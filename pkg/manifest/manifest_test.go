@@ -237,7 +237,7 @@ func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
 }
 
 func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
-	assertAllCredentialsRequired := func(t *testing.T, creds []CredentialDefinition) {
+	assertAllCredentialsRequired := func(t *testing.T, creds CredentialDefinitions) {
 		for _, cred := range creds {
 			assert.EqualValuesf(t, true, cred.Required, "Credential: %s should be required", cred.Name)
 		}

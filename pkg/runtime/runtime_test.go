@@ -77,15 +77,15 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"foo": {
 				Name: "foo",
 				Schema: definition.Schema{
 					Type: "string",
 				},
 				Sensitive: true,
 			},
-			{
+			"123": {
 				Name: "123",
 				Schema: definition.Schema{
 					Type: "string",
@@ -121,11 +121,11 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"bar": {
 				Name: "bar",
 			},
-			{
+			"456": {
 				Name: "456",
 			},
 		},
@@ -152,14 +152,14 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"foo": {
 				Name: "foo",
 				ApplyTo: []string{
 					"upgrade",
 				},
 			},
-			{
+			"123": {
 				Name: "123",
 				ApplyTo: []string{
 					"install",
@@ -252,8 +252,8 @@ func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
 			r := NewTestPorterRuntime(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
-				Outputs: []manifest.OutputDefinition{
-					tc.def,
+				Outputs: manifest.OutputDefinitions{
+					tc.def.Name: tc.def,
 				},
 			}
 			r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)

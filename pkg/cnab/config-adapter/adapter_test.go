@@ -301,8 +301,8 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	outputDefinitions := []manifest.OutputDefinition{
-		{
+	outputDefinitions := manifest.OutputDefinitions{
+		"output1": {
 			Name: "output1",
 			ApplyTo: []string{
 				"install",
@@ -314,14 +314,14 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			},
 			Sensitive: true,
 		},
-		{
+		"output2": {
 			Name: "output2",
 			Schema: definition.Schema{
 				Type:        "boolean",
 				Description: "Description of output2",
 			},
 		},
-		{
+		"kubeconfig": {
 			Name: "kubeconfig",
 			Path: "/root/.kube/config",
 			Schema: definition.Schema{

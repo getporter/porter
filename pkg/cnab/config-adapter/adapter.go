@@ -139,7 +139,7 @@ func (c *ManifestConverter) generateDefaultAction(action string) bundle.Action {
 func (c *ManifestConverter) generateBundleParameters(defs *definition.Definitions) map[string]bundle.Parameter {
 	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
 
-	for _, param := range append(c.Manifest.Parameters, c.buildDefaultPorterParameters()...) {
+	addParam := func(param manifest.ParameterDefinition) {
 		p := bundle.Parameter{
 			Definition:  param.Name,
 			ApplyTo:     param.ApplyTo,
@@ -170,6 +170,15 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		p.Definition = defName
 		params[param.Name] = p
 	}
+
+	for _, p := range c.Manifest.Parameters {
+		addParam(p)
+	}
+
+	for _, p := range c.buildDefaultPorterParameters() {
+		addParam(p)
+	}
+
 	return params
 }
 
