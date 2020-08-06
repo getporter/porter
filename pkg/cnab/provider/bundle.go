@@ -16,7 +16,7 @@ func (r *Runtime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 
 	bun, err := l.LoadData(bunD)
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "cannot load bundle")
+		return bundle.Bundle{}, errors.Wrapf(err, "cannot load bundle from\n%s at %s", string(bunD), bundleFile)
 	}
 
 	return *bun, nil
