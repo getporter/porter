@@ -15,12 +15,12 @@ import (
 type GenerateParametersOptions struct {
 	GenerateOptions
 
-	// Parameters from the bundle
-	Parameters map[string]bundle.Parameter
+	// Bundle to generate parameters from
+	Bundle bundle.Bundle
 }
 
 // GenerateParameters will generate a parameter set based on the given options
-func GenerateParameters(opts GenerateParametersOptions) (*parameters.ParameterSet, error) {
+func (opts *GenerateParametersOptions) GenerateParameters() (*parameters.ParameterSet, error) {
 	if opts.Name == "" {
 		return nil, errors.New("parameter set name is required")
 	}
@@ -28,36 +28,34 @@ func GenerateParameters(opts GenerateParametersOptions) (*parameters.ParameterSe
 	if opts.Silent {
 		generator = genEmptySet
 	}
-	pset, err := genParameterSet(opts.Name, opts.Parameters, generator)
+	pset, err := opts.genParameterSet(generator)
 	if err != nil {
 		return nil, err
 	}
 	return &pset, nil
 }
 
-func genParameterSet(name string, params map[string]bundle.Parameter, fn generator) (parameters.ParameterSet, error) {
+func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters.ParameterSet, error) {
 	pset := parameters.ParameterSet{
-		Name: name,
+		Name: opts.Name,
 	}
 	pset.Parameters = []valuesource.Strategy{}
 
-	if strings.ContainsAny(name, "./\\") {
-		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", name)
+	if strings.ContainsAny(opts.Name, "./\\") {
+		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", opts.Name)
 	}
 
 	var parameterNames []string
-	for name := range params {
+	for name := range opts.Bundle.Parameters {
 		parameterNames = append(parameterNames, name)
 	}
 
 	sort.Strings(parameterNames)
 
 	for _, name := range parameterNames {
-		// Skip if parameter is "porter-debug"
-		if name == "porter-debug" {
+		if parameters.IsInternal(name, opts.Bundle) {
 			continue
 		}
-
 		c, err := fn(name, surveyParameters)
 		if err != nil {
 			return pset, err

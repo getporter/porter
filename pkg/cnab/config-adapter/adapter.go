@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -227,6 +228,7 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				Description: "Print debug information from Porter when executing the bundle",
 				Type:        "boolean",
 				Default:     false,
+				Comment:     parameters.PorterInternal,
 			},
 		},
 	}
@@ -357,6 +359,7 @@ func (c *ManifestConverter) generateOutputWiringParameter(b bundle.Bundle, outpu
 	var wiringDef definition.Schema
 	wiringDef = *outputDef
 	wiringDef.ID = "https://porter.sh/generated-bundle/#porter-parameter-source-definition"
+	wiringDef.Comment = parameters.PorterInternal
 
 	return wiringName, wiringParam, wiringDef
 }

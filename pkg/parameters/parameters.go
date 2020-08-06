@@ -5,8 +5,13 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/cnabio/cnab-go/bundle"
 	"gopkg.in/yaml.v2"
 )
+
+// PorterInternal is a string that can be used to designate a parameter
+// as internal to Porter
+const PorterInternal = "porter-internal"
 
 // ParseVariableAssignments converts a string array of variable assignments
 // into a map of keys and values
@@ -43,4 +48,15 @@ func Load(path string) (*ParameterSet, error) {
 		return pset, err
 	}
 	return pset, yaml.Unmarshal(data, pset)
+}
+
+// IsInternal determines if the provided param is an internal parameter
+// to Porter after analyzing the provided bundle
+func IsInternal(param string, bun bundle.Bundle) bool {
+	if param, exists := bun.Parameters[param]; exists {
+		if def, exists := bun.Definitions[param.Definition]; exists {
+			return def.Comment == PorterInternal
+		}
+	}
+	return false
 }
