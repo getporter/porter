@@ -31,8 +31,7 @@ is needed.
 
 ### Setting up Porter
 After checking out the code in the repository, you need to install porter in the workflow
-so that you can run porter commands. There is a GitHub action for Porter that you can use
-for this step linked [here](https://github.com/deislabs/porter-gh-action). Adding this 
+so that you can run porter commands. The [Porter GitHub Action](https://github.com/deislabs/porter-gh-action) takes care of installing Porter for you. Adding this 
 action to your workflow will install Porter for you. Here is an example of how to use it:
 ````yaml
 - name: Setup Porter
@@ -159,4 +158,3 @@ Next, we add the steps we want to run. As explained above, the first thing we do
 Next, you can install any of the mixins your bundle needs to be able to run. After you have installed the necessary mixins, you can just run the porter commands that you want to run. We suggest running install, upgrade, and uninstall to verify that they are working as intended. 
 
 Finally, we run the docker-login action to login to Docker Hub so that we can publish our bundle. After logging in, you can run porter publish to publish the bundle. If any of the porter commands fail, the workflow will stop, so your bundle will only be published if it works properly.
-
