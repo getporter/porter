@@ -36,9 +36,11 @@ for this step linked [here](https://github.com/deislabs/porter-gh-action). Addin
 action to your workflow will install Porter for you. Here is an example of how to use it:
 ````yaml
 - name: Setup Porter
-  uses: deislabs/porter-gh-action@v0.27.2
+  uses: deislabs/porter-gh-action@v0.1.1
+  with:
+    porter_version: v0.27.2
 ````
-The version should be the version of Porter you want installed. You can check [here](https://github.com/deislabs/porter) for the most recent released version of Porter.
+The porter_version should be the version of Porter you want installed. You can check [here](https://github.com/deislabs/porter) for the most recent released version of Porter. If you do not pass it in, it will default to latest. 
 
 ### Logging into DockerHub
 Next, you will want to log in to Docker Hub so that you can publish your bundle to a registry. 
@@ -75,7 +77,7 @@ Now that we know the parts that are needed in a workflow, we can learn how to se
 * [Using credential files](#using-credential-files)
 
 ### Making yaml files
-The way you set up your yaml files depends on who will be contributing to your repository. If you are the only one working on a project and no one else can make pull requests, you can set up one yaml file to run when a pull request opens and one yaml file to run when a commit is merged. You can have the one that runs on a pull request run your bundle to test it, and you can have the second yaml file publish the bundle to Docker Hub. 
+The way you set up your yaml files depends on who will be contributing to your repository. If you are the only one working on a project and no one else can make pull requests (you have a private repository), you can set up one yaml file to run when a pull request opens and one yaml file to run when a commit is merged. You can have the one that runs on a pull request run your bundle to test it, and you can have the second yaml file publish the bundle to Docker Hub. 
 
 If you are not the only one contributing to the repository and other contributors will be making pull requests from forks, the yaml file setup is slightly different. GitHub actions and workflows do not run automatically on pull requests from a fork. So, in this situation, you will only need one yaml file that runs when a pull request is merged. You can test the bundle and publish in the same yaml file.  
 
@@ -119,7 +121,9 @@ jobs:
     - uses: actions/checkout@v1
     # Use Porter GH action to set up Porter
     - name: Setup Porter
-      uses: deislabs/porter-gh-action@v0.27.2
+      uses: deislabs/porter-gh-action@v0.1.1
+      with:
+        porter_version: v0.27.2
     # Install docker mixin needed for the bundle
     - name: Install Docker mixin
       run: porter mixins install docker
@@ -150,7 +154,7 @@ Next, we set up the environment variables that we need for our bundle. You shoul
 
 Next, we set up the actual job. A workflow can be made of many jobs, but this example puts all the steps under one job. Publish is the name of this job. For runs-on, you specify the type of machine you want the job to run on. We chose ubuntu-latest. 
 
-Next, we add the steps we want to run. As explained above, the first thing we do is checkout the code. Next, we run the Porter GitHub action to set up and install Porter. You can specify the version of Porter that you want installed after the @. 
+Next, we add the steps we want to run. As explained above, the first thing we do is checkout the code. Next, we run the Porter GitHub action to set up and install Porter. You can specify the version of Porter that you want installed by adding the lines for with and porter_version. 
 
 Next, you can install any of the mixins your bundle needs to be able to run. After you have installed the necessary mixins, you can just run the porter commands that you want to run. We suggest running install, upgrade, and uninstall to verify that they are working as intended. 
 
