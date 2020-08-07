@@ -277,6 +277,8 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	templatedOutputs := m.GetTemplatedOutputs()
+	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
 	for paramName, sources := range paramSources {
 		param := m.bundle.Parameters[paramName]
 		if !param.AppliesTo(m.Action) {
@@ -286,11 +288,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		for _, s := range sources.ListSourcesByPriority() {
 			switch ps := s.(type) {
 			case extensions.DependencyOutputParameterSource:
+				outRef := manifest.DependencyOutputReference{Dependency: ps.Dependency, Output: ps.OutputName}
+
+				// Ignore anything that isn't templated, because that's what we are building the source data for
+				if _, isTemplated := templatedDependencyOutputs[outRef.String()]; !isTemplated {
+					continue
+				}
+
 				depBun := deps[ps.Dependency].(map[string]interface{})
 				depOutputs := make(map[string]interface{})
 				depBun["outputs"] = depOutputs
 
-				outRef := manifest.DependencyOutputReference{Dependency: ps.Dependency, Output: ps.OutputName}
 				value, err := m.ReadDependencyOutputValue(outRef)
 				if err != nil {
 					return nil, err
@@ -307,6 +315,11 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				}
 
 			case extensions.OutputParameterSource:
+				// Ignore anything that isn't templated, because that's what we are building the source data for
+				if _, isTemplated := templatedOutputs[ps.OutputName]; !isTemplated {
+					continue
+				}
+
 				val, err := m.resolveBundleOutput(ps.OutputName)
 				if err != nil {
 					return nil, err

@@ -413,7 +413,7 @@ func TestManifest_GetTemplatedOutputs(t *testing.T) {
 	outputs := m.GetTemplatedOutputs()
 
 	require.Len(t, outputs, 1)
-	assert.Equal(t, "msg", outputs[0].Name)
+	assert.Equal(t, "msg", outputs["msg"].Name)
 }
 
 func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
@@ -425,7 +425,7 @@ func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
 	outputs := m.GetTemplatedDependencyOutputs()
 
 	require.Len(t, outputs, 1)
-	ref := outputs[0]
+	ref := outputs["mysql.mysql-password"]
 	assert.Equal(t, "mysql", ref.Dependency)
 	assert.Equal(t, "mysql-password", ref.Output)
 }

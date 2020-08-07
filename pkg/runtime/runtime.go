@@ -139,7 +139,10 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 	}
 
 	for outputKey, outputValue := range outputs {
-		bundleOutput := r.RuntimeManifest.Outputs[outputKey]
+		bundleOutput, ok := r.RuntimeManifest.Outputs[outputKey]
+		if !ok {
+			continue
+		}
 
 		if r.shouldApplyOutput(bundleOutput) {
 			outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)

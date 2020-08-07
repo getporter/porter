@@ -163,9 +163,9 @@ func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string
 }
 
 // GetTemplatedOutputs returns the output definitions for any bundle level outputs
-// that have been templated.
-func (m *Manifest) GetTemplatedOutputs() []OutputDefinition {
-	outputs := make([]OutputDefinition, 0, len(m.TemplateVariables))
+// that have been templated, keyed by the output name.
+func (m *Manifest) GetTemplatedOutputs() OutputDefinitions {
+	outputs := make(OutputDefinitions, len(m.TemplateVariables))
 	for _, tmplVar := range m.TemplateVariables {
 		if name, ok := m.getTemplateOutputName(tmplVar); ok {
 			outputDef, ok := m.Outputs[name]
@@ -173,22 +173,23 @@ func (m *Manifest) GetTemplatedOutputs() []OutputDefinition {
 				// Only return bundle level definitions
 				continue
 			}
-			outputs = append(outputs, outputDef)
+			outputs[name] = outputDef
 		}
 	}
 	return outputs
 }
 
 // GetTemplatedOutputs returns the output definitions for any bundle level outputs
-// that have been templated.
-func (m *Manifest) GetTemplatedDependencyOutputs() []DependencyOutputReference {
-	var outputs []DependencyOutputReference
+// that have been templated, keyed by "DEPENDENCY.OUTPUT".
+func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
+	outputs := make(DependencyOutputReferences, len(m.TemplateVariables))
 	for _, tmplVar := range m.TemplateVariables {
 		if dep, output, ok := m.getTemplateDependencyOutputName(tmplVar); ok {
-			outputs = append(outputs, DependencyOutputReference{
+			ref := DependencyOutputReference{
 				Dependency: dep,
 				Output:     output,
-			})
+			}
+			outputs[ref.String()] = ref
 		}
 	}
 	return outputs
@@ -199,9 +200,25 @@ type DependencyOutputReference struct {
 	Output     string
 }
 
+func (r DependencyOutputReference) String() string {
+	return fmt.Sprintf("%s.%s", r.Dependency, r.Output)
+}
+
+type DependencyOutputReferences map[string]DependencyOutputReference
+
 // ParameterDefinitions allows us to represent parameters as a list in the YAML
 // and work with them as a map internally
 type ParameterDefinitions map[string]ParameterDefinition
+
+func (pd ParameterDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]ParameterDefinition, 0, len(pd))
+
+	for _, param := range pd {
+		raw = append(raw, param)
+	}
+
+	return raw, nil
+}
 
 func (pd *ParameterDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var raw []ParameterDefinition
@@ -296,6 +313,16 @@ type ParameterSource struct {
 // CredentialDefinitions allows us to represent credentials as a list in the YAML
 // and work with them as a map internally
 type CredentialDefinitions map[string]CredentialDefinition
+
+func (cd CredentialDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]CredentialDefinition, 0, len(cd))
+
+	for _, cred := range cd {
+		raw = append(raw, cred)
+	}
+
+	return raw, nil
+}
 
 func (cd *CredentialDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var raw []CredentialDefinition
@@ -472,6 +499,16 @@ type CustomActionDefinition struct {
 // OutputDefinitions allows us to represent parameters as a list in the YAML
 // and work with them as a map internally
 type OutputDefinitions map[string]OutputDefinition
+
+func (od OutputDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]OutputDefinition, 0, len(od))
+
+	for _, output := range od {
+		raw = append(raw, output)
+	}
+
+	return raw, nil
+}
 
 func (od *OutputDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var raw []OutputDefinition

@@ -396,10 +396,11 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 
 	m := &manifest.Manifest{
 		Dependencies: map[string]manifest.Dependency{
-			"dep": {
-				Tag: "getporter/porter-hello",
+			"mysql": {
+				Tag: "getporter/mysql",
 			},
 		},
+		TemplateVariables: []string{"bundle.dependencies.mysql.outputs.root-password"},
 	}
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
