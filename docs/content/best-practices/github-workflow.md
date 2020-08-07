@@ -44,7 +44,7 @@ The porter_version should be the version of Porter you want installed. You can c
 ### Logging into DockerHub
 Next, you will want to log in to Docker Hub so that you can publish your bundle to a registry. 
 In order to do this, you can use the [docker-login](https://github.com/Azure/docker-login) action
-to do it easily. Here is an example of how it is used:
+to do it easily. Below is an example of how it is used:
 ````yaml
 - uses: azure/docker-login@v1
   name: Docker Login
