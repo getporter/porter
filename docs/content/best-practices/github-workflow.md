@@ -39,7 +39,7 @@ action to your workflow will install Porter for you. Here is an example of how t
   with:
     porter_version: v0.27.2
 ````
-The porter_version should be the version of Porter you want installed. You can check [here](https://github.com/deislabs/porter) for the most recent released version of Porter. If you do not pass it in, it will default to latest. 
+The porter_version should be the version of Porter you want installed. You can check [our releases](https://github.com/deislabs/porter) for the list of recent versions of Porter. When not specified, porter_version defaults to latest version of Porter. 
 
 ### Logging into DockerHub
 Next, you will want to log in to Docker Hub so that you can publish your bundle to a registry. 
