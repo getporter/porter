@@ -42,7 +42,7 @@ action to your workflow will install Porter for you. For example:
 The porter_version should be the version of Porter you want installed. You can check [our releases](https://github.com/deislabs/porter) for the list of recent versions of Porter. When not specified, porter_version defaults to latest version of Porter. 
 
 ### Login to DockerHub
-Next, you will want to login to Docker Hub so that you can publish your bundle to a registry. 
+Next, you will want to login to Docker Hub so that you can publish your bundle to a Docker Hub registry. If you do not wish to publish your bundle to a Docker Hub registry, you can configure another registry in this step instead.
 In order to do this, you can use the [docker-login](https://github.com/Azure/docker-login) action
 to do it easily. Below is an example of how it is used:
 ````yaml
@@ -52,7 +52,7 @@ to do it easily. Below is an example of how it is used:
     username: ${{ secrets.DOCKER_USERNAME }}
     password: ${{ secrets.DOCKER_PASSWORD }}
 ````
-You will need to set your docker username and password as secrets in the repository you are setting up the workflow in.
+You will need to set your docker username and password as [secrets](https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets) in the repository you are setting up the workflow in.
 
 ### Install mixins
 Next, you should install any mixins your bundle will use so that it can be tested properly. You
@@ -64,9 +64,17 @@ You can also specify the version of the mixin by adding the version flag. For ex
 ````yaml
 run: porter mixins install az --version v0.4.2
 ````
+Take a look at the [documentation](https://porter.sh/mixins) to see all available mixins and how to know what command to run to install them. The documentation provides install commands for each mixin. The command `porter mixin search` lists all the mixins created by the community. Depending on if the URL is an atom feed or a github url you can install the mixin using
+```yaml
+porter mixins install NAME --feed-url ATOM_URL
+```
+or
+```yaml
+porter mixins install NAME --url GITHUB_URL
+```
 
 ### Run Porter commands
-The final part of the workflow is running porter commands. The commands we suggest running are porter install, porter upgrade, porter uninstall, and porter publish. Porter install will install your bundle and give an error if something is wrong. This will be useful as part of your pipeline in testing your bundle because you can go fix the problem right away instead of finding it later. Porter upgrade and porter uninstall will execute the code and also give errors if there are problems. If all these commands run successfully, you can run porter publish to publish your working bundle image to Docker Hub. 
+The final part of the workflow is running porter commands. The commands we suggest running are porter install, porter upgrade, porter uninstall, and porter publish. Porter install will install your bundle and give an error if something is wrong. This will be useful as part of your pipeline in testing your bundle because you can go fix the problem right away instead of finding it later when users try to run your bundle. Porter upgrade and porter uninstall will execute the code and also give errors if there are problems. If all these commands run successfully, you can run porter publish to publish your working bundle image to a registry. In this example, we publish to Docker Hub, but porter publish can publish to any registry. 
 
 ## Set up the Workflow
 Now that we know the parts that are needed in a workflow, we can learn how to set one up. Here are the steps we will go through to set up the workflow: 
@@ -75,9 +83,11 @@ Now that we know the parts that are needed in a workflow, we can learn how to se
 * [Use credential files](#use-credential-files)
 
 ### Make yaml files
-The way you set up your yaml files depends on who will be contributing to your repository. If you are the only one working on a project and no one else can make pull requests (you have a private repository), you can set up one yaml file to run when a pull request opens and one yaml file to run when a commit is merged. You can have the one that runs on a pull request run your bundle to test it, and you can have the second yaml file publish the bundle to Docker Hub. 
+The way you set up your yaml files depends on who will be contributing to your repository and how they will be contributing. GitHub actions and workflows do not run automatically on pull requests from forks. 
 
-If you are not the only one contributing to the repository and other contributors will be making pull requests from forks, the yaml file setup is slightly different. GitHub actions and workflows do not run automatically on pull requests from a fork. So, in this situation, you will only need one yaml file that runs when a pull request is merged. You can test the bundle and publish in the same yaml file.  
+So, if you are the only one working on a project and no one else can make pull requests (you have a private repository) or no one will be contributing from a fork, you can set up one yaml file to run when a pull request opens and one yaml file to run when a commit is merged. You can have the one that runs on a pull request run your bundle to test it, and you can have the second yaml file publish the bundle to Docker Hub. 
+
+If you are not the only one contributing to the repository and other contributors will be making pull requests from forks, the yaml file setup is slightly different. Since the GitHub action won't be triggered from a fork, you will only need one yaml file that runs when a pull request is merged. You can test the bundle and publish in the same yaml file.  
 
 
 ### Use credential files
