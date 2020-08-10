@@ -93,7 +93,7 @@ Now, we will show example code for a workflow and explain what the code does.
 ```yaml
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push event for the main branch. 
+# On controls when the action will run. This triggers the workflow on push event for the main branch. 
 # Can change push to pull_request to run when a PR is made. 
 # You can also change the branch name from main to the name of the branch you want the workflow to run on. 
 on:
