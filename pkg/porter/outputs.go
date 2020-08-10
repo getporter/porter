@@ -35,7 +35,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 		return errors.Errorf("only one positional argument may be specified, the output name, but multiple were received: %s", args)
 	}
 
-	// If not provided, attempt to derive claim name from context
+	// If not provided, attempt to derive installation name from context
 	if o.sharedOptions.Name == "" {
 		err := o.sharedOptions.defaultBundleFiles(cxt)
 		if err != nil {
@@ -49,13 +49,13 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputListOptions as applicable
 func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
-	// Ensure only one argument exists (claim name) if args length non-zero
+	// Ensure only one argument exists (installation name) if args length non-zero
 	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	// Attempt to derive claim name from context
+	// Attempt to derive installation name from context
 	err = o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
 		return errors.Wrap(err, "installation name must be provided")
@@ -129,8 +129,8 @@ func NewDisplayOutputs(outputs claim.Outputs, format printer.Format) DisplayOutp
 	return displayOutputs
 }
 
-// ListBundleOutputs lists the outputs for a given bundle,
-// according to the provided claim and display format
+// ListBundleOutputs lists the outputs for a given bundle according to the
+// provided display format
 func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {

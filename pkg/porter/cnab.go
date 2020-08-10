@@ -112,7 +112,7 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	return nil
 }
 
-// validateInstallationName grabs the claim name from the first positional argument.
+// validateInstallationName grabs the installation name from the first positional argument.
 func (o *sharedOptions) validateInstallationName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]

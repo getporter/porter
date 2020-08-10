@@ -34,9 +34,9 @@ func NewPorterRuntime(cxt *context.Context, mixins pkgmgmt.PackageManager) *Port
 func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 	r.RuntimeManifest = rm
 
-	claimName := os.Getenv(config.EnvClaimName)
+	installationName := os.Getenv(config.EnvInstallationName)
 	bundleName := os.Getenv(config.EnvBundleName)
-	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, claimName)
+	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
 
 	err := r.RuntimeManifest.Validate()
 	if err != nil {

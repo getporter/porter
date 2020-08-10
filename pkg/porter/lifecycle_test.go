@@ -125,7 +125,7 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 					RelocationMapping: "relocation-mapping.json",
 					File:              config.Name,
 				},
-				Name: "MyClaim",
+				Name: "MyInstallation",
 				Params: []string{
 					"PARAM1=VALUE1",
 				},
@@ -155,7 +155,7 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
 		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
-		assert.Equal(t, opts.Name, args.Installation, "Claim not populated correctly")
+		assert.Equal(t, opts.Name, args.Installation, "Installation not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
 	})
 }

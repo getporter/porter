@@ -17,7 +17,8 @@ type ListOptions struct {
 	printer.PrintOptions
 }
 
-// DisplayInstallation holds a subset of pertinent values to be listed from a claim.Claim
+// DisplayInstallation holds a subset of pertinent values to be listed from installation data
+// originating from its claims, results and outputs records
 type DisplayInstallation struct {
 	Name     string
 	Created  time.Time
