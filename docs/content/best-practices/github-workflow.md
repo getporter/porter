@@ -56,7 +56,7 @@ You will need to set your docker username and password as secrets in the reposit
 
 ### Install mixins
 Next, you should install any mixins your bundle will use so that it can be tested properly. You
-can simply add a line as a run command to install your mixin as shown below:
+can add a line as a run command to install your mixin as shown below:
 ````yaml
 run: porter mixins install az
 ````
