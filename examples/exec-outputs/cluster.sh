@@ -68,5 +68,12 @@ uninstall() {
   echo 'Uninstalling Cluster...'
 }
 
+assert-admin() {
+  if [ "$1" != "sally" ]; then
+    echo "$1 is not an admin."
+    exit 1
+  fi
+}
+
 # Call the requested function and pass the arguments as-is
 "$@"
