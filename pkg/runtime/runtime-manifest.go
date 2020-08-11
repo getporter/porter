@@ -258,11 +258,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 
 	bun["outputs"] = m.outputs
-	// Iterate through the runtime manifest's step outputs and mask by default
-	for _, stepOutput := range m.outputs {
-		// TODO: check if output declared sensitive or not; currently we default always sensitive
+
+	// Iterate through the runtime manifest's step outputs and determine if we should mask
+	for name, val := range m.outputs {
+		// TODO: support configuring sensitivity for step outputs that aren't also bundle-level outputs
 		// See https://github.com/deislabs/porter/issues/855
-		m.setSensitiveValue(stepOutput)
+
+		// If step output is also a bundle-level output, defer to bundle-level output sensitivity
+		if outputDef, ok := m.Outputs[name]; ok && !outputDef.Sensitive {
+			continue
+		}
+		m.setSensitiveValue(val)
 	}
 
 	// Externally injected outputs (bundle level outputs and dependency outputs) are
