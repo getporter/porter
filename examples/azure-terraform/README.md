@@ -246,6 +246,40 @@ Installing the bundle will take some amount of time, especially the Azure deploy
 
 Assuming all goes well, you should see the relevant resource outputs printed and `execution completed successfully!`
 
+## Inspecting Outputs
+
+Now that the bundle has been installed, outputs can be inspected in the following ways.
+
+First, we can get an overview of this installation via `porter installation show`:
+
+```
+$ porter installation show
+Name: azure-terraform
+Created: 37 minutes ago
+Modified: 37 minutes ago
+
+Outputs:
+-----------------------------------------------------------------------------------------------------
+  Name                         Type    Value
+-----------------------------------------------------------------------------------------------------
+  cosmos-db-uri                string  mongodb://porterform-cosmos-db:PfOFJ6kbcO0dQp0jA07PGRzjZk...
+  eventhubs_connection_string  string  Endpoint=sb://porterform-eventhub-ns.servicebus.windows.n...
+  storage_account_key          string  jHb90Ukm1AJ7PySPkltE1dpQv16meV4PAhJuJyURlfeHoeROoNE+aLXQk...
+
+History:
+--------------------------------------
+  Action   Timestamp       Status
+--------------------------------------
+  install  37 minutes ago  succeeded
+```
+
+We can also show a specific output via `porter installation output show [NAME]`:
+
+```
+$ porter installation output show cosmos-db-uri
+mongodb://porterform-cosmos-db:PfOFJ6kbcO0dQp0jA07PGRzjZkRS81PTU7nLfIjggl0LYV6LnanR8uC3qvPbvyhna9Z01nFJxoKL8bnejKOZCw==@porterform-cosmos-db.documents.azure.com:10255/?ssl=true&replicaSet=globaldb
+```
+
 ## Uninstalling the Bundle
 
 When you're ready to uninstall the bundle, simply run the `porter uninstall` command:

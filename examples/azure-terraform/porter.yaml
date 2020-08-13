@@ -60,9 +60,9 @@ parameters:
 outputs:
   - name: storage_account_key
     type: string
+    sensitive: true
     applyTo:
       - install
-    sensitive: true
 
   - name: cosmos-db-uri
     type: string
