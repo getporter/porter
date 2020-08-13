@@ -7,7 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
-	crudplugins "get.porter.sh/porter/pkg/storage/pluginstore"
+	"get.porter.sh/porter/pkg/storage"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/cnabio/cnab-go/valuesource"
@@ -24,16 +24,16 @@ var _ ParameterProvider = &ParameterStorage{}
 // implement CRUD storage.
 type ParameterStorage struct {
 	*config.Config
-	*ParametersStore
+	ParametersStore
 	SecretsStore
 }
 
-func NewParameterStorage(c *config.Config, storagePlugin *crudplugins.Store) *ParameterStorage {
-	paramStore := NewParameterStore(storagePlugin)
+func NewParameterStorage(storage *storage.Manager) *ParameterStorage {
+	paramStore := NewParameterStore(storage)
 	return &ParameterStorage{
-		Config:          c,
-		ParametersStore: &paramStore,
-		SecretsStore:    secrets.NewSecretStore(secretplugins.NewStore(c)),
+		Config:          storage.Config,
+		ParametersStore: paramStore,
+		SecretsStore:    secrets.NewSecretStore(secretplugins.NewStore(storage.Config)),
 	}
 }
 

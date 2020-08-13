@@ -34,17 +34,18 @@ var _ crud.Store = &migrateClaimsWrapper{}
 type migrateClaimsWrapper struct {
 	schemaChecked bool
 	schema        storage.Schema
+	storage       *storage.Manager
 	*context.Context
 	*crud.BackingStore
 	claims claim.Store
 }
 
-func newMigrateClaimsWrapper(cxt *context.Context, wrappedStore crud.Store) *migrateClaimsWrapper {
-	backingStore := crud.NewBackingStore(wrappedStore)
+func newMigrateClaimsWrapper(storage *storage.Manager) *migrateClaimsWrapper {
 	return &migrateClaimsWrapper{
-		Context:      cxt,
-		BackingStore: backingStore,
-		claims:       claim.NewClaimStore(backingStore, nil, nil),
+		Context:      storage.Context,
+		BackingStore: storage.Store,
+		storage:      storage,
+		claims:       claim.NewClaimStore(storage.Store, nil, nil),
 	}
 }
 

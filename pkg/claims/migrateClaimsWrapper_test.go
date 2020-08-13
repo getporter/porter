@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/utils/crud"
@@ -37,8 +38,9 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 			config.FileSystem.Mkdir(claimsDir, 0755)
 			config.TestContext.AddTestFile(filepath.Join("testdata", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
 
-			dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-			wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+			dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+			mgr := storage.NewManager(config.Config, dataStore)
+			wrapper := newMigrateClaimsWrapper(mgr)
 			claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 			c, err := claimStore.ReadLastClaim(installation)
@@ -68,8 +70,9 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 
 		config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
 
-		dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-		wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+		dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+		mgr := storage.NewManager(config.Config, dataStore)
+		wrapper := newMigrateClaimsWrapper(mgr)
 		claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 		c, err := claimStore.ReadLastClaim(installation)
@@ -91,8 +94,9 @@ func TestMigrateClaimsWrapper_List(t *testing.T) {
 	config.TestContext.AddTestFile(filepath.Join("testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 	config.FileSystem.Remove(filepath.Join(home, "schema.json")) // trigger a migration
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := storage.NewManager(config.Config, dataStore)
+	wrapper := newMigrateClaimsWrapper(mgr)
 	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	names, err := claimStore.ListInstallations()
@@ -112,8 +116,9 @@ func TestMigrateClaimsWrapper_Read(t *testing.T) {
 	config.TestContext.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
 	config.TestContext.AddTestFile("testdata/has-installation.json", filepath.Join(claimsDir, "has-installation.json"))
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := storage.NewManager(config.Config, dataStore)
+	wrapper := newMigrateClaimsWrapper(mgr)
 	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	// Validate that we can migrate and read in the same operation
@@ -129,8 +134,9 @@ func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := storage.NewManager(config.Config, dataStore)
+	wrapper := newMigrateClaimsWrapper(mgr)
 	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
@@ -160,8 +166,9 @@ func TestMigrateClaimsWrapper_MigrateUpgrade(t *testing.T) {
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := storage.NewManager(config.Config, dataStore)
+	wrapper := newMigrateClaimsWrapper(mgr)
 	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")

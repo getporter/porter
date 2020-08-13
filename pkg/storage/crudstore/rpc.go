@@ -22,6 +22,16 @@ func (g *Client) Read(itemType string, name string) ([]byte, error) {
 	return resp, err
 }
 
+func (g *Client) Count(itemType string, group string) (int, error) {
+	var resp int
+	args := map[string]interface{}{
+		"itemType": itemType,
+		"group":    group,
+	}
+	err := g.client.Call("Plugin.Count", args, &resp)
+	return resp, err
+}
+
 func (g *Client) List(itemType string, group string) ([]string, error) {
 	var resp []string
 	args := map[string]interface{}{
@@ -59,6 +69,12 @@ type Server struct {
 func (s *Server) Read(args map[string]interface{}, resp *[]byte) error {
 	var err error
 	*resp, err = s.Impl.Read(args["itemType"].(string), args["name"].(string))
+	return err
+}
+
+func (s *Server) Count(args map[string]interface{}, resp *int) error {
+	var err error
+	*resp, err = s.Impl.Count(args["itemType"].(string), args["group"].(string))
 	return err
 }
 

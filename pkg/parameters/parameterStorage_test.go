@@ -44,7 +44,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 
 		parameterStorage := ParameterStorage{
 			Config:          tc.Config,
-			ParametersStore: &paramStore,
+			ParametersStore: paramStore,
 			SecretsStore:    secretStore,
 		}
 
@@ -70,7 +70,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 
 		parameterStorage := ParameterStorage{
 			Config:          tc.Config,
-			ParametersStore: &paramStore,
+			ParametersStore: paramStore,
 			SecretsStore:    secretStore,
 		}
 
