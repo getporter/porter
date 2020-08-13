@@ -8,6 +8,7 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
+PORTER_DIR = $(shell echo $HOME)/.porter
 PORTER_HOME = bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
@@ -50,16 +51,13 @@ generate: packr2
 	$(GO) mod tidy
 	$(GO) generate ./...
 
-HAS_PACKR2 := $(shell command -v packr2)
-HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
+HAS_PACKR2 := $(shell command -v packr2 && echo "OK")
 packr2:
 ifndef HAS_PACKR2
-ifndef HAS_GOBIN_IN_PATH
-	$(error "$(CLIENT_GOPATH)/bin is not in path and packr2 is not installed. Install packr2 or add "$(CLIENT_GOPATH)/bin to your path")
-endif
-	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
-	cd /tmp && tar -xzf /tmp/packr.tar.gz
-	install /tmp/packr2 $(CLIENT_GOPATH)/bin/
+	mkdir -p tmp/packr2
+	curl -SLo tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
+	tar -xzf tmp/packr.tar.gz -C tmp/packr2
+	install tmp/packr2/packr2 $(CLIENT_GOPATH)/bin/
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
@@ -202,9 +200,9 @@ endif
 install: install-porter install-mixins
 
 install-porter:
-	mkdir -p $(HOME)/.porter
-	cp bin/porter* $(HOME)/.porter/
-	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
+	mkdir -p $(PORTER_DIR)
+	cp bin/porter* $(PORTER_DIR)
+	$(shell ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter || echo echo "Cannot create symlink, skipping. Binary is in $(PORTER_DIR)")
 
 install-mixins:
 	cp -R bin/mixins $(HOME)/.porter/

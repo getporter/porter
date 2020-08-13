@@ -1,8 +1,11 @@
 /docs/public/
 /bin
 /porter
+/tmp
 *-packr.go
 .DS_Store
+**/packr2
+**/packr2.exe
 
 .cnab
 examples/**/Dockerfile
