@@ -10,7 +10,7 @@ The bundle will use an Azure [Service Principal](https://docs.microsoft.com/en-u
 
 1. Create a service principal with the Azure CLI:
     ```console
-    az ad sp create-for-rbac --name porterform -o table
+    az ad sp create-for-rbac --name porterraform -o table
     ```
 1. Save the values from the command output in environment variables:
 
@@ -90,7 +90,7 @@ Finally, please note how the `porter-terraform` mixin is used:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"
         container_name: "{{ bundle.parameters.storage_container_name }}"
-        access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
+        access_key: "{{ bundle.outputs.storage_account_key }}"
       vars:
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"
@@ -100,8 +100,8 @@ Finally, please note how the `porter-terraform` mixin is used:
         resource_group_name: "{{bundle.parameters.resource_group_name}}"
         resource_group_location: "{{bundle.parameters.location}}"
       outputs:
-      - name: cosmos-db-uri
-      - name: eventhubs_connection_string
+        - name: cosmos-db-uri
+        - name: eventhubs_connection_string
 ```
 
 This mixin step uses both parameters and credentials, defined above, and declares two output values. The source of these output files is defined in the Terraform configuration.
@@ -190,6 +190,12 @@ Generating new credential azure-terraform from bundle azure-terraform
 Saving credential to /Users/jeremyrickard/.porter/credentials/azure-terraform.yaml
 ```
 
+## (OPTIONAL) Generate a Parameter Set
+
+Similar to generating a credential set, you may generate a parameter set if you wish to supply custom values for some/all of the parameters. However, all of the required parameters have default values declared in the Porter manifest, so this step is optional.
+
+To generate a parameter set, run `porter parameters generate`.  The parameter set can then be supplied on install via `-p azure-terraform`.
+
 ## Installing the Bundle
 
 Once you have built the bundle and generated a credential set, you're ready to install the bundle! To do that, you'll use the `porter install` command:
@@ -201,9 +207,6 @@ executing install action from azure-terraform (installation: azure-terraform)
 Create an Azure Storage Account
 Starting deployment operations...
 Finished deployment operations...
-Emit the key in base64 encoded form
-Here is a the storage account key (base64 encoded) ==> cFNZNExabEg1eGkzSkgrdU5HcFZyek94WmEyYXRRa1Z6WWtFVjZGamg5aU5wcjRVVjROVFBmSXJH
-UXNpTVpLQS9FYWVWanF1WkhhMFg5TE9IMERRY2c9PQo=
 Create Azure CosmosDB and Event Hubs
 Initializing Terraform...
 /usr/bin/terraform terraform init -backend=true -backend-config=access_key=******* -backend-config=container_name=portertf -backend-config=key=azure-terraform.tfstate -backend-config=storage_account_name=porterstorage -reconfigure
@@ -224,33 +227,31 @@ should now work.
 If you ever set or change modules or backend configuration for Terraform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
-/usr/bin/terraform terraform apply -auto-approve -input=false -var client_id=******* -var client_secret=******* -var database_name=porter-terraform -var resource_group_location=EastUS -var resource_group_name=porter-terraform -var subscription_id=******* -var tenant_id=*******
 Acquiring state lock. This may take a few moments...
 azurerm_resource_group.rg: Creating...
 
-< OUTPUT TRUNCATED>
+<OUTPUT TRUNCATED>
+
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+cosmos-db-uri = mongodb://porterform-cosmos-db:PfOFJ6kbcO0dQp0jA07PGRzjZkRS81PTU7nLfIjggl0LYV6LnanR8uC3qvPbvyhna9Z01nFJxoKL8bnejKOZCw==@porterform-cosmos-db.documents.azure.com:10255/?ssl=true&replicaSet=globaldb
+eventhubs_connection_string = Endpoint=sb://porterform-eventhub-ns.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=kWhJpeuVMGvkbiJs6u6V4oQd/isELXfb05O8Im5XaWk=
+eventhubs_topic = porterform-eventhub
+execution completed successfully!
 ```
 
-Installing the bundle will take some amount of time. As it is running you should see an output line like this:
+Installing the bundle will take some amount of time, especially the Azure deployments of the CosmosDB and EventHubs resources.
 
-```
-Here is a the storage account key (base64 encoded) ==> <SOME STRING>
-```
-
-This is the account key that you'll need to later uninstall the bundle. It will be base64 encoded, so you'll need to decode it before using it to uninstall the bundle:
-
-```bash
-$ echo <SOMESTRING> | base64 -D
-```
-
-You can also obtain the value from the Azure portal.
+Assuming all goes well, you should see the relevant resource outputs printed and `execution completed successfully!`
 
 ## Uninstalling the Bundle
 
-When you're ready to uninstall the bundle, simply run the `porter uninstall` command and provide the storage account key:
+When you're ready to uninstall the bundle, simply run the `porter uninstall` command:
 
 ```bash
-$ porter uninstall -c azure-terraform --param tf_storage_account_key=%%YOUR KEY VALUE%%
+$ porter uninstall -c azure-terraform
 uninstalling azure-terraform...
 executing uninstall action from azure-terraform (installation: azure-terraform)
 Remove Azure CosmosDB and Event Hubs
@@ -273,10 +274,16 @@ should now work.
 If you ever set or change modules or backend configuration for Terraform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
-/usr/bin/terraform terraform destroy -auto-approve -var client_id=******* -var client_secret=******* -var database_name=porter-terraform -var resource_group_location=EastUS -var resource_group_name=porter-terraform -var subscription_id=******* -var tenant_id=*******
 Acquiring state lock. This may take a few moments...
+azurerm_resource_group.rg: Refreshing state...
 
-< OUTPUT TRUNCATED>
+<OUTPUT TRUNCATED>
+
+azurerm_resource_group.rg: Destruction complete after 33s
+
+Destroy complete! Resources: 5 destroyed.
+Remove the Azure Storage Account
+execution completed successfully!
 ```
 
 This will take a number of minutes to finish, but when complete the resources will be removed from your account.
