@@ -100,11 +100,10 @@ func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string
 		prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 		return nil, errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 	}
-	return out, nil
+	return trimQuotes(out), nil
 }
 
 func (m *Mixin) handleOutputs(outputs []KubernetesOutput) error {
-	//Now get the outputs
 	for _, output := range outputs {
 		bytes, err := m.getOutput(
 			output.ResourceType,
