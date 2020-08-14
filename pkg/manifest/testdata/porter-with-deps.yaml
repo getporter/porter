@@ -1,0 +1,35 @@
+version: 0.1.0
+tag: example.com/mybun
+
+mixins:
+  - exec
+
+dependencies:
+  - name: nginx
+    tag: "localhost:5000/nginx:1.19"
+  - name: mysql
+    tag: "getporter/azure-mysql:5.7"
+    parameters:
+      database-name: wordpress
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+      flags:
+        c: echo Hello World
+
+uninstall:
+- exec:
+    description: "Uninstall Hello World"
+    command: bash
+    flags:
+      c: echo Goodbye World
+
+custom:
+  foo: bar
+
+required:
+  - requiredExtension1
+  - requiredExtension2:
+      config: true
+
