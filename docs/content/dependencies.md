@@ -21,7 +21,7 @@ outputs via `{{ bundle.dependencies.KEY.outputs }}`.
 
 ```yaml
 dependencies:
-  mysql:
+  - name: mysql
     tag: getporter/mysql:v0.1.2
 ```
 
@@ -34,7 +34,7 @@ to specific values, so that the user isn't required to provide values for those 
 
 ```yaml
 dependencies:
-  mysql:
+  - name: mysql
     tag: getporter/mysql:v0.1.2
     parameters:
       database_name: wordpress
@@ -90,10 +90,10 @@ A parameter for a dependency can be set in a few places, here is the order of pr
 1. Parameters set using a dependency default, for example 
     ```yaml
     dependencies:
-      mysql:
-        tag: getporter/mysql:v0.1.2
-        parameters:
-          database_name: wordpress
+    - name: mysql
+      tag: getporter/mysql:v0.1.2
+      parameters:
+        database_name: wordpress
     ```
 1. Parameter defaults defined in a bundle, for example
     ```yaml
