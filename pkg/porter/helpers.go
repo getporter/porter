@@ -86,6 +86,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err)
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
+	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := os.Getenv("HOME")

@@ -66,6 +66,7 @@ func buildRootCommand() *cobra.Command {
 
 	cmd.AddCommand(buildVersionCommand(p))
 	cmd.AddCommand(buildSchemaCommand(p))
+	cmd.AddCommand(buildStorageCommand(p))
 	cmd.AddCommand(buildRunCommand(p))
 	cmd.AddCommand(buildBundleCommands(p))
 	cmd.AddCommand(buildInstallationCommands(p))

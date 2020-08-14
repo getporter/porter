@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,19 +14,18 @@ import (
 
 func TestInstall_relativePathPorterHome(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest() // This creates a temp porter home directory
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
 
-	// Crux for this test: set Porter's home dir to a relative path
+	// Crux for this test: change Porter's home dir to a relative path
 	homeDir, err := p.Config.GetHomeDir()
 	require.NoError(t, err)
 	curDir, err := os.Getwd()
 	require.NoError(t, err)
 	relDir, err := filepath.Rel(curDir, homeDir)
 	require.NoError(t, err)
-	os.Setenv(config.EnvHOME, relDir)
-
-	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
-	p.Debug = false
+	p.SetHomeDir(relDir)
 
 	// Bring in a porter manifest that has an install action defined
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
