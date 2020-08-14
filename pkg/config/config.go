@@ -19,10 +19,10 @@ const (
 	// EnvBundleName is the name of the environment variable containing the name of the bundle.
 	EnvBundleName = "CNAB_BUNDLE_NAME"
 
-	// EnvClaimName is the name of the environment variable containing the name of the claim.
-	EnvClaimName = "CNAB_INSTALLATION_NAME"
+	// EnvInstallationName is the name of the environment variable containing the name of the installation.
+	EnvInstallationName = "CNAB_INSTALLATION_NAME"
 
-	// EnvACTION is the request
+	// EnvACTION is the requested action to be executed
 	EnvACTION = "CNAB_ACTION"
 
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.

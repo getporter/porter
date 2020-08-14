@@ -5,9 +5,9 @@ description: Learn what a Porter plugin can do and see a listing of available pl
 
 The Porter client is extensible and anyone can write a plugin to integrate with
 Porter. Plugins extend the Porter client, reimplementing Porter's default
-functionality. For example, Porter saves claims and credential sets using the local
-filesystem to ~/.porter by default. A plugin can change that behavior to save
-them to cloud storage instead. 
+functionality. For example, Porter saves installation data, credential sets and
+parameter sets using the local filesystem to ~/.porter by default. A plugin can
+change that behavior to save them to cloud storage instead.
 
 [Plugins are very different from mixins][vs], which give you building blocks for
 authoring bundles. There are a couple [types of plugins][types] and a single

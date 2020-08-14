@@ -9,7 +9,7 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
 
-// ShowOptions represent options for showing a particular claim
+// ShowOptions represent options for showing a particular installation
 type ShowOptions struct {
 	sharedOptions
 	printer.PrintOptions
@@ -31,7 +31,7 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	return so.ParseFormat()
 }
 
-// ShowInstallation shows a bundle, or more properly a bundle claim, along with any
+// ShowInstallation shows a bundle installation, along with any
 // associated outputs
 func (p *Porter) ShowInstallation(opts ShowOptions) error {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
@@ -69,7 +69,7 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			Now: func() time.Time { return now },
 		}
 
-		// Print claim details
+		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))

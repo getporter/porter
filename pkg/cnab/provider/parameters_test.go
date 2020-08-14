@@ -56,8 +56,8 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 func Test_loadParameters_applyTo(t *testing.T) {
 	r := NewTestRuntime(t)
 
-	// Here we set default values, but we expect the corresponding
-	// claim values to take precedence when loadParameters is called
+	// Here we set default values, but expect nil/empty
+	// values for parameters that do not apply to a given action
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{

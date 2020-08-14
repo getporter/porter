@@ -11,9 +11,10 @@ switched by editing Porter's [configuration file](/configuration/).
 
 Storage plugins let you persist files created by Porter to an alternative
 location, instead of to the local filesystem under ~/.porter. By default,
-credential sets (created by `porter credentials generate`) are saved to
-~/.porter/credentials and records of a bundle being executed (claims) are saved
-to ~/.porter/claims.
+credential and parameter sets are saved to the /credentials and /parameters
+directories under ~/.porter. Installation records of a bundle being
+executed, including claim receipts, action results and outputs, are saved to
+the /claims, /results and /outputs directories under ~/.porter.
 
 A storage plugin can implement the [crud.Store interface][crudstore] and change
 where those files are saved. For example, the [Azure plugin](/plugins/azure/)
