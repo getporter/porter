@@ -170,6 +170,7 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, "porter.yaml"))
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
+		p.TestConfig.TestContext.FileSystem.Remove(path.Join(wd, "porter.yaml"))
 	})
 }
 
