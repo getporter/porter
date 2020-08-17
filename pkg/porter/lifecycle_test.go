@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -157,6 +159,17 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.Equal(t, opts.Name, args.Installation, "Claim not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
+	})
+
+	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.Tag = "deislabs/kubekahn:latest"
+
+		// cnab.go#defaultBundleFiles uses `os.Getwd()`
+		wd, _ := os.Getwd()
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, "porter.yaml"))
+		err := opts.Validate(nil, p.Porter)
+		require.NoError(t, err, "Validate failed")
 	})
 }
 
