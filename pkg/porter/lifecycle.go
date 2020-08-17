@@ -25,7 +25,7 @@ func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
 		return o.validateTag()
 	}
 
-	// since tag takes precedence over manifest/cnab file, validate manifest/cnab file if no tag present
+	// tag takes precedence over manifest/cnab file
 	err = o.bundleFileOptions.Validate(porter.Context)
 	if err != nil {
 		return err
