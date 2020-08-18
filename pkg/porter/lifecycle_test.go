@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -157,6 +159,25 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.Equal(t, opts.Name, args.Installation, "Installation not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
+	})
+}
+
+func TestManifestIgnoredWithTag(t *testing.T) {
+	p := NewTestPorter(t)
+	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
+		opts := BundleLifecycleOpts{}
+		opts.Tag = "deislabs/kubekahn:latest"
+
+		wd, _ := os.Getwd()
+		// `path.Join(wd...` -> makes cnab.go#defaultBundleFiles#manifestExists `true`
+		// Only when `manifestExists` eq to `true`, default bundle logic will run
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, config.Name))
+		// When execution reach to `readFromFile`, manifest file path will be lost.
+		// So, had to use root manifest file also for error simuation purpose
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
+
+		err := opts.Validate(nil, p.Porter)
+		require.NoError(t, err, "Validate failed")
 	})
 }
 
