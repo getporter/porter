@@ -169,11 +169,11 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 		opts.Tag = "deislabs/kubekahn:latest"
 
 		wd, _ := os.Getwd()
-		// Below line makes cnab.go#defaultBundleFiles#manifestExists true
+		// `path.Join(wd...` -> makes cnab.go#defaultBundleFiles#manifestExists `true`
+		// Only when `manifestExists` eq to `true`, default bundle logic will run
 		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, config.Name))
 		// When execution reach to `readFromFile`, manifest file path will be lost.
-		// So, had to empty default manifest content also
-		// Below line makes manifest.go#readFromFile#exists true
+		// So, had to use root manifest file also for error simuation purpose
 		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
 
 		err := opts.Validate(nil, p.Porter)
