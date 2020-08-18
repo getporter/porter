@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = UpgradeOptions{}
+
 // UpgradeOptions that may be specified when upgrading a bundle.
 // Porter handles defaulting any missing values.
 type UpgradeOptions struct {
@@ -27,7 +29,7 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 	}
 
 	deperator := newDependencyExecutioner(p, claim.ActionUpgrade)
-	err = deperator.Prepare(opts.BundleLifecycleOpts)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}

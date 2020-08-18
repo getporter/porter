@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = UninstallOptions{}
+
 // ErrUnsafeInstallationDeleteRetryForceDelete presents the ErrUnsafeInstallationDelete error and provides a retry option of --force-delete
 var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sure it should be deleted, retry the last command with the --force-delete flag", ErrUnsafeInstallationDelete)
 
@@ -17,6 +19,7 @@ var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sur
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
 	BundleLifecycleOpts
+	UninstallDeleteOptions
 }
 
 // UninstallDeleteOptions supply options for deletion on uninstall
@@ -49,6 +52,10 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 	return err
 }
 
+func (opts UninstallOptions) GetBundleLifecycleOptions() BundleLifecycleOpts {
+	return opts.BundleLifecycleOpts
+}
+
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
@@ -63,7 +70,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	deperator := newDependencyExecutioner(p, claim.ActionUninstall)
-	err = deperator.Prepare(opts.BundleLifecycleOpts)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}

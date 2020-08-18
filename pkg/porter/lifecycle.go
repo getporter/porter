@@ -5,11 +5,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = BundleLifecycleOpts{}
+
+// BundleAction is an interface that defines methods related to constructing
+// ActionArguments and supplying BundleLifecycleOptions.  The latter is useful
+// when the implementation contains further, action-specific options beyond
+// the stock BundleLifecycleOptions.
+type BundleAction interface {
+	ToActionArgs(*dependencyExecutioner) cnabprovider.ActionArguments
+
+	GetBundleLifecycleOptions() BundleLifecycleOpts
+}
+
 type BundleLifecycleOpts struct {
 	sharedOptions
 	BundlePullOptions
 	AllowAccessToDockerHost bool
-	UninstallDeleteOptions
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
@@ -28,8 +39,12 @@ func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
 	return nil
 }
 
+func (o BundleLifecycleOpts) GetBundleLifecycleOptions() BundleLifecycleOpts {
+	return o
+}
+
 // ToActionArgs converts this instance of user-provided action options.
-func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
+func (o BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
 		Action:                deperator.Action,
 		Installation:          o.Name,

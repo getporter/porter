@@ -25,8 +25,9 @@ type dependencyExecutioner struct {
 	Claims   claim.Provider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentOpts BundleLifecycleOpts
-	deps       []*queuedDependency
+	parentOpts          BundleAction
+	bundleLifecycleOpts BundleLifecycleOpts
+	deps                []*queuedDependency
 }
 
 func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
@@ -57,8 +58,9 @@ type queuedDependency struct {
 	RelocationMapping string
 }
 
-func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts) error {
+func (e *dependencyExecutioner) Prepare(parentOpts BundleAction) error {
 	e.parentOpts = parentOpts
+	e.bundleLifecycleOpts = parentOpts.GetBundleLifecycleOptions()
 
 	err := e.identifyDependencies()
 	if err != nil {
@@ -120,21 +122,21 @@ func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.Actio
 func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
 	var bun bundle.Bundle
-	if e.parentOpts.CNABFile != "" {
-		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+	if e.bundleLifecycleOpts.CNABFile != "" {
+		bundle, err := e.CNAB.LoadBundle(e.bundleLifecycleOpts.CNABFile)
 		if err != nil {
 			return err
 		}
 		bun = bundle
-	} else if e.parentOpts.Tag != "" {
-		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+	} else if e.bundleLifecycleOpts.Tag != "" {
+		cachedBundle, err := e.Resolver.Resolve(e.bundleLifecycleOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
 		bun = cachedBundle.Bundle
-	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.ReadLastClaim(e.parentOpts.Name)
+	} else if e.bundleLifecycleOpts.Name != "" {
+		c, err := e.Claims.ReadLastClaim(e.bundleLifecycleOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -169,8 +171,8 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	var err error
 	pullOpts := BundlePullOptions{
 		Tag:              dep.Tag,
-		InsecureRegistry: e.parentOpts.InsecureRegistry,
-		Force:            e.parentOpts.Force,
+		InsecureRegistry: e.bundleLifecycleOpts.InsecureRegistry,
+		Force:            e.bundleLifecycleOpts.Force,
 	}
 	cachedDep, err := e.Resolver.Resolve(pullOpts)
 	if err != nil {
@@ -217,7 +219,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentOpts.combinedParameters {
+	for key, value := range e.bundleLifecycleOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -231,7 +233,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
-			delete(e.parentOpts.combinedParameters, key)
+			delete(e.bundleLifecycleOpts.combinedParameters, key)
 		}
 	}
 
@@ -250,6 +252,13 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		CredentialIdentifiers: parentArgs.CredentialIdentifiers,
 	}
 
+	// Determine if we're working with UninstallOptions, to inform deletion and
+	// error handling, etc.
+	var uninstallOpts UninstallOptions
+	if opts, ok := e.parentOpts.(UninstallOptions); ok {
+		uninstallOpts = opts
+	}
+
 	var executeErrs error
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
 	err := e.CNAB.Execute(depArgs)
@@ -257,13 +266,13 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 
 		// Handle errors when/if the action is uninstall
-		executeErrs = e.parentOpts.handleUninstallErrs(e.Out, executeErrs)
+		executeErrs = uninstallOpts.handleUninstallErrs(e.Out, executeErrs)
 		if executeErrs != nil {
 			return executeErrs
 		}
 	}
 
-	if e.parentOpts.shouldDelete() {
+	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
 		return e.Claims.DeleteInstallation(depArgs.Installation)
 	}
