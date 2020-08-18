@@ -31,7 +31,7 @@ func NewTestParameterProvider(t *testing.T, tc *config.TestConfig) TestParameter
 		TestConfig:  tc,
 		TestSecrets: backingSecrets,
 		ParameterStorage: &ParameterStorage{
-			ParametersStore: &paramStore,
+			ParametersStore: paramStore,
 			SecretsStore:    secrets.NewSecretStore(backingSecrets),
 		},
 	}

@@ -54,6 +54,7 @@ porter [flags]
 * [porter publish](/cli/porter_publish/)	 - Publish a bundle
 * [porter schema](/cli/porter_schema/)	 - Print the JSON schema for the Porter manifest
 * [porter show](/cli/porter_show/)	 - Show an installation of a bundle
+* [porter storage](/cli/porter_storage/)	 - Manage data stored by Porter
 * [porter uninstall](/cli/porter_uninstall/)	 - Uninstall an installation
 * [porter upgrade](/cli/porter_upgrade/)	 - Upgrade an installation
 * [porter version](/cli/porter_version/)	 - Print the application version

@@ -30,7 +30,7 @@ func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredenti
 		TestConfig:  tc,
 		TestSecrets: backingSecrets,
 		CredentialStorage: &CredentialStorage{
-			CredentialsStore: &credStore,
+			CredentialsStore: credStore,
 			SecretsStore:     secrets.NewSecretStore(backingSecrets),
 		},
 	}

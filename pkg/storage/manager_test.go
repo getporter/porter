@@ -1,20 +1,106 @@
-package claims
+package storage
 
 import (
+	"encoding/json"
 	"path/filepath"
-	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
+func TestManager_LoadSchema(t *testing.T) {
+	t.Run("valid schema", func(t *testing.T) {
+		schema := Schema{
+			Claims:      "cnab-claim-1.0.0-DRAFT",
+			Credentials: "cnab-credentials-1.0.0-DRAFT",
+		}
+
+		c := config.NewTestConfig(t)
+		storage := crud.NewBackingStore(crud.NewMockStore())
+		p := NewManager(c.Config, storage)
+
+		schemaB, err := json.Marshal(schema)
+		require.NoError(t, err, "Marshal schema failed")
+		err = storage.Save("", "", "schema", schemaB)
+		require.NoError(t, err, "Save schema failed")
+
+		err = p.loadSchema()
+		require.NoError(t, err, "LoadSchema failed")
+		assert.NotEmpty(t, p.schema, "Schema should be populated with the file's data")
+	})
+
+	t.Run("missing schema, empty home", func(t *testing.T) {
+		c := config.NewTestConfig(t)
+		storage := crud.NewBackingStore(crud.NewMockStore())
+		p := NewManager(c.Config, storage)
+
+		err := p.loadSchema()
+		require.NoError(t, err, "LoadSchema failed")
+		assert.NotEmpty(t, p.schema, "Schema should be initialized automatically when PORTER_HOME is empty")
+	})
+
+	t.Run("missing schema, existing home data", func(t *testing.T) {
+		c := config.NewTestConfig(t)
+		storage := crud.NewBackingStore(crud.NewMockStore())
+		p := NewManager(c.Config, storage)
+
+		storage.Save("claims", "", "mybun", []byte(""))
+
+		err := p.loadSchema()
+		require.NoError(t, err, "LoadSchema failed")
+		assert.Empty(t, p.schema, "Schema should be empty because none was loaded")
+	})
+
+	t.Run("invalid schema", func(t *testing.T) {
+		c := config.NewTestConfig(t)
+		storage := crud.NewBackingStore(crud.NewMockStore())
+		p := NewManager(c.Config, storage)
+
+		var schemaB = []byte("invalid schema")
+		err := storage.Save("", "", "schema", schemaB)
+		require.NoError(t, err, "Save schema failed")
+
+		err = p.loadSchema()
+		require.Error(t, err, "Expected LoadSchema to fail")
+		assert.Contains(t, err.Error(), "could not parse storage schema document")
+		assert.Empty(t, p.schema, "Schema should be empty because none was loaded")
+	})
+}
+
+func TestManager_ShouldMigrateClaims(t *testing.T) {
+	testcases := []struct {
+		name         string
+		claimVersion string
+		wantMigrate  bool
+	}{
+		{"old schema", "cnab-claim-1.0.0-DRAFT", true},
+		{"missing schema", "", true},
+		{"current schema", claim.CNABSpecVersion, false},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			storage := crud.NewBackingStore(crud.NewMockStore())
+			p := NewManager(c.Config, storage)
+
+			p.schema = Schema{
+				Claims: schema.Version(tc.claimVersion),
+			}
+
+			assert.Equal(t, tc.wantMigrate, p.ShouldMigrateClaims())
+		})
+	}
+}
+
+func TestManager_MigrateClaims(t *testing.T) {
 	const installation = "example-exec-outputs"
 
 	testcases := []struct {
@@ -37,9 +123,12 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 			config.FileSystem.Mkdir(claimsDir, 0755)
 			config.TestContext.AddTestFile(filepath.Join("testdata", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
 
-			dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-			wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-			claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
+			dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+			mgr := NewManager(config.Config, dataStore)
+			claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
+
+			logfilePath, err := mgr.Migrate()
+			require.NoError(t, err, "Migrate failed")
 
 			c, err := claimStore.ReadLastClaim(installation)
 			require.NoError(t, err, "could not read claim")
@@ -52,6 +141,10 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 			} else {
 				assert.NotContains(t, config.TestContext.GetError(), "claim.Name to claim.Installation", "the claim should NOT be migrated")
 			}
+
+			logfile, err := config.FileSystem.ReadFile(logfilePath)
+			require.NoError(t, err, "error reading logfile")
+			assert.Equal(t, config.TestContext.GetError(), string(logfile), "the migration should have been copied to both stderr and the logfile")
 
 			// Read a second time, this time there shouldn't be a migration
 			config.TestContext.ClearOutputs()
@@ -68,9 +161,9 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 
 		config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
 
-		dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-		wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-		claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
+		dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+		mgr := NewManager(config.Config, dataStore)
+		claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
 
 		c, err := claimStore.ReadLastClaim(installation)
 		require.NoError(t, err, "could not read claim")
@@ -80,65 +173,36 @@ func TestMigrateClaimsWrapper_MigrateInstallation(t *testing.T) {
 	})
 }
 
-func TestMigrateClaimsWrapper_List(t *testing.T) {
+func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
-	// Mix up migrated and unmigrated claims
-	config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
-	config.TestContext.AddTestFile(filepath.Join("testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
-	config.FileSystem.Remove(filepath.Join(home, "schema.json")) // trigger a migration
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := NewManager(config.Config, dataStore)
+	claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
-
-	names, err := claimStore.ListInstallations()
-	sort.Strings(names)
-	require.NoError(t, err, "could not list installations")
-	assert.Equal(t, []string{"example-exec-outputs", "mybun"}, names, "unexpected list of installation names")
+	_, err := claimStore.ListInstallations()
+	require.NoError(t, err, "ListInstallations failed")
 }
 
-func TestMigrateClaimsWrapper_Read(t *testing.T) {
+func TestManager_MigrateInstall(t *testing.T) {
 	config := config.NewTestConfig(t)
 	home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
-	claimsDir := filepath.Join(home, "claims")
-	config.FileSystem.Mkdir(claimsDir, 0755)
-	config.TestContext.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
-	config.TestContext.AddTestFile("testdata/has-installation.json", filepath.Join(claimsDir, "has-installation.json"))
-
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
-
-	// Validate that we can migrate and read in the same operation
-	i, err := claimStore.ReadInstallation("mybun")
-	require.NoError(t, err, "ReadInstallation failed")
-	assert.Equal(t, "mybun", i.Name)
-	assert.Equal(t, claim.StatusSucceeded, i.GetLastStatus())
-}
-
-func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
-	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
-	config.SetHomeDir(home)
-	defer config.TestContext.Cleanup()
-
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := NewManager(config.Config, dataStore)
+	claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
 	config.TestContext.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
 
-	err := wrapper.MigrateInstallation("installed")
-	require.NoError(t, err, "MigrateInstallation failed")
+	_, err := mgr.Migrate()
+	require.NoError(t, err, "Migrate failed")
 
 	exists, _ := config.FileSystem.Exists(filepath.Join(claimsDir, "installed.json"))
 	assert.False(t, exists, "the original claim should be removed")
@@ -154,22 +218,22 @@ func TestMigrateClaimsWrapper_MigrateInstall(t *testing.T) {
 	assert.Equal(t, claim.StatusSucceeded, i.GetLastStatus())
 }
 
-func TestMigrateClaimsWrapper_MigrateUpgrade(t *testing.T) {
+func TestManager_MigrateUpgrade(t *testing.T) {
 	config := config.NewTestConfig(t)
 	home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
-	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
-	wrapper := newMigrateClaimsWrapper(config.Context, dataStore)
-	claimStore := claim.NewClaimStore(crud.NewBackingStore(wrapper), nil, nil)
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := NewManager(config.Config, dataStore)
+	claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
 	config.TestContext.AddTestFile("testdata/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
 
-	err := wrapper.MigrateInstallation("upgraded")
-	require.NoError(t, err, "MigrateInstallation failed")
+	_, err := mgr.Migrate()
+	require.NoError(t, err, "Migrate failed")
 
 	exists, _ := config.FileSystem.Exists(filepath.Join(claimsDir, "upgraded.json"))
 	assert.False(t, exists, "the original claim should be removed")

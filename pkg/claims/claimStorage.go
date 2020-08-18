@@ -2,9 +2,8 @@ package claims
 
 import (
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/storage/pluginstore"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/utils/crud"
 )
 
 var _ claim.Provider = &ClaimStorage{}
@@ -16,10 +15,9 @@ type ClaimStorage struct {
 	claim.Store
 }
 
-func NewClaimStorage(c *config.Config, storagePlugin *pluginstore.Store) *ClaimStorage {
-	migration := newMigrateClaimsWrapper(c.Context, storagePlugin)
+func NewClaimStorage(storage *storage.Manager) *ClaimStorage {
 	return &ClaimStorage{
-		Config: c,
-		Store:  claim.NewClaimStore(crud.NewBackingStore(migration), nil, nil),
+		Config: storage.Config,
+		Store:  claim.NewClaimStore(storage, nil, nil),
 	}
 }
