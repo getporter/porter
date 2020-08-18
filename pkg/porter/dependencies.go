@@ -266,12 +266,15 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 
 		// Handle errors when/if the action is uninstall
+		// If uninstallOpts is an empty struct, executeErrs will pass through
 		executeErrs = uninstallOpts.handleUninstallErrs(e.Out, executeErrs)
 		if executeErrs != nil {
 			return executeErrs
 		}
 	}
 
+	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
+	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
 		return e.Claims.DeleteInstallation(depArgs.Installation)
