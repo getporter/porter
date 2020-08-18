@@ -71,6 +71,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	// Add a supplemental parameter set to vet dep param resolution
@@ -131,6 +132,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := upgradeOpts.Validate([]string{}, p.Porter)
@@ -163,6 +165,7 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := invokeOpts.Validate([]string{}, p.Porter)
