@@ -7,13 +7,10 @@ import (
 
 var _ BundleAction = BundleLifecycleOpts{}
 
-// BundleAction is an interface that defines methods related to constructing
-// ActionArguments and supplying BundleLifecycleOptions.  The latter is useful
-// when the implementation contains further, action-specific options beyond
-// the stock BundleLifecycleOptions.
+// BundleAction is an interface that defines a method for supplying
+// BundleLifecycleOptions.  This is useful when implementations contain
+// action-specific options beyond the stock BundleLifecycleOptions.
 type BundleAction interface {
-	ToActionArgs(*dependencyExecutioner) cnabprovider.ActionArguments
-
 	GetBundleLifecycleOptions() BundleLifecycleOpts
 }
 
