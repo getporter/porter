@@ -22,7 +22,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	// Add an unmigrated claim
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
-	config.TestContext.AddTestFile(filepath.Join("../storage/testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	mgr := storage.NewManager(config.Config, dataStore)
@@ -31,14 +31,16 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	var err error
 	t.Run("list", func(t *testing.T) {
 		_, err = claimStore.ListInstallations()
+		require.Error(t, err, "Operation should halt because a migration is required")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
 
 	t.Run("read", func(t *testing.T) {
 		_, err = claimStore.ReadInstallation("mybun")
+		require.Error(t, err, "Operation should halt because a migration is required")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
 
-	require.Error(t, err, "Operation should halt because a migration is required")
-	assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 }
 
 func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {

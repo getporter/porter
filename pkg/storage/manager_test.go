@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
@@ -121,11 +122,11 @@ func TestManager_MigrateClaims(t *testing.T) {
 
 			claimsDir := filepath.Join(home, "claims")
 			config.FileSystem.Mkdir(claimsDir, 0755)
-			config.TestContext.AddTestFile(filepath.Join("testdata", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
+			config.TestContext.AddTestFile(filepath.Join("testdata/claims", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
 
 			dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
 			mgr := NewManager(config.Config, dataStore)
-			claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
+			claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 			logfilePath, err := mgr.Migrate()
 			require.NoError(t, err, "Migrate failed")
@@ -135,7 +136,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 			require.NotNil(t, c, "claim should be populated")
 			assert.Equal(t, installation, c.Installation, "claim.Installation was not populated")
 
-			assert.Contains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
+			assert.Contains(t, config.TestContext.GetError(), "Migrating claims data", "the claim should have been migrated")
 			if tc.migrateName {
 				assert.Contains(t, config.TestContext.GetError(), "claim.Name to claim.Installation", "the claim should have been migrated from Name -> Installation")
 			} else {
@@ -149,7 +150,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 			// Read a second time, this time there shouldn't be a migration
 			config.TestContext.ClearOutputs()
 			_, err = claimStore.ReadLastClaim(installation)
-			assert.NotContains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated a second time")
+			assert.NotContains(t, config.TestContext.GetError(), "Migrating claims data", "the claim should have been migrated a second time")
 		})
 	}
 
@@ -163,13 +164,13 @@ func TestManager_MigrateClaims(t *testing.T) {
 
 		dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
 		mgr := NewManager(config.Config, dataStore)
-		claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
+		claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 		c, err := claimStore.ReadLastClaim(installation)
 		require.NoError(t, err, "could not read claim")
 		require.NotNil(t, c, "claim should be populated")
 		assert.Equal(t, installation, c.Installation, "claim.Installation was not populated")
-		assert.NotContains(t, config.TestContext.GetError(), "!!! Migrating claims data", "the claim should have been migrated")
+		assert.NotContains(t, config.TestContext.GetError(), "Migrating claims data", "the claim should have been migrated")
 	})
 }
 
@@ -181,13 +182,17 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 
 	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
 	mgr := NewManager(config.Config, dataStore)
-	claimStore := claim.NewClaimStore(crud.NewBackingStore(mgr), nil, nil)
+	claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 	_, err := claimStore.ListInstallations()
 	require.NoError(t, err, "ListInstallations failed")
+
+	credStore := credentials.NewCredentialStore(mgr)
+	_, err = credStore.List()
+	require.NoError(t, err, "List credentials failed")
 }
 
-func TestManager_MigrateInstall(t *testing.T) {
+func TestManager_MigrateInstallClaim(t *testing.T) {
 	config := config.NewTestConfig(t)
 	home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
@@ -199,7 +204,7 @@ func TestManager_MigrateInstall(t *testing.T) {
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
-	config.TestContext.AddTestFile("testdata/installed.json", filepath.Join(claimsDir, "installed.json"))
+	config.TestContext.AddTestFile("testdata/claims/installed.json", filepath.Join(claimsDir, "installed.json"))
 
 	_, err := mgr.Migrate()
 	require.NoError(t, err, "Migrate failed")
@@ -218,7 +223,7 @@ func TestManager_MigrateInstall(t *testing.T) {
 	assert.Equal(t, claim.StatusSucceeded, i.GetLastStatus())
 }
 
-func TestManager_MigrateUpgrade(t *testing.T) {
+func TestManager_MigrateUpgradeClaim(t *testing.T) {
 	config := config.NewTestConfig(t)
 	home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
@@ -230,7 +235,7 @@ func TestManager_MigrateUpgrade(t *testing.T) {
 
 	claimsDir := filepath.Join(home, "claims")
 	config.FileSystem.Mkdir(claimsDir, 0755)
-	config.TestContext.AddTestFile("testdata/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
+	config.TestContext.AddTestFile("testdata/claims/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
 
 	_, err := mgr.Migrate()
 	require.NoError(t, err, "Migrate failed")
@@ -251,4 +256,30 @@ func TestManager_MigrateUpgrade(t *testing.T) {
 	installClaim := i.Claims[0]
 	assert.Equal(t, claim.ActionInstall, installClaim.Action)
 	assert.Equal(t, claim.StatusUnknown, installClaim.GetStatus())
+}
+
+func TestManager_ShouldMigrateCredentials(t *testing.T) {
+	testcases := []struct {
+		name               string
+		credentialsVersion string
+		wantMigrate        bool
+	}{
+		{"old schema", "cnab-credentialsets-1.0.0-DRAFT", true},
+		{"missing schema", "", true},
+		{"current schema", credentials.CNABSpecVersion, false},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			storage := crud.NewBackingStore(crud.NewMockStore())
+			p := NewManager(c.Config, storage)
+
+			p.schema = Schema{
+				Credentials: schema.Version(tc.credentialsVersion),
+			}
+
+			assert.Equal(t, tc.wantMigrate, p.ShouldMigrateCredentials())
+		})
+	}
 }

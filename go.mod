@@ -3,6 +3,9 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
+	// https://github.com/cnabio/cnab-go/pull/229 (valueset-schema)
+	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.13.4-0.20200817192725-a4a6a5beafc5
+
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
