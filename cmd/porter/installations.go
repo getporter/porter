@@ -60,7 +60,7 @@ func buildInstallationShowCommand(p *porter.Porter) *cobra.Command {
 		Short: "Show an installation of a bundle",
 		Long:  "Displays info relating to an installation of a bundle, including status and a listing of outputs.",
 		Example: `  porter installation show
-porter installation show another-bundle
+  porter installation show another-bundle
 
 Optional output formats include json and yaml.
 `,
@@ -87,8 +87,8 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 		Short: "Delete an installation",
 		Long:  "Deletes all records and outputs associated with an installation",
 		Example: `  porter installation delete
-porter installation delete wordpress
-porter installation delete --force
+  porter installation delete wordpress
+  porter installation delete --force
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
