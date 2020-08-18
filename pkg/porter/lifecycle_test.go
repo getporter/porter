@@ -160,17 +160,24 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		assert.Equal(t, opts.Name, args.Installation, "Claim not populated correctly")
 		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
 	})
+}
 
+func TestManifestIgnoredWithTag(t *testing.T) {
+	p := NewTestPorter(t)
 	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
 		opts := BundleLifecycleOpts{}
 		opts.Tag = "deislabs/kubekahn:latest"
 
-		// cnab.go#defaultBundleFiles uses `os.Getwd()`
 		wd, _ := os.Getwd()
-		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, "porter.yaml"))
+		// Below line makes cnab.go#defaultBundleFiles#manifestExists true
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, config.Name))
+		// When execution reach to `readFromFile`, manifest file path will be lost.
+		// So, had to empty default manifest content also
+		// Below line makes manifest.go#readFromFile#exists true
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
+
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		p.TestConfig.TestContext.FileSystem.Remove(path.Join(wd, "porter.yaml"))
 	})
 }
 
