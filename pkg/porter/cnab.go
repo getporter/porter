@@ -34,6 +34,9 @@ type bundleFileOptions struct {
 
 	// RelocationMapping is the path to the relocation-mapping.json file, if one exists. Populated only for published bundles
 	RelocationMapping string
+
+	// TagSet indicates whether a bundle tag is present, to determine whether or not to default bundle files
+	TagSet bool
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
@@ -42,9 +45,11 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 		return err
 	}
 
-	err = o.defaultBundleFiles(cxt)
-	if err != nil {
-		return err
+	if !o.TagSet {
+		err = o.defaultBundleFiles(cxt)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -84,6 +89,12 @@ type sharedOptions struct {
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	err := o.validateInstallationName(args)
+	if err != nil {
+		return err
+	}
+
+	// tag takes precedence over manifest/cnab file
+	err = o.bundleFileOptions.Validate(p.Context)
 	if err != nil {
 		return err
 	}
