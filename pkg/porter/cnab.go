@@ -93,7 +93,6 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 		return err
 	}
 
-	// tag takes precedence over manifest/cnab file
 	err = o.bundleFileOptions.Validate(p.Context)
 	if err != nil {
 		return err
