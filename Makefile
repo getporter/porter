@@ -135,7 +135,7 @@ start-local-docker-registry:
 
 stop-local-docker-registry:
 	@if $$(docker inspect registry > /dev/null 2>&1); then \
-		docker kill registry && docker rm registry ; \
+		docker rm -f registry ; \
 	fi
 
 # all-bundles loops through all items under the dir provided by the first argument

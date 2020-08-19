@@ -249,6 +249,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
+  porter bundle uninstall --delete
+  porter bundle uninstall --force-delete
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -273,6 +275,10 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.BoolVar(&opts.Delete, "delete", false,
+		"Delete all records associated with the installation, assuming the uninstall action succeeds")
+	f.BoolVar(&opts.ForceDelete, "force-delete", false,
+		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd

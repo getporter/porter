@@ -86,6 +86,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err)
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
+	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := os.Getenv("HOME")
@@ -109,6 +110,19 @@ func (p *TestPorter) AddTestFile(src string, dest string) {
 	}
 
 	p.TestConfig.TestContext.AddTestFile(src, dest)
+}
+
+type TestDriver struct {
+	Name     string
+	Filepath string
+}
+
+func (p *TestPorter) AddTestDriver(driver TestDriver) string {
+	if !filepath.IsAbs(driver.Filepath) {
+		driver.Filepath = filepath.Join(p.TestDir, driver.Filepath)
+	}
+
+	return p.TestConfig.TestContext.AddTestDriver(driver.Filepath, driver.Name)
 }
 
 func (p *TestPorter) CreateBundleDir() string {

@@ -135,6 +135,51 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	}
 }
 
+func (c *TestContext) AddTestDriver(src, name string) string {
+	c.T.Helper()
+
+	data, err := ioutil.ReadFile(src)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	dirname, err := c.FileSystem.TempDir("", "porter")
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	// filename in accordance with cnab-go's command driver expectations
+	filename := fmt.Sprintf("%s/cnab-%s", dirname, name)
+
+	newfile, err := c.FileSystem.Create(filename)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	if len(data) > 0 {
+		_, err := newfile.Write(data)
+		if err != nil {
+			c.T.Fatal(err)
+		}
+	}
+
+	err = c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+	err = newfile.Close()
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	path := os.Getenv("PATH")
+	pathlist := []string{dirname, path}
+	newpath := strings.Join(pathlist, string(os.PathListSeparator))
+	os.Setenv("PATH", newpath)
+
+	return dirname
+}
+
 // GetOutput returns all text printed to stdout.
 func (c *TestContext) GetOutput() string {
 	return string(c.capturedOut.Bytes())

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Do a transparent migration. This also checks for any problems with our
+// Do a migration. This also checks for any problems with our
 // connection handling which can result in panics :-)
 func TestClaimMigration_List(t *testing.T) {
 	p := porter.NewTestPorter(t)
@@ -30,7 +30,10 @@ func TestClaimMigration_List(t *testing.T) {
 
 	// Create unmigrated claim data
 	p.FileSystem.Mkdir(claimsDir, 0755)
-	p.AddTestFile(filepath.Join("../pkg/claims/testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	p.AddTestFile(filepath.Join("../pkg/storage/testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+
+	err = p.MigrateStorage()
+	require.NoError(t, err, "MigrateStorage failed")
 
 	installations, err := p.ListInstallations()
 	require.NoError(t, err, "could not list installations")
