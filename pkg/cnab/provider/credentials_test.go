@@ -2,7 +2,6 @@ package cnabprovider
 
 import (
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
@@ -20,20 +19,15 @@ func TestRuntime_loadCredentials(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
 
-	cs1 := credentials.CredentialSet{
-		Name:     "mycreds",
-		Created:  time.Now(),
-		Modified: time.Now(),
-		Credentials: []valuesource.Strategy{
-			{
-				Name: "password",
-				Source: valuesource.Source{
-					Key:   secrets.SourceSecret,
-					Value: "password",
-				},
+	cs1 := credentials.NewCredentialSet("mycreds",
+		valuesource.Strategy{
+			Name: "password",
+			Source: valuesource.Source{
+				Key:   secrets.SourceSecret,
+				Value: "password",
 			},
-		},
-	}
+		})
+
 	err := r.credentials.Save(cs1)
 	require.NoError(t, err, "Save credential set failed")
 

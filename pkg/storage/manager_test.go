@@ -146,11 +146,6 @@ func TestManager_MigrateClaims(t *testing.T) {
 			logfile, err := config.FileSystem.ReadFile(logfilePath)
 			require.NoError(t, err, "error reading logfile")
 			assert.Equal(t, config.TestContext.GetError(), string(logfile), "the migration should have been copied to both stderr and the logfile")
-
-			// Read a second time, this time there shouldn't be a migration
-			config.TestContext.ClearOutputs()
-			_, err = claimStore.ReadLastClaim(installation)
-			assert.NotContains(t, config.TestContext.GetError(), "Migrating claims data", "the claim should have been migrated a second time")
 		})
 	}
 
@@ -282,4 +277,31 @@ func TestManager_ShouldMigrateCredentials(t *testing.T) {
 			assert.Equal(t, tc.wantMigrate, p.ShouldMigrateCredentials())
 		})
 	}
+}
+
+func TestManager_MigrateCredentials(t *testing.T) {
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	credsDir := filepath.Join(home, "credentials")
+	config.FileSystem.Mkdir(credsDir, 0755)
+	config.TestContext.AddTestFile(filepath.Join("testdata/credentials", "mybun.json"), filepath.Join(credsDir, "mybun.json"))
+
+	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
+	mgr := NewManager(config.Config, dataStore)
+	credStore := credentials.NewCredentialStore(mgr)
+
+	logfilePath, err := mgr.Migrate()
+	require.NoError(t, err, "Migrate failed")
+
+	c, err := credStore.Read("mybun")
+	require.NoError(t, err, "Read credential failed")
+
+	assert.Equal(t, credentials.DefaultSchemaVersion, c.SchemaVersion, "credential was not migrated")
+
+	logfile, err := config.FileSystem.ReadFile(logfilePath)
+	require.NoError(t, err, "error reading logfile")
+	assert.Equal(t, config.TestContext.GetError(), string(logfile), "the migration should have been copied to both stderr and the logfile")
 }

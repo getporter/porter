@@ -186,6 +186,8 @@ func (m *Manager) MigrationRequired() bool {
 
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
 func (m *Manager) Migrate() (string, error) {
+	m.resetSchema()
+
 	// Let us call connect and not have it kick us out because the schema is out-of-date
 	m.allowOutOfDateSchema = true
 	defer func() {
@@ -235,6 +237,12 @@ func (m *Manager) Migrate() (string, error) {
 	}
 
 	return logfilePath, migrationErr.ErrorOrNil()
+}
+
+// resetSchema allows us to relook at our schema.json even after its been read.
+func (m *Manager) resetSchema() {
+	m.schema = Schema{}
+	m.schemaLoaded = false
 }
 
 // When there is no schema, and no existing storage data, create an initial
@@ -491,11 +499,10 @@ func (m *Manager) migrateCredentials(w io.Writer) error {
 	}
 
 	var migrationErr *multierror.Error
-	version, _ := credentials.GetDefaultSchemaVersion()
 	for _, cred := range creds {
 		// Set a schema version on credentials that don't have it yet
 		if cred.SchemaVersion == "" {
-			cred.SchemaVersion = version
+			cred.SchemaVersion = credentials.DefaultSchemaVersion
 		}
 
 		err = credStore.Save(cred)

@@ -36,9 +36,7 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (credentials.Credentia
 }
 
 func genCredentialSet(name string, creds map[string]bundle.Credential, fn generator) (credentials.CredentialSet, error) {
-	cs := credentials.CredentialSet{
-		Name: name,
-	}
+	cs := credentials.NewCredentialSet(name)
 	cs.Credentials = []valuesource.Strategy{}
 
 	if strings.ContainsAny(name, "./\\") {
