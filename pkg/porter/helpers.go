@@ -112,6 +112,19 @@ func (p *TestPorter) AddTestFile(src string, dest string) {
 	p.TestConfig.TestContext.AddTestFile(src, dest)
 }
 
+type TestDriver struct {
+	Name     string
+	Filepath string
+}
+
+func (p *TestPorter) AddTestDriver(driver TestDriver) string {
+	if !filepath.IsAbs(driver.Filepath) {
+		driver.Filepath = filepath.Join(p.TestDir, driver.Filepath)
+	}
+
+	return p.TestConfig.TestContext.AddTestDriver(driver.Filepath, driver.Name)
+}
+
 func (p *TestPorter) CreateBundleDir() string {
 	bundleDir, err := ioutil.TempDir("", "bundle")
 	require.NoError(p.T(), err)

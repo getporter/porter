@@ -6,6 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = InvokeOptions{}
+
 // InvokeOptions that may be specified when invoking a bundle.
 // Porter handles defaulting any missing values.
 type InvokeOptions struct {
@@ -36,7 +38,7 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 	}
 
 	deperator := newDependencyExecutioner(p, opts.Action)
-	err = deperator.Prepare(opts.BundleLifecycleOpts)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}

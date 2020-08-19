@@ -30,6 +30,8 @@ porter uninstall [INSTALLATION] [flags]
   porter uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter uninstall --cred azure --cred kubernetes
   porter uninstall --driver debug
+  porter uninstall --delete
+  porter uninstall --force-delete
 
 ```
 
@@ -39,9 +41,11 @@ porter uninstall [INSTALLATION] [flags]
       --allow-docker-host-access   Controls if the bundle should have access to the host's Docker daemon with elevated privileges. See https://porter.sh/configuration/#allow-docker-host-access for the full implications of this flag.
       --cnab-file string           Path to the CNAB bundle.json file.
   -c, --cred strings               Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.
+      --delete                     Delete all records associated with the installation, assuming the uninstall action succeeds
   -d, --driver string              Specify a driver to use. Allowed values: docker, debug (default "docker")
   -f, --file string                Path to the porter manifest file. Defaults to the bundle in the current directory. Optional unless a newer version of the bundle should be used to uninstall the bundle.
       --force                      Force a fresh pull of the bundle
+      --force-delete               UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.
   -h, --help                       help for uninstall
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.

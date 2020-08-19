@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = InstallOptions{}
+
 // InstallOptions that may be specified when installing a bundle.
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
@@ -27,7 +29,7 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 	}
 
 	deperator := newDependencyExecutioner(p, claim.ActionInstall)
-	err = deperator.Prepare(opts.BundleLifecycleOpts)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}

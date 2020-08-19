@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/hashicorp/go-multierror"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
@@ -24,8 +25,9 @@ type dependencyExecutioner struct {
 	Claims   claim.Provider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentOpts BundleLifecycleOpts
-	deps       []*queuedDependency
+	parentOpts          BundleAction
+	bundleLifecycleOpts BundleLifecycleOpts
+	deps                []*queuedDependency
 }
 
 func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
@@ -56,8 +58,9 @@ type queuedDependency struct {
 	RelocationMapping string
 }
 
-func (e *dependencyExecutioner) Prepare(parentOpts BundleLifecycleOpts) error {
+func (e *dependencyExecutioner) Prepare(parentOpts BundleAction) error {
 	e.parentOpts = parentOpts
+	e.bundleLifecycleOpts = parentOpts.GetBundleLifecycleOptions()
 
 	err := e.identifyDependencies()
 	if err != nil {
@@ -80,7 +83,7 @@ func (e *dependencyExecutioner) Execute() error {
 	}
 
 	// executeDependency the requested action against all of the dependencies
-	parentArgs := e.parentOpts.ToActionArgs(e)
+	parentArgs := e.bundleLifecycleOpts.ToActionArgs(e)
 	for _, dep := range e.deps {
 		err := e.executeDependency(dep, parentArgs)
 		if err != nil {
@@ -119,21 +122,21 @@ func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.Actio
 func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
 	var bun bundle.Bundle
-	if e.parentOpts.CNABFile != "" {
-		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
+	if e.bundleLifecycleOpts.CNABFile != "" {
+		bundle, err := e.CNAB.LoadBundle(e.bundleLifecycleOpts.CNABFile)
 		if err != nil {
 			return err
 		}
 		bun = bundle
-	} else if e.parentOpts.Tag != "" {
-		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
+	} else if e.bundleLifecycleOpts.Tag != "" {
+		cachedBundle, err := e.Resolver.Resolve(e.bundleLifecycleOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
 		bun = cachedBundle.Bundle
-	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.ReadLastClaim(e.parentOpts.Name)
+	} else if e.bundleLifecycleOpts.Name != "" {
+		c, err := e.Claims.ReadLastClaim(e.bundleLifecycleOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -168,8 +171,8 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	var err error
 	pullOpts := BundlePullOptions{
 		Tag:              dep.Tag,
-		InsecureRegistry: e.parentOpts.InsecureRegistry,
-		Force:            e.parentOpts.Force,
+		InsecureRegistry: e.bundleLifecycleOpts.InsecureRegistry,
+		Force:            e.bundleLifecycleOpts.Force,
 	}
 	cachedDep, err := e.Resolver.Resolve(pullOpts)
 	if err != nil {
@@ -216,7 +219,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentOpts.combinedParameters {
+	for key, value := range e.bundleLifecycleOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -230,7 +233,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
-			delete(e.parentOpts.combinedParameters, key)
+			delete(e.bundleLifecycleOpts.combinedParameters, key)
 		}
 	}
 
@@ -248,22 +251,41 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 		// For now, assume it's okay to give the dependency the same credentials as the parent
 		CredentialIdentifiers: parentArgs.CredentialIdentifiers,
 	}
+
+	// Determine if we're working with UninstallOptions, to inform deletion and
+	// error handling, etc.
+	var uninstallOpts UninstallOptions
+	if opts, ok := e.parentOpts.(UninstallOptions); ok {
+		uninstallOpts = opts
+	}
+
+	var executeErrs error
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
 	err := e.CNAB.Execute(depArgs)
 	if err != nil {
-		return errors.Wrapf(err, "error executing dependency %s", dep.Alias)
-	}
+		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 
-	// If action is uninstall, no claim will exist
-	if parentArgs.Action != claim.ActionUninstall {
-		// Collect expected outputs via claim
-		outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
-		if err != nil {
-			return err
+		// Handle errors when/if the action is uninstall
+		// If uninstallOpts is an empty struct, executeErrs will pass through
+		executeErrs = uninstallOpts.handleUninstallErrs(e.Out, executeErrs)
+		if executeErrs != nil {
+			return executeErrs
 		}
-
-		dep.outputs = outputs
 	}
+
+	// If uninstallOpts is an empty struct (i.e., action not Uninstall), this
+	// will resolve to false and thus be a no-op
+	if uninstallOpts.shouldDelete() {
+		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
+		return e.Claims.DeleteInstallation(depArgs.Installation)
+	}
+
+	// Collect expected outputs via claim
+	outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
+	if err != nil {
+		return err
+	}
+	dep.outputs = outputs
 
 	return nil
 }

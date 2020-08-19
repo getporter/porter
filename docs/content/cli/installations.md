@@ -27,6 +27,7 @@ Commands for working with installations of a bundle
 ### SEE ALSO
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter installations delete](/cli/porter_installations_delete/)	 - Delete an installation
 * [porter installations list](/cli/porter_installations_list/)	 - List installed bundles
 * [porter installations output](/cli/porter_installations_output/)	 - Output commands
 * [porter installations show](/cli/porter_installations_show/)	 - Show an installation of a bundle

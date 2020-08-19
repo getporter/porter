@@ -19,6 +19,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildInstallationsListCommand(p))
 	cmd.AddCommand(buildInstallationShowCommand(p))
 	cmd.AddCommand(buildInstallationOutputsCommands(p))
+	cmd.AddCommand(buildInstallationDeleteCommand(p))
 
 	return cmd
 }
@@ -59,7 +60,7 @@ func buildInstallationShowCommand(p *porter.Porter) *cobra.Command {
 		Short: "Show an installation of a bundle",
 		Long:  "Displays info relating to an installation of a bundle, including status and a listing of outputs.",
 		Example: `  porter installation show
-porter installation show another-bundle
+  porter installation show another-bundle
 
 Optional output formats include json and yaml.
 `,
@@ -74,6 +75,32 @@ Optional output formats include json and yaml.
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
+
+	return &cmd
+}
+
+func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.DeleteOptions{}
+
+	cmd := cobra.Command{
+		Use:   "delete [INSTALLATION]",
+		Short: "Delete an installation",
+		Long:  "Deletes all records and outputs associated with an installation",
+		Example: `  porter installation delete
+  porter installation delete wordpress
+  porter installation delete --force
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.DeleteInstallation(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.BoolVar(&opts.Force, "force", false,
+		"Force a delete the installation, regardless of last completed action")
 
 	return &cmd
 }
