@@ -19,8 +19,8 @@ porter installations delete [INSTALLATION] [flags]
 
 ```
   porter installation delete
-porter installation delete wordpress
-porter installation delete --force
+  porter installation delete wordpress
+  porter installation delete --force
 
 ```
 
