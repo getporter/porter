@@ -17,7 +17,6 @@ func TestExecOutputs(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
-	p.Debug = true
 
 	// Install a bundle with exec outputs
 	installExecOutputsBundle(p)

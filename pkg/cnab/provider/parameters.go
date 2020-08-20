@@ -114,7 +114,7 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 				installation = args.Installation
 				outputName = source.OutputName
 			case extensions.DependencyOutputParameterSource:
-				installation = fmt.Sprintf("%s-%s", args.Installation, source.Dependency)
+				installation = extensions.BuildPrerequisiteInstallationName(args.Installation, source.Dependency)
 				outputName = source.OutputName
 			}
 

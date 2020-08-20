@@ -389,8 +389,12 @@ func TestResolveCredential(t *testing.T) {
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
+	os.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 	os.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
-	defer os.Unsetenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT")
+	defer func() {
+		os.Unsetenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT")
+		os.Unsetenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT")
+	}()
 
 	cxt := context.NewTestContext(t)
 
@@ -400,11 +404,15 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 				Tag: "getporter/mysql",
 			},
 		},
-		TemplateVariables: []string{"bundle.dependencies.mysql.outputs.root-password"},
+		TemplateVariables: []string{
+			"bundle.dependencies.mysql.outputs.password",
+			"bundle.dependencies.mysql.outputs.root-password",
+		},
 	}
 
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	ps := extensions.ParameterSources{}
+	ps.SetParameterFromDependencyOutput("porter-mysql-password", "mysql", "password")
 	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
 	rm.bundle = bundle.Bundle{
 		Custom: map[string]interface{}{
@@ -416,11 +424,15 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	rm.bundles = map[string]bundle.Bundle{
 		"mysql": {
 			Outputs: map[string]bundle.Output{
+				"password": {
+					Definition: "password",
+				},
 				"root-password": {
 					Definition: "root-password",
 				},
 			},
 			Definitions: map[string]*definition.Schema{
+				"password":      {WriteOnly: makeBoolPtr(true)},
 				"root-password": {WriteOnly: makeBoolPtr(true)},
 			},
 		},
@@ -430,6 +442,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 		Data: map[string]interface{}{
 			"description": "a test step",
 			"Arguments": []string{
+				"{{ bundle.dependencies.mysql.outputs.password }}",
 				"{{ bundle.dependencies.mysql.outputs.root-password }}",
 			},
 		},
@@ -441,12 +454,11 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.NoError(t, err)
 	args, ok := s.Data["Arguments"].([]interface{})
-	assert.True(t, ok)
-	assert.Equal(t, 1, len(args))
-	assert.Equal(t, "mysql-password", args[0].(string))
+	require.True(t, ok)
+	assert.Equal(t, []interface{}{"password", "mysql-password"}, args, "Incorrect template args passed to the mixin step")
 
 	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"mysql-password"}, rm.GetSensitiveValues())
+	assert.Equal(t, []string{"password", "mysql-password"}, rm.GetSensitiveValues(), "Incorrect values were marked as sensitive")
 }
 
 func TestResolveInMainDict(t *testing.T) {

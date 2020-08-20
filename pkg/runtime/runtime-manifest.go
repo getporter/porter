@@ -296,8 +296,13 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				}
 
 				depBun := deps[ps.Dependency].(map[string]interface{})
-				depOutputs := make(map[string]interface{})
-				depBun["outputs"] = depOutputs
+				var depOutputs map[string]interface{}
+				if depBun["outputs"] == nil {
+					depOutputs = make(map[string]interface{})
+					depBun["outputs"] = depOutputs
+				} else {
+					depOutputs = depBun["outputs"].(map[string]interface{})
+				}
 
 				value, err := m.ReadDependencyOutputValue(outRef)
 				if err != nil {
@@ -308,9 +313,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 				// Determine if the dependency's output is defined as sensitive
 				depB := m.bundles[ps.Dependency]
-				output := depB.Outputs[ps.OutputName]
-				def := depB.Definitions[output.Definition]
-				if def.WriteOnly != nil && *def.WriteOnly == true {
+				if ok, _ := depB.IsOutputSensitive(ps.OutputName); ok {
 					m.setSensitiveValue(value)
 				}
 
@@ -325,16 +328,16 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 					return nil, err
 				}
 
-				outputDef := m.Manifest.Outputs[ps.OutputName]
-				if outputDef.Sensitive {
-					m.setSensitiveValue(val)
-				}
-
 				if m.outputs == nil {
 					m.outputs = map[string]string{}
 				}
 				m.outputs[ps.OutputName] = val
 				bun["outputs"] = m.outputs
+
+				outputDef := m.Manifest.Outputs[ps.OutputName]
+				if outputDef.Sensitive {
+					m.setSensitiveValue(val)
+				}
 			}
 		}
 	}

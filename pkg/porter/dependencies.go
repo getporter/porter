@@ -244,7 +244,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentA
 	depArgs := cnabprovider.ActionArguments{
 		Action:            parentArgs.Action,
 		BundlePath:        dep.CNABFile,
-		Installation:      fmt.Sprintf("%s-%s", parentArgs.Installation, dep.Alias),
+		Installation:      extensions.BuildPrerequisiteInstallationName(parentArgs.Installation, dep.Alias),
 		Driver:            parentArgs.Driver,
 		Params:            dep.Parameters,
 		RelocationMapping: dep.RelocationMapping,
