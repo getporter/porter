@@ -48,6 +48,9 @@ func NewFileExtensions() map[string]string {
 	jsonExt := ".json"
 	ext[credentials.ItemType] = jsonExt
 
+	// TODO (carolynvs): change to parameters.ItemType once parameters move to cnab-go
+	ext["parameters"] = jsonExt
+
 	// Handle top level files, like schema.json
 	ext[""] = jsonExt
 

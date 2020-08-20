@@ -181,7 +181,7 @@ func (m *Manager) loadSchema() error {
 
 // MigrationRequired determines if a migration of Porter's storage system is necessary.
 func (m *Manager) MigrationRequired() bool {
-	return m.ShouldMigrateClaims() || m.ShouldMigrateCredentials()
+	return m.ShouldMigrateClaims() || m.ShouldMigrateCredentials() || m.ShouldMigrateParameters()
 }
 
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
@@ -229,6 +229,14 @@ func (m *Manager) Migrate() (string, error) {
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
 		fmt.Fprintln(w, "Credentials schema is up-to-date")
+	}
+
+	if m.ShouldMigrateParameters() {
+		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", ParameterSetCNABSpecVersion, m.schema.Parameters)
+		err = m.migrateParameters(w)
+		migrationErr = multierror.Append(migrationErr, err)
+	} else {
+		fmt.Fprintln(w, "Parameters schema is up-to-date")
 	}
 
 	if migrationErr.ErrorOrNil() == nil {
@@ -285,11 +293,6 @@ func (m *Manager) ShouldMigrateClaims() bool {
 	return string(m.schema.Claims) != claim.CNABSpecVersion
 }
 
-// ShouldMigrateCredentials determines if the credentials storage system requires a migration.
-func (m *Manager) ShouldMigrateCredentials() bool {
-	return string(m.schema.Credentials) != credentials.CNABSpecVersion
-}
-
 func (m *Manager) migrateClaims(w io.Writer) error {
 	fmt.Fprintln(w, "Migrating claims data to match the CNAB Claim spec https://cdn.cnab.io/schema/cnab-claim-1.0.0-DRAFT+b5ed2f3/claim.schema.json. This is a one-way migration.")
 
@@ -315,6 +318,7 @@ func (m *Manager) writeSchema(w io.Writer) error {
 	m.schema = Schema{
 		Claims:      schema.Version(claim.CNABSpecVersion),
 		Credentials: schema.Version(credentials.CNABSpecVersion),
+		Parameters:  schema.Version(ParameterSetCNABSpecVersion),
 	}
 	schemaB, err := json.Marshal(m.schema)
 	if err != nil {
@@ -350,7 +354,7 @@ func (m *Manager) writeSchema(w io.Writer) error {
 //    - RESULTID/
 //        - RESULTID-OUTPUTNAME
 func (m *Manager) migrateInstallation(w io.Writer, name string) error {
-	fmt.Fprintf(w, " - Migrating claim %s to the new claim layout...\n", name)
+	fmt.Fprintf(w, " - Migrating claim %s to the new schema...\n", name)
 
 	oldClaimData, err := m.BackingStore.Read(claim.ItemTypeClaims, name)
 	if err != nil {
@@ -488,6 +492,11 @@ func (m *Manager) migrateUnversionedClaim(w io.Writer, name string, data []byte)
 	return data, nil
 }
 
+// ShouldMigrateCredentials determines if the credentials storage system requires a migration.
+func (m *Manager) ShouldMigrateCredentials() bool {
+	return string(m.schema.Credentials) != credentials.CNABSpecVersion
+}
+
 func (m *Manager) migrateCredentials(w io.Writer) error {
 	// Ensure all credentials have a schemaVersion set
 	fmt.Fprintln(w, "Migrating credential set data to match the CNAB Credential Set spec https://github.com/cnabio/cnab-spec/blob/cnab-credentialsets-1.0.0-DRAFT+b6c701f/802-credential-sets.md. This is a one-way migration.")
@@ -501,14 +510,79 @@ func (m *Manager) migrateCredentials(w io.Writer) error {
 	var migrationErr *multierror.Error
 	for _, cred := range creds {
 		// Set a schema version on credentials that don't have it yet
-		if cred.SchemaVersion == "" {
-			cred.SchemaVersion = credentials.DefaultSchemaVersion
+		if cred.SchemaVersion != "" {
+			continue
 		}
+
+		fmt.Fprintf(w, " - Migrating credential set %s to the new ...\n", cred.Name)
+		cred.SchemaVersion = credentials.DefaultSchemaVersion
 
 		err = credStore.Save(cred)
 		if err != nil {
-			fmt.Fprintf(w, errors.Wrapf(err, "Error migrating credential set %s. Skipping.\n", cred.Name).Error())
-			migrationErr = multierror.Append(migrationErr, err)
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot save migrated credential set %s. Skipping.", cred.Name))
+		}
+	}
+
+	return migrationErr.ErrorOrNil()
+}
+
+// TODO (carolynvs): Replace with cnab-go's const when this moves to cnab-go
+const (
+	ParameterSetDefaultSchemaVersion schema.Version = "1.0.0-DRAFT+TODO"
+	ParameterSetCNABSpecVersion      string         = "cnab-parametersets-" + string(ParameterSetDefaultSchemaVersion)
+)
+
+// ShouldMigrateParameters determines if the parameters storage system requires a migration.
+func (m *Manager) ShouldMigrateParameters() bool {
+	// Can't reference parameters.CNABSpecVersion because it causes a circular dependency
+	// It will be resolved when parametersets move to cnab-go
+	return string(m.schema.Parameters) != ParameterSetCNABSpecVersion
+}
+
+func (m *Manager) migrateParameters(w io.Writer) error {
+	// Ensure all parameters have a schemaVersion set
+	// TODO (carolynvs): Update this with a link to the spec once we have it
+	fmt.Fprintln(w, "Migrating parameter set data to match the CNAB Parameter Set spec TODO. This is a one-way migration.")
+
+	// TODO (carolynvs): Use typed parameter store when it has moved to cnab-go. It causes a circular dependency at the moment.
+	names, err := m.BackingStore.List("parameters", "")
+	if err != nil {
+		return errors.Wrapf(err, "Migration failed, unable to read all credentials")
+	}
+
+	var migrationErr *multierror.Error
+	for _, name := range names {
+		paramB, err := m.BackingStore.Read("parameters", name)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot read parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		param := map[string]interface{}{}
+		err = json.Unmarshal(paramB, &param)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot parse parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		// Set a schema version on credentials that don't have it yet
+		if _, ok := param["schemaVersion"]; ok {
+			continue
+		}
+
+		fmt.Fprintf(w, " - Migrating parameter set %s to the new schema...\n", name)
+		param["schemaVersion"] = ParameterSetDefaultSchemaVersion
+
+		paramB, err = json.Marshal(param)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot marshal parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		err = m.BackingStore.Save("parameters", "", name, paramB)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot save migrated parameter set %s. Skipping.", name))
+			continue
 		}
 	}
 

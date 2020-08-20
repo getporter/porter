@@ -1,9 +1,14 @@
 package parameters
 
 import (
+	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/hashicorp/go-hclog"
+	"github.com/stretchr/testify/assert"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
@@ -34,7 +39,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 	t.Run("resolve params success", func(t *testing.T) {
 		tc := config.NewTestConfig(t)
 		backingSecrets := inmemorysecrets.NewStore()
-		backingParams := crud.NewMockStore()
+		backingParams := crud.NewBackingStore(crud.NewMockStore())
 		paramStore := NewParameterStore(backingParams)
 		secretStore := secrets.NewSecretStore(backingSecrets)
 
@@ -60,7 +65,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 	t.Run("resolve params failure", func(t *testing.T) {
 		tc := config.NewTestConfig(t)
 		backingSecrets := inmemorysecrets.NewStore()
-		backingParams := crud.NewMockStore()
+		backingParams := crud.NewBackingStore(crud.NewMockStore())
 		paramStore := NewParameterStore(backingParams)
 		secretStore := secrets.NewSecretStore(backingSecrets)
 
@@ -143,4 +148,66 @@ func TestParameterStorage_Validate(t *testing.T) {
 		err := s.Validate(testParameterSet)
 		require.Error(t, err, "Validate returned errors")
 	})
+}
+
+func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	// Add an unmigrated parameter
+	credDir := filepath.Join(home, "parameters")
+	config.FileSystem.Mkdir(credDir, 0755)
+	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/parameters", "mybun.json"), filepath.Join(home, "parameters", "mybun.json"))
+
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	mgr := storage.NewManager(config.Config, dataStore)
+	paramStore := NewParameterStore(mgr)
+
+	var err error
+	t.Run("list", func(t *testing.T) {
+		_, err = paramStore.List()
+		require.Error(t, err, "Operation should halt because a migration is required")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+	})
+
+	t.Run("read", func(t *testing.T) {
+		_, err = paramStore.Read("mybun")
+		require.Error(t, err, "Operation should halt because a migration is required")
+		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
+	})
+}
+
+func TestParameterStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	// Add migrated credentials data
+	config.CopyDirectory(filepath.Join("../storage/testdata", "migrated"), home, false)
+
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	mgr := storage.NewManager(config.Config, dataStore)
+	paramStore := NewParameterStore(mgr)
+
+	names, err := paramStore.List()
+	require.NoError(t, err, "List failed")
+	assert.NotEmpty(t, names, "Expected parameter names to be populated")
+}
+
+func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
+	config := config.NewTestConfig(t)
+	home := config.TestContext.UseFilesystem()
+	config.SetHomeDir(home)
+	defer config.TestContext.Cleanup()
+
+	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
+	mgr := storage.NewManager(config.Config, dataStore)
+	paramStore := NewParameterStore(mgr)
+
+	names, err := paramStore.List()
+	require.NoError(t, err, "List failed")
+	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
 }

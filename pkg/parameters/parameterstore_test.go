@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewParameterStore(t *testing.T) {
-	backingParams := crud.NewMockStore()
+	backingParams := crud.NewBackingStore(crud.NewMockStore())
 	paramStore := NewParameterStore(backingParams)
 
 	params, err := paramStore.List()

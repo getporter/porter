@@ -11,7 +11,7 @@ const (
 	// DefaultSchemaVersion is the default SchemaVersion value
 	// set on new CredentialSet instances, and is the semver portion
 	// of CNABSpecVersion.
-	DefaultSchemaVersion = schema.Version("1.0.0-DRAFT-b6c701f")
+	DefaultSchemaVersion = schema.Version("1.0.0-DRAFT+TODO")
 
 	// CNABSpecVersion represents the CNAB Spec version of the Credentials
 	// that this library implements

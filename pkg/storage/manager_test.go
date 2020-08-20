@@ -185,6 +185,10 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	credStore := credentials.NewCredentialStore(mgr)
 	_, err = credStore.List()
 	require.NoError(t, err, "List credentials failed")
+
+	// TODO (carolynvs): use a parameterstore once it's moved to cnab-go
+	_, err = mgr.List("parameters", "")
+	require.NoError(t, err, "List parameters failed")
 }
 
 func TestManager_MigrateInstallClaim(t *testing.T) {
@@ -304,4 +308,30 @@ func TestManager_MigrateCredentials(t *testing.T) {
 	logfile, err := config.FileSystem.ReadFile(logfilePath)
 	require.NoError(t, err, "error reading logfile")
 	assert.Equal(t, config.TestContext.GetError(), string(logfile), "the migration should have been copied to both stderr and the logfile")
+}
+
+func TestManager_ShouldMigrateParameters(t *testing.T) {
+	testcases := []struct {
+		name              string
+		parametersVersion string
+		wantMigrate       bool
+	}{
+		{"old schema", "cnab-parametersets-1.0.0-DRAFT", true},
+		{"missing schema", "", true},
+		{"current schema", ParameterSetCNABSpecVersion, false},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := config.NewTestConfig(t)
+			storage := crud.NewBackingStore(crud.NewMockStore())
+			p := NewManager(c.Config, storage)
+
+			p.schema = Schema{
+				Parameters: schema.Version(tc.parametersVersion),
+			}
+
+			assert.Equal(t, tc.wantMigrate, p.ShouldMigrateParameters())
+		})
+	}
 }
