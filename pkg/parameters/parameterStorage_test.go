@@ -15,25 +15,21 @@ import (
 func TestParameterStorage_ResolveAll(t *testing.T) {
 	// The inmemory secret store currently only supports secret sources
 	// So all of these have this same source
-	testParameterSet := ParameterSet{
-		Name: "myparamset",
-		Parameters: []valuesource.Strategy{
-			{
-				Name: "param1",
-				Source: valuesource.Source{
-					Key:   "secret",
-					Value: "param1",
-				},
-			},
-			{
-				Name: "param2",
-				Source: valuesource.Source{
-					Key:   "secret",
-					Value: "param2",
-				},
+	testParameterSet := NewParameterSet("myparamset",
+		valuesource.Strategy{
+			Name: "param1",
+			Source: valuesource.Source{
+				Key:   "secret",
+				Value: "param1",
 			},
 		},
-	}
+		valuesource.Strategy{
+			Name: "param2",
+			Source: valuesource.Source{
+				Key:   "secret",
+				Value: "param2",
+			},
+		})
 
 	t.Run("resolve params success", func(t *testing.T) {
 		tc := config.NewTestConfig(t)
@@ -92,40 +88,37 @@ func TestParameterStorage_Validate(t *testing.T) {
 	t.Run("valid sources", func(t *testing.T) {
 		s := ParameterStorage{}
 
-		testParameterSet := ParameterSet{
-			Parameters: []valuesource.Strategy{
-				{
-					Source: valuesource.Source{
-						Key:   "env",
-						Value: "SOME_ENV",
-					},
-				},
-				{
-					Source: valuesource.Source{
-						Key:   "value",
-						Value: "somevalue",
-					},
-				},
-				{
-					Source: valuesource.Source{
-						Key:   "path",
-						Value: "/some/path",
-					},
-				},
-				{
-					Source: valuesource.Source{
-						Key:   "command",
-						Value: "some command",
-					},
-				},
-				{
-					Source: valuesource.Source{
-						Key:   "secret",
-						Value: "secret",
-					},
+		testParameterSet := NewParameterSet("myparams",
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "env",
+					Value: "SOME_ENV",
 				},
 			},
-		}
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "value",
+					Value: "somevalue",
+				},
+			},
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "path",
+					Value: "/some/path",
+				},
+			},
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "command",
+					Value: "some command",
+				},
+			},
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "secret",
+					Value: "secret",
+				},
+			})
 
 		err := s.Validate(testParameterSet)
 		require.NoError(t, err, "Validate did not return errors")
@@ -133,22 +126,19 @@ func TestParameterStorage_Validate(t *testing.T) {
 
 	t.Run("invalid sources", func(t *testing.T) {
 		s := ParameterStorage{}
-		testParameterSet := ParameterSet{
-			Parameters: []valuesource.Strategy{
-				{
-					Source: valuesource.Source{
-						Key:   "wrongthing",
-						Value: "SOME_ENV",
-					},
-				},
-				{
-					Source: valuesource.Source{
-						Key:   "anotherwrongthing",
-						Value: "somevalue",
-					},
+		testParameterSet := NewParameterSet("myparams",
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "wrongthing",
+					Value: "SOME_ENV",
 				},
 			},
-		}
+			valuesource.Strategy{
+				Source: valuesource.Source{
+					Key:   "anotherwrongthing",
+					Value: "somevalue",
+				},
+			})
 
 		err := s.Validate(testParameterSet)
 		require.Error(t, err, "Validate returned errors")

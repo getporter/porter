@@ -41,13 +41,13 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 // Load a ParameterSet from a file at a given path.
 //
 // It does not load the individual parameters.
-func Load(path string) (*ParameterSet, error) {
-	pset := &ParameterSet{}
+func Load(path string) (ParameterSet, error) {
+	var pset ParameterSet
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return pset, err
 	}
-	return pset, yaml.Unmarshal(data, pset)
+	return pset, yaml.Unmarshal(data, &pset)
 }
 
 // IsInternal determines if the provided param is an internal parameter

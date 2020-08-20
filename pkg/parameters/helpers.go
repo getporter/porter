@@ -43,7 +43,7 @@ func (p *TestParameterProvider) AddTestParameters(path string) {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
 	}
 
-	err = p.ParameterStorage.Save(*cs)
+	err = p.ParameterStorage.Save(cs)
 	if err != nil {
 		p.T.Fatal(errors.Wrap(err, "could not load test parameters into in memory parameter storage"))
 	}
