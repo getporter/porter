@@ -14,6 +14,9 @@ const (
 	ParameterSourcesSchema = "https://cnab.io/v1/parameter-sources.schema.json"
 	// ParameterSourceTypeOutput defines a type of parameter source that is provided by a bundle output.
 	ParameterSourceTypeOutput = "output"
+	// ParameterSourceTypeDependencyOutput defines a type of parameter source that is provided by a bundle's dependency
+	// output.
+	ParameterSourceTypeDependencyOutput = "dependencies.output"
 )
 
 // ParameterSourcesExtension represents a required extension that specifies how
@@ -40,6 +43,23 @@ func (ps *ParameterSources) SetParameterFromOutput(parameter string, output stri
 		Priority: []string{ParameterSourceTypeOutput},
 		Sources: ParameterSourceMap{
 			ParameterSourceTypeOutput: OutputParameterSource{OutputName: output},
+		},
+	}
+}
+
+// SetParameterFromDependencyOutput creates an entry in the parameter sources section setting
+// the parameter's value using the specified dependency's output value.
+func (ps *ParameterSources) SetParameterFromDependencyOutput(parameter string, dep string, output string) {
+	if *ps == nil {
+		*ps = ParameterSources{}
+	}
+
+	(*ps)[parameter] = ParameterSource{
+		Priority: []string{ParameterSourceTypeDependencyOutput},
+		Sources: ParameterSourceMap{
+			ParameterSourceTypeDependencyOutput: DependencyOutputParameterSource{
+				Dependency: dep,
+				OutputName: output},
 		},
 	}
 }
@@ -94,9 +114,16 @@ func (m *ParameterSourceMap) UnmarshalJSON(data []byte) error {
 			var output OutputParameterSource
 			err := json.Unmarshal(rawDef, &output)
 			if err != nil {
-				return errors.Wrapf(err, "invalid parameter source definition for key output")
+				return errors.Wrapf(err, "invalid parameter source definition for key %s", sourceKey)
 			}
 			(*m)[ParameterSourceTypeOutput] = output
+		case ParameterSourceTypeDependencyOutput:
+			var depOutput DependencyOutputParameterSource
+			err := json.Unmarshal(rawDef, &depOutput)
+			if err != nil {
+				return errors.Wrapf(err, "invalid parameter source definition for key %s", sourceKey)
+			}
+			(*m)[ParameterSourceTypeDependencyOutput] = depOutput
 		default:
 			return errors.Errorf("unsupported parameter source key %s", sourceKey)
 		}
@@ -111,6 +138,13 @@ type ParameterSourceDefinition interface {
 // OutputParameterSource represents a parameter that is set using the value from
 // a bundle output.
 type OutputParameterSource struct {
+	OutputName string `json:"name" mapstructure:"name"`
+}
+
+// DependencyOutputParameterSource represents a parameter that is set using the value
+// from a bundle's dependency output.
+type DependencyOutputParameterSource struct {
+	Dependency string `json:"dependency" mapstructure:"dependency"`
 	OutputName string `json:"name" mapstructure:"name"`
 }
 

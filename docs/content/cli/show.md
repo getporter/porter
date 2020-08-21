@@ -19,7 +19,7 @@ porter show [INSTALLATION] [flags]
 
 ```
   porter show
-porter show another-bundle
+  porter show another-bundle
 
 Optional output formats include json and yaml.
 

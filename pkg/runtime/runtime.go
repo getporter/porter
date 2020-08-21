@@ -139,20 +139,17 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 	}
 
 	for outputKey, outputValue := range outputs {
-		// Iterate through bundle outputs declared in the manifest
-		for _, bundleOutput := range r.RuntimeManifest.Outputs {
-			// If a given step output matches a bundle output, proceed
-			if outputKey != bundleOutput.Name {
-				continue
-			}
+		bundleOutput, ok := r.RuntimeManifest.Outputs[outputKey]
+		if !ok {
+			continue
+		}
 
-			if r.shouldApplyOutput(bundleOutput) {
-				outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+		if r.shouldApplyOutput(bundleOutput) {
+			outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
-				err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
-				if err != nil {
-					return errors.Wrapf(err, "unable to write output file %s", outpath)
-				}
+			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
+			if err != nil {
+				return errors.Wrapf(err, "unable to write output file %s", outpath)
 			}
 		}
 	}
