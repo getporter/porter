@@ -8,6 +8,7 @@ import (
 
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
@@ -147,6 +148,12 @@ func (c *Cache) cacheManifest(cb *CachedBundle) error {
 		if err != nil {
 			return errors.Wrapf(err, "error writing porter.yaml for %s", cb.Tag)
 		}
+
+		m, err := manifest.LoadManifestFrom(c.Context, cb.ManifestPath)
+		if err != nil {
+			return errors.Wrapf(err, "error reading porter.yaml for %s", cb.Tag)
+		}
+		cb.Manifest = m
 	}
 
 	return nil

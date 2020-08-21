@@ -21,22 +21,18 @@ type BundleLifecycleOpts struct {
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
-
 	if o.Tag != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
 		o.File = ""
 		o.CNABFile = ""
 		o.TagSet = true
 
-		return o.validateTag()
+		if err := o.validateTag(); err != nil {
+			return err
+		}
 	}
 
-	err := o.sharedOptions.Validate(args, porter)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.sharedOptions.Validate(args, porter)
 }
 
 func (o BundleLifecycleOpts) GetBundleLifecycleOptions() BundleLifecycleOpts {
