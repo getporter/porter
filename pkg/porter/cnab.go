@@ -125,7 +125,12 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
-	if o.File == "" {
+	if o.File != "" { // --file
+		bundleDir := filepath.Dir(o.File)
+		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
+	} else if o.CNABFile != "" { // --cnab-file
+		// Nothing to default
+	} else { // no flags passed (--tag is handled elsewhere)
 		pwd, err := os.Getwd()
 		if err != nil {
 			return errors.Wrap(err, "could not get current working directory")
@@ -136,13 +141,10 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
 
-		if manifestExists && o.CNABFile == "" {
+		if manifestExists {
 			o.File = config.Name
 			o.CNABFile = build.LOCAL_BUNDLE
 		}
-	} else {
-		bundleDir := filepath.Dir(o.File)
-		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
 	}
 
 	return nil
