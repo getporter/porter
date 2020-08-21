@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -507,6 +508,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
+		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	})
 
 	t.Run("param with hyphen", func(t *testing.T) {
@@ -537,6 +539,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 		assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
 		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 		assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 	})
 }

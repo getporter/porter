@@ -3,6 +3,7 @@ package runtime
 import (
 	"fmt"
 	"os"
+	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -458,7 +459,9 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	assert.Equal(t, []interface{}{"password", "mysql-password"}, args, "Incorrect template args passed to the mixin step")
 
 	// There should now be a sensitive value tracked under the manifest
-	assert.Equal(t, []string{"password", "mysql-password"}, rm.GetSensitiveValues(), "Incorrect values were marked as sensitive")
+	gotSensitiveValues := rm.GetSensitiveValues()
+	sort.Strings(gotSensitiveValues)
+	assert.Equal(t, []string{"mysql-password", "password"}, gotSensitiveValues, "Incorrect values were marked as sensitive")
 }
 
 func TestResolveInMainDict(t *testing.T) {

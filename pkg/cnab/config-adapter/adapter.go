@@ -401,7 +401,8 @@ func (c *ManifestConverter) generateDependencyOutputWiringParameter(reference ma
 	wiringParam := c.generateWiringParameter(wiringName, paramDesc)
 
 	wiringDef := definition.Schema{
-		ID: "https://porter.sh/generated-bundle/#porter-parameter-source-definition",
+		ID:      "https://porter.sh/generated-bundle/#porter-parameter-source-definition",
+		Comment: parameters.PorterInternal,
 		// any type, the dependency's bundle definition is not available at buildtime
 	}
 
