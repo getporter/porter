@@ -124,12 +124,12 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 			Name:   name,
 			Silent: opts.Silent,
 		},
-		Parameters: bundle.Parameters,
+		Bundle: bundle,
 	}
 	fmt.Fprintf(p.Out, "Generating new parameter set %s from bundle %s\n", genOpts.Name, bundle.Name)
-	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", len(genOpts.Parameters), bundle.Name)
+	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", len(bundle.Parameters), bundle.Name)
 
-	pset, err := generator.GenerateParameters(genOpts)
+	pset, err := genOpts.GenerateParameters()
 	if err != nil {
 		return errors.Wrap(err, "unable to generate parameter set")
 	}

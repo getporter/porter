@@ -23,6 +23,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 
 	// Now make sure execute passes now that we have called execute
 	opts := InstallOptions{}
+	opts.Driver = DebugDriver
 	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")

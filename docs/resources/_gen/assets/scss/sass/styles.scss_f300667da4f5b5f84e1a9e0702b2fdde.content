@@ -4258,8 +4258,6 @@ p {
 ol, ul {
   margin-left: 1.8rem;
   margin-bottom: 2.5rem; }
-  ol li, ul li {
-    margin-bottom: 0.5em; }
 
 a {
   color: #2BA0D3; }
@@ -8220,7 +8218,6 @@ body {
   .main .content-wrap ul,
   .main .content-wrap ol {
     padding: 0 0.25rem;
-    margin-bottom: 2em;
     color: #333333;
     font-size: 15px;
     line-height: 1.7; }

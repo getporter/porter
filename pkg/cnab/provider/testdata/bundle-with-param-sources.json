@@ -23,6 +23,18 @@
             "name": "bar"
           }
         }
+      },
+      "connstr": {
+        "priority": ["output", "dependencies.output"],
+        "sources": {
+          "output": {
+            "name": "connstr"
+          },
+          "dependencies.output": {
+            "dependency": "mysql",
+            "name": "connstr"
+          }
+        }
       }
     }
   },
@@ -41,6 +53,12 @@
       ],
       "definition": "foo",
       "path": "/cnab/app/outputs/foo"
+    },
+    "connstr": {
+      "applyTo": [
+        "install"
+      ],
+      "definition": "connstr"
     }
   },
   "parameters": {
@@ -71,9 +89,18 @@
       "destination": {
         "env": "QUX"
       }
+    },
+    "connstr": {
+      "definition":"connstr",
+      "destination": {
+        "env": "CONNSTR"
+      }
     }
   },
   "definitions": {
+    "connstr": {
+      "type": "string"
+    },
     "foo": {
       "type": "string",
       "default": "foo_default"

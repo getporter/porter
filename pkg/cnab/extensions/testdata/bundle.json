@@ -79,6 +79,15 @@
             "name": "tfstate"
           }
         }
+      },
+      "mysql_connstr": {
+        "priority": ["dependencies.output"],
+        "sources": {
+          "dependencies.output": {
+            "dependency": "mysql",
+            "name": "connstr"
+          }
+        }
       }
     }
   },
@@ -101,6 +110,9 @@
         "port"
       ]
     },
+    "mysql_connstr": {
+      "type": "string"
+    },
     "tfstate": {
       "contentEncoding": "base64",
       "type": "string"
@@ -117,6 +129,9 @@
       "applyTo": [ "upgrade", "uninstall" ],
       "definition": "tfstate",
       "required": true
+    },
+    "mysql_connstr": {
+      "definition": "mysql_connstr"
     }
   },
   "outputs": {

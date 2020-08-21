@@ -3,8 +3,8 @@ mixins:
 - helm
 
 name: wordpress
-version: 0.1.2
 tag: localhost:5000/wordpress
+version: 0.1.3
 
 dependencies:
   - name: mysql
@@ -25,6 +25,9 @@ parameters:
 - name: wordpress-password
   type: string
   sensitive: true
+  applyTo:
+    - install
+    - upgrade
 - name: namespace
   type: string
   default: ''
@@ -38,9 +41,6 @@ install:
       replace: true
       set:
         wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
-        #externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
-        #externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.services }}"
-        #externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
         externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
         externalDatabase.port: 3306
         mariadb.enabled: false
@@ -78,6 +78,7 @@ outputs:
   - name: wordpress-password
     description: "The Wordpress installation password"
     type: string
+    default: "default-password"
     applyTo:
       - "install"
       - "upgrade"

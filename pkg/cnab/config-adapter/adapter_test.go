@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -301,8 +302,8 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	outputDefinitions := []manifest.OutputDefinition{
-		{
+	outputDefinitions := manifest.OutputDefinitions{
+		"output1": {
 			Name: "output1",
 			ApplyTo: []string{
 				"install",
@@ -314,14 +315,14 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			},
 			Sensitive: true,
 		},
-		{
+		"output2": {
 			Name: "output2",
 			Schema: definition.Schema{
 				Type:        "boolean",
 				Description: "Description of output2",
 			},
 		},
-		{
+		"kubeconfig": {
 			Name: "kubeconfig",
 			Path: "/root/.kube/config",
 			Schema: definition.Schema{
@@ -467,6 +468,8 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	want := extensions.ParameterSources{}
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
+	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
+	want.SetParameterFromDependencyOutput("root-password", "mysql", "mysql-root-password")
 
 	assert.Equal(t, want, sources)
 }
@@ -508,6 +511,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
+		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	})
 
 	t.Run("param with hyphen", func(t *testing.T) {
@@ -516,6 +520,30 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		assert.Equal(t, "porter-some-thing-output", name, "unexpected parameter name")
 		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
 		assert.Equal(t, "PORTER_SOME_THING_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
+	})
+}
+
+func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	t.Run("generate parameter", func(t *testing.T) {
+		ref := manifest.DependencyOutputReference{Dependency: "mysql", Output: "mysql-password"}
+		name, param, paramDef := a.generateDependencyOutputWiringParameter(ref)
+
+		assert.Equal(t, "porter-mysql-mysql-password-dep-output", name, "unexpected parameter name")
+		assert.False(t, param.Required, "wiring parameters should NOT be required")
+		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
+		assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
+
+		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
+		assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 	})
 }
 
@@ -530,7 +558,7 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Equal(t, []string{"io.cnab.parameter-sources"}, bun.RequiredExtensions)
+	assert.Equal(t, []string{"io.cnab.dependencies", "io.cnab.parameter-sources"}, bun.RequiredExtensions)
 }
 
 func TestManifestConverter_generateRequiredExtensions(t *testing.T) {

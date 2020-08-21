@@ -268,6 +268,38 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"expected param 'foo' to have parameter override value")
 	})
 
+	t.Run("dependency output without type", func(t *testing.T) {
+		fooBun := bundle.Bundle{
+			Name:    "foo-setup",
+			Version: bundle.CNABSpecVersion,
+			InvocationImages: []bundle.InvocationImage{
+				{
+					BaseImage: bundle.BaseImage{
+						ImageType: "docker",
+						Image:     "getporter/foo-setup:latest",
+					},
+				},
+			},
+			Outputs: map[string]bundle.Output{
+				"connstr": {Definition: "connstr"}},
+			Definitions: map[string]*definition.Schema{
+				"connstr": {Type: "string"},
+			},
+		}
+		c := r.TestClaims.CreateClaim("mybun-mysql", claim.ActionInstall, fooBun, nil)
+		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		r.TestClaims.CreateOutput(c, cr, "connstr", []byte("connstr value"))
+
+		args := ActionArguments{
+			Installation: "mybun",
+			Action:       claim.ActionUpgrade,
+		}
+		params, err := r.loadParameters(b, args)
+		require.NoError(t, err)
+		assert.Equal(t, "connstr value", params["connstr"],
+			"expected param 'connstr' to have parameter value from the untyped dependency output")
+	})
+
 	t.Run("merge parameter values", func(t *testing.T) {
 		// foo is set by a the user
 		// bar is set by a parameter source
@@ -468,9 +500,30 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	bun, err := r.ProcessBundle("bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
-	c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, bun, nil)
+	fooBun := bundle.Bundle{
+		Name:    "foo-setup",
+		Version: bundle.CNABSpecVersion,
+		InvocationImages: []bundle.InvocationImage{
+			{
+				BaseImage: bundle.BaseImage{
+					ImageType: "docker",
+					Image:     "getporter/foo-setup:latest",
+				},
+			},
+		},
+		Outputs: map[string]bundle.Output{
+			"connstr": {Definition: "connstr"}},
+		Definitions: map[string]*definition.Schema{
+			"connstr": {Type: "string"},
+		},
+	}
+	c := r.TestClaims.CreateClaim("mybun-mysql", claim.ActionInstall, fooBun, nil)
 	cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-	r.TestClaims.CreateOutput(c, cr, "foo", []byte("abc123"))
+	r.TestClaims.CreateOutput(c, cr, "connstr", []byte("connstr value"))
+
+	c = r.TestClaims.CreateClaim("mybun", claim.ActionInstall, bun, nil)
+	cr = r.TestClaims.CreateResult(c, claim.StatusSucceeded)
+	r.TestClaims.CreateOutput(c, cr, "bar", []byte("bar value"))
 
 	args := ActionArguments{
 		Installation: "mybun",
@@ -478,6 +531,9 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	got, err := r.resolveParameterSources(bun, args)
 	require.NoError(t, err, "resolveParameterSources failed")
 
-	want := valuesource.Set{"foo": "abc123"}
+	want := valuesource.Set{
+		"bar":     "bar value",
+		"connstr": "connstr value",
+	}
 	assert.Equal(t, want, got, "resolved incorrect parameter values")
 }
