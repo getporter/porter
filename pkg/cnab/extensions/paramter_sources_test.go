@@ -56,6 +56,7 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 
 	want := ParameterSources{}
 	want.SetParameterFromOutput("tfstate", "tfstate")
+	want.SetParameterFromDependencyOutput("mysql_connstr", "mysql", "connstr")
 	assert.Equal(t, want, ps)
 }
 

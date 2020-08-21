@@ -16,8 +16,6 @@ import (
 )
 
 func TestDependenciesLifecycle(t *testing.T) {
-	t.Skip("TODO: Implement parameter sources #1069")
-
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -128,7 +126,7 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.UpgradeOptions{}
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
-	upgradeOpts.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
@@ -165,7 +163,6 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := invokeOpts.Validate([]string{}, p.Porter)
@@ -195,6 +192,8 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.UninstallOptions{}
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
+		"wordpress-password=mypassword",
+		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}

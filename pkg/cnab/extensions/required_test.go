@@ -36,6 +36,15 @@ func TestProcessRequiredExtensions(t *testing.T) {
 						ParameterSourceTypeOutput: OutputParameterSource{"tfstate"},
 					},
 				},
+				"mysql_connstr": ParameterSource{
+					Priority: []string{ParameterSourceTypeDependencyOutput},
+					Sources: ParameterSourceMap{
+						ParameterSourceTypeDependencyOutput: DependencyOutputParameterSource{
+							Dependency: "mysql",
+							OutputName: "connstr",
+						},
+					},
+				},
 			},
 		}
 		require.Equal(t, expected, exts)

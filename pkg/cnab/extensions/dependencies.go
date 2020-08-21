@@ -2,6 +2,7 @@ package extensions
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -91,4 +92,9 @@ func DependencyReader(bun bundle.Bundle) (interface{}, error) {
 func HasDependencies(bun bundle.Bundle) bool {
 	_, ok := bun.Custom[DependenciesKey]
 	return ok
+}
+
+// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
+func BuildPrerequisiteInstallationName(installation string, dependency string) string {
+	return fmt.Sprintf("%s-%s", installation, dependency)
 }

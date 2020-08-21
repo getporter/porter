@@ -52,10 +52,10 @@ type Manifest struct {
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
-	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
-	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
-	Dependencies map[string]Dependency  `yaml:"dependencies,omitempty"`
-	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
+	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
+	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
+	Dependencies map[string]Dependency `yaml:"dependencies,omitempty"`
+	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
 	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.
@@ -136,6 +136,7 @@ func (m *Manifest) Validate() error {
 
 var templatedOutputRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
 
+// getTemplateOutputName returns the output name from the template variable.
 func (m *Manifest) getTemplateOutputName(value string) (string, bool) {
 	matches := templatedOutputRegex.FindStringSubmatch(value)
 	if len(matches) < 2 {
@@ -146,29 +147,95 @@ func (m *Manifest) getTemplateOutputName(value string) (string, bool) {
 	return outputName, true
 }
 
-// GetTemplatedOutputs returns the output definitions for any bundle level outputs
-// that have been templated.
-func (m *Manifest) GetTemplatedOutputs() []OutputDefinition {
-	// TODO: long term we should use a custom type for m.Outputs with its own
-	// deserialization so we can store it as a map but still support it looking
-	// list a yaml list
-	lookup := make(map[string]OutputDefinition, len(m.Outputs))
-	for _, o := range m.Outputs {
-		lookup[o.Name] = o
+var templatedDependencyOutputRegex = regexp.MustCompile(`^bundle\.dependencies\.(.+).outputs.(.+)$`)
+
+// getTemplateDependencyOutputName returns the dependency and output name from the
+// template variable.
+func (m *Manifest) getTemplateDependencyOutputName(value string) (string, string, bool) {
+	matches := templatedDependencyOutputRegex.FindStringSubmatch(value)
+	if len(matches) < 3 {
+		return "", "", false
 	}
 
-	outputs := make([]OutputDefinition, 0, len(m.TemplateVariables))
+	dependencyName := matches[1]
+	outputName := matches[2]
+	return dependencyName, outputName, true
+}
+
+// GetTemplatedOutputs returns the output definitions for any bundle level outputs
+// that have been templated, keyed by the output name.
+func (m *Manifest) GetTemplatedOutputs() OutputDefinitions {
+	outputs := make(OutputDefinitions, len(m.TemplateVariables))
 	for _, tmplVar := range m.TemplateVariables {
 		if name, ok := m.getTemplateOutputName(tmplVar); ok {
-			outputDef, ok := lookup[name]
+			outputDef, ok := m.Outputs[name]
 			if !ok {
 				// Only return bundle level definitions
 				continue
 			}
-			outputs = append(outputs, outputDef)
+			outputs[name] = outputDef
 		}
 	}
 	return outputs
+}
+
+// GetTemplatedOutputs returns the output definitions for any bundle level outputs
+// that have been templated, keyed by "DEPENDENCY.OUTPUT".
+func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
+	outputs := make(DependencyOutputReferences, len(m.TemplateVariables))
+	for _, tmplVar := range m.TemplateVariables {
+		if dep, output, ok := m.getTemplateDependencyOutputName(tmplVar); ok {
+			ref := DependencyOutputReference{
+				Dependency: dep,
+				Output:     output,
+			}
+			outputs[ref.String()] = ref
+		}
+	}
+	return outputs
+}
+
+type DependencyOutputReference struct {
+	Dependency string
+	Output     string
+}
+
+func (r DependencyOutputReference) String() string {
+	return fmt.Sprintf("%s.%s", r.Dependency, r.Output)
+}
+
+type DependencyOutputReferences map[string]DependencyOutputReference
+
+// ParameterDefinitions allows us to represent parameters as a list in the YAML
+// and work with them as a map internally
+type ParameterDefinitions map[string]ParameterDefinition
+
+func (pd ParameterDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]ParameterDefinition, 0, len(pd))
+
+	for _, param := range pd {
+		raw = append(raw, param)
+	}
+
+	return raw, nil
+}
+
+func (pd *ParameterDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []ParameterDefinition
+	err := unmarshal(&raw)
+	if err != nil {
+		return err
+	}
+
+	if *pd == nil {
+		*pd = make(map[string]ParameterDefinition, len(raw))
+	}
+
+	for _, item := range raw {
+		(*pd)[item.Name] = item
+	}
+
+	return nil
 }
 
 // ParameterDefinition defines a single parameter for a CNAB bundle
@@ -239,7 +306,40 @@ func (pd *ParameterDefinition) AppliesTo(action string) bool {
 }
 
 type ParameterSource struct {
-	Output string `yaml:"output"`
+	Dependency string `yaml:"dependency,omitempty"`
+	Output     string `yaml:"output"`
+}
+
+// CredentialDefinitions allows us to represent credentials as a list in the YAML
+// and work with them as a map internally
+type CredentialDefinitions map[string]CredentialDefinition
+
+func (cd CredentialDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]CredentialDefinition, 0, len(cd))
+
+	for _, cred := range cd {
+		raw = append(raw, cred)
+	}
+
+	return raw, nil
+}
+
+func (cd *CredentialDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []CredentialDefinition
+	err := unmarshal(&raw)
+	if err != nil {
+		return err
+	}
+
+	if *cd == nil {
+		*cd = make(map[string]CredentialDefinition, len(raw))
+	}
+
+	for _, item := range raw {
+		(*cd)[item.Name] = item
+	}
+
+	return nil
 }
 
 // CredentialDefinition represents the structure or fields of a credential parameter
@@ -394,6 +494,38 @@ type CustomActionDefinition struct {
 	Description       string `yaml:"description,omitempty"`
 	ModifiesResources bool   `yaml:"modifies,omitempty"`
 	Stateless         bool   `yaml:"stateless,omitempty"`
+}
+
+// OutputDefinitions allows us to represent parameters as a list in the YAML
+// and work with them as a map internally
+type OutputDefinitions map[string]OutputDefinition
+
+func (od OutputDefinitions) MarshalYAML() (interface{}, error) {
+	raw := make([]OutputDefinition, 0, len(od))
+
+	for _, output := range od {
+		raw = append(raw, output)
+	}
+
+	return raw, nil
+}
+
+func (od *OutputDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []OutputDefinition
+	err := unmarshal(&raw)
+	if err != nil {
+		return err
+	}
+
+	if *od == nil {
+		*od = make(map[string]OutputDefinition, len(raw))
+	}
+
+	for _, item := range raw {
+		(*od)[item.Name] = item
+	}
+
+	return nil
 }
 
 // OutputDefinition defines a single output for a CNAB
@@ -807,12 +939,14 @@ func ParamToEnvVar(name string) string {
 	return fixer.Replace(name)
 }
 
-// GetParameterSourceName builds the parameter source name used by Porter
+// GetParameterSourceForOutput builds the parameter source name used by Porter
 // internally for wiring up an output to a parameter.
-func GetParameterSourceEnvVar(outputName string) string {
-	return fmt.Sprintf("PORTER_%s_OUTPUT", ParamToEnvVar(outputName))
+func GetParameterSourceForOutput(outputName string) string {
+	return fmt.Sprintf("porter-%s-output", outputName)
 }
 
-func GetParameterSourceName(outputName string) string {
-	return fmt.Sprintf("porter-%s-output", outputName)
+// GetParameterSourceForDependency builds the parameter source name used by Porter
+// internally for wiring up an dependency's output to a parameter.
+func GetParameterSourceForDependency(ref DependencyOutputReference) string {
+	return fmt.Sprintf("porter-%s-%s-dep-output", ref.Dependency, ref.Output)
 }

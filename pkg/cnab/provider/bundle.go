@@ -1,25 +1,13 @@
 package cnabprovider
 
 import (
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/pkg/errors"
 )
 
 func (r *Runtime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
-	l := loader.New()
-
-	bunD, err := r.FileSystem.ReadFile(bundleFile)
-	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "cannot read bundle at %s", bundleFile)
-	}
-
-	bun, err := l.LoadData(bunD)
-	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "cannot load bundle")
-	}
-
-	return *bun, nil
+	return cnab.LoadBundle(r.Context, bundleFile)
 }
 
 func (r *Runtime) ProcessBundle(bundleFile string) (bundle.Bundle, error) {
