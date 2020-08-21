@@ -5,6 +5,17 @@ description: How to wire parameters, credentials and outputs into steps
 
 In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins][mixin-architecture]. This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
 
+* [Parameters](#parameters)
+  * [File Parameters](#file-parameters)
+  * [Wiring Parameters](#wiring-parameters)
+* [Credentials](#credentials)
+  * [Wiring Credentials](#wiring-credentials)
+* [Outputs](#outputs)
+  * [Wiring Outputs](#wiring-outputs)
+* [Wiring Images](#wiring-images)
+* [Wiring Dependency Outputs](#wiring-dependency-outputs)
+* [Combining References](#combining-references)
+
 ## Parameters
 
 In order to declare a parameter in a Porter bundle, you first declare a parameters block with one or more parameters in the `porter.yaml`. For example, to declare a parameter named database_name, you might include the following YAML block:
@@ -161,8 +172,6 @@ install:
 
 In this example, a new output will be created named `MYSQL_URL`. The Azure mixin allows you to specify the key to fetch the output from, in this case it is `MYSQL_HOST`. Each mixin can provide different ways of addressing outputs, so refer to the schema for each mixin. The Porter runtime will keep a map in memory with each of the outputs declared.
 
-TODO: What happens if someone overwrites one? Should we fail the `porter build`?
-
 ## Wiring Outputs
 
 Once an output has been declared, it can be referenced in the same way as parameters and credentials. Outputs are referenced with the syntax `"{{ bundle.outputs.OUTPUT_NAME }}"`
@@ -184,6 +193,29 @@ For example, given the install step above, we can use the `MYSQL_URL` with the h
 ```
 
 Just like in the case of credentials and parameters, the value of the `bundle.outputs.MYSQL_URL` reference will be rewritten in the YAML before the helm mixin is invoked.
+
+Parameters can also use the value from an output from the current bundle or one of its dependencies as its default value
+using the `source` field when defining the parameter.
+
+**Source an output from the current bundle**
+```yaml
+parameters:
+- name: tfstate
+  type: file
+  path: /cnab/app/tfstate
+  source:
+    output: tfstate
+```
+
+**Source an output from a dependency**
+```yaml
+parameters:
+- name: connection-string
+  type: string
+  source:
+    dependency: mysql
+    source: connstr
+```
 
 ## Wiring Images
 
@@ -211,19 +243,19 @@ These images will be used to build the `bundle.json` images section, but can als
         image.tag: "{{ bundle.images.ALIAS.tag }}"
 ```
 
-## Use Parameters, Credentials, and Outputs from Bundle Dependencies
+## Wiring Dependency Outputs
 
-When using a bundle dependency, you can reference parameters, credentials and outputs in a similar way. To reference things from a dependency, you simply need to use another form of the `"{{  bundle.x.y.z }}"` syntax.
+You can reference outputs from a dependency defined in your bundle using the syntax `{{ bundle.dependencies.DEPENDENCY.outputs.OUTPUT }}`.
 
 For example, consider a bundle that creates a mysql defined with the following `porter.yaml`:
 
 ```yaml
-mixins:
-- helm
-
 name: mysql
 version: 0.1.0
-tag: getporter/mysql:v0.1.0
+tag: getporter/mysql
+
+mixins:
+- helm
 
 credentials:
 - name: kubeconfig
@@ -257,15 +289,15 @@ install:
       key: mysql-password
 ```
 
-In this bundle, we see the normal declaration of credentials, parameters and outputs, along with the use of `"{{ bundle.x.y.z }}"` to use these. With this bundle definition, we can build a second bundle to install wordpress and declare a dependency on this bundle. The `porter.yaml` for this might look something like:
+With this bundle definition, we can build a second bundle to install wordpress and declare a dependency on this bundle. The `porter.yaml` for this might look something like:
 
 ```yaml
-mixins:
-- helm
-
 name: wordpress
 version: 0.1.0
-tag: getporter/wordpress:v0.1.0
+tag: getporter/wordpress
+
+mixins:
+- helm
 
 dependencies:
   mysql:
@@ -283,17 +315,32 @@ parameters:
   type: string
   default: porter-ci-wordpress
   env: WORDPRESS_NAME
+- name: wordpress-password
+  type: string
+  sensitive: true
+  applyTo:
+    - install
+    - upgrade
+- name: namespace
+  type: string
+  default: ''
 
 install:
 - helm:
-    description: "Install Wordpress"
-    name: "{{ bundle.parameters.wordpress-name }}"
-    chart: stable/wordpress
-    replace: true
-    set:
-      externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
-      externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
-      externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+  description: "Install Wordpress"
+  name: "{{ bundle.parameters.wordpress-name }}"
+  chart: stable/wordpress
+  namespace: "{{ bundle.parameters.namespace }}"
+  replace: true
+  set:
+    wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
+    externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+    externalDatabase.port: 3306
+    mariadb.enabled: false
+  outputs:
+    - name: wordpress-password
+      secret: "{{ bundle.parameters.wordpress-name }}"
+      key: wordpress-password
 ```
 
 The wordpress bundle declares a dependency on the `mysql` bundle, which we saw above. Now, we are able to refer to the parameters and the outputs from that bundle!
@@ -301,17 +348,17 @@ The wordpress bundle declares a dependency on the `mysql` bundle, which we saw a
 ```yaml
 install:
 - helm:
-    description: "Install Wordpress"
-    name: "{{ bundle.parameters.wordpress-name }}"
-    chart: stable/wordpress
-    replace: true
-    set:
-      externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database-name }}"
-      externalDatabase.user: "{{ bundle.dependencies.mysql.parameters.mysql-user }}"
-      externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+  description: "Install Wordpress"
+  name: "{{ bundle.parameters.wordpress-name }}"
+  chart: stable/wordpress
+  namespace: "{{ bundle.parameters.namespace }}"
+  replace: true
+  set:
+    wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
+    externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+    externalDatabase.port: 3306
+    mariadb.enabled: false
 ```
-
-When the install is executed for this bundle, the steps defined in the `mysql` bundle are completed first. Once those steps have run, any outputs defined are available. In this case, we want to use the `mysql-password` output from the `mysql` dependency. As the example YAML indicates, we do so with the declaration `"{{ bundle.dependencies.mysql.outputs.mysql-password }}"`. The Porter runtime uses the `mysql` manifest to determine how to obtain the values from the dependency output and parameters.
 
 For more information on how dependencies are handled, refer to the [dependencies](/dependencies) documentation.
 

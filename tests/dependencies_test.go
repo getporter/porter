@@ -22,7 +22,7 @@ func TestDependenciesLifecycle(t *testing.T) {
 	p.Debug = false
 
 	namespace := installWordpressBundle(p)
-	defer cleanupWordpressBundle(p)
+	defer cleanupWordpressBundle(p, namespace)
 
 	upgradeWordpressBundle(p, namespace)
 
@@ -69,6 +69,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	// Add a supplemental parameter set to vet dep param resolution
@@ -81,47 +82,55 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	require.NoError(p.T(), err, "install of root bundle failed")
 
 	// Verify that the dependency claim is present
-	c, err := p.Claims.Read("wordpress-mysql")
-	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being installed successfully")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
+	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being installed successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), "porter-ci-mysql-"+namespace, c.Parameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
 	assert.Equal(p.T(), "mydb", c.Parameters["database-name"], "the dependency param value for 'dabaase-name' is incorrect")
 
 	// Verify that the bundle claim is present
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being installed successfully")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being installed successfully")
 
 	return namespace
 }
 
-func cleanupWordpressBundle(p *porter.TestPorter) {
-	uninstallOpts := porter.UninstallOptions{}
-	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	uninstallOpts.Tag = p.Manifest.Dependencies.Elements["mysql"].Tag
-	err := uninstallOpts.Validate([]string{"wordpress-mysql"}, p.Porter)
-	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
+func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
+	uninstallOptions := porter.UninstallOptions{}
+	uninstallOptions.CredentialIdentifiers = []string{"ci"}
+	uninstallOptions.Delete = true
+	uninstallOptions.Params = []string{
+		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#mysql-name=porter-ci-mysql-" + namespace,
+	}
+	err := uninstallOptions.Validate([]string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 
-	err = p.UninstallBundle(uninstallOpts)
-	assert.NoError(p.T(), err, "uninstall failed for dependent bundle")
+	err = p.UninstallBundle(uninstallOptions)
+	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
-	// Uninstall the bundle
-	uninstallOpts = porter.UninstallOptions{}
-	uninstallOpts.CredentialIdentifiers = []string{"ci"}
-	err = uninstallOpts.Validate([]string{}, p.Porter)
-	assert.NoError(p.T(), err, "validation of uninstall opts failed for dependent bundle")
+	// Verify that the dependency installation is deleted
+	i, err := p.Claims.ReadInstallation("wordpress-mysql")
+	require.EqualError(p.T(), err, "Installation does not exist")
+	require.Equal(p.T(), claim.Installation{}, i)
 
-	err = p.UninstallBundle(uninstallOpts)
-	assert.NoError(p.T(), err, "uninstall failed for root bundle")
+	// Verify that the root installation is deleted
+	i, err = p.Claims.ReadInstallation("wordpress")
+	require.EqualError(p.T(), err, "Installation does not exist")
+	require.Equal(p.T(), claim.Installation{}, i)
 }
 
 func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	upgradeOpts := porter.UpgradeOptions{}
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
-	upgradeOpts.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
+		"mysql#namespace=" + namespace,
 		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := upgradeOpts.Validate([]string{}, p.Porter)
@@ -131,22 +140,26 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
 	// Verify that the dependency claim is upgraded
-	c, err := p.Claims.Read("wordpress-mysql")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), claim.ActionUpgrade, c.Result.Action, "the dependency wasn't recorded as being upgraded")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being upgraded successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUpgrade, c.Action, "the dependency wasn't recorded as being upgraded")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being upgraded successfully")
 
 	// Verify that the bundle claim is upgraded
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), claim.ActionUpgrade, c.Result.Action, "the root bundle wasn't recorded as being upgraded")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being upgraded successfully")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUpgrade, c.Action, "the root bundle wasn't recorded as being upgraded")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being upgraded successfully")
 }
 
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	invokeOpts := porter.InvokeOptions{Action: "ping"}
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
-	invokeOpts.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+	invokeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
@@ -159,22 +172,26 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "invoke of root bundle failed")
 
 	// Verify that the dependency claim is invoked
-	c, err := p.Claims.Read("wordpress-mysql")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	assert.Equal(p.T(), "ping", c.Result.Action, "the dependency wasn't recorded as being invoked")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the dependency wasn't recorded as being invoked successfully")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), "ping", c.Action, "the dependency wasn't recorded as being invoked")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being invoked successfully")
 
 	// Verify that the bundle claim is invoked
-	c, err = p.Claims.Read("wordpress")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	assert.Equal(p.T(), "ping", c.Result.Action, "the root bundle wasn't recorded as being invoked")
-	assert.Equal(p.T(), claim.StatusSuccess, c.Result.Status, "the root bundle wasn't recorded as being invoked successfully")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), "ping", c.Action, "the root bundle wasn't recorded as being invoked")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being invoked successfully")
 }
 
 func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.UninstallOptions{}
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
-	uninstallOptions.Params = []string{ // See https://github.com/deislabs/porter/issues/474
+	uninstallOptions.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
 		"wordpress-name=porter-ci-wordpress-" + namespace,
@@ -187,10 +204,18 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency claim is uninstalled
-	_, err = p.Claims.Read("wordpress-mysql")
-	assert.EqualError(p.T(), err, "Claim does not exist")
+	i, err := p.Claims.ReadInstallationStatus("wordpress-mysql")
+	require.NoError(p.T(), err, "could not fetch installation for the dependency")
+	c, err := i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUninstall, c.Action, "the dependency wasn't recorded as being uninstalled")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being uninstalled successfully")
 
 	// Verify that the bundle claim is uninstalled
-	_, err = p.Claims.Read("wordpress")
-	assert.EqualError(p.T(), err, "Claim does not exist")
+	i, err = p.Claims.ReadInstallationStatus("wordpress")
+	require.NoError(p.T(), err, "could not fetch installation for the root bundle")
+	c, err = i.GetLastClaim()
+	require.NoError(p.T(), err, "GetLastClaim failed")
+	assert.Equal(p.T(), claim.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
+	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the root bundle wasn't recorded as being uninstalled successfully")
 }

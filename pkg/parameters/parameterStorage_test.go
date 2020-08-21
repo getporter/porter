@@ -3,10 +3,11 @@ package parameters
 import (
 	"testing"
 
+	"github.com/cnabio/cnab-go/utils/crud"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
-	inmemorystorage "get.porter.sh/porter/pkg/storage/in-memory"
 	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/require"
 )
@@ -34,16 +35,16 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		},
 	}
 
-	t.Run("resolve params success", func(t *testing.T){
+	t.Run("resolve params success", func(t *testing.T) {
 		tc := config.NewTestConfig(t)
 		backingSecrets := inmemorysecrets.NewStore()
-		backingParams := inmemorystorage.NewStore()
+		backingParams := crud.NewMockStore()
 		paramStore := NewParameterStore(backingParams)
 		secretStore := secrets.NewSecretStore(backingSecrets)
-	
+
 		parameterStorage := ParameterStorage{
 			Config:          tc.Config,
-			ParametersStore: &paramStore,
+			ParametersStore: paramStore,
 			SecretsStore:    secretStore,
 		}
 
@@ -51,8 +52,8 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		backingSecrets.AddSecret("param2", "param2_value")
 
 		expected := valuesource.Set{
-			"param1":"param1_value",
-			"param2":"param2_value",
+			"param1": "param1_value",
+			"param2": "param2_value",
 		}
 
 		resolved, err := parameterStorage.ResolveAll(testParameterSet)
@@ -60,16 +61,16 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		require.Equal(t, expected, resolved)
 	})
 
-	t.Run("resolve params failure", func(t *testing.T){
+	t.Run("resolve params failure", func(t *testing.T) {
 		tc := config.NewTestConfig(t)
 		backingSecrets := inmemorysecrets.NewStore()
-		backingParams := inmemorystorage.NewStore()
+		backingParams := crud.NewMockStore()
 		paramStore := NewParameterStore(backingParams)
 		secretStore := secrets.NewSecretStore(backingSecrets)
-	
+
 		parameterStorage := ParameterStorage{
 			Config:          tc.Config,
-			ParametersStore: &paramStore,
+			ParametersStore: paramStore,
 			SecretsStore:    secretStore,
 		}
 
@@ -77,8 +78,8 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		backingSecrets.AddSecret("param1", "param1_value")
 
 		expected := valuesource.Set{
-			"param1":"param1_value",
-			"param2":"",
+			"param1": "param1_value",
+			"param2": "",
 		}
 
 		resolved, err := parameterStorage.ResolveAll(testParameterSet)
@@ -125,12 +126,12 @@ func TestParameterStorage_Validate(t *testing.T) {
 				},
 			},
 		}
-	
+
 		err := s.Validate(testParameterSet)
 		require.NoError(t, err, "Validate did not return errors")
 	})
 
-	t.Run("invalid sources", func(t *testing.T){
+	t.Run("invalid sources", func(t *testing.T) {
 		s := ParameterStorage{}
 		testParameterSet := ParameterSet{
 			Parameters: []valuesource.Strategy{
@@ -148,7 +149,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 				},
 			},
 		}
-	
+
 		err := s.Validate(testParameterSet)
 		require.Error(t, err, "Validate returned errors")
 	})

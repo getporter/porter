@@ -22,7 +22,7 @@ func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
 	}
 
 	//
-	// Default the claim name to the bundle name
+	// Default the installation name to the bundle name
 	//
 	if opts.Name == "" {
 		opts.Name = p.Manifest.Name

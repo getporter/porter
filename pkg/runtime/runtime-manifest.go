@@ -7,7 +7,8 @@ import (
 	"reflect"
 	"strings"
 
-	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
@@ -23,7 +24,10 @@ type RuntimeManifest struct {
 	*context.Context
 	*manifest.Manifest
 
-	Action manifest.Action
+	Action string
+
+	// bundle is the executing bundle definition
+	bundle bundle.Bundle
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
 	bundles map[string]bundle.Bundle
@@ -31,10 +35,9 @@ type RuntimeManifest struct {
 	steps           manifest.Steps
 	outputs         map[string]string
 	sensitiveValues []string
-	claim           *claim.Claim
 }
 
-func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cxt *context.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
 		Context:  cxt,
 		Action:   action,
@@ -43,7 +46,12 @@ func NewRuntimeManifest(cxt *context.Context, action manifest.Action, manifest *
 }
 
 func (m *RuntimeManifest) Validate() error {
-	err := m.loadDependencyDefinitions()
+	err := m.loadBundle()
+	if err != nil {
+		return err
+	}
+
+	err = m.loadDependencyDefinitions()
 	if err != nil {
 		return err
 	}
@@ -58,11 +66,16 @@ func (m *RuntimeManifest) Validate() error {
 		return errors.Wrap(err, "invalid action configuration")
 	}
 
-	err = m.loadClaim()
+	return nil
+}
+
+func (m *RuntimeManifest) loadBundle() error {
+	b, err := cnab.LoadBundle(m.Context, "/cnab/bundle.json")
 	if err != nil {
-		return errors.Wrap(err, "unable to load claim")
+		return err
 	}
 
+	m.bundle = b
 	return nil
 }
 
@@ -85,29 +98,15 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) loadClaim() error {
-	if claimBytes, err := m.FileSystem.ReadFile(config.ClaimFilepath); err == nil {
-		claim := &claim.Claim{}
-		err = yaml.Unmarshal(claimBytes, claim)
-		if err != nil {
-			return errors.Wrap(err, "unable to unmarshal claim")
-		}
-		m.claim = claim
+func resolveParameter(pd manifest.ParameterDefinition) string {
+	if pd.Destination.EnvironmentVariable != "" {
+		return os.Getenv(pd.Destination.EnvironmentVariable)
 	}
-	return nil
-}
-
-func resolveParameter(pd manifest.ParameterDefinition) (string, error) {
-	pe := pd.Name
-	if pd.Destination.IsEmpty() {
-		// Porter by default sets CNAB params to name.ToUpper()
-		return os.Getenv(strings.ToUpper(pe)), nil
-	} else if pd.Destination.EnvironmentVariable != "" {
-		return os.Getenv(pd.Destination.EnvironmentVariable), nil
-	} else if pd.Destination.Path != "" {
-		return pd.Destination.Path, nil
+	if pd.Destination.Path != "" {
+		return pd.Destination.Path
 	}
-	return "", fmt.Errorf("parameter: %s is malformed", pd.Name)
+	envVar := manifest.ParamToEnvVar(pd.Name)
+	return os.Getenv(envVar)
 }
 
 func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -120,23 +119,15 @@ func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	}
 }
 
-// resolveBundleOutput will attempt to resolve a bundle output value if required
-// by string interpolation, e.g. via {{ bundle.outputs.foo }}
-// It first checks the outputs field on the RuntimeManifest struct and, if non-existent,
-// attempts to pull a value from the claim, if exists
-func (m *RuntimeManifest) resolveBundleOutput(output manifest.OutputDefinition) (string, error) {
-	if m.outputs[output.Name] != "" {
-		return m.outputs[output.Name], nil
+func (m *RuntimeManifest) resolveBundleOutput(outputName string) (string, error) {
+	// Get the output's value from the injected parameter source
+	ps := manifest.GetParameterSourceForOutput(outputName)
+	psParamEnv := manifest.ParamToEnvVar(ps)
+	outputValue, ok := os.LookupEnv(psParamEnv)
+	if !ok {
+		return "", errors.Errorf("No parameter source was injected for output %s", outputName)
 	}
-
-	if m.claim != nil {
-		if val := m.claim.Outputs[output.Name]; val != nil {
-			return fmt.Sprintf("%v", val), nil
-		}
-	}
-
-	// No claim exists, so no previous output value to return
-	return "", nil
+	return outputValue, nil
 }
 
 func (m *RuntimeManifest) GetSensitiveValues() []string {
@@ -175,14 +166,14 @@ func (m *RuntimeManifest) GetOutputs() map[string]string {
 
 func (m *RuntimeManifest) setStepsByAction() error {
 	switch m.Action {
-	case manifest.ActionInstall:
+	case claim.ActionInstall:
 		m.steps = m.Install
-	case manifest.ActionUninstall:
+	case claim.ActionUninstall:
 		m.steps = m.Uninstall
-	case manifest.ActionUpgrade:
+	case claim.ActionUpgrade:
 		m.steps = m.Upgrade
 	default:
-		customAction, ok := m.CustomActions[string(m.Action)]
+		customAction, ok := m.CustomActions[m.Action]
 		if !ok {
 			actions := make([]string, 0, len(m.CustomActions))
 			for a := range m.CustomActions {
@@ -196,7 +187,7 @@ func (m *RuntimeManifest) setStepsByAction() error {
 	return nil
 }
 
-func (m *RuntimeManifest) ApplyStepOutputs(step *manifest.Step, assignments map[string]string) error {
+func (m *RuntimeManifest) ApplyStepOutputs(assignments map[string]string) error {
 	if m.outputs == nil {
 		m.outputs = map[string]string{}
 	}
@@ -230,16 +221,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	params := make(map[string]interface{})
 	bun["parameters"] = params
 	for _, param := range m.Parameters {
-		if !param.AppliesTo(string(m.Action)) {
+		if !param.AppliesTo(m.Action) {
 			continue
 		}
 
 		pe := param.Name
-		var val string
-		val, err := resolveParameter(param)
-		if err != nil {
-			return nil, err
-		}
+		val := resolveParameter(param)
 		if param.Sensitive {
 			m.setSensitiveValue(val)
 		}
@@ -258,6 +245,18 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		creds[pe] = val
 	}
 
+	deps := make(map[string]interface{})
+	bun["dependencies"] = deps
+	for alias, depB := range m.bundles {
+		// bundle.dependencies.ALIAS.outputs.NAME
+		depBun := make(map[string]interface{})
+		deps[alias] = depBun
+
+		depBun["name"] = depB.Name
+		depBun["version"] = depB.Version
+		depBun["description"] = depB.Description
+	}
+
 	bun["outputs"] = m.outputs
 	// Iterate through the runtime manifest's step outputs and mask by default
 	for _, stepOutput := range m.outputs {
@@ -265,62 +264,84 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		// See https://github.com/deislabs/porter/issues/855
 		m.setSensitiveValue(stepOutput)
 	}
-	// Iterate through the bundle-level manifests and resolve for interpolation
-	for _, outputDef := range m.Outputs {
-		val, err := m.resolveBundleOutput(outputDef)
-		if err != nil {
-			return nil, err
-		}
-		if outputDef.Sensitive {
-			m.setSensitiveValue(val)
-		}
 
-		if m.outputs == nil {
-			m.outputs = map[string]string{}
-		}
-		m.outputs[outputDef.Name] = val
-		bun["outputs"] = m.outputs
+	// Externally injected outputs (bundle level outputs and dependency outputs) are
+	// injected through parameter sources.
+	bunExt, err := extensions.ProcessRequiredExtensions(m.bundle)
+	if err != nil {
+		return nil, err
 	}
 
-	deps := make(map[string]interface{})
-	bun["dependencies"] = deps
-	for alias, bun := range m.bundles {
-		// TODO: Support bundle.dependencies.ALIAS.parameters.NAME
+	paramSources, _, err := bunExt.GetParameterSources()
+	if err != nil {
+		return nil, err
+	}
 
-		// bundle.dependencies.ALIAS.outputs.NAME
-		depBundle := make(map[string]interface{})
-		deps[alias] = depBundle
-
-		depBundle["name"] = bun.Name
-		depBundle["version"] = bun.Version
-		depBundle["description"] = bun.Description
-
-		depOutputs := make(map[string]interface{})
-		depBundle["outputs"] = depOutputs
-
-		if bun.Outputs == nil || m.Action == manifest.ActionUninstall {
-			// uninstalls are done backwards, so we don't have outputs available from dependencies
-			// TODO: validate that they weren't trying to use them at build time so they don't find out at uninstall time
+	templatedOutputs := m.GetTemplatedOutputs()
+	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
+	for paramName, sources := range paramSources {
+		param := m.bundle.Parameters[paramName]
+		if !param.AppliesTo(m.Action) {
 			continue
 		}
-		for name, output := range bun.Outputs {
-			if !output.AppliesTo(string(m.Action)) {
-				continue
-			}
 
-			value, err := ReadDependencyOutputValue(m.Context, alias, name)
-			if err != nil {
-				return nil, err
-			}
+		for _, s := range sources.ListSourcesByPriority() {
+			switch ps := s.(type) {
+			case extensions.DependencyOutputParameterSource:
+				outRef := manifest.DependencyOutputReference{Dependency: ps.Dependency, Output: ps.OutputName}
 
-			depOutputs[name] = value
+				// Ignore anything that isn't templated, because that's what we are building the source data for
+				if _, isTemplated := templatedDependencyOutputs[outRef.String()]; !isTemplated {
+					continue
+				}
 
-			def := bun.Definitions[output.Definition]
-			if def.WriteOnly != nil && *def.WriteOnly == true {
-				m.setSensitiveValue(value)
+				depBun := deps[ps.Dependency].(map[string]interface{})
+				var depOutputs map[string]interface{}
+				if depBun["outputs"] == nil {
+					depOutputs = make(map[string]interface{})
+					depBun["outputs"] = depOutputs
+				} else {
+					depOutputs = depBun["outputs"].(map[string]interface{})
+				}
+
+				value, err := m.ReadDependencyOutputValue(outRef)
+				if err != nil {
+					return nil, err
+				}
+
+				depOutputs[ps.OutputName] = value
+
+				// Determine if the dependency's output is defined as sensitive
+				depB := m.bundles[ps.Dependency]
+				if ok, _ := depB.IsOutputSensitive(ps.OutputName); ok {
+					m.setSensitiveValue(value)
+				}
+
+			case extensions.OutputParameterSource:
+				// Ignore anything that isn't templated, because that's what we are building the source data for
+				if _, isTemplated := templatedOutputs[ps.OutputName]; !isTemplated {
+					continue
+				}
+
+				val, err := m.resolveBundleOutput(ps.OutputName)
+				if err != nil {
+					return nil, err
+				}
+
+				if m.outputs == nil {
+					m.outputs = map[string]string{}
+				}
+				m.outputs[ps.OutputName] = val
+				bun["outputs"] = m.outputs
+
+				outputDef := m.Manifest.Outputs[ps.OutputName]
+				if outputDef.Sensitive {
+					m.setSensitiveValue(val)
+				}
 			}
 		}
 	}
+
 	images := make(map[string]interface{})
 	bun["images"] = images
 	for alias, image := range m.ImageMap {

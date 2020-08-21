@@ -1,25 +1,25 @@
 package cnabprovider
 
 import (
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/pkg/errors"
 )
 
-func (d *Runtime) LoadBundle(bundleFile string) (*bundle.Bundle, error) {
-	l := loader.New()
+func (r *Runtime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
+	return cnab.LoadBundle(r.Context, bundleFile)
+}
 
-	bunD, err := d.FileSystem.ReadFile(bundleFile)
+func (r *Runtime) ProcessBundle(bundleFile string) (bundle.Bundle, error) {
+	b, err := r.LoadBundle(bundleFile)
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot read bundle at %s", bundleFile)
+		return bundle.Bundle{}, err
 	}
 
-	// Issue #439: Errors that come back from the loader can be
-	// pretty opaque.
-	bun, err := l.LoadData(bunD)
+	err = b.Validate()
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot load bundle")
+		return b, errors.Wrap(err, "invalid bundle")
 	}
 
-	return bun, nil
+	return b, r.ProcessRequiredExtensions(b)
 }

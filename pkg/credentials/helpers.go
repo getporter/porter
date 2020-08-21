@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
-	inmemorystorage "get.porter.sh/porter/pkg/storage/in-memory"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/pkg/errors"
 )
@@ -25,14 +24,13 @@ type TestCredentialProvider struct {
 
 func NewTestCredentialProvider(t *testing.T, tc *config.TestConfig) TestCredentialProvider {
 	backingSecrets := inmemorysecrets.NewStore()
-	backingCreds := inmemorystorage.NewStore()
-	credStore := credentials.NewCredentialStore(backingCreds)
+	credStore := credentials.NewMockStore()
 	return TestCredentialProvider{
 		T:           t,
 		TestConfig:  tc,
 		TestSecrets: backingSecrets,
 		CredentialStorage: &CredentialStorage{
-			CredentialsStore: &credStore,
+			CredentialsStore: credStore,
 			SecretsStore:     secrets.NewSecretStore(backingSecrets),
 		},
 	}

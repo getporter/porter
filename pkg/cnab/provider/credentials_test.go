@@ -52,7 +52,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	}
 
-	gotValues, err := r.loadCredentials(&b, []string{"mycreds", "/db-creds.json"})
+	gotValues, err := r.loadCredentials(b, []string{"mycreds", "/db-creds.json"})
 	require.NoError(t, err, "loadCredentials failed")
 
 	wantValues := valuesource.Set{

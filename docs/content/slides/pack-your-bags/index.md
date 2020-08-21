@@ -752,23 +752,12 @@ name: claims
 Claims are records of any actions performed by CNAB compliant tools on a bundle.
 
 ```console
-$ cat ~/.porter/claims/HELLO.json
-{
-  "name": "HELLO",
-  "revision": "01DCFCN6AH00SM8E1968XHTSJ5",
-  "created": "2019-06-03T14:22:00.952704-05:00",
-  "modified": "2019-06-03T14:22:02.449355-05:00",
-  "result": {
-    "message": "",
-    "action": "install",
-    "status": "success"
-  },
-  "parameters": {
-    "porter-debug": false,
-    "name": "llama"
-  },
-  ...
-}
+$ porter show HELLO
+  Name: HELLO
+  Created: 2019-11-08
+  Modified: 2019-11-08
+  Last Action: install
+  Last Status: success
 ```
 
 ---
@@ -954,9 +943,8 @@ name: manifest
 
 ```yaml
 name: "azure-wordpress"
-version: "v0.1.0"
-invocationImage: "deislabs/azure-wordpress-ii:v0.1.0"
-tag: "deislabs/azure-wordpress:v0.1.0"
+version: "0.1.0"
+tag: "deislabs/azure-wordpress"
 ```
 
 ---

@@ -18,9 +18,9 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -28,6 +28,7 @@ import (
 type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
+	TestClaims      claims.TestClaimProvider
 	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
@@ -37,9 +38,6 @@ type TestPorter struct {
 
 	// directory where the integration test is being executed
 	BundleDir string
-
-	// tempDirectories that need to be cleaned up at the end of the testRun
-	cleanupDirs []string
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -48,7 +46,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
 	testParameters := parameters.NewTestParameterProvider(t, tc)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
-	testClaims := claims.NewTestClaimProvider()
+	testClaims := claims.NewTestClaimProvider(t)
 
 	p := New()
 	p.Config = tc.Config
@@ -64,6 +62,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	return &TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
+		TestClaims:      testClaims,
 		TestCredentials: &testCredentials,
 		TestParameters:  &testParameters,
 		TestCache:       testCache,
@@ -78,7 +77,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.NewCommand = exec.Command
 	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
-	homeDir := p.UseFilesystem()
+	homeDir := p.TestConfig.TestContext.UseFilesystem()
 	p.TestConfig.SetupIntegrationTest(homeDir)
 	bundleDir := p.CreateBundleDir()
 
@@ -87,6 +86,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err)
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
+	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
 	kubeconfig := os.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := os.Getenv("HOME")
@@ -104,16 +104,25 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not save test credentials")
 }
 
-// UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
-// Returns the temp porter home directory created for the test
-func (p *TestPorter) UseFilesystem() string {
-	p.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
+func (p *TestPorter) AddTestFile(src string, dest string) {
+	if !filepath.IsAbs(src) {
+		src = filepath.Join(p.TestDir, src)
+	}
 
-	homeDir, err := ioutil.TempDir("/tmp", "porter")
-	require.NoError(p.T(), err)
-	p.cleanupDirs = append(p.cleanupDirs, homeDir)
+	p.TestConfig.TestContext.AddTestFile(src, dest)
+}
 
-	return homeDir
+type TestDriver struct {
+	Name     string
+	Filepath string
+}
+
+func (p *TestPorter) AddTestDriver(driver TestDriver) string {
+	if !filepath.IsAbs(driver.Filepath) {
+		driver.Filepath = filepath.Join(p.TestDir, driver.Filepath)
+	}
+
+	return p.TestConfig.TestContext.AddTestDriver(driver.Filepath, driver.Name)
 }
 
 func (p *TestPorter) CreateBundleDir() string {
@@ -121,7 +130,7 @@ func (p *TestPorter) CreateBundleDir() string {
 	require.NoError(p.T(), err)
 
 	p.BundleDir = bundleDir
-	p.cleanupDirs = append(p.cleanupDirs, p.BundleDir)
+	p.TestConfig.TestContext.AddCleanupDir(p.BundleDir)
 
 	return bundleDir
 }
@@ -133,11 +142,19 @@ func (p *TestPorter) T() *testing.T {
 func (p *TestPorter) CleanupIntegrationTest() {
 	os.Unsetenv(config.EnvHOME)
 
-	for _, dir := range p.cleanupDirs {
-		p.FileSystem.RemoveAll(dir)
-	}
+	p.TestConfig.TestContext.Cleanup()
 
 	os.Chdir(p.TestDir)
+}
+
+func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
+	bunD, err := ioutil.ReadFile(path)
+	require.NoError(p.T(), err, "ReadFile failed for %s", path)
+
+	bun, err := bundle.Unmarshal(bunD)
+	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
+
+	return *bun
 }
 
 type TestBuildProvider struct{}
@@ -145,6 +162,7 @@ type TestBuildProvider struct{}
 func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
+
 func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }

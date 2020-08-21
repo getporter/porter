@@ -7,27 +7,25 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInstall_relativePathPorterHome(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest() // This creates a temp porter home directory
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
 
-	// Crux for this test: set Porter's home dir to a relative path
+	// Crux for this test: change Porter's home dir to a relative path
 	homeDir, err := p.Config.GetHomeDir()
 	require.NoError(t, err)
 	curDir, err := os.Getwd()
 	require.NoError(t, err)
 	relDir, err := filepath.Rel(curDir, homeDir)
 	require.NoError(t, err)
-	os.Setenv(config.EnvHOME, relDir)
-
-	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
-	p.Debug = false
+	p.SetHomeDir(relDir)
 
 	// Bring in a porter manifest that has an install action defined
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
@@ -67,8 +65,13 @@ func TestInstall_fileParam(t *testing.T) {
 	// output := p.TestConfig.TestContext.GetOutput()
 	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	claim, err := p.Claims.Read(p.Manifest.Name)
-	require.NoError(t, err, "could not fetch claim")
-	require.Equal(t, "Hello World!", claim.Outputs["myfile"], "expected output 'myfile' to match the decoded file contents")
-	require.Equal(t, "Hello Other World!", claim.Outputs["myotherfile"], "expected output 'myotherfile' to match the decoded file contents")
+	outputs, err := p.Claims.ReadLastOutputs(p.Manifest.Name)
+	require.NoError(t, err, "ReadLastOutput failed")
+	myfile, ok := outputs.GetByName("myfile")
+	require.True(t, ok, "expected myfile output to be persisted")
+	assert.Equal(t, "Hello World!", string(myfile.Value), "expected output to match the decoded file contents")
+	myotherfile, ok := outputs.GetByName("myotherfile")
+	require.True(t, ok, "expected myotherfile output to be persisted")
+	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
+
 }

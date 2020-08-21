@@ -13,11 +13,13 @@ import (
 
 	"get.porter.sh/porter/pkg/test"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 )
 
 type TestContext struct {
 	*Context
 
+	cleanupDirs []string
 	capturedErr *bytes.Buffer
 	capturedOut *bytes.Buffer
 	T           *testing.T
@@ -63,7 +65,28 @@ func NewTestCommand() CommandBuilder {
 	}
 }
 
-// TODO: Replace these functions with a union file system for test data
+// UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
+// Returns the temp porter home directory created for the test
+func (c *TestContext) UseFilesystem() string {
+	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
+
+	testDir, err := ioutil.TempDir("/tmp", "porter")
+	require.NoError(c.T, err)
+	c.cleanupDirs = append(c.cleanupDirs, testDir)
+
+	return testDir
+}
+
+func (c *TestContext) AddCleanupDir(dir string) {
+	c.cleanupDirs = append(c.cleanupDirs, dir)
+}
+
+func (c *TestContext) Cleanup() {
+	for _, dir := range c.cleanupDirs {
+		c.FileSystem.RemoveAll(dir)
+	}
+}
+
 func (c *TestContext) AddTestFile(src, dest string) []byte {
 	c.T.Helper()
 
@@ -112,6 +135,51 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	}
 }
 
+func (c *TestContext) AddTestDriver(src, name string) string {
+	c.T.Helper()
+
+	data, err := ioutil.ReadFile(src)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	dirname, err := c.FileSystem.TempDir("", "porter")
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	// filename in accordance with cnab-go's command driver expectations
+	filename := fmt.Sprintf("%s/cnab-%s", dirname, name)
+
+	newfile, err := c.FileSystem.Create(filename)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	if len(data) > 0 {
+		_, err := newfile.Write(data)
+		if err != nil {
+			c.T.Fatal(err)
+		}
+	}
+
+	err = c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
+	if err != nil {
+		c.T.Fatal(err)
+	}
+	err = newfile.Close()
+	if err != nil {
+		c.T.Fatal(err)
+	}
+
+	path := os.Getenv("PATH")
+	pathlist := []string{dirname, path}
+	newpath := strings.Join(pathlist, string(os.PathListSeparator))
+	os.Setenv("PATH", newpath)
+
+	return dirname
+}
+
 // GetOutput returns all text printed to stdout.
 func (c *TestContext) GetOutput() string {
 	return string(c.capturedOut.Bytes())
@@ -120,6 +188,11 @@ func (c *TestContext) GetOutput() string {
 // GetError returns all text printed to stderr.
 func (c *TestContext) GetError() string {
 	return string(c.capturedErr.Bytes())
+}
+
+func (c *TestContext) ClearOutputs() {
+	c.capturedOut.Truncate(0)
+	c.capturedErr.Truncate(0)
 }
 
 func (c *TestContext) FindBinDir() string {

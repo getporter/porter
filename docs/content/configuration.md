@@ -14,6 +14,7 @@ override it in a shell session with an environment variable and then override
 both in a particular command with a flag.
 
 * [Enable Debug Output](#debug)
+* [Debug Plugins](#debug-plugins)
 * [Output Formatting](#output)
 * [Allow Docker Host Access](#allow-docker-host-access)
 
@@ -26,6 +27,12 @@ runtime and most mixins. They may use it to print additional information that
 may be useful when you think you may have found a bug, when you want to know
 what commands they are executing, or when you need really verbose output to send
 to the developers.
+
+### Debug Plugins
+
+`--debug-plugins` controls if logs related to communication
+between porter and its plugins should be printed when debugging. This can be _very_
+verbose, so it is not turned on by default when debug is true.
 
 ### Output
 
@@ -73,9 +80,11 @@ Below is an example configuration file in TOML
 **~/.porter/config.toml**
 ```toml
 debug = true
+debug-plugins = true
 output = "json"
 allow-docker-host-access = true
 ```
+
 
 [install]: /cli/porter_install/
 [upgrade]: /cli/porter_upgrade/

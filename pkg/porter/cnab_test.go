@@ -40,6 +40,24 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	assert.Equal(t, filepath.Join("mybun", build.LOCAL_BUNDLE), opts.CNABFile)
 }
 
+func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	pwd, _ := os.Getwd()
+	// Add existing porter manifest; ensure it isn't processed when cnab-file is spec'd
+	_, err := cxt.FileSystem.Create(filepath.Join(pwd, "porter.yaml"))
+	_, err = cxt.FileSystem.Create(filepath.Join(pwd, "mycnabfile.json"))
+	require.NoError(t, err)
+
+	opts := sharedOptions{}
+	opts.CNABFile = "mycnabfile.json"
+	err = opts.defaultBundleFiles(cxt.Context)
+	require.NoError(t, err)
+
+	assert.Equal(t, "", opts.File)
+	assert.Equal(t, "mycnabfile.json", opts.CNABFile)
+}
+
 func TestSharedOptions_validateBundleJson(t *testing.T) {
 	pwd, _ := os.Getwd()
 

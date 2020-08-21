@@ -23,6 +23,8 @@ func TestCommandWiring(t *testing.T) {
 		"mixins",
 		"mixins list",
 		"plugins list",
+		"storage",
+		"storage migrate",
 		"version",
 	}
 

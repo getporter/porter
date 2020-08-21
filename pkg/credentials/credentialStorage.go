@@ -7,7 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
-	crudplugins "get.porter.sh/porter/pkg/storage/pluginstore"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/credentials"
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -25,17 +25,16 @@ var _ CredentialProvider = &CredentialStorage{}
 // implement CRUD storage.
 type CredentialStorage struct {
 	*config.Config
-	*CredentialsStore
+	CredentialsStore
 	SecretsStore
 }
 
-func NewCredentialStorage(c *config.Config, storagePlugin *crudplugins.Store) *CredentialStorage {
-	migration := newMigrateCredentialsWrapper(c, storagePlugin)
-	credStore := credentials.NewCredentialStore(migration)
+func NewCredentialStorage(storage *storage.Manager) *CredentialStorage {
+	credStore := credentials.NewCredentialStore(storage)
 	return &CredentialStorage{
-		Config:           c,
-		CredentialsStore: &credStore,
-		SecretsStore:     secrets.NewSecretStore(secretplugins.NewStore(c)),
+		Config:           storage.Config,
+		CredentialsStore: credStore,
+		SecretsStore:     secrets.NewSecretStore(secretplugins.NewStore(storage.Config)),
 	}
 }
 

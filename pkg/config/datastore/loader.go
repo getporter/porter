@@ -22,9 +22,15 @@ func FromFlagsThenEnvVarsThenConfigFile(cmd *cobra.Command) config.DataStoreLoad
 
 		// Apply the configuration file value to the flag when the flag is not set
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
-			viperName := strings.ReplaceAll(f.Name, "-", "_")
-			if !f.Changed && v.IsSet(viperName) {
-				val := v.Get(viperName)
+			// Environment variables can't have dashes in them, so bind them to their equivalent
+			// keys with underscores, e.g. --debug-plugins binds to PORTER_DEBUG_PLUGINS
+			if strings.Contains(f.Name, "-") {
+				envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
+				v.BindEnv(f.Name, fmt.Sprintf("PORTER_%s", envVarSuffix))
+			}
+
+			if !f.Changed && v.IsSet(f.Name) {
+				val := v.Get(f.Name)
 				cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
 			}
 		})

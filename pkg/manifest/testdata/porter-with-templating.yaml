@@ -1,0 +1,65 @@
+name: hello
+version: 0.1.0
+tag: getporterci/hello-with-templating
+
+mixins:
+  - exec
+
+dependencies:
+  mysql:
+    tag: getporter/mysql:v0.1.3
+
+parameters:
+  - name: tfstate
+    type: file
+    path: /cnab/app/tfstate
+    source:
+      output: tfstate
+  - name: root-password
+    type: string
+    source:
+      dependency: mysql
+      output: mysql-root-password
+
+outputs:
+  - name: msg
+    type: string
+    default: ""
+  - name: tfstate
+    type: file
+    path: /cnab/app/outputs/tfstate
+
+install:
+  - exec:
+      description: "Say Hello"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
+      outputs:
+        - name: name
+          regex: Hello (.*)
+        - name: tfstate
+          path: /cnab/app/outputs/tfstate
+  - exec:
+      description: "Use step output"
+      command: ./helpers.sh
+      arguments:
+        - debug
+        - "{{ bundle.outputs.name }}"
+
+upgrade:
+  - exec:
+      description: "Upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+        - "{{ bundle.outputs.msg }}"
+
+uninstall:
+  - exec:
+      description: "Say Goodbye"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+        - "{{ bundle.outputs.msg }}"

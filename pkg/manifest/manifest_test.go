@@ -237,7 +237,7 @@ func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
 }
 
 func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
-	assertAllCredentialsRequired := func(t *testing.T, creds []CredentialDefinition) {
+	assertAllCredentialsRequired := func(t *testing.T, creds CredentialDefinitions) {
 		for _, cred := range creds {
 			assert.EqualValuesf(t, true, cred.Required, "Credential: %s should be required", cred.Name)
 		}
@@ -393,4 +393,58 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 
 	assert.NotNil(t, m)
 	assert.Equal(t, expected, m.Required)
+}
+
+func TestReadManifest_WithTemplateVariables(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
+	require.NoError(t, err, "ReadManifest failed")
+	wantVars := []string{"bundle.dependencies.mysql.outputs.mysql-password", "bundle.outputs.msg", "bundle.outputs.name"}
+	assert.Equal(t, wantVars, m.TemplateVariables)
+}
+
+func TestManifest_GetTemplatedOutputs(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
+	require.NoError(t, err, "ReadManifest failed")
+
+	outputs := m.GetTemplatedOutputs()
+
+	require.Len(t, outputs, 1)
+	assert.Equal(t, "msg", outputs["msg"].Name)
+}
+
+func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
+	m, err := ReadManifest(cxt.Context, config.Name)
+	require.NoError(t, err, "ReadManifest failed")
+
+	outputs := m.GetTemplatedDependencyOutputs()
+
+	require.Len(t, outputs, 1)
+	ref := outputs["mysql.mysql-password"]
+	assert.Equal(t, "mysql", ref.Dependency)
+	assert.Equal(t, "mysql-password", ref.Output)
+}
+
+func TestParamToEnvVar(t *testing.T) {
+	testcases := []struct {
+		name      string
+		paramName string
+		envName   string
+	}{
+		{"no special characters", "myparam", "MYPARAM"},
+		{"dash", "my-param", "MY_PARAM"},
+		{"period", "my.param", "MY_PARAM"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ParamToEnvVar(tc.paramName)
+			assert.Equal(t, tc.envName, got)
+		})
+	}
 }

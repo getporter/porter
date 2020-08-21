@@ -51,8 +51,12 @@ generate: packr2
 	$(GO) generate ./...
 
 HAS_PACKR2 := $(shell command -v packr2)
+HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
 packr2:
 ifndef HAS_PACKR2
+ifndef HAS_GOBIN_IN_PATH
+	$(error "$(CLIENT_GOPATH)/bin is not in path and packr2 is not installed. Install packr2 or add "$(CLIENT_GOPATH)/bin to your path")
+endif
 	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
 	cd /tmp && tar -xzf /tmp/packr.tar.gz
 	install /tmp/packr2 $(CLIENT_GOPATH)/bin/
@@ -80,16 +84,16 @@ test: clean-last-testrun test-unit test-integration test-cli
 test-unit:
 	$(GO) test ./...
 
-test-integration: build
+test-integration: clean-last-testrun build start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
 
-test-cli: clean-last-testrun build init-porter-home-for-ci
+test-cli: clean-last-testrun build init-porter-home-for-ci start-local-docker-registry
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
 
 init-porter-home-for-ci:
 	cp -R build/testdata/credentials $(PORTER_HOME)
-	sed -i 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
+	sed -i.bak 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
 	cp -R build/testdata/bundles $(PORTER_HOME)
 
 .PHONY: docs
@@ -131,7 +135,7 @@ start-local-docker-registry:
 
 stop-local-docker-registry:
 	@if $$(docker inspect registry > /dev/null 2>&1); then \
-		docker kill registry && docker rm registry ; \
+		docker rm -f registry ; \
 	fi
 
 # all-bundles loops through all items under the dir provided by the first argument
@@ -210,7 +214,7 @@ clean: clean-mixins clean-last-testrun
 clean-mixins:
 	-rm -fr bin/
 
-clean-last-testrun:
+clean-last-testrun: stop-local-docker-registry
 	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2

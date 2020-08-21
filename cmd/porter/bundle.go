@@ -92,20 +92,21 @@ The lint command is run automatically when you build a bundle. The command is av
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install [INSTANCE]",
-		Short: "Install a new instance of a bundle",
-		Long: `Install a new instance of a bundle.
+		Use:   "install [INSTALLATION]",
+		Short: "Create a new installation of a bundle",
+		Long: `Create a new installation of a bundle.
 
-The first argument is the bundle instance name to create for the installation. This defaults to the name of the bundle. 
+The first argument is the name of the installation to create. This defaults to the name of the bundle. 
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
+  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
+  porter bundle install --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
-  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -130,32 +131,28 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
-	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Use a bundle in an OCI registry specified by the given tag")
-	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
-		"Don't require TLS for the registry")
-	f.BoolVar(&opts.Force, "force", false,
-		"Force a fresh pull of the bundle and all dependencies")
+	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return cmd
 }
 
 func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.UpgradeOptions{}
 	cmd := &cobra.Command{
-		Use:   "upgrade [INSTANCE]",
-		Short: "Upgrade a bundle instance",
-		Long: `Upgrade a bundle instance.
+		Use:   "upgrade [INSTALLATION]",
+		Short: "Upgrade an installation",
+		Long: `Upgrade an installation.
 
-The first argument is the bundle instance name to upgrade. This defaults to the name of the bundle.
+The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade
+  porter bundle upgrade --tag getporter/kubernetes:v0.1.0
+  porter bundle upgrade --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
-  porter bundle upgrade MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -180,12 +177,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
-	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Use a bundle in an OCI registry specified by the given tag")
-	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
-		"Don't require TLS for the registry")
-	f.BoolVar(&opts.Force, "force", false,
-		"Force a fresh pull of the bundle and all dependencies")
+	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
 }
@@ -193,20 +185,21 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.InvokeOptions{}
 	cmd := &cobra.Command{
-		Use:   "invoke [INSTANCE] --action ACTION",
-		Short: "Invoke a custom action on a bundle instance",
-		Long: `Invoke a custom action on a bundle instance.
+		Use:   "invoke [INSTALLATION] --action ACTION",
+		Short: "Invoke a custom action on an installation",
+		Long: `Invoke a custom action on an installation.
 
-The first argument is the bundle instance name upon which to invoke the action. This defaults to the name of the bundle.
+The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle invoke --action ACTION
+  porter bundle invoke --tag getporter/kubernetes:v0.1.0
+  porter bundle invoke --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
   porter bundle invoke --action ACTION --driver debug
-  porter bundle invoke --action ACTION MyAppFromTag --tag getporter/kubernetes:v0.1.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -233,12 +226,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
-	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Use a bundle in an OCI registry specified by the given tag")
-	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
-		"Don't require TLS for the registry")
-	f.BoolVar(&opts.Force, "force", false,
-		"Force a fresh pull of the bundle and all dependencies")
+	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
 }
@@ -246,21 +234,23 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.UninstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "uninstall [INSTANCE]",
-		Short: "Uninstall a bundle instance",
-		Long: `Uninstall a bundle instance
+		Use:   "uninstall [INSTALLATION]",
+		Short: "Uninstall an installation",
+		Long: `Uninstall an installation
 
-The first argument is the bundle instance name to uninstall. This defaults to the name of the bundle.
+The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
+  porter bundle uninstall --tag getporter/kubernetes:v0.1.0
+  porter bundle uninstall --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
   porter bundle uninstall --driver debug
-  porter bundle uninstall MyAppFromTag --tag getporter/kubernetes:v0.1.0
-
+  porter bundle uninstall --delete
+  porter bundle uninstall --force-delete
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -285,12 +275,11 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when uninstalling the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
-	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Use a bundle in an OCI registry specified by the given tag")
-	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false,
-		"Don't require TLS for the registry")
-	f.BoolVar(&opts.Force, "force", false,
-		"Force a fresh pull of the bundle and all dependencies")
+	f.BoolVar(&opts.Delete, "delete", false,
+		"Delete all records associated with the installation, assuming the uninstall action succeeds")
+	f.BoolVar(&opts.ForceDelete, "force-delete", false,
+		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
+	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
 }
@@ -316,9 +305,10 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.BoolVar(&opts.InsecureRegistry, "insecure-registry", false, "Don't require TLS for the registry.")
 	f.StringVarP(&opts.ArchiveFile, "archive", "a", "", "Path to the bundle archive in .tgz format")
-	f.StringVarP(&opts.Tag, "tag", "t", "", "Bundle tag for newly published bundle; required if --archive is supplied")
+	addTagFlag(f, &opts.BundlePullOptions)
+	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
+	// We aren't using addBundlePullFlags because we don't use --force since we are pushing, and that flag isn't needed
 
 	return &cmd
 }
@@ -327,14 +317,12 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
-		Use:   "archive FILENAME",
-		Short: "Archive a bundle",
+		Use:   "archive FILENAME --tag PUBLISHED_BUNDLE",
+		Short: "Archive a bundle from a tag",
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
-		Example: `  porter bundle archive mybun.tgz
-  porter bundle archive mybun.tgz --file another/porter.yaml
-  porter bundle archive mybun.tgz --cnab-file some/bundle.json
-  porter bundle archive mybun.tgz --tag repo/bundle:tag
-		  `,
+		Example: `  porter bundle archive mybun.tgz --tag getporter/porter-hello:v0.1.0
+  porter bundle archive mybun.tgz --tag localhost:5000/getporter/porter-hello:v0.1.0 --force
+`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
 		},
@@ -342,13 +330,8 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 			return p.Archive(opts)
 		},
 	}
-	f := cmd.Flags()
-	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
-	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
-	f.StringVarP(&opts.Tag, "tag", "t", "",
-		"Use a bundle in an OCI registry specified by the given tag")
-	f.BoolVar(&opts.Force, "force", false,
-		"Force a fresh pull of the bundle")
+
+	addBundlePullFlags(cmd.Flags(), &opts.BundlePullOptions)
 
 	return &cmd
 }

@@ -16,8 +16,9 @@ func TestReadDependencyProperties(t *testing.T) {
 
 	bun, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
+	assert.True(t, HasDependencies(*bun))
 
-	deps, err := ReadDependencies(bun)
+	deps, err := ReadDependencies(*bun)
 
 	assert.NotNil(t, deps, "Dependencies was not populated")
 	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")
@@ -32,7 +33,6 @@ func TestReadDependencyProperties(t *testing.T) {
 	assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
 	assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
 	assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
-
 }
 
 func TestSortDependenciesBySequence(t *testing.T) {

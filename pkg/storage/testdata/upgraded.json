@@ -1,0 +1,98 @@
+{
+  "installation": "mybun",
+  "revision": "01EAX385TG348KSJEZ51GEPEP2",
+  "created": "2019-11-07T12:01:44.719151-06:00",
+  "modified": "2019-11-08T12:01:44.719151-06:00",
+  "bundle": {
+    "schemaVersion": "v1.0.0",
+    "name": "example-exec-outputs",
+    "version": "0.1.0",
+    "description": "An example Porter bundle demonstrating exec mixin outputs",
+    "invocationImages": [
+      {
+        "imageType": "docker",
+        "image": "deislabs/porter-example-exec-outputs:0.1.0"
+      }
+    ],
+    "actions": {
+      "status": {
+        "modifies": true,
+        "description": "Parse stdout as json"
+      },
+      "test": {
+        "modifies": true,
+        "description": "Scrape stdout with regex"
+      }
+    },
+    "parameters": {
+      "porter-debug": {
+        "definition": "porter-debug-parameter",
+        "description": "Print debug information from Porter when executing the bundle",
+        "destination": {
+          "env": "PORTER_DEBUG"
+        }
+      }
+    },
+    "outputs": {
+      "config": {
+        "definition": "config-output",
+        "applyTo": [
+          "install"
+        ],
+        "path": "/cnab/app/outputs/config"
+      },
+      "failed-tests": {
+        "definition": "failed-tests-output",
+        "applyTo": [
+          "test"
+        ],
+        "path": "/cnab/app/outputs/failed-tests"
+      },
+      "kubeconfig": {
+        "definition": "kubeconfig-output",
+        "applyTo": [
+          "install"
+        ],
+        "path": "/cnab/app/outputs/kubeconfig"
+      },
+      "user": {
+        "definition": "user-output",
+        "applyTo": [
+          "status"
+        ],
+        "path": "/cnab/app/outputs/user"
+      }
+    },
+    "definitions": {
+      "config-output": {
+        "type": "string"
+      },
+      "failed-tests-output": {
+        "type": "string"
+      },
+      "kubeconfig-output": {
+        "contentEncoding": "base64",
+        "type": "string"
+      },
+      "porter-debug-parameter": {
+        "default": false,
+        "description": "Print debug information from Porter when executing the bundle",
+        "type": "boolean"
+      },
+      "user-output": {
+        "type": "string"
+      }
+    },
+    "custom": {
+      "io.cnab.dependencies": null,
+      "sh.porter": {
+        "manifestDigest": "f23ca8f34a4e9a54babe625700997115e64dcef2b4411b9af0943c21870487be"
+      }
+    }
+  },
+  "result": {
+    "message": "",
+    "action": "upgrade",
+    "status": "success"
+  }
+}

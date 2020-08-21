@@ -34,6 +34,9 @@ type bundleFileOptions struct {
 
 	// RelocationMapping is the path to the relocation-mapping.json file, if one exists. Populated only for published bundles
 	RelocationMapping string
+
+	// TagSet indicates whether a bundle tag is present, to determine whether or not to default bundle files
+	TagSet bool
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
@@ -42,9 +45,11 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 		return err
 	}
 
-	err = o.defaultBundleFiles(cxt)
-	if err != nil {
-		return err
+	if !o.TagSet {
+		err = o.defaultBundleFiles(cxt)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -54,7 +59,7 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 type sharedOptions struct {
 	bundleFileOptions
 
-	// Name of the instance. Defaults to the name of the bundle.
+	// Name of the installation. Defaults to the name of the bundle.
 	Name string
 
 	// Params is the unparsed list of NAME=VALUE parameters set on the command line.
@@ -83,7 +88,7 @@ type sharedOptions struct {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (o *sharedOptions) Validate(args []string, p *Porter) error {
-	err := o.validateInstanceName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -112,12 +117,12 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	return nil
 }
 
-// validateInstanceName grabs the claim name from the first positional argument.
-func (o *sharedOptions) validateInstanceName(args []string) error {
+// validateInstallationName grabs the installation name from the first positional argument.
+func (o *sharedOptions) validateInstallationName(args []string) error {
 	if len(args) == 1 {
 		o.Name = args[0]
 	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the bundle instance name, but multiple were received: %s", args)
+		return errors.Errorf("only one positional argument may be specified, the installation name, but multiple were received: %s", args)
 	}
 
 	return nil
@@ -125,7 +130,12 @@ func (o *sharedOptions) validateInstanceName(args []string) error {
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
-	if o.File == "" {
+	if o.File != "" { // --file
+		bundleDir := filepath.Dir(o.File)
+		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
+	} else if o.CNABFile != "" { // --cnab-file
+		// Nothing to default
+	} else { // no flags passed (--tag is handled elsewhere)
 		pwd, err := os.Getwd()
 		if err != nil {
 			return errors.Wrap(err, "could not get current working directory")
@@ -140,9 +150,6 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 			o.File = config.Name
 			o.CNABFile = build.LOCAL_BUNDLE
 		}
-	} else {
-		bundleDir := filepath.Dir(o.File)
-		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
 	}
 
 	return nil

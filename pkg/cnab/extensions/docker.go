@@ -31,7 +31,7 @@ type Docker struct {
 // DockerExtensionReader is a Reader for the DockerExtension,
 // which reads from the applicable section in the provided bundle and
 // returns a the raw data in the form of an interface
-func DockerExtensionReader(bun *bundle.Bundle) (interface{}, error) {
+func DockerExtensionReader(bun bundle.Bundle) (interface{}, error) {
 	data, ok := bun.Custom[DockerExtensionKey]
 	if !ok {
 		return nil, errors.New("no custom extension configuration found")
@@ -53,9 +53,9 @@ func DockerExtensionReader(bun *bundle.Bundle) (interface{}, error) {
 	return dha, nil
 }
 
-// GetDockerExtension checks if the docker extension is present and returns its
+// GetDocker checks if the docker extension is present and returns its
 // extension configuration.
-func (e ProcessedExtensions) GetDockerExtension() (dockerExt Docker, dockerRequired bool, err error) {
+func (e ProcessedExtensions) GetDocker() (dockerExt Docker, dockerRequired bool, err error) {
 	ext, extensionRequired := e[DockerExtensionKey]
 
 	dockerExt, ok := ext.(Docker)

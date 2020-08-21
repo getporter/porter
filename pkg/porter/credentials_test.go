@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cnabio/cnab-go/claim"
+
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/credentials"
@@ -178,14 +180,14 @@ kool-kreds   2019-06-24`},
 
 func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p := NewTestPorter(t)
-	home := p.UseFilesystem()
+	home := p.TestConfig.TestContext.UseFilesystem()
 	p.CreateBundleDir()
 	p.TestConfig.TestContext.CopyFile("testdata/bundle.json", filepath.Join(p.BundleDir, "bundle.json"))
 
 	// Write credentials to the real file system for this test, not sure if this test is worth keeping
-	fsStore := crud.NewFileSystemStore(home, "json")
-	credStore := credentials.NewCredentialStore(fsStore)
-	p.TestCredentials.CredentialStorage.CredentialsStore = &credStore
+	fsStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
+	credStore := credentials.NewCredentialStore(crud.NewBackingStore(fsStore))
+	p.TestCredentials.CredentialStorage.CredentialsStore = credStore
 
 	p.TestConfig.SetupPorterHome()
 	opts := CredentialOptions{

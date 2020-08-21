@@ -34,9 +34,9 @@ func NewPorterRuntime(cxt *context.Context, mixins pkgmgmt.PackageManager) *Port
 func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 	r.RuntimeManifest = rm
 
-	claimName := os.Getenv(config.EnvClaimName)
+	installationName := os.Getenv(config.EnvInstallationName)
 	bundleName := os.Getenv(config.EnvBundleName)
-	fmt.Fprintf(r.Out, "executing %s action from %s (bundle instance: %s)\n", r.RuntimeManifest.Action, bundleName, claimName)
+	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
 
 	err := r.RuntimeManifest.Validate()
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 				return errors.Wrap(err, "could not read step outputs")
 			}
 
-			err = r.RuntimeManifest.ApplyStepOutputs(step, outputs)
+			err = r.RuntimeManifest.ApplyStepOutputs(outputs)
 			if err != nil {
 				return err
 			}
@@ -139,20 +139,17 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 	}
 
 	for outputKey, outputValue := range outputs {
-		// Iterate through bundle outputs declared in the manifest
-		for _, bundleOutput := range r.RuntimeManifest.Outputs {
-			// If a given step output matches a bundle output, proceed
-			if outputKey != bundleOutput.Name {
-				continue
-			}
+		bundleOutput, ok := r.RuntimeManifest.Outputs[outputKey]
+		if !ok {
+			continue
+		}
 
-			if r.shouldApplyOutput(bundleOutput) {
-				outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
+		if r.shouldApplyOutput(bundleOutput) {
+			outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
-				err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
-				if err != nil {
-					return errors.Wrapf(err, "unable to write output file %s", outpath)
-				}
+			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
+			if err != nil {
+				return errors.Wrapf(err, "unable to write output file %s", outpath)
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 create-cluster() {
 echo "Creating the cluster..."
 # This pretends to create a kubernetes cluster
@@ -28,15 +30,41 @@ users:
 EOF
 }
 
-generate-config() {
-    echo '{"user": "sally"}' > config.json
+ensure-config() {
+    if [ ! -f "/root/.kube/config" ]; then
+      echo "kubeconfig not found"
+      exit 1
+    fi
 }
 
-dump-config() {
-    echo '{"user": "sally"}'
+ensure-users() {
+    if [ ! -f "/cnab/app/users.json" ]; then
+      echo "users.json not found"
+      exit 1
+    fi
+}
+
+generate-users() {
+    ensure-config
+    echo '{"users": ["sally"]}' > users.json
+    cat users.json
+}
+
+add-user() {
+  ensure-config
+  ensure-users
+  cat users.json | jq ".users += [\"$1\"]" > users.json.new
+  mv users.json.new users.json
+}
+
+dump-users() {
+    ensure-config
+    ensure-users
+    cat users.json
 }
 
 uninstall() {
+  ensure-config
   echo 'Uninstalling Cluster...'
 }
 

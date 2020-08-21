@@ -14,8 +14,10 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 // Porter is the logic behind the porter client.
@@ -25,7 +27,7 @@ type Porter struct {
 	Cache       cache.BundleCache
 	Credentials credentials.CredentialProvider
 	Parameters  parameters.ParameterProvider
-	Claims      claims.ClaimProvider
+	Claims      claim.Provider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
 	Builder     BuildProvider
@@ -33,6 +35,7 @@ type Porter struct {
 	Mixins      mixin.MixinProvider
 	Plugins     plugins.PluginProvider
 	CNAB        cnabprovider.CNABProvider
+	Storage     *storage.Manager
 }
 
 // New porter client, initialized with useful defaults.
@@ -44,12 +47,14 @@ func New() *Porter {
 func NewWithConfig(c *config.Config) *Porter {
 	cache := cache.New(c)
 	storagePlugin := pluginstore.NewStore(c)
-	claimStorage := claims.NewClaimStorage(c, storagePlugin)
-	credStorage := credentials.NewCredentialStorage(c, storagePlugin)
-	paramStorage := parameters.NewParameterStorage(c, storagePlugin)
+	storageManager := storage.NewManager(c, storagePlugin)
+	claimStorage := claims.NewClaimStorage(storageManager)
+	credStorage := credentials.NewCredentialStorage(storageManager)
+	paramStorage := parameters.NewParameterStorage(storageManager)
 	return &Porter{
 		Config:      c,
 		Cache:       cache,
+		Storage:     storageManager,
 		Claims:      claimStorage,
 		Credentials: credStorage,
 		Parameters:  paramStorage,

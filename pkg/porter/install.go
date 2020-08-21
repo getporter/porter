@@ -3,10 +3,11 @@ package porter
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/manifest"
-
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
+
+var _ BundleAction = InstallOptions{}
 
 // InstallOptions that may be specified when installing a bundle.
 // Porter handles defaulting any missing values.
@@ -27,17 +28,17 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		return err
 	}
 
-	deperator := newDependencyExecutioner(p)
-	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Install)
+	deperator := newDependencyExecutioner(p, claim.ActionInstall)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}
 
-	err = deperator.Execute(manifest.ActionInstall)
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(p.Out, "installing %s...\n", opts.Name)
-	return p.CNAB.Install(opts.ToActionArgs(deperator))
+	return p.CNAB.Execute(opts.ToActionArgs(deperator))
 }

@@ -5,6 +5,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+var _ BundleAction = BundleLifecycleOpts{}
+
+// BundleAction is an interface that defines a method for supplying
+// BundleLifecycleOptions.  This is useful when implementations contain
+// action-specific options beyond the stock BundleLifecycleOptions.
+type BundleAction interface {
+	GetBundleLifecycleOptions() BundleLifecycleOpts
+}
+
 type BundleLifecycleOpts struct {
 	sharedOptions
 	BundlePullOptions
@@ -12,25 +21,29 @@ type BundleLifecycleOpts struct {
 }
 
 func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
-	err := o.sharedOptions.Validate(args, porter)
-	if err != nil {
-		return err
-	}
-
 	if o.Tag != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
 		o.File = ""
 		o.CNABFile = ""
+		o.TagSet = true
 
-		return o.validateTag()
+		if err := o.validateTag(); err != nil {
+			return err
+		}
 	}
-	return nil
+
+	return o.sharedOptions.Validate(args, porter)
+}
+
+func (o BundleLifecycleOpts) GetBundleLifecycleOptions() BundleLifecycleOpts {
+	return o
 }
 
 // ToActionArgs converts this instance of user-provided action options.
-func (o *BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
+func (o BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
 	args := cnabprovider.ActionArguments{
-		Claim:                 o.Name,
+		Action:                deperator.Action,
+		Installation:          o.Name,
 		BundlePath:            o.CNABFile,
 		Params:                make(map[string]string, len(o.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),

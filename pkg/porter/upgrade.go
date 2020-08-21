@@ -3,10 +3,11 @@ package porter
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/manifest"
-
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
+
+var _ BundleAction = UpgradeOptions{}
 
 // UpgradeOptions that may be specified when upgrading a bundle.
 // Porter handles defaulting any missing values.
@@ -27,17 +28,17 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 		return err
 	}
 
-	deperator := newDependencyExecutioner(p)
-	err = deperator.Prepare(opts.BundleLifecycleOpts, p.CNAB.Upgrade)
+	deperator := newDependencyExecutioner(p, claim.ActionUpgrade)
+	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
 	}
 
-	err = deperator.Execute(manifest.ActionUpgrade)
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(p.Out, "upgrading %s...\n", opts.Name)
-	return p.CNAB.Upgrade(opts.ToActionArgs(deperator))
+	return p.CNAB.Execute(opts.ToActionArgs(deperator))
 }

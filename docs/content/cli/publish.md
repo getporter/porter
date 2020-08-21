@@ -30,14 +30,15 @@ porter publish [flags]
   -a, --archive string      Path to the bundle archive in .tgz format
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                help for publish
-      --insecure-registry   Don't require TLS for the registry.
-  -t, --tag string          Bundle tag for newly published bundle; required if --archive is supplied
+      --insecure-registry   Don't require TLS for the registry
+      --tag string          Use a bundle in an OCI registry specified by the given tag.
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --debug   Enable debug logging
+      --debug           Enable debug logging
+      --debug-plugins   Enable plugin debug logging
 ```
 
 ### SEE ALSO

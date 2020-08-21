@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -114,11 +115,8 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// Using empty structs instead of booleans cuz empty structs occupy zero memory
-var porterInternalParams = map[string]struct{}{"porter-debug": {}}
-
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
-	err := o.validateInstanceName(args)
+	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
@@ -178,15 +176,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
-func isInternalParam(inputParam string) bool {
-	_, ok := porterInternalParams[inputParam]
-	return ok
-}
-
-func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
-	if bun == nil {
-		return nil, fmt.Errorf("expected a bundle")
-	}
+func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	pb := PrintableBundle{
 		Name:        bun.Name,
 		Description: bun.Description,
@@ -217,7 +207,7 @@ func generatePrintable(bun *bundle.Bundle) (*PrintableBundle, error) {
 
 	params := []PrintableParameter{}
 	for p, v := range bun.Parameters {
-		if isInternalParam(p) {
+		if parameters.IsInternal(p, bun) {
 			continue
 		}
 		def, ok := bun.Definitions[v.Definition]
@@ -387,5 +377,5 @@ func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 			}
 			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
 		}
-	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Instance", "Stateless")
+	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
 }

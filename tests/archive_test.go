@@ -23,7 +23,7 @@ func TestArchive(t *testing.T) {
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/deislabs/porter/issues/697
 	publishOpts := porter.PublishOptions{}
-	publishOpts.Tag = "localhost:5000/mysql:v0.1.2"
+	publishOpts.Tag = "localhost:5000/mysql:v0.1.3"
 	err := publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
@@ -32,6 +32,7 @@ func TestArchive(t *testing.T) {
 
 	// Archive bundle
 	archiveOpts := porter.ArchiveOptions{}
+	archiveOpts.Tag = "localhost:5000/mysql:v0.1.3"
 	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 

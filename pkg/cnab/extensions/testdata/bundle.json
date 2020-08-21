@@ -43,7 +43,8 @@
     }
   },
   "requiredExtensions": [
-    "io.cnab.dependencies"
+    "io.cnab.dependencies",
+    "io.cnab.parameter-sources"
   ],
   "custom": {
     "com.example.duffle-bag": {
@@ -69,6 +70,25 @@
           }
         }
       }
+    },
+    "io.cnab.parameter-sources": {
+      "tfstate": {
+        "priority": ["output"],
+        "sources": {
+          "output": {
+            "name": "tfstate"
+          }
+        }
+      },
+      "mysql_connstr": {
+        "priority": ["dependencies.output"],
+        "sources": {
+          "dependencies.output": {
+            "dependency": "mysql",
+            "name": "connstr"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -89,6 +109,13 @@
       "required": [
         "port"
       ]
+    },
+    "mysql_connstr": {
+      "type": "string"
+    },
+    "tfstate": {
+      "contentEncoding": "base64",
+      "type": "string"
     }
   },
   "parameters": {
@@ -97,6 +124,21 @@
       "destination": {
         "path": "/cnab/is/go"
       }
+    },
+    "tfstate": {
+      "applyTo": [ "upgrade", "uninstall" ],
+      "definition": "tfstate",
+      "required": true
+    },
+    "mysql_connstr": {
+      "definition": "mysql_connstr"
+    }
+  },
+  "outputs": {
+    "tfstate": {
+      "applyTo": [ "install", "upgrade", "uninstall" ],
+      "definition": "tfstate",
+      "path": "/cnab/app/outputs/tfstate"
     }
   }
 }

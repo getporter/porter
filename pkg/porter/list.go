@@ -5,6 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/cnabio/cnab-go/claim"
+
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/pkg/errors"
@@ -15,52 +17,104 @@ type ListOptions struct {
 	printer.PrintOptions
 }
 
-// CondensedClaim holds a subset of pertinent values to be listed from a claim.Claim
-type CondensedClaim struct {
+// DisplayInstallation holds a subset of pertinent values to be listed from installation data
+// originating from its claims, results and outputs records
+type DisplayInstallation struct {
 	Name     string
 	Created  time.Time
 	Modified time.Time
 	Action   string
 	Status   string
+
+	Outputs DisplayOutputs
+	History []InstallationAction
 }
 
-type CondensedClaimList []CondensedClaim
+func NewDisplayInstallation(installation claim.Installation) (DisplayInstallation, error) {
+	c, err := installation.GetLastClaim()
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
 
-func (l CondensedClaimList) Len() int {
+	installTime, err := installation.GetInstallationTimestamp()
+	if err != nil {
+		// if we cannot determine when the bundle was installed,
+		// for example it hasn't had install run yet, only an action like dry-run
+		// just use the timestamp from the claim
+		installTime = c.Created
+	}
+
+	history := make([]InstallationAction, len(installation.Claims))
+	for i, hc := range installation.Claims {
+		history[i] = InstallationAction{
+			Action:    hc.Action,
+			Timestamp: hc.Created,
+			Status:    hc.GetStatus(),
+		}
+	}
+
+	return DisplayInstallation{
+		Name:     installation.Name,
+		Created:  installTime,
+		Modified: c.Created,
+		Action:   c.Action,
+		Status:   installation.GetLastStatus(),
+		History:  history,
+	}, nil
+}
+
+type DisplayInstallations []DisplayInstallation
+
+func (l DisplayInstallations) Len() int {
 	return len(l)
 }
-func (l CondensedClaimList) Swap(i, j int) {
+
+func (l DisplayInstallations) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
-func (l CondensedClaimList) Less(i, j int) bool {
+
+func (l DisplayInstallations) Less(i, j int) bool {
 	return l[i].Modified.Before(l[j].Modified)
 }
 
-// ListInstances lists installed bundles by their claims.
-func (p *Porter) ListInstances(opts ListOptions) error {
-	claims, err := p.Claims.ReadAll()
+type InstallationAction struct {
+	Action    string
+	Timestamp time.Time
+	Status    string
+}
+
+// ListInstallations lists installed bundles.
+func (p *Porter) ListInstallations() (DisplayInstallations, error) {
+	installations, err := p.Claims.ReadAllInstallationStatus()
 	if err != nil {
-		return errors.Wrap(err, "could not list bundle instances")
+		return nil, errors.Wrap(err, "could not list installations")
 	}
 
-	var condensedClaims CondensedClaimList
-	for _, claim := range claims {
-		condensedClaim := CondensedClaim{
-			Name:     claim.Installation,
-			Created:  claim.Created,
-			Modified: claim.Modified,
-			Action:   claim.Result.Action,
-			Status:   claim.Result.Status,
+	var displayInstallations DisplayInstallations
+	for _, installation := range installations {
+		displayInstallation, err := NewDisplayInstallation(installation)
+		if err != nil {
+			return nil, err
 		}
-		condensedClaims = append(condensedClaims, condensedClaim)
+		displayInstallations = append(displayInstallations, displayInstallation)
 	}
-	sort.Sort(sort.Reverse(condensedClaims))
+	sort.Sort(sort.Reverse(displayInstallations))
+
+	return displayInstallations, nil
+}
+
+// PrintInstallations prints installed bundles.
+func (p *Porter) PrintInstallations(opts ListOptions) error {
+	displayInstallations, err := p.ListInstallations()
+	if err != nil {
+		return err
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, condensedClaims)
+		return printer.PrintJson(p.Out, displayInstallations)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, condensedClaims)
+		return printer.PrintYaml(p.Out, displayInstallations)
 	case printer.FormatTable:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
@@ -68,15 +122,15 @@ func (p *Porter) ListInstances(opts ListOptions) error {
 			Now: func() time.Time { return now },
 		}
 
-		printClaimRow :=
+		row :=
 			func(v interface{}) []interface{} {
-				cl, ok := v.(CondensedClaim)
+				cl, ok := v.(DisplayInstallation)
 				if !ok {
 					return nil
 				}
 				return []interface{}{cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Action, cl.Status}
 			}
-		return printer.PrintTable(p.Out, condensedClaims, printClaimRow,
+		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)

@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,7 +62,7 @@ BAZ`,
 func TestPorterRuntime_ApplyStepOutputsToBundle_None(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{Name: "mybun"}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -76,15 +77,15 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"foo": {
 				Name: "foo",
 				Schema: definition.Schema{
 					Type: "string",
 				},
 				Sensitive: true,
 			},
-			{
+			"123": {
 				Name: "123",
 				Schema: definition.Schema{
 					Type: "string",
@@ -93,7 +94,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_Match(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -120,16 +121,16 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_Some_NoMatch(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"bar": {
 				Name: "bar",
 			},
-			{
+			"456": {
 				Name: "456",
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -151,14 +152,14 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	m := &manifest.Manifest{
 		Name: "mybun",
-		Outputs: []manifest.OutputDefinition{
-			{
+		Outputs: manifest.OutputDefinitions{
+			"foo": {
 				Name: "foo",
 				ApplyTo: []string{
 					"upgrade",
 				},
 			},
-			{
+			"123": {
 				Name: "123",
 				ApplyTo: []string{
 					"install",
@@ -170,7 +171,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 			},
 		},
 	}
-	r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+	r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 	outputs := map[string]string{
 		"foo": "bar",
@@ -251,11 +252,11 @@ func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
 			r := NewTestPorterRuntime(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
-				Outputs: []manifest.OutputDefinition{
-					tc.def,
+				Outputs: manifest.OutputDefinitions{
+					tc.def.Name: tc.def,
 				},
 			}
-			r.RuntimeManifest = NewRuntimeManifest(r.Context, manifest.ActionInstall, m)
+			r.RuntimeManifest = NewRuntimeManifest(r.Context, claim.ActionInstall, m)
 
 			_, err := r.FileSystem.Create(srcPath)
 			require.NoError(t, err)
