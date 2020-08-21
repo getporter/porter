@@ -101,10 +101,6 @@ func HasDependencies(bun bundle.Bundle) bool {
 	return ok
 }
 
-// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
-func BuildPrerequisiteInstallationName(installation string, dependency string) string {
-	return fmt.Sprintf("%s-%s", installation, dependency)
-}
 
 // ListBySequence returns the dependencies by the defined sequence,
 // if none is specified, they are unsorted.
@@ -123,4 +119,9 @@ func (d Dependencies) ListBySequence() []Dependency {
 		}
 	}
 	return deps
+}
+// BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
+func BuildPrerequisiteInstallationName(installation string, dependency string) string {
+	return fmt.Sprintf("%s-%s", installation, dependency)
+
 }

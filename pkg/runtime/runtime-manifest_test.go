@@ -400,13 +400,12 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
 	m := &manifest.Manifest{
+
 		Dependencies: []manifest.Dependency{
 			{
 				Name: "mysql",
 				Tag:  "getporter/porter-mysql",
-		Dependencies: map[string]manifest.Dependency{
-			"mysql": {
-				Tag: "getporter/mysql",
+
 			},
 		},
 		TemplateVariables: []string{

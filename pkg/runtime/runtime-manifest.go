@@ -271,12 +271,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+  
 	paramSources, _, err := bunExt.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}
-
+  
 	templatedOutputs := m.GetTemplatedOutputs()
 	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
 	for paramName, sources := range paramSources {
