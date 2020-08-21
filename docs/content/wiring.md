@@ -300,7 +300,7 @@ mixins:
 - helm
 
 dependencies:
-  mysql:
+  - name: mysql
     tag: getporter/mysql:v0.1.3
     parameters:
       database_name: wordpress

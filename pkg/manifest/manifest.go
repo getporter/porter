@@ -52,10 +52,10 @@ type Manifest struct {
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
-	Parameters   []ParameterDefinition  `yaml:"parameters,omitempty"`
-	Credentials  []CredentialDefinition `yaml:"credentials,omitempty"`
-	Dependencies []Dependency           `yaml:"dependencies,omitempty"`
-	Outputs      []OutputDefinition     `yaml:"outputs,omitempty"`
+	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
+	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
+	Dependencies []Dependency          `yaml:"dependencies,omitempty"`
+	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
 	// will be mounted at as a file at runtime to /cnab/app/relocation-mapping.json.

@@ -289,7 +289,7 @@ See [dependencies](/dependencies/) for more details on how Porter handles depend
 
 ```yaml
 dependencies:
-  mysql:
+  - name: mysql
     tag: getporter/wordpress:v0.1.0
     parameters:
       database_name: wordpress

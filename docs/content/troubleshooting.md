@@ -15,7 +15,7 @@ When you run your bundle you see the following error
 ```
 executing install action from HELLO (installation: HELLO)
 === Step Data ===
-map[bundle:map[credentials:map[] dependencies:map[] description:An example Porter configuration images:map[] invocationImage:porter-hello:latest name:HELLO outputs:map[] parameters:map[test:{"test": "test"}] version:0.1.0]]
+map[bundle:map[credentials:map[] dependencies:array[] description:An example Porter configuration images:map[] invocationImage:porter-hello:latest name:HELLO outputs:map[] parameters:map[test:{"test": "test"}] version:0.1.0]]
 === Step Template ===
 exec:
   command: bash
