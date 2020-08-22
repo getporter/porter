@@ -7,17 +7,17 @@ tag: localhost:5000/nginx
 
 install:
   - exec:
-      description: "Install Hello World"
+      description: "install nginx"
       command: bash
       flags:
-        c: echo Hello World
+        c: '"echo Hello nginx"'
 
 uninstall:
-- exec:
-    description: "Uninstall Hello World"
-    command: bash
-    flags:
-      c: echo Goodbye World
+  - exec:
+      description: "uninstall nginx"
+      command: bash
+      flags:
+        c: '"echo Hello nginx"'
 
 custom:
   foo: bar
