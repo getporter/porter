@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -256,4 +257,53 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Actions))
+}
+
+func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
+	bun := bundle.Bundle{
+		Custom: map[string]interface{}{
+			extensions.DependenciesKey: "io.cnab.dependencies",
+		},
+		RequiredExtensions: []string{extensions.DependenciesKey},
+	}
+	pb, err := generatePrintable(bun)
+	assert.NoError(t, err)
+	assert.NotNil(t, pb)
+	// bun := bundle.Bundle{
+
+	// 	Custom: map[string]interface{}{
+	// 		"io.cnab.dependencies": []interface{}{
+	// 			"Sequence": []string{"nginx", "storage", "mysql"},
+	// 			"Requires": map[string]interface{}{
+	// 				"mysql": {
+	// 					Name:   "mysql",
+	// 					Bundle: "somecloud/mysql",
+	// 					Version: &DependencyVersion{
+	// 						AllowPrereleases: true,
+	// 						Ranges:           []string{"5.7.x"},
+	// 					},
+	// 				},
+	// 				"storage": {
+	// 					Name:   "storage",
+	// 					Bundle: "somecloud/blob-storage",
+	// 				},
+	// 				"nginx": {
+	// 					Name:   "nginx",
+	// 					Bundle: "localhost:5000/nginx:1.19",
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
+
+	// pb, err := generatePrintable(bun)
+	// assert.NoError(t, err)
+
+	// assert.Equal(t, 1, len(pb.Credentials))
+	// d := pb.Credentials[0]
+	// assert.True(t, d.Required)
+	// assert.Equal(t, "a cred", d.Description)
+	// assert.Equal(t, 0, len(pb.Parameters))
+	// assert.Equal(t, 0, len(pb.Outputs))
+	// assert.Equal(t, 0, len(pb.Actions))
 }
