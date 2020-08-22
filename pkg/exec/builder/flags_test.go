@@ -82,3 +82,16 @@ func TestFlags_ToSlice(t *testing.T) {
 	// Flags should be sorted and sliced up on a platter
 	assert.Equal(t, []string{"-a", "1", "--bull", "2"}, args)
 }
+
+func TestFlags_NonStringKeys(t *testing.T) {
+	flags := Flags{}
+	err := yaml.Unmarshal([]byte(`
+yes: ""
+true:
+nil:
+1.0:
+1: ""
+`), &flags)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, len(flags))
+}
