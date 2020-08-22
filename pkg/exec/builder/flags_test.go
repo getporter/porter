@@ -86,11 +86,11 @@ func TestFlags_ToSlice(t *testing.T) {
 func TestFlags_NonStringKeys(t *testing.T) {
 	flags := Flags{}
 	err := yaml.Unmarshal([]byte(`
-yes: ""
-true:
-nil:
-1.0:
-1: ""
+yes: ["y", "true"]
+true: ["y", "yes"]
+nil: ["no", "nah"]
+1.0: ["true", "yes"]
+1: ["yes"]
 `), &flags)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(flags))
