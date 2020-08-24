@@ -16,16 +16,21 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const (
+	defaultKubernetesClientVersion string = "v1.15.5"
+)
+
 type Mixin struct {
 	*context.Context
-
 	schemas *packr.Box
+	KubernetesClientVersion string
 }
 
 func New() *Mixin {
 	return &Mixin{
 		Context: context.New(),
 		schemas: NewSchemaBox(),
+		KubernetesClientVersion: defaultKubernetesClientVersion,
 	}
 }
 
