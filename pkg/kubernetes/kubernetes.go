@@ -95,9 +95,14 @@ func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string
 	}
 	cmd := m.NewCommand("kubectl", args...)
 	cmd.Stderr = m.Err
+
+	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
+	if m.Debug {
+		fmt.Fprintln(m.Err, prettyCmd)
+	}
 	out, err := cmd.Output()
+
 	if err != nil {
-		prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 		return nil, errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 	}
 	return out, nil
