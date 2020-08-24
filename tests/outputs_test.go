@@ -9,7 +9,6 @@ import (
 
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -163,9 +162,4 @@ func TestKubernetesMixinOutputs(t *testing.T) {
 
 	err = p.UninstallBundle(uninstallOptions)
 	require.NoError(p.T(), err, "uninstall of bundle failed")
-
-	// Verify that the installation is deleted
-	i, err := p.Claims.ReadInstallation("kubernetes")
-	require.EqualError(p.T(), err, "Installation does not exist")
-	require.Equal(p.T(), claim.Installation{}, i)
 }
