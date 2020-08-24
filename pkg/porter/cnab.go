@@ -229,7 +229,7 @@ func (o *sharedOptions) validateParams(p *Porter) error {
 		return err
 	}
 
-	o.combinedParameters = o.combineParameters()
+	o.combinedParameters = o.combineParameters(p.Context)
 
 	return nil
 }
@@ -260,7 +260,7 @@ func (o *sharedOptions) parseParamSets(p *Porter) error {
 // The params set on the command line take precedence over the params set in
 // parameter set files
 // Anything set multiple times, is decided by "last one set wins"
-func (o *sharedOptions) combineParameters() map[string]string {
+func (o *sharedOptions) combineParameters(c *context.Context) map[string]string {
 	final := make(map[string]string)
 
 	for k, v := range o.parsedParamSets {
@@ -269,6 +269,13 @@ func (o *sharedOptions) combineParameters() map[string]string {
 
 	for k, v := range o.parsedParams {
 		final[k] = v
+	}
+
+	//
+	// Default the porter-debug param to --debug
+	//
+	if c.Debug {
+		final["porter-debug"] = "true"
 	}
 
 	return final
