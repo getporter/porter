@@ -153,18 +153,14 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 
 	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-	cs := credentials.CredentialSet{
-		Name: "wordpress",
-		Credentials: []valuesource.Strategy{
-			{
-				Name: "kubeconfig",
-				Source: valuesource.Source{
-					Key:   secrets.SourceSecret,
-					Value: "kubeconfig",
-				},
+	cs := credentials.NewCredentialSet("wordpress",
+		valuesource.Strategy{
+			Name: "kubeconfig",
+			Source: valuesource.Source{
+				Key:   secrets.SourceSecret,
+				Value: "kubeconfig",
 			},
-		},
-	}
+		})
 	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
 	err := p.Credentials.Save(cs)
 	require.NoError(t, err, "Credentials.Save failed")

@@ -17,10 +17,8 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -75,8 +73,17 @@ func (p *TestPorter) SetupIntegrationTest() {
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
 	p.Porter = NewWithConfig(p.Config)
 	p.NewCommand = exec.Command
-	p.TestCredentials.SecretsStore = secrets.NewSecretStore(&host.SecretStore{})
 
+	/*
+		// Update test providers to use the instances we just reset above
+		// We mostly don't use test providers for integration tests, but a few provide
+		// useful helper methods that are still nice to have.
+		hostSecrets := &host.SecretStore{}
+		p.TestCredentials.SecretsStore = secrets.NewSecretStore(hostSecrets)
+		p.TestParameters.SecretsStore = secrets.NewSecretStore(hostSecrets)
+	*/
+
+	// Run the test in a temp directory
 	homeDir := p.TestConfig.TestContext.UseFilesystem()
 	p.TestConfig.SetupIntegrationTest(homeDir)
 	bundleDir := p.CreateBundleDir()

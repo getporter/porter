@@ -7,7 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestBadParametersName(t *testing.T) {
 
 	pset, err := opts.GenerateParameters()
 	require.Error(t, err, "bad name should have resulted in an error")
-	require.Nil(t, pset, "parameter set should have been empty")
+	require.Empty(t, pset, "parameter set should have been empty")
 	require.EqualError(t, err, fmt.Sprintf("parameter set name '%s' cannot contain the following characters: './\\'", name))
 }
 
@@ -50,7 +50,6 @@ func TestGoodParametersName(t *testing.T) {
 
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.NotNil(t, pset, "parameter set should have been empty and not nil")
 	require.Equal(t, 3, len(pset.Parameters), "should have had 3 entries")
 }
 
@@ -64,7 +63,7 @@ func TestNoParameters(t *testing.T) {
 	}
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "no parameters should have generated an empty parameter set")
-	require.NotNil(t, pset, "empty parameters should still return an empty parameter set")
+	require.NotEmpty(t, pset, "empty parameters should still return an empty parameter set")
 }
 
 func TestEmptyParameters(t *testing.T) {
@@ -78,7 +77,7 @@ func TestEmptyParameters(t *testing.T) {
 	}
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "empty parameters should have generated an empty parameter set")
-	require.NotNil(t, pset, "empty parameters should still return an empty parameter set")
+	require.NotEmpty(t, pset, "empty parameters should still return an empty parameter set")
 }
 
 func TestNoParametersName(t *testing.T) {
@@ -89,7 +88,7 @@ func TestNoParametersName(t *testing.T) {
 	}
 	pset, err := opts.GenerateParameters()
 	require.Error(t, err, "expected an error because name is required")
-	require.Nil(t, pset, "parameter set should have been empty")
+	require.Empty(t, pset, "parameter set should have been empty")
 }
 
 func TestSkipParameters(t *testing.T) {
@@ -113,13 +112,8 @@ func TestSkipParameters(t *testing.T) {
 		},
 	}
 
-	expected := &parameters.ParameterSet{
-		Name:       "skip-params",
-		Parameters: []valuesource.Strategy{},
-	}
-
 	pset, err := opts.GenerateParameters()
 	require.NoError(t, err, "parameters generation should not have resulted in an error")
-	require.NotNil(t, pset, "parameter set should not be nil")
-	require.Equal(t, expected, pset, "parameter set should have empty parameters section")
+	assert.Equal(t, "skip-params", pset.Name, "Name was not set")
+	require.Empty(t, pset.Parameters, "parameter set should have empty parameters section")
 }

@@ -35,7 +35,7 @@ type Porter struct {
 	Mixins      mixin.MixinProvider
 	Plugins     plugins.PluginProvider
 	CNAB        cnabprovider.CNABProvider
-	Storage     *storage.Manager
+	Storage     storage.StorageProvider
 }
 
 // New porter client, initialized with useful defaults.

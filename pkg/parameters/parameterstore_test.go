@@ -2,6 +2,7 @@ package parameters
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
@@ -9,25 +10,24 @@ import (
 )
 
 func TestNewParameterStore(t *testing.T) {
-	backingParams := crud.NewMockStore()
+	backingParams := crud.NewBackingStore(crud.NewMockStore())
 	paramStore := NewParameterStore(backingParams)
 
 	params, err := paramStore.List()
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 
-	myParamSet := ParameterSet{
-		Name: "myparams",
-		Parameters: []valuesource.Strategy{
-			{
-				Name: "myparam",
-				Source: valuesource.Source{
-					Key:   "value",
-					Value: "myparamvalue",
-				},
+	myParamSet := NewParameterSet("myparams",
+		valuesource.Strategy{
+			Name: "myparam",
+			Source: valuesource.Source{
+				Key:   "value",
+				Value: "myparamvalue",
 			},
-		},
-	}
+		})
+	myParamSet.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
+	myParamSet.Modified = myParamSet.Created
+
 	err = paramStore.Save(myParamSet)
 	require.NoError(t, err, "Save should successfully save")
 
