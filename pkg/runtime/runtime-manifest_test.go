@@ -140,8 +140,8 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "LoadManifestFrom failed")
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
-	rm.bundles = []bundle.Bundle{
-		{
+	rm.bundles = map[string]bundle.Bundle{
+		"mysql": {
 			Name:        "Azure MySQL",
 			Description: "Azure MySQL database as a service",
 			Version:     "v1.0.0",
@@ -405,6 +405,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 			{
 				Name: "mysql",
 				Tag:  "getporter/porter-mysql",
+
 			},
 		},
 		TemplateVariables: []string{
@@ -424,9 +425,8 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 		RequiredExtensions: []string{extensions.ParameterSourcesKey},
 	}
 
-	rm.bundles = []bundle.Bundle{
-		{
-			Name: "mysql",
+	rm.bundles = map[string]bundle.Bundle{
+		"mysql": {
 			Outputs: map[string]bundle.Output{
 				"password": {
 					Definition: "password",

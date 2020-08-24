@@ -30,7 +30,7 @@ type RuntimeManifest struct {
 	bundle bundle.Bundle
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
-	bundles []bundle.Bundle
+	bundles map[string]bundle.Bundle
 
 	steps           manifest.Steps
 	outputs         map[string]string
@@ -80,8 +80,8 @@ func (m *RuntimeManifest) loadBundle() error {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make([]bundle.Bundle, len(m.Dependencies))
-	for i, dep := range m.Dependencies {
+	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
+	for _, dep := range m.Dependencies {
 		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
 		if err != nil {
 			return err
@@ -92,7 +92,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
 		}
 
-		m.bundles[i] = *bun
+		m.bundles[dep.Name] = *bun
 	}
 
 	return nil
@@ -245,14 +245,16 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		creds[pe] = val
 	}
 
-	deps := make([]interface{}, len(m.bundles))
+	deps := make(map[string]interface{})
 	bun["dependencies"] = deps
-	for i, depB := range m.bundles {
+	for alias, depB := range m.bundles {
+		// bundle.dependencies.ALIAS.outputs.NAME
 		depBun := make(map[string]interface{})
+		deps[alias] = depBun
+
 		depBun["name"] = depB.Name
 		depBun["version"] = depB.Version
 		depBun["description"] = depB.Description
-		deps[i] = depBun
 	}
 
 	bun["outputs"] = m.outputs
@@ -269,12 +271,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+  
 	paramSources, _, err := bunExt.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}
-
+  
 	templatedOutputs := m.GetTemplatedOutputs()
 	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
 	for paramName, sources := range paramSources {
@@ -292,8 +294,8 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				if _, isTemplated := templatedDependencyOutputs[outRef.String()]; !isTemplated {
 					continue
 				}
-				depIndex := getDependencyIdentifier(deps, ps.Dependency)
-				depBun := deps[depIndex].(map[string]interface{})
+
+				depBun := deps[ps.Dependency].(map[string]interface{})
 				var depOutputs map[string]interface{}
 				if depBun["outputs"] == nil {
 					depOutputs = make(map[string]interface{})
@@ -310,7 +312,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 				depOutputs[ps.OutputName] = value
 
 				// Determine if the dependency's output is defined as sensitive
-				depB := m.bundles[depIndex]
+				depB := m.bundles[ps.Dependency]
 				if ok, _ := depB.IsOutputSensitive(ps.OutputName); ok {
 					m.setSensitiveValue(value)
 				}
@@ -489,15 +491,4 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 		image.Tag = "latest" //Populate this with latest so that the {{ can reference something }}
 	}
 	return nil
-}
-
-func getDependencyIdentifier(deps []interface{}, depName string) int {
-	var typedDep interface{} = &deps
-	typedDepRange := typedDep.([]*manifest.Dependency)
-	for i, dep := range typedDepRange {
-		if dep.Name == depName {
-			return i
-		}
-	}
-	return -1
 }
