@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -126,4 +127,45 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	require.NoError(t, err)
 	err = p.UninstallBundle(uninstallOpts)
 	require.NoError(t, err, "uninstall should have succeeded")
+}
+
+func TestKubernetesMixinOutputs(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	// Use the kubernetes example bundle
+	p.CopyDirectory(filepath.Join(p.TestDir, "../examples/kubernetes"), ".", false)
+
+	installOpts := porter.InstallOptions{}
+	installOpts.CredentialIdentifiers = []string{"ci"}
+
+	err := installOpts.Validate([]string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of install opts for bundle failed")
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(p.T(), err, "install of bundle failed")
+
+	// Verify the output value has no wrapping single quotes
+	output, err := p.ReadBundleOutput("IP_ADDRESS", "kubernetes")
+	require.NoError(p.T(), err, "could not read bundle output")
+	require.NotEmpty(p.T(), output, "expected the output value to not be empty")
+	require.NotContains(p.T(), "'", output, "did not expect the output value to contain any single quote characters")
+
+	// Uninstall and delete installation
+	uninstallOptions := porter.UninstallOptions{}
+	uninstallOptions.CredentialIdentifiers = []string{"ci"}
+	uninstallOptions.Delete = true
+
+	err = uninstallOptions.Validate([]string{}, p.Porter)
+	require.NoError(p.T(), err, "validation of uninstall opts for bundle failed")
+
+	err = p.UninstallBundle(uninstallOptions)
+	require.NoError(p.T(), err, "uninstall of bundle failed")
+
+	// Verify that the installation is deleted
+	i, err := p.Claims.ReadInstallation("kubernetes")
+	require.EqualError(p.T(), err, "Installation does not exist")
+	require.Equal(p.T(), claim.Installation{}, i)
 }
