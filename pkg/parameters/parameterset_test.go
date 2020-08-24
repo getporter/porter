@@ -21,7 +21,7 @@ func TestCNABSpecVersion(t *testing.T) {
 	assert.Equal(t, DefaultSchemaVersion, version)
 }
 
-func TestNewCredentialSet(t *testing.T) {
+func TestNewParameterSet(t *testing.T) {
 	cs := NewParameterSet("myparams",
 		valuesource.Strategy{
 			Name: "password",

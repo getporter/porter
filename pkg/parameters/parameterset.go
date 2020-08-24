@@ -9,20 +9,20 @@ import (
 
 const (
 	// DefaultSchemaVersion is the default SchemaVersion value
-	// set on new CredentialSet instances, and is the semver portion
+	// set on new ParameterSet instances, and is the semver portion
 	// of CNABSpecVersion.
 	DefaultSchemaVersion = schema.Version("1.0.0-DRAFT+TODO")
 
-	// CNABSpecVersion represents the CNAB Spec version of the Credentials
-	// that this library implements
-	// This value is prefixed with e.g. `cnab-credentials-` so isn't itself valid semver.
+	// CNABSpecVersion represents the CNAB Spec version of the Parameters
+	// that this library implements.
+	// This value is prefixed with e.g. `cnab-parametersets-` so isn't itself valid semver.
 	CNABSpecVersion string = "cnab-parametersets-" + string(DefaultSchemaVersion)
 )
 
 // ParameterSet represents a collection of parameters and their
 // sources/strategies for value resolution
 type ParameterSet struct {
-	// SchemaVersion is the version of the paramete-set schema.
+	// SchemaVersion is the version of the parameter-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion"`
 	// Name is the name of the parameter set.
 	Name string `json:"name" yaml:"name"`

@@ -335,3 +335,5 @@ func TestManager_ShouldMigrateParameters(t *testing.T) {
 		})
 	}
 }
+
+// NOTE: TestManager_MigrateParameters is in parameterset_test.go to avoid a circular dependency
