@@ -448,3 +448,45 @@ func TestParamToEnvVar(t *testing.T) {
 		})
 	}
 }
+
+func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
+
+	m, err := LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	testcases := []struct {
+		name         string
+		defaultValue string
+		applyTo      []string
+		source       ParameterSource
+		wantApplyTo  []string
+	}{
+		{"no source", "", nil, ParameterSource{}, nil},
+		{"has default", "myparam", nil, ParameterSource{Output: "myoutput"}, nil},
+		{"has applyTo", "", []string{"status"}, ParameterSource{Output: "myoutput"}, []string{"status"}},
+		{"no default, no applyTo", "", nil, ParameterSource{Output: "myoutput"}, []string{"status", "uninstall"}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			pd := ParameterDefinition{
+				Name: "myparam",
+				Schema: definition.Schema{
+					Type: "file",
+				},
+				Source:  tc.source,
+				ApplyTo: tc.applyTo,
+			}
+
+			if tc.defaultValue != "" {
+				pd.Schema.Default = tc.defaultValue
+			}
+
+			pd.UpdateApplyTo(m)
+			require.Equal(t, tc.wantApplyTo, pd.ApplyTo)
+		})
+	}
+}

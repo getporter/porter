@@ -13,6 +13,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/distribution/reference"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -303,6 +304,33 @@ func (pd *ParameterDefinition) AppliesTo(action string) bool {
 		}
 	}
 	return false
+}
+
+// exemptFromInstall returns true if a parameter definition:
+//   - has an output source (which will not exist prior to install)
+//   - doesn't already have applyTo specified
+//   - doesn't have a default value
+func (pd *ParameterDefinition) exemptFromInstall() bool {
+	return pd.Source.Output != "" && pd.ApplyTo == nil && pd.Default == nil
+}
+
+// UpdateApplyTo updates a parameter definition's applyTo section
+// based on the provided manifest
+func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
+	if pd.exemptFromInstall() {
+		applyTo := []string{claim.ActionUninstall}
+		// The core action "Upgrade" is technically still optional
+		// so only add it if it is declared in the manifest
+		if m.Upgrade != nil {
+			applyTo = append(applyTo, claim.ActionUpgrade)
+		}
+		// Add all custom actions
+		for action := range m.CustomActions {
+			applyTo = append(applyTo, action)
+		}
+		sort.Strings(applyTo)
+		pd.ApplyTo = applyTo
+	}
 }
 
 type ParameterSource struct {
