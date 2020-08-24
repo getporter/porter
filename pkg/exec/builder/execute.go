@@ -92,7 +92,7 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	// Preallocate an array big enough to hold all arguments
 	arguments := step.GetArguments()
 	flags := step.GetFlags()
-	args := make([]string, len(arguments), 1+len(arguments)+len(flags)*2 + len(suffixArgs))
+	args := make([]string, len(arguments), 1+len(arguments)+len(flags)*2+len(suffixArgs))
 
 	// Copy all prefix arguments
 	copy(args, arguments)
@@ -133,7 +133,7 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 		cmd.Stdout = io.MultiWriter(cxt.Out, output)
 		cmd.Stderr = cxt.Err
 		if cxt.Debug {
-			fmt.Fprintln(cxt.Out, prettyCmd)
+			fmt.Fprintln(cxt.Err, prettyCmd)
 		}
 	}
 

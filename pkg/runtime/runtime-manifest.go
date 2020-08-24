@@ -405,6 +405,9 @@ func (m *RuntimeManifest) Prepare() error {
 	// For parameters of type "file", we may need to decode files on the filesystem
 	// before execution of the step/action
 	for _, param := range m.Parameters {
+		// Update ApplyTo per parameter definition and manifest
+		param.UpdateApplyTo(m.Manifest)
+
 		if !param.AppliesTo(string(m.Action)) {
 			continue
 		}

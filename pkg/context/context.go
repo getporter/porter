@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -68,17 +69,19 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 }
 
 func New() *Context {
-	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
-	_, debug := os.LookupEnv("PORTER_DEBUG")
-
-	return &Context{
-		Debug:      debug,
+	c := &Context{
 		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
 		In:         os.Stdin,
 		Out:        NewCensoredWriter(os.Stdout),
 		Err:        NewCensoredWriter(os.Stderr),
 		NewCommand: exec.Command,
 	}
+
+	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
+	debug, _ := strconv.ParseBool(os.Getenv("PORTER_DEBUG"))
+	c.Debug = debug
+
+	return c
 }
 
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {
