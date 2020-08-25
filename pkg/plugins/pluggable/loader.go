@@ -141,8 +141,10 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 }
 
 func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (func(), error) {
-	// TODO check that dlv is installed
 	if len(l.Config.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(l.Config.RunPlugInInDebugger)) {
+		if !isDelveInstalled() {
+			return cleanup, errors.New("Delve needs to be installed to debug plugins")
+		}
 		listen := fmt.Sprintf("--listen=127.0.0.1:%s", l.Config.DebuggerPort)
 		if len(l.Config.PlugInWorkingDirectory) == 0 {
 			return cleanup, errors.New("Plugin Working Directory is required for debugging")
