@@ -329,6 +329,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 					continue
 				}
 
+				// A bundle-level output may also be a step-level output
+				// If already set, do not override
+				if val, exists := m.outputs[ps.OutputName]; exists && val != "" {
+					continue
+				}
+
 				val, err := m.resolveBundleOutput(ps.OutputName)
 				if err != nil {
 					return nil, err
