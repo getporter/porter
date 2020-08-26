@@ -142,7 +142,7 @@ func TestCredentialsList(t *testing.T) {
 		{
 			name:         "yaml",
 			format:       printer.FormatYaml,
-			wantContains: []string{`- name: kool-kreds`},
+			wantContains: []string{`name: kool-kreds`},
 			errorMsg:     "",
 		},
 		{
@@ -284,6 +284,7 @@ func TestShowCredential_Found(t *testing.T) {
 			name:   "json",
 			format: printer.FormatJson,
 			wantOutput: `{
+  "schemaVersion": "1.0.0-DRAFT+b6c701f",
   "name": "kool-kreds",
   "created": "2019-06-24T16:07:57.415378-05:00",
   "modified": "2019-06-24T16:07:57.415378-05:00",
@@ -319,7 +320,8 @@ func TestShowCredential_Found(t *testing.T) {
 		{
 			name:   "yaml",
 			format: printer.FormatYaml,
-			wantOutput: `name: kool-kreds
+			wantOutput: `schemaVersion: 1.0.0-DRAFT+b6c701f
+name: kool-kreds
 created: 2019-06-24T16:07:57.415378-05:00
 modified: 2019-06-24T16:07:57.415378-05:00
 credentials:

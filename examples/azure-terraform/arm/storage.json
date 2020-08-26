@@ -52,8 +52,8 @@
     }	
   ],	
   "outputs": {	
-    "STORAGE_ACCOUNT_KEY": {	
-      "type": "string",	
+    "storage_account_key": {
+      "type": "string",
       "value": "[first(listKeys(parameters('storageAccountName'), '2018-02-01').keys).value]"	
     }	
   }	

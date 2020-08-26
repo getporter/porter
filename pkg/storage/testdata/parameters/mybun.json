@@ -1,0 +1,19 @@
+{
+  "name": "mybun",
+  "created": "2020-01-01T00:00:00Z",
+  "modified": "2020-01-01T00:00:00Z",
+  "parameters": [
+    {
+      "name": "verbose",
+      "source": {
+        "value": "6"
+      }
+    },
+    {
+      "name": "db-password",
+      "source": {
+        "secret": "mysql-password"
+      }
+    }
+  ]
+}

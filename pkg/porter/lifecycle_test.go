@@ -149,8 +149,9 @@ func TestBundleLifecycleOpts_ToActionArgs(t *testing.T) {
 		args := opts.ToActionArgs(deps)
 
 		expectedParams := map[string]string{
-			"PARAM1": "VALUE1",
-			"PARAM2": "VALUE2",
+			"PARAM1":       "VALUE1",
+			"PARAM2":       "VALUE2",
+			"porter-debug": "true",
 		}
 
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")

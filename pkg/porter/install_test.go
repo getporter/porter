@@ -58,27 +58,6 @@ func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	assert.Equal(t, &manifest.Manifest{}, p.Manifest, "p.Manifest should be initialized to an empty manifest")
 }
 
-func TestPorter_applyDefaultOptions_DebugOff(t *testing.T) {
-	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	err := p.Create()
-	require.NoError(t, err)
-
-	opts := &InstallOptions{}
-	opts.File = "porter.yaml"
-	err = opts.Validate([]string{}, p.Porter)
-	require.NoError(t, err)
-
-	p.Debug = false
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	require.NoError(t, err)
-
-	assert.Equal(t, p.Manifest.Name, opts.Name)
-
-	_, set := opts.parsedParams["porter-debug"]
-	assert.False(t, set)
-}
-
 func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
@@ -91,13 +70,9 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	p.Debug = true
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	require.NoError(t, err)
-
-	debug, set := opts.parsedParams["porter-debug"]
+	debug, set := opts.combinedParameters["porter-debug"]
 	assert.True(t, set)
-	assert.Equal(t, "false", debug)
+	assert.Equal(t, "true", debug)
 }
 
 func TestInstallOptions_validateParams(t *testing.T) {
@@ -178,18 +153,14 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 
 	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-	cs := credentials.CredentialSet{
-		Name: "wordpress",
-		Credentials: []valuesource.Strategy{
-			{
-				Name: "kubeconfig",
-				Source: valuesource.Source{
-					Key:   secrets.SourceSecret,
-					Value: "kubeconfig",
-				},
+	cs := credentials.NewCredentialSet("wordpress",
+		valuesource.Strategy{
+			Name: "kubeconfig",
+			Source: valuesource.Source{
+				Key:   secrets.SourceSecret,
+				Value: "kubeconfig",
 			},
-		},
-	}
+		})
 	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
 	err := p.Credentials.Save(cs)
 	require.NoError(t, err, "Credentials.Save failed")

@@ -17,15 +17,20 @@ var ErrNotFound = errors.New("Parameter set does not exist")
 
 // Store is a persistent store for parameter sets.
 type Store struct {
-	backingStore *crud.BackingStore
+	backingStore crud.ManagedStore
 }
 
 // NewParameterStore creates a persistent store for parameter sets using the specified
 // backing key-blob store.
-func NewParameterStore(store crud.Store) Store {
+func NewParameterStore(store crud.ManagedStore) Store {
 	return Store{
-		backingStore: crud.NewBackingStore(store),
+		backingStore: store,
 	}
+}
+
+// GetBackingStore returns the data store behind this credentials store.
+func (s Store) GetBackingStore() crud.ManagedStore {
+	return s.backingStore
 }
 
 // List the names of the stored parameter sets.

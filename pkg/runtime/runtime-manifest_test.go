@@ -547,6 +547,48 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 	assert.Equal(t, "unable to render step template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
 }
 
+func TestResolveSensitiveOutputs(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{
+		Outputs: manifest.OutputDefinitions{
+			"username": {
+				Name: "username",
+			},
+			"password": {
+				Name:      "password",
+				Sensitive: true,
+			},
+		},
+	}
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+	rm.outputs = map[string]string{
+		"username": "sally",
+		"password": "top$ecret!",
+	}
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "a test step",
+			"Arguments": []string{
+				"{{ bundle.outputs.username }}",
+				"{{ bundle.outputs.password }}",
+			},
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err)
+
+	args, ok := s.Data["Arguments"].([]interface{})
+	require.True(t, ok)
+	require.Equal(t, 2, len(args))
+	require.Equal(t, "sally", args[0])
+	require.Equal(t, "top$ecret!", args[1])
+
+	// There should be only one sensitive value being tracked
+	require.Equal(t, []string{"top$ecret!"}, rm.GetSensitiveValues())
+}
+
 func TestManifest_ResolveBundleName(t *testing.T) {
 	cxt := context.NewTestContext(t)
 	m := &manifest.Manifest{

@@ -20,9 +20,9 @@ type GenerateCredentialsOptions struct {
 }
 
 // GenerateCredentials will generate a credential set based on the given options
-func GenerateCredentials(opts GenerateCredentialsOptions) (*credentials.CredentialSet, error) {
+func GenerateCredentials(opts GenerateCredentialsOptions) (credentials.CredentialSet, error) {
 	if opts.Name == "" {
-		return nil, errors.New("credentialset name is required")
+		return credentials.CredentialSet{}, errors.New("credentialset name is required")
 	}
 	generator := genSurvey
 	if opts.Silent {
@@ -30,15 +30,13 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (*credentials.Credenti
 	}
 	credSet, err := genCredentialSet(opts.Name, opts.Credentials, generator)
 	if err != nil {
-		return nil, err
+		return credentials.CredentialSet{}, err
 	}
-	return &credSet, nil
+	return credSet, nil
 }
 
 func genCredentialSet(name string, creds map[string]bundle.Credential, fn generator) (credentials.CredentialSet, error) {
-	cs := credentials.CredentialSet{
-		Name: name,
-	}
+	cs := credentials.NewCredentialSet(name)
 	cs.Credentials = []valuesource.Strategy{}
 
 	if strings.ContainsAny(name, "./\\") {

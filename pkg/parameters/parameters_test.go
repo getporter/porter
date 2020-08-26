@@ -56,57 +56,51 @@ func TestLoad(t *testing.T) {
 	})
 
 	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {
-		expected := &ParameterSet{}
-
 		pset, err := Load("testdata/paramset_bad.json")
 		require.EqualError(t, err,
 			"yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `myparam...` into parameters.ParameterSet")
-		require.Equal(t, expected, pset)
+		require.Empty(t, pset)
 	})
 
 	t.Run("successful load, successful unmarshal", func(t *testing.T) {
-		expected := &ParameterSet{
-			Name:     "mybun",
-			Created:  time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-			Modified: time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC),
-			Parameters: []valuesource.Strategy{
-				{
-					Name: "param_env",
-					Source: valuesource.Source{
-						Key:   "env",
-						Value: "PARAM_ENV",
-					},
-				},
-				{
-					Name: "param_value",
-					Source: valuesource.Source{
-						Key:   "value",
-						Value: "param_value",
-					},
-				},
-				{
-					Name: "param_command",
-					Source: valuesource.Source{
-						Key:   "command",
-						Value: "echo hello world",
-					},
-				},
-				{
-					Name: "param_path",
-					Source: valuesource.Source{
-						Key:   "path",
-						Value: "/path/to/param",
-					},
-				},
-				{
-					Name: "param_secret",
-					Source: valuesource.Source{
-						Key:   "secret",
-						Value: "param_secret",
-					},
+		expected := NewParameterSet("mybun",
+			valuesource.Strategy{
+				Name: "param_env",
+				Source: valuesource.Source{
+					Key:   "env",
+					Value: "PARAM_ENV",
 				},
 			},
-		}
+			valuesource.Strategy{
+				Name: "param_value",
+				Source: valuesource.Source{
+					Key:   "value",
+					Value: "param_value",
+				},
+			},
+			valuesource.Strategy{
+				Name: "param_command",
+				Source: valuesource.Source{
+					Key:   "command",
+					Value: "echo hello world",
+				},
+			},
+			valuesource.Strategy{
+				Name: "param_path",
+				Source: valuesource.Source{
+					Key:   "path",
+					Value: "/path/to/param",
+				},
+			},
+			valuesource.Strategy{
+				Name: "param_secret",
+				Source: valuesource.Source{
+					Key:   "secret",
+					Value: "param_secret",
+				},
+			})
+		expected.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
+		expected.Modified = expected.Created
 
 		pset, err := Load("testdata/paramset.json")
 		require.NoError(t, err)

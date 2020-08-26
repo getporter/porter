@@ -16,16 +16,21 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const (
+	defaultKubernetesClientVersion string = "v1.15.5"
+)
+
 type Mixin struct {
 	*context.Context
-
 	schemas *packr.Box
+	KubernetesClientVersion string
 }
 
 func New() *Mixin {
 	return &Mixin{
 		Context: context.New(),
 		schemas: NewSchemaBox(),
+		KubernetesClientVersion: defaultKubernetesClientVersion,
 	}
 }
 
@@ -95,9 +100,14 @@ func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string
 	}
 	cmd := m.NewCommand("kubectl", args...)
 	cmd.Stderr = m.Err
+
+	prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
+	if m.Debug {
+		fmt.Fprintln(m.Err, prettyCmd)
+	}
 	out, err := cmd.Output()
+
 	if err != nil {
-		prettyCmd := fmt.Sprintf("%s%s", cmd.Dir, strings.Join(cmd.Args, " "))
 		return nil, errors.Wrap(err, fmt.Sprintf("couldn't run command %s", prettyCmd))
 	}
 	return out, nil
