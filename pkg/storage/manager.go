@@ -514,7 +514,7 @@ func (m *Manager) migrateCredentials(w io.Writer) error {
 			continue
 		}
 
-		fmt.Fprintf(w, " - Migrating credential set %s to the new ...\n", cred.Name)
+		fmt.Fprintf(w, " - Migrating credential set %s to the new schema...\n", cred.Name)
 		cred.SchemaVersion = credentials.DefaultSchemaVersion
 
 		err = credStore.Save(cred)
