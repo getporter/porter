@@ -1,16 +1,16 @@
+## This section defines the metadata that defines the bundle. This includes the name of the generated
+## invocation image as well as the tag that will be applied to the bundle when it is published.
+
+name: azure-terraform
+version: 1.1.0
+description: "An example Porter Bundle using Terraform and Azure"
+tag: getporter/azure-terraform
+
 ## This section defines which Mixins will be used by the bundle.
 mixins:
   - arm
   - exec
   - terraform
-
-## This section defines the metadata that defines the bundle. This includes the name of the generated
-## invocation image as well as the tag that will be applied to the bundle when it is published.
-
-name: azure-terraform
-version: 1.0.0
-description: "An example Porter Bundle using Terraform and Azure"
-tag: getporter/azure-terraform
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
@@ -54,32 +54,28 @@ parameters:
     type: string
     default: "porter-terraform"
 
-  - name: tf_storage_account_key
-    type: string
-    applyTo:
-      - upgrade
-      - uninstall
-
 ## Here we designate outputs at the top level that we wish
 ## to see after an action has completed (via `porter installation outputs list`)
 ## and/or utilize in a subsequent action.
-## Note that currently, outputs don't persist across more than one action unless
-## all of the actions traversed (re-)state the output value.
 outputs:
-  - name: STORAGE_ACCOUNT_KEY
+  - name: storage_account_key
     type: string
     sensitive: true
     applyTo:
       - install
+
   - name: cosmos-db-uri
     type: string
     applyTo:
       - install
+      - upgrade
+
   - name: eventhubs_connection_string
     type: string
     sensitive: true
     applyTo:
       - install
+      - upgrade
 
 install:
   - arm:
@@ -93,14 +89,8 @@ install:
         storageAccountName: "{{ bundle.parameters.storage_account_name }}"
         storageContainerName: "{{ bundle.parameters.storage_container_name }}"
       outputs:
-      - name: "STORAGE_ACCOUNT_KEY"
-        key: "STORAGE_ACCOUNT_KEY"
-
-  - exec:
-      description: "Emit the key in base64 encoded form"
-      command: ./helpers.sh
-      arguments:
-        - "dump-account-key {{bundle.outputs.STORAGE_ACCOUNT_KEY}}"
+        - name: storage_account_key
+          key: storage_account_key
 
   - terraform:
       description: "Create Azure CosmosDB and Event Hubs"
@@ -109,7 +99,7 @@ install:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"
         container_name: "{{ bundle.parameters.storage_container_name }}"
-        access_key: "{{ bundle.outputs.STORAGE_ACCOUNT_KEY }}"
+        access_key: "{{ bundle.outputs.storage_account_key }}"
       vars:
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"
@@ -119,8 +109,8 @@ install:
         resource_group_name: "{{bundle.parameters.resource_group_name}}"
         resource_group_location: "{{bundle.parameters.location}}"
       outputs:
-      - name: cosmos-db-uri
-      - name: eventhubs_connection_string
+        - name: cosmos-db-uri
+        - name: eventhubs_connection_string
     
 upgrade:
   - terraform:
@@ -138,7 +128,10 @@ upgrade:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"
         container_name: "{{ bundle.parameters.storage_container_name }}"
-        access_key: "{{ bundle.parameters.tf_storage_account_key }}"
+        access_key: "{{ bundle.outputs.storage_account_key }}"
+      outputs:
+        - name: cosmos-db-uri
+        - name: eventhubs_connection_string
 
 uninstall:
   - terraform:
@@ -147,7 +140,7 @@ uninstall:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"
         container_name: "{{ bundle.parameters.storage_container_name }}"
-        access_key: "{{ bundle.parameters.tf_storage_account_key }}"
+        access_key: "{{ bundle.outputs.storage_account_key }}"
       vars:
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"

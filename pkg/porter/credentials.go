@@ -131,7 +131,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	cs.Created = time.Now()
 	cs.Modified = cs.Created
 
-	err = p.Credentials.Save(*cs)
+	err = p.Credentials.Save(cs)
 	return errors.Wrapf(err, "unable to save credentials")
 }
 

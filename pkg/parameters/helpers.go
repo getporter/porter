@@ -24,7 +24,7 @@ type TestParameterProvider struct {
 
 func NewTestParameterProvider(t *testing.T, tc *config.TestConfig) TestParameterProvider {
 	backingSecrets := inmemorysecrets.NewStore()
-	backingParams := crud.NewMockStore()
+	backingParams := crud.NewBackingStore(crud.NewMockStore())
 	paramStore := NewParameterStore(backingParams)
 	return TestParameterProvider{
 		T:           t,
@@ -43,7 +43,7 @@ func (p *TestParameterProvider) AddTestParameters(path string) {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
 	}
 
-	err = p.ParameterStorage.Save(*cs)
+	err = p.ParameterStorage.Save(cs)
 	if err != nil {
 		p.T.Fatal(errors.Wrap(err, "could not load test parameters into in memory parameter storage"))
 	}

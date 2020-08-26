@@ -137,7 +137,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 	pset.Created = time.Now()
 	pset.Modified = pset.Created
 
-	err = p.Parameters.Save(*pset)
+	err = p.Parameters.Save(pset)
 	return errors.Wrapf(err, "unable to save parameter set")
 }
 

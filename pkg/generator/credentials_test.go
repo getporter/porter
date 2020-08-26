@@ -19,7 +19,7 @@ func TestBadCredentialsName(t *testing.T) {
 
 	cs, err := GenerateCredentials(opts)
 	require.Error(t, err, "bad name should have resulted in an error")
-	require.Nil(t, cs, "credential set should have been empty")
+	require.Empty(t, cs, "credential set should have been empty")
 	require.EqualError(t, err, fmt.Sprintf("credentialset name '%s' cannot contain the following characters: './\\'", name))
 }
 
@@ -51,7 +51,6 @@ func TestGoodCredentialsName(t *testing.T) {
 
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "name should NOT have resulted in an error")
-	require.NotNil(t, cs, "credential set should have been empty and not nil")
 	require.Equal(t, 3, len(cs.Credentials), "should have had 3 entries")
 }
 
@@ -79,7 +78,7 @@ func TestEmptyCredentials(t *testing.T) {
 	}
 	cs, err := GenerateCredentials(opts)
 	require.NoError(t, err, "empty credentials should have generated an empty credential set")
-	require.NotNil(t, cs, "empty credentials should still return an empty credential set")
+	require.NotEmpty(t, cs, "empty credentials should still return an empty credential set")
 }
 
 func TestNoCredentialsName(t *testing.T) {
@@ -90,5 +89,5 @@ func TestNoCredentialsName(t *testing.T) {
 	}
 	cs, err := GenerateCredentials(opts)
 	require.Error(t, err, "expected an error because name is required")
-	require.Nil(t, cs, "credential set should have been empty")
+	require.Empty(t, cs, "credential set should have been empty")
 }

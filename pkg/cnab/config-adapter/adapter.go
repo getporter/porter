@@ -141,6 +141,9 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 	params := make(map[string]bundle.Parameter, len(c.Manifest.Parameters))
 
 	addParam := func(param manifest.ParameterDefinition) {
+		// Update ApplyTo per parameter definition and manifest
+		param.UpdateApplyTo(c.Manifest)
+
 		p := bundle.Parameter{
 			Definition:  param.Name,
 			ApplyTo:     param.ApplyTo,

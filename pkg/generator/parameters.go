@@ -8,7 +8,6 @@ import (
 
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/valuesource"
 )
 
 // GenerateParametersOptions are the options to generate a Parameter Set
@@ -20,9 +19,9 @@ type GenerateParametersOptions struct {
 }
 
 // GenerateParameters will generate a parameter set based on the given options
-func (opts *GenerateParametersOptions) GenerateParameters() (*parameters.ParameterSet, error) {
+func (opts *GenerateParametersOptions) GenerateParameters() (parameters.ParameterSet, error) {
 	if opts.Name == "" {
-		return nil, errors.New("parameter set name is required")
+		return parameters.ParameterSet{}, errors.New("parameter set name is required")
 	}
 	generator := genSurvey
 	if opts.Silent {
@@ -30,16 +29,13 @@ func (opts *GenerateParametersOptions) GenerateParameters() (*parameters.Paramet
 	}
 	pset, err := opts.genParameterSet(generator)
 	if err != nil {
-		return nil, err
+		return parameters.ParameterSet{}, err
 	}
-	return &pset, nil
+	return pset, nil
 }
 
 func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters.ParameterSet, error) {
-	pset := parameters.ParameterSet{
-		Name: opts.Name,
-	}
-	pset.Parameters = []valuesource.Strategy{}
+	pset := parameters.NewParameterSet(opts.Name)
 
 	if strings.ContainsAny(opts.Name, "./\\") {
 		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", opts.Name)

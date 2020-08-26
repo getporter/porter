@@ -258,11 +258,17 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	}
 
 	bun["outputs"] = m.outputs
-	// Iterate through the runtime manifest's step outputs and mask by default
-	for _, stepOutput := range m.outputs {
-		// TODO: check if output declared sensitive or not; currently we default always sensitive
+
+	// Iterate through the runtime manifest's step outputs and determine if we should mask
+	for name, val := range m.outputs {
+		// TODO: support configuring sensitivity for step outputs that aren't also bundle-level outputs
 		// See https://github.com/deislabs/porter/issues/855
-		m.setSensitiveValue(stepOutput)
+
+		// If step output is also a bundle-level output, defer to bundle-level output sensitivity
+		if outputDef, ok := m.Outputs[name]; ok && !outputDef.Sensitive {
+			continue
+		}
+		m.setSensitiveValue(val)
 	}
 
 	// Externally injected outputs (bundle level outputs and dependency outputs) are
@@ -320,6 +326,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 			case extensions.OutputParameterSource:
 				// Ignore anything that isn't templated, because that's what we are building the source data for
 				if _, isTemplated := templatedOutputs[ps.OutputName]; !isTemplated {
+					continue
+				}
+
+				// A bundle-level output may also be a step-level output
+				// If already set, do not override
+				if val, exists := m.outputs[ps.OutputName]; exists && val != "" {
 					continue
 				}
 
@@ -405,6 +417,9 @@ func (m *RuntimeManifest) Prepare() error {
 	// For parameters of type "file", we may need to decode files on the filesystem
 	// before execution of the step/action
 	for _, param := range m.Parameters {
+		// Update ApplyTo per parameter definition and manifest
+		param.UpdateApplyTo(m.Manifest)
+
 		if !param.AppliesTo(string(m.Action)) {
 			continue
 		}

@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -84,7 +87,73 @@ func (m *Manager) Close() error {
 }
 
 func (m *Manager) HandleConnect() (func() error, error) {
+	// Use our own HandleConnect, override other crud.Store methods
+	// so that we can call it instead of using the underlying datastore's connect.
 	return m.connMgr.HandleConnect()
+}
+
+func (m *Manager) GetDataStore() crud.Store {
+	return m.BackingStore
+}
+
+func (m *Manager) Count(itemType string, group string) (int, error) {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return 0, err
+	}
+
+	return m.BackingStore.Count(itemType, group)
+}
+
+func (m *Manager) List(itemType string, group string) ([]string, error) {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.BackingStore.List(itemType, group)
+}
+
+func (m *Manager) Save(itemType string, group string, name string, data []byte) error {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return err
+	}
+
+	return m.BackingStore.Save(itemType, group, name, data)
+}
+
+func (m *Manager) Read(itemType string, name string) ([]byte, error) {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.BackingStore.Read(itemType, name)
+}
+
+func (m *Manager) ReadAll(itemType string, group string) ([][]byte, error) {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.BackingStore.ReadAll(itemType, group)
+}
+
+func (m *Manager) Delete(itemType string, name string) error {
+	handleClose, err := m.HandleConnect()
+	defer handleClose()
+	if err != nil {
+		return err
+	}
+
+	return m.BackingStore.Delete(itemType, name)
 }
 
 // loadSchema parses the schema file at the root of PORTER_HOME. This file (when present) contains
@@ -93,7 +162,7 @@ func (m *Manager) loadSchema() error {
 	b, err := m.BackingStore.Read("", "schema")
 	if err != nil {
 		if strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
-			emptyHome, err := m.initEmptyPorterHome()
+			emptyHome, err := m.initEmptyPorterHome(ioutil.Discard)
 			if emptyHome {
 				// Return any errors from creating a schema document in an empty porter home directory
 				return err
@@ -112,12 +181,13 @@ func (m *Manager) loadSchema() error {
 
 // MigrationRequired determines if a migration of Porter's storage system is necessary.
 func (m *Manager) MigrationRequired() bool {
-	// TODO (carolynvs): Include credentials/parameters
-	return m.ShouldMigrateClaims()
+	return m.ShouldMigrateClaims() || m.ShouldMigrateCredentials() || m.ShouldMigrateParameters()
 }
 
 // Migrate executes a migration on any/all of Porter's storage sub-systems.
 func (m *Manager) Migrate() (string, error) {
+	m.resetSchema()
+
 	// Let us call connect and not have it kick us out because the schema is out-of-date
 	m.allowOutOfDateSchema = true
 	defer func() {
@@ -144,27 +214,49 @@ func (m *Manager) Migrate() (string, error) {
 	defer logfile.Close()
 	w := io.MultiWriter(m.Err, logfile)
 
+	var migrationErr *multierror.Error
 	if m.ShouldMigrateClaims() {
 		fmt.Fprintf(w, "Claims schema is out-of-date (want: %s got: %s)\n", claim.CNABSpecVersion, m.schema.Claims)
 		err = m.migrateClaims(w)
-		if err != nil {
-			// Print the error and continue
-			fmt.Fprintln(w, err)
-		}
+		migrationErr = multierror.Append(migrationErr, err)
 	} else {
 		fmt.Fprintln(w, "Claims schema is up-to-date")
 	}
 
-	fmt.Fprintf(w, "\nSaved migration logs to %s\n", logfilePath)
+	if m.ShouldMigrateCredentials() {
+		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", credentials.CNABSpecVersion, m.schema.Credentials)
+		err = m.migrateCredentials(w)
+		migrationErr = multierror.Append(migrationErr, err)
+	} else {
+		fmt.Fprintln(w, "Credentials schema is up-to-date")
+	}
 
-	// TODO (carolynvs): migrate credentials
-	return logfilePath, nil
+	if m.ShouldMigrateParameters() {
+		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", ParameterSetCNABSpecVersion, m.schema.Parameters)
+		err = m.migrateParameters(w)
+		migrationErr = multierror.Append(migrationErr, err)
+	} else {
+		fmt.Fprintln(w, "Parameters schema is up-to-date")
+	}
+
+	if migrationErr.ErrorOrNil() == nil {
+		err = m.writeSchema(w)
+		migrationErr = multierror.Append(migrationErr, err)
+	}
+
+	return logfilePath, migrationErr.ErrorOrNil()
+}
+
+// resetSchema allows us to relook at our schema.json even after its been read.
+func (m *Manager) resetSchema() {
+	m.schema = Schema{}
+	m.schemaLoaded = false
 }
 
 // When there is no schema, and no existing storage data, create an initial
 // schema file and allow the operation to continue. Don't require a
 // migration.
-func (m *Manager) initEmptyPorterHome() (bool, error) {
+func (m *Manager) initEmptyPorterHome(w io.Writer) (bool, error) {
 	if m.schema != (Schema{}) {
 		return false, nil
 	}
@@ -193,7 +285,7 @@ func (m *Manager) initEmptyPorterHome() (bool, error) {
 		return false, err
 	}
 
-	return true, m.writeSchema()
+	return true, m.writeSchema(w)
 }
 
 // ShouldMigrateClaims determines if the claims storage system requires a migration.
@@ -201,41 +293,32 @@ func (m *Manager) ShouldMigrateClaims() bool {
 	return string(m.schema.Claims) != claim.CNABSpecVersion
 }
 
-// ShouldMigrateCredentials determines if the credentials storage system requires a migration.
-func (m *Manager) ShouldMigrateCredentials() bool {
-	// TODO (carolynvs): This isn't in cnab-go and param sets aren't in the spec...
-	return false
-}
-
 func (m *Manager) migrateClaims(w io.Writer) error {
-	fmt.Fprint(w, "!!! Migrating claims data to match the CNAB Claim spec https://cdn.cnab.io/schema/cnab-claim-1.0.0-DRAFT+b5ed2f3/claim.schema.json. This is a one-way migration !!!\n")
+	fmt.Fprintln(w, "Migrating claims data to match the CNAB Claim spec https://cdn.cnab.io/schema/cnab-claim-1.0.0-DRAFT+b5ed2f3/claim.schema.json. This is a one-way migration.")
 
 	installationNames, err := m.BackingStore.List(claim.ItemTypeClaims, "")
 	if err != nil {
-		return errors.Wrapf(err, "!!! Migration failed, unable to list installation names")
+		return errors.Wrapf(err, "Migration failed, unable to list installation names")
 	}
 
+	var migrationErr *multierror.Error
 	for _, installationName := range installationNames {
 		err = m.migrateInstallation(w, installationName)
 		if err != nil {
 			fmt.Fprintf(w, errors.Wrapf(err, "Error migrating installation %s. Skipping.\n", installationName).Error())
+			migrationErr = multierror.Append(migrationErr, err)
 		}
 	}
 
-	err = m.writeSchema()
-	if err != nil {
-		return errors.Wrap(err, "!!! Migration failed")
-	}
-
-	fmt.Fprintf(w, "!!! Migration complete !!!\n")
-	return nil
+	return migrationErr.ErrorOrNil()
 }
 
 // writeSchema updates the schema with the most recent version then writes it to disk.
-func (m *Manager) writeSchema() error {
+func (m *Manager) writeSchema(w io.Writer) error {
 	m.schema = Schema{
 		Claims:      schema.Version(claim.CNABSpecVersion),
-		Credentials: schema.Version("cnab-credentials-1.0.0-DRAFT-b6c701f"),
+		Credentials: schema.Version(credentials.CNABSpecVersion),
+		Parameters:  schema.Version(ParameterSetCNABSpecVersion),
 	}
 	schemaB, err := json.Marshal(m.schema)
 	if err != nil {
@@ -243,7 +326,12 @@ func (m *Manager) writeSchema() error {
 	}
 
 	err = m.BackingStore.Save("", "", "schema", schemaB)
-	return errors.Wrap(err, "Unable to save storage schema file")
+	if err != nil {
+		errors.Wrap(err, "Unable to save storage schema file")
+	}
+
+	fmt.Fprintln(w, "Wrote updated schema.json to storage")
+	return nil
 }
 
 // migrateInstallation moves the data from the older claim schema into the new format.
@@ -266,7 +354,7 @@ func (m *Manager) writeSchema() error {
 //    - RESULTID/
 //        - RESULTID-OUTPUTNAME
 func (m *Manager) migrateInstallation(w io.Writer, name string) error {
-	fmt.Fprintf(w, " - Migrating claim %s to the new claim layout...\n", name)
+	fmt.Fprintf(w, " - Migrating claim %s to the new schema...\n", name)
 
 	oldClaimData, err := m.BackingStore.Read(claim.ItemTypeClaims, name)
 	if err != nil {
@@ -402,6 +490,103 @@ func (m *Manager) migrateUnversionedClaim(w io.Writer, name string, data []byte)
 	}
 
 	return data, nil
+}
+
+// ShouldMigrateCredentials determines if the credentials storage system requires a migration.
+func (m *Manager) ShouldMigrateCredentials() bool {
+	return string(m.schema.Credentials) != credentials.CNABSpecVersion
+}
+
+func (m *Manager) migrateCredentials(w io.Writer) error {
+	// Ensure all credentials have a schemaVersion set
+	fmt.Fprintln(w, "Migrating credential set data to match the CNAB Credential Set spec https://github.com/cnabio/cnab-spec/blob/cnab-credentialsets-1.0.0-DRAFT+b6c701f/802-credential-sets.md. This is a one-way migration.")
+
+	credStore := credentials.NewCredentialStore(m)
+	creds, err := credStore.ReadAll()
+	if err != nil {
+		return errors.Wrapf(err, "Migration failed, unable to read all credentials")
+	}
+
+	var migrationErr *multierror.Error
+	for _, cred := range creds {
+		// Set a schema version on credentials that don't have it yet
+		if cred.SchemaVersion != "" {
+			continue
+		}
+
+		fmt.Fprintf(w, " - Migrating credential set %s to the new schema...\n", cred.Name)
+		cred.SchemaVersion = credentials.DefaultSchemaVersion
+
+		err = credStore.Save(cred)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot save migrated credential set %s. Skipping.", cred.Name))
+		}
+	}
+
+	return migrationErr.ErrorOrNil()
+}
+
+// TODO (carolynvs): Replace with cnab-go's const when this moves to cnab-go
+const (
+	ParameterSetDefaultSchemaVersion schema.Version = "1.0.0-DRAFT+TODO"
+	ParameterSetCNABSpecVersion      string         = "cnab-parametersets-" + string(ParameterSetDefaultSchemaVersion)
+)
+
+// ShouldMigrateParameters determines if the parameters storage system requires a migration.
+func (m *Manager) ShouldMigrateParameters() bool {
+	// Can't reference parameters.CNABSpecVersion because it causes a circular dependency
+	// It will be resolved when parametersets move to cnab-go
+	return string(m.schema.Parameters) != ParameterSetCNABSpecVersion
+}
+
+func (m *Manager) migrateParameters(w io.Writer) error {
+	// Ensure all parameters have a schemaVersion set
+	// TODO (carolynvs): Update this with a link to the spec once we have it
+	fmt.Fprintln(w, "Migrating parameter set data to match the CNAB Parameter Set spec TODO. This is a one-way migration.")
+
+	// TODO (carolynvs): Use typed parameter store when it has moved to cnab-go. It causes a circular dependency at the moment.
+	names, err := m.BackingStore.List("parameters", "")
+	if err != nil {
+		return errors.Wrapf(err, "Migration failed, unable to read all credentials")
+	}
+
+	var migrationErr *multierror.Error
+	for _, name := range names {
+		paramB, err := m.BackingStore.Read("parameters", name)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot read parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		param := map[string]interface{}{}
+		err = json.Unmarshal(paramB, &param)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot parse parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		// Set a schema version on credentials that don't have it yet
+		if _, ok := param["schemaVersion"]; ok {
+			continue
+		}
+
+		fmt.Fprintf(w, " - Migrating parameter set %s to the new schema...\n", name)
+		param["schemaVersion"] = ParameterSetDefaultSchemaVersion
+
+		paramB, err = json.Marshal(param)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot marshal parameter set %s to migrate it. Skipping.", name))
+			continue
+		}
+
+		err = m.BackingStore.Save("parameters", "", name, paramB)
+		if err != nil {
+			migrationErr = multierror.Append(migrationErr, errors.Wrapf(err, "Cannot save migrated parameter set %s. Skipping.", name))
+			continue
+		}
+	}
+
+	return migrationErr.ErrorOrNil()
 }
 
 // getSchemaVersion attempts to read the schemaVersion stamped on a document.

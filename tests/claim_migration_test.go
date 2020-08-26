@@ -30,7 +30,7 @@ func TestClaimMigration_List(t *testing.T) {
 
 	// Create unmigrated claim data
 	p.FileSystem.Mkdir(claimsDir, 0755)
-	p.AddTestFile(filepath.Join("../pkg/storage/testdata", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	p.AddTestFile(filepath.Join("../pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 
 	err = p.MigrateStorage()
 	require.NoError(t, err, "MigrateStorage failed")

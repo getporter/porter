@@ -9,7 +9,7 @@ mixins:
 outputs:
   - name: user-output
     type: string
-    sensitive: true
+    sensitive: false
     applyTo:
       - upgrade
 
@@ -40,11 +40,14 @@ upgrade:
         - name: user-output
           jsonPath: '$.user'
   # This step tests successful interpolation of a bundle-level output in the same action
+  # Note: this assertion is placed in the bundle itself as docker driver output still goes directly
+  # to stdout, hence we can't yet capture it in the integration test output
+  # https://github.com/cnabio/cnab-go/issues/78
   - exec:
-      description: "Echo bundle-level output in same action as it was produced"
+      description: "Validate bundle-level output value in the same action as it was produced"
       command: ./helpers.sh
       arguments:
-        - "dump {{ bundle.outputs.user-output }}"
+        - "assert-output-value {{ bundle.outputs.user-output }} 'sally'"
 
 uninstall:
   # This step tests successful interpolation of a bundle-level output across actions  

@@ -39,6 +39,36 @@ The Azure plugin stores files in Azure Blob Storage. You should also backup
 the container named "porter" in the storage account in addition to backing
 up Porter home on your local file system.
 
+Versions v0.9.0+ of the Azure plugin requires that the blob storage account
+has the Blob Index preview enabled on the account. [Only certain regions support
+the Blob Index preview, and you must run a command to enable it on your
+account][blob-preview].
+
+At the time of the v0.28.0 Porter release, only the following Azure regions
+support the Blob Index preview. If your current storage account is
+in another region, you can create a new account in one of the regions 
+below and copy the container to the new account.
+
+* Canada Central
+* Canada East
+* France Central
+* France South
+
+The following az cli command enables the Blob Index preview on your account (it
+can take up to 10 minutes for this command to propagate):
+
+```
+az feature register --namespace Microsoft.Storage --name BlobIndex
+az provider register --namespace 'Microsoft.Storage'
+```
+
+After you have created a new account an appropriate region and enabled the
+Blob Index preview, you can use azcopy to [copy the porter container to a new
+storage account][azcopy-container].
+
+[blob-preview]: https://docs.microsoft.com/en-us/azure/storage/blobs/storage-manage-find-blobs?tabs=azure-portal#regional-availability-and-storage-account-support
+[azcopy-container]: https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-blobs#copy-a-container-to-another-storage-account
+ 
 ## Migrate
 
 Once you have completed a backup of Porter's data, you are ready to run the migration
