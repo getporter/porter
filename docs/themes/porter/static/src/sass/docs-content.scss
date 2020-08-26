@@ -48,22 +48,17 @@
       margin-bottom: 1.925rem;
       padding-right: 7.5%;
     }
-
-    a {
-      padding-left: 0.25em;
-      padding-right: 0.25em;
-    }
   }
 
   a {
     color: darken($blue3, 7.5%);
-    background-color: #f6fbfe;
+    background: white;
     @include transition;
 
     &:hover {
       color: darken($blue2, 5%);
       border-bottom: 2px solid $blue1;
-      background: white;
+      background-color: #f6fbfe;
     }
   }
 
@@ -144,6 +139,14 @@
     font-size: $scalex5;
   }
 
+  blockquote {
+    p {
+      &:first-child {
+        color: $grey3;
+      }
+    }
+  }
+
   p {
     color: $grey4;
     line-height: 1.725;
@@ -156,11 +159,6 @@
       line-height: 1.636;
       margin-bottom: 1.925rem;
       padding-right: 7.5%;
-    }
-
-    a {
-      padding-left: 0.25em;
-      padding-right: 0.25em;
     }
   }
 
@@ -238,13 +236,13 @@
 
   a {
     color: darken($blue3, 7.5%);
-    background-color: #f6fbfe;
+    background: white;    
     @include transition;
 
     &:hover {
       color: darken($blue2, 5%);
       border-bottom: 2px solid $blue1;
-      background: white;
+      background-color: #f6fbfe;
     }
   }
 
