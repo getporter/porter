@@ -86,10 +86,7 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 
 	m, err := LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
-
 	assert.NotNil(t, m)
-	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins)
-	assert.Len(t, m.Install, 1)
 
 	nginxDep := m.Dependencies[0]
 	assert.Equal(t, "nginx", nginxDep.Name)

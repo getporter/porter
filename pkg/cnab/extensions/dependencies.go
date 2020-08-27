@@ -57,19 +57,19 @@ type DependencyVersion struct {
 // ReadDependencies is a convenience method for returning a bonafide
 // Dependencies reference after reading from the applicable section from
 // the provided bundle
-func ReadDependencies(bun bundle.Bundle) ([]Dependency, error) {
+func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
 	raw, err := DependencyReader(bun)
 	if err != nil {
-		return []Dependency{}, err
+		return Dependencies{}, err
 	}
 
 	deps, ok := raw.(Dependencies)
 	if !ok {
-		return []Dependency{}, errors.New("unable to read dependencies extension data")
+		return Dependencies{}, errors.New("unable to read dependencies extension data")
 	}
 
 	// Return the dependencies
-	return deps.ListBySequence(), nil
+	return deps, nil
 }
 
 // DependencyReader is a Reader for the DependenciesExtension, which reads
@@ -101,7 +101,6 @@ func HasDependencies(bun bundle.Bundle) bool {
 	return ok
 }
 
-
 // ListBySequence returns the dependencies by the defined sequence,
 // if none is specified, they are unsorted.
 func (d Dependencies) ListBySequence() []Dependency {
@@ -120,6 +119,7 @@ func (d Dependencies) ListBySequence() []Dependency {
 	}
 	return deps
 }
+
 // BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
 func BuildPrerequisiteInstallationName(installation string, dependency string) string {
 	return fmt.Sprintf("%s-%s", installation, dependency)

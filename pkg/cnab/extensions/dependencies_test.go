@@ -17,20 +17,21 @@ func TestReadDependencyProperties(t *testing.T) {
 	require.NoError(t, err, "could not unmarshal the bundle")
 	assert.True(t, HasDependencies(*bun))
 
-	deps, err := ReadDependencies(*bun)
+	rawDeps, err := ReadDependencies(*bun)
+	assert.NotNil(t, rawDeps, "Dependencies was not populated")
 
-	assert.NotNil(t, deps, "Dependencies was not populated")
-	assert.Len(t, deps, 2, "Dependencies.Requires is the wrong length")
+	orderedDeps := rawDeps.ListBySequence()
+	assert.Len(t, orderedDeps, 2, "Dependencies.Requires is the wrong length")
 
-	for _, dep := range deps {
-		if dep.Name == "storage" {
-			assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "Dependency.Bundle is incorrect")
-			assert.Nil(t, dep.Version, "Dependency.Version should be nil")
+	for i, sequence := range rawDeps.Sequence {
+		if orderedDeps[i].Name == sequence {
+			assert.Equal(t, "somecloud/blob-storage", orderedDeps[i].Bundle, "Dependency.Bundle is incorrect")
+			assert.Nil(t, orderedDeps[i].Version, "Dependency.Version should be nil")
 
-		} else if dep.Name == "mysql" {
-			assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
-			assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
-			assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
+		} else if orderedDeps[i].Name == sequence {
+			assert.Equal(t, "somecloud/mysql", orderedDeps[i].Bundle, "Dependency.Bundle is incorrect")
+			assert.True(t, orderedDeps[i].Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
+			assert.Equal(t, []string{"5.7.x"}, orderedDeps[i].Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
 		}
 	}
 
@@ -65,7 +66,9 @@ func TestDependencies_ListBySequence(t *testing.T) {
 		},
 	}
 
-	orderedDeps, err := ReadDependencies(bun)
+	rawDeps, err := ReadDependencies(bun)
+	orderedDeps := rawDeps.ListBySequence()
+
 	require.NoError(t, err, "unable to read dependencies extension data")
 
 	assert.NotNil(t, orderedDeps, "Dependencies was not populated")

@@ -23,13 +23,16 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 		return nil, nil
 	}
 
-	deps, err := ReadDependencies(bun)
+	rawDeps, err := ReadDependencies(bun)
+	// We need make sure the Dependencies are ordered by the desired sequence
+	orderedDeps := rawDeps.ListBySequence()
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
 	}
 
-	q := make([]DependencyLock, 0, len(deps))
-	for _, dep := range deps {
+	q := make([]DependencyLock, 0, len(orderedDeps))
+	for _, dep := range orderedDeps {
 		ref, err := s.ResolveVersion(dep.Name, dep)
 		if err != nil {
 			return nil, err
