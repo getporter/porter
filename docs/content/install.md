@@ -3,18 +3,23 @@ title: Install Porter
 description: Installing the Porter client and mixins
 ---
 
+> Join our [mailing list] for announcements of releases and announcements of new features.
+> Connect with other Porter users and contributors on [Slack].
+
 We have a few release types available for you to use:
 
 * [Latest](#latest)
 * [Canary](#canary)
 * [Older Version](#older-version)
 
-You can also install and manage [mixins](#mixins) using porter,
-and use the [Porter VS Code Extension][vscode-ext] for help
-authoring bundles. 
+You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
+porter, and use the [Porter VS Code Extension][vscode-ext] for help authoring
+bundles.
 
 [vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
 [ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
+[mailing list]: https://groups.io/g/porter
+[Slack]: /community/#slack
 
 # Latest
 
