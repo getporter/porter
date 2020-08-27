@@ -17,23 +17,21 @@ func TestReadDependencyProperties(t *testing.T) {
 	require.NoError(t, err, "could not unmarshal the bundle")
 	assert.True(t, HasDependencies(*bun))
 
-	rawDeps, err := ReadDependencies(*bun)
-	assert.NotNil(t, rawDeps, "Dependencies was not populated")
+	deps, err := ReadDependencies(*bun)
 
-	orderedDeps := rawDeps.ListBySequence()
-	assert.Len(t, orderedDeps, 2, "Dependencies.Requires is the wrong length")
+	assert.NotNil(t, deps, "Dependencies was not populated")
+	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")
 
-	for i, sequence := range rawDeps.Sequence {
-		if orderedDeps[i].Name == sequence {
-			assert.Equal(t, "somecloud/blob-storage", orderedDeps[i].Bundle, "Dependency.Bundle is incorrect")
-			assert.Nil(t, orderedDeps[i].Version, "Dependency.Version should be nil")
+	dep := deps.Requires["storage"]
+	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'storage'")
+	assert.Equal(t, "somecloud/blob-storage", dep.Bundle, "Dependency.Bundle is incorrect")
+	assert.Nil(t, dep.Version, "Dependency.Version should be nil")
 
-		} else if orderedDeps[i].Name == sequence {
-			assert.Equal(t, "somecloud/mysql", orderedDeps[i].Bundle, "Dependency.Bundle is incorrect")
-			assert.True(t, orderedDeps[i].Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
-			assert.Equal(t, []string{"5.7.x"}, orderedDeps[i].Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
-		}
-	}
+	dep = deps.Requires["mysql"]
+	assert.NotNil(t, dep, "expected Dependencies.Requires to have an entry for 'mysql'")
+	assert.Equal(t, "somecloud/mysql", dep.Bundle, "Dependency.Bundle is incorrect")
+	assert.True(t, dep.Version.AllowPrereleases, "Dependency.Bundle.Version.AllowPrereleases should be true")
+	assert.Equal(t, []string{"5.7.x"}, dep.Version.Ranges, "Dependency.Bundle.Version.Ranges is incorrect")
 
 }
 
