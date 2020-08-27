@@ -77,7 +77,7 @@ func (flags *Flags) ToSlice(dashes Dashes) []string {
 //
 // []Flags{ {"flag1", []string{"value"}}, {"flag2", []string{"value"}}, {"flag3", []string{"value1", "value2"} }
 func (flags *Flags) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	flagMap := map[interface{}]interface{}{}
+	flagMap := map[string]interface{}{}
 	err := unmarshal(&flagMap)
 	if err != nil {
 		return errors.Wrap(err, "could not unmarshal yaml into Step.Flags")
@@ -86,7 +86,7 @@ func (flags *Flags) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*flags = make(Flags, 0, len(flagMap))
 	for k, v := range flagMap {
 		f := Flag{}
-		f.Name = k.(string)
+		f.Name = k
 
 		switch t := v.(type) {
 		case []interface{}:
