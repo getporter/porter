@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -68,6 +69,11 @@ func (s SortPrintableOutput) Less(i, j int) bool {
 
 func (s SortPrintableOutput) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
+}
+
+type Dependencies struct {
+	Sequence []string
+	Requires map[string]interface{}
 }
 
 type PrintableDependency struct {
@@ -269,11 +275,25 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	}
 	sort.Sort(SortPrintableOutput(outputs))
 
+	dependencies := []PrintableDependency{}
+	// depsDefinition, err := DependencyReader(bun)
+	// bun.Custom["io.cnab.dependencies"]
+	// for _, _ := range depsDefinition.Requires {
+
+	// 	pp := PrintableDependency{}
+	// 	//pp.Name = dep
+	// 	// pp.Version = v["Version"]
+	// 	// pp.Description = v.Description
+
+	// 	dependencies = append(dependencies, pp)
+	// }
+	sort.Sort(SortPrintableDependency(dependencies))
+
 	pb.Actions = actions
 	pb.Credentials = creds
 	pb.Outputs = outputs
 	pb.Parameters = params
-
+	pb.Dependencies = dependencies
 	return &pb, nil
 }
 
@@ -295,7 +315,7 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	p.printParametersExplainBlock(bun)
 	p.printOutputsExplainBlock(bun)
 	p.printActionsExplainBlock(bun)
-
+	p.printDependenciesExplainBlock(bun)
 	return nil
 }
 
@@ -426,4 +446,20 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			return []interface{}{o.Name, o.Description, o.Version}
 		}
 	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Name", "Description", "Version")
+}
+
+// DependencyReader is a Reader for the DependenciesExtension, which reads
+// from the applicable section in the provided bundle and returns a the raw
+// data in the form of an interface
+func DependencyReader(bun bundle.Bundle) (Dependencies, error) {
+	data, _ := bun.Custom["io.cnab.dependencies"]
+
+	dataB, _ := json.Marshal(data)
+
+	deps := Dependencies{}
+	err := json.Unmarshal(dataB, &deps)
+	if err != nil {
+		return deps, err
+	}
+	return deps, nil
 }
