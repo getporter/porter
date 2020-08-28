@@ -71,15 +71,15 @@
         "name": {
           "type": "string"
         },
-        "tag": {
-          "type": "string"
-        },
         "parameters": {
           "type": "object"
+        },
+        "tag": {
+          "type": "string"
         }
       },
       "required": [
-        "name", 
+        "name",
         "tag"
       ],
       "type": "object"
