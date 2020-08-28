@@ -117,8 +117,11 @@
       "type": "object"
     },
     "dependency": {
-      "type": "object",
+      "additionalProperties": false,
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "tag": {
           "type": "string"
         },
@@ -126,8 +129,11 @@
           "type": "object"
         }
       },
-      "required": ["tag"],
-      "additionalProperties": false
+      "required": [
+        "name", 
+        "tag"
+      ],
+      "type": "object"
     },
     "customAction": {
       "type": "object",
@@ -241,11 +247,11 @@
       "description": "Parameters that can be injected into the invocation image"
     },
     "dependencies": {
-      "additionalProperties": {
+      "description": "Dependent bundles that must be executed with the bundle",
+      "items": {
         "$ref": "#/definitions/dependency"
       },
-      "description": "Dependent bundles that must be executed with the bundle",
-      "type": "object"
+      "type": "array"
     },
     "required": {
       "description": "Required extensions for this bundle",

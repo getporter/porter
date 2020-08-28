@@ -68,6 +68,9 @@
     "dependency": {
       "additionalProperties": false,
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "parameters": {
           "type": "object"
         },
@@ -76,6 +79,7 @@
         }
       },
       "required": [
+        "name",
         "tag"
       ],
       "type": "object"
@@ -385,11 +389,11 @@
       "type": "object"
     },
     "dependencies": {
-      "additionalProperties": {
+      "description": "Dependent bundles that must be executed with the bundle",
+      "items": {
         "$ref": "#/definitions/dependency"
       },
-      "description": "Dependent bundles that must be executed with the bundle",
-      "type": "object"
+      "type": "array"
     },
     "description": {
       "description": "A description of the bundle",
