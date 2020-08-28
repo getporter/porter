@@ -66,19 +66,20 @@
       "type": "object"
     },
     "dependency": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
-        "parameters": {
-          "type": "object"
+        "name": {
+          "type": "string"
         },
         "tag": {
           "type": "string"
+        },
+        "parameters": {
+          "type": "object"
         }
       },
-      "required": [
-        "tag"
-      ],
-      "type": "object"
+      "required": ["name", "tag"],
+      "additionalProperties": true
     },
     "image": {
       "additionalProperties": false,
@@ -385,11 +386,11 @@
       "type": "object"
     },
     "dependencies": {
-      "additionalProperties": {
+      "type": "array",
+      "items": {
         "$ref": "#/definitions/dependency"
       },
-      "description": "Dependent bundles that must be executed with the bundle",
-      "type": "object"
+      "description": "Dependent bundles that must be executed with the bundle"
     },
     "description": {
       "description": "A description of the bundle",

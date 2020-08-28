@@ -130,7 +130,7 @@
         }
       },
       "required": ["name", "tag"],
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "customAction": {
       "type": "object",
