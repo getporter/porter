@@ -38,3 +38,5 @@ uninstall:
 outputs:
   - name: IP_ADDRESS
     type: string
+    applyTo:
+      - install
