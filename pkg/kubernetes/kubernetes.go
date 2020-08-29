@@ -4,9 +4,14 @@ package kubernetes
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
@@ -36,6 +41,25 @@ func New() *Mixin {
 
 func NewSchemaBox() *packr.Box {
 	return packr.New("get.porter.sh/porter/pkg/kubernetes/schema", "./schema")
+}
+
+func (m *Mixin) Init() error {
+	apiServerVersion, err := getKubectlApiServerVersion(m)
+
+	if err != nil {
+		return err
+	}
+
+	if m.KubernetesClientVersion != apiServerVersion {
+		fmt.Fprintf(m.Out, "Kubectl api server version (%s) does not match client version (%s); downloading a compatible client.\n",
+			apiServerVersion, m.KubernetesClientVersion)
+
+		err := installKubectlClient(m, apiServerVersion)
+		if err != nil {
+			return errors.Wrap(err, "unable to install a compatible kubectl client")
+		}
+	}
+	return err
 }
 
 func (m *Mixin) getCommandFile(commandFile string, w io.Writer) ([]byte, error) {
@@ -131,4 +155,63 @@ func (m *Mixin) handleOutputs(outputs []KubernetesOutput) error {
 		}
 	}
 	return nil
+}
+
+func installKubectlClient(m *Mixin, version string) error {
+
+	url := fmt.Sprintf("https://storage.googleapis.com/kubernetes-release/release/%s/bin/linux/amd64/kubectl", version)
+
+	// Fetch archive from url
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to construct GET request for fetching kubectl client binary")
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.Wrapf(err, "failed to download kubectl client binary via url: %s", url)
+	}
+	defer res.Body.Close()
+
+	// Create a temp dir
+	tmpDir, err := m.FileSystem.TempDir("", "tmp")
+	if err != nil {
+		return errors.Wrap(err, "unable to create a temporary directory for downloading the kubectl client binary")
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create the local archive
+	kubectlBinPath, err := m.FileSystem.Create(filepath.Join(tmpDir, "kubectl"))
+	if err != nil {
+		return errors.Wrap(err, "unable to create a local file for the kubectl client binary")
+	}
+
+	// Copy response body to local archive
+	_, err = io.Copy(kubectlBinPath, res.Body)
+	if err != nil {
+		return errors.Wrap(err, "unable to copy the kubectl client binary to the local archive file")
+	}
+
+	// Move the kubectl binary into the appropriate location
+	binPath := "/usr/local/bin/kubectl"
+	err = m.FileSystem.Rename(fmt.Sprintf("%s", kubectlBinPath), binPath)
+	if err != nil {
+		return errors.Wrapf(err, "unable to install the kubectl client binary to %q", binPath)
+	}
+	return nil
+}
+
+func getKubectlApiServerVersion(m *Mixin) (string, error) {
+	var stderr bytes.Buffer
+
+	cmd := m.NewCommand("kubectl", "api-versions")
+	cmd.Stderr = &stderr
+
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to determine kubernetes api server version: %s", stderr.String())
+	}
+	re := regexp.MustCompile(`v[0-9]*\.[0-9]*\.[0-9]*`)
+	version := re.FindString(string(outputBytes))
+
+	return version, nil
 }
