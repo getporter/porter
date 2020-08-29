@@ -22,14 +22,14 @@ const (
 
 type Mixin struct {
 	*context.Context
-	schemas *packr.Box
+	schemas                 *packr.Box
 	KubernetesClientVersion string
 }
 
 func New() *Mixin {
 	return &Mixin{
-		Context: context.New(),
-		schemas: NewSchemaBox(),
+		Context:                 context.New(),
+		schemas:                 NewSchemaBox(),
 		KubernetesClientVersion: defaultKubernetesClientVersion,
 	}
 }
@@ -94,7 +94,7 @@ func (m *Mixin) ValidatePayload(b []byte) error {
 
 func (m *Mixin) getOutput(resourceType, resourceName, namespace, jsonPath string) ([]byte, error) {
 	args := []string{"get", resourceType, resourceName}
-	args = append(args, fmt.Sprintf("-o=jsonpath='%s'", jsonPath))
+	args = append(args, fmt.Sprintf("-o=jsonpath=%s", jsonPath))
 	if namespace != "" {
 		args = append(args, fmt.Sprintf("--namespace=%s", namespace))
 	}

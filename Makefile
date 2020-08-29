@@ -86,7 +86,7 @@ test-unit:
 
 test-integration: clean-last-testrun build start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
-	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 20m -tags=integration ./...
+	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
 
 test-cli: clean-last-testrun build init-porter-home-for-ci start-local-docker-registry
 	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
