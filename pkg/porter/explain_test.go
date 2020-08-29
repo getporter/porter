@@ -260,50 +260,36 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 }
 
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
+
+	sequenceMock := []string{"nginx", "storage", "mysql"}
 	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
-			extensions.DependenciesKey: "io.cnab.dependencies",
+			extensions.DependenciesKey: extensions.Dependencies{
+				Sequence: sequenceMock,
+				Requires: map[string]extensions.Dependency{
+					"mysql": extensions.Dependency{
+						Name:   "mysql",
+						Bundle: "somecloud/mysql:0.1.0",
+					},
+					"storage": extensions.Dependency{
+						Name:   "storage",
+						Bundle: "localhost:5000/blob-storage:0.1.0",
+					},
+					"nginx": extensions.Dependency{
+						Name:   "nginx",
+						Bundle: "localhost:5000/nginx:1.19",
+					},
+				},
+			},
 		},
-		RequiredExtensions: []string{extensions.DependenciesKey},
 	}
-	pb, err := generatePrintable(bun)
+
+	pd, err := generatePrintable(bun)
 	assert.NoError(t, err)
-	assert.NotNil(t, pb)
-	// bun := bundle.Bundle{
-
-	// 	Custom: map[string]interface{}{
-	// 		"io.cnab.dependencies": []interface{}{
-	// 			"Sequence": []string{"nginx", "storage", "mysql"},
-	// 			"Requires": map[string]interface{}{
-	// 				"mysql": {
-	// 					Name:   "mysql",
-	// 					Bundle: "somecloud/mysql",
-	// 					Version: &DependencyVersion{
-	// 						AllowPrereleases: true,
-	// 						Ranges:           []string{"5.7.x"},
-	// 					},
-	// 				},
-	// 				"storage": {
-	// 					Name:   "storage",
-	// 					Bundle: "somecloud/blob-storage",
-	// 				},
-	// 				"nginx": {
-	// 					Name:   "nginx",
-	// 					Bundle: "localhost:5000/nginx:1.19",
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-
-	// pb, err := generatePrintable(bun)
-	// assert.NoError(t, err)
-
-	// assert.Equal(t, 1, len(pb.Credentials))
-	// d := pb.Credentials[0]
-	// assert.True(t, d.Required)
-	// assert.Equal(t, "a cred", d.Description)
-	// assert.Equal(t, 0, len(pb.Parameters))
-	// assert.Equal(t, 0, len(pb.Outputs))
-	// assert.Equal(t, 0, len(pb.Actions))
+	assert.Equal(t, 3, len(pd.Dependencies))
+	assert.Equal(t, 0, len(pd.Parameters))
+	assert.Equal(t, 0, len(pd.Outputs))
+	assert.Equal(t, 0, len(pd.Actions))
+	assert.Equal(t, "nginx", pd.Dependencies[0].Alias)
+	assert.Equal(t, "somecloud/mysql:0.1.0", pd.Dependencies[2].Tag)
 }

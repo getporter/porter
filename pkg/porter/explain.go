@@ -1,11 +1,11 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
@@ -77,23 +77,8 @@ type Dependencies struct {
 }
 
 type PrintableDependency struct {
-	Name        string `json:"name" yaml:"name"`
-	Version     string `json:"version" yaml:"version"`
-	Description string `json:"description" yaml:"description"`
-}
-
-type SortPrintableDependency []PrintableDependency
-
-func (s SortPrintableDependency) Len() int {
-	return len(s)
-}
-
-func (s SortPrintableDependency) Less(i, j int) bool {
-	return s[i].Name < s[j].Name
-}
-
-func (s SortPrintableDependency) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
+	Alias string `json:"name" yaml:"name"`
+	Tag   string `json:"tag" yaml:"tag"`
 }
 
 type PrintableParameter struct {
@@ -276,18 +261,19 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	sort.Sort(SortPrintableOutput(outputs))
 
 	dependencies := []PrintableDependency{}
-	// depsDefinition, err := DependencyReader(bun)
-	// bun.Custom["io.cnab.dependencies"]
-	// for _, _ := range depsDefinition.Requires {
+	solver := &extensions.DependencySolver{}
+	deps, err := solver.ResolveDependencies(bun)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error executing dependencies")
+	}
+	for _, dep := range deps {
 
-	// 	pp := PrintableDependency{}
-	// 	//pp.Name = dep
-	// 	// pp.Version = v["Version"]
-	// 	// pp.Description = v.Description
+		pp := PrintableDependency{}
+		pp.Alias = dep.Alias
+		pp.Tag = dep.Tag
 
-	// 	dependencies = append(dependencies, pp)
-	// }
-	sort.Sort(SortPrintableDependency(dependencies))
+		dependencies = append(dependencies, pp)
+	}
 
 	pb.Actions = actions
 	pb.Credentials = creds
@@ -443,23 +429,7 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Name, o.Description, o.Version}
+			return []interface{}{o.Alias, o.Tag}
 		}
 	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Name", "Description", "Version")
-}
-
-// DependencyReader is a Reader for the DependenciesExtension, which reads
-// from the applicable section in the provided bundle and returns a the raw
-// data in the form of an interface
-func DependencyReader(bun bundle.Bundle) (Dependencies, error) {
-	data, _ := bun.Custom["io.cnab.dependencies"]
-
-	dataB, _ := json.Marshal(data)
-
-	deps := Dependencies{}
-	err := json.Unmarshal(dataB, &deps)
-	if err != nil {
-		return deps, err
-	}
-	return deps, nil
 }
