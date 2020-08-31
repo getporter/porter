@@ -15,14 +15,28 @@ Here is a [full example][example] of a Porter manifest that uses dependencies.
 
 ## Define a dependency
 
-In the manifest, add entries for each dependency of your bundle. The key used is a short name for the dependent bundle that
+In the manifest, add entries for each dependency of your bundle. The `name` field takes a short name for the dependent bundle that
 you will use to reference the dependent bundle elsewhere in the bundle. For example you can reference the dependent bundle's
-outputs via `{{ bundle.dependencies.KEY.outputs }}`.
+outputs via `{{ bundle.dependencies.KEY.outputs }}`.  The `tag` field takes the bundle tag of the dependency.  Both `name` and `tag`
+are required fields.
 
 ```yaml
 dependencies:
   - name: mysql
     tag: getporter/mysql:v0.1.3
+```
+
+## Ordering of dependencies
+
+If more than one dependency is declared, they will be installed in the order they are listed.  For example, if both the `mysql` and
+`nginx` bundles are required, but the `mysql` bundle should be installed first, you would list them as such:
+
+```yaml
+dependencies:
+  - name: mysql
+    tag: getporter/mysql:v0.1.3
+  - name: nginx
+    tag: my/nginx-bundle:v0.1.0
 ```
 
 ## Defaulting Parameters
