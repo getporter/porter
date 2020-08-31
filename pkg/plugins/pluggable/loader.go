@@ -72,7 +72,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		if err != nil {
 			return nil, nil, err
 		}
-		pluginCommand.Env = append(pluginCommand.Env, home)
+		pluginCommand.Env = append(pluginCommand.Env, fmt.Sprintf("PORTER_HOME=%s", home))
 	}
 
 	if l.DebugPlugins {
