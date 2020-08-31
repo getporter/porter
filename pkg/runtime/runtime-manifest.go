@@ -81,18 +81,18 @@ func (m *RuntimeManifest) loadBundle() error {
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
-	for alias := range m.Dependencies {
-		bunD, err := GetDependencyDefinition(m.Context, alias)
+	for _, dep := range m.Dependencies {
+		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
 		if err != nil {
 			return err
 		}
 
 		bun, err := bundle.Unmarshal(bunD)
 		if err != nil {
-			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", alias)
+			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
 		}
 
-		m.bundles[alias] = *bun
+		m.bundles[dep.Name] = *bun
 	}
 
 	return nil
@@ -277,12 +277,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
+  
 	paramSources, _, err := bunExt.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}
-
+  
 	templatedOutputs := m.GetTemplatedOutputs()
 	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
 	for paramName, sources := range paramSources {

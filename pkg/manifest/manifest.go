@@ -55,7 +55,7 @@ type Manifest struct {
 
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies map[string]Dependency `yaml:"dependencies,omitempty"`
+	Dependencies []Dependency          `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
@@ -499,14 +499,18 @@ func (mi *MappedImage) Validate() error {
 }
 
 type Dependency struct {
-	Tag              string   `yaml:"tag"`
-	Versions         []string `yaml:"versions"`
-	AllowPrereleases bool     `yaml:"prereleases"`
-
-	Parameters map[string]string `yaml:"parameters,omitempty"`
+	Name             string            `yaml:"name"`
+	Tag              string            `yaml:"tag"`
+	Versions         []string          `yaml:"versions"`
+	AllowPrereleases bool              `yaml:"prereleases"`
+	Parameters       map[string]string `yaml:"parameters,omitempty"`
 }
 
 func (d *Dependency) Validate() error {
+	if d.Name == "" {
+		return errors.New("dependency name is required")
+	}
+
 	if d.Tag == "" {
 		return errors.New("dependency tag is required")
 	}

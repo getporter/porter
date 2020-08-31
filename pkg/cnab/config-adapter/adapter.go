@@ -295,25 +295,33 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 	return images
 }
 
-func (c *ManifestConverter) generateDependencies() extensions.Dependencies {
-	deps := extensions.Dependencies{
+func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
+
+	if len(c.Manifest.Dependencies) == 0 {
+		return nil
+	}
+
+	deps := &extensions.Dependencies{
+		Sequence: make([]string, len(c.Manifest.Dependencies)),
 		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
 	}
 
-	for name, dep := range c.Manifest.Dependencies {
-		r := extensions.Dependency{
+	for _, dep := range c.Manifest.Dependencies {
+		dependencyRef := extensions.Dependency{
+			Name:   dep.Name,
 			Bundle: dep.Tag,
 		}
 		if len(dep.Versions) > 0 || dep.AllowPrereleases {
-			r.Version = &extensions.DependencyVersion{
+			dependencyRef.Version = &extensions.DependencyVersion{
 				AllowPrereleases: dep.AllowPrereleases,
 			}
 			if len(dep.Versions) > 0 {
-				r.Version.Ranges = make([]string, len(dep.Versions))
-				copy(r.Version.Ranges, dep.Versions)
+				dependencyRef.Version.Ranges = make([]string, len(dep.Versions))
+				copy(dependencyRef.Version.Ranges, dep.Versions)
 			}
 		}
-		deps.Requires[name] = r
+		deps.Sequence = append(deps.Sequence, dep.Name)
+		deps.Requires[dep.Name] = dependencyRef
 	}
 
 	return deps
@@ -467,7 +475,7 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 
 	// Add the dependency extension
 	deps := c.generateDependencies()
-	if len(deps.Requires) > 0 {
+	if deps != nil && len(deps.Requires) > 0 {
 		customExtensions[extensions.DependenciesKey] = deps
 	}
 
@@ -493,6 +501,7 @@ func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string
 		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
 	}
 
+	// Add the appropriate parameter sources key if applicable
 	if extensions.HasParameterSources(b) {
 		requiredExtensions = append(requiredExtensions, extensions.ParameterSourcesKey)
 	}
@@ -508,8 +517,10 @@ func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string
 // lookupExtensionKey is a helper method to return a full key matching a
 // supported extension, if applicable
 func lookupExtensionKey(name string) string {
+
 	key := name
 	// If an official supported extension, we grab the full key
+
 	supportedExt, err := extensions.GetSupportedExtension(name)
 	if err != nil {
 		// TODO: Issue linter warning

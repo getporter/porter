@@ -1,14 +1,9 @@
-version: 0.1.0
-tag: example.com/mybun
-
 mixins:
-  - exec
+- exec
 
-dependencies:
-  - name: mysql
-    tag: "getporter/azure-mysql:5.7"
-    parameters:
-      database-name: wordpress
+name: nginx
+version: 1.19
+tag: localhost:5000/nginx
 
 install:
   - exec:
@@ -26,9 +21,3 @@ uninstall:
 
 custom:
   foo: bar
-
-required:
-  - requiredExtension1
-  - requiredExtension2:
-      config: true
-

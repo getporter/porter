@@ -26,12 +26,18 @@ var DependenciesExtension = RequiredExtension{
 // Dependencies describes the set of custom extension metadata associated with the dependencies spec
 // https://github.com/cnabio/cnab-spec/blob/master/500-CNAB-dependencies.md
 type Dependencies struct {
+	// Sequence is a list to order the dependencies
+	Sequence []string `json:"sequence,omitempty" mapstructure:"sequence"`
+
 	// Requires is a list of bundles required by this bundle
 	Requires map[string]Dependency `json:"requires,omitempty" mapstructure:"requires"`
 }
 
 // Dependency describes a dependency on another bundle
 type Dependency struct {
+	// Name of the dependency
+	Name string `json:"name" mapstructure:"name"`
+
 	// Bundle is the location of the bundle in a registry, for example REGISTRY/NAME:TAG
 	Bundle string `json:"bundle" mapstructure:"bundle"`
 
@@ -62,6 +68,7 @@ func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
 		return Dependencies{}, errors.New("unable to read dependencies extension data")
 	}
 
+	// Return the dependencies
 	return deps, nil
 }
 
@@ -94,7 +101,27 @@ func HasDependencies(bun bundle.Bundle) bool {
 	return ok
 }
 
+// ListBySequence returns the dependencies by the defined sequence,
+// if none is specified, they are unsorted.
+func (d Dependencies) ListBySequence() []Dependency {
+	deps := make([]Dependency, 0, len(d.Requires))
+	if len(d.Sequence) > 0 && len(d.Sequence) == len(d.Requires) {
+		for _, depName := range d.Sequence {
+			dep := d.Requires[depName]
+			dep.Name = depName
+			deps = append(deps, dep)
+		}
+	} else {
+		for depName, dep := range d.Requires {
+			dep.Name = depName
+			deps = append(deps, dep)
+		}
+	}
+	return deps
+}
+
 // BuildPrerequisiteInstallationName generates the name of a prerequisite dependency installation.
 func BuildPrerequisiteInstallationName(installation string, dependency string) string {
 	return fmt.Sprintf("%s-%s", installation, dependency)
+
 }

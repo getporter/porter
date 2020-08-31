@@ -5,11 +5,12 @@ mixins:
   - exec
 
 dependencies:
+  - name: nginx
+    tag: "localhost:5000/nginx:1.19"
   - name: mysql
     tag: "getporter/azure-mysql:5.7"
     parameters:
       database-name: wordpress
-
 install:
   - exec:
       description: "Install Hello World"

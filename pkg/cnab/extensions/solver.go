@@ -23,20 +23,23 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 		return nil, nil
 	}
 
-	deps, err := ReadDependencies(bun)
+	rawDeps, err := ReadDependencies(bun)
+	// We need make sure the Dependencies are ordered by the desired sequence
+	orderedDeps := rawDeps.ListBySequence()
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies for %s", bun.Name)
 	}
 
-	q := make([]DependencyLock, 0, len(deps.Requires))
-	for alias, dep := range deps.Requires {
-		ref, err := s.ResolveVersion(alias, dep)
+	q := make([]DependencyLock, 0, len(orderedDeps))
+	for _, dep := range orderedDeps {
+		ref, err := s.ResolveVersion(dep.Name, dep)
 		if err != nil {
 			return nil, err
 		}
 
 		lock := DependencyLock{
-			Alias: alias,
+			Alias: dep.Name,
 			Tag:   reference.FamiliarString(ref),
 		}
 		q = append(q, lock)
@@ -46,10 +49,10 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (s *DependencySolver) ResolveVersion(alias string, dep Dependency) (reference.NamedTagged, error) {
+func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (reference.NamedTagged, error) {
 	ref, err := reference.ParseNormalizedNamed(dep.Bundle)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", alias, dep.Bundle)
+		return nil, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
 	}
 
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
@@ -67,7 +70,7 @@ func (s *DependencySolver) ResolveVersion(alias string, dep Dependency) (referen
 		return reference.WithTag(ref, tag)
 	}
 
-	return nil, errors.Errorf("not implemented: dependency version range specified for %s", alias)
+	return nil, errors.Errorf("not implemented: dependency version range specified for %s", name)
 }
 
 func (s *DependencySolver) determineDefaultTag(dep Dependency) (string, error) {

@@ -201,8 +201,8 @@ The MySQL author indicates that the bundle can provide credentials for connectin
 
 ```yaml
 name: mysql
-version: 0.1.0
-tag: getporter/mysql:v0.1.0
+version: 0.1.3
+tag: getporter/mysql:v0.1.3
 
 mixins:
   - helm
@@ -250,8 +250,8 @@ parameters:
     default: mywordpress
 
 dependencies:
-  mysql:
-    tag: getporter/mysql:v0.1.0
+  - name: mysql
+    tag: getporter/mysql:v0.1.3
     parameters:
       database_name: wordpress
 
