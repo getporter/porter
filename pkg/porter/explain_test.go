@@ -293,3 +293,24 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 	assert.Equal(t, "nginx", pd.Dependencies[0].Alias)
 	assert.Equal(t, "somecloud/mysql:0.1.0", pd.Dependencies[2].Tag)
 }
+
+func TestExplain_generateJSONForDependencies(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
+	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
+
+	pb, err := generatePrintable(b)
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "json"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb)
+	assert.NoError(t, err)
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	expected, err := ioutil.ReadFile("testdata/explain/expected-json-dependencies-output.json")
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), gotOutput)
+}

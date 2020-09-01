@@ -1,0 +1,34 @@
+{
+    "custom": {
+        "io.cnab.dependencies": {
+            "sequence": [
+                "nginx",
+                "mysql"
+            ],
+            "requires": {
+                "mysql": {
+                    "bundle": "getporter/mysql:v0.1.3"
+                },
+                "nginx": {
+                    "bundle": "localhost:5000/nginx:1.19"
+                }
+            }
+        },
+        "sh.porter": {
+            "manifestDigest": "01092020d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0"
+        }
+    },
+    "description": "An example Porter configuration",
+    "invocationImages": [
+        {
+            "image": "porter-dependency:latest",
+            "imageType": "docker"
+        }
+    ],
+    "name": "HELLO",
+    "requiredExtensions": [
+        "io.cnab.dependencies"
+    ],
+    "schemaVersion": "v1.0.0-WD",
+    "version": "0.1.0"
+}

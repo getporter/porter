@@ -1,0 +1,15 @@
+{
+  "name": "HELLO",
+  "description": "An example Porter configuration",
+  "version": "0.1.0",
+  "dependencies": [
+    {
+      "alias": "nginx",
+      "tag": "localhost:5000/nginx:1.19"
+    },
+    {
+      "alias": "mysql",
+      "tag": "getporter/mysql:v0.1.3"
+    }
+  ]
+}
