@@ -418,7 +418,7 @@ func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
-	printOutputRow :=
+	printDependencyRow :=
 		func(v interface{}) []interface{} {
 			o, ok := v.(PrintableDependency)
 			if !ok {
@@ -426,5 +426,5 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			}
 			return []interface{}{o.Alias, o.Tag}
 		}
-	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Alias", "Tag")
+	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Tag")
 }
