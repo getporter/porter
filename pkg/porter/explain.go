@@ -77,7 +77,7 @@ type Dependencies struct {
 }
 
 type PrintableDependency struct {
-	Alias string `json:"name" yaml:"name"`
+	Alias string `json:"alias" yaml:"alias"`
 	Tag   string `json:"tag" yaml:"tag"`
 }
 
@@ -267,12 +267,11 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 		return nil, errors.Wrapf(err, "error executing dependencies")
 	}
 	for _, dep := range deps {
+		pd := PrintableDependency{}
+		pd.Alias = dep.Alias
+		pd.Tag = dep.Tag
 
-		pp := PrintableDependency{}
-		pp.Alias = dep.Alias
-		pp.Tag = dep.Tag
-
-		dependencies = append(dependencies, pp)
+		dependencies = append(dependencies, pd)
 	}
 
 	pb.Actions = actions
@@ -431,5 +430,5 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			}
 			return []interface{}{o.Alias, o.Tag}
 		}
-	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Name", "Description", "Version")
+	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Alias", "Tag")
 }
