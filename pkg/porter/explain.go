@@ -71,11 +71,6 @@ func (s SortPrintableOutput) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-type Dependencies struct {
-	Sequence []string
-	Requires map[string]interface{}
-}
-
 type PrintableDependency struct {
 	Alias string `json:"alias" yaml:"alias"`
 	Tag   string `json:"tag" yaml:"tag"`
@@ -266,6 +261,7 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies")
 	}
+
 	for _, dep := range deps {
 		pd := PrintableDependency{}
 		pd.Alias = dep.Alias
