@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -256,4 +257,60 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Actions))
+}
+
+func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
+
+	sequenceMock := []string{"nginx", "storage", "mysql"}
+	bun := bundle.Bundle{
+		Custom: map[string]interface{}{
+			extensions.DependenciesKey: extensions.Dependencies{
+				Sequence: sequenceMock,
+				Requires: map[string]extensions.Dependency{
+					"mysql": extensions.Dependency{
+						Name:   "mysql",
+						Bundle: "somecloud/mysql:0.1.0",
+					},
+					"storage": extensions.Dependency{
+						Name:   "storage",
+						Bundle: "localhost:5000/blob-storage:0.1.0",
+					},
+					"nginx": extensions.Dependency{
+						Name:   "nginx",
+						Bundle: "localhost:5000/nginx:1.19",
+					},
+				},
+			},
+		},
+	}
+
+	pd, err := generatePrintable(bun)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(pd.Dependencies))
+	assert.Equal(t, 0, len(pd.Parameters))
+	assert.Equal(t, 0, len(pd.Outputs))
+	assert.Equal(t, 0, len(pd.Actions))
+	assert.Equal(t, "nginx", pd.Dependencies[0].Alias)
+	assert.Equal(t, "somecloud/mysql:0.1.0", pd.Dependencies[2].Tag)
+}
+
+func TestExplain_generateJSONForDependencies(t *testing.T) {
+	p := NewTestPorter(t)
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
+	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
+
+	pb, err := generatePrintable(b)
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "json"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb)
+	assert.NoError(t, err)
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	expected, err := ioutil.ReadFile("testdata/explain/expected-json-dependencies-output.json")
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), gotOutput)
 }

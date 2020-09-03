@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
@@ -19,13 +20,14 @@ type ExplainOpts struct {
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle.Bundle
 type PrintableBundle struct {
-	Name        string                `json:"name" yaml:"name"`
-	Description string                `json:"description,omitempty" yaml:"description,omitempty"`
-	Version     string                `json:"version" yaml:"version"`
-	Parameters  []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs     []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	Actions     []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
+	Name         string                `json:"name" yaml:"name"`
+	Description  string                `json:"description,omitempty" yaml:"description,omitempty"`
+	Version      string                `json:"version" yaml:"version"`
+	Parameters   []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials  []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs      []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Actions      []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
+	Dependencies []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 }
 
 type PrintableCredential struct {
@@ -67,6 +69,11 @@ func (s SortPrintableOutput) Less(i, j int) bool {
 
 func (s SortPrintableOutput) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
+}
+
+type PrintableDependency struct {
+	Alias string `json:"alias" yaml:"alias"`
+	Tag   string `json:"tag" yaml:"tag"`
 }
 
 type PrintableParameter struct {
@@ -248,11 +255,26 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	}
 	sort.Sort(SortPrintableOutput(outputs))
 
+	dependencies := []PrintableDependency{}
+	solver := &extensions.DependencySolver{}
+	deps, err := solver.ResolveDependencies(bun)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error executing dependencies")
+	}
+
+	for _, dep := range deps {
+		pd := PrintableDependency{}
+		pd.Alias = dep.Alias
+		pd.Tag = dep.Tag
+
+		dependencies = append(dependencies, pd)
+	}
+
 	pb.Actions = actions
 	pb.Credentials = creds
 	pb.Outputs = outputs
 	pb.Parameters = params
-
+	pb.Dependencies = dependencies
 	return &pb, nil
 }
 
@@ -274,7 +296,7 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	p.printParametersExplainBlock(bun)
 	p.printOutputsExplainBlock(bun)
 	p.printActionsExplainBlock(bun)
-
+	p.printDependenciesExplainBlock(bun)
 	return nil
 }
 
@@ -378,4 +400,31 @@ func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
 		}
 	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
+}
+
+// Dependencies
+func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
+	if len(bun.Dependencies) > 0 {
+		fmt.Fprintln(p.Out, "Dependencies:")
+		err := p.printDependenciesExplainTable(bun)
+		if err != nil {
+			return errors.Wrap(err, "unable to print dependencies table")
+		}
+	} else {
+		fmt.Fprintln(p.Out, "No dependencies defined")
+	}
+	fmt.Fprintln(p.Out, "") // force a blank line after this block
+	return nil
+}
+
+func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
+	printDependencyRow :=
+		func(v interface{}) []interface{} {
+			o, ok := v.(PrintableDependency)
+			if !ok {
+				return nil
+			}
+			return []interface{}{o.Alias, o.Tag}
+		}
+	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Tag")
 }

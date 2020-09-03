@@ -16,13 +16,13 @@ install:
       command: bash
       flags:
         c: echo Hello World
-
+        
 uninstall:
-- exec:
-    description: "Uninstall Hello World"
-    command: bash
-    flags:
-      c: echo Goodbye World
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World
 
 custom:
   foo: bar
