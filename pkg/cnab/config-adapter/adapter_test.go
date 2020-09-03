@@ -393,6 +393,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	deps := a.generateDependencies()
 	require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+	require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
 
 	testcases := []struct {
 		name    string
