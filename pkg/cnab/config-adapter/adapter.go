@@ -302,7 +302,7 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	}
 
 	deps := &extensions.Dependencies{
-		Sequence: make([]string, len(c.Manifest.Dependencies)),
+		Sequence: make([]string, 0, len(c.Manifest.Dependencies)),
 		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
 	}
 
