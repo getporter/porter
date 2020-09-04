@@ -1,4 +1,0 @@
-install:
-  - kubernetes:
-      description: "Install Hello World App"
-      wait: true
