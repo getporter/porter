@@ -281,7 +281,6 @@ dependency injection and testing strategies.
   * **context**: essentially dependency injection that's needed throughout Porter,
     such as stdout, stderr, stdin, filesystem and command execution.
   * **exec**: the exec mixin
-  * **kubernetes**: the kubernetes mixin
   * **mixin**: enums, functions and interfaces for the mixin framework.
     * **feed**: works with mixin atom feeds
     * **provider**: handles communicating with mixins
