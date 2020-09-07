@@ -104,7 +104,14 @@ docs-gen:
 	$(GO) run --tags=docs ./cmd/porter docs
 
 docs-preview:
-	hugo serve --source docs/
+	make docs-stop-preview
+	@export DOCKER_BUILDKIT=1
+	@docker build -f "Dockerfile.Docs" -t porter-docs:latest "."
+	@docker run -d  -p 1313:80/tcp --name porter-docs porter-docs:latest
+	@python -m webbrowser -t "http://127.0.0.1:1313/docs/"
+	# hugo server --disableFastRender --source docs/
+docs-stop-preview:
+	@docker rm porter-docs > /dev/null 2>&1 &
 
 publish: publish-bin publish-mixins publish-images
 
