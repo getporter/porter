@@ -109,7 +109,6 @@ docs-preview:
 	@docker build -f "Dockerfile.Docs" -t porter-docs:latest "."
 	@docker run -d  -p 1313:80/tcp --name porter-docs porter-docs:latest
 	@python -m webbrowser -t "http://127.0.0.1:1313/docs/"
-	# hugo server --disableFastRender --source docs/
 docs-stop-preview:
 	@docker rm porter-docs > /dev/null 2>&1 &
 
