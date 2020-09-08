@@ -35,20 +35,62 @@ porter mixin install kubernetes --version $VERSION --url https://github.com/deis
 
 ### Examples
 
+### Mixin Configuration
+
+#### Kubernetes client version
+
+```yaml
+- kubernetes:
+    clientVersion: v1.15.5
+```
+
+### Mixin Actions Syntax
+
+#### Install Action
+
 ```yaml
 install:
   - kubernetes:
       description: "Install Hello World App"
       manifests:
-        - ./manifests/hello
+        - /cnab/app/manifests/hello
       wait: true
+
 ```
+
+#### Install Upgrade Action
+
+```yaml
+upgrade:
+  - kubernetes:
+      description: "Upgrade Hello World App"
+      manifests:
+        - /cnab/app/manifests/hello
+      wait: true
+
+```
+
+#### Uninstall Action
 
 ```yaml
 uninstall:
   - kubernetes:
       description: "Uninstall Hello World App"
       manifests:
-        - ./manifests/hello
+        - /cnab/app/manifests/hello
       wait: true
+
+```
+
+#### Outputs
+
+The mixin supports extracting resource metadata from Kubernetes as outputs.
+
+```yaml
+outputs:
+    - name: NAME
+      resourceType: RESOURCE_TYPE
+      resourceName: RESOURCE_TYPE_NAME
+      namespace: NAMESPACE
+      jsonPath: JSON_PATH_DEFINITION
 ```
