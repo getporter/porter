@@ -27,8 +27,8 @@ else
 FILE_EXT=
 endif
 
-INT_MIXINS = exec kubernetes
-EXT_MIXINS = helm arm terraform
+INT_MIXINS = exec
+EXT_MIXINS = helm arm terraform kubernetes
 MIXIN_TAG ?= canary
 MIXINS_URL = https://cdn.porter.sh/mixins
 
@@ -120,7 +120,6 @@ publish-bin:
 
 publish-mixins:
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
-	$(MAKE) $(MAKE_OPTS) publish MIXIN=kubernetes -f mixin.mk
 
 	# Generate the mixin feed
 	az storage blob download -c porter -n atom.xml -f bin/atom.xml
