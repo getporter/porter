@@ -20,7 +20,7 @@ COPY docs /site
 WORKDIR /site
 
 # And then we just run Hugo
-RUN /hugo --minify
+RUN /hugo -b http://localhost:1313
 
 # stage 2
 FROM nginx:1.15-alpine
