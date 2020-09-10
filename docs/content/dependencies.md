@@ -15,14 +15,28 @@ Here is a [full example][example] of a Porter manifest that uses dependencies.
 
 ## Define a dependency
 
-In the manifest, add entries for each dependency of your bundle. The key used is a short name for the dependent bundle that
+In the manifest, add entries for each dependency of your bundle. The `name` field takes a short name for the dependent bundle that
 you will use to reference the dependent bundle elsewhere in the bundle. For example you can reference the dependent bundle's
-outputs via `{{ bundle.dependencies.KEY.outputs }}`.
+outputs via `{{ bundle.dependencies.NAME.outputs }}`.  The `tag` field takes the bundle tag of the dependency.  Both `name` and `tag`
+are required fields.
 
 ```yaml
 dependencies:
   - name: mysql
     tag: getporter/mysql:v0.1.3
+```
+
+## Ordering of dependencies
+
+If more than one dependency is declared, they will be installed in the order they are listed.  For example, if both the `mysql` and
+`nginx` bundles are required, but the `mysql` bundle should be installed first, you would list them as such:
+
+```yaml
+dependencies:
+  - name: mysql
+    tag: getporter/mysql:v0.1.3
+  - name: nginx
+    tag: my/nginx-bundle:v0.1.0
 ```
 
 ## Defaulting Parameters
@@ -48,7 +62,7 @@ dependencies:
 You can specify parameters for a dependent bundle on the command-line using the following syntax
 
 ```
---param KEY#NAME=VALUE
+--param DEPENDENCY#PARAMETER=VALUE
 ```
 
 For example, to override the default parameter `database_name` when installing the wordpress bundle the comand would be
@@ -57,15 +71,15 @@ For example, to override the default parameter `database_name` when installing t
 $ porter install --tag getporter/mysql:v0.1.3 --param mysql#database_name=mywordpress
 ```
 
-* `KEY`: The dependency key used in the `dependencies` section of the porter manifest. From the example above, the key is "mysql".
-* `NAME`: The name of the parameter.
+* `DEPENDENCY`: The dependency name used in the `dependencies` section of the porter manifest. From the example above, the name is "mysql".
+* `PARAMETER`: The name of the parameter.
 * `VALUE`: The parameter value.
 
 ### Parameter Set
 
 The same syntax shown above can be used to specify dependency parameters in a [Parameter Set][parameter-set] file.
 
-Here, the `name` field should be set to the `KEY#NAME` value, or `mysql#database-name` from above.
+Here, the `name` field should be set to the `DEPENDENCY#PARAMETER` value, or `mysql#database-name` from above.
 
 ```json
 {
