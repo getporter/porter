@@ -296,6 +296,7 @@ dependencies:
       mysql_user: wordpress
 ```
 
+* `name`: A short name for the dependent bundle that is used to reference the dependent bundle elsewhere in the bundle.
 * `tag`: The tag where the bundle can be found in an OCI registry. The format should be `REGISTRY/NAME:TAG` where TAG is 
     the semantic version of the bundle.
 * `parameters`: Optionally set default values for parameters in the bundle.
