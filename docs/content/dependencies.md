@@ -62,7 +62,7 @@ dependencies:
 You can specify parameters for a dependent bundle on the command-line using the following syntax
 
 ```
---param KEY#NAME=VALUE
+--param DEPENDENCY#PARAMETER=VALUE
 ```
 
 For example, to override the default parameter `database_name` when installing the wordpress bundle the comand would be
@@ -71,15 +71,15 @@ For example, to override the default parameter `database_name` when installing t
 $ porter install --tag getporter/mysql:v0.1.3 --param mysql#database_name=mywordpress
 ```
 
-* `KEY`: The dependency key used in the `dependencies` section of the porter manifest. From the example above, the key is "mysql".
-* `NAME`: The name of the parameter.
+* `DEPENDENCY`: The dependency name used in the `dependencies` section of the porter manifest. From the example above, the name is "mysql".
+* `PARAMETER`: The name of the parameter.
 * `VALUE`: The parameter value.
 
 ### Parameter Set
 
 The same syntax shown above can be used to specify dependency parameters in a [Parameter Set][parameter-set] file.
 
-Here, the `name` field should be set to the `KEY#NAME` value, or `mysql#database-name` from above.
+Here, the `name` field should be set to the `DEPENDENCY#PARAMETER` value, or `mysql#database-name` from above.
 
 ```json
 {
