@@ -104,9 +104,10 @@ docs-gen:
 	$(GO) run --tags=docs ./cmd/porter docs
 
 docs-preview: docs-stop-preview
-	@DOCKER_BUILDKIT=1 docker build -f "Dockerfile.Docs" -t porter-docs:latest "."
-	@docker run -d -p 1313:80/tcp --name porter-docs porter-docs:latest
-	@open http://localhost:1313/docs/
+	@DOCKER_BUILDKIT=1 docker build -f "$$PWD/docs/Dockerfile" -t porter-docs:latest "."
+	@docker run -d -v $$PWD/docs:/docs -p 1313:1313 -u hugo --name porter-docs \
+	porter-docs:latest hugo server --noHTTPCache --watch --bind=0.0.0.0
+	@open "http://localhost:1313/docs/"
 
 docs-stop-preview:
 	@docker rm -f porter-docs &> /dev/null || true

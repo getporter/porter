@@ -22,20 +22,20 @@ defaultContentLanguage = "en"
   weight = 2
   [[menu.main]]
     name = "Install Porter"
-    url = "/install"
+    url = "/install/"
     identifier = "install"
     weight = 11
     parent = "get-started"
   [[menu.main]]
     name = "QuickStart"
-    url = "/quickstart"
+    url = "/quickstart/"
     identifier = "quickstart"
     weight = 12
     parent = "get-started"
 
 [[menu.main]]
   name = "Porter Commands"
-  url = "/cli"
+  url = "/cli/"
   identifier = "cli"
   weight = 102
   [[menu.main]]
@@ -46,37 +46,37 @@ defaultContentLanguage = "en"
     parent = "cli"
   [[menu.main]]
     name = "Bundles"
-    url = "/cli/porter_bundles"
+    url = "/cli/porter_bundles/"
     identifier = "cli-bundles"
     weight = 123
     parent = "cli"
   [[menu.main]]
     name = "Credentials"
-    url = "/cli/porter_credentials"
+    url = "/cli/porter_credentials/"
     identifier = "cli-credentials"
     weight = 124
     parent = "cli"
   [[menu.main]]
     name = "Parameters"
-    url = "/cli/porter_parameters"
+    url = "/cli/porter_parameters/"
     identifier = "cli-parameters"
     weight = 125
     parent = "cli"
   [[menu.main]]
     name = "Installations"
-    url = "/cli/porter_installations"
+    url = "/cli/porter_installations/"
     identifier = "cli-installations"
     weight = 126
     parent = "cli"
   [[menu.main]]
     name = "Mixins"
-    url = "/cli/porter_mixins"
+    url = "/cli/porter_mixins/"
     identifier = "cli-mixins"
     weight = 127
     parent = "cli"
   [[menu.main]]
     name = "Plugins"
-    url = "/cli/porter_plugins"
+    url = "/cli/porter_plugins/"
     identifier = "cli-plugins"
     weight = 128
     parent = "cli"
@@ -89,7 +89,7 @@ defaultContentLanguage = "en"
     name = "Overview"
     identifier = "mixins-overview"
     weight = 201
-    url = "/mixins"
+    url = "/mixins/"
     parent = "mixins"
   [[menu.main]]
     name = "Develop Mixins"
@@ -118,13 +118,13 @@ defaultContentLanguage = "en"
     name = "Overview"
     identifier = "plugins-overview"
     weight = 251
-    url = "/plugins"
+    url = "/plugins/"
     parent = "plugins"
   [[menu.main]]
     name = "Types"
     identifier = "plugin-types"
     weight = 252
-    url = "/plugins/types"
+    url = "/plugins/types/"
     parent = "plugins"
 
 [[menu.main]]
@@ -133,7 +133,7 @@ defaultContentLanguage = "en"
   weight = 300
   [[menu.main]]
     name = "Overview"
-    url = "/author-bundles"
+    url = "/author-bundles/"
     identifier = "author-bundles-overview"
     weight = 301
     parent = "author-bundles"
@@ -145,19 +145,19 @@ defaultContentLanguage = "en"
     parent = "author-bundles"
   [[menu.main]]
     name = "Mixins"
-    url = "/use-mixins"
+    url = "/use-mixins/"
     identifier = "use-mixins"
     weight = 303
     parent = "author-bundles"
   [[menu.main]]
     name = "Dependencies"
-    url = "/dependencies"
+    url = "/dependencies/"
     identifier = "dependencies"
     weight = 304
     parent = "author-bundles"
   [[menu.main]]
     name = "Parameters, Credentials and Outputs"
-    url = "/wiring"
+    url = "/wiring/"
     identifier = "wiring"
     weight = 305
     parent = "author-bundles"
@@ -168,20 +168,20 @@ defaultContentLanguage = "en"
   weight = 310
   [[menu.main]]
     name = "Overview"
-    url = "/distribute-bundles"
+    url = "/distribute-bundles/"
     identifier = "distribute-bundles-overview"
     weight = 311
     parent = "distribute-bundles"
   [[menu.main]]
     name = "Copy Bundles"
     identifier = "copy-bundles"
-    url = "/copy-bundles"
+    url = "/copy-bundles/"
     weight = 312
     parent = "distribute-bundles"
   [[menu.main]]
     name = "Archive Bundles"
     identifier = "archive-bundles"
-    url = "/archive-bundles"
+    url = "/archive-bundles/"
     weight = 313
     parent = "distribute-bundles"
   [[menu.main]]
@@ -197,13 +197,13 @@ defaultContentLanguage = "en"
   weight = 325
   [[menu.main]]
     name = "Overview"
-    url = "/examine-bundles"
+    url = "/examine-bundles/"
     identifier = "examine-bundles-overview"
     weight = 326
     parent = "examine-bundles"
   [[menu.main]]
     name = "Inspect Bundle Images"
-    url = "/inspect-bundle"
+    url = "/inspect-bundle/"
     identifier = "inspect-bundles"
     weight = 327
     parent = "examine-bundles"
@@ -214,25 +214,25 @@ defaultContentLanguage = "en"
   weight = 400
   [[menu.main]]
     name = "Overview"
-    url = "/architecture"
+    url = "/architecture/"
     identifier = "architecture"
     weight = 401
     parent = "porter-architecture"
   [[menu.main]]
     name = "Buildtime"
-    url = "/architecture-buildtime"
+    url = "/architecture-buildtime/"
     identifier = "architecture-buildtime"
     weight = 402
     parent = "porter-architecture"
   [[menu.main]]
     name = "Runtime"
-    url = "/architecture-runtime"
+    url = "/architecture-runtime/"
     identifier = "architecture-runtime"
     weight = 403
     parent = "porter-architecture"
   [[menu.main]]
     name = "Invocation Images"
-    url = "/build-image"
+    url = "/build-image/"
     identifier = "build-image"
     weight = 404
     parent = "porter-architecture"
@@ -252,13 +252,13 @@ defaultContentLanguage = "en"
 [[menu.main]]
   name = "FAQ"
   identifier = "faq"
-  url = "/faq"
+  url = "/faq/"
   weight = 500
 
 [[menu.main]]
   name = "Troubleshooting"
   identifier = "troubleshooting"
-  url = "/troubleshooting"
+  url = "/troubleshooting/"
   weight = 501
 
 [[menu.main]]
@@ -273,7 +273,7 @@ defaultContentLanguage = "en"
   weight = 1000
   [[menu.main]]
     name = "Configuration"
-    url = "/configuration"
+    url = "/configuration/"
     identifier = "configuration"
     weight = 1010
     parent = "references"
@@ -285,7 +285,7 @@ defaultContentLanguage = "en"
     parent = "references"
   [[menu.main]]
     name = "CNAB Spec"
-    url = "https://deislabs.io/cnab"
+    url = "https://deislabs.io/cnab/"
     identifier = "cnab"
     weight = 1020
     parent = "references"
