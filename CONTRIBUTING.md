@@ -5,6 +5,7 @@
   * [Find an issue](#find-an-issue)
   * [When to open a pull request](#when-to-open-a-pull-request)
   * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
+  * [Signing your commits](#signing-your-commits)
   * [The life of a pull request](#the-life-of-a-pull-request)
 * [Contribution Ladder](#contribution-ladder)
 * [Developer Tasks](#developer-tasks)
@@ -130,7 +131,7 @@ tackle it in a reasonable amount of time in a subsequent pull request. If you
 can't get to it soon, please create an issue and link to it from the pull
 request comment so that we don't collectively forget.
 
-## Signed commits
+## Signing your commits
 
 A DCO sign-off is required for all contributions to Porter repos. A DCO
 sign-off is a line placed at the end of a commit message containing a
