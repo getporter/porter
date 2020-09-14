@@ -6,7 +6,6 @@ import (
 )
 
 type PluginDebugContext struct {
-	DebugPlugins           bool
 	RunPlugInInDebugger    string
 	PlugInWorkingDirectory string
 	DebuggerPort           string
