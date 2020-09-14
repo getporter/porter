@@ -75,3 +75,27 @@ func TestInstall_fileParam(t *testing.T) {
 	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
 
 }
+
+func TestInstall_withDockerignore(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/outputs-example"), ".")
+
+	// Create .dockerignore file which ignores the helpers script
+	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0644)
+	require.NoError(t, err)
+
+	opts := porter.InstallOptions{}
+	err = opts.Validate([]string{}, p.Porter)
+	require.NoError(t, err)
+
+	// Verify Porter uses the .dockerignore file (no helpers script added to installer image)
+	err = p.InstallBundle(opts)
+	// The following line would be seen from the daemon, but is printed directly to stdout:
+	// Error: couldn't run command ./helpers.sh dump-config: fork/exec ./helpers.sh: no such file or directory
+	// We should check this once https://github.com/cnabio/cnab-go/issues/78 is closed
+	require.EqualError(t, err, "1 error occurred:\n\t* container exit code: 1, message: <nil>\n\n")
+}
