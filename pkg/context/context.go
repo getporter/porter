@@ -21,14 +21,15 @@ const (
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
-	Debug        bool
-	DebugPlugins bool
-	verbose      bool
-	FileSystem   *afero.Afero
-	In           io.Reader
-	Out          io.Writer
-	Err          io.Writer
-	NewCommand   CommandBuilder
+	Debug              bool
+	DebugPlugins       bool
+	verbose            bool
+	FileSystem         *afero.Afero
+	In                 io.Reader
+	Out                io.Writer
+	Err                io.Writer
+	NewCommand         CommandBuilder
+	PlugInDebugContext *PluginDebugContext
 }
 
 func (c *Context) SetVerbose(value bool) {
@@ -69,19 +70,18 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 }
 
 func New() *Context {
-	c := &Context{
-		FileSystem: &afero.Afero{Fs: afero.NewOsFs()},
-		In:         os.Stdin,
-		Out:        NewCensoredWriter(os.Stdout),
-		Err:        NewCensoredWriter(os.Stderr),
-		NewCommand: exec.Command,
-	}
-
 	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
 	debug, _ := strconv.ParseBool(os.Getenv("PORTER_DEBUG"))
-	c.Debug = debug
 
-	return c
+	return &Context{
+		Debug:              debug,
+		FileSystem:         &afero.Afero{Fs: afero.NewOsFs()},
+		In:                 os.Stdin,
+		Out:                NewCensoredWriter(os.Stdout),
+		Err:                NewCensoredWriter(os.Stderr),
+		NewCommand:         exec.Command,
+		PlugInDebugContext: NewPluginDebugContext(),
+	}
 }
 
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {

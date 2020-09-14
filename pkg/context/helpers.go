@@ -42,6 +42,11 @@ func NewTestContext(t *testing.T) *TestContext {
 			Out:        aggOut,
 			Err:        aggErr,
 			NewCommand: NewTestCommand(),
+			PlugInDebugContext: &PluginDebugContext{
+				DebuggerPort:           "2735",
+				RunPlugInInDebugger:    "",
+				PlugInWorkingDirectory: "",
+			},
 		},
 		capturedOut: out,
 		capturedErr: err,
