@@ -295,6 +295,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "suppress-output": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
