@@ -232,6 +232,20 @@ installed into your bin directory in the root of the repository. You can use
 
 \* canary = most recent successful build of the "main" branch
 
+## Plugin Debugging
+
+If you are developing a [plugin](https://porter.sh/plugins/) and you want to debug it follow these steps:
+
+The plugin to be debugged should be compiled and placed in porters plugin path (e.g. in the Azure plugin case the plugin would be copied to $PORTER_HOME/plugins/azure/.
+
+The following environment variables should be set:
+
+`PORTER_RUN_PLUGIN_IN_DEBUGGER` should be set to the name of the plugin to be debugged (e.g. secrets.azure.keyvault to debug the azure secrets plugin)  
+`PORTER_DEBUGGER_PORT` should be set to the port number where the delve API will listen, if not set it defaults to 2345  
+`PORTER_PLUGIN_WORKING_DIRECTORY` should be the path to the directory containing *source code* for the plugin being executed.  
+
+When porter is run it will start delve and attach it to the plugin process, this exposes the delve API so that any delve client can connect to the server and debug the plugin.
+
 ## Preview documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
