@@ -5,6 +5,7 @@
   * [Find an issue](#find-an-issue)
   * [When to open a pull request](#when-to-open-a-pull-request)
   * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
+  * [Signing your commits](#signing-your-commits)
   * [The life of a pull request](#the-life-of-a-pull-request)
 * [Contribution Ladder](#contribution-ladder)
 * [Developer Tasks](#developer-tasks)
@@ -129,6 +130,37 @@ You can decide to make the change in the current PR immediately, or agree to
 tackle it in a reasonable amount of time in a subsequent pull request. If you
 can't get to it soon, please create an issue and link to it from the pull
 request comment so that we don't collectively forget.
+
+## Signing your commits
+
+Licensing is important to open source projects. It provides some assurances that the software
+will continue to be available based under the terms that the author(s) desired. We require that
+contributors sign off on commits submitted to our project's repositories. The 
+[Developer Certificate of Origin (DCO)](https://developercertificate.org/) is a way to certify that 
+you wrote and have the right to contribute the code you are submitting to the project.
+
+You sign-off by adding the following to your commit messages:
+
+```
+Author: Your Name <your.name@example.com>
+Date:   Thu Feb 2 11:41:15 2018 -0800
+
+    This is my commit message
+
+    Signed-off-by: Your Name <your.name@example.com>
+```
+
+Notice the `Author` and `Signed-off-by` lines match. If they don't, the PR will
+be rejected by the automated DCO check.
+
+Git has a `-s` command line option to do this automatically:
+
+    git commit -s -m 'This is my commit message'
+
+If you forgot to do this and have not yet pushed your changes to the remote repository, you can 
+amend your commit with the sign-off by running 
+
+    git commit --amend -s
 
 ## The life of a pull request
 
