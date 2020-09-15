@@ -71,6 +71,10 @@
             "minItems": 1
           }
         },
+        "suppress-output": {
+          "type": "boolean",
+          "default": false
+        },
         "outputs": {
           "type": "array",
           "items": {
