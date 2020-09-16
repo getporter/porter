@@ -7,7 +7,7 @@ description: Run Azure commands using the az CLI
 
 Run Azure commands using the az CLI.
 
-Source: https://github.com/deislabs/porter-az
+Source: https://github.com/getporter/az-mixin
 
 ### Install or Upgrade
 ```

@@ -25,7 +25,7 @@ out a particular registry and know that it will work for you.
 | Quay | No | No
  
  _If you are a registry or user and know that this page is out of date, [please
- let us know!](https://github.com/deislabs/porter/issues/new)_
+ let us know!](https://github.com/getporter/porter/issues/new)_
  
  [cnab-to-oci]: https://github.com/docker/cnab-to-oci
  

@@ -63,7 +63,7 @@ When you create your first pull request, add your name to the bottom of our
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
                                           
 [contributors]: /CONTRIBUTORS.md                                          
-[skeletor]: https://github.com/deislabs/porter-skeletor
+[skeletor]: https://github.com/getporter/skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
 [good-first-issue]: https://porter.sh/board/good+first+issue
 [help-wanted]: https://porter.sh/board/help+wanted
@@ -190,11 +190,11 @@ amend your commit with the sign-off by running
 
 At this point your changes are available in the [canary][canary] release of
 Porter! After your first pull request is merged, you will be invited to the
-[Porters team] which you may choose to accept (or not). Joining the team lets
+[Contributors team] which you may choose to accept (or not). Joining the team lets
 you have issues in GitHub assigned to you.
 
 [canary]: https://porter.sh/install/#canary
-[Porters team]: https://github.com/orgs/deislabs/teams/porters
+[Contributors team]: https://github.com/orgs/getporter/teams/contributors
 
 ### Follow-on PR
 
@@ -224,7 +224,7 @@ maintainer.
 
 ## Initial setup
 
-1. Clone this repository with `git clone https://github.com/deislabs/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
+1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
 1. Run `make build install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.

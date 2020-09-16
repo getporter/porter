@@ -2,7 +2,7 @@
 
 This bundle demonstrates how to use Docker inside of a bundle! 🐳
 
-Looking for an [example bundle with docker-compose](https://github.com/deislabs/porter-docker-compose/tree/master/examples/compose)?
+Looking for an [example bundle with docker-compose](https://github.com/getporter/docker-compose-mixin/tree/master/examples/compose)?
 
 ```
  ____________________
@@ -43,7 +43,7 @@ Host Access setting](https://porter.sh/configuration/#allow-docker-host-access):
 1. [Install porter](https://porter.sh/install).
 1. Clone this repository:
     ```
-    git clone https://github.com/deislabs/porter.git
+    git clone https://github.com/getporter/porter.git
     ```
 1. Change to this directory:
     ```

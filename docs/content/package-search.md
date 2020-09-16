@@ -37,11 +37,11 @@ Porter maintains lists for mixins and plugins available for installation.
 They are represented in JSON and hosted in the [porter-packages][porter-packages]
 GitHub repository:
 
-* [Mixin Directory](https://github.com/deislabs/porter-packages/blob/master/mixins/index.json)
-* [Plugin Directory](https://github.com/deislabs/porter-packages/blob/master/plugins/index.json)
+* [Mixin Directory](https://github.com/getporter/packages/blob/master/mixins/index.json)
+* [Plugin Directory](https://github.com/getporter/packages/blob/master/plugins/index.json)
 
 To add a listing for your mixin or plugin for others to see, follow the
 instructions in the [repository README][porter-packages-readme].
 
-[porter-packages]: https://github.com/deislabs/porter-packages
-[porter-packages-readme]: https://github.com/deislabs/porter-packages/blob/master/README.md
+[porter-packages]: https://github.com/getporter/packages
+[porter-packages-readme]: https://github.com/getporter/packages/blob/master/README.md

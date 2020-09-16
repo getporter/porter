@@ -46,7 +46,7 @@ specification](https://github.com/cnabio/cnab-spec) moves toward 1.0, some
 gaps have emerged. Currently, if you build a bundle with Porter, you'll be able
 to install it with Porter. There are some gaps with the spec that limit
 compatibility with other CNAB tooling. See the [CNAB 1.0
-Milestone](https://github.com/deislabs/porter/milestone/12) for more information
+Milestone](https://github.com/getporter/porter/milestone/12) for more information
 on these gaps.
 
 ## Does Porter solve something that Ansible, Terraform, etc does not?

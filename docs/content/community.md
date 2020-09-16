@@ -29,4 +29,4 @@ spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
-[issue]: https://github.com/deislabs/porter/issues/new
+[issue]: https://github.com/getporter/porter/issues/new

@@ -21,7 +21,7 @@ application.
 
 [Mailing List]: https://porter.sh/mailing-list
 [Slack]: https://porter.sh/community/#slack
-[Open an Issue]: https://github.com/deislabs/porter/issues/new/choose
+[Open an Issue]: https://github.com/getporter/porter/issues/new/choose
 
 ---
 

@@ -8,7 +8,7 @@ bundle.
 1. [Install porter](https://porter.sh/install).
 1. Clone this repository:
     ```
-    git clone https://github.com/deislabs/porter.git
+    git clone https://github.com/getporter/porter.git
     ```
 1. Change to this directory:
     ```

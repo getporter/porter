@@ -21,7 +21,7 @@ func TestArchive(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), ".")
 
 	// Currently, archive requires the bundle to already be published.
-	// https://github.com/deislabs/porter/issues/697
+	// https://github.com/getporter/porter/issues/697
 	publishOpts := porter.PublishOptions{}
 	publishOpts.Tag = "localhost:5000/mysql:v0.1.3"
 	err := publishOpts.Validate(p.Context)

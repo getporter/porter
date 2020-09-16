@@ -55,7 +55,7 @@ Contributors and maintainers will do their best to watch for community members
 who may make good contributors. But don’t be shy, if you feel that this is you,
 please reach out to one or more of the contributors or maintainers.
 
-[contributors]: https://github.com/orgs/deislabs/teams/porter-contributors
+[contributors]: https://github.com/orgs/getporter/teams/contributors
 
 ## Maintainer
 
@@ -77,7 +77,7 @@ Maintainers also have additional responsibilities beyond just merging code:
 
 They must agree to and follow the [Reviewing Guide](REVIEWING.md).
 
-[maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
+[maintainers]: https://github.com/orgs/getporter/teams/maintainers
 
 ### How to become a maintainer
 
@@ -95,7 +95,7 @@ the maintainers.
 * Manage porter-* repositories
 * Manage porter-* teams
 
-[admins]: https://github.com/orgs/deislabs/teams/porter-admins
+[admins]: https://github.com/orgs/getporter/teams/admins
 
 ### How to become an admin
 

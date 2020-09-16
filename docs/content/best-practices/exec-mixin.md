@@ -31,7 +31,7 @@ Do you have an idea for a mixin? You can [create your own](/mixin-dev-guide/) or
 [suggest one][new-issue] to the community and see if someone is interested in
 implementing it.
 
-[new-issue]: https://github.com/deislabs/porter/issues/new
+[new-issue]: https://github.com/getporter/porter/issues/new
 
 ## Use scripts
 

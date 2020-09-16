@@ -73,7 +73,7 @@ install:
 
 uninstall:
   # TODO: enable once the porter-arm mixin implements uninstall
-  # see https://github.com/deislabs/porter-arm/issues/7
+  # see https://github.com/getporter/arm-mixin/issues/7
   # - arm:
   #     description: "Uninstall Mysql"
   #     name: mysql-azure-porter-demo-wordpress
