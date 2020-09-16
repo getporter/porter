@@ -16,5 +16,5 @@ jobs:
     - name: Assign Issue to Project
       uses: srggrs/assign-one-project-github-action@1.2.0
       with:
-        project: 'https://github.com/orgs/deislabs/projects/2'
+        project: 'https://github.com/orgs/getporter/projects/1'
         column_name: 'Inbox'
