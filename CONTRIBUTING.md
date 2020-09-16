@@ -237,14 +237,11 @@ installed into your bin directory in the root of the repository. You can use
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
 [Netlify](netlify.com).
 
-1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`,
-`choco install hugo` or `go get -u github.com/gohugoio/hugo`.
-1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
-1. Open <http://localhost:1313> to preview the site.
+1. You don't have to install [hugo], because we use a docker image from `klakegg/hugo:0.53-ext-alpine` as our rendering engine
+1. Run `make docs-preview` to start serving the docs. It will watch the file system for changes.
+1. Our make rule should open <http://localhost:1313/docs> to preview the site/docs. Sometimes you may observe a small rendering delay when you start the first time, just hit refresh and the site should render as expected.
 
-If anyone is interested in contributing changes to our makefile to improve the
-authoring experience, such as doing this with Docker so that you don't need Hugo
-installed, it would be a welcome contribution! ❤️
+We welcome your contribution to improve our documentation and we hope it is an easy process! ❤️
 
 ## Command Documentation
 
