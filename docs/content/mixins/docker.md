@@ -29,7 +29,7 @@ not the container should run as privileged or not:
 
 ```yaml
 required:
-  - docker
+  - docker:
       privileged: false
 ```
 
