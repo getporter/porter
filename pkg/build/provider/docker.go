@@ -50,6 +50,8 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 	if err != nil {
 		return err
 	}
+	excludes = clibuild.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
+
 	tar, err := archive.TarWithOptions(path, &archive.TarOptions{ExcludePatterns: excludes})
 	if err != nil {
 		return err
