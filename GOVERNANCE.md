@@ -8,7 +8,7 @@ Everyone who interacts with the project must abide by our [Code of Conduct].
 
 ## Legal
 
-The Porter project is in the CNCF Sandbox. ⛱
+The Porter project is in the [CNCF Sandbox](https://www.cncf.io/sandbox-projects/). ⛱
 
 ## Roles
 
@@ -24,7 +24,7 @@ The [OWNERS] defines the current maintainers of the project.
 ## Release Process
 
 Maintainers create the next release when the main branch is stable and related
-groupings of work is complete. We do not have a fixed cadence and prefer release
+groupings of work is complete. We do not have a fixed cadence and prefer to release
 smaller batches of work more often.
 
 ## Roadmap
