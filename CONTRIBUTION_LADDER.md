@@ -92,8 +92,8 @@ the maintainers.
 [Admins][admins] are maintainers with extra responsibilities:
 
 * Create new mixin repositories
-* Manage porter-* repositories
-* Manage porter-* teams
+* Manage getporter repositories
+* Manage getporter teams
 
 [admins]: https://github.com/orgs/getporter/teams/admins
 
