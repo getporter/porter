@@ -103,8 +103,13 @@ docs:
 docs-gen:
 	$(GO) run --tags=docs ./cmd/porter docs
 
-docs-preview:
-	hugo serve --source docs/
+docs-preview: docs-stop-preview
+	@docker run -d -v $$PWD/docs:/src -p 1313:1313 --name porter-docs \
+	klakegg/hugo:0.53-ext-alpine server --noHTTPCache --watch --bind=0.0.0.0
+	@open "http://localhost:1313/docs/"
+
+docs-stop-preview:
+	@docker rm -f porter-docs &> /dev/null || true
 
 publish: publish-bin publish-mixins publish-images
 
