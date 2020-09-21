@@ -23,7 +23,7 @@ func TestSearch(t *testing.T) {
 			Name:        "cowsay",
 			Author:      "Porter Authors",
 			Description: "A mixin for using the cowsay cli",
-			URL:         "https://github.com/deislabs/porter-cowsay/releases/download",
+			URL:         "https://github.com/carolynvs/porter-cowsay/releases/download",
 		},
 		{
 			Name:        "cowsayeth",

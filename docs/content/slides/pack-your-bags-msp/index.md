@@ -31,7 +31,7 @@ to get all the materials ready.
    ```
 1. Clone the workshop repository
     ```
-    git clone https://github.com/deislabs/porter.git
+    git clone https://github.com/getporter/porter.git
     cd porter/workshop
     ```
 
@@ -403,7 +403,7 @@ exclude: true
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://github.com/deislabs/porter/tree/main/examples/azure-mysql-wordpress
+  https://porter.sh/src/examples/azure-wordpress
 ]
 
 ---
@@ -1393,4 +1393,3 @@ What is the timeline for the project and how should they be thinking about begin
 * Create a MySQL on Azure - workshop/porter-tf-aci
 * Manage VMs with gcloud - workshop/gcloud-compute
 * Manage Buckets with aws - workshop/aws-bucket
-

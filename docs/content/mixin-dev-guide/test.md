@@ -12,7 +12,7 @@ a tip, please submit a PR and help us fill this out!
 
 Here is a [full working example][example] of a unit test that validates the commands executed by a mixin.
 
-Make sure that your package has a `TestMain` that calls `github.com/deislabs/porter/pkg/test.TestMainWithMockedCommandHandlers`
+Make sure that your package has a `TestMain` that calls `github.com/getporter/porter/pkg/test.TestMainWithMockedCommandHandlers`
 
 ```go
 import "get.porter.sh/porter/pkg/test"
@@ -50,4 +50,4 @@ err = m.Execute()
 Instead of os calls to the real commands, the test mixin mode calls back into your test binary. The `TestMain` handles
 asserting that the expected commands were made and fails the test if they weren't.
 
-[example]: https://github.com/deislabs/porter-gcloud/blob/v0.2.1-beta.1/pkg/gcloud/execute_test.go
+[example]: https://github.com/getporter/gcloud-mixin/blob/v0.2.1-beta.1/pkg/gcloud/execute_test.go

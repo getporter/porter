@@ -85,11 +85,11 @@ on after you have tackled an issue or two to learn how to contribute to Porter.
 If you would like to contribute regularly to a larger issue on the roadmap,
 contact us on the [mailing list] or [Slack].
 
-[skeletor]: https://github.com/deislabs/porter-skeletor
+[skeletor]: https://github.com/getporter/skeletor
 [mixin-dev-guide]: /mixin-dev-guide/
 [roadmap]: /roadmap
-[existing mixins]: https://github.com/deislabs/porter-packages/blob/main/mixins/index.json
-[requested mixins]: https://github.com/deislabs/porter/issues?q=is%3Aissue+is%3Aopen+label%3A%22mixin+idea%22
+[existing mixins]: https://github.com/getporter/packages/blob/main/mixins/index.json
+[requested mixins]: https://github.com/getporter/porter/issues?q=is%3Aissue+is%3Aopen+label%3A%22mixin+idea%22
 [mailing list]: https://groups.io/g/porter 
 
 ## Who can be a maintainer?

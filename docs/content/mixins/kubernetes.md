@@ -7,7 +7,7 @@ description: Manage a set of Kubernetes manifests using the kubectl CLI
 
 Manage a set of Kubernetes manifests using the [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/).
 
-Source: https://github.com/deislabs/porter-kubernetes
+Source: https://github.com/getporter/kubernetes-mixin
 
 ### Install or Upgrade
 
@@ -30,7 +30,7 @@ porter mixin install kubernetes --feed-url https://cdn.porter.sh/mixins/atom.xml
 ### Manually Install or Upgrade with a specific version from github
 
 ```shell
-porter mixin install kubernetes --version $VERSION --url https://github.com/deislabs/porter-kubernetes/releases/download
+porter mixin install kubernetes --version $VERSION --url https://github.com/getporter/kubernetes-mixin/releases/download
 ```
 
 ### Examples

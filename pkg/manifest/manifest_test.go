@@ -170,7 +170,7 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 
 func TestReadManifest_URL(t *testing.T) {
 	cxt := context.NewTestContext(t)
-	url := "https://raw.githubusercontent.com/deislabs/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
+	url := "https://raw.githubusercontent.com/getporter/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
 	m, err := ReadManifest(cxt.Context, url)
 
 	require.NoError(t, err)

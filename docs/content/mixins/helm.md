@@ -7,7 +7,7 @@ description: Manage a Helm release with the helm CLI
 
 Manage a Helm release with the [helm CLI](https://helm.sh).
 
-Source: https://github.com/deislabs/porter-helm
+Source: https://github.com/getporter/helm-mixin
 
 ### Install or Upgrade
 ```

@@ -8,7 +8,7 @@ This example represents an advanced use case for Porter. First, the example show
 
 ## Azure Terraform
 
-This bundle provides an example of how you can use Porter to build Terraform-based bundles. The example provided here will create Azure CosmosDB and Azure EventHubs objects using Terraform configurations and the [porter-terraform](https://github.com/deislabs/porter-terraform/) mixin. This sample also shows how the Terraform mixin can be used with other mixins, in this case the Azure mixin. The Azure mixin is first used to create an Azure storage account that will be used to configure the Terraform `azurerm` backend. It is possible to build bundles using just the [porter-terraform](https://github.com/deislabs/porter-terraform) mixin, but this example shows you how to use outputs between steps as well.
+This bundle provides an example of how you can use Porter to build Terraform-based bundles. The example provided here will create Azure CosmosDB and Azure EventHubs objects using Terraform configurations and the [porter-terraform](https://github.com/getporter/terraform-mixin) mixin. This sample also shows how the Terraform mixin can be used with other mixins, in this case the Azure mixin. The Azure mixin is first used to create an Azure storage account that will be used to configure the Terraform `azurerm` backend. It is possible to build bundles using just the [porter-terraform](https://github.com/getporter/terraform-mixin) mixin, but this example shows you how to use outputs between steps as well.
 
 ## Azure MySQL WordPress
 

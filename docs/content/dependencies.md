@@ -120,7 +120,7 @@ A parameter for a dependency can be set in a few places, here is the order of pr
 ## Dependency Graph
 
 At this time Porter only supports direct dependencies. Dependencies of dependencies, a.k.a. 
-transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/deislabs/porter/issues/69) 
+transitive dependencies, are ignored. See [Design: Dependency Graph Resolution](https://github.com/getporter/porter/issues/69) 
 for our backlog item tracking this feature. We do plan to support it!
 
 [example]: /src/build/testdata/bundles/wordpress/porter.yaml

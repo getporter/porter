@@ -40,7 +40,7 @@ If you are making bundles, may we suggest using Porter?
 
 ## What is Duffle?
 
-[Duffle](https://github.com/deislabs/duffle) is a command-line tool that can be used to build and manage (distribute, install, upgrade and uninstall) [Cloud Native Application Bundles](https://cnab.io) (CNABs). Using Duffle, bundle authors can build, test and distribute installers for their application bundles. The CNAB specification provides high-level guidance for the structure of a bundle, but gives the author a great deal of flexibility. Duffle is the reference implementation of the spec and is not intended to be opinionated. So it also has a great deal of flexibility, at the cost of requiring more knowledge of the CNAB spec when authoring bundles. 
+[Duffle](https://github.com/cnabio/duffle) is a command-line tool that can be used to build and manage (distribute, install, upgrade and uninstall) [Cloud Native Application Bundles](https://cnab.io) (CNABs). Using Duffle, bundle authors can build, test and distribute installers for their application bundles. The CNAB specification provides high-level guidance for the structure of a bundle, but gives the author a great deal of flexibility. Duffle is the reference implementation of the spec and is not intended to be opinionated. So it also has a great deal of flexibility, at the cost of requiring more knowledge of the CNAB spec when authoring bundles. 
 
 ## What is Porter?
 

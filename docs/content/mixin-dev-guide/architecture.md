@@ -112,5 +112,5 @@ Mixins can expose JSON schema to describe the YAML format that they expect to ac
 
 If you'd like to build a mixin and would like to refer to some existing implementations, please see:
 
-* [porter-helm](https://github.com/deislabs/porter-helm) - The Porter Helm Mixin
-* [porter-azure](https://github.com/deislabs/porter-azure) - The Porter Azure Mixin
+* [helm-mixin](https://github.com/getporter/helm-mixin) - The Porter Helm Mixin
+* [az-mixin](https://github.com/getporter/az-mixin) - The Porter Azure (az cli) Mixin

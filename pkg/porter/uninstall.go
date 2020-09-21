@@ -97,7 +97,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		}
 	}
 
-	// TODO: See https://github.com/deislabs/porter/issues/465 for flag to allow keeping around the dependencies
+	// TODO: See https://github.com/getporter/porter/issues/465 for flag to allow keeping around the dependencies
 	err = opts.handleUninstallErrs(p.Out, deperator.Execute())
 	if err != nil {
 		return err

@@ -1,7 +1,7 @@
 name: HELLO-LLAMA
 version: 0.1.0
 description: "An example Porter configuration with moar llamas"
-tag: deislabs/porter-hello-llama-bundle
+tag: getporter/porter-hello-llama-bundle
 
 mixins:
   - exec

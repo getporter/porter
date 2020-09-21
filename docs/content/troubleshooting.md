@@ -44,7 +44,7 @@ have lines that contain a colon followed by a space `: ` or a hash `#` preceeded
 things will get tricky. If you can remove the space, or wrap the entire line in an extra quote, that
 should workaround the problem.
 
-[851]: https://github.com/deislabs/porter/issues/851
+[851]: https://github.com/getporter/porter/issues/851
 **before**
 
 ```yaml
