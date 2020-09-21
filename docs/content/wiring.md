@@ -5,6 +5,7 @@ description: How to wire parameters, credentials and outputs into steps
 
 In the Porter manifest, you can declare both parameters and credentials. In addition to providing a mechanism for declaring parameters and credentials at the bundle level, Porter provides a way to declare how each of these are provided to [mixins][mixin-architecture]. This mechanism is also applicable to declaring how output from one mixin can be passed to another, as well as how to consume parameters, credentials and outputs from bundle dependencies. Finally, you can also use this technique to reference images defined in the `images` section of the manifest.
 
+* [Wiring Installation Metadata](#wiring-installation-metadata)
 * [Parameters](#parameters)
   * [File Parameters](#file-parameters)
   * [Wiring Parameters](#wiring-parameters)
@@ -12,9 +13,23 @@ In the Porter manifest, you can declare both parameters and credentials. In addi
   * [Wiring Credentials](#wiring-credentials)
 * [Outputs](#outputs)
   * [Wiring Outputs](#wiring-outputs)
+* [Wiring Custom Metadata](#wiring-custom-metadata)
 * [Wiring Images](#wiring-images)
 * [Wiring Dependency Outputs](#wiring-dependency-outputs)
 * [Combining References](#combining-references)
+
+## Wiring Installation Metadata
+
+The installation name is available at runtime as `{{ installation.name }}`. In the example below, we install a helm chart
+and set the release name to the installation name of the bundle:
+
+```yaml
+install:
+  helm:
+    description: Install myapp
+    name: "{{ installation.name }}"
+    chart: charts/myapp
+```
 
 ## Parameters
 
@@ -215,6 +230,30 @@ parameters:
   source:
     dependency: mysql
     source: connstr
+```
+
+## Wiring Custom Metadata
+
+In the `porter.yaml`, you can define custom metadata and use it in your bundle.
+These custom values are hard-coded into the bundle and cannot be modified at
+runtime. If you need that, then you should use a parameter.
+
+```yaml
+custom:
+  myApp:
+    featureFlags:
+      featureA: true
+```
+
+Now you can use the custom values in your actions like so:
+
+```yaml
+install:
+  helm:
+    description: Install myapp
+    chart: charts/myapp
+    set:
+      featureA: "{{ bundle.custom.myApp.featureFlags.featureA }}"
 ```
 
 ## Wiring Images
