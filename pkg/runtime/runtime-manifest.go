@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
@@ -77,6 +78,10 @@ func (m *RuntimeManifest) loadBundle() error {
 
 	m.bundle = b
 	return nil
+}
+
+func (m *RuntimeManifest) GetInstallationName() string {
+	return os.Getenv(config.EnvInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
@@ -209,6 +214,11 @@ type StepOutput struct {
 func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	m.sensitiveValues = []string{}
+
+	inst := make(map[string]interface{})
+	data["installation"] = inst
+	inst["name"] = m.GetInstallationName()
+
 	bun := make(map[string]interface{})
 	data["bundle"] = bun
 
@@ -217,6 +227,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["version"] = m.Version
 	bun["description"] = m.Description
 	bun["invocationImage"] = m.Image
+	bun["custom"] = m.Custom
 
 	params := make(map[string]interface{})
 	bun["parameters"] = params

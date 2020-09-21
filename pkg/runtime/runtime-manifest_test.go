@@ -405,7 +405,6 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 			{
 				Name: "mysql",
 				Tag:  "getporter/porter-mysql",
-
 			},
 		},
 		TemplateVariables: []string{
@@ -1039,4 +1038,54 @@ func TestResolveStepEncoding(t *testing.T) {
 	require.NoError(t, err)
 	flags := s.Data["Flags"].(map[interface{}]interface{})
 	assert.Equal(t, flags["c"], wantValue)
+}
+
+func TestResolveInstallationName(t *testing.T) {
+	os.Setenv(config.EnvInstallationName, "mybun")
+	defer os.Unsetenv(config.EnvInstallationName)
+
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{}
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "Do a helm release",
+			"release":     "{{ installation.name }}",
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err, "ResolveStep failed")
+
+	assert.Equal(t, "mybun", s.Data["release"], "installation.name was not rendered")
+}
+
+func TestResolveCustomMetadata(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{
+		Custom: map[string]interface{}{
+			"foo": "foobar",
+			"myApp": map[string]interface{}{
+				"featureFlags": map[string]bool{
+					"featureA": true,
+				},
+			},
+		},
+	}
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "Do a helm release",
+			"release":     "{{ bundle.custom.foo }}",
+			"featureA":    "{{ bundle.custom.myApp.featureFlags.featureA }}",
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err, "ResolveStep failed")
+
+	assert.Equal(t, "foobar", s.Data["release"], "custom metadata was not rendered")
+	assert.Equal(t, "true", s.Data["featureA"], "nested custom metadata was not rendered")
 }
