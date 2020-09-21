@@ -364,7 +364,7 @@ For more information on how dependencies are handled, refer to the [dependencies
 
 ## Combining References
 
-It is possible to reference multiple parameters, credentials and/or outputs in a single place. You simply combine the expressions as follows:
+It is possible to reference multiple parameters, credentials and/or outputs in a single place. You can combine the expressions as follows:
 
 ```yaml
 install:
