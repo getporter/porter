@@ -25,8 +25,7 @@ import (
 type PublishOptions struct {
 	BundlePullOptions
 	bundleFileOptions
-	InsecureRegistry bool
-	ArchiveFile      string
+	ArchiveFile string
 }
 
 // Validate performs validation on the publish options
