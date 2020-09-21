@@ -5,9 +5,9 @@ description: Where to find other people, ask for help and share neat stuff with 
 
 ## Forum
 
-The best place to engage with the community is our [forum]. People can find
-topics that your start and join the conversation, or find an answer to their
-question.
+The best place to engage with the community is our [forum]. We prefer it over
+Slack because people can more easily join in on conversations over time and find
+answers to their questions.
 
 <ul style="list-style:none;">
     <li>🙋🏽‍♀️ Ask questions</li>
@@ -49,4 +49,4 @@ spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
 [issue]: https://github.com/getporter/porter/issues/new
-[forum]: https://porter.sh/forum
+[forum]: /forum
