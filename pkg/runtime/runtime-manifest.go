@@ -227,6 +227,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["version"] = m.Version
 	bun["description"] = m.Description
 	bun["invocationImage"] = m.Image
+	bun["custom"] = m.Custom
 
 	params := make(map[string]interface{})
 	bun["parameters"] = params
