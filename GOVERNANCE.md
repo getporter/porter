@@ -13,13 +13,14 @@ The Porter project is in the [CNCF Sandbox](https://www.cncf.io/sandbox-projects
 ## Roles
 
 We have a [Contribution Ladder] that explains the capabilities and
-responsibilities of each role:
+responsibilities of each role on the project. The ladder includes the
+requirements necessary to "move up the ladder" and attain each role such as:
 
 * Contributor
 * Maintainer
 * Admin
 
-The [OWNERS] defines the current maintainers of the project.
+The [OWNERS] file defines the current maintainers of the project.
 
 ## Release Process
 
