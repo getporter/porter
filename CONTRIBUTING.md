@@ -281,13 +281,16 @@ When porter is run it will start delve and attach it to the plugin process, this
 ## Preview documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
-[Netlify](netlify.com).
+[Netlify](netlify.com). You don't have to install Hugo locally because the
+preview happens inside a docker container.
 
-1. You don't have to install [hugo], because we use a docker image from `klakegg/hugo:0.53-ext-alpine` as our rendering engine
-1. Run `make docs-preview` to start serving the docs. It will watch the file system for changes.
-1. Our make rule should open <http://localhost:1313/docs> to preview the site/docs. Sometimes you may observe a small rendering delay when you start the first time, just hit refresh and the site should render as expected.
+1. Run `make docs-preview` to start serving the docs. It will watch the file
+system for changes.
+1. Our make rule should open <http://localhost:1313/docs> to preview the
+site/docs.
 
-We welcome your contribution to improve our documentation and we hope it is an easy process! ❤️
+We welcome your contribution to improve our documentation, and we hope it is an
+easy process! ❤️
 
 ## Command Documentation
 
