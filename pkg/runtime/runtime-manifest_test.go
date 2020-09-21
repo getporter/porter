@@ -1040,3 +1040,24 @@ func TestResolveStepEncoding(t *testing.T) {
 	flags := s.Data["Flags"].(map[interface{}]interface{})
 	assert.Equal(t, flags["c"], wantValue)
 }
+
+func TestResolveInstallationName(t *testing.T) {
+	os.Setenv(config.EnvInstallationName, "mybun")
+	defer os.Unsetenv(config.EnvInstallationName)
+
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{}
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "Do a helm release",
+			"release":     "{{ installation.name }}",
+		},
+	}
+
+	err := rm.ResolveStep(s)
+	require.NoError(t, err, "ResolveStep failed")
+
+	assert.Equal(t, "mybun", s.Data["release"], "installation.name was not rendered")
+}
