@@ -7381,7 +7381,7 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  background: #d4ebf5;
+  background: #DDF5F2;
   z-index: 700;
   position: fixed;
   border-right: 1px solid #cfedfa; }
