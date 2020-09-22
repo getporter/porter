@@ -1,0 +1,29 @@
+version: 0.1.0
+tag: example.com/mybundle
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: bash
+
+        
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+
+custom:
+  foo: 
+    test1: true
+    test2: 1
+    test3: value
+    test4:
+      - one
+      - two
+      - three
+    test5:
+      1: one
+      two: two

@@ -49,7 +49,7 @@ type Manifest struct {
 	Uninstall Steps `yaml:"uninstall"`
 	Upgrade   Steps `yaml:"upgrade"`
 
-	Custom                  map[string]interface{}            `yaml:"custom,omitempty"`
+	Custom                  CustomDefinitions                 `yaml:"custom,omitempty"`
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
@@ -336,6 +336,69 @@ func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
 type ParameterSource struct {
 	Dependency string `yaml:"dependency,omitempty"`
 	Output     string `yaml:"output"`
+}
+
+// CredentialDefinitions allows objects and arrays to be provided as values in custom definitions
+// By default yaml serilialiser convert these to map[interface{}]interface which cannot be serialised as json
+// see https://github.com/go-yaml/yaml/issues/139
+
+type CustomDefinitions map[string]interface{}
+
+func (cd CustomDefinitions) MarshalYAML() (interface{}, error) {
+	var raw map[interface{}]interface{}
+
+	for k, v := range cd {
+		raw[k] = v
+	}
+
+	return raw, nil
+}
+
+func (cd *CustomDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw map[interface{}]interface{}
+	err := unmarshal(&raw)
+	if err != nil {
+		return err
+	}
+
+	if *cd == nil {
+		*cd = make(map[string]interface{}, len(raw))
+	}
+
+	for k, v := range raw {
+		(*cd)[fmt.Sprintf("%v", k)] = cleanupMapValue(v)
+	}
+
+	return nil
+}
+
+func cleanupInterfaceArray(in []interface{}) []interface{} {
+	res := make([]interface{}, len(in))
+	for i, v := range in {
+		res[i] = cleanupMapValue(v)
+	}
+	return res
+}
+
+func cleanupInterfaceMap(in map[interface{}]interface{}) map[string]interface{} {
+	res := make(map[string]interface{})
+	for k, v := range in {
+		res[fmt.Sprintf("%v", k)] = cleanupMapValue(v)
+	}
+	return res
+}
+
+func cleanupMapValue(v interface{}) interface{} {
+	switch v := v.(type) {
+	case []interface{}:
+		return cleanupInterfaceArray(v)
+	case map[interface{}]interface{}:
+		return cleanupInterfaceMap(v)
+	case string, bool, int8, int16, int32, int64, int, uint, uint8, uint16, uint32, uint64:
+		return v
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 // CredentialDefinitions allows us to represent credentials as a list in the YAML

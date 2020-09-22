@@ -379,17 +379,47 @@ func TestValidateImageMap(t *testing.T) {
 func TestLoadManifestWithCustomData(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("testdata/porter.yaml", config.Name)
+	cxt.AddTestFile("testdata/porter-with-custom-metadata.yaml", config.Name)
 
 	m, err := LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	assert.NotNil(t, m)
-	assert.Equal(t, map[string]interface{}{"foo": "bar"}, m.Custom)
+	require.NotNil(t, m, "manifest was nil")
+	val, ok := m.Custom["foo"].(map[string]interface{})
+	require.True(t, ok, "Cannot cast foo value to map[string]interface{}")
 
-	custom := m.Custom
-	fooCustomField, _ := custom["foo"]
-	assert.Equal(t, "bar", fooCustomField)
+	val1, ok := val["test1"].(bool)
+	require.True(t, ok, "Cannot cast test1 value to bool")
+	require.True(t, val1, "test1 value is unexpected")
+
+	val2, ok := val["test2"].(int)
+	require.True(t, ok, "Cannot cast test2 value to int")
+	require.Equal(t, 1, val2, "test2 value is unexpected")
+
+	val3, ok := val["test3"].(string)
+	require.True(t, ok, "Cannot cast test3 value to string")
+	require.Equal(t, "value", val3, "test3 value is unexpected")
+
+	val4, ok := val["test4"].([]interface{})
+	require.True(t, ok, "Cannot cast test4 value to interface{} array")
+	val5, ok := val4[0].(string)
+	require.True(t, ok, "Cannot cast test4[0] value to string")
+	require.Equal(t, "one", val5, "test4[0] value is unexpected")
+	val6, ok := val4[1].(string)
+	require.True(t, ok, "Cannot cast test4[1] value to string")
+	require.Equal(t, "two", val6, "test4[1] value is unexpected")
+	val7, ok := val4[2].(string)
+	require.True(t, ok, "Cannot cast test4[2] value to string")
+	require.Equal(t, "three", val7, "test4[2] value is unexpected")
+
+	val8, ok := val["test5"].(map[string]interface{})
+	require.True(t, ok, "Cannot cast test5 value to interface{} array")
+	val9, ok := val8["1"].(string)
+	require.True(t, ok, "Cannot cast test5[0] value to string")
+	require.Equal(t, "one", val9, "test54[0] value is unexpected")
+	val10, ok := val8["two"].(string)
+	require.True(t, ok, "Cannot cast test5[1] value to string")
+	require.Equal(t, "two", val10, "test5[1] value is unexpected")
 }
 
 func TestLoadManifestWithRequiredExtensions(t *testing.T) {
