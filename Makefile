@@ -213,6 +213,9 @@ install-porter:
 install-mixins:
 	cp -R bin/mixins $(HOME)/.porter/
 
+setup-dco:
+	@scripts/setup-dco/setup.sh
+
 clean: clean-mixins clean-last-testrun
 
 clean-mixins:
