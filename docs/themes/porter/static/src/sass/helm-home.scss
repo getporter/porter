@@ -17,6 +17,10 @@ body.home {
   h2, h3, h4, h5 {
     @include klinicReg;
   }
+  
+  #footer {
+    max-width: 100%;
+  }
 }
 
 
