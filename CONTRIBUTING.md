@@ -133,11 +133,15 @@ request comment so that we don't collectively forget.
 
 ## Signing your commits
 
-Licensing is important to open source projects. It provides some assurances that the software
-will continue to be available based under the terms that the author(s) desired. We require that
-contributors sign off on commits submitted to our project's repositories. The 
-[Developer Certificate of Origin (DCO)](https://developercertificate.org/) is a way to certify that 
-you wrote and have the right to contribute the code you are submitting to the project.
+You can automatically sign your commits to meet the DCO requirement for this
+project by running the following command: `make setup-dco`.
+
+Licensing is important to open source projects. It provides some assurances that
+the software will continue to be available based under the terms that the
+author(s) desired. We require that contributors sign off on commits submitted to
+our project's repositories. The [Developer Certificate of Origin
+(DCO)](https://developercertificate.org/) is a way to certify that you wrote and
+have the right to contribute the code you are submitting to the project.
 
 You sign-off by adding the following to your commit messages:
 
@@ -157,8 +161,8 @@ Git has a `-s` command line option to do this automatically:
 
     git commit -s -m 'This is my commit message'
 
-If you forgot to do this and have not yet pushed your changes to the remote repository, you can 
-amend your commit with the sign-off by running 
+If you forgot to do this and have not yet pushed your changes to the remote
+repository, you can amend your commit with the sign-off by running 
 
     git commit --amend -s
 
@@ -236,14 +240,21 @@ You now have canary builds of porter and all the mixins installed.
 Here are the most common Makefile tasks
 
 * `build` builds all binaries, porter and internal mixins.
-* `build-porter-client` just builds the porter client for your operating
-  system. It does not build the porter-runtime binary. Useful when you just want
-  to do a build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime. It does not clean
-   up generated files created by packr, so you usually want to also run `clean-packr`.
-* `install-porter` installs porter from source into your home directory and creates a symlink for porter from **$(HOME)/.porter/** into **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be overwritten with the new symlink.
-* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** . This is useful when you are working on the exec or kubernetes mixin.
-* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to **$(HOME)/.porter/**.
+* `build-porter-client` just builds the porter client for your operating system.
+  It does not build the porter-runtime binary. Useful when you just want to do a
+  build and don't remember the proper way to call `go build` yourself.
+* `build-porter` builds both the porter client and runtime. It does not clean up
+  g enerated files created by packr, so you usually want to also run
+  `clean-packr`.
+* `install-porter` installs porter from source into your home directory and
+  creates a symlink for porter from **$(HOME)/.porter/** into
+  **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be
+  overwritten with the new symlink.
+* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** .
+  This is useful when you are working on the exec or kubernetes mixin.
+* `install` installs porter _and_ the mixins from source into
+  **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to
+  **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
@@ -255,6 +266,8 @@ Here are the most common Makefile tasks
 * `clean-packr` removes extra packr files that were a side-effect of the build.
   Normally this is run automatically but if you run into issues with packr, 
   run this command.
+* `setup-dco` installs a git commit hook that automatically signsoff your commit
+  messages per the DCO requirement.
 
 ## Install mixins
 
@@ -266,17 +279,25 @@ installed into your bin directory in the root of the repository. You can use
 
 ## Plugin Debugging
 
-If you are developing a [plugin](https://porter.sh/plugins/) and you want to debug it follow these steps:
+If you are developing a [plugin](https://porter.sh/plugins/) and you want to
+debug it follow these steps:
 
-The plugin to be debugged should be compiled and placed in porters plugin path (e.g. in the Azure plugin case the plugin would be copied to $PORTER_HOME/plugins/azure/.
+The plugin to be debugged should be compiled and placed in porters plugin path
+(e.g. in the Azure plugin case the plugin would be copied to
+$PORTER_HOME/plugins/azure/.
 
 The following environment variables should be set:
 
-`PORTER_RUN_PLUGIN_IN_DEBUGGER` should be set to the name of the plugin to be debugged (e.g. secrets.azure.keyvault to debug the azure secrets plugin)  
-`PORTER_DEBUGGER_PORT` should be set to the port number where the delve API will listen, if not set it defaults to 2345  
-`PORTER_PLUGIN_WORKING_DIRECTORY` should be the path to the directory containing *source code* for the plugin being executed.  
+`PORTER_RUN_PLUGIN_IN_DEBUGGER` should be set to the name of the plugin to be
+debugged (e.g. secrets.azure.keyvault to debug the azure secrets plugin)  
+`PORTER_DEBUGGER_PORT` should be set to the port number where the delve API will
+listen, if not set it defaults to 2345  
+`PORTER_PLUGIN_WORKING_DIRECTORY` should be the path to the directory containing
+*source code* for the plugin being executed.  
 
-When porter is run it will start delve and attach it to the plugin process, this exposes the delve API so that any delve client can connect to the server and debug the plugin.
+When porter is run it will start delve and attach it to the plugin process, this
+exposes the delve API so that any delve client can connect to the server and
+debug the plugin.
 
 ## Preview documentation
 
@@ -335,6 +356,7 @@ dependency injection and testing strategies.
       version command.
 * **scripts**:
   * **install**: Porter [installation](https://porter.sh/install) scripts
+  * **setup-doc**: Set up automatic DCO signoff for the developer environment
 * **tests** have Go-based integration tests.
 
 ## Logging
