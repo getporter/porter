@@ -38,7 +38,7 @@ func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout s
 		}
 
 		if cxt.Debug {
-			fmt.Fprintf(cxt.Err, "Processing jsonpath output %s...", outputName)
+			fmt.Fprintf(cxt.Err, "Processing jsonpath output %s using query %s against document\n%s\n", outputName, outputPath, stdout)
 		}
 
 		var valueB []byte
