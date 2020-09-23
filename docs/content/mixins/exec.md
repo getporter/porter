@@ -94,6 +94,11 @@ Then then output would have the following contents:
 ["1085517466897181794"]
 ```
 
+When you are developing your jsonPath expression, you can specify the --debug
+flag and the full json document with your query are printed to stderr so that you
+can troubleshoot and improve your query based on the real result of the mixin's
+execution.
+
 #### Regular Expressions
 
 The `regex` output applies a Go-syntax regular expression to stdout and saves every capture group, one per line, to the output.

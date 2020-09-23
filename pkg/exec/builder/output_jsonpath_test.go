@@ -90,6 +90,24 @@ func TestJsonPathOutputs(t *testing.T) {
 	}
 }
 
+func TestJsonPathOutputs_DebugPrintsDocument(t *testing.T) {
+	c := context.NewTestContext(t)
+	c.Debug = true
+	step := TestStep{
+		Outputs: []Output{
+			TestJsonPathOutput{Name: "ids", JsonPath: "$[*].id"},
+		},
+	}
+
+	document := `[{"id": "abc123"}]`
+	err := ProcessJsonPathOutputs(c.Context, step, document)
+	require.NoError(t, err)
+	wantDebugLine := `Processing jsonpath output ids using query $[*].id against document
+[{"id": "abc123"}]
+`
+	assert.Contains(t, c.GetError(), wantDebugLine, "Debug mode should print the full document and query being captured")
+}
+
 func TestJsonPathOutputs_NoOutput(t *testing.T) {
 	c := context.NewTestContext(t)
 
