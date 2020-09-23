@@ -389,7 +389,7 @@ The friendly cloud installer that bootstraps your bundles using tools and assets
 * Community focused
 
 .center[
-  <img src="/images/porter-notext.png" alt="woman in black suit and hat, with cnab logo" width="300px" style="bottom: 0; position: absolute;"/>
+  <img src="/images/porter-docs-header.svg" alt="cat in bellhop hat and bowtie, Porter" width="300px" style="bottom: 0; position: absolute;"/>
 ]
 
 ---
