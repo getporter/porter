@@ -1,19 +1,21 @@
 {{ partial "header.html" . }}
 
-  <div class="container container-full">
+  <div class="blog-layout">
     {{ partial "sidebar.html" . }}
 
-    <div class="main page" id="scrollpane">
+    <div class="main page blog blog-single" id="scrollpane">
       {{ partial "topbar.html" . }}
 
-      <div class="row">
-        <div class="small-1 columns">&nbsp;</div>
-        <div class="small-10 columns content-wrap">
+      <div class="small-2 columns">&nbsp;</div>
+      <div class="small-8 columns content-wrap">
+        <article>
           <h1>{{ .Title }}</h1>
+          <p class="date">{{ dateFormat "Jan 2, 2006" .Params.postDate }}</p>
           {{ .Content }}
-        </div>
-        <div class="small-1 columns">&nbsp;</div>
+        </article>
       </div>
+      <div class="small-2 columns">&nbsp;</div>
     </div>
+  </div>
 
-    {{ partial "footer.html" . }}
+  {{ partial "footer.html" . }}

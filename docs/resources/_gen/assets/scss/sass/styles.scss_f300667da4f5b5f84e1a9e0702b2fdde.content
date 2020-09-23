@@ -7285,9 +7285,7 @@ nav.home-nav {
     left: 0;
     top: 0;
     display: block;
-    background-color: white;
-    border-bottom: 1px solid #cfedfa;
-    border-right: 1px solid #cfedfa; }
+    background-color: white; }
     .blog-layout h1.blog-logo a {
       padding: 0.333em 2.25rem;
       background-color: white;
@@ -7335,11 +7333,17 @@ nav.home-nav {
           color: white !important; }
   .blog-layout .main {
     padding-top: 2rem; }
-    .blog-layout .main.blog .content-wrap article h1 {
-      padding-top: 4rem; }
+    .blog-layout .main.blog .content-wrap h1 {
+      margin-top: 0; }
+    .blog-layout .main.blog .content-wrap article {
+      padding: 0; }
+      .blog-layout .main.blog .content-wrap article h2 {
+        padding-top: 4rem; }
     .blog-layout .main.blog-single .content-wrap article h1 {
-      font-size: 2.667rem;
-      margin-top: 2rem; }
+      font-size: 2.667rem; }
+    .blog-layout .main.blog-single .content-wrap article .date {
+      text-align: right;
+      font-style: italic; }
 
 html,
 body {
@@ -8142,8 +8146,7 @@ body {
     .main .content-wrap article h1 {
       font-size: 32px;
       color: #2090CD;
-      margin: 1em 0 1em;
-      padding-top: 4.5em; }
+      margin: 1em 0 1em; }
   .main .content-wrap h2 {
     color: #595959;
     font-size: 24px;

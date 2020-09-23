@@ -1,39 +1,7 @@
-<div class="sidebar show-for-large-up">
-  <h1>
+<div>
+  <h1 class="blog-logo">
     <a href="/" title="Porter | Back to home">
-      <img src="/images/porter-docs-header.svg" alt="Porter | Back to home" />
+      <img src="/images/porter-logo.png" alt="Porter | Back to home" />
     </a>
   </h1>
-
-  <div class="sidebar-wrap">
-
-    <nav class="sidebar-nav">
-      <ul class="current sidebar-main">
-        {{ range .Site.Menus.main }}
-        <li class="sidebar-nav-item toctree-l1 {{if $.IsMenuCurrent "main" . }} active {{end}}">
-          <a class="reference internal" href="{{ .URL | safeHTMLAttr }}" state="">
-            <span class="ripple">{{ .Name }} <span></span></span>
-          </a>
-          {{ if .HasChildren }}
-          <ul class="current">
-            {{ range .Children.ByWeight }}
-            <li class="toctree-l2 {{if $.IsMenuCurrent "main" . }} active {{end}}">
-              <a href="{{ .URL | safeHTMLAttr }}" title="{{ .Name }}">
-                {{ .Name }}
-              </a>
-            </li>
-            {{ end }}
-          </ul>
-          {{end}}
-        </li>
-        {{ end }}
-      </ul>
-    </nav>
-
-    <aside class="sidebar-buttons">
-      <div class="button-wrap">
-        <a href="https://github.com/getporter/porter" class="button small primary expand email-support"><i class="fa fa-github"></i> Contribute to Docs</a>
-      </div>
-    </aside>
-  </div>
 </div>
