@@ -6447,9 +6447,6 @@ nav.home-nav {
     left: 5%;
     top: 0.5rem;
     max-width: 250px; }
-    nav.home-nav h1 img,
-    nav.home-nav h1 svg {
-      min-height: 150px; }
   nav.home-nav ul {
     position: absolute;
     top: 3.25rem;
@@ -7040,7 +7037,7 @@ nav.home-nav {
     letter-spacing: 0.05em;
     -webkit-font-smoothing: antialiased; }
     #helm .geo-shapes-title h2 hr.border {
-      border-color: #38BB4C;
+      border-color: #DDF5F2;
       border-width: 0 0 5px;
       margin: 0.575em -5% 1em; }
     #helm .geo-shapes-title h2 .geo-shapes {
@@ -7381,7 +7378,7 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  background: #d4ebf5;
+  background: #DDF5F2;
   z-index: 700;
   position: fixed;
   border-right: 1px solid #cfedfa; }
@@ -7512,7 +7509,7 @@ body {
   .sidebar .sidebar-buttons {
     border-top: 2px solid white;
     min-height: 4.75rem;
-    background: #d4ebf5; }
+    background: #DDF5F2; }
     .sidebar .sidebar-buttons .button-wrap {
       width: 300px;
       padding: 0.5em 10% 0.5em; }
