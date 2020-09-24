@@ -16,31 +16,11 @@
     background-color: white;
 
     a {
+      display: block;
+      width: 100%;
       padding: 0.333em 2.25rem;
       background-color: white;
-      display: inline-block;
-      max-height: 4rem;
-      line-height: 4rem;
-      position: absolute;
-      font-size: 1.5rem;
-      color: $blue3;
-      letter-spacing: -0.125rem;
       text-align: left;
-      @include klinicReg;
-
-      em {
-        font-style: normal;
-      }
-
-      &:first-of-type {
-        min-width: 30%;
-        left: 0;
-      }
-
-      &:last-of-type {
-        min-width: 70%;
-        right: 0;
-      }
 
       img,
       svg {
@@ -61,6 +41,14 @@
         left: 6.5rem;
         letter-spacing: -0.125rem;
         @include klinicReg;
+      }
+
+      &:hover {
+        background: $light2;
+
+        svg {
+          color: white !important;
+        }
       }
     }
   }

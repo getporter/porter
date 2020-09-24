@@ -7287,28 +7287,11 @@ nav.home-nav {
     display: block;
     background-color: white; }
     .blog-layout h1.blog-logo a {
+      display: block;
+      width: 100%;
       padding: 0.333em 2.25rem;
       background-color: white;
-      display: inline-block;
-      max-height: 4rem;
-      line-height: 4rem;
-      position: absolute;
-      font-size: 1.5rem;
-      color: #2090CD;
-      letter-spacing: -0.125rem;
-      text-align: left;
-      font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.0075em;
-      -webkit-font-smoothing: antialiased; }
-      .blog-layout h1.blog-logo a em {
-        font-style: normal; }
-      .blog-layout h1.blog-logo a:first-of-type {
-        min-width: 30%;
-        left: 0; }
-      .blog-layout h1.blog-logo a:last-of-type {
-        min-width: 70%;
-        right: 0; }
+      text-align: left; }
       .blog-layout h1.blog-logo a img,
       .blog-layout h1.blog-logo a svg {
         display: block;
@@ -7327,6 +7310,10 @@ nav.home-nav {
         font-weight: 400;
         letter-spacing: 0.0075em;
         -webkit-font-smoothing: antialiased; }
+      .blog-layout h1.blog-logo a:hover {
+        background: #E4E4E4; }
+        .blog-layout h1.blog-logo a:hover svg {
+          color: white !important; }
   .blog-layout .main {
     padding-top: 2rem; }
     .blog-layout .main.blog .content-wrap h1 {
