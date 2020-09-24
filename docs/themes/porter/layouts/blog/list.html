@@ -15,7 +15,7 @@
           <article>
             <header>
               <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
-              <p>{{ dateFormat "Jan 2, 2006" .Params.postDate }}</p>
+              <p>{{ dateFormat "Jan 2, 2006" .Date }}</p>
             </header>
             
             {{ .Summary }}

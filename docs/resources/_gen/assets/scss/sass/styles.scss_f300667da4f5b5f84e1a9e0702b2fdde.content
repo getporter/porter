@@ -7344,6 +7344,12 @@ nav.home-nav {
     .blog-layout .main.blog-single .content-wrap article .date {
       text-align: right;
       font-style: italic; }
+    .blog-layout .main.blog-single .content-wrap article img {
+      box-shadow: none; }
+      .blog-layout .main.blog-single .content-wrap article img:hover {
+        -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
 
 html,
 body {
