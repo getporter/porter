@@ -62,14 +62,6 @@
         letter-spacing: -0.125rem;
         @include klinicReg;
       }
-
-      &:hover {
-        background: $light2;
-
-        svg {
-          color: white !important;
-        }
-      }
     }
   }
 

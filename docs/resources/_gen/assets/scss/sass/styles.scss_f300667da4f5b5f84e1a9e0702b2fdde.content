@@ -7327,10 +7327,6 @@ nav.home-nav {
         font-weight: 400;
         letter-spacing: 0.0075em;
         -webkit-font-smoothing: antialiased; }
-      .blog-layout h1.blog-logo a:hover {
-        background: #E4E4E4; }
-        .blog-layout h1.blog-logo a:hover svg {
-          color: white !important; }
   .blog-layout .main {
     padding-top: 2rem; }
     .blog-layout .main.blog .content-wrap h1 {
