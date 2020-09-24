@@ -7285,32 +7285,13 @@ nav.home-nav {
     left: 0;
     top: 0;
     display: block;
-    background-color: white;
-    border-bottom: 1px solid #cfedfa;
-    border-right: 1px solid #cfedfa; }
+    background-color: white; }
     .blog-layout h1.blog-logo a {
+      display: block;
+      width: 100%;
       padding: 0.333em 2.25rem;
       background-color: white;
-      display: inline-block;
-      max-height: 4rem;
-      line-height: 4rem;
-      position: absolute;
-      font-size: 1.5rem;
-      color: #2090CD;
-      letter-spacing: -0.125rem;
-      text-align: left;
-      font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.0075em;
-      -webkit-font-smoothing: antialiased; }
-      .blog-layout h1.blog-logo a em {
-        font-style: normal; }
-      .blog-layout h1.blog-logo a:first-of-type {
-        min-width: 30%;
-        left: 0; }
-      .blog-layout h1.blog-logo a:last-of-type {
-        min-width: 70%;
-        right: 0; }
+      text-align: left; }
       .blog-layout h1.blog-logo a img,
       .blog-layout h1.blog-logo a svg {
         display: block;
@@ -7335,11 +7316,23 @@ nav.home-nav {
           color: white !important; }
   .blog-layout .main {
     padding-top: 2rem; }
-    .blog-layout .main.blog .content-wrap article h1 {
-      padding-top: 4rem; }
+    .blog-layout .main.blog .content-wrap h1 {
+      margin-top: 0; }
+    .blog-layout .main.blog .content-wrap article {
+      padding: 0; }
+      .blog-layout .main.blog .content-wrap article h2 {
+        padding-top: 4rem; }
     .blog-layout .main.blog-single .content-wrap article h1 {
-      font-size: 2.667rem;
-      margin-top: 2rem; }
+      font-size: 2.667rem; }
+    .blog-layout .main.blog-single .content-wrap article .date {
+      text-align: right;
+      font-style: italic; }
+    .blog-layout .main.blog-single .content-wrap article img {
+      box-shadow: none; }
+      .blog-layout .main.blog-single .content-wrap article img:hover {
+        -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
 
 html,
 body {
@@ -8142,8 +8135,7 @@ body {
     .main .content-wrap article h1 {
       font-size: 32px;
       color: #2090CD;
-      margin: 1em 0 1em;
-      padding-top: 4.5em; }
+      margin: 1em 0 1em; }
   .main .content-wrap h2 {
     color: #595959;
     font-size: 24px;

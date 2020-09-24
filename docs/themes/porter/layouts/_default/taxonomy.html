@@ -1,0 +1,32 @@
+{{ partial "header.html" . }}
+
+<div class="blog-layout">
+{{ partial "sidebar.html" . }}
+
+<div class="main page blog" id="scrollpane">
+    {{ partial "topbar.html" . }}
+
+    <div class="small-2 columns">&nbsp;</div>
+    <div class="small-8 columns content-wrap">
+        <h1>{{ title .Type | singularize }}: {{ .Title }}</h1>
+        {{ .Content }}
+
+        {{ range .Paginator.Pages }}
+            <article>
+                <header>
+                    <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
+                    <p>{{ dateFormat "Jan 2, 2006" .Date }}</p>
+                </header>
+
+                {{ .Summary }}
+                {{ if .Truncated }}
+                    <a href="{{ .RelPermalink }}">…</a>
+                {{ end }}
+            </article>
+
+        {{ end }}
+    </div>
+    <div class="small-2 columns">&nbsp;</div>
+</div>
+
+{{ partial "footer-blog.html" . }}
