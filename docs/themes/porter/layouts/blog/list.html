@@ -15,13 +15,21 @@
           <article>
             <header>
               <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
-              <p>{{ dateFormat "Jan 2, 2006" .Date }}</p>
+              <p class="date">{{ dateFormat "Jan 2, 2006" .Date }}</p>
             </header>
-            
-            {{ .Summary }}
-            {{ if .Truncated }}
-            <a href="{{ .RelPermalink }}">…</a>
-            {{ end }}
+
+            <div class="summary">
+              {{ if hasPrefix .Summary "<p>" }}
+              {{ .Summary }}
+              {{ else }}
+              <p>
+              {{ .Summary }}
+              </p>
+              {{ end }}
+              {{ if .Truncated }}
+                <a href="{{ .RelPermalink }}">…</a>
+              {{ end }}
+            </div>
           </article>
   
         {{ end }}
