@@ -69,6 +69,25 @@
 
           h2 {
             padding-top: 4rem;
+            margin-bottom: 0;
+          }
+
+          p.date {
+            margin-top: 0;
+            padding-top: 0;
+          }
+
+          // Workaround bug: https://github.com/gohugoio/hugo/issues/1217#issuecomment-628409159
+          .summary {
+            p {
+              display: inline;
+              margin: 0;
+              padding: 0;
+            }
+
+            a {
+              font-weight: 900;
+            }
           }
         }
       }
@@ -89,6 +108,8 @@
 
           img {
             box-shadow: none;
+            display: block;
+            margin: 0 auto;
 
             &:hover {
               @include box-shadow(none);
