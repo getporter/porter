@@ -5,8 +5,9 @@ description: Run commands using the docker CLI.
 
 <img src="/images/mixins/docker.png" class="mixin-logo" style="width: 300px"/>
 
-
 This is a Docker mixin for Porter. The mixin provides the Docker CLI. 
+
+Source: Source: https://github.com/getporter/docker-mixin
 
 ### Install or Upgrade
 ```

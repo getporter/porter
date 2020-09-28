@@ -7,6 +7,8 @@ description: Run commands using the docker-compose CLI.
 
 This is a mixin for Porter that provides the Docker Compose (docker-compose) CLI.
 
+Source: https://github.com/getporter/docker-compose-mixin
+
 ### Install or Upgrade
 ```
 porter mixin install docker-compose
