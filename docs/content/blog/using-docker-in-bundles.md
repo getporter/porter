@@ -4,7 +4,8 @@ description: "Now you can use Docker and Docker Compose from inside Porter bundl
 date: "2020-04-23"
 authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
-authorlink: "https://twitter.com/carolynvs"
+authorlink: "https://carolynvanslyck.com/"
+authorimage: "https://github.com/carolynvs.png"
 image: "images/porter-with-docker-twitter-card.png"
 tags: ["docker", "mixins"]
 ---

@@ -115,6 +115,15 @@
               @include box-shadow(none);
             }
           }
+
+          .author {
+            img {
+              max-width: 10rem;
+              display: block;
+              margin: 0;
+              padding: 0;
+            }
+          }
         }
       }
     }

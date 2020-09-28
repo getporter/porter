@@ -7345,6 +7345,11 @@ nav.home-nav {
         -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
         -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
         box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
+    .blog-layout .main.blog-single .content-wrap article .author img {
+      max-width: 10rem;
+      display: block;
+      margin: 0;
+      padding: 0; }
 
 html,
 body {
