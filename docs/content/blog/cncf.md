@@ -1,19 +1,19 @@
 ---
-title: "Porter Has Joined the CNCF"
-description: "Porter has been accepted into the Cloud Native Computing Foundation (CNCF)"
-date: "2020-09-24"
+title: "Porter Has Joined the CNCF as a Sandbox Project"
+description: "Porter has been accepted into the Cloud Native Computing Foundation (CNCF) as a Sandbox project"
+date: "2020-09-28"
 ---
 
 When [Jeremy Rickard][jerrycar] and I created Porter less than two years ago, we
 wanted to create a community-led project that would encourage collaboration
-across vendors to make Cloud Native Application Bundles (CNAB) accessible and
+across vendors to make Cloud Native Application Bundles ([CNAB]) accessible and
 maintainable. We want to continue to support that mission of vendor neutral
 independence while growing the community of practitioners who can use and
 contribute to Porter's development.
 <!-- more -->
 
-Today, the Porter Maintainers are happy to announce that Porter is now an
-official CNCF Sandbox project. By contributing Porter to the CNCF, we hope to
+Today, the Porter Maintainers are happy to announce that Porter has been accepted
+as a CNCF Sandbox project. By contributing Porter to the CNCF, we hope to
 encourage the adoption of Porter to ease the creation and use of bundles and to
 see more companies contribute mixins.
 
@@ -34,6 +34,7 @@ If you are interested in learning more about bundles, check out this
 [introductory video][cnab-unpacked]. Learn more about the [Porter
 Community][community] and [contribute to the project][contribute].
 
+[CNAB]: https://cnab.io/
 [jerrycar]: https://github.com/jeremyrickard
 [sandbox]: https://cncf.io/sandbox-projects/
 [community]: /community/
