@@ -13,6 +13,7 @@
   * [Makefile explained](#makefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
+  * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
@@ -312,6 +313,42 @@ site/docs.
 
 We welcome your contribution to improve our documentation, and we hope it is an
 easy process! ❤️
+
+## Write a blog post
+
+Thank you for writing a post for our blog! 🙇‍♀️ Here's what you need to do to create
+a new blog post and then preview it:
+
+1. Go to /docs/content/blog and create a new file. Whatever you name the file
+    will be the last part of the URL. For example a file named
+    "porter-collaboration.md" will be located at
+    <https://porter.sh/blog/porter-collaboration/>.
+    
+1. At the top of the file copy and paste the frontmatter template below. The
+    frontmatter is YAML that instucts the blogging software, Hugo, how to render the
+    blog post.
+    
+    ```yaml
+   ---
+   title: "Title of Your Blog Post in Titlecase"
+   description: "SEO description of your post, displayed in search engine results."
+   date: "2020-07-28"
+   authorname: "Your Name"
+   author: "@yourhandle" #Not used to link to github/twitter, but informally that's what people put here
+   authorlink: "https://link/to/your/website" # link to your personal website, github, social media...
+   authorimage: "https://link/to/your/profile/picture" # Optional, https://github.com/yourhandle.png works great
+   tags: [] # Optional, look at other pages and pick tags that are already in use, e.g. ["mixins"]
+   ---
+   ```
+
+1. [Preview](#preview-documentation) the website and click "Blog" at the top right to find your blog post.
+
+1. When you create a pull request, look at the checks run by the pull request,
+    and click "Details" on the *netlify/porter/deploy-preview** one to see a live
+    preview of your pull request.
+    
+Our pull request preview and the live site will not show posts with a date in
+the future. If you don't see your post, change the date to today's date.
 
 ## Command Documentation
 
