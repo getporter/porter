@@ -2,6 +2,12 @@
 title: "Porter Has Joined the CNCF as a Sandbox Project"
 description: "Porter has been accepted into the Cloud Native Computing Foundation (CNCF) as a Sandbox project"
 date: "2020-09-28"
+authorname: "Carolyn Van Slyck"
+author: "@carolynvs"
+authorlink: "https://carolynvanslyck.com/"
+authorimage: "https://github.com/carolynvs.png"
+image: "images/porter-twitter-card.png"
+tags: ["cncf"]
 ---
 
 When [Jeremy Rickard][jerrycar] and I created Porter less than two years ago, we
@@ -21,7 +27,7 @@ In the near-term, we are focusing on our [roadmap]. Our introductory
 documentation will be expanded and restructured to make it easier to get started
 with Porter and bundles. We have also been collecting feedback from the
 community on various usability points in Porter, for example how to build and
-promote bundles in a CI pipeline or using template variables in the Porter
+promote bundles in a CI pipeline or use template variables in the Porter
 manifest, and we will begin addressing these items to make Porter easier to use
 and automate.
 
