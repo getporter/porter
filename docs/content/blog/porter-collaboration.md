@@ -4,7 +4,8 @@ description: "Porter's latest release makes managing a bundle's lifecycle as a t
 date: "2020-02-19"
 authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
-authorlink: "https://twitter.com/carolynvs"
+authorlink: "https://carolynvanslyck.com/"
+authorimage: "https://github.com/carolynvs.png"
 image: "images/porter-twitter-card.png"
 tags: ["plugins"]
 ---

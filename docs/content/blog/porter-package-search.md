@@ -5,6 +5,7 @@ date: "2020-03-02"
 authorname: "Vaughn Dice"
 author: "@vdice"
 authorlink: "https://github.com/vdice"
+authorimage: "https://github.com/vdice.png"
 tags: ["plugins", "mixins"]
 ---
 

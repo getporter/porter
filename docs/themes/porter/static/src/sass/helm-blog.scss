@@ -115,6 +115,18 @@
               @include box-shadow(none);
             }
           }
+
+          .author {
+            text-align: center;
+            width: max-content;
+
+            img {
+              max-width: 10rem;
+              display: block;
+              margin: 0;
+              padding: 0;
+            }
+          }
         }
       }
     }

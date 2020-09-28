@@ -5,6 +5,7 @@ date: "2020-07-28"
 authorname:  Gauri Madhok
 author: "@gaurimadhok"
 authorlink: "https://twitter.com/gaurimadhok"
+authorimage: "https://github.com/gaurimadhok.png"
 tags: ["docker", "mixins"]
 ---
 
