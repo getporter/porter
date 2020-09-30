@@ -1,0 +1,93 @@
+mixins:
+- exec
+- helm
+
+name: mysql
+version: 0.1.3
+tag: localhost:5000/mysql
+
+credentials:
+- name: kubeconfig
+  path: /root/.kube/config
+
+parameters:
+- name: database-name
+  type: string
+  default: mydb
+  env: DATABASE_NAME
+- name: mysql-user
+  type: string
+  default: mysql-admin
+  env: MYSQL_USER
+- name: namespace
+  type: string
+  default: ''
+- name: mysql-name
+  type: string
+  default: porter-ci-mysql
+
+install:
+- helm:
+    description: "Install MySQL"
+    name: "{{ bundle.parameters.mysql-name }}"
+    chart: stable/mysql
+    version: 1.6.2
+    namespace: "{{ bundle.parameters.namespace }}"
+    replace: true
+    set:
+      mysqlDatabase: "{{ bundle.parameters.database-name}}"
+      mysqlUser: "{{ bundle.parameters.mysql-user }}"
+    outputs:
+    - name: mysql-root-password
+      secret: "{{ bundle.parameters.mysql-name }}"
+      key: mysql-root-password
+    - name: mysql-password
+      secret: "{{ bundle.parameters.mysql-name }}"
+      key: mysql-password
+
+ping:
+  - exec:
+      description: "Ping"
+      command: ./helpers.sh
+      arguments:
+        - ping
+
+upgrade:
+  - helm:
+      description: "Upgrade MySQL"
+      name: "{{ bundle.parameters.mysql-name }}"
+      namespace: "{{ bundle.parameters.namespace }}"
+      chart: stable/mysql
+      version: 1.6.2
+      outputs:
+      - name: mysql-root-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-root-password
+      - name: mysql-password
+        secret: "{{ bundle.parameters.mysql-name }}"
+        key: mysql-password
+
+uninstall:
+- helm:
+    description: "Uninstall MySQL"
+    purge: true
+    releases:
+      - "{{ bundle.parameters.mysql-name }}"
+
+outputs:
+  - name: mysql-password
+    description: "The mysql database password"
+    type: string
+    default: "default-password"
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true
+  - name: mysql-root-password
+    description: "The mysql root user password"
+    type: string
+    default: "default-root-password"
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true

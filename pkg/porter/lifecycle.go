@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"github.com/pkg/errors"
 )
@@ -75,6 +77,11 @@ func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
 	cachedBundle, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
 		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
+	}
+
+	invocationImage := cachedBundle.Bundle.InvocationImages[0]
+	if invocationImage.Digest == "" {
+		return fmt.Errorf("no content digest is present for image %s", invocationImage.Image)
 	}
 
 	opts.CNABFile = cachedBundle.BundlePath
