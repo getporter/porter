@@ -376,7 +376,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		typeOfT := val.Type()
 		for i := 0; i < val.NumField(); i++ {
 			f := val.Field(i)
-			name := strings.ToLower(typeOfT.Field(i).Name)
+			name := toLowerCase(typeOfT.Field(i).Name)
 			img[name] = f.String()
 		}
 		images[alias] = img
@@ -474,7 +474,7 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 		if !ok {
 			return fmt.Errorf("unable to find image in porter manifest: %s", alias)
 		}
-		manifestImage.Digest = image.Digest
+		manifestImage.ContentDigest = image.Digest
 		err := resolveImage(&manifestImage, image.Image)
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from bundle.json")
@@ -507,7 +507,7 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 			image.Tag = tagged.Tag()
 		}
 		image.Repository = v.Name()
-		image.Digest = v.Digest().String()
+		image.ContentDigest = v.Digest().String()
 
 	case reference.NamedTagged:
 		image.Tag = v.Tag()
@@ -517,4 +517,14 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 		image.Tag = "latest" //Populate this with latest so that the {{ can reference something }}
 	}
 	return nil
+}
+
+// toLowerCase returns a string with the first character lowercased
+func toLowerCase(str string) string {
+	var b strings.Builder
+
+	b.WriteString(strings.ToLower(string(str[0])))
+	b.WriteString(str[1:])
+
+	return b.String()
 }

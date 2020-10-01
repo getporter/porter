@@ -169,7 +169,7 @@
           "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
           "type": "string"
         },
-        "digest" :{ 
+        "contentDigest" :{ 
           "description": "The digest of the image, i.e. sha256:cafebabe...",
           "type": "string"
         },

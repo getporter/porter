@@ -7,7 +7,7 @@
     "description": "",
     "images": null,
     "invocationImages": [{
-        "digest": "sha256:f858bc025ad34099fe67ebe6152e03b4c91b34cc7a77d1aa10aaf1dc1389c2c2",
+        "contentDigest": "sha256:f858bc025ad34099fe67ebe6152e03b4c91b34cc7a77d1aa10aaf1dc1389c2c2",
         "image": "jeremyrickard/porter-mysql@sha256:f858bc025ad34099fe67ebe6152e03b4c91b34cc7a77d1aa10aaf1dc1389c2c2",
         "imageType": "docker"
     }],

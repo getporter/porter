@@ -473,20 +473,20 @@ func (m MixinDeclaration) MarshalYAML() (interface{}, error) {
 }
 
 type MappedImage struct {
-	Description string            `yaml:"description"`
-	ImageType   string            `yaml:"imageType"`
-	Repository  string            `yaml:"repository"`
-	Digest      string            `yaml:"digest,omitempty"`
-	Size        uint64            `yaml:"size,omitempty"`
-	MediaType   string            `yaml:"mediaType,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Tag         string            `yaml:"tag,omitempty"`
+	Description   string            `yaml:"description"`
+	ImageType     string            `yaml:"imageType"`
+	Repository    string            `yaml:"repository"`
+	ContentDigest string            `yaml:"contentDigest,omitempty"`
+	Size          uint64            `yaml:"size,omitempty"`
+	MediaType     string            `yaml:"mediaType,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty"`
+	Tag           string            `yaml:"tag,omitempty"`
 }
 
 func (mi *MappedImage) Validate() error {
-	if mi.Digest != "" {
+	if mi.ContentDigest != "" {
 		anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
-		if !anchoredDigestRegex.MatchString(mi.Digest) {
+		if !anchoredDigestRegex.MatchString(mi.ContentDigest) {
 			return reference.ErrDigestInvalidFormat
 		}
 	}
