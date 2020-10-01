@@ -22,8 +22,8 @@ out a particular registry and know that it will work for you.
 | GCR | Yes |
 | GitHub Packages | Yes | Yes |
 | Nexus | No |  |
-| Quay | No | No
-| Harbor | yes | yes
+| Quay | No | No |
+| Harbor | yes | yes |
 
  If you are a registry or user and know that this page is out of date, [please
  let us know!](https://github.com/deislabs/porter/issues/new)_
