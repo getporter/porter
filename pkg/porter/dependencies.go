@@ -181,11 +181,6 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	dep.CNABFile = cachedDep.BundlePath
 	dep.RelocationMapping = cachedDep.RelocationFilePath
 
-	invocationImage := cachedDep.Bundle.InvocationImages[0]
-	if invocationImage.Digest == "" {
-		return fmt.Errorf("no content digest is present for dependency image %s", invocationImage.Image)
-	}
-
 	err = cachedDep.Bundle.Validate()
 	if err != nil {
 		return errors.Wrapf(err, "invalid bundle %s", dep.Alias)
