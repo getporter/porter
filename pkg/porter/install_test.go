@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/manifest"
@@ -147,71 +146,33 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	}
 }
 
-func TestPorter_InstallBundle_FromTag(t *testing.T) {
-	wordpressBundleCacheDir := "5d9a67917af0797beeb54b85bd869cab"
-	mysqlBundleCacheDir := "4f17468b1ad86cb50cd76d9b8148d249"
+func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
+	p := NewTestPorter(t)
 
-	testcases := []struct {
-		name          string
-		bundleModFunc func(*TestPorter, string)
-		wantError     string
-	}{
-		{
-			name:          "bundle and dep bundle have content digests",
-			bundleModFunc: func(p *TestPorter, cacheDir string) {},
-			wantError:     "",
-		}, {
-			name: "bundle is missing content digest",
-			bundleModFunc: func(p *TestPorter, cacheDir string) {
-				p.TestConfig.TestContext.AddTestFile(
-					"testdata/wordpress-bundle-no-content-digest.json", filepath.Join(cacheDir, wordpressBundleCacheDir, "cnab/bundle.json"))
+	cacheDir, _ := p.Cache.GetCacheDir()
+	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
+
+	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
+	cs := credentials.NewCredentialSet("wordpress",
+		valuesource.Strategy{
+			Name: "kubeconfig",
+			Source: valuesource.Source{
+				Key:   secrets.SourceSecret,
+				Value: "kubeconfig",
 			},
-			wantError: "unable to pull bundle before installation: no content digest is present for image getporter/wordpress-installer:v0.1.3",
-		}, {
-			name: "dep bundle is missing content digest",
-			bundleModFunc: func(p *TestPorter, cacheDir string) {
-				p.TestConfig.TestContext.AddTestFile(
-					"testdata/mysql-dep-bundle-no-content-digest.json", filepath.Join(cacheDir, mysqlBundleCacheDir, "cnab/bundle.json"))
-			},
-			wantError: "no content digest is present for dependency image getporter/mysql-installer:v0.1.3",
-		}}
-
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			p := NewTestPorter(t)
-
-			cacheDir, _ := p.Cache.GetCacheDir()
-			p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
-
-			tc.bundleModFunc(p, cacheDir)
-
-			// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-			cs := credentials.NewCredentialSet("wordpress",
-				valuesource.Strategy{
-					Name: "kubeconfig",
-					Source: valuesource.Source{
-						Key:   secrets.SourceSecret,
-						Value: "kubeconfig",
-					},
-				})
-			p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
-			err := p.Credentials.Save(cs)
-			require.NoError(t, err, "Credentials.Save failed")
-
-			opts := InstallOptions{}
-			opts.Driver = DebugDriver
-			opts.Tag = "getporter/wordpress:v0.1.3"
-			opts.CredentialIdentifiers = []string{"wordpress"}
-			opts.Params = []string{"wordpress-password=mypassword"}
-			err = opts.Validate(nil, p.Porter)
-			require.NoError(t, err, "Validate install options failed")
-
-			err = p.InstallBundle(opts)
-			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
-			} else {
-				require.NoError(t, err)
-			}
 		})
-	}
+	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
+	err := p.Credentials.Save(cs)
+	require.NoError(t, err, "Credentials.Save failed")
+
+	opts := InstallOptions{}
+	opts.Driver = DebugDriver
+	opts.Tag = "getporter/wordpress:v0.1.2"
+	opts.CredentialIdentifiers = []string{"wordpress"}
+	opts.Params = []string{"wordpress-password=mypassword"}
+	err = opts.Validate(nil, p.Porter)
+	require.NoError(t, err, "Validate install options failed")
+
+	err = p.InstallBundle(opts)
+	require.NoError(t, err, "InstallBundle failed")
 }
