@@ -6,7 +6,7 @@ description: How to effectively use a GitHub workflow to create a CI pipeline us
 To properly test your bundle in a CI pipeline, you can utilize a GitHub workflow. 
 You can have the workflow run when you create a pull request, when you merge into 
 main, or both. We will go through the best practices of a CI pipeline for your 
-bundle and show you how to set up the GitHub workflow. [Here](https://github.com/deislabs/porter-pipeline/blob/main/.github/workflows/publish.yaml) is the full working example workflow explained in this article.
+bundle and show you how to set up the GitHub workflow. [Here](https://github.com/getporter/pipeline-demo/blob/main/.github/workflows/publish.yaml) is the full working example workflow explained in this article.
 
 ## Parts of the Workflow
 
@@ -31,15 +31,15 @@ is needed.
 
 ### Set up Porter
 After checking out the code in the repository, you need to install porter in the workflow
-so that you can run porter commands. The [Porter GitHub Action](https://github.com/deislabs/porter-gh-action) takes care of installing Porter for you. Adding this 
+so that you can run porter commands. The [Porter GitHub Action](https://github.com/getporter/gh-action) takes care of installing Porter for you. Adding this 
 action to your workflow will install Porter for you. For example:
 ````yaml
 - name: Setup Porter
-  uses: deislabs/porter-gh-action@v0.1.1
+  uses: getporter/gh-action@v0.1.1
   with:
     porter_version: v0.27.2
 ````
-The porter_version should be the version of Porter you want installed. You can check [our releases](https://github.com/deislabs/porter) for the list of recent versions of Porter. When not specified, porter_version defaults to latest version of Porter. 
+The porter_version should be the version of Porter you want installed. You can check [our releases](https://github.com/getporter/porter/releases) for the list of recent versions of Porter. When not specified, porter_version defaults to latest version of Porter. 
 
 ### Login to DockerHub
 Next, you will want to login to Docker Hub so that you can publish your bundle to a Docker Hub registry. If you do not wish to publish your bundle to a Docker Hub registry, you can configure another registry in this step instead.
@@ -130,7 +130,7 @@ jobs:
     # Use Porter GH action to set up Porter. 
     # You can specify the version of Porter that you want installed by adding the lines for with and porter_version as explained above. 
     - name: Setup Porter
-      uses: deislabs/porter-gh-action@v0.1.1
+      uses: getporter/gh-action@v0.1.1
     # Install docker mixin needed for this bundle. 
     # Add lines to install any of the mixins your bundle needs to be able to run.
     - name: Install Docker mixin

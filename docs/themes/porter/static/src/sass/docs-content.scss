@@ -40,14 +40,6 @@
     line-height: 1.725;
     margin: 0.825rem 0 1.667rem;
     font-size: $scalex5;
-
-    &:first-child {
-      font-size: $scalex6;
-      color: $grey4;
-      line-height: 1.636;
-      margin-bottom: 1.925rem;
-      padding-right: 7.5%;
-    }
   }
 
   a {
@@ -114,7 +106,6 @@
       font-size: $scalex8;
       color: $blue3;
       margin: 1em 0 1em;
-      padding-top: 4.5em;
     }
   }
 
@@ -152,14 +143,6 @@
     line-height: 1.725;
     margin: 0.825rem 0 1.667rem;
     font-size: $scalex5;
-
-    &:first-child {
-      font-size: $scalex6;
-      color: $grey4;
-      line-height: 1.636;
-      margin-bottom: 1.925rem;
-      padding-right: 7.5%;
-    }
   }
 
   &.markdown pre,

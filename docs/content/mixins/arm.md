@@ -7,7 +7,7 @@ description: Provision Azure resources with Azure ARM templates.
 
 Provision Azure resources with Azure ARM templates.
 
-Source: https://github.com/deislabs/porter-arm
+Source: https://github.com/getporter/arm-mixin
 
 ### Install or Upgrade
 ```

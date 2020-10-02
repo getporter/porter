@@ -27,7 +27,7 @@ saves them to Azure Blob Storage.
 Secrets plugins make it easier to securely store and share secret values and
 then inject them into a bundle. Currently secrets can only be injected as
 credentials but we are working on [injecting them into
-parameters](https://github.com/deislabs/porter/issues/878) too. By default,
+parameters](https://github.com/getporter/porter/issues/878) too. By default,
 credentials are resolved against the local host: environment variables, files,
 commands and hard-coded values.
 

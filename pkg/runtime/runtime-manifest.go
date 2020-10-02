@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cbroglie/mustache"
@@ -77,6 +78,10 @@ func (m *RuntimeManifest) loadBundle() error {
 
 	m.bundle = b
 	return nil
+}
+
+func (m *RuntimeManifest) GetInstallationName() string {
+	return os.Getenv(config.EnvInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
@@ -209,6 +214,11 @@ type StepOutput struct {
 func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	m.sensitiveValues = []string{}
+
+	inst := make(map[string]interface{})
+	data["installation"] = inst
+	inst["name"] = m.GetInstallationName()
+
 	bun := make(map[string]interface{})
 	data["bundle"] = bun
 
@@ -217,6 +227,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["version"] = m.Version
 	bun["description"] = m.Description
 	bun["invocationImage"] = m.Image
+	bun["custom"] = m.Custom
 
 	params := make(map[string]interface{})
 	bun["parameters"] = params
@@ -262,7 +273,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	// Iterate through the runtime manifest's step outputs and determine if we should mask
 	for name, val := range m.outputs {
 		// TODO: support configuring sensitivity for step outputs that aren't also bundle-level outputs
-		// See https://github.com/deislabs/porter/issues/855
+		// See https://github.com/getporter/porter/issues/855
 
 		// If step output is also a bundle-level output, defer to bundle-level output sensitivity
 		if outputDef, ok := m.Outputs[name]; ok && !outputDef.Sensitive {
@@ -277,12 +288,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-  
+
 	paramSources, _, err := bunExt.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}
-  
+
 	templatedOutputs := m.GetTemplatedOutputs()
 	templatedDependencyOutputs := m.GetTemplatedDependencyOutputs()
 	for paramName, sources := range paramSources {

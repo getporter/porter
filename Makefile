@@ -103,8 +103,15 @@ docs:
 docs-gen:
 	$(GO) run --tags=docs ./cmd/porter docs
 
-docs-preview:
-	hugo serve --source docs/
+docs-preview: docs-stop-preview
+	@docker run -d -v $$PWD/docs:/src -p 1313:1313 --name porter-docs \
+	klakegg/hugo:0.53-ext-alpine server -D -F --noHTTPCache --watch --bind=0.0.0.0
+	# Wait for the documentation web server to finish rendering
+	@until docker logs porter-docs | grep -m 1  "Web Server is available"; do : ; done
+	@open "http://localhost:1313/docs/"
+
+docs-stop-preview:
+	@docker rm -f porter-docs &> /dev/null || true
 
 publish: publish-bin publish-mixins publish-images
 
@@ -207,6 +214,9 @@ install-porter:
 
 install-mixins:
 	cp -R bin/mixins $(HOME)/.porter/
+
+setup-dco:
+	@scripts/setup-dco/setup.sh
 
 clean: clean-mixins clean-last-testrun
 

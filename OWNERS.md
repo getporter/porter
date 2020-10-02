@@ -7,7 +7,7 @@ questions about. If you don't customize it, Carolyn may make it up for you. 😉
 
 ## Maintainers
 
-These are the members of the [porter-maintainers team](https://github.com/orgs/deislabs/teams/porter-maintainers).
+These are the members of the [maintainers team](https://github.com/orgs/getporter/teams/maintainers).
 
 * [Carolyn Van Slyck](https://github.com/carolynvs)
     * I am happy to help with most things

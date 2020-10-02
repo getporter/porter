@@ -7,7 +7,7 @@ description: Execute Terraform files using the terraform CLI
 
 Execute Terraform files using the [terraform CLI](https://www.terraform.io/)
 
-Source: https://github.com/deislabs/porter-terraform
+Source: https://github.com/getporter/terraform-mixin
 
 ### Install or Upgrade
 ```

@@ -7,7 +7,7 @@ Run a command or script.
 
 ✅ Learn how to use the exec mixin with our [Exec Mixin Best Practice Guide](/best-practices/exec-mixin/)
 
-Source: https://github.com/deislabs/porter/tree/main/pkg/exec
+Source: https://porter.sh/src/pkg/exec
 
 ### Install or Upgrade
 ```
@@ -93,6 +93,11 @@ Then then output would have the following contents:
 ```json
 ["1085517466897181794"]
 ```
+
+When you are developing your jsonPath expression, you can specify the --debug
+flag and the full json document with your query are printed to stderr so that you
+can troubleshoot and improve your query based on the real result of the mixin's
+execution.
 
 #### Regular Expressions
 

@@ -6417,6 +6417,8 @@ body.home {
     font-weight: 400;
     letter-spacing: 0.0075em;
     -webkit-font-smoothing: antialiased; }
+  body.home #footer {
+    max-width: 100%; }
 
 #cookie-banner {
   background: rgba(238, 238, 238, 0.5);
@@ -6445,9 +6447,6 @@ nav.home-nav {
     left: 5%;
     top: 0.5rem;
     max-width: 250px; }
-    nav.home-nav h1 img,
-    nav.home-nav h1 svg {
-      min-height: 150px; }
   nav.home-nav ul {
     position: absolute;
     top: 3.25rem;
@@ -7038,7 +7037,7 @@ nav.home-nav {
     letter-spacing: 0.05em;
     -webkit-font-smoothing: antialiased; }
     #helm .geo-shapes-title h2 hr.border {
-      border-color: #38BB4C;
+      border-color: #DDF5F2;
       border-width: 0 0 5px;
       margin: 0.575em -5% 1em; }
     #helm .geo-shapes-title h2 .geo-shapes {
@@ -7286,32 +7285,13 @@ nav.home-nav {
     left: 0;
     top: 0;
     display: block;
-    background-color: white;
-    border-bottom: 1px solid #cfedfa;
-    border-right: 1px solid #cfedfa; }
+    background-color: white; }
     .blog-layout h1.blog-logo a {
+      display: block;
+      width: 100%;
       padding: 0.333em 2.25rem;
       background-color: white;
-      display: inline-block;
-      max-height: 4rem;
-      line-height: 4rem;
-      position: absolute;
-      font-size: 1.5rem;
-      color: #2090CD;
-      letter-spacing: -0.125rem;
-      text-align: left;
-      font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.0075em;
-      -webkit-font-smoothing: antialiased; }
-      .blog-layout h1.blog-logo a em {
-        font-style: normal; }
-      .blog-layout h1.blog-logo a:first-of-type {
-        min-width: 30%;
-        left: 0; }
-      .blog-layout h1.blog-logo a:last-of-type {
-        min-width: 70%;
-        right: 0; }
+      text-align: left; }
       .blog-layout h1.blog-logo a img,
       .blog-layout h1.blog-logo a svg {
         display: block;
@@ -7336,11 +7316,43 @@ nav.home-nav {
           color: white !important; }
   .blog-layout .main {
     padding-top: 2rem; }
-    .blog-layout .main.blog .content-wrap article h1 {
-      padding-top: 4rem; }
+    .blog-layout .main.blog .content-wrap h1 {
+      margin-top: 0; }
+    .blog-layout .main.blog .content-wrap article {
+      padding: 0; }
+      .blog-layout .main.blog .content-wrap article h2 {
+        padding-top: 4rem;
+        margin-bottom: 0; }
+      .blog-layout .main.blog .content-wrap article p.date {
+        margin-top: 0;
+        padding-top: 0; }
+      .blog-layout .main.blog .content-wrap article .summary p {
+        display: inline;
+        margin: 0;
+        padding: 0; }
+      .blog-layout .main.blog .content-wrap article .summary a {
+        font-weight: 900; }
     .blog-layout .main.blog-single .content-wrap article h1 {
-      font-size: 2.667rem;
-      margin-top: 2rem; }
+      font-size: 2.667rem; }
+    .blog-layout .main.blog-single .content-wrap article .date {
+      text-align: right;
+      font-style: italic; }
+    .blog-layout .main.blog-single .content-wrap article img {
+      box-shadow: none;
+      display: block;
+      margin: 0 auto; }
+      .blog-layout .main.blog-single .content-wrap article img:hover {
+        -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+        box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
+    .blog-layout .main.blog-single .content-wrap article .author {
+      text-align: center;
+      width: max-content; }
+      .blog-layout .main.blog-single .content-wrap article .author img {
+        max-width: 10rem;
+        display: block;
+        margin: 0;
+        padding: 0; }
 
 html,
 body {
@@ -7379,7 +7391,7 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  background: #d4ebf5;
+  background: #DDF5F2;
   z-index: 700;
   position: fixed;
   border-right: 1px solid #cfedfa; }
@@ -7510,7 +7522,7 @@ body {
   .sidebar .sidebar-buttons {
     border-top: 2px solid white;
     min-height: 4.75rem;
-    background: #d4ebf5; }
+    background: #DDF5F2; }
     .sidebar .sidebar-buttons .button-wrap {
       width: 300px;
       padding: 0.5em 10% 0.5em; }
@@ -8083,12 +8095,6 @@ body {
     line-height: 1.725;
     margin: 0.825rem 0 1.667rem;
     font-size: 17.92px; }
-    .main .list-wrap p:first-child {
-      font-size: 20px;
-      color: #333333;
-      line-height: 1.636;
-      margin-bottom: 1.925rem;
-      padding-right: 7.5%; }
   .main .list-wrap a {
     color: #1b79ac;
     background: white;
@@ -8143,8 +8149,7 @@ body {
     .main .content-wrap article h1 {
       font-size: 32px;
       color: #2090CD;
-      margin: 1em 0 1em;
-      padding-top: 4.5em; }
+      margin: 1em 0 1em; }
   .main .content-wrap h2 {
     color: #595959;
     font-size: 24px;
@@ -8174,12 +8179,6 @@ body {
     line-height: 1.725;
     margin: 0.825rem 0 1.667rem;
     font-size: 17.92px; }
-    .main .content-wrap p:first-child {
-      font-size: 20px;
-      color: #333333;
-      line-height: 1.636;
-      margin-bottom: 1.925rem;
-      padding-right: 7.5%; }
   .main .content-wrap.markdown pre,
   .main .content-wrap pre {
     background-color: #e4f3f9;
@@ -8413,70 +8412,6 @@ body {
     letter-spacing: 0.05em;
     margin: 5em 7.5% 2.5em;
     position: relative; }
-
-#footer {
-  background-color: white;
-  border-top: 2px solid rgba(0, 0, 0, 0.05);
-  position: relative;
-  min-height: 3rem; }
-  #footer .deislabs {
-    width: 5.5rem;
-    height: 7.3rem;
-    display: inline-block;
-    position: absolute;
-    top: 1rem;
-    margin-bottom: 1.25rem; }
-    #footer .deislabs span {
-      background: url(../src/img/deislabs.svg) no-repeat center bottom;
-      width: 100%;
-      height: 3rem;
-      background-size: contain;
-      display: inline-block;
-      text-indent: -999em;
-      position: absolute;
-      bottom: 0;
-      transition: all 0.3s ease-in-out; }
-    #footer .deislabs em {
-      width: 3rem;
-      height: 3rem;
-      display: inline-block;
-      position: absolute;
-      background-blend-mode: multiply;
-      mix-blend-mode: multiply;
-      content: " ";
-      transition: all 0.3s ease-in-out; }
-      #footer .deislabs em.dl-tr {
-        background: url(../src/img/deislabs-tr.svg) no-repeat 50% 50%;
-        background-size: contain;
-        left: 0;
-        top: 0; }
-      #footer .deislabs em.dl-sq {
-        background: url(../src/img/deislabs-sq.svg) no-repeat 50% 50%;
-        background-size: contain;
-        right: 0;
-        bottom: 1.8rem; }
-      #footer .deislabs em.dl-ci {
-        background: url(../src/img/deislabs-ci.svg) no-repeat 50% 50%;
-        background-size: contain;
-        left: 0;
-        bottom: 1.8rem; }
-    #footer .deislabs a {
-      display: inline-block;
-      width: 5.5rem;
-      height: 7.3rem; }
-      #footer .deislabs a:hover em.dl-tr {
-        left: 2.2rem;
-        top: 2.5rem; }
-      #footer .deislabs a:hover em.dl-sq {
-        right: 2.5rem; }
-      #footer .deislabs a:hover em.dl-ci {
-        bottom: 4.2rem; }
-  #footer p {
-    margin: 2rem 0;
-    padding: 0 0 0 6rem; }
-  #footer .fa {
-    font-size: 1em;
-    color: #333; }
 
 html {
   background: white !important; }

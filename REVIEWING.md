@@ -133,6 +133,6 @@ here is the process:
     ```
 1. Name the release after the version.
 
-[maintainers]: https://github.com/orgs/deislabs/teams/porter-maintainers
-[admins]: https://github.com/orgs/deislabs/teams/porter-admins
-[commits]: https://github.com/deislabs/porter/commits/main
+[maintainers]: https://github.com/orgs/getporter/teams/maintainers
+[admins]: https://github.com/orgs/getporter/teams/admins
+[commits]: https://github.com/getporter/porter/commits/main

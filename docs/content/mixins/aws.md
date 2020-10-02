@@ -7,7 +7,7 @@ description: Run Amazon commands using the aws CLI.
 
 Run Amazon commands using the [aws CLI](https://docs.aws.amazon.com/cli/latest/reference/index.html#cli-aws).
 
-Source: https://github.com/deislabs/porter-aws
+Source: https://github.com/getporter/aws-mixin
 
 ### Install or Upgrade
 ```
@@ -84,7 +84,7 @@ Then then output would have the following contents:
 
 ### Examples
 
-The [Buckets Example](https://github.com/deislabs/porter-aws/tree/master/examples/buckets) provides a full working bundle demonstrating how to use this mixin.
+The [Buckets Example](https://github.com/getporter/aws-mixin/tree/master/examples/buckets) provides a full working bundle demonstrating how to use this mixin.
 
 #### Provision a VM
 

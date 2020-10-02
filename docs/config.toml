@@ -9,6 +9,7 @@ theme = "porter"
   title = "Porter"
   author = "Carolyn Van Slyck"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
+  image = "images/porter-twitter-card.png"
 
 canonifyURLs = "false"
 relativeURLs = "true"
@@ -289,4 +290,4 @@ defaultContentLanguage = "en"
     identifier = "cnab"
     weight = 1020
     parent = "references"
-
+    

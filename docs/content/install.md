@@ -127,5 +127,5 @@ installed azure plugin v0.1.1-10-g7071451 (7071451)
 All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugins/atom.xml`.
 
 
-[releases]: https://github.com/deislabs/porter/releases
+[releases]: https://github.com/getporter/porter/releases
 

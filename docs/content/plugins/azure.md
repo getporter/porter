@@ -7,7 +7,7 @@ description: Integrate Porter with Azure Cloud
 
 Integrate Porter with Azure Cloud.
 
-Source: https://github.com/deislabs/porter-azure-plugins
+Source: https://github.com/getporter/azure-plugins
 
 ## Install or Upgrade
 

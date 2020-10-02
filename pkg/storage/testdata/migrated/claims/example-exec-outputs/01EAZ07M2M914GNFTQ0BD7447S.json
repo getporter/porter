@@ -13,7 +13,7 @@
     "invocationImages": [
       {
         "imageType": "docker",
-        "image": "deislabs/porter-example-exec-outputs:0.1.0"
+        "image": "getporter/example-exec-outputs:0.1.0"
       }
     ],
     "actions": {

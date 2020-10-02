@@ -1,32 +1,40 @@
 {{ partial "header.html" . }}
 
-<div class="container container-full">
+<div class="blog-layout">
   {{ partial "sidebar.html" . }}
 
-  <div class="main page" id="scrollpane">
+  <div class="main page blog" id="scrollpane">
     {{ partial "topbar.html" . }}
 
-    <div class="row">
-      <div class="small-1 columns">&nbsp;</div>
-      <div class="small-10 columns content-wrap">        
-        
+      <div class="small-2 columns">&nbsp;</div>
+      <div class="small-8 columns content-wrap">
+        <h1>{{ .Title }}</h1>
+        {{ .Content }}
+
         {{ range .Paginator.Pages }}
           <article>
             <header>
-              <h1><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
-              <p>{{ .Date.Format "Mon, Jan 2, 2006" }}</p>
+              <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
+              <p class="date">{{ dateFormat "Jan 2, 2006" .Date }}</p>
             </header>
-            
-            {{ .Summary }}
-            {{ if .Truncated }}
-            <a href="{{ .RelPermalink }}">Read More…</a>
-            {{ end }}
+
+            <div class="summary">
+              {{ if hasPrefix .Summary "<p>" }}
+              {{ .Summary }}
+              {{ else }}
+              <p>
+              {{ .Summary }}
+              </p>
+              {{ end }}
+              {{ if .Truncated }}
+                <a href="{{ .RelPermalink }}">…</a>
+              {{ end }}
+            </div>
           </article>
   
         {{ end }}
       </div>
-      <div class="small-1 columns">&nbsp;</div>
-    </div>
+      <div class="small-2 columns">&nbsp;</div>
   </div>
 
   {{ partial "footer-blog.html" . }}

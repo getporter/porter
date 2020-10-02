@@ -1,6 +1,6 @@
 # Advanced Azure + Terraform Cloud Native Application Bundle Using Porter
 
-This exercise extends the [porter-tf](https://github.com/deislabs/porter/tree/main/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `arm` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `arm` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
+This exercise extends the [porter-tf](https://porter.sh/src/workshop/porter-tf)  example in order provide a more complete example of buiding a CNAB that combines both infrastructure and deployment of an application. As in the `porter-tf` example, we will use the `arm` and `terraform` mixins to provision a MySQL database on Azure. We will then use the `arm` mixin with a custom [ARM](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) template to deploy a notional web service as an Azure Container Instance. This part of the bundle could easily be replaced with deployment to Kubernetes or any other container runtime system, but this exercise will use Azure.
 
 ## Prerequisites
 

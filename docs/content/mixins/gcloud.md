@@ -7,7 +7,7 @@ description: Run a Google command with the gcloud CLI
 
 Run a Google command using the [gcloud CLI](https://cloud.google.com/sdk/gcloud/reference/).
 
-Source: https://github.com/deislabs/porter-gcloud
+Source: https://github.com/getporter/gcloud-mixin
 
 ### Install or Upgrade
 ```
@@ -95,7 +95,7 @@ Then then output would have the following contents:
 
 ## Examples
 
-The [Compute Example](https://github.com/deislabs/porter-gcloud/tree/master/examples/compute) provides a full working bundle demonstrating how to use this mixin.
+The [Compute Example](https://github.com/getporter/gcloud-mixin/tree/master/examples/compute) provides a full working bundle demonstrating how to use this mixin.
 
 ### Authenticate
 

@@ -144,7 +144,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 		bun = c.Bundle
 	} else {
 		// If we hit here, there is a bug somewhere
-		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/deislabs/porter/issues/new/choose")
+		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose")
 	}
 
 	solver := &extensions.DependencySolver{}

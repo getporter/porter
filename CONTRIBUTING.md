@@ -13,6 +13,7 @@
   * [Makefile explained](#makefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
+  * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
@@ -63,7 +64,7 @@ When you create your first pull request, add your name to the bottom of our
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
                                           
 [contributors]: /CONTRIBUTORS.md                                          
-[skeletor]: https://github.com/deislabs/porter-skeletor
+[skeletor]: https://github.com/getporter/skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
 [good-first-issue]: https://porter.sh/board/good+first+issue
 [help-wanted]: https://porter.sh/board/help+wanted
@@ -133,11 +134,15 @@ request comment so that we don't collectively forget.
 
 ## Signing your commits
 
-Licensing is important to open source projects. It provides some assurances that the software
-will continue to be available based under the terms that the author(s) desired. We require that
-contributors sign off on commits submitted to our project's repositories. The 
-[Developer Certificate of Origin (DCO)](https://developercertificate.org/) is a way to certify that 
-you wrote and have the right to contribute the code you are submitting to the project.
+You can automatically sign your commits to meet the DCO requirement for this
+project by running the following command: `make setup-dco`.
+
+Licensing is important to open source projects. It provides some assurances that
+the software will continue to be available based under the terms that the
+author(s) desired. We require that contributors sign off on commits submitted to
+our project's repositories. The [Developer Certificate of Origin
+(DCO)](https://developercertificate.org/) is a way to certify that you wrote and
+have the right to contribute the code you are submitting to the project.
 
 You sign-off by adding the following to your commit messages:
 
@@ -157,8 +162,8 @@ Git has a `-s` command line option to do this automatically:
 
     git commit -s -m 'This is my commit message'
 
-If you forgot to do this and have not yet pushed your changes to the remote repository, you can 
-amend your commit with the sign-off by running 
+If you forgot to do this and have not yet pushed your changes to the remote
+repository, you can amend your commit with the sign-off by running 
 
     git commit --amend -s
 
@@ -190,11 +195,11 @@ amend your commit with the sign-off by running
 
 At this point your changes are available in the [canary][canary] release of
 Porter! After your first pull request is merged, you will be invited to the
-[Porters team] which you may choose to accept (or not). Joining the team lets
+[Contributors team] which you may choose to accept (or not). Joining the team lets
 you have issues in GitHub assigned to you.
 
 [canary]: https://porter.sh/install/#canary
-[Porters team]: https://github.com/orgs/deislabs/teams/porters
+[Contributors team]: https://github.com/orgs/getporter/teams/contributors
 
 ### Follow-on PR
 
@@ -224,7 +229,7 @@ maintainer.
 
 ## Initial setup
 
-1. Clone this repository with `git clone https://github.com/deislabs/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
+1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
 1. Run `make build install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
@@ -236,14 +241,21 @@ You now have canary builds of porter and all the mixins installed.
 Here are the most common Makefile tasks
 
 * `build` builds all binaries, porter and internal mixins.
-* `build-porter-client` just builds the porter client for your operating
-  system. It does not build the porter-runtime binary. Useful when you just want
-  to do a build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime. It does not clean
-   up generated files created by packr, so you usually want to also run `clean-packr`.
-* `install-porter` installs porter from source into your home directory and creates a symlink for porter from **$(HOME)/.porter/** into **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be overwritten with the new symlink.
-* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** . This is useful when you are working on the exec or kubernetes mixin.
-* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to **$(HOME)/.porter/**.
+* `build-porter-client` just builds the porter client for your operating system.
+  It does not build the porter-runtime binary. Useful when you just want to do a
+  build and don't remember the proper way to call `go build` yourself.
+* `build-porter` builds both the porter client and runtime. It does not clean up
+  g enerated files created by packr, so you usually want to also run
+  `clean-packr`.
+* `install-porter` installs porter from source into your home directory and
+  creates a symlink for porter from **$(HOME)/.porter/** into
+  **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be
+  overwritten with the new symlink.
+* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** .
+  This is useful when you are working on the exec or kubernetes mixin.
+* `install` installs porter _and_ the mixins from source into
+  **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to
+  **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
@@ -255,6 +267,8 @@ Here are the most common Makefile tasks
 * `clean-packr` removes extra packr files that were a side-effect of the build.
   Normally this is run automatically but if you run into issues with packr, 
   run this command.
+* `setup-dco` installs a git commit hook that automatically signsoff your commit
+  messages per the DCO requirement.
 
 ## Install mixins
 
@@ -266,31 +280,75 @@ installed into your bin directory in the root of the repository. You can use
 
 ## Plugin Debugging
 
-If you are developing a [plugin](https://porter.sh/plugins/) and you want to debug it follow these steps:
+If you are developing a [plugin](https://porter.sh/plugins/) and you want to
+debug it follow these steps:
 
-The plugin to be debugged should be compiled and placed in porters plugin path (e.g. in the Azure plugin case the plugin would be copied to $PORTER_HOME/plugins/azure/.
+The plugin to be debugged should be compiled and placed in porters plugin path
+(e.g. in the Azure plugin case the plugin would be copied to
+$PORTER_HOME/plugins/azure/.
 
 The following environment variables should be set:
 
-`PORTER_RUN_PLUGIN_IN_DEBUGGER` should be set to the name of the plugin to be debugged (e.g. secrets.azure.keyvault to debug the azure secrets plugin)  
-`PORTER_DEBUGGER_PORT` should be set to the port number where the delve API will listen, if not set it defaults to 2345  
-`PORTER_PLUGIN_WORKING_DIRECTORY` should be the path to the directory containing *source code* for the plugin being executed.  
+`PORTER_RUN_PLUGIN_IN_DEBUGGER` should be set to the name of the plugin to be
+debugged (e.g. secrets.azure.keyvault to debug the azure secrets plugin)  
+`PORTER_DEBUGGER_PORT` should be set to the port number where the delve API will
+listen, if not set it defaults to 2345  
+`PORTER_PLUGIN_WORKING_DIRECTORY` should be the path to the directory containing
+*source code* for the plugin being executed.  
 
-When porter is run it will start delve and attach it to the plugin process, this exposes the delve API so that any delve client can connect to the server and debug the plugin.
+When porter is run it will start delve and attach it to the plugin process, this
+exposes the delve API so that any delve client can connect to the server and
+debug the plugin.
 
 ## Preview documentation
 
 We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
-[Netlify](netlify.com).
+[Netlify](netlify.com). You don't have to install Hugo locally because the
+preview happens inside a docker container.
 
-1. [Install Hugo](https://gohugo.io/getting-started/installing) using `brew install hugo`,
-`choco install hugo` or `go get -u github.com/gohugoio/hugo`.
-1. Run `make docs-preview` to start Hugo. It will watch the file system for changes.
-1. Open <http://localhost:1313> to preview the site.
+1. Run `make docs-preview` to start serving the docs. It will watch the file
+system for changes.
+1. Our make rule should open <http://localhost:1313/docs> to preview the
+site/docs.
 
-If anyone is interested in contributing changes to our makefile to improve the
-authoring experience, such as doing this with Docker so that you don't need Hugo
-installed, it would be a welcome contribution! ❤️
+We welcome your contribution to improve our documentation, and we hope it is an
+easy process! ❤️
+
+## Write a blog post
+
+Thank you for writing a post for our blog! 🙇‍♀️ Here's what you need to do to create
+a new blog post and then preview it:
+
+1. Go to /docs/content/blog and create a new file. Whatever you name the file
+    will be the last part of the URL. For example a file named
+    "porter-collaboration.md" will be located at
+    <https://porter.sh/blog/porter-collaboration/>.
+    
+1. At the top of the file copy and paste the frontmatter template below. The
+    frontmatter is YAML that instucts the blogging software, Hugo, how to render the
+    blog post.
+    
+    ```yaml
+   ---
+   title: "Title of Your Blog Post in Titlecase"
+   description: "SEO description of your post, displayed in search engine results."
+   date: "2020-07-28"
+   authorname: "Your Name"
+   author: "@yourhandle" #Not used to link to github/twitter, but informally that's what people put here
+   authorlink: "https://link/to/your/website" # link to your personal website, github, social media...
+   authorimage: "https://link/to/your/profile/picture" # Optional, https://github.com/yourhandle.png works great
+   tags: [] # Optional, look at other pages and pick tags that are already in use, e.g. ["mixins"]
+   ---
+   ```
+
+1. [Preview](#preview-documentation) the website and click "Blog" at the top right to find your blog post.
+
+1. When you create a pull request, look at the checks run by the pull request,
+    and click "Details" on the *netlify/porter/deploy-preview** one to see a live
+    preview of your pull request.
+    
+Our pull request preview and the live site will not show posts with a date in
+the future. If you don't see your post, change the date to today's date.
 
 ## Command Documentation
 
@@ -338,6 +396,7 @@ dependency injection and testing strategies.
       version command.
 * **scripts**:
   * **install**: Porter [installation](https://porter.sh/install) scripts
+  * **setup-dco**: Set up automatic DCO signoff for the developer environment
 * **tests** have Go-based integration tests.
 
 ## Logging
