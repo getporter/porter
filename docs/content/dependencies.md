@@ -117,7 +117,7 @@ A parameter for a dependency can be set in a few places, here is the order of pr
       default: mydb
     ```
 
-## Dependency Registry Provenance
+## Dependency Registry Authentication
 
 Porter support multiple registries. If you are pulling different dependencies from multiple registries,
 just make sure that you login into each registry before executing your bundle.
