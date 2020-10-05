@@ -1,6 +1,6 @@
 ---
 title: Compatible Registries
-description: Understanding which OCI registries work with CNAB 
+description: Understanding which OCI registries work with CNAB
 ---
 
 Cloud Native Application Bundles are very new, and support for storing anything
@@ -19,13 +19,13 @@ out a particular registry and know that it will work for you.
 | Docker Hub | Yes | Yes |
 | Digital Ocean | Yes | Yes |
 | ECR | No |  |
-| GCR | Yes |  
-| GitHub Packages | No |  | 
+| GCR | Yes |
+| GitHub Packages | Yes | Yes |
+| Harbor 2 | yes | yes |
 | Nexus | No |  |
-| Quay | No | No
- 
- _If you are a registry or user and know that this page is out of date, [please
- let us know!](https://github.com/getporter/porter/issues/new)_
- 
- [cnab-to-oci]: https://github.com/docker/cnab-to-oci
- 
+| Quay | No | No |
+
+If you are a registry or user and know that this page is out of date, [please
+let us know!](https://github.com/deislabs/porter/issues/new)_
+
+[cnab-to-oci]: https://github.com/docker/cnab-to-oci
