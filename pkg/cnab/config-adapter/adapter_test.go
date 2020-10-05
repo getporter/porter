@@ -2,6 +2,9 @@ package configadapter
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -675,6 +678,17 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 	assert.Len(t, bun.Custom, 2)
 
-	fooCustomData := bun.Custom["foo"]
-	assert.Equal(t, "bar", fooCustomData)
+	f, err := ioutil.TempFile("", "")
+	assert.NoError(t, err, "Failed to create bundle file")
+	defer os.Remove(f.Name())
+
+	_, err = bun.WriteTo(f)
+	assert.NoError(t, err, "Failed to write bundle file")
+
+	expectedCustomMetaData := "{\"foo\":{\"test1\":true,\"test2\":1,\"test3\":\"value\",\"test4\":[\"one\",\"two\",\"three\"],\"test5\":{\"1\":\"one\",\"two\":\"two\"}}"
+	bundleData, err := ioutil.ReadFile(f.Name())
+
+	assert.NoError(t, err, "Failed to read bundle file")
+	assert.Truef(t, strings.Contains(string(bundleData), expectedCustomMetaData), "Created bundle should be equal to expected bundle ")
+
 }

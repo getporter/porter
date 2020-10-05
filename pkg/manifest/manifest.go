@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/unmarshallyaml"
 	"github.com/Masterminds/semver"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -49,7 +50,7 @@ type Manifest struct {
 	Uninstall Steps `yaml:"uninstall"`
 	Upgrade   Steps `yaml:"upgrade"`
 
-	Custom                  map[string]interface{}            `yaml:"custom,omitempty"`
+	Custom                  unmarshallyaml.CustomDefinitions  `yaml:"custom,omitempty"`
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
