@@ -2,6 +2,9 @@ package configadapter
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -675,39 +678,17 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 	assert.Len(t, bun.Custom, 2)
 
-	val, ok := bun.Custom["foo"].(map[string]interface{})
-	require.True(t, ok, "Cannot cast foo value to map[string]interface{}")
+	f, err := ioutil.TempFile("", "")
+	assert.NoError(t, err, "Failed to create bundle file")
+	defer os.Remove(f.Name())
 
-	val1, ok := val["test1"].(bool)
-	require.True(t, ok, "Cannot cast test1 value to bool")
-	require.True(t, val1, "test1 value is unexpected")
+	_, err = bun.WriteTo(f)
+	assert.NoError(t, err, "Failed to write bundle file")
 
-	val2, ok := val["test2"].(int)
-	require.True(t, ok, "Cannot cast test2 value to int")
-	require.Equal(t, 1, val2, "test2 value is unexpected")
+	expectedCustomMetaData := "{\"foo\":{\"test1\":true,\"test2\":1,\"test3\":\"value\",\"test4\":[\"one\",\"two\",\"three\"],\"test5\":{\"1\":\"one\",\"two\":\"two\"}}"
+	bundleData, err := ioutil.ReadFile(f.Name())
 
-	val3, ok := val["test3"].(string)
-	require.True(t, ok, "Cannot cast test3 value to string")
-	require.Equal(t, "value", val3, "test3 value is unexpected")
+	assert.NoError(t, err, "Failed to read bundle file")
+	assert.Truef(t, strings.Contains(string(bundleData), expectedCustomMetaData), "Created bundle should be equal to expected bundle ")
 
-	val4, ok := val["test4"].([]interface{})
-	require.True(t, ok, "Cannot cast test4 value to interface{} array")
-	val5, ok := val4[0].(string)
-	require.True(t, ok, "Cannot cast test4[0] value to string")
-	require.Equal(t, "one", val5, "test4[0] value is unexpected")
-	val6, ok := val4[1].(string)
-	require.True(t, ok, "Cannot cast test4[1] value to string")
-	require.Equal(t, "two", val6, "test4[1] value is unexpected")
-	val7, ok := val4[2].(string)
-	require.True(t, ok, "Cannot cast test4[2] value to string")
-	require.Equal(t, "three", val7, "test4[2] value is unexpected")
-
-	val8, ok := val["test5"].(map[string]interface{})
-	require.True(t, ok, "Cannot cast test5 value to interface{} array")
-	val9, ok := val8["1"].(string)
-	require.True(t, ok, "Cannot cast test5[0] value to string")
-	require.Equal(t, "one", val9, "test54[0] value is unexpected")
-	val10, ok := val8["two"].(string)
-	require.True(t, ok, "Cannot cast test5[1] value to string")
-	require.Equal(t, "two", val10, "test5[1] value is unexpected")
 }

@@ -8,8 +8,7 @@ install:
   - exec:
       description: "Install Hello World"
       command: bash
-
-        
+    
 uninstall:
   - exec:
       description: "Uninstall Hello World"
