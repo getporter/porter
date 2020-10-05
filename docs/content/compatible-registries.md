@@ -21,11 +21,11 @@ out a particular registry and know that it will work for you.
 | ECR | No |  |
 | GCR | Yes |
 | GitHub Packages | Yes | Yes |
+| Harbor 2 | yes | yes |
 | Nexus | No |  |
 | Quay | No | No |
-| Harbor | yes | yes |
 
- If you are a registry or user and know that this page is out of date, [please
- let us know!](https://github.com/deislabs/porter/issues/new)_
- 
- [cnab-to-oci]: https://github.com/docker/cnab-to-oci
+If you are a registry or user and know that this page is out of date, [please
+let us know!](https://github.com/deislabs/porter/issues/new)_
+
+[cnab-to-oci]: https://github.com/docker/cnab-to-oci
