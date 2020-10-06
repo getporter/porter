@@ -39,7 +39,8 @@ invite][invite] to join.
 <ul style="list-style: none;">
     <li>🗣 This is a good place to chat with other people about using Porter, developing
 Porter mixins and plugins.</li>
-    <li>🐞 This is not a good place to submit bug reports. Please [open an issue][issue]
+    <li>🐞 This is not a good place to submit bug reports. Please 
+    <a href="https://github.com/getporter/porter/issues/new">open an issue</a>
 instead so that we don't miss it!</li>
 </ul>
 
@@ -48,5 +49,4 @@ spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
-[issue]: https://github.com/getporter/porter/issues/new
 [forum]: /forum
