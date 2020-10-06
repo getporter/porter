@@ -85,6 +85,7 @@ outputs:
     sensitive: true
   - name: mysql-root-password
     description: "The mysql root user password"
+    default: "default-root-password"
     type: string
     applyTo:
       - install
