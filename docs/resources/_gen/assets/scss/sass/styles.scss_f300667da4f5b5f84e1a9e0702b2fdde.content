@@ -7333,9 +7333,9 @@ nav.home-nav {
       .blog-layout .main.blog .content-wrap article .summary a {
         font-weight: 900; }
     .blog-layout .main.blog-single .content-wrap article h1 {
-      font-size: 2.667rem; }
+      font-size: 2.667rem;
+      margin-bottom: 0; }
     .blog-layout .main.blog-single .content-wrap article .date {
-      text-align: right;
       font-style: italic; }
     .blog-layout .main.blog-single .content-wrap article img {
       box-shadow: none;
