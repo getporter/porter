@@ -130,6 +130,12 @@
     font-size: $scalex5;
   }
 
+  figure {
+    width: max-content;
+    text-align: center;
+    margin: 0 auto;
+  }
+
   blockquote {
     p {
       &:first-child {
@@ -257,15 +263,11 @@
   }
 
   img {
-    box-shadow: 0 0 3px $grey1;
     padding: 0.5em;
     background-color: white;
     max-width: 100%;
-    margin-bottom: 0.75em;
-
-    &:hover {
-      @include box-shadow(0, 0, 4px, $grey2);
-    }
+    margin: 0 auto;
+    display: block
   }
 
   iframe,

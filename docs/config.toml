@@ -285,6 +285,12 @@ defaultContentLanguage = "en"
     weight = 1011
     parent = "references"
   [[menu.main]]
+    name = "Logos"
+    url = "/logo/"
+    identifer = "logo"
+    weight = 1011
+    parent = "references"
+  [[menu.main]]
     name = "CNAB Spec"
     url = "https://deislabs.io/cnab"
     identifier = "cnab"
