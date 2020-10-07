@@ -344,7 +344,7 @@ a new blog post and then preview it:
 1. [Preview](#preview-documentation) the website and click "Blog" at the top right to find your blog post.
 
 1. When you create a pull request, look at the checks run by the pull request,
-    and click "Details" on the *netlify/porter/deploy-preview** one to see a live
+    and click "Details" on the **netlify/porter/deploy-preview** one to see a live
     preview of your pull request.
     
 Our pull request preview and the live site will not show posts with a date in
