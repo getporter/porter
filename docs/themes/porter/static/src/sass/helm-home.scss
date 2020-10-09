@@ -20,9 +20,12 @@ body.home {
   
   #footer {
     max-width: 100%;
+
+    .row {
+      max-width: 100%;
+    }
   }
 }
-
 
 #cookie-banner {
   background: rgba(238,238,238,0.5);
@@ -554,6 +557,18 @@ nav.home-nav {
   }
 }
 
+.copyright {
+  background: $blue;
+  color: white;
+  font-size: 1.1rem;
+  padding: 1rem;
+  text-align: center;
+
+  a, a:focus, a:visited {
+    color: $dark2;
+  }
+}
+
 @media only screen and (min-device-width: $mobile-maximum-width + 1) {
   @include boat-animation-rules(-$boat-size, 25%, 145%, 0);
 }
@@ -627,8 +642,6 @@ nav.home-nav {
     }
   }
 }
-
-
 
 #helm {
   .panel {
