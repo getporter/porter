@@ -48,7 +48,7 @@ No images defined
 
 With this information, you can pull, inspect, and vet images before you use the bundle. In this example, you are inspecting the HELLO bundle with the tag  getporter/porter-hello:v0.1.0. There are no referenced images. 
 
-## Install the bundle from a registry
+## Run the install instructions from a bundle located in a registry
 
 To install a bundle, you use the `porter install` command. 
 
@@ -61,7 +61,7 @@ In this example, you are installing athe 0.1.0 version of the bundle from the de
 
 ## List 
 
-To see all of the bundles installed, you can use the `porter list` command. 
+To see the bundle installations, use the `porter list` command. 
 
 ```
 porter list
@@ -77,7 +77,7 @@ In this example, it shows the bundle metadata along with the creation time, modi
 
 ## Show
 
-To see information about a specific bundle after it's installed, use the `porter show` command with the name of the bundle.
+To see information about an installation, use the `porter show` command with the name of the installation.
 
 ```
 porter show HELLO
@@ -99,12 +99,12 @@ History:
   ```
 
 
-## Upgrade the bundle
+## Run the upgrade instructions from the bundle
 
-If a bundle is updated and you want to install a later version, you can update the bundle using `porter upgrade`.
+To run the upgrade instructions from the bundle, use `porter upgrade`.
 
 ```
-porter upgrade --tag getporter/porter-hello:v0.1.1
+porter upgrade 
 ```
 
 Sample Output:
@@ -118,7 +118,7 @@ execution completed successfully!
 
 ## Cleanup
 
-To uninstall a bundle, use the `porter uninstall` command. 
+To clean up the resources installed from the bundle, use the `porter uninstall` command. 
 
 ```
 porter uninstall HELLO
