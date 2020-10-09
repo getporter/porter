@@ -3,59 +3,14 @@ title: Porter Docs
 description: All the magic of Porter explained
 ---
 
-Porter takes the work out of creating CNAB bundles. It provides a declarative authoring 
-experience that lets you to reuse existing bundles, and understands how to translate 
-CNAB actions to Helm, Terraform, Azure, etc.
+Porter is an open source project that lets you package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
 
-```console
-$ porter create
-created porter.yaml
+## Explore documentation
 
-$ porter build
-created Dockerfile
-created bundle.json
-created cnab/app/run
+Porter has a lot of documentation and we're in the process of reorganizing and updating it. We welcome [contributions](/contribute/) from the community. 
 
-$ porter install
-```
+## Quicklinks
 
-Here's a sample Porter manifest:
-
-```yaml
-mixins:
-- helm
-
-name: mysql
-version: 0.1.3
-tag: getporter/mysql
-
-credentials:
-- name: kubeconfig
-  path: /root/.kube/config
-
-install:
-- helm:
-    description: "Install MySQL"
-    name: mydb
-    chart: stable/mysql
-    version: 0.10.2
-    replace: true
-    set:
-      mysqlDatabase: mydb
-    outputs:
-    - name: "MYSQL_HOST"
-      key: "MYSQL_HOST"
-
-uninstall:
-- helm:
-    description: "Uninstall MySQL"
-    releases:
-    - mydb
-    purge: true
-```
-
-# Next Steps
-
-* [Install Porter](/install/)
-* [Quick Start](/quickstart/)
-* [Frequently Asked Questions](/faq)
+* [Install Porter](/install/) How to install Porter. 
+* [Quick Start](/quickstart/) Gets you started with using your first bundle introducing the key concepts of tags and registries 
+* [Frequently Asked Questions](/faq) 
