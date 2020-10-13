@@ -6835,8 +6835,7 @@ nav.home-nav {
   color: white;
   font-size: 1.1rem;
   padding: 1rem; }
-  .copyright max-wi
-a, .copyright a:focus, .copyright a:visited {
+  .copyright a, .copyright a:focus, .copyright a:visited {
     color: #464646; }
 
 @media only screen and (min-device-width: 415px) {
