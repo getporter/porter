@@ -562,8 +562,7 @@ nav.home-nav {
   color: white;
   font-size: 1.1rem;
   padding: 1rem;
-  text-align: center;
-
+  max-wi
   a, a:focus, a:visited {
     color: $dark2;
   }
@@ -633,7 +632,6 @@ nav.home-nav {
     img,
     p {
       float: none;
-      min-width: 80%;
       margin: 1.5rem auto;
     }
 

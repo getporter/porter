@@ -6834,9 +6834,9 @@ nav.home-nav {
   background: #3FB1E5;
   color: white;
   font-size: 1.1rem;
-  padding: 1rem;
-  text-align: center; }
-  .copyright a, .copyright a:focus, .copyright a:visited {
+  padding: 1rem; }
+  .copyright max-wi
+a, .copyright a:focus, .copyright a:visited {
     color: #464646; }
 
 @media only screen and (min-device-width: 415px) {
@@ -7008,7 +7008,6 @@ nav.home-nav {
     .cncf img,
     .cncf p {
       float: none;
-      min-width: 80%;
       margin: 1.5rem auto; }
     .cncf img {
       max-width: 51%; } }
