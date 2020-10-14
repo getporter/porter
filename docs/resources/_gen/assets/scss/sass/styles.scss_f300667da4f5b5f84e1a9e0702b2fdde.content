@@ -6419,6 +6419,8 @@ body.home {
     -webkit-font-smoothing: antialiased; }
   body.home #footer {
     max-width: 100%; }
+    body.home #footer .row {
+      max-width: 100%; }
 
 #cookie-banner {
   background: rgba(238, 238, 238, 0.5);
@@ -6828,6 +6830,14 @@ nav.home-nav {
     .cncf p:hover {
       color: #7FCCF0; }
 
+.copyright {
+  background: #3FB1E5;
+  color: white;
+  font-size: 1.1rem;
+  padding: 1rem; }
+  .copyright a, .copyright a:focus, .copyright a:visited {
+    color: #464646; }
+
 @media only screen and (min-device-width: 415px) {
   @keyframes animatedBoat {
     0% {
@@ -6997,7 +7007,6 @@ nav.home-nav {
     .cncf img,
     .cncf p {
       float: none;
-      min-width: 80%;
       margin: 1.5rem auto; }
     .cncf img {
       max-width: 51%; } }
