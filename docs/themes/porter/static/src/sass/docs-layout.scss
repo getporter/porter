@@ -37,3 +37,11 @@ body {
   width: 25%;
   width: 300px;
 }
+
+.flextable {
+  display: flex;
+  flex-flow: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-items: baseline;
+}
