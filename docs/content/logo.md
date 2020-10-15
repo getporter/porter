@@ -141,6 +141,8 @@ $orange:  #F1CE91;
 
 ### Guidelines for Drawing Porter Cat
 
+When drawing the Porter cat, follow these set of guidelines:
+
 **Simple Shape**
 
 The character should have just enough detail to make them out. The smaller they
