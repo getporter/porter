@@ -83,15 +83,21 @@ func (c *Config) LoadData() error {
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
+// Hierarchy of checks:
+// - PORTER_HOME
+// - HOME/.porter or USERPROFILE/.porter
 func (c *Config) GetHomeDir() (string, error) {
 	if c.porterHome != "" {
 		return c.porterHome, nil
 	}
 
 	home := os.Getenv(EnvHOME)
-
 	if home == "" {
-		// TODO
+		userHome, err := os.UserHomeDir()
+		if err != nil {
+			return "", errors.Wrap(err, "could not get user home directory")
+		}
+		home = filepath.Join(userHome, ".porter")
 	}
 
 	// As a relative path may be supplied via EnvHOME,
