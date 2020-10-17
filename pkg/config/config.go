@@ -91,23 +91,7 @@ func (c *Config) GetHomeDir() (string, error) {
 	home := os.Getenv(EnvHOME)
 
 	if home == "" {
-		porterPath, err := getExecutable()
-		if err != nil {
-			return "", errors.Wrap(err, "could not get path to the executing porter binary")
-		}
-
-		// This is for the scenario when someone symlinks the ~/.porter/porter binary to /usr/local/porter
-		// We try to resolve back to the original location so that we can find the mixins, etc next to it.
-		hardPath, err := evalSymlinks(porterPath)
-		if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
-			fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
-		} else if hardPath != porterPath {
-			if c.Debug {
-				fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
-			}
-			porterPath = hardPath
-		}
-		home = filepath.Dir(porterPath)
+		// TODO
 	}
 
 	// As a relative path may be supplied via EnvHOME,
@@ -127,22 +111,34 @@ func (c *Config) SetHomeDir(home string) {
 }
 
 func (c *Config) GetPorterPath() (string, error) {
-	home, err := c.GetHomeDir()
+	porterPath, err := getExecutable()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "could not get path to the executing porter binary")
 	}
 
-	executablePath := filepath.Join(home, "porter")
-	return executablePath, nil
+	// We try to resolve back to the original location
+	hardPath, err := evalSymlinks(porterPath)
+	if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
+		fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
+	} else if hardPath != porterPath {
+		if c.Debug {
+			fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
+		}
+		porterPath = hardPath
+	}
+
+	return porterPath, nil
 }
 
 func (c *Config) GetPorterRuntimePath() (string, error) {
-	path, err := c.GetPorterPath()
+	home, err := c.GetHomeDir()
 	if err != nil {
 		return "", nil
 	}
 
-	return path + "-runtime", nil
+	runtimePath := filepath.Join(home, "runtime")
+	runtimeBinaryPath := filepath.Join(runtimePath, "porter-runtime")
+	return runtimeBinaryPath, nil
 }
 
 // GetBundlesDir locates the bundle cache from the porter home directory.
