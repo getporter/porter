@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
+export PORTER_HOME=/cnab/app
 exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml

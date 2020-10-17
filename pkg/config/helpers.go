@@ -31,7 +31,9 @@ func (c *TestConfig) SetupPorterHome() {
 
 	// Fake out the porter home directory
 	c.FileSystem.Create(filepath.Join(home, "porter"))
-	c.FileSystem.Create(filepath.Join(home, "porter-runtime"))
+
+	runtimeDir := filepath.Join(home, "runtime")
+	c.FileSystem.Create(filepath.Join(runtimeDir, "porter-runtime"))
 
 	mixinsDir := filepath.Join(home, "mixins")
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
