@@ -376,7 +376,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		typeOfT := val.Type()
 		for i := 0; i < val.NumField(); i++ {
 			f := val.Field(i)
-			name := toLowerCase(typeOfT.Field(i).Name)
+			name := toCamelCase(typeOfT.Field(i).Name)
 			img[name] = f.String()
 		}
 		images[alias] = img
@@ -519,8 +519,8 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 	return nil
 }
 
-// toLowerCase returns a string with the first character lowercased
-func toLowerCase(str string) string {
+// toCamelCase returns a camel-cased variant of the provided string
+func toCamelCase(str string) string {
 	var b strings.Builder
 
 	b.WriteString(strings.ToLower(string(str[0])))
