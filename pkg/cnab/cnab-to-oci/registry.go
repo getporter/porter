@@ -23,6 +23,16 @@ import (
 	portercontext "get.porter.sh/porter/pkg/context"
 )
 
+// ErrNoContentDigest represents an error due to an image not having a
+// corresponding content digest in a bundle definition
+type ErrNoContentDigest error
+
+// NewErrNoContentDigest returns an ErrNoContentDigest formatted with the
+// provided image name
+func NewErrNoContentDigest(image string) ErrNoContentDigest {
+	return fmt.Errorf("unable to verify that the pulled image %s is the invocation image referenced by the bundle because the bundle does not specify a content digest. This could allow for the invocation image to be replaced or tampered with", image)
+}
+
 var _ RegistryProvider = &Registry{}
 
 type Registry struct {
@@ -61,6 +71,12 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle,
 	bun, reloMap, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 	if err != nil {
 		return bundle.Bundle{}, nil, errors.Wrap(err, "unable to pull remote bundle")
+	}
+
+	invocationImage := bun.InvocationImages[0]
+	if invocationImage.Digest == "" {
+		return bundle.Bundle{}, nil,
+			NewErrNoContentDigest(invocationImage.Image)
 	}
 
 	if len(reloMap) == 0 {
