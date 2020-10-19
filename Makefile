@@ -208,9 +208,9 @@ endif
 install: install-porter install-mixins
 
 install-porter:
-	mkdir -p $(HOME)/.porter/runtime
+	mkdir -p $(HOME)/.porter/runtimes
 	cp bin/porter $(HOME)/.porter/
-	cp bin/porter-runtime $(HOME)/.porter/runtime
+	cp bin/porter-runtime $(HOME)/.porter/runtimes
 
 install-mixins:
 	cp -R bin/mixins $(HOME)/.porter/

@@ -142,7 +142,7 @@ func (c *Config) GetPorterRuntimePath() (string, error) {
 		return "", nil
 	}
 
-	runtimePath := filepath.Join(home, "runtime")
+	runtimePath := filepath.Join(home, "runtimes")
 	runtimeBinaryPath := filepath.Join(runtimePath, "porter-runtime")
 	return runtimeBinaryPath, nil
 }
