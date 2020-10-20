@@ -88,5 +88,14 @@ func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
 		p.Manifest = cachedBundle.Manifest
 	}
 
+	// (Re-)validate parameters after the bundle is pulled, since p.Manifest
+	// may now be non-empty and should be referenced for correct parsing.
+	// For example, checking to see if the manifest declares parameter(s)
+	// of type file.
+	err = opts.validateParams(p)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

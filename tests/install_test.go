@@ -73,7 +73,37 @@ func TestInstall_fileParam(t *testing.T) {
 	myotherfile, ok := outputs.GetByName("myotherfile")
 	require.True(t, ok, "expected myotherfile output to be persisted")
 	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
+}
 
+func TestInstall_fileParam_fromTag(t *testing.T) {
+	p := porter.NewTestPorter(t)
+	p.SetupIntegrationTest()
+	defer p.CleanupIntegrationTest()
+	p.Debug = false
+
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
+	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
+
+	publishOpts := porter.PublishOptions{}
+	publishOpts.Tag = "localhost:5000/file-param:v0.1.0"
+	err := publishOpts.Validate(p.Context)
+	require.NoError(t, err, "validation of publish opts for bundle failed")
+
+	err = p.Publish(publishOpts)
+	require.NoError(t, err, "publish of bundle failed")
+
+	installOpts := porter.InstallOptions{}
+	installOpts.Tag = "localhost:5000/file-param:v0.1.0"
+	installOpts.Params = []string{"myfile=./myfile"}
+	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
+
+	err = installOpts.Validate([]string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(installOpts)
+	require.NoError(t, err)
 }
 
 func TestInstall_withDockerignore(t *testing.T) {
