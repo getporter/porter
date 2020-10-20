@@ -267,8 +267,8 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 
 	for i, refImage := range c.Manifest.ImageMap {
 		imgRefStr := refImage.Repository
-		if refImage.Digest != "" {
-			imgRefStr = fmt.Sprintf("%s@%s", imgRefStr, refImage.Digest)
+		if refImage.ContentDigest != "" {
+			imgRefStr = fmt.Sprintf("%s@%s", imgRefStr, refImage.ContentDigest)
 		} else if refImage.Tag != "" {
 			imgRefStr = fmt.Sprintf("%s:%s", imgRefStr, refImage.Tag)
 		} else { // default to `latest` if no tag is provided
@@ -282,7 +282,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 			Description: refImage.Description,
 			BaseImage: bundle.BaseImage{
 				Image:     imgRefStr,
-				Digest:    refImage.Digest,
+				Digest:    refImage.ContentDigest,
 				ImageType: imgType,
 				MediaType: refImage.MediaType,
 				Size:      refImage.Size,

@@ -8,7 +8,7 @@ images:
       description: "Something"
       imageType: "docker"
       repository: "getporter/mcguffin"
-      digest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
+      contentDigest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f"
 
 mixins:
 - searcher
@@ -16,14 +16,14 @@ mixins:
 install:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
+      image: "{{bundle.images.something.repository}}@{{bundle.images.something.contentDigest}}"
       repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
+      contentDigest: "{{bundle.images.something.contentDigest}}"
       tag: "{{bundle.images.something.tag}}"
 uninstall:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
+      image: "{{bundle.images.something.repository}}@{{bundle.images.something.contentDigest}}"
       repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
+      contentDigest: "{{bundle.images.something.contentDigest}}"
       tag: "{{bundle.images.something.tag}}"

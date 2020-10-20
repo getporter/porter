@@ -336,8 +336,8 @@ func TestValidateOutputDefinition(t *testing.T) {
 func TestValidateImageMap(t *testing.T) {
 	t.Run("with both valid image digest and valid repository format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "getporter/myserver",
-			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+			Repository:    "getporter/myserver",
+			ContentDigest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
 		}
 
 		err := mi.Validate()
@@ -357,8 +357,8 @@ func TestValidateImageMap(t *testing.T) {
 
 	t.Run("with valid image digest but invalid repository format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "getporter//myserver//",
-			Digest:     "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
+			Repository:    "getporter//myserver//",
+			ContentDigest: "sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f",
 		}
 
 		err := mi.Validate()
@@ -367,8 +367,8 @@ func TestValidateImageMap(t *testing.T) {
 
 	t.Run("with invalid image digest format", func(t *testing.T) {
 		mi := MappedImage{
-			Repository: "getporter/myserver",
-			Digest:     "abc123",
+			Repository:    "getporter/myserver",
+			ContentDigest: "abc123",
 		}
 
 		err := mi.Validate()
