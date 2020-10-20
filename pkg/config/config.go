@@ -136,16 +136,6 @@ func (c *Config) GetPorterPath() (string, error) {
 	return porterPath, nil
 }
 
-func (c *Config) GetPorterRuntimePath() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", nil
-	}
-
-	runtimeBinaryPath := filepath.Join(home, "runtimes", "porter-runtime")
-	return runtimeBinaryPath, nil
-}
-
 // GetBundlesDir locates the bundle cache from the porter home directory.
 func (c *Config) GetBundlesCache() (string, error) {
 	home, err := c.GetHomeDir()
