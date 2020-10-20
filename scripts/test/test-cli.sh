@@ -12,7 +12,7 @@ mkdir -p ${PORTER_HOME}/runtimes
 # Populate temporary porter home
 BIN_DIR=${REPO_DIR}/bin/
 cp ${BIN_DIR}/porter ${PORTER_HOME}/
-cp ${BIN_DIR}/porter-runtime ${PORTER_HOME}/runtimes
+cp -R ${BIN_DIR}/runtimes ${PORTER_HOME}/
 cp -R ${BIN_DIR}/mixins ${PORTER_HOME}/
 
 ${PORTER_HOME}/porter help

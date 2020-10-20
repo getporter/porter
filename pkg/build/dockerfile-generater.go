@@ -207,7 +207,7 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 	if err != nil {
 		return err
 	}
-	err = g.CopyFile(pr, filepath.Join(LOCAL_APP, "porter-runtime"))
+	err = g.CopyFile(pr, filepath.Join(LOCAL_APP, "runtimes", "porter-runtime"))
 	if err != nil {
 		return err
 	}

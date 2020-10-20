@@ -77,9 +77,9 @@ func NewTestRunner(t *testing.T, name string, pkgType string, runtime bool) *Tes
 
 	// Setup Porter home
 	c.FileSystem.Create("/root/.porter/porter")
-	c.FileSystem.Create("/root/.porter/porter-runtime")
+	c.FileSystem.Create("/root/.porter/runtimes/porter-runtime")
 	c.FileSystem.Create(path.Join(pkgDir, name))
-	c.FileSystem.Create(path.Join(pkgDir, name+"-runtime"))
+	c.FileSystem.Create(path.Join(pkgDir, "runtimes", name+"-runtime"))
 
 	return r
 }

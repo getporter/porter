@@ -102,7 +102,7 @@ func (r *Runner) Run(commandOpts pkgmgmt.CommandOptions) error {
 func (r *Runner) getExecutablePath() string {
 	path := filepath.Join(r.pkgDir, r.pkgName)
 	if r.runtime {
-		return path + "-runtime"
+		return filepath.Join(r.pkgDir, "runtimes", r.pkgName+"-runtime")
 	}
 	return path + pkgmgmt.FileExt
 }

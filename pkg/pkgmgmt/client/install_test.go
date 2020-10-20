@@ -38,7 +38,7 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 
 	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/mixxin")
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/mixxin-runtime")
+	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/runtimes/mixxin-runtime")
 	assert.True(t, runtimeExists)
 }
 
@@ -76,7 +76,7 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 
 	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/helm")
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/helm-runtime")
+	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/runtimes/helm-runtime")
 	assert.True(t, runtimeExists)
 }
 

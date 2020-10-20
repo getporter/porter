@@ -144,7 +144,7 @@ func (fs *FileSystem) downloadPackage(name string, clientUrl url.URL, runtimeUrl
 		return err
 	}
 
-	runtimePath := filepath.Join(pkgDir, name+"-runtime")
+	runtimePath := filepath.Join(pkgDir, "runtimes", name+"-runtime")
 	err = fs.downloadFile(runtimeUrl, runtimePath, true)
 	if err != nil {
 		fs.FileSystem.RemoveAll(pkgDir) // If the runtime download fails, cleanup the package so it's not half installed

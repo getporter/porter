@@ -31,15 +31,13 @@ func (c *TestConfig) SetupPorterHome() {
 
 	// Fake out the porter home directory
 	c.FileSystem.Create(filepath.Join(home, "porter"))
-
-	runtimeDir := filepath.Join(home, "runtimes")
-	c.FileSystem.Create(filepath.Join(runtimeDir, "porter-runtime"))
+	c.FileSystem.Create(filepath.Join(home, "runtimes", "porter-runtime"))
 
 	mixinsDir := filepath.Join(home, "mixins")
 	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/exec-runtime"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "exec/runtimes/exec-runtime"))
 	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm"))
-	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/helm-runtime"))
+	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/runtimes/helm-runtime"))
 }
 
 // InitializePorterHome initializes the filesystem with the supporting files in the PORTER_HOME directory.
