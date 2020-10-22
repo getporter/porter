@@ -3,6 +3,7 @@
 /roadmap            https://github.com/getporter/porter/projects/4
 
 # Redirect source code links
+/:repo/src/*        https://github.com/getporter/:repo/blob/main/:splat
 /src/*              https://github.com/getporter/porter/blob/main/:splat
 
 # Redirect 
