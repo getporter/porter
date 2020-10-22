@@ -32,7 +32,8 @@ func TestInvokeCustomAction(t *testing.T) {
 	require.NoError(t, err)
 
 	// Invoke the custom action
-	invokeOpts := porter.InvokeOptions{Action: "zombies"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "zombies"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InvokeBundle(invokeOpts)

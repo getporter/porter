@@ -27,7 +27,8 @@ type dependencyExecutioner struct {
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentAction BundleAction
-	parentOpts   BundleActionOptions
+	parentOpts   *BundleActionOptions
+	parentArgs   cnabprovider.ActionArguments
 	deps         []*queuedDependency
 }
 
@@ -62,9 +63,15 @@ type queuedDependency struct {
 
 func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
 	e.parentAction = parentAction
-	e.parentOpts = *parentAction.GetOptions()
+	e.parentOpts = parentAction.GetOptions()
 
-	err := e.identifyDependencies()
+	parentArgs, err := e.porter.BuildActionArgs(parentAction)
+	if err != nil {
+		return err
+	}
+	e.parentArgs = parentArgs
+
+	err = e.identifyDependencies()
 	if err != nil {
 		return err
 	}
@@ -85,13 +92,8 @@ func (e *dependencyExecutioner) Execute() error {
 	}
 
 	// executeDependency the requested action against all of the dependencies
-	parentArgs, err := e.porter.BuildActionArgs(e.parentAction)
-	if err != nil {
-		return err
-	}
-
 	for _, dep := range e.deps {
-		err := e.executeDependency(dep, parentArgs)
+		err := e.executeDependency(dep)
 		if err != nil {
 			return err
 		}
@@ -100,7 +102,9 @@ func (e *dependencyExecutioner) Execute() error {
 	return nil
 }
 
-func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.ActionArguments) {
+// PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
+// the execution of the root operation.
+func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.ActionArguments) {
 	if args.Files == nil {
 		args.Files = make(map[string]string, 2*len(e.deps))
 	}
@@ -111,17 +115,13 @@ func (e *dependencyExecutioner) ApplyDependencyMappings(args *cnabprovider.Actio
 		// Copy the dependency bundle.json
 		target := runtime.GetDependencyDefinitionPath(dep.Alias)
 		args.Files[target] = string(dep.cnabFileContents)
+	}
 
-		// TODO: (carolynvs) dependency outputs now need to happen differently through parameter sources
-		// outputs aren't loaded as files anymore
-		/*
-			// Copy the dependency output files defined from the bundle.json (loaded in executeDependency)
-			for i := 0; i < dep.outputs.Len(); i++ {
-				output, _ := dep.outputs.GetByIndex(i)
-				target := filepath.Join(runtime.GetDependencyOutputsDir(dep.Alias), output.Name)
-				args.Files[target] = string(output.Data)
-			}
-		*/
+	// Remove parameters for dependencies
+	for key := range args.Params {
+		if strings.Contains(key, "#") {
+			delete(args.Params, key)
+		}
 	}
 }
 
@@ -227,7 +227,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentOpts.combinedParameters {
+	for key, value := range e.parentArgs.Params {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -241,24 +241,24 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
-			delete(e.parentOpts.combinedParameters, key)
+			delete(e.parentArgs.Params, key)
 		}
 	}
 
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency, parentArgs cnabprovider.ActionArguments) error {
+func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	depArgs := cnabprovider.ActionArguments{
-		Action:            parentArgs.Action,
+		Action:            e.parentArgs.Action,
 		BundlePath:        dep.CNABFile,
-		Installation:      extensions.BuildPrerequisiteInstallationName(parentArgs.Installation, dep.Alias),
-		Driver:            parentArgs.Driver,
+		Installation:      extensions.BuildPrerequisiteInstallationName(e.parentArgs.Installation, dep.Alias),
+		Driver:            e.parentArgs.Driver,
 		Params:            dep.Parameters,
 		RelocationMapping: dep.RelocationMapping,
 
 		// For now, assume it's okay to give the dependency the same credentials as the parent
-		CredentialIdentifiers: parentArgs.CredentialIdentifiers,
+		CredentialIdentifiers: e.parentArgs.CredentialIdentifiers,
 	}
 
 	// Determine if we're working with UninstallOptions, to inform deletion and

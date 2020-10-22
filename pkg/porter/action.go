@@ -36,7 +36,7 @@ func (p *Porter) ExecuteAction(action BundleAction) error {
 	if err != nil {
 		return err
 	}
-	deperator.ApplyDependencyMappings(&actionArgs)
+	deperator.PrepareRootActionArguments(&actionArgs)
 
 	fmt.Fprintf(p.Out, "%s %s...\n", action.GetActionVerb(), actionOpts.Name)
 	return p.CNAB.Execute(actionArgs)

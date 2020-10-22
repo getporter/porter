@@ -88,7 +88,8 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 }
 
 func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
-	statusOpts := porter.InvokeOptions{Action: action}
+	statusOpts := porter.NewInvokeOptions()
+	statusOpts.Action = action
 	err := statusOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InvokeBundle(statusOpts)

@@ -157,7 +157,8 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 }
 
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
-	invokeOpts := porter.InvokeOptions{Action: "ping"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "ping"
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
 	invokeOpts.Params = []string{
 		"wordpress-password=mypassword",

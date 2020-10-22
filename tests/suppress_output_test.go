@@ -48,7 +48,8 @@ func TestSuppressOutput(t *testing.T) {
 	require.Equal(t, "Hello World!", bundleOutput, "expected the bundle output to be populated correctly")
 
 	// Invoke - Log Error (Output suppressed)
-	invokeOpts := porter.InvokeOptions{Action: "log-error"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "log-error"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 

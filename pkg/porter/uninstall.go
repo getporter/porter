@@ -87,6 +87,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	if err != nil {
 		return err
 	}
+	deperator.PrepareRootActionArguments(&actionArgs)
 
 	fmt.Fprintf(p.Out, "%s %s...\n", opts.GetActionVerb(), opts.Name)
 	err = p.CNAB.Execute(actionArgs)
