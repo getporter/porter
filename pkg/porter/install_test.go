@@ -19,8 +19,8 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	opts := &InstallOptions{
-		BundleLifecycleOpts{
+	opts := InstallOptions{
+		BundleActionOptions{
 			sharedOptions: sharedOptions{
 				bundleFileOptions: bundleFileOptions{
 					File: "porter.yaml",
@@ -38,10 +38,6 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	assert.NotNil(t, p.Manifest, "Manifest should be loaded")
 	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
 	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
-
-	debug, set := opts.combinedParameters["porter-debug"]
-	assert.True(t, set)
-	assert.Equal(t, "true", debug)
 }
 
 func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
@@ -73,17 +69,6 @@ func TestPorter_applyDefaultOptions_ParamSet(t *testing.T) {
 	debug, set := opts.combinedParameters["porter-debug"]
 	assert.True(t, set)
 	assert.Equal(t, "true", debug)
-}
-
-func TestInstallOptions_validateParams(t *testing.T) {
-	p := NewTestPorter(t)
-	opts := InstallOptions{}
-	opts.Params = []string{"A=1", "B=2"}
-
-	err := opts.validateParams(p.Porter)
-	require.NoError(t, err)
-
-	assert.Len(t, opts.Params, 2)
 }
 
 func TestInstallOptions_validateInstallationName(t *testing.T) {
@@ -128,7 +113,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{
-				BundleLifecycleOpts{
+				BundleActionOptions{
 					sharedOptions: sharedOptions{
 						Driver: tc.driver,
 					},

@@ -16,7 +16,7 @@ import (
 
 // ArchiveOptions defines the valid options for performing an archive operation
 type ArchiveOptions struct {
-	BundleLifecycleOpts
+	BundleActionOptions
 	ArchiveFile string
 }
 
@@ -33,7 +33,7 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	if o.Tag == "" {
 		return errors.New("must provide a value for --tag of the form REGISTRY/bundle:tag")
 	}
-	return o.BundleLifecycleOpts.Validate(args, p)
+	return o.BundleActionOptions.Validate(args, p)
 }
 
 // Archive is a composite function that generates a CNAB thick bundle. It will pull the invocation image, and
@@ -45,7 +45,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return fmt.Errorf("parent directory %q does not exist", dir)
 	}
 
-	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	err := p.prepullBundleByTag(&opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before building archive")
 	}

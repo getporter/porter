@@ -27,7 +27,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")
-	err = e.Prepare(opts.BundleLifecycleOpts)
+	err = e.Prepare(opts)
 	require.NoError(t, err, "prepare should have succeeded")
 	err = e.Execute()
 	require.NoError(t, err, "execute should not fail when we have called prepare")
