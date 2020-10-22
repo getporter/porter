@@ -11,7 +11,7 @@ import (
 func (p *Porter) ExecuteAction(action BundleAction) error {
 	actionOpts := action.GetOptions()
 
-	err := p.prepullBundleByTag(action.GetOptions())
+	err := p.prepullBundleByTag(actionOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before installation")
 	}
@@ -20,8 +20,6 @@ func (p *Porter) ExecuteAction(action BundleAction) error {
 	if err != nil {
 		return err
 	}
-
-	lifecycleOpts := action.GetOptions()
 
 	deperator := newDependencyExecutioner(p, action.GetAction())
 	err = deperator.Prepare(action)
@@ -40,6 +38,6 @@ func (p *Porter) ExecuteAction(action BundleAction) error {
 	}
 	deperator.ApplyDependencyMappings(&actionArgs)
 
-	fmt.Fprintf(p.Out, "%s %s...\n", action.GetActionVerb(), lifecycleOpts.Name)
+	fmt.Fprintf(p.Out, "%s %s...\n", action.GetActionVerb(), actionOpts.Name)
 	return p.CNAB.Execute(actionArgs)
 }

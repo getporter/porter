@@ -31,7 +31,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
@@ -51,7 +51,7 @@ func TestInstall_fileParam(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
 
@@ -94,7 +94,7 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 	err = p.Publish(publishOpts)
 	require.NoError(t, err, "publish of bundle failed")
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	installOpts.Tag = "localhost:5000/file-param:v0.1.0"
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
@@ -118,7 +118,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0644)
 	require.NoError(t, err)
 
-	opts := porter.InstallOptions{}
+	opts := porter.NewInstallOptions()
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 

@@ -4,14 +4,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ BundleAction = InvokeOptions{}
+var _ BundleAction = NewInvokeOptions()
 
 // InvokeOptions that may be specified when invoking a bundle.
 // Porter handles defaulting any missing values.
 type InvokeOptions struct {
 	// Action name to invoke
 	Action string
-	BundleActionOptions
+	*BundleActionOptions
+}
+
+func NewInvokeOptions() InvokeOptions {
+	return InvokeOptions{BundleActionOptions: &BundleActionOptions{}}
 }
 
 func (o InvokeOptions) GetAction() string {

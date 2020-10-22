@@ -27,7 +27,7 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Install a bundle without building first
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
@@ -43,7 +43,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	// Install a bundle
 	err := p.Create()
 	require.NoError(t, err)
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
@@ -59,7 +59,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	// Upgrade the bundle
-	upgradeOpts := porter.UpgradeOptions{}
+	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)

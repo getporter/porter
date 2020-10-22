@@ -22,7 +22,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	assert.EqualError(t, err, "Prepare must be called before Execute")
 
 	// Now make sure execute passes now that we have called execute
-	opts := InstallOptions{}
+	opts := NewInstallOptions()
 	opts.Driver = DebugDriver
 	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)

@@ -76,27 +76,13 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	installOpts := InstallOptions{}
+	installOpts := NewInstallOptions()
 	installOpts.Tag = "mybun:1.0"
 
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
-}
-
-var _ BundleAction = TestActionOptions{}
-
-type TestActionOptions struct {
-	BundleActionOptions
-}
-
-func (o TestActionOptions) GetAction() string {
-	return "test"
-}
-
-func (t TestActionOptions) GetActionVerb() string {
-	return "testing"
 }
 
 func TestPorter_BuildActionArgs(t *testing.T) {
@@ -107,7 +93,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 	cxt.AddTestFile("testdata/porter.yaml", config.Name)
 
 	t.Run("porter.yaml set", func(t *testing.T) {
-		opts := TestActionOptions{}
+		opts := NewInstallOptions()
 		opts.File = "porter.yaml"
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
@@ -122,7 +108,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 	// Just do a quick check that things are populated correctly when a bundle.json is passed
 	t.Run("bundle.json set", func(t *testing.T) {
-		opts := TestActionOptions{}
+		opts := NewInstallOptions()
 		opts.CNABFile = "/bundle.json"
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
@@ -135,8 +121,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 	})
 
 	t.Run("remaining fields", func(t *testing.T) {
-		opts := TestActionOptions{
-			BundleActionOptions: BundleActionOptions{
+		opts := InstallOptions{
+			BundleActionOptions: &BundleActionOptions{
 				sharedOptions: sharedOptions{
 					bundleFileOptions: bundleFileOptions{
 						RelocationMapping: "relocation-mapping.json",
@@ -202,7 +188,7 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	p := NewTestPorter(t)
 
-	installOpts := InstallOptions{}
+	installOpts := NewInstallOptions()
 	installOpts.Name = "hello"
 	installOpts.Tag = "getporter/porter-hello:v0.1.1"
 	err := installOpts.Validate(nil, p.Porter)
@@ -211,14 +197,14 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err, "InstallBundle failed")
 
-	upgradeOpts := UpgradeOptions{}
+	upgradeOpts := NewUpgradeOptions()
 	upgradeOpts.Name = installOpts.Name
 	err = upgradeOpts.Validate(nil, p.Porter)
 
 	err = p.UpgradeBundle(upgradeOpts)
 	require.NoError(t, err, "UpgradeBundle failed")
 
-	uninstallOpts := UninstallOptions{}
+	uninstallOpts := NewUninstallOptions()
 	uninstallOpts.Name = installOpts.Name
 	err = uninstallOpts.Validate(nil, p.Porter)
 

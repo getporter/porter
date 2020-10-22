@@ -62,7 +62,7 @@ func TestExecOutputs(t *testing.T) {
 
 func CleanupCurrentBundle(p *porter.TestPorter) {
 	// Uninstall the bundle
-	uninstallOpts := porter.UninstallOptions{}
+	uninstallOpts := porter.NewUninstallOptions()
 	err := uninstallOpts.Validate([]string{}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for current bundle")
 
@@ -80,7 +80,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	files, _ := x.ReadDir(".")
 	fmt.Println(files)
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InstallBundle(installOpts)
@@ -105,7 +105,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 
 	// Install the bundle
 	// A step-level output will be used during this action
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
@@ -113,7 +113,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 
 	// Upgrade the bundle
 	// A bundle-level output will be produced during this action
-	upgradeOpts := porter.UpgradeOptions{}
+	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(upgradeOpts)
@@ -121,7 +121,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 
 	// Uninstall the bundle
 	// A bundle-level output will be used during this action
-	uninstallOpts := porter.UninstallOptions{}
+	uninstallOpts := porter.NewUninstallOptions()
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UninstallBundle(uninstallOpts)

@@ -25,7 +25,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)

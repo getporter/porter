@@ -4,12 +4,12 @@ import (
 	"github.com/cnabio/cnab-go/claim"
 )
 
-var _ BundleAction = InstallOptions{}
+var _ BundleAction = NewInstallOptions()
 
 // InstallOptions that may be specified when installing a bundle.
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
-	BundleActionOptions
+	*BundleActionOptions
 }
 
 func (o InstallOptions) GetAction() string {
@@ -18,6 +18,10 @@ func (o InstallOptions) GetAction() string {
 
 func (o InstallOptions) GetActionVerb() string {
 	return "installing"
+}
+
+func NewInstallOptions() InstallOptions {
+	return InstallOptions{&BundleActionOptions{}}
 }
 
 // InstallBundle accepts a set of pre-validated InstallOptions and uses

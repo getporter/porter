@@ -40,8 +40,8 @@ func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 	return o.sharedOptions.Validate(args, porter)
 }
 
-func (o BundleActionOptions) GetOptions() *BundleActionOptions {
-	return &o
+func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
+	return o
 }
 
 // BuildActionArgs converts an instance of user-provided action options into prepared arguments
