@@ -48,3 +48,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Michael William Boldt](https://github.com/mboldt)
 * [Mohamed Chorfa](https://github.com/MChorfa)
 * [Don Stewart](https://github.com/donmstewart)
+* [Nicholas Carrigan](https://github.com/nhcarrigan)
