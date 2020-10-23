@@ -30,7 +30,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 
 	assert.Equal(t, SchemaVersion, string(bun.SchemaVersion))
-	assert.Equal(t, "hello", bun.Name)
+	assert.Equal(t, "porter-hello", bun.Name)
 	assert.Equal(t, "0.1.0", bun.Version)
 	assert.Equal(t, "An example Porter configuration", bun.Description)
 

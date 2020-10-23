@@ -24,7 +24,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 		{
 			name:         "not yet installed",
 			notInstalled: true,
-			wantError:    "1 error occurred:\n\t* could not load installation HELLO: Installation does not exist\n\n",
+			wantError:    "1 error occurred:\n\t* could not load installation porter-hello: Installation does not exist\n\n",
 		}, {
 			name:                "no --delete",
 			installationRemains: true,

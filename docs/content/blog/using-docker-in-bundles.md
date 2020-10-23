@@ -160,7 +160,7 @@ defined in my helpers.sh script for each action:
 name: whalesay
 version: 0.1.1
 description: "An example bundle that uses docker through the magic of whalespeak"
-tag: getporter/whalesay:v0.1.1
+registry: getporter
 
 dockerfile: Dockerfile.tmpl
 

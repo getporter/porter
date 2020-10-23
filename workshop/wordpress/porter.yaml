@@ -1,6 +1,6 @@
-name: wordpress
+name: porter-workshop-wordpress
 version: 0.1.0
-tag: getporter/porter-workshop-wordpress
+registry: getporter
 
 mixins:
   - helm

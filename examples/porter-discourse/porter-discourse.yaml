@@ -6,8 +6,8 @@
 name: discourse-azure
 version: 0.1.0
 description: "A Porter bundle for Discourse"
-# TODO: update the registry to your own, e.g. myregistry/porter-hello:v0.1.0
-tag: getporter/discourse-azure:v0.1.0
+# TODO: update the registry to your own, e.g. myregistry
+registry: getporter
 
 # Uncomment the line below to use a template Dockerfile for your invocation image
 #dockerfile: Dockerfile.tmpl

@@ -9,7 +9,7 @@ credentials:
 name: kubernetes 
 version: 0.1.0
 description: "An example Porter bundle with Kubernetes"
-tag: getporter/kubernetes
+registry: getporter
 
 install:
   - kubernetes:

@@ -74,13 +74,13 @@
         "parameters": {
           "type": "object"
         },
-        "tag": {
+        "reference": {
           "type": "string"
         }
       },
       "required": [
         "name",
-        "tag"
+        "reference"
       ],
       "type": "object"
     },
@@ -450,6 +450,14 @@
       },
       "type": "array"
     },
+    "reference": {
+      "description": "The full reference to use when the bundle is published to an OCI registry",
+      "type": "string"
+    },
+    "registry": {
+      "description": "The OCI registry to use when the bundle is published",
+      "type": "string"
+    },
     "required": {
       "additionalItems": true,
       "description": "Required extensions for this bundle",
@@ -476,10 +484,6 @@
       ],
       "type": "array",
       "uniqueItems": true
-    },
-    "tag": {
-      "description": "The tag to use when the bundle is published to an OCI registry",
-      "type": "string"
     },
     "uninstall": {
       "items": {

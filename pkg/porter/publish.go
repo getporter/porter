@@ -84,14 +84,14 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	if tag != "" {
 		// If tag was supplied, update the invocation image name on the manifest
 		// per the registry, org and docker tag from the value provided
-		if err := p.Manifest.SetInvocationImageFromBundleTag(tag); err != nil {
+		if err := p.Manifest.SetInvocationImageAndBundleTag(); err != nil {
 			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
 		}
 	} else {
 		tag = p.Manifest.BundleTag
 	}
 	if p.Manifest.BundleTag == "" {
-		return errors.New("porter.yaml must specify a `tag` value for this bundle")
+		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
 	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)

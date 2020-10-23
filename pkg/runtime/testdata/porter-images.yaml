@@ -1,7 +1,7 @@
 name: some-test
 version: 0.3.11
 description: "Test some things"
-tag: getporter/test
+registry: getporter
 
 images:
   something:

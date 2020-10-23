@@ -24,7 +24,8 @@ func TestLoadManifest(t *testing.T) {
 	require.Equal(t, m.Name, "hello", "manifest has incorrect name")
 	require.Equal(t, m.Description, "An example Porter configuration", "manifest has incorrect description")
 	require.Equal(t, m.Version, "0.1.0", "manifest has incorrect version")
-	require.Equal(t, m.BundleTag, "getporter/porter-hello:v0.1.0", "manifest has incorrect bundle tag")
+	require.Equal(t, m.Registry, "getporter", "manifest has incorrect registry")
+	require.Equal(t, m.Reference, "getporter/hello:v0.1.0", "manifest has incorrect reference")
 
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins, "expected manifest to declare the exec mixin")
 	require.Len(t, m.Install, 1, "expected 1 install step")
@@ -50,11 +51,13 @@ func TestLoadManifest(t *testing.T) {
 func TestLoadManifest_DeprecatedFields(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("testdata/porter-with-image.yaml", config.Name)
+	cxt.AddTestFile("testdata/porter-with-deprecated-fields.yaml", config.Name)
 
 	m, err := LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, m, "manifest was nil")
+
+	require.Equal(t, "getporter/porter-hello:v0.1.0", m.BundleTag, "manifest has incorrect bundle tag")
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
@@ -90,11 +93,11 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 
 	nginxDep := m.Dependencies[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Tag)
+	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Reference)
 
 	mysqlDep := m.Dependencies[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
-	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Tag)
+	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)
 
 }
@@ -153,6 +156,15 @@ func TestManifest_Empty_Steps(t *testing.T) {
 	assert.EqualError(t, err, "3 errors occurred:\n\t* validation of action \"install\" failed: found an empty step\n\t* validation of action \"uninstall\" failed: found an empty step\n\t* validation of action \"status\" failed: found an empty step\n\n")
 }
 
+func TestManifest_Validate_Name(t *testing.T) {
+	cxt := context.NewTestContext(t)
+
+	cxt.AddTestFile("testdata/porter-no-name.yaml", config.Name)
+
+	_, err := LoadManifestFrom(cxt.Context, config.Name)
+	assert.EqualError(t, err, "bundle name must be set")
+}
+
 func TestManifest_Validate_Dockerfile(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
@@ -195,10 +207,11 @@ func TestReadManifest_File(t *testing.T) {
 }
 
 func TestSetDefault(t *testing.T) {
-	t.Run("bundle docker tag set", func(t *testing.T) {
+	t.Run("bundle docker tag set on reference", func(t *testing.T) {
 		m := Manifest{
+			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
+			Reference: "getporter/mybun:v1.2.3",
 		}
 		err := m.SetDefaults()
 		require.NoError(t, err)
@@ -206,10 +219,11 @@ func TestSetDefault(t *testing.T) {
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
 	})
 
-	t.Run("bundle docker tag not set", func(t *testing.T) {
+	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
 		m := Manifest{
+			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun",
+			Reference: "getporter/mybun",
 		}
 		err := m.SetDefaults()
 		require.NoError(t, err)
@@ -217,15 +231,53 @@ func TestSetDefault(t *testing.T) {
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
-	t.Run("bundle tag includes registry with port", func(t *testing.T) {
+	t.Run("bundle reference includes registry with port", func(t *testing.T) {
 		m := Manifest{
+			Name:      "mybun",
 			Version:   "0.1.0",
-			BundleTag: "localhost:5000/missing-invocation-image",
+			Reference: "localhost:5000/missing-invocation-image",
 		}
 		err := m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.BundleTag)
 		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:v0.1.0", m.Image)
+	})
+
+	t.Run("registry provided, no reference", func(t *testing.T) {
+		m := Manifest{
+			Name:     "mybun",
+			Version:  "1.2.3-beta.1",
+			Registry: "getporter",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
+	})
+
+	t.Run("registry provided with org, no reference", func(t *testing.T) {
+		m := Manifest{
+			Name:     "mybun",
+			Version:  "1.2.3-beta.1",
+			Registry: "getporter/myorg",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.BundleTag)
+		assert.Equal(t, "getporter/myorg/mybun-installer:v1.2.3-beta.1", m.Image)
+	})
+
+	t.Run("registry and reference provided", func(t *testing.T) {
+		m := Manifest{
+			Name:      "mybun",
+			Version:   "1.2.3-beta.1",
+			Registry:  "myregistry/myorg",
+			Reference: "getporter/org/mybun:v1.2.3",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
 	})
 }
 

@@ -1,13 +1,13 @@
-name: hello
+name: hello-with-templating
 version: 0.1.0
-tag: getporterci/hello-with-templating
+registry: getporterci
 
 mixins:
   - exec
 
 dependencies:
   - name: mysql
-    tag: getporter/mysql:v0.1.3
+    reference: getporter/mysql:v0.1.3
 
 parameters:
   - name: tfstate

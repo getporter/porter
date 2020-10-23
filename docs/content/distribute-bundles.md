@@ -21,15 +21,15 @@ Before you can publish your bundle, you must first run a `porter build` command.
 Once you are satisfied with the bundle, the next step is to publish the bundle! Bundle publishing involves pushing both the invocation image and the CNAB bundle manifest to an OCI registry. Porter uses [docker tags](https://docs.docker.com/engine/reference/commandline/tag/) for both invocation images and CNAB bundle manifests. These are defined in your `porter.yaml` file:
 
 ```yaml
-name: kube-example
+name: kubernetes
 version: 0.1.0
 description: "An example Porter bundle using Kubernetes"
-tag: getporter/kubernetes
+registry: getporter
 ```
 
-This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. The first part of this reference, `getporter` indicates the registry that the bundle should eventually be published to. The `kubernetes` segment identifies the bundle name, while the `:v0.1.0` portion denotes a specific version. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
+This YAML snippet indicates that the bundle will be built and tagged as `getporter/kubernetes:v0.1.0`. This full bundle reference is constructed from the provided `registry`, `name` and `version` fields. We recommend using [semantic versioning](https://semver.org/) for the bundle version.
 
-The generated invocation image name will be auto-derived from a combination of `tag` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
+The generated invocation image name will be auto-derived from the same combination of `registry`, `name` and `version`.  Using the example above, an invocation image with the name of `getporter/kubernetes-installer:0.1.0` will be built.
 
 Once you have provided values for the fields above, run the `porter build` command one last time to verify that your invocation image can be successfully built.
 
@@ -69,7 +69,7 @@ When this command is complete, your CNAB bundle manifest and invocation image wi
 
 ```
 $ porter install --tag getporter/kubernetes:v0.1.0 -c kool-kred
-installing kube-example...
+installing kubernetes...
 executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
 ```
@@ -78,7 +78,7 @@ The bundle can also be pulled with specified digest:
 
 ```
 $ porter install --tag getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456 -c kool-kred
-installing kube-example...
+installing kubernetes...
 executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
 ```
@@ -110,10 +110,10 @@ NOTE: Digest refers to the the [repository digest][digest] (not the image id).
 Consider the following example:
 
 ```
-name: spring-music
+name: porter-do-bundle
 version: 0.5.0
 description: "Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL"
-tag: jeremyrickard/porter-do-bundle
+registry: jeremyrickard
 
 images:
   spring-music:

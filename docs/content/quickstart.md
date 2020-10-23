@@ -22,10 +22,10 @@ for your bundle. Modify and customize this file for your application's needs.
 Here is a very basic **porter.yaml** file:
 
 ```yaml
-name: HELLO
+name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello
+registry: getporter
 
 mixins:
   - exec
@@ -80,11 +80,11 @@ When you are ready to share your bundle, the next step is publishing it to an
 OCI registry such as Docker Hub or Quay.
 
 You must authenticate with `docker login` before publishing the bundle. Make
-sure that the `tag` listed in your `porter.yaml` is a reference to which the
+sure that the `registry` listed in your `porter.yaml` is a reference to which the
 currently logged in user has write permission.
 
 ```yaml
-tag: myregistry/porter-hello:v0.1.0
+registry: myregistry
 ```
 
 Now run `porter publish` and porter will push the invocation image and bundle to

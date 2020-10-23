@@ -1,7 +1,7 @@
 name: porter-gcloud-compute
 version: 0.1.0
 description: "An example Porter gcloud compute bundle"
-tag: getporter/porter-gcloud-compute
+registry: getporter
 
 mixins:
   - gcloud

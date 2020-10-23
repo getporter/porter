@@ -4,7 +4,7 @@
 name: azure-terraform
 version: 1.1.0
 description: "An example Porter Bundle using Terraform and Azure"
-tag: getporter/azure-terraform
+registry: getporter
 
 ## This section defines which Mixins will be used by the bundle.
 mixins:

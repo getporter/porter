@@ -37,7 +37,7 @@ The bundle will use the service principal created above to interact with Azure. 
     ```
 
 * Update params for your deployment
-    * change the `tag` Docker repo to match your Docker Hub account
+    * change the `registry` to match your Docker Hub account
     * Cosmos and AKS names must be unique. You can either edit the `porter.yaml` file default values (starting on line 90) or you can supply the with the porter CLI as shown below.
 
 * Build the innvocation image
