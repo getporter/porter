@@ -84,8 +84,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	if tag != "" {
 		// If tag was supplied, update the invocation image name on the manifest
 		// per the registry, org and docker tag from the value provided
-		p.Manifest.BundleTag = tag
-		if err := p.Manifest.SetInvocationImageAndBundleTag(); err != nil {
+		if err := p.Manifest.SetInvocationImageAndBundleTag(tag); err != nil {
 			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
 		}
 	} else {

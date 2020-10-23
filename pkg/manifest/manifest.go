@@ -792,23 +792,26 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 
 // SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	return m.SetInvocationImageAndBundleTag()
+	return m.SetInvocationImageAndBundleTag("")
 }
 
 // SetInvocationImageAndBundleTag sets the invocation image name and the
-// bundle tag on the manifest per the provided registry or repository values.
-func (m *Manifest) SetInvocationImageAndBundleTag() error {
+// bundle tag on the manifest per the provided reference or via the
+// registry or repository values on the manifest.
+func (m *Manifest) SetInvocationImageAndBundleTag(ref string) error {
 	// Set bundle tag to repo value (combination of registry and name) by default
 	// Note: the bundle version will be appended as the Docker tag below
-	if m.Registry != "" {
+	if ref != "" {
+		m.BundleTag = ref
+	} else if m.Registry != "" && m.BundleTag == "" {
+		// Note: m.BundleTag may be non-empty, via the deprecated 'tag' field
+		// (no longer meant to be user-specified)
+		// We can remove the check once support is removed
 		repo, err := reference.ParseNormalizedNamed(filepath.Join(m.Registry, m.Name))
 		if err != nil {
 			return errors.Wrapf(err, "invalid bundle reference %s", repo)
 		}
 		m.BundleTag = repo.Name()
-		// Note: m.BundleTag may be non-empty, via the deprecated 'tag' field
-		// (no longer meant to be user-specified)
-		// We can remove this check once support is removed
 	} else if m.BundleTag == "" && m.Registry == "" && m.Reference == "" {
 		return fmt.Errorf("a registry or reference value must be provided")
 	}

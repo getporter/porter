@@ -279,6 +279,19 @@ func TestSetDefault(t *testing.T) {
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.BundleTag)
 		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
 	})
+
+	t.Run("tag (deprecated) and registry provided", func(t *testing.T) {
+		m := Manifest{
+			Name:      "mybun",
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Registry:  "myregistry/myorg",
+		}
+		err := m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+	})
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
