@@ -187,6 +187,8 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 
 func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	p := NewTestPorter(t)
+	cacheDir, _ := p.Cache.GetCacheDir()
+	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 
 	installOpts := NewInstallOptions()
 	installOpts.Name = "hello"

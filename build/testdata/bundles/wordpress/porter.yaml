@@ -3,7 +3,7 @@ mixins:
 - helm
 
 name: wordpress
-registry: localhost:5000
+registry: "localhost:5000"
 version: 0.1.3
 
 dependencies:
