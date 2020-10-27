@@ -100,11 +100,11 @@ func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bo
 
 	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
 	d, err := remotes.Push(context.Background(), &bun, rm, ref, resolver, true)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error pushing the bundle to %s", tag)
 	}
 	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
 
