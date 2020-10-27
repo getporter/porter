@@ -10,6 +10,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
+	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
@@ -30,6 +31,7 @@ type TestPorter struct {
 	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
+	TestRegistry    *cnabtooci.TestRegistry
 
 	// original directory where the test was being executed
 	TestDir string
@@ -45,6 +47,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testParameters := parameters.NewTestParameterProvider(t, tc)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProvider(t)
+	testRegistry := cnabtooci.NewTestRegistry()
 
 	p := New()
 	p.Config = tc.Config
@@ -56,6 +59,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
 	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
+	p.Registry = testRegistry
 
 	return &TestPorter{
 		Porter:          p,
@@ -64,6 +68,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestCredentials: &testCredentials,
 		TestParameters:  &testParameters,
 		TestCache:       testCache,
+		TestRegistry:    testRegistry,
 	}
 }
 
