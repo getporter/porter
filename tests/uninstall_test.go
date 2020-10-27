@@ -58,7 +58,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 
 			// Install bundle
 			if !tc.notInstalled {
-				opts := porter.InstallOptions{}
+				opts := porter.NewInstallOptions()
 				opts.Driver = "debug"
 
 				err = opts.Validate(nil, p.Porter)
@@ -83,7 +83,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 			defer p.TestConfig.TestContext.FileSystem.RemoveAll(dir)
 
 			// Uninstall bundle with custom command driver
-			opts := porter.UninstallOptions{}
+			opts := porter.NewUninstallOptions()
 			opts.Delete = tc.delete
 			opts.ForceDelete = tc.forceDelete
 			opts.Driver = driver.Name

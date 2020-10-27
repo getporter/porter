@@ -63,7 +63,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	p.CopyDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress"), ".", false)
 
 	namespace = randomString(10)
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	installOpts.CredentialIdentifiers = []string{"ci"}
 	installOpts.Params = []string{
 		"wordpress-password=mypassword",
@@ -99,7 +99,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 }
 
 func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
-	uninstallOptions := porter.UninstallOptions{}
+	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Delete = true
 	uninstallOptions.Params = []string{
@@ -124,7 +124,7 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 }
 
 func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
-	upgradeOpts := porter.UpgradeOptions{}
+	upgradeOpts := porter.NewUpgradeOptions()
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
 	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
@@ -157,7 +157,8 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 }
 
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
-	invokeOpts := porter.InvokeOptions{Action: "ping"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "ping"
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
 	invokeOpts.Params = []string{
 		"wordpress-password=mypassword",
@@ -189,7 +190,7 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 }
 
 func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
-	uninstallOptions := porter.UninstallOptions{}
+	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
 		"wordpress-password=mypassword",

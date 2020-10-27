@@ -103,7 +103,9 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 		return err
 	}
 
-	err = o.validateParams(p)
+	// Only validate the syntax of the --param flags
+	// We will validate the parameter sets later once we have the bundle loaded.
+	err = o.parseParams()
 	if err != nil {
 		return err
 	}
@@ -218,7 +220,9 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	return nil
 }
 
-func (o *sharedOptions) validateParams(p *Porter) error {
+// LoadParameters validates and resolves the parameters and sets. It must be
+// called after porter has loaded the bundle definition.
+func (o *sharedOptions) LoadParameters(p *Porter) error {
 	err := o.parseParams()
 	if err != nil {
 		return err

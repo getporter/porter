@@ -5,22 +5,27 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ BundleAction = BundleLifecycleOpts{}
-
 // BundleAction is an interface that defines a method for supplying
 // BundleLifecycleOptions.  This is useful when implementations contain
 // action-specific options beyond the stock BundleLifecycleOptions.
 type BundleAction interface {
-	GetBundleLifecycleOptions() BundleLifecycleOpts
+	// GetAction returns the type of action: install, upgrade, invoke, uninstall
+	GetAction() string
+
+	// GetActionVerb returns the appropriate verb (present participle, e.g. -ing)
+	// for the action.
+	GetActionVerb() string
+
+	GetOptions() *BundleActionOptions
 }
 
-type BundleLifecycleOpts struct {
+type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowAccessToDockerHost bool
 }
 
-func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
+func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 	if o.Tag != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
 		o.File = ""
@@ -35,39 +40,44 @@ func (o *BundleLifecycleOpts) Validate(args []string, porter *Porter) error {
 	return o.sharedOptions.Validate(args, porter)
 }
 
-func (o BundleLifecycleOpts) GetBundleLifecycleOptions() BundleLifecycleOpts {
+func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 	return o
 }
 
-// ToActionArgs converts this instance of user-provided action options.
-func (o BundleLifecycleOpts) ToActionArgs(deperator *dependencyExecutioner) cnabprovider.ActionArguments {
+// BuildActionArgs converts an instance of user-provided action options into prepared arguments
+// that can be used to execute the action.
+func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArguments, error) {
+	opts := action.GetOptions()
 	args := cnabprovider.ActionArguments{
-		Action:                deperator.Action,
-		Installation:          o.Name,
-		BundlePath:            o.CNABFile,
-		Params:                make(map[string]string, len(o.combinedParameters)),
-		CredentialIdentifiers: make([]string, len(o.CredentialIdentifiers)),
-		Driver:                o.Driver,
-		RelocationMapping:     o.RelocationMapping,
-		AllowDockerHostAccess: o.AllowAccessToDockerHost,
+		Action:                action.GetAction(),
+		Installation:          opts.Name,
+		BundlePath:            opts.CNABFile,
+		Params:                make(map[string]string, len(opts.combinedParameters)),
+		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),
+		Driver:                opts.Driver,
+		RelocationMapping:     opts.RelocationMapping,
+		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
+	}
+
+	err := opts.LoadParameters(p)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
 	}
 
 	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
-	for k, v := range o.combinedParameters {
+	for k, v := range opts.combinedParameters {
 		args.Params[k] = v
 	}
-	copy(args.CredentialIdentifiers, o.CredentialIdentifiers)
+	copy(args.CredentialIdentifiers, opts.CredentialIdentifiers)
 
-	deperator.ApplyDependencyMappings(&args)
-
-	return args
+	return args, nil
 }
 
 // prepullBundleByTag handles calling the bundle pull operation and updating
 // the shared options like name and bundle file path. This is used by install, upgrade
 // and uninstall
-func (p *Porter) prepullBundleByTag(opts *BundleLifecycleOpts) error {
+func (p *Porter) prepullBundleByTag(opts *BundleActionOptions) error {
 	if opts.Tag == "" {
 		return nil
 	}

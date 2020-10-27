@@ -25,14 +25,15 @@ func TestInvokeCustomAction(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
 
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
 	// Invoke the custom action
-	invokeOpts := porter.InvokeOptions{Action: "zombies"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "zombies"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InvokeBundle(invokeOpts)

@@ -107,7 +107,7 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 	assert.Equal(t, DefaultDriver, opts.Driver)
 }
 
-func TestParseParamSets_viaPathOrName(t *testing.T) {
+func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 	p := NewTestPorter(t)
 
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
@@ -135,7 +135,7 @@ func TestParseParamSets_viaPathOrName(t *testing.T) {
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }
 
-func TestParseParamSets_FileType(t *testing.T) {
+func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
 	p := NewTestPorter(t)
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", "porter.yaml")
@@ -162,7 +162,18 @@ func TestParseParamSets_FileType(t *testing.T) {
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }
 
-func TestCombineParameters(t *testing.T) {
+func TestSharedOptions_LoadParameters(t *testing.T) {
+	p := NewTestPorter(t)
+	opts := sharedOptions{}
+	opts.Params = []string{"A=1", "B=2"}
+
+	err := opts.LoadParameters(p.Porter)
+	require.NoError(t, err)
+
+	assert.Len(t, opts.Params, 2)
+}
+
+func TestSharedOptions_CombineParameters(t *testing.T) {
 	c := context.NewTestContext(t)
 	c.Debug = false
 
