@@ -12,4 +12,4 @@
 // such as a key/value store like Hashicorp Vault, or Azure Key Vault.
 // See the get.porter.sh/porter/pkg/secrets package for more on how Porter
 // handles accessing secrets.
-package credentials // import "get.porter.sh/porter/pkg/credentials"
+package credentials
