@@ -8,7 +8,7 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
-PORTER_HOME = bin
+export PORTER_HOME = ${CURDIR}/bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
