@@ -1,7 +1,7 @@
 name: mybun
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello
+registry: getporter
 
 mixins:
   - exec

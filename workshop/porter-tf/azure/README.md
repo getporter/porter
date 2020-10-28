@@ -25,13 +25,13 @@ Review the `porter.yaml` to see what each of these sections looks like.
 Now, update the `porter.yaml` and change the following value:
 
 ```
-tag: getporter/orkshop-tf
+registry: getporter
 ```
 
-Change the Docker-like reference to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
+Change the registry to point to your own Docker registry. For example, if my Docker user name is `jeremyrickard`, I'd change that these lines to:
 
 ```
-tag: jeremyrickard/workshop-tf
+registry: jeremyrickard
 ```
 
 ## Build The Bundle!

@@ -122,7 +122,7 @@
         "name": {
           "type": "string"
         },
-        "tag": {
+        "reference": {
           "type": "string"
         },
         "parameters": {
@@ -131,7 +131,7 @@
       },
       "required": [
         "name", 
-        "tag"
+        "reference"
       ],
       "type": "object"
     },
@@ -217,9 +217,13 @@
         "anyOf": []
       }
     },
-    "tag": {
-      "type": "string",
-      "description": "The tag to use when the bundle is published to an OCI registry"
+    "reference": {
+      "description": "The full reference to use when the bundle is published to an OCI registry",
+      "type": "string"
+    },
+    "registry": {
+      "description": "The OCI registry to use when the bundle is published",
+      "type": "string"
     },
     "mixins": {
       "type": "array",

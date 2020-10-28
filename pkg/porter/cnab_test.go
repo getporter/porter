@@ -117,7 +117,7 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 
 	opts := sharedOptions{
 		ParameterSets: []string{
-			"HELLO_CUSTOM",
+			"porter-hello",
 			"/paramset.json",
 		},
 	}

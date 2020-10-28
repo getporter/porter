@@ -98,7 +98,7 @@ The porter manifest and runtime handles interpreting and executing the logical p
 ```yaml
 name: wordpress
 version: 0.1.0
-tag: getporter/wordpress
+registry: getporter
 
 mixins:
   - helm
@@ -202,7 +202,7 @@ The MySQL author indicates that the bundle can provide credentials for connectin
 ```yaml
 name: mysql
 version: 0.1.3
-tag: getporter/mysql:v0.1.3
+registry: getporter
 
 mixins:
   - helm
@@ -242,7 +242,7 @@ mixins:
 
 name: wordpress
 version: 0.1.0
-tag: porter/wordpress
+registry: getporter
 
 parameters:
   - name: wordpress_name
@@ -251,7 +251,7 @@ parameters:
 
 dependencies:
   - name: mysql
-    tag: getporter/mysql:v0.1.3
+    reference: getporter/mysql:v0.1.3
     parameters:
       database_name: wordpress
 

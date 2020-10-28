@@ -1,7 +1,7 @@
 name: workshop-tf-aci
 version: 0.1.0
 description: "An example using Porter to build a TF bundle and use ACI"
-tag: getporter/workshop-tf-aci
+registry: getporter
 
 mixins:
   - arm

@@ -32,7 +32,7 @@ func TestGenerateNoName(t *testing.T) {
 	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
 
-	creds, err := p.Credentials.Read("HELLO_CUSTOM")
+	creds, err := p.Credentials.Read("porter-hello")
 	require.NoError(t, err, "expected credential to have been generated")
 	var zero time.Time
 	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
@@ -383,9 +383,9 @@ func TestShowCredential_PreserveCase(t *testing.T) {
 	opts := CredentialShowOptions{}
 	opts.RawFormat = string(printer.FormatTable)
 
-	err := opts.Validate([]string{"HELLO"})
+	err := opts.Validate([]string{"porter-hello"})
 	require.NoError(t, err, "Validate failed")
-	assert.Equal(t, "HELLO", opts.Name, "Validate should preserve the credential set name case")
+	assert.Equal(t, "porter-hello", opts.Name, "Validate should preserve the credential set name case")
 }
 
 type SourceTest struct {

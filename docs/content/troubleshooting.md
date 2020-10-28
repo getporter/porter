@@ -13,9 +13,9 @@ With any porter error, it can really help to re-run the command again with the `
 When you run your bundle you see the following error
 
 ```
-executing install action from HELLO (installation: HELLO)
+executing install action from porter-hello (installation: porter-hello)
 === Step Data ===
-map[bundle:map[credentials:map[] dependencies:map[] description:An example Porter configuration images:map[] invocationImage:porter-hello:latest name:HELLO outputs:map[] parameters:map[test:{"test": "test"}] version:0.1.0]]
+map[bundle:map[credentials:map[] dependencies:map[] description:An example Porter configuration images:map[] invocationImage:porter-hello:latest name:porter-hello outputs:map[] parameters:map[test:{"test": "test"}] version:0.1.0]]
 === Step Template ===
 exec:
   command: bash

@@ -1,7 +1,7 @@
 name: whalesay
 version: 0.1.1
 description: "An example bundle that uses docker through the magic of whalespeak"
-tag: getporter/whalesay
+registry: getporter
 
 dockerfile: Dockerfile.tmpl
 

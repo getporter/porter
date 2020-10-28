@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
@@ -34,11 +35,21 @@ type Manifest struct {
 	Description string `yaml:"description,omitempty"`
 	Version     string `yaml:"version,omitempty"`
 
+	// Registry is the OCI registry and org/subdomain for the bundle
+	Registry string `yaml:"registry,omitempty"`
+
+	// Reference is the optional, full bundle reference
+	// in the format REGISTRY/NAME or REGISTRY/NAME:TAG
+	Reference string `yaml:"reference,omitempty"`
+
 	// BundleTag is the name of the bundle in the format REGISTRY/NAME:TAG
-	BundleTag string `yaml:"tag"`
+	// It doesn't map to any field in the manifest as it has been deprecated
+	// and isn't meant to be user-specified
+	BundleTag string `yaml:"-"`
 
 	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
-	// It doesn't map to any field in the manifest as it isn't meant to be user-specified
+	// It doesn't map to any field in the manifest as it has been deprecated
+	// and isn't meant to be user-specified
 	Image string `yaml:"-"`
 
 	// Dockerfile is the relative path to the Dockerfile template for the invocation image
@@ -66,10 +77,15 @@ type Manifest struct {
 	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
-func (m *Manifest) Validate() error {
+func (m *Manifest) Validate(cxt *context.Context) error {
 	var result error
 
-	err := m.SetDefaults()
+	err := m.validateMetadata(cxt)
+	if err != nil {
+		return err
+	}
+
+	err = m.SetDefaults()
 	if err != nil {
 		return err
 	}
@@ -134,6 +150,35 @@ func (m *Manifest) Validate() error {
 	}
 
 	return result
+}
+
+func (m *Manifest) validateMetadata(cxt *context.Context) error {
+	if m.Name == "" {
+		return errors.New("bundle name must be set")
+	}
+
+	if m.BundleTag == "" && m.Registry == "" && m.Reference == "" {
+		return errors.New("a registry or reference value must be provided")
+	}
+
+	if m.Reference != "" && m.Registry != "" {
+		fmt.Fprintf(cxt.Out, "WARNING: both registry and reference were provided; "+
+			"using the reference value of %s for the bundle reference\n", m.Reference)
+	}
+
+	// Check the deprecated tag field (still allowing use for time being)
+	if m.BundleTag != "" {
+		fmt.Fprintln(cxt.Out, "WARNING: the tag field has been deprecated and replaced by reference; "+
+			"please update the Porter manifest accordingly.")
+		if m.Reference != "" {
+			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided; "+
+				"using the reference value %s for the bundle reference\n", m.Reference)
+		} else {
+			m.Reference = m.BundleTag
+		}
+	}
+
+	return nil
 }
 
 var templatedOutputRegex = regexp.MustCompile(`^bundle\.outputs\.(.+)$`)
@@ -500,8 +545,15 @@ func (mi *MappedImage) Validate() error {
 }
 
 type Dependency struct {
-	Name             string            `yaml:"name"`
-	Tag              string            `yaml:"tag"`
+	Name string `yaml:"name"`
+
+	// Reference is the full bundle reference for the dependency
+	// in the format REGISTRY/NAME:TAG
+	Reference string `yaml:"reference"`
+
+	// Tag is a deprecated field.  It has been replaced by Reference.
+	Tag string `yaml:"-"`
+
 	Versions         []string          `yaml:"versions"`
 	AllowPrereleases bool              `yaml:"prereleases"`
 	Parameters       map[string]string `yaml:"parameters,omitempty"`
@@ -512,12 +564,24 @@ func (d *Dependency) Validate() error {
 		return errors.New("dependency name is required")
 	}
 
-	if d.Tag == "" {
-		return errors.New("dependency tag is required")
+	depRef := d.Reference
+	if d.Tag != "" {
+		fmt.Println("WARNING: the tag field has been deprecated in favor of reference; " +
+			"please update the Porter manifest accordingly")
+		if depRef == "" {
+			depRef = d.Tag
+		} else {
+			fmt.Printf("WARNING: both tag (deprecated) and reference were provided; "+
+				"using the reference value %s for the dependency", depRef)
+		}
 	}
 
-	if strings.Contains(d.Tag, ":") && len(d.Versions) > 0 {
-		return errors.New("dependency tag can only specify REGISTRY/NAME when version ranges are specified")
+	if depRef == "" {
+		return errors.New("dependency reference is required")
+	}
+
+	if strings.Contains(depRef, ":") && len(d.Versions) > 0 {
+		return errors.New("dependency reference can only specify REGISTRY/NAME when version ranges are specified")
 	}
 
 	return nil
@@ -732,6 +796,11 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 			fmt.Fprintln(cxt.Out, "WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.")
 			delete(unmappedData, key)
 		}
+		// Print deprecation notice for this field
+		if key == "tag" {
+			manifest.BundleTag = unmappedData[key].(string)
+			delete(unmappedData, key)
+		}
 	}
 
 	// Marshal the remaining keys in the unmappedData as custom actions and append them to the typed manifest
@@ -756,21 +825,33 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 
 // SetDefaults updates the manifest with default values where not populated
 func (m *Manifest) SetDefaults() error {
-	return m.SetInvocationImageFromBundleTag(m.BundleTag)
+	return m.SetInvocationImageAndReference("")
 }
 
-// SetInvocationImageFromBundleTag sets the invocation image name on the manifest
-// per the provided bundle tag, also updating the manifest BundleTag value
-// if it initially lacks a Docker tag
-func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string) error {
-	bundleRef, err := reference.ParseNormalizedNamed(bundleTag)
+// SetInvocationImageAndReference sets the invocation image name and the
+// bundle reference on the manifest per the provided reference or via the
+// registry or name values on the manifest.
+func (m *Manifest) SetInvocationImageAndReference(ref string) error {
+	if ref != "" {
+		m.Reference = ref
+	}
+
+	if m.Reference == "" && m.Registry != "" {
+		repo, err := reference.ParseNormalizedNamed(filepath.Join(m.Registry, m.Name))
+		if err != nil {
+			return errors.Wrapf(err, "invalid bundle reference %s", repo)
+		}
+		m.Reference = repo.Name()
+	}
+
+	bundleRef, err := reference.ParseNormalizedNamed(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "invalid tag %s", bundleTag)
+		return errors.Wrapf(err, "invalid bundle reference %s", m.Reference)
 	}
 
 	dockerTag, err := m.getDockerTagFromBundleRef(bundleRef)
 	if err != nil {
-		return errors.Wrapf(err, "unable to derive docker tag from bundle tag %q", bundleTag)
+		return errors.Wrapf(err, "unable to derive docker tag from bundle reference %q", m.Reference)
 	}
 
 	// If the docker tag is initially missing from bundleTag, update with
@@ -781,7 +862,7 @@ func (m *Manifest) SetInvocationImageFromBundleTag(bundleTag string) error {
 		if err != nil {
 			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
 		}
-		m.BundleTag = reference.FamiliarString(bundleRef)
+		m.Reference = reference.FamiliarString(bundleRef)
 	}
 
 	imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
@@ -912,7 +993,7 @@ func LoadManifestFrom(cxt *context.Context, file string) (*Manifest, error) {
 		return nil, err
 	}
 
-	err = m.Validate()
+	err = m.Validate(cxt)
 	if err != nil {
 		return nil, err
 	}

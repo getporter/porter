@@ -1,7 +1,7 @@
 name: azure-cli
 version: 0.1.0
 description: "Print the azure cli help text"
-tag: getporter/porter-azure-cli
+registry: getporter
 
 mixins:
   - exec

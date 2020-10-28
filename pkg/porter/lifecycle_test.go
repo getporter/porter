@@ -133,7 +133,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 						"PARAM1=VALUE1",
 					},
 					ParameterSets: []string{
-						"HELLO_CUSTOM",
+						"porter-hello",
 					},
 					CredentialIdentifiers: []string{
 						"mycreds",

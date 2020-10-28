@@ -3,7 +3,7 @@ mixins:
 
 name: nginx
 version: 1.19
-tag: localhost:5000/nginx
+registry: localhost:5000
 
 install:
   - exec:

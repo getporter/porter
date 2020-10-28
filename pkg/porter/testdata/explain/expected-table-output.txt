@@ -1,4 +1,4 @@
-Name: HELLO
+Name: porter-hello
 Description: An example Porter configuration
 Version: 0.1.0
 

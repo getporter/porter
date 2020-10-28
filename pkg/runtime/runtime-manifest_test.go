@@ -130,7 +130,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
+	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
@@ -657,10 +657,12 @@ func TestDependency_Validate(t *testing.T) {
 		dep       manifest.Dependency
 		wantError string
 	}{
-		{"version in tag", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
-		{"version ranges", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
-		{"missing tag", manifest.Dependency{Name: "mysql", Tag: ""}, "dependency tag is required"},
-		{"version double specified", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
+		{"tag (deprecated) supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"tag (deprecated) and reference supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.7"}, ""},
+		{"version in reference", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"}, ""},
+		{"version ranges", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
+		{"missing reference", manifest.Dependency{Name: "mysql", Reference: ""}, "dependency reference is required"},
+		{"version double specified", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency reference can only specify REGISTRY/NAME when version ranges are specified"},
 	}
 
 	for _, tc := range testcases {

@@ -309,7 +309,7 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	for _, dep := range c.Manifest.Dependencies {
 		dependencyRef := extensions.Dependency{
 			Name:   dep.Name,
-			Bundle: dep.Tag,
+			Bundle: dep.Reference,
 		}
 		if len(dep.Versions) > 0 || dep.AllowPrereleases {
 			dependencyRef.Version = &extensions.DependencyVersion{

@@ -1,11 +1,11 @@
-name: hello
+name: porter-hello
 description: "An example Porter configuration"
 version: 0.1.0
-tag: getporter/porter-hello
+registry: getporter
 
 dependencies:
   - name: mysql
-    tag: "getporter/azure-mysql:5.7"
+    reference: "getporter/azure-mysql:5.7"
     
 mixins:
 - exec
