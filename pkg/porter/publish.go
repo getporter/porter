@@ -84,13 +84,13 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	if tag != "" {
 		// If tag was supplied, update the invocation image name on the manifest
 		// per the registry, org and docker tag from the value provided
-		if err := p.Manifest.SetInvocationImageAndBundleTag(tag); err != nil {
+		if err := p.Manifest.SetInvocationImageAndReference(tag); err != nil {
 			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
 		}
 	} else {
-		tag = p.Manifest.BundleTag
+		tag = p.Manifest.Reference
 	}
-	if p.Manifest.BundleTag == "" {
+	if p.Manifest.Reference == "" {
 		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}
 

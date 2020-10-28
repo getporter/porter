@@ -1,4 +1,4 @@
-name: porter-gcloud-compute
+name: gcloud-compute
 version: 0.1.0
 description: "An example Porter gcloud compute bundle"
 registry: getporter

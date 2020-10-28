@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "9db9ef2c8ebe2f4be857f23e83e9364ba02338839ea0b662b8db6080069fb1ac"
+var simpleManifestDigest = "b3be65771034c64a0d49d2c8a4ac3103a1ec12d6e41015ef57861fd913f72ecf"
 
 func TestConfig_GenerateStamp(t *testing.T) {
 	c := config.NewTestConfig(t)

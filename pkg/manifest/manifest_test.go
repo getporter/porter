@@ -56,8 +56,13 @@ func TestLoadManifest_DeprecatedFields(t *testing.T) {
 	m, err := LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, m, "manifest was nil")
+	require.Equal(t,
+		"WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.\n"+
+			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n",
+		cxt.GetOutput())
 
-	require.Equal(t, "getporter/porter-hello:v0.1.0", m.BundleTag, "manifest has incorrect bundle tag")
+	require.Equal(t, "getporter/porter-hello:v0.1.0", m.Reference, "manifest has incorrect bundle tag")
+	require.Equal(t, "getporter/porter-hello-installer:v0.1.0", m.Image, "image has the incorrect value")
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
@@ -175,7 +180,7 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 
 	m.Dockerfile = "Dockerfile"
 
-	err = m.Validate()
+	err = m.Validate(cxt.Context)
 
 	assert.EqualError(t, err, "Dockerfile template cannot be named 'Dockerfile' because that is the filename generated during porter build")
 }
@@ -206,91 +211,156 @@ func TestReadManifest_File(t *testing.T) {
 	assert.Equal(t, "hello", m.Name)
 }
 
-func TestSetDefault(t *testing.T) {
+func TestSetDefaults(t *testing.T) {
+	t.Run("no registry or reference provided", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		m := Manifest{
+			Name:    "mybun",
+			Version: "1.2.3-beta.1",
+		}
+		err := m.validateMetadata(cxt.Context)
+		require.EqualError(t, err, "a registry or reference value must be provided")
+	})
+
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
 			Reference: "getporter/mybun:v1.2.3",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
 			Reference: "getporter/mybun",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.BundleTag)
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
 			Version:   "0.1.0",
 			Reference: "localhost:5000/missing-invocation-image",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.BundleTag)
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.Reference)
 		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:v0.1.0", m.Image)
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:     "mybun",
 			Version:  "1.2.3-beta.1",
 			Registry: "getporter",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.BundleTag)
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:     "mybun",
 			Version:  "1.2.3-beta.1",
 			Registry: "getporter/myorg",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.BundleTag)
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.Reference)
 		assert.Equal(t, "getporter/myorg/mybun-installer:v1.2.3-beta.1", m.Image)
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
 			Registry:  "myregistry/myorg",
 			Reference: "getporter/org/mybun:v1.2.3",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.BundleTag)
+		require.Equal(t,
+			"WARNING: both registry and reference were provided; using the reference value of getporter/org/mybun:v1.2.3 for the bundle reference\n",
+			cxt.GetOutput())
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
 		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
 	})
 
 	t.Run("tag (deprecated) and registry provided", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
 			Version:   "1.2.3-beta.1",
 			BundleTag: "getporter/mybun:v1.2.3",
 			Registry:  "myregistry/myorg",
 		}
-		err := m.SetDefaults()
+		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.BundleTag)
+		require.Equal(t,
+			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n",
+			cxt.GetOutput())
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
 		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+	})
+
+	t.Run("tag (deprecated) and reference provided", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		m := Manifest{
+			Name:      "mybun",
+			Version:   "1.2.3-beta.1",
+			BundleTag: "getporter/mybun:v1.2.3",
+			Reference: "myregistry/myorg/mybun:v1.2.3",
+		}
+		err := m.validateMetadata(cxt.Context)
+		require.NoError(t, err)
+		require.Equal(t,
+			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n"+
+				"WARNING: both tag (deprecated) and reference were provided; using the reference value myregistry/myorg/mybun:v1.2.3 for the bundle reference\n",
+			cxt.GetOutput())
+
+		err = m.SetDefaults()
+		require.NoError(t, err)
+		assert.Equal(t, "myregistry/myorg/mybun:v1.2.3", m.Reference)
+		assert.Equal(t, "myregistry/myorg/mybun-installer:v1.2.3", m.Image)
 	})
 }
 

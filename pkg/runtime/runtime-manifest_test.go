@@ -658,9 +658,10 @@ func TestDependency_Validate(t *testing.T) {
 		wantError string
 	}{
 		{"tag (deprecated) supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"tag (deprecated) and reference supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.7"}, ""},
 		{"version in reference", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"}, ""},
 		{"version ranges", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
-		{"missing tag", manifest.Dependency{Name: "mysql", Reference: ""}, "dependency reference is required"},
+		{"missing reference", manifest.Dependency{Name: "mysql", Reference: ""}, "dependency reference is required"},
 		{"version double specified", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency reference can only specify REGISTRY/NAME when version ranges are specified"},
 	}
 
