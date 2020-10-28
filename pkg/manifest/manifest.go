@@ -828,8 +828,6 @@ func (m *Manifest) SetDefaults() error {
 	return m.SetInvocationImageAndReference("")
 }
 
-// TODO: move more logic into manifest.Validate
-
 // SetInvocationImageAndReference sets the invocation image name and the
 // bundle reference on the manifest per the provided reference or via the
 // registry or name values on the manifest.
