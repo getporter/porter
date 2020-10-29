@@ -59,7 +59,11 @@ type Config struct {
 	Data       *Data
 	DataLoader DataStoreLoaderFunc
 
+	// Cache the resolved Porter home directory
 	porterHome string
+
+	// Cache the resolved Porter binary path
+	porterPath string
 }
 
 // New Config initializes a default porter configuration.
@@ -112,11 +116,23 @@ func (c *Config) GetHomeDir() (string, error) {
 	return c.porterHome, nil
 }
 
+// SetHomeDir is a test function that allows tests to use an alternate
+// Porter home directory.
 func (c *Config) SetHomeDir(home string) {
 	c.porterHome = home
 }
 
+// SetPorterPath is a test function that allows tests to use an alternate
+// Porter binary location.
+func (c *Config) SetPorterPath(path string) {
+	c.porterPath = path
+}
+
 func (c *Config) GetPorterPath() (string, error) {
+	if c.porterPath != "" {
+		return c.porterPath, nil
+	}
+
 	porterPath, err := getExecutable()
 	if err != nil {
 		return "", errors.Wrap(err, "could not get path to the executing porter binary")
@@ -133,6 +149,7 @@ func (c *Config) GetPorterPath() (string, error) {
 		porterPath = hardPath
 	}
 
+	c.porterPath = porterPath
 	return porterPath, nil
 }
 
