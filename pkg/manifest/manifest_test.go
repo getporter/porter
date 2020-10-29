@@ -58,7 +58,8 @@ func TestLoadManifest_DeprecatedFields(t *testing.T) {
 	require.NotNil(t, m, "manifest was nil")
 	require.Equal(t,
 		"WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.\n"+
-			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n",
+			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
+			"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
 		cxt.GetOutput())
 
 	require.Equal(t, "getporter/porter-hello:v0.1.0", m.Reference, "manifest has incorrect bundle tag")
@@ -333,7 +334,8 @@ func TestSetDefaults(t *testing.T) {
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
 		require.Equal(t,
-			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n",
+			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
+				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
 			cxt.GetOutput())
 
 		err = m.SetDefaults()
@@ -353,7 +355,8 @@ func TestSetDefaults(t *testing.T) {
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
 		require.Equal(t,
-			"WARNING: the tag field has been deprecated and replaced by reference; please update the Porter manifest accordingly.\n"+
+			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
+				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n"+
 				"WARNING: both tag (deprecated) and reference were provided; using the reference value myregistry/myorg/mybun:v1.2.3 for the bundle reference\n",
 			cxt.GetOutput())
 

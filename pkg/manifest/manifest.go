@@ -168,8 +168,9 @@ func (m *Manifest) validateMetadata(cxt *context.Context) error {
 
 	// Check the deprecated tag field (still allowing use for time being)
 	if m.BundleTag != "" {
-		fmt.Fprintln(cxt.Out, "WARNING: the tag field has been deprecated and replaced by reference; "+
-			"please update the Porter manifest accordingly.")
+		fmt.Fprintln(cxt.Out, "WARNING: the tag field has been deprecated; "+
+			"please replace with a value for the registry field on the Porter manifest instead")
+		fmt.Fprintln(cxt.Out, "===> See https://porter.sh/author-bundles/#bundle-metadata for more details")
 		if m.Reference != "" {
 			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided; "+
 				"using the reference value %s for the bundle reference\n", m.Reference)
