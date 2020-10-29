@@ -1,16 +1,16 @@
-name: HELLO
+name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
-tag: getporter/porter-hello
+registry: getporter
 
 dependencies:
   - name: mysql
-    tag: "getporter/azure-mysql:5.7"
+    reference: "getporter/azure-mysql:5.7"
   - name: ad
-    tag: "getporter/azure-active-directory"
+    reference: "getporter/azure-active-directory"
     prereleases: true
   - name: storage
-    tag: "getporter/azure-blob-storage"
+    reference: "getporter/azure-blob-storage"
     versions:
       - 1.x - 2
       - 2.1 - 3.x

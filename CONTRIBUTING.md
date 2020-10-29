@@ -36,13 +36,10 @@ slack, interactions on social media, project meetings, conferences and meetups.
 
 ## Find an issue
 
-We have [good first issues][good-first-issue] for new contributors and [help
-wanted][help-wanted] issues for our other contributors. When you have been
-contributing for a while, take a look at the "Backlog" column on our [project
-board][board] for high priority issues.
+We have good first issues for new contributors and help wanted issues for our other contributors. When you have been contributing for a while, take a look at the "Backlog" column on our [project board][board] for high priority issues. The project board is at the organization level, so it contains issues from across all of the Porter repositories. 
 
-* `good first issue` has extra information to help you make your first contribution.
-* `help wanted` are issues suitable for someone who isn't a core maintainer.
+* [`good first issues`][good-first-issue] has extra information to help you make your first contribution.
+* [`help wanted`][help-wanted] are issues suitable for someone who isn't a core maintainer.
 * `hmm 🛑🤔` issues should be avoided. They are not ready to be worked on yet
   because they are not finished being designed or we aren't sure if we want the
   feature, etc.

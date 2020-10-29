@@ -35,7 +35,7 @@ func TestSuppressOutput(t *testing.T) {
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/suppressed-output-example"), ".")
 
 	// Install (Output suppressed)
-	installOpts := porter.InstallOptions{}
+	installOpts := porter.NewInstallOptions()
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
@@ -48,7 +48,8 @@ func TestSuppressOutput(t *testing.T) {
 	require.Equal(t, "Hello World!", bundleOutput, "expected the bundle output to be populated correctly")
 
 	// Invoke - Log Error (Output suppressed)
-	invokeOpts := porter.InvokeOptions{Action: "log-error"}
+	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Action = "log-error"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
@@ -56,7 +57,7 @@ func TestSuppressOutput(t *testing.T) {
 	require.NoError(t, err)
 
 	// Uninstall
-	uninstallOpts := porter.UninstallOptions{}
+	uninstallOpts := porter.NewUninstallOptions()
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 

@@ -3,11 +3,11 @@
 # See https://porter.sh/author-bundles for documentation on how to configure your bundle
 # Uncomment out the sections below to take full advantage of what Porter can do!
 
-name: HELLO
+name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
-# TODO: update the registry to your own, e.g. myregistry/porter-hello
-tag: getporter/porter-hello
+# TODO: update the registry to your own, e.g. myregistry
+registry: getporter
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
 # See https://porter.sh/custom-dockerfile/

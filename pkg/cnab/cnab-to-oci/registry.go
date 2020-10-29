@@ -23,6 +23,16 @@ import (
 	portercontext "get.porter.sh/porter/pkg/context"
 )
 
+// ErrNoContentDigest represents an error due to an image not having a
+// corresponding content digest in a bundle definition
+type ErrNoContentDigest error
+
+// NewErrNoContentDigest returns an ErrNoContentDigest formatted with the
+// provided image name
+func NewErrNoContentDigest(image string) ErrNoContentDigest {
+	return fmt.Errorf("unable to verify that the pulled image %s is the invocation image referenced by the bundle because the bundle does not specify a content digest. This could allow for the invocation image to be replaced or tampered with", image)
+}
+
 var _ RegistryProvider = &Registry{}
 
 type Registry struct {
@@ -63,6 +73,12 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle,
 		return bundle.Bundle{}, nil, errors.Wrap(err, "unable to pull remote bundle")
 	}
 
+	invocationImage := bun.InvocationImages[0]
+	if invocationImage.Digest == "" {
+		return bundle.Bundle{}, nil,
+			NewErrNoContentDigest(invocationImage.Image)
+	}
+
 	if len(reloMap) == 0 {
 		return *bun, nil, nil
 	}
@@ -84,11 +100,11 @@ func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bo
 
 	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
 	d, err := remotes.Push(context.Background(), &bun, rm, ref, resolver, true)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error pushing the bundle to %s", tag)
 	}
 	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
 

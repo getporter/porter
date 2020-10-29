@@ -1,5 +1,6 @@
+name: empty-steps
 version: 0.1.0
-tag: example.com/mybun
+registry: example.com
 
 mixins:
   - exec

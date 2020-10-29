@@ -130,7 +130,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[interface{}]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:HELLO version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
+	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
@@ -657,10 +657,12 @@ func TestDependency_Validate(t *testing.T) {
 		dep       manifest.Dependency
 		wantError string
 	}{
-		{"version in tag", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
-		{"version ranges", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
-		{"missing tag", manifest.Dependency{Name: "mysql", Tag: ""}, "dependency tag is required"},
-		{"version double specified", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency tag can only specify REGISTRY/NAME when version ranges are specified"},
+		{"tag (deprecated) supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"}, ""},
+		{"tag (deprecated) and reference supplied", manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.7"}, ""},
+		{"version in reference", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"}, ""},
+		{"version ranges", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}}, ""},
+		{"missing reference", manifest.Dependency{Name: "mysql", Reference: ""}, "dependency reference is required"},
+		{"version double specified", manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}}, "dependency reference can only specify REGISTRY/NAME when version ranges are specified"},
 	}
 
 	for _, tc := range testcases {
@@ -707,7 +709,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
-	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
+	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.ContentDigest)
 	step := rm.Install[0]
 	err = rm.ResolveStep(step)
 	assert.NoError(t, err, "Should have successfully resolved step")
@@ -723,10 +725,10 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	val = fmt.Sprintf("%v", repo)
 	assert.Equal(t, expectedImage.Repository, val)
 
-	digest, ok := s["digest"]
-	assert.True(t, ok, "should have found digest")
+	digest, ok := s["contentDigest"]
+	assert.True(t, ok, "should have found content digest")
 	val = fmt.Sprintf("%v", digest)
-	assert.Equal(t, expectedImage.Digest, val)
+	assert.Equal(t, expectedImage.ContentDigest, val)
 
 	tag, ok := s["tag"]
 	assert.True(t, ok, "should have found tag")
@@ -741,8 +743,8 @@ func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
 			"something": manifest.MappedImage{
-				Repository: "blah/blah",
-				Digest:     "sha1234:cafebab",
+				Repository:    "blah/blah",
+				ContentDigest: "sha1234:cafebab",
 			},
 		},
 	}
@@ -766,8 +768,8 @@ func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
 			"notsomething": manifest.MappedImage{
-				Repository: "blah/blah",
-				Digest:     "sha1234:cafebab",
+				Repository:    "blah/blah",
+				ContentDigest: "sha1234:cafebab",
 			},
 		},
 	}
@@ -794,8 +796,8 @@ func TestResolveImage(t *testing.T) {
 			name:      "canonical reference",
 			reference: "getporter/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+				Repository:    "getporter/porter-hello",
+				ContentDigest: "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},
 		{
@@ -835,9 +837,9 @@ func TestResolveImage(t *testing.T) {
 			name:      "tagged and digested",
 			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Tag:        "v0.1.0",
-				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+				Repository:    "getporter/porter-hello",
+				Tag:           "v0.1.0",
+				ContentDigest: "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},
 	}
@@ -847,7 +849,7 @@ func TestResolveImage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.want.Repository, got.Repository)
 		assert.Equal(t, test.want.Tag, got.Tag)
-		assert.Equal(t, test.want.Digest, got.Digest)
+		assert.Equal(t, test.want.ContentDigest, got.ContentDigest)
 	}
 }
 
@@ -895,9 +897,9 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
-				Repository: "deislabs/ghost",
-				Tag:        "latest",
-				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+				Repository:    "deislabs/ghost",
+				Tag:           "latest",
+				ContentDigest: "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
 			},
 		},
 	}
@@ -925,9 +927,9 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
-				Repository: "deislabs/ghost",
-				Tag:        "latest",
-				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+				Repository:    "deislabs/ghost",
+				Tag:           "latest",
+				ContentDigest: "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
 			},
 		},
 	}
@@ -955,9 +957,9 @@ func TestResolveImageWithRelo(t *testing.T) {
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
-				Repository: "gabrtv/microservice",
-				Tag:        "latest",
-				Digest:     "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+				Repository:    "gabrtv/microservice",
+				Tag:           "latest",
+				ContentDigest: "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
 			},
 		},
 	}
@@ -987,9 +989,9 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
-				Repository: "deislabs/ghost",
-				Tag:        "latest",
-				Digest:     "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
+				Repository:    "deislabs/ghost",
+				Tag:           "latest",
+				ContentDigest: "sha256:75c495e5ce9c428d482973d72e3ce9925e1db304a97946c9aa0b540d7537e041",
 			},
 		},
 	}

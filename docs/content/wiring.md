@@ -291,7 +291,7 @@ For example, consider a bundle that creates a mysql defined with the following `
 ```yaml
 name: mysql
 version: 0.1.3
-tag: getporter/mysql
+registry: getporter
 
 mixins:
 - helm
@@ -333,14 +333,14 @@ With this bundle definition, we can build a second bundle to install wordpress a
 ```yaml
 name: wordpress
 version: 0.1.0
-tag: getporter/wordpress
+registry: getporter
 
 mixins:
 - helm
 
 dependencies:
   - name: mysql
-    tag: getporter/mysql:v0.1.3
+    reference: getporter/mysql:v0.1.3
     parameters:
       database_name: wordpress
       mysql_user: wordpress

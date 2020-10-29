@@ -7,6 +7,10 @@ These are the commands that a mixin can implement to work with porter. Some must
 be implemented, or porter will refuse to load the mixin, while others are just
 recommended so that your mixin has a good user experience.
 
+Our [skeleton mixin template][skeletor] demonstrates how to implement each command,
+providing a working implementation, tests, and a Makefile to manage common tasks. If
+you are writing a mixin in Go, we strongly recommend starting from the template.
+
 **Required Commands**
 
 * [build](#build)
@@ -14,11 +18,12 @@ recommended so that your mixin has a good user experience.
 * [install](#install)
 * [upgrade](#upgrade)
 * [uninstall](#uninstall)
+* [version](#version)
 
 **Optional Commands**
 
 * [invoke](#invoke)
-* [version](#version)
+* [lint](#lint)
 
 
 # build
@@ -58,13 +63,44 @@ RUN az extension add --name azure-cli-iot-ext
 
 The schema command (required) is used in multiple porter commands, such as
 `porter schema`, `porter build` and `porter run`. The mixin should return a json
-schema for the parts of the Porter manifest that it is responsible for. Porter
+schema for the parts of the Porter manifest it is responsible for. Porter
 combines each of the mixin's schema documents into a single json schema document
 and uses that to validate the Porter manifest, and other tools, like VS Code,
 use the document to provide autocomplete when editing the manifest.
 
+The output of your schema command must be a [json schema][jsonschema] document.
+The schema should describe which fields are supported by your mixin, and their
+descriptions, type and optionality. Good examples of a mixin schema are the
+[exec mixin schema] and [helm mixin schema].
+
+Your mixin is responsible for defining the allowed schema for each action
+because for some mixins the schema is different per action. Porter will handle
+parsing through your schema and piecing it all together into a coherent schema
+for porter.yaml. You just need to worry about what your schema should look like
+for your portion of the manifest related to the mixin:
+
+Below is an example of the potion of the Porter manifest that will be used with the 
+[exec mixin schema].
+
+```yaml
+install:
+- exec:
+   description: Some description
+   command: ./helpers.sh
+```
+
+The [mixin skeleton template][skeletor] provides an example implementation, unit tests
+and an integration test to validate your implementation. After you have customized
+your schema command, you can test it out with the [Porter extension](https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode)
+for Visual Studio Code. Install your updated mixin, and then open a porter.yaml
+file with VS Code. You should get autocomplete and hover documentation for your
+mixin's fields.
+
+A great resource for developing and testing your schema is the [JSON Schema Validator]
+and [YAML to JSON converter].
+
 There are a few rules to follow when authoring your mixin's json schema as there
-are known bugs in some of the libraries in the libraries used by Porter and VS
+are known bugs in the libraries used by Porter and VS
 Code that they workaround:
 
 1. Do not chain together references. A reference should only link to another type,
@@ -133,7 +169,6 @@ the action, e.g. "install", and a definition named `<action>Step`, e.g.
 **NOTE**: porter handles rewriting the references when it merges the json
 *schemas. So write your references relative to your mixin's schema document, and
 *porter will take care of adjusting it when the schema is merged.
-
 
 # install
 
@@ -245,9 +280,10 @@ status:
 
 # version
 
-The version command (optional) is used by porter when listing installed mixins 
-via `porter mixins list`. It should support an `--output|o` flag that accepts
-either `plaintext` or `json` as values, defaulting to `plaintext`.
+The version command (required) is used by porter during `porter build` and when
+listing installed mixins via `porter mixins list`. It should support an
+`--output|o` flag that accepts either `plaintext` or `json` as values,
+defaulting to `plaintext`.
  
 Example:
 
@@ -263,3 +299,10 @@ $ ~/.porter/mixins/exec/exec version --output json
   "author": "Porter Authors"
 }
 ```
+
+[jsonschema]: https://json-schema.org/understanding-json-schema/
+[skeletor]: https://github.com/getporter/skeletor
+[JSON Schema Validator]: https://www.jsonschemavalidator.net/
+[YAML to JSON converter]: https://www.convertjson.com/yaml-to-json.htm
+[exec mixin schema]: https://porter.sh/src/pkg/exec/schema/exec.json
+[helm mixin schema]: https://porter.sh/helm-mixin/src/pkg/helm/schema/schema.json

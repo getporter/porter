@@ -1,10 +1,10 @@
 mixins:
   - exec
 
-name: HELLO
+name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
-tag: jeremyrickard/porter-hello
+registry: jeremyrickard
 
 parameters:
   - name: command 

@@ -93,8 +93,6 @@ func (c *TestContext) Cleanup() {
 }
 
 func (c *TestContext) AddTestFile(src, dest string) []byte {
-	c.T.Helper()
-
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(err)
@@ -113,8 +111,6 @@ func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
 }
 
 func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
-	c.T.Helper()
-
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -141,8 +137,6 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 }
 
 func (c *TestContext) AddTestDriver(src, name string) string {
-	c.T.Helper()
-
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(err)

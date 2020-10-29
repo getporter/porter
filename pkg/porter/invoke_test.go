@@ -9,7 +9,7 @@ import (
 
 func TestInvokeOptions_Validate_ActionRequired(t *testing.T) {
 	p := NewTestPorter(t)
-	opts := InvokeOptions{}
+	opts := NewInvokeOptions()
 
 	err := opts.Validate(nil, p.Porter)
 

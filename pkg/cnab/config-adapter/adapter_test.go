@@ -30,7 +30,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	require.NoError(t, err, "ToBundle failed")
 
 	assert.Equal(t, SchemaVersion, string(bun.SchemaVersion))
-	assert.Equal(t, "hello", bun.Name)
+	assert.Equal(t, "porter-hello", bun.Name)
 	assert.Equal(t, "0.1.0", bun.Version)
 	assert.Equal(t, "An example Porter configuration", bun.Description)
 
@@ -240,12 +240,12 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
 	mappedImage := manifest.MappedImage{
-		Description: "un petite server",
-		Repository:  "getporter/myserver",
-		ImageType:   "docker",
-		Digest:      "abc123",
-		Size:        12,
-		MediaType:   "download",
+		Description:   "un petite server",
+		Repository:    "getporter/myserver",
+		ImageType:     "docker",
+		ContentDigest: "abc123",
+		Size:          12,
+		MediaType:     "download",
 		Labels: map[string]string{
 			"OS":           "linux",
 			"Architecture": "amd64",
@@ -260,9 +260,9 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	require.Len(t, images, 1)
 	img := images["server"]
 	assert.Equal(t, mappedImage.Description, img.Description)
-	assert.Equal(t, fmt.Sprintf("%s@%s", mappedImage.Repository, mappedImage.Digest), img.Image)
+	assert.Equal(t, fmt.Sprintf("%s@%s", mappedImage.Repository, mappedImage.ContentDigest), img.Image)
 	assert.Equal(t, mappedImage.ImageType, img.ImageType)
-	assert.Equal(t, mappedImage.Digest, img.Digest)
+	assert.Equal(t, mappedImage.ContentDigest, img.Digest)
 	assert.Equal(t, mappedImage.Size, img.Size)
 	assert.Equal(t, mappedImage.MediaType, img.MediaType)
 	assert.Equal(t, mappedImage.Labels["OS"], img.Labels["OS"])

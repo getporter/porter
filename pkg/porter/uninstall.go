@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ BundleAction = UninstallOptions{}
+var _ BundleAction = NewUninstallOptions()
 
 // ErrUnsafeInstallationDeleteRetryForceDelete presents the ErrUnsafeInstallationDelete error and provides a retry option of --force-delete
 var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sure it should be deleted, retry the last command with the --force-delete flag", ErrUnsafeInstallationDelete)
@@ -18,8 +18,20 @@ var ErrUnsafeInstallationDeleteRetryForceDelete = fmt.Errorf("%s; if you are sur
 // UninstallOptions that may be specified when uninstalling a bundle.
 // Porter handles defaulting any missing values.
 type UninstallOptions struct {
-	BundleLifecycleOpts
+	*BundleActionOptions
 	UninstallDeleteOptions
+}
+
+func NewUninstallOptions() UninstallOptions {
+	return UninstallOptions{BundleActionOptions: &BundleActionOptions{}}
+}
+
+func (o UninstallOptions) GetAction() string {
+	return claim.ActionUninstall
+}
+
+func (o UninstallOptions) GetActionVerb() string {
+	return "uninstalling"
 }
 
 // UninstallDeleteOptions supply options for deletion on uninstall
@@ -52,14 +64,10 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 	return err
 }
 
-func (opts UninstallOptions) GetBundleLifecycleOptions() BundleLifecycleOpts {
-	return opts.BundleLifecycleOpts
-}
-
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
-	err := p.prepullBundleByTag(&opts.BundleLifecycleOpts)
+	err := p.prepullBundleByTag(opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before uninstall")
 	}
@@ -75,9 +83,16 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
+	actionArgs, err := p.BuildActionArgs(opts)
+	if err != nil {
+		return err
+	}
+	deperator.PrepareRootActionArguments(&actionArgs)
+
+	fmt.Fprintf(p.Out, "%s %s...\n", opts.GetActionVerb(), opts.Name)
+	err = p.CNAB.Execute(actionArgs)
+
 	var uninstallErrs error
-	fmt.Fprintf(p.Out, "uninstalling %s...\n", opts.Name)
-	err = p.CNAB.Execute(opts.ToActionArgs(deperator))
 	if err != nil {
 		uninstallErrs = multierror.Append(uninstallErrs, err)
 

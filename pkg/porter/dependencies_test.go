@@ -22,12 +22,12 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	assert.EqualError(t, err, "Prepare must be called before Execute")
 
 	// Now make sure execute passes now that we have called execute
-	opts := InstallOptions{}
+	opts := NewInstallOptions()
 	opts.Driver = DebugDriver
 	opts.File = "/porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")
-	err = e.Prepare(opts.BundleLifecycleOpts)
+	err = e.Prepare(opts)
 	require.NoError(t, err, "prepare should have succeeded")
 	err = e.Execute()
 	require.NoError(t, err, "execute should not fail when we have called prepare")

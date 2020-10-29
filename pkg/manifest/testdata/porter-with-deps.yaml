@@ -1,14 +1,15 @@
+name: mybun
 version: 0.1.0
-tag: example.com/mybun
+registry: example.com
 
 mixins:
   - exec
 
 dependencies:
   - name: nginx
-    tag: "localhost:5000/nginx:1.19"
+    reference: "localhost:5000/nginx:1.19"
   - name: mysql
-    tag: "getporter/azure-mysql:5.7"
+    reference: "getporter/azure-mysql:5.7"
     parameters:
       database-name: wordpress
 install:

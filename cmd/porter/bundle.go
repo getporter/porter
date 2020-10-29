@@ -90,7 +90,7 @@ The lint command is run automatically when you build a bundle. The command is av
 }
 
 func buildBundleInstallCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.InstallOptions{}
+	opts := porter.NewInstallOptions()
 	cmd := &cobra.Command{
 		Use:   "install [INSTALLATION]",
 		Short: "Create a new installation of a bundle",
@@ -136,7 +136,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 }
 
 func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.UpgradeOptions{}
+	opts := porter.NewUpgradeOptions()
 	cmd := &cobra.Command{
 		Use:   "upgrade [INSTALLATION]",
 		Short: "Upgrade an installation",
@@ -183,7 +183,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 }
 
 func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.InvokeOptions{}
+	opts := porter.NewInvokeOptions()
 	cmd := &cobra.Command{
 		Use:   "invoke [INSTALLATION] --action ACTION",
 		Short: "Invoke a custom action on an installation",
@@ -232,7 +232,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 }
 
 func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.UninstallOptions{}
+	opts := porter.NewUninstallOptions()
 	cmd := &cobra.Command{
 		Use:   "uninstall [INSTALLATION]",
 		Short: "Uninstall an installation",

@@ -14,7 +14,7 @@ import (
 )
 
 type ExplainOpts struct {
-	BundleLifecycleOpts
+	BundleActionOptions
 	printer.PrintOptions
 }
 
@@ -147,7 +147,7 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 }
 
 func (p *Porter) Explain(o ExplainOpts) error {
-	err := p.prepullBundleByTag(&o.BundleLifecycleOpts)
+	err := p.prepullBundleByTag(&o.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
 	}
