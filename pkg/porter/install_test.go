@@ -135,7 +135,7 @@ func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 
 	opts := NewInstallOptions()
 	opts.Driver = DebugDriver
-	opts.Tag = "getporter/wordpress:v0.1.2"
+	opts.Tag = "localhost:5000/wordpress:v0.1.3"
 	opts.CredentialIdentifiers = []string{"wordpress"}
 	opts.Params = []string{"wordpress-password=mypassword"}
 	err = opts.Validate(nil, p.Porter)

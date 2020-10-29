@@ -1,12 +1,15 @@
 package porter
 
 import (
+	"errors"
 	"os"
 	"path"
 	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +42,11 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 
 func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+
+	p.TestRegistry.MockPullBundle = func(tag string, insecureRegistry bool) (bun bundle.Bundle, reloMap *relocation.ImageRelocationMap, err error) {
+		return bundle.Bundle{}, nil, errors.New("unable to pull bundle deislabs/kubekahn:latest")
+	}
+
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
 			Tag: "deislabs/kubekahn:latest",
@@ -187,6 +194,8 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 
 func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	p := NewTestPorter(t)
+	cacheDir, _ := p.Cache.GetCacheDir()
+	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 
 	installOpts := NewInstallOptions()
 	installOpts.Name = "hello"
