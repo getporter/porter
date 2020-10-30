@@ -8,7 +8,7 @@ VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
 KUBECONFIG  ?= $(HOME)/.kube/config
-PORTER_HOME = bin
+export PORTER_HOME = ${CURDIR}/bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
@@ -209,8 +209,8 @@ install: install-porter install-mixins
 
 install-porter:
 	mkdir -p $(HOME)/.porter
-	cp bin/porter* $(HOME)/.porter/
-	ln -f -s $(HOME)/.porter/porter /usr/local/bin/porter
+	cp bin/porter $(HOME)/.porter/
+	cp -R bin/runtimes $(HOME)/.porter/
 
 install-mixins:
 	cp -R bin/mixins $(HOME)/.porter/

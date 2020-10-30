@@ -33,8 +33,8 @@ endif
 build: build-client build-runtime
 
 build-runtime:
-	mkdir -p $(BINDIR)
-	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
+	mkdir -p $(BINDIR)/runtimes
+	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/runtimes/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
 
 build-client:
 	mkdir -p $(BINDIR)

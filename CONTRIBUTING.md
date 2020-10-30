@@ -244,15 +244,10 @@ Here are the most common Makefile tasks
 * `build-porter` builds both the porter client and runtime. It does not clean up
   g enerated files created by packr, so you usually want to also run
   `clean-packr`.
-* `install-porter` installs porter from source into your home directory and
-  creates a symlink for porter from **$(HOME)/.porter/** into
-  **/usr/local/bin**. If **/usr/local/bin/porter** already exists, it will be
-  overwritten with the new symlink.
-* `install-mixins` installs the mixins from source into **$(HOME)/.porter/** .
+* `install-porter` installs porter from source into your home directory **$(HOME)/.porter**.
+* `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
   This is useful when you are working on the exec or kubernetes mixin.
-* `install` installs porter _and_ the mixins from source into
-  **$(HOME)/.porter/** and creates a symlink in **/usr/local/bin** to
-  **$(HOME)/.porter/**.
+* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to

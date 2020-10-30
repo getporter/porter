@@ -59,7 +59,11 @@ type Config struct {
 	Data       *Data
 	DataLoader DataStoreLoaderFunc
 
+	// Cache the resolved Porter home directory
 	porterHome string
+
+	// Cache the resolved Porter binary path
+	porterPath string
 }
 
 // New Config initializes a default porter configuration.
@@ -83,31 +87,21 @@ func (c *Config) LoadData() error {
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
+// Hierarchy of checks:
+// - PORTER_HOME
+// - HOME/.porter or USERPROFILE/.porter
 func (c *Config) GetHomeDir() (string, error) {
 	if c.porterHome != "" {
 		return c.porterHome, nil
 	}
 
 	home := os.Getenv(EnvHOME)
-
 	if home == "" {
-		porterPath, err := getExecutable()
+		userHome, err := os.UserHomeDir()
 		if err != nil {
-			return "", errors.Wrap(err, "could not get path to the executing porter binary")
+			return "", errors.Wrap(err, "could not get user home directory")
 		}
-
-		// This is for the scenario when someone symlinks the ~/.porter/porter binary to /usr/local/porter
-		// We try to resolve back to the original location so that we can find the mixins, etc next to it.
-		hardPath, err := evalSymlinks(porterPath)
-		if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
-			fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
-		} else if hardPath != porterPath {
-			if c.Debug {
-				fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
-			}
-			porterPath = hardPath
-		}
-		home = filepath.Dir(porterPath)
+		home = filepath.Join(userHome, ".porter")
 	}
 
 	// As a relative path may be supplied via EnvHOME,
@@ -122,27 +116,41 @@ func (c *Config) GetHomeDir() (string, error) {
 	return c.porterHome, nil
 }
 
+// SetHomeDir is a test function that allows tests to use an alternate
+// Porter home directory.
 func (c *Config) SetHomeDir(home string) {
 	c.porterHome = home
 }
 
-func (c *Config) GetPorterPath() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	executablePath := filepath.Join(home, "porter")
-	return executablePath, nil
+// SetPorterPath is a test function that allows tests to use an alternate
+// Porter binary location.
+func (c *Config) SetPorterPath(path string) {
+	c.porterPath = path
 }
 
-func (c *Config) GetPorterRuntimePath() (string, error) {
-	path, err := c.GetPorterPath()
-	if err != nil {
-		return "", nil
+func (c *Config) GetPorterPath() (string, error) {
+	if c.porterPath != "" {
+		return c.porterPath, nil
 	}
 
-	return path + "-runtime", nil
+	porterPath, err := getExecutable()
+	if err != nil {
+		return "", errors.Wrap(err, "could not get path to the executing porter binary")
+	}
+
+	// We try to resolve back to the original location
+	hardPath, err := evalSymlinks(porterPath)
+	if err != nil { // if we have trouble resolving symlinks, skip trying to help people who used symlinks
+		fmt.Fprintln(c.Err, errors.Wrapf(err, "WARNING could not resolve %s for symbolic links\n", porterPath))
+	} else if hardPath != porterPath {
+		if c.Debug {
+			fmt.Fprintf(c.Err, "Resolved porter binary from %s to %s\n", porterPath, hardPath)
+		}
+		porterPath = hardPath
+	}
+
+	c.porterPath = porterPath
+	return porterPath, nil
 }
 
 // GetBundlesDir locates the bundle cache from the porter home directory.

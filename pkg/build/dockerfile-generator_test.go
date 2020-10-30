@@ -203,12 +203,12 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, runscriptExists, "The run script wasn't copied into %s", wantRunscript)
 
-	wantPorterRuntime := filepath.Join(LOCAL_APP, "porter-runtime")
+	wantPorterRuntime := filepath.Join(LOCAL_APP, "runtimes", "porter-runtime")
 	porterMixinExists, err := c.FileSystem.Exists(wantPorterRuntime)
 	require.NoError(t, err)
 	assert.True(t, porterMixinExists, "The porter-runtime wasn't copied into %s", wantPorterRuntime)
 
-	wantExecMixin := filepath.Join(LOCAL_APP, "mixins", "exec", "exec-runtime")
+	wantExecMixin := filepath.Join(LOCAL_APP, "mixins", "exec", "runtimes", "exec-runtime")
 	execMixinExists, err := c.FileSystem.Exists(wantExecMixin)
 	require.NoError(t, err)
 	assert.True(t, execMixinExists, "The exec-runtime mixin wasn't copied into %s", wantExecMixin)

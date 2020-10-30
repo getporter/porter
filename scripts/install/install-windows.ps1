@@ -5,10 +5,10 @@ $PORTER_URL="https://cdn.porter.sh"
 
 echo "Installing porter to $PORTER_HOME"
 
-mkdir -f $PORTER_HOME
+mkdir -f $PORTER_HOME/runtimes
 
 (new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_PERMALINK/porter-windows-amd64.exe", "$PORTER_HOME\porter.exe")
-(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_PERMALINK/porter-linux-amd64", "$PORTER_HOME\porter-runtime")
+(new-object System.Net.WebClient).DownloadFile("$PORTER_URL/$PORTER_PERMALINK/porter-linux-amd64", "$PORTER_HOME\runtimes\porter-runtime")
 echo "Installed $(& $PORTER_HOME\porter.exe version)"
 
 & $PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK

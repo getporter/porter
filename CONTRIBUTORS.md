@@ -49,3 +49,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Mohamed Chorfa](https://github.com/MChorfa)
 * [Don Stewart](https://github.com/donmstewart)
 * [Nicholas Carrigan](https://github.com/nhcarrigan)
+* [Stéphane Este-Gracias](https://github.com/sestegra)
