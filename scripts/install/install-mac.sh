@@ -12,7 +12,7 @@ mkdir -p $PORTER_HOME/runtimes
 curl -fsSLo $PORTER_HOME/porter $PORTER_URL/$PORTER_PERMALINK/porter-darwin-amd64
 curl -fsSLo $PORTER_HOME/runtimes/porter-runtime $PORTER_URL/$PORTER_PERMALINK/porter-linux-amd64
 chmod +x $PORTER_HOME/porter
-chmod +x $PORTER_HOME/runtime/porter-runtime
+chmod +x $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
 
 $PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK
