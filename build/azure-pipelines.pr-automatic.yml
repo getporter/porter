@@ -6,110 +6,133 @@
 trigger: none
 
 pool:
-  vmImage: 'Ubuntu 16.04'
+  vmImage: "Ubuntu 16.04"
 
 variables:
-  GOVERSION: '1.13.10'
-  System.Debug: false
+  GOVERSION: "1.13.10"
 
-jobs:
-- job: setup
-  steps:
-  - script: ./build/doc-only-build.sh
-    name: BUILD
-    displayName: 'Check Doc Only Build'
+stages:
+  - stage: Setup
+    jobs:
+      - job: pr_type
+        displayName: "Determine PR Type"
+        steps:
+          - bash: ./build/doc-only-build.sh
+            name: BUILD
+            displayName: "Is Doc Only?"
 
-- job: test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make verify
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Verify'
-
-  - script: |
-      make test-unit
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Unit Test'
-
-- job: compile
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-        make xbuild-all
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Cross Compile'
-
-- job: validate_example_bundles
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: |
-      sudo make ajv
-      make build-bundle validate-bundle
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Validate Example Bundles'
-
-- job: integration_test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-      make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: ./build/run-integration-tests.sh
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Integration Test'
-
-- job: cli_test
-  dependsOn: setup
-  condition: eq(dependencies.setup.outputs['BUILD.DOCS_ONLY'], 'false')
-  steps:
-  - task: GoTool@0
-    inputs:
-      version: '$(GOVERSION)'
-  - script: build/azure-pipelines.setup-go-workspace.sh
-    displayName: 'Set up the Go workspace'
-
-  - script: |
-       make build
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'Build'
-
-  - script: |
-      make test-cli
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    displayName: 'CLI Test'
+  - stage: Validate
+    dependsOn: Setup
+    condition: eq(dependencies.Setup.outputs['pr_type.BUILD.DOCS_ONLY'], 'false')
+    jobs:
+      - job: build
+        displayName: "Native Compile"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make build
+            displayName: "Native Build"
+          - task: PublishPipelineArtifact@0
+            displayName: "Publish Native Binaries"
+            inputs:
+              targetPath: $(System.DefaultWorkingDirectory)/bin
+              archiveFilePatterns: "**"
+              artifactName: "build-bin"
+      - job: xbuild
+        displayName: "Cross Compile"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make xbuild-all
+            displayName: "Cross Compile"
+          - task: PublishPipelineArtifact@0
+            displayName: "Publish Release Binaries"
+            inputs:
+              targetPath: $(System.DefaultWorkingDirectory)/bin
+              archiveFilePatterns: "**"
+              artifactName: "xbuild-bin"
+      - job: unit_test
+        displayName: "Unit Test"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make verify
+            displayName: "Verify"
+          - bash: make test-unit
+            displayName: "Unit Test"
+      - job: integration_test
+        displayName: "Integration Test"
+        dependsOn: build
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Bin"
+            inputs:
+              source: current
+              artifact: build-bin
+              path: bin
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent SetBinExecutable
+            displayName: "Configure Agent"
+          - bash: ./build/run-integration-tests.sh
+            displayName: "Integration Test"
+      - job: build_examples
+        displayName: "Build Examples"
+        dependsOn: build
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: build-bin
+              path: bin
+          - script: go run mage.go SetBinExecutable
+            displayName: "Setup Bin"
+          - bash: |
+              set -e
+              sudo make ajv
+              make get-mixins build-bundle validate-bundle
+            displayName: "Validate Examples"
+      - job: e2e_test
+        displayName: "Run E2E tests on"
+        dependsOn: xbuild
+        strategy:
+          matrix:
+            windows:
+              poolName: "windows"
+              vmImage: ""
+            linux:
+              poolName: "Azure Pipelines"
+              vmImage: "ubuntu-latest"
+        pool:
+          name: $(poolName)
+          vmImage: $(vmImage)
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: xbuild-bin
+              path: bin
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
+            displayName: "Configure Agent"
+          - script: mage TestE2E
+            displayName: "Run E2E Tests"

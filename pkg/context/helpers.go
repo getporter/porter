@@ -75,7 +75,7 @@ func NewTestCommand() CommandBuilder {
 func (c *TestContext) UseFilesystem() string {
 	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
 
-	testDir, err := ioutil.TempDir("/tmp", "porter")
+	testDir, err := ioutil.TempDir("", "porter-test")
 	require.NoError(c.T, err)
 	c.cleanupDirs = append(c.cleanupDirs, testDir)
 

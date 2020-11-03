@@ -59,7 +59,7 @@ stages:
       displayName: 'Build'
 
     - script: |
-        make test-cli
+        make teste2e
       workingDirectory: '$(System.DefaultWorkingDirectory)'
       displayName: 'CLI Test'
 

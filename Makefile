@@ -3,11 +3,9 @@ SHELL = bash
 # --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
 MAKE_OPTS ?= --no-print-directory
 
-REGISTRY ?= $(USER)
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
-KUBECONFIG  ?= $(HOME)/.kube/config
 export PORTER_HOME = ${CURDIR}/bin
 
 CLIENT_PLATFORM = $(shell go env GOOS)
@@ -18,6 +16,12 @@ RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
 
 GO = GO111MODULE=on go
+
+# Add ~/go/bin to PATH, works for everything _except_ shell commands
+HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
+ifndef HAS_GOBIN_IN_PATH
+export PATH := ${CLIENT_GOPATH}/bin:${PATH}
+endif
 
 ifeq ($(CLIENT_PLATFORM),windows)
 FILE_EXT=.exe
@@ -79,22 +83,17 @@ get-mixins:
 verify:
 	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
 
-test: clean-last-testrun test-unit test-integration test-cli
+test: clean-last-testrun build test-unit test-integration teste2e
 
 test-unit:
 	$(GO) test ./...
 
-test-integration: clean-last-testrun build start-local-docker-registry
+test-integration: clean-last-testrun start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
 
-test-cli: clean-last-testrun build init-porter-home-for-ci start-local-docker-registry
-	REGISTRY=$(REGISTRY) KUBECONFIG=$(KUBECONFIG) ./scripts/test/test-cli.sh
-
-init-porter-home-for-ci:
-	cp -R build/testdata/credentials $(PORTER_HOME)
-	sed -i.bak 's|KUBECONFIGPATH|$(KUBECONFIG)|g' $(PORTER_HOME)/credentials/ci.json
-	cp -R build/testdata/bundles $(PORTER_HOME)
+teste2e: clean-last-testrun start-local-docker-registry
+	go run mage.go teste2e
 
 .PHONY: docs
 docs:
