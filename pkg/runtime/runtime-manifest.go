@@ -474,7 +474,7 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 		if !ok {
 			return fmt.Errorf("unable to find image in porter manifest: %s", alias)
 		}
-		manifestImage.ContentDigest = image.Digest
+		manifestImage.Digest = image.Digest
 		err := resolveImage(&manifestImage, image.Image)
 		if err != nil {
 			return errors.Wrap(err, "unable to update image map from bundle.json")
@@ -507,7 +507,7 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 			image.Tag = tagged.Tag()
 		}
 		image.Repository = v.Name()
-		image.ContentDigest = v.Digest().String()
+		image.Digest = v.Digest().String()
 
 	case reference.NamedTagged:
 		image.Tag = v.Tag()

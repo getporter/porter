@@ -88,12 +88,12 @@
       "additionalProperties": false,
       "description": "An image represents an application image used in a bundle",
       "properties": {
-        "contentDigest": {
-          "description": "The digest of the image, i.e. sha256:cafebabe...",
-          "type": "string"
-        },
         "description": {
           "description": "A user-friendly description of this image",
+          "type": "string"
+        },
+        "digest": {
+          "description": "The content digest of the image, i.e. sha256:cafebabe...",
           "type": "string"
         },
         "imageType": {
@@ -125,8 +125,6 @@
         }
       },
       "required": [
-        "description",
-        "imageType",
         "repository"
       ],
       "type": "object"
