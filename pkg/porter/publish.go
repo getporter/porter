@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/config"
 	portercontext "get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
@@ -66,17 +67,15 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
 func (p *Porter) Publish(opts PublishOptions) error {
 	if opts.File != "" {
-		err := p.LoadManifestFrom(opts.File)
-		if err != nil {
+		if err := p.LoadManifestFrom(opts.File); err != nil {
 			return err
 		}
 	}
 
 	if opts.ArchiveFile == "" {
 		return p.publishFromFile(opts)
-	} else {
-		return p.publishFromArchive(opts)
 	}
+	return p.publishFromArchive(opts)
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
@@ -97,6 +96,16 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
+	}
+
+	// After checking if the bundle is up-to-date,
+	// if the manifest file is the default/user-supplied manifest,
+	// hot-swap in Porter's canonical translation from the .cnab/app directory
+	if opts.File == config.Name {
+		err = p.LoadManifestFrom(build.LOCAL_MANIFEST)
+		if err != nil {
+			return err
+		}
 	}
 
 	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)

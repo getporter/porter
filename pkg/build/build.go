@@ -14,6 +14,10 @@ var (
 	// LOCAL_BUNDLE is the generated bundle.json file.
 	LOCAL_BUNDLE = filepath.Join(LOCAL_CNAB, "bundle.json")
 
+	// LOCAL_MANIFEST is the canonical Porter manifest generated from the
+	// user-provided manifest and any dynamic overrides
+	LOCAL_MANIFEST = filepath.Join(LOCAL_APP, "porter.yaml")
+
 	// LOCAL_RUN is the path to the generated CNAB entrypoint script, located at /cnab/app/run.
 	LOCAL_RUN = filepath.Join(LOCAL_APP, "run")
 

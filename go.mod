@@ -44,20 +44,21 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-plugin v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-version v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-isatty v0.0.9 // indirect
+	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mmcdole/gofeed v1.0.0-beta2
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
+	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
