@@ -1,0 +1,25 @@
+name: new name
+version: 0.1.0
+description: "An example Porter configuration"
+registry: getporter
+mixins:
+  - exec
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+status:
+  - exec:
+      description: "World Status"
+      command: ./helpers.sh
+      arguments:
+        - status
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+# comments n stuff

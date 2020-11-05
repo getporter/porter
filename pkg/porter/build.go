@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
@@ -38,6 +39,28 @@ func (p *Porter) Build(opts BuildOptions) error {
 		}
 	}
 
+	// Update the manifest, with any dynamic overrides, for inclusion
+	// into the invocation image.
+	// TODO: ingest dynamic overrides for name and version and supply these here
+	// https://github.com/getporter/porter/issues/1334
+	updateOpts := updateManifestOpts{}
+	// TODO: We read/decode the manifest again to parse into a yaml.Node
+	// We might try to consolidate logic so that the manifest is also loaded into memory,
+	// thereby replacing the p.LoadManifest() call above
+	if err = p.updateManifest(config.Name, updateOpts); err != nil {
+		return errors.Wrap(err, "unable to update manifest")
+	}
+
+	// Build bundle so that resulting bundle.json is available for inclusion
+	// into the invocation image.
+	// Note: the content digest field on the invocation image section of the
+	// bundle.json will *not* be correct until the image is actually pushed
+	// to a registry.  The bundle.json will need to be updated after publishing
+	// and provided just-in-time during bundle execution.
+	if err = p.buildBundle(p.Manifest.Image, ""); err != nil {
+		return errors.Wrap(err, "unable to build bundle")
+	}
+
 	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
@@ -46,11 +69,8 @@ func (p *Porter) Build(opts BuildOptions) error {
 	if err := generator.GenerateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-	if err := p.Builder.BuildInvocationImage(p.Manifest); err != nil {
-		return errors.Wrap(err, "unable to build CNAB invocation image")
-	}
 
-	return p.buildBundle(p.Manifest.Image, "")
+	return errors.Wrap(p.Builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
@@ -111,6 +131,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	if err != nil {
 		return err
 	}
+
 	return p.writeBundle(bun)
 }
 
