@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
+	"path"
 	"reflect"
 	"regexp"
 	"sort"
@@ -838,9 +838,9 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	}
 
 	if m.Reference == "" && m.Registry != "" {
-		repo, err := reference.ParseNormalizedNamed(filepath.Join(m.Registry, m.Name))
+		repo, err := reference.ParseNormalizedNamed(path.Join(m.Registry, m.Name))
 		if err != nil {
-			return errors.Wrapf(err, "invalid bundle reference %s", repo)
+			return errors.Wrapf(err, "invalid bundle reference %s", path.Join(m.Registry, m.Name))
 		}
 		m.Reference = repo.Name()
 	}
