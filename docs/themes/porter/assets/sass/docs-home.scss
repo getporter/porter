@@ -38,7 +38,7 @@
 
     .billboard {
       background-color: white;
-      //background: url('/src/img/pattern-topo.png') left top repeat;
+      //background: url('/img/pattern-topo.png') left top repeat;
       background-size: 376px;
       padding-top: 230px;
       position: relative;
@@ -89,7 +89,7 @@
 
       &:after {
         $height: 6px;
-        background: url('/src/img/pattern-waves.png') left top repeat-x;
+        background: url('/img/pattern-waves.png') left top repeat-x;
         background-size: $gutter;
         bottom: 0;
         content: '';
@@ -110,7 +110,7 @@
 
     @media only screen and (min-device-width: $mobile-maximum-width + 1) {
       $duration: 20s;
-      background: url('/src/img/boat.png') no-repeat;
+      background: url('/img/boat.png') no-repeat;
       background-size: $boat-size;
       height: 120px; //TODO programmatize this!
       position: relative;
