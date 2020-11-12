@@ -27,10 +27,10 @@ func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error 
 	// Decode the manifest file into a yaml.Node
 	var node yaml.Node
 	input, err := p.FileSystem.Open(filepath)
-	defer input.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error opening %s", filepath)
 	}
+	defer input.Close()
 
 	var decoder = yaml.NewDecoder(input)
 	err = decoder.Decode(&node)
@@ -57,10 +57,10 @@ func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error 
 
 	// Encode the updated manifest to the proper location
 	output, err := p.Config.FileSystem.OpenFile(build.LOCAL_MANIFEST, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	defer output.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_MANIFEST)
 	}
+	defer output.Close()
 
 	var encoder = yqlib.NewYamlEncoder(output, 2, false)
 	return errors.Wrapf(encoder.Encode(&node), "unable to encode the manifest at %s", build.LOCAL_MANIFEST)
