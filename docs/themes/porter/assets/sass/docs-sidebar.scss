@@ -113,15 +113,14 @@
           background: lighten($blue3, 37.5%);
         }
 
-        &.active,
-        &[state="open"] {
-          color: $blue4;
+        &.active {
+          text-decoration: underline;
           background: transparent;
 
-          .ripple span {
+          span.ripple {
+            text-decoration: underline;
             width: 100%;
             opacity: 1;
-            background: lighten($blue3, 12.5%);
           }
 
           &:hover .ripple span {
@@ -142,7 +141,6 @@
           padding-left: 0.5em;
           width: 1em;
           height: 1em;
-          color: $blue1;
           font-size: $scalex4;
           opacity: 0.5;
         }
@@ -167,7 +165,6 @@
             line-height: 1;
             font-size: $scalex3;
             border-right: 4px solid transparent;
-            color: $blue1;
             @include transition;
             font-family: $base;
             font-weight: bold;

@@ -9,23 +9,31 @@
 
     <nav class="sidebar-nav">
       <ul class="current sidebar-main">
+
+        {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
-        <li class="sidebar-nav-item toctree-l1 {{if $.IsMenuCurrent "main" . }} active {{end}}">
-          <a class="reference internal" href="{{ .URL | safeHTMLAttr }}" state="">
-            <span class="ripple">{{ .Name }} <span></span></span>
-          </a>
           {{ if .HasChildren }}
-          <ul class="current">
-            {{ range .Children.ByWeight }}
-            <li class="toctree-l2 {{if $.IsMenuCurrent "main" . }} active {{end}}">
-              <a href="{{ .URL | safeHTMLAttr }}" title="{{ .Name }}">
-                {{ .Name }}
+            <li class="sidebar-nav-item toctree-l1 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+              <a class="reference internal" href="#" state="">
+                {{ .Pre }}
+                <span class="ripple">{{ .Name }}</span>
+              </a>
+              <ul class="sub-menu current">
+                {{ range .Children.ByWeight }}
+                  <li class="toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                    <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
+                  </li>
+                {{ end }}
+              </ul>
+            </li>
+          {{ else }}
+            <li>
+              <a href="{{ .URL }}">
+                {{ .Pre }}
+                <span>{{ .Name }}</span>
               </a>
             </li>
-            {{ end }}
-          </ul>
-          {{end}}
-        </li>
+          {{ end }}
         {{ end }}
       </ul>
     </nav>

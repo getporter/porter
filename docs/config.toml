@@ -204,7 +204,7 @@ defaultContentLanguage = "en"
     parent = "examine-bundles"
   [[menu.main]]
     name = "Inspect Bundle Images"
-    url = "/inspect-bundle"
+    url = "/inspect-bundles/"
     identifier = "inspect-bundles"
     weight = 327
     parent = "examine-bundles"
