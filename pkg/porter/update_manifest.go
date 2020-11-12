@@ -61,7 +61,7 @@ func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error 
 		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
 	}
 
-	output, err := p.Config.FileSystem.OpenFile(build.LOCAL_MANIFEST, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	output, err := p.FileSystem.OpenFile(build.LOCAL_MANIFEST, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_MANIFEST)
 	}
