@@ -10,4 +10,4 @@ if you would like to add content for this page.
 
 * This needs to wait until we wrap duffle commands with porter
 
-[contrib]: /src/CONTRIBUTING.md#documentation
+[contrib]: /contribute/guide/#documentation

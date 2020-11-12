@@ -11,4 +11,4 @@ if you would like to add content for this page.
 * CNAB Spec is still working on distributing bundles
 * Once we have it, document how to find bundle registries
 
-[contrib]: /src/CONTRIBUTING.md#documentation
+[contrib]: /contribute/guide/#documentation

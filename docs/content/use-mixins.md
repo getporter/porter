@@ -17,4 +17,4 @@ if you would like to add content for this page.
 
 * [Mixin Architecture](/mixin-dev-guide/architecture/)
 
-[contrib]: /src/CONTRIBUTING.md#documentation
+[contrib]: /contribute/guide/#documentation

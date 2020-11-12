@@ -2,25 +2,40 @@ baseURL = "https://porter.sh/"
 languageCode = "en-us"
 title = "Porter"
 theme = "porter"
+canonifyURLs = "false"
+relativeURLs = "false"
+pluralizeListTitles = "false"
+plainIdAnchors = "true"
+defaultContentLanguage = "en"
 
-# Docs Navigation
+# Syntax Highlighting
+pygmentsUseClasses = true
+pygmentsStyle = "friendly"
 
+[markup]
+  defaultMarkdownHandler = "goldmark"
+
+  [markup.goldmark.renderer]
+    unsafe = true
+
+  [markup.tableOfContents]
+    endLevel = 3
+    ordered = false
+    startLevel = 2
+
+# Default Page Parameters
 [params]
   title = "Porter"
   author = "Carolyn Van Slyck"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
   image = "images/porter-twitter-card.png"
 
-canonifyURLs = "false"
-relativeURLs = "true"
-pluralizeListTitles = "false"
-plainIdAnchors = "true"
-defaultContentLanguage = "en"
-
+# Docs Navigation
 [[menu.main]]
   name = "Get Started"
   identifier = "get-started"
   weight = 2
+  url = "#"
   [[menu.main]]
     name = "Install Porter"
     url = "/install"

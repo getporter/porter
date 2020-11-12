@@ -1,6 +1,7 @@
 ---
 title: Work on Porter with us! 💖
 description: We are putting out the welcome mat for new contributors! Learn how to get started as a contributor and work your way up to a maintainer.
+layout: single
 ---
 
 ✅ Are you interested in contributing to an open-source Go project?
@@ -39,6 +40,9 @@ Every new contributor should read our [Code of Conduct][conduct] and use our
 contributing to our repositories. The guide also covers how to get the source
 code, build and test it, and then submit your first pull request.
 
+We have a [tutorial] to get your environment setup, make your first change
+to Porter, and try it out.
+
 The contributing guide explains how to [find an issue]. We do use
 two labels:
 
@@ -46,10 +50,11 @@ two labels:
 * [help wanted] are issues suitable for someone who isn't a core maintainer.
 
 [conduct]: /src/CODE_OF_CONDUCT.md
-[contributing]: /src/CONTRIBUTING.md
-[find an issue]: /src/CONTRIBUTING.md#find-an-issue
+[contributing]: /contribute/guide/
+[find an issue]: /contribute/guide/#find-an-issue
 [good first issue]: /board/good+first+issue
 [help wanted]: /board/help+wanted
+[tutorial]: /contribute/tutorial/
 
 ## What can you work on?
 

@@ -14,4 +14,4 @@ if you would like to add content for this page.
 * How mixins are executed
 * single invocation image
 
-[contrib]: /src/CONTRIBUTING.md#documentation
+[contrib]: /contribute/guide/#documentation
