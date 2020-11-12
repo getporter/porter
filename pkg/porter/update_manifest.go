@@ -55,13 +55,19 @@ func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error 
 		}
 	}
 
-	// Encode the updated manifest to the proper location
+	// Create the local app dir and local manifest file, if they do not already exist
+	err = p.FileSystem.MkdirAll(build.LOCAL_APP, 0755)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
+	}
+
 	output, err := p.Config.FileSystem.OpenFile(build.LOCAL_MANIFEST, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_MANIFEST)
 	}
 	defer output.Close()
 
+	// Encode the updated manifest to the proper location
 	var encoder = yqlib.NewYamlEncoder(output, 2, false)
 	return errors.Wrapf(encoder.Encode(&node), "unable to encode the manifest at %s", build.LOCAL_MANIFEST)
 }
