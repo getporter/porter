@@ -15,6 +15,29 @@ to start a new discussion on our [forum].
 
 [forum]: /forum/
 
+## Try Porter
+
+Before contributing to any open-source project, you should start with becoming
+familiar with the software first. 
+
+1. [Install Porter](/install/)
+1. Run through the [QuickStart]
+
+After this you should be able to answer:
+
+* What is Porter?
+* What is a bundle?
+* How do I make a bundle?
+* How do I install a bundle?
+
+We are always iterating on our documentation. If something isn't clear and you
+have read our [documentation], let us know by opening an issue. Say what you
+were trying to learn about, where you looked, if you could find a relevant page,
+and what still isn't clear. We can then answer your question and improve our docs
+so the next person has a better experience.
+
+[documentation]: /docs/
+
 ## Setup Environment
 
 First let's get your computer setup so that you can work on Porter. You will
