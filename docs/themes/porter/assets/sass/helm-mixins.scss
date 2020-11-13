@@ -69,24 +69,24 @@ $mono: "Lucida Console", "Courier New", monaco, monospace;
 
 @font-face {
   font-family: 'klinic-reg';
-  src: url('/src/fonts/klinicslabbook-webfont.eot');
-  src: url('/src/fonts/klinicslabbook-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/src/fonts/klinicslabbook-webfont.woff2') format('woff2'),
-   url('/src/fonts/klinicslabbook-webfont.woff') format('woff'),
-   url('/src/fonts/klinicslabbook-webfont.ttf') format('truetype'),
-   url('/src/fonts/klinicslabbook-webfont.svg#klinic_slabbook') format('svg');
+  src: url('/fonts/klinicslabbook-webfont.eot');
+  src: url('/fonts/klinicslabbook-webfont.eot?#iefix') format('embedded-opentype'),
+   url('/fonts/klinicslabbook-webfont.woff2') format('woff2'),
+   url('/fonts/klinicslabbook-webfont.woff') format('woff'),
+   url('/fonts/klinicslabbook-webfont.ttf') format('truetype'),
+   url('/fonts/klinicslabbook-webfont.svg#klinic_slabbook') format('svg');
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'klinic-bold';
-  src: url('/src/fonts/klinicslabmedium-webfont.eot');
-  src: url('/src/fonts/klinicslabmedium-webfont.eot?#iefix') format('embedded-opentype'),
-   url('/src/fonts/klinicslabmedium-webfont.woff2') format('woff2'),
-   url('/src/fonts/klinicslabmedium-webfont.woff') format('woff'),
-   url('/src/fonts/klinicslabmedium-webfont.ttf') format('truetype'),
-   url('/src/fonts/klinicslabmedium-webfont.svg#klinic_slabmedium') format('svg');
+  src: url('/fonts/klinicslabmedium-webfont.eot');
+  src: url('/fonts/klinicslabmedium-webfont.eot?#iefix') format('embedded-opentype'),
+   url('/fonts/klinicslabmedium-webfont.woff2') format('woff2'),
+   url('/fonts/klinicslabmedium-webfont.woff') format('woff'),
+   url('/fonts/klinicslabmedium-webfont.ttf') format('truetype'),
+   url('/fonts/klinicslabmedium-webfont.svg#klinic_slabmedium') format('svg');
   font-weight: 500;
   font-style: normal;
 }

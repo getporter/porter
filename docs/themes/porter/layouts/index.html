@@ -22,11 +22,11 @@
   <meta property="og:url" content="{{ .Site.BaseURL }}" />
   <meta property="og:image" content="{{ .Site.BaseURL }}images/porter-twitter-card.png" />
 
-  <link rel="icon" href="/src/img/favicon.png" type="image/x-icon">
+  <link rel="icon" href="/img/favicon.png" type="image/x-icon">
   {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS }}
   <link rel="stylesheet" href="{{ $style.Permalink }}">
 
-  <link href="/src/css/custom.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
 </head>
 
 <body id="landing" class="home">
@@ -204,7 +204,7 @@
     <div class="row">
       <div class="small-12 medium-12 large-12 columns cncf">
         <a href="https://www.cncf.io/" title="Cloud Native Computing Foundation" target="_blank">
-          <img src="/src/img/cncf-color.png" alt="We are a Cloud Native Computing Foundation sandbox project">
+          <img src="/img/cncf-color.png" alt="We are a Cloud Native Computing Foundation sandbox project">
           <p>We are a <strong>Cloud Native Computing Foundation</strong> sandbox project.</p>
         </a>
       </div>

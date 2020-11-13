@@ -5,10 +5,17 @@ $(document).ready(function() {
   var allClosed;
 
   // close all accordions, besides that of the page that is currently active
-  var doclocation = window.location.pathname;
-  var docpath = doclocation.substring(0, doclocation.lastIndexOf("/"));
-  var directoryName = docpath.substring(docpath.lastIndexOf("/")+1);
-  $(".toctree-l1 > a[href='" + directoryName + "']").addClass('active').attr({state: "open"});
+  var curPage = window.location.pathname+window.location.search+window.location.hash
+
+  // Find nav links even when they don't end in /
+  var curPage2 = curPage.slice(0, curPage.length-1)
+  var activeLink = $(".sidebar-nav a[href='" + curPage + "'], .sidebar-nav a[href='" + curPage2 + "']");
+  activeLink.addClass('active');
+
+  // Try to open the parent menu
+  var parentMenu = activeLink.closest('li.toctree-l1');
+  var parentLink = parentMenu.children('a');
+  parentLink.addClass('active').attr({state: "open"});
 
   if (allClosed === true) { }
 
