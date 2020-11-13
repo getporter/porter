@@ -16,9 +16,7 @@ maintainers.
 
 # Getting Started
 
-* [What is the project?](#what-is-the-project)
-* [What can you work on?](#what-can-you-work-on)
-* [Who can be a maintainer?](#who-can-be-a-maintainer)
+{{< toc >}}
 
 ## What is the project?
 

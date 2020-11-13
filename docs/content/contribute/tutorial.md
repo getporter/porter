@@ -49,10 +49,15 @@ please use [Windows Subsystem for Linux][wsl] (WSL). The rest of this tutorial
 assumes that you are inside your WSL distribution when installing prerequisites
 and executing the commands.
 
-1. [Git]
-1. [Go](https://golang.org/doc/install) version 1.13 or higher
-1. [Docker]
+* [Git]
+   
+   If you are new to Git or GitHub, we recommend reading the [GitHub Guides].
+   They will walk you through installing Git, forking a repository and
+   submitting a pull request.
+* [Go](https://golang.org/doc/install) version 1.13 or higher
+* [Docker]
 
+[GitHub Guides]: https://guides.github.com/
 [Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [wsl]: https://docs.microsoft.com/en-us/windows/wsl/install-win10
 [Docker]: https://docs.docker.com/get-docker/
