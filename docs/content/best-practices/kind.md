@@ -73,7 +73,7 @@ installing mysql...
 executing install action from mysql (bundle instance: mysql)
 Install MySQL
 ...
-/usr/local/bin/helm helm install --name porter-ci-mysql stable/mysql --version 1.6.2 --replace --set mysqlDatabase=mydb --set mysqlUser=mysql-admin
+/usr/local/bin/helm helm install --name porter-ci-mysql bitnami/mysql --version 6.14.2 --replace --set db.name=mydb --set db.user=mysql-admin
 NAME:   porter-ci-mysql
 LAST DEPLOYED: Wed Jul 15 15:11:43 2020
 NAMESPACE: default

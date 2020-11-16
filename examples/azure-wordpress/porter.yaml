@@ -1,6 +1,9 @@
 mixins:
   - arm
-  - helm
+  - helm:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
  
 name: azure-wordpress
 version: 0.1.0
@@ -60,7 +63,7 @@ install:
   - helm:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       replace: true
       set:
         mariadb.enabled: "false"

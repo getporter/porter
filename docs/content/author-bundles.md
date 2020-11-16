@@ -66,17 +66,21 @@ Declare the mixins that your bundle uses with the `mixins` section of the manife
 ```yaml
 mixins:
 - exec
-- helm
 ```
 
 Some mixins allow you to specify configuration data that is provided to the mixin during `porter build`. Each mixin
-has its own format for the configuration. For example, the az mixin allows you to specify extensions to install:
+has its own format for the configuration. For example, the az mixin allows you to specify extensions to install
+and the helm mixin takes repositories to configure:
 
 ```yaml
 mixins:
 - az:
     extensions:
     - azure-cli-iot-ext
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 ```
 
 See [Using Mixins](/use-mixins) to learn more about how mixins work.
@@ -237,11 +241,11 @@ install:
 - helm:
     description: "Install MySQL"
     name: mydb
-    chart: stable/mysql
-    version: 0.10.2
+    chart: bitnami/mysql
+    version: 6.14.2
     set:
-      mysqlDatabase: "{{ bundle.parameters.database-name }}"
-      mysqlUser: "{{ bundle.parameters.mysql-user }}"
+      db.name: "{{ bundle.parameters.database-name }}"
+      db.user: "{{ bundle.parameters.mysql-user }}"
   outputs:
   - name: mysql-root-password
     secret: mydb-creds

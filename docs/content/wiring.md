@@ -91,12 +91,12 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-ci-mysql
-    chart: stable/mysql
-    version: 0.10.2
+    chart: bitnami/mysql
+    version: 6.14.2
     replace: true
     set:
-      mysqlDatabase: "{{ bundle.parameters.database-name }}"
-      mysqlUser: "root"
+      db.name: "{{ bundle.parameters.database-name }}"
+      db.user: "root"
 ```
 
 Or to provide a parameter to the `command` attribute of the exec mixin:
@@ -197,7 +197,7 @@ For example, given the install step above, we can use the `MYSQL_URL` with the h
   - helm:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       set:
         mariadb.enabled: "false"
         externalDatabase.port: 3306
@@ -276,7 +276,7 @@ These images will be used to build the `bundle.json` images section, but can als
   - helm:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       set:
         image.repository: "{{ bundle.images.ALIAS.repository }}"
         image.tag: "{{ bundle.images.ALIAS.tag }}"
@@ -294,7 +294,10 @@ version: 0.1.3
 registry: getporter
 
 mixins:
-- helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 credentials:
 - name: kubeconfig
@@ -313,12 +316,12 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-ci-mysql
-    chart: stable/mysql
-    version: 1.6.2
+    chart: bitnami/mysql
+    version: 6.14.2
     replace: true
     set:
-      mysqlDatabase: "{{ bundle.parameters.database-name }}"
-      mysqlUser: "{{ bundle.parameters.mysql-user }}"
+      db.name: "{{ bundle.parameters.database-name }}"
+      db.user: "{{ bundle.parameters.mysql-user }}"
     outputs:
     - name: mysql-root-password
       secret: porter-ci-mysql
@@ -336,7 +339,10 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-- helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 dependencies:
   - name: mysql
@@ -368,7 +374,7 @@ install:
 - helm:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
-  chart: stable/wordpress
+  chart: bitnami/wordpress
   namespace: "{{ bundle.parameters.namespace }}"
   replace: true
   set:
@@ -389,7 +395,7 @@ install:
 - helm:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
-  chart: stable/wordpress
+  chart: bitnami/wordpress
   namespace: "{{ bundle.parameters.namespace }}"
   replace: true
   set:
@@ -410,7 +416,7 @@ install:
 - helm:
     description: "Install Java App"
     name: "{{ bundle.parameters.cool-app}}"
-    chart: stable/wordpress
+    chart: bitnami/wordpress
     replace: true
     set:
       jdbc_url: "jdbc:mysql://{{ bundle.outputs.mysql_host }}:{{ bundle.outputs.mysql_port }}/{{ bundle.parameters.database_name }}"

@@ -1,5 +1,8 @@
 mixins:
-- helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 name: mysql
 version: 0.1.3
@@ -13,11 +16,11 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-ci-mysql
-    chart: stable/mysql
-    version: 0.10.2
+    chart: bitnami/mysql
+    version: 6.14.2
     replace: true
     set:
-      mysqlDatabase: mydb
+      db.name: mydb
     outputs:
     - name: host
       secret: porter-ci-mysql
