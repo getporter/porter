@@ -29,12 +29,7 @@ func (o *GenerateOptions) Validate(c *context.Context) error {
 
 func (o *GenerateOptions) ValidateSearchDirectory(cxt *context.Context) error {
 	if o.SearchDirectory == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		o.SearchDirectory = wd
+		o.SearchDirectory = cxt.Getwd()
 	}
 
 	if _, err := cxt.FileSystem.Stat(o.SearchDirectory); err != nil {

@@ -3,8 +3,6 @@
 package pluggable
 
 import (
-	"io/ioutil"
-	"os"
 	"os/exec"
 	"path"
 	"testing"
@@ -15,12 +13,8 @@ import (
 )
 
 func TestPlugins_CatchStderr(t *testing.T) {
-	home, err := ioutil.TempDir("/tmp", "porter")
-	require.NoError(t, err, "could not create porter home directory")
-
 	c := config.NewTestConfig(t)
-	c.SetHomeDir(home)
-	c.NewCommand = exec.Command
+	c.SetupIntegrationTest()
 
 	t.Run("plugin throws an error", func(t *testing.T) {
 		pluginsPath, _ := c.GetPluginsDir()
@@ -30,7 +24,7 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		require.NoError(t, err, "could not create plugin dir")
 
 		// testplugin binary will be in bin. refer "test-integration" in Makefile
-		err = exec.Command("cp", path.Join(os.Getenv("PROJECT_ROOT"), "bin", pluginName), path.Join(pluginsPath, pluginName)).Run()
+		err = exec.Command("cp", path.Join(c.Getenv("PROJECT_ROOT"), "bin", pluginName), path.Join(pluginsPath, pluginName)).Run()
 		require.NoError(t, err, "could not copy test binary")
 
 		cfg := PluginTypeConfig{

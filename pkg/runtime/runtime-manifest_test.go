@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"testing"
 
@@ -20,10 +19,9 @@ import (
 )
 
 func TestResolveMapParam(t *testing.T) {
-	os.Setenv("PERSON", "Ralpha")
-	defer os.Unsetenv("PERSON")
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv("PERSON", "Ralpha")
+
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"person": {
@@ -113,7 +111,8 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
-	m, _ := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	require.NoError(t, err, "LoadManifestFrom")
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
@@ -278,10 +277,8 @@ func TestResolveArrayUnknown(t *testing.T) {
 }
 
 func TestResolveArray(t *testing.T) {
-	os.Setenv("PERSON", "Ralpha")
-	defer os.Unsetenv("PERSON")
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv("PERSON", "Ralpha")
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"person": {
@@ -308,12 +305,10 @@ func TestResolveArray(t *testing.T) {
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
-	os.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
-	defer os.Unsetenv("SENSITIVE_PARAM")
-	os.Setenv("REGULAR_PARAM", "regular param value")
-	defer os.Unsetenv("REGULAR_PARAM")
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
+	cxt.Setenv("REGULAR_PARAM", "regular param value")
+
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"sensitive_param": {
@@ -353,10 +348,9 @@ func TestResolveSensitiveParameter(t *testing.T) {
 }
 
 func TestResolveCredential(t *testing.T) {
-	os.Setenv("PASSWORD", "deliciou$dubonnet")
-	defer os.Unsetenv("PASSWORD")
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv("PASSWORD", "deliciou$dubonnet")
+
 	m := &manifest.Manifest{
 		Credentials: manifest.CredentialDefinitions{
 			"password": {
@@ -390,17 +384,11 @@ func TestResolveCredential(t *testing.T) {
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
-	os.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
-	os.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
-	defer func() {
-		os.Unsetenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT")
-		os.Unsetenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT")
-	}()
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
+	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
 	m := &manifest.Manifest{
-
 		Dependencies: []manifest.Dependency{
 			{
 				Name: "mysql",
@@ -478,7 +466,7 @@ func TestResolveInMainDict(t *testing.T) {
 
 	installStep := rm.Install[0]
 
-	os.Setenv("COMMAND", "echo hello world")
+	rm.Setenv("COMMAND", "echo hello world")
 	err = rm.ResolveStep(installStep)
 	assert.NoError(t, err)
 
@@ -505,7 +493,7 @@ func TestResolveSliceWithAMap(t *testing.T) {
 
 	installStep := rm.Install[0]
 
-	os.Setenv("COMMAND", "echo hello world")
+	rm.Setenv("COMMAND", "echo hello world")
 	err = rm.ResolveStep(installStep)
 	assert.NoError(t, err)
 
@@ -1016,11 +1004,11 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 }
 
 func TestResolveStepEncoding(t *testing.T) {
-	wantValue := `{"test":"value"}`
-	os.Setenv("TEST", wantValue)
-	defer os.Unsetenv("TEST")
-
 	cxt := context.NewTestContext(t)
+
+	wantValue := `{"test":"value"}`
+	cxt.Setenv("TEST", wantValue)
+
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"test": {Name: "test"},
@@ -1043,10 +1031,9 @@ func TestResolveStepEncoding(t *testing.T) {
 }
 
 func TestResolveInstallationName(t *testing.T) {
-	os.Setenv(config.EnvInstallationName, "mybun")
-	defer os.Unsetenv(config.EnvInstallationName)
-
 	cxt := context.NewTestContext(t)
+	cxt.Setenv(config.EnvInstallationName, "mybun")
+
 	m := &manifest.Manifest{}
 	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
 

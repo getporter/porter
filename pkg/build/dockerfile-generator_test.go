@@ -184,7 +184,6 @@ func TestPorter_generateDockerfile(t *testing.T) {
 
 func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.SetupPorterHome()
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)

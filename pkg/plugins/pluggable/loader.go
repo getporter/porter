@@ -14,8 +14,8 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
+	hclog "github.com/hashicorp/go-hclog"
+	plugin "github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"
 )
 
@@ -68,8 +68,8 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	pluginCommand.Stdin = configReader
 
 	// Explicitly set PORTER_HOME for the plugin
-	pluginCommand.Env = os.Environ()
-	if _, homeSet := os.LookupEnv(config.EnvHOME); !homeSet {
+	pluginCommand.Env = l.Environ()
+	if _, homeSet := l.LookupEnv(config.EnvHOME); !homeSet {
 		home, err := l.GetHomeDir()
 		if err != nil {
 			return nil, nil, err

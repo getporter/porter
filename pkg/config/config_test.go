@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -11,7 +10,6 @@ import (
 
 func TestConfig_GetHomeDir(t *testing.T) {
 	c := NewTestConfig(t)
-	c.SetupPorterHome()
 
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
@@ -21,10 +19,9 @@ func TestConfig_GetHomeDir(t *testing.T) {
 
 func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 	c := NewTestConfig(t)
-	c.SetupPorterHome()
 
 	// Set up no PORTER_HOME, and /usr/local/bin/porter -> ~/.porter/porter
-	os.Unsetenv(EnvHOME)
+	c.Unsetenv(EnvHOME)
 	getExecutable = func() (string, error) {
 		return "/usr/local/bin/porter", nil
 	}

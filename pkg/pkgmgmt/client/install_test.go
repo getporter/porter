@@ -24,7 +24,6 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	defer ts.Close()
 
 	c := config.NewTestConfig(t)
-	c.SetupPorterHome()
 	p := NewFileSystem(c.Config, "packages")
 
 	opts := pkgmgmt.InstallOptions{
@@ -62,7 +61,6 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	testURL = ts.URL
 
 	c := config.NewTestConfig(t)
-	c.SetupPorterHome()
 	p := NewFileSystem(c.Config, "packages")
 
 	opts := pkgmgmt.InstallOptions{
@@ -114,7 +112,6 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 
 func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.SetupPorterHome()
 	p := NewFileSystem(c.Config, "packages")
 
 	packageURL := "https://cdn.porter.sh/mixins/helm"

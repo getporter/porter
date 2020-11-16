@@ -4,7 +4,6 @@ package tests
 
 import (
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -43,12 +42,10 @@ func randomString(len int) string {
 
 func publishMySQLBundle(p *porter.TestPorter) {
 	mysqlBundlePath := filepath.Join(p.TestDir, "../build/testdata/bundles/mysql")
-	err := os.Chdir(mysqlBundlePath)
-	require.NoError(p.T(), err, "could not change into the test mysql bundle directory")
-	defer os.Chdir(p.BundleDir)
+	p.Chdir(mysqlBundlePath)
 
 	publishOpts := porter.PublishOptions{}
-	err = publishOpts.Validate(p.Context)
+	err := publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(publishOpts)

@@ -3,7 +3,6 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/config"
@@ -34,8 +33,8 @@ func NewPorterRuntime(cxt *context.Context, mixins pkgmgmt.PackageManager) *Port
 func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 	r.RuntimeManifest = rm
 
-	installationName := os.Getenv(config.EnvInstallationName)
-	bundleName := os.Getenv(config.EnvBundleName)
+	installationName := r.Getenv(config.EnvInstallationName)
+	bundleName := r.Getenv(config.EnvBundleName)
 	fmt.Fprintf(r.Out, "executing %s action from %s (installation: %s)\n", r.RuntimeManifest.Action, bundleName, installationName)
 
 	err := r.RuntimeManifest.Validate()

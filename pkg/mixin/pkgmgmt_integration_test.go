@@ -4,20 +4,16 @@ package mixin
 
 import (
 	"io/ioutil"
-	"os/exec"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPackageManager_GetSchema(t *testing.T) {
 	c := config.NewTestConfig(t)
-	// Hit the real file system for this test
-	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-	c.NewCommand = exec.Command
+	c.TestContext.UseFilesystem()
 
 	// bin is my home now
 	binDir := c.TestContext.FindBinDir()

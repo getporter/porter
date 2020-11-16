@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
@@ -44,8 +43,7 @@ func TestExecuteSingleStepAction(t *testing.T) {
 		},
 	}
 
-	os.Setenv(test.ExpectedCommandEnv, "foo")
-	defer os.Unsetenv(test.ExpectedCommandEnv)
+	c.Setenv(test.ExpectedCommandEnv, "foo")
 
 	_, err = ExecuteSingleStepAction(c.Context, a)
 	require.NoError(t, err, "ExecuteSingleStepAction should not have returned an error")
@@ -131,8 +129,7 @@ func TestExecuteStep_HasOrderedArguments(t *testing.T) {
 		SuffixArguments: []string{"."},
 	}
 
-	os.Setenv(test.ExpectedCommandEnv, "docker build -t getporter/porter-hello:latest .")
-	defer os.Unsetenv(test.ExpectedCommandEnv)
+	c.Setenv(test.ExpectedCommandEnv, "docker build -t getporter/porter-hello:latest .")
 
 	_, err := ExecuteStep(c.Context, step)
 	require.NoError(t, err, "ExecuteStep failed")

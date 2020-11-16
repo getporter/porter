@@ -3,7 +3,6 @@ package exec
 import (
 	"bytes"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/test"
@@ -21,8 +20,7 @@ func TestMixin_Execute(t *testing.T) {
 	require.NoError(t, err)
 	m.In = bytes.NewBuffer(stdin)
 
-	os.Setenv(test.ExpectedCommandEnv, "foo")
-	defer os.Unsetenv(test.ExpectedCommandEnv)
+	m.Setenv(test.ExpectedCommandEnv, "foo")
 
 	err = m.Execute(ExecuteOptions{})
 	require.NoError(t, err, "Execute should not have returned an error")

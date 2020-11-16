@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"sort"
 	"testing"
 
@@ -40,9 +39,6 @@ func TestAction_UnmarshalYAML(t *testing.T) {
 }
 
 func TestMixin_ExecuteCommand(t *testing.T) {
-	os.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
-	defer os.Unsetenv(test.ExpectedCommandEnv)
-
 	step := Step{
 		Instruction: Instruction{
 			Command:   "bash",
@@ -56,10 +52,12 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 	b, _ := yaml.Marshal(action)
 
 	fmt.Println(string(b))
-	h := NewTestMixin(t)
-	h.In = bytes.NewReader(b)
+	m := NewTestMixin(t)
+	m.In = bytes.NewReader(b)
 
-	err := h.Execute(ExecuteOptions{})
+	m.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
+
+	err := m.Execute(ExecuteOptions{})
 
 	require.NoError(t, err)
 }
@@ -119,9 +117,6 @@ func TestMixin_Uninstall(t *testing.T) {
 }
 
 func TestMixin_SuffixArgs(t *testing.T) {
-	os.Setenv(test.ExpectedCommandEnv, `docker build --tag getporter/porter-hello:latest .`)
-	defer os.Unsetenv(test.ExpectedCommandEnv)
-
 	b, err := ioutil.ReadFile("testdata/suffix-args-input.yaml")
 	require.NoError(t, err, "ReadFile failed")
 
@@ -129,9 +124,11 @@ func TestMixin_SuffixArgs(t *testing.T) {
 	err = yaml.Unmarshal(b, &action)
 	require.NoError(t, err, "Unmarshal failed")
 
-	h := NewTestMixin(t)
-	h.In = bytes.NewReader(b)
+	m := NewTestMixin(t)
+	m.In = bytes.NewReader(b)
 
-	err = h.Execute(ExecuteOptions{})
+	m.Setenv(test.ExpectedCommandEnv, `docker build --tag getporter/porter-hello:latest .`)
+
+	err = m.Execute(ExecuteOptions{})
 	require.NoError(t, err)
 }

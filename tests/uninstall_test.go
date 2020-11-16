@@ -4,7 +4,6 @@ package tests
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -77,9 +76,9 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 				driver.Filepath = "testdata/drivers/exit-driver-fail.sh"
 			}
 
-			path := os.Getenv("PATH")
+			path := p.Getenv("PATH")
 			dir := p.AddTestDriver(driver)
-			defer os.Setenv("PATH", path)
+			defer p.Setenv("PATH", path)
 			defer p.TestConfig.TestContext.FileSystem.RemoveAll(dir)
 
 			// Uninstall bundle with custom command driver

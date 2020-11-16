@@ -15,7 +15,6 @@ import (
 
 func TestPorter_applyDefaultOptions(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	err := p.Create()
 	require.NoError(t, err)
 

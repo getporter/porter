@@ -31,14 +31,13 @@ m := NewTestMixin(t)
 This sets up your test binary to assert that expected command(s) were called. You tell it what command to expect with
 
 ```go
-os.Setenv(test.ExpectedCommandEnv, "helm install")
-defer os.Unsetenv(test.ExpectedCommandEnv)
+m.Setenv(test.ExpectedCommandEnv, "helm install")
 ```
 
 If your mixin action executes multiple commands, separate them with a newline `\n` like so
 
 ```go
-os.Setenv(test.ExpectedCommandEnv, "helm install\nhelm upgrade")
+m.Setenv(test.ExpectedCommandEnv, "helm install\nhelm upgrade")
 ```
 
 Now execute your mixin action:

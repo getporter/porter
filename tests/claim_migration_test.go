@@ -25,6 +25,7 @@ func TestClaimMigration_List(t *testing.T) {
 
 	// Remove any rando stuff copied from the dev bin, you won't find this in CI but a local dev run may have it
 	// Not checking for an error, since the files won't be there on CI
+	p.FileSystem.RemoveAll(filepath.Join(home, "installations"))
 	p.FileSystem.RemoveAll(claimsDir)
 	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 

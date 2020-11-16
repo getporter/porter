@@ -3,7 +3,6 @@
 package tests
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -21,9 +20,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	// Crux for this test: change Porter's home dir to a relative path
 	homeDir, err := p.Config.GetHomeDir()
 	require.NoError(t, err)
-	curDir, err := os.Getwd()
-	require.NoError(t, err)
-	relDir, err := filepath.Rel(curDir, homeDir)
+	relDir, err := filepath.Rel(p.Getwd(), homeDir)
 	require.NoError(t, err)
 	p.SetHomeDir(relDir)
 

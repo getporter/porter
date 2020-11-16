@@ -1,7 +1,6 @@
 package context
 
 import (
-	"os"
 	"strconv"
 )
 
@@ -11,11 +10,11 @@ type PluginDebugContext struct {
 	DebuggerPort           string
 }
 
-func NewPluginDebugContext() *PluginDebugContext {
+func NewPluginDebugContext(c *Context) *PluginDebugContext {
 
-	runPlugInInDebugger := os.Getenv("PORTER_RUN_PLUGIN_IN_DEBUGGER")
-	debugWorkingDirectory := os.Getenv("PORTER_PLUGIN_WORKING_DIRECTORY")
-	debuggerPort := os.Getenv("PORTER_DEBUGGER_PORT")
+	runPlugInInDebugger := c.Getenv("PORTER_RUN_PLUGIN_IN_DEBUGGER")
+	debugWorkingDirectory := c.Getenv("PORTER_PLUGIN_WORKING_DIRECTORY")
+	debuggerPort := c.Getenv("PORTER_DEBUGGER_PORT")
 
 	port := "2345"
 	if _, err := strconv.ParseInt(debuggerPort, 10, 16); err != nil {

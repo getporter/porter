@@ -95,7 +95,7 @@ func (c *Config) GetHomeDir() (string, error) {
 		return c.porterHome, nil
 	}
 
-	home := os.Getenv(EnvHOME)
+	home := c.Getenv(EnvHOME)
 	if home == "" {
 		userHome, err := os.UserHomeDir()
 		if err != nil {

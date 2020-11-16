@@ -10,7 +10,7 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +42,7 @@ func TestNewParameterSet(t *testing.T) {
 // TODO: (carolynvs) move this into manager_test.go in pkg/storage once parameter set is moved to cnab-go
 func TestManager_MigrateParameters(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 

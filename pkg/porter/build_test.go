@@ -16,7 +16,6 @@ import (
 
 func TestPorter_buildBundle(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
@@ -71,7 +70,6 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("failing lint should stop build", func(t *testing.T) {
 		p := NewTestPorter(t)
-		p.TestConfig.SetupPorterHome()
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
@@ -86,7 +84,6 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("ignores lint error with --no-lint", func(t *testing.T) {
 		p := NewTestPorter(t)
-		p.TestConfig.SetupPorterHome()
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
@@ -102,7 +99,6 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 func TestPorter_paramRequired(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
 	err := p.LoadManifest()

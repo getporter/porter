@@ -12,7 +12,6 @@ import (
 
 func TestPorter_PrintManifestSchema(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	err := p.PrintManifestSchema()
 	require.NoError(t, err)
@@ -27,7 +26,6 @@ func TestPorter_PrintManifestSchema(t *testing.T) {
 
 func TestPorter_ValidateManifestSchema(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	// Load the default Porter manifest
 	b, err := ioutil.ReadFile("testdata/porter.yaml")

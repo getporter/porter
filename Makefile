@@ -6,8 +6,6 @@ MAKE_OPTS ?= --no-print-directory
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
-export PORTER_HOME = ${CURDIR}/bin
-
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
 CLIENT_GOPATH = $(shell go env GOPATH)
@@ -84,7 +82,7 @@ test-unit:
 	$(GO) test ./...
 
 test-integration: clean-last-testrun start-local-docker-registry
-	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
+	$(GO) build -o bin/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
 
 teste2e:

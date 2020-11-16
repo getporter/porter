@@ -3,6 +3,7 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
+	// See https://github.com/cnabio/cnab-go/pull/233 (command-driver)
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
@@ -21,6 +22,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
+	github.com/carolynvs/aferox v0.2.1
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.2.1-0.20201116013928-d6af240c802c
 	github.com/cbroglie/mustache v1.0.1
@@ -53,7 +55,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/afero v1.2.2
+	github.com/spf13/afero v1.4.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0

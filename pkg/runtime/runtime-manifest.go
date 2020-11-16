@@ -81,7 +81,7 @@ func (m *RuntimeManifest) loadBundle() error {
 }
 
 func (m *RuntimeManifest) GetInstallationName() string {
-	return os.Getenv(config.EnvInstallationName)
+	return m.Getenv(config.EnvInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
@@ -103,20 +103,20 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func resolveParameter(pd manifest.ParameterDefinition) string {
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
 	if pd.Destination.EnvironmentVariable != "" {
-		return os.Getenv(pd.Destination.EnvironmentVariable)
+		return m.Getenv(pd.Destination.EnvironmentVariable)
 	}
 	if pd.Destination.Path != "" {
 		return pd.Destination.Path
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return os.Getenv(envVar)
+	return m.Getenv(envVar)
 }
 
-func resolveCredential(cd manifest.CredentialDefinition) (string, error) {
+func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
 	if cd.EnvironmentVariable != "" {
-		return os.Getenv(cd.EnvironmentVariable), nil
+		return m.Getenv(cd.EnvironmentVariable), nil
 	} else if cd.Path != "" {
 		return cd.Path, nil
 	} else {
@@ -128,7 +128,7 @@ func (m *RuntimeManifest) resolveBundleOutput(outputName string) (string, error)
 	// Get the output's value from the injected parameter source
 	ps := manifest.GetParameterSourceForOutput(outputName)
 	psParamEnv := manifest.ParamToEnvVar(ps)
-	outputValue, ok := os.LookupEnv(psParamEnv)
+	outputValue, ok := m.LookupEnv(psParamEnv)
 	if !ok {
 		return "", errors.Errorf("No parameter source was injected for output %s", outputName)
 	}
@@ -237,7 +237,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		val := resolveParameter(param)
+		val := m.resolveParameter(param)
 		if param.Sensitive {
 			m.setSensitiveValue(val)
 		}
@@ -248,7 +248,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["credentials"] = creds
 	for _, cred := range m.Credentials {
 		pe := cred.Name
-		val, err := resolveCredential(cred)
+		val, err := m.resolveCredential(cred)
 		if err != nil {
 			return nil, err
 		}

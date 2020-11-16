@@ -4,16 +4,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/storage"
-	"get.porter.sh/porter/pkg/storage/filesystem"
-	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/hashicorp/go-hclog"
-	"github.com/stretchr/testify/assert"
-
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage/filesystem"
+	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/cnabio/cnab-go/valuesource"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -152,7 +151,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 
 func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -181,7 +180,7 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 
 func TestParameterStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -199,7 +198,7 @@ func TestParameterStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) 
 
 func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 

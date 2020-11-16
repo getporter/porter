@@ -2,7 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
@@ -138,12 +137,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else { // no flags passed (--tag is handled elsewhere)
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
@@ -197,18 +191,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	originalPath := o.CNABFile
 	if !filepath.IsAbs(o.CNABFile) {
 		// Convert to an absolute filepath because runtime needs it that way
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		f := filepath.Join(pwd, o.CNABFile)
-		f, err = filepath.Abs(f)
-		if err != nil {
-			return errors.Wrapf(err, "could not get absolute path for --cnab-file %s", o.CNABFile)
-		}
-
-		o.CNABFile = f
+		o.CNABFile = filepath.Join(cxt.Getwd(), o.CNABFile)
 	}
 
 	// Verify the file can be accessed

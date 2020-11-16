@@ -2,7 +2,6 @@ package porter
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
@@ -15,22 +14,17 @@ import (
 )
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
-
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	pwd, err := os.Getwd()
-	require.NoError(t, err, "should not have gotten an error obtaining current working directory")
 
-	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", filepath.Join(pwd, "porter.yaml"))
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 	opts := PublishOptions{}
-	err = opts.Validate(p.Context)
+	err := opts.Validate(p.Context)
 	require.NoError(t, err, "validating should not have failed")
-
 }
 
 func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+
 	opts := PublishOptions{}
 	err := opts.Validate(p.Context)
 	require.Error(t, err, "validation should have failed")
@@ -44,17 +38,14 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 
 func TestPublish_Validate_ArchivePath(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
-	pwd, err := p.GetHomeDir()
-	require.NoError(t, err, "should not have gotten an error obtaining current working directory")
 
 	opts := PublishOptions{
-		ArchiveFile: filepath.Join(pwd, "mybuns.tgz"),
+		ArchiveFile: "mybuns.tgz",
 	}
-	err = opts.Validate(p.Context)
-	assert.EqualError(t, err, "unable to access --archive /root/.porter/mybuns.tgz: open /root/.porter/mybuns.tgz: file does not exist")
+	err := opts.Validate(p.Context)
+	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
 
-	p.FileSystem.WriteFile(filepath.Join(pwd, "mybuns.tgz"), []byte("mybuns"), os.ModePerm)
+	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), os.ModePerm)
 	err = opts.Validate(p.Context)
 	assert.EqualError(t, err, "must provide a value for --tag of the form REGISTRY/bundle:tag")
 

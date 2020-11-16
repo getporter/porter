@@ -76,10 +76,6 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 
 	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../examples/exec-outputs"), ".")
 
-	x := p.Context.FileSystem
-	files, _ := x.ReadDir(".")
-	fmt.Println(files)
-
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)

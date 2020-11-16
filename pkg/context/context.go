@@ -2,13 +2,14 @@ package context
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
+	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 )
@@ -24,12 +25,55 @@ type Context struct {
 	Debug              bool
 	DebugPlugins       bool
 	verbose            bool
-	FileSystem         *afero.Afero
+	environ            map[string]string
+	FileSystem         aferox.Aferox
 	In                 io.Reader
 	Out                io.Writer
 	Err                io.Writer
 	NewCommand         CommandBuilder
 	PlugInDebugContext *PluginDebugContext
+}
+
+// New creates a new context in the specified directory.
+func New() *Context {
+	// Ignore any error getting the working directory and report errors
+	// when we attempt to access files in the current directory. This
+	// allows us to use the current directory as a default, and allow
+	// tests to override it.
+	pwd, _ := os.Getwd()
+
+	c := &Context{
+		environ:    getEnviron(),
+		FileSystem: aferox.NewAferox(pwd, afero.NewOsFs()),
+		In:         os.Stdin,
+		Out:        NewCensoredWriter(os.Stdout),
+		Err:        NewCensoredWriter(os.Stderr),
+	}
+	c.defaultNewCommand()
+	c.PlugInDebugContext = NewPluginDebugContext(c)
+	return c
+}
+
+func (c *Context) defaultNewCommand() {
+	c.NewCommand = func(name string, arg ...string) *exec.Cmd {
+		cmd := exec.Command(name, arg...)
+		cmd.Dir = c.Getwd()
+		return cmd
+	}
+}
+
+func getEnviron() map[string]string {
+	environ := map[string]string{}
+	for _, env := range os.Environ() {
+		envParts := strings.SplitN(env, "=", 2)
+		key := envParts[0]
+		value := ""
+		if len(envParts) > 1 {
+			value = envParts[1]
+		}
+		environ[key] = value
+	}
+	return environ
 }
 
 func (c *Context) SetVerbose(value bool) {
@@ -38,6 +82,76 @@ func (c *Context) SetVerbose(value bool) {
 
 func (c *Context) IsVerbose() bool {
 	return c.Debug || c.verbose
+}
+
+// Environ returns a copy of strings representing the environment,
+// in the form "key=value".
+func (c *Context) Environ() []string {
+	e := make([]string, 0, len(c.environ))
+	for k, v := range c.environ {
+		e = append(e, fmt.Sprintf("%s=%s", k, v))
+	}
+	return e
+}
+
+// ExpandEnv replaces ${var} or $var in the string according to the values
+// of the current environment variables. References to undefined
+// variables are replaced by the empty string.
+func (c *Context) ExpandEnv(s string) string {
+	return os.Expand(s, func(key string) string { return c.Getenv(key) })
+}
+
+// Getenv retrieves the value of the environment variable named by the key.
+// It returns the value, which will be empty if the variable is not present.
+// To distinguish between an empty value and an unset value, use LookupEnv.
+func (c *Context) Getenv(key string) string {
+	return c.environ[key]
+}
+
+// This is a simplified exec.LookPath that checks if command is accessible given
+// a PATH environment variable.
+func (c *Context) LookPath(file string) (string, bool) {
+	return c.FileSystem.LookPath(file, c.Getenv("PATH"), c.Getenv("PATHEXT"))
+}
+
+// LookupEnv retrieves the value of the environment variable named
+// by the key. If the variable is present in the environment the
+// value (which may be empty) is returned and the boolean is true.
+// Otherwise the returned value will be empty and the boolean will
+// be false.
+func (c *Context) LookupEnv(key string) (string, bool) {
+	value, ok := c.environ[key]
+	return value, ok
+}
+
+// Setenv sets the value of the environment variable named by the key.
+// It returns an error, if any.
+func (c *Context) Setenv(key string, value string) {
+	if c.environ == nil {
+		c.environ = make(map[string]string, 1)
+	}
+
+	c.environ[key] = value
+}
+
+// Unsetenv unsets a single environment variable.
+func (c *Context) Unsetenv(key string) {
+	delete(c.environ, key)
+}
+
+// Clearenv deletes all environment variables.
+func (c *Context) Clearenv() {
+	c.environ = make(map[string]string, 0)
+}
+
+// Getwd returns a rooted path name corresponding to the current directory.
+func (c *Context) Getwd() string {
+	return c.FileSystem.Getwd()
+}
+
+// Chdir changes the current working directory to the named directory.
+func (c *Context) Chdir(dir string) {
+	c.FileSystem.Chdir(dir)
 }
 
 // CensoredWriter is a writer wrapping the provided io.Writer with logic to censor certain values
@@ -67,21 +181,6 @@ func (cw *CensoredWriter) Write(b []byte) (int, error) {
 
 	_, err := cw.writer.Write(auditedBytes)
 	return len(b), err
-}
-
-func New() *Context {
-	// Default to respecting the PORTER_DEBUG env variable, the cli will override if --debug is set otherwise
-	debug, _ := strconv.ParseBool(os.Getenv("PORTER_DEBUG"))
-
-	return &Context{
-		Debug:              debug,
-		FileSystem:         &afero.Afero{Fs: afero.NewOsFs()},
-		In:                 os.Stdin,
-		Out:                NewCensoredWriter(os.Stdout),
-		Err:                NewCensoredWriter(os.Stderr),
-		NewCommand:         exec.Command,
-		PlugInDebugContext: NewPluginDebugContext(),
-	}
 }
 
 func (c *Context) CopyDirectory(srcDir, destDir string, includeBaseDir bool) error {

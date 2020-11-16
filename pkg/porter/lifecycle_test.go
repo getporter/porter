@@ -2,8 +2,6 @@ package porter
 
 import (
 	"errors"
-	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -16,7 +14,6 @@ import (
 
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	home, err := p.TestConfig.GetHomeDir()
 	t.Logf("home dir is: %s", home)
@@ -60,7 +57,6 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 
 func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	// mess up the cache
 	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
@@ -78,7 +74,6 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 
 	err := p.Create()
 	require.NoError(t, err)
@@ -179,10 +174,9 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 		opts := BundleActionOptions{}
 		opts.Tag = "deislabs/kubekahn:latest"
 
-		wd, _ := os.Getwd()
 		// `path.Join(wd...` -> makes cnab.go#defaultBundleFiles#manifestExists `true`
 		// Only when `manifestExists` eq to `true`, default bundle logic will run
-		p.TestConfig.TestContext.AddTestFileContents([]byte(""), path.Join(wd, config.Name))
+		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
 		// When execution reach to `readFromFile`, manifest file path will be lost.
 		// So, had to use root manifest file also for error simuation purpose
 		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)

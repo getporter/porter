@@ -1,8 +1,6 @@
 package cnabprovider
 
 import (
-	"os"
-
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -51,7 +49,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 		driverCfg := make(map[string]string)
 		// Load any driver-specific config out of the environment
 		for env := range configurable.Config() {
-			if val, ok := os.LookupEnv(env); ok {
+			if val, ok := r.LookupEnv(env); ok {
 				driverCfg[env] = val
 			}
 		}

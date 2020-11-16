@@ -8,14 +8,14 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/claim"
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -45,7 +45,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 
 func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -63,7 +63,7 @@ func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 
 func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 

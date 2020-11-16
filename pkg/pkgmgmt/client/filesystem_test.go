@@ -10,7 +10,6 @@ import (
 
 func TestFileSystem_List(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.SetupPorterHome()
 
 	p := NewFileSystem(c.Config, "mixins")
 	mixins, err := p.List()

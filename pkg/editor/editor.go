@@ -32,14 +32,14 @@ func New(context *context.Context, tempFilename string, contents []byte) *Editor
 	}
 }
 
-func editorArgs(filename string) []string {
-	shell := defaultShell
-	if os.Getenv("SHELL") != "" {
-		shell = os.Getenv("SHELL")
+func (e *Editor) editorArgs(filename string) []string {
+	shell := e.Getenv("SHELL")
+	if shell == "" {
+		shell = defaultShell
 	}
-	editor := defaultEditor
-	if os.Getenv("EDITOR") != "" {
-		editor = os.Getenv("EDITOR")
+	editor := e.Getenv("EDITOR")
+	if editor == "" {
+		editor = defaultEditor
 	}
 
 	// Example of what will be run:
@@ -69,7 +69,7 @@ func (e *Editor) Run() ([]byte, error) {
 	// close here without defer so cmd can grab the file
 	tempFile.Close()
 
-	args := editorArgs(tempFile.Name())
+	args := e.editorArgs(tempFile.Name())
 	cmd := e.NewCommand(args[0], args[1:]...)
 	cmd.Stdout = e.Out
 	cmd.Stderr = e.Err

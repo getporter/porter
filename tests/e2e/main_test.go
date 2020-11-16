@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
-	"github.com/carolynvs/magex/shx"
+	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -66,14 +66,13 @@ func (t Test) RequirePorter(args ...string) {
 // Run a porter command, printing stderr when the command fails.
 func (t Test) PorterE(args ...string) error {
 	args = append(args, "--debug")
-	err := shx.RunE(t.PorterPath, args...)
+	p := sh.Command(t.PorterPath, args...).Stdout(nil)
+	p.Cmd.Env = []string{"PORTER_HOME=" + t.PorterHomeDir}
+	_, _, err := p.Run()
 	return errors.Wrapf(err, "error running porter %s", args)
 }
 
 func (t Test) Teardown() {
-	t.T.Log("Unsetting PORTER_HOME")
-	os.Unsetenv("PORTER_HOME")
-
 	t.T.Log("Removing temp test PORTER_HOME")
 	os.RemoveAll(t.PorterHomeDir)
 
@@ -116,6 +115,5 @@ func (t *Test) createPorterHome() error {
 		return errors.Wrap(err, "could not copy mixins/ into test PORTER_HOME")
 	}
 
-	os.Setenv("PORTER_HOME", t.PorterHomeDir)
 	return nil
 }
