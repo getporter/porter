@@ -11,10 +11,8 @@ By default, KinD sets up the Kubernetes API server IP to be the local loopback a
 
 There are two main options:
 
-1. Configure the Docker container that Porter runs to use [host networking](https://docs.docker.com/network/host/)
-1. Configure the KinD cluster to use an IP address that is resolvable from within Porter's Docker container
-
-Both routes lead to considerable security implications and neither are advised for clusters hosting actual workloads or sensitive information.
+1. Set up public DNS to map to the default API server address.  This would ideally include ingress TLS and so presents a secure option for communication, but does involve a larger overhead for setup.
+1. Configure the KinD cluster to use an IP address that is already resolvable from within Porter's Docker container.  This will most likely lead to considerable security implications and is not advised for clusters hosting actual workloads or sensitive information.
 
 Here we'll look at the latter option of configuring the KinD cluster to use a [different API Server address](https://kind.sigs.k8s.io/docs/user/configuration/#api-server).
 
