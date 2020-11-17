@@ -88,10 +88,15 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		}
 	} else {
 		// If the manifest file is the default/user-supplied manifest,
-		// hot-swap in Porter's canonical translation from the .cnab/app directory,
-		// as there may be dynamic overrides for the name and version fields
-		// to inform invocation image naming.
-		if opts.File == config.Name {
+		// hot-swap in Porter's canonical translation (if exists) from
+		// the .cnab/app directory, as there may be dynamic overrides for
+		// the name and version fields to inform invocation image naming.
+		canonicalExists, err := p.FileSystem.Exists(build.LOCAL_MANIFEST)
+		if err != nil {
+			return err
+		}
+
+		if opts.File == config.Name && canonicalExists {
 			err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
 			if err != nil {
 				return err
