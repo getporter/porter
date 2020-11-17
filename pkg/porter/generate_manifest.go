@@ -4,31 +4,32 @@ import (
 	"os"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/config"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
 	"github.com/pkg/errors"
 	"gopkg.in/op/go-logging.v1"
 	"gopkg.in/yaml.v3"
 )
 
-// updateManifestOpts contain manifest fields eligible for dynamic
+// metadataOpts contain manifest fields eligible for dynamic
 // updating prior to saving Porter's internal version of the manifest
-type updateManifestOpts struct {
+type metadataOpts struct {
 	Name    string
 	Version string
 }
 
-// updateManifest decodes the manifest designated by filepath and applies
-// the provided updateManifestOpts, saving the updated manifest to the path
+// generateInternalManifest decodes the manifest designated by filepath and applies
+// the provided generateInternalManifestOpts, saving the updated manifest to the path
 // designated by build.LOCAL_MANIFEST
-func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error {
+func (p *Porter) generateInternalManifest(opts metadataOpts) error {
 	p.initYqLogger()
 	var lib = yqlib.NewYqLib()
 
-	// Decode the manifest file into a yaml.Node
+	// Decode the user's manifest file into a yaml.Node
 	var node yaml.Node
-	input, err := p.FileSystem.Open(filepath)
+	input, err := p.FileSystem.Open(config.Name)
 	if err != nil {
-		return errors.Wrapf(err, "error opening %s", filepath)
+		return errors.Wrapf(err, "error opening %s", config.Name)
 	}
 	defer input.Close()
 
@@ -55,7 +56,7 @@ func (p *Porter) updateManifest(filepath string, opts updateManifestOpts) error 
 		}
 	}
 
-	// Create the local app dir and local manifest file, if they do not already exist
+	// Create the local app dir if it does not already exist
 	err = p.FileSystem.MkdirAll(build.LOCAL_APP, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)

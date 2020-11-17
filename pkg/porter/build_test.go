@@ -121,3 +121,38 @@ func TestPorter_paramRequired(t *testing.T) {
 	require.False(t, bundle.Parameters["command"].Required, "expected command param to not be required")
 	require.True(t, bundle.Parameters["command2"].Required, "expected command2 param to be required")
 }
+
+func TestValidateBuildOpts(t *testing.T) {
+	testcases := []struct {
+		name      string
+		opts      BuildOptions
+		wantError string
+	}{{
+		name:      "no opts",
+		opts:      BuildOptions{},
+		wantError: "",
+	}, {
+		name:      "invalid name set",
+		opts:      BuildOptions{metadataOpts: metadataOpts{Name: "new name"}},
+		wantError: `invalid bundle name "new name". Names must match ^[a-zA-Z0-9._-]+$`,
+	}, {
+		name:      "invalid version set",
+		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
+		wantError: `invalid bundle version "latest".  Cannot be parsed as semver: Invalid Semantic Version`,
+	}, {
+		name:      "valid name and value set",
+		opts:      BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
+		wantError: "",
+	}}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.opts.Validate()
+			if tc.wantError != "" {
+				require.EqualError(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

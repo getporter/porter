@@ -58,6 +58,8 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.BoolVar(&opts.NoLint, "no-lint", false, "Do not run the linter")
 	f.BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
+	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
+	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
 
 	return cmd
 }

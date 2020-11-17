@@ -79,21 +79,6 @@ func (p *Porter) Publish(opts PublishOptions) error {
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
-	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-
-	// After checking if the bundle is up-to-date,
-	// if the manifest file is the default/user-supplied manifest,
-	// hot-swap in Porter's canonical translation from the .cnab/app directory
-	if opts.File == config.Name {
-		err = p.LoadManifestFrom(build.LOCAL_MANIFEST)
-		if err != nil {
-			return err
-		}
-	}
-
 	tag := opts.Tag
 	if tag != "" {
 		// If tag was supplied, update the invocation image name on the manifest
@@ -102,8 +87,24 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
 		}
 	} else {
+		// If the manifest file is the default/user-supplied manifest,
+		// hot-swap in Porter's canonical translation from the .cnab/app directory,
+		// as there may be dynamic overrides for the name and version fields
+		// to inform invocation image naming.
+		if opts.File == config.Name {
+			err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
+			if err != nil {
+				return err
+			}
+		}
 		tag = p.Manifest.Reference
 	}
+
+	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+	if err != nil {
+		return err
+	}
+
 	if p.Manifest.Reference == "" {
 		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}

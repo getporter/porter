@@ -6,11 +6,12 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/Masterminds/semver"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -21,34 +22,49 @@ type BuildProvider interface {
 
 type BuildOptions struct {
 	contextOptions
+	metadataOpts
 	NoLint bool
+}
+
+func (o BuildOptions) Validate() error {
+	if o.Name != "" {
+		if !claim.ValidName.MatchString(o.Name) {
+			return fmt.Errorf("invalid bundle name %q. Names must match %s", o.Name, claim.ValidName)
+		}
+	}
+
+	if o.Version != "" {
+		if _, err := semver.NewVersion(o.Version); err != nil {
+			return errors.Wrapf(err, "invalid bundle version %q.  Cannot be parsed as semver", o.Version)
+		}
+	}
+
+	return nil
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
-	err := p.LoadManifest()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return err
 	}
 
-	if !opts.NoLint {
-		err = p.preLint()
-		if err != nil {
+	if err := p.generateInternalManifest(opts.metadataOpts); err != nil {
+		return errors.Wrap(err, "unable to generate manifest")
+	}
+
+	// Publish may invoke this method and the manifest will already be
+	// populated.  Only load if still empty.
+	if p.Manifest == nil {
+		if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
 			return err
 		}
 	}
 
-	// Update the manifest, with any dynamic overrides, for inclusion
-	// into the invocation image.
-	// TODO: ingest dynamic overrides for name and version and supply these here
-	// https://github.com/getporter/porter/issues/1334
-	updateOpts := updateManifestOpts{}
-	// TODO: We read/decode the manifest again to parse into a yaml.Node
-	// We might try to consolidate logic so that the manifest is also loaded into memory,
-	// thereby replacing the p.LoadManifest() call above
-	if err = p.updateManifest(config.Name, updateOpts); err != nil {
-		return errors.Wrap(err, "unable to update manifest")
+	if !opts.NoLint {
+		if err := p.preLint(); err != nil {
+			return err
+		}
 	}
 
 	// Build bundle so that resulting bundle.json is available for inclusion
@@ -57,7 +73,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err = p.buildBundle(p.Manifest.Image, ""); err != nil {
+	if err := p.buildBundle(p.Manifest.Image, ""); err != nil {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 

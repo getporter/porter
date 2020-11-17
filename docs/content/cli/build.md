@@ -18,9 +18,11 @@ porter build [flags]
 ### Options
 
 ```
-  -h, --help      help for build
-      --no-lint   Do not run the linter
-  -v, --verbose   Enable verbose logging
+  -h, --help             help for build
+      --name string      Override the bundle name
+      --no-lint          Do not run the linter
+  -v, --verbose          Enable verbose logging
+      --version string   Override the bundle version
 ```
 
 ### Options inherited from parent commands
