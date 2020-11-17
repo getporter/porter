@@ -87,12 +87,12 @@ Porter will pass the entire step, in YAML form, to the mixin. Porter expects the
 helm:
   description: "Install MySQL"
   name: porter-ci-mysql
-  chart: stable/mysql
-  version: 0.10.2
+  chart: bitnami/mysql
+  version: 6.14.2
   replace: true
   set:
-    mysqlDatabase: "{{ bundle.parameters.database-name }}"
-    mysqlUser: "{{ bundle.parameters.mysql-user }}"
+    db.name: "{{ bundle.parameters.database-name }}"
+    db.user: "{{ bundle.parameters.mysql-user }}"
   outputs:
   - name: mysql-root-password
     secret: porter-ci-mysql

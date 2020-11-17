@@ -271,7 +271,10 @@ In many cases, however, mixins will have build time requirements. Next let's see
 
 ```yaml
 mixins:
-- helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 name: mysql
 version: "0.1.0"
@@ -285,8 +288,8 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-ci-mysql
-    chart: stable/mysql
-    version: "0.10.2"
+    chart: bitnami/mysql
+    version: "6.14.2"
 uninstall:
 - helm:
     description: "Uninstall MySQL"

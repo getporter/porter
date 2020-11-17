@@ -1,6 +1,9 @@
 mixins:
 - exec
-- helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 name: wordpress
 registry: "localhost:5000"
@@ -36,7 +39,7 @@ install:
   - helm:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       namespace: "{{ bundle.parameters.namespace }}"
       replace: true
       set:
@@ -54,7 +57,7 @@ upgrade:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       outputs:
         - name: wordpress-password
           secret: "{{ bundle.parameters.wordpress-name }}"

@@ -3,7 +3,10 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-  - helm
+- helm:
+    repositories:
+      bitnami:
+        url: "https://charts.bitnami.com/bitnami"
 
 credentials:
 - name: kubeconfig
@@ -25,13 +28,13 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-workshop-mysql
-    chart: stable/mysql
-    version: 0.10.2
+    chart: bitnami/mysql
+    version: 6.14.2
     namespace: "{{ bundle.parameters.namespace }}"
     replace: true
     set:
-      mysqlDatabase: wordpress
-      mysqlUser: wordpress
+      db.name: wordpress
+      db.user: wordpress
     outputs:
     - name: mysql-password
       secret: porter-workshop-mysql
@@ -40,7 +43,7 @@ install:
 - helm:
     description: "Helm Install Wordpress"
     name: porter-workshop-wordpress
-    chart: stable/wordpress
+    chart: bitnami/wordpress
     namespace: wordpress
     replace: true
     set:

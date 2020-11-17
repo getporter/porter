@@ -101,7 +101,10 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-  - helm
+  - helm:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
 
 credentials:
   - name: kubeconfig
@@ -116,9 +119,9 @@ install:
   - helm:
       description: "Install MySQL"
       name: mywordpress-mysql
-      chart: stable/mysql
+      chart: bitnami/mysql
       set:
-        mysqlDatabase: wordpress
+        db.name: wordpress
       outputs:
         - name: dbhost
           secret: mywordpress-mysql
@@ -132,8 +135,8 @@ install:
   - helm:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
-      chart: stable/wordpress
-      parameters:
+      chart: bitnami/wordpress
+      set:
         externalDatabase.database: wordpress
         externalDatabase.host: "{{ bundle.outputs.dbhost }}"
         externalDatabase.user: "{{ bundle.outputs.dbuser }}"
@@ -205,7 +208,10 @@ version: 0.1.3
 registry: getporter
 
 mixins:
-  - helm
+  - helm:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
 
 credentials:
   - name: kubeconfig
@@ -220,9 +226,9 @@ install:
   - helm:
       description: "Install MySQL"
       name: mysql
-      chart: stable/mysql
+      chart: bitnami/mysql
       set:
-      mysqlDatabase: "{{ bundle.parameters.database_name }}"
+        db.name: "{{ bundle.parameters.database_name }}"
       outputs:
       - name: dbhost
         secret: mysql
@@ -238,7 +244,10 @@ install:
 #### Wordpress Porter Manifest
 ```yaml
 mixins:
-  - helm
+  - helm:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
 
 name: wordpress
 version: 0.1.0
@@ -263,7 +272,7 @@ install:
   - helm:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
-      chart: stable/wordpress
+      chart: bitnami/wordpress
       set:
         externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database_name }}"
         externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.dbhost }}"

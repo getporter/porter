@@ -185,7 +185,7 @@ install:
 - helm:
     description: "Install MySQL"
     name: porter-ci-mysql
-    chart: stable/mysql
+    chart: bitnami/mysql
     outputs:
       - name: mysql-root-password
         secret: "{{ bundle.parameters.mysql-name }}"
