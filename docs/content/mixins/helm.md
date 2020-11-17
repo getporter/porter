@@ -59,7 +59,7 @@ install:
 Upgrade
 
 ```yaml
-install:
+upgrade:
 - helm:
     description: "Description of the command"
     name: RELEASE_NAME
