@@ -66,7 +66,7 @@ and executing the commands.
 
 Porter can either be cloned into your GOPATH (usually ~/go) or anywhere on your computer.
 
-Porter has a couple repositories. You may want to clone Porter and its other
+Porter has [many repositories](https://github.com/getporter/). You may want to clone Porter and its other
 repositories into a dedicated directory so they are easier to find later.
 
 ```bash
