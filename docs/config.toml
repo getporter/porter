@@ -48,12 +48,6 @@ pygmentsStyle = "friendly"
     identifier = "quickstart"
     weight = 12
     parent = "get-started"
-  [[menu.main]]
-    name = "Contribute"
-    url = "/contribute/"
-    identifier = "get-started-contribute"
-    weight = 13
-    parent = "get-started"
   
 [[menu.main]]
   name = "Contribute"
@@ -67,10 +61,16 @@ pygmentsStyle = "friendly"
     weight = 51
     parent = "contribute"
   [[menu.main]]
+    name = "Contributing Tutorial"
+    url = "/contribute/tutorial/"
+    identifier = "contributing-tutorial"
+    weight = 52
+    parent = "contribute"
+  [[menu.main]]
     name = "Contributing Guide"
     url = "/contribute/guide/"
     identifier = "contributing-guide"
-    weight = 52
+    weight = 53
     parent = "contribute"
 
 [[menu.main]]

@@ -28,6 +28,11 @@ We welcome your contributions and participation! If you aren't sure what to
 expect, here are some norms for our project so you feel more comfortable with
 how things will go.
 
+If this is your first contribution to Porter, we have a [tutorial] that walks you
+through how to setup your developer environment, make a change and test it.
+
+[tutorial]: https://porter.sh/contribute/tutorial/
+
 ## Code of Conduct
 
 The Porter community is governed by our [Code of Conduct][coc].
@@ -229,8 +234,13 @@ maintainer.
 
 ## Initial setup
 
+We have a [tutorial] that walks you through how to setup your developer
+environment, make a change and test it.
+
+Here are the key steps, if you run into trouble, the tutorial has more details:
+
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
-2. Run `make build install` from within the newly cloned repository.
+1. Run `make build install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
 

@@ -64,14 +64,69 @@ and executing the commands.
 
 ## Checkout Code
 
-Porter can either be cloned into your GOPATH (usually ~/go) or anywhere on your computer.
-
-Porter has [many repositories](https://github.com/getporter/). You may want to clone Porter and its other
-repositories into a dedicated directory so they are easier to find later.
+Porter can either be cloned into your GOPATH (usually ~/go) or anywhere on your
+computer. Porter has [many repositories](https://github.com/getporter/). If you
+decide to not clone Porter into your GOPATH, you may still want to clone Porter
+and its other repositories into a dedicated directory so they are easier to find
+later.
 
 ```bash
-git clone https://github.com/getporter/porter.git
+git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter
 ```
+
+If you are planning on contributing back to the project, you'll need to
+[fork](https://guides.github.com/activities/forking/) and fetch your fork. Here
+is a suggested setup for managing your fork, that uses `upstream` to refer to
+the original porter repository and `origin` to refer to your fork:
+
+1. Fork the repository in GitHub and copy your fork's reference.
+    ![click on the green code button on the repository's homepage, and copy the reference](/images/clone-ref.png)
+1. In a terminal, cd to where you cloned Porter.
+1. Rename the origin remote to upstream: 
+    ```bash
+    git remote rename origin upstream
+    ```
+1. Add a remote to your local checkout of Porter for your fork:
+    ```bash
+    git remote add origin https://github.com/YOURNAME/porter.git
+    ```
+1. Run `git remote -vv` to verify that origin is your fork and upstream is the canonical repository.
+    ```bash
+    $ git remote -vv
+    origin      https://github.com/YOURNAME/porter.git (fetch)
+    origin      https://github.com/YOURNAME/porter.git (push)
+    upstream    https://github.com/getporter/porter.git (fetch)
+    upstream    https://github.com/getporter/porter.git (push)
+    ```
+1. Create a branch for your changes:
+    ```bash
+    git checkout -b YOURBRANCH main
+    ```
+1. Push your branch to your fork (origin):
+    ```bash
+    git push -u origin YOURBRANCH
+    ```
+
+    Afterwards you can use just `git push` to synchronize your
+    local branch with your fork on GitHub.
+1. Run `git branch -vv` to verify that the `main` branch is synchronized with
+   `upstream/main` and your branch is synchronized with `origin/YOURBRANCH`.
+    ```bash
+    $ git branch -vv
+    * mybranch      26d8358f [origin/mybranch] Review feedback
+    main            7e120aab [upstream/main]   Bump cnab-go
+    ```
+
+## Configure Signing
+
+Porter requires that [all commits are signed][dco]. Run the following command to
+tell git to automatically sign your commits in the Porter repository:
+
+```bash
+make setup-dco
+```
+
+[dco]: /contribute/guide/#signing-your-commits
 
 ## Build Porter
 
