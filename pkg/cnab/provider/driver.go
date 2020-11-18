@@ -1,10 +1,10 @@
 package cnabprovider
 
 import (
+	"get.porter.sh/porter/pkg/cnab/drivers"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
-	"github.com/cnabio/cnab-go/driver/lookup"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
@@ -39,7 +39,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
 				extensions.DockerExtensionKey)
 		}
-		driverImpl, err = lookup.Lookup(driverName)
+		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
 	if err != nil {
 		return nil, err

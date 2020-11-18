@@ -4,6 +4,8 @@ go 1.13
 
 replace (
 	// See https://github.com/cnabio/cnab-go/pull/233 (command-driver)
+	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.13.4-0.20201123151610-320dd330b853
+	
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible

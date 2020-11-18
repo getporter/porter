@@ -57,5 +57,13 @@ func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
 	// Copy bin dir contents to the home directory
 	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir)
 
+	// Remove any rando stuff copied from the dev bin, you won't find this in CI but a local dev run may have it
+	// Not checking for an error, since the files won't be there on CI
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "installations"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "claims"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "results"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "outputs"))
+	c.FileSystem.Remove(filepath.Join(homeDir, "schema.json"))
+
 	return testDir, homeDir
 }

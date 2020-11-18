@@ -3,7 +3,9 @@
 package tests
 
 import (
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -41,11 +43,19 @@ func randomString(len int) string {
 }
 
 func publishMySQLBundle(p *porter.TestPorter) {
-	mysqlBundlePath := filepath.Join(p.TestDir, "../build/testdata/bundles/mysql")
-	p.Chdir(mysqlBundlePath)
+	bunDir, err := ioutil.TempDir("", "porter-mysql")
+	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
+	defer os.RemoveAll(bunDir)
+
+	// Rebuild the bundle from a temp directory so that we don't modify the source directory
+	// and leave modified files around.
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
 
 	publishOpts := porter.PublishOptions{}
-	err := publishOpts.Validate(p.Context)
+	err = publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for dependent bundle failed")
 
 	err = p.Publish(publishOpts)

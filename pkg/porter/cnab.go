@@ -1,15 +1,14 @@
 package porter
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/pkg/errors"
 )
 
@@ -110,7 +109,7 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	}
 
 	o.defaultDriver()
-	err = o.validateDriver()
+	err = o.validateDriver(p.Context)
 	if err != nil {
 		return err
 	}
@@ -276,16 +275,7 @@ func (o *sharedOptions) defaultDriver() {
 }
 
 // validateDriver validates that the provided driver is supported by Porter
-func (o *sharedOptions) validateDriver() error {
-	switch o.Driver {
-	case DockerDriver, DebugDriver:
-		return nil
-	default:
-		cmddriver := &command.Driver{Name: o.Driver}
-		if cmddriver.CheckDriverExists() {
-			return nil
-		}
-
-		return fmt.Errorf("unsupported driver or driver not found in PATH: %s", o.Driver)
-	}
+func (o *sharedOptions) validateDriver(cxt *context.Context) error {
+	_, err := drivers.LookupDriver(cxt, o.Driver)
+	return err
 }
