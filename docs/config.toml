@@ -2,25 +2,40 @@ baseURL = "https://porter.sh/"
 languageCode = "en-us"
 title = "Porter"
 theme = "porter"
+canonifyURLs = "false"
+relativeURLs = "false"
+pluralizeListTitles = "false"
+plainIdAnchors = "true"
+defaultContentLanguage = "en"
 
-# Docs Navigation
+# Syntax Highlighting
+pygmentsUseClasses = true
+pygmentsStyle = "friendly"
 
+[markup]
+  defaultMarkdownHandler = "goldmark"
+
+  [markup.goldmark.renderer]
+    unsafe = true
+
+  [markup.tableOfContents]
+    endLevel = 3
+    ordered = false
+    startLevel = 2
+
+# Default Page Parameters
 [params]
   title = "Porter"
   author = "Carolyn Van Slyck"
   description = "A Friendly Cloud Installer for Cloud Native Application Bundles"
   image = "images/porter-twitter-card.png"
 
-canonifyURLs = "false"
-relativeURLs = "true"
-pluralizeListTitles = "false"
-plainIdAnchors = "true"
-defaultContentLanguage = "en"
-
+# Docs Navigation
 [[menu.main]]
   name = "Get Started"
   identifier = "get-started"
   weight = 2
+  url = "#"
   [[menu.main]]
     name = "Install Porter"
     url = "/install"
@@ -33,6 +48,30 @@ defaultContentLanguage = "en"
     identifier = "quickstart"
     weight = 12
     parent = "get-started"
+  
+[[menu.main]]
+  name = "Contribute"
+  url = "/contribute/"
+  identifier = "contribute"
+  weight = 50
+  [[menu.main]]
+    name = "New Contributor Guide"
+    url = "/contribute/"
+    identifier = "contribute-overview"
+    weight = 51
+    parent = "contribute"
+  [[menu.main]]
+    name = "Contributing Tutorial"
+    url = "/contribute/tutorial/"
+    identifier = "contributing-tutorial"
+    weight = 52
+    parent = "contribute"
+  [[menu.main]]
+    name = "Contributing Guide"
+    url = "/contribute/guide/"
+    identifier = "contributing-guide"
+    weight = 53
+    parent = "contribute"
 
 [[menu.main]]
   name = "Porter Commands"

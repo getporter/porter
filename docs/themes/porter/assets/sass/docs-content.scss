@@ -35,11 +35,14 @@
     font-size: $scalex5;
   }
 
-  p {
+  p, ul, ol, blockquote {
     color: $grey4;
     line-height: 1.725;
-    margin: 0.825rem 0 1.667rem;
     font-size: $scalex5;
+  }
+
+  p {
+    margin: 0.825rem 0 1.667rem;
   }
 
   a {
@@ -181,6 +184,7 @@
   }
 
   code {
+    dispaly: block;
     color: black;
     padding: 0.5em 0.5em;
     background-color: #e4f3f9;
@@ -195,12 +199,8 @@
   ol {
     padding: 0 0.25rem;
     color: $grey4;
-    font-size: $scalex4;
+    font-size: $scalex5;
     line-height: 1.7;
-
-    li {
-      font-size: 1.125em;
-    }
   }
 
   table {
@@ -219,7 +219,7 @@
 
     td {
       color: $grey4;
-      font-size: $scalex4;
+      font-size: $scalex5;
     }
   }
 

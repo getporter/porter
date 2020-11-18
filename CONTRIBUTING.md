@@ -28,11 +28,18 @@ We welcome your contributions and participation! If you aren't sure what to
 expect, here are some norms for our project so you feel more comfortable with
 how things will go.
 
+If this is your first contribution to Porter, we have a [tutorial] that walks you
+through how to setup your developer environment, make a change and test it.
+
+[tutorial]: https://porter.sh/contribute/tutorial/
+
 ## Code of Conduct
 
-The Porter community is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
+The Porter community is governed by our [Code of Conduct][coc].
 This includes but isn't limited to: the porter and related mixin repositories,
 slack, interactions on social media, project meetings, conferences and meetups.
+
+[coc]: https://porter.sh/src/CODE_OF_CONDUCT.md
 
 ## Find an issue
 
@@ -47,7 +54,7 @@ We have good first issues for new contributors and help wanted issues for our ot
 Maintainers will do our best regularly make new issues for you to solve and then
 help out as you work on them. 💖
 
-We have a [roadmap](README.md#roadmap) that will give you a good idea of the
+We have a [roadmap] that will give you a good idea of the
 larger features that we are working on right now. That may help you decide what
 you would like to work on after you have tackled an issue or two to learn how to
 contribute to Porter. If you would like to contribute regularly to a larger
@@ -60,13 +67,14 @@ Another great way to contribute is to create a mixin! You can start use the
 When you create your first pull request, add your name to the bottom of our 
 [Contributors][contributors] list. Thank you for making Porter better! 🙇‍♀️
                                           
-[contributors]: /CONTRIBUTORS.md                                          
+[contributors]: https://porter.sh/src/CONTRIBUTORS.md                                          
 [skeletor]: https://github.com/getporter/skeletor
 [mixin-dev-guide]: https://porter.sh/mixin-dev-guide/
 [good-first-issue]: https://porter.sh/board/good+first+issue
 [help-wanted]: https://porter.sh/board/help+wanted
 [board]: https://porter.sh/board
 [slack]: https://porter.sh/community#slack
+[roadmap]: https://porter.sh/src/README.md#roadmap
 
 ## When to open a pull request
 
@@ -220,14 +228,19 @@ Our [contribution ladder][ladder] defines the roles and responsibilities on this
 project and how to participate with the goal of moving from a user to a
 maintainer.
 
-[ladder]: /CONTRIBUTION_LADDER.md
+[ladder]: https://porter.sh/src/CONTRIBUTION_LADDER.md
 
 # Developer Tasks
 
 ## Initial setup
 
+We have a [tutorial] that walks you through how to setup your developer
+environment, make a change and test it.
+
+Here are the key steps, if you run into trouble, the tutorial has more details:
+
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
-2. Run `make build install` from within the newly cloned repository.
+1. Run `make build install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
 
@@ -242,7 +255,7 @@ Here are the most common Makefile tasks
   It does not build the porter-runtime binary. Useful when you just want to do a
   build and don't remember the proper way to call `go build` yourself.
 * `build-porter` builds both the porter client and runtime. It does not clean up
-  g enerated files created by packr, so you usually want to also run
+  generated files created by packr, so you usually want to also run
   `clean-packr`.
 * `install-porter` installs porter from source into your home directory **$(HOME)/.porter**.
 * `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
@@ -424,5 +437,7 @@ for maintainers.
 
 ## CDN Setup
 
-See the [CDN Setup Doc](infra/cdn.md) for details on the services Porter uses to
+See the [CDN Setup Doc][cdn] for details on the services Porter uses to
 host and distribute its release binaries.
+
+[cdn]: https://porter.sh/src/infra/cdn.md
