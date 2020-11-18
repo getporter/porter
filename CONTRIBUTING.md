@@ -226,7 +226,7 @@ maintainer.
 
 ## Initial setup
 
-1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`. Porter relies on being in the GOPATH.
+1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
 1. Run `make build install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
