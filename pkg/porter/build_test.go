@@ -132,10 +132,6 @@ func TestValidateBuildOpts(t *testing.T) {
 		opts:      BuildOptions{},
 		wantError: "",
 	}, {
-		name:      "invalid name set",
-		opts:      BuildOptions{metadataOpts: metadataOpts{Name: "new name"}},
-		wantError: `invalid bundle name "new name". Names must match ^[a-zA-Z0-9._-]+$`,
-	}, {
 		name:      "invalid version set",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
 		wantError: `invalid bundle version "latest".  Cannot be parsed as semver: Invalid Semantic Version`,

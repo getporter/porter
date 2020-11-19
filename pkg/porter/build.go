@@ -11,7 +11,6 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -28,9 +27,9 @@ type BuildOptions struct {
 
 func (o BuildOptions) Validate() error {
 	if o.Name != "" {
-		if !claim.ValidName.MatchString(o.Name) {
-			return fmt.Errorf("invalid bundle name %q. Names must match %s", o.Name, claim.ValidName)
-		}
+		// TODO: What sort of validation, if any, do we want on the bundle name?
+		// Originally I had used the *installation* validation from cnab-go,
+		// but that is most likely more restrictive than what we want (no spaces allowed, etc.)
 	}
 
 	if o.Version != "" {
