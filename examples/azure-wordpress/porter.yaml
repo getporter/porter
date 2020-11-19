@@ -64,6 +64,7 @@ install:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
+      version: "9.9.3"
       replace: true
       set:
         mariadb.enabled: "false"

@@ -136,6 +136,7 @@ install:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
+      version: "9.9.3"
       set:
         externalDatabase.database: wordpress
         externalDatabase.host: "{{ bundle.outputs.dbhost }}"
@@ -273,6 +274,7 @@ install:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
+      version: "9.9.3"
       set:
         externalDatabase.database: "{{ bundle.dependencies.mysql.parameters.database_name }}"
         externalDatabase.host: "{{ bundle.dependencies.mysql.outputs.dbhost }}"

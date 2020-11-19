@@ -265,7 +265,7 @@ Here are the most common Makefile tasks
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
   take 20 minutes.
-* `test-cli` runs a small suite of end-to-end tests using the Porter CLI.
+* `teste2e` runs a small suite of end-to-end tests using the Porter CLI.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.

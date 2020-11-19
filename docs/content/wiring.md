@@ -198,6 +198,7 @@ For example, given the install step above, we can use the `MYSQL_URL` with the h
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
+      version: "9.9.3"
       set:
         mariadb.enabled: "false"
         externalDatabase.port: 3306
@@ -277,6 +278,7 @@ These images will be used to build the `bundle.json` images section, but can als
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
+      version: "9.9.3"
       set:
         image.repository: "{{ bundle.images.ALIAS.repository }}"
         image.tag: "{{ bundle.images.ALIAS.tag }}"
@@ -375,6 +377,7 @@ install:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
   chart: bitnami/wordpress
+  version: "9.9.3"  
   namespace: "{{ bundle.parameters.namespace }}"
   replace: true
   set:
@@ -396,6 +399,7 @@ install:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
   chart: bitnami/wordpress
+  version: "9.9.3"      
   namespace: "{{ bundle.parameters.namespace }}"
   replace: true
   set:
@@ -417,6 +421,7 @@ install:
     description: "Install Java App"
     name: "{{ bundle.parameters.cool-app}}"
     chart: bitnami/wordpress
+    version: "9.9.3"
     replace: true
     set:
       jdbc_url: "jdbc:mysql://{{ bundle.outputs.mysql_host }}:{{ bundle.outputs.mysql_port }}/{{ bundle.parameters.database_name }}"

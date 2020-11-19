@@ -13,6 +13,10 @@ replace (
 
 	github.com/hashicorp/go-plugin => github.com/carolynvs/go-plugin v1.0.1-acceptstdin
 
+	// Fork (fluent branch) that adds fluent syntax and supports running a
+	// command in a directory without using chdir
+	github.com/magefile/mage => github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0
+
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 )
 
@@ -21,6 +25,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/datetime-printer v0.2.0
+	github.com/carolynvs/magex v0.2.1-0.20201116013928-d6af240c802c
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.13.4-0.20200817181428-9005c1da4354
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
@@ -44,6 +49,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-plugin v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-version v1.2.0 // indirect
+	github.com/magefile/mage v1.10.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mmcdole/gofeed v1.0.0-beta2
@@ -55,9 +61,9 @@ require (
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/yaml.v2 v2.2.4
 )

@@ -10,114 +10,158 @@ trigger:
       - refs/tags/*
 
 pool:
-  vmImage: 'Ubuntu 16.04'
+  vmImage: "Ubuntu 16.04"
 
 variables:
-  GOVERSION: '1.13.10'
+  GOVERSION: "1.13.10"
 
 stages:
-- stage: Test
-  jobs:
-  - job: unit_test
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: '$(GOVERSION)'
-    - script: build/azure-pipelines.setup-go-workspace.sh
-      displayName: 'Set up the Go workspace'
+  - stage: Validate
+    jobs:
+      - job: build
+        displayName: "Native Compile"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make build
+            displayName: "Native Build"
+          - task: PublishPipelineArtifact@0
+            displayName: "Publish Native Binaries"
+            inputs:
+              targetPath: $(System.DefaultWorkingDirectory)/bin
+              archiveFilePatterns: "**"
+              artifactName: "build-bin"
+      - job: xbuild
+        displayName: "Cross Compile"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make xbuild-all
+            displayName: "Cross Compile"
+          - task: PublishPipelineArtifact@0
+            displayName: "Publish Release Binaries"
+            inputs:
+              targetPath: $(System.DefaultWorkingDirectory)/bin
+              archiveFilePatterns: "**"
+              artifactName: "xbuild-bin"
+      - job: unit_test
+        displayName: "Unit Test"
+        steps:
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent
+            displayName: "Configure Agent"
+          - bash: make verify
+            displayName: "Verify"
+          - bash: make test-unit
+            displayName: "Unit Test"
+      - job: integration_test
+        displayName: "Integration Test"
+        dependsOn: build
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Bin"
+            inputs:
+              source: current
+              artifact: build-bin
+              path: bin
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent SetBinExecutable
+            displayName: "Configure Agent"
+          - bash: ./build/run-integration-tests.sh
+            displayName: "Integration Test"
+      - job: e2e_test
+        displayName: "Run E2E tests on"
+        dependsOn: xbuild
+        strategy:
+          matrix:
+            windows:
+              poolName: "windows"
+              vmImage: ""
+            linux:
+              poolName: "Azure Pipelines"
+              vmImage: "ubuntu-latest"
+        pool:
+          name: $(poolName)
+          vmImage: $(vmImage)
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: xbuild-bin
+              path: bin
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
+            displayName: "Configure Agent"
+          - script: mage TestE2E
+            displayName: "Run E2E Tests"
 
-    - script: make verify
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Verify'
+  - stage: Publish
+    jobs:
+      - job: publish_binaries
+        steps:
+          - task: GoTool@0
+            inputs:
+              version: "$(GOVERSION)"
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: xbuild-bin
+              path: bin
+          - task: Docker@1
+            displayName: Docker Login
+            inputs:
+              containerRegistryType: Container Registry
+              dockerRegistryEndpoint: getporter-registry
+              command: login
+          - script: |
+              export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
+              make publish
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            displayName: "Publish Porter Binaries"
 
-    - script: make test-unit
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Unit Test'
-
-  - job: integration_test
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: '$(GOVERSION)'
-    - script: build/azure-pipelines.setup-go-workspace.sh
-      displayName: 'Set up the Go workspace'
-
-    - script: ./build/run-integration-tests.sh
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Integration Test'
-
-  - job: cli_test
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: '$(GOVERSION)'
-    - script: build/azure-pipelines.setup-go-workspace.sh
-      displayName: 'Set up the Go workspace'
-
-    - script: make build
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Build'
-
-    - script: |
-        make test-cli
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'CLI Test'
-
-- stage: Publish
-  jobs:
-  - job: publish_binaries
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: '$(GOVERSION)'
-    - script: build/azure-pipelines.setup-go-workspace.sh
-      displayName: 'Set up the Go workspace'
-    
-    # Don't combine with the next step, it messes up the templates in the binaries
-    - script: make build
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Get yourself a porter'
-
-    - script: make xbuild-all
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Cross Compile'
-
-    - task: Docker@1
-      displayName: Docker Login
-      inputs:
-        containerRegistryType: Container Registry
-        dockerRegistryEndpoint: getporter-registry
-        command: login
-
-    - script: |
-        export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
-        make publish
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-      displayName: 'Publish Porter Binaries'
-
-  - job: publish_example_bundles
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: '$(GOVERSION)'
-    - script: build/azure-pipelines.setup-go-workspace.sh
-      displayName: 'Set up the Go workspace'
-
-    - script: |
-        sudo make ajv
-        make build build-bundle validate-bundle
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      displayName: 'Validate Example Bundles'
-
-    - task: Docker@1
-      displayName: Docker Login
-      inputs:
-        containerRegistryType: Container Registry
-        dockerRegistryEndpoint: getporter-registry
-        command: login
-
-    - script: make publish-bundle
-      workingDirectory: '$(System.DefaultWorkingDirectory)'
-      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-      displayName: 'Publish Example Bundles'
+      - job: publish_example_bundles
+        steps:
+          - task: GoTool@0
+            inputs:
+              version: "$(GOVERSION)"
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Native Porter Binaries"
+            inputs:
+              source: current
+              artifact: build-bin
+              path: bin
+          - script: go run mage.go SetBinExecutable
+            displayName: "Setup Bin"
+          - bash: |
+              set -e
+              sudo make ajv
+              make build-bundle validate-bundle
+            displayName: "Validate Examples"
+          - task: Docker@1
+            displayName: Docker Login
+            inputs:
+              containerRegistryType: Container Registry
+              dockerRegistryEndpoint: getporter-registry
+              command: login
+          - script: make publish-bundle
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            displayName: "Publish Example Bundles"
