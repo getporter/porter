@@ -40,6 +40,7 @@ install:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
+      version: "9.9.3"
       namespace: "{{ bundle.parameters.namespace }}"
       replace: true
       set:
@@ -58,6 +59,7 @@ upgrade:
       name: "{{ bundle.parameters.wordpress-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
       chart: bitnami/wordpress
+      version: "9.9.3"
       outputs:
         - name: wordpress-password
           secret: "{{ bundle.parameters.wordpress-name }}"

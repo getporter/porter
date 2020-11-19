@@ -44,6 +44,7 @@ install:
     description: "Helm Install Wordpress"
     name: porter-workshop-wordpress
     chart: bitnami/wordpress
+    version: "9.9.3"
     namespace: wordpress
     replace: true
     set:
