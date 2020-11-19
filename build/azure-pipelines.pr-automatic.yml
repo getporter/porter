@@ -95,7 +95,7 @@ stages:
         dependsOn: build
         steps:
           - task: DownloadPipelineArtifact@2
-            displayName: "Download Cross-Compiled Porter Binaries"
+            displayName: "Download Native Porter Binaries"
             inputs:
               source: current
               artifact: build-bin
@@ -105,7 +105,7 @@ stages:
           - bash: |
               set -e
               sudo make ajv
-              make get-mixins build-bundle validate-bundle
+              make build-bundle validate-bundle
             displayName: "Validate Examples"
       - job: e2e_test
         displayName: "Run E2E tests on"
