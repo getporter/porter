@@ -126,6 +126,8 @@ stages:
               source: current
               artifact: xbuild-bin
               path: bin
+          - script: go run mage.go UseXBuildBinaries
+            displayName: "Setup Bin"
           - task: Docker@1
             displayName: Docker Login
             inputs:
