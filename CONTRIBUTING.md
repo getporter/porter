@@ -57,8 +57,8 @@ help out as you work on them. 💖
 We have a [roadmap] that will give you a good idea of the
 larger features that we are working on right now. That may help you decide what
 you would like to work on after you have tackled an issue or two to learn how to
-contribute to Porter. If you would like to contribute regularly to a larger
-issue on the roadmap, reach out to a maintainer on [Slack][slack].
+contribute to Porter. If you have a big idea for Porter, learn [how to propose
+a change to Porter][pep].
 
 Another great way to contribute is to create a mixin! You can start use the
 [Porter Skeletor][skeletor] repository as a template to start, along with the
@@ -75,6 +75,7 @@ When you create your first pull request, add your name to the bottom of our
 [board]: https://porter.sh/board
 [slack]: https://porter.sh/community#slack
 [roadmap]: https://porter.sh/src/README.md#roadmap
+[pep]: https://porter.sh/contribute/proposals/
 
 ## When to open a pull request
 
