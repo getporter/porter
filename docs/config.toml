@@ -72,6 +72,12 @@ pygmentsStyle = "friendly"
     identifier = "contributing-guide"
     weight = 53
     parent = "contribute"
+  [[menu.main]]
+    name = "Make a Proposal"
+    url = "/contribute/proposals/"
+    identifier = "proposals"
+    weight = 54
+    parent = "contribute"
 
 [[menu.main]]
   name = "Porter Commands"
