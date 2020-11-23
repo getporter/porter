@@ -111,6 +111,9 @@ listing the defined mage targets.
 You can enable tab completion for mage as well, so that you can type 
 `mage t[TAB]` and it will complete it with the name of matching targets.
 
+1. Install bash-completion if it isn't already installed with either `brew install
+    bash-completion` (macOS) or `apt install bash-completion` (debian/ubuntu) depending
+    on your operating system.
 1. Copy the mage-completion.sh script to a local directory:
     ```bash
     cp scripts/mage-completion.sh ~

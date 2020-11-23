@@ -261,7 +261,7 @@ tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestE2E` or `mage teste2e` for
-exmaple.
+example.
 
 * **TestE2E** runs a small suite of end-to-end tests using the Porter CLI.
 
