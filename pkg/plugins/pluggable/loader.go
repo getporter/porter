@@ -69,13 +69,6 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 	// Explicitly set PORTER_HOME for the plugin
 	pluginCommand.Env = l.Environ()
-	if _, homeSet := l.LookupEnv(config.EnvHOME); !homeSet {
-		home, err := l.GetHomeDir()
-		if err != nil {
-			return nil, nil, err
-		}
-		pluginCommand.Env = append(pluginCommand.Env, fmt.Sprintf("PORTER_HOME=%s", home))
-	}
 
 	if l.DebugPlugins {
 		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)

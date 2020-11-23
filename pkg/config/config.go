@@ -107,7 +107,7 @@ func (c *Config) GetHomeDir() (string, error) {
 	// As a relative path may be supplied via EnvHOME,
 	// we want to return the absolute path for programmatic usage elsewhere,
 	// for instance, in setting up volume mounts for outputs
-	c.porterHome = c.FileSystem.Abs(home)
+	c.SetHomeDir(c.FileSystem.Abs(home))
 
 	return c.porterHome, nil
 }
@@ -116,6 +116,10 @@ func (c *Config) GetHomeDir() (string, error) {
 // Porter home directory.
 func (c *Config) SetHomeDir(home string) {
 	c.porterHome = home
+
+	// Set this as an environment variable so that when we spawn new processes
+	// such as a mixin or plugin, that they can find PORTER_HOME too
+	c.Setenv(EnvHOME, home)
 }
 
 // SetPorterPath is a test function that allows tests to use an alternate
