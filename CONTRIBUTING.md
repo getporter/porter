@@ -252,7 +252,7 @@ You now have canary builds of porter and all the mixins installed.
 
 ## Makefile explained
 
-� We are in the process of transitioning from make to [mage](https://magefile.org).
+🚧 We are in the process of transitioning from make to [mage](https://magefile.org).
 
 ### Mage Targets
 
