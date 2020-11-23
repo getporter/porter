@@ -56,11 +56,76 @@ and executing the commands.
    submitting a pull request.
 * [Go](https://golang.org/doc/install) version 1.13 or higher
 * [Docker]
+* Make. You can install it with a package manager such as apt-get, or homebrew.
+* [Mage](#install-mage)
 
 [GitHub Guides]: https://guides.github.com/
 [Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [wsl]: https://docs.microsoft.com/en-us/windows/wsl/install-win10
 [Docker]: https://docs.docker.com/get-docker/
+
+### Add GOPATH/bin to your PATH
+
+Porter relies on a few tools that will be installed in your $GOPATH/bin directory.
+When go tools are installed, they automatically are put into GOPATH/bin and in
+order to use them that directory needs to be included in your PATH environment
+variable. This is a standard Go developer environment configuration and will be
+useful for other Go projects.
+
+1. Open your ~/.bash_profile or ~/.bashrc file (depending on your OS you will
+   have one or the other) and add the following line to the file:
+
+    ```bash
+    export PATH=$(go env GOPATH)/bin:$PATH
+    ```
+1. Now load the changes to your bash profile with `source ~/.bash_profile` or
+   `source ~/.bashrc`.
+
+### Install Mage
+
+We are transitioning from Make to [Mage]. Installing mage isn't strictly required,
+you can always run `go run mage.go TARGET` instead of `mage TARGET`. However having
+the tool saves typing and time!
+
+Mage targets are not case-sensitive, but in our docs we use camel case to make
+it easier to read. Run the following commands to install mage:
+
+```bash
+$ go run mage.go EnsureMage
+$ mage
+
+This is a magefile, and is a "makefile for go". See https://magefile.org/
+
+Targets:
+  configureAgent       sets up an Azure DevOps agent with Mage and ensures that GOPATH/bin is in PATH.
+  ensureMage           Ensure Mage is installed and on the PATH.
+  setBinExecutable     Run `chmod +x -R bin`.
+  startDocker          Ensure the docker daemon is started and ready to accept connections.
+  testE2E              Run end-to-end (e2e) tests
+  useXBuildBinaries    Copy the cross-compiled binaries from xbuild into bin.
+```
+
+You know that your $GOPATH/bin is configured correctly if you see the output above
+listing the defined mage targets.
+
+You can enable tab completion for mage as well, so that you can type 
+`mage t[TAB]` and it will complete it with the name of matching targets.
+
+1. Install bash-completion if it isn't already installed with either `brew install
+    bash-completion` (macOS) or `apt install bash-completion` (debian/ubuntu) depending
+    on your operating system.
+1. Copy the mage-completion.sh script to a local directory:
+    ```bash
+    cp scripts/mage-completion.sh ~
+    ```
+1. Open your ~/.bash_profile or ~/.bashrc file and add the following line to the
+    file:
+
+    ```bash
+    source ~/mage-completion.sh
+    ```
+1. Now load the changes to your bash profile with `source ~/.bash_profile` or
+   `source ~/.bashrc`.
 
 ## Checkout Code
 
@@ -90,7 +155,8 @@ the original porter repository and `origin` to refer to your fork:
     ```bash
     git remote add origin https://github.com/YOURNAME/porter.git
     ```
-1. Run `git remote -vv` to verify that origin is your fork and upstream is the canonical repository.
+1. Run `git remote -vv` to verify that origin is your fork and upstream is the 
+    canonical repository.
     ```bash
     $ git remote -vv
     origin      https://github.com/YOURNAME/porter.git (fetch)
@@ -130,35 +196,34 @@ make setup-dco
 
 ## Build Porter
 
-Now that we have the source code, let's build porter and make sure everything is working.
+Now that we have the source code, let's build porter and make sure everything is 
+working.
 
 ```bash
 make build
 ```
 
-You may see a message about your Go bin not being in your PATH. When go tools are installed, they automatically are put into GOPATH/bin and in order to use them that directory needs to be included in your PATH environment variable. This is a standard Go developer environment configuration and will be useful for other Go projects.
-
-1. Open your ~/.bash_profile or ~/.bashrc file (depending on your OS you will
-   have one or the other) and add the following line to the file:
-
-    ```
-    export PATH=$(go env GOPATH)/bin:$PATH
-    ```
-1. Now load the changes to your bash profile with `source ~/.bash_profile` or
-   `source ~/.bashrc`.
-1. Run `make build` again and it should work. If it doesn't, please let us know!
+You may see a message about your Go bin not being in your PATH. If that happens,
+[Add $GOPATH/bin to your PATH](#add-gopathbin-to-your-path) and then run 
+`make build` again. It should work now but if it doesn't, please let us know!
 
 ## Verify Porter
 
-After you have built Porter, the resulting `porter` command-line tool is placed in the bin directory. Let's try running porter to make sure everything worked:
+After you have built Porter, the resulting `porter` command-line tool is placed 
+in the bin directory. Let's try running porter to make sure everything worked:
 
 ```
 ./bin/porter help
 ```
 
-Now you that you have built Porter, let's try running a bundle to make sure Docker is installed and configured properly too. This is an abbreviated version of our [QuickStart]. If you are new to Porter, we recommend trying the QuickStart as well to learn how Porter works.
+Now you that you have built Porter, let's try running a bundle to make sure 
+Docker is installed and configured properly too. This is an abbreviated version
+of our [QuickStart]. If you are new to Porter, we recommend trying the 
+QuickStart as well to learn how Porter works.
 
-First let's do some quick configuration so that you can use the porter executable that you just built, instead of the installed porter. This change isn't permanent and only affects your current shell session.
+First let's do some quick configuration so that you can use the porter
+executable that you just built, instead of the installed porter. This change
+isn't permanent and only affects your current shell session.
 
 ```bash
 export PORTER_HOME=`pwd`/bin

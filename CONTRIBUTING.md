@@ -243,13 +243,32 @@ Here are the key steps, if you run into trouble, the tutorial has more details:
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
 1. Run `make build install` from within the newly cloned repository.
 
-If you are planning on contributing back to the project, you'll need to [fork](https://guides.github.com/activities/forking/) and clone your fork. If you want to build porter from scratch, you can follow the process above and clone directly from the project.
+If you are planning on contributing back to the project, you'll need to
+[fork](https://guides.github.com/activities/forking/) and clone your fork. If
+you want to build porter from scratch, you can follow the process above and
+clone directly from the project.
 
 You now have canary builds of porter and all the mixins installed.
 
 ## Makefile explained
 
-Here are the most common Makefile tasks
+🚧 We are in the process of transitioning from make to [mage](https://magefile.org).
+
+### Mage Targets
+
+Below are the targets that have been migrated to mage. Our new contributor
+tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
+
+Mage targets are not case-sensitive, but in our docs we use camel case to make
+it easier to read. You can run either `mage TestE2E` or `mage teste2e` for
+example.
+
+* **TestE2E** runs a small suite of end-to-end tests using the Porter CLI.
+
+### Make Targets
+
+Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
+`make build`.
 
 * `build` builds all binaries, porter and internal mixins.
 * `build-porter-client` just builds the porter client for your operating system.
@@ -266,7 +285,6 @@ Here are the most common Makefile tasks
 * `test-integration` runs the integration tests. This requires a kubernetes
   cluster setup with credentials located at **~/.kube/config**. Expect this to
   take 20 minutes.
-* `teste2e` runs a small suite of end-to-end tests using the Porter CLI.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.
@@ -347,7 +365,8 @@ a new blog post and then preview it:
    ---
    ```
 
-1. [Preview](#preview-documentation) the website and click "Blog" at the top right to find your blog post.
+1. [Preview](#preview-documentation) the website and click "Blog" at the top 
+    right to find your blog post.
 
 1. When you create a pull request, look at the checks run by the pull request,
     and click "Details" on the **netlify/porter/deploy-preview** one to see a live
