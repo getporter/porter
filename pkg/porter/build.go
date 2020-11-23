@@ -3,13 +3,13 @@ package porter
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/Masterminds/semver"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -25,16 +25,18 @@ type BuildOptions struct {
 	NoLint bool
 }
 
-func (o BuildOptions) Validate() error {
-	if o.Name != "" {
-		// TODO: What sort of validation, if any, do we want on the bundle name?
-		// Originally I had used the *installation* validation from cnab-go,
-		// but that is most likely more restrictive than what we want (no spaces allowed, etc.)
-	}
+// semVerRegex is a regex for ensuring bundle versions adhere to
+// semantic versioning per https://semver.org/#is-v123-a-semantic-version
+// Basis for this regex from github.com/Masterminds/semver
+const semVerRegex string = `([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
+	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
+	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
 
+func (o BuildOptions) Validate() error {
 	if o.Version != "" {
-		if _, err := semver.NewVersion(o.Version); err != nil {
-			return errors.Wrapf(err, "invalid bundle version %q.  Cannot be parsed as semver", o.Version)
+		versionRegex := regexp.MustCompile("^" + semVerRegex + "$")
+		if m := versionRegex.FindStringSubmatch(o.Version); m == nil {
+			return fmt.Errorf("invalid bundle version: %q is not a valid semantic version", o.Version)
 		}
 	}
 
