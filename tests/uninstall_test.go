@@ -11,6 +11,8 @@ import (
 )
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
+	t.Parallel()
+
 	testcases := []struct {
 		name                string
 		notInstalled        bool

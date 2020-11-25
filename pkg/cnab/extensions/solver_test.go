@@ -10,6 +10,8 @@ import (
 )
 
 func TestDependencySolver_ResolveDependencies(t *testing.T) {
+	t.Parallel()
+
 	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesKey: Dependencies{
@@ -46,6 +48,8 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 }
 
 func TestDependencySolver_ResolveVersion(t *testing.T) {
+	t.Parallel()
+
 	testcases := []struct {
 		name        string
 		dep         Dependency
@@ -77,6 +81,9 @@ func TestDependencySolver_ResolveVersion(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+
 			s := DependencySolver{}
 			version, err := s.ResolveVersion("mysql", tc.dep)
 

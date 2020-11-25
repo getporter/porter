@@ -8,7 +8,11 @@ import (
 )
 
 func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
+	t.Parallel()
+
 	t.Run("extension present", func(t *testing.T) {
+		t.Parallel()
+
 		ext := ProcessedExtensions{
 			DockerExtensionKey: Docker{
 				Privileged: true,
@@ -22,6 +26,8 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 	})
 
 	t.Run("extension missing", func(t *testing.T) {
+		t.Parallel()
+
 		ext := ProcessedExtensions{}
 
 		dockerExt, dockerRequired, err := ext.GetDocker()
@@ -31,6 +37,8 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 	})
 
 	t.Run("extension invalid", func(t *testing.T) {
+		t.Parallel()
+
 		ext := ProcessedExtensions{
 			DockerExtensionKey: map[string]string{"ponies": "are great"},
 		}

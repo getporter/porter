@@ -15,6 +15,8 @@ import (
 var simpleManifestDigest = "b3be65771034c64a0d49d2c8a4ac3103a1ec12d6e41015ef57861fd913f72ecf"
 
 func TestConfig_GenerateStamp(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
@@ -35,6 +37,8 @@ func TestConfig_GenerateStamp(t *testing.T) {
 }
 
 func TestConfig_LoadStamp(t *testing.T) {
+	t.Parallel()
+
 	bun := &bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: map[string]interface{}{
@@ -55,6 +59,8 @@ func TestConfig_LoadStamp(t *testing.T) {
 }
 
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
+	t.Parallel()
+
 	bun := &bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: []string{
@@ -70,9 +76,12 @@ func TestConfig_LoadStamp_Invalid(t *testing.T) {
 }
 
 func TestStamp_DecodeManifest(t *testing.T) {
-	c := config.NewTestConfig(t)
+	t.Parallel()
 
 	t.Run("manifest populated", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
 		s := Stamp{
 			EncodedManifest: "bmFtZTogaGVsbG8=", // name: hello
 		}
@@ -88,6 +97,8 @@ func TestStamp_DecodeManifest(t *testing.T) {
 	})
 
 	t.Run("manifest empty", func(t *testing.T) {
+		t.Parallel()
+
 		s := Stamp{}
 
 		data, err := s.DecodeManifest()
@@ -97,6 +108,8 @@ func TestStamp_DecodeManifest(t *testing.T) {
 	})
 
 	t.Run("manifest invalid", func(t *testing.T) {
+		t.Parallel()
+
 		s := Stamp{
 			EncodedManifest: "name: hello", // this should be base64 encoded
 		}
@@ -111,10 +124,14 @@ func TestStamp_DecodeManifest(t *testing.T) {
 }
 
 func TestConfig_DigestManifest(t *testing.T) {
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	t.Parallel()
 
 	t.Run("updated invocation image", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
+		c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+
 		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
@@ -129,6 +146,11 @@ func TestConfig_DigestManifest(t *testing.T) {
 	})
 
 	t.Run("updated version", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
+		c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+
 		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 		require.NoError(t, err, "could not load manifest")
 

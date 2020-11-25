@@ -14,6 +14,8 @@ import (
 )
 
 func TestExecOutputs(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -93,6 +95,8 @@ func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 }
 
 func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

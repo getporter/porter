@@ -10,7 +10,11 @@ import (
 )
 
 func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
+	t.Parallel()
+
 	t.Run("extension present", func(t *testing.T) {
+		t.Parallel()
+
 		var ps ParameterSources
 		ps.SetParameterFromOutput("tfstate", "tfstate")
 		processed := ProcessedExtensions{
@@ -24,6 +28,8 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 	})
 
 	t.Run("extension missing", func(t *testing.T) {
+		t.Parallel()
+
 		processed := ProcessedExtensions{}
 
 		ext, required, err := processed.GetParameterSources()
@@ -33,6 +39,8 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 	})
 
 	t.Run("extension invalid", func(t *testing.T) {
+		t.Parallel()
+
 		processed := ProcessedExtensions{
 			ParameterSourcesKey: map[string]string{"ponies": "are great"},
 		}
@@ -45,6 +53,8 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 }
 
 func TestReadParameterSourcesProperties(t *testing.T) {
+	t.Parallel()
+
 	data, err := ioutil.ReadFile("testdata/bundle.json")
 	require.NoError(t, err, "cannot read bundle file")
 
@@ -61,6 +71,8 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 }
 
 func TestParameterSource_ListSourcesByPriority(t *testing.T) {
+	t.Parallel()
+
 	ps := ParameterSources{}
 	ps.SetParameterFromOutput("tfstate", "tfstate")
 	got := ps["tfstate"].ListSourcesByPriority()

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
@@ -104,20 +105,14 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 		cb.ManifestPath = manifestPath
 	}
 
-	// Read the files
-	data, err := cxt.FileSystem.ReadFile(cb.BundlePath)
-	if err != nil {
-		return true, errors.Wrapf(err, "unable to read cached bundle file at %s", cb.BundlePath)
-	}
-
-	bun, err := bundle.Unmarshal(data)
+	bun, err := cnab.LoadBundle(cxt, cb.BundlePath)
 	if err != nil {
 		return true, errors.Wrapf(err, "unable to parse cached bundle file at %s", cb.BundlePath)
 	}
-	cb.Bundle = *bun
+	cb.Bundle = bun
 
 	if cb.RelocationFilePath != "" {
-		data, err = cxt.FileSystem.ReadFile(cb.RelocationFilePath)
+		data, err := cxt.FileSystem.ReadFile(cb.RelocationFilePath)
 		if err != nil {
 			return true, errors.Wrapf(err, "unable to read cached relocation file at %s", cb.RelocationFilePath)
 		}

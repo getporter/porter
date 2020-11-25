@@ -13,6 +13,8 @@ import (
 )
 
 func TestPorter_buildDockerfile(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -49,16 +51,19 @@ func TestPorter_buildDockerfile(t *testing.T) {
 }
 
 func TestPorter_buildCustomDockerfile(t *testing.T) {
-	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
-	configTpl, err := tmpl.GetManifest()
-	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
-
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
+	t.Parallel()
 
 	t.Run("build from custom docker without supplying ARG BUNDLE_DIR", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
+		tmpl := templates.NewTemplates()
+		configTpl, err := tmpl.GetManifest()
+		require.Nil(t, err)
+		c.TestContext.AddTestFileContents(configTpl, config.Name)
+
+		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		require.NoError(t, err, "could not load manifest")
 
 		// Use a custom dockerfile template
 		m.Dockerfile = "Dockerfile.template"
@@ -83,6 +88,16 @@ COPY mybin /cnab/app/
 	})
 
 	t.Run("build from custom docker with ARG BUNDLE_DIR supplied", func(t *testing.T) {
+		t.Parallel()
+
+		c := config.NewTestConfig(t)
+		tmpl := templates.NewTemplates()
+		configTpl, err := tmpl.GetManifest()
+		require.Nil(t, err)
+		c.TestContext.AddTestFileContents(configTpl, config.Name)
+
+		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		require.NoError(t, err, "could not load manifest")
 
 		// Use a custom dockerfile template
 		m.Dockerfile = "Dockerfile.template"
@@ -118,6 +133,8 @@ COPY mybin /cnab/app/
 }
 
 func TestPorter_buildDockerfile_output(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -155,6 +172,8 @@ CMD ["/cnab/app/run"]
 }
 
 func TestPorter_generateDockerfile(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -183,6 +202,8 @@ func TestPorter_generateDockerfile(t *testing.T) {
 }
 
 func TestPorter_prepareDockerFilesystem(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -214,6 +235,8 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 }
 
 func TestPorter_replacePorterMixinTokenWithBuildInstructions(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -256,6 +279,8 @@ COPY mybin /cnab/app/
 }
 
 func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()
@@ -298,6 +323,8 @@ COPY mybin /cnab/app/
 }
 
 func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	tmpl := templates.NewTemplates()
 	configTpl, err := tmpl.GetManifest()

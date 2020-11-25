@@ -14,6 +14,8 @@ import (
 // Do a migration. This also checks for any problems with our
 // connection handling which can result in panics :-)
 func TestClaimMigration_List(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

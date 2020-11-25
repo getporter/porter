@@ -11,6 +11,8 @@ import (
 )
 
 func TestPull_ContentDigestMissing(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

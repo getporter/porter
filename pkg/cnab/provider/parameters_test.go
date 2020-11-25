@@ -13,6 +13,8 @@ import (
 )
 
 func Test_loadParameters_paramNotDefined(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
@@ -31,6 +33,8 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 }
 
 func Test_loadParameters_definitionNotDefined(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
@@ -54,6 +58,8 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 }
 
 func Test_loadParameters_applyTo(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	// Here we set default values, but expect nil/empty
@@ -111,6 +117,8 @@ func Test_loadParameters_applyTo(t *testing.T) {
 }
 
 func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
@@ -138,6 +146,8 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 }
 
 func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	b := bundle.Bundle{
@@ -165,6 +175,8 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 }
 
 func Test_loadParameters_fileParameter(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
@@ -202,19 +214,19 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 }
 
 func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
-	r := NewTestRuntime(t)
-	r.TestParameters.AddTestParameters("testdata/paramset.json")
-	r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
-
-	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-	b, err := r.ProcessBundle("bundle.json")
-	require.NoError(t, err, "ProcessBundle failed")
-
-	overrides := map[string]string{
-		"foo": "foo_override",
-	}
+	t.Parallel()
 
 	t.Run("nothing present, use default", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
 		args := ActionArguments{
 			Installation: "mybun",
 			Action:       claim.ActionUpgrade,
@@ -226,6 +238,20 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("only override present", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
+		overrides := map[string]string{
+			"foo": "foo_override",
+		}
+
 		args := ActionArguments{
 			Installation: "mybun",
 			Action:       claim.ActionUpgrade,
@@ -238,6 +264,16 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("only parameter source present", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
 		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
 		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
 		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
@@ -253,6 +289,20 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("override > parameter source", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
+		overrides := map[string]string{
+			"foo": "foo_override",
+		}
+
 		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
 		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
 		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
@@ -269,6 +319,16 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("dependency output without type", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
 		fooBun := bundle.Bundle{
 			Name:    "foo-setup",
 			Version: bundle.CNABSpecVersion,
@@ -301,6 +361,16 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 	})
 
 	t.Run("merge parameter values", func(t *testing.T) {
+		t.Parallel()
+
+		r := NewTestRuntime(t)
+		r.TestParameters.AddTestParameters("testdata/paramset.json")
+		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+
+		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
+		b, err := r.ProcessBundle("bundle.json")
+		require.NoError(t, err, "ProcessBundle failed")
+
 		// foo is set by a the user
 		// bar is set by a parameter source
 		// baz is set by the bundle default
@@ -397,6 +467,9 @@ func Test_Paramapalooza(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
+					t.Parallel()
+					tc := tc
+
 					d := NewTestRuntime(t)
 
 					bun := bundle.Bundle{
@@ -494,6 +567,8 @@ func Test_Paramapalooza(t *testing.T) {
 }
 
 func TestRuntime_ResolveParameterSources(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")

@@ -56,10 +56,23 @@ func New() *Context {
 
 func (c *Context) defaultNewCommand() {
 	c.NewCommand = func(name string, arg ...string) *exec.Cmd {
-		cmd := exec.Command(name, arg...)
-		cmd.Dir = c.Getwd()
-		return cmd
+		return c.Command(name, arg...)
 	}
+}
+
+// Command creates a new exec.Cmd using the context's current directory.
+func (c *Context) Command(name string, arg ...string) *exec.Cmd {
+	cmd := &exec.Cmd{
+		Dir:  c.Getwd(),
+		Path: name,
+		Args: append([]string{name}, arg...),
+	}
+	if filepath.Base(name) == name {
+		if lp, ok := c.LookPath(name); ok {
+			cmd.Path = lp
+		}
+	}
+	return cmd
 }
 
 func getEnviron() map[string]string {

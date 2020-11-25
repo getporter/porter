@@ -12,6 +12,8 @@ import (
 )
 
 func TestRuntime_loadCredentials(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	r.TestCredentials.TestSecrets.AddSecret("password", "mypassword")

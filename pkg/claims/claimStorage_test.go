@@ -14,6 +14,8 @@ import (
 )
 
 func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
+	t.Parallel()
+
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
@@ -44,6 +46,8 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 }
 
 func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
+	t.Parallel()
+
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
@@ -62,6 +66,8 @@ func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 }
 
 func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
+	t.Parallel()
+
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)

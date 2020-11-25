@@ -12,6 +12,8 @@ import (
 )
 
 func TestInstall_relativePathPorterHome(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest() // This creates a temp porter home directory
 	defer p.CleanupIntegrationTest()
@@ -38,6 +40,8 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 }
 
 func TestInstall_fileParam(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -72,6 +76,8 @@ func TestInstall_fileParam(t *testing.T) {
 }
 
 func TestInstall_fileParam_fromTag(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -103,6 +109,8 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 }
 
 func TestInstall_withDockerignore(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

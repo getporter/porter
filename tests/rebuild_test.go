@@ -17,6 +17,8 @@ import (
 )
 
 func TestRebuild_InstallNewBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -35,6 +37,8 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 }
 
 func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -74,6 +78,8 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 }
 
 func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -94,6 +100,8 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 }
 
 func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()

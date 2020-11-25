@@ -10,6 +10,8 @@ import (
 )
 
 func TestReadDependencyProperties(t *testing.T) {
+	t.Parallel()
+
 	data, err := ioutil.ReadFile("testdata/bundle.json")
 	require.NoError(t, err, "cannot read bundle file")
 
@@ -36,6 +38,8 @@ func TestReadDependencyProperties(t *testing.T) {
 }
 
 func TestDependencies_ListBySequence(t *testing.T) {
+	t.Parallel()
+
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 
 	bun := bundle.Bundle{
