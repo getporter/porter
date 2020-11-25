@@ -132,9 +132,13 @@ func TestValidateBuildOpts(t *testing.T) {
 		opts:      BuildOptions{},
 		wantError: "",
 	}, {
-		name:      "invalid version set",
+		name:      "invalid version set - latest",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
 		wantError: `invalid bundle version: "latest" is not a valid semantic version`,
+	}, {
+		name:      "invalid version set - v prefix",
+		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "v1.0.0"}},
+		wantError: `invalid bundle version: "v1.0.0" is not a valid semantic version`,
 	}, {
 		name:      "valid name and value set",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},

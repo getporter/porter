@@ -27,7 +27,7 @@ type BuildOptions struct {
 
 // semVerRegex is a regex for ensuring bundle versions adhere to
 // semantic versioning per https://semver.org/#is-v123-a-semantic-version
-// Basis for this regex from github.com/Masterminds/semver
+// Regex adapted from github.com/Masterminds/semver
 const semVerRegex string = `([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
 	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
 	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
@@ -56,6 +56,10 @@ func (p *Porter) Build(opts BuildOptions) error {
 
 	// Publish may invoke this method and the manifest will already be
 	// populated.  Only load if still empty.
+	// For instance, Publish may be called with a full, new bundle reference
+	// via --tag, which will update the invocation image name and spark a new
+	// build here.  If we re-load from the local manifest, we will lose these
+	// values.
 	if p.Manifest == nil {
 		if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
 			return err
