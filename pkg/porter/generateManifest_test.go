@@ -34,7 +34,7 @@ func TestgenerateInternalManifest(t *testing.T) {
 
 	p := NewTestPorter(t)
 	p.TestConfig.SetupPorterHome()
-	p.TestConfig.TestContext.AddTestFile("testdata/generate-manifest/original.yaml", config.Name)
+	p.TestConfig.TestContext.AddTestFile("testdata/generateManifest/original.yaml", config.Name)
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestgenerateInternalManifest(t *testing.T) {
 			require.NoError(t, err)
 
 			want := p.TestConfig.TestContext.AddTestFile(
-				filepath.Join("testdata/generate-manifest", tc.wantManifest), tc.wantManifest)
+				filepath.Join("testdata/generateManifest", tc.wantManifest), tc.wantManifest)
 
 			got, err := p.FileSystem.ReadFile(build.LOCAL_MANIFEST)
 			require.NoError(t, err)

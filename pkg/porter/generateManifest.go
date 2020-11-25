@@ -16,6 +16,7 @@ import (
 type metadataOpts struct {
 	Name    string
 	Version string
+	Tag     string // This may be set via Publish
 }
 
 // generateInternalManifest decodes the manifest designated by filepath and applies
@@ -69,6 +70,7 @@ func (p *Porter) generateInternalManifest(opts metadataOpts) error {
 	defer output.Close()
 
 	// Encode the updated manifest to the proper location
+	// yqlib.NewYamlEncoder takes: dest (io.Writer), indent spaces (int), colorised output (bool)
 	var encoder = yqlib.NewYamlEncoder(output, 2, false)
 	return errors.Wrapf(encoder.Encode(&node), "unable to encode the manifest at %s", build.LOCAL_MANIFEST)
 }
@@ -77,6 +79,8 @@ func (p *Porter) generateInternalManifest(opts metadataOpts) error {
 // path and replacement value
 func createUpdateCommand(path, value string) yqlib.UpdateCommand {
 	var valueParser = yqlib.NewValueParser()
+	// valueParser.Parse takes: argument (string), custom tag (string),
+	// custom style (string), anchor name (string), create alias (bool)
 	var parsedValue = valueParser.Parse(value, "", "", "", false)
 	return yqlib.UpdateCommand{Command: "update", Path: path, Value: parsedValue, Overwrite: true}
 }
