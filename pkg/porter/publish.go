@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/config"
 	portercontext "get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
@@ -96,7 +95,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 			return err
 		}
 
-		if opts.File == config.Name && canonicalExists {
+		if canonicalExists {
 			err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
 			if err != nil {
 				return err
