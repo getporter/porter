@@ -31,7 +31,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	require.NoError(t, err)
 
 	wantlines := []string{
-		"FROM debian:stretch",
+		"FROM debian:stretch-slim",
 		"",
 		"ARG BUNDLE_DIR",
 		"",
@@ -137,7 +137,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 
 	wantlines := `
 Generating Dockerfile =======>
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 
