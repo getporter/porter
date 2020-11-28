@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -20,22 +21,65 @@ type BuildProvider interface {
 
 type BuildOptions struct {
 	contextOptions
+	metadataOpts
 	NoLint bool
+}
+
+// semVerRegex is a regex for ensuring bundle versions adhere to
+// semantic versioning per https://semver.org/#is-v123-a-semantic-version
+// Regex adapted from github.com/Masterminds/semver
+const semVerRegex string = `([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
+	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
+	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
+
+func (o BuildOptions) Validate() error {
+	if o.Version != "" {
+		versionRegex := regexp.MustCompile("^" + semVerRegex + "$")
+		if m := versionRegex.FindStringSubmatch(o.Version); m == nil {
+			return fmt.Errorf("invalid bundle version: %q is not a valid semantic version", o.Version)
+		}
+	}
+
+	return nil
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
-	err := p.LoadManifest()
-	if err != nil {
+	if err := opts.Validate(); err != nil {
 		return err
 	}
 
-	if !opts.NoLint {
-		err = p.preLint()
-		if err != nil {
+	if err := p.generateInternalManifest(opts.metadataOpts); err != nil {
+		return errors.Wrap(err, "unable to generate manifest")
+	}
+
+	// Publish may invoke this method and the manifest will already be
+	// populated.  Only load if still empty.
+	// For instance, Publish may be called with a full, new bundle reference
+	// via --tag, which will update the invocation image name and spark a new
+	// build here.  If we re-load from the local manifest, we will lose these
+	// values.
+	if p.Manifest == nil {
+		if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
 			return err
 		}
+	}
+
+	if !opts.NoLint {
+		if err := p.preLint(); err != nil {
+			return err
+		}
+	}
+
+	// Build bundle so that resulting bundle.json is available for inclusion
+	// into the invocation image.
+	// Note: the content digest field on the invocation image section of the
+	// bundle.json will *not* be correct until the image is actually pushed
+	// to a registry.  The bundle.json will need to be updated after publishing
+	// and provided just-in-time during bundle execution.
+	if err := p.buildBundle(p.Manifest.Image, ""); err != nil {
+		return errors.Wrap(err, "unable to build bundle")
 	}
 
 	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
@@ -46,11 +90,8 @@ func (p *Porter) Build(opts BuildOptions) error {
 	if err := generator.GenerateDockerFile(); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
-	if err := p.Builder.BuildInvocationImage(p.Manifest); err != nil {
-		return errors.Wrap(err, "unable to build CNAB invocation image")
-	}
 
-	return p.buildBundle(p.Manifest.Image, "")
+	return errors.Wrap(p.Builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
@@ -111,6 +152,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	if err != nil {
 		return err
 	}
+
 	return p.writeBundle(bun)
 }
 

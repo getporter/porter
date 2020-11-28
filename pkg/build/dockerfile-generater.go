@@ -72,8 +72,8 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 		lines = append(pretoken, append(mixinLines, posttoken...)...)
 	}
 
-	lines = append(lines, g.buildCNABSection()...)
 	lines = append(lines, g.buildPorterSection()...)
+	lines = append(lines, g.buildCNABSection()...)
 	lines = append(lines, g.buildWORKDIRSection())
 	lines = append(lines, g.buildCMDSection())
 
@@ -144,7 +144,9 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
 	return []string{
-		`COPY porter.yaml $BUNDLE_DIR/porter.yaml`,
+		// Remove the user-provided Porter manifest as the canonical version
+		// will migrate via its location in .cnab
+		`RUN rm $BUNDLE_DIR/porter.yaml`,
 	}
 }
 
@@ -183,7 +185,6 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	// clean up previously generated files
-	g.FileSystem.RemoveAll(LOCAL_CNAB)
 	g.FileSystem.Remove("Dockerfile")
 
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")

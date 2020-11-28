@@ -66,17 +66,15 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
 func (p *Porter) Publish(opts PublishOptions) error {
 	if opts.File != "" {
-		err := p.LoadManifestFrom(opts.File)
-		if err != nil {
+		if err := p.LoadManifestFrom(opts.File); err != nil {
 			return err
 		}
 	}
 
 	if opts.ArchiveFile == "" {
 		return p.publishFromFile(opts)
-	} else {
-		return p.publishFromArchive(opts)
 	}
+	return p.publishFromArchive(opts)
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
@@ -88,15 +86,31 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
 		}
 	} else {
+		// If the manifest file is the default/user-supplied manifest,
+		// hot-swap in Porter's canonical translation (if exists) from
+		// the .cnab/app directory, as there may be dynamic overrides for
+		// the name and version fields to inform invocation image naming.
+		canonicalExists, err := p.FileSystem.Exists(build.LOCAL_MANIFEST)
+		if err != nil {
+			return err
+		}
+
+		if canonicalExists {
+			err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
+			if err != nil {
+				return err
+			}
+		}
 		tag = p.Manifest.Reference
-	}
-	if p.Manifest.Reference == "" {
-		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
 	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
+	}
+
+	if p.Manifest.Reference == "" {
+		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
 	digest, err := p.Registry.PushInvocationImage(p.Manifest.Image)
