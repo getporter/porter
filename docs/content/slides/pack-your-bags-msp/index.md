@@ -528,7 +528,7 @@ Generating parameter definition porter-debug ====>
 ### Dockerfile
 ```Dockerfile
 FROM quay.io/deis/lightweight-docker-go:v0.2.0
-FROM debian:stretch
+FROM debian:stretch-slim
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ARG BUNDLE_DIR
@@ -1096,7 +1096,7 @@ dockerfile: Dockerfile.tmpl
 ### Dockerfile.tmpl
 
 ```Dockerfile
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 

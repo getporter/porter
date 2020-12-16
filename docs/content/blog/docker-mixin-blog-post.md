@@ -106,7 +106,7 @@ Run Whalesay
 Now, we will go through an example of how you can incorporate and build your own Docker image and then push it to Docker hub. First, you will need to create a Dockerfile named Dockerfile-cookies next to your porter.yaml and copy paste the code below into the file.
 
 ```
-FROM debian:stretch
+FROM debian:stretch-slim
 
 CMD ["echo", "Everyone loves cookies"]
 ```
@@ -154,7 +154,7 @@ After it runs, you should see output that the image was built and tagged success
 ```
 Build image
 Sending build context to Docker daemon  101.2MB
-Step 1/2 : FROM debian:stretch
+Step 1/2 : FROM debian:stretch-slim
  ---> 614bb74b620e
 Step 2/2 : CMD ["echo", "Everyone loves cookies"]
  ---> Using cache

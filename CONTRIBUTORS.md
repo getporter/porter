@@ -50,3 +50,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Don Stewart](https://github.com/donmstewart)
 * [Nicholas Carrigan](https://github.com/nhcarrigan)
 * [Stéphane Este-Gracias](https://github.com/sestegra)
+* [Jeetu Kumar](https://github.com/i-am-jeetu)
