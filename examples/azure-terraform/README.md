@@ -132,7 +132,7 @@ Once this command has finished, you will see some additional resources in your w
 
 ```bash
 $ more Dockerfile
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 

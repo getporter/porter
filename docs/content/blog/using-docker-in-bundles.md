@@ -84,7 +84,7 @@ In our [Dockerfile.tmpl](https://porter.sh/src/examples/docker/Dockerfile.tmpl)
 below, I am installing the Docker CLI and copying my files into the bundle:
 
 ```dockerfile
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 RUN apt-get update && apt-get install -y curl ca-certificates

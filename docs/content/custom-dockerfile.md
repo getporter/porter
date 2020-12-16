@@ -13,7 +13,7 @@ When you run `porter create` template Dockerfile is created for you
 in the current directory named **Dockerfile.tmpl**:
 
 ```Dockerfile
-FROM debian:stretch
+FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 
