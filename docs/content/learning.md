@@ -9,6 +9,7 @@ Do you have a blog post, video, tutorial, demo, or some other neat thing
 using Porter or CNAB that you'd like to share? [Open up a pull request][pr] 
 and show it off! ✨
 
+* [The Devil is in the Deployments: Bundle Use Cases](#the-devil-is-in-the-deployments-bundle-use-cases)
 * [Understanding Cloud Native Application Bundles](#understanding-cloud-native-application-bundles)
 * [Porter: Digital Ocean, Terraform, Kubernetes](#porter-digital-ocean-terraform-kubernetes)
 * [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#porter-bundle-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
@@ -16,6 +17,29 @@ and show it off! ✨
 * [Free Glue Code - Porter](#free-glue-code-porter)
 
 [pr]: /contribute/guide/
+
+### The Devil is in the Deployments: Bundle Use Cases
+
+Can you deploy your entire app from scratch with a Helm install? Or do you
+have cloud infra and hosted services that you rely on? The cloudy bits that make
+your app cloud native.
+
+Cloud Native Application Bundles, the CNAB spec, was designed to solve
+deployment problems that we all have been quietly battling with, mostly with
+hope and bash. Bundles come in handy when deploying applications that don't live
+neatly inside of just Kubernetes.
+
+Let's learn when bundles make sense, when they don't, and what your day could
+look like if you were using them:
+
+* Install tools to manage your app: helm, aws/azure/gcloud, terraform.
+* Deploy your app along with its infra: cloud storage, dns entry, load balancer, ssl cert.
+* Get software and its dependencies into airgapped networks.
+* Manage disparate operational tech, such as Helm or Terraform, across
+  teams and departments.
+* Secure your pipeline.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/wNl8m3h9I4E" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Understanding Cloud Native Application Bundles
 
