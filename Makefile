@@ -192,7 +192,7 @@ fetch-definitions-schema:
 HAS_AJV := $(shell command -v ajv)
 ajv:
 ifndef HAS_AJV
-	npm install -g ajv-cli
+	npm install -g ajv-cli@3.3.0
 endif
 
 .PHONY: validate-bundle
