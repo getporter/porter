@@ -123,7 +123,7 @@ func StartDocker() error {
 	case "windows":
 		_, err := shx.OutputS("powershell", "-c", "Get-Process 'Docker Desktop'")
 		if err != nil {
-			log.Println("Starting Docker Desktop")
+			fmt.Println("Starting Docker Desktop")
 			ran, err := sh.Exec(nil, nil, nil, `C:\Program Files\Docker\Docker\Docker Desktop.exe`)
 			if !ran {
 				return errors.Wrapf(err, "could not start Docker Desktop")
@@ -131,7 +131,7 @@ func StartDocker() error {
 		}
 	}
 
-	log.Print("Waiting for the docker service to be ready")
+	fmt.Print("Waiting for the docker service to be ready")
 	ready := false
 	for count := 0; count < 60; count++ {
 		err := shx.RunS("docker", "ps")
@@ -142,22 +142,22 @@ func StartDocker() error {
 			ready = true
 			break
 		}
-		log.Print(".")
+		fmt.Print(".")
 		time.Sleep(time.Second)
 	}
-	log.Println()
+	fmt.Println()
 
 	if !ready {
 		return errors.New("a timeout was reached waiting for the docker service to become unavailable")
 	}
 
-	log.Println("Docker service is ready!")
+	fmt.Println("Docker service is ready!")
 	return nil
 }
 
 func startLocalDockerRegistry() error {
 	if !isContainerRunning(registryContainer) {
-		log.Println("Starting local docker registry")
+		fmt.Println("Starting local docker registry")
 		return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", registryContainer, "registry:2")
 	}
 	return nil
@@ -165,7 +165,7 @@ func startLocalDockerRegistry() error {
 
 func stopLocalDockerRegistry() error {
 	if containerExists(registryContainer) {
-		log.Println("Stopping local docker registry")
+		fmt.Println("Stopping local docker registry")
 		return removeContainer(registryContainer)
 	}
 	return nil
