@@ -54,7 +54,7 @@ func ConfigureAgent() error {
 
 // Run end-to-end (e2e) tests
 func TestE2E() error {
-	mg.Deps(StartDocker, startLocalDockerRegistry)
+	mg.Deps(startLocalDockerRegistry)
 	defer stopLocalDockerRegistry()
 
 	// Only do verbose output of tests when called with `mage -v TestE2E`
@@ -121,11 +121,12 @@ func chmodRecursive(name string, mode os.FileMode) error {
 func StartDocker() error {
 	switch runtime.GOOS {
 	case "windows":
-		_, err := shx.OutputS("powershell", "-c", "Get-Process 'Docker Desktop'")
+		err := shx.RunS("powershell", "-c", "Get-Process 'Docker Desktop'")
 		if err != nil {
 			fmt.Println("Starting Docker Desktop")
-			ran, err := sh.Exec(nil, nil, nil, `C:\Program Files\Docker\Docker\Docker Desktop.exe`)
-			if !ran {
+			cmd := sh.Command(`C:\Program Files\Docker\Docker\Docker Desktop.exe`)
+			err := cmd.Cmd.Start()
+			if err != nil {
 				return errors.Wrapf(err, "could not start Docker Desktop")
 			}
 		}
@@ -156,11 +157,18 @@ func StartDocker() error {
 }
 
 func startLocalDockerRegistry() error {
-	if !isContainerRunning(registryContainer) {
-		fmt.Println("Starting local docker registry")
-		return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", registryContainer, "registry:2")
+	mg.Deps(StartDocker)
+	if isContainerRunning(registryContainer) {
+		return nil
 	}
-	return nil
+
+	err := removeContainer(registryContainer)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Starting local docker registry")
+	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", registryContainer, "registry:2")
 }
 
 func stopLocalDockerRegistry() error {
@@ -183,5 +191,10 @@ func containerExists(name string) bool {
 }
 
 func removeContainer(name string) error {
-	return shx.RunE("docker", "rm", "-f", name)
+	stderr, err := shx.OutputE("docker", "rm", "-f", name)
+	// Gracefully handle the container already being gone
+	if err != nil && !strings.Contains(stderr, "No such container") {
+		return err
+	}
+	return nil
 }

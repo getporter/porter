@@ -92,7 +92,7 @@ test-integration: clean-last-testrun start-local-docker-registry
 	$(GO) build -o $(PORTER_HOME)/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
 
-teste2e: clean-last-testrun start-local-docker-registry
+teste2e:
 	go run mage.go teste2e
 
 .PHONY: docs
