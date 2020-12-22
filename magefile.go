@@ -48,7 +48,7 @@ func ConfigureAgent() error {
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
 	}
-	fmt.Println("##vso[task.prependpath]/home/vsts/go/bin/")
+	fmt.Printf("##vso[task.prependpath]%s\n", gobin)
 	return nil
 }
 
