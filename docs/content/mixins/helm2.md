@@ -1,39 +1,45 @@
 ---
-title: helm mixin
-description: Manage a Helm release with the helm CLI
+title: helm2 mixin
+description: Manage a Helm release with the helm v2 CLI
+aliases:
+ - /mixins/helm/
 ---
 
 <img src="/images/mixins/helm.svg" class="mixin-logo" style="width: 150px"/>
 
-This is a [Helm](https://helm.sh) mixin for
-[Porter](https://github.com/getporter/porter). It executes the appropriate helm
-command based on which action it is included within: `install`, `upgrade`, or
-`delete`.
+This is a Helm v2 mixin for [Porter](https://github.com/getporter/porter). It
+executes the appropriate helm command based on which action it is included
+within: `install`, `upgrade`, or `delete`.
 
-Source: https://github.com/getporter/helm-mixin
+🚨 [Helm v2 is deprecated](https://helm.sh/blog/helm-2-becomes-unsupported/) so
+you should move to Helm v3 as soon as possible. After you [migrate to Helm
+3](https://helm.sh/docs/topics/v2_v3_migration/), use the [Helm 3
+mixin](/mixins/helm3/). 🚀
+
+Source: https://github.com/getporter/helm2-mixin
 
 ### Install or Upgrade
 
 ```shell
-porter mixin install helm
+porter mixin install helm2
 ```
 
 ### Mixin Configuration
 
-Helm client
+Helm client version
 
 ```yaml
 - helm:
-    clientVersion: v2.15.2
+    clientVersion: v2.17.0
 ```
 
-Repositories
+Add repositories
 
 ```yaml
 - helm:
     repositories:
-      bitnami:
-        url: "https://charts.bitnami.com/bitnami"
+      stable:
+        url: "https://charts.helm.sh/stable
 ```
 
 ### Mixin Syntax
