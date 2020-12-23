@@ -36,6 +36,8 @@ stages:
             displayName: "Configure Agent"
           - bash: make build
             displayName: "Native Build"
+          - bash: make build-images
+            displayName: "Build Docker Images"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
             inputs:

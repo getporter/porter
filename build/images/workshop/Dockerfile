@@ -1,7 +1,7 @@
 FROM docker:dind
 
 ARG PERMALINK
-ENV HELM_VER 2.16.1
+ENV HELM_VER 2.17.0
 
 RUN apk add bash \
             git \

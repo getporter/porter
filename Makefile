@@ -132,7 +132,12 @@ publish-mixins:
 	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
 	az storage blob upload -c porter -n atom.xml -f bin/atom.xml
 
-publish-images:
+.PHONY: build-images
+build-images:
+	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/build-images.sh
+
+.PHONY: publish-images
+publish-images: build-images
 	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
 
 start-local-docker-registry:
