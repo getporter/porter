@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"go/build"
 	"log"
@@ -132,28 +133,43 @@ func StartDocker() error {
 		}
 	}
 
-	fmt.Print("Waiting for the docker service to be ready")
-	ready := false
-	for count := 0; count < 60; count++ {
-		err := shx.RunS("docker", "ps")
-		if !sh.CmdRan(err) {
-			return errors.Wrap(err, "could not run docker")
-		}
-		if err == nil {
-			ready = true
-			break
-		}
-		fmt.Print(".")
-		time.Sleep(time.Second)
-	}
-	fmt.Println()
-
-	if !ready {
-		return errors.New("a timeout was reached waiting for the docker service to become unavailable")
+	ready, err := isDockerReady()
+	if err != nil {
+		return err
 	}
 
-	fmt.Println("Docker service is ready!")
-	return nil
+	if ready {
+		return nil
+	}
+
+	fmt.Println("Waiting for the docker service to be ready")
+	cxt, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-cxt.Done():
+			return errors.New("a timeout was reached waiting for the docker service to become unavailable")
+		default:
+			// Wait and check again
+			// Writing a dot on a single line so the CI logs show our progress, instead of a bunch of dots at the end
+			fmt.Println(".")
+			time.Sleep(time.Second)
+
+			if ready, _ := isDockerReady(); ready {
+				fmt.Println("Docker service is ready!")
+				return nil
+			}
+		}
+	}
+}
+
+func isDockerReady() (bool, error) {
+	err := shx.RunS("docker", "ps")
+	if !sh.CmdRan(err) {
+		return false, errors.Wrap(err, "could not run docker")
+	}
+
+	return err == nil, nil
 }
 
 func startLocalDockerRegistry() error {
