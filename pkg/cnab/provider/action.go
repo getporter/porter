@@ -60,6 +60,7 @@ func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
 func (r *Runtime) SetOutput() action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
 		op.Out = r.Out
+		op.Err = r.Err
 		return nil
 	}
 }
