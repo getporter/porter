@@ -56,6 +56,11 @@ az:
       path: SOURCE_FILEPATH
 ```
 
+NOTE: Some commands may not allow a flag to be repeated, and use a different
+syntax such as packing all the values into a single flag instance. [Change
+Settings for a Web Application](#change-settings-for-a-web-application)
+demonstrates how to handle inconsistent flags behavior.
+
 ### Suppress Output
 
 The `suppress-output` field controls whether output from the mixin should be
@@ -161,4 +166,23 @@ az:
   flags:
     resource-group: porterci
     name: myVM
+```
+
+### Change Settings for a Web Application
+
+The `--settings` flag for this command does not support being repeated. Instead you must pack all
+the setting values into a single flag using space-separated KEY=VALUE pairs.
+
+```yaml
+install: 
+  - az:
+      description: 'Deploy Web API configurations'
+      arguments:
+        - webapp
+        - config
+        - appsettings
+        - set
+      flags:
+        ids: '{{ bundle.outputs.WEBAPI_ID }}'
+        settings: 'PGHOST={{ bundle.outputs.POSTGRES_HOST }} PGUSER={{ bundle.outputs.POSTGRES_USER }} PGPASSWORD={{ bundle.outputs.POSTGRES_PASSWORD }} PGDB={{ bundle.outputs.POSTGRES_DB }}'
 ```
