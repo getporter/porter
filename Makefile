@@ -32,9 +32,6 @@ FILE_EXT=
 endif
 
 INT_MIXINS = exec
-EXT_MIXINS = helm arm terraform kubernetes
-MIXIN_TAG ?= canary
-MIXINS_URL = https://cdn.porter.sh/mixins
 
 .PHONY: build
 build: build-porter docs-gen build-mixins clean-packr get-mixins
@@ -76,9 +73,7 @@ xbuild-mixin-%: generate
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=$* -f mixin.mk
 
 get-mixins:
-	$(foreach MIXIN, $(EXT_MIXINS), \
-		bin/porter mixin install $(MIXIN) --version $(MIXIN_TAG) --url $(MIXINS_URL)/$(MIXIN); \
-	)
+	go run mage.go GetMixins
 
 verify:
 	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'

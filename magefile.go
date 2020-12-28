@@ -22,13 +22,17 @@ import (
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // Default target to run when none is specified
 // If not set, running mage will list available targets
 // var Default = Build
 
-const registryContainer = "registry"
+const (
+	registryContainer = "registry"
+	mixinsURL         = "https://cdn.porter.sh/mixins/"
+)
 
 // Ensure Mage is installed and on the PATH.
 func EnsureMage() error {
@@ -51,6 +55,45 @@ func ConfigureAgent() error {
 	}
 	fmt.Printf("##vso[task.prependpath]%s\n", gobin)
 	return nil
+}
+
+// Install mixins used by tests and example bundles, if not already installed
+func GetMixins() error {
+	mixinTag := os.Getenv("MIXIN_TAG")
+	if mixinTag == "" {
+		mixinTag = "canary"
+	}
+
+	mixins := []string{"helm", "arm", "terraform", "kubernetes"}
+	var errG errgroup.Group
+	for _, mixin := range mixins {
+		mixinDir := filepath.Join("bin/mixins/", mixin)
+		if _, err := os.Stat(mixinDir); err == nil {
+			log.Println("Mixin already installed into bin:", mixin)
+			continue
+		}
+
+		mixin := mixin
+		errG.Go(func() error {
+			log.Println("Installing mixin:", mixin)
+			mixinURL := mixinsURL + mixin
+			_, _, err := porter("mixin", "install", mixin, "--version", mixinTag, "--url", mixinURL).Run()
+			return err
+		})
+	}
+
+	return errG.Wait()
+}
+
+// Run a porter command from the bin
+func porter(args ...string) sh.PreparedCommand {
+	porterPath := filepath.Join("bin", "porter")
+	p := sh.Command(porterPath, args...)
+
+	porterHome, _ := filepath.Abs("bin")
+	p.Cmd.Env = []string{"PORTER_HOME=" + porterHome}
+
+	return p
 }
 
 // Run end-to-end (e2e) tests
