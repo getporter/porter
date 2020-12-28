@@ -39,9 +39,8 @@ func TestInvokeCustomAction(t *testing.T) {
 	err = p.InvokeBundle(invokeOpts)
 	require.NoError(t, err, "invoke should have succeeded")
 
-	// TODO: We can't check this yet because docker driver is printing directly to stdout instead of to the given writer
-	//gotOutput := p.TestConfig.TestContext.GetOutput()
-	//assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Verify that the custom action was recorded properly
 	i, err := p.Claims.ReadInstallationStatus(p.Manifest.Name)

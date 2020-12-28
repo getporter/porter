@@ -61,9 +61,8 @@ func TestInstall_fileParam(t *testing.T) {
 	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
-	// TODO: We can't check this yet because docker driver is printing directly to stdout instead of to the given writer
-	// output := p.TestConfig.TestContext.GetOutput()
-	// require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
 	outputs, err := p.Claims.ReadLastOutputs(p.Manifest.Name)
 	require.NoError(t, err, "ReadLastOutput failed")
