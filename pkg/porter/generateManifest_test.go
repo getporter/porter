@@ -33,7 +33,6 @@ func TestgenerateInternalManifest(t *testing.T) {
 	}}
 
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	p.TestConfig.TestContext.AddTestFile("testdata/generateManifest/original.yaml", config.Name)
 
 	for _, tc := range testcases {

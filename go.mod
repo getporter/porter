@@ -3,9 +3,6 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
-	github.com/qri-io/jsonschema => /Users/carolynvs/go/src/github.com/qri-io/jsonschema
-
-	// See https://github.com/cnabio/cnab-go/pull/233 (command-driver)
 	// jsonschema lock
 	github.com/cnabio/cnab-go => /Users/carolynvs/go/src/github.com/cnabio/cnab-go
 
@@ -22,6 +19,9 @@ replace (
 	// Fork (fluent branch) that adds fluent syntax and supports running a
 	// command in a directory without using chdir
 	github.com/magefile/mage => github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0
+
+	// jsonschema lock
+	github.com/qri-io/jsonschema => /Users/carolynvs/go/src/github.com/qri-io/jsonschema
 
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 )
