@@ -6,7 +6,7 @@ description: Manage a Helm release with the helm v3 CLI
 <img src="https://porter.sh/images/mixins/helm.svg" align="right" width="150px"/>
 
 This is a Helm3 mixin for [Porter](https://github.com/getporter/porter). It executes the
-appropriate helm command based on which action it is included within: `install`,
+appropriate helm command based on which action is included within: `install`,
 `upgrade`, or `delete`.
 
 Source: https://github.com/MChorfa/porter-helm3
@@ -88,7 +88,7 @@ uninstall:
 
 #### Outputs
 
-The mixin supports saving secrets from Kuberentes as outputs.
+The mixin supports saving secrets from Kubernetes as outputs.
 
 ```yaml
 outputs:
