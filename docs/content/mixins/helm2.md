@@ -39,7 +39,7 @@ Add repositories
 - helm:
     repositories:
       stable:
-        url: "https://charts.helm.sh/stable
+        url: "https://charts.helm.sh/stable"
 ```
 
 ### Mixin Syntax
