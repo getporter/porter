@@ -1,10 +1,13 @@
 package porter
 
 import (
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
@@ -159,7 +162,45 @@ func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
 	return *bun
 }
 
-type TestBuildProvider struct{}
+func (p *TestPorter) RandomString(len int) string {
+	rand.Seed(time.Now().UnixNano())
+	bytes := make([]byte, len)
+	for i := 0; i < len; i++ {
+		//A=97 and Z = 97+25
+		bytes[i] = byte(97 + rand.Intn(25))
+	}
+	return string(bytes)
+}
+
+// AddTestBundleDir into the test bundle directory and give it a unique name
+// to avoid collisions with other tests running in parallel.
+func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool) string {
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, bundleDir), p.BundleDir)
+
+	testManifest := filepath.Join(p.BundleDir, config.Name)
+	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
+	require.NoError(p.T(), err)
+
+	if !generateUniqueName {
+		return m.Name
+	}
+
+	e := manifest.NewEditor(p.Context)
+	err = e.ReadFile(testManifest)
+	require.NoError(p.T(), err)
+
+	uniqueName := fmt.Sprintf("%s-%s", m.Name, p.RandomString(5))
+	err = e.SetValue("name", uniqueName)
+	require.NoError(p.T(), err)
+
+	err = e.WriteFile(testManifest)
+	require.NoError(p.T(), err)
+
+	return uniqueName
+}
+
+type TestBuildProvider struct {
+}
 
 func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}

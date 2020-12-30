@@ -29,7 +29,7 @@ func NewDockerBuilder(cxt *portercontext.Context) *DockerBuilder {
 }
 
 func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error {
-	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build =======> \n")
+	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
 		PullParent:     false,

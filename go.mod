@@ -4,7 +4,7 @@ go 1.13
 
 replace (
 	// jsonschema lock
-	github.com/cnabio/cnab-go => /Users/carolynvs/go/src/github.com/cnabio/cnab-go
+	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.13.4-0.20201230032116-229dd4b057af
 
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
@@ -21,7 +21,7 @@ replace (
 	github.com/magefile/mage => github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0
 
 	// jsonschema lock
-	github.com/qri-io/jsonschema => /Users/carolynvs/go/src/github.com/qri-io/jsonschema
+	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20201229145510-cc593f443fdb
 
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 )

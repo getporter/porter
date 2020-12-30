@@ -14,6 +14,7 @@ import (
 
 	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
+	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -117,12 +118,12 @@ func (c *TestContext) Cleanup() {
 func (c *TestContext) AddTestFile(src, dest string) []byte {
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
-		c.T.Fatal(err)
+		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
 	}
 
 	err = c.FileSystem.WriteFile(dest, data, os.ModePerm)
 	if err != nil {
-		c.T.Fatal(err)
+		c.T.Fatal(errors.Wrapf(err, "error writing file %s to test filesystem", dest))
 	}
 
 	return data

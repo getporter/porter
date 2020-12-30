@@ -4,11 +4,9 @@ package tests
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/cnabio/cnab-go/claim"
@@ -32,16 +30,6 @@ func TestDependenciesLifecycle(t *testing.T) {
 	invokeWordpressBundle(p, namespace)
 
 	uninstallWordpressBundle(p, namespace)
-}
-
-func randomString(len int) string {
-	rand.Seed(time.Now().UnixNano())
-	bytes := make([]byte, len)
-	for i := 0; i < len; i++ {
-		//A=97 and Z = 97+25
-		bytes[i] = byte(97 + rand.Intn(25))
-	}
-	return string(bytes)
 }
 
 func publishMySQLBundle(p *porter.TestPorter) {
@@ -71,7 +59,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	// Install the bundle that has dependencies
 	p.CopyDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress"), ".", false)
 
-	namespace = randomString(10)
+	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
 	installOpts.CredentialIdentifiers = []string{"ci"}
 	installOpts.Params = []string{

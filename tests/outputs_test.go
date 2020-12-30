@@ -4,7 +4,6 @@ package tests
 
 import (
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -76,7 +75,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../examples/exec-outputs"), ".")
+	p.AddTestBundleDir("../examples/exec-outputs", true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
@@ -102,7 +101,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/outputs-example"), ".")
+	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 
 	// Install the bundle
 	// A step-level output will be used during this action

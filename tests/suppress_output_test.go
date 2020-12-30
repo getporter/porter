@@ -3,7 +3,6 @@
 package tests
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestSuppressOutput(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/suppressed-output-example"), ".")
+	p.AddTestBundleDir("testdata/bundles/suppressed-output-example", true)
 
 	// Install (Output suppressed)
 	installOpts := porter.NewInstallOptions()

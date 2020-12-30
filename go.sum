@@ -87,6 +87,8 @@ github.com/carolynvs/cnab-go v0.13.4-0.20201230032116-229dd4b057af h1:qDvnCQWrSs
 github.com/carolynvs/cnab-go v0.13.4-0.20201230032116-229dd4b057af/go.mod h1:vW7N9iN+Jd5P37cQNYS/q1IQLCfakqIFg08BQ8MHZdw=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
+github.com/carolynvs/jsonschema v0.2.1-0.20201229145510-cc593f443fdb h1:c7GTaHPGaDjZ7z0GYHcpml41Xy72pSkaw4xFMPbz3Aw=
+github.com/carolynvs/jsonschema v0.2.1-0.20201229145510-cc593f443fdb/go.mod h1:g7DPkiOsK1xv6T/Ao5scXRkd+yTFygcANPBaaqW+VrI=
 github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0 h1:5W+JLpLwd/6dZGllMKWGlEGuUzI2o27CZXzKXWdLUnI=
 github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0/go.mod h1:z5UZb/iS3GoOSn0JgWuiw7dxlurVYTu+/jHXqQg881A=
 github.com/carolynvs/magex v0.2.1-0.20201116013928-d6af240c802c h1:X+V0HFxdUNGSxAX4ej9gmpGLPcOqqnhdRTs4RsEXypA=
@@ -379,9 +381,10 @@ github.com/mattn/go-colorable v0.1.7 h1:bQGKb3vps/j0E9GfJQ03JyhRuxsvdAanXlT9BTw3
 github.com/mattn/go-colorable v0.1.7/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
+github.com/mattn/go-isatty v0.0.9 h1:d5US/mDsogSGW37IV293h//ZFaeajb69h+EHFsv2xGg=
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
-github.com/mattn/go-isatty v0.0.9 h1:d5US/mDsogSGW37IV293h//ZFaeajb69h+EHFsv2xGg=
+github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-runewidth v0.0.7 h1:Ei8KR0497xHyKJPAv59M1dkC+rOZCMBJ+t3fZ+twI54=
 github.com/mattn/go-runewidth v0.0.7/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=

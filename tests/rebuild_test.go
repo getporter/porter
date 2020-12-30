@@ -3,7 +3,6 @@
 package tests
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -86,7 +85,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	p.Debug = false
 
 	// Create a bundle that uses credentials
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
@@ -108,7 +107,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	p.Debug = false
 
 	// Create a bundle that uses credentials
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
