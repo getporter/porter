@@ -32,7 +32,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/aferox v0.2.1
 	github.com/carolynvs/datetime-printer v0.2.0
-	github.com/carolynvs/magex v0.2.1-0.20201116013928-d6af240c802c
+	github.com/carolynvs/magex v0.3.1-0.20201231144157-18bcbf7fb1fa
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.15.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1

@@ -68,6 +68,7 @@ stages:
       - job: integration_test
         displayName: "Integration Test"
         dependsOn: build
+        pool: "windows" # Run on our beefier custom agent
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: "Download Bin"
@@ -81,7 +82,7 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
-          - bash: ./build/run-integration-tests.sh
+          - script: mage TestIntegration
             displayName: "Integration Test"
       - job: e2e_test
         displayName: "Run E2E tests on"

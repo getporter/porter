@@ -91,7 +91,7 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
-          - script: ./build/run-integration-tests.sh
+          - script: mage TestIntegration
             displayName: "Integration Test"
       - job: build_examples
         displayName: "Build Examples"
