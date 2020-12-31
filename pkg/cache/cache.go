@@ -17,7 +17,7 @@ import (
 type BundleCache interface {
 	FindBundle(tag string) (bun CachedBundle, found bool, err error)
 	StoreBundle(tag string, bun bundle.Bundle, reloMap *relocation.ImageRelocationMap) (CachedBundle, error)
-	GetCacheDir() (string, error)
+	GetCacheDir() string
 }
 
 var _ BundleCache = &Cache{}
@@ -42,11 +42,7 @@ func (c *Cache) FindBundle(bundleTag string) (CachedBundle, bool, error) {
 		Tag: bundleTag,
 	}
 
-	cacheDir, err := c.GetCacheDir()
-	if err != nil {
-		return CachedBundle{}, false, err
-	}
-	cb.SetCacheDir(cacheDir)
+	cb.SetCacheDir(c.GetCacheDir())
 
 	found, err := cb.Load(c.Context)
 	if err != nil {
@@ -70,14 +66,10 @@ func (c *Cache) StoreBundle(bundleTag string, bun bundle.Bundle, reloMap *reloca
 		RelocationMap: reloMap,
 	}
 
-	cacheDir, err := c.GetCacheDir()
-	if err != nil {
-		return CachedBundle{}, err
-	}
-	cb.SetCacheDir(cacheDir)
+	cb.SetCacheDir(c.GetCacheDir())
 
 	// Remove any previously cached bundle files
-	err = c.FileSystem.RemoveAll(cb.cacheDir)
+	err := c.FileSystem.RemoveAll(cb.cacheDir)
 	if err != nil {
 		return CachedBundle{}, errors.Wrapf(err, "cannot remove existing cache directory %s", cb.BundlePath)
 	}
@@ -159,10 +151,6 @@ func (c *Cache) cacheManifest(cb *CachedBundle) error {
 	return nil
 }
 
-func (c *Cache) GetCacheDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "cache"), nil
+func (c *Cache) GetCacheDir() string {
+	return filepath.Join(c.GetHomeDir(), "cache")
 }

@@ -17,7 +17,7 @@ func TestPlugins_CatchStderr(t *testing.T) {
 	c.SetupIntegrationTest()
 
 	t.Run("plugin throws an error", func(t *testing.T) {
-		pluginsPath, _ := c.GetPluginsDir()
+		pluginsPath := c.GetPluginsDir()
 		pluginName := "testplugin"
 
 		err := exec.Command("mkdir", "-p", path.Join(pluginsPath, pluginName)).Run()

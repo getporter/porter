@@ -14,9 +14,6 @@ func TestFileSystem_Delete_DeletePackage(t *testing.T) {
 	c := config.NewTestConfig(t)
 	p := NewFileSystem(c.Config, "packages")
 
-	parentDir, _ := p.GetPackagesDir()
-	pkgDir := path.Join(parentDir, "mixxin")
-
 	opts := pkgmgmt.UninstallOptions{
 		Name: "mixxin",
 	}
@@ -26,6 +23,7 @@ func TestFileSystem_Delete_DeletePackage(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Make sure the package directory was removed
+	pkgDir := path.Join(p.GetPackagesDir(), "mixxin")
 	dirExists, _ := p.FileSystem.DirExists(pkgDir)
 	assert.False(t, dirExists)
 }

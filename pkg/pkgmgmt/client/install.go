@@ -31,8 +31,7 @@ func (fs *FileSystem) Install(opts pkgmgmt.InstallOptions) error {
 }
 
 func (fs *FileSystem) savePackageInfo(opts pkgmgmt.InstallOptions) error {
-	parentDir, _ := fs.GetPackagesDir()
-	cacheJSONPath := filepath.Join(parentDir, "/", PackageCacheJSON)
+	cacheJSONPath := filepath.Join(fs.GetPackagesDir(), "/", PackageCacheJSON)
 	exists, _ := fs.FileSystem.Exists(cacheJSONPath)
 	if !exists {
 		_, err := fs.FileSystem.Create(cacheJSONPath)
@@ -132,14 +131,10 @@ func (fs *FileSystem) InstallFromFeedURL(opts pkgmgmt.InstallOptions) error {
 }
 
 func (fs *FileSystem) downloadPackage(name string, clientUrl url.URL, runtimeUrl url.URL) error {
-	parentDir, err := fs.GetPackagesDir()
-	if err != nil {
-		return err
-	}
-	pkgDir := filepath.Join(parentDir, name)
+	pkgDir := filepath.Join(fs.GetPackagesDir(), name)
 
 	clientPath := fs.BuildClientPath(pkgDir, name)
-	err = fs.downloadFile(clientUrl, clientPath, true)
+	err := fs.downloadFile(clientUrl, clientPath, true)
 	if err != nil {
 		return err
 	}

@@ -17,14 +17,10 @@ func (fs *FileSystem) Uninstall(opts pkgmgmt.UninstallOptions) error {
 }
 
 func (fs *FileSystem) uninstallByName(name string) error {
-	parentDir, err := fs.GetPackagesDir()
-	if err != nil {
-		return err
-	}
-	pkgDir := filepath.Join(parentDir, name)
+	pkgDir := filepath.Join(fs.GetPackagesDir(), name)
 	exists, _ := fs.FileSystem.Exists(pkgDir)
 	if exists == true {
-		err = fs.FileSystem.RemoveAll(pkgDir)
+		err := fs.FileSystem.RemoveAll(pkgDir)
 		if err != nil {
 			return errors.Wrapf(err, "could not remove %s directory %q", fs.PackageType, pkgDir)
 		}

@@ -201,12 +201,7 @@ func (m *Manager) Migrate() (string, error) {
 	}
 	defer m.Close()
 
-	home, err := m.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	logfilePath := filepath.Join(home, fmt.Sprintf("%s-migrate.log", time.Now().Format("20060102150405")))
+	logfilePath := filepath.Join(m.GetHomeDir(), fmt.Sprintf("%s-migrate.log", time.Now().Format("20060102150405")))
 	logfile, err := m.FileSystem.Create(logfilePath)
 	if err != nil {
 		return "", errors.Wrapf(err, "error creating logfile for migration at %s", logfilePath)

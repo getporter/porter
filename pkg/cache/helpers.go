@@ -34,6 +34,6 @@ func (c *TestCache) StoreBundle(tag string, bun bundle.Bundle, reloMap *relocati
 	return c.cache.StoreBundle(tag, bun, reloMap)
 }
 
-func (c *TestCache) GetCacheDir() (string, error) {
+func (c *TestCache) GetCacheDir() string {
 	return c.cache.GetCacheDir()
 }

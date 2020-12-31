@@ -15,11 +15,7 @@ import (
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	p := NewTestPorter(t)
 
-	home, err := p.TestConfig.GetHomeDir()
-	t.Logf("home dir is: %s", home)
-	cacheDir, err := p.Cache.GetCacheDir()
-	require.NoError(t, err, "should have had a porter cache dir")
-	t.Logf("cache dir is: %s", cacheDir)
+	cacheDir := p.Cache.GetCacheDir()
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 	fullPath := filepath.Join(cacheDir, "887e7e65e39277f8744bd00278760b06/cnab/bundle.json")
 	fileExists, err := p.FileSystem.Exists(fullPath)

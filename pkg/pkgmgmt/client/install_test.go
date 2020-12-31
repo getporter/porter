@@ -92,9 +92,6 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	c := config.NewTestConfig(t)
 	p := NewFileSystem(c.Config, "packages")
 
-	parentDir, _ := p.GetPackagesDir()
-	pkgDir := path.Join(parentDir, "mixxin")
-
 	opts := pkgmgmt.InstallOptions{
 		Version: "latest",
 		URL:     ts.URL,
@@ -106,6 +103,7 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	assert.Contains(t, err.Error(), "bad status returned when downloading")
 
 	// Make sure the package directory was removed
+	pkgDir := path.Join(p.GetPackagesDir(), "mixxin")
 	dirExists, _ := p.FileSystem.DirExists(pkgDir)
 	assert.False(t, dirExists)
 }

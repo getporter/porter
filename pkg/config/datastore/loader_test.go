@@ -137,7 +137,6 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 
 func TestData_Marshal(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.SetHomeDir("/root/.porter")
 
 	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
 

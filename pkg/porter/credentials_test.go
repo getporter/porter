@@ -232,21 +232,19 @@ func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	require.NoError(t, err, "Validate failed")
 
 	// Create the credentials directory
-	home, err := p.Config.GetHomeDir()
-	require.NoError(t, err, "should have been able to get home directory path")
-	credDir := filepath.Join(home, "credentials")
+	credDir := filepath.Join(p.GetHomeDir(), "credentials")
 	err = p.Config.FileSystem.MkdirAll(credDir, 0600)
 	require.NoError(t, err, "should have been able to make directory path")
 
 	// Verify the directory does in fact, exist.
-	credDirExists, err := p.Porter.Context.FileSystem.DirExists(credDir)
+	credDirExists, err := p.FileSystem.DirExists(credDir)
 	require.NoError(t, err, "shouldn't have failed on dir exists")
 	require.True(t, credDirExists, "there should have been a credential directory for this test")
 
 	// Generate the credential now. The directory does exist, so there should be no error.
 	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "credential generation should have been successful")
-	credDirExists, err = p.Porter.Context.FileSystem.DirExists(credDir)
+	credDirExists, err = p.FileSystem.DirExists(credDir)
 	require.NoError(t, err, "shouldn't have gotten an error checking credential directory after generate")
 	assert.True(t, credDirExists, "should have been a credential directory after the generation")
 

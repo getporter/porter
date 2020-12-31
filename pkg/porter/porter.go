@@ -67,6 +67,15 @@ func NewWithConfig(c *config.Config) *Porter {
 	}
 }
 
+// Init sets up the porter app and checks for common errors
+// that would prevent Porter from running.
+func (p *Porter) Init() error {
+	// Do one-time checks before we run a porter command so that we aren't
+	// checking for errors constantly in the rest of the code
+	_, err := p.FindHomeDir()
+	return err
+}
+
 func (p *Porter) LoadManifest() error {
 	if p.Manifest != nil {
 		return nil

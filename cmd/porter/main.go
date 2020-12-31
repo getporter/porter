@@ -33,8 +33,14 @@ func buildRootCommand() *cobra.Command {
   porter install
   porter uninstall`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			err := p.Init()
+			if err != nil {
+				return err
+			}
+
+			// Load configuration data
 			p.Config.DataLoader = datastore.FromFlagsThenEnvVarsThenConfigFile(cmd)
-			err := p.LoadData()
+			err = p.LoadData()
 			if err != nil {
 				return err
 			}

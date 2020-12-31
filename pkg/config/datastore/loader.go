@@ -45,7 +45,7 @@ func FromConfigFile(cfg *config.Config) error {
 
 func buildDataLoader(viperCfg func(v *viper.Viper)) config.DataStoreLoaderFunc {
 	return func(cfg *config.Config) error {
-		home, _ := cfg.GetHomeDir()
+		home := cfg.GetHomeDir()
 
 		v := viper.New()
 		v.SetFs(cfg.FileSystem)
@@ -59,6 +59,11 @@ func buildDataLoader(viperCfg func(v *viper.Viper)) config.DataStoreLoaderFunc {
 		var data config.Data
 		if err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+				fmt.Println(errors.Wrap(err, "could not load config file, looked in:"))
+				files, _ := cfg.FileSystem.ReadDir(home)
+				for _, f := range files {
+					fmt.Println(f.Name())
+				}
 				data = DefaultDataStore()
 			} else {
 				return errors.Wrapf(err, "error reading config file at %q", v.ConfigFileUsed())

@@ -43,8 +43,7 @@ type FileSystem struct {
 }
 
 func (fs *FileSystem) List() ([]string, error) {
-	parentDir, err := fs.GetPackagesDir()
-
+	parentDir := fs.GetPackagesDir()
 	files, err := fs.FileSystem.ReadDir(parentDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list the contents of the %s directory %q", fs.PackageType, parentDir)
@@ -112,22 +111,12 @@ func (fs *FileSystem) Run(pkgContext *context.Context, name string, commandOpts 
 	return r.Run(commandOpts)
 }
 
-func (fs *FileSystem) GetPackagesDir() (string, error) {
-	home, err := fs.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(home, fs.PackageType), nil
+func (fs *FileSystem) GetPackagesDir() string {
+	return filepath.Join(fs.GetHomeDir(), fs.PackageType)
 }
 
 func (fs *FileSystem) GetPackageDir(name string) (string, error) {
-	parentDir, err := fs.GetPackagesDir()
-	if err != nil {
-		return "", err
-	}
-
-	pkgDir := filepath.Join(parentDir, name)
+	pkgDir := filepath.Join(fs.GetPackagesDir(), name)
 	dirExists, err := fs.FileSystem.DirExists(pkgDir)
 	if err != nil {
 		return "", errors.Wrapf(err, "%s %s not accessible at %s", fs.PackageType, name, pkgDir)

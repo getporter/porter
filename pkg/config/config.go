@@ -90,31 +90,44 @@ func (c *Config) LoadData() error {
 // Hierarchy of checks:
 // - PORTER_HOME
 // - HOME/.porter or USERPROFILE/.porter
-func (c *Config) GetHomeDir() (string, error) {
-	if c.porterHome != "" {
-		return c.porterHome, nil
-	}
-
-	home := c.Getenv(EnvHOME)
-	if home == "" {
-		userHome, err := os.UserHomeDir()
+func (c *Config) GetHomeDir() string {
+	if c.porterHome == "" {
+		home, err := c.FindHomeDir()
 		if err != nil {
-			return "", errors.Wrap(err, "could not get user home directory")
+			// If we can't find home, then make the current directory our home
+			home = c.Getwd()
 		}
-		home = filepath.Join(userHome, ".porter")
+		c.SetHomeDir(home)
 	}
 
-	// As a relative path may be supplied via EnvHOME,
-	// we want to return the absolute path for programmatic usage elsewhere,
-	// for instance, in setting up volume mounts for outputs
-	c.SetHomeDir(c.FileSystem.Abs(home))
+	return c.porterHome
+}
 
-	return c.porterHome, nil
+// FindHomeDir determines the absolute path to the porter home directory.
+// Hierarchy of checks:
+// - PORTER_HOME
+// - HOME/.porter or USERPROFILE/.porter
+func (c *Config) FindHomeDir() (string, error) {
+	home := c.Getenv(EnvHOME)
+	if home != "" {
+		return home, nil
+	}
+
+	userHome, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "could not get user home directory")
+	}
+	return filepath.Join(userHome, ".porter"), nil
 }
 
 // SetHomeDir is a test function that allows tests to use an alternate
 // Porter home directory.
 func (c *Config) SetHomeDir(home string) {
+	// As a relative path may be supplied via EnvHOME,
+	// we want to return the absolute path for programmatic usage elsewhere,
+	// for instance, in setting up volume mounts for outputs
+	home = c.FileSystem.Abs(home)
+
 	c.porterHome = home
 
 	// Set this as an environment variable so that when we spawn new processes
@@ -154,37 +167,19 @@ func (c *Config) GetPorterPath() (string, error) {
 }
 
 // GetBundlesDir locates the bundle cache from the porter home directory.
-func (c *Config) GetBundlesCache() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "bundles"), nil
+func (c *Config) GetBundlesCache() string {
+	return filepath.Join(c.GetHomeDir(), "bundles")
 }
 
-func (c *Config) GetPluginsDir() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "plugins"), nil
+func (c *Config) GetPluginsDir() string {
+	return filepath.Join(c.GetHomeDir(), "plugins")
 }
 
-func (c *Config) GetPluginPath(plugin string) (string, error) {
-	pluginsDir, err := c.GetPluginsDir()
-	if err != nil {
-		return "", err
-	}
-
-	executablePath := filepath.Join(pluginsDir, plugin, plugin)
-	return executablePath, nil
+func (c *Config) GetPluginPath(plugin string) string {
+	return filepath.Join(c.GetPluginsDir(), plugin, plugin)
 }
 
 // GetArchiveLogs locates the output for Bundle Archive Operations.
-func (c *Config) GetBundleArchiveLogs() (string, error) {
-	home, err := c.GetHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, "archives"), nil
+func (c *Config) GetBundleArchiveLogs() string {
+	return filepath.Join(c.GetHomeDir(), "archives")
 }

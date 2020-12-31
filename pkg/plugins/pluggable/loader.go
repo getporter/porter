@@ -53,11 +53,7 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 		pluginCommand = l.NewCommand(porterPath, "plugin", "run", l.SelectedPluginKey.String())
 	} else {
-		pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
-		if err != nil {
-			return nil, nil, err
-		}
-
+		pluginPath := l.GetPluginPath(l.SelectedPluginKey.Binary)
 		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
 	}
 	configReader, err := l.readPluginConfig()

@@ -1,38 +1,59 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_GetHomeDir(t *testing.T) {
-	c := NewTestConfig(t)
+	// Do not run in parallel, relies on real environment variables
 
-	home, err := c.GetHomeDir()
-	require.NoError(t, err)
+	t.Run("PORTER_HOME set", func(t *testing.T) {
+		porterhome, _ := filepath.Abs("/home/myuser/.porter")
+		t.Log("PORTER_HOME=", porterhome)
+		c := NewTestConfig(t)
+		c.porterHome = ""
+		c.Setenv("PORTER_HOME", porterhome)
 
-	assert.Equal(t, "/root/.porter", home)
-}
+		assert.Equal(t, porterhome, c.GetHomeDir())
+	})
 
-func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
-	c := NewTestConfig(t)
+	t.Run("HOME set", func(t *testing.T) {
+		// Set the real env var because we are using go's implementation to find the user's home directory
+		homeVar := "HOME"
+		if runtime.GOOS == "windows" {
+			homeVar = "USERPROFILE"
+		}
+		origHome := os.Getenv(homeVar)
+		os.Setenv(homeVar, filepath.Join("/home/myuser"))
+		defer os.Unsetenv(origHome)
 
-	// Set up no PORTER_HOME, and /usr/local/bin/porter -> ~/.porter/porter
-	c.Unsetenv(EnvHOME)
-	getExecutable = func() (string, error) {
-		return "/usr/local/bin/porter", nil
-	}
-	evalSymlinks = func(path string) (string, error) {
-		return "/root/.porter/porter", nil
-	}
+		c := NewTestConfig(t)
+		c.porterHome = ""
+		c.Unsetenv("PORTER_HOME")
 
-	home, err := c.GetHomeDir()
-	require.NoError(t, err)
+		assert.Equal(t, filepath.Join("/home/myuser/.porter"), c.GetHomeDir())
+	})
 
-	// The reason why we do filepath.join here and not above is because resolving symlinks gets the OS involved
-	// and on Windows, that means flipping the afero `/` to `\`.
-	assert.Equal(t, filepath.Join("/root", ".porter"), home)
+	t.Run("unfindable", func(t *testing.T) {
+		// Set the real env var because we are using go's implementation to find the user's home directory
+		homeVar := "HOME"
+		if runtime.GOOS == "windows" {
+			homeVar = "USERPROFILE"
+		}
+		origHome := os.Getenv(homeVar)
+		os.Unsetenv(homeVar)
+		defer os.Unsetenv(origHome)
+
+		c := NewTestConfig(t)
+		c.porterHome = ""
+		c.Unsetenv("PORTER_HOME")
+
+		pwd := c.Getwd()
+		assert.Equal(t, pwd, c.GetHomeDir())
+	})
 }

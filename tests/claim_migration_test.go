@@ -20,9 +20,8 @@ func TestClaimMigration_List(t *testing.T) {
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 
-	// Make a test home
-	home, err := p.GetHomeDir()
-	require.NoError(t, err, "GetHomeDir failed")
+	// Create claims
+	home := p.GetHomeDir()
 	claimsDir := filepath.Join(home, "claims")
 
 	// Create unmigrated claim data
@@ -30,7 +29,7 @@ func TestClaimMigration_List(t *testing.T) {
 	p.AddTestFile(filepath.Join("../pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 
-	err = p.MigrateStorage()
+	err := p.MigrateStorage()
 	require.NoError(t, err, "MigrateStorage failed")
 
 	installations, err := p.ListInstallations()

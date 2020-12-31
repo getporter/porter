@@ -177,12 +177,7 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 }
 
 func (p *Porter) GetReplacementSchema() (jsonSchema, error) {
-	home, err := p.GetHomeDir()
-	if err != nil {
-		return nil, err
-	}
-
-	replacementSchemaPath := filepath.Join(home, "porter.json")
+	replacementSchemaPath := filepath.Join(p.GetHomeDir(), "porter.json")
 	if exists, _ := p.FileSystem.Exists(replacementSchemaPath); !exists {
 		return nil, nil
 	}

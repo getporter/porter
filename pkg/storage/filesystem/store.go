@@ -6,7 +6,6 @@ import (
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/utils/crud"
 	"github.com/hashicorp/go-hclog"
-	"github.com/pkg/errors"
 )
 
 var _ crud.Store = &Store{}
@@ -31,11 +30,7 @@ func (s *Store) Connect() error {
 		return nil
 	}
 
-	home, err := s.Config.GetHomeDir()
-	if err != nil {
-		return errors.Wrap(err, "could not determine home directory for filesystem storage")
-	}
-
+	home := s.GetHomeDir()
 	s.logger.Info("PORTER HOME: " + home)
 
 	s.Store = crud.NewFileSystemStore(home, NewFileExtensions())

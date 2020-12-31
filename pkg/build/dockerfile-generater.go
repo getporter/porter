@@ -204,11 +204,9 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 		return errors.Wrapf(err, "failed to write %s", LOCAL_RUN)
 	}
 
-	homeDir, err := g.GetHomeDir()
-	if err != nil {
-		return err
-	}
-	err = g.Context.CopyDirectory(filepath.Join(homeDir, "runtimes"), filepath.Join(LOCAL_APP, "runtimes"), false)
+	err = g.Context.CopyDirectory(
+		filepath.Join(g.GetHomeDir(), "runtimes"),
+		filepath.Join(LOCAL_APP, "runtimes"), false)
 	if err != nil {
 		return err
 	}
