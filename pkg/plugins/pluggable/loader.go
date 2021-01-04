@@ -63,9 +63,6 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 	pluginCommand.Stdin = configReader
 
-	// Explicitly set PORTER_HOME for the plugin
-	pluginCommand.Env = l.Environ()
-
 	if l.DebugPlugins {
 		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
 		if l.SelectedPluginConfig != nil {

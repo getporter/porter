@@ -3,6 +3,7 @@ package porter
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -392,9 +393,15 @@ type SourceTest struct {
 func TestCredentialsEdit(t *testing.T) {
 	p := NewTestPorter(t)
 
-	p.Setenv("SHELL", "bash")
-	p.Setenv("EDITOR", "vi")
-	p.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+	p.Unsetenv("SHELL")
+	p.Unsetenv("EDITOR")
+
+	credPath := filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")
+	if runtime.GOOS == "windows" {
+		p.Setenv(test.ExpectedCommandEnv, "cmd /C notepad "+credPath)
+	} else {
+		p.Setenv(test.ExpectedCommandEnv, "sh -c vi "+credPath)
+	}
 
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
@@ -405,9 +412,17 @@ func TestCredentialsEdit(t *testing.T) {
 
 func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 	p := NewTestPorter(t)
-	p.Setenv("SHELL", "something")
-	p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-	p.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+
+	p.Unsetenv("SHELL")
+	credPath := filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")
+	if runtime.GOOS == "windows" {
+		p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
+		p.Setenv(test.ExpectedCommandEnv, "cmd /c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+credPath)
+	} else {
+		p.Setenv("EDITOR", "vi -n")
+		p.Setenv(test.ExpectedCommandEnv, "sh -c vi -n "+credPath)
+	}
+
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")

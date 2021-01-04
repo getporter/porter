@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
+	"github.com/stretchr/testify/require"
 )
 
 type TestConfig struct {
@@ -25,10 +26,17 @@ func NewTestConfig(t *testing.T) *TestConfig {
 	return tc
 }
 
+func (c *TestConfig) T() *testing.T {
+	return c.TestContext.T
+}
+
 // SetupUnitTest initializes the unit test filesystem with the supporting files in the PORTER_HOME directory.
 func (c *TestConfig) SetupUnitTest() {
-	// Set up the test porter home directory
-	home := "/root/.porter"
+	// Set up the test porter home directory using an absolute path based on the OS filesystem
+	// e.g. C:\.porter on Windows, or /.porter otherwise.
+	rootDir, err := filepath.Abs("/")
+	require.NoError(c.T(), err, "could not determine the filesystem root")
+	home := filepath.Join(rootDir, ".porter")
 	c.SetHomeDir(home)
 
 	// Fake out the porter home directory

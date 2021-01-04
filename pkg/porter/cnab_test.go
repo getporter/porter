@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
@@ -19,7 +21,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "porter.yaml", opts.File)
-	assert.Equal(t, ".cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, filepath.FromSlash(".cnab/bundle.json"), opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
@@ -33,7 +35,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	err := opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
 
-	assert.Equal(t, "mybun/.cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, filepath.FromSlash("mybun/.cnab/bundle.json"), opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
@@ -59,15 +61,17 @@ func TestSharedOptions_validateBundleJson(t *testing.T) {
 	cxt.FileSystem.Create("mybun1/bundle.json")
 	cxt.FileSystem.Create("bundle1.json")
 
+	goodAbs := cxt.FileSystem.Abs("/mybun1/bundle.json")
+	missingAbs := cxt.FileSystem.Abs("/mybun2/bundle.json")
 	testcases := []struct {
 		name           string
 		cnabFile       string
 		wantBundleJson string
 		wantError      string
 	}{
-		{name: "absolute file exists", cnabFile: "/mybun1/bundle.json", wantBundleJson: "/mybun1/bundle.json", wantError: ""},
-		{name: "relative file exists", cnabFile: "bundle1.json", wantBundleJson: "/bundle1.json", wantError: ""},
-		{name: "absolute file does not exist", cnabFile: "mybun2/bundle.json", wantError: "unable to access --cnab-file mybun2/bundle.json"},
+		{name: "absolute file exists", cnabFile: goodAbs, wantBundleJson: goodAbs, wantError: ""},
+		{name: "relative file exists", cnabFile: "bundle1.json", wantBundleJson: cxt.FileSystem.Abs("/bundle1.json"), wantError: ""},
+		{name: "absolute file does not exist", cnabFile: missingAbs, wantError: fmt.Sprintf("unable to access --cnab-file %s", missingAbs)},
 		{name: "relative file does not", cnabFile: "bundle2.json", wantError: "unable to access --cnab-file bundle2.json"},
 	}
 
@@ -103,15 +107,16 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 	p := NewTestPorter(t)
 
+	paramSet1File := filepath.Join(p.Getwd(), "paramset.json")
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
-	p.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
+	p.TestConfig.TestContext.AddTestFile("testdata/paramset.json", paramSet1File)
 	p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 	opts := sharedOptions{
 		ParameterSets: []string{
 			"porter-hello",
-			"/paramset.json",
+			paramSet1File,
 		},
 	}
 
@@ -131,12 +136,13 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
 	p := NewTestPorter(t)
 
+	paramFile := filepath.Join(p.Getwd(), "paramset.json")
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
+	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", paramFile)
 
 	opts := sharedOptions{
 		ParameterSets: []string{
-			"/paramset.json",
+			paramFile,
 		},
 		bundleFileOptions: bundleFileOptions{
 			File: "porter.yaml",

@@ -116,9 +116,11 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 }
 
 func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
-	p := NewTestPorter(t)
+	const wordpressTag = "localhost:5000/wordpress:v0.1.3"
 
-	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", p.Cache.GetCacheDir())
+	p := NewTestPorter(t)
+	p.CacheTestBundle("../../build/testdata/bundles/wordpress", wordpressTag)
+	p.CacheTestBundle("../../build/testdata/bundles/mysql", "localhost:5000/mysql:v0.1.3")
 
 	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
 	cs := credentials.NewCredentialSet("wordpress",

@@ -1,6 +1,8 @@
 package mixin
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -13,21 +15,23 @@ func TestRunner_BuildCommand(t *testing.T) {
 	testcases := []struct {
 		name          string
 		runnerCommand string
-		wantCommand   string
+		wantMixin     string
+		wantArgs      string
 	}{
-		{"build", "build", "/root/.porter/mixins/exec/exec build"},
-		{"install", "install", "/root/.porter/mixins/exec/exec install"},
-		{"upgrade", "upgrade", "/root/.porter/mixins/exec/exec upgrade"},
-		{"uninstall", "uninstall", "/root/.porter/mixins/exec/exec uninstall"},
-		{"invoke", "status", "/root/.porter/mixins/exec/exec invoke --action status"},
-		{"version", "version --output json", "/root/.porter/mixins/exec/exec version --output json"},
+		{"build", "build", "exec", "build"},
+		{"install", "install", "exec", "install"},
+		{"upgrade", "upgrade", "exec", "upgrade"},
+		{"uninstall", "uninstall", "exec", "uninstall"},
+		{"invoke", "status", "exec", "invoke --action status"},
+		{"version", "version --output json", "exec", "version --output json"},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := client.NewTestRunner(t, "exec", "mixins", false)
 			r.Debug = false
-			r.Setenv(test.ExpectedCommandEnv, tc.wantCommand)
+			wantCommand := fmt.Sprintf("%s %s", filepath.Join(r.TestConfig.GetMixinsDir(), tc.wantMixin, tc.wantMixin+pkgmgmt.FileExt), tc.wantArgs)
+			r.Setenv(test.ExpectedCommandEnv, wantCommand)
 
 			mgr := PackageManager{}
 			cmd := pkgmgmt.CommandOptions{Command: tc.runnerCommand, PreRun: mgr.PreRunMixinCommandHandler}

@@ -113,7 +113,7 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args = append(args, suffixArgs...)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
-	prettyCmd := fmt.Sprintf("%s %s", cmd.Dir, strings.Join(cmd.Args, " "))
+	prettyCmd := fmt.Sprintf("%s$ %s", cmd.Dir, strings.Join(cmd.Args, " "))
 
 	// Setup output streams for command
 	// If Step suppresses output, update streams accordingly

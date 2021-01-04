@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
@@ -24,7 +25,7 @@ type TestMixinProvider struct {
 }
 
 // NewTestMixinProvider helps us test Porter.Mixins in our unit tests without actually hitting any real plugins on the file system.
-func NewTestMixinProvider() *TestMixinProvider {
+func NewTestMixinProvider(c *config.TestConfig) *TestMixinProvider {
 	packages := []pkgmgmt.PackageMetadata{
 		&Metadata{
 			Name: "exec",
@@ -38,6 +39,7 @@ func NewTestMixinProvider() *TestMixinProvider {
 
 	provider := TestMixinProvider{
 		TestPackageManager: client.TestPackageManager{
+			Config:   c,
 			PkgType:  "mixins",
 			Packages: packages,
 		},

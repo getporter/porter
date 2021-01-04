@@ -1,6 +1,7 @@
 package parameters
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,7 +54,7 @@ func TestParseVariableAssignments_MissingVariableName(t *testing.T) {
 func TestLoad(t *testing.T) {
 	t.Run("unsuccessful load", func(t *testing.T) {
 		_, err := Load("paramset.json")
-		require.EqualError(t, err, "open paramset.json: no such file or directory")
+		require.True(t, os.IsNotExist(errors.Cause(err)), "expected that the file is missing")
 	})
 
 	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {

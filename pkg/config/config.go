@@ -166,9 +166,8 @@ func (c *Config) GetPorterPath() (string, error) {
 	return porterPath, nil
 }
 
-// GetBundlesDir locates the bundle cache from the porter home directory.
-func (c *Config) GetBundlesCache() string {
-	return filepath.Join(c.GetHomeDir(), "bundles")
+func (c *Config) GetMixinsDir() string {
+	return filepath.Join(c.GetHomeDir(), "mixins")
 }
 
 func (c *Config) GetPluginsDir() string {

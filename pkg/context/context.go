@@ -22,10 +22,13 @@ const (
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
-	Debug              bool
-	DebugPlugins       bool
-	verbose            bool
-	environ            map[string]string
+	Debug        bool
+	DebugPlugins bool
+	verbose      bool
+
+	// map of environment variables, all keys are upper case
+	environ map[string]string
+
 	FileSystem         aferox.Aferox
 	In                 io.Reader
 	Out                io.Writer
@@ -60,12 +63,13 @@ func (c *Context) defaultNewCommand() {
 	}
 }
 
-// Command creates a new exec.Cmd using the context's current directory.
+// Command creates a new exec.Cmd using the context's current directory and environment variables.
 func (c *Context) Command(name string, arg ...string) *exec.Cmd {
 	cmd := &exec.Cmd{
 		Dir:  c.Getwd(),
 		Path: name,
 		Args: append([]string{name}, arg...),
+		Env:  c.Environ(),
 	}
 	if filepath.Base(name) == name {
 		if lp, ok := c.LookPath(name); ok {
@@ -79,7 +83,7 @@ func getEnviron() map[string]string {
 	environ := map[string]string{}
 	for _, env := range os.Environ() {
 		envParts := strings.SplitN(env, "=", 2)
-		key := envParts[0]
+		key := strings.ToUpper(envParts[0])
 		value := ""
 		if len(envParts) > 1 {
 			value = envParts[1]
@@ -118,6 +122,7 @@ func (c *Context) ExpandEnv(s string) string {
 // It returns the value, which will be empty if the variable is not present.
 // To distinguish between an empty value and an unset value, use LookupEnv.
 func (c *Context) Getenv(key string) string {
+	key = strings.ToUpper(key)
 	return c.environ[key]
 }
 
@@ -133,6 +138,7 @@ func (c *Context) LookPath(file string) (string, bool) {
 // Otherwise the returned value will be empty and the boolean will
 // be false.
 func (c *Context) LookupEnv(key string) (string, bool) {
+	key = strings.ToUpper(key)
 	value, ok := c.environ[key]
 	return value, ok
 }
@@ -140,6 +146,8 @@ func (c *Context) LookupEnv(key string) (string, bool) {
 // Setenv sets the value of the environment variable named by the key.
 // It returns an error, if any.
 func (c *Context) Setenv(key string, value string) {
+	key = strings.ToUpper(key)
+
 	if c.environ == nil {
 		c.environ = make(map[string]string, 1)
 	}
@@ -149,6 +157,8 @@ func (c *Context) Setenv(key string, value string) {
 
 // Unsetenv unsets a single environment variable.
 func (c *Context) Unsetenv(key string) {
+	key = strings.ToUpper(key)
+
 	delete(c.environ, key)
 }
 

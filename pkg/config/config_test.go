@@ -29,14 +29,16 @@ func TestConfig_GetHomeDir(t *testing.T) {
 			homeVar = "USERPROFILE"
 		}
 		origHome := os.Getenv(homeVar)
-		os.Setenv(homeVar, filepath.Join("/home/myuser"))
+		home, _ := filepath.Abs("/home/myuser")
+		t.Logf("%s=%s", homeVar, home)
+		os.Setenv(homeVar, home)
 		defer os.Unsetenv(origHome)
 
 		c := NewTestConfig(t)
 		c.porterHome = ""
 		c.Unsetenv("PORTER_HOME")
 
-		assert.Equal(t, filepath.Join("/home/myuser/.porter"), c.GetHomeDir())
+		assert.Equal(t, filepath.Join(home, ".porter"), c.GetHomeDir())
 	})
 
 	t.Run("unfindable", func(t *testing.T) {
@@ -53,7 +55,12 @@ func TestConfig_GetHomeDir(t *testing.T) {
 		c.porterHome = ""
 		c.Unsetenv("PORTER_HOME")
 
-		pwd := c.Getwd()
-		assert.Equal(t, pwd, c.GetHomeDir())
+		// Set the current working directory explicitly
+		pwd, _ := filepath.Abs("/tmp")
+		c.Chdir(pwd)
+
+		// Home defaults to pwd when it can't be deduced otherwise
+		gotHome := c.GetHomeDir()
+		assert.Equal(t, pwd, gotHome)
 	})
 }

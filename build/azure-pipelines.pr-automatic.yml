@@ -76,20 +76,20 @@ stages:
             displayName: "Unit Test"
       - job: integration_test
         displayName: "Integration Test"
-        dependsOn: build
+        dependsOn: xbuild
         pool: "windows" # Run on our beefier custom agent
         steps:
           - task: DownloadPipelineArtifact@2
-            displayName: "Download Bin"
+            displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
               source: current
-              artifact: build-bin
+              artifact: xbuild-bin
               path: bin
           - task: GoTool@0
             displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
-          - script: go run mage.go ConfigureAgent SetBinExecutable
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Configure Agent"
           - script: mage TestIntegration
             displayName: "Integration Test"

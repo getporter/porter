@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -12,9 +13,9 @@ import (
 
 func TestFromConfigFile(t *testing.T) {
 	c := config.NewTestConfig(t)
-	c.SetHomeDir("/root/.porter")
+	home := c.GetHomeDir()
 
-	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+	c.TestContext.AddTestFile("testdata/config.toml", filepath.Join(home, "config.toml"))
 
 	c.DataLoader = FromConfigFile
 	err := c.LoadData()
@@ -40,7 +41,6 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 
 	t.Run("no flag", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -51,7 +51,6 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 
 	t.Run("debug flag", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug"})
@@ -64,8 +63,8 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 
 	t.Run("debug flag overrides config", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+		home := c.GetHomeDir()
+		c.TestContext.AddTestFile("testdata/config.toml", filepath.Join(home, "config.toml"))
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug=false"})
@@ -79,7 +78,6 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 	t.Run("debug env var", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "true")
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -92,7 +90,6 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 	t.Run("invalid debug env var", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "blorp")
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -106,8 +103,8 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "false")
 		defer os.Unsetenv("PORTER_DEBUG")
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+		home := c.GetHomeDir()
+		c.TestContext.AddTestFile("testdata/config.toml", filepath.Join(home, "config.toml"))
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -122,8 +119,8 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+		home := c.GetHomeDir()
+		c.TestContext.AddTestFile("testdata/config.toml", filepath.Join(home, "config.toml"))
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug", "true"})
@@ -138,7 +135,7 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 func TestData_Marshal(t *testing.T) {
 	c := config.NewTestConfig(t)
 
-	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+	c.TestContext.AddTestFile("testdata/config.toml", filepath.Join(c.GetHomeDir(), "config.toml"))
 
 	c.DataLoader = FromConfigFile
 	err := c.LoadData()

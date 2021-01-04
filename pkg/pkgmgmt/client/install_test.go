@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -35,9 +36,10 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	err := p.Install(opts)
 	require.NoError(t, err)
 
-	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/mixxin")
+	pkgsDir := p.GetPackagesDir()
+	clientExists, _ := p.FileSystem.Exists(filepath.Join(pkgsDir, "mixxin/mixxin"+pkgmgmt.FileExt))
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/runtimes/mixxin-runtime")
+	runtimeExists, _ := p.FileSystem.Exists(filepath.Join(pkgsDir, "mixxin/runtimes/mixxin-runtime"))
 	assert.True(t, runtimeExists)
 }
 
@@ -72,9 +74,10 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	err = p.Install(opts)
 	require.NoError(t, err)
 
-	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/helm")
+	pkgsDir := p.GetPackagesDir()
+	clientExists, _ := p.FileSystem.Exists(filepath.Join(pkgsDir, "helm/helm"+pkgmgmt.FileExt))
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/runtimes/helm-runtime")
+	runtimeExists, _ := p.FileSystem.Exists(filepath.Join(pkgsDir, "helm/runtimes/helm-runtime"))
 	assert.True(t, runtimeExists)
 }
 
@@ -121,17 +124,19 @@ func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 	opts.Validate([]string{name})
 
 	// ensure cache.json does not exist (yet)
-	cacheExists, _ := p.FileSystem.Exists("/root/.porter/packages/cache.json")
+	pkgsDir := p.GetPackagesDir()
+	cacheFile := filepath.Join(pkgsDir, "cache.json")
+	cacheExists, _ := p.FileSystem.Exists(cacheFile)
 	assert.False(t, cacheExists)
 
 	err := p.savePackageInfo(opts)
 	require.NoError(t, err)
 
 	// cache.json should have been created
-	cacheExists, _ = p.FileSystem.Exists("/root/.porter/packages/cache.json")
+	cacheExists, _ = p.FileSystem.Exists(cacheFile)
 	assert.True(t, cacheExists)
 
-	cacheContentsB, err := p.FileSystem.ReadFile("/root/.porter/packages/cache.json")
+	cacheContentsB, err := p.FileSystem.ReadFile(cacheFile)
 	require.NoError(t, err)
 
 	//read cache.json

@@ -15,7 +15,8 @@ import (
 var simpleManifestDigest = "b3be65771034c64a0d49d2c8a4ac3103a1ec12d6e41015ef57861fd913f72ecf"
 
 func TestConfig_GenerateStamp(t *testing.T) {
-	t.Parallel()
+	// Do not run in parallel, it's flakey and I haven't figured out why yet
+	// I assume cruft in bin and the timing of when the test is run
 
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)

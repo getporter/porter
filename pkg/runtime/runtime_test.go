@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -283,7 +285,7 @@ func TestLoadImageMappingFilesNoBundle(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
-	assert.EqualError(t, err, "couldn't read runtime bundle.json: open /cnab/bundle.json: file does not exist")
+	assert.True(t, os.IsNotExist(errors.Cause(err)), "expected this to fail because bundle.json doesn't exist")
 }
 
 func TestLoadImageMappingFilesBadBundle(t *testing.T) {

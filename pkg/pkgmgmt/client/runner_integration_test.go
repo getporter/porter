@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"io"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
@@ -37,9 +38,13 @@ func TestRunner_Run(t *testing.T) {
 		Command: "install",
 		File:    "testdata/exec_input.yaml",
 	}
+	if runtime.GOOS == "windows" {
+		cmd.File = "testdata/exec_input.windows.yaml"
+	}
+
 	err = r.Run(cmd)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output.Bytes()), "Hello World")
+	require.NoError(t, err, "Run failed: %s", output.String())
+	assert.Contains(t, output.String(), "Hello")
 }
 
 func TestRunner_RunWithMaskedOutput(t *testing.T) {
@@ -72,11 +77,13 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 
 	cmd := pkgmgmt.CommandOptions{
 		Command: "install",
-		File:    "testdata/exec_input_with_whitespace.yaml",
+		File:    "testdata/exec_input.yaml",
+	}
+	if runtime.GOOS == "windows" {
+		cmd.File = "testdata/exec_input.windows.yaml"
 	}
 
 	err = r.Run(cmd)
-	assert.NoError(t, err)
-	assert.Equal(t, `Hello ******* 	
-`, string(output.Bytes()))
+	require.NoError(t, err, "Run failed: %s", output.String())
+	assert.Contains(t, output.String(), "Hello *******")
 }

@@ -10,8 +10,8 @@ import (
 
 func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.TestContext.AddTestDirectory("../../build/testdata/bundles/mysql", "/")
-	err := p.LoadManifestFrom("/porter.yaml")
+	p.TestConfig.TestContext.AddTestDirectory("../../build/testdata/bundles/mysql", ".")
+	err := p.LoadManifestFrom("porter.yaml")
 	require.NoError(t, err)
 
 	e := newDependencyExecutioner(p.Porter, claim.ActionInstall)
@@ -24,7 +24,7 @@ func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	// Now make sure execute passes now that we have called execute
 	opts := NewInstallOptions()
 	opts.Driver = DebugDriver
-	opts.File = "/porter.yaml"
+	opts.File = "porter.yaml"
 	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err, "opts validate failed")
 	err = e.Prepare(opts)

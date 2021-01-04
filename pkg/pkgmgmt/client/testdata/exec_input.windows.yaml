@@ -1,0 +1,6 @@
+install:
+- exec:
+    description: "Say Hello"
+    command: powershell
+    flags:
+        c: '"Write-Host Hello World"'

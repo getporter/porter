@@ -27,7 +27,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -75,7 +75,7 @@ COPY mybin /cnab/app/
 
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
-		mp := mixin.NewTestMixinProvider()
+		mp := mixin.NewTestMixinProvider(c)
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
@@ -110,7 +110,7 @@ COPY mybin /cnab/app/
 
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
-		mp := mixin.NewTestMixinProvider()
+		mp := mixin.NewTestMixinProvider(c)
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
@@ -147,7 +147,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
@@ -186,7 +186,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	// ignore mixins in the unit tests
 	m.Mixins = []manifest.MixinDeclaration{}
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
@@ -255,7 +255,7 @@ COPY mybin /cnab/app/
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
@@ -298,7 +298,7 @@ COPY mybin /cnab/app/
 `
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
@@ -336,7 +336,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 
 	m.Mixins = []manifest.MixinDeclaration{{Name: "exec"}}
 
-	mp := mixin.NewTestMixinProvider()
+	mp := mixin.NewTestMixinProvider(c)
 	mp.ReturnBuildError = true
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildMixinsSection()

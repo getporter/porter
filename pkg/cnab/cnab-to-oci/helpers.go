@@ -3,6 +3,7 @@ package cnabtooci
 import (
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/pkg/errors"
 )
 
 var _ RegistryProvider = &TestRegistry{}
@@ -22,7 +23,7 @@ func (t TestRegistry) PullBundle(tag string, insecureRegistry bool) (bundle.Bund
 		return t.MockPullBundle(tag, insecureRegistry)
 	}
 
-	return bundle.Bundle{}, nil, nil
+	return bundle.Bundle{}, nil, errors.Errorf("tried to pull %s but MockPullBundle was not set", tag)
 }
 
 func (t TestRegistry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {

@@ -68,10 +68,8 @@ func NewTestCommand(c *Context) CommandBuilder {
 		testArgs := append([]string{command}, args...)
 		cmd := exec.Command(os.Args[0], testArgs...)
 		cmd.Dir = c.Getwd()
-		cmd.Env = []string{
-			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
-		}
+		cmd.Env = c.Environ()
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=true", test.MockedCommandEnv))
 
 		return cmd
 	}
@@ -145,7 +143,11 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 		}
 
 		// Translate the path from the src to the final destination
-		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
+		relPath, err := filepath.Rel(srcDir, path)
+		if err != nil {
+			return err
+		}
+		dest := filepath.Join(destDir, relPath)
 
 		if info.IsDir() {
 			return c.FileSystem.MkdirAll(dest, os.ModePerm)

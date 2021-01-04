@@ -3,7 +3,7 @@ package linter
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"github.com/stretchr/testify/require"
@@ -11,9 +11,9 @@ import (
 
 func TestLinter_Lint(t *testing.T) {
 	t.Run("no results", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		mixins := mixin.NewTestMixinProvider()
-		l := New(cxt.Context, mixins)
+		c := config.NewTestConfig(t)
+		mixins := mixin.NewTestMixinProvider(c)
+		l := New(c.Context, mixins)
 		m := &manifest.Manifest{
 			Mixins: []manifest.MixinDeclaration{
 				{
@@ -29,9 +29,9 @@ func TestLinter_Lint(t *testing.T) {
 	})
 
 	t.Run("has results", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		mixins := mixin.NewTestMixinProvider()
-		l := New(cxt.Context, mixins)
+		c := config.NewTestConfig(t)
+		mixins := mixin.NewTestMixinProvider(c)
+		l := New(c.Context, mixins)
 		m := &manifest.Manifest{
 			Mixins: []manifest.MixinDeclaration{
 				{
@@ -54,9 +54,9 @@ func TestLinter_Lint(t *testing.T) {
 	})
 
 	t.Run("mixin doesn't support lint", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		mixins := mixin.NewTestMixinProvider()
-		l := New(cxt.Context, mixins)
+		c := config.NewTestConfig(t)
+		mixins := mixin.NewTestMixinProvider(c)
+		l := New(c.Context, mixins)
 		m := &manifest.Manifest{
 			Mixins: []manifest.MixinDeclaration{
 				{

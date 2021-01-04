@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
@@ -97,14 +98,21 @@ func TestIntegration() error {
 		defer DeleteKindCluster()
 	}
 
-	err := shx.RunE("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+	err := sh.RunWith(map[string]string{"CGO_ENABLED": "0"},
+		"go", "build", "-o", "bin/testplugin"+pkgmgmt.FileExt, "./cmd/testplugin")
 	if err != nil {
 		return errors.Wrap(err, "could not build test plugin")
 	}
 
+	// Only do verbose output of tests when called with `mage -v TestE2E`
+	v := ""
+	if mg.Verbose() {
+		v = "-v"
+	}
+
 	pwd, _ := os.Getwd()
-	return sh.RunWithV(map[string]string{"PROJECT_ROOT": pwd}, "go", "test",
-		"-timeout", "30m", "-tags=integration", "./...")
+	return sh.RunWithV(map[string]string{"PROJECT_ROOT": pwd, "CGO_ENABLED": "0"},
+		"go", shx.CollapseArgs("test", "-timeout", "30m", "-tags=integration", v, "./...")...)
 }
 
 // Run end-to-end (e2e) tests.
@@ -118,7 +126,8 @@ func TestE2E() error {
 		v = "-v"
 	}
 
-	return sh.RunV("go", shx.CollapseArgs("test", "-tags", "e2e", v, "./tests/e2e/...")...)
+	return sh.RunWithV(map[string]string{"CGO_ENABLED": "0"},
+		"go", shx.CollapseArgs("test", "-tags=e2e", v, "./tests/e2e/...")...)
 }
 
 // Copy the cross-compiled binaries from xbuild into bin.

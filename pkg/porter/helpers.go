@@ -52,7 +52,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 
 	p := New()
 	p.Config = tc.Config
-	p.Mixins = mixin.NewTestMixinProvider()
+	p.Mixins = mixin.NewTestMixinProvider(tc)
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
 	p.Builder = NewTestBuildProvider()
@@ -118,6 +118,14 @@ func (p *TestPorter) AddTestFile(src string, dest string) {
 	}
 
 	p.TestConfig.TestContext.AddTestFile(src, dest)
+}
+
+func (p *TestPorter) AddTestDirectory(src string, dest string) {
+	if !filepath.IsAbs(src) {
+		src = filepath.Join(p.TestDir, src)
+	}
+
+	p.TestConfig.TestContext.AddTestDirectory(src, dest)
 }
 
 type TestDriver struct {
@@ -197,6 +205,15 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 	require.NoError(p.T(), err)
 
 	return uniqueName
+}
+
+// Copy a bundle from the Porter repository into the test's cache
+func (p *TestPorter) CacheTestBundle(srcDir string, tag string) {
+	cacheDir := p.Cache.GetCacheDir()
+	cb := cache.CachedBundle{Tag: tag}
+	destDir := filepath.Join(cacheDir, cb.GetBundleID())
+	p.AddTestDirectory(srcDir, destDir)
+	p.FileSystem.Rename(filepath.Join(destDir, ".cnab"), filepath.Join(destDir, "cnab"))
 }
 
 type TestBuildProvider struct {

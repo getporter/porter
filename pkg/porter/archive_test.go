@@ -1,8 +1,11 @@
 package porter
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,11 +15,13 @@ func TestArchive_ParentDirDoesNotExist(t *testing.T) {
 	opts := ArchiveOptions{}
 	opts.Tag = "myreg/mybuns:v0.1.0"
 
-	err := opts.Validate([]string{"/path/to/file"}, p.Porter)
+	missingParent := filepath.Join(p.Getwd(), "missing")
+	err := opts.Validate([]string{filepath.Join(missingParent, "somepath")}, p.Porter)
 	require.NoError(t, err, "expected no validation error to occur")
 
 	err = p.Archive(opts)
-	require.EqualError(t, err, "parent directory \"/path/to\" does not exist")
+	require.Error(t, err, "expected Archive to fail")
+	assert.Contains(t, err.Error(), fmt.Sprintf("parent directory %q does not exist", missingParent))
 }
 
 func TestArchive_Validate(t *testing.T) {

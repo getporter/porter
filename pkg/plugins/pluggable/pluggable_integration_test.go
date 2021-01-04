@@ -3,11 +3,11 @@
 package pluggable
 
 import (
-	"os/exec"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/require"
 )
@@ -20,12 +20,13 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		pluginsPath := c.GetPluginsDir()
 		pluginName := "testplugin"
 
-		err := exec.Command("mkdir", "-p", path.Join(pluginsPath, pluginName)).Run()
+		pluginDir := filepath.Join(pluginsPath, pluginName)
+		err := c.FileSystem.MkdirAll(pluginDir, 0755)
 		require.NoError(t, err, "could not create plugin dir")
 
 		// testplugin binary will be in bin. refer "test-integration" in Makefile
-		err = exec.Command("cp", path.Join(c.Getenv("PROJECT_ROOT"), "bin", pluginName), path.Join(pluginsPath, pluginName)).Run()
-		require.NoError(t, err, "could not copy test binary")
+		c.TestContext.AddTestFile(filepath.Join(c.Getenv("PROJECT_ROOT"), "bin", pluginName+pkgmgmt.FileExt),
+			filepath.Join(pluginDir, pluginName+pkgmgmt.FileExt))
 
 		cfg := PluginTypeConfig{
 			Interface: secrets.PluginInterface,

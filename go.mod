@@ -23,6 +23,10 @@ replace (
 	// jsonschema lock
 	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20201229145510-cc593f443fdb
 
+	// pr239-fix-memmap-rename-dir
+	// https://github.com/spf13/afero/pull/239 + fixes
+	github.com/spf13/afero => github.com/getporter/afero v1.2.3-0.20210106151829-9adb084dc832
+
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 )
 

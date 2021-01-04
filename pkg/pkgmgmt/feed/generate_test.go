@@ -84,7 +84,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 	}{{
 		name:      "no bins",
 		mixinName: "",
-		wantError: `failed to traverse the bin directory: open /bin: file does not exist`,
+		wantError: `failed to traverse the bin directory`,
 	}, {
 		name:      "valid mixin name",
 		mixinName: "my-42nd-mixin",
@@ -92,7 +92,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 	}, {
 		name:      "invalid mixin name",
 		mixinName: "my-42nd-mixin!",
-		wantError: `no mixin binaries found in bin matching the regex "(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\\.exe)?"`,
+		wantError: `no mixin binaries found in bin matching the regex`,
 	}}
 
 	for _, tc := range testcases {
@@ -114,7 +114,8 @@ func TestGenerate_RegexMatch(t *testing.T) {
 			f := NewMixinFeed(ctx.Context)
 			err := f.Generate(opts)
 			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
+				require.Error(t, err, "expected Generate to fail")
+				assert.Contains(t, err.Error(), tc.wantError)
 			} else {
 				require.NoError(t, err)
 			}

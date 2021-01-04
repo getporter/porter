@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -19,7 +20,8 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	r.TestCredentials.TestSecrets.AddSecret("password", "mypassword")
 	r.TestCredentials.TestSecrets.AddSecret("db-password", "topsecret")
 
-	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
+	credsPath := filepath.Join(r.Getwd(), "db-creds.json")
+	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", credsPath)
 
 	cs1 := credentials.NewCredentialSet("mycreds",
 		valuesource.Strategy{
@@ -48,7 +50,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	}
 
-	gotValues, err := r.loadCredentials(b, []string{"mycreds", "/db-creds.json"})
+	gotValues, err := r.loadCredentials(b, []string{"mycreds", credsPath})
 	require.NoError(t, err, "loadCredentials failed")
 
 	wantValues := valuesource.Set{

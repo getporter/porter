@@ -3,6 +3,7 @@ package feed
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"time"
@@ -59,7 +60,11 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		}
 	}
 
-	mixinRegex := regexp.MustCompile(`(.*/)?(.+)/([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\.exe)?`)
+	sep := string(filepath.Separator)
+	if sep == "\\" {
+		sep = `\\`
+	}
+	mixinRegex := regexp.MustCompile(fmt.Sprintf(`(.*%s)?(.+)%s([a-z0-9-]+)-(linux|windows|darwin)-(amd64)(\.exe)?`, sep, sep))
 
 	err = feed.FileSystem.Walk(opts.SearchDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
