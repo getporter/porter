@@ -222,7 +222,7 @@ and should only be given to trusted containers, or in this case trusted bundles.
 Let the whales speak!
 
 ```console
-$ porter install --tag getporter/whalesay:v0.1.1 --allow-docker-host-access
+$ porter install --reference getporter/whalesay:v0.1.1 --allow-docker-host-access
 installing whalesay...
 executing install action from whalesay (bundle instance: whalesay)
 Install Hello World

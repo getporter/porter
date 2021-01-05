@@ -29,7 +29,7 @@ type PrintableImage struct {
 }
 
 func (p *Porter) Inspect(o ExplainOpts) error {
-	err := p.prepullBundleByTag(&o.BundleActionOptions)
+	err := p.prepullBundleByReference(&o.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
 	}

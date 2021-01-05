@@ -298,7 +298,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```console
-$ porter install --tag deislabs/porter-hello-velocity:latest
+$ porter install --reference deislabs/porter-hello-velocity:latest
 ```
 
 ---
@@ -1291,11 +1291,11 @@ Example (assuming your username is cnabaholic):
 
 # Now run your bundle
 
-* Run `porter install --tag [your new tag]`
+* Run `porter install --reference [your new tag]`
 
 Example tag of `cnabaholic/hello-people:latest`:
 
-* Run `porter install --tag cnabaholic/hello-people:latest`
+* Run `porter install --reference cnabaholic/hello-people:latest`
 
 ---
 

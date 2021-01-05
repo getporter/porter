@@ -36,8 +36,8 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 			return errors.Wrapf(err, "unable to access --archive %s", o.ArchiveFile)
 		}
 
-		if o.Tag == "" {
-			return errors.New("must provide a value for --tag of the form REGISTRY/bundle:tag")
+		if o.Reference == "" {
+			return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
 		}
 	} else {
 		// Proceed with publishing from current directory
@@ -51,8 +51,8 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 		}
 	}
 
-	if o.Tag != "" {
-		return o.validateTag()
+	if o.Reference != "" {
+		return o.validateReference()
 	}
 
 	return nil
@@ -74,7 +74,7 @@ func (p *Porter) Publish(opts PublishOptions) error {
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
-	tag := opts.Tag
+	tag := opts.Reference
 	if tag != "" {
 		// If tag was supplied, update the invocation image name on the manifest
 		// per the registry, org and docker tag from the value provided
@@ -158,7 +158,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Tag)
+	fmt.Fprintf(p.Out, "Beginning bundle publish to %s. This may take some time.\n", opts.Reference)
 
 	// Use the ggcr client to read the extracted OCI Layout
 	client := ggcr.NewRegistryClient()
@@ -170,7 +170,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for i, invImg := range bun.InvocationImages {
-		newImgName, err := getNewImageNameFromBundleTag(invImg.Image, opts.Tag)
+		newImgName, err := getNewImageNameFromBundleTag(invImg.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		}
 	}
 	for name, img := range bun.Images {
-		newImgName, err := getNewImageNameFromBundleTag(img.Image, opts.Tag)
+		newImgName, err := getNewImageNameFromBundleTag(img.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -202,14 +202,14 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		}
 	}
 
-	rm, err := p.Registry.PushBundle(bun, opts.Tag, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, opts.Reference, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bun, opts.Tag, rm)
+	return p.refreshCachedBundle(bun, opts.Reference, rm)
 }
 
 // extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle

@@ -8,18 +8,18 @@ import (
 
 func TestBundlePullOptions_validtag(t *testing.T) {
 	opts := BundlePullOptions{
-		Tag: "deislabs/kubetest:1.0",
+		Reference: "deislabs/kubetest:1.0",
 	}
 
-	err := opts.validateTag()
+	err := opts.validateReference()
 	assert.NoError(t, err, "valid tag should not produce an error")
 }
 
 func TestBundlePullOptions_invalidtag(t *testing.T) {
 	opts := BundlePullOptions{
-		Tag: "deislabs/kubetest:1.0:ahjdljahsdj",
+		Reference: "deislabs/kubetest:1.0:ahjdljahsdj",
 	}
 
-	err := opts.validateTag()
+	err := opts.validateReference()
 	assert.Error(t, err, "invalid tag should produce an error")
 }

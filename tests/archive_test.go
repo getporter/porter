@@ -21,12 +21,12 @@ func TestArchive(t *testing.T) {
 	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("../build/testdata/bundles/mysql", true)
-	tag := fmt.Sprintf("localhost:5000/%s:v0.1.3", bundleName)
+	reference := fmt.Sprintf("localhost:5000/%s:v0.1.3", bundleName)
 
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/getporter/porter/issues/697
 	publishOpts := porter.PublishOptions{}
-	publishOpts.Tag = tag
+	publishOpts.Reference = reference
 	err := publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
@@ -35,7 +35,7 @@ func TestArchive(t *testing.T) {
 
 	// Archive bundle
 	archiveOpts := porter.ArchiveOptions{}
-	archiveOpts.Tag = tag
+	archiveOpts.Reference = reference
 	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
@@ -46,11 +46,11 @@ func TestArchive(t *testing.T) {
 	require.NoError(p.T(), err)
 	require.Equal(p.T(), os.FileMode(0644), info.Mode())
 
-	// Publish bundle from archive, with new tag
+	// Publish bundle from archive, with new reference
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
-			Tag: fmt.Sprintf("localhost:5000/archived-%s:v0.1.3", bundleName),
+			Reference: fmt.Sprintf("localhost:5000/archived-%s:v0.1.3", bundleName),
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)

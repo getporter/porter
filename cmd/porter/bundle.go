@@ -103,8 +103,8 @@ The first argument is the name of the installation to create. This defaults to t
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
-  porter bundle install MyAppFromTag --tag getporter/kubernetes:v0.1.0
-  porter bundle install --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle install MyAppFromReference --reference getporter/kubernetes:v0.1.0
+  porter bundle install --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
@@ -149,8 +149,8 @@ The first argument is the installation name to upgrade. This defaults to the nam
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade
-  porter bundle upgrade --tag getporter/kubernetes:v0.1.0
-  porter bundle upgrade --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle upgrade --reference getporter/kubernetes:v0.1.0
+  porter bundle upgrade --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
@@ -196,8 +196,8 @@ The first argument is the installation name upon which to invoke the action. Thi
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle invoke --action ACTION
-  porter bundle invoke --tag getporter/kubernetes:v0.1.0
-  porter bundle invoke --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle invoke --reference getporter/kubernetes:v0.1.0
+  porter bundle invoke --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
@@ -245,8 +245,8 @@ The first argument is the installation name to uninstall. This defaults to the n
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
-  porter bundle uninstall --tag getporter/kubernetes:v0.1.0
-  porter bundle uninstall --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle uninstall --reference getporter/kubernetes:v0.1.0
+  porter bundle uninstall --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
@@ -295,7 +295,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
-  porter bundle publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
+  porter bundle publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
@@ -308,7 +308,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.StringVarP(&opts.ArchiveFile, "archive", "a", "", "Path to the bundle archive in .tgz format")
-	addTagFlag(f, &opts.BundlePullOptions)
+	addReferenceFlag(f, &opts.BundlePullOptions)
 	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
 	// We aren't using addBundlePullFlags because we don't use --force since we are pushing, and that flag isn't needed
 
@@ -319,11 +319,11 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
-		Use:   "archive FILENAME --tag PUBLISHED_BUNDLE",
+		Use:   "archive FILENAME --reference PUBLISHED_BUNDLE",
 		Short: "Archive a bundle from a tag",
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
-		Example: `  porter bundle archive mybun.tgz --tag getporter/porter-hello:v0.1.0
-  porter bundle archive mybun.tgz --tag localhost:5000/getporter/porter-hello:v0.1.0 --force
+		Example: `  porter bundle archive mybun.tgz --reference getporter/porter-hello:v0.1.0
+  porter bundle archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)

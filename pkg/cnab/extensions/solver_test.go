@@ -43,8 +43,8 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, "getporter/mysql:5.7", mysql.Tag)
-	assert.Equal(t, "localhost:5000/nginx:1.19", nginx.Tag)
+	assert.Equal(t, "getporter/mysql:5.7", mysql.Reference)
+	assert.Equal(t, "localhost:5000/nginx:1.19", nginx.Reference)
 }
 
 func TestDependencySolver_ResolveVersion(t *testing.T) {

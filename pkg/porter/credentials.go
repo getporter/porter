@@ -91,7 +91,7 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
-	err := p.prepullBundleByTag(&opts.BundleActionOptions)
+	err := p.prepullBundleByReference(&opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before invoking credentials generate")
 	}

@@ -106,7 +106,7 @@ installation to the name of the bundle. This time we will explicitly name the
 installation "demo".
 
 ```
-porter install demo --tag getporter/porter-hello:v0.1.0
+porter install demo --reference getporter/porter-hello:v0.1.0
 ```
 
 [tools]: https://cnab.io/community-projects/#tools

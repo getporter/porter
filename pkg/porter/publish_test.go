@@ -47,9 +47,9 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), os.ModePerm)
 	err = opts.Validate(p.Context)
-	assert.EqualError(t, err, "must provide a value for --tag of the form REGISTRY/bundle:tag")
+	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 
-	opts.Tag = "myreg/mybuns:v0.1.0"
+	opts.Reference = "myreg/mybuns:v0.1.0"
 	err = opts.Validate(p.Context)
 	require.NoError(t, err, "validating should not have failed")
 }

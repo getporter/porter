@@ -33,8 +33,8 @@ type bundleFileOptions struct {
 	// RelocationMapping is the path to the relocation-mapping.json file, if one exists. Populated only for published bundles
 	RelocationMapping string
 
-	// TagSet indicates whether a bundle tag is present, to determine whether or not to default bundle files
-	TagSet bool
+	// ReferenceSet indicates whether a bundle reference is present, to determine whether or not to default bundle files
+	ReferenceSet bool
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
@@ -43,7 +43,7 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 		return err
 	}
 
-	if !o.TagSet {
+	if !o.ReferenceSet {
 		err = o.defaultBundleFiles(cxt)
 		if err != nil {
 			return err
@@ -135,7 +135,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
-	} else { // no flags passed (--tag is handled elsewhere)
+	} else { // no flags passed (--reference is handled elsewhere)
 		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")

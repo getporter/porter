@@ -97,7 +97,7 @@ func (g *ParameterOptions) validateParamName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
 func (p *Porter) GenerateParameters(opts ParameterOptions) error {
-	err := p.prepullBundleByTag(&opts.BundleActionOptions)
+	err := p.prepullBundleByReference(&opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before invoking parameters generate")
 	}

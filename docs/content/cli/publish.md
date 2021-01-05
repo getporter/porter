@@ -20,7 +20,7 @@ porter publish [flags]
 ```
   porter publish
   porter publish --file myapp/porter.yaml
-  porter publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
+  porter publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
 		
 ```
 
@@ -31,7 +31,7 @@ porter publish [flags]
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                help for publish
       --insecure-registry   Don't require TLS for the registry
-      --tag string          Use a bundle in an OCI registry specified by the given tag.
+      --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

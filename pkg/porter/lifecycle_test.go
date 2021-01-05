@@ -28,10 +28,10 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	assert.True(t, ok, "should have found the bundle...")
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
-			Tag: "deislabs/kubekahn:1.0",
+			Reference: "deislabs/kubekahn:1.0",
 		},
 	}
-	err = p.prepullBundleByTag(b)
+	err = p.prepullBundleByReference(b)
 	assert.NoError(t, err, "pulling bundle should not have resulted in an error")
 	assert.Equal(t, "mysql", b.Name, "name should have matched testdata bundle")
 	assert.Equal(t, fullPath, b.CNABFile, "the prepare method should have set the file to the fullpath")
@@ -46,10 +46,10 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
-			Tag: "deislabs/kubekahn:latest",
+			Reference: "deislabs/kubekahn:latest",
 		},
 	}
-	err := p.prepullBundleByTag(b)
+	err := p.prepullBundleByReference(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to pull bundle deislabs/kubekahn:latest")
 
@@ -63,11 +63,11 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
-			Tag: "deislabs/kubekahn:1.0",
+			Reference: "deislabs/kubekahn:1.0",
 		},
 	}
 
-	err := p.prepullBundleByTag(b)
+	err := p.prepullBundleByReference(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to parse cached bundle file")
 }
@@ -79,7 +79,7 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	require.NoError(t, err)
 
 	installOpts := NewInstallOptions()
-	installOpts.Tag = "mybun:1.0"
+	installOpts.Reference = "mybun:1.0"
 
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
@@ -172,7 +172,7 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 	p := NewTestPorter(t)
 	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
 		opts := BundleActionOptions{}
-		opts.Tag = "deislabs/kubekahn:latest"
+		opts.Reference = "deislabs/kubekahn:latest"
 
 		// `path.Join(wd...` -> makes cnab.go#defaultBundleFiles#manifestExists `true`
 		// Only when `manifestExists` eq to `true`, default bundle logic will run

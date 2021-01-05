@@ -57,7 +57,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 	// Publish may invoke this method and the manifest will already be
 	// populated.  Only load if still empty.
 	// For instance, Publish may be called with a full, new bundle reference
-	// via --tag, which will update the invocation image name and spark a new
+	// via --reference, which will update the invocation image name and spark a new
 	// build here.  If we re-load from the local manifest, we will lose these
 	// values.
 	if p.Manifest == nil {

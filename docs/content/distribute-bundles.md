@@ -68,7 +68,7 @@ Note: you can safely ignore the `WARN[0005] reference for unknown type: applicat
 When this command is complete, your CNAB bundle manifest and invocation image will have been successfully pushed to the specified OCI registry. It can then be installed with the `porter install` command:
 
 ```
-$ porter install --tag getporter/kubernetes:v0.1.0 -c kool-kred
+$ porter install --reference getporter/kubernetes:v0.1.0 -c kool-kred
 installing kubernetes...
 executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
@@ -77,7 +77,7 @@ Install Hello World App
 The bundle can also be pulled with specified digest:
 
 ```
-$ porter install --tag getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456 -c kool-kred
+$ porter install --reference getporter/kubernetes@sha256:10a41e6d5af73f2cebe4bf6d368bdf5ccc39e641117051d30f88cf0c69e4e456 -c kool-kred
 installing kubernetes...
 executing porter install configuration from /cnab/app/porter.yaml
 Install Hello World App
@@ -87,10 +87,10 @@ The latter example ensures immutability for your bundle. After you've initially 
 
 ## Publish Archived Bundles
 
-The `porter publish` command can also be used to publish an [archived](/archive-bundles/) bundle to a registry. To publish an archived bundle, the publish command is used with the `-a <filename>` and `--tag <repo/name:tag>` flags. For example, to publish a bundle in the `mybunz1.1.tgz` file to `getporter/megabundle:1.1.0`, you would run the following command:
+The `porter publish` command can also be used to publish an [archived](/archive-bundles/) bundle to a registry. To publish an archived bundle, the publish command is used with the `-a <filename>` and `--reference <repo/name:tag>` flags. For example, to publish a bundle in the `mybunz1.1.tgz` file to `getporter/megabundle:1.1.0`, you would run the following command:
 
 ```
-porter publish -a mybunz1.1.tgz --tag getporter/megabundle:1.1.0
+porter publish -a mybunz1.1.tgz --reference getporter/megabundle:1.1.0
 ```
 
 ## Image References After Publishing

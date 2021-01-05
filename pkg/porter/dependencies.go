@@ -134,7 +134,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 			return err
 		}
 		bun = bundle
-	} else if e.parentOpts.Tag != "" {
+	} else if e.parentOpts.Reference != "" {
 		cachedBundle, err := e.Resolver.Resolve(e.parentOpts.BundlePullOptions)
 		if err != nil {
 			return errors.Wrapf(err, "could not resolve bundle")
@@ -162,7 +162,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 	e.deps = make([]*queuedDependency, len(locks))
 	for i, lock := range locks {
 		if e.Debug {
-			fmt.Fprintf(e.Out, "Resolved dependency %s to %s\n", lock.Alias, lock.Tag)
+			fmt.Fprintf(e.Out, "Resolved dependency %s to %s\n", lock.Alias, lock.Reference)
 		}
 		e.deps[i] = &queuedDependency{
 			DependencyLock: lock,
@@ -176,7 +176,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
-		Tag:              dep.Tag,
+		Reference:        dep.Reference,
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
 		Force:            e.parentOpts.Force,
 	}

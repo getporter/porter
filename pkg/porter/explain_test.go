@@ -291,7 +291,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 	assert.Equal(t, 0, len(pd.Outputs))
 	assert.Equal(t, 0, len(pd.Actions))
 	assert.Equal(t, "nginx", pd.Dependencies[0].Alias)
-	assert.Equal(t, "somecloud/mysql:0.1.0", pd.Dependencies[2].Tag)
+	assert.Equal(t, "somecloud/mysql:0.1.0", pd.Dependencies[2].Reference)
 }
 
 func TestExplain_generateJSONForDependencies(t *testing.T) {

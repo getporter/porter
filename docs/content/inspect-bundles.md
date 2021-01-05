@@ -11,7 +11,7 @@ You've found a bundle that you'd like to use, but you'd like to what images will
 When a bundle is published, the images that it will use are copied into the location of the published bundle. This simplifies access control and management of artifacts in the repository. The `inspect` command will show the invocation images, as well as any referenced images, that will be used as a result of performing actions like install nad upgrade. For each image, you will see the image reference that will be used, along with the original image reference that the image was copied from.
 
 ```bash
-$ porter inspect --tag jeremyrickard/porter-do-bundle:v1.0.0
+$ porter inspect --reference jeremyrickard/porter-do-bundle:v1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 1.0.0
@@ -28,7 +28,7 @@ spring-music   docker   jeremyrickard/porter-do-bundle@sha256:8f1133d81f1b078c86
 With the image information above, you can use existing tooling to pull, inspect and vet the images before you run the bundle. If you copy or archive and then republish a bundle, the image information will reflect the new locations of the images, allowing you to compare between the source and the new bundle as well. This is especially useful when used with bundles that have been re-published from an archive:
 
 ```
-porter inspect --tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0
+porter inspect --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 1.0.0

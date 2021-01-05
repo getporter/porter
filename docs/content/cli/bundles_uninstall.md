@@ -24,8 +24,8 @@ porter bundles uninstall [INSTALLATION] [flags]
 
 ```
   porter bundle uninstall
-  porter bundle uninstall --tag getporter/kubernetes:v0.1.0
-  porter bundle uninstall --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle uninstall --reference getporter/kubernetes:v0.1.0
+  porter bundle uninstall --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
@@ -50,7 +50,7 @@ porter bundles uninstall [INSTALLATION] [flags]
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
-      --tag string                 Use a bundle in an OCI registry specified by the given tag.
+      --reference string           Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

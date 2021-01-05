@@ -300,7 +300,7 @@ class: center, middle
 ## Try it out: Install a bundle
 
 ```
-$ porter install --tag deislabs/porter-hello-devopsdays:latest
+$ porter install --reference deislabs/porter-hello-devopsdays:latest
 ```
 
 ---
@@ -806,7 +806,7 @@ If you run into trouble here, here are a few things to check:
 # Try it out: Install the bundle
 
 ```
-$ porter install --tag YOURNAME/porter-hello-llama:v0.1.0 --param name=YOURNAME
+$ porter install --reference YOURNAME/porter-hello-llama:v0.1.0 --param name=YOURNAME
 ```
 
 ---
@@ -1343,11 +1343,11 @@ exclude: true
 exclude: true
 # Now run your bundle
 
-* Run `porter install --tag [your new tag]`
+* Run `porter install --reference [your new tag]`
 
 Example tag of `cnabaholic/hello-people:latest`:
 
-* Run `porter install --tag cnabaholic/hello-people:latest`
+* Run `porter install --reference cnabaholic/hello-people:latest`
 
 ---
 exclude: true

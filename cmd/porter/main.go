@@ -133,14 +133,14 @@ func ShouldShowUngroupedCommand(cmd *cobra.Command) bool {
 }
 
 func addBundlePullFlags(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
-	addTagFlag(f, opts)
+	addReferenceFlag(f, opts)
 	addInsecureRegistryFlag(f, opts)
 	addForcePullFlag(f, opts)
 }
 
-func addTagFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
-	f.StringVar(&opts.Tag, "tag", "",
-		"Use a bundle in an OCI registry specified by the given tag.")
+func addReferenceFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
+	f.StringVar(&opts.Reference, "reference", "",
+		"Use a bundle in an OCI registry specified by the given reference.")
 }
 
 func addInsecureRegistryFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
