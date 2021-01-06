@@ -18,7 +18,6 @@ func (b BundlePullOptions) validateReference() error {
 		return errors.Wrap(err, "invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag")
 	}
 	return nil
-
 }
 
 // PullBundle looks for a given bundle tag in the bundle cache. If it is not found, it is

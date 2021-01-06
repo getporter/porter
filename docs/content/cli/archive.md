@@ -5,7 +5,7 @@ url: /cli/porter_archive/
 ---
 ## porter archive
 
-Archive a bundle from a tag
+Archive a bundle from a reference
 
 ### Synopsis
 

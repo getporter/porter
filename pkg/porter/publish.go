@@ -25,6 +25,8 @@ import (
 type PublishOptions struct {
 	BundlePullOptions
 	bundleFileOptions
+	Tag         string
+	Registry    string
 	ArchiveFile string
 }
 
@@ -74,12 +76,12 @@ func (p *Porter) Publish(opts PublishOptions) error {
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
-	tag := opts.Reference
-	if tag != "" {
-		// If tag was supplied, update the invocation image name on the manifest
+	reference := opts.Reference
+	if reference != "" {
+		// If reference was supplied, update the invocation image name on the manifest
 		// per the registry, org and docker tag from the value provided
-		if err := p.Manifest.SetInvocationImageAndReference(tag); err != nil {
-			return errors.Wrapf(err, "unable to set invocation image name from tag %q", tag)
+		if err := p.Manifest.SetInvocationImageAndReference(reference); err != nil {
+			return errors.Wrapf(err, "unable to set invocation image name from reference %q", reference)
 		}
 	} else {
 		// If the manifest file is the default/user-supplied manifest,
@@ -97,7 +99,23 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 				return err
 			}
 		}
-		tag = p.Manifest.Reference
+
+		// Check for tag and registry overrides
+		if opts.Tag != "" {
+			p.Manifest.DockerTag = opts.Tag
+		}
+		if opts.Registry != "" {
+			p.Manifest.Registry = opts.Registry
+		}
+		if opts.Tag != "" || opts.Registry != "" {
+			// Null out the reference as it needs to be rebuilt with new values
+			p.Manifest.Reference = ""
+			if err := p.Manifest.SetInvocationImageAndReference(""); err != nil {
+				return errors.Wrap(err, "unable to set invocation image name and reference")
+			}
+		}
+
+		reference = p.Manifest.Reference
 	}
 
 	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
@@ -119,14 +137,14 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		return err
 	}
 
-	rm, err := p.Registry.PushBundle(bun, tag, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, reference, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
 
-	// Perhaps we have a cached version of a bundle with the same tag, previously pulled
+	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bun, tag, rm)
+	return p.refreshCachedBundle(bun, reference, rm)
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
@@ -170,7 +188,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for i, invImg := range bun.InvocationImages {
-		newImgName, err := getNewImageNameFromBundleTag(invImg.Image, opts.Reference)
+		newImgName, err := getNewImageNameFromBundleReference(invImg.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -186,7 +204,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		}
 	}
 	for name, img := range bun.Images {
-		newImgName, err := getNewImageNameFromBundleTag(img.Image, opts.Reference)
+		newImgName, err := getNewImageNameFromBundleReference(img.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -284,9 +302,9 @@ func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, 
 	return nil
 }
 
-// getNewImageNameFromBundleTag derives a new image.Name object from the provided original
+// getNewImageNameFromBundleReference derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to glean registry/org/etc.
-func getNewImageNameFromBundleTag(origImg, bundleTag string) (image.Name, error) {
+func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
 	origName, err := image.NewName(origImg)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)

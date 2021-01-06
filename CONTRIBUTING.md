@@ -399,7 +399,7 @@ dependency injection and testing strategies.
 * **pkg**
   * **build**: implements building the invocation image.
   * **cache**: handles the cache of bundles that have been pulled by commands
-  like `porter install --referenceerence`.
+  like `porter install --reference`.
   * **cnab**: deals with the CNAB spec
     * **cnab-to-oci**: talking to an OCI registry.
     * **config-adapter**: converting porter.yaml to bundle.json.

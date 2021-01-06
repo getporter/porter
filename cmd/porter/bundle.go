@@ -296,6 +296,8 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
   porter bundle publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
+  porter bundle publish --tag latest
+  porter bundle pulbish --registry myregistry.com/myorg
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
@@ -308,6 +310,8 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.StringVarP(&opts.ArchiveFile, "archive", "a", "", "Path to the bundle archive in .tgz format")
+	f.StringVar(&opts.Tag, "tag", "", "Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1")
+	f.StringVar(&opts.Registry, "registry", "", "Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg")
 	addReferenceFlag(f, &opts.BundlePullOptions)
 	addInsecureRegistryFlag(f, &opts.BundlePullOptions)
 	// We aren't using addBundlePullFlags because we don't use --force since we are pushing, and that flag isn't needed
@@ -320,7 +324,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ArchiveOptions{}
 	cmd := cobra.Command{
 		Use:   "archive FILENAME --reference PUBLISHED_BUNDLE",
-		Short: "Archive a bundle from a tag",
+		Short: "Archive a bundle from a reference",
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
 		Example: `  porter bundle archive mybun.tgz --reference getporter/porter-hello:v0.1.0
   porter bundle archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
