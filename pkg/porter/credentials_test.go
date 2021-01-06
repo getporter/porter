@@ -417,7 +417,7 @@ func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 	credPath := filepath.Join(os.TempDir(), "porter-kool-kreds.yaml")
 	if runtime.GOOS == "windows" {
 		p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-		p.Setenv(test.ExpectedCommandEnv, "cmd /c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+credPath)
+		p.Setenv(test.ExpectedCommandEnv, "cmd /C C:\\Program Files\\Visual Studio Code\\code.exe --wait "+credPath)
 	} else {
 		p.Setenv("EDITOR", "vi -n")
 		p.Setenv(test.ExpectedCommandEnv, "sh -c vi -n "+credPath)

@@ -93,10 +93,13 @@ func porter(args ...string) sh.PreparedCommand {
 // use your current cluster context. Otherwise a new KIND
 // cluster will be created just for the test run.
 func TestIntegration() error {
+	deps := []interface{}{startLocalDockerRegistry, GetMixins}
 	if os.Getenv("USE_CURRENT_CLUSTER") != "true" {
-		mg.Deps(CreateKindCluster)
+		deps = append(deps, CreateKindCluster)
 		defer DeleteKindCluster()
 	}
+	mg.Deps(deps...)
+	defer stopLocalDockerRegistry()
 
 	err := sh.RunWith(map[string]string{"CGO_ENABLED": "0"},
 		"go", "build", "-o", "bin/testplugin"+pkgmgmt.FileExt, "./cmd/testplugin")
