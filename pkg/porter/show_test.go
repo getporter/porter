@@ -13,7 +13,7 @@ import (
 
 func TestPorter_ShowBundle(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
+
 	opts := ShowOptions{
 		sharedOptions: sharedOptions{
 			Name: "test",

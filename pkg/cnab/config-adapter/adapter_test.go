@@ -18,6 +18,8 @@ import (
 )
 
 func TestManifestConverter_ToBundle(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
@@ -48,17 +50,6 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 }
 
 func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
-
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	a := NewManifestConverter(c.Context, m, nil, nil)
-
-	defs := make(definition.Definitions, len(m.Parameters))
-	params := a.generateBundleParameters(&defs)
-
 	testcases := []struct {
 		propname  string
 		wantParam bundle.Parameter
@@ -195,6 +186,20 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.propname, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFile("testdata/porter-with-parameters.yaml", config.Name)
+
+			m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			a := NewManifestConverter(c.Context, m, nil, nil)
+
+			defs := make(definition.Definitions, len(m.Parameters))
+			params := a.generateBundleParameters(&defs)
+
 			param, ok := params[tc.propname]
 			require.True(t, ok, "parameter definition was not generated")
 
@@ -208,6 +213,8 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 }
 
 func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
@@ -231,6 +238,8 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 }
 
 func TestManifestConverter_generateImages(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
@@ -270,6 +279,8 @@ func TestManifestConverter_generateImages(t *testing.T) {
 }
 
 func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
@@ -297,6 +308,8 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 }
 
 func TestManifestConverter_generateBundleOutputs(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
 
@@ -386,17 +399,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 }
 
 func TestManifestConverter_generateDependencies(t *testing.T) {
-	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
-
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
-
-	a := NewManifestConverter(c.Context, m, nil, nil)
-
-	deps := a.generateDependencies()
-	require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
-	require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
+	t.Parallel()
 
 	testcases := []struct {
 		name    string
@@ -427,6 +430,21 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+
+			c := config.NewTestConfig(t)
+			c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
+
+			m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+			require.NoError(t, err, "could not load manifest")
+
+			a := NewManifestConverter(c.Context, m, nil, nil)
+
+			deps := a.generateDependencies()
+			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
+			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
+
 			var dep *extensions.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
@@ -442,6 +460,8 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 }
 
 func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 
@@ -456,6 +476,8 @@ func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T)
 }
 
 func TestManifestConverter_generateParameterSources(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 
@@ -479,6 +501,8 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 }
 
 func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 
@@ -505,6 +529,8 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	}
 
 	t.Run("generate parameter", func(t *testing.T) {
+		t.Parallel()
+
 		name, param, paramDef := a.generateOutputWiringParameter(b, "msg")
 
 		assert.Equal(t, "porter-msg-output", name, "unexpected parameter name")
@@ -519,6 +545,8 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	})
 
 	t.Run("param with hyphen", func(t *testing.T) {
+		t.Parallel()
+
 		name, param, _ := a.generateOutputWiringParameter(b, "some-thing")
 
 		assert.Equal(t, "porter-some-thing-output", name, "unexpected parameter name")
@@ -528,6 +556,8 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 }
 
 func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 
@@ -536,22 +566,22 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 
-	t.Run("generate parameter", func(t *testing.T) {
-		ref := manifest.DependencyOutputReference{Dependency: "mysql", Output: "mysql-password"}
-		name, param, paramDef := a.generateDependencyOutputWiringParameter(ref)
+	ref := manifest.DependencyOutputReference{Dependency: "mysql", Output: "mysql-password"}
+	name, param, paramDef := a.generateDependencyOutputWiringParameter(ref)
 
-		assert.Equal(t, "porter-mysql-mysql-password-dep-output", name, "unexpected parameter name")
-		assert.False(t, param.Required, "wiring parameters should NOT be required")
-		require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
-		assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
+	assert.Equal(t, "porter-mysql-mysql-password-dep-output", name, "unexpected parameter name")
+	assert.False(t, param.Required, "wiring parameters should NOT be required")
+	require.NotNil(t, param.Destination, "wiring parameters should have a destination set")
+	assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
-		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
-		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
-		assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
-	})
+	assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
+	assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
+	assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 }
 
 func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 
@@ -566,6 +596,8 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 }
 
 func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-required-extensions.yaml", config.Name)
 
@@ -582,6 +614,8 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 }
 
 func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-required-extensions.yaml", config.Name)
 
@@ -598,6 +632,8 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 }
 
 func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter-with-custom-action.yaml", config.Name)
 
@@ -623,7 +659,7 @@ func TestManifestConverter_GenerateCustomActionDefinitions(t *testing.T) {
 }
 
 func TestManifestConverter_generateDefaultAction(t *testing.T) {
-	a := ManifestConverter{}
+	t.Parallel()
 
 	testcases := []struct {
 		action     string
@@ -659,6 +695,10 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.action, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+
+			a := ManifestConverter{}
 			gotAction := a.generateDefaultAction(tc.action)
 			assert.Equal(t, tc.wantAction, gotAction)
 		})
@@ -666,6 +706,8 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 }
 
 func TestManifestConverter_generateCustomMetadata(t *testing.T) {
+	t.Parallel()
+
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("./testdata/porter-with-custom-metadata.yaml", config.Name)
 
@@ -690,5 +732,4 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	assert.NoError(t, err, "Failed to read bundle file")
 	assert.Truef(t, strings.Contains(string(bundleData), expectedCustomMetaData), "Created bundle should be equal to expected bundle ")
-
 }

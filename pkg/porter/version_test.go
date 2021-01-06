@@ -61,7 +61,6 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	p := NewTestPorter(t)
 
 	opts := VersionOpts{System: true}
-	p.TestConfig.SetupPorterHome()
 	opts.RawFormat = string(printer.FormatJson)
 	err := opts.Validate()
 	require.Nil(t, err)
@@ -98,7 +97,6 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 	p := NewTestPorter(t)
 
 	opts := VersionOpts{System: true}
-	p.TestConfig.SetupPorterHome()
 	err := opts.Validate()
 	require.Nil(t, err)
 	p.PrintVersion(opts)

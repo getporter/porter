@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -30,29 +29,25 @@ func NewDockerBuilder(cxt *portercontext.Context) *DockerBuilder {
 }
 
 func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error {
-	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build =======> \n")
-	path, err := os.Getwd()
-	if err != nil {
-		return errors.Wrap(err, "could not get current working directory")
-	}
+	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
 		PullParent:     false,
 		Remove:         true,
 		Tags:           []string{manifest.Image},
-		Dockerfile:     "Dockerfile",
+		Dockerfile:     build.DOCKER_FILE,
 		BuildArgs: map[string]*string{
 			"BUNDLE_DIR": &build.BUNDLE_DIR,
 		},
 	}
 
-	excludes, err := clibuild.ReadDockerignore(path)
+	excludes, err := clibuild.ReadDockerignore(b.Getwd())
 	if err != nil {
 		return err
 	}
 	excludes = clibuild.TrimBuildFilesFromExcludes(excludes, buildOptions.Dockerfile, false)
 
-	tar, err := archive.TarWithOptions(path, &archive.TarOptions{ExcludePatterns: excludes})
+	tar, err := archive.TarWithOptions(b.Getwd(), &archive.TarOptions{ExcludePatterns: excludes})
 	if err != nil {
 		return err
 	}

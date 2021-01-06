@@ -19,7 +19,9 @@ func TestRunner_Run(t *testing.T) {
 	// Provide a way for tests to capture stdout
 	output := &bytes.Buffer{}
 
-	binDir := context.NewTestContext(t).FindBinDir()
+	cxt := context.NewTestContext(t)
+	cxt.UseFilesystem()
+	binDir := cxt.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)
@@ -54,7 +56,9 @@ func TestRunner_RunWithMaskedOutput(t *testing.T) {
 	sensitiveValues = append(sensitiveValues, " ", "", "\n", "\r", "\t")
 	censoredWriter.SetSensitiveValues(sensitiveValues)
 
-	binDir := context.NewTestContext(t).FindBinDir()
+	cxt := context.NewTestContext(t)
+	cxt.UseFilesystem()
+	binDir := cxt.FindBinDir()
 
 	// I'm not using the TestRunner because I want to use the current filesystem, not an isolated one
 	r := NewRunner("exec", filepath.Join(binDir, "mixins/exec"), false)

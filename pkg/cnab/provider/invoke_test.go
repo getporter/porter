@@ -11,6 +11,8 @@ import (
 )
 
 func TestRuntime_ClaimPersistence(t *testing.T) {
+	t.Parallel()
+
 	type input struct {
 		bun          bundle.Bundle
 		action       string
@@ -138,6 +140,8 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 }
 
 func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 
 	args := ActionArguments{

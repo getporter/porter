@@ -17,12 +17,13 @@ func main() {
 
 func buildRootCommand(in io.Reader) *cobra.Command {
 	m := exec.New()
-	m.In = in
+
 	cmd := &cobra.Command{
 		Use:  "exec",
 		Long: "exec is a porter 👩🏽‍✈️ mixin that you can you can use to execute arbitrary commands",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			// Enable swapping out stdout/stderr for testing
+			// Enable swapping out stdout/stderr/stdin for testing
+			m.In = in
 			m.Out = cmd.OutOrStdout()
 			m.Err = cmd.OutOrStderr()
 		},

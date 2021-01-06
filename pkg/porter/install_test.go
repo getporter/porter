@@ -3,6 +3,7 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -15,7 +16,6 @@ import (
 
 func TestPorter_applyDefaultOptions(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	err := p.Create()
 	require.NoError(t, err)
 
@@ -93,6 +93,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		{"invalid driver provided", "dbeug", "", "unsupported driver or driver not found in PATH: dbeug"},
 	}
 
+	cxt := context.NewTestContext(t)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{
@@ -102,7 +103,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 					},
 				},
 			}
-			err := opts.validateDriver()
+			err := opts.validateDriver(cxt.Context)
 
 			if tc.wantError == "" {
 				require.NoError(t, err)

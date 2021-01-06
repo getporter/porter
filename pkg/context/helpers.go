@@ -8,10 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/test"
+	"github.com/carolynvs/aferox"
+	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +28,9 @@ type TestContext struct {
 	T           *testing.T
 }
 
-// NewTestContext initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
+// NewTestContext initializes a configuration suitable for testing, with the
+// output buffered, and an in-memory file system, using the specified
+// environment variables.
 func NewTestContext(t *testing.T) *TestContext {
 	// Provide a way for tests to provide and capture stdin and stdout
 	// Copy output to the test log simultaneously, use go test -v to see the output
@@ -37,11 +42,11 @@ func NewTestContext(t *testing.T) *TestContext {
 	c := &TestContext{
 		Context: &Context{
 			Debug:      true,
-			FileSystem: &afero.Afero{Fs: afero.NewMemMapFs()},
+			environ:    getEnviron(),
+			FileSystem: aferox.NewAferox("/", afero.NewMemMapFs()),
 			In:         &bytes.Buffer{},
 			Out:        aggOut,
 			Err:        aggErr,
-			NewCommand: NewTestCommand(),
 			PlugInDebugContext: &PluginDebugContext{
 				DebuggerPort:           "2735",
 				RunPlugInInDebugger:    "",
@@ -53,33 +58,51 @@ func NewTestContext(t *testing.T) *TestContext {
 		T:           t,
 	}
 
+	c.NewCommand = NewTestCommand(c.Context)
+
 	return c
 }
 
-func NewTestCommand() CommandBuilder {
+func NewTestCommand(c *Context) CommandBuilder {
 	return func(command string, args ...string) *exec.Cmd {
 		testArgs := append([]string{command}, args...)
 		cmd := exec.Command(os.Args[0], testArgs...)
-
+		cmd.Dir = c.Getwd()
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, os.Getenv(test.ExpectedCommandEnv)),
+			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
 		}
 
 		return cmd
 	}
 }
 
+func (c *TestContext) GetTestDefinitionDirectory() string {
+	for i := 0; true; i++ {
+		_, filename, _, ok := runtime.Caller(i)
+		if !ok {
+			c.T.Fatal("could not determine calling test directory")
+		}
+		filename = strings.ToLower(filename)
+		if strings.HasSuffix(filename, "_test.go") {
+			return filepath.Dir(filename)
+		}
+	}
+	return ""
+}
+
 // UseFilesystem has porter's context use the OS filesystem instead of an in-memory filesystem
-// Returns the temp porter home directory created for the test
-func (c *TestContext) UseFilesystem() string {
-	c.FileSystem = &afero.Afero{Fs: afero.NewOsFs()}
-
-	testDir, err := ioutil.TempDir("", "porter-test")
+// Returns the test directory, and the temp porter home directory.
+func (c *TestContext) UseFilesystem() (testDir string, homeDir string) {
+	homeDir, err := ioutil.TempDir("", "porter-test")
 	require.NoError(c.T, err)
-	c.cleanupDirs = append(c.cleanupDirs, testDir)
+	c.cleanupDirs = append(c.cleanupDirs, homeDir)
 
-	return testDir
+	testDir = c.GetTestDefinitionDirectory()
+	c.FileSystem = aferox.NewAferox(testDir, afero.NewOsFs())
+	c.defaultNewCommand()
+
+	return testDir, homeDir
 }
 
 func (c *TestContext) AddCleanupDir(dir string) {
@@ -95,12 +118,12 @@ func (c *TestContext) Cleanup() {
 func (c *TestContext) AddTestFile(src, dest string) []byte {
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
-		c.T.Fatal(err)
+		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
 	}
 
 	err = c.FileSystem.WriteFile(dest, data, os.ModePerm)
 	if err != nil {
-		c.T.Fatal(err)
+		c.T.Fatal(errors.Wrapf(err, "error writing file %s to test filesystem", dest))
 	}
 
 	return data
@@ -171,10 +194,10 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		c.T.Fatal(err)
 	}
 
-	path := os.Getenv("PATH")
+	path := c.Getenv("PATH")
 	pathlist := []string{dirname, path}
 	newpath := strings.Join(pathlist, string(os.PathListSeparator))
-	os.Setenv("PATH", newpath)
+	c.Setenv("PATH", newpath)
 
 	return dirname
 }
@@ -196,10 +219,7 @@ func (c *TestContext) ClearOutputs() {
 
 func (c *TestContext) FindBinDir() string {
 	var binDir string
-	d, err := os.Getwd()
-	if err != nil {
-		c.T.Fatal(err)
-	}
+	d := c.GetTestDefinitionDirectory()
 	for {
 		binDir = c.getBinDir(d)
 		if binDir != "" {

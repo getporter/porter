@@ -24,6 +24,7 @@ func TestFromConfigFile(t *testing.T) {
 }
 
 func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
+	// Cannot be run in parallel because viper reads directly from env vars
 	buildCommand := func(c *config.Config) *cobra.Command {
 		cmd := &cobra.Command{}
 		cmd.Flags().BoolVar(&c.Debug, "debug", false, "debug")
@@ -76,10 +77,9 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 	})
 
 	t.Run("debug env var", func(t *testing.T) {
+		os.Setenv("PORTER_DEBUG", "true")
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
-		os.Setenv("PORTER_DEBUG", "true")
-		defer os.Unsetenv("PORTER_DEBUG")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -89,11 +89,24 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 		assert.True(t, c.Debug, "config.Debug was not set correctly")
 	})
 
-	t.Run("debug env var overrides config", func(t *testing.T) {
+	t.Run("invalid debug env var", func(t *testing.T) {
+		os.Setenv("PORTER_DEBUG", "blorp")
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
+
+		cmd := buildCommand(c.Config)
+		err := cmd.Execute()
+
+		require.NoError(t, err, "dataloader failed")
+		require.NotNil(t, c.Data, "config.Data was not populated")
+		assert.False(t, c.Debug, "config.Debug was not set correctly")
+	})
+
+	t.Run("debug env var overrides config", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "false")
 		defer os.Unsetenv("PORTER_DEBUG")
+		c := config.NewTestConfig(t)
+		c.SetHomeDir("/root/.porter")
 		c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
@@ -105,10 +118,11 @@ func TestFromFlagsThenEnvVarsThenConfigFile(t *testing.T) {
 	})
 
 	t.Run("flag overrides debug env var overrides config", func(t *testing.T) {
-		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
 		os.Setenv("PORTER_DEBUG", "false")
 		defer os.Unsetenv("PORTER_DEBUG")
+
+		c := config.NewTestConfig(t)
+		c.SetHomeDir("/root/.porter")
 		c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)

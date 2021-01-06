@@ -11,7 +11,11 @@ import (
 )
 
 func TestNewDriver_Docker(t *testing.T) {
+	t.Parallel()
+
 	t.Run("vanilla docker", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		driver, err := d.newDriver(DriverNameDocker, "myclaim", ActionArguments{})
 
@@ -20,6 +24,8 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		d.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
@@ -33,6 +39,8 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, mismatch driver name", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -44,6 +52,8 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, missing docker daemon", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -54,6 +64,8 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, default config", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply no override, so expect Privileged to be false
@@ -79,6 +91,8 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, privileged true", func(t *testing.T) {
+		t.Parallel()
+
 		d := NewTestRuntime(t)
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply an override, so expect Privileged to be set to the override

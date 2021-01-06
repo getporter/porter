@@ -1,16 +1,14 @@
 package porter
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/driver/command"
 	"github.com/pkg/errors"
 )
 
@@ -111,7 +109,7 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 	}
 
 	o.defaultDriver()
-	err = o.validateDriver()
+	err = o.validateDriver(p.Context)
 	if err != nil {
 		return err
 	}
@@ -138,12 +136,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else { // no flags passed (--tag is handled elsewhere)
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
@@ -197,18 +190,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 	originalPath := o.CNABFile
 	if !filepath.IsAbs(o.CNABFile) {
 		// Convert to an absolute filepath because runtime needs it that way
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		f := filepath.Join(pwd, o.CNABFile)
-		f, err = filepath.Abs(f)
-		if err != nil {
-			return errors.Wrapf(err, "could not get absolute path for --cnab-file %s", o.CNABFile)
-		}
-
-		o.CNABFile = f
+		o.CNABFile = filepath.Join(cxt.Getwd(), o.CNABFile)
 	}
 
 	// Verify the file can be accessed
@@ -293,16 +275,7 @@ func (o *sharedOptions) defaultDriver() {
 }
 
 // validateDriver validates that the provided driver is supported by Porter
-func (o *sharedOptions) validateDriver() error {
-	switch o.Driver {
-	case DockerDriver, DebugDriver:
-		return nil
-	default:
-		cmddriver := &command.Driver{Name: o.Driver}
-		if cmddriver.CheckDriverExists() {
-			return nil
-		}
-
-		return fmt.Errorf("unsupported driver or driver not found in PATH: %s", o.Driver)
-	}
+func (o *sharedOptions) validateDriver(cxt *context.Context) error {
+	_, err := drivers.LookupDriver(cxt, o.Driver)
+	return err
 }

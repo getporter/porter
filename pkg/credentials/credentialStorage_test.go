@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/filesystem"
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/valuesource"
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +57,7 @@ func TestCredentialStorage_Validate_BadSources(t *testing.T) {
 
 func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -86,7 +86,7 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 
 func TestCredentialStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -104,7 +104,7 @@ func TestCredentialStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T)
 
 func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 

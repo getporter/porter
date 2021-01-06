@@ -11,7 +11,7 @@ type TestMixin struct {
 	TestContext *context.TestContext
 }
 
-// NewTestMixin initializes a helm mixin, with the output buffered, and an in-memory file system.
+// NewTestMixin initializes an exec mixin, with the output buffered, and an in-memory file system.
 func NewTestMixin(t *testing.T) *TestMixin {
 	tc := context.NewTestContext(t)
 	m := New()

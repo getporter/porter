@@ -1,12 +1,10 @@
 package cnabprovider
 
 import (
-	"os"
-
+	"get.porter.sh/porter/pkg/cnab/drivers"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
-	"github.com/cnabio/cnab-go/driver/lookup"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
@@ -41,7 +39,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
 				extensions.DockerExtensionKey)
 		}
-		driverImpl, err = lookup.Lookup(driverName)
+		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
 	if err != nil {
 		return nil, err
@@ -51,7 +49,7 @@ func (r *Runtime) newDriver(driverName string, claimName string, args ActionArgu
 		driverCfg := make(map[string]string)
 		// Load any driver-specific config out of the environment
 		for env := range configurable.Config() {
-			if val, ok := os.LookupEnv(env); ok {
+			if val, ok := r.LookupEnv(env); ok {
 				driverCfg[env] = val
 			}
 		}

@@ -3,7 +3,6 @@
 package tests
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -17,6 +16,8 @@ import (
 )
 
 func TestRebuild_InstallNewBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -35,6 +36,8 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 }
 
 func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -74,13 +77,15 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 }
 
 func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
@@ -94,13 +99,15 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 }
 
 func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-credentials.yaml"), "porter.yaml")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-credentials", true)
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true

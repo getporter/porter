@@ -133,7 +133,7 @@ func (fs *FileSystem) GetPackageDir(name string) (string, error) {
 		return "", errors.Wrapf(err, "%s %s not accessible at %s", fs.PackageType, name, pkgDir)
 	}
 	if !dirExists {
-		return "", fmt.Errorf("%s %s not installed", fs.PackageType, name)
+		return "", fmt.Errorf("%s %s not installed in %s", fs.PackageType, name, pkgDir)
 	}
 
 	return pkgDir, nil

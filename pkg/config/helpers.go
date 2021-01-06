@@ -14,17 +14,19 @@ type TestConfig struct {
 
 // NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
 func NewTestConfig(t *testing.T) *TestConfig {
-	tc := context.NewTestContext(t)
+	cxt := context.NewTestContext(t)
 	cfg := New()
-	cfg.Context = tc.Context
-	return &TestConfig{
+	cfg.Context = cxt.Context
+	tc := &TestConfig{
 		Config:      cfg,
-		TestContext: tc,
+		TestContext: cxt,
 	}
+	tc.SetupUnitTest()
+	return tc
 }
 
-// InitializePorterHome initializes the test filesystem with the supporting files in the PORTER_HOME directory.
-func (c *TestConfig) SetupPorterHome() {
+// SetupUnitTest initializes the unit test filesystem with the supporting files in the PORTER_HOME directory.
+func (c *TestConfig) SetupUnitTest() {
 	// Set up the test porter home directory
 	home := "/root/.porter"
 	c.SetHomeDir(home)
@@ -40,16 +42,28 @@ func (c *TestConfig) SetupPorterHome() {
 	c.FileSystem.Create(filepath.Join(mixinsDir, "helm/runtimes/helm-runtime"))
 }
 
-// InitializePorterHome initializes the filesystem with the supporting files in the PORTER_HOME directory.
-func (c *TestConfig) SetupIntegrationTest(home string) {
-	c.SetHomeDir(home)
+// SetupIntegrationTest initializes the filesystem with the supporting files in
+// a temp PORTER_HOME directory.
+func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
+	testDir, homeDir = c.TestContext.UseFilesystem()
+	c.SetHomeDir(homeDir)
 
 	// Use the compiled porter binary in the test home directory,
 	// and not the go test binary that is generated when we run integration tests.
 	// This way when Porter calls back to itself, e.g. for internal plugins,
 	// it is calling the normal porter binary.
-	c.SetPorterPath(filepath.Join(home, "porter"))
+	c.SetPorterPath(filepath.Join(homeDir, "porter"))
 
 	// Copy bin dir contents to the home directory
-	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), home)
+	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir)
+
+	// Remove any rando stuff copied from the dev bin, you won't find this in CI but a local dev run may have it
+	// Not checking for an error, since the files won't be there on CI
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "installations"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "claims"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "results"))
+	c.FileSystem.RemoveAll(filepath.Join(homeDir, "outputs"))
+	c.FileSystem.Remove(filepath.Join(homeDir, "schema.json"))
+
+	return testDir, homeDir
 }

@@ -11,6 +11,8 @@ import (
 )
 
 func TestAddReloccation(t *testing.T) {
+	t.Parallel()
+
 	data, err := ioutil.ReadFile("testdata/relocation-mapping.json")
 	require.NoError(t, err)
 

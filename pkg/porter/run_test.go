@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -49,10 +48,9 @@ func TestPorter_defaultDebugToOff(t *testing.T) {
 }
 
 func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
-	os.Setenv(config.EnvDEBUG, "true")
-	defer os.Unsetenv(config.EnvDEBUG)
-
 	p := New() // Don't use the test porter, it has debug on by default
+	p.Setenv(config.EnvDEBUG, "true")
+
 	opts := NewRunOptions(p.Config)
 
 	err := opts.defaultDebug()

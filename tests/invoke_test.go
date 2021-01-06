@@ -3,7 +3,6 @@
 package tests
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +12,8 @@ import (
 )
 
 func TestInvokeCustomAction(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -22,8 +23,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)

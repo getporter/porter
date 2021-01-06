@@ -16,7 +16,7 @@ func TestValidateDocsCommand(t *testing.T) {
 		destination string
 		wantError   string
 	}{
-		{"should return error if destination doesn't exist", "./no-existing/destination/directory", "--destination %q doesn't exist"},
+		{"should return error if destination doesn't exist", "/no-existing/destination/directory", "--destination %q doesn't exist"},
 		{"should not return error if destination exists", ".", ""},
 	}
 	for _, tc := range testcases {
@@ -30,9 +30,8 @@ func TestValidateDocsCommand(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
-				assert.Equal(t, err.Error(), fmt.Sprintf(tc.wantError, tc.destination))
+				assert.Equal(t, fmt.Sprintf(tc.wantError, tc.destination), err.Error())
 			}
 		})
 	}
-
 }

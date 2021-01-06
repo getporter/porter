@@ -2,7 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"get.porter.sh/porter/pkg/config"
@@ -39,7 +38,7 @@ func (o *RunOptions) Validate() error {
 
 func (o *RunOptions) validateAction() error {
 	if o.Action == "" {
-		o.Action = os.Getenv(config.EnvACTION)
+		o.Action = o.config.Getenv(config.EnvACTION)
 		if o.config.Debug {
 			fmt.Fprintf(o.config.Err, "DEBUG: defaulting action to %s (%s)\n", config.EnvACTION, o.Action)
 		}
@@ -54,7 +53,7 @@ func (o *RunOptions) defaultDebug() error {
 		return nil
 	}
 
-	rawDebug, set := os.LookupEnv(config.EnvDEBUG)
+	rawDebug, set := o.config.LookupEnv(config.EnvDEBUG)
 	if !set {
 		return nil
 	}

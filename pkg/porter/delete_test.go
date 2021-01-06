@@ -48,7 +48,6 @@ func TestDeleteInstallation(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			p.TestConfig.SetupPorterHome()
 
 			var err error
 

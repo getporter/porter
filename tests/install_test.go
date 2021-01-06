@@ -3,7 +3,7 @@
 package tests
 
 import (
-	"os"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -13,6 +13,8 @@ import (
 )
 
 func TestInstall_relativePathPorterHome(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest() // This creates a temp porter home directory
 	defer p.CleanupIntegrationTest()
@@ -21,15 +23,12 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	// Crux for this test: change Porter's home dir to a relative path
 	homeDir, err := p.Config.GetHomeDir()
 	require.NoError(t, err)
-	curDir, err := os.Getwd()
-	require.NoError(t, err)
-	relDir, err := filepath.Rel(curDir, homeDir)
+	relDir, err := filepath.Rel(p.Getwd(), homeDir)
 	require.NoError(t, err)
 	p.SetHomeDir(relDir)
 
 	// Bring in a porter manifest that has an install action defined
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-custom-action.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
@@ -41,15 +40,14 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 }
 
 func TestInstall_fileParam(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
+	p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", false)
 
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"myfile=./myfile"}
@@ -75,18 +73,18 @@ func TestInstall_fileParam(t *testing.T) {
 }
 
 func TestInstall_fileParam_fromTag(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/bundle-with-file-params.yaml"), "porter.yaml")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/helpers.sh"), "helpers.sh")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myfile"), "./myfile")
-	p.TestConfig.TestContext.AddTestFile(filepath.Join(p.TestDir, "testdata/myotherfile"), "./myotherfile")
+	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", true)
+	tag := fmt.Sprintf("localhost:5000/%s:v0.1.0", bundleName)
 
 	publishOpts := porter.PublishOptions{}
-	publishOpts.Tag = "localhost:5000/file-param:v0.1.0"
+	publishOpts.Tag = tag
 	err := publishOpts.Validate(p.Context)
 	require.NoError(t, err, "validation of publish opts for bundle failed")
 
@@ -94,7 +92,7 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 	require.NoError(t, err, "publish of bundle failed")
 
 	installOpts := porter.NewInstallOptions()
-	installOpts.Tag = "localhost:5000/file-param:v0.1.0"
+	installOpts.Tag = tag
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
 
@@ -106,12 +104,14 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 }
 
 func TestInstall_withDockerignore(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "testdata/bundles/outputs-example"), ".")
+	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 
 	// Create .dockerignore file which ignores the helpers script
 	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0644)

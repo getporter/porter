@@ -14,6 +14,8 @@ import (
 // Do a migration. This also checks for any problems with our
 // connection handling which can result in panics :-)
 func TestClaimMigration_List(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -23,14 +25,10 @@ func TestClaimMigration_List(t *testing.T) {
 	require.NoError(t, err, "GetHomeDir failed")
 	claimsDir := filepath.Join(home, "claims")
 
-	// Remove any rando stuff copied from the dev bin, you won't find this in CI but a local dev run may have it
-	// Not checking for an error, since the files won't be there on CI
-	p.FileSystem.RemoveAll(claimsDir)
-	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
-
 	// Create unmigrated claim data
 	p.FileSystem.Mkdir(claimsDir, 0755)
 	p.AddTestFile(filepath.Join("../pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 
 	err = p.MigrateStorage()
 	require.NoError(t, err, "MigrateStorage failed")

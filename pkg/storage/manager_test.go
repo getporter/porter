@@ -11,7 +11,7 @@ import (
 	"github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,7 +116,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := config.NewTestConfig(t)
-			home := config.TestContext.UseFilesystem()
+			_, home := config.TestContext.UseFilesystem()
 			config.SetHomeDir(home)
 			defer config.TestContext.Cleanup()
 
@@ -151,7 +151,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 
 	t.Run("no migration", func(t *testing.T) {
 		config := config.NewTestConfig(t)
-		home := config.TestContext.UseFilesystem()
+		_, home := config.TestContext.UseFilesystem()
 		config.SetHomeDir(home)
 		defer config.TestContext.Cleanup()
 
@@ -171,7 +171,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 
 func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -193,7 +193,7 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 
 func TestManager_MigrateInstallClaim(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -224,7 +224,7 @@ func TestManager_MigrateInstallClaim(t *testing.T) {
 
 func TestManager_MigrateUpgradeClaim(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 
@@ -285,7 +285,7 @@ func TestManager_ShouldMigrateCredentials(t *testing.T) {
 
 func TestManager_MigrateCredentials(t *testing.T) {
 	config := config.NewTestConfig(t)
-	home := config.TestContext.UseFilesystem()
+	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
 	defer config.TestContext.Cleanup()
 

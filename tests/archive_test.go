@@ -3,8 +3,8 @@
 package tests
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,17 +13,20 @@ import (
 )
 
 func TestArchive(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), ".")
+	bundleName := p.AddTestBundleDir("../build/testdata/bundles/mysql", true)
+	tag := fmt.Sprintf("localhost:5000/%s:v0.1.3", bundleName)
 
 	// Currently, archive requires the bundle to already be published.
 	// https://github.com/getporter/porter/issues/697
 	publishOpts := porter.PublishOptions{}
-	publishOpts.Tag = "localhost:5000/mysql:v0.1.3"
+	publishOpts.Tag = tag
 	err := publishOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
@@ -32,7 +35,7 @@ func TestArchive(t *testing.T) {
 
 	// Archive bundle
 	archiveOpts := porter.ArchiveOptions{}
-	archiveOpts.Tag = "localhost:5000/mysql:v0.1.3"
+	archiveOpts.Tag = tag
 	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
@@ -47,7 +50,7 @@ func TestArchive(t *testing.T) {
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: "mybuns.tgz",
 		BundlePullOptions: porter.BundlePullOptions{
-			Tag: "localhost:5000/mysql-from-archive:v0.1.2",
+			Tag: fmt.Sprintf("localhost:5000/archived-%s:v0.1.3", bundleName),
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)

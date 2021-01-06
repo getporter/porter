@@ -8,6 +8,8 @@ import (
 )
 
 func TestCachedBundle_GetBundleID(t *testing.T) {
+	t.Parallel()
+
 	cb := CachedBundle{}
 
 	cb.Tag = kahn1dot01

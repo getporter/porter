@@ -180,16 +180,15 @@ kool-kreds   2019-06-24`},
 
 func TestGenerateNoCredentialDirectory(t *testing.T) {
 	p := NewTestPorter(t)
-	home := p.TestConfig.TestContext.UseFilesystem()
+	_, home := p.TestConfig.TestContext.UseFilesystem()
 	p.CreateBundleDir()
-	p.TestConfig.TestContext.CopyFile("testdata/bundle.json", filepath.Join(p.BundleDir, "bundle.json"))
+	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", filepath.Join(p.BundleDir, "bundle.json"))
 
 	// Write credentials to the real file system for this test, not sure if this test is worth keeping
 	fsStore := crud.NewFileSystemStore(home, claim.NewClaimStoreFileExtensions())
 	credStore := credentials.NewCredentialStore(crud.NewBackingStore(fsStore))
 	p.TestCredentials.CredentialStorage.CredentialsStore = credStore
 
-	p.TestConfig.SetupPorterHome()
 	opts := CredentialOptions{
 		Silent: true,
 	}
@@ -221,7 +220,6 @@ func TestGenerateNoCredentialDirectory(t *testing.T) {
 
 func TestGenerateCredentialDirectoryExists(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
 	opts := CredentialOptions{
@@ -265,7 +263,6 @@ type CredentialShowTest struct {
 
 func TestShowCredential_NotFound(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.SetupPorterHome()
 	opts := CredentialShowOptions{
 		PrintOptions: printer.PrintOptions{
 			Format: printer.FormatTable,
@@ -361,7 +358,6 @@ Modified: 2019-06-24
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			p.TestConfig.SetupPorterHome()
 			opts := CredentialShowOptions{
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
@@ -396,14 +392,12 @@ type SourceTest struct {
 }
 
 func TestCredentialsEdit(t *testing.T) {
-	os.Setenv("SHELL", "bash")
-	os.Setenv("EDITOR", "vi")
-	os.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
-	defer os.Unsetenv("SHELL")
-	defer os.Unsetenv("EDITOR")
-	defer os.Unsetenv(test.ExpectedCommandEnv)
-
 	p := NewTestPorter(t)
+
+	p.Setenv("SHELL", "bash")
+	p.Setenv("EDITOR", "vi")
+	p.Setenv(test.ExpectedCommandEnv, "bash -c vi "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
+
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
@@ -412,14 +406,10 @@ func TestCredentialsEdit(t *testing.T) {
 }
 
 func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
-	os.Setenv("SHELL", "something")
-	os.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
-	os.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
-	defer os.Unsetenv("SHELL")
-	defer os.Unsetenv("EDITOR")
-	defer os.Unsetenv(test.ExpectedCommandEnv)
-
 	p := NewTestPorter(t)
+	p.Setenv("SHELL", "something")
+	p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
+	p.Setenv(test.ExpectedCommandEnv, "something -c C:\\Program Files\\Visual Studio Code\\code.exe --wait "+filepath.Join(os.TempDir(), "porter-kool-kreds.yaml"))
 	opts := CredentialEditOptions{Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")

@@ -10,7 +10,7 @@ PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo late
 
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 GO = GO111MODULE=on go
-XBUILD = CGO_ENABLED=0 GO111MODULE=on $(GO) build -a -tags netgo -ldflags '$(LDFLAGS)'
+XBUILD = CGO_ENABLED=0 GO111MODULE=on $(GO) build -ldflags '$(LDFLAGS)'
 BINDIR ?= bin/mixins/$(MIXIN)
 
 CLIENT_PLATFORM ?= $(shell go env GOOS)

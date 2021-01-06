@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -21,6 +22,8 @@ const (
 )
 
 func TestFindBundleCacheExists(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -34,6 +37,8 @@ func TestFindBundleCacheExists(t *testing.T) {
 }
 
 func TestFindBundleCacheDoesNotExist(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -47,6 +52,8 @@ func TestFindBundleCacheDoesNotExist(t *testing.T) {
 }
 
 func TestFindBundleBundleCached(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -65,6 +72,8 @@ func TestFindBundleBundleCached(t *testing.T) {
 }
 
 func TestFindBundleBundleNotCached(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	c := New(cfg.Config)
 	cb, ok, err := c.FindBundle(kahnlatest)
@@ -74,6 +83,8 @@ func TestFindBundleBundleNotCached(t *testing.T) {
 }
 
 func TestCacheWriteNoCacheDir(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	cfg.TestContext.AddTestFile("testdata/cnab/bundle.json", "/cnab/bundle.json")
 	b, err := cfg.FileSystem.ReadFile("/cnab/bundle.json")
@@ -95,6 +106,8 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 }
 
 func TestCacheWriteCacheDirExists(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -118,11 +131,6 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 }
 
 func TestStoreRelocationMapping(t *testing.T) {
-
-	cfg := config.NewTestConfig(t)
-	home, _ := cfg.Config.GetHomeDir()
-	cacheDir := filepath.Join(home, "cache")
-
 	tests := []struct {
 		name              string
 		relocationMapping *relocation.ImageRelocationMap
@@ -138,7 +146,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			relocationMapping: &relocation.ImageRelocationMap{
 				"asd": "asdf",
 			},
-			wantedReloPath: filepath.Join(cacheDir, kahn1dot0Hash, "cnab", "relocation-mapping.json"),
+			wantedReloPath: path.Join("/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
 		},
 		{
 			name:           "no relocation file gets no path",
@@ -148,15 +156,20 @@ func TestStoreRelocationMapping(t *testing.T) {
 		},
 	}
 
-	c := New(cfg.Config)
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			cb, err := c.StoreBundle(test.tag, test.bundle, test.relocationMapping)
-			assert.NoError(t, err, fmt.Sprintf("didn't expect storage error for test %s", test.name))
-			assert.Equal(t, test.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
 
-			cb, _, err = c.FindBundle(test.tag)
-			assert.Equal(t, test.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for load")
+			cfg := config.NewTestConfig(t)
+			c := New(cfg.Config)
+
+			cb, err := c.StoreBundle(tc.tag, tc.bundle, tc.relocationMapping)
+			assert.NoError(t, err, fmt.Sprintf("didn't expect storage error for test %s", tc.name))
+			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
+
+			cb, _, err = c.FindBundle(tc.tag)
+			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for load")
 		})
 	}
 }
@@ -200,19 +213,22 @@ func TestStoreManifest(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc := tc
+
 			cfg := config.NewTestConfig(t)
 			home, _ := cfg.Config.GetHomeDir()
 			cacheDir := filepath.Join(home, "cache")
 			cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 			c := New(cfg.Config)
 
-			cb, err := c.StoreBundle(test.tag, test.bundle, nil)
+			cb, err := c.StoreBundle(tc.tag, tc.bundle, nil)
 			require.NoError(t, err, "StoreBundle failed")
 
 			cachedManifestExists, _ := cfg.FileSystem.Exists(cb.BuildManifestPath())
-			if test.shouldCacheManifest {
+			if tc.shouldCacheManifest {
 				assert.Equal(t, cb.BuildManifestPath(), cb.ManifestPath, "CachedBundle.ManifestPath was not set")
 				assert.True(t, cachedManifestExists, "Expected the porter.yaml manifest to be cached but it wasn't")
 			} else {
@@ -224,6 +240,8 @@ func TestStoreManifest(t *testing.T) {
 }
 
 func TestCache_StoreBundle_Overwrite(t *testing.T) {
+	t.Parallel()
+
 	cfg := config.NewTestConfig(t)
 	home, _ := cfg.Config.GetHomeDir()
 	cacheDir := filepath.Join(home, "cache")

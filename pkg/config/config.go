@@ -95,7 +95,7 @@ func (c *Config) GetHomeDir() (string, error) {
 		return c.porterHome, nil
 	}
 
-	home := os.Getenv(EnvHOME)
+	home := c.Getenv(EnvHOME)
 	if home == "" {
 		userHome, err := os.UserHomeDir()
 		if err != nil {
@@ -107,12 +107,8 @@ func (c *Config) GetHomeDir() (string, error) {
 	// As a relative path may be supplied via EnvHOME,
 	// we want to return the absolute path for programmatic usage elsewhere,
 	// for instance, in setting up volume mounts for outputs
-	absoluteHome, err := filepath.Abs(home)
-	if err != nil {
-		return "", errors.Wrap(err, "could not get the absolute path for the porter home directory")
-	}
+	c.SetHomeDir(c.FileSystem.Abs(home))
 
-	c.porterHome = absoluteHome
 	return c.porterHome, nil
 }
 
@@ -120,6 +116,10 @@ func (c *Config) GetHomeDir() (string, error) {
 // Porter home directory.
 func (c *Config) SetHomeDir(home string) {
 	c.porterHome = home
+
+	// Set this as an environment variable so that when we spawn new processes
+	// such as a mixin or plugin, that they can find PORTER_HOME too
+	c.Setenv(EnvHOME, home)
 }
 
 // SetPorterPath is a test function that allows tests to use an alternate

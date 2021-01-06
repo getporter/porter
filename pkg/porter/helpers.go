@@ -1,12 +1,13 @@
 package porter
 
 import (
+	"fmt"
 	"io/ioutil"
-	"os"
-	"os/exec"
+	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
@@ -77,7 +78,6 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
 	p.Porter = NewWithConfig(p.Config)
-	p.NewCommand = exec.Command
 
 	/*
 		// Update test providers to use the instances we just reset above
@@ -89,19 +89,15 @@ func (p *TestPorter) SetupIntegrationTest() {
 	*/
 
 	// Run the test in a temp directory
-	homeDir := p.TestConfig.TestContext.UseFilesystem()
-	p.TestConfig.SetupIntegrationTest(homeDir)
-	bundleDir := p.CreateBundleDir()
-
-	p.TestDir, _ = os.Getwd()
-	err := os.Chdir(bundleDir)
-	require.NoError(t, err)
+	testDir, homeDir := p.TestConfig.SetupIntegrationTest()
+	p.TestDir = testDir
+	p.CreateBundleDir()
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
 	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
-	kubeconfig := os.Getenv("KUBECONFIG")
+	kubeconfig := p.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
-		home := os.Getenv("HOME")
+		home := p.Getenv("HOME")
 		kubeconfig = filepath.Join(home, ".kube/config")
 	}
 	ciCredsPath := filepath.Join(p.TestDir, "../build/testdata/credentials/ci.json")
@@ -142,6 +138,7 @@ func (p *TestPorter) CreateBundleDir() string {
 	require.NoError(p.T(), err)
 
 	p.BundleDir = bundleDir
+	p.Chdir(bundleDir)
 	p.TestConfig.TestContext.AddCleanupDir(p.BundleDir)
 
 	return bundleDir
@@ -152,11 +149,7 @@ func (p *TestPorter) T() *testing.T {
 }
 
 func (p *TestPorter) CleanupIntegrationTest() {
-	os.Unsetenv(config.EnvHOME)
-
 	p.TestConfig.TestContext.Cleanup()
-
-	os.Chdir(p.TestDir)
 }
 
 func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
@@ -169,7 +162,45 @@ func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
 	return *bun
 }
 
-type TestBuildProvider struct{}
+func (p *TestPorter) RandomString(len int) string {
+	rand.Seed(time.Now().UnixNano())
+	bytes := make([]byte, len)
+	for i := 0; i < len; i++ {
+		//A=97 and Z = 97+25
+		bytes[i] = byte(97 + rand.Intn(25))
+	}
+	return string(bytes)
+}
+
+// AddTestBundleDir into the test bundle directory and give it a unique name
+// to avoid collisions with other tests running in parallel.
+func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool) string {
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, bundleDir), p.BundleDir)
+
+	testManifest := filepath.Join(p.BundleDir, config.Name)
+	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
+	require.NoError(p.T(), err)
+
+	if !generateUniqueName {
+		return m.Name
+	}
+
+	e := manifest.NewEditor(p.Context)
+	err = e.ReadFile(testManifest)
+	require.NoError(p.T(), err)
+
+	uniqueName := fmt.Sprintf("%s-%s", m.Name, p.RandomString(5))
+	err = e.SetValue("name", uniqueName)
+	require.NoError(p.T(), err)
+
+	err = e.WriteFile(testManifest)
+	require.NoError(p.T(), err)
+
+	return uniqueName
+}
+
+type TestBuildProvider struct {
+}
 
 func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}

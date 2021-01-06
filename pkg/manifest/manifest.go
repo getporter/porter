@@ -17,7 +17,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/distribution/reference"
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )

@@ -3,8 +3,8 @@ package porter
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -30,17 +30,12 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 // IsBundleUpToDate checks the hash of the manifest against the hash in cnab/bundle.json.
 func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 	if exists, _ := p.FileSystem.Exists(opts.CNABFile); exists {
-		bunData, err := p.FileSystem.ReadFile(opts.CNABFile)
-		if err != nil {
-			return false, errors.Wrapf(err, "could not read data from %s", opts.CNABFile)
-		}
-
-		bun, err := bundle.Unmarshal(bunData)
+		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
 		}
 
-		oldStamp, err := configadapter.LoadStamp(*bun)
+		oldStamp, err := configadapter.LoadStamp(bun)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}

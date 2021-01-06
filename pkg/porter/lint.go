@@ -2,8 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
@@ -33,12 +31,7 @@ func (o *LintOptions) Validate(cxt *context.Context) error {
 
 func (o *LintOptions) validateFile(cxt *context.Context) error {
 	if o.File == "" {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return errors.Wrap(err, "could not get current working directory")
-		}
-
-		manifestExists, err := cxt.FileSystem.Exists(filepath.Join(pwd, config.Name))
+		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}

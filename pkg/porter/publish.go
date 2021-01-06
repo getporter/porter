@@ -32,11 +32,7 @@ type PublishOptions struct {
 func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 	if o.ArchiveFile != "" {
 		// Verify the archive file can be accessed
-		path, err := filepath.Abs(o.ArchiveFile)
-		if err != nil {
-			return errors.Wrapf(err, "unable to determine absolute path for --archive %s", o.ArchiveFile)
-		}
-		if _, err := cxt.FileSystem.Stat(path); err != nil {
+		if _, err := cxt.FileSystem.Stat(o.ArchiveFile); err != nil {
 			return errors.Wrapf(err, "unable to access --archive %s", o.ArchiveFile)
 		}
 
@@ -149,11 +145,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 // this approach will need to be refactored, via preserving the original bundle and employing
 // a relocation mapping approach to associate the bundle's (old) images with the newly copied images.
 func (p *Porter) publishFromArchive(opts PublishOptions) error {
-	source, err := filepath.Abs(opts.ArchiveFile)
-	if err != nil {
-		return errors.Wrapf(err, "could not determine absolute path to archive file %s", opts.ArchiveFile)
-	}
-
+	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
 		return errors.Wrap(err, "error creating temp directory for archive extraction")

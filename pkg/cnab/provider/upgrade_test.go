@@ -11,7 +11,11 @@ import (
 )
 
 func TestRuntime_Upgrade(t *testing.T) {
+	t.Parallel()
+
 	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
 		r := NewTestRuntime(t)
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
@@ -36,6 +40,8 @@ func TestRuntime_Upgrade(t *testing.T) {
 	})
 
 	t.Run("requires existing claim", func(t *testing.T) {
+		t.Parallel()
+
 		r := NewTestRuntime(t)
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 

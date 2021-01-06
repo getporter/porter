@@ -9,6 +9,8 @@ import (
 )
 
 func TestRuntime_Install(t *testing.T) {
+	t.Parallel()
+
 	r := NewTestRuntime(t)
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 

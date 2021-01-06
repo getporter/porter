@@ -14,6 +14,7 @@ const (
 
 func TestMainWithMockedCommandHandlers(m *testing.M) {
 	// Fake out executing a command
+	// It's okay to use os.LookupEnv here because it's running in it's own process, and won't impact running tests in parallel.
 	if _, mockCommand := os.LookupEnv(MockedCommandEnv); mockCommand {
 		if expectedCmdEnv, doAssert := os.LookupEnv(ExpectedCommandEnv); doAssert {
 			gotCmd := strings.Join(os.Args[1:len(os.Args)], " ")

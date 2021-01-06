@@ -3,11 +3,10 @@
 package tests
 
 import (
-	"math/rand"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/cnabio/cnab-go/claim"
@@ -16,6 +15,8 @@ import (
 )
 
 func TestDependenciesLifecycle(t *testing.T) {
+	t.Parallel()
+
 	p := porter.NewTestPorter(t)
 	p.SetupIntegrationTest()
 	defer p.CleanupIntegrationTest()
@@ -31,21 +32,17 @@ func TestDependenciesLifecycle(t *testing.T) {
 	uninstallWordpressBundle(p, namespace)
 }
 
-func randomString(len int) string {
-	rand.Seed(time.Now().UnixNano())
-	bytes := make([]byte, len)
-	for i := 0; i < len; i++ {
-		//A=97 and Z = 97+25
-		bytes[i] = byte(97 + rand.Intn(25))
-	}
-	return string(bytes)
-}
-
 func publishMySQLBundle(p *porter.TestPorter) {
-	mysqlBundlePath := filepath.Join(p.TestDir, "../build/testdata/bundles/mysql")
-	err := os.Chdir(mysqlBundlePath)
-	require.NoError(p.T(), err, "could not change into the test mysql bundle directory")
-	defer os.Chdir(p.BundleDir)
+	bunDir, err := ioutil.TempDir("", "porter-mysql")
+	require.NoError(p.T(), err, "could not create temp directory to publish the mysql bundle")
+	defer os.RemoveAll(bunDir)
+
+	// Rebuild the bundle from a temp directory so that we don't modify the source directory
+	// and leave modified files around.
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), bunDir)
+	pwd := p.Getwd()
+	p.Chdir(bunDir)
+	defer p.Chdir(pwd)
 
 	publishOpts := porter.PublishOptions{}
 	err = publishOpts.Validate(p.Context)
@@ -62,7 +59,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	// Install the bundle that has dependencies
 	p.CopyDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress"), ".", false)
 
-	namespace = randomString(10)
+	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
 	installOpts.CredentialIdentifiers = []string{"ci"}
 	installOpts.Params = []string{
