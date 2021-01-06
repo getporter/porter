@@ -43,7 +43,8 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 		ArchiveFile: "mybuns.tgz",
 	}
 	err := opts.Validate(p.Context)
-	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
+	require.Error(t, err, "expected Validate to fail")
+	assert.True(t, os.IsNotExist(errors.Cause(err)), "expected a file not found error")
 
 	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), os.ModePerm)
 	err = opts.Validate(p.Context)

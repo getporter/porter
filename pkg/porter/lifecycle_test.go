@@ -100,14 +100,14 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		args, err := p.BuildActionArgs(opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		assert.Equal(t, ".cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
+		assert.Equal(t, filepath.FromSlash(".cnab/bundle.json"), args.BundlePath, "BundlePath not populated correctly")
 	})
 
 	// Just do a quick check that things are populated correctly when a bundle.json is passed
 	t.Run("bundle.json set", func(t *testing.T) {
 		opts := NewInstallOptions()
-		opts.CNABFile = "/bundle.json"
-		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
+		opts.CNABFile = "bundle.json"
+		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")

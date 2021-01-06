@@ -1,9 +1,11 @@
 package porter
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,7 +24,6 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
 type TestPorter struct {
@@ -95,18 +96,19 @@ func (p *TestPorter) SetupIntegrationTest() {
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
 	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
-	kubeconfig := p.Getenv("KUBECONFIG")
+	kubeconfig := filepath.ToSlash(p.Getenv("KUBECONFIG"))
 	if kubeconfig == "" {
 		home := p.Getenv("HOME")
-		kubeconfig = filepath.Join(home, ".kube/config")
+		kubeconfig = path.Join(home, ".kube/config")
 	}
 	ciCredsPath := filepath.Join(p.TestDir, "../build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
+
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
 	ciCredsB = []byte(strings.Replace(string(ciCredsB), "KUBECONFIGPATH", kubeconfig, -1))
 	var testCreds cnabcreds.CredentialSet
-	err = yaml.Unmarshal(ciCredsB, &testCreds)
+	err = json.Unmarshal(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
 	err = p.Credentials.Save(testCreds)
 	require.NoError(t, err, "could not save test credentials")
