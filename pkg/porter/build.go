@@ -17,6 +17,9 @@ import (
 type BuildProvider interface {
 	// BuildInvocationImage using the bundle in the current directory
 	BuildInvocationImage(manifest *manifest.Manifest) error
+
+	// TagInvocationImage using the origTag and newTag values supplied
+	TagInvocationImage(origTag, newTag string) error
 }
 
 type BuildOptions struct {
@@ -54,16 +57,8 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
 
-	// Publish may invoke this method and the manifest will already be
-	// populated.  Only load if still empty.
-	// For instance, Publish may be called with a full, new bundle reference
-	// via --reference, which will update the invocation image name and spark a new
-	// build here.  If we re-load from the local manifest, we will lose these
-	// values.
-	if p.Manifest == nil {
-		if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
-			return err
-		}
+	if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
+		return err
 	}
 
 	if !opts.NoLint {

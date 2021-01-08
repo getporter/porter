@@ -76,51 +76,54 @@ func (p *Porter) Publish(opts PublishOptions) error {
 }
 
 func (p *Porter) publishFromFile(opts PublishOptions) error {
-	reference := opts.Reference
-	if reference != "" {
-		// If reference was supplied, update the invocation image name on the manifest
-		// per the registry, org and docker tag from the value provided
-		if err := p.Manifest.SetInvocationImageAndReference(reference); err != nil {
-			return errors.Wrapf(err, "unable to set invocation image name from reference %q", reference)
-		}
-	} else {
-		// If the manifest file is the default/user-supplied manifest,
-		// hot-swap in Porter's canonical translation (if exists) from
-		// the .cnab/app directory, as there may be dynamic overrides for
-		// the name and version fields to inform invocation image naming.
-		canonicalExists, err := p.FileSystem.Exists(build.LOCAL_MANIFEST)
-		if err != nil {
-			return err
-		}
-
-		if canonicalExists {
-			err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Check for tag and registry overrides
-		if opts.Tag != "" {
-			p.Manifest.DockerTag = opts.Tag
-		}
-		if opts.Registry != "" {
-			p.Manifest.Registry = opts.Registry
-		}
-		if opts.Tag != "" || opts.Registry != "" {
-			// Null out the reference as it needs to be rebuilt with new values
-			p.Manifest.Reference = ""
-			if err := p.Manifest.SetInvocationImageAndReference(""); err != nil {
-				return errors.Wrap(err, "unable to set invocation image name and reference")
-			}
-		}
-
-		reference = p.Manifest.Reference
-	}
-
 	err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
+	}
+
+	// Capture original invocation image name as it may be updated below
+	origInvImg := p.Manifest.Image
+
+	// If the manifest file is the default/user-supplied manifest,
+	// hot-swap in Porter's canonical translation (if exists) from
+	// the .cnab/app directory, as there may be dynamic overrides for
+	// the name and version fields to inform invocation image naming.
+	canonicalExists, err := p.FileSystem.Exists(build.LOCAL_MANIFEST)
+	if err != nil {
+		return err
+	}
+	if canonicalExists {
+		err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check for tag and registry overrides optionally supplied on publish
+	if opts.Tag != "" {
+		p.Manifest.DockerTag = opts.Tag
+	}
+	if opts.Registry != "" {
+		p.Manifest.Registry = opts.Registry
+	}
+	// If either are non-empty, null out the reference on the manifest, as
+	// it needs to be rebuilt with new values
+	if opts.Tag != "" || opts.Registry != "" {
+		p.Manifest.Reference = ""
+	}
+
+	// Update invocation image and reference with opts.Reference, which may be
+	// empty, which is fine - we still may need to pick up tag and/or registry
+	// overrides
+	if err := p.Manifest.SetInvocationImageAndReference(opts.Reference); err != nil {
+		return errors.Wrap(err, "unable to set invocation image name and reference")
+	}
+
+	if origInvImg != p.Manifest.Image {
+		// Tag it so that it will be known/found by Docker for publishing
+		if err := p.Builder.TagInvocationImage(origInvImg, p.Manifest.Image); err != nil {
+			return err
+		}
 	}
 
 	if p.Manifest.Reference == "" {
@@ -137,14 +140,14 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		return err
 	}
 
-	rm, err := p.Registry.PushBundle(bun, reference, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, p.Manifest.Reference, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
 
 	// Perhaps we have a cached version of a bundle with the same reference, previously pulled
 	// If so, replace it, as it is most likely out-of-date per this publish
-	return p.refreshCachedBundle(bun, reference, rm)
+	return p.refreshCachedBundle(bun, p.Manifest.Reference, rm)
 }
 
 // publishFromArchive (re-)publishes a bundle, provided by the archive file, using the provided tag.
