@@ -57,6 +57,21 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 		return o.validateReference()
 	}
 
+	if o.Tag != "" {
+		return o.validateTag()
+	}
+
+	return nil
+}
+
+// validateTag checks to make sure the supplied tag is of the expected form.
+// A previous iteration of this flag was used to designate an entire bundle
+// reference.  If we detect this attempted use, we return an error and
+// explanation
+func (o *PublishOptions) validateTag() error {
+	if strings.Contains(o.Tag, ":") || strings.Contains(o.Tag, "@") {
+		return errors.New("the --tag flag has been updated to designate just the Docker tag portion of the bundle reference; use --reference for the full bundle reference instead")
+	}
 	return nil
 }
 

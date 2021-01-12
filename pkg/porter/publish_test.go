@@ -54,6 +54,32 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	require.NoError(t, err, "validating should not have failed")
 }
 
+func TestPublish_validateTag(t *testing.T) {
+	t.Run("tag is a Docker tag", func(t *testing.T) {
+		opts := PublishOptions{
+			Tag: "latest",
+		}
+		err := opts.validateTag()
+		assert.NoError(t, err)
+	})
+
+	t.Run("tag is a full bundle reference with '@'", func(t *testing.T) {
+		opts := PublishOptions{
+			Tag: "myregistry.com/mybuns:v0.1.0",
+		}
+		err := opts.validateTag()
+		assert.EqualError(t, err, "the --tag flag has been updated to designate just the Docker tag portion of the bundle reference; use --reference for the full bundle reference instead")
+	})
+
+	t.Run("tag is a full bundle reference with ':'", func(t *testing.T) {
+		opts := PublishOptions{
+			Tag: "myregistry.com/mybuns@abcde1234",
+		}
+		err := opts.validateTag()
+		assert.EqualError(t, err, "the --tag flag has been updated to designate just the Docker tag portion of the bundle reference; use --reference for the full bundle reference instead")
+	})
+}
+
 func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 	t.Run("has registry and org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("localhost:5000/myorg/apache-installer", "example.com/neworg/apache:v0.1.0")
