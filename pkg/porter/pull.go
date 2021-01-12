@@ -7,6 +7,8 @@ import (
 )
 
 type BundlePullOptions struct {
+	// Tag is a deprecated option, replaced by Reference below
+	Tag              string
 	Reference        string
 	InsecureRegistry bool
 	Force            bool

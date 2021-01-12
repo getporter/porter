@@ -133,9 +133,15 @@ func ShouldShowUngroupedCommand(cmd *cobra.Command) bool {
 }
 
 func addBundlePullFlags(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
+	addDeprecatedTagFlag(f, opts)
 	addReferenceFlag(f, opts)
 	addInsecureRegistryFlag(f, opts)
 	addForcePullFlag(f, opts)
+}
+
+func addDeprecatedTagFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
+	f.StringVar(&opts.Tag, "tag", "", "")
+	f.MarkDeprecated("tag", "use --reference to declare a full bundle reference")
 }
 
 func addReferenceFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
