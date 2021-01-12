@@ -68,7 +68,7 @@ You can specify parameters for a dependent bundle on the command-line using the 
 For example, to override the default parameter `database_name` when installing the wordpress bundle the comand would be
 
 ```
-$ porter install --tag getporter/mysql:v0.1.3 --param mysql#database_name=mywordpress
+$ porter install --reference getporter/mysql:v0.1.3 --param mysql#database_name=mywordpress
 ```
 
 * `DEPENDENCY`: The dependency name used in the `dependencies` section of the porter manifest. From the example above, the name is "mysql".

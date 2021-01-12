@@ -28,7 +28,7 @@ func (o UpgradeOptions) GetActionVerb() string {
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
-	err := p.prepullBundleByTag(opts.BundleActionOptions)
+	err := p.prepullBundleByReference(opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before upgrade")
 	}

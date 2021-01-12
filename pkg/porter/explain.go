@@ -72,8 +72,8 @@ func (s SortPrintableOutput) Swap(i, j int) {
 }
 
 type PrintableDependency struct {
-	Alias string `json:"alias" yaml:"alias"`
-	Tag   string `json:"tag" yaml:"tag"`
+	Alias     string `json:"alias" yaml:"alias"`
+	Reference string `json:"reference" yaml:"reference"`
 }
 
 type PrintableParameter struct {
@@ -137,17 +137,17 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 	if err != nil {
 		return err
 	}
-	if o.Tag != "" {
+	if o.Reference != "" {
 		o.File = ""
 		o.CNABFile = ""
 
-		return o.validateTag()
+		return o.validateReference()
 	}
 	return nil
 }
 
 func (p *Porter) Explain(o ExplainOpts) error {
-	err := p.prepullBundleByTag(&o.BundleActionOptions)
+	err := p.prepullBundleByReference(&o.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
 	}
@@ -265,7 +265,7 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 	for _, dep := range deps {
 		pd := PrintableDependency{}
 		pd.Alias = dep.Alias
-		pd.Tag = dep.Tag
+		pd.Reference = dep.Reference
 
 		dependencies = append(dependencies, pd)
 	}
@@ -424,7 +424,7 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Alias, o.Tag}
+			return []interface{}{o.Alias, o.Reference}
 		}
-	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Tag")
+	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Reference")
 }

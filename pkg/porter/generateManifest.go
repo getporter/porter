@@ -12,7 +12,6 @@ import (
 type metadataOpts struct {
 	Name    string
 	Version string
-	Tag     string // This may be set via Publish
 }
 
 // generateInternalManifest decodes the manifest designated by filepath and applies

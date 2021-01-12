@@ -47,6 +47,10 @@ type Manifest struct {
 	// and isn't meant to be user-specified
 	BundleTag string `yaml:"-"`
 
+	// DockerTag is the Docker tag portion of the published invocation
+	// image and bundle.  It will only be set at time of publishing.
+	DockerTag string `yaml:"-"`
+
 	// Image is the name of the invocation image in the format REGISTRY/NAME:TAG
 	// It doesn't map to any field in the manifest as it has been deprecated
 	// and isn't meant to be user-specified
@@ -882,6 +886,11 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 // getDockerTagFromBundleRef returns the Docker tag portion of the bundle tag,
 // using the bundle version as a fallback
 func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string, error) {
+	// If the manifest has a DockerTag override already set (e.g. on publish), use this
+	if m.DockerTag != "" {
+		return m.DockerTag, nil
+	}
+
 	var dockerTag string
 	switch v := bundleRef.(type) {
 	case reference.Tagged:

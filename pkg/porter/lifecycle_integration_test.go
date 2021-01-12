@@ -15,7 +15,7 @@ func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 
 	installOpts := NewInstallOptions()
 	installOpts.Name = "hello"
-	installOpts.Tag = "getporter/porter-hello:v0.1.1"
+	installOpts.Reference = "getporter/porter-hello:v0.1.1"
 	err := installOpts.Validate(nil, p.Porter)
 	require.NoError(t, err, "InstallOptions.Validate failed")
 

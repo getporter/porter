@@ -30,8 +30,8 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	}
 	o.ArchiveFile = args[0]
 
-	if o.Tag == "" {
-		return errors.New("must provide a value for --tag of the form REGISTRY/bundle:tag")
+	if o.Reference == "" {
+		return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
 	}
 	return o.BundleActionOptions.Validate(args, p)
 }
@@ -45,7 +45,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return fmt.Errorf("parent directory %q does not exist", dir)
 	}
 
-	err := p.prepullBundleByTag(&opts.BundleActionOptions)
+	err := p.prepullBundleByReference(&opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before building archive")
 	}

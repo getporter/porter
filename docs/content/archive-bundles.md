@@ -10,13 +10,13 @@ Porter allows you to share bundles by [publishing](/distribute-bundles) them to 
 In order to generate the archive, all of the images in the bundle **must** have been published to a registry. For this reason, you must first `publish` your bundle to a registry:
 
 ```
-porter publish --tag jeremyrickard/porter-do-bundle:v0.5.0
+porter publish --reference jeremyrickard/porter-do-bundle:v0.5.0
 ```
 
 Now you can run the `porter archive` command and designate the archive file name and bundle tag to use:
 
 ```
-porter archive --tag jeremyrickard/porter-do-bundle:v0.5.0 do-porter.tgz
+porter archive --reference jeremyrickard/porter-do-bundle:v0.5.0 do-porter.tgz
 ```
 
 This will generate a file in the directory named `do-porter.tgz`.
@@ -61,7 +61,7 @@ In this archive file, you will see the `bundle.json`, along with all of the arti
 Once you have a bundle archive, the next step to make it usable is to publish it to an OCI registry. To do this, the `porter publish` command is used. Given our `do-porter.tgz` bundle above, we can publish this to a new registry with the following command:
 
 ```
-$ porter publish -a do-porter.tgz --tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0
+$ porter publish -a do-porter.tgz --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Starting to copy image jrrporter.azurecr.io/do-porter-from-archive/porter-do@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be...
 Completed image jrrporter.azurecr.io/do-porter-from-archive/porter-do@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be copy
 Starting to copy image jrrporter.azurecr.io/do-porter-from-archive/spring-music@sha256:8f1133d81f1b078c865cdb11d17d1ff15f55c449d3eecca50190eed0f5e5e26f...
@@ -72,7 +72,7 @@ Bundle tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0 pushed successfully
 This command will expand the bundle archive and copy each image up to the new registry. Once complete, you can use the bundle like any other published bundle:
 
 ```
-porter explain --tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0
+porter explain --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL
 Version: 0.5.0

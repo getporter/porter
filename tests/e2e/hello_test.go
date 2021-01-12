@@ -17,9 +17,9 @@ func TestHelloBundle(t *testing.T) {
 	test.RequirePorter("build")
 
 	ref := "localhost:5000/porter-hello:v0.1.1"
-	test.RequirePorter("publish", "--tag", ref)
+	test.RequirePorter("publish", "--reference", ref)
 
-	test.RequirePorter("install", "--tag", ref)
+	test.RequirePorter("install", "--reference", ref)
 	test.RequirePorter("installation", "show", "porter-hello")
 
 	test.RequirePorter("upgrade")

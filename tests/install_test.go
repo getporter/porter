@@ -72,7 +72,7 @@ func TestInstall_fileParam(t *testing.T) {
 	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
 }
 
-func TestInstall_fileParam_fromTag(t *testing.T) {
+func TestInstall_fileParam_fromReference(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
@@ -81,10 +81,10 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", true)
-	tag := fmt.Sprintf("localhost:5000/%s:v0.1.0", bundleName)
+	reference := fmt.Sprintf("localhost:5000/%s:v0.1.0", bundleName)
 
 	publishOpts := porter.PublishOptions{}
-	publishOpts.Tag = tag
+	publishOpts.Reference = reference
 	err := publishOpts.Validate(p.Context)
 	require.NoError(t, err, "validation of publish opts for bundle failed")
 
@@ -92,7 +92,7 @@ func TestInstall_fileParam_fromTag(t *testing.T) {
 	require.NoError(t, err, "publish of bundle failed")
 
 	installOpts := porter.NewInstallOptions()
-	installOpts.Tag = tag
+	installOpts.Reference = reference
 	installOpts.Params = []string{"myfile=./myfile"}
 	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
 

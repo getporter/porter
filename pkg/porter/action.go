@@ -11,7 +11,7 @@ import (
 func (p *Porter) ExecuteAction(action BundleAction) error {
 	actionOpts := action.GetOptions()
 
-	err := p.prepullBundleByTag(actionOpts)
+	err := p.prepullBundleByReference(actionOpts)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before installation")
 	}

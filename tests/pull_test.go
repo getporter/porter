@@ -19,7 +19,7 @@ func TestPull_ContentDigestMissing(t *testing.T) {
 	p.Debug = false
 
 	opts := porter.BundlePullOptions{}
-	opts.Tag = "getporterci/mysql:no-content-digest"
+	opts.Reference = "getporterci/mysql:no-content-digest"
 
 	cachedBun, err := p.PullBundle(opts)
 	require.Contains(t, err.Error(),

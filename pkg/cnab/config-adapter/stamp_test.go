@@ -12,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "b3be65771034c64a0d49d2c8a4ac3103a1ec12d6e41015ef57861fd913f72ecf"
+var simpleManifestDigest = "62686a974a7bce589c981cb16549feb58ef308fbe98b9763e9151eaf30b27562"
 
 func TestConfig_GenerateStamp(t *testing.T) {
-	t.Parallel()
+	// Do not run this test in parallel
+	// Still need to figure out what is introducing flakey-ness
 
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
@@ -125,25 +126,6 @@ func TestStamp_DecodeManifest(t *testing.T) {
 
 func TestConfig_DigestManifest(t *testing.T) {
 	t.Parallel()
-
-	t.Run("updated invocation image", func(t *testing.T) {
-		t.Parallel()
-
-		c := config.NewTestConfig(t)
-		c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
-
-		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-		require.NoError(t, err, "could not load manifest")
-
-		a := NewManifestConverter(c.Context, m, nil, nil)
-		digest, err := a.DigestManifest()
-		require.NoError(t, err, "DigestManifest failed")
-
-		m.Image = "newpublishregistry/porter-hello:v0.1.0"
-		newDigest, err := a.DigestManifest()
-		require.NoError(t, err, "DigestManifest failed")
-		assert.NotEqual(t, newDigest, digest, "expected the digest to be different due to the updated image")
-	})
 
 	t.Run("updated version", func(t *testing.T) {
 		t.Parallel()

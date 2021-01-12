@@ -16,7 +16,7 @@ func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
 	}
 
 	// Ensure that we have a manifest initialized, even if it's just an empty one
-	// This happens for non-porter bundles using --cnab-file or --tag
+	// This happens for non-porter bundles using --cnab-file or --reference
 	if p.Manifest == nil {
 		p.Manifest = &manifest.Manifest{}
 	}

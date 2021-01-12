@@ -24,8 +24,8 @@ porter invoke [INSTALLATION] --action ACTION [flags]
 
 ```
   porter invoke --action ACTION
-  porter invoke --tag getporter/kubernetes:v0.1.0
-  porter invoke --tag localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter invoke --reference getporter/kubernetes:v0.1.0
+  porter invoke --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter invoke --action ACTION --cred azure --cred kubernetes
@@ -47,7 +47,7 @@ porter invoke [INSTALLATION] --action ACTION [flags]
       --insecure-registry          Don't require TLS for the registry
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
-      --tag string                 Use a bundle in an OCI registry specified by the given tag.
+      --reference string           Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

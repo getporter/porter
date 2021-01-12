@@ -46,21 +46,21 @@ func isCopyReferenceOnly(dest string) bool {
 
 func generateNewBundleRef(source, dest string) string {
 	if isCopyReferenceOnly(dest) {
-		bundleNameTag := source[strings.LastIndex(source, "/")+1:]
-		return fmt.Sprintf("%s/%s", dest, bundleNameTag)
+		bundleNameRef := source[strings.LastIndex(source, "/")+1:]
+		return fmt.Sprintf("%s/%s", dest, bundleNameRef)
 	}
 	return dest
 }
 
 // CopyBundle copies a bundle from one repository to another
 func (p *Porter) CopyBundle(c *CopyOpts) error {
-	destinationTag := generateNewBundleRef(c.Source, c.Destination)
-	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationTag)
+	destinationRef := generateNewBundleRef(c.Source, c.Destination)
+	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationRef)
 	bun, _, err := p.Registry.PullBundle(c.Source, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before copying")
 	}
-	_, err = p.Registry.PushBundle(bun, destinationTag, c.InsecureRegistry)
+	_, err = p.Registry.PushBundle(bun, destinationRef, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy bundle to new location")
 	}

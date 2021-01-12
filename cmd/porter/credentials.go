@@ -62,8 +62,8 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
-  porter credential generate kubecred --tag getporter/porter-hello:v0.1.0
-  porter credential generate kubecred --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0
+  porter credential generate kubecred --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter credential generate kubecred --file myapp/porter.yaml
   porter credential generate kubecred --cnab-file myapp/bundle.json
 `,

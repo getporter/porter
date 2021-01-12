@@ -7,18 +7,19 @@ import (
 )
 
 type BundlePullOptions struct {
+	// Tag is a deprecated option, replaced by Reference below
 	Tag              string
+	Reference        string
 	InsecureRegistry bool
 	Force            bool
 }
 
-func (b BundlePullOptions) validateTag() error {
-	_, err := cnabtooci.ParseOCIReference(b.Tag)
+func (b BundlePullOptions) validateReference() error {
+	_, err := cnabtooci.ParseOCIReference(b.Reference)
 	if err != nil {
-		return errors.Wrap(err, "invalid value for --tag, specified value should be of the form REGISTRY/bundle:tag")
+		return errors.Wrap(err, "invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag")
 	}
 	return nil
-
 }
 
 // PullBundle looks for a given bundle tag in the bundle cache. If it is not found, it is

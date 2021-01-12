@@ -26,13 +26,19 @@ type BundleActionOptions struct {
 }
 
 func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
+	// During the deprecation phase of the --tag flag, just assign reference to
+	// the supplied value
 	if o.Tag != "" {
+		o.Reference = o.Tag
+	}
+
+	if o.Reference != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
 		o.File = ""
 		o.CNABFile = ""
-		o.TagSet = true
+		o.ReferenceSet = true
 
-		if err := o.validateTag(); err != nil {
+		if err := o.validateReference(); err != nil {
 			return err
 		}
 	}
@@ -74,17 +80,17 @@ func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArgume
 	return args, nil
 }
 
-// prepullBundleByTag handles calling the bundle pull operation and updating
+// prepullBundleByReference handles calling the bundle pull operation and updating
 // the shared options like name and bundle file path. This is used by install, upgrade
 // and uninstall
-func (p *Porter) prepullBundleByTag(opts *BundleActionOptions) error {
-	if opts.Tag == "" {
+func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) error {
+	if opts.Reference == "" {
 		return nil
 	}
 
 	cachedBundle, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
-		return errors.Wrapf(err, "unable to pull bundle %s", opts.Tag)
+		return errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
 	}
 
 	opts.CNABFile = cachedBundle.BundlePath

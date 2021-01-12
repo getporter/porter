@@ -27,7 +27,7 @@ Commands for working with bundles. These all have shortcuts so that you can call
 ### SEE ALSO
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
-* [porter bundles archive](/cli/porter_bundles_archive/)	 - Archive a bundle from a tag
+* [porter bundles archive](/cli/porter_bundles_archive/)	 - Archive a bundle from a reference
 * [porter bundles build](/cli/porter_bundles_build/)	 - Build a bundle
 * [porter bundles copy](/cli/porter_bundles_copy/)	 - Copy a bundle
 * [porter bundles create](/cli/porter_bundles_create/)	 - Create a bundle

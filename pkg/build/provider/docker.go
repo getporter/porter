@@ -80,3 +80,18 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 	}
 	return nil
 }
+
+func (b *DockerBuilder) TagInvocationImage(origTag, newTag string) error {
+	cli, err := command.NewDockerCli()
+	if err != nil {
+		return errors.Wrap(err, "could not create new docker client")
+	}
+	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
+		return err
+	}
+
+	if err := cli.Client().ImageTag(context.Background(), origTag, newTag); err != nil {
+		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
+	}
+	return nil
+}

@@ -67,7 +67,7 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
-	err := p.prepullBundleByTag(opts.BundleActionOptions)
+	err := p.prepullBundleByReference(opts.BundleActionOptions)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before uninstall")
 	}

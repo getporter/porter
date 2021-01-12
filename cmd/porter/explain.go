@@ -14,8 +14,8 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
 		Short: "Explain a bundle",
 		Long:  "Explain how to use a bundle by printing the parameters, credentials, outputs, actions.",
 		Example: `  porter bundle explain
-  porter bundle explain --tag getporter/porter-hello:v0.1.0
-  porter bundle explain --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter bundle explain --reference getporter/porter-hello:v0.1.0
+  porter bundle explain --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
 		  `,

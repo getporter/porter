@@ -19,8 +19,8 @@ porter bundles explain [flags]
 
 ```
   porter bundle explain
-  porter bundle explain --tag getporter/porter-hello:v0.1.0
-  porter bundle explain --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter bundle explain --reference getporter/porter-hello:v0.1.0
+  porter bundle explain --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
 		  
@@ -35,7 +35,7 @@ porter bundles explain [flags]
   -h, --help                help for explain
       --insecure-registry   Don't require TLS for the registry
   -o, --output string       Specify an output format.  Allowed values: table, json, yaml (default "table")
-      --tag string          Use a bundle in an OCI registry specified by the given tag.
+      --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

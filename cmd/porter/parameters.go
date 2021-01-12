@@ -62,8 +62,8 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 parameter set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter parameter generate
-  porter parameter generate myparamset --tag getporter/porter-hello:v0.1.0
-  porter parameter generate myparamset --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter parameter generate myparamset --reference getporter/porter-hello:v0.1.0
+  porter parameter generate myparamset --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter parameter generate myparamset --file myapp/porter.yaml
   porter parameter generate myparamset --cnab-file myapp/bundle.json
 `,

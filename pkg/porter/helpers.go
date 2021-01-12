@@ -209,3 +209,7 @@ func NewTestBuildProvider() *TestBuildProvider {
 func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }
+
+func (t *TestBuildProvider) TagInvocationImage(origTag, newTag string) error {
+	return nil
+}

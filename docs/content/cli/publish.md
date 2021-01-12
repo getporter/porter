@@ -11,6 +11,8 @@ Publish a bundle
 
 Publishes a bundle by pushing the invocation image and bundle to a registry.
 
+Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.
+
 ```
 porter publish [flags]
 ```
@@ -20,7 +22,9 @@ porter publish [flags]
 ```
   porter publish
   porter publish --file myapp/porter.yaml
-  porter publish --archive /tmp/mybuns.tgz --tag myrepo/my-buns:0.1.0
+  porter publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
+  porter publish --tag latest
+  porter bundle pulbish --registry myregistry.com/myorg
 		
 ```
 
@@ -31,7 +35,9 @@ porter publish [flags]
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                help for publish
       --insecure-registry   Don't require TLS for the registry
-      --tag string          Use a bundle in an OCI registry specified by the given tag.
+      --reference string    Use a bundle in an OCI registry specified by the given reference.
+      --registry string     Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
+      --tag string          Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```
 
 ### Options inherited from parent commands

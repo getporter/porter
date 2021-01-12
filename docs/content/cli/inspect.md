@@ -23,8 +23,8 @@ porter inspect [flags]
 
 ```
   porter inspect
-  porter inspect --tag getporter/porter-hello:v0.1.0
-  porter inspect --tag localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter inspect --reference getporter/porter-hello:v0.1.0
+  porter inspect --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter inspect --file another/porter.yaml
   porter inspect --cnab-file some/bundle.json
 		  
@@ -39,7 +39,7 @@ porter inspect [flags]
   -h, --help                help for inspect
       --insecure-registry   Don't require TLS for the registry
   -o, --output string       Specify an output format.  Allowed values: table, json, yaml (default "table")
-      --tag string          Use a bundle in an OCI registry specified by the given tag.
+      --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

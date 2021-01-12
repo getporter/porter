@@ -11,8 +11,8 @@ import (
 )
 
 type DependencyLock struct {
-	Alias string
-	Tag   string
+	Alias     string
+	Reference string
 }
 
 type DependencySolver struct {
@@ -39,8 +39,8 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 		}
 
 		lock := DependencyLock{
-			Alias: dep.Name,
-			Tag:   reference.FamiliarString(ref),
+			Alias:     dep.Name,
+			Reference: reference.FamiliarString(ref),
 		}
 		q = append(q, lock)
 	}
