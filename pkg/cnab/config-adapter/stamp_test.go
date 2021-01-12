@@ -12,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "b21b32c1ee53e5430a4fe94694da40f1252f9aa7cbb8c83e9b7d7e6a0fc5029b"
+var simpleManifestDigest = "62686a974a7bce589c981cb16549feb58ef308fbe98b9763e9151eaf30b27562"
 
 func TestConfig_GenerateStamp(t *testing.T) {
-	t.Parallel()
+	// Do not run this test in parallel
+	// Still need to figure out what is introducing flakey-ness
 
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
