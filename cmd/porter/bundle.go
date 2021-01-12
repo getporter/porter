@@ -292,7 +292,9 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "publish",
 		Short: "Publish a bundle",
-		Long:  "Publishes a bundle by pushing the invocation image and bundle to a registry.",
+		Long: `Publishes a bundle by pushing the invocation image and bundle to a registry.
+
+Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.`,
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
   porter bundle publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
