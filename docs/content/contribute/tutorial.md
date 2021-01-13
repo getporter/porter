@@ -359,3 +359,4 @@ You can now build Porter, modify its code and try out your changes! 🎉 You are
 now ready to [find an issue] and contribute to Porter.
 
 [find an issue]: /contribute/guide/#find-an-issue
+[Mage]: https://magefile.org
