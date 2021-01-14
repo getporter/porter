@@ -18,6 +18,7 @@ type RequiredExtension struct {
 var SupportedExtensions = []RequiredExtension{
 	DependenciesExtension,
 	DockerExtension,
+	FileParameterExtension,
 	ParameterSourcesExtension,
 }
 
@@ -56,6 +57,9 @@ func ProcessRequiredExtensions(b bundle.Bundle) (ProcessedExtensions, error) {
 // provided name, or an error
 func GetSupportedExtension(e string) (*RequiredExtension, error) {
 	for _, ext := range SupportedExtensions {
+		// TODO(v1) we should only check for the key in v1.0.0
+		// We are checking for both because of a bug in the cnab dependencies spec
+		// https://github.com/cnabio/cnab-spec/issues/403
 		if e == ext.Key || e == ext.Shorthand {
 			return &ext, nil
 		}

@@ -44,7 +44,8 @@
   },
   "requiredExtensions": [
     "io.cnab.dependencies",
-    "io.cnab.parameter-sources"
+    "io.cnab.parameter-sources",
+    "sh.porter.file-parameters"
   ],
   "custom": {
     "com.example.duffle-bag": {

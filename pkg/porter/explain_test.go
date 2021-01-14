@@ -186,10 +186,17 @@ func TestExplain_generateYAML(t *testing.T) {
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
 	bun := bundle.Bundle{
+		RequiredExtensions: []string{
+			extensions.FileParameterExtensionKey,
+		},
 		Definitions: definition.Definitions{
 			"string": &definition.Schema{
 				Type:    "string",
 				Default: "clippy",
+			},
+			"file": &definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
 			},
 		},
 		Parameters: map[string]bundle.Parameter{
@@ -197,15 +204,24 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 				Definition: "string",
 				Required:   true,
 			},
+			"tfstate": {
+				Definition: "file",
+			},
 		},
 	}
 
 	pb, err := generatePrintable(bun)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(pb.Parameters))
+	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
 	d := pb.Parameters[0]
+	require.Equal(t, "debug", d.Name)
 	assert.Equal(t, "clippy", fmt.Sprintf("%v", d.Default))
+	assert.Equal(t, "string", d.Type)
+	f := pb.Parameters[1]
+	require.Equal(t, "tfstate", f.Name)
+	assert.Equal(t, "file", f.Type)
+
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Credentials))
 	assert.Equal(t, 0, len(pb.Actions))
@@ -264,7 +280,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
-			extensions.DependenciesKey: extensions.Dependencies{
+			extensions.DependenciesExtensionKey: extensions.Dependencies{
 				Sequence: sequenceMock,
 				Requires: map[string]extensions.Dependency{
 					"mysql": extensions.Dependency{

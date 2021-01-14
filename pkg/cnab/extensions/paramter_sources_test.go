@@ -18,7 +18,7 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 		var ps ParameterSources
 		ps.SetParameterFromOutput("tfstate", "tfstate")
 		processed := ProcessedExtensions{
-			ParameterSourcesKey: ps,
+			ParameterSourcesExtensionKey: ps,
 		}
 
 		ext, required, err := processed.GetParameterSources()
@@ -42,7 +42,7 @@ func TestProcessedExtensions_GetParameterSourcesExtension(t *testing.T) {
 		t.Parallel()
 
 		processed := ProcessedExtensions{
-			ParameterSourcesKey: map[string]string{"ponies": "are great"},
+			ParameterSourcesExtensionKey: map[string]string{"ponies": "are great"},
 		}
 
 		ext, required, err := processed.GetParameterSources()
@@ -63,6 +63,7 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 	assert.True(t, HasParameterSources(*bun))
 
 	ps, err := ReadParameterSources(*bun)
+	require.NoError(t, err, "could not read parameter sources")
 
 	want := ParameterSources{}
 	want.SetParameterFromOutput("tfstate", "tfstate")
@@ -80,4 +81,43 @@ func TestParameterSource_ListSourcesByPriority(t *testing.T) {
 		OutputParameterSource{OutputName: "tfstate"},
 	}
 	assert.Equal(t, want, got)
+}
+
+func TestSupportsParameterSources(t *testing.T) {
+	t.Parallel()
+
+	t.Run("supported", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{ParameterSourcesExtensionKey},
+		}
+
+		assert.True(t, SupportsParameterSources(b))
+	})
+	t.Run("unsupported", func(t *testing.T) {
+		b := bundle.Bundle{}
+
+		assert.False(t, SupportsParameterSources(b))
+	})
+}
+
+func TestHasParameterSources(t *testing.T) {
+	t.Parallel()
+
+	t.Run("has parameter sources", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{ParameterSourcesExtensionKey},
+			Custom: map[string]interface{}{
+				ParameterSourcesExtensionKey: struct{}{},
+			},
+		}
+
+		assert.True(t, HasParameterSources(b))
+	})
+	t.Run("no parameter sources", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{ParameterSourcesExtensionKey},
+		}
+
+		assert.False(t, HasParameterSources(b))
+	})
 }

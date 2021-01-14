@@ -472,7 +472,7 @@ func TestManifestConverter_generateRequiredExtensions_Dependencies(t *testing.T)
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Equal(t, []string{"io.cnab.dependencies"}, bun.RequiredExtensions)
+	assert.Contains(t, bun.RequiredExtensions, "io.cnab.dependencies")
 }
 
 func TestManifestConverter_generateParameterSources(t *testing.T) {
@@ -592,7 +592,7 @@ func TestManifestConverter_generateRequiredExtensions_ParameterSources(t *testin
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Equal(t, []string{"io.cnab.dependencies", "io.cnab.parameter-sources"}, bun.RequiredExtensions)
+	assert.Contains(t, bun.RequiredExtensions, "io.cnab.parameter-sources")
 }
 
 func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
@@ -609,7 +609,7 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
 
-	expected := []string{"requiredExtension1", "requiredExtension2"}
+	expected := []string{"sh.porter.file-parameters", "requiredExtension1", "requiredExtension2"}
 	assert.Equal(t, expected, bun.RequiredExtensions)
 }
 
@@ -626,6 +626,7 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
+	assert.Contains(t, bun.Custom, extensions.FileParameterExtensionKey)
 	assert.Contains(t, bun.Custom, "requiredExtension1")
 	assert.Contains(t, bun.Custom, "requiredExtension2")
 	assert.Equal(t, map[string]interface{}{"config": true}, bun.Custom["requiredExtension2"])
@@ -718,7 +719,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Len(t, bun.Custom, 2)
+	assert.Len(t, bun.Custom, 3)
 
 	f, err := ioutil.TempFile("", "")
 	assert.NoError(t, err, "Failed to create bundle file")
