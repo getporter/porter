@@ -93,7 +93,7 @@ func porter(args ...string) sh.PreparedCommand {
 // use your current cluster context. Otherwise a new KIND
 // cluster will be created just for the test run.
 func TestIntegration() error {
-	deps := []interface{}{startLocalDockerRegistry, GetMixins}
+	deps := []interface{}{StartLocalDockerRegistry, GetMixins}
 	if os.Getenv("USE_CURRENT_CLUSTER") != "true" {
 		deps = append(deps, CreateKindCluster)
 		defer DeleteKindCluster()
@@ -120,7 +120,7 @@ func TestIntegration() error {
 
 // Run end-to-end (e2e) tests.
 func TestE2E() error {
-	mg.Deps(startLocalDockerRegistry)
+	mg.Deps(StartLocalDockerRegistry)
 	defer stopLocalDockerRegistry()
 
 	// Only do verbose output of tests when called with `mage -v TestE2E`
@@ -238,7 +238,7 @@ func isDockerReady() (bool, error) {
 	return err == nil, nil
 }
 
-func startLocalDockerRegistry() error {
+func StartLocalDockerRegistry() error {
 	mg.Deps(StartDocker)
 	if isContainerRunning(registryContainer) {
 		return nil

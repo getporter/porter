@@ -35,5 +35,6 @@ like parameters, credentials, outputs and custom actions available.
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
+
 	return &cmd
 }
