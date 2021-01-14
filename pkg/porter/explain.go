@@ -123,6 +123,8 @@ func (s SortPrintableAction) Swap(i, j int) {
 }
 
 func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
+	o.checkForDeprecatedTagValue()
+
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err

@@ -14,6 +14,14 @@ type BundlePullOptions struct {
 	Force            bool
 }
 
+func (b *BundlePullOptions) checkForDeprecatedTagValue() {
+	// During the deprecation phase of the --tag flag, just assign reference to
+	// the supplied value
+	if b.Tag != "" {
+		b.Reference = b.Tag
+	}
+}
+
 func (b BundlePullOptions) validateReference() error {
 	_, err := cnabtooci.ParseOCIReference(b.Reference)
 	if err != nil {
