@@ -26,11 +26,7 @@ type BundleActionOptions struct {
 }
 
 func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
-	// During the deprecation phase of the --tag flag, just assign reference to
-	// the supplied value
-	if o.Tag != "" {
-		o.Reference = o.Tag
-	}
+	o.checkForDeprecatedTagValue()
 
 	if o.Reference != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
