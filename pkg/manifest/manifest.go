@@ -71,7 +71,7 @@ type Manifest struct {
 
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies []Dependency          `yaml:"dependencies,omitempty"`
+	Dependencies []*Dependency         `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that

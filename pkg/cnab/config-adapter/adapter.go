@@ -307,12 +307,6 @@ func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 	}
 
 	for _, dep := range c.Manifest.Dependencies {
-		// Use the deprecated Tag value if Reference not set
-		// We should remove this field completely before 1.0
-		if dep.Tag != "" && dep.Reference == "" {
-			dep.Reference = dep.Tag
-		}
-
 		dependencyRef := extensions.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Reference,
