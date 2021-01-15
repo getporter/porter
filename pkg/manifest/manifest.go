@@ -71,7 +71,7 @@ type Manifest struct {
 
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies []Dependency          `yaml:"dependencies,omitempty"`
+	Dependencies []*Dependency         `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
@@ -126,7 +126,7 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 	}
 
 	for _, dep := range m.Dependencies {
-		err = dep.Validate()
+		err = dep.Validate(cxt)
 		if err != nil {
 			result = multierror.Append(result, err)
 		}
@@ -557,36 +557,37 @@ type Dependency struct {
 	Reference string `yaml:"reference"`
 
 	// Tag is a deprecated field.  It has been replaced by Reference.
-	Tag string `yaml:"-"`
+	// This should be removed prior to v1.0.0
+	Tag string `yaml:"tag"`
 
 	Versions         []string          `yaml:"versions"`
 	AllowPrereleases bool              `yaml:"prereleases"`
 	Parameters       map[string]string `yaml:"parameters,omitempty"`
 }
 
-func (d *Dependency) Validate() error {
+func (d *Dependency) Validate(cxt *context.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}
 
-	depRef := d.Reference
 	if d.Tag != "" {
-		fmt.Println("WARNING: the tag field has been deprecated in favor of reference; " +
-			"please update the Porter manifest accordingly")
-		if depRef == "" {
-			depRef = d.Tag
+		fmt.Fprintf(cxt.Out, "WARNING: the tag field for dependency %q has been deprecated "+
+			"in favor of reference; please update the Porter manifest accordingly\n",
+			d.Name)
+		if d.Reference == "" {
+			d.Reference = d.Tag
 		} else {
-			fmt.Printf("WARNING: both tag (deprecated) and reference were provided; "+
-				"using the reference value %s for the dependency", depRef)
+			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided for dependency %q; "+
+				"using the reference value %s\n", d.Name, d.Reference)
 		}
 	}
 
-	if depRef == "" {
-		return errors.New("dependency reference is required")
+	if d.Reference == "" {
+		return fmt.Errorf("reference is required for dependency %q", d.Name)
 	}
 
-	if strings.Contains(depRef, ":") && len(d.Versions) > 0 {
-		return errors.New("dependency reference can only specify REGISTRY/NAME when version ranges are specified")
+	if strings.Contains(d.Reference, ":") && len(d.Versions) > 0 {
+		return fmt.Errorf("reference for dependency %q can only specify REGISTRY/NAME when version ranges are specified", d.Name)
 	}
 
 	return nil

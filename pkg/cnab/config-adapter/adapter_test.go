@@ -426,6 +426,10 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 				},
 			},
 		}},
+		{"with-tag", extensions.Dependency{
+			Name:   "dep-with-tag",
+			Bundle: "getporter/dep-bun:v0.1.0",
+		}},
 	}
 
 	for _, tc := range testcases {
@@ -442,8 +446,8 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			a := NewManifestConverter(c.Context, m, nil, nil)
 
 			deps := a.generateDependencies()
-			require.Len(t, deps.Requires, 3, "incorrect number of dependencies were generated")
-			require.Equal(t, []string{"mysql", "ad", "storage"}, deps.Sequence, "incorrect sequence was generated")
+			require.Len(t, deps.Requires, 4, "incorrect number of dependencies were generated")
+			require.Equal(t, []string{"mysql", "ad", "storage", "dep-with-tag"}, deps.Sequence, "incorrect sequence was generated")
 
 			var dep *extensions.Dependency
 			for _, d := range deps.Requires {
