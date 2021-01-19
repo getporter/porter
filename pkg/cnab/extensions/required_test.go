@@ -19,6 +19,7 @@ func TestProcessRequiredExtensions(t *testing.T) {
 		require.NoError(t, err, "could not process required extensions")
 
 		expected := ProcessedExtensions{
+			"sh.porter.file-parameters": nil,
 			"io.cnab.dependencies": Dependencies{
 				Requires: map[string]Dependency{
 					"storage": Dependency{

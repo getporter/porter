@@ -55,7 +55,11 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		return err
 	}
 
-	displayInstallation.Outputs = NewDisplayOutputs(outputs, opts.Format)
+	c, err := installation.GetLastClaim()
+	if err != nil {
+		return err
+	}
+	displayInstallation.Outputs = NewDisplayOutputs(c.Bundle, outputs, opts.Format)
 
 	switch opts.Format {
 	case printer.FormatJson:

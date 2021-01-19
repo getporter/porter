@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/valuesource"
 
@@ -42,7 +41,7 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[s
 		}
 
 		// Apply porter specific conversions, like retrieving file contents
-		value, err := r.getUnconvertedValueFromRaw(def, key, rawValue)
+		value, err := r.getUnconvertedValueFromRaw(bun, def, key, rawValue)
 		if err != nil {
 			return nil, err
 		}
@@ -80,9 +79,9 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[s
 	return bundle.ValuesOrDefaults(typedParams, &bun, args.Action)
 }
 
-func (r *Runtime) getUnconvertedValueFromRaw(def *definition.Schema, key, rawValue string) (string, error) {
+func (r *Runtime) getUnconvertedValueFromRaw(b bundle.Bundle, def *definition.Schema, key, rawValue string) (string, error) {
 	// the parameter value (via rawValue) may represent a file on the local filesystem
-	if cnab.IsFileType(def) {
+	if extensions.IsFileType(b, def) {
 		if _, err := r.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := r.FileSystem.ReadFile(rawValue)
 			if err != nil {
@@ -139,7 +138,7 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 			}
 
-			if cnab.IsFileType(&def) {
+			if extensions.IsFileType(bun, &def) {
 				values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
 			} else {
 				values[parameterName] = string(output.Value)

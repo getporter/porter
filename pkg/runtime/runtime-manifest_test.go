@@ -407,9 +407,9 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	ps.SetParameterFromDependencyOutput("porter-mysql-root-password", "mysql", "root-password")
 	rm.bundle = bundle.Bundle{
 		Custom: map[string]interface{}{
-			extensions.ParameterSourcesKey: ps,
+			extensions.ParameterSourcesExtensionKey: ps,
 		},
-		RequiredExtensions: []string{extensions.ParameterSourcesKey},
+		RequiredExtensions: []string{extensions.ParameterSourcesExtensionKey},
 	}
 
 	rm.bundles = map[string]bundle.Bundle{

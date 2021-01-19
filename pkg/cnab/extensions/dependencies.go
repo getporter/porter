@@ -9,16 +9,20 @@ import (
 )
 
 const (
-	// DependenciesKey represents the full key for the Dependencies Extension
-	DependenciesKey = "io.cnab.dependencies"
+	// DependenciesExtensionShortHand is the short suffix of the DependenciesExtensionKey
+	DependenciesExtensionShortHand = "dependencies"
+
+	// DependenciesExtensionKey represents the full key for the DependenciesExtension.
+	DependenciesExtensionKey = OfficialExtensionsPrefix + DependenciesExtensionShortHand
+
 	// DependenciesSchema represents the schema for the Dependencies Extension
 	DependenciesSchema = "https://cnab.io/v1/dependencies.schema.json"
 )
 
 // DependenciesExtension represents the required extension to enable dependencies
 var DependenciesExtension = RequiredExtension{
-	Shorthand: "dependencies",
-	Key:       DependenciesKey,
+	Shorthand: DependenciesExtensionShortHand,
+	Key:       DependenciesExtensionKey,
 	Schema:    DependenciesSchema,
 	Reader:    DependencyReader,
 }
@@ -76,7 +80,7 @@ func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
 // from the applicable section in the provided bundle and returns a the raw
 // data in the form of an interface
 func DependencyReader(bun bundle.Bundle) (interface{}, error) {
-	data, ok := bun.Custom[DependenciesKey]
+	data, ok := bun.Custom[DependenciesExtensionKey]
 	if !ok {
 		return nil, errors.Errorf("attempted to read dependencies from bundle but none are defined")
 	}
@@ -95,9 +99,14 @@ func DependencyReader(bun bundle.Bundle) (interface{}, error) {
 	return deps, nil
 }
 
-// HasDependencies returns whether or not the bundle has dependencies defined.
-func HasDependencies(bun bundle.Bundle) bool {
-	_, ok := bun.Custom[DependenciesKey]
+// SupportsDependencies checks if the bundle supports dependencies
+func SupportsDependencies(b bundle.Bundle) bool {
+	return SupportsExtension(b, DependenciesExtensionKey)
+}
+
+// HasParameterSources returns whether or not the bundle has parameter sources defined.
+func HasDependencies(b bundle.Bundle) bool {
+	_, ok := b.Custom[DependenciesExtensionKey]
 	return ok
 }
 

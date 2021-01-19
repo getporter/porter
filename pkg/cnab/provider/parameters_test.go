@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -182,6 +183,9 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
 	b := bundle.Bundle{
+		RequiredExtensions: []string{
+			extensions.FileParameterExtensionKey,
+		},
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:            "string",

@@ -466,7 +466,9 @@ func toInt(v int) *int {
 }
 
 func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[string]interface{} {
-	customExtensions := map[string]interface{}{}
+	customExtensions := map[string]interface{}{
+		extensions.FileParameterExtensionKey: struct{}{},
+	}
 
 	// Add custom metadata defined in the manifest
 	for key, value := range c.Manifest.Custom {
@@ -476,13 +478,13 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 	// Add the dependency extension
 	deps := c.generateDependencies()
 	if deps != nil && len(deps.Requires) > 0 {
-		customExtensions[extensions.DependenciesKey] = deps
+		customExtensions[extensions.DependenciesExtensionKey] = deps
 	}
 
 	// Add the parameter sources extension
 	ps := c.generateParameterSources(b)
 	if len(ps) > 0 {
-		customExtensions[extensions.ParameterSourcesKey] = ps
+		customExtensions[extensions.ParameterSourcesExtensionKey] = ps
 	}
 
 	// Add entries for user-specified required extensions, like docker
@@ -494,16 +496,16 @@ func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[strin
 }
 
 func (c *ManifestConverter) generateRequiredExtensions(b bundle.Bundle) []string {
-	var requiredExtensions []string
+	requiredExtensions := []string{extensions.FileParameterExtensionKey}
 
 	// Add the appropriate dependencies key if applicable
 	if extensions.HasDependencies(b) {
-		requiredExtensions = append(requiredExtensions, extensions.DependenciesKey)
+		requiredExtensions = append(requiredExtensions, extensions.DependenciesExtensionKey)
 	}
 
 	// Add the appropriate parameter sources key if applicable
 	if extensions.HasParameterSources(b) {
-		requiredExtensions = append(requiredExtensions, extensions.ParameterSourcesKey)
+		requiredExtensions = append(requiredExtensions, extensions.ParameterSourcesExtensionKey)
 	}
 
 	// Add all under required section of manifest

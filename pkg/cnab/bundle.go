@@ -3,14 +3,10 @@ package cnab
 import (
 	"get.porter.sh/porter/pkg/context"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
 )
 
-func IsFileType(s *definition.Schema) bool {
-	return s.Type == "string" && s.ContentEncoding == "base64"
-}
-
+// LoadBundle from the specified filepath.
 func LoadBundle(c *context.Context, bundleFile string) (bundle.Bundle, error) {
 	bunD, err := c.FileSystem.ReadFile(bundleFile)
 	if err != nil {

@@ -44,7 +44,7 @@ func TestDependencies_ListBySequence(t *testing.T) {
 
 	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
-			DependenciesKey: Dependencies{
+			DependenciesExtensionKey: Dependencies{
 				Sequence: sequenceMock,
 				Requires: map[string]Dependency{
 					"mysql": Dependency{
@@ -84,4 +84,43 @@ func TestDependencies_ListBySequence(t *testing.T) {
 	assert.Equal(t, sequenceMock[0], orderedDeps[0].Name, "unexpected order of the dependencies")
 	assert.Equal(t, sequenceMock[1], orderedDeps[1].Name, "unexpected order of the dependencies")
 	assert.Equal(t, sequenceMock[2], orderedDeps[2].Name, "unexpected order of the dependencies")
+}
+
+func TestSupportsDependencies(t *testing.T) {
+	t.Parallel()
+
+	t.Run("supported", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{DependenciesExtensionKey},
+		}
+
+		assert.True(t, SupportsDependencies(b))
+	})
+	t.Run("unsupported", func(t *testing.T) {
+		b := bundle.Bundle{}
+
+		assert.False(t, SupportsDependencies(b))
+	})
+}
+
+func TestHasDependencies(t *testing.T) {
+	t.Parallel()
+
+	t.Run("has dependencies", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{DependenciesExtensionKey},
+			Custom: map[string]interface{}{
+				DependenciesExtensionKey: struct{}{},
+			},
+		}
+
+		assert.True(t, HasDependencies(b))
+	})
+	t.Run("no dependencies", func(t *testing.T) {
+		b := bundle.Bundle{
+			RequiredExtensions: []string{DependenciesExtensionKey},
+		}
+
+		assert.False(t, HasDependencies(b))
+	})
 }

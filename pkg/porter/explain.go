@@ -228,7 +228,7 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 		}
 		pp := PrintableParameter{}
 		pp.Name = p
-		pp.Type = def.Type
+		pp.Type = extensions.GetParameterType(bun, def)
 		pp.Default = def.Default
 		pp.ApplyTo = generateApplyToString(v.ApplyTo)
 		pp.Required = v.Required

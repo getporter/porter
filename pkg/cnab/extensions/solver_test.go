@@ -14,7 +14,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 
 	bun := bundle.Bundle{
 		Custom: map[string]interface{}{
-			DependenciesKey: Dependencies{
+			DependenciesExtensionKey: Dependencies{
 				Requires: map[string]Dependency{
 					"mysql": {
 						Bundle: "getporter/mysql:5.7",

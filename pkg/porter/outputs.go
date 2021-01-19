@@ -3,6 +3,8 @@ package porter
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
 
 	"get.porter.sh/porter/pkg/context"
@@ -89,7 +91,7 @@ type DisplayOutput struct {
 
 type DisplayOutputs []DisplayOutput
 
-func NewDisplayOutputs(outputs claim.Outputs, format printer.Format) DisplayOutputs {
+func NewDisplayOutputs(bun bundle.Bundle, outputs claim.Outputs, format printer.Format) DisplayOutputs {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
 	displayOutputs := make(DisplayOutputs, outputs.Len())
@@ -106,17 +108,7 @@ func NewDisplayOutputs(outputs claim.Outputs, format printer.Format) DisplayOutp
 			continue
 		}
 
-		outputType, _, err := schema.GetType()
-		if err != nil {
-			continue
-		}
-		do.Type = outputType
-
-		// Try to figure out if this was originally a file output. Long term, we should find a way to find
-		// and crack open the invocation image to get the porter.yaml
-		if do.Type == "string" && schema.ContentEncoding == "base64" {
-			do.Type = "file"
-		}
+		do.Type = extensions.GetParameterType(bun, &schema)
 
 		// If table output is desired, truncate the value to a reasonable length
 		if format == printer.FormatTable {
@@ -137,12 +129,17 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, err
 		return nil, err
 	}
 
+	c, err := p.Claims.ReadLastClaim(opts.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	displayOutputs := NewDisplayOutputs(outputs, opts.Format)
+	displayOutputs := NewDisplayOutputs(c.Bundle, outputs, opts.Format)
 	if err != nil {
 		return nil, err
 	}

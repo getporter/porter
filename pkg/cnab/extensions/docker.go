@@ -8,17 +8,21 @@ import (
 )
 
 const (
+	// DockerExtensionShortHand is the short suffix of the DockerExtensionKey.
+	DockerExtensionShortHand = "docker"
+
 	// DockerExtensionKey represents the full key for the Docker Extension
-	DockerExtensionKey = "io.cnab.docker"
+	DockerExtensionKey = OfficialExtensionsPrefix + DockerExtensionShortHand
+
 	// DockerExtensionSchema represents the schema for the Docker Extension
 	DockerExtensionSchema = "schema/io-cnab-docker.schema.json"
 )
 
 // DockerExtension represents a required extension enabling access to the host Docker daemon
 var DockerExtension = RequiredExtension{
-	Shorthand: "docker",
+	Shorthand: DockerExtensionShortHand,
 	Key:       DockerExtensionKey,
-	Schema:    DockerExtensionSchema,
+	Schema:    "schema/io-cnab-docker.schema.json",
 	Reader:    DockerExtensionReader,
 }
 
