@@ -13,7 +13,8 @@ const (
 	FileParameterExtensionKey = PorterExtensionsPrefix + FileParameterExtensionShortHand
 )
 
-// DockerExtension represents a required extension enabling access to the host Docker daemon
+// FileParameterExtension represents a required extension that indicates that the bundle
+// requires support for parameters of type "file"
 var FileParameterExtension = RequiredExtension{
 	Shorthand: FileParameterExtensionShortHand,
 	Key:       FileParameterExtensionKey,
@@ -38,8 +39,8 @@ func SupportsFileParameters(b bundle.Bundle) bool {
 	return IsPorterBundle(b)
 }
 
-// FileParameterSupport checks if the docker extension is present and returns its
-// extension configuration.
+// FileParameterSupport checks if the file parameter extension
+// is present.
 func (e ProcessedExtensions) FileParameterSupport() bool {
 	_, extensionRequired := e[FileParameterExtensionKey]
 	return extensionRequired

@@ -96,13 +96,6 @@ func TestSupportsDependencies(t *testing.T) {
 
 		assert.True(t, SupportsDependencies(b))
 	})
-	t.Run("supported-shorthand", func(t *testing.T) {
-		b := bundle.Bundle{
-			RequiredExtensions: []string{DependenciesExtensionKey},
-		}
-
-		assert.True(t, SupportsDependencies(b))
-	})
 	t.Run("unsupported", func(t *testing.T) {
 		b := bundle.Bundle{}
 
@@ -113,7 +106,7 @@ func TestSupportsDependencies(t *testing.T) {
 func TestHasDependencies(t *testing.T) {
 	t.Parallel()
 
-	t.Run("has parameter sources", func(t *testing.T) {
+	t.Run("has dependencies", func(t *testing.T) {
 		b := bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
 			Custom: map[string]interface{}{
@@ -123,7 +116,7 @@ func TestHasDependencies(t *testing.T) {
 
 		assert.True(t, HasDependencies(b))
 	})
-	t.Run("no parameter sources", func(t *testing.T) {
+	t.Run("no dependencies", func(t *testing.T) {
 		b := bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
 		}

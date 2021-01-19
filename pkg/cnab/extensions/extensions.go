@@ -14,8 +14,8 @@ const (
 
 // SupportsExtension checks if the bundle supports the specified CNAB extension.
 func SupportsExtension(b bundle.Bundle, key string) bool {
-	for _, key := range b.RequiredExtensions {
-		if key == key {
+	for _, ext := range b.RequiredExtensions {
+		if key == ext {
 			return true
 		}
 	}

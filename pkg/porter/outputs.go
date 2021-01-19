@@ -108,15 +108,7 @@ func NewDisplayOutputs(bun bundle.Bundle, outputs claim.Outputs, format printer.
 			continue
 		}
 
-		outputType, _, err := schema.GetType()
-		if err != nil {
-			continue
-		}
-
-		do.Type = outputType
-		if extensions.IsFileType(bun, &schema) {
-			do.Type = "file"
-		}
+		do.Type = extensions.GetParameterType(bun, &schema)
 
 		// If table output is desired, truncate the value to a reasonable length
 		if format == printer.FormatTable {
