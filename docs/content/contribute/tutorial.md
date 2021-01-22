@@ -88,6 +88,7 @@ useful for other Go projects.
    open a new terminal.
    
    **Posix shells like bash and zsh**
+   
    Replace PROFILE_PATH with the path to your profile
    ```bash
    source PROFILE_PATH
@@ -229,58 +230,6 @@ You may see a message about your Go bin not being in your PATH. If that happens,
 [Add $GOPATH/bin to your PATH](#add-gopathbin-to-your-path) and then run 
 `make build` again. It should work now but if it doesn't, please let us know!
 
-## Test Porter
-
-We have a few different kinds of tests in Porter. You can run all tests types
-with `mage test`.
-
-### Unit Tests
- 
-```
-mage test-unit
-```
-
-Should not rely on Docker, or try to really run bundles without key components
-mocked. Most structs have test functions, e.g. `porter.NewTestPorter` that are
-appropriate for unit tests.
-
-Fast! 🏎💨 This takes about 15s - 3 minutes, depending on your computer hardware.
-
-### Integration Tests
-
-```
-mage test-integration
-```
-
-These tests run parts of Porter, using the Porter structs instead of the cli.
-They can use Docker, expect that a cluster is available, etc. These tests all
-use functions like `porter.SetupIntegrationTest()` to update the underlying
-components so that they hit the real filesystem, and don't mock out stuff like
-Docker.
-
-You must have Docker on your computer to run these tests. The test setup handles
-creating a Kubernetes cluster and Docker registry. Since they are slow, it is
-perfectly fine to not run these locally and rely on the CI build that's triggered
-when you push commits to your pull request instead.
-
-When I am troubleshooting an integration test, I will run just the single test
-locally by using `go test -run TESTNAME ./...`. If the test needs infrastructure, 
-we have scripts that you can use, like `mage StartDockerRegistry` or 
-`make -f Makefile.kind install-kind create-kind-cluster`.
-
-Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
-
-### End to End Tests
-
-```
-mage teste2e
-```
-
-** - End to End tests test Porter using the cli and are used as smoke
-  tests that should quickly identify big problems with a build that would make it
-  unusable. 
-
-Short! We want this to always be something you can run in about 1-3 minutes.
 
 ## Verify Porter
 
@@ -441,6 +390,17 @@ local changes](#use-the-locally-built-porter), let's rebuild and test your chang
 $ porter hello --name Carolyn
 Hello Carolyn!
 ```
+
+That verifies your change but let's also run the [unit tests] and [end-to-end] tests
+to make sure there aren't any regressions.
+
+```
+make test-unit
+mage teste2e
+```
+
+[unit tests]: /contribute/#unit-tests
+[end-to-end]: /contribute/#end-to-end-tests
 
 ## Celebrate!
 
