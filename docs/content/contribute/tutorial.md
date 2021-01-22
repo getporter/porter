@@ -107,47 +107,6 @@ The default locations are:
 
 [PowerShell profile]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
 
-### Install Mage
-
-We are transitioning from Make to [Mage]. Installing mage isn't strictly required,
-you can always run `go run mage.go TARGET` instead of `mage TARGET`. However, having
-the tool saves typing and time!
-
-Mage targets are not case-sensitive, but in our docs we use camel case to make
-it easier to read. Run the following commands to install mage:
-
-```bash
-$ go run mage.go EnsureMage
-$ mage
-
-This is a magefile, and is a "makefile for go". See https://magefile.org/
-
-Targets:
-  <List of available targets>
-```
-
-You know that your $GOPATH/bin is configured correctly if you see a list of mage
-targets.
-
-You can enable tab completion for mage as well, so that you can type 
-`mage t[TAB]` and it will complete it with the name of matching targets.
-
-1. Install bash-completion if it isn't already installed with either `brew install
-    bash-completion` (macOS) or `apt install bash-completion` (debian/ubuntu) depending
-    on your operating system.
-1. Copy the mage-completion.sh script to a local directory:
-    ```bash
-    cp scripts/mage-completion.sh ~
-    ```
-1. Open your ~/.bash_profile or ~/.bashrc file and add the following line to the
-    file:
-
-    ```bash
-    source ~/mage-completion.sh
-    ```
-1. Now load the changes to your bash profile with `source ~/.bash_profile` or
-   `source ~/.bashrc`.
-
 ## Checkout Code
 
 Porter can either be cloned into your GOPATH (usually ~/go) or anywhere on your
@@ -203,6 +162,48 @@ the original porter repository and `origin` to refer to your fork:
     * mybranch      26d8358f [origin/mybranch] Review feedback
     main            7e120aab [upstream/main]   Bump cnab-go
     ```
+
+
+### Install Mage
+
+We are transitioning from Make to [Mage]. Installing mage isn't strictly required,
+you can always run `go run mage.go TARGET` instead of `mage TARGET`. However, having
+the tool saves typing and time!
+
+Mage targets are not case-sensitive, but in our docs we use camel case to make
+it easier to read. Run the following commands from the porter directory to install mage:
+
+```bash
+$ go run mage.go EnsureMage
+$ mage
+
+This is a magefile, and is a "makefile for go". See https://magefile.org/
+
+Targets:
+  <List of available targets>
+```
+
+You know that your $GOPATH/bin is configured correctly if you see a list of mage
+targets.
+
+You can enable tab completion for mage as well, so that you can type 
+`mage t[TAB]` and it will complete it with the name of matching targets.
+
+1. Install bash-completion if it isn't already installed with either `brew install
+    bash-completion` (macOS) or `apt install bash-completion` (debian/ubuntu) depending
+    on your operating system.
+1. Copy the mage-completion.sh script to a local directory:
+    ```bash
+    cp scripts/mage-completion.sh ~
+    ```
+1. Open your ~/.bash_profile or ~/.bashrc file and add the following line to the
+    file:
+
+    ```bash
+    source ~/mage-completion.sh
+    ```
+1. Now load the changes to your bash profile with `source ~/.bash_profile` or
+   `source ~/.bashrc`.
 
 ## Configure Signing
 
