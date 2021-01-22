@@ -98,8 +98,8 @@ func porter(args ...string) sh.PreparedCommand {
 
 // Run end-to-end (e2e) tests
 func TestE2E() error {
-	mg.Deps(startLocalDockerRegistry)
-	defer stopLocalDockerRegistry()
+	mg.Deps(StarlDockerRegistry)
+	defer StopDockerRegistry()
 
 	// Only do verbose output of tests when called with `mage -v TestE2E`
 	v := ""
@@ -215,7 +215,8 @@ func isDockerReady() (bool, error) {
 	return err == nil, nil
 }
 
-func startLocalDockerRegistry() error {
+// Start a Docker registry to use with the tests.
+func StarlDockerRegistry() error {
 	mg.Deps(StartDocker)
 	if isContainerRunning(registryContainer) {
 		return nil
@@ -230,7 +231,8 @@ func startLocalDockerRegistry() error {
 	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", registryContainer, "registry:2")
 }
 
-func stopLocalDockerRegistry() error {
+// Stop the Docker registry used by the tests.
+func StopDockerRegistry() error {
 	if containerExists(registryContainer) {
 		fmt.Println("Stopping local docker registry")
 		return removeContainer(registryContainer)

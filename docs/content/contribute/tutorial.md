@@ -72,19 +72,45 @@ order to use them that directory needs to be included in your PATH environment
 variable. This is a standard Go developer environment configuration and will be
 useful for other Go projects.
 
-1. Open your ~/.bash_profile or ~/.bashrc file (depending on your OS you will
-   have one or the other) and add the following line to the file:
+1. Open your shell profile file* and add the following line to the file:
 
+    **Posix shells like bash and zsh**
     ```bash
     export PATH=$(go env GOPATH)/bin:$PATH
     ```
-1. Now load the changes to your bash profile with `source ~/.bash_profile` or
-   `source ~/.bashrc`.
+   
+   **PowerShell**
+   ```powershell
+   $env:PATH="$(go env GOPATH)\bin;$env:PATH"
+   ```
+   
+1. Now load the changes to your bash profile with the source command or
+   open a new terminal.
+   
+   **Posix shells like bash and zsh**
+   Replace PROFILE_PATH with the path to your profile
+   ```bash
+   source PROFILE_PATH
+   ```
+   
+   **PowerShell**
+   ```powershell
+   . $profile
+   ```
+
+\* There are a bunch of different shell profiles depending on your shell and customizations.
+The default locations are:
+
+* ~/.bash_profile or ~/.bashrc
+* ~/.zshrc
+* PowerShell doesn't have a profile by default. Here's how to find or create a [PowerShell profile].
+
+[PowerShell profile]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
 
 ### Install Mage
 
 We are transitioning from Make to [Mage]. Installing mage isn't strictly required,
-you can always run `go run mage.go TARGET` instead of `mage TARGET`. However having
+you can always run `go run mage.go TARGET` instead of `mage TARGET`. However, having
 the tool saves typing and time!
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
@@ -97,16 +123,11 @@ $ mage
 This is a magefile, and is a "makefile for go". See https://magefile.org/
 
 Targets:
-  configureAgent       sets up an Azure DevOps agent with Mage and ensures that GOPATH/bin is in PATH.
-  ensureMage           Ensure Mage is installed and on the PATH.
-  setBinExecutable     Run `chmod +x -R bin`.
-  startDocker          Ensure the docker daemon is started and ready to accept connections.
-  testE2E              Run end-to-end (e2e) tests
-  useXBuildBinaries    Copy the cross-compiled binaries from xbuild into bin.
+  <List of available targets>
 ```
 
-You know that your $GOPATH/bin is configured correctly if you see the output above
-listing the defined mage targets.
+You know that your $GOPATH/bin is configured correctly if you see a list of mage
+targets.
 
 You can enable tab completion for mage as well, so that you can type 
 `mage t[TAB]` and it will complete it with the name of matching targets.
@@ -207,6 +228,59 @@ You may see a message about your Go bin not being in your PATH. If that happens,
 [Add $GOPATH/bin to your PATH](#add-gopathbin-to-your-path) and then run 
 `make build` again. It should work now but if it doesn't, please let us know!
 
+## Test Porter
+
+We have a few different kinds of tests in Porter. You can run all tests types
+with `mage test`.
+
+### Unit Tests
+ 
+```
+mage test-unit
+```
+
+Should not rely on Docker, or try to really run bundles without key components
+mocked. Most structs have test functions, e.g. `porter.NewTestPorter` that are
+appropriate for unit tests.
+
+Fast! 🏎💨 This takes about 15s - 3 minutes, depending on your computer hardware.
+
+### Integration Tests
+
+```
+mage test-integration
+```
+
+These tests run parts of Porter, using the Porter structs instead of the cli.
+They can use Docker, expect that a cluster is available, etc. These tests all
+use functions like `porter.SetupIntegrationTest()` to update the underlying
+components so that they hit the real filesystem, and don't mock out stuff like
+Docker.
+
+You must have Docker on your computer to run these tests. The test setup handles
+creating a Kubernetes cluster and Docker registry. Since they are slow, it is
+perfectly fine to not run these locally and rely on the CI build that's triggered
+when you push commits to your pull request instead.
+
+When I am troubleshooting an integration test, I will run just the single test
+locally by using `go test -run TESTNAME ./...`. If the test needs infrastructure, 
+we have scripts that you can use, like `mage StartDockerRegistry` or 
+`make -f Makefile.kind install-kind create-kind-cluster`.
+
+Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
+
+### End to End Tests
+
+```
+mage teste2e
+```
+
+** - End to End tests test Porter using the cli and are used as smoke
+  tests that should quickly identify big problems with a build that would make it
+  unusable. 
+
+Short! We want this to always be something you can run in about 1-3 minutes.
+
 ## Verify Porter
 
 After you have built Porter, the resulting `porter` command-line tool is placed 
@@ -221,13 +295,28 @@ Docker is installed and configured properly too. This is an abbreviated version
 of our [QuickStart]. If you are new to Porter, we recommend trying the 
 QuickStart as well to learn how Porter works.
 
+[QuickStart]: /quickstart/
+
+### Use the locally built porter
+
 First let's do some quick configuration so that you can use the porter
 executable that you just built, instead of the installed porter. This change
-isn't permanent and only affects your current shell session.
+isn't permanent and only affects your current shell session. 
 
+If you skip this set up, and `./bin/porter` without PORTER_HOME set it
+will use the files in the `~/.porter` instead of what you built. This can
+result in not actually using your local binaries in bin.
+
+**Bash**
 ```bash
 export PORTER_HOME=`pwd`/bin
 alias porter=`pwd`/bin/porter
+```
+
+**PowerShell**
+```powershell
+$env:PORTER_HOME="$pwd\bin"
+Set-Alias -Name porter -Value "$pwd\bin\porter.exe"
 ```
 
 Let's use what you just built and verify that everything is working:
@@ -253,8 +342,6 @@ Let's use what you just built and verify that everything is working:
     ```bash
     porter list
     ```
-
-[QuickStart]: /quickstart/
 
 ## Change Porter
 
@@ -342,11 +429,12 @@ YOURNAME` that prints `Hello YOURNAME!`.
 
 ## Test Your Changes
 
-After you have modified Porter, let's rebuild and test your changes.
+After you have modified Porter, and [aliased the `porter` command to use your
+local changes](#use-the-locally-built-porter), let's rebuild and test your changes.
 
 1. Build porter to incorporate your new command by running `make build`.
-1. Run `./bin/porter hello --help` to see the helptext for your command.
-1. Run `./bin/porter --name YOURNAME` to try out your new command.
+1. Run `porter hello --help` to see the helptext for your command.
+1. Run `porter --name YOURNAME` to try out your new command.
 
 ```bash
 $ porter hello --name Carolyn
@@ -355,8 +443,10 @@ Hello Carolyn!
 
 ## Celebrate!
 
-You can now build Porter, modify its code and try out your changes! 🎉 You are 
-now ready to [find an issue] and contribute to Porter.
+You can now build Porter, modify its code and try out your changes! 🎉 Your next
+steps should be to read our [Contributing Guide] to understand how to [find an
+issue] and contribute to Porter.
 
+[Contributing Guide]: /contribute/
 [find an issue]: /contribute/guide/#find-an-issue
 [Mage]: https://magefile.org
