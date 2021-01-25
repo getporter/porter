@@ -19,7 +19,9 @@ porter create
 This will create a file called **porter.yaml** which contains the configuration
 for your bundle. Modify and customize this file for your application's needs.
 
-Here is a very basic **porter.yaml** file:
+This is a snippet of the **porter.yaml** file made by `porter create` to give you
+an idea of what it will look like. This bundle is using a helper script, **helpers.sh**,
+so that we aren't trying to embed bash inside yaml.
 
 ```yaml
 name: porter-hello
@@ -33,23 +35,23 @@ mixins:
 install:
   - exec:
       description: "Install Hello World"
-      command: bash
-      flags:
-        c: echo Hello World
+      command: ./helpers.sh
+      arguments:
+        - install
 
 upgrade:
   - exec:
       description: "World 2.0"
-      command: bash
-      flags:
-        c: echo World 2.0
+      command: ./helpers.sh
+      arguments:
+        - upgrade
 
 uninstall:
   - exec:
       description: "Uninstall Hello World"
-      command: bash
-      flags:
-        c: echo Goodbye World
+      command: ./helpers.sh
+      arguments:
+        - uninstall
 ```
 
 ## Build the bundle
