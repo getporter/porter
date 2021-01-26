@@ -236,7 +236,7 @@ func generatePrintable(bun bundle.Bundle, actionOption string) (*PrintableBundle
 		pp.Required = v.Required
 		pp.Description = v.Description
 
-		if pp.ApplyTo == "All Actions" || pp.ApplyTo == actionOption {
+		if pp.ApplyTo == "All Actions" || pp.ApplyTo == actionOption || actionOption == "" {
 			params = append(params, pp)
 		}
 	}
@@ -257,7 +257,7 @@ func generatePrintable(bun bundle.Bundle, actionOption string) (*PrintableBundle
 		po.ApplyTo = generateApplyToString(v.ApplyTo)
 		po.Description = v.Description
 
-		if po.ApplyTo == "All Actions" || po.ApplyTo == actionOption {
+		if po.ApplyTo == "All Actions" || po.ApplyTo == actionOption || actionOption == "" {
 			outputs = append(outputs, po)
 		}
 	}
