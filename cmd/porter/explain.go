@@ -18,6 +18,7 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
   porter bundle explain --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter bundle explain --file another/porter.yaml
   porter bundle explain --cnab-file some/bundle.json
+  porter bundle explain --action install
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -31,6 +32,7 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
 	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
+	f.StringVar(&opts.ActionOption, "action", "", "Porter action to be explained.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return &cmd
