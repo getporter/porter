@@ -125,7 +125,7 @@ func TestExplain_generateTable(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "table"
@@ -146,7 +146,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -167,7 +167,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 
 	opts := ExplainOpts{}
@@ -210,7 +210,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -242,7 +242,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Outputs))
@@ -263,7 +263,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Credentials))
@@ -300,7 +300,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 		},
 	}
 
-	pd, err := generatePrintable(bun)
+	pd, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(pd.Dependencies))
 	assert.Equal(t, 0, len(pd.Parameters))
@@ -315,7 +315,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
