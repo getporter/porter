@@ -98,7 +98,7 @@ func porter(args ...string) sh.PreparedCommand {
 
 // Run end-to-end (e2e) tests
 func TestE2E() error {
-	mg.Deps(StarlDockerRegistry)
+	mg.Deps(StartDockerRegistry)
 	defer StopDockerRegistry()
 
 	// Only do verbose output of tests when called with `mage -v TestE2E`
@@ -216,7 +216,7 @@ func isDockerReady() (bool, error) {
 }
 
 // Start a Docker registry to use with the tests.
-func StarlDockerRegistry() error {
+func StartDockerRegistry() error {
 	mg.Deps(StartDocker)
 	if isContainerRunning(registryContainer) {
 		return nil
