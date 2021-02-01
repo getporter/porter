@@ -53,8 +53,11 @@ generate-users() {
 add-user() {
   ensure-config
   ensure-users
-  cat users.json | jq ".users += [\"$1\"]" > users.json.new
-  mv users.json.new users.json
+  # Do this in two steps because jq doesn't have overwrite functionality
+  cat users.json | jq ".users += [\"$1\"]" > users.json.tmp
+  # Using cp instead of mv because if the bundle is executed with Kubernetes
+  # you can't move a file that was volume mounted in k8s. That only works with Docker.
+  cp users.json.tmp users.json
 }
 
 dump-users() {
