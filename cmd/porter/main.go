@@ -145,7 +145,7 @@ func addDeprecatedTagFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
 }
 
 func addReferenceFlag(f *pflag.FlagSet, opts *porter.BundlePullOptions) {
-	f.StringVar(&opts.Reference, "reference", "",
+	f.StringVarP(&opts.Reference, "reference", "r", "",
 		"Use a bundle in an OCI registry specified by the given reference.")
 }
 
