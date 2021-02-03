@@ -50,7 +50,7 @@ porter parameters generate [NAME] [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for generate
       --insecure-registry   Don't require TLS for the registry
-      --reference string    Use a bundle in an OCI registry specified by the given reference.
+  -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 
 ### Options inherited from parent commands

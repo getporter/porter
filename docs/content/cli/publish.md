@@ -35,7 +35,7 @@ porter publish [flags]
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                help for publish
       --insecure-registry   Don't require TLS for the registry
-      --reference string    Use a bundle in an OCI registry specified by the given reference.
+  -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
       --registry string     Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg
       --tag string          Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1
 ```
