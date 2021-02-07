@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/experimental"
 	"github.com/pkg/errors"
 )
 
@@ -50,7 +51,7 @@ type DataStoreLoaderFunc func(*Config) error
 var _ DataStoreLoaderFunc = NoopDataLoader
 
 // NoopDataLoader skips loading the datastore.
-func NoopDataLoader(config *Config) error {
+func NoopDataLoader(_ *Config) error {
 	return nil
 }
 
@@ -64,6 +65,8 @@ type Config struct {
 
 	// Cache the resolved Porter binary path
 	porterPath string
+
+	experimental *experimental.FeatureFlags
 }
 
 // New Config initializes a default porter configuration.
@@ -187,4 +190,23 @@ func (c *Config) GetBundleArchiveLogs() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, "archives"), nil
+}
+
+// FeatureFlags indicates which experimental feature flags are enabled
+func (c *Config) GetFeatureFlags() experimental.FeatureFlags {
+	if c.experimental == nil {
+		if c.Data == nil {
+			var none experimental.FeatureFlags
+			c.experimental = &none
+		} else {
+			flags := experimental.ParseFlags(c.Data.ExperimentalFlags)
+			c.experimental = &flags
+		}
+	}
+	return *c.experimental
+}
+
+// IsFeatureEnabled returns true if the specified experimental flag is enabled.
+func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
+	return c.GetFeatureFlags()&flag == flag
 }

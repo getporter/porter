@@ -25,7 +25,9 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 		// opts.File is non-empty, which overrides opts.CNABFile if set
 		// (which may be if a cached bundle is fetched e.g. when running an action)
 		opts.CNABFile = ""
-		return p.Build(BuildOptions{bundleFileOptions: opts})
+		buildOpts := BuildOptions{bundleFileOptions: opts}
+		buildOpts.Validate(p.Context)
+		return p.Build(buildOpts)
 	}
 	return nil
 }

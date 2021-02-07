@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/mixin"
 	"github.com/cnabio/cnab-go/bundle"
@@ -137,7 +138,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	require.True(t, bundle.Parameters["command2"].Required, "expected command2 param to be required")
 }
 
-func TestValidateBuildOpts(t *testing.T) {
+func TestBuildOptions_Validate(t *testing.T) {
 	p := NewTestPorter(t)
 
 	testcases := []struct {
@@ -145,25 +146,31 @@ func TestValidateBuildOpts(t *testing.T) {
 		opts      BuildOptions
 		wantError string
 	}{{
-		name:      "no opts",
-		opts:      BuildOptions{},
-		wantError: "",
+		name: "no opts",
+		opts: BuildOptions{},
 	}, {
 		name:      "invalid version set - latest",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
 		wantError: `invalid bundle version: "latest" is not a valid semantic version`,
 	}, {
-		name:      "valid version - v prefix",
-		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "v1.0.0"}},
-		wantError: "",
+		name: "valid version - v prefix",
+		opts: BuildOptions{metadataOpts: metadataOpts{Version: "v1.0.0"}},
 	}, {
-		name:      "valid version - with hash",
-		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "v0.1.7+58d98af56c3a4c40c69535654216bd4a1fa701e7"}},
-		wantError: "",
+		name: "valid version - with hash",
+		opts: BuildOptions{metadataOpts: metadataOpts{Version: "v0.1.7+58d98af56c3a4c40c69535654216bd4a1fa701e7"}},
 	}, {
-		name:      "valid name and value set",
-		opts:      BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
-		wantError: "",
+		name: "valid name and value set",
+		opts: BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
+	}, {
+		name: "valid driver: docker",
+		opts: BuildOptions{Driver: config.BuildDriverBuildkit},
+	}, {
+		name: "valid driver: buildkit",
+		opts: BuildOptions{Driver: config.BuildDriverBuildkit},
+	}, {
+		name:      "invalid driver",
+		opts:      BuildOptions{Driver: "missing-driver"},
+		wantError: `invalid --driver value missing-driver`,
 	}}
 
 	for _, tc := range testcases {
@@ -176,4 +183,14 @@ func TestValidateBuildOpts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuildOptions_Defaults(t *testing.T) {
+	c := context.NewTestContext(t)
+	t.Run("default driver", func(t *testing.T) {
+		opts := BuildOptions{}
+		err := opts.Validate(c.Context)
+		require.NoError(t, err, "Validate failed")
+		assert.Equal(t, config.BuildDriverDocker, opts.Driver)
+	})
 }

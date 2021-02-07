@@ -140,7 +140,8 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 
 	if origInvImg != p.Manifest.Image {
 		// Tag it so that it will be known/found by Docker for publishing
-		if err := p.Builder.TagInvocationImage(origInvImg, p.Manifest.Image); err != nil {
+		builder := p.GetBuilder(p.GetBuildDriver())
+		if err := builder.TagInvocationImage(origInvImg, p.Manifest.Image); err != nil {
 			return err
 		}
 	}

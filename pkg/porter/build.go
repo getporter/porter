@@ -6,8 +6,8 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
@@ -15,20 +15,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type BuildProvider interface {
-	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(manifest *manifest.Manifest) error
-
-	// TagInvocationImage using the origTag and newTag values supplied
-	TagInvocationImage(origTag, newTag string) error
-}
-
 type BuildOptions struct {
 	bundleFileOptions
 	contextOptions
 	metadataOpts
 	NoLint bool
+	Driver string
 }
+
+const BuildDriverDefault = config.BuildDriverDocker
+
+var BuildDriverAllowedValues = []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
 
 func (o *BuildOptions) Validate(cxt *context.Context) error {
 	if o.Version != "" {
@@ -39,11 +36,32 @@ func (o *BuildOptions) Validate(cxt *context.Context) error {
 		o.Version = v.String()
 	}
 
+	if o.Driver == "" {
+		o.Driver = BuildDriverDefault
+	} else {
+		if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
+			return errors.Errorf("invalid --driver value %s", o.Driver)
+		}
+	}
+
 	return o.bundleFileOptions.Validate(cxt)
+}
+
+func stringSliceContains(allowedValues []string, value string) bool {
+	for _, allowed := range allowedValues {
+		if value == allowed {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
+
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Using %s build driver\n", opts.Driver)
+	}
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
@@ -81,7 +99,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
+	generator := build.NewDockerfileGenerator(p.Config, opts.Driver, p.Manifest, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
@@ -90,11 +108,15 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
 
-	return errors.Wrap(p.Builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
+	builder := p.GetBuilder(opts.Driver)
+	return errors.Wrap(builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
-	lintOpts := LintOptions{}
+	lintOpts := LintOptions{
+		contextOptions: NewContextOptions(p.Context),
+		PrintOptions:   printer.PrintOptions{},
+	}
 	lintOpts.RawFormat = string(printer.FormatPlaintext)
 	err := lintOpts.Validate(p.Context)
 	if err != nil {

@@ -27,7 +27,10 @@ func (p *Porter) Create() error {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "Dockerfile.tmpl")
+	tmpl := func() ([]byte, error) {
+		return p.Templates.GetDockerfileTemplate(p.GetBuildDriver())
+	}
+	err = p.CopyTemplate(tmpl, "Dockerfile.tmpl")
 	if err != nil {
 		return err
 	}

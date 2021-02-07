@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"os"
 
-	"get.porter.sh/porter/pkg/config/datastore"
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -34,7 +34,7 @@ func buildRootCommand() *cobra.Command {
   porter install
   porter uninstall`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			p.Config.DataLoader = datastore.FromFlagsThenEnvVarsThenConfigFile(cmd)
+			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
 			err := p.LoadData()
 			if err != nil {
 				return err

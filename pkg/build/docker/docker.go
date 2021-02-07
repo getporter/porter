@@ -1,4 +1,4 @@
-package provider
+package docker
 
 import (
 	"context"
@@ -15,21 +15,21 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/term"
+	"github.com/moby/term"
 	"github.com/pkg/errors"
 )
 
-type DockerBuilder struct {
+type Builder struct {
 	*portercontext.Context
 }
 
-func NewDockerBuilder(cxt *portercontext.Context) *DockerBuilder {
-	return &DockerBuilder{
+func NewBuilder(cxt *portercontext.Context) *Builder {
+	return &Builder{
 		Context: cxt,
 	}
 }
 
-func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error {
+func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
@@ -82,7 +82,7 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 	return nil
 }
 
-func (b *DockerBuilder) TagInvocationImage(origTag, newTag string) error {
+func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return errors.Wrap(err, "could not create new docker client")

@@ -59,7 +59,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
-	p.Builder = NewTestBuildProvider()
+	p.builder = NewTestBuildProvider()
 	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
