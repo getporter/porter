@@ -32,7 +32,7 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
 	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
-	f.StringVar(&opts.ActionOption, "action", "", "Porter action to be explained.")
+	f.StringVar(&opts.Action, "action", "", "Hide parameters and outputs that are not used by the specified action.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return &cmd

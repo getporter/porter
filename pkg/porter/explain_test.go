@@ -227,6 +227,55 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Actions))
 }
 
+func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
+	bun := bundle.Bundle{
+		RequiredExtensions: []string{
+			extensions.FileParameterExtensionKey,
+		},
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{
+				Type:    "string",
+				Default: "clippy",
+			},
+			"file": &definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"debug": {
+				Definition: "string",
+				Required:   true,
+				ApplyTo:    []string{"install"},
+			},
+			"tfstate": {
+				Definition: "file",
+			},
+		},
+	}
+
+	pb, err := generatePrintable(bun, "install")
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
+	d := pb.Parameters[0]
+	require.Equal(t, "debug", d.Name)
+	assert.Equal(t, "clippy", fmt.Sprintf("%v", d.Default))
+	assert.Equal(t, "string", d.Type)
+	f := pb.Parameters[1]
+	require.Equal(t, "tfstate", f.Name)
+	assert.Equal(t, "file", f.Type)
+
+	assert.Equal(t, 0, len(pb.Outputs))
+	assert.Equal(t, 0, len(pb.Credentials))
+	assert.Equal(t, 0, len(pb.Actions))
+
+	pb2, err := generatePrintable(bun, "upgrade")
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(pb2.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
+}
+
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	bun := bundle.Bundle{
 		Definitions: definition.Definitions{
