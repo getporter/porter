@@ -96,9 +96,6 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		return err
 	}
 
-	// Capture original invocation image name as it may be updated below
-	origInvImg := p.Manifest.Image
-
 	// If the manifest file is the default/user-supplied manifest,
 	// hot-swap in Porter's canonical translation (if exists) from
 	// the .cnab/app directory, as there may be dynamic overrides for
@@ -113,6 +110,9 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 			return err
 		}
 	}
+
+	// Capture original invocation image name as it may be updated below
+	origInvImg := p.Manifest.Image
 
 	// Check for tag and registry overrides optionally supplied on publish
 	if opts.Tag != "" {
