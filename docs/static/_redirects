@@ -22,6 +22,8 @@
 # cdn.porter.sh proxy to Azure Blob Storage
 https://cdn--porter.netlify.app/mixins/atom.xml     https://deislabs.blob.core.windows.net/porter/atom.xml 200
 https://cdn.porter.sh/mixins/atom.xml               https://deislabs.blob.core.windows.net/porter/atom.xml 200
+https://cdn2.porter.sh/mixins/atom.xml              https://deislabs.blob.core.windows.net/porter/atom.xml 200
 
 https://cdn--porter.netlify.app/*                   https://deislabs.blob.core.windows.net/porter/:splat 200
 https://cdn.porter.sh/*                             https://deislabs.blob.core.windows.net/porter/:splat 200
+https://cdn2.porter.sh/*                            https://deislabs.blob.core.windows.net/porter/:splat 200
