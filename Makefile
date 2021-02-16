@@ -117,7 +117,7 @@ publish-bin:
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 		az storage blob upload-batch -d porter/$(VERSION) -s bin/$(VERSION); \
 	fi
-	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION) --content-cache-control mage-age=300
+	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION) --content-cache-control max-age=300
 
 publish-mixins:
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
@@ -125,7 +125,7 @@ publish-mixins:
 	# Generate the mixin feed
 	az storage blob download -c porter -n atom.xml -f bin/atom.xml
 	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
-	az storage blob upload -c porter -n atom.xml -f bin/atom.xml --content-cache-control mage-age=300
+	az storage blob upload -c porter -n atom.xml -f bin/atom.xml --content-cache-control max-age=300
 
 .PHONY: build-images
 build-images:
