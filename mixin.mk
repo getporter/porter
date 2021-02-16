@@ -56,10 +56,10 @@ publish:
 	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
 	if [[ "$(PERMALINK)" == "latest" ]]; then \
 		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(VERSION) -s $(BINDIR)/$(VERSION); \
-		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(VERSION); \
+		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(VERSION) --content-cache-control no-cache; \
 	else \
 		mv $(BINDIR)/$(VERSION) $(BINDIR)/$(PERMALINK); \
-		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(PERMALINK); \
+		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(PERMALINK) --content-cache-control no-cache; \
 	fi
 
 clean:
