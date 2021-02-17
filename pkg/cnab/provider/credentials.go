@@ -11,16 +11,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *Runtime) loadCredentials(b bundle.Bundle, creds []string) (valuesource.Set, error) {
-	if len(creds) == 0 {
-		return nil, credentials.Validate(nil, b.Credentials)
+func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
+	if len(args.CredentialIdentifiers) == 0 {
+		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}
 
 	// The strategy here is "last one wins". We loop through each credential file and
 	// calculate its credentials. Then we insert them into the creds map in the order
 	// in which they were supplied on the CLI.
 	resolvedCredentials := valuesource.Set{}
-	for _, name := range creds {
+	for _, name := range args.CredentialIdentifiers {
 		var cset credentials.CredentialSet
 		var err error
 		if r.isPathy(name) {
@@ -41,7 +41,7 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, creds []string) (valuesource.
 			resolvedCredentials[k] = v
 		}
 	}
-	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials)
+	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
 }
 
 // isPathy checks to see if a name looks like a path.

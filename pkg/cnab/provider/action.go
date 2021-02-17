@@ -159,7 +159,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		return err
 	}
 
-	creds, err := r.loadCredentials(c.Bundle, args.CredentialIdentifiers)
+	creds, err := r.loadCredentials(c.Bundle, args)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}

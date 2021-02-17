@@ -3,10 +3,8 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
-	// porterops: contains the following patches
 	// jsonschema-lock: https://github.com/cnabio/cnab-go/pull/237
-	// k8s-driver-improvements: https://github.com/cnabio/cnab-go/pull/238
-	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.13.4-0.20210202134931-c688d6de576e
+	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.16.1-0.20210302183338-f200d1ee2082
 
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
