@@ -123,9 +123,9 @@ publish-mixins:
 	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
 
 	# Generate the mixin feed
-	az storage blob download -c porter -n atom.xml -f bin/atom.xml
-	bin/porter mixins feed generate -d bin/mixins -f bin/atom.xml -t build/atom-template.xml
-	az storage blob upload -c porter -n atom.xml -f bin/atom.xml --content-cache-control max-age=300
+	az storage blob download -c porter -n mixins/atom.xml -f bin/mixins/atom.xml
+	bin/porter mixins feed generate -d bin/mixins -f bin/mixins/atom.xml -t build/atom-template.xml
+	az storage blob upload -c porter -n mixins/atom.xml -f bin/mixins/atom.xml --content-cache-control max-age=300
 
 .PHONY: build-images
 build-images:
