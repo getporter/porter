@@ -24,7 +24,7 @@ porter publish [flags]
   porter publish --file myapp/porter.yaml
   porter publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
   porter publish --tag latest
-  porter bundle pulbish --registry myregistry.com/myorg
+  porter publish --registry myregistry.com/myorg
 		
 ```
 
