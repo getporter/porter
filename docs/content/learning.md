@@ -9,6 +9,8 @@ Do you have a blog post, video, tutorial, demo, or some other neat thing
 using Porter or CNAB that you'd like to share? [Open up a pull request][pr] 
 and show it off! ✨
 
+Check out our new [CNCF Porter Community] channel for all of our conference talks, demos and meeting videos.
+
 * [The Devil is in the Deployments: Bundle Use Cases](#the-devil-is-in-the-deployments-bundle-use-cases)
 * [Understanding Cloud Native Application Bundles](#understanding-cloud-native-application-bundles)
 * [Porter: Digital Ocean, Terraform, Kubernetes](#porter-digital-ocean-terraform-kubernetes)
@@ -94,3 +96,5 @@ What problem does CNAB solve and where does Porter fit in? Porter maintainer, Ca
 assisted as always with emoji and markdown.
 
 <p align=center><a href="https://carolynvanslyck.com/blog/2019/04/porter">Free Glue Code - Porter</a></p>
+
+[CNCF Porter Community]: https://porter.sh/videos
