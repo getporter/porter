@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go/build"
@@ -270,9 +271,10 @@ func containerExists(name string) bool {
 }
 
 func removeContainer(name string) error {
-	stderr, err := shx.OutputE("docker", "rm", "-f", name)
+	stderr := bytes.Buffer{}
+	_, _, err := shx.Command("docker", "rm", "-f", name).Stderr(&stderr).Stdout(nil).Exec()
 	// Gracefully handle the container already being gone
-	if err != nil && !strings.Contains(stderr, "No such container") {
+	if err != nil && !strings.Contains(stderr.String(), "No such container") {
 		return err
 	}
 	return nil
