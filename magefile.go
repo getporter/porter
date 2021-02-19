@@ -52,11 +52,12 @@ func ConfigureAgent() error {
 	}
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
-	gobin := filepath.Join(pkg.GOPATH())
+	gobin := pkg.GetGopathBin()
 	err = os.MkdirAll(gobin, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
 	}
+	fmt.Printf("Adding %s to the PATH\n", gobin)
 	fmt.Printf("##vso[task.prependpath]%s\n", gobin)
 	return nil
 }
