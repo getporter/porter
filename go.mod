@@ -18,10 +18,6 @@ replace (
 	// Tagged from v1.4.0, the improved-configuration branch
 	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration
 
-	// Fork (fluent branch) that adds fluent syntax and supports running a
-	// command in a directory without using chdir
-	github.com/magefile/mage => github.com/carolynvs/mage v1.10.1-0.20201116013517-68243214dee0
-
 	// local-keyword-registry
 	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8
 
@@ -34,7 +30,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/aferox v0.2.1
 	github.com/carolynvs/datetime-printer v0.2.0
-	github.com/carolynvs/magex v0.2.1-0.20201116013928-d6af240c802c
+	github.com/carolynvs/magex v0.5.0
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.15.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
@@ -58,7 +54,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-plugin v1.4.0
 	github.com/hashicorp/go-version v1.2.0 // indirect
-	github.com/magefile/mage v1.10.0
+	github.com/magefile/mage v1.11.0
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mmcdole/gofeed v1.0.0-beta2
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect

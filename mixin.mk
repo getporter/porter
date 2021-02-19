@@ -52,16 +52,6 @@ $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
 	mkdir -p $(dir $@)
 	GOOS=$(CLIENT_PLATFORM) GOARCH=$(CLIENT_ARCH) $(XBUILD) -o $@ ./cmd/$(MIXIN)
 
-publish:
-	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
-	if [[ "$(PERMALINK)" == "latest" ]]; then \
-		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(VERSION) -s $(BINDIR)/$(VERSION); \
-		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(VERSION) --content-cache-control max-age=300; \
-	else \
-		mv $(BINDIR)/$(VERSION) $(BINDIR)/$(PERMALINK); \
-		az storage blob upload-batch -d porter/mixins/$(MIXIN)/$(PERMALINK) -s $(BINDIR)/$(PERMALINK) --content-cache-control max-age=300; \
-	fi
-
 clean:
 	-rm -r $(BINDIR)/latest
 	-rm -fr bin/mixins/$(MIXIN)

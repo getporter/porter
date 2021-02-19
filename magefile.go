@@ -10,15 +10,17 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	// mage:import
+	"get.porter.sh/porter/mage/releases"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/shx"
-	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
@@ -34,6 +36,8 @@ const (
 	mixinsURL         = "https://cdn.porter.sh/mixins/"
 )
 
+var must = shx.CommandBuilder{StopOnError: true}
+
 // Ensure Mage is installed and on the PATH.
 func EnsureMage() error {
 	return pkg.EnsureMage("")
@@ -48,7 +52,7 @@ func ConfigureAgent() error {
 	}
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
-	gobin := xplat.FilePathJoin(xplat.GOPATH(), "bin")
+	gobin := filepath.Join(pkg.GOPATH())
 	err = os.MkdirAll(gobin, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
@@ -77,8 +81,7 @@ func GetMixins() error {
 		errG.Go(func() error {
 			log.Println("Installing mixin:", mixin)
 			mixinURL := mixinsURL + mixin
-			_, _, err := porter("mixin", "install", mixin, "--version", mixinTag, "--url", mixinURL).Run()
-			return err
+			return porter("mixin", "install", mixin, "--version", mixinTag, "--url", mixinURL).Run()
 		})
 	}
 
@@ -86,9 +89,9 @@ func GetMixins() error {
 }
 
 // Run a porter command from the bin
-func porter(args ...string) sh.PreparedCommand {
+func porter(args ...string) shx.PreparedCommand {
 	porterPath := filepath.Join("bin", "porter")
-	p := sh.Command(porterPath, args...)
+	p := shx.Command(porterPath, args...)
 
 	porterHome, _ := filepath.Abs("bin")
 	p.Cmd.Env = []string{"PORTER_HOME=" + porterHome}
@@ -107,7 +110,21 @@ func TestE2E() error {
 		v = "-v"
 	}
 
-	return sh.RunV("go", shx.CollapseArgs("test", "-tags", "e2e", v, "./tests/e2e/...")...)
+	return shx.Command("go", "test", "-tags", "e2e", v, "./tests/e2e/...").CollapseArgs().RunV()
+}
+
+// Publish the porter binaries and install scripts.
+func PublishPorter(version string, permalink string) {
+	binDir := "bin"
+	versionDir := filepath.Join(binDir, version)
+
+	os.MkdirAll(versionDir, 0755)
+	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
+
+	if permalink == "latest" {
+		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, version), "-s", versionDir, "--content-cache-control", releases.StaticCache)
+	}
+	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, permalink), "-s", versionDir, "--content-cache-control", releases.VolatileCache)
 }
 
 // Copy the cross-compiled binaries from xbuild into bin.
@@ -168,7 +185,7 @@ func StartDocker() error {
 		err := shx.RunS("powershell", "-c", "Get-Process 'Docker Desktop'")
 		if err != nil {
 			fmt.Println("Starting Docker Desktop")
-			cmd := sh.Command(`C:\Program Files\Docker\Docker\Docker Desktop.exe`)
+			cmd := shx.Command(`C:\Program Files\Docker\Docker\Docker Desktop.exe`)
 			err := cmd.Cmd.Start()
 			if err != nil {
 				return errors.Wrapf(err, "could not start Docker Desktop")
