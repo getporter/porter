@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
-	"github.com/magefile/mage/sh"
+	"github.com/carolynvs/magex/shx"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -66,9 +66,9 @@ func (t Test) RequirePorter(args ...string) {
 // Run a porter command, printing stderr when the command fails.
 func (t Test) PorterE(args ...string) error {
 	args = append(args, "--debug")
-	p := sh.Command(t.PorterPath, args...).Stdout(nil)
+	p := shx.Command(t.PorterPath, args...).Stdout(nil)
 	p.Cmd.Env = []string{"PORTER_HOME=" + t.PorterHomeDir}
-	_, _, err := p.Run()
+	err := p.Run()
 	return errors.Wrapf(err, "error running porter %s", args)
 }
 

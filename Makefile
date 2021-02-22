@@ -110,22 +110,11 @@ docs-stop-preview:
 publish: publish-bin publish-mixins publish-images
 
 publish-bin:
-	mkdir -p bin/$(VERSION)
-	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/prep-install-scripts.sh
-
-	# AZURE_STORAGE_CONNECTION_STRING will be used for auth in the following commands
-	if [[ "$(PERMALINK)" == "latest" ]]; then \
-		az storage blob upload-batch -d porter/$(VERSION) -s bin/$(VERSION); \
-	fi
-	az storage blob upload-batch -d porter/$(PERMALINK) -s bin/$(VERSION) --content-cache-control max-age=300
+	go run mage.go PublishPorter $(VERSION) $(PERMALINK)
 
 publish-mixins:
-	$(MAKE) $(MAKE_OPTS) publish MIXIN=exec -f mixin.mk
-
-	# Generate the mixin feed
-	az storage blob download -c porter -n mixins/atom.xml -f bin/mixins/atom.xml
-	bin/porter mixins feed generate -d bin/mixins -f bin/mixins/atom.xml -t build/atom-template.xml
-	az storage blob upload -c porter -n mixins/atom.xml -f bin/mixins/atom.xml --content-cache-control max-age=300
+	go run mage.go PublishMixin exec $(VERSION) $(PERMALINK)
+	go run mage.go PublishMixinFeed
 
 .PHONY: build-images
 build-images:
