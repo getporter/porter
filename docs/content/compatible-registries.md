@@ -19,7 +19,8 @@ out a particular registry and know that it will work for you.
 | **Docker Hub** | **Yes** |
 | **DigitalOcean Container Registry** | **Yes** |
 | Amazon Elastic Container Registry (ECR) | No |
-| **Google Cloud Registry (GCR)** | **Yes** | 
+| **Google Artifact Registry** | **Yes** | 
+| Google Cloud Registry (GCR) | No | 
 | **GitHub Container Registry (GHCR)** | **Yes** | 
 | GitHub Packages | No |
 | **Harbor 2** | **Yes** |
