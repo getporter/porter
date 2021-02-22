@@ -16,7 +16,7 @@ import (
 var must = shx.CommandBuilder{StopOnError: true}
 
 const (
-	ContainerName = "releases"
+	ContainerName = "porter"
 	mixinFeedBlob = "mixins/atom.xml"
 	mixinFeedFile = "bin/mixins/atom.xml"
 	VolatileCache = "max-age=300"    // 5 minutes
