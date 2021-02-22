@@ -35,9 +35,9 @@ func PublishMixin(mixin string, version string, permalink string) {
 
 // Generate an updated mixin feed and releases it.
 func PublishMixinFeed(ctx context.Context) {
-	leaseId, err := lockMixinFeed(ctx)
+	leaseId, unlock, err := lockMixinFeed(ctx)
+	defer unlock()
 	mgx.Must(err)
-	defer shx.RunE("az", "storage", "blob", "lease", "release", "-c", ContainerName, "-b", mixinFeedBlob, "--lease-id", leaseId)
 
 	must.RunE("az", "storage", "blob", "download", "-c", ContainerName, "-n", mixinFeedBlob, "-f", mixinFeedFile, "--lease-id", leaseId)
 	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Dir(mixinFeedFile), "-f", mixinFeedFile, "-t", "build/atom-template.xml")
@@ -45,7 +45,7 @@ func PublishMixinFeed(ctx context.Context) {
 }
 
 // Tries to get a lock on the mixin feed in blob storage, returning the lease id
-func lockMixinFeed(ctx context.Context) (string, error) {
+func lockMixinFeed(ctx context.Context) (string, func(), error) {
 	var leaseJson string
 	var err error
 
@@ -54,7 +54,7 @@ func lockMixinFeed(ctx context.Context) (string, error) {
 	for {
 		select {
 		case <-timeout.Done():
-			return "", errors.New("timeout while trying to acquire lease on the mixin feed")
+			return "", func() {}, errors.New("timeout while trying to acquire lease on the mixin feed")
 		default:
 			leaseJson, err = shx.OutputE("az", "storage", "blob", "lease", "acquire", "-c", ContainerName, "-b", mixinFeedBlob, "--lease-duration", "60", "-o=json")
 			if err != nil {
@@ -67,7 +67,10 @@ func lockMixinFeed(ctx context.Context) (string, error) {
 
 			var leaseId string
 			err = json.Unmarshal([]byte(leaseJson), &leaseId)
-			return leaseId, errors.Wrapf(err, "error parsing lease id %s as a json string", leaseJson)
+			unlock := func() {
+				shx.RunE("az", "storage", "blob", "lease", "release", "-c", ContainerName, "-b", mixinFeedBlob, "--lease-id", leaseId)
+			}
+			return leaseId, unlock, errors.Wrapf(err, "error parsing lease id %s as a json string", leaseJson)
 		}
 	}
 }
