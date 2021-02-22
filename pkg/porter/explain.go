@@ -16,6 +16,8 @@ import (
 type ExplainOpts struct {
 	BundleActionOptions
 	printer.PrintOptions
+
+	Action string
 }
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle.Bundle
@@ -165,7 +167,7 @@ func (p *Porter) Explain(o ExplainOpts) error {
 	bundle, err := p.CNAB.LoadBundle(o.CNABFile)
 	// Print Bundle Details
 
-	pb, err := generatePrintable(bundle)
+	pb, err := generatePrintable(bundle, o.Action)
 	if err != nil {
 		return errors.Wrap(err, "unable to print bundle")
 	}
@@ -185,7 +187,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
-func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
+func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, error) {
 	pb := PrintableBundle{
 		Name:        bun.Name,
 		Description: bun.Description,
@@ -234,7 +236,9 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 		pp.Required = v.Required
 		pp.Description = v.Description
 
-		params = append(params, pp)
+		if v.AppliesTo(action) {
+			params = append(params, pp)
+		}
 	}
 	sort.Sort(SortPrintableParameter(params))
 
@@ -253,7 +257,9 @@ func generatePrintable(bun bundle.Bundle) (*PrintableBundle, error) {
 		po.ApplyTo = generateApplyToString(v.ApplyTo)
 		po.Description = v.Description
 
-		outputs = append(outputs, po)
+		if v.AppliesTo(action) {
+			outputs = append(outputs, po)
+		}
 	}
 	sort.Sort(SortPrintableOutput(outputs))
 

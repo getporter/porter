@@ -125,7 +125,7 @@ func TestExplain_generateTable(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "table"
@@ -146,7 +146,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"
@@ -167,7 +167,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 
 	opts := ExplainOpts{}
@@ -210,7 +210,7 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	require.NoError(t, err)
 
 	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
@@ -225,6 +225,55 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Credentials))
 	assert.Equal(t, 0, len(pb.Actions))
+}
+
+func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
+	bun := bundle.Bundle{
+		RequiredExtensions: []string{
+			extensions.FileParameterExtensionKey,
+		},
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{
+				Type:    "string",
+				Default: "clippy",
+			},
+			"file": &definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"debug": {
+				Definition: "string",
+				Required:   true,
+				ApplyTo:    []string{"install"},
+			},
+			"tfstate": {
+				Definition: "file",
+			},
+		},
+	}
+
+	pb, err := generatePrintable(bun, "install")
+	require.NoError(t, err)
+
+	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
+	d := pb.Parameters[0]
+	require.Equal(t, "debug", d.Name)
+	assert.Equal(t, "clippy", fmt.Sprintf("%v", d.Default))
+	assert.Equal(t, "string", d.Type)
+	f := pb.Parameters[1]
+	require.Equal(t, "tfstate", f.Name)
+	assert.Equal(t, "file", f.Type)
+
+	assert.Equal(t, 0, len(pb.Outputs))
+	assert.Equal(t, 0, len(pb.Credentials))
+	assert.Equal(t, 0, len(pb.Actions))
+
+	pb2, err := generatePrintable(bun, "upgrade")
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(pb2.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
@@ -242,7 +291,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Outputs))
@@ -263,7 +312,7 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(pb.Credentials))
@@ -300,7 +349,7 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 		},
 	}
 
-	pd, err := generatePrintable(bun)
+	pd, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(pd.Dependencies))
 	assert.Equal(t, 0, len(pd.Parameters))
@@ -315,7 +364,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
 
-	pb, err := generatePrintable(b)
+	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
 	opts.RawFormat = "json"

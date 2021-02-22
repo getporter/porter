@@ -23,12 +23,14 @@ porter explain [flags]
   porter explain --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter explain --file another/porter.yaml
   porter explain --cnab-file some/bundle.json
+  porter explain --action install
 		  
 ```
 
 ### Options
 
 ```
+      --action string       Hide parameters and outputs that are not used by the specified action.
       --cnab-file string    Path to the CNAB bundle.json file.
   -f, --file porter.yaml    Path to the Porter manifest. Defaults to porter.yaml in the current directory.
       --force               Force a fresh pull of the bundle
