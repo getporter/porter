@@ -12,6 +12,7 @@ and show it off! ✨
 Check out our new [CNCF Porter Community] channel for all of our conference talks, demos and meeting videos.
 
 * [The Devil is in the Deployments: Bundle Use Cases](#the-devil-is-in-the-deployments-bundle-use-cases)
+* [Deploy Across an Airgap](#deploy-across-an-airgap)
 * [Understanding Cloud Native Application Bundles](#understanding-cloud-native-application-bundles)
 * [Porter: Digital Ocean, Terraform, Kubernetes](#porter-digital-ocean-terraform-kubernetes)
 * [Porter Bundle with K3D, Helm3 and Brigade by Nuno Do Carmo](#porter-bundle-with-k3d-helm3-and-brigade-by-nuno-do-carmo)
@@ -42,6 +43,12 @@ look like if you were using them:
 * Secure your pipeline.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/wNl8m3h9I4E" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+### Deploy Across an Airgap
+
+A gentle introduction to Porter and a demo of how to use Porter to deploy your application across an airgap.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/IFWIBSzhgM4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Understanding Cloud Native Application Bundles
 
