@@ -54,6 +54,15 @@ func TestGenerate(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
 	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
 
+	// Create extraneous release directories that should be ignores
+	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-linux-amd64")
+	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-windows-amd64.exe")
+
+	tc.FileSystem.Create("bin/latest/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/latest/helm-linux-amd64")
+	tc.FileSystem.Create("bin/latest/helm-windows-amd64.exe")
+
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
 		SearchDirectory: "bin",

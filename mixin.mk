@@ -45,7 +45,7 @@ xbuild-all:
 		$(foreach ARCH, $(SUPPORTED_ARCHES), \
 				$(MAKE) $(MAKE_OPTS) CLIENT_PLATFORM=$(OS) CLIENT_ARCH=$(ARCH) MIXIN=$(MIXIN) xbuild -f mixin.mk; \
 		))
-	cp -R $(BINDIR)/$(VERSION) $(BINDIR)/latest
+	mage PrepareMixinForPublish $(MIXIN) $(VERSION) $(PERMALINK)
 
 xbuild: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
 $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
@@ -53,5 +53,4 @@ $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
 	GOOS=$(CLIENT_PLATFORM) GOARCH=$(CLIENT_ARCH) $(XBUILD) -o $@ ./cmd/$(MIXIN)
 
 clean:
-	-rm -r $(BINDIR)/latest
 	-rm -fr bin/mixins/$(MIXIN)

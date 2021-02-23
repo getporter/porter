@@ -69,6 +69,14 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		matches := mixinRegex.FindStringSubmatch(path)
 		if len(matches) > 0 {
 			version := matches[2]
+
+			// As a safety measure, skip versions that shouldn't be put in the feed, "lates" and non tagged releases.
+			// Normally the makefile prepares the bin ahead of time, just bail out just in case.
+			untaggedRegex := regexp.MustCompile(`v\d+\.\d+\.\d+-\d+-g[a-z0-9]{8}`)
+			if version == "latest" || untaggedRegex.MatchString(version) {
+				return nil
+			}
+
 			mixin := matches[3]
 			filename := info.Name()
 			updated := info.ModTime()
