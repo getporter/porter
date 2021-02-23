@@ -70,11 +70,14 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		if len(matches) > 0 {
 			version := matches[2]
 
-			// As a safety measure, skip versions that shouldn't be put in the feed, "latest" and non tagged releases.
-			// Normally the makefile prepares the bin ahead of time, just bail out just in case.
-			untaggedRegex := regexp.MustCompile(`v\d+\.\d+\.\d+-\d+-g[a-z0-9]{8}`)
-			if version == "latest" || untaggedRegex.MatchString(version) {
-				return nil
+			// As a safety measure, skip versions that shouldn't be put in the feed, we only want canary and tagged releases.
+			if version != "canary" {
+				versionRegex := regexp.MustCompile(`v\d+\.\d+\.\d+(-\d+-g[a-z0-9]{8})?`)
+				matches := versionRegex.FindStringSubmatch(version)
+				if len(matches) == 0 || // e.g. latest
+					len(matches) == 2 && matches[1] != "" { // e.g. v1.2.3-2-g12345678
+					return nil
+				}
 			}
 
 			mixin := matches[3]

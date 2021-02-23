@@ -45,6 +45,8 @@ xbuild-all:
 		$(foreach ARCH, $(SUPPORTED_ARCHES), \
 				$(MAKE) $(MAKE_OPTS) CLIENT_PLATFORM=$(OS) CLIENT_ARCH=$(ARCH) MIXIN=$(MIXIN) xbuild -f mixin.mk; \
 		))
+	@# Copy most recent build into bin/dev so that subsequent build steps can easily find it, not used for publishing
+	cp -R $(BINDIR)/$(VERSION) $(BINDIR)/dev
 	mage PrepareMixinForPublish $(MIXIN) $(VERSION) $(PERMALINK)
 
 xbuild: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)

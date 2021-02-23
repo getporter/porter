@@ -64,8 +64,6 @@ endif
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
-	@# Copy most recent build into bin/latest so that subsequent build steps can easily find it, not used for publishing
-	cp -R $(BINDIR)/$(VERSION) $(BINDIR)/latest
 
 xbuild-porter: generate
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
@@ -219,6 +217,7 @@ clean-last-testrun: stop-local-docker-registry
 clean-packr: packr2
 	cd cmd/porter && packr2 clean
 	cd pkg/porter && packr2 clean
+	cd pkg/pkgmgmt/feed && packr2 clean
 	$(foreach MIXIN, $(INT_MIXINS), \
 		`cd pkg/$(MIXIN) && packr2 clean`; \
 	)

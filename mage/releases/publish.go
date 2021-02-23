@@ -31,10 +31,6 @@ func PrepareMixinForPublish(mixin string, version string, permalink string) {
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
 	// We do not want a latest directory, latest entries are calculated using the most recent
 	// timestamp in the atom.xml, not from an explicit entry.
-	if permalink == "latest" {
-		return
-	}
-
 	binDir := filepath.Join("bin/mixins/", mixin)
 	// Temp hack until we have mixin.mk totally moved into mage
 	if mixin == "porter" {
