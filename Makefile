@@ -64,6 +64,8 @@ endif
 endif
 
 xbuild-all: xbuild-porter xbuild-mixins
+	@# Copy most recent build into bin/latest so that subsequent build steps can easily find it, not used for publishing
+	cp -R $(BINDIR)/$(VERSION) $(BINDIR)/latest
 
 xbuild-porter: generate
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
