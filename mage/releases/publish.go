@@ -3,6 +3,8 @@ package releases
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -23,25 +25,54 @@ const (
 	StaticCache   = "max-age=604800" // 1 week
 )
 
-// Publish a mixin's binaries.
-func PublishMixin(mixin string, version string, permalink string) {
+// Prepares bin directory for publishing
+func PrepareMixinForPublish(mixin string, version string, permalink string) {
+	// Prepare the bin directory for generating a mixin feed
+	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
+	// We do not want a latest directory, latest entries are calculated using the most recent
+	// timestamp in the atom.xml, not from an explicit entry.
 	binDir := filepath.Join("bin/mixins/", mixin)
-	versionDir := filepath.Join(binDir, version)
-	if permalink == "latest" {
-		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, version), "-s", versionDir, "--content-cache-control", StaticCache)
+	// Temp hack until we have mixin.mk totally moved into mage
+	if mixin == "porter" {
+		binDir = "bin"
 	}
-	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, permalink), "-s", versionDir, "--content-cache-control", VolatileCache)
+	versionDir := filepath.Join(binDir, version)
+	permalinkDir := filepath.Join(binDir, permalink)
+
+	mgx.Must(os.RemoveAll(permalinkDir))
+	log.Printf("mv %s %s\n", versionDir, permalinkDir)
+	mgx.Must(os.Rename(versionDir, permalinkDir))
 }
 
-// Generate an updated mixin feed and releases it.
+// Publish a mixin's binaries.
+func PublishMixin(mixin string, version string, permalink string) {
+	var publishDir string
+	if permalink == "canary" {
+		publishDir = filepath.Join("bin/mixins/", mixin, permalink)
+	} else {
+		publishDir = filepath.Join("bin/mixins/", mixin, version)
+	}
+
+	if permalink == "latest" {
+		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, version), "-s", publishDir, "--content-cache-control", StaticCache)
+	}
+	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, permalink), "-s", publishDir, "--content-cache-control", VolatileCache)
+}
+
+// Generate an updated mixin feed and publishes it.
 func PublishMixinFeed(ctx context.Context) {
 	leaseId, unlock, err := lockMixinFeed(ctx)
 	defer unlock()
 	mgx.Must(err)
 
 	must.RunE("az", "storage", "blob", "download", "-c", ContainerName, "-n", mixinFeedBlob, "-f", mixinFeedFile, "--lease-id", leaseId)
-	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Dir(mixinFeedFile), "-f", mixinFeedFile, "-t", "build/atom-template.xml")
+	GenerateMixinFeed()
 	must.RunV("az", "storage", "blob", "upload", "-c", ContainerName, "-n", mixinFeedBlob, "-f", mixinFeedFile, "--content-cache-control", VolatileCache, "--lease-id", leaseId)
+}
+
+// Generate a mixin feed from any mixin versions in bin.
+func GenerateMixinFeed() {
+	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Dir(mixinFeedFile), "-f", mixinFeedFile, "-t", "build/atom-template.xml")
 }
 
 // Tries to get a lock on the mixin feed in blob storage, returning the lease id

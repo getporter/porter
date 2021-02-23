@@ -139,10 +139,10 @@ func UseXBuildBinaries() error {
 	}
 
 	copies := map[string]string{
-		"bin/latest/porter-$GOOS-amd64$EXT":           "bin/porter$EXT",
-		"bin/latest/porter-linux-amd64":               "bin/runtimes/porter-runtime",
-		"bin/mixins/exec/latest/exec-$GOOS-amd64$EXT": "bin/mixins/exec/exec$EXT",
-		"bin/mixins/exec/latest/exec-linux-amd64":     "bin/mixins/exec/runtimes/exec-runtime",
+		"bin/dev/porter-$GOOS-amd64$EXT":           "bin/porter$EXT",
+		"bin/dev/porter-linux-amd64":               "bin/runtimes/porter-runtime",
+		"bin/mixins/exec/dev/exec-$GOOS-amd64$EXT": "bin/mixins/exec/exec$EXT",
+		"bin/mixins/exec/dev/exec-linux-amd64":     "bin/mixins/exec/runtimes/exec-runtime",
 	}
 
 	r := strings.NewReplacer("$GOOS", goos, "$EXT", ext, "$PWD", pwd)

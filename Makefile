@@ -217,6 +217,7 @@ clean-last-testrun: stop-local-docker-registry
 clean-packr: packr2
 	cd cmd/porter && packr2 clean
 	cd pkg/porter && packr2 clean
+	cd pkg/pkgmgmt/feed && packr2 clean
 	$(foreach MIXIN, $(INT_MIXINS), \
 		`cd pkg/$(MIXIN) && packr2 clean`; \
 	)
