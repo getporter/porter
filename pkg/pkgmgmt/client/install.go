@@ -164,7 +164,7 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 		return errors.Wrapf(err, "error downloading %s", url.String())
 	}
 	if resp.StatusCode != 200 {
-		return errors.Errorf("bad status returned when downloading %s (%d)", url.String(), resp.StatusCode)
+		return errors.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 
