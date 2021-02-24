@@ -123,10 +123,10 @@ func PublishPorter(version string, permalink string) {
 	os.MkdirAll(versionDir, 0755)
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
 
+	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, permalink), "-s", versionDir, "--content-cache-control", releases.VolatileCache)
 	if permalink == "latest" {
 		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, version), "-s", versionDir, "--content-cache-control", releases.StaticCache)
 	}
-	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, permalink), "-s", versionDir, "--content-cache-control", releases.VolatileCache)
 }
 
 // Copy the cross-compiled binaries from xbuild into bin.
