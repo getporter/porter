@@ -366,10 +366,6 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "v0.30.0", pb.PorterVersion)
-	assert.Equal(t, 0, len(pb.Parameters))
-	assert.Equal(t, 0, len(pb.Outputs))
-	assert.Equal(t, 0, len(pb.Actions))
-	assert.Equal(t, 0, len(pb.Credentials))
 }
 
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
