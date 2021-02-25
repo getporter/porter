@@ -26,7 +26,7 @@ type PrintableBundle struct {
 	Name          string                `json:"name" yaml:"name"`
 	Description   string                `json:"description,omitempty" yaml:"description,omitempty"`
 	Version       string                `json:"version" yaml:"version"`
-	PorterVersion string                `json:"porter_version" yaml:"porter_version"`
+	PorterVersion string                `json:"porterVersion" yaml:"porterVersion"`
 	Parameters    []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Credentials   []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
 	Outputs       []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
