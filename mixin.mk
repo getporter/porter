@@ -10,7 +10,8 @@ PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo late
 
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
 GO = GO111MODULE=on go
-XBUILD = CGO_ENABLED=0 GO111MODULE=on $(GO) build -ldflags '$(LDFLAGS)'
+# I am using both ways to disable http/2 which is causing us massive instability.  Hopefully one of them sticks.
+XBUILD = CGO_ENABLED=0 GO111MODULE=on GODEBUG=http2client=0 $(GO) build -ldflags '$(LDFLAGS)' -tags nethttpomithttp2
 BINDIR ?= bin/mixins/$(MIXIN)
 
 CLIENT_PLATFORM ?= $(shell go env GOOS)
@@ -38,7 +39,7 @@ build-runtime:
 
 build-client:
 	mkdir -p $(BINDIR)
-	$(GO) build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
+	GODEBUG=http2client=0 $(GO) build -ldflags '$(LDFLAGS)' -tags nethttpomithttp2 -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
 
 xbuild-all:
 	$(foreach OS, $(SUPPORTED_PLATFORMS), \
