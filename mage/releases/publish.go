@@ -45,22 +45,17 @@ func PrepareMixinForPublish(mixin string, version string, permalink string) {
 
 	mgx.Must(os.RemoveAll(permalinkDir))
 	log.Printf("mv %s %s\n", versionDir, permalinkDir)
-	mgx.Must(os.Rename(versionDir, permalinkDir))
+	mgx.Must(shx.Copy(versionDir, permalinkDir, shx.CopyRecursive))
 }
 
 // Publish a mixin's binaries.
 func PublishMixin(mixin string, version string, permalink string) {
-	var publishDir string
-	if permalink == "canary" {
-		publishDir = filepath.Join("bin/mixins/", mixin, permalink)
-	} else {
-		publishDir = filepath.Join("bin/mixins/", mixin, version)
-	}
+	versionDir := filepath.Join("bin/mixins/", mixin, version)
 
 	if permalink == "latest" {
-		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, version), "-s", publishDir, "--content-cache-control", StaticCache)
+		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, version), "-s", versionDir, "--content-cache-control", StaticCache)
 	}
-	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, permalink), "-s", publishDir, "--content-cache-control", VolatileCache)
+	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(ContainerName, "mixins", mixin, permalink), "-s", versionDir, "--content-cache-control", VolatileCache)
 }
 
 // Generate an updated mixin feed and publishes it.
