@@ -148,3 +148,27 @@ func TestConfig_DigestManifest(t *testing.T) {
 		assert.NotEqual(t, newDigest, digest, "expected the digest to be different due to the updated pkg version")
 	})
 }
+
+func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
+	// Do not run this test in parallel
+	// Still need to figure out what is introducing flakey-ness
+
+	pkg.Version = "v1.2.3"
+	pkg.Commit = "abc123"
+	defer func() {
+		pkg.Version = ""
+		pkg.Commit = ""
+	}()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+	stamp, err := a.GenerateStamp()
+	require.NoError(t, err, "DigestManifest failed")
+	assert.Equal(t, "v1.2.3", stamp.Version)
+	assert.Equal(t, "abc123", stamp.Commit)
+}
