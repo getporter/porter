@@ -1,5 +1,6 @@
 // +build mage
 
+// trigger build
 // This is a magefile, and is a "makefile for go".
 // See https://magefile.org/
 package main
