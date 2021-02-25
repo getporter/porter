@@ -55,9 +55,9 @@ func TestGenerate(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
 
 	// Create extraneous release directories that should be ignored
-	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-darwin-amd64")
-	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-linux-amd64")
-	tc.FileSystem.Create("bin/v0.34.0-4-gd8ec3bbf/helm-windows-amd64.exe")
+	tc.FileSystem.Create("bin/v0.34.0-1-gda/helm-darwin-amd64")
+	tc.FileSystem.Create("bin/v0.34.0-2-g1234567/helm-linux-amd64")
+	tc.FileSystem.Create("bin/v0.34.0-3-g12345/helm-windows-amd64.exe")
 
 	tc.FileSystem.Create("bin/latest/helm-darwin-amd64")
 	tc.FileSystem.Create("bin/latest/helm-linux-amd64")
@@ -83,6 +83,30 @@ func TestGenerate(t *testing.T) {
 	wantXml := string(b)
 
 	assert.Equal(t, wantXml, gotXml)
+}
+
+func TestShouldPublishVersion(t *testing.T) {
+	testcases := map[string]bool{
+		"canary":                    true,
+		"latest":                    false,
+		"dev":                       false,
+		"rando-thing":               false,
+		"v1.2.3":                    true,
+		"v1.2.3-alpha.1":            true,
+		"v1.2.3-alpha.1+metadata":   true,
+		"v1.2.3-alpha.1-1-ga368f9f": false,
+		"v1.2.3-0-g":                true, // Need the hash
+		"v0.33.2-0-ga":              false,
+		"v0.33.2-0-g12345678":       false,
+		"v0.33.2-0-ga1b3c5":         false,
+	}
+
+	for version, wantPublish := range testcases {
+		t.Run(version, func(t *testing.T) {
+			gotPublish := shouldPublishVersion(version)
+			assert.Equal(t, wantPublish, gotPublish)
+		})
+	}
 }
 
 func TestGenerate_RegexMatch(t *testing.T) {
