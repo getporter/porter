@@ -117,8 +117,7 @@ func TestE2E() error {
 
 // Publish the porter binaries and install scripts.
 func PublishPorter(version string, permalink string) {
-	binDir := "bin"
-	versionDir := filepath.Join(binDir, version)
+	versionDir := filepath.Join("bin", version)
 
 	os.MkdirAll(versionDir, 0755)
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
