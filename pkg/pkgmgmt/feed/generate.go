@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
+	"github.com/Masterminds/semver"
 	"github.com/cbroglie/mustache"
 	"github.com/pkg/errors"
 )
@@ -70,14 +71,8 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 		if len(matches) > 0 {
 			version := matches[2]
 
-			// As a safety measure, skip versions that shouldn't be put in the feed, we only want canary and tagged releases.
-			if version != "canary" {
-				versionRegex := regexp.MustCompile(`v\d+\.\d+\.\d+(-\d+-g[a-z0-9]{8})?`)
-				matches := versionRegex.FindStringSubmatch(version)
-				if len(matches) == 0 || // e.g. latest
-					len(matches) == 2 && matches[1] != "" { // e.g. v1.2.3-2-g12345678
-					return nil
-				}
+			if !shouldPublishVersion(version) {
+				return nil
 			}
 
 			mixin := matches[3]
@@ -125,6 +120,26 @@ func (feed *MixinFeed) Generate(opts GenerateOptions) error {
 	}
 
 	return nil
+}
+
+var versionRegex = regexp.MustCompile(`\d+-g[a-z0-9]+`)
+
+// As a safety measure, skip versions that shouldn't be put in the feed, we only want canary and tagged releases.
+func shouldPublishVersion(version string) bool {
+	if version == "canary" {
+		// Publish canary permalinks
+		return true
+	}
+
+	v, err := semver.NewVersion(version)
+	if err != nil {
+		// If it's not a version, don't publish
+		return false
+	}
+
+	// Check if this is an untagged version, i.e. the output of git describe, v1.2.3-2-ga1b3c5
+	untagged := versionRegex.MatchString(v.Prerelease())
+	return !untagged
 }
 
 func (feed *MixinFeed) Save(opts GenerateOptions) error {
