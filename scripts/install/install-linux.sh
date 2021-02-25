@@ -9,7 +9,7 @@ echo "Installing porter to $PORTER_HOME"
 
 mkdir -p $PORTER_HOME/runtimes
 
-curl -fsSLo $PORTER_HOME/porter $PORTER_URL/$PORTER_PERMALINK/porter-linux-amd64
+curl --http1.1 -fsSLo $PORTER_HOME/porter $PORTER_URL/$PORTER_PERMALINK/porter-linux-amd64
 chmod +x $PORTER_HOME/porter
 cp $PORTER_HOME/porter $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
