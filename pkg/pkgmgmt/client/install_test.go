@@ -104,6 +104,7 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	err := p.Install(opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "bad status returned when downloading")
+	assert.Contains(t, err.Error(), "porter_trace_", "The error message should contain our special debug user agent")
 
 	// Make sure the package directory was removed
 	dirExists, _ := p.FileSystem.DirExists(pkgDir)
