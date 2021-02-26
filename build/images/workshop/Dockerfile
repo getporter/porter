@@ -9,7 +9,7 @@ RUN apk add bash \
             bash-completion \
             jq \
             ca-certificates && \
-    curl https://cdn.porter.sh/${PERMALINK}/install-linux.sh | bash && \
+    curl --http1.1 -v -H "X-Azure-DebugInfo: 1" -A "curl build-porter-workshop" https://cdn.porter.sh/${PERMALINK}/install-linux.sh | bash && \
     ln -s /root/.porter/porter /usr/local/bin/porter && \
     curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v${HELM_VER}-linux-amd64.tar.gz && \
     tar -xzf helm.tgz && \
