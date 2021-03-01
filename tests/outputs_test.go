@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestExecOutputs(t *testing.T) {
 	defer CleanupCurrentBundle(p)
 
 	// Verify that its file output was captured
-	usersOutput, err := p.ReadBundleOutput("users", p.Manifest.Name)
+	usersOutput, err := p.ReadBundleOutput("users.json", p.Manifest.Name)
 	require.NoError(t, err, "could not read users output")
 	assert.Equal(t, fmt.Sprintln(`{"users": ["sally"]}`), usersOutput, "expected the users output to be populated correctly")
 
@@ -47,6 +48,11 @@ func TestExecOutputs(t *testing.T) {
 
 	invokeExecOutputsBundle(p, "add-user")
 	invokeExecOutputsBundle(p, "get-users")
+
+	// Verify logs were captured as an output
+	logs, err := p.ReadBundleOutput(claim.OutputInvocationImageLogs, p.Manifest.Name)
+	require.NoError(t, err, "ListBundleOutputs failed")
+	assert.Contains(t, logs, "executing get-users action from exec-outputs", "expected the logs to contain bundle output from the last action")
 
 	// Verify that its jsonPath output was captured
 	userOutput, err := p.ReadBundleOutput("user-names", p.Manifest.Name)

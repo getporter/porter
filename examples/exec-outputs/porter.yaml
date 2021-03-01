@@ -18,14 +18,14 @@ parameters:
     path: /root/.kube/config
     source:
       output: kubeconfig
-  - name: users
+  - name: users.json
     type: file
     applyTo:
       - add-user
       - get-users
     path: /cnab/app/users.json
     source:
-      output: users
+      output: users.json
   - name: username
     type: string
     default: wei
@@ -86,7 +86,7 @@ uninstall:
         - uninstall
 
 outputs:
-  - name: users
+  - name: users.json
     type: file
     path: /cnab/app/users.json
     applyTo:

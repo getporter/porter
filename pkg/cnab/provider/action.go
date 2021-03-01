@@ -171,6 +171,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 
 	a := cnabaction.New(driver, r.claims)
 	a.SaveAllOutputs = true
+	a.SaveLogs = true
 
 	modifies, err := c.IsModifyingAction()
 	if err != nil {

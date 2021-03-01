@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
 
 	"get.porter.sh/porter/pkg/context"
@@ -100,12 +101,12 @@ func NewDisplayOutputs(bun bundle.Bundle, outputs claim.Outputs, format printer.
 		do := DisplayOutput{
 			Name:  output.Name,
 			Value: string(output.Value),
-			Type:  "unknown",
 		}
 
 		schema, exists := output.GetSchema()
 		if !exists {
-			continue
+			// Allow for the tooling to inject additional outputs
+			schema = definition.Schema{ID: output.Name, Type: "unknown"}
 		}
 
 		do.Type = extensions.GetParameterType(bun, &schema)

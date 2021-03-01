@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -45,24 +46,24 @@ func TestPorter_ShowBundle(t *testing.T) {
 			},
 		},
 	}
-	c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-	c.Created = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
-	err := p.Claims.SaveClaim(c)
+	c1 := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
+	c1.Created = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
+	err := p.Claims.SaveClaim(c1)
 	require.NoError(t, err, "SaveClaim failed")
-	r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
-	p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
-	p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
+	r := p.TestClaims.CreateResult(c1, claim.StatusSucceeded)
+	p.TestClaims.CreateOutput(c1, r, "foo", []byte("foo-output"))
+	p.TestClaims.CreateOutput(c1, r, "bar", []byte("bar-output"))
 
-	c = p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, nil)
-	c.Created = time.Date(2020, time.April, 19, 1, 2, 3, 4, time.UTC)
-	err = p.Claims.SaveClaim(c)
+	c2 := p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, nil)
+	c2.Created = time.Date(2020, time.April, 19, 1, 2, 3, 4, time.UTC)
+	err = p.Claims.SaveClaim(c2)
 	require.NoError(t, err, "SaveClaim failed")
-	r = p.TestClaims.CreateResult(c, claim.StatusRunning)
+	r = p.TestClaims.CreateResult(c2, claim.StatusRunning)
 
 	err = p.ShowInstallation(opts)
 	require.NoError(t, err, "ShowInstallation failed")
 
-	wantOutput :=
+	wantOutput := fmt.Sprintf(
 		`Name: test
 Created: 2020-04-18
 Modified: 2020-04-19
@@ -75,12 +76,13 @@ Outputs:
   foo   string  foo-output  
 
 History:
-----------------------------------
-  Action   Timestamp   Status     
-----------------------------------
-  install  2020-04-18  succeeded  
-  upgrade  2020-04-19  running    
-`
+------------------------------------------------------------------------
+  Run ID                      Action   Timestamp   Status     Has Logs  
+------------------------------------------------------------------------
+  %s  install  2020-04-18  succeeded  false     
+  %s  upgrade  2020-04-19  running    false     
+`, c1.ID, c2.ID)
+
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	require.Equal(t, wantOutput, gotOutput)
 }
