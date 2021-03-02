@@ -12,7 +12,7 @@
   },
   "definitions": {
     "applyTo": {
-      "description": "An optional exhaustive list of actions producing this output",
+      "description": "An optional exhaustive list of actions that apply to this item. When none are specified, all actions apply.",
       "items": {
         "type": "string"
       },
@@ -21,6 +21,9 @@
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
       "properties": {
+        "applyTo": {
+          "$ref": "#/definitions/applyTo"
+        },
         "description": {
           "description": "A user-friendly description of this credential",
           "type": "string"

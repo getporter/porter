@@ -256,6 +256,7 @@ func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Creden
 				Path:                cred.Path,
 				EnvironmentVariable: cred.EnvironmentVariable,
 			},
+			ApplyTo: cred.ApplyTo,
 		}
 		params[cred.Name] = l
 	}

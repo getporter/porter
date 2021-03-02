@@ -407,6 +407,11 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 		m, err := ReadManifest(cxt.Context, config.Name)
 		require.NoError(t, err)
 		assertAllCredentialsRequired(t, m.Credentials)
+
+		require.Len(t, m.Credentials, 5)
+		assert.Contains(t, m.Credentials, "kubeconfig", "expected a kubeconfig credential definition")
+		assert.Equal(t, []string{"status", "uninstall"}, m.Credentials["kubeconfig"].ApplyTo, "credential kubeconfig has incorrect applyTo")
+
 	})
 }
 

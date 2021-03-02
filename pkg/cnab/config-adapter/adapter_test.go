@@ -41,12 +41,41 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.NotNil(t, stamp)
 
 	assert.Contains(t, bun.Actions, "status", "custom action 'status' was not populated")
+
+	require.Len(t, bun.Credentials, 2, "expected two credentials")
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
 	assert.True(t, extensions.HasDependencies(bun), "Dependencies was not populated")
 
 	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
+}
+
+func TestManifestConverter_generateBundleCredentials(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
+
+	assert.Contains(t, bun.Credentials, "username", "credential 'username' was not populated")
+	username := bun.Credentials["username"]
+	assert.Equal(t, "Name of the database user", username.Description, "credential.Description was not populated")
+	assert.False(t, username.Required, "credential.Required was not populated correctly")
+	assert.Equal(t, "ROOT_USERNAME", username.EnvironmentVariable, "credential.EnvironmentVariable was not populated")
+
+	assert.Contains(t, bun.Credentials, "password", "credential 'password' was not populated")
+	password := bun.Credentials["password"]
+	assert.True(t, password.Required, "credential.Required was not populated correctly")
+	assert.Equal(t, []string{"uninstall"}, password.ApplyTo, "credential.ApplyTo was not populated")
+	assert.Equal(t, "/tmp/password", password.Path, "credential.Path was not populated")
 }
 
 func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {

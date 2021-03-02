@@ -425,7 +425,12 @@ func (cd *CredentialDefinitions) UnmarshalYAML(unmarshal func(interface{}) error
 type CredentialDefinition struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description,omitempty"`
-	Required    bool   `yaml:"required,omitempty"`
+
+	// Required specifies if the credential must be specified for applicable actions. Defaults to true.
+	Required bool `yaml:"required,omitempty"`
+
+	// ApplyTo lists the actions to which the credential applies. When unset, defaults to all actions.
+	ApplyTo []string `yaml:"applyTo,omitempty"`
 
 	Location `yaml:",inline"`
 }
