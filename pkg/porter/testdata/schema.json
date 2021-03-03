@@ -387,6 +387,11 @@
       },
       "type": "array"
     },
+    "custom": {
+      "additionalProperties": true,
+      "description": "Custom bundle metadata",
+      "type": "object"
+    },
     "customActions": {
       "additionalProperties": {
         "$ref": "#/definitions/customAction"

@@ -364,18 +364,24 @@ A last note on `digest`.  Taking the example of the library `nginx` Docker image
 
 ## Custom
 
-The Custom section of a Porter manifest is intended for bundle authors to capture custom data used by the bundle.
-Porter passes all custom data through to the resulting `bundle.json` as-is, without attempting to parse or otherwise
-understand the data.
+The Custom section of a Porter manifest is intended for bundle authors to
+capture custom data used by the bundle. It is a map of string keys to values of
+any structure. Porter passes all custom data through to the resulting
+`bundle.json` as-is, without attempting to parse or otherwise understand the
+data.
 
 ```yaml
 custom:
-  - some-custom-config:
-      item: value
-  - more-custom-config:
-      enabled: true
-      succeed: please!
+  some-custom-config:
+    item: "value"
+  more-custom-config:
+    enabled: true
+    succeed: "please!"
 ```
+
+You can access custom data at runtime using the `bundle.custom.KEY.SUBKEY` templating.
+For example, `{{ bundle.custom.more-custom-config.enabled}}` allows you to
+access nested values from the custom section.
 
 See the [Custom Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions)
 section of the CNAB Specification for more details.

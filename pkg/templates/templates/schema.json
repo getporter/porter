@@ -309,6 +309,11 @@
     "images": {
       "type": "object",
       "additionalProperties": {"$ref": "#/definitions/image"}
+    },
+    "custom": {
+      "description": "Custom bundle metadata",
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "additionalProperties": {
