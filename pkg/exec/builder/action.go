@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 
 	"get.porter.sh/porter/pkg/context"
-	//"get.porter.sh/porter/pkg/yaml"
-
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
 )
