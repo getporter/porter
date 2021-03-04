@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"get.porter.sh/porter/pkg/manifest"
-	"gopkg.in/yaml.v2"
+	"get.porter.sh/porter/pkg/yaml"
 )
 
 type ActionInput struct {

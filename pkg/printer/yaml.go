@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"gopkg.in/yaml.v2"
+	"get.porter.sh/porter/pkg/yaml"
 
 	"github.com/pkg/errors"
 )

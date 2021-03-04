@@ -7,8 +7,8 @@ import (
 
 	"get.porter.sh/porter/pkg/exec/builder"
 	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // BuildInput represents stdin sent by porter to the build and lint commands

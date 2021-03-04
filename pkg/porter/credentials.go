@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
-	"gopkg.in/yaml.v2"
+	"get.porter.sh/porter/pkg/yaml"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	credentials "github.com/cnabio/cnab-go/credentials"

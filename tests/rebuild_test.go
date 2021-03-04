@@ -10,9 +10,9 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
+	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestRebuild_InstallNewBundle(t *testing.T) {

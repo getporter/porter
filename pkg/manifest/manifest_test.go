@@ -6,10 +6,10 @@ import (
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
 func TestLoadManifest(t *testing.T) {
@@ -383,7 +383,7 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 	assert.Len(t, m.Mixins, 2, "expected 2 mixins")
 	assert.Equal(t, "exec", m.Mixins[0].Name)
 	assert.Equal(t, "az", m.Mixins[1].Name)
-	assert.Equal(t, map[interface{}]interface{}{"extensions": []interface{}{"iot"}}, m.Mixins[1].Config)
+	assert.Equal(t, map[string]interface{}{"extensions": []interface{}{"iot"}}, m.Mixins[1].Config)
 }
 
 func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
@@ -421,7 +421,7 @@ func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	}{
 		[]MixinDeclaration{
 			{Name: "exec"},
-			{Name: "az", Config: map[interface{}]interface{}{"extensions": []interface{}{"iot"}}},
+			{Name: "az", Config: map[string]interface{}{"extensions": []interface{}{"iot"}}},
 		},
 	}
 

@@ -2,9 +2,9 @@ package query
 
 import (
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // ManifestGenerator generates mixin input from the manifest contents associated with each mixin.

@@ -8,6 +8,7 @@ import (
 	"github.com/cnabio/cnab-go/bundle"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-go/driver"
@@ -15,7 +16,6 @@ import (
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // Shared arguments for all CNAB actions

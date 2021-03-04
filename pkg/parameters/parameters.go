@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
-	"gopkg.in/yaml.v2"
 )
 
 // PorterInternal is a string that can be used to designate a parameter

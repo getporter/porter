@@ -12,13 +12,13 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type RuntimeManifest struct {
