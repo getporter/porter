@@ -1,0 +1,28 @@
+root:
+  array:
+    - map:
+        a: "a"
+        1: 1
+        true: true
+        yes: "yes"
+        null: null
+        typesArray:
+          - a
+          - 1
+          - true
+          - yes
+          - null
+          - [1,2]
+        map:
+          a: "a"
+          1: 1
+          true: true
+          yes: "yes"
+          null: null
+          typesArray:
+            - a
+            - 1
+            - true
+            - yes
+            - null
+            - [ 1,2 ]

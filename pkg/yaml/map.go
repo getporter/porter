@@ -3,7 +3,7 @@
 //
 // Originally distributed as part of "beats" repository (https://github.com/elastic/beats).
 // Modified specifically for "iodatafmt" package.
-// Modified to make UnmarshalYAML reusable by other types and compatible with gopkg.in/yaml.v3
+// Modified to make UnmarshalYAML reusable by other types, turn null keys to "null" and be compatible with gopkg.in/yaml.v3
 //
 // Distributed underneath "Apache License, Version 2.0" which is compatible with the LICENSE for this package.
 // see https://github.com/go-yaml/yaml/issues/139#issuecomment-220072190
@@ -26,7 +26,7 @@ func UnmarshalMap(unmarshal func(interface{}) error) (map[string]interface{}, er
 	}
 
 	for k, v := range raw {
-		raw[fmt.Sprintf("%v", k)] = cleanupMapValue(v)
+		raw[stringKey(k)] = cleanupMapValue(v)
 	}
 
 	return raw, nil
@@ -43,7 +43,7 @@ func cleanupInterfaceArray(in []interface{}) []interface{} {
 func cleanupInterfaceMap(in map[interface{}]interface{}) map[string]interface{} {
 	res := make(map[string]interface{})
 	for k, v := range in {
-		res[fmt.Sprintf("%v", k)] = cleanupMapValue(v)
+		res[stringKey(k)] = cleanupMapValue(v)
 	}
 	return res
 }
@@ -51,7 +51,7 @@ func cleanupInterfaceMap(in map[interface{}]interface{}) map[string]interface{} 
 func cleanupStringMap(in map[string]interface{}) map[string]interface{} {
 	res := make(map[string]interface{})
 	for k, v := range in {
-		res[fmt.Sprintf("%v", k)] = cleanupMapValue(v)
+		res[stringKey(k)] = cleanupMapValue(v)
 	}
 	return res
 }
@@ -64,9 +64,16 @@ func cleanupMapValue(v interface{}) interface{} {
 		return cleanupInterfaceMap(v)
 	case map[string]interface{}:
 		return cleanupStringMap(v)
-	case string, bool, int8, int16, int32, int64, int, uint, uint8, uint16, uint32, uint64:
-		return v
 	default:
-		return fmt.Sprintf("%v", v)
+		return v
+	}
+}
+
+func stringKey(k interface{}) string {
+	switch k {
+	case nil:
+		return "null"
+	default:
+		return fmt.Sprintf("%v", k)
 	}
 }
