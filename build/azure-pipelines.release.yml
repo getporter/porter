@@ -128,17 +128,34 @@ stages:
               path: bin
           - script: go run mage.go UseXBuildBinaries
             displayName: "Setup Bin"
+          - script: |
+              export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
+              make publish-bin publish-mixins
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            displayName: "Publish Porter Binaries"
+
+      - job: publish_docker
+        steps:
+          - task: GoTool@0
+            inputs:
+              version: "$(GOVERSION)"
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: xbuild-bin
+              path: bin
+          - script: go run mage.go UseXBuildBinaries
+            displayName: "Setup Bin"
           - task: Docker@1
             displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: getporter-registry
               command: login
-          - script: |
-              export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
-              make publish
+          - script: make publish-images
             condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-            displayName: "Publish Porter Binaries"
+            displayName: "Publish Docker Images"
 
       - job: publish_example_bundles
         steps:
