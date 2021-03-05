@@ -15,6 +15,7 @@ pool:
 variables:
   GOVERSION: "1.13.10"
   REGISTRY: "getporter"
+  HAVE_SECRETS: $[ne(variables['AZURE_STORAGE_CONNECTION_STRING'], '')]
 
 stages:
   - stage: Validate
@@ -119,69 +120,81 @@ stages:
       - job: publish_binaries
         steps:
           - task: GoTool@0
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             inputs:
               version: "$(GOVERSION)"
           - task: DownloadPipelineArtifact@2
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
               source: current
               artifact: xbuild-bin
               path: bin
           - script: go run mage.go UseXBuildBinaries
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Setup Bin"
           - script: |
               export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
               make publish-bin publish-mixins
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Publish Porter Binaries"
 
       - job: publish_docker
         steps:
           - task: GoTool@0
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             inputs:
               version: "$(GOVERSION)"
           - task: DownloadPipelineArtifact@2
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Download Cross-Compiled Porter Binaries"
             inputs:
               source: current
               artifact: xbuild-bin
               path: bin
           - script: go run mage.go UseXBuildBinaries
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Setup Bin"
           - task: Docker@1
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: getporter-registry
               command: login
           - script: make publish-images
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Publish Docker Images"
 
       - job: publish_example_bundles
         steps:
           - task: GoTool@0
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             inputs:
               version: "$(GOVERSION)"
           - task: DownloadPipelineArtifact@2
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Download Native Porter Binaries"
             inputs:
               source: current
               artifact: build-bin
               path: bin
           - script: go run mage.go SetBinExecutable
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Setup Bin"
           - bash: |
               set -e
               sudo make ajv
               make build-bundle validate-bundle
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Validate Examples"
           - task: Docker@1
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: getporter-registry
               command: login
           - script: make publish-bundle
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            condition: and(succeeded(), eq(variables.HAVE_SECRETS, 'true'))
             displayName: "Publish Example Bundles"
