@@ -36,8 +36,6 @@ stages:
             displayName: "Configure Agent"
           - bash: make build
             displayName: "Native Build"
-          - bash: make build-images
-            displayName: "Build Docker Images"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
             inputs:
@@ -109,6 +107,21 @@ stages:
               sudo make ajv
               make build-bundle validate-bundle
             displayName: "Validate Examples"
+      - job: build_docker
+        steps:
+          - task: GoTool@0
+            inputs:
+              version: "$(GOVERSION)"
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Cross-Compiled Porter Binaries"
+            inputs:
+              source: current
+              artifact: xbuild-bin
+              path: bin
+          - script: go run mage.go UseXBuildBinaries
+            displayName: "Setup Bin"
+          - script: make build-images
+            displayName: "Build Docker Images"
       - job: e2e_test
         displayName: "Run E2E tests on"
         dependsOn: xbuild
