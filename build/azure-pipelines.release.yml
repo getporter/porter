@@ -14,6 +14,7 @@ pool:
 
 variables:
   GOVERSION: "1.13.10"
+  REGISTRY: "getporter"
 
 stages:
   - stage: Validate

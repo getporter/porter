@@ -2,15 +2,15 @@
 set -euo pipefail
 
 
-# PERMALINK and VERSION must be set before calling this script
+# REGISTRY, PERMALINK and VERSION must be set before calling this script
 # It is intended to only be executed by make publish
 
 if [[ "$PERMALINK" == "latest" ]]; then
-  docker push getporter/porter:$VERSION
-  docker push getporter/workshop:$VERSION
-  docker push getporter/porter:$PERMALINK
-  docker push getporter/workshop:$PERMALINK
+  docker push $REGISTRY/porter:$VERSION
+  docker push $REGISTRY/workshop:$VERSION
+  docker push $REGISTRY/porter:$PERMALINK
+  docker push $REGISTRY/workshop:$PERMALINK
 else
-  docker push getporter/porter:$PERMALINK
-  docker push getporter/workshop:$PERMALINK
+  docker push $REGISTRY/porter:$PERMALINK
+  docker push $REGISTRY/workshop:$PERMALINK
 fi

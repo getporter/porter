@@ -2,11 +2,11 @@
 set -euo pipefail
 
 
-# PERMALINK and VERSION must be set before calling this script
+# REGISTRY, PERMALINK and VERSION must be set before calling this script
 # It is intended to only be executed by make publish
 
-docker build -t getporter/porter:$VERSION -f build/images/client/Dockerfile .
-docker build -t getporter/workshop:$VERSION -f build/images/workshop/Dockerfile .
+docker build -t $REGISTRY/porter:$VERSION -f build/images/client/Dockerfile .
+docker build -t $REGISTRY/workshop:$VERSION -f build/images/workshop/Dockerfile .
 
-docker tag getporter/porter:$VERSION getporter/porter:$PERMALINK
-docker tag getporter/workshop:$VERSION getporter/workshop:$PERMALINK
+docker tag $REGISTRY/porter:$VERSION $REGISTRY/porter:$PERMALINK
+docker tag $REGISTRY/workshop:$VERSION $REGISTRY/workshop:$PERMALINK

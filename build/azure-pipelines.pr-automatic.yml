@@ -108,6 +108,7 @@ stages:
               make build-bundle validate-bundle
             displayName: "Validate Examples"
       - job: build_docker
+        dependsOn: build
         steps:
           - task: GoTool@0
             inputs:
