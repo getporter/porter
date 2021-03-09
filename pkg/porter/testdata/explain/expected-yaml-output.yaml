@@ -2,10 +2,10 @@ name: porter-hello
 description: An example Porter configuration
 version: 0.1.0
 parameters:
-- name: region
-  type: string
-  default: mars
-  applyTo: All Actions
-  description: ""
-  required: false
+  - name: region
+    type: string
+    default: mars
+    applyTo: All Actions
+    description: ""
+    required: false
 

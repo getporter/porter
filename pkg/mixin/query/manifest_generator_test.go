@@ -39,6 +39,6 @@ func TestManifestGenerator_BuildInput(t *testing.T) {
 
 	t.Run("with config", func(t *testing.T) {
 		input := g.buildInputForMixin("az")
-		assert.Equal(t, map[interface{}]interface{}{"extensions": []interface{}{"iot"}}, input.Config, "az mixin should have config")
+		assert.Equal(t, map[string]interface{}{"extensions": []interface{}{"iot"}}, input.Config, "az mixin should have config")
 	})
 }

@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // UnmarshalAction handles unmarshaling any action, given a pointer to a slice of Steps.
@@ -23,7 +23,7 @@ import (
 //		a.Steps = append(a.Steps, *step...)
 //	}
 func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction) (map[string][]interface{}, error) {
-	actionMap := map[interface{}][]interface{}{}
+	actionMap := map[string][]interface{}{}
 	err := unmarshal(&actionMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not unmarshal yaml into an action map of exec steps")
@@ -32,7 +32,7 @@ func UnmarshalAction(unmarshal func(interface{}) error, builder BuildableAction)
 	return unmarshalActionMap(actionMap, builder)
 }
 
-func unmarshalActionMap(actionMap map[interface{}][]interface{}, builder BuildableAction) (map[string][]interface{}, error) {
+func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAction) (map[string][]interface{}, error) {
 	results := make(map[string][]interface{})
 	for actionIndex, stepMaps := range actionMap {
 		// Figure out the string representation of the action

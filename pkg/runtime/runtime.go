@@ -9,11 +9,11 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 // PorterRuntime orchestrates executing a bundle and managing state.

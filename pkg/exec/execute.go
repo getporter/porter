@@ -2,7 +2,7 @@ package exec
 
 import (
 	"get.porter.sh/porter/pkg/exec/builder"
-	yaml "gopkg.in/yaml.v2"
+	yaml "get.porter.sh/porter/pkg/yaml"
 )
 
 // ExecOptions represent the options for any exec command

@@ -79,20 +79,20 @@ unknown   v1.0      Porter Authors
     commit: abc123
     author: Porter Authors
   implementations:
-  - type: storage
-    name: blob
-  - type: storage
-    name: mongo
+    - type: storage
+      name: blob
+    - type: storage
+      name: mongo
 - name: plugin2
   versioninfo:
     version: v1.0
     commit: abc123
     author: Porter Authors
   implementations:
-  - type: storage
-    name: blob
-  - type: storage
-    name: mongo
+    - type: storage
+      name: blob
+    - type: storage
+      name: mongo
 - name: unknown
   versioninfo:
     version: v1.0
@@ -198,10 +198,10 @@ versioninfo:
   commit: abc123
   author: Porter Authors
 implementations:
-- type: storage
-  name: blob
-- type: storage
-  name: mongo
+  - type: storage
+    name: blob
+  - type: storage
+    name: mongo
 
 `
 		actual := p.TestConfig.TestContext.GetOutput()

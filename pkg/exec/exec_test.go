@@ -11,9 +11,9 @@ import (
 
 	"get.porter.sh/porter/pkg/test"
 
+	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestAction_UnmarshalYAML(t *testing.T) {

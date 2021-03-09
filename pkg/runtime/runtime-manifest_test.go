@@ -9,13 +9,13 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
 func TestResolveMapParam(t *testing.T) {
@@ -55,7 +55,7 @@ func TestResolveMapParam(t *testing.T) {
 	for k, v := range s.Data {
 		t.Logf("Key %s, value: %s, type: %T", k, v, v)
 	}
-	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	pms, ok := s.Data["Parameters"].(map[string]interface{})
 	assert.True(t, ok)
 	val, ok := pms["Thing"].(string)
 	assert.True(t, ok)
@@ -100,7 +100,7 @@ func TestResolvePathParam(t *testing.T) {
 	for k, v := range s.Data {
 		t.Logf("Key %s, value: %s, type: %T", k, v, v)
 	}
-	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	pms, ok := s.Data["Parameters"].(map[string]interface{})
 	assert.True(t, ok)
 	val, ok := pms["Thing"].(string)
 	assert.True(t, ok)
@@ -126,7 +126,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	after, _ := yaml.Marshal(s)
 	t.Logf("After:\n %s", after)
 
-	pms, ok := s.Data["exec"].(map[interface{}]interface{})
+	pms, ok := s.Data["exec"].(map[string]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
 	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
@@ -157,7 +157,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 	after, _ := yaml.Marshal(s)
 	t.Logf("After:\n %s", after)
 
-	pms, ok := s.Data["exec"].(map[interface{}]interface{})
+	pms, ok := s.Data["exec"].(map[string]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
 	assert.Equal(t, "echo \"dep name: Azure MySQL dep version: v1.0.0 dep description: Azure MySQL database as a service\"", cmd)
@@ -234,7 +234,7 @@ func TestPrepare_fileParam(t *testing.T) {
 	for k, v := range s.Data {
 		t.Logf("Key %s, value: %s, type: %T", k, v, v)
 	}
-	pms, ok := s.Data["Parameters"].(map[interface{}]interface{})
+	pms, ok := s.Data["Parameters"].(map[string]interface{})
 	assert.True(t, ok)
 	val, ok := pms["file-param"].(string)
 	assert.True(t, ok)
@@ -273,7 +273,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to render step template Arguments:\n- '{{ bundle.parameters.person }}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
+	assert.Contains(t, err.Error(), `Missing variable "person"`)
 }
 
 func TestResolveArray(t *testing.T) {
@@ -472,7 +472,7 @@ func TestResolveInMainDict(t *testing.T) {
 
 	assert.NotNil(t, installStep.Data)
 	t.Logf("install data %v", installStep.Data)
-	exec := installStep.Data["exec"].(map[interface{}]interface{})
+	exec := installStep.Data["exec"].(map[string]interface{})
 	assert.NotNil(t, exec)
 	command := exec["command"].(interface{})
 	assert.NotNil(t, command)
@@ -499,9 +499,9 @@ func TestResolveSliceWithAMap(t *testing.T) {
 
 	assert.NotNil(t, installStep.Data)
 	t.Logf("install data %v", installStep.Data)
-	exec := installStep.Data["exec"].(map[interface{}]interface{})
+	exec := installStep.Data["exec"].(map[string]interface{})
 	assert.NotNil(t, exec)
-	flags := exec["flags"].(map[interface{}]interface{})
+	flags := exec["flags"].(map[string]interface{})
 	assert.Len(t, flags, 1)
 	assert.Equal(t, "echo hello world", flags["c"].(string))
 	assert.NotNil(t, flags)
@@ -511,7 +511,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 
 	s := &manifest.Step{
 		Data: map[string]interface{}{
-			"helm": map[interface{}]interface{}{
+			"helm": map[string]interface{}{
 				"description": "install wordpress",
 				"Arguments": []string{
 					"jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}",
@@ -531,7 +531,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
-	assert.Equal(t, "unable to render step template helm:\n  Arguments:\n  - jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}\n  description: install wordpress\n: Missing variable \"database_url\"", err.Error())
+	assert.Contains(t, err.Error(), `Missing variable "database_url"`)
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
@@ -737,7 +737,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 	step := rm.Install[0]
 	err = rm.ResolveStep(step)
 	assert.NoError(t, err, "Should have successfully resolved step")
-	s := step.Data["searcher"].(map[interface{}]interface{})
+	s := step.Data["searcher"].(map[string]interface{})
 	assert.NotNil(t, s)
 	img, ok := s["image"]
 	assert.True(t, ok, "should have found image")
@@ -1062,7 +1062,7 @@ func TestResolveStepEncoding(t *testing.T) {
 
 	err := rm.ResolveStep(s)
 	require.NoError(t, err)
-	flags := s.Data["Flags"].(map[interface{}]interface{})
+	flags := s.Data["Flags"].(map[string]interface{})
 	assert.Equal(t, flags["c"], wantValue)
 }
 

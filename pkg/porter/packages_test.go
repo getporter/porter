@@ -136,8 +136,7 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 		format: printer.FormatYaml,
 		wantOutput: `- name: azure
   author: Porter Authors
-  description: Integrate Porter with Azure. Store Porter's data in Azure Cloud and
-    secure your bundle's secrets in Azure Key Vault.
+  description: Integrate Porter with Azure. Store Porter's data in Azure Cloud and secure your bundle's secrets in Azure Key Vault.
   url: https://cdn.porter.sh/plugins/atom.xml
 
 `,

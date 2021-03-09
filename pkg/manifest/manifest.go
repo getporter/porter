@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/unmarshallyaml"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -19,7 +19,6 @@ import (
 	"github.com/docker/distribution/reference"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 const invalidStepErrorFormat = "validation of action \"%s\" failed"
@@ -65,7 +64,7 @@ type Manifest struct {
 	Uninstall Steps `yaml:"uninstall"`
 	Upgrade   Steps `yaml:"upgrade"`
 
-	Custom                  unmarshallyaml.CustomDefinitions  `yaml:"custom,omitempty"`
+	Custom                  CustomDefinitions                 `yaml:"custom,omitempty"`
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
@@ -245,6 +244,17 @@ func (m *Manifest) GetTemplatedDependencyOutputs() DependencyOutputReferences {
 		}
 	}
 	return outputs
+}
+
+type CustomDefinitions map[string]interface{}
+
+func (cd *CustomDefinitions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	raw, err := yaml.UnmarshalMap(unmarshal)
+	if err != nil {
+		return err
+	}
+	*cd = raw
+	return nil
 }
 
 type DependencyOutputReference struct {
@@ -749,7 +759,7 @@ func (s *Step) GetDescription() (string, error) {
 
 	mixinName := s.GetMixinName()
 	children := s.Data[mixinName]
-	d, ok := children.(map[interface{}]interface{})["description"]
+	d, ok := children.(map[string]interface{})["description"]
 	if !ok {
 		return "", errors.Errorf("mixin step (%s) missing description", mixinName)
 	}
