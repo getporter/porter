@@ -19,6 +19,10 @@ import (
 func TestFileSystem_InstallFromUrl(t *testing.T) {
 	// serve out a fake package
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Azure-DebugInfo") == "" ||
+			!strings.Contains(r.Header.Get("User-Agent"), "porter_trace") {
+			w.WriteHeader(400)
+		}
 		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a mixxin\n")
 	}))
 	defer ts.Close()
