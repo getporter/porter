@@ -5,6 +5,7 @@ description: Frequently Asked Questions
 
 * [What is CNAB?](#what-is-cnab)
 * [Does Porter fully implement the CNAB specification?](#does-porter-fully-implement-the-cnab-specification)
+* [Can I use Porter bundles with other CNAB tools?](#can-i-use-porter-bundles-with-other-cnab-tools)
 * [Does Porter solve something that Ansible, Terraform, etc does not?](#does-porter-solve-something-that-ansible-terraform-etc-does-not)
 * [Does Porter Replace Duffle?](#does-porter-replace-duffle)
 * [Should I use Porter or Duffle?](#should-i-use-porter-or-duffle)
@@ -41,13 +42,29 @@ credentials for a Kubernetes cluster.
 
 ## Does Porter fully implement the CNAB specification?
 
-Porter currently implements much of the CNAB spec, however, as the [CNAB
-specification](https://github.com/cnabio/cnab-spec) moves toward 1.0, some
-gaps have emerged. Currently, if you build a bundle with Porter, you'll be able
-to install it with Porter. There are some gaps with the spec that limit
-compatibility with other CNAB tooling. See the [CNAB 1.0
-Milestone](https://github.com/getporter/porter/milestone/12) for more information
-on these gaps.
+Porter is [committed to supporting the CNAB specification](/cnab/).
+We support every released sub-specification of CNAB though there are still some in draft status,
+such as the security spec, and are not supported yet.
+
+## Can I use Porter bundles with other CNAB tools?
+
+It depends on what features your bundle relies upon. All of the CNAB tools
+support the [CNAB Core Spec] which covers executing the bundle. Some of the
+tools support extended specs like the [CNAB Dependencies Spec]. If you create a
+bundle that uses custom extensions to the CNAB spec, and try to run it from a
+tool that doesn’t support those extensions, then the tool will tell you and not
+run the bundle.
+
+Porter is at the leading-edge of the CNAB specification, vetting improvements to
+the specification first in Porter before agreeing that the design is solid
+enough to be incorporated into one of the CNAB specifications or a custom
+extension. We will start calling out these features in the documentation so that
+you can understand which are experimental and aren't yet included in the spec.
+
+On the flip side of this, Porter is usually one of the first tools (or only
+tool) to support changes to the CNAB Specification. So Porter can usually run
+any bundle created by other CNAB tools and will always let you know if a bundle
+isn't fully supported by Porter.
 
 ## Does Porter solve something that Ansible, Terraform, etc does not?
 
@@ -126,3 +143,6 @@ Some Porter mixins are simple adapters between Porter and a command-line tool.
 The Azure mixins are going to be full fledged tools that communicate with the
 Azure APIs, and provide an improved user experience. It all depends on how much
 time you want to invest, and what you are starting from.
+
+[CNAB Core Spec]: https://github.com/cnabio/cnab-spec/blob/main/100-CNAB.md
+[CNAB Dependencies Spec]: https://github.com/cnabio/cnab-spec/blob/main/500-CNAB-dependencies.md

@@ -265,34 +265,40 @@ pygmentsStyle = "friendly"
     weight = 401
     parent = "porter-architecture"
   [[menu.main]]
+    name = "CNAB"
+    url = "/cnab/"
+    identifier = "architecture-cnab"
+    weight = 402
+    parent = "porter-architecture"
+  [[menu.main]]
     name = "Buildtime"
     url = "/architecture-buildtime"
     identifier = "architecture-buildtime"
-    weight = 402
+    weight = 403
     parent = "porter-architecture"
   [[menu.main]]
     name = "Runtime"
     url = "/architecture-runtime"
     identifier = "architecture-runtime"
-    weight = 403
+    weight = 404
     parent = "porter-architecture"
   [[menu.main]]
     name = "Invocation Images"
     url = "/build-image"
     identifier = "build-image"
-    weight = 404
+    weight = 405
     parent = "porter-architecture"
   [[menu.main]]
     name = "Credentials"
     url = "/credentials/"
     identifier = "credentials"
-    weight = 405
+    weight = 406
     parent = "porter-architecture"
   [[menu.main]]
     name = "Parameters"
     url = "/parameters/"
     identifier = "parameters"
-    weight = 406
+    weight = 407
     parent = "porter-architecture"
 
 [[menu.main]]
