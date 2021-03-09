@@ -20,8 +20,12 @@ func (o *LogsShowOptions) Installation() string {
 }
 
 // Validate validates the provided args, using the provided context,
-// setting attributes of OutputShowOptions as applicable
+// setting attributes of LogsShowOptions as applicable
 func (o *LogsShowOptions) Validate(cxt *context.Context) error {
+	if o.Name != "" && o.ClaimID != "" {
+		return errors.New("either --installation or --run should be specified, not both")
+	}
+
 	// Attempt to derive installation name from context
 	err := o.sharedOptions.defaultBundleFiles(cxt)
 	if err != nil {
@@ -29,13 +33,13 @@ func (o *LogsShowOptions) Validate(cxt *context.Context) error {
 	}
 
 	if o.File == "" && o.Name == "" && o.ClaimID == "" {
-		return errors.New("--installation or --run is required")
+		return errors.New("either --installation or --run is required")
 	}
 
 	return nil
 }
 
-// ShowBundleOutput shows a bundle output value, according to the provided options
+// ShowInstallationLogs shows logs for an installation, according to the provided options.
 func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
 	logs, ok, err := p.GetInstallationLogs(opts)
 	if err != nil {
@@ -50,7 +54,7 @@ func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
 	return nil
 }
 
-// ShowBundleOutput shows a bundle output value, according to the provided options
+// GetInstallationLogs gets logs for an installation, according to the provided options
 func (p *Porter) GetInstallationLogs(opts *LogsShowOptions) (string, bool, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {

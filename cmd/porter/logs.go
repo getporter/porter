@@ -29,7 +29,7 @@ func buildInstallationLogShowCommand(p *porter.Porter) *cobra.Command {
 		Short: "Show the logs from an installation",
 		Long: `Show the logs from an installation.
 
-Either display the logs from a specific run of a bundle with --run, use --installation to display the logs from its most recent run.`,
+Either display the logs from a specific run of a bundle with --run, or use --installation to display the logs from its most recent run.`,
 		Example: `  porter installation logs show --installation wordpress
   porter installations logs show --run 01EZSWJXFATDE24XDHS5D5PWK6`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
