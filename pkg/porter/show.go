@@ -97,9 +97,9 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 				if !ok {
 					return nil
 				}
-				return []string{a.Action, tp.Format(a.Timestamp), a.Status}
+				return []string{a.ClaimID, a.Action, tp.Format(a.Timestamp), a.Status, a.HasLogs}
 			}
-		return printer.PrintTableSection(p.Out, displayInstallation.History, historyRow, "Action", "Timestamp", "Status")
+		return printer.PrintTableSection(p.Out, displayInstallation.History, historyRow, "Run ID", "Action", "Timestamp", "Status", "Has Logs")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}

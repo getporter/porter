@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/cnabio/cnab-go/claim"
@@ -46,10 +47,17 @@ func NewDisplayInstallation(installation claim.Installation) (DisplayInstallatio
 
 	history := make([]InstallationAction, len(installation.Claims))
 	for i, hc := range installation.Claims {
+		hasLogs, ok := hc.HasLogs()
+		hasLogsS := ""
+		if ok {
+			hasLogsS = strconv.FormatBool(hasLogs)
+		}
 		history[i] = InstallationAction{
+			ClaimID:   hc.ID,
 			Action:    hc.Action,
 			Timestamp: hc.Created,
 			Status:    hc.GetStatus(),
+			HasLogs:   hasLogsS,
 		}
 	}
 
@@ -78,9 +86,11 @@ func (l DisplayInstallations) Less(i, j int) bool {
 }
 
 type InstallationAction struct {
+	ClaimID   string
 	Action    string
 	Timestamp time.Time
 	Status    string
+	HasLogs   string
 }
 
 // ListInstallations lists installed bundles.

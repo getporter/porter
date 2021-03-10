@@ -5,6 +5,7 @@ import (
 
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/claim"
 )
 
 // IsPorterBundle determines if the bundle was created by Porter.
@@ -19,6 +20,11 @@ func GetParameterType(b bundle.Bundle, def *definition.Schema) string {
 	if IsFileType(b, def) {
 		return "file"
 	}
+
+	if def.ID == claim.OutputInvocationImageLogs {
+		return "string"
+	}
+
 	return fmt.Sprintf("%v", def.Type)
 }
 

@@ -20,6 +20,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildInstallationShowCommand(p))
 	cmd.AddCommand(buildInstallationOutputsCommands(p))
 	cmd.AddCommand(buildInstallationDeleteCommand(p))
+	cmd.AddCommand(buildInstallationLogCommands(p))
 
 	return cmd
 }
