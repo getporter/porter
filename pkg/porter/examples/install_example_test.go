@@ -11,9 +11,6 @@ func ExampleInstall() {
 	// Create an instance of the Porter application
 	p := porter.New()
 
-	// This is just for our examples, you don't need it.
-	prepareExample(p)
-
 	// Specify any of the command-line arguments to pass to the install command
 	installOpts := porter.NewInstallOptions()
 	installOpts.Reference = "getporter/porter-hello:v0.1.1"
@@ -26,9 +23,7 @@ func ExampleInstall() {
 		log.Fatal(err)
 	}
 
-	p.Claims.ListInstallations()
-
-	// Install the bundle
+	// porter install porter-hello --reference getporter/porter-hello:v0.1.1
 	err = p.InstallBundle(installOpts)
 	if err != nil {
 		log.Fatal(err)
@@ -47,11 +42,4 @@ func ExampleInstall() {
 	}
 
 	fmt.Println(installation.Status)
-
-	// Output: installing porter-hello...
-	//executing install action from porter-hello (installation: porter-hello)
-	//Install Hello World
-	//Hello World
-	//execution completed successfully!
-	//succeeded
 }

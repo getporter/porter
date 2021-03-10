@@ -39,10 +39,10 @@ func (p *PrintOptions) ParseFormat() error {
 	}
 }
 
-func (p *PrintOptions) Validate(allowedFormats []Format) error {
-	// Default unspecified to plaintext
+func (p *PrintOptions) Validate(defaultFormat Format, allowedFormats []Format) error {
+	// Default unspecified format
 	if p.RawFormat == "" {
-		p.RawFormat = string(FormatPlaintext)
+		p.RawFormat = string(defaultFormat)
 	}
 
 	format := Format(p.RawFormat)

@@ -9,6 +9,11 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
 
+var (
+	ShowAllowedFormats = []printer.Format{printer.FormatTable, printer.FormatYaml, printer.FormatJson}
+	ShowDefaultFormat  = printer.FormatTable
+)
+
 // ShowOptions represent options for showing a particular installation
 type ShowOptions struct {
 	sharedOptions
@@ -28,7 +33,7 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	return so.ParseFormat()
+	return so.PrintOptions.Validate(ShowDefaultFormat, ShowAllowedFormats)
 }
 
 // GetInstallation retrieves information about an installation.

@@ -327,24 +327,24 @@ pygmentsStyle = "friendly"
     name = "Configuration"
     url = "/configuration"
     identifier = "configuration"
-    weight = 1010
     parent = "references"
   [[menu.main]]
     name = "Docker Images"
     url = "/docker-images/"
     identifer = "docker-images"
-    weight = 1011
+    parent = "references"
+  [[menu.main]]
+    name = "Porter Go Library"
+    url = "/library/"
+    identifer = "library"
     parent = "references"
   [[menu.main]]
     name = "Logos"
     url = "/logo/"
     identifer = "logo"
-    weight = 1011
     parent = "references"
   [[menu.main]]
     name = "CNAB Spec"
     url = "https://deislabs.io/cnab"
     identifier = "cnab"
-    weight = 1020
     parent = "references"
-    
