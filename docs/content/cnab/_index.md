@@ -30,7 +30,7 @@ The CNAB Specification is composed of multiple specifications:
 
 * [CNAB Dependencies] ✅ - Covers bundles depending upon other bundles, for example
   WordPress depending upon a MySQL bundle. The spec is still in DRAFT and has
-  major changes planned. Porter suports the DRAFT and serves as the reference
+  major changes planned. Porter supports the DRAFT and serves as the reference
   implementation of the spec, vetting proposals to this spec before they are adopted.
 
 * [Credential Sets] ✅ - Covers managing credential sets on the client-side and passing
