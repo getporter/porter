@@ -174,7 +174,7 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 	}
 
 	req.Header.Set("User-Agent", userAgent)
-	resp, err := http.Get(url.String())
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return errors.Wrapf(err, "error downloading %s\nPlease include the following information in any bug reports:\nPORTER_TRACE: %s", url.String(), userAgent)
 	}
