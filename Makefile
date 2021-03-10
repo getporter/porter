@@ -3,6 +3,7 @@ SHELL = bash
 # --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
 MAKE_OPTS ?= --no-print-directory
 
+REGISTRY ?= getporter
 VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
 
@@ -118,11 +119,11 @@ publish-mixins:
 
 .PHONY: build-images
 build-images:
-	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/build-images.sh
+	REGISTRY=$(REGISTRY) VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/build-images.sh
 
 .PHONY: publish-images
 publish-images: build-images
-	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
+	REGISTRY=$(REGISTRY) VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
 
 start-local-docker-registry:
 	@docker run -d -p 5000:5000 --name registry registry:2
@@ -158,7 +159,7 @@ publish-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish --registry $(REGISTRY)
 endif
 
 SCHEMA_VERSION     := cnab-core-1.0.1
