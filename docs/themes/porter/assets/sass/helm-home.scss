@@ -79,6 +79,7 @@ nav.home-nav {
         position: relative;
         letter-spacing: 0.0125em;
         color: $dark2;
+        text-decoration: none;
         @include klinicBold;
         @include ripple;
 
@@ -379,6 +380,7 @@ nav.home-nav {
           a {
             color: $dark2;
             border-bottom: 3px solid $blue;
+            text-decoration: none;
 
             &:hover {
               color: $blue;
