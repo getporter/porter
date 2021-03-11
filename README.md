@@ -62,7 +62,7 @@ open issues and pull requests.
 
 The roadmap represents what the maintainers have said that they are
 currently working on and plan to work on over the next few months. We use the
-"on-hold" bucket to communicate items of interest that doesn't have a
+"on-hold" bucket to communicate items of interest that do not have a
 maintainer who will be working on it.
 
 <p align="center">Check out our <a href="https://porter.sh/roadmap">roadmap</a></p>
