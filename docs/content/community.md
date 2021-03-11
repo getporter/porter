@@ -47,6 +47,15 @@ instead so that we don't miss it!</li>
 There is also a **#cnab** channel that is very active where people discuss the CNAB
 spec, and work on upstream libraries such as cnab-go and docker-to-oci.
 
+## Dev Meeting
+
+We meet every other week to discuss [Porter Enhancement Proposals], demo new features and help other contributors. The agenda is open, anyone can edit to add an agenda item.
+
+* [Zoom](https://porter.sh/zoom/dev/) code `77777`
+* [Agenda](https://porter.sh/dev-meeting)
+* [Calendar](https://porter.sh/calendar/)
+
+[Porter Enhancement Proposals]: https://porter.sh/contribute/proposals/
 [slack]: https://cloud-native.slack.com/
 [invite]: https://slack.cncf.io/
 [forum]: /forum
