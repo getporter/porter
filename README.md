@@ -23,8 +23,6 @@ application.
 [Slack]: https://porter.sh/community/#slack
 [Open an Issue]: https://github.com/getporter/porter/issues/new/choose
 
----
-
 # Looking for Contributors
 
 Want to work on Porter with us? 💖 We are actively seeking out new contributors
@@ -38,7 +36,12 @@ the load and making it better every day! 🙇‍♀️
 
 [contributors]: /CONTRIBUTORS.md
 
----
+# Do you use Porter?
+
+We want to know if you use Porter! Project priorities and funding are based on
+adoption. So if you are using Porter, add yourself to our [Adopters](ADOPTERS.md)
+page, or if it needs to stay private, email
+[porter-maintainers@lists.cncf.io](mailto:porter-maintainers@lists.cncf.io).
 
 # Roadmap
 
