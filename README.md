@@ -15,15 +15,22 @@ application.
 
 # Contact
 
-* [Mailing List] - Great for following the project at a high level because it is low traffic, mostly release notes and blog posts on new features.
-* [Slack] - Discuss #porter or #cnab with other users and the maintainers.
-* [Open an Issue] - If you have a bug, feature request or question about Porter, ask on GitHub so that we can prioritize it and make sure you get an answer. If you ask on Slack, we will probably turn around and make an issue anyway. 😉
+* [Mailing List] - Great for following the project at a high level because it is
+  low traffic, mostly release notes and blog posts on new features.
+* [Forum] - Share an idea or propose a design where everyone can benefit from
+  the discussion and find answers to questions later.
+* [Dev Meeting] - Biweekly meeting where we discuss [Porter Enhancement Proposals], demo new features and help other contributors.
+* [Open an Issue] - If you are having trouble or found a bug, ask on GitHub so
+  that we can prioritize it and make sure you get an answer.
+* [Slack] - We have a #porter channel and there's also #cnab for deep thoughts
+  about the CNAB specification.
 
 [Mailing List]: https://porter.sh/mailing-list
 [Slack]: https://porter.sh/community/#slack
 [Open an Issue]: https://github.com/getporter/porter/issues/new/choose
-
----
+[Forum]: https://porter.sh/forum/
+[Dev Meeting]: https://porter.sh/community/#dev-meeting
+[Porter Enhancement Proposals]: https://porter.sh/contribute/proposals/
 
 # Looking for Contributors
 
@@ -38,7 +45,12 @@ the load and making it better every day! 🙇‍♀️
 
 [contributors]: /CONTRIBUTORS.md
 
----
+# Do you use Porter?
+
+We want to know if you use Porter! Project priorities and funding are based on
+adoption. So if you are using Porter, add yourself to our [Adopters](ADOPTERS.md)
+page, or if it needs to stay private, email
+[porter-maintainers@lists.cncf.io](mailto:porter-maintainers@lists.cncf.io).
 
 # Roadmap
 
@@ -48,9 +60,9 @@ motivated contributors working on features that interest them. 😉
 We use a single [project board][board] across all of our repositories to track
 open issues and pull requests.
 
-The roadmap represents what the core maintainers have said that they are
+The roadmap represents what the maintainers have said that they are
 currently working on and plan to work on over the next few months. We use the
-"on-hold" bucket to communicate items of interest that doesn't have a core
+"on-hold" bucket to communicate items of interest that do not have a
 maintainer who will be working on it.
 
 <p align="center">Check out our <a href="https://porter.sh/roadmap">roadmap</a></p>
