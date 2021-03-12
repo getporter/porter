@@ -1,5 +1,5 @@
-pool:
-  vmImage: "Ubuntu 16.04"
+variables: # these are really constants
+  vmImage: "ubuntu-latest"
 
 parameters:
   - name: goVersion
@@ -21,6 +21,7 @@ stages:
     jobs:
       - job: build
         displayName: "Native Compile"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -38,6 +39,7 @@ stages:
               artifactName: "build-bin"
       - job: xbuild
         displayName: "Cross Compile"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -55,6 +57,7 @@ stages:
               artifactName: "xbuild-bin"
       - job: unit_test
         displayName: "Unit Test"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -69,6 +72,7 @@ stages:
       - job: integration_test
         displayName: "Integration Test"
         dependsOn: build
+        pool: ${{variables.vmImage}}
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: "Download Bin"
@@ -87,6 +91,7 @@ stages:
       - job: e2e_test
         displayName: "Run E2E tests on"
         dependsOn: xbuild
+        pool: ${{variables.vmImage}}
         strategy:
           matrix:
             windows:
@@ -118,6 +123,8 @@ stages:
     condition: ${{ parameters.shouldPublish }}
     jobs:
       - job: publish_binaries
+        displayName: "Publish Binaries"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
@@ -136,6 +143,8 @@ stages:
             displayName: "Publish Porter Binaries"
 
       - job: publish_docker
+        displayName: "Publish Docker Images"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
@@ -158,6 +167,8 @@ stages:
             displayName: "Publish Docker Images"
 
       - job: publish_example_bundles
+        displayName: "Publish Example Bundles"
+        pool: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
