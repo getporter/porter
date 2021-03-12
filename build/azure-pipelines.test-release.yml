@@ -1,0 +1,8 @@
+# Do not run on push
+trigger: none
+
+extends:
+  template: azure-pipelines.release-template.yml
+  parameters:
+      shouldPublish: true
+      registry: getporterci
