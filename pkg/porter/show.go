@@ -9,6 +9,11 @@ import (
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
 
+var (
+	ShowAllowedFormats = []printer.Format{printer.FormatTable, printer.FormatYaml, printer.FormatJson}
+	ShowDefaultFormat  = printer.FormatTable
+)
+
 // ShowOptions represent options for showing a particular installation
 type ShowOptions struct {
 	sharedOptions
@@ -28,44 +33,54 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	return so.ParseFormat()
+	return so.PrintOptions.Validate(ShowDefaultFormat, ShowAllowedFormats)
 }
 
-// ShowInstallation shows a bundle installation, along with any
-// associated outputs
-func (p *Porter) ShowInstallation(opts ShowOptions) error {
+// GetInstallation retrieves information about an installation.
+func (p *Porter) GetInstallation(opts ShowOptions) (DisplayInstallation, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
-		return err
+		return DisplayInstallation{}, err
 	}
 
 	installation, err := p.Claims.ReadInstallation(opts.Name)
 	if err != nil {
-		return err
+		return DisplayInstallation{}, err
 	}
 
 	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
 	if err != nil {
-		return err
+		return DisplayInstallation{}, err
 	}
 
 	displayInstallation, err := NewDisplayInstallation(installation)
 	if err != nil {
 		// There isn't an installation to display
-		return err
+		return DisplayInstallation{}, err
 	}
 
 	c, err := installation.GetLastClaim()
 	if err != nil {
-		return err
+		return DisplayInstallation{}, err
 	}
 	displayInstallation.Outputs = NewDisplayOutputs(c.Bundle, outputs, opts.Format)
 
+	return displayInstallation, nil
+}
+
+// ShowInstallation shows a bundle installation, along with any
+// associated outputs
+func (p *Porter) ShowInstallation(opts ShowOptions) error {
+	displayInstallation, err := p.GetInstallation(opts)
+	if err != nil {
+		return err
+	}
+
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, installation)
+		return printer.PrintJson(p.Out, displayInstallation)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, installation)
+		return printer.PrintYaml(p.Out, displayInstallation)
 	case printer.FormatTable:
 		// Set up human friendly time formatter
 		now := time.Now()

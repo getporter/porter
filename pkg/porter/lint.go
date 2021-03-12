@@ -18,10 +18,13 @@ type LintOptions struct {
 	File string
 }
 
-var AllowedLintFormats = printer.Formats{printer.FormatPlaintext, printer.FormatJson}
+var (
+	LintAllowFormats   = printer.Formats{printer.FormatPlaintext, printer.FormatJson}
+	LintDefaultFormats = printer.FormatPlaintext
+)
 
 func (o *LintOptions) Validate(cxt *context.Context) error {
-	err := o.PrintOptions.Validate(AllowedLintFormats)
+	err := o.PrintOptions.Validate(LintDefaultFormats, LintAllowFormats)
 	if err != nil {
 		return err
 	}

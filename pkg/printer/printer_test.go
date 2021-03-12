@@ -33,10 +33,18 @@ func TestParseFormat(t *testing.T) {
 }
 
 func TestPrintOptions_Validate(t *testing.T) {
+	t.Run("default format", func(t *testing.T) {
+		allowed := Formats{FormatPlaintext, FormatJson}
+		opts := PrintOptions{}
+		err := opts.Validate(FormatJson, allowed)
+		require.NoError(t, err, "Validate should succeed for a defaulted value")
+		assert.Equal(t, FormatJson, opts.Format, "Validate should set the Format field to the default format")
+	})
+
 	t.Run("allowed format", func(t *testing.T) {
 		allowed := Formats{FormatPlaintext, FormatJson}
 		opts := PrintOptions{RawFormat: "plaintext"}
-		err := opts.Validate(allowed)
+		err := opts.Validate("", allowed)
 		require.NoError(t, err, "Validate should succeed for an allowed value")
 		assert.Equal(t, FormatPlaintext, opts.Format, "Validate should set the Format field to the parsed format")
 	})
@@ -44,7 +52,7 @@ func TestPrintOptions_Validate(t *testing.T) {
 	t.Run("unallowed format", func(t *testing.T) {
 		allowed := Formats{FormatPlaintext, FormatJson}
 		opts := PrintOptions{RawFormat: "yaml"}
-		err := opts.Validate(allowed)
+		err := opts.Validate("", allowed)
 		require.EqualError(t, err, "invalid format: yaml", "Validate should fail for an unallowed value")
 	})
 }
