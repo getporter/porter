@@ -7,7 +7,7 @@ The [getporter/porter][porter] Docker image provides the Porter client installed
 container.
 
 It has tags that match what is available from our [install](/install/) page:
-`latest`, `canary` and specific versions such as `v0.20.0-beta.1`.
+latest, canary and specific versions such as v0.20.0-beta.1.
 
 **Notes**
 

@@ -15,6 +15,9 @@ parameters:
   - name: shouldPublish
     type: boolean
     default: false
+  - name: dualPublish # Publish to the registry parameter and to ghcr.io while we migrate to GHCR
+    type: boolean
+    default: true
 
 stages:
   - stage: Validate
@@ -164,12 +167,18 @@ stages:
           - script: go run mage.go UseXBuildBinaries
             displayName: "Setup Bin"
           - task: Docker@1
-            displayName: Docker Login
+            displayName: Docker Hub Login
             inputs:
               containerRegistryType: Container Registry
-              dockerRegistryEndpoint: ${{parameters.registry}}
+              dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
               command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-images
+          - task: Docker@1 # Support publishing to our old registry on Docker Hub and to our new location on GHCR while we migrate
+            displayName: GHCR Login
+            inputs:
+              containerRegistryType: Container Registry
+              dockerRegistryEndpoint: ghcr.io/getporter
+              command: login
+          - script: REGISTRY=${{parameters.registry}} DUAL_PUBLISH=${{parameters.dualPublish}} make publish-images
             displayName: "Publish Docker Images"
 
       - job: publish_example_bundles
