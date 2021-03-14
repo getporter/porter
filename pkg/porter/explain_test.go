@@ -375,6 +375,22 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 	assert.Equal(t, "v0.30.0", pb.PorterVersion)
 }
 
+func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.T) {
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{
+				Type:    "string",
+				Default: "clippy",
+			},
+		},
+	}
+
+	pb, err := generatePrintable(bun, "")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "", pb.PorterVersion)
+}
+
 func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 	bun := bundle.Bundle{
 		Definitions: definition.Definitions{

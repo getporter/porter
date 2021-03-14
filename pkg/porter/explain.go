@@ -190,9 +190,11 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 }
 
 func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, error) {
+	var stamp configadapter.Stamp
+
 	stamp, err := configadapter.LoadStamp(bun)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error retrieving stamp")
+		stamp = configadapter.Stamp{}
 	}
 
 	pb := PrintableBundle{
@@ -306,7 +308,9 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	fmt.Fprintf(p.Out, "Name: %s\n", bun.Name)
 	fmt.Fprintf(p.Out, "Description: %s\n", bun.Description)
 	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
-	fmt.Fprintf(p.Out, "Porter Version: %s\n", bun.PorterVersion)
+	if bun.PorterVersion != "" {
+		fmt.Fprintf(p.Out, "Porter Version: %s\n", bun.PorterVersion)
+	}
 	fmt.Fprintln(p.Out, "")
 
 	p.printCredentialsExplainBlock(bun)
