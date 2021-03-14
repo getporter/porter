@@ -259,6 +259,13 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 				Definition: "file",
 			},
 		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
 	}
 
 	pb, err := generatePrintable(bun, "install")
