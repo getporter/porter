@@ -2,7 +2,7 @@
   "name": "porter-hello",
   "description": "An example Porter configuration",
   "version": "0.1.0",
-  "porter_version": "v0.30.0",
+  "porterVersion": "v0.30.0",
   "parameters": [
     {
       "name": "region",
