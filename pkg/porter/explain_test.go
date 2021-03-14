@@ -362,7 +362,7 @@ func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun)
+	pb, err := generatePrintable(bun, "")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "v0.30.0", pb.PorterVersion)
