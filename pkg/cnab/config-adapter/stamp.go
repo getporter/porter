@@ -30,6 +30,10 @@ type Stamp struct {
 
 	// Manifest is the base64 encoded porter.yaml.
 	EncodedManifest string `json:"manifest"`
+
+	// Version and commit define the version of the Porter used when a bundle was built.
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
 }
 
 // DecodeManifest base64 decodes the manifest stored in the stamp
@@ -85,6 +89,9 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	} else {
 		stamp.ManifestDigest = digest
 	}
+
+	stamp.Version = pkg.Version
+	stamp.Commit = pkg.Commit
 
 	return stamp, nil
 }

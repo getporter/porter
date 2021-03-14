@@ -29,6 +29,8 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
+	assert.Equal(t, pkg.Version, stamp.Version)
+	assert.Equal(t, pkg.Commit, stamp.Commit)
 
 	gotManifestContentsB, err := stamp.DecodeManifest()
 	require.NoError(t, err, "DecodeManifest failed")

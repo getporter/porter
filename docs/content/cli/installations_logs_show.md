@@ -11,7 +11,7 @@ Show the logs from an installation
 
 Show the logs from an installation.
 
-Either display the logs from a specific run of a bundle with --run, use --installation to display the logs from its most recent run.
+Either display the logs from a specific run of a bundle with --run, or use --installation to display the logs from its most recent run.
 
 ```
 porter installations logs show [flags]
