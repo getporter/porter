@@ -21,7 +21,8 @@ stages:
     jobs:
       - job: build
         displayName: "Native Compile"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -39,7 +40,8 @@ stages:
               artifactName: "build-bin"
       - job: xbuild
         displayName: "Cross Compile"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -57,7 +59,8 @@ stages:
               artifactName: "xbuild-bin"
       - job: unit_test
         displayName: "Unit Test"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             displayName: "Set Go Version"
@@ -72,7 +75,8 @@ stages:
       - job: integration_test
         displayName: "Integration Test"
         dependsOn: build
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: "Download Bin"
@@ -91,7 +95,6 @@ stages:
       - job: e2e_test
         displayName: "Run E2E tests on"
         dependsOn: xbuild
-        pool: ${{variables.vmImage}}
         strategy:
           matrix:
             windows:
@@ -124,7 +127,8 @@ stages:
     jobs:
       - job: publish_binaries
         displayName: "Publish Binaries"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
@@ -144,7 +148,8 @@ stages:
 
       - job: publish_docker
         displayName: "Publish Docker Images"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
@@ -161,14 +166,15 @@ stages:
             displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
-              dockerRegistryEndpoint: getporter-registry
+              dockerRegistryEndpoint: ${{parameters.registry}}
               command: login
           - script: REGISTRY=${{parameters.registry}} make publish-images
             displayName: "Publish Docker Images"
 
       - job: publish_example_bundles
         displayName: "Publish Example Bundles"
-        pool: ${{variables.vmImage}}
+        pool:
+          vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
             inputs:
