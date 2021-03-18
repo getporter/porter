@@ -9,8 +9,8 @@ parameters:
     type: string
     default: getporterci
     values:
-      - getporter
-      - getporterci
+      - docker.io/getporter
+      - docker.io/getporterci
       - ghcr.io/getporter
   - name: shouldPublish
     type: boolean
