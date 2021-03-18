@@ -35,6 +35,9 @@ type bundleFileOptions struct {
 
 	// ReferenceSet indicates whether a bundle reference is present, to determine whether or not to default bundle files
 	ReferenceSet bool
+
+	// Dir represents the build context directory containing bundle assets
+	Dir string
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
@@ -48,6 +51,21 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if o.File != "" {
+		o.File = cxt.FileSystem.Abs(o.File)
+	}
+
+	// Resolve the proper build context directory and cd into it
+	if o.Dir != "" {
+		_, err := cxt.FileSystem.IsDir(o.Dir)
+		if err != nil {
+			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
+		}
+
+		o.Dir = cxt.FileSystem.Abs(o.Dir)
+		cxt.Chdir(o.Dir)
 	}
 
 	return err
@@ -130,6 +148,8 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
+	// TODO: revisit the assumption that the bundle.json is paired with the manifest
+	// designated by o.File
 	if o.File != "" { // --file
 		bundleDir := filepath.Dir(o.File)
 		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)

@@ -9,35 +9,51 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestgenerateInternalManifest(t *testing.T) {
+func Test_generateInternalManifest(t *testing.T) {
 	testcases := []struct {
 		name         string
-		opts         metadataOpts
+		opts         BuildOptions
 		wantManifest string
 	}{{
 		name:         "no opts",
-		opts:         metadataOpts{},
+		opts:         BuildOptions{},
+		wantManifest: "original.yaml",
+	}, {
+		name: "--file set",
+		opts: BuildOptions{
+			bundleFileOptions: bundleFileOptions{
+				File: "alternate.yaml",
+			},
+		},
 		wantManifest: "original.yaml",
 	}, {
 		name:         "name set",
-		opts:         metadataOpts{Name: "newname"},
+		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname"}},
 		wantManifest: "new-name.yaml",
 	}, {
 		name:         "version set",
-		opts:         metadataOpts{Version: "1.0.0"},
+		opts:         BuildOptions{metadataOpts: metadataOpts{Version: "1.0.0"}},
 		wantManifest: "new-version.yaml",
 	}, {
 		name:         "name and value set",
-		opts:         metadataOpts{Name: "newname", Version: "1.0.0"},
+		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
 		wantManifest: "all-fields.yaml",
 	}}
 
 	p := NewTestPorter(t)
-	p.TestConfig.TestContext.AddTestFile("testdata/generateManifest/original.yaml", config.Name)
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := p.generateInternalManifest(tc.opts)
+			manifest := config.Name
+			if tc.opts.File != "" {
+				manifest = tc.opts.File
+			}
+			p.TestConfig.TestContext.AddTestFile("testdata/generateManifest/original.yaml", manifest)
+
+			err := tc.opts.Validate(p.Context)
+			require.NoError(t, err)
+
+			err = p.generateInternalManifest(tc.opts)
 			require.NoError(t, err)
 
 			want := p.TestConfig.TestContext.AddTestFile(

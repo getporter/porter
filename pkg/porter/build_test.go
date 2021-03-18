@@ -119,6 +119,8 @@ func TestPorter_paramRequired(t *testing.T) {
 }
 
 func TestValidateBuildOpts(t *testing.T) {
+	p := NewTestPorter(t)
+
 	testcases := []struct {
 		name      string
 		opts      BuildOptions
@@ -143,7 +145,7 @@ func TestValidateBuildOpts(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.opts.Validate()
+			err := tc.opts.Validate(p.Context)
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {

@@ -22,7 +22,10 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 
 	if !upToDate {
 		fmt.Fprintln(p.Out, "Building bundle ===>")
-		return p.Build(BuildOptions{})
+		// opts.File is non-empty, which overrides opts.CNABFile if set
+		// (which may be if a cached bundle is fetched e.g. when running an action)
+		opts.CNABFile = ""
+		return p.Build(BuildOptions{bundleFileOptions: opts})
 	}
 	return nil
 }

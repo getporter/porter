@@ -45,7 +45,7 @@ func (g *DockerfileGenerator) GenerateDockerFile() error {
 		fmt.Fprintln(g.Out, contents)
 	}
 
-	err = g.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
+	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), 0644)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
@@ -111,6 +111,7 @@ func (g *DockerfileGenerator) readAndValidateDockerfile(s *bufio.Scanner) ([]str
 
 func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	var reader io.Reader
+
 	if g.Manifest.Dockerfile != "" {
 		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
 		if err != nil {
@@ -185,7 +186,7 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	// clean up previously generated files
-	g.FileSystem.Remove("Dockerfile")
+	g.FileSystem.Remove(DOCKER_FILE)
 
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")
 

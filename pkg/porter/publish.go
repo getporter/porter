@@ -42,7 +42,7 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 			return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
 		}
 	} else {
-		// Proceed with publishing from current directory
+		// Proceed with publishing from the resolved build context directory
 		err := o.bundleFileOptions.Validate(cxt)
 		if err != nil {
 			return err
@@ -78,12 +78,6 @@ func (o *PublishOptions) validateTag() error {
 // Publish is a composite function that publishes an invocation image, rewrites the porter manifest
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
 func (p *Porter) Publish(opts PublishOptions) error {
-	if opts.File != "" {
-		if err := p.LoadManifestFrom(opts.File); err != nil {
-			return err
-		}
-	}
-
 	if opts.ArchiveFile == "" {
 		return p.publishFromFile(opts)
 	}

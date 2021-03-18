@@ -1,8 +1,10 @@
 package porter
 
 import (
+	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -224,4 +226,108 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 		params := opts.combineParameters(debugContext.Context)
 		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
 	})
+}
+
+func Test_bundleFileOptions(t *testing.T) {
+	testcases := []struct {
+		name      string
+		opts      bundleFileOptions
+		setup     func(*context.Context, bundleFileOptions) error
+		wantError string
+	}{
+		{
+			name:      "no opts",
+			opts:      bundleFileOptions{},
+			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantError: "",
+		}, {
+			name: "reference set",
+			opts: bundleFileOptions{
+				ReferenceSet: true,
+			},
+			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantError: "",
+		}, {
+			name: "invalid dir",
+			opts: bundleFileOptions{
+				Dir: "path/to/bundle",
+			},
+			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantError: `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
+		}, {
+			name: "invalid file",
+			opts: bundleFileOptions{
+				File: "alternate/porter.yaml",
+			},
+			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantError: "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
+		}, {
+			name: "valid dir",
+			opts: bundleFileOptions{
+				Dir: "path/to/bundle",
+			},
+			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
+			},
+			wantError: "",
+		}, {
+			name: "valid file",
+			opts: bundleFileOptions{
+				File: "alternate/porter.yaml",
+			},
+			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+				return ctx.FileSystem.MkdirAll(opts.File, os.ModePerm)
+			},
+			wantError: "",
+		}, {
+			name: "valid dir and file",
+			opts: bundleFileOptions{
+				Dir:  "path/to/bundle",
+				File: "alternate/porter.yaml",
+			},
+			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+				err := ctx.FileSystem.MkdirAll(opts.File, os.ModePerm)
+				if err != nil {
+					return err
+				}
+				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
+			},
+			wantError: "",
+		}}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cxt := context.NewTestContext(t)
+
+			// Create default local manifest
+			_, err := cxt.FileSystem.Create(config.Name)
+			require.NoError(t, err)
+
+			err = tc.setup(cxt.Context, tc.opts)
+			require.NoError(t, err)
+
+			err = tc.opts.Validate(cxt.Context)
+			if tc.wantError != "" {
+				require.EqualError(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.opts.ReferenceSet {
+				require.Equal(t, "", tc.opts.File)
+			} else if tc.opts.File != "" {
+				require.Equal(t, tc.opts.File, tc.opts.File)
+			} else {
+				require.Equal(t, config.Name, tc.opts.File)
+			}
+
+			// Verify Porter has changed to opts.Dir, if set and valid
+			wd := cxt.FileSystem.Getwd()
+			if tc.opts.Dir != "" && tc.wantError == "" {
+				require.Equal(t, tc.opts.Dir, wd)
+			} else {
+				require.Equal(t, "/", wd)
+			}
+		})
+	}
 }
