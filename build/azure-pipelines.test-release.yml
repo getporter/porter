@@ -5,4 +5,4 @@ extends:
   template: azure-pipelines.release-template.yml
   parameters:
       shouldPublish: true
-      registry: getporterci
+      registry: docker.io/getporterci
