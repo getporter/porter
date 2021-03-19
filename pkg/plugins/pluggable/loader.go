@@ -192,17 +192,19 @@ func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
 		if err != nil {
 			continue
 		}
-		if len(line) == 0 {
+		if line == "" {
 			return
 		}
 
-		var pluginLog map[string]string
+		var pluginLog map[string]interface{}
 		err = json.Unmarshal([]byte(line), &pluginLog)
 		if err != nil {
-			continue
+			// plaintext log
+			fmt.Fprintln(l.Err, line)
+		} else {
+			// print just the message from the json log
+			fmt.Fprintln(l.Err, pluginLog["@message"])
 		}
-
-		fmt.Fprintln(l.Err, pluginLog["@message"])
 	}
 }
 

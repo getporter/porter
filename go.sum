@@ -191,8 +191,8 @@ github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/getporter/cnab-go v0.16.1-0.20210310211153-4776ad6d80b0 h1:iiZnjGYmgSZEdMDZFuUEuFwa/ZOzODI0fWBK4WiTIM4=
 github.com/getporter/cnab-go v0.16.1-0.20210310211153-4776ad6d80b0/go.mod h1:N3fO6gpbk6GenNa7k+jcKXODzNArhidIGmUOM3TcFxE=
-github.com/getporter/go-plugin v1.4.0-improved-configuration h1:UedA6wc5lRjLOjG/g/AH3QplFLZt1JvCfyzGkp2koyQ=
-github.com/getporter/go-plugin v1.4.0-improved-configuration/go.mod h1:5fGEH17QVwTTcR0zV7yhDPLLmFX9YSZ38b18Udy6vYQ=
+github.com/getporter/go-plugin v1.4.0-improved-configuration.1 h1:Y5P+fuDCpuvf5zkgtNpRA9ltbIPulH6sp1zEn9YjJP4=
+github.com/getporter/go-plugin v1.4.0-improved-configuration.1/go.mod h1:5fGEH17QVwTTcR0zV7yhDPLLmFX9YSZ38b18Udy6vYQ=
 github.com/getsentry/raven-go v0.0.0-20180121060056-563b81fc02b7/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
