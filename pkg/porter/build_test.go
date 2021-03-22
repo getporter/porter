@@ -24,7 +24,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	err = p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest")
+	err = p.buildBundle("foo", "digest", config.Name)
 	require.NoError(t, err)
 
 	bundleJSONExists, err := p.FileSystem.Exists(build.LOCAL_BUNDLE)
@@ -104,7 +104,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	err := p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest")
+	err = p.buildBundle("foo", "digest", config.Name)
 	require.NoError(t, err)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)

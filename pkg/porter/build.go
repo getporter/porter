@@ -75,11 +75,11 @@ func (p *Porter) Build(opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err := p.buildBundle(p.Manifest.Image, ""); err != nil {
+	if err := p.buildBundle(p.Manifest.Image, "", opts.File); err != nil {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
+	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, opts.File, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
@@ -138,7 +138,8 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(invocationImage string, digest string) error {
+func (p *Porter) buildBundle(invocationImage string, digest string, manifestPath string) error {
+	fmt.Fprintf(p.Out, "wd = %s\n", p.Getwd())
 	imageDigests := map[string]string{invocationImage: digest}
 
 	mixins, err := p.getUsedMixins()
@@ -147,7 +148,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
+	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, manifestPath, imageDigests, mixins)
 	bun, err := converter.ToBundle()
 	if err != nil {
 		return err

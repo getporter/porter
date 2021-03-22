@@ -41,34 +41,39 @@ type bundleFileOptions struct {
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
-	err := o.validateBundleFiles(cxt)
+	var err error
+
+	err = o.validateBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
 
-	if !o.ReferenceSet {
-		err = o.defaultBundleFiles(cxt)
-		if err != nil {
-			return err
-		}
+	if o.ReferenceSet {
+		return nil
 	}
 
 	if o.File != "" {
 		o.File = cxt.FileSystem.Abs(o.File)
 	}
 
-	// Resolve the proper build context directory and cd into it
+	// Resolve the proper build context directory
 	if o.Dir != "" {
-		_, err := cxt.FileSystem.IsDir(o.Dir)
+		_, err = cxt.FileSystem.IsDir(o.Dir)
 		if err != nil {
 			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
 		}
-
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
-		cxt.Chdir(o.Dir)
 	}
 
-	return err
+	err = o.defaultBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	// Enter the resolved build context directory after all defaults
+	// have been populated
+	cxt.Chdir(o.Dir)
+	return nil
 }
 
 // sharedOptions are common options that apply to multiple CNAB actions.
@@ -148,11 +153,13 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
-	// TODO: revisit the assumption that the bundle.json is paired with the manifest
-	// designated by o.File
 	if o.File != "" { // --file
-		bundleDir := filepath.Dir(o.File)
-		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
+		// If o.Dir/bundleDir not set, assume it is in the same directory
+		// as the specified manifest
+		if o.Dir == "" {
+			o.Dir = filepath.Dir(o.File)
+		}
+		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
 	} else { // no flags passed (--reference is handled elsewhere)
@@ -163,7 +170,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 
 		if manifestExists {
 			o.File = config.Name
-			o.CNABFile = build.LOCAL_BUNDLE
+			o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 		}
 	}
 

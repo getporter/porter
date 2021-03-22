@@ -24,7 +24,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	a := NewManifestConverter(c.Context, m, config.Name, nil, nil)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
@@ -138,7 +138,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
-		a := NewManifestConverter(c.Context, m, nil, nil)
+		a := NewManifestConverter(c.Context, m, config.Name, nil, nil)
 		digest, err := a.DigestManifest()
 		require.NoError(t, err, "DigestManifest failed")
 

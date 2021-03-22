@@ -20,14 +20,22 @@ const SchemaVersion = "v1.0.0"
 type ManifestConverter struct {
 	*context.Context
 	Manifest     *manifest.Manifest
+	ManifestPath string
 	ImageDigests map[string]string
 	Mixins       []mixin.Metadata
 }
 
-func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string, mixins []mixin.Metadata) *ManifestConverter {
+func NewManifestConverter(
+	cxt *context.Context,
+	manifest *manifest.Manifest,
+	manifestPath string,
+	imageDigests map[string]string,
+	mixins []mixin.Metadata,
+) *ManifestConverter {
 	return &ManifestConverter{
 		Context:      cxt,
 		Manifest:     manifest,
+		ManifestPath: manifestPath,
 		ImageDigests: imageDigests,
 		Mixins:       mixins,
 	}

@@ -48,7 +48,7 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "error while listing used mixins")
 		}
 
-		converter := configadapter.NewManifestConverter(p.Context, p.Manifest, nil, mixins)
+		converter := configadapter.NewManifestConverter(p.Context, p.Manifest, opts.File, nil, mixins)
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			if p.Debug {

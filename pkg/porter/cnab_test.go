@@ -2,8 +2,10 @@ package porter
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
@@ -311,22 +313,28 @@ func Test_bundleFileOptions(t *testing.T) {
 				require.EqualError(t, err, tc.wantError)
 			} else {
 				require.NoError(t, err)
-			}
 
-			if tc.opts.ReferenceSet {
-				require.Equal(t, "", tc.opts.File)
-			} else if tc.opts.File != "" {
-				require.Equal(t, tc.opts.File, tc.opts.File)
-			} else {
-				require.Equal(t, config.Name, tc.opts.File)
-			}
+				if tc.opts.ReferenceSet {
+					require.Equal(t, "", tc.opts.File)
+					require.Equal(t, "", tc.opts.CNABFile)
+				} else if tc.opts.File != "" && tc.opts.Dir == "" {
+					require.Equal(t, tc.opts.File, tc.opts.File)
+					require.Equal(t, filepath.Join(filepath.Dir(tc.opts.File), build.LOCAL_BUNDLE), tc.opts.CNABFile)
+				} else if tc.opts.File != "" && tc.opts.Dir != "" {
+					require.Equal(t, tc.opts.File, tc.opts.File)
+					require.Equal(t, filepath.Join(tc.opts.Dir, build.LOCAL_BUNDLE), tc.opts.CNABFile)
+				} else {
+					require.Equal(t, config.Name, tc.opts.File)
+					require.Equal(t, build.LOCAL_BUNDLE, tc.opts.CNABFile)
+				}
 
-			// Verify Porter has changed to opts.Dir, if set and valid
-			wd := cxt.FileSystem.Getwd()
-			if tc.opts.Dir != "" && tc.wantError == "" {
-				require.Equal(t, tc.opts.Dir, wd)
-			} else {
-				require.Equal(t, "/", wd)
+				// Verify Porter has changed to opts.Dir, if set and valid
+				wd := cxt.FileSystem.Getwd()
+				if tc.opts.Dir != "" && tc.wantError == "" {
+					require.Equal(t, tc.opts.Dir, wd)
+				} else {
+					require.Equal(t, "/", wd)
+				}
 			}
 		})
 	}

@@ -105,7 +105,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		args, err := p.BuildActionArgs(opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		assert.Equal(t, ".cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
+		assert.Equal(t, "/.cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
 	})
 
 	// Just do a quick check that things are populated correctly when a bundle.json is passed
