@@ -48,7 +48,18 @@ pygmentsStyle = "friendly"
     identifier = "quickstart"
     weight = 12
     parent = "get-started"
-  
+
+[[menu.main]]
+  name = "Use Porter"
+  identifier = "operators"
+  weight = 20
+  [[menu.main]]
+    name = "View logs"
+    url = "/operators/logs/"
+    identifier = "operators-logs"
+    weight = 51
+    parent = "operators"
+
 [[menu.main]]
   name = "Contribute"
   url = "/contribute/"

@@ -5,10 +5,17 @@ description: Error messages you may see from Porter and how to handle them
 
 With any porter error, it can really help to re-run the command again with the `--debug` flag.
 
-* [mapping values are not allowed in this context](#mapping-values-are-not-allowed-in-this-context)
-* [you see apt errors when you use a custom Dockerfile](#)
+* [Examine Previous Logs](#examine-previous-logs)
+* [Mapping values are not allowed in this context](#mapping-values-are-not-allowed-in-this-context)
+* [You see apt errors when you use a custom Dockerfile](#you-see-apt-errors-when-you-use-a-custom-dockerfile)
 
-## mapping values are not allowed in this context
+## Examine Previous Logs
+
+Porter [saves the logs](/operators/logs/) when a bundle is executed. Comparing the logs
+from a failing run to those from a successful run may assist with
+troubleshooting.
+
+## Mapping values are not allowed in this context
 
 When you run your bundle you see the following error
 
@@ -81,7 +88,7 @@ install:
         c: "echo {{ bundle.parameters.test}}"
 ```
 
-## you see apt errors when you use a custom Dockerfile
+## You see apt errors when you use a custom Dockerfile
 
 When you use a custom Dockerfile you see `apt` errors even though you did not use apt in your Dockerfile. This is because
 Porter assumes a debian-based base image that has apt available. Many of the mixins use apt to install the dependencies
