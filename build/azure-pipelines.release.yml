@@ -11,4 +11,5 @@ extends:
   template: azure-pipelines.release-template.yml
   parameters:
       shouldPublish: true
+      dualPublish: true
       registry: docker.io/getporter

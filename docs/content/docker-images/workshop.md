@@ -9,7 +9,7 @@ participants don't need to figure out their various Docker setups since they wil
 use the Docker host inside the container.
 
 It has tags that match what is available from our [install](/install/) page:
-`latest`, `canary` and specific versions such as `v0.20.0-beta.1`.
+latest, canary and specific versions such as v0.20.0-beta.1.
 
 ## Start the workshop container
 ```
