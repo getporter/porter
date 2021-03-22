@@ -154,8 +154,8 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	if o.File != "" { // --file
-		// If o.Dir/bundleDir not set, assume it is in the same directory
-		// as the specified manifest
+		// If o.Dir not set, assume the build context dir is in the same
+		// directory as the specified manifest
 		if o.Dir == "" {
 			o.Dir = filepath.Dir(o.File)
 		}
@@ -169,7 +169,11 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 		}
 
 		if manifestExists {
+			// Note: We *don't* assume the manifest exists relative to o.Dir;
+			// rather, we expect it to exist in the current working directory
 			o.File = config.Name
+			// ... but we *do* intend for the path to the bundle.json to exist relative to o.Dir
+			// as it constitutes a build context asset
 			o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
 		}
 	}

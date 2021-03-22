@@ -314,21 +314,26 @@ func Test_bundleFileOptions(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
+				// opts.File and opts.CNABFile assertions
 				if tc.opts.ReferenceSet {
+					// if reference is set, neither should be populated
 					require.Equal(t, "", tc.opts.File)
 					require.Equal(t, "", tc.opts.CNABFile)
 				} else if tc.opts.File != "" && tc.opts.Dir == "" {
+					// if opts.File is set and opts.Dir empty, opts.CNABFile should use the dir from opts.File
 					require.Equal(t, tc.opts.File, tc.opts.File)
 					require.Equal(t, filepath.Join(filepath.Dir(tc.opts.File), build.LOCAL_BUNDLE), tc.opts.CNABFile)
 				} else if tc.opts.File != "" && tc.opts.Dir != "" {
+					// if opts.File is set and opts.Dir is set, opts.CNABFile should use the dir from opts.Dir
 					require.Equal(t, tc.opts.File, tc.opts.File)
 					require.Equal(t, filepath.Join(tc.opts.Dir, build.LOCAL_BUNDLE), tc.opts.CNABFile)
 				} else {
+					// if opts.File and opts.Dir are unset, expect local defaults
 					require.Equal(t, config.Name, tc.opts.File)
 					require.Equal(t, build.LOCAL_BUNDLE, tc.opts.CNABFile)
 				}
 
-				// Verify Porter has changed to opts.Dir, if set and valid
+				// Working Dir assertions
 				wd := cxt.FileSystem.Getwd()
 				if tc.opts.Dir != "" && tc.wantError == "" {
 					require.Equal(t, tc.opts.Dir, wd)

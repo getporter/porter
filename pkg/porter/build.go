@@ -139,7 +139,6 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 }
 
 func (p *Porter) buildBundle(invocationImage string, digest string, manifestPath string) error {
-	fmt.Fprintf(p.Out, "wd = %s\n", p.Getwd())
 	imageDigests := map[string]string{invocationImage: digest}
 
 	mixins, err := p.getUsedMixins()

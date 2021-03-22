@@ -19,16 +19,24 @@ import (
 type DockerfileGenerator struct {
 	*config.Config
 	*manifest.Manifest
+	ManifestPath string
 	*templates.Templates
 	Mixins pkgmgmt.PackageManager
 }
 
-func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager) *DockerfileGenerator {
+func NewDockerfileGenerator(
+	config *config.Config,
+	m *manifest.Manifest,
+	manifestPath string,
+	tmpl *templates.Templates,
+	mp pkgmgmt.PackageManager,
+) *DockerfileGenerator {
 	return &DockerfileGenerator{
-		Config:    config,
-		Manifest:  m,
-		Templates: tmpl,
-		Mixins:    mp,
+		Config:       config,
+		Manifest:     m,
+		ManifestPath: manifestPath,
+		Templates:    tmpl,
+		Mixins:       mp,
 	}
 }
 
@@ -111,7 +119,6 @@ func (g *DockerfileGenerator) readAndValidateDockerfile(s *bufio.Scanner) ([]str
 
 func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	var reader io.Reader
-
 	if g.Manifest.Dockerfile != "" {
 		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
 		if err != nil {
@@ -144,11 +151,24 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
-	return []string{
-		// Remove the user-provided Porter manifest as the canonical version
-		// will migrate via its location in .cnab
-		`RUN rm $BUNDLE_DIR/porter.yaml`,
+	// The user-provided manifest may be located separate from the build context directory.
+	// Therefore, only add lines to remove it from BUNDLE_DIR if its filepath
+	// contains the current working directory.
+	if strings.Contains(g.ManifestPath, g.Getwd()) {
+		manifestSubpaths := strings.SplitAfterN(g.ManifestPath, g.Getwd(), 2)
+		if len(manifestSubpaths) != 2 {
+			return []string{}
+		}
+		manifestSubpath := manifestSubpaths[1]
+		if exists, _ := g.FileSystem.Exists(manifestSubpath); exists {
+			return []string{
+				// Remove the user-provided Porter manifest as the canonical version
+				// will migrate via its location in .cnab
+				fmt.Sprintf(`RUN rm $BUNDLE_DIR/%s`, manifestSubpath),
+			}
+		}
 	}
+	return []string{}
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {

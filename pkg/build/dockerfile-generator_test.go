@@ -28,7 +28,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -42,6 +42,90 @@ func TestPorter_buildDockerfile(t *testing.T) {
 		"",
 		"COPY . $BUNDLE_DIR",
 		"RUN rm $BUNDLE_DIR/porter.yaml",
+		"RUN rm -fr $BUNDLE_DIR/.cnab",
+		"COPY .cnab /cnab",
+		"WORKDIR $BUNDLE_DIR",
+		"CMD [\"/cnab/app/run\"]",
+	}
+	assert.Equal(t, wantlines, gotlines)
+}
+
+func TestPorter_buildDockerfile_alternateManifestLocation(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+
+	manifestPath := "alternate/porter.yaml"
+	c.TestContext.AddTestFileContents(configTpl, manifestPath)
+
+	m, err := manifest.LoadManifestFrom(c.Context, manifestPath)
+	require.NoError(t, err, "could not load manifest")
+
+	// ignore mixins in the unit tests
+	m.Mixins = []manifest.MixinDeclaration{}
+
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), manifestPath), tmpl, mp)
+	gotlines, err := g.buildDockerfile()
+	require.NoError(t, err)
+
+	wantlines := []string{
+		"FROM debian:stretch-slim",
+		"",
+		"ARG BUNDLE_DIR",
+		"",
+		"RUN apt-get update && apt-get install -y ca-certificates",
+		"",
+		"",
+		"COPY . $BUNDLE_DIR",
+		"RUN rm $BUNDLE_DIR/alternate/porter.yaml",
+		"RUN rm -fr $BUNDLE_DIR/.cnab",
+		"COPY .cnab /cnab",
+		"WORKDIR $BUNDLE_DIR",
+		"CMD [\"/cnab/app/run\"]",
+	}
+	assert.Equal(t, wantlines, gotlines)
+}
+
+func TestPorter_buildDockerfile_separateManifestLocation(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	tmpl := templates.NewTemplates()
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+
+	manifestPath := "separate/porter.yaml"
+	c.TestContext.AddTestFileContents(configTpl, manifestPath)
+
+	m, err := manifest.LoadManifestFrom(c.Context, manifestPath)
+	require.NoError(t, err, "could not load manifest")
+
+	// Now remove the local manifest to simulate it existing separate
+	// from the build context directory
+	c.TestContext.FileSystem.RemoveAll(manifestPath)
+
+	// ignore mixins in the unit tests
+	m.Mixins = []manifest.MixinDeclaration{}
+
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), manifestPath), tmpl, mp)
+	gotlines, err := g.buildDockerfile()
+	require.NoError(t, err)
+
+	// Verify that the line to remove the manifest from BUNDLE_DIR is *not* added
+	wantlines := []string{
+		"FROM debian:stretch-slim",
+		"",
+		"ARG BUNDLE_DIR",
+		"",
+		"RUN apt-get update && apt-get install -y ca-certificates",
+		"",
+		"",
+		"COPY . $BUNDLE_DIR",
 		"RUN rm -fr $BUNDLE_DIR/.cnab",
 		"COPY .cnab /cnab",
 		"WORKDIR $BUNDLE_DIR",
@@ -76,7 +160,7 @@ COPY mybin /cnab/app/
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
-		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect an error when ARG BUNDLE_DIR is not in Dockerfile
@@ -111,7 +195,7 @@ COPY mybin /cnab/app/
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
-		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect no error when ARG BUNDLE_DIR is in Dockerfile
@@ -148,7 +232,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -187,7 +271,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
 
@@ -214,7 +298,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
 
@@ -256,7 +340,7 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -299,7 +383,7 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -338,7 +422,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	mp.ReturnBuildError = true
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, filepath.Join(c.Context.Getwd(), config.Name), tmpl, mp)
 	_, err = g.buildMixinsSection()
 	require.EqualError(t, err, "1 error occurred:\n\t* error encountered from mixin \"exec\": encountered build error\n\n")
 }
