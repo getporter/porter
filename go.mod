@@ -14,8 +14,9 @@ replace (
 
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
+	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
 	// Tagged from v1.4.0, the improved-configuration branch
-	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration
+	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration.1
 
 	// local-keyword-registry
 	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8
