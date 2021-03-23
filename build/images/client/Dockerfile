@@ -16,6 +16,7 @@ RUN porter mixin install kubernetes && \
     porter mixin install az && \
     porter mixin install aws && \
     porter mixin install gcloud && \
-    porter plugin install azure
+    porter plugin install azure && \ 
+    porter plugin install kubernetes
 
 ENTRYPOINT ["porter"]
