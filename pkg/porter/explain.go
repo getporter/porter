@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
@@ -22,14 +23,15 @@ type ExplainOpts struct {
 
 // PrintableBundle holds a subset of pertinent values to be explained from a bundle.Bundle
 type PrintableBundle struct {
-	Name         string                `json:"name" yaml:"name"`
-	Description  string                `json:"description,omitempty" yaml:"description,omitempty"`
-	Version      string                `json:"version" yaml:"version"`
-	Parameters   []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Credentials  []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
-	Outputs      []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	Actions      []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
-	Dependencies []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Name          string                `json:"name" yaml:"name"`
+	Description   string                `json:"description,omitempty" yaml:"description,omitempty"`
+	Version       string                `json:"version" yaml:"version"`
+	PorterVersion string                `json:"porterVersion,omitempty" yaml:"porterVersion,omitempty"`
+	Parameters    []PrintableParameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Credentials   []PrintableCredential `json:"credentials,omitempty" yaml:"credentials,omitempty"`
+	Outputs       []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	Actions       []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
+	Dependencies  []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 }
 
 type PrintableCredential struct {
@@ -188,10 +190,18 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 }
 
 func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, error) {
+	var stamp configadapter.Stamp
+
+	stamp, err := configadapter.LoadStamp(bun)
+	if err != nil {
+		stamp = configadapter.Stamp{}
+	}
+
 	pb := PrintableBundle{
-		Name:        bun.Name,
-		Description: bun.Description,
-		Version:     bun.Version,
+		Name:          bun.Name,
+		Description:   bun.Description,
+		Version:       bun.Version,
+		PorterVersion: stamp.Version,
 	}
 
 	actions := []PrintableAction{}
@@ -298,6 +308,9 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	fmt.Fprintf(p.Out, "Name: %s\n", bun.Name)
 	fmt.Fprintf(p.Out, "Description: %s\n", bun.Description)
 	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
+	if bun.PorterVersion != "" {
+		fmt.Fprintf(p.Out, "Porter Version: %s\n", bun.PorterVersion)
+	}
 	fmt.Fprintln(p.Out, "")
 
 	p.printCredentialsExplainBlock(bun)

@@ -208,6 +208,13 @@ func TestExplain_generatePrintableBundleParams(t *testing.T) {
 				Definition: "file",
 			},
 		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
 	}
 
 	pb, err := generatePrintable(bun, "")
@@ -252,6 +259,13 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 				Definition: "file",
 			},
 		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
 	}
 
 	pb, err := generatePrintable(bun, "install")
@@ -289,6 +303,13 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 				Definition: "string",
 			},
 		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
 	}
 
 	pb, err := generatePrintable(bun, "")
@@ -310,6 +331,13 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 				Description: "a cred",
 			},
 		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
 	}
 
 	pb, err := generatePrintable(bun, "")
@@ -322,6 +350,45 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Outputs))
 	assert.Equal(t, 0, len(pb.Actions))
+}
+
+func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{
+				Type:    "string",
+				Default: "clippy",
+			},
+		},
+		Custom: map[string]interface{}{
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
+			},
+		},
+	}
+
+	pb, err := generatePrintable(bun, "")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "v0.30.0", pb.PorterVersion)
+}
+
+func TestExplain_generatePrintableBundlePorterVersionNonPorterBundle(t *testing.T) {
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"string": &definition.Schema{
+				Type:    "string",
+				Default: "clippy",
+			},
+		},
+	}
+
+	pb, err := generatePrintable(bun, "")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "", pb.PorterVersion)
 }
 
 func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
@@ -345,6 +412,11 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 						Bundle: "localhost:5000/nginx:1.19",
 					},
 				},
+			},
+			"sh.porter": map[string]interface{}{
+				"manifest": "5040d45d0c44e7632563966c33f5e8980e83cfa7c0485f725b623b7604f072f0",
+				"version":  "v0.30.0",
+				"commit":   "3b7c85ba",
 			},
 		},
 	}
