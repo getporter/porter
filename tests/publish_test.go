@@ -25,6 +25,10 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	// Build with version override
 	buildOpts := porter.BuildOptions{}
 	buildOpts.Version = "0.0.0"
+
+	err = buildOpts.Validate(p.Context)
+	require.NoError(t, err)
+
 	err = p.Build(buildOpts)
 	require.NoError(t, err)
 
