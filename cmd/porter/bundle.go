@@ -54,8 +54,11 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
   porter build --name newbuns
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
-  porter build --dir path/to/bundle
+  porter build --dir path/to/build/context
 `,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Build(opts)
 		},

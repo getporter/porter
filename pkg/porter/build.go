@@ -51,10 +51,7 @@ func (o *BuildOptions) Validate(cxt *context.Context) error {
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
-	if err := opts.Validate(p.Context); err != nil {
-		return err
-	}
-
+	// Generate Porter's canonical version of the user-provided manifest
 	if err := p.generateInternalManifest(opts); err != nil {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
@@ -62,6 +59,11 @@ func (p *Porter) Build(opts BuildOptions) error {
 	if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
 		return err
 	}
+
+	// Capture the path to the original, user-provided manifest.
+	// This value will be referenced elsewhere, for insteance by
+	// the digest logic (to dictate auto-rebuild)
+	p.Manifest.ManifestPath = opts.File
 
 	if !opts.NoLint {
 		if err := p.preLint(); err != nil {
@@ -75,11 +77,11 @@ func (p *Porter) Build(opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err := p.buildBundle(p.Manifest.Image, "", opts.File); err != nil {
+	if err := p.buildBundle(p.Manifest.Image, ""); err != nil {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, opts.File, p.Templates, p.Mixins)
+	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
@@ -125,9 +127,6 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 
 	var usedMixins []mixin.Metadata
 	for _, installedMixin := range installedMixins {
-		if p.Manifest == nil {
-			return usedMixins, nil
-		}
 		for _, m := range p.Manifest.Mixins {
 			if installedMixin.Name == m.Name {
 				usedMixins = append(usedMixins, installedMixin)
@@ -138,7 +137,7 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(invocationImage string, digest string, manifestPath string) error {
+func (p *Porter) buildBundle(invocationImage string, digest string) error {
 	imageDigests := map[string]string{invocationImage: digest}
 
 	mixins, err := p.getUsedMixins()
@@ -147,7 +146,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string, manifestPath
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, manifestPath, imageDigests, mixins)
+	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
 	bun, err := converter.ToBundle()
 	if err != nil {
 		return err

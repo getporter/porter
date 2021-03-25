@@ -68,7 +68,7 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
 
 	// Remember the original porter.yaml, base64 encoded to avoid canonical json shenanigans
-	rawManifest, err := manifest.ReadManifestData(c.Context, c.ManifestPath)
+	rawManifest, err := manifest.ReadManifestData(c.Context, c.Manifest.ManifestPath)
 	if err != nil {
 		return Stamp{}, err
 	}
@@ -97,13 +97,13 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 }
 
 func (c *ManifestConverter) DigestManifest() (string, error) {
-	if exists, _ := c.FileSystem.Exists(c.ManifestPath); !exists {
-		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.ManifestPath)
+	if exists, _ := c.FileSystem.Exists(c.Manifest.ManifestPath); !exists {
+		return "", errors.Errorf("the specified porter configuration file %s does not exist", c.Manifest.ManifestPath)
 	}
 
-	data, err := c.FileSystem.ReadFile(c.ManifestPath)
+	data, err := c.FileSystem.ReadFile(c.Manifest.ManifestPath)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not read manifest at %q", c.ManifestPath)
+		return "", errors.Wrapf(err, "could not read manifest at %q", c.Manifest.ManifestPath)
 	}
 
 	v := pkg.Version

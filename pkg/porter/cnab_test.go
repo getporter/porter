@@ -2,7 +2,6 @@ package porter
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
@@ -37,7 +36,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 	err := opts.defaultBundleFiles(cxt.Context)
 	require.NoError(t, err)
 
-	assert.Equal(t, "mybun/.cnab/bundle.json", opts.CNABFile)
+	assert.Equal(t, ".cnab/bundle.json", opts.CNABFile)
 }
 
 func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
@@ -232,37 +231,47 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 
 func Test_bundleFileOptions(t *testing.T) {
 	testcases := []struct {
-		name      string
-		opts      bundleFileOptions
-		setup     func(*context.Context, bundleFileOptions) error
-		wantError string
+		name         string
+		opts         bundleFileOptions
+		setup        func(*context.Context, bundleFileOptions) error
+		wantFile     string
+		wantCNABFile string
+		wantError    string
 	}{
 		{
-			name:      "no opts",
-			opts:      bundleFileOptions{},
-			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
-			wantError: "",
+			name:         "no opts",
+			opts:         bundleFileOptions{},
+			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantFile:     config.Name,
+			wantCNABFile: build.LOCAL_BUNDLE,
+			wantError:    "",
 		}, {
 			name: "reference set",
 			opts: bundleFileOptions{
 				ReferenceSet: true,
 			},
-			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
-			wantError: "",
+			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantFile:     "",
+			wantCNABFile: "",
+			wantError:    "",
 		}, {
 			name: "invalid dir",
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
-			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
-			wantError: `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
+			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantFile:     "",
+			wantCNABFile: "",
+			wantError:    `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
 		}, {
 			name: "invalid file",
 			opts: bundleFileOptions{
 				File: "alternate/porter.yaml",
 			},
-			setup:     func(ctx *context.Context, opts bundleFileOptions) error { return nil },
-			wantError: "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
+			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantFile:     "",
+			wantCNABFile: "",
+			wantError:    "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
 		}, {
 			name: "valid dir",
 			opts: bundleFileOptions{
@@ -271,7 +280,9 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
 			},
-			wantError: "",
+			wantFile:     config.Name,
+			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
+			wantError:    "",
 		}, {
 			name: "valid file",
 			opts: bundleFileOptions{
@@ -280,7 +291,9 @@ func Test_bundleFileOptions(t *testing.T) {
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, os.ModePerm)
 			},
-			wantError: "",
+			wantFile:     "/alternate/porter.yaml",
+			wantCNABFile: build.LOCAL_BUNDLE,
+			wantError:    "",
 		}, {
 			name: "valid dir and file",
 			opts: bundleFileOptions{
@@ -294,7 +307,9 @@ func Test_bundleFileOptions(t *testing.T) {
 				}
 				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
 			},
-			wantError: "",
+			wantFile:     "/alternate/porter.yaml",
+			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
+			wantError:    "",
 		}}
 
 	for _, tc := range testcases {
@@ -314,24 +329,8 @@ func Test_bundleFileOptions(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				// opts.File and opts.CNABFile assertions
-				if tc.opts.ReferenceSet {
-					// if reference is set, neither should be populated
-					require.Equal(t, "", tc.opts.File)
-					require.Equal(t, "", tc.opts.CNABFile)
-				} else if tc.opts.File != "" && tc.opts.Dir == "" {
-					// if opts.File is set and opts.Dir empty, opts.CNABFile should use the dir from opts.File
-					require.Equal(t, tc.opts.File, tc.opts.File)
-					require.Equal(t, filepath.Join(filepath.Dir(tc.opts.File), build.LOCAL_BUNDLE), tc.opts.CNABFile)
-				} else if tc.opts.File != "" && tc.opts.Dir != "" {
-					// if opts.File is set and opts.Dir is set, opts.CNABFile should use the dir from opts.Dir
-					require.Equal(t, tc.opts.File, tc.opts.File)
-					require.Equal(t, filepath.Join(tc.opts.Dir, build.LOCAL_BUNDLE), tc.opts.CNABFile)
-				} else {
-					// if opts.File and opts.Dir are unset, expect local defaults
-					require.Equal(t, config.Name, tc.opts.File)
-					require.Equal(t, build.LOCAL_BUNDLE, tc.opts.CNABFile)
-				}
+				require.Equal(t, tc.wantFile, tc.opts.File)
+				require.Equal(t, tc.wantCNABFile, tc.opts.CNABFile)
 
 				// Working Dir assertions
 				wd := cxt.FileSystem.Getwd()

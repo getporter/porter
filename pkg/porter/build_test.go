@@ -24,7 +24,7 @@ func TestPorter_buildBundle(t *testing.T) {
 	err = p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest", config.Name)
+	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
 	bundleJSONExists, err := p.FileSystem.Exists(build.LOCAL_BUNDLE)
@@ -77,6 +77,9 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: false}
+		err = opts.Validate(p.Context)
+		require.NoError(t, err)
+
 		err = p.Build(opts)
 		require.Errorf(t, err, "Build should have been aborted with lint errors")
 		assert.Contains(t, err.Error(), "Lint errors were detected")
@@ -91,6 +94,9 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: true}
+		err = opts.Validate(p.Context)
+		require.NoError(t, err)
+
 		err = p.Build(opts)
 		require.NoError(t, err, "Build failed but should have not run lint")
 	})
@@ -104,7 +110,7 @@ func TestPorter_paramRequired(t *testing.T) {
 	err := p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest", config.Name)
+	err = p.buildBundle("foo", "digest")
 	require.NoError(t, err)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)

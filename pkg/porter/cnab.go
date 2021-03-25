@@ -154,31 +154,31 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	if o.File != "" { // --file
-		// If o.Dir not set, assume the build context dir is in the same
-		// directory as the specified manifest
-		if o.Dir == "" {
-			o.Dir = filepath.Dir(o.File)
-		}
-		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
+		o.defaultCNABFile()
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
-	} else { // no flags passed (--reference is handled elsewhere)
+	} else {
 		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
 		}
 
 		if manifestExists {
-			// Note: We *don't* assume the manifest exists relative to o.Dir;
-			// rather, we expect it to exist in the current working directory
 			o.File = config.Name
-			// ... but we *do* intend for the path to the bundle.json to exist relative to o.Dir
-			// as it constitutes a build context asset
-			o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
+			o.defaultCNABFile()
 		}
 	}
 
 	return nil
+}
+
+func (o *bundleFileOptions) defaultCNABFile() {
+	// Place the bundle.json in o.Dir if set; otherwise place in current directory
+	if o.Dir != "" {
+		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
+	} else {
+		o.CNABFile = build.LOCAL_BUNDLE
+	}
 }
 
 func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {

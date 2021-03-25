@@ -19,7 +19,6 @@ import (
 type DockerfileGenerator struct {
 	*config.Config
 	*manifest.Manifest
-	ManifestPath string
 	*templates.Templates
 	Mixins pkgmgmt.PackageManager
 }
@@ -27,16 +26,14 @@ type DockerfileGenerator struct {
 func NewDockerfileGenerator(
 	config *config.Config,
 	m *manifest.Manifest,
-	manifestPath string,
 	tmpl *templates.Templates,
 	mp pkgmgmt.PackageManager,
 ) *DockerfileGenerator {
 	return &DockerfileGenerator{
-		Config:       config,
-		Manifest:     m,
-		ManifestPath: manifestPath,
-		Templates:    tmpl,
-		Mixins:       mp,
+		Config:    config,
+		Manifest:  m,
+		Templates: tmpl,
+		Mixins:    mp,
 	}
 }
 
@@ -152,19 +149,15 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
 	// The user-provided manifest may be located separate from the build context directory.
-	// Therefore, only add lines to remove it from BUNDLE_DIR if its filepath
-	// contains the current working directory.
-	if strings.Contains(g.ManifestPath, g.Getwd()) {
-		manifestSubpaths := strings.SplitAfterN(g.ManifestPath, g.Getwd(), 2)
-		if len(manifestSubpaths) != 2 {
-			return []string{}
-		}
-		manifestSubpath := manifestSubpaths[1]
-		if exists, _ := g.FileSystem.Exists(manifestSubpath); exists {
+	// Therefore, we only need to add lines if the relative manifest path exists inside of
+	// the current working directory.
+	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
+	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
+		if !strings.Contains(relManifestPath, "..") {
 			return []string{
 				// Remove the user-provided Porter manifest as the canonical version
 				// will migrate via its location in .cnab
-				fmt.Sprintf(`RUN rm $BUNDLE_DIR/%s`, manifestSubpath),
+				fmt.Sprintf(`RUN rm $BUNDLE_DIR/%s`, relManifestPath),
 			}
 		}
 	}

@@ -22,7 +22,7 @@ porter build [flags]
   porter build --name newbuns
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
-  porter build --dir path/to/bundle
+  porter build --dir path/to/build/context
 
 ```
 

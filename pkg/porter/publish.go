@@ -100,15 +100,19 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 	// hot-swap in Porter's canonical translation (if exists) from
 	// the .cnab/app directory, as there may be dynamic overrides for
 	// the name and version fields to inform invocation image naming.
-	canonicalExists, err := p.FileSystem.Exists(build.LOCAL_MANIFEST)
+	canonicalManifest := filepath.Join(opts.Dir, build.LOCAL_MANIFEST)
+	canonicalExists, err := p.FileSystem.Exists(canonicalManifest)
 	if err != nil {
 		return err
 	}
 	if canonicalExists {
-		err := p.LoadManifestFrom(build.LOCAL_MANIFEST)
+		err := p.LoadManifestFrom(canonicalManifest)
 		if err != nil {
 			return err
 		}
+		// We still want the user-provided manifest path to be tracked,
+		// not Porter's canonical manifest path, for digest matching/auto-rebuilds
+		p.Manifest.ManifestPath = opts.File
 	}
 
 	// Capture original invocation image name as it may be updated below
@@ -351,7 +355,7 @@ func (p *Porter) rewriteBundleWithInvocationImageDigest(digest string, manifestP
 	}
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
-	err = p.buildBundle(taggedImage, digest, manifestPath)
+	err = p.buildBundle(taggedImage, digest)
 	if err != nil {
 		return bundle.Bundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
 	}
