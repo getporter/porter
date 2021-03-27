@@ -229,6 +229,10 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 	bun["invocationImage"] = m.Image
 	bun["custom"] = m.Custom
 
+	// Make environment variable accessible
+	env := m.EnvironMap()
+	data["env"] = env
+
 	params := make(map[string]interface{})
 	bun["parameters"] = params
 	for _, param := range m.Parameters {
