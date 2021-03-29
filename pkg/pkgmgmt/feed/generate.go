@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 	"github.com/pkg/errors"
 )

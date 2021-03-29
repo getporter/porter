@@ -3,7 +3,7 @@ package extensions
 import (
 	"sort"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/crane"
