@@ -24,7 +24,12 @@ type ManifestConverter struct {
 	Mixins       []mixin.Metadata
 }
 
-func NewManifestConverter(cxt *context.Context, manifest *manifest.Manifest, imageDigests map[string]string, mixins []mixin.Metadata) *ManifestConverter {
+func NewManifestConverter(
+	cxt *context.Context,
+	manifest *manifest.Manifest,
+	imageDigests map[string]string,
+	mixins []mixin.Metadata,
+) *ManifestConverter {
 	return &ManifestConverter{
 		Context:      cxt,
 		Manifest:     manifest,

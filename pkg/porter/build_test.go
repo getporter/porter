@@ -77,6 +77,9 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: false}
+		err = opts.Validate(p.Context)
+		require.NoError(t, err)
+
 		err = p.Build(opts)
 		require.Errorf(t, err, "Build should have been aborted with lint errors")
 		assert.Contains(t, err.Error(), "Lint errors were detected")
@@ -91,6 +94,9 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: true}
+		err = opts.Validate(p.Context)
+		require.NoError(t, err)
+
 		err = p.Build(opts)
 		require.NoError(t, err, "Build failed but should have not run lint")
 	})
@@ -119,6 +125,8 @@ func TestPorter_paramRequired(t *testing.T) {
 }
 
 func TestValidateBuildOpts(t *testing.T) {
+	p := NewTestPorter(t)
+
 	testcases := []struct {
 		name      string
 		opts      BuildOptions
@@ -143,7 +151,7 @@ func TestValidateBuildOpts(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.opts.Validate()
+			err := tc.opts.Validate(p.Context)
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {

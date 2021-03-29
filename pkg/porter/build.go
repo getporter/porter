@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
@@ -15,7 +16,7 @@ import (
 )
 
 type BuildProvider interface {
-	// BuildInvocationImage using the bundle in the current directory
+	// BuildInvocationImage using the bundle in the build context directory
 	BuildInvocationImage(manifest *manifest.Manifest) error
 
 	// TagInvocationImage using the origTag and newTag values supplied
@@ -23,6 +24,7 @@ type BuildProvider interface {
 }
 
 type BuildOptions struct {
+	bundleFileOptions
 	contextOptions
 	metadataOpts
 	NoLint bool
@@ -35,7 +37,7 @@ const semVerRegex string = `([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
 	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
 	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
 
-func (o BuildOptions) Validate() error {
+func (o *BuildOptions) Validate(cxt *context.Context) error {
 	if o.Version != "" {
 		versionRegex := regexp.MustCompile("^" + semVerRegex + "$")
 		if m := versionRegex.FindStringSubmatch(o.Version); m == nil {
@@ -43,23 +45,25 @@ func (o BuildOptions) Validate() error {
 		}
 	}
 
-	return nil
+	return o.bundleFileOptions.Validate(cxt)
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
-	if err := opts.Validate(); err != nil {
-		return err
-	}
-
-	if err := p.generateInternalManifest(opts.metadataOpts); err != nil {
+	// Generate Porter's canonical version of the user-provided manifest
+	if err := p.generateInternalManifest(opts); err != nil {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
 
 	if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
 		return err
 	}
+
+	// Capture the path to the original, user-provided manifest.
+	// This value will be referenced elsewhere, for insteance by
+	// the digest logic (to dictate auto-rebuild)
+	p.Manifest.ManifestPath = opts.File
 
 	if !opts.NoLint {
 		if err := p.preLint(); err != nil {

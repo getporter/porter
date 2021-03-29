@@ -17,6 +17,15 @@ The lint command is run automatically when you build a bundle. The command is av
 porter bundles lint [flags]
 ```
 
+### Examples
+
+```
+  porter lint
+  porter lint --file path/to/porter.yaml
+  porter lint --output plaintext
+
+```
+
 ### Options
 
 ```

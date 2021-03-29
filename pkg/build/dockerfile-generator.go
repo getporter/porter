@@ -23,7 +23,12 @@ type DockerfileGenerator struct {
 	Mixins pkgmgmt.PackageManager
 }
 
-func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager) *DockerfileGenerator {
+func NewDockerfileGenerator(
+	config *config.Config,
+	m *manifest.Manifest,
+	tmpl *templates.Templates,
+	mp pkgmgmt.PackageManager,
+) *DockerfileGenerator {
 	return &DockerfileGenerator{
 		Config:    config,
 		Manifest:  m,
@@ -45,7 +50,7 @@ func (g *DockerfileGenerator) GenerateDockerFile() error {
 		fmt.Fprintln(g.Out, contents)
 	}
 
-	err = g.FileSystem.WriteFile("Dockerfile", []byte(contents), 0644)
+	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), 0644)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
@@ -143,11 +148,20 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
-	return []string{
-		// Remove the user-provided Porter manifest as the canonical version
-		// will migrate via its location in .cnab
-		`RUN rm $BUNDLE_DIR/porter.yaml`,
+	// The user-provided manifest may be located separate from the build context directory.
+	// Therefore, we only need to add lines if the relative manifest path exists inside of
+	// the current working directory.
+	manifestPath := g.FileSystem.Abs(g.Manifest.ManifestPath)
+	if relManifestPath, err := filepath.Rel(g.Getwd(), manifestPath); err == nil {
+		if !strings.Contains(relManifestPath, "..") {
+			return []string{
+				// Remove the user-provided Porter manifest as the canonical version
+				// will migrate via its location in .cnab
+				fmt.Sprintf(`RUN rm $BUNDLE_DIR/%s`, relManifestPath),
+			}
+		}
 	}
+	return []string{}
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
@@ -185,7 +199,7 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	// clean up previously generated files
-	g.FileSystem.Remove("Dockerfile")
+	g.FileSystem.Remove(DOCKER_FILE)
 
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")
 

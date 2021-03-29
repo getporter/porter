@@ -50,6 +50,15 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 		Use:   "build",
 		Short: "Build a bundle",
 		Long:  "Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.",
+		Example: `  porter build
+  porter build --name newbuns
+  porter build --version 0.1.0
+  porter build --file path/to/porter.yaml
+  porter build --dir path/to/build/context
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Build(opts)
 		},
@@ -60,6 +69,10 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
 	f.StringVar(&opts.Name, "name", "", "Override the bundle name")
 	f.StringVar(&opts.Version, "version", "", "Override the bundle version")
+	f.StringVarP(&opts.File, "file", "f", "",
+		"Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+	f.StringVarP(&opts.Dir, "dir", "d", "",
+		"Path to the build context directory where all bundle assets are located.")
 
 	return cmd
 }
@@ -72,6 +85,10 @@ func buildBundleLintCommand(p *porter.Porter) *cobra.Command {
 		Long: `Check the bundle for problems and adherence to best practices by running linters for porter and the mixins used in the bundle.
 
 The lint command is run automatically when you build a bundle. The command is available separately so that you can just lint your bundle without also building it.`,
+		Example: `  porter lint
+  porter lint --file path/to/porter.yaml
+  porter lint --output plaintext
+`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context)
 		},
@@ -297,6 +314,7 @@ func buildBundlePublishCommand(p *porter.Porter) *cobra.Command {
 Note: if overrides for registry/tag/reference are provided, this command only re-tags the invocation image and bundle; it does not re-build the bundle.`,
 		Example: `  porter bundle publish
   porter bundle publish --file myapp/porter.yaml
+  porter bundle publish --dir myapp
   porter bundle publish --archive /tmp/mybuns.tgz --reference myrepo/my-buns:0.1.0
   porter bundle publish --tag latest
   porter bundle publish --registry myregistry.com/myorg
@@ -311,6 +329,8 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
+	f.StringVarP(&opts.Dir, "dir", "d", "",
+		"Path to the build context directory where all bundle assets are located.")
 	f.StringVarP(&opts.ArchiveFile, "archive", "a", "", "Path to the bundle archive in .tgz format")
 	f.StringVar(&opts.Tag, "tag", "", "Override the Docker tag portion of the bundle reference, e.g. latest, v0.1.1")
 	f.StringVar(&opts.Registry, "registry", "", "Override the registry portion of the bundle reference, e.g. docker.io, myregistry.com/myorg")

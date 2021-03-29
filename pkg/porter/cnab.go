@@ -35,22 +35,45 @@ type bundleFileOptions struct {
 
 	// ReferenceSet indicates whether a bundle reference is present, to determine whether or not to default bundle files
 	ReferenceSet bool
+
+	// Dir represents the build context directory containing bundle assets
+	Dir string
 }
 
 func (o *bundleFileOptions) Validate(cxt *context.Context) error {
-	err := o.validateBundleFiles(cxt)
+	var err error
+
+	err = o.validateBundleFiles(cxt)
 	if err != nil {
 		return err
 	}
 
-	if !o.ReferenceSet {
-		err = o.defaultBundleFiles(cxt)
-		if err != nil {
-			return err
-		}
+	if o.ReferenceSet {
+		return nil
 	}
 
-	return err
+	if o.File != "" {
+		o.File = cxt.FileSystem.Abs(o.File)
+	}
+
+	// Resolve the proper build context directory
+	if o.Dir != "" {
+		_, err = cxt.FileSystem.IsDir(o.Dir)
+		if err != nil {
+			return errors.Wrapf(err, "%q is not a valid directory", o.Dir)
+		}
+		o.Dir = cxt.FileSystem.Abs(o.Dir)
+	}
+
+	err = o.defaultBundleFiles(cxt)
+	if err != nil {
+		return err
+	}
+
+	// Enter the resolved build context directory after all defaults
+	// have been populated
+	cxt.Chdir(o.Dir)
+	return nil
 }
 
 // sharedOptions are common options that apply to multiple CNAB actions.
@@ -131,11 +154,10 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
 func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 	if o.File != "" { // --file
-		bundleDir := filepath.Dir(o.File)
-		o.CNABFile = filepath.Join(bundleDir, build.LOCAL_BUNDLE)
+		o.defaultCNABFile()
 	} else if o.CNABFile != "" { // --cnab-file
 		// Nothing to default
-	} else { // no flags passed (--reference is handled elsewhere)
+	} else {
 		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
 			return errors.Wrap(err, "could not check if porter manifest exists in current directory")
@@ -143,11 +165,20 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 
 		if manifestExists {
 			o.File = config.Name
-			o.CNABFile = build.LOCAL_BUNDLE
+			o.defaultCNABFile()
 		}
 	}
 
 	return nil
+}
+
+func (o *bundleFileOptions) defaultCNABFile() {
+	// Place the bundle.json in o.Dir if set; otherwise place in current directory
+	if o.Dir != "" {
+		o.CNABFile = filepath.Join(o.Dir, build.LOCAL_BUNDLE)
+	} else {
+		o.CNABFile = build.LOCAL_BUNDLE
+	}
 }
 
 func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {

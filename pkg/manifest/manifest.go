@@ -24,7 +24,7 @@ import (
 const invalidStepErrorFormat = "validation of action \"%s\" failed"
 
 type Manifest struct {
-	// ManifestPath is the location from which the manifest was loaded, such as the path on the filesystem or a url.
+	// ManifestPath is location to the original, user-supplied manifest, such as the path on the filesystem or a url
 	ManifestPath string `yaml:"-"`
 
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
