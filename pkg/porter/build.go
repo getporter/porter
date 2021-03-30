@@ -3,7 +3,6 @@ package porter
 import (
 	"fmt"
 	"os"
-	"regexp"
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -11,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
@@ -30,19 +30,13 @@ type BuildOptions struct {
 	NoLint bool
 }
 
-// semVerRegex is a regex for ensuring bundle versions adhere to
-// semantic versioning per https://semver.org/#is-v123-a-semantic-version
-// Regex adapted from github.com/Masterminds/semver
-const semVerRegex string = `([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
-	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
-	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
-
 func (o *BuildOptions) Validate(cxt *context.Context) error {
 	if o.Version != "" {
-		versionRegex := regexp.MustCompile("^" + semVerRegex + "$")
-		if m := versionRegex.FindStringSubmatch(o.Version); m == nil {
+		v, err := semver.NewVersion(o.Version)
+		if err != nil {
 			return fmt.Errorf("invalid bundle version: %q is not a valid semantic version", o.Version)
 		}
+		o.Version = v.String()
 	}
 
 	return o.bundleFileOptions.Validate(cxt)

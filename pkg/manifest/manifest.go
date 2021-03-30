@@ -12,7 +12,7 @@ import (
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -182,6 +182,15 @@ func (m *Manifest) validateMetadata(cxt *context.Context) error {
 		}
 	}
 
+	// Allow for the user to have specified the version with a leading v prefix but save it as
+	// proper semver
+	if m.Version != "" {
+		v, err := semver.NewVersion(m.Version)
+		if err != nil {
+			return errors.Wrapf(err, "version %q is not a valid semver value", m.Version)
+		}
+		m.Version = v.String()
+	}
 	return nil
 }
 
@@ -912,14 +921,11 @@ func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string,
 	case reference.Tagged:
 		dockerTag = v.Tag()
 	case reference.Named:
-		ver, err := semver.NewVersion(m.Version)
-		if err != nil {
-			return "", errors.Wrapf(err, "could not parse the bundle version %q as a semantic version", m.Version)
-		}
 		// Docker tag is missing from the provided bundle tag, so default it
 		// to use the manifest version prefixed with v
 		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
-		dockerTag = fmt.Sprintf("v%s", ver.String())
+		cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
+		dockerTag = fmt.Sprintf("v%s", cleanTag)
 	case reference.Digested:
 		return "", errors.New("invalid bundle tag format, must be an OCI image tag")
 	}

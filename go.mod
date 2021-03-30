@@ -25,7 +25,7 @@ replace (
 )
 
 require (
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
 	github.com/carolynvs/aferox v0.2.1

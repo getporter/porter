@@ -38,14 +38,16 @@ dockerfile: dockerfile.tmpl
 
 * `name`: The name of the bundle
 * `description`: A description of the bundle
-* `version`: The version of the bundle, uses [semver](https://semver.org). Should not have a 'v' prefix.
+* `version`: The version of the bundle, uses [semver](https://semver.org). A leading v prefix may optionally be used.
 * `registry`: The registry to use for publishing the bundle. The format is `REGISTRY_HOST/ORG`.
     Both the final bundle reference and invocation image name will be based on this value.
     For example, if the bundle name is `porter-hello`, registry is `getporter` and the version is `0.1.0`,
     the bundle reference will be `getporter/porter-hello:v0.1.0` and the invocation image name will be `getporter/porter-hello-installer:v0.1.0`
 * `reference`: OPTIONAL. The bundle reference, taking precedence over any values set for the `registry`, `name` fields. The format is `REGISTRY_HOST/ORG/NAME`.  The recommended pattern is to let the Docker tag be auto-derived from the `version` field.  However, a full reference with a Docker tag included may also be specified.
    The invocation image name will also be based on this value when set. For example, if the `reference` is
-   `getporter/porter-hello`, then the final invocation image name will be `getporter/porter-hello-installer:v0.1.0`
+   `getporter/porter-hello`, then the final invocation image name will be `getporter/porter-hello-installer:v0.1.0`. 
+  
+   When the version is used to default the tag, and it contains a plus sign (+), the plus sign is replaced with an underscore because while + is a valid semver delimiter for the build metadata, it is not an allowed character in a tag.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).

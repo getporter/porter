@@ -3,7 +3,7 @@ mixins:
 
 name: hello
 description: "An example Porter configuration"
-version: 0.1.0
+version: v0.1.0
 registry: getporter
 
 install:

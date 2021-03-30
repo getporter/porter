@@ -243,7 +243,7 @@ func TestSetDefaults(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
 			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
+			Version:   "1.2.3-beta.1+15",
 			Reference: "getporter/mybun",
 		}
 		err := m.validateMetadata(cxt.Context)
@@ -251,8 +251,8 @@ func TestSetDefaults(t *testing.T) {
 
 		err = m.SetDefaults()
 		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
+		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1_15", m.Reference)
+		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1_15", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
