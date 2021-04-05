@@ -10,6 +10,8 @@ requires such as a github token, cloud provider username/password, etc. Then in
 your action's steps you can reference the credentials using porter's template
 language `{{ bundle.credentials.github_token }}`.
 
+## Credential Sets
+
 Credentials are injected when a bundle is executed
 (install/upgrade/uninstall/invoke). First a user creates a credentials set using
 [porter credentials generate][generate]. This is a mapping that tells porter
@@ -19,6 +21,13 @@ variables or local files, or if you are using a [secrets
 plugin](/plugins/types/#secrets) they can come from an external secret store.
 The generate command walks you through all the credentials used by a bundle and
 where the values can be found.
+
+If you are creating credential sets manually, you can use the [Credential Set Schema]
+to validate that you have created it properly.
+
+[Credential Set Schema]: /src/pkg/schema/credential-set.schema.json
+
+## Runtime
 
 Now when you execute the bundle you can pass the credential set to the command
 use `--cred` or `-c` flag, e.g. `porter install --cred github`. Before the

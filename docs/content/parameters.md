@@ -35,6 +35,11 @@ Now when you execute the bundle you can pass the name of the parameter set to
 the command using the `--parameter-set` or `-p` flag, e.g.
 `porter install -p myparamset`.
 
+If you are creating parameter sets manually, you can use the [Parameter Set Schema]
+to validate that you have created it properly.
+
+[Parameter Set Schema]: /src/pkg/schema/parameter-set.schema.json
+
 ## User-specified values
 
 A user may also supply parameter values when invoking an action on the bundle.
