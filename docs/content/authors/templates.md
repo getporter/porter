@@ -66,8 +66,8 @@ The bundle variable contains data that was declared in the bundle definition (po
 |----------|--------------|
 | bundle.name | The bundle name |
 | bundle.description | The bundle description |
-| bundle.version | The bundle version. This is a semver v2 value, and will not have a leading v prefix. |
-| bundle.invocationImage | (DEPRECATED) The name of the invocation image. |
+| bundle.version | The bundle version defined in porter.yaml |
+| bundle.invocationImage | (DEPRECATED) The name of the invocation image |
 
 #### custom metadata
 
