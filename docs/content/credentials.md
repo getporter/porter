@@ -22,10 +22,10 @@ plugin](/plugins/types/#secrets) they can come from an external secret store.
 The generate command walks you through all the credentials used by a bundle and
 where the values can be found.
 
-If you are creating parameter sets manually, you can use the [Credential Set Schema]
+If you are creating credential sets manually, you can use the [Credential Set Schema]
 to validate that you have created it properly.
 
-[Credential Set Schema]: /src/pkg/schema/parameter-set.schema.json
+[Credential Set Schema]: /src/pkg/schema/credential-set.schema.json
 
 ## Runtime
 
