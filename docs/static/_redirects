@@ -24,24 +24,24 @@
 # cdn.porter.sh proxy to GitHub downloads
 #
 
-# Atom feeds are stored in their own repository
+# Redirect atom feeds, which are stored in their own repository
 /mixins/atom.xml    https://raw.githubusercontent.com/getporter/package-feeds/main/mixins/atom.xml 302
 /plugins/atom.xml   https://raw.githubusercontent.com/getporter/package-feeds/main/plugins/atom.xml 302
 
-# exec mixin downloads are attached to Porter releases. It doesn't have it's own repository.
+# Redirect exec mixin binaries which are attached to Porter releases. Exec doesn't have its own repository.
 /mixins/exec/:version/:file         https://github.com/getporter/porter/releases/download/:version/:file 302
 
-# Serve downloads for any official package
+# Redirect downloads for any official package
 /mixins/:mixin/:version/:file       https://github.com/getporter/:mixin-mixin/releases/download/:version/:file 302
 /plugins/:plugin/:version/:file     https://github.com/getporter/:plugin-plugins/releases/download/:version/:file 302
 
-# Serve these files directly so that the curl commands run by the end-user don't need to worry about redirects
+# Directly serve these files directly so that the curl commands run by the end-user don't need to worry about redirects
 # We can only serve content directly through Netlify's CDN for files under 2MB
 /:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
 /:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
 
-# Serve the porter binaries
+# Redirect the porter binaries
 /:version/porter-darwin-amd64           https://github.com/getporter/porter/releases/download/:version/porter-darwin-amd64 302
 /:version/porter-linux-amd64            https://github.com/getporter/porter/releases/download/:version/porter-linux-amd64 302
 /:version/porter-windows-amd64.exe      https://github.com/getporter/porter/releases/download/:version/porter-windows-amd64.exe 302
