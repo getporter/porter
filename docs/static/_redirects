@@ -20,11 +20,26 @@
 # Moved Links
 /configuration/#porter-allow-docker-host-access /configuration/#allow-docker-host-access
 
-# cdn.porter.sh proxy to Azure Blob Storage
-https://cdn--porter.netlify.app/mixins/atom.xml     https://deislabs.blob.core.windows.net/porter/atom.xml 200
-https://cdn.porter.sh/mixins/atom.xml               https://deislabs.blob.core.windows.net/porter/atom.xml 200
-https://cdn2.porter.sh/mixins/atom.xml              https://deislabs.blob.core.windows.net/porter/atom.xml 200
+#
+# cdn.porter.sh proxy to GitHub downloads
+#
 
-https://cdn--porter.netlify.app/*                   https://deislabs.blob.core.windows.net/porter/:splat 200
-https://cdn.porter.sh/*                             https://deislabs.blob.core.windows.net/porter/:splat 200
-https://cdn2.porter.sh/*                            https://deislabs.blob.core.windows.net/porter/:splat 200
+# Atom feeds are stored in their own repository
+/mixins/atom.xml    https://raw.githubusercontent.com/getporter/package-feeds/main/mixins/atom.xml 302
+/plugins/atom.xml   https://raw.githubusercontent.com/getporter/package-feeds/main/plugins/atom.xml 302
+
+# exec mixin downloads are attached to Porter releases. It doesn't have it's own repository.
+/mixins/exec/:version/:file         https://github.com/getporter/porter/releases/download/:version/:file 302
+
+# Serve downloads for any official package
+/mixins/:mixin/:version/:file       https://github.com/getporter/:mixin-mixin/releases/download/:version/:file 302
+/plugins/:plugin/:version/:file     https://github.com/getporter/:plugin-plugins/releases/download/:version/:file 302
+
+# Serve these files directly so that the curl commands run by the end-user don't need to worry about redirects
+# We can only serve content directly through Netlify's CDN for files under 2MB
+/:version/install-linux.sh      https://github.com/getporter/porter/releases/download/:version/install-linux.sh 200
+/:version/install-mac.sh        https://github.com/getporter/porter/releases/download/:version/install-mac.sh 200
+/:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
+
+# Serve the porter binaries
+/:version/porter-:file          https://github.com/getporter/porter/releases/download/:version/porter-:file 302
