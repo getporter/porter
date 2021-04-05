@@ -42,4 +42,6 @@
 /:version/install-windows.ps1   https://github.com/getporter/porter/releases/download/:version/install-windows.ps1 200
 
 # Serve the porter binaries
-/:version/porter-:file          https://github.com/getporter/porter/releases/download/:version/porter-:file 302
+/:version/porter-darwin-amd64           https://github.com/getporter/porter/releases/download/:version/porter-darwin-amd64 302
+/:version/porter-linux-amd64            https://github.com/getporter/porter/releases/download/:version/porter-linux-amd64 302
+/:version/porter-windows-amd64.exe      https://github.com/getporter/porter/releases/download/:version/porter-windows-amd64.exe 302
