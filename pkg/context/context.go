@@ -107,6 +107,15 @@ func (c *Context) Environ() []string {
 	return e
 }
 
+// EnvironMap returns a map of the current environment variables.
+func (c *Context) EnvironMap() map[string]string {
+	env := make(map[string]string, len(c.environ))
+	for k, v := range c.environ {
+		env[k] = v
+	}
+	return env
+}
+
 // ExpandEnv replaces ${var} or $var in the string according to the values
 // of the current environment variables. References to undefined
 // variables are replaced by the empty string.

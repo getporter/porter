@@ -4216,7 +4216,7 @@ h5 {
   letter-spacing: 0.25em;
   font-size: 12px; }
 
-p, ol, ul, dl, blockquote {
+p, ol, ul, dl, blockquote, table {
   font-size: 14px;
   padding-right: 5%;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }

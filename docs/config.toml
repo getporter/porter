@@ -213,9 +213,9 @@ pygmentsStyle = "friendly"
     weight = 304
     parent = "author-bundles"
   [[menu.main]]
-    name = "Parameters, Credentials and Outputs"
-    url = "/wiring"
-    identifier = "wiring"
+    name = "Templates"
+    url = "/authors/templates/"
+    identifier = "author-templates"
     weight = 305
     parent = "author-bundles"
 

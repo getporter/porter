@@ -1114,3 +1114,25 @@ func TestResolveCustomMetadata(t *testing.T) {
 	assert.Equal(t, "foobar", s.Data["release"], "custom metadata was not rendered")
 	assert.Equal(t, "true", s.Data["featureA"], "nested custom metadata was not rendered")
 }
+
+func TestResolveEnvironmentVariable(t *testing.T) {
+	cxt := context.NewTestContext(t)
+	m := &manifest.Manifest{}
+	rm := NewRuntimeManifest(cxt.Context, claim.ActionInstall, m)
+
+	s := &manifest.Step{
+		Data: map[string]interface{}{
+			"description": "Read an environment variable",
+			"someInput":   "{{ env.foo }}",
+			"moreInput":   "{{ env.BAR }}",
+		},
+	}
+
+	cxt.Setenv("foo", "foo-value")
+	cxt.Setenv("BAR", "bar-value")
+	err := rm.ResolveStep(s)
+	require.NoError(t, err, "ResolveStep failed")
+
+	assert.Equal(t, "foo-value", s.Data["someInput"], "expected lower-case foo env var was resolved")
+	assert.Equal(t, "bar-value", s.Data["moreInput"], "expected upper-case BAR env var was resolved")
+}
