@@ -1,9 +1,22 @@
 # Do not run on push
 trigger: none
 
+parameters:
+  - name: shouldPublish
+    type: boolean
+    default: true
+  - name: skipTests
+    type: boolean
+    default: true
+  - name: publishExamples
+    type: boolean
+    default: false
+
 extends:
   template: azure-pipelines.release-template.yml
   parameters:
-      shouldPublish: true
+      skipTests: ${{ parameters.skipTests }}
+      shouldPublish: ${{ parameters.shouldPublish }}
       dualPublish: false
       registry: docker.io/getporterci
+      publishExamples: ${{ parameters.publishExamples }}

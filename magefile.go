@@ -11,7 +11,6 @@ import (
 	"go/build"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -21,6 +20,7 @@ import (
 	// mage:import
 	"get.porter.sh/porter/mage/releases"
 	"github.com/carolynvs/magex/pkg"
+	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -53,7 +53,7 @@ func ConfigureAgent() error {
 	}
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
-	gobin := pkg.GetGopathBin()
+	gobin := gopath.GetGopathBin()
 	err = os.MkdirAll(gobin, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
@@ -117,14 +117,31 @@ func TestE2E() error {
 
 // Publish the porter binaries and install scripts.
 func PublishPorter(version string, permalink string) {
-	versionDir := filepath.Join("bin", version)
+	mg.Deps(releases.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	os.MkdirAll(versionDir, 0755)
+	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
 
-	must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, permalink), "-s", versionDir, "--content-cache-control", releases.VolatileCache)
+	porterVersionDir := filepath.Join("bin", version)
+	execVersionDir := filepath.Join("bin/mixins/exec", version)
+	var repo = os.Getenv("PORTER_RELEASE_REPOSITORY")
+	if repo == "" {
+		repo = "github.com/getporter/porter"
+	}
+	remote := fmt.Sprintf("https://%s.git", repo)
+
+	// Move the permalink tag. The existing release automatically points to the tag.
+	must.RunV("git", "tag", permalink, version+"^{}", "-f")
+	must.RunV("git", "push", "-f", remote, permalink)
+
+	// Create or update GitHub release for the permalink (canary/latest) with the version's assets (porter binaries, exec binaries and install scripts)
+	releases.AddFilesToRelease(repo, permalink, porterVersionDir)
+	releases.AddFilesToRelease(repo, permalink, execVersionDir)
+
 	if permalink == "latest" {
-		must.RunV("az", "storage", "blob", "upload-batch", "-d", path.Join(releases.ContainerName, version), "-s", versionDir, "--content-cache-control", releases.StaticCache)
+		// Create GitHub release for the exact version (v1.2.3) and attach assets
+		releases.AddFilesToRelease(repo, version, porterVersionDir)
+		releases.AddFilesToRelease(repo, version, execVersionDir)
 	}
 }
 

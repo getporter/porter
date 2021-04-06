@@ -2,7 +2,7 @@ trigger:
   branches:
     include:
       - refs/heads/main
-      - refs/tags/*
+      - refs/tags/v*
 
 # Do not run on pull requests
 pr: none

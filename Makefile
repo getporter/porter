@@ -5,8 +5,8 @@ MAKE_OPTS ?= --no-print-directory
 
 REGISTRY ?= getporterci
 DUAL_PUBLISH ?= false
-VERSION ?= $(shell git describe --tags 2> /dev/null || echo v0)
-PERMALINK ?= $(shell git describe --tags --exact-match &> /dev/null && echo latest || echo canary)
+VERSION ?= $(shell git describe --tags --match v* 2> /dev/null || echo v0)
+PERMALINK ?= $(shell git describe --tags --exact-match --match v* &> /dev/null && echo latest || echo canary)
 
 export PORTER_HOME = ${CURDIR}/bin
 
@@ -112,11 +112,10 @@ docs-stop-preview:
 publish: publish-bin publish-mixins publish-images
 
 publish-bin:
-	go run mage.go PublishPorter $(VERSION) $(PERMALINK)
+	go run mage.go -v PublishPorter $(VERSION) $(PERMALINK)
 
 publish-mixins:
-	go run mage.go PublishMixin exec $(VERSION) $(PERMALINK)
-	go run mage.go PublishMixinFeed
+	go run mage.go -v PublishMixinFeed exec $(VERSION)
 
 .PHONY: build-images
 build-images:
