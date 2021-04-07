@@ -27,12 +27,12 @@ Install the most recent stable release of porter and its default [mixins](#mixin
 
 ## Latest MacOS
 ```
-curl https://cdn.porter.sh/latest/install-mac.sh | bash
+curl -L https://cdn.porter.sh/latest/install-mac.sh | bash
 ```
 
 ## Latest Linux
 ```
-curl https://cdn.porter.sh/latest/install-linux.sh | bash
+curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
 ```
 
 ## Latest Windows
@@ -52,12 +52,12 @@ that we are developing.
 
 ## Canary MacOS
 ```
-curl https://cdn.porter.sh/canary/install-mac.sh | bash
+curl -L https://cdn.porter.sh/canary/install-mac.sh | bash
 ```
 
 ## Canary Linux
 ```
-curl https://cdn.porter.sh/canary/install-linux.sh | bash
+curl -L https://cdn.porter.sh/canary/install-linux.sh | bash
 ```
 
 ## Canary Windows
@@ -79,13 +79,13 @@ Set `VERSION` to the version of Porter that you want to install.
 ## Older Version MacOS
 ```
 VERSION="v0.18.1-beta.2"
-curl https://cdn.porter.sh/$VERSION/install-mac.sh | bash
+curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
 ## Older Version Linux
 ```
 VERSION="v0.18.1-beta.2"
-curl https://cdn.porter.sh/$VERSION/install-linux.sh | bash
+curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
 ## Older Version Windows
