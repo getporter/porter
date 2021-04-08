@@ -23,9 +23,9 @@ const (
 	packagesRepo = "bin/mixins/.packages"
 )
 
-// Prepares bin directory for publishing
-func PrepareMixinForPublish(mixin string, version string, permalink string) {
-	// Prepare the bin directory for generating a mixin feed
+// Prepares bin directory for publishing a package
+func preparePackageForPublish(pkgType string, name string, version string, permalink string) {
+	// Prepare the bin directory for generating a package feed
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
 	// We do not want a latest directory, latest entries are calculated using the most recent
 	// timestamp in the atom.xml, not from an explicit entry.
@@ -33,9 +33,9 @@ func PrepareMixinForPublish(mixin string, version string, permalink string) {
 		return
 	}
 
-	binDir := filepath.Join("bin/mixins/", mixin)
+	binDir := filepath.Join("bin", pkgType+"s", name)
 	// Temp hack until we have mixin.mk totally moved into mage
-	if mixin == "porter" {
+	if name == "porter" {
 		binDir = "bin"
 	}
 	versionDir := filepath.Join(binDir, version)
@@ -46,30 +46,52 @@ func PrepareMixinForPublish(mixin string, version string, permalink string) {
 	mgx.Must(shx.Copy(versionDir, permalinkDir, shx.CopyRecursive))
 }
 
+// Prepares bin directory for publishing a mixin
+func PrepareMixinForPublish(mixin string, version string, permalink string) {
+	preparePackageForPublish("mixin", mixin, version, permalink)
+}
+
+// Prepares bin directory for publishing a plugin
+func PreparePluginForPublish(plugin string, version string, permalink string) {
+	preparePackageForPublish("plugin", plugin, version, permalink)
+}
+
 // Use GITHUB_TOKEN to log the porter bot into git
 func ConfigureGitBot() {
 	configureGitBotIn(".")
 }
 
 func configureGitBotIn(dir string) {
+	askpass := "build/git_askpass.sh"
+	contents := `#!/bin/sh
+exec echo "$GITHUB_TOKEN"
+`
+	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), 0755))
+
 	pwd, _ := os.Getwd()
-	script := filepath.Join(pwd, "build/git_askpass.sh")
+	script := filepath.Join(pwd, askpass)
 
 	must.Command("git", "config", "user.name", "Porter Bot").In(dir).RunV()
 	must.Command("git", "config", "user.email", "bot@porter.sh").In(dir).RunV()
 	must.Command("git", "config", "core.askPass", script).In(dir).RunV()
 }
 
-// Publish a mixin's binaries.
-func PublishMixin(mixin string, version string, permalink string) {
+func publishPackage(pkgType string, name string, version string, permalink string) {
 	mg.Deps(EnsureGitHubClient, ConfigureGitBot)
 
 	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
-		repo = fmt.Sprintf("github.com/getporter/%s-mixin", mixin)
+		switch pkgType {
+		case "mixin":
+			repo = fmt.Sprintf("github.com/getporter/%s-mixin", name)
+		case "plugin":
+			repo = fmt.Sprintf("github.com/getporter/%s-plugins", name)
+		default:
+			mgx.Must(errors.Errorf("invalid package type %q", pkgType))
+		}
 	}
 	remote := fmt.Sprintf("https://%s.git", repo)
-	versionDir := filepath.Join("bin/mixins/", mixin, version)
+	versionDir := filepath.Join("bin", pkgType+"s", name, version)
 
 	// Move the permalink tag. The existing release automatically points to the tag.
 	must.RunV("git", "tag", permalink, version+"^{}", "-f")
@@ -84,8 +106,18 @@ func PublishMixin(mixin string, version string, permalink string) {
 	}
 }
 
-// Generate an updated mixin feed and publishes it.
-func PublishMixinFeed(mixin string, version string) {
+// Publish a mixin's binaries.
+func PublishMixin(mixin string, version string, permalink string) {
+	publishPackage("mixin", mixin, version, permalink)
+}
+
+// Publish a plugin's binaries.
+func PublishPlugin(plugin string, version string, permalink string) {
+	publishPackage("plugin", plugin, version, permalink)
+
+}
+
+func publishPackageFeed(pkgType string, name string, version string) {
 	// Clone the packages repository
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
 		os.RemoveAll(packagesRepo)
@@ -97,17 +129,37 @@ func PublishMixinFeed(mixin string, version string) {
 	must.RunV("git", "clone", "--depth=1", remote, packagesRepo)
 	configureGitBotIn(packagesRepo)
 
-	GenerateMixinFeed()
+	generatePackageFeed(pkgType)
 
-	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to mixin feed", mixin, version)).
+	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, version, pkgType)).
 		In(packagesRepo).RunV()
 	must.Command("git", "push").In(packagesRepo).RunV()
 }
 
+// Generate an updated mixin feed and publishes it.
+func PublishMixinFeed(mixin string, version string) {
+	publishPackageFeed("mixin", mixin, version)
+}
+
+// Generate an updated plugin feed and publishes it.
+func PublishPluginFeed(plugin string, version string) {
+	publishPackageFeed("plugin", plugin, version)
+}
+
+func generatePackageFeed(pkgType string) {
+	pkgDir := pkgType + "s"
+	feedFile := filepath.Join(packagesRepo, pkgDir, "atom.xml")
+	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
+}
+
 // Generate a mixin feed from any mixin versions in bin/mixins.
 func GenerateMixinFeed() {
-	feedFile := filepath.Join(packagesRepo, "mixins/atom.xml")
-	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", "bin/mixins", "-f", feedFile, "-t", "build/atom-template.xml")
+	generatePackageFeed("mixin")
+}
+
+// Generate a plugin feed from any plugin versions in bin/plugins.
+func GeneratePluginFeed() {
+	generatePackageFeed("plugin")
 }
 
 // Install the gh CLI
