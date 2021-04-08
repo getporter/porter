@@ -66,7 +66,7 @@ func PublishMixin(mixin string, version string, permalink string) {
 
 	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
-		fmt.Sprintf("github.com/getporter/%s-mixin", mixin)
+		repo = fmt.Sprintf("github.com/getporter/%s-mixin", mixin)
 	}
 	remote := fmt.Sprintf("https://%s.git", repo)
 	versionDir := filepath.Join("bin/mixins/", mixin, version)
