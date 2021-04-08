@@ -26,7 +26,9 @@
 
 # Redirect atom feeds, which are stored in their own repository
 /mixins/atom.xml    https://raw.githubusercontent.com/getporter/packages/main/mixins/atom.xml 302
+/mixins/index.json  https://raw.githubusercontent.com/getporter/packages/main/mixins/index.json 302
 /plugins/atom.xml   https://raw.githubusercontent.com/getporter/packages/main/plugins/atom.xml 302
+/plugins/index.json   https://raw.githubusercontent.com/getporter/packages/main/plugins/index.json 302
 
 # Redirect exec mixin binaries which are attached to Porter releases. Exec doesn't have its own repository.
 /mixins/exec/:version/:file         https://github.com/getporter/porter/releases/download/:version/:file 302
