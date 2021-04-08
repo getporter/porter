@@ -18,6 +18,12 @@ parameters:
   - name: dualPublish # Publish to the registry parameter and to ghcr.io while we migrate to GHCR
     type: boolean
     default: true
+  - name: skipTests
+    type: boolean
+    default: false
+  - name: publishExamples
+    type: boolean
+    default: true
 
 stages:
   - stage: Validate
@@ -62,6 +68,7 @@ stages:
               artifactName: "xbuild-bin"
       - job: unit_test
         displayName: "Unit Test"
+        condition: not(${{ parameters.skipTests }})
         pool:
           vmImage: ${{variables.vmImage}}
         steps:
@@ -78,6 +85,7 @@ stages:
       - job: integration_test
         displayName: "Integration Test"
         dependsOn: build
+        condition: and(succeeded('build'), not(${{ parameters.skipTests }}))
         pool:
           vmImage: ${{variables.vmImage}}
         steps:
@@ -98,6 +106,7 @@ stages:
       - job: e2e_test
         displayName: "Run E2E tests on"
         dependsOn: xbuild
+        condition: and(succeeded(), not(${{ parameters.skipTests }}))
         strategy:
           matrix:
             windows:
@@ -127,7 +136,7 @@ stages:
 
   - stage: Publish
     dependsOn: Validate
-    condition: and(succeeded('Validate'), ${{ parameters.shouldPublish }})
+    condition: and(succeeded(), ${{ parameters.shouldPublish }})
     jobs:
       - job: publish_binaries
         displayName: "Publish Binaries"
@@ -146,8 +155,9 @@ stages:
           - script: go run mage.go UseXBuildBinaries
             displayName: "Setup Bin"
           - script: |
-              export AZURE_STORAGE_CONNECTION_STRING=$(AZURE_STORAGE_CONNECTION_STRING)
               make publish-bin publish-mixins
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
             displayName: "Publish Porter Binaries"
 
       - job: publish_docker
@@ -187,6 +197,7 @@ stages:
 
       - job: publish_example_bundles
         displayName: "Publish Example Bundles"
+        condition: and(succeeded(), ${{ parameters.publishExamples }})
         pool:
           vmImage: ${{variables.vmImage}}
         steps:

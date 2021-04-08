@@ -10,6 +10,8 @@ else
   PORTER_PERMALINK=$VERSION
 fi
 
+ls -R bin
+
 sed -e "s|PORTER_PERMALINK:-latest|PORTER_PERMALINK:-$PORTER_PERMALINK|g" -e "s|PKG_PERMALINK:-latest|PKG_PERMALINK:-$PERMALINK|" scripts/install/install-mac.sh > bin/$VERSION/install-mac.sh
 sed -e "s|PORTER_PERMALINK:-latest|PORTER_PERMALINK:-$PORTER_PERMALINK|g" -e "s|PKG_PERMALINK:-latest|PKG_PERMALINK:-$PERMALINK|" scripts/install/install-linux.sh > bin/$VERSION/install-linux.sh
 sed -e "s|PORTER_PERMALINK='latest'|PORTER_PERMALINK='$PORTER_PERMALINK'|g" -e "s|PKG_PERMALINK='latest'|PKG_PERMALINK='$PERMALINK'|g" scripts/install/install-windows.ps1 > bin/$VERSION/install-windows.ps1
