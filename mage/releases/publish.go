@@ -52,8 +52,14 @@ func ConfigureGitBot() {
 }
 
 func configureGitBotIn(dir string) {
+	askpass := "build/git_askpass.sh"
+	contents := `#!/bin/sh
+exec echo "$GITHUB_TOKEN"
+`
+	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), 0755))
+
 	pwd, _ := os.Getwd()
-	script := filepath.Join(pwd, "build/git_askpass.sh")
+	script := filepath.Join(pwd, askpass)
 
 	must.Command("git", "config", "user.name", "Porter Bot").In(dir).RunV()
 	must.Command("git", "config", "user.email", "bot@porter.sh").In(dir).RunV()
