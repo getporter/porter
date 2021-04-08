@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/imagestore"
 	"github.com/cnabio/cnab-go/imagestore/construction"
@@ -72,6 +74,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0644)
 
 	exp := &exporter{
+		fs:                    p.Config.FileSystem,
 		out:                   p.Config.Out,
 		logs:                  p.Config.Out,
 		bundle:                bun,
@@ -86,6 +89,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 }
 
 type exporter struct {
+	fs                    aferox.Aferox
 	out                   io.Writer
 	logs                  io.Writer
 	bundle                bundle.Bundle
@@ -125,6 +129,10 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("Error preparing artifacts: %s", err)
 	}
 
+	if err := ex.chtimes(archiveDir); err != nil {
+		return fmt.Errorf("Error preparing artifacts: %s", err)
+	}
+
 	tarOptions := &archive.TarOptions{
 		Compression:      archive.Gzip,
 		IncludeFiles:     []string{"."},
@@ -138,6 +146,28 @@ func (ex *exporter) export() error {
 
 	_, err = io.Copy(ex.destination, rc)
 	return err
+}
+
+// chtimes updates all paths under the provided archive path with a constant
+// atime and mtime (Unix time 0), such that the shasum of the resulting archive
+// will not change between repeated archival executions using the same bundle.
+// See: https://unix.stackexchange.com/questions/346789/compressing-two-identical-folders-give-different-result
+func (ex *exporter) chtimes(path string) error {
+	err := filepath.Walk(path,
+		func(subpath string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			err = ex.fs.Chtimes(subpath, time.Unix(0, 0), time.Unix(0, 0))
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // prepareArtifacts pulls all images, verifies their digests and
