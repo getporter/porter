@@ -2,20 +2,22 @@
 
 Porter uses a variety of services to distribute its CLI, mixin and plugin binaries.
 
-## Azure Storage
+## GitHub Releases
 
-Binaries are uploaded to [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) upon relevant events in our GitHub repositories, such as merges to the "main" branch (producing `canary` artifacts) and official releases (producing `latest` and semver-tagged artifacts).
+Binaries and install scripts are attached to GitHub releases upon relevant events in our GitHub repositories, such as merges to the "main" branch (producing `canary` artifacts) and official releases (producing `latest` and semver-tagged artifacts). We create releases for the following tags:
 
-Although it is possible to provide URLs directly to the stored resources, we'd be tightly coupled to a particular storage account and layout, not to mention ungainly URLs.  Therefore, we utilize the services below to achieve flexibility and control over asset links.
+* vX.Y.Z - a tagged version of Porter. Recommended.
+* latest - the most recent tagged version of Porter. Stable but you should use a specific version in prod.
+* canary - the tip of the main branch. Unstable.
+
+We use our own tag for latest (instead of relying upon GitHub's latest release logic) so that we have consistent URLs.
+
+## GitHub Packages Repo
+
+We have a [packages](https://github.com/getporter/packages) repository that has our official mixin and plugin atom feeds used by porter mixin install and porter plugin install. It also contains an index of all known mixins and plugins from both the Porter Authors and the community, which is used by porter mixins search and porter plugins search.
 
 ## DNS for porter.sh
 
 DNS entries for the `porter.sh` domain are managed via a [Netlify](https://www.netlify.com/) account.  A `cdn` CNAME record exists in this configuration such that `cdn.porter.sh` can represent the hostname for all artifact URLs.
 
-## Azure Front Door
-
-We use [Azure Front Door](https://azure.microsoft.com/en-us/services/frontdoor/) to route incoming requests involving the `https://cdn.porter.sh` hostname to their corresponding assets in storage.  This is where TLS certificate material for our custom domain is managed, along with routing rules corresponding to various classes of assets (mixins, plugins, etc.)
-
-## Azure Web Application Firewall
-
-As a first stop for all incoming traffic, we use [Azure Web Application Firewall](https://docs.microsoft.com/en-us/azure/web-application-firewall/) to filter out requests involving invalid URIs.  This ensures that most of the traffic actually reaching Azure Front Door corresponds to actual assets.
+Netlify handles redirecting traffic to cdn.porter.sh to the appropriate backing store (either a GH release artifact or a file in a repo).
