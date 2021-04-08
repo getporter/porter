@@ -13,7 +13,6 @@ dependencies:
 
 install:
   - exec:
-      description: "Install Hello World"
       command: bash
       flags:
         c: echo Hello World

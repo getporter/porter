@@ -74,7 +74,9 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 			}
 
 			description, _ := step.GetDescription()
-			fmt.Fprintln(r.Out, description)
+			if len(description) > 0 {
+				fmt.Fprintln(r.Out, description)
+			}
 
 			// Hand over values needing masking in context output streams
 			r.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
