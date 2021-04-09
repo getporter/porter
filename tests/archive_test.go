@@ -14,7 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 )
 
-const wantHash = "7c2da507a73a034c9c4f82c760c3e7111ceefaf228ff440836d6f07823bd93df"
+const wantHash = "7f905d135996e6f5a4d5d5bd028d61e3b1646817679e4d0b2389ba05dc10f743"
 
 func TestArchive(t *testing.T) {
 	t.Parallel()

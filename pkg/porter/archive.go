@@ -3,7 +3,6 @@ package porter
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -101,16 +100,16 @@ type exporter struct {
 func (ex *exporter) export() error {
 
 	name := ex.bundle.Name + "-" + ex.bundle.Version
-	archiveDir, err := ioutil.TempDir("", name)
+	archiveDir, err := ex.fs.TempDir("", name)
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(archiveDir, 0644); err != nil {
+	if err := ex.fs.MkdirAll(archiveDir, 0644); err != nil {
 		return err
 	}
-	defer os.RemoveAll(archiveDir)
+	defer ex.fs.RemoveAll(archiveDir)
 
-	to, err := os.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, 0666)
+	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
@@ -122,15 +121,15 @@ func (ex *exporter) export() error {
 
 	ex.imageStore, err = ex.imageStoreConstructor(imagestore.WithArchiveDir(archiveDir), imagestore.WithLogs(ex.logs))
 	if err != nil {
-		return fmt.Errorf("Error creating artifacts: %s", err)
+		return fmt.Errorf("error creating artifacts: %s", err)
 	}
 
 	if err := ex.prepareArtifacts(ex.bundle); err != nil {
-		return fmt.Errorf("Error preparing artifacts: %s", err)
+		return fmt.Errorf("error preparing artifacts: %s", err)
 	}
 
 	if err := ex.chtimes(archiveDir); err != nil {
-		return fmt.Errorf("Error preparing artifacts: %s", err)
+		return fmt.Errorf("error preparing artifacts: %s", err)
 	}
 
 	tarOptions := &archive.TarOptions{
