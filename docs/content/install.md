@@ -170,12 +170,12 @@ iwr REPLACE_WITH_INSTALL_URL -OutFile install-porter.ps1 -UseBasicParsing
 .\install-porter.ps1 -PORTER_MIRROR https://example.com/porter
 ```
 
-### File Structure
+### URL Structure
 
 Configuring a mirror of Porter's assets is out of scope of this document.
 Reach out on the Porter [mailing list] for assistance.
 
-Below is the general structure for Porter's assets:
+Below is the general structure for Porter's asset URLs:
 
 ```
 PERMALINK/
