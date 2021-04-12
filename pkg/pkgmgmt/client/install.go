@@ -9,9 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"time"
 
-	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
 	"github.com/pkg/errors"
@@ -166,20 +164,12 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 		return errors.Wrapf(err, "error creating web request to %s", url.String())
 	}
 
-	// Add debugging headers to our request
-	req.Header.Set("X-Azure-DebugInfo", "1")
-	userAgent := fmt.Sprintf("porter/%s porter_trace_%d %s", pkg.Version, time.Now().UnixNano(), req.UserAgent())
-	if fs.Debug {
-		fmt.Fprintln(fs.Err, "PORTER_TRACE:", userAgent)
-	}
-
-	req.Header.Set("User-Agent", userAgent)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "error downloading %s\nPlease include the following information in any bug reports:\nPORTER_TRACE: %s", url.String(), userAgent)
+		return errors.Wrapf(err, "error downloading %s", url.String())
 	}
 	if resp.StatusCode != 200 {
-		return errors.Errorf("bad status returned when downloading %s (%d) %s\nPlease include the following information in any bug reports:\nPORTER_TRACE: %s\nHEADERS: %#v", url.String(), resp.StatusCode, resp.Status, userAgent, resp.Header)
+		return errors.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 

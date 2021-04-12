@@ -41,23 +41,37 @@ func TestInstallOptions_DefaultVersion(t *testing.T) {
 }
 
 func TestInstallOptions_ValidateFeedURL(t *testing.T) {
-	t.Run("default feed url", func(t *testing.T) {
-		defaultFeedURL := "https://example.com/atom.xml"
+	t.Run("feed url unset, mirror unset", func(t *testing.T) {
 		opts := InstallOptions{
-			DefaultFeedURL: defaultFeedURL,
+			PackageType: "mixin",
 		}
-		err := opts.validateFeedURL()
+		err := opts.Validate([]string{"mypkg"})
 		require.NoError(t, err)
-		assert.Equal(t, defaultFeedURL, opts.FeedURL, "fallback to the default feed url when nothing is specified")
+		wantFeedURL := "https://cdn.porter.sh/mixins/atom.xml"
+		assert.Equal(t, wantFeedURL, opts.FeedURL, "fallback to the default feed url when nothing is specified")
 
 		parsedFeedURL := opts.GetParsedFeedURL()
-		assert.Equal(t, defaultFeedURL, parsedFeedURL.String(), "validateFeedURL should parse the feed url")
+		assert.Equal(t, wantFeedURL, parsedFeedURL.String(), "validateFeedURL should parse the feed url")
+	})
+	t.Run("feed url unset, mirror set", func(t *testing.T) {
+		opts := InstallOptions{
+			PackageType:            "plugin",
+			PackageDownloadOptions: PackageDownloadOptions{Mirror: "https://example.com:81/porter"},
+		}
+		err := opts.Validate([]string{"mypkg"})
+		require.NoError(t, err)
+		wantFeedURL := "https://example.com:81/porter/plugins/atom.xml"
+		assert.Equal(t, wantFeedURL, opts.FeedURL, "fallback to the mirror when nothing is specified")
+
+		parsedFeedURL := opts.GetParsedFeedURL()
+		assert.Equal(t, wantFeedURL, parsedFeedURL.String(), "validateFeedURL should parse the feed url")
 	})
 	t.Run("user specified feed url", func(t *testing.T) {
 		opts := InstallOptions{
-			FeedURL: "https://example.com/atom.xml",
+			PackageType: "mixin",
+			FeedURL:     "https://example.com/atom.xml",
 		}
-		err := opts.validateFeedURL()
+		err := opts.Validate([]string{"mypkg"})
 		require.NoError(t, err)
 
 		parsedFeedURL := opts.GetParsedFeedURL()
@@ -65,24 +79,32 @@ func TestInstallOptions_ValidateFeedURL(t *testing.T) {
 	})
 	t.Run("user specified url", func(t *testing.T) {
 		opts := InstallOptions{
-			URL: "https://example.com/mymixin",
+			PackageType: "plugin",
+			URL:         "https://example.com/mymixin",
 		}
-		err := opts.validateFeedURL()
+		err := opts.Validate([]string{"mypkg"})
 		require.NoError(t, err)
 		assert.Nil(t, opts.parsedFeedURL, "validateFeedURL shouldn't try to parse an empty URL")
 	})
 	t.Run("invalid feed url specified", func(t *testing.T) {
 		opts := InstallOptions{
-			FeedURL: "$://example.com",
+			PackageType: "mixin",
+			FeedURL:     "$://example.com",
 		}
-		err := opts.validateFeedURL()
+		err := opts.Validate([]string{"mypkg"})
 		assert.Contains(t, err.Error(), fmt.Sprintf("invalid --feed-url %s", opts.FeedURL))
 		assert.Contains(t, err.Error(), "first path segment in URL cannot contain colon")
 	})
 }
 
 func TestInstallOptions_ValidateURL(t *testing.T) {
-	t.Run("url not specified", func(t *testing.T) {
+	t.Run("url unset, mirror unset", func(t *testing.T) {
+		opts := InstallOptions{}
+		err := opts.validateURL()
+		require.NoError(t, err)
+		assert.Nil(t, opts.parsedURL, "validateURL shouldn't try to parse an empty URL")
+	})
+	t.Run("url unset, mirror set", func(t *testing.T) {
 		opts := InstallOptions{}
 		err := opts.validateURL()
 		require.NoError(t, err)
@@ -108,11 +130,32 @@ func TestInstallOptions_ValidateURL(t *testing.T) {
 }
 
 func TestInstallOptions_Validate(t *testing.T) {
-	opts := InstallOptions{
-		DefaultFeedURL: "http://example.com/atom.xml", // this isn't set by the user but by the package manager
-	}
-	err := opts.Validate([]string{"pkg"})
-	require.NoError(t, err, "Validate failed")
-	assert.NotEmpty(t, opts.FeedURL, "Validate should have defaulted the feed")
-	assert.NotEmpty(t, opts.Version, "Validate should have defaulted the version")
+	t.Run("mixin", func(t *testing.T) {
+		opts := InstallOptions{
+			PackageType: "mixin",
+		}
+		err := opts.Validate([]string{"pkg"})
+		require.NoError(t, err, "Validate failed")
+		assert.NotEmpty(t, opts.FeedURL, "Validate should have defaulted the feed")
+		assert.NotEmpty(t, opts.Version, "Validate should have defaulted the version")
+		assert.NotEmpty(t, opts.Mirror, "Validate should have defaulted the mirror")
+	})
+	t.Run("plugin", func(t *testing.T) {
+		opts := InstallOptions{
+			PackageType: "mixin",
+		}
+		err := opts.Validate([]string{"pkg"})
+		require.NoError(t, err, "Validate failed")
+		assert.NotEmpty(t, opts.FeedURL, "Validate should have defaulted the feed")
+		assert.NotEmpty(t, opts.Version, "Validate should have defaulted the version")
+		assert.NotEmpty(t, opts.Mirror, "Validate should have defaulted the mirror")
+	})
+	t.Run("invalid package type", func(t *testing.T) {
+		opts := InstallOptions{
+			PackageType: "oops",
+		}
+		err := opts.Validate([]string{"pkg"})
+		require.Error(t, err, "Validate should have failed")
+		assert.Contains(t, err.Error(), `invalid package type "oops"`)
+	})
 }

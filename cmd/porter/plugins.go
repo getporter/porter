@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/porter"
@@ -57,7 +55,10 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "search [QUERY]",
 		Short: "Search available plugins",
-		Long:  "Search available plugins. You can specify an optional plugin name query, where the results are filtered by plugins whose name contains the query term.",
+		Long: `Search available plugins. You can specify an optional plugin name query, where the results are filtered by plugins whose name contains the query term.
+
+By default the community plugin index at https://cdn.porter.sh/plugins/index.json is searched.
+To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
 		Example: `  porter plugin search
   porter plugin search azure
   porter plugin search -o json`,
@@ -69,8 +70,11 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+	flags := cmd.Flags()
+	flags.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Output format, allowed values are: table, json, yaml")
+	flags.StringVar(&opts.Mirror, "mirror", pkgmgmt.DefaultPackageMirror,
+		"Mirror of official Porter assets")
 
 	return cmd
 }
@@ -100,6 +104,9 @@ func BuildPluginInstallCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install NAME",
 		Short: "Install a plugin",
+		Long: `Install a plugin.
+
+By default plugins are downloaded from the official Porter plugin feed at https://cdn.porter.sh/plugins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
 		Example: `  porter plugin install azure  
   porter plugin install azure --url https://cdn.porter.sh/plugins/azure
   porter plugin install azure --feed-url https://cdn.porter.sh/plugins/atom.xml
@@ -113,12 +120,16 @@ func BuildPluginInstallCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Version, "version", "v", "latest",
+	flags := cmd.Flags()
+	flags.StringVarP(&opts.Version, "version", "v", "latest",
 		"The plugin version. This can either be a version number, or a tagged release like 'latest' or 'canary'")
-	cmd.Flags().StringVar(&opts.URL, "url", "",
+	flags.StringVar(&opts.URL, "url", "",
 		"URL from where the plugin can be downloaded, for example https://github.com/org/proj/releases/downloads")
-	cmd.Flags().StringVar(&opts.FeedURL, "feed-url", "",
-		fmt.Sprintf(`URL of an atom feed where the plugin can be downloaded (default %s)`, plugins.DefaultFeedUrl))
+	flags.StringVar(&opts.FeedURL, "feed-url", "",
+		"URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.")
+	flags.StringVar(&opts.Mirror, "mirror", pkgmgmt.DefaultPackageMirror,
+		"Mirror of official Porter assets")
+
 	return cmd
 }
 

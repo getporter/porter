@@ -1,8 +1,9 @@
 package pkgmgmt
 
 import (
-	"fmt"
+	"net/url"
 	"os/exec"
+	"path"
 
 	"get.porter.sh/porter/pkg/context"
 )
@@ -41,7 +42,8 @@ type CommandOptions struct {
 	PreRun PreRunHandler
 }
 
-// GetPackageListURL returns the URL for package listings of the provided type
-func GetPackageListURL(pkgType string) string {
-	return fmt.Sprintf("https://cdn.porter.sh/%ss/index.json", pkgType)
+// GetPackageListURL returns the URL for package listings of the provided type.
+func GetPackageListURL(mirror url.URL, pkgType string) string {
+	mirror.Path = path.Join(mirror.Path, pkgType+"s", "index.json")
+	return mirror.String()
 }

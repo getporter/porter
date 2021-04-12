@@ -15,6 +15,7 @@ type SearchOptions struct {
 	Name string
 	Type string
 	printer.PrintOptions
+	pkgmgmt.PackageDownloadOptions
 }
 
 // Validate validates the arguments provided to a search command
@@ -24,6 +25,11 @@ func (o *SearchOptions) Validate(args []string) error {
 	}
 
 	err := o.validatePackageName(args)
+	if err != nil {
+		return err
+	}
+
+	err = o.PackageDownloadOptions.Validate()
 	if err != nil {
 		return err
 	}
@@ -46,7 +52,7 @@ func (o *SearchOptions) validatePackageName(args []string) error {
 
 // SearchPackages searches the provided package list according to the provided options
 func (p *Porter) SearchPackages(opts SearchOptions) error {
-	url := pkgmgmt.GetPackageListURL(opts.Type)
+	url := pkgmgmt.GetPackageListURL(opts.GetMirror(), opts.Type)
 	list, err := pkgmgmt.GetPackageListings(url)
 	if err != nil {
 		return err

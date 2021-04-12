@@ -13,8 +13,10 @@ We have a few release types available for you to use:
 * [Older Version](#older-version)
 
 You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
-porter, and use the [Porter VS Code Extension][vscode-ext] for help authoring
+porter, and use the [Porter VS Code Extension][vscode-ext] for help author
 bundles.
+
+All the scripts for Porter v0.37.3+ support [customizing the installation through parameters](#install-script-parameters).
 
 [vscode-ext]: https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.porter-vscode
 [ps-link]: https://www.howtogeek.com/126469/how-to-create-a-powershell-profile/
@@ -129,3 +131,64 @@ All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugi
 
 [releases]: https://github.com/getporter/porter/releases
 
+
+
+# Install Script Parameters
+
+The installation scripts provide the following parameters. Paramters can be specified with environment variables for the macOS and Linux scripts, and on Windows they are named parameters in the script.
+
+## PORTER_HOME
+
+Location where Porter is installed (defaults to ~/.porter).
+
+**Posix Shells**
+```bash
+PORTER_HOME=/alt/porter/home curl -L REPLACE_WITH_INSTALL_URL | bash
+```
+
+**PowerShell**
+```powershell
+iwr REPLACE_WITH_INSTALL_URL -OutFile install-porter.ps1 -UseBasicParsing
+.\install-porter.ps1 -PORTER_HOME C:\alt\porter\home
+```
+
+## PORTER_MIRROR
+
+Base URL where Porter assets, such as binaries and atom feeds, are downloaded.
+This lets you set up an internal mirror. Note that atom feeds and index files
+should be updated in the mirror to point to the mirrored location. Porter does
+not alter the contents of these files.
+
+**Posix Shells**
+```bash
+PORTER_MIRROR=https://example.com/porter curl -L REPLACE_WITH_INSTALL_URL | bash
+```
+
+**PowerShell**
+```powershell
+iwr REPLACE_WITH_INSTALL_URL -OutFile install-porter.ps1 -UseBasicParsing
+.\install-porter.ps1 -PORTER_MIRROR https://example.com/porter
+```
+
+### File Structure
+
+Configuring a mirror of Porter's assets is out of scope of this document.
+Reach out on the Porter [mailing list] for assistance.
+
+Below is the general structure for Porter's assets:
+
+```
+PERMALINK/
+  - install-linux.sh
+  - install-mac.sh
+  - install-windows.ps1
+  - porter-GOOS-GOARCH[FILE_EXT]
+mixins/
+  - atom.xml
+  - index.json
+  - MIXIN/PERMALINK/MIXIN-GOOS-GOARCH[FILE_EXT]
+plugins/
+  - atom.xml
+  - index.json
+  - PLUGIN/PERMALINK/PLUGIN-GOOS-GOARCH[FILE_EXT]
+```

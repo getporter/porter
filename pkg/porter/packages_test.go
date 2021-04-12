@@ -175,7 +175,7 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 // fetchFullListBytes fetches the full package list according to the
 // provided package type, sorts the list, and returns its marshaled byte form
 func fetchFullListBytes(pkgType string) ([]byte, error) {
-	url := pkgmgmt.GetPackageListURL(pkgType)
+	url := pkgmgmt.GetPackageListURL(pkgmgmt.GetDefaultPackageMirrorURL(), pkgType)
 	packageList, err := pkgmgmt.GetPackageListings(url)
 	if err != nil {
 		return nil, err
