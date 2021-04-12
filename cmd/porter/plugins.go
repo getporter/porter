@@ -57,8 +57,7 @@ func buildPluginSearchCommand(p *porter.Porter) *cobra.Command {
 		Short: "Search available plugins",
 		Long: `Search available plugins. You can specify an optional plugin name query, where the results are filtered by plugins whose name contains the query term.
 
-By default the community plugin index at https://cdn.porter.sh/plugins/index.json is searched.
-To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
+By default the community plugin index at https://cdn.porter.sh/plugins/index.json is searched. To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
 		Example: `  porter plugin search
   porter plugin search azure
   porter plugin search -o json`,

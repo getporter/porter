@@ -57,8 +57,7 @@ func buildMixinsSearchCommand(p *porter.Porter) *cobra.Command {
 		Short: "Search available mixins",
 		Long: `Search available mixins. You can specify an optional mixin name query, where the results are filtered by mixins whose name contains the query term.
 
-By default the community mixin index at https://cdn.porter.sh/mixins/index.json is searched.
-To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
+By default the community mixin index at https://cdn.porter.sh/mixins/index.json is searched. To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
 		Example: `  porter mixin search
   porter mixin search helm
   porter mixin search -o json`,
