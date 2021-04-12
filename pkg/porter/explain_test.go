@@ -43,7 +43,7 @@ func TestExplain_generateCredentialsTableNoCreds(t *testing.T) {
 	p := NewTestPorter(t)
 
 	p.printCredentialsExplainTable(&bun)
-	expected := "Name   Description   Required\n"
+	expected := "Name   Description   Required   Applies To\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Equal(t, expected, gotOutput)
 	t.Log(gotOutput)
@@ -268,26 +268,43 @@ func TestExplain_generatePrintableBundleParamsWithAction(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun, "install")
-	require.NoError(t, err)
+	t.Run("action applies", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "install")
+		require.NoError(t, err)
 
-	require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
-	d := pb.Parameters[0]
-	require.Equal(t, "debug", d.Name)
-	assert.Equal(t, "clippy", fmt.Sprintf("%v", d.Default))
-	assert.Equal(t, "string", d.Type)
-	f := pb.Parameters[1]
-	require.Equal(t, "tfstate", f.Name)
-	assert.Equal(t, "file", f.Type)
+		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
 
-	assert.Equal(t, 0, len(pb.Outputs))
-	assert.Equal(t, 0, len(pb.Credentials))
-	assert.Equal(t, 0, len(pb.Actions))
+		d := pb.Parameters[0]
+		require.Equal(t, "debug", d.Name)
+		assert.Equal(t, "install", d.ApplyTo)
 
-	pb2, err := generatePrintable(bun, "upgrade")
-	require.NoError(t, err)
+		f := pb.Parameters[1]
+		require.Equal(t, "tfstate", f.Name)
+		assert.Equal(t, "All Actions", f.ApplyTo)
+	})
 
-	require.Equal(t, 1, len(pb2.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
+	t.Run("action does not apply", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "upgrade")
+		require.NoError(t, err)
+
+		require.Equal(t, 1, len(pb.Parameters), "expected only 1 parameter since debug parameter doesn't apply to upgrade command")
+		require.Equal(t, "tfstate", pb.Parameters[0].Name)
+	})
+
+	t.Run("all actions", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "")
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(pb.Parameters), "expected 2 parameters")
+
+		d := pb.Parameters[0]
+		require.Equal(t, "debug", d.Name)
+		assert.Equal(t, "install", d.ApplyTo)
+
+		f := pb.Parameters[1]
+		require.Equal(t, "tfstate", f.Name)
+		assert.Equal(t, "All Actions", f.ApplyTo)
+	})
 }
 
 func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
@@ -326,9 +343,13 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 	bun := bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
-			"debug": {
+			"kubeconfig": {
 				Required:    true,
 				Description: "a cred",
+				ApplyTo:     []string{"install"},
+			},
+			"password": {
+				Description: "another cred",
 			},
 		},
 		Custom: map[string]interface{}{
@@ -340,16 +361,43 @@ func TestExplain_generatePrintableBundleCreds(t *testing.T) {
 		},
 	}
 
-	pb, err := generatePrintable(bun, "")
-	assert.NoError(t, err)
+	t.Run("action applies", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "install")
+		require.NoError(t, err)
 
-	assert.Equal(t, 1, len(pb.Credentials))
-	d := pb.Credentials[0]
-	assert.True(t, d.Required)
-	assert.Equal(t, "a cred", d.Description)
-	assert.Equal(t, 0, len(pb.Parameters))
-	assert.Equal(t, 0, len(pb.Outputs))
-	assert.Equal(t, 0, len(pb.Actions))
+		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
+
+		d := pb.Credentials[0]
+		require.Equal(t, "kubeconfig", d.Name)
+		assert.Equal(t, "install", d.ApplyTo)
+
+		f := pb.Credentials[1]
+		require.Equal(t, "password", f.Name)
+		assert.Equal(t, "All Actions", f.ApplyTo)
+	})
+
+	t.Run("action does not apply", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "upgrade")
+		require.NoError(t, err)
+
+		require.Equal(t, 1, len(pb.Credentials), "expected only 1 credential since kubeconfig credential doesn't apply to upgrade command")
+		require.Equal(t, "password", pb.Credentials[0].Name)
+	})
+
+	t.Run("all actions", func(t *testing.T) {
+		pb, err := generatePrintable(bun, "")
+		require.NoError(t, err)
+
+		require.Equal(t, 2, len(pb.Credentials), "expected 2 credentials")
+
+		d := pb.Credentials[0]
+		require.Equal(t, "kubeconfig", d.Name)
+		assert.Equal(t, "install", d.ApplyTo)
+
+		f := pb.Credentials[1]
+		require.Equal(t, "password", f.Name)
+		assert.Equal(t, "All Actions", f.ApplyTo)
+	})
 }
 
 func TestExplain_generatePrintableBundlePorterVersion(t *testing.T) {
