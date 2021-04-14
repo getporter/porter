@@ -18,7 +18,7 @@ out a particular registry and know that it will work for you.
 | Artifactory | No |
 | **Docker Hub** | **Yes** |
 | **DigitalOcean Container Registry** | **Yes** |
-| Amazon Elastic Container Registry (ECR) | No |
+| **Amazon Elastic Container Registry (ECR)** | **[Yes*](#notes)** |
 | **Google Artifact Registry** | **Yes** | 
 | Google Cloud Registry (GCR) | No | 
 | **GitHub Container Registry (GHCR)** | **Yes** | 
@@ -27,7 +27,12 @@ out a particular registry and know that it will work for you.
 | Nexus | No |
 | Quay | No |
 
-If you are a registry or user and know that this page is out of date, [please
-let us know!](https://github.com/deislabs/porter/issues/new)
+If you test a registry with Porter and find that this page is out of date, [please
+let us know](https://github.com/deislabs/porter/issues/new)!
 
-[cnab-to-oci]: https://github.com/docker/cnab-to-oci
+### Notes
+
+* Amazon Elastic Container Registry (ECR) requires that you create the repository for the installer and the bundle before publishing.
+
+[cnab-to-oci]: https://github.com/cnabio/cnab-to-oci
+[oci-spec]: https://github.com/opencontainers/distribution-spec/blob/master/spec.md
