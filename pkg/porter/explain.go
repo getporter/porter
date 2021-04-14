@@ -38,6 +38,7 @@ type PrintableCredential struct {
 	Name        string `json:"name" yaml:"name"`
 	Description string `json:"description" yaml:"description"`
 	Required    bool   `json:"required" yaml:"required"`
+	ApplyTo     string `json:"applyTo" yaml:"applyTo"`
 }
 
 type SortPrintableCredential []PrintableCredential
@@ -204,7 +205,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		PorterVersion: stamp.Version,
 	}
 
-	actions := []PrintableAction{}
+	actions := make([]PrintableAction, 0, len(bun.Actions))
 	for a, v := range bun.Actions {
 		pa := PrintableAction{}
 		pa.Name = a
@@ -215,18 +216,21 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 	}
 	sort.Sort(SortPrintableAction(actions))
 
-	creds := []PrintableCredential{}
+	creds := make([]PrintableCredential, 0, len(bun.Credentials))
 	for c, v := range bun.Credentials {
 		pc := PrintableCredential{}
 		pc.Name = c
 		pc.Description = v.Description
 		pc.Required = v.Required
+		pc.ApplyTo = generateApplyToString(v.ApplyTo)
 
-		creds = append(creds, pc)
+		if action == "" || v.AppliesTo(action) {
+			creds = append(creds, pc)
+		}
 	}
 	sort.Sort(SortPrintableCredential(creds))
 
-	params := []PrintableParameter{}
+	params := make([]PrintableParameter, 0, len(bun.Parameters))
 	for p, v := range bun.Parameters {
 		if parameters.IsInternal(p, bun) {
 			continue
@@ -246,13 +250,13 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		pp.Required = v.Required
 		pp.Description = v.Description
 
-		if v.AppliesTo(action) {
+		if action == "" || v.AppliesTo(action) {
 			params = append(params, pp)
 		}
 	}
 	sort.Sort(SortPrintableParameter(params))
 
-	outputs := []PrintableOutput{}
+	outputs := make([]PrintableOutput, 0, len(bun.Outputs))
 	for o, v := range bun.Outputs {
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
@@ -273,13 +277,13 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 	}
 	sort.Sort(SortPrintableOutput(outputs))
 
-	dependencies := []PrintableDependency{}
 	solver := &extensions.DependencySolver{}
 	deps, err := solver.ResolveDependencies(bun)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies")
 	}
 
+	dependencies := make([]PrintableDependency, 0, len(deps))
 	for _, dep := range deps {
 		pd := PrintableDependency{}
 		pd.Alias = dep.Alias
@@ -341,9 +345,9 @@ func (p *Porter) printCredentialsExplainTable(bun *PrintableBundle) error {
 			if !ok {
 				return nil
 			}
-			return []interface{}{c.Name, c.Description, c.Required}
+			return []interface{}{c.Name, c.Description, c.Required, c.ApplyTo}
 		}
-	return printer.PrintTable(p.Out, bun.Credentials, printCredRow, "Name", "Description", "Required")
+	return printer.PrintTable(p.Out, bun.Credentials, printCredRow, "Name", "Description", "Required", "Applies To")
 }
 
 func (p *Porter) printParametersExplainBlock(bun *PrintableBundle) error {
