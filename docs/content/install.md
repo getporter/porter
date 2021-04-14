@@ -13,7 +13,7 @@ We have a few release types available for you to use:
 * [Older Version](#older-version)
 
 You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
-porter, and use the [Porter VS Code Extension][vscode-ext] for help author
+porter, and use the [Porter VS Code Extension][vscode-ext] to help author
 bundles.
 
 All the scripts for Porter v0.37.3+ support [customizing the installation through parameters](#install-script-parameters).
@@ -135,7 +135,7 @@ All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugi
 
 # Install Script Parameters
 
-The installation scripts provide the following parameters. Paramters can be specified with environment variables for the macOS and Linux scripts, and on Windows they are named parameters in the script.
+The installation scripts provide the following parameters. Parameters can be specified with environment variables for the macOS and Linux scripts, and on Windows they are named parameters in the script.
 
 ## PORTER_HOME
 

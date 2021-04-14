@@ -23,7 +23,7 @@ credentials:
   - name: client_secret
     env: AZURE_CLIENT_SECRET
 
-## This section defines what paramters are used by the bundle. These parameters are used by various 
+## This section defines what parameters are used by the bundle. These parameters are used by various 
 ## steps within the bundle
 parameters:
   - name: location
