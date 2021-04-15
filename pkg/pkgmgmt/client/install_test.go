@@ -19,11 +19,7 @@ import (
 func TestFileSystem_InstallFromUrl(t *testing.T) {
 	// serve out a fake package
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Azure-DebugInfo") == "" ||
-			!strings.Contains(r.Header.Get("User-Agent"), "porter_trace") {
-			w.WriteHeader(400)
-		}
-		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a mixxin\n")
+		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a random package\n")
 	}))
 	defer ts.Close()
 
@@ -31,17 +27,19 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	p := NewFileSystem(c.Config, "packages")
 
 	opts := pkgmgmt.InstallOptions{
-		Version: "latest",
-		URL:     ts.URL,
+		PackageType: "mixin",
+		Version:     "latest",
+		URL:         ts.URL,
 	}
-	opts.Validate([]string{"mixxin"})
+	err := opts.Validate([]string{"mypkg"})
+	require.NoError(t, err, "Validate failed")
 
-	err := p.Install(opts)
+	err = p.Install(opts)
 	require.NoError(t, err)
 
-	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/mixxin")
+	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/mypkg/mypkg")
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mixxin/runtimes/mixxin-runtime")
+	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mypkg/runtimes/mypkg-runtime")
 	assert.True(t, runtimeExists)
 }
 
@@ -68,10 +66,12 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	p := NewFileSystem(c.Config, "packages")
 
 	opts := pkgmgmt.InstallOptions{
-		Version: "v1.2.4",
-		FeedURL: ts.URL + "/atom.xml",
+		PackageType: "plugin",
+		Version:     "v1.2.4",
+		FeedURL:     ts.URL + "/atom.xml",
 	}
-	opts.Validate([]string{"helm"})
+	err = opts.Validate([]string{"helm"})
+	require.NoError(t, err, "Validate failed")
 
 	err = p.Install(opts)
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 		if strings.Contains(r.RequestURI, "linux-amd64") {
 			w.WriteHeader(400)
 		} else {
-			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a client mixxin\n")
+			fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a client mypkg\n")
 		}
 	}))
 	defer ts.Close()
@@ -97,18 +97,19 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	p := NewFileSystem(c.Config, "packages")
 
 	parentDir, _ := p.GetPackagesDir()
-	pkgDir := path.Join(parentDir, "mixxin")
+	pkgDir := path.Join(parentDir, "mypkg")
 
 	opts := pkgmgmt.InstallOptions{
-		Version: "latest",
-		URL:     ts.URL,
+		PackageType: "mixin",
+		Version:     "latest",
+		URL:         ts.URL,
 	}
-	opts.Validate([]string{"mixxin"})
+	err := opts.Validate([]string{"mypkg"})
+	require.NoError(t, err, "Validate failed")
 
-	err := p.Install(opts)
+	err = p.Install(opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "bad status returned when downloading")
-	assert.Contains(t, err.Error(), "porter_trace_", "The error message should contain our special debug user agent")
 
 	// Make sure the package directory was removed
 	dirExists, _ := p.FileSystem.DirExists(pkgDir)
@@ -121,17 +122,19 @@ func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 
 	packageURL := "https://cdn.porter.sh/mixins/helm"
 	opts := pkgmgmt.InstallOptions{
-		Version: "v1.2.4",
-		URL:     packageURL,
+		PackageType: "plugin",
+		Version:     "v1.2.4",
+		URL:         packageURL,
 	}
 	name := "helm"
-	opts.Validate([]string{name})
+	err := opts.Validate([]string{name})
+	require.NoError(t, err, "Validate failed")
 
 	// ensure cache.json does not exist (yet)
 	cacheExists, _ := p.FileSystem.Exists("/root/.porter/packages/cache.json")
 	assert.False(t, cacheExists)
 
-	err := p.savePackageInfo(opts)
+	err = p.savePackageInfo(opts)
 	require.NoError(t, err)
 
 	// cache.json should have been created
