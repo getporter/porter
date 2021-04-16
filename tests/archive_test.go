@@ -9,12 +9,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
-const wantHash = "7f905d135996e6f5a4d5d5bd028d61e3b1646817679e4d0b2389ba05dc10f743"
 
 func TestArchive(t *testing.T) {
 	t.Parallel()
@@ -24,40 +22,45 @@ func TestArchive(t *testing.T) {
 	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
-	bundleName := p.AddTestBundleDir("../build/testdata/bundles/mysql", false)
-	reference := fmt.Sprintf("localhost:5000/archive-test-%s:v0.1.3", bundleName)
-
-	// Currently, archive requires the bundle to already be published.
-	// https://github.com/getporter/porter/issues/697
-	publishOpts := porter.PublishOptions{}
-	publishOpts.Reference = reference
-	err := publishOpts.Validate(p.Context)
-	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
-
-	err = p.Publish(publishOpts)
-	require.NoError(p.T(), err, "publish of bundle failed")
+	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
+	const reference = "getporter/mysql:v0.1.3"
 
 	// Archive bundle
-	archiveOpts := porter.ArchiveOptions{}
-	archiveOpts.Reference = reference
-	err = archiveOpts.Validate([]string{"mybuns.tgz"}, p.Porter)
+	archive1Opts := porter.ArchiveOptions{}
+	archive1Opts.Reference = reference
+	archiveFile1 := "mybuns1.tgz"
+	err := archive1Opts.Validate([]string{archiveFile1}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
-	err = p.Archive(archiveOpts)
+	err = p.Archive(archive1Opts)
 	require.NoError(p.T(), err, "archival of bundle failed")
 
-	info, err := p.FileSystem.Stat("mybuns.tgz")
+	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
 	require.Equal(p.T(), os.FileMode(0644), info.Mode())
 
-	// Check to be sure the shasum matches expected
-	require.Equal(p.T(), wantHash, getHash(p, "mybuns.tgz"), "shasum of archive does not match expected")
+	hash1 := getHash(p, archiveFile1)
+
+	// Check to be sure the shasum is stable after archiving a second time
+	archive2Opts := porter.ArchiveOptions{}
+	archive2Opts.Reference = reference
+	archiveFile2 := "mybuns2.tgz"
+	err = archive2Opts.Validate([]string{archiveFile2}, p.Porter)
+	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
+
+	err = archive1Opts.Validate([]string{archiveFile2}, p.Porter)
+	require.NoError(t, err, "Second validate failed")
+
+	err = p.Archive(archive2Opts)
+	require.NoError(t, err, "Second archive failed")
+
+	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
 
 	// Publish bundle from archive, with new reference
 	publishFromArchiveOpts := porter.PublishOptions{
-		ArchiveFile: "mybuns.tgz",
+		ArchiveFile: archiveFile1,
 		BundlePullOptions: porter.BundlePullOptions{
-			Reference: fmt.Sprintf("localhost:5000/archived-%s:v0.1.3", bundleName),
+			Reference: fmt.Sprintf("localhost:5000/archived-mysql:v0.1.3"),
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)
