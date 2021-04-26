@@ -16,6 +16,7 @@ RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
 
 GO = GO111MODULE=on go
+LOCAL_PORTER = PORTER_HOME=$(PWD)/bin $(PWD)/bin/porter
 
 # Add ~/go/bin to PATH, works for everything _except_ shell commands
 HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
@@ -155,7 +156,7 @@ build-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),build-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter build
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build
 endif
 
 .PHONY: publish-bundle
@@ -163,7 +164,7 @@ publish-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish --registry $(REGISTRY)
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY)
 endif
 
 SCHEMA_VERSION     := cnab-core-1.0.1
