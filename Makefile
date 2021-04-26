@@ -8,8 +8,6 @@ DUAL_PUBLISH ?= false
 VERSION ?= $(shell git describe --tags --match v* 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match --match v* &> /dev/null && echo latest || echo canary)
 
-export PORTER_HOME = ${CURDIR}/bin
-
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
 CLIENT_GOPATH = $(shell go env GOPATH)
@@ -200,15 +198,8 @@ else
 		ajv test -s /tmp/$(BUNDLE_SCHEMA) -r /tmp/$(DEFINITIONS_SCHEMA) -d .cnab/bundle.json --valid
 endif
 
-install: install-porter install-mixins
-
-install-porter:
-	mkdir -p $(HOME)/.porter
-	cp bin/porter $(HOME)/.porter/
-	cp -R bin/runtimes $(HOME)/.porter/
-
-install-mixins:
-	cp -R bin/mixins $(HOME)/.porter/
+install:
+	go run mage.go install
 
 setup-dco:
 	@scripts/setup-dco/setup.sh

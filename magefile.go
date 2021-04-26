@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"go/build"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,9 +20,11 @@ import (
 
 	// mage:import
 	"get.porter.sh/porter/mage/releases"
+	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
+	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
@@ -294,4 +297,45 @@ func removeContainer(name string) error {
 		return err
 	}
 	return nil
+}
+
+func Install() {
+	porterHome := getPorterHome()
+	fmt.Println("installing Porter from bin to", porterHome)
+
+	// Copy porter binaries
+	mgx.Must(os.MkdirAll(porterHome, 0750))
+	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
+	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
+
+	// Copy mixin binaries
+	mixinsDir := filepath.Join("bin", "mixins")
+	mixinsDirItems, err := ioutil.ReadDir(mixinsDir)
+	mgx.Must(errors.Wrap(err, "could not list mixins in bin"))
+	for _, fi := range mixinsDirItems {
+		if !fi.IsDir() {
+			continue
+		}
+
+		mixin := fi.Name()
+		srcDir := filepath.Join(mixinsDir, mixin)
+		destDir := filepath.Join(porterHome, "mixins", mixin)
+		mgx.Must(os.MkdirAll(destDir, 0750))
+
+		// Copy the mixin client binary
+		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))
+
+		// Copy the mixin runtimes
+		mgx.Must(shx.Copy(filepath.Join(srcDir, "runtimes"), destDir, shx.CopyRecursive))
+	}
+}
+
+func getPorterHome() string {
+	porterHome := os.Getenv("PORTER_HOME")
+	if porterHome == "" {
+		home, err := os.UserHomeDir()
+		mgx.Must(errors.Wrap(err, "could not determine home directory"))
+		porterHome = filepath.Join(home, ".porter")
+	}
+	return porterHome
 }
