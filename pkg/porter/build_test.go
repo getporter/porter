@@ -14,17 +14,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPorter_buildBundle(t *testing.T) {
+func TestPorter_Build(t *testing.T) {
 	p := NewTestPorter(t)
 
 	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
 	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
 
+	// Create some junk in the previous .cnab directory, build should clean it up and not copy it into the bundle
+	junkDir := ".cnab/test/junk"
+	require.NoError(t, p.FileSystem.MkdirAll(junkDir, 0755), "could not create test junk files")
+	junkExists, _ := p.FileSystem.DirExists(junkDir)
+	assert.True(t, junkExists, "failed to create junk files for the test")
+
 	err = p.LoadManifest()
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest")
+	opts := BuildOptions{}
+	require.NoError(t, opts.Validate(p.Context), "Validate failed")
+
+	err = p.Build(opts)
 	require.NoError(t, err)
 
 	bundleJSONExists, err := p.FileSystem.Exists(build.LOCAL_BUNDLE)
@@ -35,6 +44,10 @@ func TestPorter_buildBundle(t *testing.T) {
 	if f.Size() == 0 {
 		t.Fatalf("%s is empty", build.LOCAL_BUNDLE)
 	}
+
+	// Check that the junk files were cleaned up
+	junkExists, _ = p.FileSystem.DirExists(junkDir)
+	assert.False(t, junkExists, "junk files were not cleaned up before building")
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
 	require.NoError(t, err)

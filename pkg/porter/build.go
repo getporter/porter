@@ -45,6 +45,12 @@ func (o *BuildOptions) Validate(cxt *context.Context) error {
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
+	// Start with a fresh .cnab directory before building
+	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
+	if err != nil {
+		return errors.Wrap(err, "could not cleanup generated .cnab directory before building")
+	}
+
 	// Generate Porter's canonical version of the user-provided manifest
 	if err := p.generateInternalManifest(opts); err != nil {
 		return errors.Wrap(err, "unable to generate manifest")

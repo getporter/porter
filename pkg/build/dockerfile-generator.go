@@ -198,9 +198,6 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 }
 
 func (g *DockerfileGenerator) PrepareFilesystem() error {
-	// clean up previously generated files
-	g.FileSystem.Remove(DOCKER_FILE)
-
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")
 
 	runTmpl, err := g.Templates.GetRunScript()

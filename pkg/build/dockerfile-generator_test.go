@@ -278,14 +278,19 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
 
-	dockerfileExists, err := c.FileSystem.Exists("Dockerfile")
+	wantDockerfilePath := ".cnab/Dockerfile"
+	dockerfileExists, err := c.FileSystem.Exists(wantDockerfilePath)
 	require.NoError(t, err)
 	require.True(t, dockerfileExists, "Dockerfile wasn't written")
 
-	f, _ := c.FileSystem.Stat("Dockerfile")
+	f, _ := c.FileSystem.Stat(wantDockerfilePath)
 	if f.Size() == 0 {
 		t.Fatalf("Dockerfile is empty")
 	}
+
+	// Verify that we didn't generate a Dockerfile at the root of the bundle dir
+	oldDockerfilePathExists, _ := c.FileSystem.Exists("Dockerfile")
+	assert.False(t, oldDockerfilePathExists, "expected the Dockerfile to be placed only at .cnab/Dockerfile, not at the root of the bundle directory")
 }
 
 func TestPorter_prepareDockerFilesystem(t *testing.T) {
