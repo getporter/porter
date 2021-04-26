@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -35,7 +36,7 @@ func (b *DockerBuilder) BuildInvocationImage(manifest *manifest.Manifest) error 
 		PullParent:     false,
 		Remove:         true,
 		Tags:           []string{manifest.Image},
-		Dockerfile:     build.DOCKER_FILE,
+		Dockerfile:     filepath.ToSlash(build.DOCKER_FILE),
 		BuildArgs: map[string]*string{
 			"BUNDLE_DIR": &build.BUNDLE_DIR,
 		},
