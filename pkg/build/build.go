@@ -6,7 +6,7 @@ import (
 
 var (
 	// DOCKER_FILE is the file generated before running a docker build.
-	DOCKER_FILE = "Dockerfile"
+	DOCKER_FILE = filepath.Join(LOCAL_CNAB, "Dockerfile")
 
 	// LOCAL_CNAB is the generated directory where porter stages the /cnab directory.
 	LOCAL_CNAB = ".cnab"
