@@ -8,8 +8,6 @@ DUAL_PUBLISH ?= false
 VERSION ?= $(shell git describe --tags --match v* 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match --match v* &> /dev/null && echo latest || echo canary)
 
-export PORTER_HOME = ${CURDIR}/bin
-
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
 CLIENT_GOPATH = $(shell go env GOPATH)
@@ -18,6 +16,7 @@ RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
 
 GO = GO111MODULE=on go
+LOCAL_PORTER = PORTER_HOME=$(PWD)/bin $(PWD)/bin/porter
 
 # Add ~/go/bin to PATH, works for everything _except_ shell commands
 HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
@@ -157,7 +156,7 @@ build-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),build-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter build
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build
 endif
 
 .PHONY: publish-bundle
@@ -165,7 +164,7 @@ publish-bundle:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && ../../bin/porter publish --registry $(REGISTRY)
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY)
 endif
 
 SCHEMA_VERSION     := cnab-core-1.0.1
@@ -200,15 +199,8 @@ else
 		ajv test -s /tmp/$(BUNDLE_SCHEMA) -r /tmp/$(DEFINITIONS_SCHEMA) -d .cnab/bundle.json --valid
 endif
 
-install: install-porter install-mixins
-
-install-porter:
-	mkdir -p $(HOME)/.porter
-	cp bin/porter $(HOME)/.porter/
-	cp -R bin/runtimes $(HOME)/.porter/
-
-install-mixins:
-	cp -R bin/mixins $(HOME)/.porter/
+install:
+	go run mage.go install
 
 setup-dco:
 	@scripts/setup-dco/setup.sh
