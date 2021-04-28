@@ -143,7 +143,8 @@ Location where Porter is installed (defaults to ~/.porter).
 
 **Posix Shells**
 ```bash
-PORTER_HOME=/alt/porter/home curl -L REPLACE_WITH_INSTALL_URL | bash
+export PORTER_HOME=/alt/porter/home
+curl -L REPLACE_WITH_INSTALL_URL | bash
 ```
 
 **PowerShell**
@@ -161,7 +162,8 @@ not alter the contents of these files.
 
 **Posix Shells**
 ```bash
-PORTER_MIRROR=https://example.com/porter curl -L REPLACE_WITH_INSTALL_URL | bash
+export PORTER_MIRROR=https://example.com/porter
+curl -L REPLACE_WITH_INSTALL_URL | bash
 ```
 
 **PowerShell**
