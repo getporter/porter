@@ -31,6 +31,7 @@ type ExecutableStep interface {
 	//GetArguments() puts the arguments at the beginning of the command
 	GetArguments() []string
 	GetFlags() Flags
+	GetWorkingDir() string
 }
 
 type HasOrderedArguments interface {
@@ -113,6 +114,13 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	args = append(args, suffixArgs...)
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
+
+	// ensure command is executed in the correct directory
+	wd := step.GetWorkingDir()
+	if len(wd) > 0 && wd != "." {
+		cmd.Dir = wd
+	}
+
 	prettyCmd := fmt.Sprintf("%s %s", cmd.Dir, strings.Join(cmd.Args, " "))
 
 	// Setup output streams for command
