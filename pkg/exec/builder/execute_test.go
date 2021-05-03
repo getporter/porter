@@ -1,6 +1,9 @@
 package builder
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
@@ -133,4 +136,23 @@ func TestExecuteStep_HasOrderedArguments(t *testing.T) {
 
 	_, err := ExecuteStep(c.Context, step)
 	require.NoError(t, err, "ExecuteStep failed")
+}
+
+func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
+	c := context.NewTestContext(t)
+	c.UseFilesystem()
+	wd, _ := filepath.EvalSymlinks(os.TempDir())
+
+	step := TestOrderedStep{
+		TestStep: TestStep{
+			Command:          "pwd",
+			Arguments:        []string{},
+			WorkingDirectory: wd,
+		},
+		SuffixArguments: []string{},
+	}
+
+	_, err := ExecuteStep(c.Context, step)
+	assert.Equal(t, fmt.Sprintln(wd), c.GetOutput())
+	require.NoError(t, err, "Execute Step failed")
 }

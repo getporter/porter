@@ -99,6 +99,7 @@ type Step struct {
 type Instruction struct {
 	Description     string        `yaml:"description"`
 	Command         string        `yaml:"command"`
+	WorkingDir      string        `yaml:"dir,omitempty"`
 	Arguments       []string      `yaml:"arguments,omitempty"`
 	SuffixArguments []string      `yaml:"suffix-arguments,omitempty"`
 	Flags           builder.Flags `yaml:"flags,omitempty"`
@@ -132,6 +133,10 @@ func (s Step) GetOutputs() []builder.Output {
 		outputs[i] = s.Outputs[i]
 	}
 	return outputs
+}
+
+func (s Step) GetWorkingDir() string {
+	return s.WorkingDir
 }
 
 var _ builder.OutputRegex = Output{}

@@ -11,10 +11,11 @@ import (
 )
 
 type TestStep struct {
-	Command   string
-	Arguments []string
-	Flags     Flags
-	Outputs   []Output
+	Command          string
+	Arguments        []string
+	Flags            Flags
+	Outputs          []Output
+	WorkingDirectory string
 }
 
 func (s TestStep) GetCommand() string {
@@ -23,6 +24,10 @@ func (s TestStep) GetCommand() string {
 
 func (s TestStep) GetArguments() []string {
 	return s.Arguments
+}
+
+func (s TestStep) GetWorkingDir() string {
+	return s.WorkingDirectory
 }
 
 func (s TestStep) GetFlags() Flags {
