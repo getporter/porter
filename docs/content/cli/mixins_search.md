@@ -11,6 +11,8 @@ Search available mixins
 
 Search available mixins. You can specify an optional mixin name query, where the results are filtered by mixins whose name contains the query term.
 
+By default the community mixin index at https://cdn.porter.sh/mixins/index.json is searched. To search from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.
+
 ```
 porter mixins search [QUERY] [flags]
 ```
@@ -27,6 +29,7 @@ porter mixins search [QUERY] [flags]
 
 ```
   -h, --help            help for search
+      --mirror string   Mirror of official Porter assets (default "https://cdn.porter.sh")
   -o, --output string   Output format, allowed values are: table, json, yaml (default "table")
 ```
 

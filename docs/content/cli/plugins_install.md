@@ -9,7 +9,9 @@ Install a plugin
 
 ### Synopsis
 
-Install a plugin
+Install a plugin.
+
+By default plugins are downloaded from the official Porter plugin feed at https://cdn.porter.sh/plugins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.
 
 ```
 porter plugins install NAME [flags]
@@ -28,8 +30,9 @@ porter plugins install NAME [flags]
 ### Options
 
 ```
-      --feed-url string   URL of an atom feed where the plugin can be downloaded (default https://cdn.porter.sh/plugins/atom.xml)
+      --feed-url string   URL of an atom feed where the plugin can be downloaded. Defaults to the official Porter plugin feed.
   -h, --help              help for install
+      --mirror string     Mirror of official Porter assets (default "https://cdn.porter.sh")
       --url string        URL from where the plugin can be downloaded, for example https://github.com/org/proj/releases/downloads
   -v, --version string    The plugin version. This can either be a version number, or a tagged release like 'latest' or 'canary' (default "latest")
 ```
