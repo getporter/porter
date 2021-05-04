@@ -3,9 +3,10 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
-	// porterops branch includes:
-	// jsonschema-lock: https://github.com/cnabio/cnab-go/pull/237
-	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.16.1-0.20210310211153-4776ad6d80b0
+	// This points to a tag off of the porter branch. This branch has whatever unmerged PRs that are currently
+	// outstanding. The tagging scheme is LATEST_TAG_FROM_CNABGO-porter.N where N allows for us to make multiple
+	// tags based on the same underlying version of cnab-go.
+	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.19.0-porter.1
 
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
@@ -32,7 +33,7 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.15.0
+	github.com/cnabio/cnab-go v0.19.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 // indirect
 	github.com/containerd/containerd v1.3.0
