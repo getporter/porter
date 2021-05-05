@@ -215,8 +215,8 @@ stages:
           - bash: |
               set -e
               sudo make ajv
-              make build-bundle validate-bundle
-            displayName: "Validate Examples"
+              make build-examples validate-examples
+            displayName: "Build Example Bundles"
           - task: Docker@1
             displayName: Docker Login
             inputs:

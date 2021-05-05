@@ -151,18 +151,26 @@ endef
 
 EXAMPLES_DIR := examples
 
-.PHONY: build-bundle
-build-bundle:
+.PHONY: lint-examples
+lint-examples:
 ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),build-bundle)
+	$(call all-bundles,$(EXAMPLES_DIR),lint-examples)
+else
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) lint
+endif
+
+.PHONY: build-examples
+build-examples:
+ifndef BUNDLE
+	$(call all-bundles,$(EXAMPLES_DIR),build-examples)
 else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build
 endif
 
-.PHONY: publish-bundle
-publish-bundle:
+.PHONY: publish-examples
+publish-examples:
 ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),publish-bundle)
+	$(call all-bundles,$(EXAMPLES_DIR),publish-examples)
 else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY)
 endif
@@ -191,9 +199,9 @@ ifndef HAS_AJV
 endif
 
 .PHONY: validate-bundle
-validate-bundle: fetch-schemas ajv
+validate-examples: fetch-schemas ajv
 ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),validate-bundle)
+	$(call all-bundles,$(EXAMPLES_DIR),validate-examples)
 else
 	cd $(EXAMPLES_DIR)/$(BUNDLE) && \
 		ajv test -s /tmp/$(BUNDLE_SCHEMA) -r /tmp/$(DEFINITIONS_SCHEMA) -d .cnab/bundle.json --valid

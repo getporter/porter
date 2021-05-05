@@ -102,11 +102,8 @@ stages:
               path: bin
           - script: go run mage.go SetBinExecutable
             displayName: "Setup Bin"
-          - bash: |
-              set -e
-              sudo make ajv
-              make build-bundle validate-bundle
-            displayName: "Validate Examples"
+          - bash: make lint-examples
+            displayName: "Lint Examples"
       - job: build_docker
         dependsOn: xbuild
         steps:
