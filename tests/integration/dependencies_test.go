@@ -1,6 +1,6 @@
 // +build integration
 
-package tests
+package integration
 
 import (
 	"io/ioutil"

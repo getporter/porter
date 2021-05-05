@@ -1,4 +1,4 @@
-package e2e
+package smoke
 
 import (
 	"io/ioutil"
@@ -27,7 +27,7 @@ type Test struct {
 	T *testing.T
 }
 
-// NewTest sets up for an e2e test.
+// NewTest sets up for an smoke test.
 //
 // Always defer Test.Teardown(), even when an error is returned.
 func NewTest(t *testing.T) (Test, error) {

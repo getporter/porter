@@ -396,7 +396,7 @@ to make sure there aren't any regressions.
 
 ```
 make test-unit
-mage teste2e
+mage testSmoke
 ```
 
 [unit tests]: /contribute/#unit-tests

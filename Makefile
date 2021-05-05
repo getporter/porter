@@ -79,7 +79,7 @@ get-mixins:
 verify:
 	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
 
-test: clean-last-testrun build test-unit test-integration teste2e
+test: clean-last-testrun build test-unit test-integration test-smoke
 
 test-unit:
 	$(GO) test ./...
@@ -88,8 +88,8 @@ test-integration: clean-last-testrun start-local-docker-registry
 	$(GO) build -o bin/testplugin ./cmd/testplugin
 	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
 
-teste2e:
-	go run mage.go teste2e
+test-smoke:
+	go run mage.go testSmoke
 
 .PHONY: docs
 docs:

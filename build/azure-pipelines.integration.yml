@@ -1,0 +1,62 @@
+# Run integration tests
+# /azp run porter-integration
+
+# Only test canary builds
+trigger:
+  branches:
+    include:
+      - refs/heads/main
+
+# Only test a PR when a smoke test or the runtime has changed
+pr:
+  autoCancel: true # Cancel an outdated build when people push new changes to their PR
+  drafts: false # Wait to test until they have marked it as ready for review
+  paths:
+    include:
+      - build/azure-pipelines.integration.yaml
+      - tests/smoke/*
+      - pkg/cnab/*
+      - pkg/runtime/*
+
+pool:
+  vmImage: "Ubuntu 16.04"
+
+variables:
+  GOVERSION: "1.13.10"
+
+jobs:
+  - job: build
+    displayName: "Compile"
+    steps:
+      - task: GoTool@0
+        displayName: "Set Go Version"
+        inputs:
+          version: "$(GOVERSION)"
+      - script: go run mage.go ConfigureAgent
+        displayName: "Configure Agent"
+      - bash: make build
+        displayName: "Native Build"
+      - task: PublishPipelineArtifact@0
+        displayName: "Publish Native Binaries"
+        inputs:
+          targetPath: $(System.DefaultWorkingDirectory)/bin
+          archiveFilePatterns: "**"
+          artifactName: "build-bin"
+  - job: integration_test
+    displayName: "Integration Test"
+    dependsOn: build
+    steps:
+      - task: DownloadPipelineArtifact@2
+        displayName: "Download Bin"
+        inputs:
+          source: current
+          artifact: build-bin
+          path: bin
+      - task: GoTool@0
+        displayName: "Set Go Version"
+        inputs:
+          version: "$(GOVERSION)"
+      - script: go run mage.go ConfigureAgent SetBinExecutable
+        displayName: "Configure Agent"
+      - bash: ./build/run-integration-tests.sh
+        displayName: "Integration Test"

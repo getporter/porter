@@ -260,10 +260,11 @@ Below are the targets that have been migrated to mage. Our new contributor
 tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
-it easier to read. You can run either `mage TestE2E` or `mage teste2e` for
+it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
-* **TestE2E** runs a small suite of end-to-end tests using the Porter CLI.
+* **TestSmoke** runs a small suite of tests using the Porter CLI to validate
+  that Porter is (mostly) working.
 
 ### Make Targets
 
@@ -335,16 +336,16 @@ we have scripts that you can use, like `mage StartDockerRegistry` or
 
 Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
 
-### End to End Tests
+### Smoke Tests
 
 ```
-mage teste2e
+mage testSmoke
 ```
 
-End to End tests test Porter using the cli and are used as smoke tests that
-should quickly identify big problems with a build that would make it unusable.
+Smoke tests test Porter using the CLI and quickly identify big problems with a
+build that would make it unusable.
 
-Short! We want this to always be something you can run in about 1-3 minutes.
+Short! We want this to always be something you can run in under 3 minutes.
 
 
 ## Install mixins

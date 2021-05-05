@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - refs/tags/v*
+      - refs/heads/main
 
 # Do not run on pull requests
 pr: none
@@ -9,7 +9,7 @@ pr: none
 extends:
   template: azure-pipelines.release-template.yml
   parameters:
-    skipTests: true
+    skipTests: false
     shouldPublish: true
     dualPublish: true
     registry: docker.io/getporter
