@@ -7,7 +7,7 @@ author: "@carolynvs"
 authorlink: "https://twitter.com/carolynvs"
 authorimage: "https://github.com/carolynvs.png"
 tags: ["docker", "docker-app"]
-image: "images/porter-with-docker-twitter-card.png"
+image: "images/migrate-from-docker-app-twitter-card.png"
 summary: | 
   Docker recently announced that they are no longer developing Docker App, and that you should migrate to Porter to continue using your app and work with it like you do today. Let's walk through how to migrate your Docker App to Porter.
 ---
