@@ -35,5 +35,5 @@ jobs:
         displayName: "Configure Agent"
       - bash: make build
         displayName: "Native Build"
-      - bash: ./build/run-integration-tests.sh
+      - bash: mage TestIntegration
         displayName: "Integration Test"

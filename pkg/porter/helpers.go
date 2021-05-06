@@ -94,7 +94,8 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
-	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
+	binDir := p.TestConfig.TestContext.FindBinDir()
+	p.AddTestFile(filepath.Join(binDir, "../build/testdata/schema.json"), filepath.Join(homeDir, "schema.json"))
 	kubeconfig := p.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := p.Getenv("HOME")

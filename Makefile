@@ -84,9 +84,8 @@ test: clean-last-testrun build test-unit test-integration test-smoke
 test-unit:
 	$(GO) test ./...
 
-test-integration: clean-last-testrun start-local-docker-registry
-	$(GO) build -o bin/testplugin ./cmd/testplugin
-	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
+test-integration:
+	go run mage.go TestIntegration
 
 test-smoke:
 	go run mage.go testSmoke

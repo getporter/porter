@@ -278,6 +278,15 @@ func StopDockerRegistry() error {
 	return nil
 }
 
+// Run integration tests (slow).
+func TestIntegration() {
+	mg.Deps(StartDockerRegistry())
+
+	os.Setenv("GO111MODULE", "on")
+	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+	must.Command("go", "test", "-timeout=30m", "-tags=integration", "./...")
+}
+
 func isContainerRunning(name string) bool {
 	out, _ := shx.OutputS("docker", "container", "inspect", "-f", "{{.State.Running}}", name)
 	running, _ := strconv.ParseBool(out)
