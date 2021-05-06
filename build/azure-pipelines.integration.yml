@@ -24,8 +24,8 @@ variables:
   GOVERSION: "1.13.10"
 
 jobs:
-  - job: build
-    displayName: "Compile"
+  - job: integration_test
+    displayName: "Integration Test"
     steps:
       - task: GoTool@0
         displayName: "Set Go Version"
@@ -35,27 +35,5 @@ jobs:
         displayName: "Configure Agent"
       - bash: make build
         displayName: "Native Build"
-      - task: PublishPipelineArtifact@0
-        displayName: "Publish Native Binaries"
-        inputs:
-          targetPath: $(System.DefaultWorkingDirectory)/bin
-          archiveFilePatterns: "**"
-          artifactName: "build-bin"
-  - job: integration_test
-    displayName: "Integration Test"
-    dependsOn: build
-    steps:
-      - task: DownloadPipelineArtifact@2
-        displayName: "Download Bin"
-        inputs:
-          source: current
-          artifact: build-bin
-          path: bin
-      - task: GoTool@0
-        displayName: "Set Go Version"
-        inputs:
-          version: "$(GOVERSION)"
-      - script: go run mage.go ConfigureAgent SetBinExecutable
-        displayName: "Configure Agent"
       - bash: ./build/run-integration-tests.sh
         displayName: "Integration Test"
