@@ -1,0 +1,41 @@
+name: my-docker-app
+version: 0.1.0
+description: My amazing docker app
+registry: carolynvs
+
+required:
+- docker:
+    privileged: false # Change to true if you need privileged containers
+
+parameters:
+- name: hello_text
+  type: string
+  env: hello_text
+  default: hello from porter
+- name: hello_port
+  type: integer
+  env: hello_port
+  default: 8080
+- name: context
+  type: string
+  default: default
+
+mixins:
+- docker-compose
+
+install:
+- docker-compose:
+    arguments:
+    - up
+    - -d
+
+upgrade:
+- docker-compose:
+    arguments:
+    - up
+    - -d
+
+uninstall:
+- docker-compose:
+    arguments:
+    - down
