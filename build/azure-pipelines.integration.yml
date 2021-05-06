@@ -10,7 +10,6 @@ trigger:
 # Only test a PR when a smoke test or the runtime has changed
 pr:
   autoCancel: true # Cancel an outdated build when people push new changes to their PR
-  drafts: false # Wait to test until they have marked it as ready for review
   paths:
     include:
       - build/azure-pipelines.integration.yaml
