@@ -7,13 +7,17 @@ author: "@carolynvs"
 authorlink: "https://twitter.com/carolynvs"
 authorimage: "https://github.com/carolynvs.png"
 tags: ["docker", "docker-app"]
+image: "images/porter-with-docker-twitter-card.png"
+summary: | 
+  Docker recently announced that they are no longer developing Docker App, and that you should migrate to Porter to continue using your app and work with it like you do today. Let's walk through how to migrate your Docker App to Porter.
 ---
+
+<img src="/images/porter-with-docker.png" width="250px" align="right"/>
 
 Welcome Docker App users! 🎉
 Docker recently [announced] that they are no longer developing Docker App, and that you should migrate to Porter to continue using your app (bundle) and work with it like you do today.
 Let's walk through how to migrate your Docker App to Porter.
 
-<!--more-->
 
 Docker App under the hood has always created and deployed Cloud Native Application Bundles, though you may not have realized it.
 Porter also supports creating bundles, publishing them to OCI registries, and managing the application lifecycle with install, upgrade and uninstall commands.
