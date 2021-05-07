@@ -232,8 +232,8 @@ func (c *TestContext) FindBinDir() string {
 func (c *TestContext) findRepoFile(wantFile string) string {
 	d := c.GetTestDefinitionDirectory()
 	for {
-		if binDir, ok := c.hasChildDir(d, wantFile); ok {
-			return binDir
+		if foundFile, ok := c.hasChild(d, wantFile); ok {
+			return foundFile
 		}
 
 		d = filepath.Dir(d)
@@ -243,13 +243,13 @@ func (c *TestContext) findRepoFile(wantFile string) string {
 	}
 }
 
-func (c *TestContext) hasChildDir(dir string, child string) (string, bool) {
+func (c *TestContext) hasChild(dir string, childName string) (string, bool) {
 	children, err := ioutil.ReadDir(dir)
 	if err != nil {
 		c.T.Fatal(err)
 	}
 	for _, child := range children {
-		if child.Name() == "bin" {
+		if child.Name() == childName {
 			return filepath.Join(dir, child.Name()), true
 		}
 	}
