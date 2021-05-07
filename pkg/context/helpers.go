@@ -249,7 +249,7 @@ func (c *TestContext) hasChildDir(dir string, child string) (string, bool) {
 		c.T.Fatal(err)
 	}
 	for _, child := range children {
-		if child.IsDir() && child.Name() == "bin" {
+		if child.Name() == "bin" {
 			return filepath.Join(dir, child.Name()), true
 		}
 	}
