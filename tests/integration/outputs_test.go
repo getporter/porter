@@ -4,6 +4,7 @@ package integration
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -81,7 +82,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	p.AddTestBundleDir("../examples/exec-outputs", true)
+	p.AddTestBundleDir(filepath.Join(p.RepoDir, "examples/exec-outputs"), true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)

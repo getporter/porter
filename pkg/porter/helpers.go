@@ -39,6 +39,10 @@ type TestPorter struct {
 
 	// directory where the integration test is being executed
 	BundleDir string
+
+	// root of the repository
+	// Helps us avoid hard coding relative paths from test directories, which easily break when tests are moved
+	RepoDir string
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -49,6 +53,9 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProvider(t)
 	testRegistry := cnabtooci.NewTestRegistry()
+
+	binDir := tc.TestContext.FindBinDir()
+	repoDir, _ := filepath.Abs(filepath.Dir(binDir))
 
 	p := New()
 	p.Config = tc.Config
@@ -70,6 +77,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestParameters:  &testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
+		RepoDir:         repoDir,
 	}
 }
 
@@ -94,14 +102,13 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
-	binDir := p.TestConfig.TestContext.FindBinDir()
-	p.AddTestFile(filepath.Join(binDir, "../build/testdata/schema.json"), filepath.Join(homeDir, "schema.json"))
+	p.AddTestFile(filepath.Join(p.RepoDir, "build/testdata/schema.json"), filepath.Join(homeDir, "schema.json"))
 	kubeconfig := p.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := p.Getenv("HOME")
 		kubeconfig = filepath.Join(home, ".kube/config")
 	}
-	ciCredsPath := filepath.Join(binDir, "../build/testdata/credentials/ci.json")
+	ciCredsPath := filepath.Join(p.RepoDir, "build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
