@@ -101,7 +101,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 		home := p.Getenv("HOME")
 		kubeconfig = filepath.Join(home, ".kube/config")
 	}
-	ciCredsPath := filepath.Join(p.TestDir, "../build/testdata/credentials/ci.json")
+	ciCredsPath := filepath.Join(binDir, "../build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
