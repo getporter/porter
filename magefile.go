@@ -280,7 +280,7 @@ func StopDockerRegistry() error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(StartDockerRegistry())
+	mg.Deps(StartDockerRegistry)
 
 	os.Setenv("GO111MODULE", "on")
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
