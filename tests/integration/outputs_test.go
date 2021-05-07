@@ -82,7 +82,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	p.AddTestBundleDir(filepath.Join(p.RepoDir, "examples/exec-outputs"), true)
+	p.AddTestBundleDir(filepath.Join(p.RepoRoot, "examples/exec-outputs"), true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)

@@ -217,31 +217,41 @@ func (c *TestContext) ClearOutputs() {
 	c.capturedErr.Truncate(0)
 }
 
+// FindRepoRoot returns the path to the porter repository where the test is currently running
+func (c *TestContext) FindRepoRoot() string {
+	goMod := c.findRepoFile("go.mod")
+	return filepath.Dir(goMod)
+}
+
+// FindBinDir returns the path to the bin directory of the repository where the test is currently running
 func (c *TestContext) FindBinDir() string {
-	var binDir string
+	return c.findRepoFile("bin")
+}
+
+// Finds a file in the porter repository, does not use the mock filesystem
+func (c *TestContext) findRepoFile(wantFile string) string {
 	d := c.GetTestDefinitionDirectory()
 	for {
-		binDir = c.getBinDir(d)
-		if binDir != "" {
+		if binDir, ok := c.hasChildDir(d, wantFile); ok {
 			return binDir
 		}
 
 		d = filepath.Dir(d)
 		if d == "." || d == "" || d == filepath.Dir(d) {
-			c.T.Fatal("could not find the bin directory")
+			c.T.Fatalf("could not find %s", wantFile)
 		}
 	}
 }
 
-func (c *TestContext) getBinDir(dir string) string {
+func (c *TestContext) hasChildDir(dir string, child string) (string, bool) {
 	children, err := ioutil.ReadDir(dir)
 	if err != nil {
 		c.T.Fatal(err)
 	}
 	for _, child := range children {
 		if child.IsDir() && child.Name() == "bin" {
-			return filepath.Join(dir, child.Name())
+			return filepath.Join(dir, child.Name()), true
 		}
 	}
-	return ""
+	return "", false
 }
