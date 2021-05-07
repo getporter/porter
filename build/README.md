@@ -10,7 +10,7 @@ See all Porter related [pipelines across all repositories](https://dev.azure.com
 Our pipeline is broken into a few discrete builds so that we can control how and when they are triggered:
 
 * **porter-release: azure-pipelines.release.yml**: Publishes tagged releases. Does not run tests.
-  This can be tested in a pull request using `/azp run porter-test-release`.
+  This can be tested in a pull request using `/azp run test-porter-release`.
   [View Latest Builds](https://dev.azure.com/getporter/porter/_build?definitionId=2)
 * **porter-canary: azure-pipelines.canary.yml**: Validates canary releases, running the full test suite.
   [View Latest Builds](https://dev.azure.com/getporter/porter/_build?definitionId=26)
