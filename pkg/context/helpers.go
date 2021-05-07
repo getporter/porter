@@ -227,7 +227,7 @@ func (c *TestContext) FindBinDir() string {
 		}
 
 		d = filepath.Dir(d)
-		if d == "." || d == "" {
+		if d == "." || d == "" || d == filepath.Dir(d) {
 			c.T.Fatal("could not find the bin directory")
 		}
 	}
