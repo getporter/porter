@@ -6,10 +6,22 @@ trigger:
 # Do not run on pull requests
 pr: none
 
+parameters:
+  - name: shouldPublish
+    type: boolean
+    default: true
+  - name: skipTests
+    type: boolean
+    default: false
+  - name: publishExamples
+    type: boolean
+    default: false
+
 extends:
   template: azure-pipelines.release-template.yml
   parameters:
-    skipTests: false
-    shouldPublish: true
+    skipTests: ${{parameters.skipTests}}
+    shouldPublish: ${{parameters.shouldPublish}}
+    publishExamples: ${{parameters.publishExamples}}
     dualPublish: true
     registry: docker.io/getporter
