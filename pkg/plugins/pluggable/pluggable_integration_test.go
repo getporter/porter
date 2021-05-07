@@ -24,7 +24,8 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		require.NoError(t, err, "could not create plugin dir")
 
 		// testplugin binary will be in bin. refer "test-integration" in Makefile
-		err = exec.Command("cp", path.Join(c.Getenv("PROJECT_ROOT"), "bin", pluginName), path.Join(pluginsPath, pluginName)).Run()
+		binDir := c.TestContext.FindBinDir()
+		err = exec.Command("cp", path.Join(binDir, pluginName), path.Join(pluginsPath, pluginName)).Run()
 		require.NoError(t, err, "could not copy test binary")
 
 		cfg := PluginTypeConfig{
