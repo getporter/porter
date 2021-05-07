@@ -284,7 +284,7 @@ func TestIntegration() {
 
 	os.Setenv("GO111MODULE", "on")
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
-	must.Command("go", "test", "-timeout=30m", "-tags=integration", "./...")
+	must.RunV("go", "test", "-timeout=30m", "-tags=integration", "./...")
 }
 
 func isContainerRunning(name string) bool {
