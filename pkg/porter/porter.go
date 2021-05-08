@@ -1,7 +1,7 @@
 package porter
 
 import (
-	buildprovider "get.porter.sh/porter/pkg/build/provider"
+	buildprovider "get.porter.sh/porter/pkg/build/docker"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
