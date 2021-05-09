@@ -180,7 +180,10 @@ func (p *TestPorter) RandomString(len int) string {
 // AddTestBundleDir into the test bundle directory and give it a unique name
 // to avoid collisions with other tests running in parallel.
 func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool) string {
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, bundleDir), p.BundleDir)
+	if !filepath.IsAbs(bundleDir) {
+		bundleDir = filepath.Join(p.TestDir, bundleDir)
+	}
+	p.TestConfig.TestContext.AddTestDirectory(bundleDir, p.BundleDir)
 
 	testManifest := filepath.Join(p.BundleDir, config.Name)
 	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
