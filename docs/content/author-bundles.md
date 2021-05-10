@@ -357,11 +357,12 @@ See [dependencies](/dependencies/) for more details on how Porter handles depend
 
 ```yaml
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.0
-    parameters:
-      database_name: wordpress
-      mysql_user: wordpress
+  requires:
+    - name: mysql
+        reference: getporter/mysql:v0.1.0
+        parameters:
+        database_name: wordpress
+        mysql_user: wordpress
 ```
 
 * `name`: A short name for the dependent bundle that is used to reference the dependent bundle elsewhere in the bundle.
