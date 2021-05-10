@@ -70,7 +70,7 @@ type Manifest struct {
 
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies []*Dependency         `yaml:"dependencies,omitempty"`
+	Dependencies *Dependencies         `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
@@ -124,10 +124,12 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 		}
 	}
 
-	for _, dep := range m.Dependencies {
-		err = dep.Validate(cxt)
-		if err != nil {
-			result = multierror.Append(result, err)
+	if m.Dependencies != nil {
+		for _, dep := range m.Dependencies.RequiredDependencies {
+			err = dep.Validate(cxt)
+			if err != nil {
+				result = multierror.Append(result, err)
+			}
 		}
 	}
 
@@ -573,7 +575,11 @@ func (mi *MappedImage) Validate() error {
 	return nil
 }
 
-type Dependency struct {
+type Dependencies struct {
+	RequiredDependencies []*RequiredDependency `yaml:"requires,omitempty"`
+}
+
+type RequiredDependency struct {
 	Name string `yaml:"name"`
 
 	// Reference is the full bundle reference for the dependency
@@ -589,7 +595,7 @@ type Dependency struct {
 	Parameters       map[string]string `yaml:"parameters,omitempty"`
 }
 
-func (d *Dependency) Validate(cxt *context.Context) error {
+func (d *RequiredDependency) Validate(cxt *context.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
 	}

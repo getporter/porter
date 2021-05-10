@@ -4,18 +4,19 @@ description: "An example Porter configuration"
 registry: getporter
 
 dependencies:
-  - name: mysql
-    reference: "getporter/azure-mysql:5.7"
-  - name: ad
-    reference: "getporter/azure-active-directory"
-    prereleases: true
-  - name: storage
-    reference: "getporter/azure-blob-storage"
-    versions:
-      - 1.x - 2
-      - 2.1 - 3.x
-  - name: dep-with-tag
-    tag: "getporter/dep-bun:v0.1.0"
+  requires:
+    - name: mysql
+      reference: "getporter/azure-mysql:5.7"
+    - name: ad
+      reference: "getporter/azure-active-directory"
+      prereleases: true
+    - name: storage
+      reference: "getporter/azure-blob-storage"
+      versions:
+        - 1.x - 2
+        - 2.1 - 3.x
+    - name: dep-with-tag
+      tag: "getporter/dep-bun:v0.1.0"
 
 mixins:
   - exec

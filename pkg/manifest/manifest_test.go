@@ -97,11 +97,11 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 	assert.NotNil(t, m)
 
-	nginxDep := m.Dependencies[0]
+	nginxDep := m.Dependencies.RequiredDependencies[0]
 	assert.Equal(t, "nginx", nginxDep.Name)
 	assert.Equal(t, "localhost:5000/nginx:1.19", nginxDep.Reference)
 
-	mysqlDep := m.Dependencies[1]
+	mysqlDep := m.Dependencies.RequiredDependencies[1]
 	assert.Equal(t, "mysql", mysqlDep.Name)
 	assert.Equal(t, "getporter/azure-mysql:5.7", mysqlDep.Reference)
 	assert.Len(t, mysqlDep.Parameters, 1)

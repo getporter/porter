@@ -85,8 +85,12 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies))
-	for _, dep := range m.Dependencies {
+	if m.Dependencies == nil {
+		m.bundles = make(map[string]bundle.Bundle, 0)
+		return nil
+	}
+	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies.RequiredDependencies))
+	for _, dep := range m.Dependencies.RequiredDependencies {
 		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
 		if err != nil {
 			return err
