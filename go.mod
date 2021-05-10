@@ -1,6 +1,6 @@
 module get.porter.sh/porter
 
-go 1.13
+go 1.16
 
 replace (
 	// This points to a tag off of the porter branch. This branch has whatever unmerged PRs that are currently
@@ -47,7 +47,6 @@ require (
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/gogo/googleapis v1.3.2 // indirect
 	github.com/google/go-containerregistry v0.0.0-20191015185424-71da34e4d9b3
 	github.com/gorilla/mux v1.7.4 // indirect

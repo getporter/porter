@@ -293,9 +293,7 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
 * `build-porter-client` just builds the porter client for your operating system.
   It does not build the porter-runtime binary. Useful when you just want to do a
   build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime. It does not clean up
-  generated files created by packr, so you usually want to also run
-  `clean-packr`.
+* `build-porter` builds both the porter client and runtime.
 * `install-porter` installs porter from source into your home directory **$(HOME)/.porter**.
 * `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
   This is useful when you are working on the exec or kubernetes mixin.
@@ -304,9 +302,6 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.
-* `clean-packr` removes extra packr files that were a side-effect of the build.
-  Normally this is run automatically but if you run into issues with packr, 
-  run this command.
 * `setup-dco` installs a git commit hook that automatically signsoff your commit
   messages per the DCO requirement.
 
@@ -483,7 +478,6 @@ dependency injection and testing strategies.
     * **provider**: handles communicating with mixins
   * **porter**: the implementation of the porter commands. Every command in Porter
     has a corresponding function in here.
-      packr
     * **version**: reusable library used by all the mixins for implementing their
   * **templates**: files that need to be compiled into the porter binary with
       version command.

@@ -1,5 +1,3 @@
-//go:generate packr2
-
 package porter
 
 import (

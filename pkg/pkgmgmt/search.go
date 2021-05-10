@@ -11,12 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Searcher contains a packr.Box containing a searchable list of packages
+// Searcher can locate a mixin or plugin from the community feeds.
 type Searcher struct {
 	List PackageList
 }
 
-// NewSearcher returns a Searcher with the provided packr.Box
+// NewSearcher creates a new Searcher from a package distribution list.
 func NewSearcher(list PackageList) Searcher {
 	return Searcher{
 		List: list,

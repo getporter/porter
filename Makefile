@@ -36,42 +36,25 @@ endif
 INT_MIXINS = exec
 
 .PHONY: build
-build: build-porter docs-gen build-mixins clean-packr get-mixins
+build: build-porter docs-gen build-mixins get-mixins
 
-build-porter: generate
+build-porter:
 	$(MAKE) $(MAKE_OPTS) build MIXIN=porter -f mixin.mk BINDIR=bin
 
-build-porter-client: generate
+build-porter-client:
 	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk BINDIR=bin
-	$(MAKE) $(MAKE_OPTS) clean-packr
 
 build-mixins: $(addprefix build-mixin-,$(INT_MIXINS))
-build-mixin-%: generate
+build-mixin-%:
 	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
-
-generate: packr2
-	$(GO) mod tidy
-	$(GO) generate ./...
-
-HAS_PACKR2 := $(shell command -v packr2)
-HAS_GOBIN_IN_PATH := $(shell re='(:|^)$(CLIENT_GOPATH)/bin/?(:|$$)'; if [[ "$${PATH}" =~ $${re} ]];then echo $${GOPATH}/bin;fi)
-packr2:
-ifndef HAS_PACKR2
-ifndef HAS_GOBIN_IN_PATH
-	$(error "$(CLIENT_GOPATH)/bin is not in path and packr2 is not installed. Install packr2 or add "$(CLIENT_GOPATH)/bin to your path")
-endif
-	curl -SLo /tmp/packr.tar.gz https://github.com/gobuffalo/packr/releases/download/v2.6.0/packr_2.6.0_$(CLIENT_PLATFORM)_$(CLIENT_ARCH).tar.gz
-	cd /tmp && tar -xzf /tmp/packr.tar.gz
-	install /tmp/packr2 $(CLIENT_GOPATH)/bin/
-endif
 
 xbuild-all: xbuild-porter xbuild-mixins
 
-xbuild-porter: generate
+xbuild-porter:
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
 
 xbuild-mixins: $(addprefix xbuild-mixin-,$(INT_MIXINS))
-xbuild-mixin-%: generate
+xbuild-mixin-%:
 	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=$* -f mixin.mk
 
 get-mixins:
@@ -217,11 +200,3 @@ clean:
 	go run mage.go clean
 
 
-
-clean-packr: packr2
-	cd cmd/porter && packr2 clean
-	cd pkg/porter && packr2 clean
-	cd pkg/pkgmgmt/feed && packr2 clean
-	$(foreach MIXIN, $(INT_MIXINS), \
-		`cd pkg/$(MIXIN) && packr2 clean`; \
-	)

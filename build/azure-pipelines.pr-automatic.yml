@@ -11,7 +11,7 @@ pool:
   vmImage: "Ubuntu 16.04"
 
 variables:
-  GOVERSION: "1.13.10"
+  GOVERSION: "1.16"
 
 stages:
   - stage: Setup
