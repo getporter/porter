@@ -4,6 +4,8 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger: none
+pr:
+  autoCancel: true
 
 pool:
   vmImage: "Ubuntu 16.04"
@@ -72,24 +74,6 @@ stages:
             displayName: "Verify"
           - bash: make test-unit
             displayName: "Unit Test"
-      - job: integration_test
-        displayName: "Integration Test"
-        dependsOn: build
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Bin"
-            inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - task: GoTool@0
-            displayName: "Set Go Version"
-            inputs:
-              version: "$(GOVERSION)"
-          - script: go run mage.go ConfigureAgent SetBinExecutable
-            displayName: "Configure Agent"
-          - bash: ./build/run-integration-tests.sh
-            displayName: "Integration Test"
       - job: build_examples
         displayName: "Build Examples"
         dependsOn: build
@@ -120,8 +104,8 @@ stages:
             displayName: "Setup Bin"
           - script: make build-images
             displayName: "Build Docker Images"
-      - job: e2e_test
-        displayName: "Run E2E tests on"
+      - job: smoke_test
+        displayName: "Run smoke tests on"
         dependsOn: xbuild
         strategy:
           matrix:
@@ -147,5 +131,5 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Configure Agent"
-          - script: mage TestE2E
-            displayName: "Run E2E Tests"
+          - script: mage TestSmoke
+            displayName: "Run Smoke Tests"

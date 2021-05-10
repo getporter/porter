@@ -104,18 +104,18 @@ func porter(args ...string) shx.PreparedCommand {
 	return p
 }
 
-// Run end-to-end (e2e) tests
-func TestE2E() error {
+// Run smoke tests to quickly check if Porter is broken
+func TestSmoke() error {
 	mg.Deps(StartDockerRegistry)
 	defer StopDockerRegistry()
 
-	// Only do verbose output of tests when called with `mage -v TestE2E`
+	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
 	if mg.Verbose() {
 		v = "-v"
 	}
 
-	return shx.Command("go", "test", "-tags", "e2e", v, "./tests/e2e/...").CollapseArgs().RunV()
+	return shx.Command("go", "test", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
 // Publish the porter binaries and install scripts.
@@ -276,6 +276,15 @@ func StopDockerRegistry() error {
 		return removeContainer(registryContainer)
 	}
 	return nil
+}
+
+// Run integration tests (slow).
+func TestIntegration() {
+	mg.Deps(StartDockerRegistry)
+
+	os.Setenv("GO111MODULE", "on")
+	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+	must.RunV("go", "test", "-timeout=30m", "-tags=integration", "./...")
 }
 
 func isContainerRunning(name string) bool {

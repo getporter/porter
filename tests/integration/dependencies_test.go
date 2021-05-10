@@ -1,6 +1,6 @@
 // +build integration
 
-package tests
+package integration
 
 import (
 	"io/ioutil"
@@ -39,7 +39,7 @@ func publishMySQLBundle(p *porter.TestPorter) {
 
 	// Rebuild the bundle from a temp directory so that we don't modify the source directory
 	// and leave modified files around.
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/mysql"), bunDir)
+	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql"), bunDir)
 	pwd := p.Getwd()
 	p.Chdir(bunDir)
 	defer p.Chdir(pwd)
@@ -57,7 +57,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	publishMySQLBundle(p)
 
 	// Install the bundle that has dependencies
-	p.CopyDirectory(filepath.Join(p.TestDir, "../build/testdata/bundles/wordpress"), ".", false)
+	p.CopyDirectory(filepath.Join(p.RepoRoot, "build/testdata/bundles/wordpress"), ".", false)
 
 	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()

@@ -103,8 +103,8 @@ stages:
             displayName: "Configure Agent"
           - bash: ./build/run-integration-tests.sh
             displayName: "Integration Test"
-      - job: e2e_test
-        displayName: "Run E2E tests on"
+      - job: smoke_test
+        displayName: "Run smoke tests on"
         dependsOn: xbuild
         condition: and(succeeded(), not(${{ parameters.skipTests }}))
         strategy:
@@ -131,8 +131,8 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Configure Agent"
-          - script: mage TestE2E
-            displayName: "Run E2E Tests"
+          - script: mage TestSmoke
+            displayName: "Run Smoke Tests"
 
   - stage: Publish
     dependsOn: Validate

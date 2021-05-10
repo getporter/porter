@@ -39,6 +39,10 @@ type TestPorter struct {
 
 	// directory where the integration test is being executed
 	BundleDir string
+
+	// root of the repository
+	// Helps us avoid hard coding relative paths from test directories, which easily break when tests are moved
+	RepoRoot string
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -70,6 +74,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestParameters:  &testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
+		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
 }
 
@@ -94,13 +99,13 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Copy test credentials into porter home, with KUBECONFIG replaced properly
-	p.AddTestFile("../build/testdata/schema.json", filepath.Join(homeDir, "schema.json"))
+	p.AddTestFile(filepath.Join(p.RepoRoot, "build/testdata/schema.json"), filepath.Join(homeDir, "schema.json"))
 	kubeconfig := p.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := p.Getenv("HOME")
 		kubeconfig = filepath.Join(home, ".kube/config")
 	}
-	ciCredsPath := filepath.Join(p.TestDir, "../build/testdata/credentials/ci.json")
+	ciCredsPath := filepath.Join(p.RepoRoot, "build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
@@ -175,7 +180,10 @@ func (p *TestPorter) RandomString(len int) string {
 // AddTestBundleDir into the test bundle directory and give it a unique name
 // to avoid collisions with other tests running in parallel.
 func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool) string {
-	p.TestConfig.TestContext.AddTestDirectory(filepath.Join(p.TestDir, bundleDir), p.BundleDir)
+	if !filepath.IsAbs(bundleDir) {
+		bundleDir = filepath.Join(p.TestDir, bundleDir)
+	}
+	p.TestConfig.TestContext.AddTestDirectory(bundleDir, p.BundleDir)
 
 	testManifest := filepath.Join(p.BundleDir, config.Name)
 	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
