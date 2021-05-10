@@ -272,8 +272,11 @@ Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
+* **Clean** removes artifacts from previous builds and test runs.
 * **TestSmoke** runs a small suite of tests using the Porter CLI to validate
   that Porter is (mostly) working.
+* **TestIntegration** runs our integration tests, which run the bundles
+  against a test KIND cluster.
 * **UpdateTestfiles** updates the "golden" test files to match the latest test output.
   This is mostly useful for when you change the schema of porter.yaml which will
   break TestPorter_PrintManifestSchema. Run this target to fix it.
@@ -298,9 +301,6 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
   This is useful when you are working on the exec or kubernetes mixin.
 * `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
-* `test-integration` runs the integration tests. This requires a kubernetes
-  cluster setup with credentials located at **~/.kube/config**. Expect this to
-  take 20 minutes.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.
@@ -361,7 +361,6 @@ Smoke tests test Porter using the CLI and quickly identify big problems with a
 build that would make it unusable.
 
 Short! We want this to always be something you can run in under 3 minutes.
-
 
 ## Install mixins
 

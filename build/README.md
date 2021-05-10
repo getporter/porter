@@ -18,8 +18,8 @@ Our pipeline is broken into a few discrete builds so that we can control how and
   [View Latest Builds](https://dev.azure.com/getporter/porter/_build?definitionId=3)
 * **porter: azure-pipelines.pr-automatic.yml**: Validates everything we can without a live environment.
   [View Latest Builds](https://dev.azure.com/getporter/porter/_build?definitionId=18)
-* **porter-integration: azure-pipelines.integration.yml**: Runs integration tests for pull requests that modify the runtime.
-  Otherwise, only runs when requested with `/azp run porter-integration` because they are slow.
+* **porter-integration: azure-pipelines.integration.yml**: Runs the full integration test suite.
+  Only runs when requested with `/azp run porter-integration` because they are slow.
   [View Latest Builds](https://dev.azure.com/getporter/porter/_build?definitionId=25)
 
 ### Documentation Only Builds

@@ -7,15 +7,9 @@ trigger:
     include:
       - refs/heads/main
 
-# Only test a PR when a smoke test or the runtime has changed
+# Only test a PR when an integration test or the runtime has changed
 pr:
   autoCancel: true # Cancel an outdated build when people push new changes to their PR
-  paths:
-    include:
-      - build/azure-pipelines.integration.yaml
-      - tests/integration/*
-      - pkg/cnab/*
-      - pkg/runtime/*
 
 pool:
   vmImage: "Ubuntu 16.04"
