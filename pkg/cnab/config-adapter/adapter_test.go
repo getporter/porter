@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -765,4 +766,43 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 	require.NoError(t, err, "Failed to read bundle file")
 
 	assert.Contains(t, string(bundleData), expectedCustomMetaData, "Created bundle should be equal to expected bundle ")
+}
+
+func TestManifestConverter_generatedMaintainers(t *testing.T) {
+	want := []bundle.Maintainer{
+		{Name: "John Doe", Email: "john.doe@mail.com", URL: "https://domain.com/a"},
+		{Name: "Jane Doe", Email: "", URL: "https://domain.com/b"},
+		{Name: "Janine Doe", Email: "janine.doe@mail.com", URL: ""},
+		{Name: "", Email: "mike.doe@mail.com", URL: "https://domain.com/c"},
+	}
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("./testdata/porter-with-maintainers.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	got := a.generateBundleMaintainers()
+	assert.Len(t, got, len(want), "Created bundle should contain desired maintainers")
+
+	for _, wanted := range want {
+		gm, err := getMaintainerByName(&got, wanted.Name)
+		if err != nil {
+			t.Errorf("Created bundle should container maintainer '%s'", wanted.Name)
+		}
+		assert.Equal(t, wanted.Email, gm.Email, "Created bundle should specify email '%s' for maintainer '%s'", wanted.Email, wanted.Name)
+		assert.Equal(t, wanted.URL, gm.URL, "Created bundle should specify url '%s' for maintainer '%s'", wanted.URL, wanted.Name)
+	}
+
+}
+
+func getMaintainerByName(source *[]bundle.Maintainer, name string) (*bundle.Maintainer, error) {
+	for _, m := range *source {
+		if m.Name == name {
+			return &m, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("Could not find maintainer with name '%s'", name))
 }
