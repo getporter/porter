@@ -3,6 +3,7 @@
 ---
 * [How to help](#how-to-help)
   * [Find an issue](#find-an-issue)
+  * [Which branch to use](#which-branch-to-use)  
   * [When to open a pull request](#when-to-open-a-pull-request)
   * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
   * [Signing your commits](#signing-your-commits)
@@ -19,6 +20,7 @@
   * [Logging](#logging)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
+  * [Releases](#releases)
 
 ---
 
@@ -76,6 +78,13 @@ When you create your first pull request, add your name to the bottom of our
 [slack]: https://porter.sh/community#slack
 [roadmap]: https://porter.sh/src/README.md#roadmap
 [pep]: https://porter.sh/contribute/proposals/
+
+## Which branch to use
+
+For issues that are in the v1 milestone, your branch should be against the **v1** branch.
+When you open the pull request, it should again target the v1 branch.
+
+For everything else, your branch should be against the **main** branch.
 
 ## When to open a pull request
 
@@ -514,4 +523,10 @@ for maintainers.
 See the [CDN Setup Doc][cdn] for details on the services Porter uses to
 host and distribute its release binaries.
 
+## Releases
+
+Our [version strategy] explains how we version the project, when you should expect
+breaking changes in a release, and the process for the v1 release.
+
 [cdn]: https://porter.sh/src/infra/cdn.md
+[version strategy]: https://porter.sh/project/version-strategy/

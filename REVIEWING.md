@@ -87,16 +87,16 @@ reviewers.
 
 🧀💨
 
-Our CI system watches for tags, and when a tag is pushed, it executes the
-publish target in the Makefile. When you are asked to cut a new release,
-here is the process:
+Our CI system watches for tags, and when a tag is pushed, cuts a release
+of Porter. When you are asked to cut a new release, here is the process:
 
-1. Figure out the correct version number, we follow [semver](semver.org):
-    * Bump the major segment if there are any breaking changes.
+1. Figure out the correct version number using our [version strategy].
+    * Bump the major segment if there are any breaking changes, and the 
+      version is greater than v1.0.0
     * Bump the minor segment if there are new features only.
     * Bump the patch segment if there are bug fixes only.
-    * Bump the build segment (version-prerelease.BUILD) if you only
-      fixed something in the build, but the final binaries are the same.
+    * Bump the pre-release number (version-prerelease.NUMBER) if this is
+      a pre-release, e.g. alpha/beta/rc.
 1. First, ensure that the main CI build has already passed for 
     the [commit that you want to tag][commits], and has published the canary binaries. 
     
@@ -136,3 +136,4 @@ here is the process:
 [maintainers]: https://github.com/orgs/getporter/teams/maintainers
 [admins]: https://github.com/orgs/getporter/teams/admins
 [commits]: https://github.com/getporter/porter/commits/main
+[version strategy]: https://porter.sh/project/version-strategy/

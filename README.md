@@ -67,4 +67,8 @@ maintainer who will be working on it.
 
 <p align="center">Check out our <a href="https://porter.sh/roadmap">roadmap</a></p>
 
+Our [version strategy] explains how we version the project, when you should expect
+breaking changes in a release, and the process for the v1 release.
+
 [board]: https://porter.sh/board
+[version strategy]: https://porter.sh/project/version-strategy/
