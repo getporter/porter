@@ -6,6 +6,17 @@ description: "An example Porter configuration"
 version: v0.1.0
 registry: getporter
 
+maintainers:
+- name: "John Doe"
+  email: "john.doe@mail.com"
+  url: "https://domain.com/a"
+- name: "Jane Doe"
+  url: "https://domain.com/b"
+- name: "Janine Doe"
+  email: "janine.doe@mail.com"
+- email: "mike.doe@mail.com"
+  url: "https://domain.com/c"
+
 install:
 - exec:
     description: "Say Hello"
