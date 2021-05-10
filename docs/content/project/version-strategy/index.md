@@ -15,7 +15,7 @@ Porter uses GitHub flow for the most part:
 
 Porter's version numbers adhere [semver v2], of `MAJOR.MINOR.PATCH-PRERELEASE.PRERELEASE_NUMBER`.
 The version tracks changes to Porter's configuration files, commands, data format, or behavior.
-Porter's library is not yet stable and changes to the underlying Porter code, including breaking changes to downstream consumers, is not encoding in Porter's version number.
+Porter's library is not yet stable and changes to the underlying Porter code, including breaking changes to downstream consumers, is not encoded in Porter's version number.
 
 * **MAJOR** - Indicates a breaking change. Until we reach v1, there isn't any indication in the version number to indicate breaking changes.
 * **MINOR** - Indicates a new feature. Until we reach v1, breaking changes can be included in a minor release.
@@ -35,8 +35,8 @@ Porter v1 will include a number of breaking changes that we are grouping togethe
 * The goal is to only release patches for the stable version of Porter until v1.0.0 is released.
 * Commits to main are cherry-picked into the v1 branch.
 * Periodic releases of the v1 branch will be made, e.g. v1.0.0-alpha.1, v1.0.0-alpha.2, v1.0.0-beta.1, v1.0.0-rc.1.
-  The final release from teh v1 branch will be v1.0.0.
-* The v1 branch will be merged into main after create the v1.0.0 release.
+  The final release from the v1 branch will be v1.0.0.
+* The v1 branch will be merged into main after creating the v1.0.0 release.
 * The latest and canary builds continue to be based on builds of the main branch only.
 
 [semver v2]: https://semver.org/spec/v2.0.0.html
