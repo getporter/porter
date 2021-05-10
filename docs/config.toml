@@ -359,3 +359,9 @@ pygmentsStyle = "friendly"
     url = "https://deislabs.io/cnab"
     identifier = "cnab"
     parent = "references"
+  [[menu.main]]
+    name = "Version Strategy"
+    url = "/project/version-strategy/"
+    identifier = "version-strategy"
+    parent = "references"
+
