@@ -13,7 +13,7 @@ pr:
   paths:
     include:
       - build/azure-pipelines.integration.yaml
-      - tests/smoke/*
+      - tests/integration/*
       - pkg/cnab/*
       - pkg/runtime/*
 
