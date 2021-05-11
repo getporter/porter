@@ -70,7 +70,7 @@ type Manifest struct {
 
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
-	Dependencies *Dependencies         `yaml:"dependencies,omitempty"`
+	Dependencies Dependencies          `yaml:"dependencies,omitempty"`
 	Outputs      OutputDefinitions     `yaml:"outputs,omitempty"`
 
 	// ImageMap is a map of images referenced in the bundle. If an image relocation mapping is later provided, that
@@ -124,12 +124,10 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 		}
 	}
 
-	if m.Dependencies != nil {
-		for _, dep := range m.Dependencies.RequiredDependencies {
-			err = dep.Validate(cxt)
-			if err != nil {
-				result = multierror.Append(result, err)
-			}
+	for _, dep := range m.Dependencies.RequiredDependencies {
+		err = dep.Validate(cxt)
+		if err != nil {
+			result = multierror.Append(result, err)
 		}
 	}
 

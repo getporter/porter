@@ -206,23 +206,22 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined in porter.yaml
 	// dependencies:
+	//  requires:
 	//   - name: DEP
 	//     parameters:
 	//       PARAM: VALUE
-	if e.Manifest.Dependencies != nil {
-		for _, manifestDep := range e.Manifest.Dependencies.RequiredDependencies {
-			if manifestDep.Name == dep.Alias {
-				for paramName, value := range manifestDep.Parameters {
-					// Make sure the parameter is defined in the bundle
-					if _, ok := depParams[paramName]; !ok {
-						return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
-					}
-
-					if dep.Parameters == nil {
-						dep.Parameters = make(map[string]string, 1)
-					}
-					dep.Parameters[paramName] = value
+	for _, manifestDep := range e.Manifest.Dependencies.RequiredDependencies {
+		if manifestDep.Name == dep.Alias {
+			for paramName, value := range manifestDep.Parameters {
+				// Make sure the parameter is defined in the bundle
+				if _, ok := depParams[paramName]; !ok {
+					return errors.Errorf("invalid dependencies.%s.parameters entry, %s is not a parameter defined in that bundle", dep.Alias, paramName)
 				}
+
+				if dep.Parameters == nil {
+					dep.Parameters = make(map[string]string, 1)
+				}
+				dep.Parameters[paramName] = value
 			}
 		}
 	}

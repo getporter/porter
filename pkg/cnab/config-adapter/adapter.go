@@ -303,7 +303,7 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 
 func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 
-	if c.Manifest.Dependencies == nil || len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
+	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
 		return nil
 	}
 

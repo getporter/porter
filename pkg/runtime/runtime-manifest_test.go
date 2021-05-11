@@ -389,7 +389,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
 	m := &manifest.Manifest{
-		Dependencies: &manifest.Dependencies{
+		Dependencies: manifest.Dependencies{
 			RequiredDependencies: []*manifest.RequiredDependency{
 				{
 					Name: "mysql",
