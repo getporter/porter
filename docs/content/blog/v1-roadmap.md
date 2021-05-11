@@ -6,7 +6,6 @@ authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
 authorlink: "https://carolynvanslyck.com/"
 authorimage: "https://github.com/carolynvs.png"
-image: "images/porter-with-docker-twitter-card.png"
 tags: ["roadmap"]
 ---
 
