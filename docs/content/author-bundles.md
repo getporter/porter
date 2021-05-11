@@ -40,8 +40,8 @@ reference: getporter/azure-wordpress
 dockerfile: dockerfile.tmpl
 maintainers:
 - name: "John Doe"
-  email: "john.doe@mail.com"
-  url: "https://domain.com"
+  email: "john.doe@example.com"
+  url: "https://example.com"
 ```
 
 * `name`: The name of the bundle

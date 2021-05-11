@@ -770,10 +770,10 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 func TestManifestConverter_generatedMaintainers(t *testing.T) {
 	want := []bundle.Maintainer{
-		{Name: "John Doe", Email: "john.doe@mail.com", URL: "https://domain.com/a"},
-		{Name: "Jane Doe", Email: "", URL: "https://domain.com/b"},
-		{Name: "Janine Doe", Email: "janine.doe@mail.com", URL: ""},
-		{Name: "", Email: "mike.doe@mail.com", URL: "https://domain.com/c"},
+		{Name: "John Doe", Email: "john.doe@example.com", URL: "https://example.com/a"},
+		{Name: "Jane Doe", Email: "", URL: "https://example.com/b"},
+		{Name: "Janine Doe", Email: "janine.doe@example.com", URL: ""},
+		{Name: "", Email: "mike.doe@example.com", URL: "https://example.com/c"},
 	}
 
 	c := config.NewTestConfig(t)

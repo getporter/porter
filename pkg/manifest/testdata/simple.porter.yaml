@@ -8,14 +8,14 @@ registry: getporter
 
 maintainers:
 - name: "John Doe"
-  email: "john.doe@mail.com"
-  url: "https://domain.com/a"
+  email: "john.doe@example.com"
+  url: "https://example.com/a"
 - name: "Jane Doe"
-  url: "https://domain.com/b"
+  url: "https://example.com/b"
 - name: "Janine Doe"
-  email: "janine.doe@mail.com"
-- email: "mike.doe@mail.com"
-  url: "https://domain.com/c"
+  email: "janine.doe@example.com"
+- email: "mike.doe@example.com"
+  url: "https://example.com/c"
 
 install:
 - exec:
