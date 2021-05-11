@@ -14,6 +14,7 @@ CLIENT_GOPATH = $(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
+PORTER_UPDATE_TEST_FILES ?=
 
 GO = GO111MODULE=on go
 LOCAL_PORTER = PORTER_HOME=$(PWD)/bin $(PWD)/bin/porter
@@ -82,7 +83,7 @@ verify:
 test: clean-last-testrun build test-unit test-integration test-smoke
 
 test-unit:
-	$(GO) test ./...
+	PORTER_UPDATE_TEST_FILES=$(PORTER_UPDATE_TEST_FILES) $(GO) test ./...
 
 test-integration:
 	go run mage.go TestIntegration
