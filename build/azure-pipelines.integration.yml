@@ -7,7 +7,7 @@ trigger:
     include:
       - refs/heads/main
 
-# Only test a PR when an integration test or the runtime has changed
+# Only test a PR when requested with a GitHub comment, /azp run porter-integration
 pr:
   autoCancel: true # Cancel an outdated build when people push new changes to their PR
 
