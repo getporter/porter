@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -39,19 +40,30 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 }
 
 func TestConfig_GetFeatureFlags(t *testing.T) {
+	t.Parallel()
+
 	t.Run("build builders defaulted to disabled", func(t *testing.T) {
-		c := Config{
-			Data: &Data{},
-		}
+		c := Config{}
 		assert.False(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 	})
 
 	t.Run("build builders enabled", func(t *testing.T) {
-		c := Config{
-			Data: &Data{
-				ExperimentalFlags: []string{experimental.BuildDrivers},
-			},
-		}
+		c := Config{}
+		c.Data.ExperimentalFlags = []string{experimental.BuildDrivers}
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 	})
+}
+
+func TestConfigExperimentalFlags(t *testing.T) {
+	// Do not run in parallel since we are using os.Setenv
+
+	os.Setenv("PORTER_EXPERIMENTAL", "build-drivers")
+	defer os.Unsetenv("PORTER_EXPERIMENTAL")
+
+	os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
+	defer os.Unsetenv("PORTER_BUILD_DRIVER")
+
+	c := NewTestConfig(t)
+	require.NoError(t, c.LoadData(), "LoadData failed")
+	assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 }

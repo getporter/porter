@@ -48,6 +48,8 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
+	tc.LoadData()
+
 	testCredentials := credentials.NewTestCredentialProvider(t, tc)
 	testParameters := parameters.NewTestParameterProvider(t, tc)
 	testCache := cache.NewTestCache(cache.New(tc.Config))

@@ -13,10 +13,9 @@ func TestFromConfigFile(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
 
-	c.DataLoader = LoadFromConfigFile
+	c.DataLoader = LoadFromEnvironment()
 	err := c.LoadData()
 	require.NoError(t, err, "dataloader failed")
-	require.NotNil(t, c.Data, "config.Data was not populated")
 	assert.True(t, c.Debug, "config.Debug was not set correctly")
 }
 
@@ -26,11 +25,9 @@ func TestData_Marshal(t *testing.T) {
 
 	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
 
-	c.DataLoader = LoadFromConfigFile
+	c.DataLoader = LoadFromEnvironment()
 	err := c.LoadData()
 	require.NoError(t, err, "LoadData failed")
-
-	require.NotNil(t, c.Data, "Data was not populated by LoadData")
 
 	// Check Storage Attributes
 	assert.Equal(t, "dev", c.Data.DefaultStorage, "DefaultStorage was not loaded properly")

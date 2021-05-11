@@ -48,16 +48,9 @@ var evalSymlinks = filepath.EvalSymlinks
 
 type DataStoreLoaderFunc func(*Config) error
 
-var _ DataStoreLoaderFunc = NoopDataLoader
-
-// NoopDataLoader skips loading the datastore.
-func NoopDataLoader(_ *Config) error {
-	return nil
-}
-
 type Config struct {
 	*context.Context
-	Data       *Data
+	Data       Data
 	DataLoader DataStoreLoaderFunc
 
 	// Cache the resolved Porter home directory
@@ -73,20 +66,43 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		Context:    context.New(),
-		DataLoader: NoopDataLoader,
+		Data:       DefaultDataStore(),
+		DataLoader: LoadFromEnvironment(),
 	}
 }
 
 // LoadData from the datastore in PORTER_HOME.
-// This defaults to doing nothing unless DataLoader has been set.
+// This defaults to reading the configuration file and environment variables.
 func (c *Config) LoadData() error {
-	c.Data = nil
-
 	if c.DataLoader == nil {
-		c.DataLoader = NoopDataLoader
+		c.DataLoader = LoadFromEnvironment()
 	}
 
 	return c.DataLoader(c)
+}
+
+func (c *Config) GetStorage(name string) (CrudStore, error) {
+	if c != nil {
+		for _, is := range c.Data.CrudStores {
+			if is.Name == name {
+				return is, nil
+			}
+		}
+	}
+
+	return CrudStore{}, errors.New("store %q not defined")
+}
+
+func (c *Config) GetSecretSource(name string) (SecretSource, error) {
+	if c != nil {
+		for _, cs := range c.Data.SecretSources {
+			if cs.Name == name {
+				return cs, nil
+			}
+		}
+	}
+
+	return SecretSource{}, errors.New("secrets %q not defined")
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
@@ -195,13 +211,8 @@ func (c *Config) GetBundleArchiveLogs() (string, error) {
 // FeatureFlags indicates which experimental feature flags are enabled
 func (c *Config) GetFeatureFlags() experimental.FeatureFlags {
 	if c.experimental == nil {
-		if c.Data == nil {
-			var none experimental.FeatureFlags
-			c.experimental = &none
-		} else {
-			flags := experimental.ParseFlags(c.Data.ExperimentalFlags)
-			c.experimental = &flags
-		}
+		flags := experimental.ParseFlags(c.Data.ExperimentalFlags)
+		c.experimental = &flags
 	}
 	return *c.experimental
 }

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,4 +53,13 @@ func TestHelpText(t *testing.T) {
 	assert.Contains(t, helpText, "Resources:")
 	assert.Contains(t, helpText, "Aliased Commands:")
 	assert.Contains(t, helpText, "Meta Commands:")
+}
+
+func TestExperimentalFlags(t *testing.T) {
+	p := porter.New()
+	cmd := buildRootCommandFrom(p)
+	cmd.SetArgs([]string{"--experimental", "build-drivers"})
+	cmd.Execute()
+
+	assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
 }

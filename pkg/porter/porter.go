@@ -46,6 +46,7 @@ type Porter struct {
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
+	c.LoadData()
 	return NewWithConfig(c)
 }
 

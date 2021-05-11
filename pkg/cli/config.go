@@ -38,7 +38,21 @@ func LoadHierarchicalConfig(cmd *cobra.Command) config.DataStoreLoaderFunc {
 
 			if !f.Changed && v.IsSet(viperKey) {
 				val := v.Get(viperKey)
-				cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
+
+				var flagVal string
+				switch typedValue := val.(type) {
+				case []interface{}:
+					// slice flags should be set using a,b,c not [a,b,c]
+					items := make([]string, len(typedValue))
+					for i, item := range typedValue {
+						items[i] = fmt.Sprintf("%v", item)
+					}
+					flagVal = strings.Join(items, ",")
+				default:
+					flagVal = fmt.Sprintf("%v", val)
+				}
+
+				cmd.Flags().Set(f.Name, flagVal)
 			}
 		})
 	})

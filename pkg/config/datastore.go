@@ -1,9 +1,5 @@
 package config
 
-import (
-	"github.com/pkg/errors"
-)
-
 const (
 	BuildDriverDocker   = "docker"
 	BuildDriverBuildkit = "buildkit"
@@ -41,6 +37,15 @@ type Data struct {
 	SecretSources []SecretSource `mapstructure:"secrets"`
 }
 
+// DefaultDataStore used when no config file is found.
+func DefaultDataStore() Data {
+	return Data{
+		BuildDriver:          BuildDriverDocker,
+		DefaultStoragePlugin: "filesystem",
+		DefaultSecretsPlugin: "host",
+	}
+}
+
 // SecretSource is the plugin stanza for secrets.
 type SecretSource struct {
 	PluginConfig `mapstructure:",squash"`
@@ -49,69 +54,6 @@ type SecretSource struct {
 // CrudStore is the plugin stanza for storage.
 type CrudStore struct {
 	PluginConfig `mapstructure:",squash"`
-}
-
-func (c *Config) GetBuildDriver() string {
-	if c == nil || c.Data == nil || c.Data.BuildDriver == "" {
-		return BuildDriverDocker
-	}
-	return c.Data.BuildDriver
-}
-
-func (d *Data) GetDefaultStoragePlugin() string {
-	if d == nil || d.DefaultStoragePlugin == "" {
-		return "filesystem"
-	}
-
-	return d.DefaultStoragePlugin
-}
-
-func (d *Data) GetDefaultStorage() string {
-	if d == nil {
-		return ""
-	}
-
-	return d.DefaultStorage
-}
-
-func (d *Data) GetStorage(name string) (CrudStore, error) {
-	if d != nil {
-		for _, is := range d.CrudStores {
-			if is.Name == name {
-				return is, nil
-			}
-		}
-	}
-
-	return CrudStore{}, errors.New("store %q not defined")
-}
-
-func (d *Data) GetDefaultSecretsPlugin() string {
-	if d == nil || d.DefaultSecretsPlugin == "" {
-		return "host"
-	}
-
-	return d.DefaultSecretsPlugin
-}
-
-func (d *Data) GetDefaultSecretSource() string {
-	if d == nil {
-		return ""
-	}
-
-	return d.DefaultSecrets
-}
-
-func (d *Data) GetSecretSource(name string) (SecretSource, error) {
-	if d != nil {
-		for _, cs := range d.SecretSources {
-			if cs.Name == name {
-				return cs, nil
-			}
-		}
-	}
-
-	return SecretSource{}, errors.New("secrets %q not defined")
 }
 
 // PluginConfig is a standardized config stanza that defines which plugin to

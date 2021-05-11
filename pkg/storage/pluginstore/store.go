@@ -28,14 +28,14 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: crudstore.PluginInterface,
 		Plugin:    &crudstore.Plugin{},
-		GetDefaultPluggable: func(datastore *config.Data) string {
-			return datastore.GetDefaultStorage()
+		GetDefaultPluggable: func(c *config.Config) string {
+			return c.Data.DefaultStorage
 		},
-		GetPluggable: func(datastore *config.Data, name string) (pluggable.Entry, error) {
-			return datastore.GetStorage(name)
+		GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
+			return c.GetStorage(name)
 		},
-		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetDefaultStoragePlugin()
+		GetDefaultPlugin: func(c *config.Config) string {
+			return c.Data.DefaultStoragePlugin
 		},
 	}
 }

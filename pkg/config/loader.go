@@ -1,14 +1,30 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
-// LoadFromConfigFile loads data from the config file only.
-func LoadFromConfigFile(cfg *Config) error {
-	dataloader := LoadFromViper(nil)
-	return dataloader(cfg)
+var _ DataStoreLoaderFunc = NoopDataLoader
+
+// NoopDataLoader skips loading the datastore.
+func NoopDataLoader(_ *Config) error {
+	return nil
+}
+
+// LoadHierarchicalConfig loads data with the following precedence:
+// * User set flag Flags (highest)
+// * Environment variables where --flag is assumed to be PORTER_FLAG
+// * Config file
+// * Flag default (lowest)
+func LoadFromEnvironment() DataStoreLoaderFunc {
+	return LoadFromViper(func(v *viper.Viper) {
+		v.SetEnvPrefix("PORTER")
+		v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+		v.AutomaticEnv()
+	})
 }
 
 // LoadFromViper loads data from a configurable viper instance.
@@ -18,34 +34,27 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 
 		v := viper.New()
 		v.SetFs(cfg.FileSystem)
-		v.AddConfigPath(home)
-		err := v.ReadInConfig()
 
 		if viperCfg != nil {
 			viperCfg(v)
 		}
 
-		var data Data
+		// Apply default values
+		err := v.ReadConfigFrom(cfg.Data)
 		if err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-				data = DefaultDataStore()
-			} else {
+			return err
+		}
+
+		// Try to read config
+		v.AddConfigPath(home)
+		err = v.MergeInConfig()
+		if err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 				return errors.Wrapf(err, "error reading config file at %q", v.ConfigFileUsed())
 			}
 		}
 
-		err = v.Unmarshal(&data)
-		if err != nil {
-			return errors.Wrapf(err, "error unmarshaling config at %q", v.ConfigFileUsed())
-		}
-
-		cfg.Data = &data
-
-		return nil
+		err = v.Unmarshal(&cfg.Data)
+		return errors.Wrapf(err, "error unmarshaling config at %q", v.ConfigFileUsed())
 	}
-}
-
-// DefaultDataStore used when no config file is found.
-func DefaultDataStore() Data {
-	return Data{}
 }

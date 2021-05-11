@@ -215,9 +215,9 @@ func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
 
 	var pluginKey string
 
-	defaultStore := cfg.GetDefaultPluggable(l.Config.Data)
+	defaultStore := cfg.GetDefaultPluggable(l.Config)
 	if defaultStore != "" {
-		is, err := cfg.GetPluggable(l.Config.Data, defaultStore)
+		is, err := cfg.GetPluggable(l.Config, defaultStore)
 		if err != nil {
 			return err
 		}
@@ -227,7 +227,7 @@ func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
 
 	// If there isn't a specific plugin configured for this plugin type, fall back to the default plugin for this type
 	if pluginKey == "" {
-		pluginKey = cfg.GetDefaultPlugin(l.Config.Data)
+		pluginKey = cfg.GetDefaultPlugin(l.Config)
 	}
 
 	key, err := plugins.ParsePluginKey(pluginKey)

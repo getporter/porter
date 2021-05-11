@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,4 +38,23 @@ func TestCreate(t *testing.T) {
 	dockerignore, err := p.FileSystem.Exists(".dockerignore")
 	require.NoError(t, err)
 	assert.True(t, dockerignore)
+}
+
+func TestCreateWithBuildkit(t *testing.T) {
+	os.Setenv("PORTER_EXPERIMENTAL", "build-drivers")
+	os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
+	defer os.Unsetenv("PORTER_EXPERIMENTAL")
+	defer os.Unsetenv("PORTER_BUILD_DRIVER")
+
+	p := NewTestPorter(t)
+
+	p.LoadData()
+
+	err := p.Create()
+	require.NoError(t, err)
+
+	dockerfile, err := p.FileSystem.ReadFile("Dockerfile.tmpl")
+	require.NoError(t, err, "could not read template dockerfile")
+
+	assert.Contains(t, string(dockerfile), "# syntax=docker/dockerfile:1.2")
 }

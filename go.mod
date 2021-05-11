@@ -18,13 +18,16 @@ replace (
 
 	// local-keyword-registry
 	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8
+
+	// Fixes https://github.com/spf13/viper/issues/761
+	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.1.0.20210512222257-5d1ed639c43c
 )
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/PuerkitoBio/goquery v1.5.0 // indirect
-	github.com/carolynvs/aferox v0.2.1
+	github.com/carolynvs/aferox v0.3.0
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
@@ -51,13 +54,13 @@ require (
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/afero v1.4.1
+	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

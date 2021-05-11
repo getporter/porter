@@ -40,7 +40,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.False(t, c.Debug, "config.Debug was not set correctly")
 	})
 
@@ -53,7 +52,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.True(t, c.Debug, "config.Debug was not set correctly")
 	})
 
@@ -67,7 +65,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.False(t, c.Debug, "config.Debug should have been set by the flag and not the config")
 	})
 
@@ -80,7 +77,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.True(t, c.Debug, "config.Debug was not set correctly")
 	})
 
@@ -93,7 +89,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.True(t, c.DebugPlugins, "config.DebugPlugins was not set correctly")
 	})
 
@@ -106,7 +101,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.Equal(t, config.BuildDriverBuildkit, c.Data.BuildDriver, "c.Data.BuildDriver was not set correctly")
 	})
 
@@ -119,7 +113,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.False(t, c.Debug, "config.Debug was not set correctly")
 	})
 
@@ -134,7 +127,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.False(t, c.Debug, "config.Debug should have been set by the env var and not the config")
 	})
 
@@ -151,7 +143,6 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		err := cmd.Execute()
 
 		require.NoError(t, err, "dataloader failed")
-		require.NotNil(t, c.Data, "config.Data was not populated")
 		assert.True(t, c.Debug, "config.Debug should have been set by the flag and not the env var or config")
 	})
 }
