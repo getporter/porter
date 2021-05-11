@@ -213,13 +213,10 @@ install:
 setup-dco:
 	@scripts/setup-dco/setup.sh
 
-clean: clean-mixins clean-last-testrun
+clean:
+	go run mage.go clean
 
-clean-mixins:
-	-rm -fr bin/
 
-clean-last-testrun: stop-local-docker-registry
-	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2
 	cd cmd/porter && packr2 clean

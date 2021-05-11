@@ -6,12 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 
+	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/pkg"
-	"github.com/carolynvs/magex/pkg/archive"
-	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
@@ -77,7 +74,7 @@ exec echo "$GITHUB_TOKEN"
 }
 
 func publishPackage(pkgType string, name string, version string, permalink string) {
-	mg.Deps(EnsureGitHubClient, ConfigureGitBot)
+	mg.Deps(tools.EnsureGitHubClient, ConfigureGitBot)
 
 	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
@@ -160,39 +157,6 @@ func GenerateMixinFeed() {
 // Generate a plugin feed from any plugin versions in bin/plugins.
 func GeneratePluginFeed() {
 	generatePackageFeed("plugin")
-}
-
-// Install the gh CLI
-func EnsureGitHubClient() {
-	if ok, _ := pkg.IsCommandAvailable("gh", ""); ok {
-		return
-	}
-
-	// gh cli unfortunately uses a different archive schema depending on the OS
-	target := "gh_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}/bin/gh{{.EXT}}"
-	if runtime.GOOS == "windows" {
-		target = "bin/gh.exe"
-	}
-
-	opts := archive.DownloadArchiveOptions{
-		DownloadOptions: downloads.DownloadOptions{
-			UrlTemplate: "https://github.com/cli/cli/releases/download/v{{.VERSION}}/gh_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
-			Name:        "gh",
-			Version:     "1.8.1",
-			OsReplacement: map[string]string{
-				"darwin": "macOS",
-			},
-		},
-		ArchiveExtensions: map[string]string{
-			"linux":   ".tar.gz",
-			"darwin":  ".tar.gz",
-			"windows": ".zip",
-		},
-		TargetFileTemplate: target,
-	}
-
-	err := archive.DownloadToGopathBin(opts)
-	mgx.Must(err)
 }
 
 // AddFilesToRelease uploads the files in the specified directory to a GitHub release.

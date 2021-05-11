@@ -101,7 +101,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Configure Agent"
-          - bash: ./build/run-integration-tests.sh
+          - script: go run mage.go TestIntegration
             displayName: "Integration Test"
       - job: smoke_test
         displayName: "Run smoke tests on"
