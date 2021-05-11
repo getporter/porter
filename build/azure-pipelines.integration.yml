@@ -1,0 +1,33 @@
+# Run integration tests
+# /azp run porter-integration
+
+# Only test canary builds
+trigger:
+  branches:
+    include:
+      - refs/heads/main
+
+# Only test a PR when requested with a GitHub comment, /azp run porter-integration
+pr:
+  autoCancel: true # Cancel an outdated build when people push new changes to their PR
+
+pool:
+  vmImage: "Ubuntu 16.04"
+
+variables:
+  GOVERSION: "1.13.10"
+
+jobs:
+  - job: integration_test
+    displayName: "Integration Test"
+    steps:
+      - task: GoTool@0
+        displayName: "Set Go Version"
+        inputs:
+          version: "$(GOVERSION)"
+      - script: go run mage.go ConfigureAgent
+        displayName: "Configure Agent"
+      - bash: make build
+        displayName: "Native Build"
+      - bash: mage TestIntegration
+        displayName: "Integration Test"

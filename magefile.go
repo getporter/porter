@@ -5,8 +5,6 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"go/build"
 	"io/ioutil"
@@ -14,14 +12,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
-	"time"
 
 	// mage:import
 	"get.porter.sh/porter/mage/releases"
+
+	"get.porter.sh/porter/mage/tests"
+	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
@@ -42,12 +40,18 @@ const (
 
 var must = shx.CommandBuilder{StopOnError: true}
 
-// Ensure Mage is installed and on the PATH.
-func EnsureMage() error {
-	return pkg.EnsureMage("")
+// Cleanup workspace after building or running tests.
+func Clean() {
+	mg.Deps(tests.DeleteTestCluster)
+	mgx.Must(os.RemoveAll("bin"))
 }
 
-// ConfigureAgent sets up an Azure DevOps agent with Mage and ensures
+// Ensure EnsureMage is installed and on the PATH.
+func EnsureMage() error {
+	return tools.EnsureMage()
+}
+
+// ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
 // that GOPATH/bin is in PATH.
 func ConfigureAgent() error {
 	err := EnsureMage()
@@ -104,23 +108,29 @@ func porter(args ...string) shx.PreparedCommand {
 	return p
 }
 
-// Run end-to-end (e2e) tests
-func TestE2E() error {
-	mg.Deps(StartDockerRegistry)
-	defer StopDockerRegistry()
+// Update golden test files to match the new test outputs
+func UpdateTestfiles() {
+	must.Command("make", "test-unit").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
+	must.Command("make", "test-unit").RunV()
+}
 
-	// Only do verbose output of tests when called with `mage -v TestE2E`
+// Run smoke tests to quickly check if Porter is broken
+func TestSmoke() error {
+	mg.Deps(tests.StartDockerRegistry)
+	defer tests.StopDockerRegistry()
+
+	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
 	if mg.Verbose() {
 		v = "-v"
 	}
 
-	return shx.Command("go", "test", "-tags", "e2e", v, "./tests/e2e/...").CollapseArgs().RunV()
+	return shx.Command("go", "test", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
 // Publish the porter binaries and install scripts.
 func PublishPorter(version string, permalink string) {
-	mg.Deps(releases.EnsureGitHubClient, releases.ConfigureGitBot)
+	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
 	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
@@ -199,104 +209,18 @@ func chmodRecursive(name string, mode os.FileMode) error {
 	})
 }
 
-// Ensure the docker daemon is started and ready to accept connections.
-func StartDocker() error {
-	switch runtime.GOOS {
-	case "windows":
-		err := shx.RunS("powershell", "-c", "Get-Process 'Docker Desktop'")
-		if err != nil {
-			fmt.Println("Starting Docker Desktop")
-			cmd := shx.Command(`C:\Program Files\Docker\Docker\Docker Desktop.exe`)
-			err := cmd.Cmd.Start()
-			if err != nil {
-				return errors.Wrapf(err, "could not start Docker Desktop")
-			}
-		}
+// Run integration tests (slow).
+func TestIntegration() {
+	mg.Deps(tests.EnsureTestCluster)
+
+	var run string
+	runTest := os.Getenv("PORTER_RUN_TEST")
+	if runTest != "" {
+		run = "-run=" + runTest
 	}
-
-	ready, err := isDockerReady()
-	if err != nil {
-		return err
-	}
-
-	if ready {
-		return nil
-	}
-
-	fmt.Println("Waiting for the docker service to be ready")
-	cxt, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-	defer cancel()
-	for {
-		select {
-		case <-cxt.Done():
-			return errors.New("a timeout was reached waiting for the docker service to become unavailable")
-		default:
-			// Wait and check again
-			// Writing a dot on a single line so the CI logs show our progress, instead of a bunch of dots at the end
-			fmt.Println(".")
-			time.Sleep(time.Second)
-
-			if ready, _ := isDockerReady(); ready {
-				fmt.Println("Docker service is ready!")
-				return nil
-			}
-		}
-	}
-}
-
-func isDockerReady() (bool, error) {
-	err := shx.RunS("docker", "ps")
-	if !sh.CmdRan(err) {
-		return false, errors.Wrap(err, "could not run docker")
-	}
-
-	return err == nil, nil
-}
-
-// Start a Docker registry to use with the tests.
-func StartDockerRegistry() error {
-	mg.Deps(StartDocker)
-	if isContainerRunning(registryContainer) {
-		return nil
-	}
-
-	err := removeContainer(registryContainer)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Starting local docker registry")
-	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", registryContainer, "registry:2")
-}
-
-// Stop the Docker registry used by the tests.
-func StopDockerRegistry() error {
-	if containerExists(registryContainer) {
-		fmt.Println("Stopping local docker registry")
-		return removeContainer(registryContainer)
-	}
-	return nil
-}
-
-func isContainerRunning(name string) bool {
-	out, _ := shx.OutputS("docker", "container", "inspect", "-f", "{{.State.Running}}", name)
-	running, _ := strconv.ParseBool(out)
-	return running
-}
-
-func containerExists(name string) bool {
-	err := shx.RunS("docker", "inspect", name)
-	return err == nil
-}
-
-func removeContainer(name string) error {
-	stderr := bytes.Buffer{}
-	_, _, err := shx.Command("docker", "rm", "-f", name).Stderr(&stderr).Stdout(nil).Exec()
-	// Gracefully handle the container already being gone
-	if err != nil && !strings.Contains(stderr.String(), "No such container") {
-		return err
-	}
-	return nil
+	os.Setenv("GO111MODULE", "on")
+	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
+	must.Command("go", "test", "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
 
 func Install() {

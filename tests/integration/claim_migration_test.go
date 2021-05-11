@@ -1,6 +1,6 @@
 // +build integration
 
-package tests
+package integration
 
 import (
 	"path/filepath"
@@ -27,7 +27,7 @@ func TestClaimMigration_List(t *testing.T) {
 
 	// Create unmigrated claim data
 	p.FileSystem.Mkdir(claimsDir, 0755)
-	p.AddTestFile(filepath.Join("../pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
+	p.AddTestFile(filepath.Join(p.RepoRoot, "pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 
 	err = p.MigrateStorage()

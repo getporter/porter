@@ -14,6 +14,7 @@ CLIENT_GOPATH = $(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
+PORTER_UPDATE_TEST_FILES ?=
 
 GO = GO111MODULE=on go
 LOCAL_PORTER = PORTER_HOME=$(PWD)/bin $(PWD)/bin/porter
@@ -79,17 +80,16 @@ get-mixins:
 verify:
 	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
 
-test: clean-last-testrun build test-unit test-integration teste2e
+test: clean-last-testrun build test-unit test-integration test-smoke
 
 test-unit:
-	$(GO) test ./...
+	PORTER_UPDATE_TEST_FILES=$(PORTER_UPDATE_TEST_FILES) $(GO) test ./...
 
-test-integration: clean-last-testrun start-local-docker-registry
-	$(GO) build -o bin/testplugin ./cmd/testplugin
-	PROJECT_ROOT=$(shell pwd) $(GO) test -timeout 30m -tags=integration ./...
+test-integration:
+	go run mage.go TestIntegration
 
-teste2e:
-	go run mage.go teste2e
+test-smoke:
+	go run mage.go testSmoke
 
 .PHONY: docs
 docs:
@@ -213,13 +213,10 @@ install:
 setup-dco:
 	@scripts/setup-dco/setup.sh
 
-clean: clean-mixins clean-last-testrun
+clean:
+	go run mage.go clean
 
-clean-mixins:
-	-rm -fr bin/
 
-clean-last-testrun: stop-local-docker-registry
-	-rm -fr cnab/ porter.yaml Dockerfile bundle.json
 
 clean-packr: packr2
 	cd cmd/porter && packr2 clean

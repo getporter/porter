@@ -3,6 +3,7 @@
 ---
 * [How to help](#how-to-help)
   * [Find an issue](#find-an-issue)
+  * [Which branch to use](#which-branch-to-use)  
   * [When to open a pull request](#when-to-open-a-pull-request)
   * [How to get your pull request reviewed fast](#how-to-get-your-pull-request-reviewed-fast)
   * [Signing your commits](#signing-your-commits)
@@ -19,6 +20,7 @@
   * [Logging](#logging)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
+  * [Releases](#releases)
 
 ---
 
@@ -76,6 +78,13 @@ When you create your first pull request, add your name to the bottom of our
 [slack]: https://porter.sh/community#slack
 [roadmap]: https://porter.sh/src/README.md#roadmap
 [pep]: https://porter.sh/contribute/proposals/
+
+## Which branch to use
+
+For issues that are in the v1 milestone, your branch should be against the **v1** branch.
+When you open the pull request, it should again target the v1 branch.
+
+For everything else, your branch should be against the **main** branch.
 
 ## When to open a pull request
 
@@ -260,10 +269,20 @@ Below are the targets that have been migrated to mage. Our new contributor
 tutorial explains how to [install mage](/contribute/tutorial/#install-mage).
 
 Mage targets are not case-sensitive, but in our docs we use camel case to make
-it easier to read. You can run either `mage TestE2E` or `mage teste2e` for
+it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
-* **TestE2E** runs a small suite of end-to-end tests using the Porter CLI.
+* **Clean** removes artifacts from previous builds and test runs.
+* **TestSmoke** runs a small suite of tests using the Porter CLI to validate
+  that Porter is (mostly) working.
+* **TestIntegration** runs our integration tests, which run the bundles
+  against a test KIND cluster.
+* **UpdateTestfiles** updates the "golden" test files to match the latest test output.
+  This is mostly useful for when you change the schema of porter.yaml which will
+  break TestPorter_PrintManifestSchema. Run this target to fix it.
+  Learn more about [golden files].
+  
+[golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
 ### Make Targets
 
@@ -282,9 +301,6 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
   This is useful when you are working on the exec or kubernetes mixin.
 * `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * `test-unit` runs the unit tests.
-* `test-integration` runs the integration tests. This requires a kubernetes
-  cluster setup with credentials located at **~/.kube/config**. Expect this to
-  take 20 minutes.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `test` runs all the tests.
@@ -335,17 +351,16 @@ we have scripts that you can use, like `mage StartDockerRegistry` or
 
 Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
 
-### End to End Tests
+### Smoke Tests
 
 ```
-mage teste2e
+mage testSmoke
 ```
 
-End to End tests test Porter using the cli and are used as smoke tests that
-should quickly identify big problems with a build that would make it unusable.
+Smoke tests test Porter using the CLI and quickly identify big problems with a
+build that would make it unusable.
 
-Short! We want this to always be something you can run in about 1-3 minutes.
-
+Short! We want this to always be something you can run in under 3 minutes.
 
 ## Install mixins
 
@@ -513,4 +528,10 @@ for maintainers.
 See the [CDN Setup Doc][cdn] for details on the services Porter uses to
 host and distribute its release binaries.
 
+## Releases
+
+Our [version strategy] explains how we version the project, when you should expect
+breaking changes in a release, and the process for the v1 release.
+
 [cdn]: https://porter.sh/src/infra/cdn.md
+[version strategy]: https://porter.sh/project/version-strategy/

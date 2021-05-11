@@ -1,6 +1,6 @@
-// +build e2e
+// +build smoke
 
-package e2e
+package smoke
 
 import (
 	"testing"
