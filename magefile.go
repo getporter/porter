@@ -104,6 +104,12 @@ func porter(args ...string) shx.PreparedCommand {
 	return p
 }
 
+// Update golden test files to match the new test outputs
+func UpdateTestfiles() {
+	must.Command("make", "test-unit").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
+	must.Command("make", "test-unit").RunV()
+}
+
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
 	mg.Deps(StartDockerRegistry)

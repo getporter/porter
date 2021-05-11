@@ -274,6 +274,12 @@ example.
 
 * **TestSmoke** runs a small suite of tests using the Porter CLI to validate
   that Porter is (mostly) working.
+* **UpdateTestfiles** updates the "golden" test files to match the latest test output.
+  This is mostly useful for when you change the schema of porter.yaml which will
+  break TestPorter_PrintManifestSchema. Run this target to fix it.
+  Learn more about [golden files].
+  
+[golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
 ### Make Targets
 
