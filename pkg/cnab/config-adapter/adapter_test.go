@@ -788,21 +788,20 @@ func TestManifestConverter_generatedMaintainers(t *testing.T) {
 	assert.Len(t, got, len(want), "Created bundle should contain desired maintainers")
 
 	for _, wanted := range want {
-		gm, err := getMaintainerByName(&got, wanted.Name)
+		gm, err := getMaintainerByName(got, wanted.Name)
 		if err != nil {
 			t.Errorf("Created bundle should container maintainer '%s'", wanted.Name)
 		}
 		assert.Equal(t, wanted.Email, gm.Email, "Created bundle should specify email '%s' for maintainer '%s'", wanted.Email, wanted.Name)
 		assert.Equal(t, wanted.URL, gm.URL, "Created bundle should specify url '%s' for maintainer '%s'", wanted.URL, wanted.Name)
 	}
-
 }
 
-func getMaintainerByName(source *[]bundle.Maintainer, name string) (*bundle.Maintainer, error) {
-	for _, m := range *source {
+func getMaintainerByName(source []bundle.Maintainer, name string) (bundle.Maintainer, error) {
+	for _, m := range source {
 		if m.Name == name {
-			return &m, nil
+			return m, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("Could not find maintainer with name '%s'", name))
+	return bundle.Maintainer{}, errors.New(fmt.Sprintf("Could not find maintainer with name '%s'", name))
 }
