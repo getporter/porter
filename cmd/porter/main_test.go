@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -38,4 +39,16 @@ func TestCommandWiring(t *testing.T) {
 			assert.Equal(t, osargs[len(osargs)-1], cmd.Name())
 		})
 	}
+}
+
+func TestHelpText(t *testing.T) {
+	rootCmd := buildRootCommand()
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetArgs([]string{"help"})
+	rootCmd.Execute()
+	helpText := buf.String()
+	assert.Contains(t, helpText, "Resources:")
+	assert.Contains(t, helpText, "Aliased Commands:")
+	assert.Contains(t, helpText, "Meta Commands:")
 }

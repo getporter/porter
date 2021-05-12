@@ -1,18 +1,19 @@
-//go:generate packr2
-
 package main
 
 import (
+	_ "embed"
 	"os"
 
 	"get.porter.sh/porter/pkg/config/datastore"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 var includeDocsCommand = false
+
+//go:embed helptext/usage.txt
+var usageText string
 
 func main() {
 	cmd := buildRootCommand()
@@ -79,9 +80,7 @@ func buildRootCommand() *cobra.Command {
 		cmd.AddCommand(alias)
 	}
 
-	help := newHelptextBox()
-	usage, _ := help.FindString("usage.txt")
-	cmd.SetUsageTemplate(usage)
+	cmd.SetUsageTemplate(usageText)
 	cobra.AddTemplateFunc("ShouldShowGroupCommands", ShouldShowGroupCommands)
 	cobra.AddTemplateFunc("ShouldShowGroupCommand", ShouldShowGroupCommand)
 	cobra.AddTemplateFunc("ShouldShowUngroupedCommands", ShouldShowUngroupedCommands)
@@ -92,10 +91,6 @@ func buildRootCommand() *cobra.Command {
 	}
 
 	return cmd
-}
-
-func newHelptextBox() *packr.Box {
-	return packr.New("get.porter.sh/porter/cmd/porter/helptext", "./helptext")
 }
 
 func ShouldShowGroupCommands(cmd *cobra.Command, group string) bool {

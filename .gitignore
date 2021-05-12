@@ -1,7 +1,6 @@
 /docs/public/
 /bin
 /porter
-*-packr.go
 .DS_Store
 
 .cnab

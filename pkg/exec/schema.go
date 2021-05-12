@@ -1,20 +1,17 @@
 package exec
 
 import (
+	_ "embed"
 	"fmt"
 )
 
-func (m *Mixin) PrintSchema() error {
-	schema, err := m.GetSchema()
-	if err != nil {
-		return err
-	}
+//go:embed schema/exec.json
+var schema string
 
-	fmt.Fprintf(m.Out, schema)
-
-	return nil
+func (m *Mixin) PrintSchema() {
+	fmt.Fprintf(m.Out, m.GetSchema())
 }
 
-func (m *Mixin) GetSchema() (string, error) {
-	return m.schemas.FindString("exec.json")
+func (m *Mixin) GetSchema() string {
+	return schema
 }
