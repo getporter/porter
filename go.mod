@@ -21,7 +21,7 @@ replace (
 	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8
 
 	// Fixes https://github.com/spf13/viper/issues/761
-	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.1.0.20210512222257-5d1ed639c43c
+	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.1+36be6bf
 )
 
 require (
