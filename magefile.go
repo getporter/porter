@@ -34,11 +34,16 @@ import (
 // var Default = Build
 
 const (
-	registryContainer = "registry"
-	mixinsURL         = "https://cdn.porter.sh/mixins/"
+	GoVersion = ">=1.16"
+	mixinsURL = "https://cdn.porter.sh/mixins/"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}
+
+// Check if we have the right version of Go
+func CheckGoVersion() {
+	tools.EnforceGoVersion(GoVersion)
+}
 
 // Cleanup workspace after building or running tests.
 func Clean() {
@@ -218,7 +223,6 @@ func TestIntegration() {
 	if runTest != "" {
 		run = "-run=" + runTest
 	}
-	os.Setenv("GO111MODULE", "on")
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
 	must.Command("go", "test", "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
