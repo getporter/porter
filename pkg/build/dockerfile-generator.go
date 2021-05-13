@@ -20,20 +20,12 @@ type DockerfileGenerator struct {
 	*config.Config
 	*manifest.Manifest
 	*templates.Templates
-	driver string
 	Mixins pkgmgmt.PackageManager
 }
 
-func NewDockerfileGenerator(
-	config *config.Config,
-	driver string,
-	m *manifest.Manifest,
-	tmpl *templates.Templates,
-	mp pkgmgmt.PackageManager,
-) *DockerfileGenerator {
+func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager) *DockerfileGenerator {
 	return &DockerfileGenerator{
 		Config:    config,
-		driver:    driver,
 		Manifest:  m,
 		Templates: tmpl,
 		Mixins:    mp,
@@ -136,7 +128,7 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 		reader = file
 
 	} else {
-		contents, err := g.Templates.GetDockerfile(g.driver)
+		contents, err := g.Templates.GetDockerfile()
 		if err != nil {
 			return nil, errors.Wrap(err, "error loading default Dockerfile template")
 		}

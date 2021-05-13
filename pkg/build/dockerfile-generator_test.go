@@ -1,7 +1,10 @@
 package build
 
 import (
+	"fmt"
+	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -17,39 +20,35 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates(c.Config)
-	configTpl, err := tmpl.GetManifest()
-	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	drivers := []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
+	for _, driver := range drivers {
+		t.Run(driver, func(t *testing.T) {
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
+			c := config.NewTestConfig(t)
+			c.Data.BuildDriver = driver
+			tmpl := templates.NewTemplates(c.Config)
+			configTpl, err := tmpl.GetManifest()
+			require.Nil(t, err)
+			c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	// ignore mixins in the unit tests
-	m.Mixins = []manifest.MixinDeclaration{}
+			m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+			require.NoError(t, err, "could not load manifest")
 
-	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
-	gotlines, err := g.buildDockerfile()
-	require.NoError(t, err)
+			// ignore mixins in the unit tests
+			m.Mixins = []manifest.MixinDeclaration{}
 
-	wantlines := []string{
-		"FROM debian:stretch-slim",
-		"",
-		"ARG BUNDLE_DIR",
-		"",
-		"RUN apt-get update && apt-get install -y ca-certificates",
-		"",
-		"",
-		"COPY . $BUNDLE_DIR",
-		"RUN rm $BUNDLE_DIR/porter.yaml",
-		"RUN rm -fr $BUNDLE_DIR/.cnab",
-		"COPY .cnab /cnab",
-		"WORKDIR $BUNDLE_DIR",
-		"CMD [\"/cnab/app/run\"]",
+			mp := mixin.NewTestMixinProvider()
+			g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+			gotlines, err := g.buildDockerfile()
+			require.NoError(t, err)
+			gotDockerfile := strings.Join(gotlines, "\n")
+
+			wantDockerfilePath := fmt.Sprintf("testdata/%s.Dockerfile", driver)
+			wantDockerfile, err := ioutil.ReadFile(wantDockerfilePath)
+			require.NoError(t, err, "could not read %s", wantDockerfilePath)
+			assert.Equal(t, string(wantDockerfile), gotDockerfile)
+		})
 	}
-	assert.Equal(t, wantlines, gotlines)
 }
 
 func TestPorter_buildDockerfile_alternateManifestLocation(t *testing.T) {
@@ -70,7 +69,7 @@ func TestPorter_buildDockerfile_alternateManifestLocation(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -115,7 +114,7 @@ func TestPorter_buildDockerfile_separateManifestLocation(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -163,7 +162,7 @@ COPY mybin /cnab/app/
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
-		g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect an error when ARG BUNDLE_DIR is not in Dockerfile
@@ -198,7 +197,7 @@ COPY mybin /cnab/app/
 		// ignore mixins in the unit tests
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
-		g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
 		// We expect no error when ARG BUNDLE_DIR is in Dockerfile
@@ -235,7 +234,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildDockerfile()
 	require.NoError(t, err)
 
@@ -274,7 +273,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	m.Mixins = []manifest.MixinDeclaration{}
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.GenerateDockerFile()
 	require.NoError(t, err)
 
@@ -306,7 +305,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.NoError(t, err, "could not load manifest")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	err = g.PrepareFilesystem()
 	require.NoError(t, err)
 
@@ -348,7 +347,7 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -391,7 +390,7 @@ COPY mybin /cnab/app/
 	c.TestContext.AddTestFileContents([]byte(customFrom), "Dockerfile.template")
 
 	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
 	gotlines, err := g.buildDockerfile()
 	require.NoError(t, err)
@@ -430,7 +429,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	mp.ReturnBuildError = true
-	g := NewDockerfileGenerator(c.Config, config.BuildDriverDocker, m, tmpl, mp)
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 	_, err = g.buildMixinsSection()
 	require.EqualError(t, err, "1 error occurred:\n\t* error encountered from mixin \"exec\": encountered build error\n\n")
 }

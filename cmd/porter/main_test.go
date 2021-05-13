@@ -56,10 +56,20 @@ func TestHelpText(t *testing.T) {
 }
 
 func TestExperimentalFlags(t *testing.T) {
-	p := porter.New()
-	cmd := buildRootCommandFrom(p)
-	cmd.SetArgs([]string{"--experimental", "build-drivers"})
-	cmd.Execute()
+	t.Run("off", func(t *testing.T) {
+		p := porter.New()
+		cmd := buildRootCommandFrom(p)
+		cmd.Execute()
+		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
 
-	assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	t.Run("on", func(t *testing.T) {
+
+		p := porter.New()
+		cmd := buildRootCommandFrom(p)
+		cmd.SetArgs([]string{"--experimental", "build-drivers"})
+		cmd.Execute()
+
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
 }

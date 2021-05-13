@@ -26,7 +26,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 		// (which may be if a cached bundle is fetched e.g. when running an action)
 		opts.CNABFile = ""
 		buildOpts := BuildOptions{bundleFileOptions: opts}
-		buildOpts.Validate(p.Context)
+		buildOpts.Validate(p)
 		return p.Build(buildOpts)
 	}
 	return nil

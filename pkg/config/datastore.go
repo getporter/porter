@@ -22,6 +22,7 @@ type Data struct {
 	DefaultStorage string `mapstructure:"default-storage"`
 
 	// ExperimentalFlags is a list of enabled experimental.FeatureFlags.
+	// Use Config.IsFeatureEnabled instead of parsing directly.
 	ExperimentalFlags []string `mapstructure:"experimental"`
 
 	// CrudStores defined in the configuration file.

@@ -96,14 +96,14 @@ allow-docker-host-access = true
 
 Porter sometimes uses feature flags to release new functionality for users to
 evaluate, without affecting the stability of Porter. You can enable an experimental
-feature using:
+feature by:
 
-* the global flag `--experimental flagA,flagB`. The  value is a comma-separated
-  list of strings.
-* the environment variable `PORTER_EXPERIMENTAL=flagA,flagB`. The value is a
-  comma-separated list of strings.
-* the configuration file entry `experimental = ["flagA","flagB"]`. The
-  value is an array of strings.
+* Using the experimental global flag `--experimental flagA,flagB`.
+  The value is a comma-separated list of strings.
+* Setting the PORTER_EXPERIMENTAL environment variable like so `PORTER_EXPERIMENTAL=flagA,flagB`.
+  The value is a comma-separated list of strings.
+* Setting the experimental field in the configuration file like so `experimental = ["flagA","flagB"]`.
+  The value is an array of strings.
 
 ### Build Drivers
 

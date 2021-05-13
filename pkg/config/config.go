@@ -59,6 +59,7 @@ type Config struct {
 	// Cache the resolved Porter binary path
 	porterPath string
 
+	// parsed feature flags
 	experimental *experimental.FeatureFlags
 }
 

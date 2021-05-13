@@ -14,6 +14,7 @@ replace (
 	// Tagged from v1.4.0, the improved-configuration branch
 	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration.1
 
+	// go.mod doesn't propogate replacements in the dependency graph so I'm copying this from github.com/moby/buildkit
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
 	// local-keyword-registry

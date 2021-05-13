@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,9 +36,10 @@ func TestTemplates_GetDockerfile(t *testing.T) {
 	testcases := []string{"buildkit", "docker"}
 	for _, driver := range testcases {
 		c := config.NewTestConfig(t)
+		c.Data.BuildDriver = driver
 		tmpl := NewTemplates(c.Config)
 
-		gotTmpl, err := tmpl.GetDockerfile(driver)
+		gotTmpl, err := tmpl.GetDockerfile()
 		require.NoError(t, err)
 
 		wantTmpl, _ := ioutil.ReadFile(fmt.Sprintf("./templates/build/%s.Dockerfile", driver))

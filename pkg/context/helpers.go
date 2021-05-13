@@ -115,7 +115,19 @@ func (c *TestContext) Cleanup() {
 	}
 }
 
+// AddTestFileFromRoot adds a test file where the filepath is relative to the root of the repository.
+// Use this when the testfile you are referencing is in a different directory than the test.
+func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
+	pathFromRoot := filepath.Join(c.FindRepoRoot(), src)
+	return c.AddTestFile(pathFromRoot, dest)
+}
+
+// AddTestFile adds a test file where the filepath is relative to the test directory.
 func (c *TestContext) AddTestFile(src, dest string) []byte {
+	if strings.Contains(src, "..") {
+		c.T.Fatal(errors.New("Use AddTestFileFromRoot when referencing a test file in a different directory than the test"))
+	}
+
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
@@ -133,6 +145,14 @@ func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
 	return c.FileSystem.WriteFile(dest, file, os.ModePerm)
 }
 
+// AddTestDirectoryFromRoot adds a test directory where the filepath is relative to the root of the repository.
+// Use this when the directory you are referencing is in a different directory than the test.
+func (c *TestContext) AddTestDirectoryFromRoot(srcDir, destDir string) {
+	pathFromRoot := filepath.Join(c.FindRepoRoot(), srcDir)
+	c.AddTestDirectory(pathFromRoot, destDir)
+}
+
+// AddTestDirectory adds a test directory where the filepath is relative to the test directory.
 func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

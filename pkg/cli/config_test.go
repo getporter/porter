@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,7 +57,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 	t.Run("debug flag overrides config", func(t *testing.T) {
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("../config/testdata/config.toml", "/root/.porter/config.toml")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug=false"})
@@ -121,7 +120,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("../config/testdata/config.toml", "/root/.porter/config.toml")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -136,7 +135,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFile("../config/testdata/config.toml", "/root/.porter/config.toml")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug", "true"})

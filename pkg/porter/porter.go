@@ -89,10 +89,10 @@ func (p *Porter) LoadManifestFrom(file string) error {
 }
 
 // NewBuilder creates a Builder based on the current configuration.
-func (p *Porter) GetBuilder(driver string) build.Builder {
+func (p *Porter) GetBuilder() build.Builder {
 	if p.builder == nil {
 		if p.IsFeatureEnabled(experimental.FlagBuildDrivers) {
-			switch driver {
+			switch p.Config.Data.BuildDriver {
 			case config.BuildDriverBuildkit:
 				p.builder = buildkit.NewBuilder(p.Context)
 			case config.BuildDriverDocker:

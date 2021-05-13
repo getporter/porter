@@ -3,8 +3,9 @@ package templates
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/config"
 	"embed"
+
+	"get.porter.sh/porter/pkg/config"
 )
 
 //go:embed templates/*
@@ -26,7 +27,7 @@ type Templates struct {
 func NewTemplates(c *config.Config) *Templates {
 	return &Templates{
 		Config: c,
-		fs: fs,
+		fs:     fs,
 	}
 }
 
@@ -56,8 +57,8 @@ func (t *Templates) GetDockerignore() ([]byte, error) {
 }
 
 // GetDockerfileTemplate returns a Dockerfile.tmpl file for use in new bundles.
-func (t *Templates) GetDockerfileTemplate(driver string) ([]byte, error) {
-	tmpl := fmt.Sprintf("templates/create/template.%s.Dockerfile", driver)
+func (t *Templates) GetDockerfileTemplate() ([]byte, error) {
+	tmpl := fmt.Sprintf("templates/create/template.%s.Dockerfile", t.Data.BuildDriver)
 	return t.fs.ReadFile(tmpl)
 }
 
@@ -73,7 +74,7 @@ func (t *Templates) GetSchema() ([]byte, error) {
 }
 
 // GetDockerfile returns the default Dockerfile for invocation images.
-func (t *Templates) GetDockerfile(driver string) ([]byte, error) {
-	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", driver)
+func (t *Templates) GetDockerfile() ([]byte, error) {
+	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", t.Data.BuildDriver)
 	return t.fs.ReadFile(tmpl)
 }

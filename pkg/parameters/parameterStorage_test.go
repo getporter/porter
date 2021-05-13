@@ -158,7 +158,7 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	// Add an unmigrated parameter
 	credDir := filepath.Join(home, "parameters")
 	config.FileSystem.Mkdir(credDir, 0755)
-	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/parameters", "mybun.json"), filepath.Join(home, "parameters", "mybun.json"))
+	config.TestContext.AddTestFileFromRoot("pkg/storage/testdata/parameters/mybun.json", filepath.Join(home, "parameters", "mybun.json"))
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	mgr := storage.NewManager(config.Config, dataStore)

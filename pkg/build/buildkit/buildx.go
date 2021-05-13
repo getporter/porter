@@ -90,12 +90,12 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	if buildErr == nil {
 		return errors.Wrapf(printErr, "error with docker printer")
 	}
-	fmt.Printf("%+v", buildErr)
 	return errors.Wrapf(buildErr, "error building docker image")
 }
 
 var _ console.File = dockerConsole{}
 
+// Wraps io.Writer since docker wants to send output to a *os.File
 type dockerConsole struct {
 	out io.Writer
 	f   *os.File
@@ -143,6 +143,7 @@ func (r dockerConsole) Name() string {
 	return r.f.Name()
 }
 
+// Adapts between Docker CLI and Buildx
 type dockerToBuildx struct {
 	cli command.Cli
 }

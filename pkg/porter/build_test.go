@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/mixin"
 	"github.com/cnabio/cnab-go/bundle"
@@ -32,7 +31,7 @@ func TestPorter_Build(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := BuildOptions{}
-	require.NoError(t, opts.Validate(p.Context), "Validate failed")
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
 	err = p.Build(opts)
 	require.NoError(t, err)
@@ -91,7 +90,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: false}
-		err = opts.Validate(p.Context)
+		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
 		err = p.Build(opts)
@@ -108,7 +107,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		require.NoError(t, err, "Create failed")
 
 		opts := BuildOptions{NoLint: true}
-		err = opts.Validate(p.Context)
+		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
 		err = p.Build(opts)
@@ -142,12 +141,14 @@ func TestBuildOptions_Validate(t *testing.T) {
 	p := NewTestPorter(t)
 
 	testcases := []struct {
-		name      string
-		opts      BuildOptions
-		wantError string
+		name       string
+		opts       BuildOptions
+		wantDriver string
+		wantError  string
 	}{{
-		name: "no opts",
-		opts: BuildOptions{},
+		name:       "no opts",
+		opts:       BuildOptions{},
+		wantDriver: config.BuildDriverDocker,
 	}, {
 		name:      "invalid version set - latest",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
@@ -162,11 +163,13 @@ func TestBuildOptions_Validate(t *testing.T) {
 		name: "valid name and value set",
 		opts: BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
 	}, {
-		name: "valid driver: docker",
-		opts: BuildOptions{Driver: config.BuildDriverBuildkit},
+		name:       "valid driver: docker",
+		opts:       BuildOptions{Driver: config.BuildDriverDocker},
+		wantDriver: config.BuildDriverDocker,
 	}, {
-		name: "valid driver: buildkit",
-		opts: BuildOptions{Driver: config.BuildDriverBuildkit},
+		name:       "valid driver: buildkit",
+		opts:       BuildOptions{Driver: config.BuildDriverBuildkit},
+		wantDriver: config.BuildDriverBuildkit,
 	}, {
 		name:      "invalid driver",
 		opts:      BuildOptions{Driver: "missing-driver"},
@@ -175,21 +178,25 @@ func TestBuildOptions_Validate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.opts.Validate(p.Context)
+			err := tc.opts.Validate(p.Porter)
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {
 				require.NoError(t, err)
+
+				if tc.wantDriver != "" {
+					assert.Equal(t, tc.wantDriver, p.Data.BuildDriver)
+				}
 			}
 		})
 	}
 }
 
 func TestBuildOptions_Defaults(t *testing.T) {
-	c := context.NewTestContext(t)
+	p := NewTestPorter(t)
 	t.Run("default driver", func(t *testing.T) {
 		opts := BuildOptions{}
-		err := opts.Validate(c.Context)
+		err := opts.Validate(p.Porter)
 		require.NoError(t, err, "Validate failed")
 		assert.Equal(t, config.BuildDriverDocker, opts.Driver)
 	})
