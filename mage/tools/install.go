@@ -1,19 +1,40 @@
 package tools
 
 import (
+	"log"
 	"os"
 	"runtime"
+	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/pkg/archive"
 	"github.com/carolynvs/magex/pkg/downloads"
+	"github.com/pkg/errors"
 )
 
 const (
 	// Version of KIND to install if not already present
 	DefaultKindVersion = "v0.10.0"
 )
+
+// Fail if the go version doesn't match the specified constraint
+// Examples: >=1.16
+func EnforceGoVersion(constraint string) {
+	log.Printf("Checking go version against constraint %s...", constraint)
+
+	value := strings.TrimPrefix(runtime.Version(), "go")
+	version, err := semver.NewVersion(value)
+	mgx.Must(errors.Wrapf(err, "could not parse go version: '%s'", value))
+	versionCheck, err := semver.NewConstraint(constraint)
+	mgx.Must(errors.Wrapf(err, "invalid semver constraint: '%s'", constraint))
+
+	ok, _ := versionCheck.Validate(version)
+	if !ok {
+		mgx.Must(errors.Errorf("Your version of Go, %s, does not meet the requirement %s", version, versionCheck))
+	}
+}
 
 // Install mage
 func EnsureMage() error {

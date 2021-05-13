@@ -244,11 +244,12 @@ maintainer.
 
 ## Initial setup
 
-We have a [tutorial] that walks you through how to setup your developer
+We have a [tutorial] that walks you through how to set up your developer
 environment, make a change and test it.
 
 Here are the key steps, if you run into trouble, the tutorial has more details:
 
+1. Install Go version 1.16 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
 1. Run `make build install` from within the newly cloned repository.
 

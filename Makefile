@@ -16,7 +16,7 @@ RUNTIME_ARCH = amd64
 BASEURL_FLAG ?=
 PORTER_UPDATE_TEST_FILES ?=
 
-GO = GO111MODULE=on go
+GO = go
 LOCAL_PORTER = PORTER_HOME=$(PWD)/bin $(PWD)/bin/porter
 
 # Add ~/go/bin to PATH, works for everything _except_ shell commands

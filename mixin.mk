@@ -9,8 +9,8 @@ VERSION ?= $(shell git describe --tags --match v* 2> /dev/null || echo v0)
 PERMALINK ?= $(shell git describe --tags --exact-match --match v* &> /dev/null && echo latest || echo canary)
 
 LDFLAGS = -w -X $(PKG)/pkg.Version=$(VERSION) -X $(PKG)/pkg.Commit=$(COMMIT)
-GO = GO111MODULE=on go
-XBUILD = CGO_ENABLED=0 GO111MODULE=on $(GO) build -ldflags '$(LDFLAGS)'
+GO = go
+XBUILD = CGO_ENABLED=0 $(GO) build -ldflags '$(LDFLAGS)'
 BINDIR ?= bin/mixins/$(MIXIN)
 
 CLIENT_PLATFORM ?= $(shell go env GOOS)
@@ -29,14 +29,18 @@ else
 FILE_EXT=
 endif
 
+.PHONY: check-go-version
+check-go-version:
+	go run mage.go CheckGoVersion
+
 .PHONY: build
 build: build-client build-runtime
 
-build-runtime:
+build-runtime: check-go-version
 	mkdir -p $(BINDIR)/runtimes
 	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/runtimes/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
 
-build-client:
+build-client: check-go-version
 	mkdir -p $(BINDIR)
 	$(GO) build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
 
@@ -51,7 +55,7 @@ xbuild-all:
 	mage PrepareMixinForPublish $(MIXIN) $(VERSION) $(PERMALINK)
 
 xbuild: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
-$(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
+$(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT): check-go-version
 	mkdir -p $(dir $@)
 	GOOS=$(CLIENT_PLATFORM) GOARCH=$(CLIENT_ARCH) $(XBUILD) -o $@ ./cmd/$(MIXIN)
 
