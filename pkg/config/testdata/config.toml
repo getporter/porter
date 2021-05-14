@@ -1,9 +1,13 @@
 debug = true
+debug-plugins = true
 
 default-storage-plugin = "azure.blob"
 default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
+
+experimental = ["build-drivers"]
+build-driver = "buildkit"
 
 [[storage]]
   name = "dev"

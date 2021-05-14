@@ -69,6 +69,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("debug env var", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "true")
+		defer os.Unsetenv("PORTER_DEBUG")
+
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
 
@@ -81,6 +83,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("debug-plugins env var", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG_PLUGINS", "true")
+		defer os.Unsetenv("PORTER_DEBUG_PLUGINS")
+
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
 
@@ -93,6 +97,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("build-driver env var", func(t *testing.T) {
 		os.Setenv("PORTER_BUILD_DRIVER", config.BuildDriverBuildkit)
+		defer os.Unsetenv("PORTER_BUILD_DRIVER")
+
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
 
@@ -103,8 +109,25 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		assert.Equal(t, config.BuildDriverBuildkit, c.Data.BuildDriver, "c.Data.BuildDriver was not set correctly")
 	})
 
+	t.Run("build-driver from config", func(t *testing.T) {
+		os.Unsetenv("PORTER_BUILD_DRIVER")
+		defer os.Unsetenv("PORTER_EXPERIMENTAL")
+
+		c := config.NewTestConfig(t)
+		c.SetHomeDir("/root/.porter")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
+
+		cmd := buildCommand(c.Config)
+		err := cmd.Execute()
+
+		require.NoError(t, err, "dataloader failed")
+		assert.Equal(t, config.BuildDriverBuildkit, c.Data.BuildDriver, "c.Data.BuildDriver was not set correctly")
+	})
+
 	t.Run("invalid debug env var", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "blorp")
+		defer os.Unsetenv("PORTER_DEBUG")
+
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
 
@@ -118,6 +141,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 	t.Run("debug env var overrides config", func(t *testing.T) {
 		os.Setenv("PORTER_DEBUG", "false")
 		defer os.Unsetenv("PORTER_DEBUG")
+
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")
 		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")

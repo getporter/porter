@@ -35,14 +35,14 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 		v := viper.New()
 		v.SetFs(cfg.FileSystem)
 
-		if viperCfg != nil {
-			viperCfg(v)
-		}
-
 		// Initialize empty config
 		err := v.SetDefaultsFrom(cfg.Data)
 		if err != nil {
 			return err
+		}
+
+		if viperCfg != nil {
+			viperCfg(v)
 		}
 
 		// Try to read config
