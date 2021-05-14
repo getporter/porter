@@ -57,13 +57,27 @@ func TestConfig_GetFeatureFlags(t *testing.T) {
 func TestConfigExperimentalFlags(t *testing.T) {
 	// Do not run in parallel since we are using os.Setenv
 
-	os.Setenv("PORTER_EXPERIMENTAL", "build-drivers")
-	defer os.Unsetenv("PORTER_EXPERIMENTAL")
+	t.Run("default off", func(t *testing.T) {
+		c := NewTestConfig(t)
+		assert.False(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
 
-	os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
-	defer os.Unsetenv("PORTER_BUILD_DRIVER")
+	t.Run("user configuration", func(t *testing.T) {
+		os.Setenv("PORTER_EXPERIMENTAL", "build-drivers")
+		defer os.Unsetenv("PORTER_EXPERIMENTAL")
 
-	c := New()
-	require.NoError(t, c.LoadData(), "LoadData failed")
-	assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
+		os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
+		defer os.Unsetenv("PORTER_BUILD_DRIVER")
+
+		c := New()
+		require.NoError(t, c.LoadData(), "LoadData failed")
+		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
+
+	t.Run("programmatically enabled", func(t *testing.T) {
+		c := NewTestConfig(t)
+		c.Data.ExperimentalFlags = nil
+		c.SetExperimentalFlags(experimental.FlagBuildDrivers)
+		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
 }

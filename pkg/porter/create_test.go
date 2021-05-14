@@ -1,8 +1,10 @@
 package porter
 
 import (
-	"os"
 	"testing"
+
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,14 +43,9 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateWithBuildkit(t *testing.T) {
-	os.Setenv("PORTER_EXPERIMENTAL", "build-drivers")
-	os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
-	defer os.Unsetenv("PORTER_EXPERIMENTAL")
-	defer os.Unsetenv("PORTER_BUILD_DRIVER")
-
 	p := NewTestPorter(t)
-
-	p.LoadData()
+	p.SetExperimentalFlags(experimental.FlagBuildDrivers)
+	p.Data.BuildDriver = config.BuildDriverBuildkit
 
 	err := p.Create()
 	require.NoError(t, err)
