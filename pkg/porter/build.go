@@ -41,16 +41,15 @@ func (o *BuildOptions) Validate(p *Porter) error {
 
 	if o.Driver == "" {
 		o.Driver = p.Data.BuildDriver
-	} else {
-		if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
-			return errors.Errorf("invalid --driver value %s", o.Driver)
-		}
-
-		// Syncing value back to the config and we will always use the config
-		// to determine the driver
-		// This would be less awkward if we didn't do an automatic build during publish
-		p.Data.BuildDriver = o.Driver
 	}
+	if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
+		return errors.Errorf("invalid --driver value %s", o.Driver)
+	}
+
+	// Syncing value back to the config and we will always use the config
+	// to determine the driver
+	// This would be less awkward if we didn't do an automatic build during publish
+	p.Data.BuildDriver = o.Driver
 
 	return o.bundleFileOptions.Validate(p.Context)
 }

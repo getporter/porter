@@ -39,15 +39,15 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			viperCfg(v)
 		}
 
-		// Apply default values
-		err := v.ReadConfigFrom(cfg.Data)
+		// Initialize empty config
+		err := v.SetDefaultsFrom(cfg.Data)
 		if err != nil {
 			return err
 		}
 
 		// Try to read config
 		v.AddConfigPath(home)
-		err = v.MergeInConfig()
+		err = v.ReadInConfig()
 		if err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 				return errors.Wrapf(err, "error reading config file at %q", v.ConfigFileUsed())

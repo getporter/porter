@@ -42,12 +42,12 @@ func TestConfig_GetHomeDirFromSymlink(t *testing.T) {
 func TestConfig_GetFeatureFlags(t *testing.T) {
 	t.Parallel()
 
-	t.Run("build builders defaulted to disabled", func(t *testing.T) {
+	t.Run("build drivers defaulted to disabled", func(t *testing.T) {
 		c := Config{}
 		assert.False(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 	})
 
-	t.Run("build builders enabled", func(t *testing.T) {
+	t.Run("build drivers enabled", func(t *testing.T) {
 		c := Config{}
 		c.Data.ExperimentalFlags = []string{experimental.BuildDrivers}
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
@@ -63,7 +63,7 @@ func TestConfigExperimentalFlags(t *testing.T) {
 	os.Setenv("PORTER_BUILD_DRIVER", "buildkit")
 	defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
-	c := NewTestConfig(t)
+	c := New()
 	require.NoError(t, c.LoadData(), "LoadData failed")
 	assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 }

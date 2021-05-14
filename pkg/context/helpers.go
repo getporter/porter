@@ -154,6 +154,10 @@ func (c *TestContext) AddTestDirectoryFromRoot(srcDir, destDir string) {
 
 // AddTestDirectory adds a test directory where the filepath is relative to the test directory.
 func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
+	if strings.Contains(srcDir, "..") {
+		c.T.Fatal(errors.New("Use AddTestDirectoryFromRoot when referencing a test directory in a different directory than the test"))
+	}
+
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

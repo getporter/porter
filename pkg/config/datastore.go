@@ -12,7 +12,7 @@ type Data struct {
 	// Values are dynamically applied to flags and don't need to be defined
 
 	// BuildDriver is the driver to use when building bundles.
-	// Available values are: docker, buildx.
+	// Available values are: docker, buildkit.
 	BuildDriver string `mapstructure:"build-driver"`
 
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
