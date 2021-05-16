@@ -25,7 +25,7 @@ All the scripts for Porter v0.37.3+ support [customizing the installation throug
 
 # Latest
 
-Install the most recent stable release of porter and its default [mixins](#mixins).
+Install the most recent stable release of porter and the [exec mixin].
 
 ## Latest MacOS
 ```
@@ -46,7 +46,7 @@ iwr "https://cdn.porter.sh/latest/install-windows.ps1" -UseBasicParsing | iex
 
 # Canary
 
-Install the most recent build from the "main" branch of porter and its [mixins](#mixins).
+Install the most recent build from the "main" branch of porter and the [exec mixin].
 
 This saves you the trouble of cloning and building porter and its mixin
 repositories yourself. The build may not be stable but it will have new features
@@ -71,9 +71,11 @@ iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 
 # Older Version
 
-Install an older version of porter, starting with `v0.18.1-beta.2`. This also
-installs the latest version of all the mixins. If you need a specific version of
-a mixin, use the `--version` flag when [installing the mixin](#mixins).
+Install an older version of porter, starting with `v0.18.1-beta.2`.
+Porter v1.0.0+ only installs porter and the [exec mixin].
+Older versions of Porter installed more mixins by default. 
+
+If you need a specific version of a mixin, use the `--version` flag when [installing the mixin](#mixins).
 
 See the porter [releases][releases] page for a list of older porter versions.
 Set `VERSION` to the version of Porter that you want to install.
@@ -100,8 +102,8 @@ iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 
 # Mixins
 
-We have a number of [mixins](/mixins) to help you get started, and stable mixins
-are installed by default.
+We have a number of [mixins](/mixins) to help you get started.
+Only the [exec mixin] is installed with Porter, other mixins should be installed separately.
 
 You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
@@ -115,8 +117,7 @@ All of the Porter-authored mixins are published to `https://cdn.porter.sh/mixins
 
 # Plugins
 
-We are working on building out [plugins](/plugins) to extend Porter and the stable
-plugins are installed by default.
+We have a couple [plugins](/plugins) which extend Porter and integrate with other cloud providers and software.
 
 You can update an existing plugin, or install a new plugin using the `porter plugin
 install` command:
@@ -130,8 +131,6 @@ All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugi
 
 
 [releases]: https://github.com/getporter/porter/releases
-
-
 
 # Install Script Parameters
 
@@ -194,3 +193,5 @@ plugins/
   - index.json
   - PLUGIN/PERMALINK/PLUGIN-GOOS-GOARCH[FILE_EXT]
 ```
+
+[exec mixin]: /mixins/exec/
