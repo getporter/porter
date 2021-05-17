@@ -7248,12 +7248,6 @@ nav.home-nav {
       letter-spacing: 0.05em;
       font-size: 2rem;
       margin: 0 0 1rem; }
-      .blog-layout .main.blog .content-wrap article h2 a {
-        color: #146a91;
-        padding: 0.15rem 0.233rem;
-        background-color: #fdfaf5; }
-        .blog-layout .main.blog .content-wrap article h2 a:hover {
-          color: #3FB1E5; }
     .blog-layout .main.blog .content-wrap article p.date {
       margin-top: 0;
       padding-top: 0;

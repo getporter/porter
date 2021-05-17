@@ -21,16 +21,15 @@
             font-size: 2rem;
             margin: 0 0 1rem;
 
+            // a {
+              // color: darken($blue, 25%);
+              // padding: 0.15rem 0.233rem;
+              // background-color: lighten($gold, 35%);
 
-            a {
-              color: darken($blue, 25%);
-              padding: 0.15rem 0.233rem;
-              background-color: lighten($gold, 35%);
-
-              &:hover {
-                color: $blue;
-              }
-            }
+            //   &:hover {
+            //     color: $blue;
+            //   }
+            // }
           }
 
           p.date {
