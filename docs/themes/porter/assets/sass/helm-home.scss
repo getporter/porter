@@ -27,26 +27,6 @@ body.home {
   }
 }
 
-#cookie-banner {
-  background: rgba(238,238,238,0.5);
-  padding: 0.75rem 0;
-  text-align: center;
-  z-index: 1501;
-  position: static;
-
-  .cc-container   {
-    max-width: 75rem;
-    margin: 0 auto;
-  }
-
-  p {
-    margin: 0;
-    font-size: 0.75rem;
-    line-height: 1.2;
-    color: lighten($darkblue, 20%);
-  }
-}
-
 nav.home-nav {
   position: absolute;
   min-height: 300px;
