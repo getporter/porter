@@ -20,6 +20,7 @@
     <meta property="og:url" content="{{ .Permalink }}" />
     <meta property="og:image" content="{{ .Site.BaseURL }}{{ $card }}" />
 
+    <link href="{{ .Site.BaseURL }}blog/index.xml" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />
     <link rel="icon" href="/img/favicon.png" type="image/x-icon">
     {{ $style := resources.Get "sass/styles.scss" | resources.ToCSS | resources.Minify }}
     <link rel="stylesheet" href="{{ $style.Permalink }}">

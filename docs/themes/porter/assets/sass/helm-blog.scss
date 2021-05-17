@@ -1,57 +1,4 @@
 .blog-layout {
-  padding-left: 0 !important;
-  background-color: white;
-
-  h1.blog-logo {
-    margin: 0;
-    padding: 0;
-    min-height: 5.125rem;
-    z-index: 1020;
-    text-transform: none;
-    position: fixed;
-    width: 300px;
-    left: 0;
-    top: 0;
-    display: block;
-    background-color: white;
-
-    a {
-      display: block;
-      width: 100%;
-      padding: 0.333em 2.25rem;
-      background-color: white;
-      text-align: left;
-
-      img,
-      svg {
-        display: block;
-        fill: currentColor;
-        @include transition;
-      }
-
-      svg {
-        margin-top: 0.5rem;
-      }
-
-      span {
-        top: 1em;
-        position: absolute;
-        font-size: 1.5rem;
-        color: $blue3;
-        left: 6.5rem;
-        letter-spacing: -0.125rem;
-        @include klinicReg;
-      }
-
-      &:hover {
-        background: $light2;
-
-        svg {
-          color: white !important;
-        }
-      }
-    }
-  }
 
   .main {
     padding-top: 2rem;
@@ -60,6 +7,7 @@
       .content-wrap {
         h1 {
           margin-top: 0;
+          color: $gray;
         }
 
         article {
@@ -68,11 +16,19 @@
           h2 {
             padding-top: 4rem;
             margin-bottom: 0;
+            text-transform: capitalize;
+            letter-spacing: 0.05em;
+            font-size: 2rem;
+            margin: 0 0 1rem;
           }
 
           p.date {
             margin-top: 0;
             padding-top: 0;
+            font-weight: bold;
+            font-size: 1rem;
+            color: lighten($gray, 35%);
+            margin: 0.5rem 0;
           }
 
           // Workaround bug: https://github.com/gohugoio/hugo/issues/1217#issuecomment-628409159
@@ -95,12 +51,13 @@
       .content-wrap {
         article {
           h1 {
-            font-size: 2.667rem;
-            margin-bottom: 0;
+            font-size: 2.75rem;
+            margin-bottom: 0.25em;
           }
 
-          .date {
+          p.date {
             font-style: italic;
+            margin-bottom: 2.67em;
           }
 
           img {
@@ -113,16 +70,69 @@
             }
           }
 
-          .author {
-            text-align: center;
-            width: max-content;
+          .blog-meta {
+            margin-top: 7.5rem;
+          }
 
-            img {
-              max-width: 10rem;
-              display: block;
-              margin: 0;
-              padding: 0;
+          .blog-author {
+            text-align: left;
+            figure {
+              display: inline-block;
+              width: 100%;
+              
+              a {
+                position: relative;
+                background: lighten($gold, 25%);
+                padding: 1rem;
+                display: inline-block;
+                width: 100%;
+                min-height: 12rem;
+                border-radius: 0.67em;
+                padding-left: 12rem;
+
+                img {
+                  position: absolute;
+                  left: 1rem;
+                  top: 1rem;
+                  border-radius: 50%;
+                  max-width: 10rem;
+                }
+
+                figcaption {
+                  text-align: left;
+                  font-size: 1.35rem;
+                  margin-top: 2.75rem;
+                }
+              }
             }
+          }
+
+          .blog-tags {
+            position: relative;
+            padding: 1rem 2rem;
+            min-height: 12rem;
+            a.tag {
+              font-size: 1.25rem;
+              border-radius: 2rem;
+              background: $blue;
+              color: white;
+              padding: 0.5rem 1.5rem;
+              margin: 2.25rem 0.25rem;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.075em;
+            }
+          }
+
+          .button-rss {
+            display: block;
+            background: lighten($blue, 35%);
+            border-radius: 3rem;
+            margin: 2.5rem 0 0;
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            right: 5%;
           }
         }
       }

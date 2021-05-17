@@ -1,10 +1,10 @@
 <figure class="author">
     <a href="{{ .Params.authorlink }}" target="_blank">
     {{ if .Params.authorimage }}
-    <img src="{{ .Params.authorimage }}" />
+    <span class="img-round"><img src="{{ .Params.authorimage }}" /></span>
     {{ end}}
     <figcaption>
-        {{ .Params.authorname }}<br/>
+        <strong>{{ .Params.authorname }}</strong><br/>
         {{ .Params.author }}
     </figcaption>
     </a>
