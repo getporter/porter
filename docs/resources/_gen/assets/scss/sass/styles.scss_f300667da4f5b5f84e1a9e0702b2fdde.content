@@ -6392,21 +6392,6 @@ body.home {
     body.home #footer .row {
       max-width: 100%; }
 
-#cookie-banner {
-  background: rgba(238, 238, 238, 0.5);
-  padding: 0.75rem 0;
-  text-align: center;
-  z-index: 1501;
-  position: static; }
-  #cookie-banner .cc-container {
-    max-width: 75rem;
-    margin: 0 auto; }
-  #cookie-banner p {
-    margin: 0;
-    font-size: 0.75rem;
-    line-height: 1.2;
-    color: #53aad4; }
-
 nav.home-nav {
   position: absolute;
   min-height: 300px;
@@ -7249,88 +7234,102 @@ nav.home-nav {
   @media only screen and (max-width: 40em) {
     #helm #tos {
       padding: 80px 20px 20px 20px; } }
-.blog-layout {
-  padding-left: 0 !important;
-  background-color: white; }
-  .blog-layout h1.blog-logo {
-    margin: 0;
-    padding: 0;
-    min-height: 5.125rem;
-    z-index: 1020;
-    text-transform: none;
-    position: fixed;
-    width: 300px;
-    left: 0;
-    top: 0;
-    display: block;
-    background-color: white; }
-    .blog-layout h1.blog-logo a {
-      display: block;
-      width: 100%;
-      padding: 0.333em 2.25rem;
-      background-color: white;
-      text-align: left; }
-      .blog-layout h1.blog-logo a img,
-      .blog-layout h1.blog-logo a svg {
-        display: block;
-        fill: currentColor;
-        transition: all 0.3s ease-in-out; }
-      .blog-layout h1.blog-logo a svg {
-        margin-top: 0.5rem; }
-      .blog-layout h1.blog-logo a span {
-        top: 1em;
-        position: absolute;
-        font-size: 1.5rem;
-        color: #2090CD;
-        left: 6.5rem;
-        letter-spacing: -0.125rem;
-        font-family: "klinic-reg", "klinic", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-weight: 400;
-        letter-spacing: 0.0075em;
-        -webkit-font-smoothing: antialiased; }
-      .blog-layout h1.blog-logo a:hover {
-        background: #E4E4E4; }
-        .blog-layout h1.blog-logo a:hover svg {
-          color: white !important; }
-  .blog-layout .main {
-    padding-top: 2rem; }
-    .blog-layout .main.blog .content-wrap h1 {
-      margin-top: 0; }
-    .blog-layout .main.blog .content-wrap article {
+.blog-layout .main {
+  padding-top: 2rem; }
+  .blog-layout .main.blog .content-wrap h1 {
+    margin-top: 0;
+    color: #3C2E53; }
+  .blog-layout .main.blog .content-wrap article {
+    padding: 0; }
+    .blog-layout .main.blog .content-wrap article h2 {
+      padding-top: 4rem;
+      margin-bottom: 0;
+      text-transform: capitalize;
+      letter-spacing: 0.05em;
+      font-size: 2rem;
+      margin: 0 0 1rem; }
+      .blog-layout .main.blog .content-wrap article h2 a {
+        color: #146a91;
+        padding: 0.15rem 0.233rem;
+        background-color: #fdfaf5; }
+        .blog-layout .main.blog .content-wrap article h2 a:hover {
+          color: #3FB1E5; }
+    .blog-layout .main.blog .content-wrap article p.date {
+      margin-top: 0;
+      padding-top: 0;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #937db7;
+      margin: 0.5rem 0; }
+    .blog-layout .main.blog .content-wrap article .summary p {
+      display: inline;
+      margin: 0;
       padding: 0; }
-      .blog-layout .main.blog .content-wrap article h2 {
-        padding-top: 4rem;
-        margin-bottom: 0; }
-      .blog-layout .main.blog .content-wrap article p.date {
-        margin-top: 0;
-        padding-top: 0; }
-      .blog-layout .main.blog .content-wrap article .summary p {
-        display: inline;
-        margin: 0;
-        padding: 0; }
-      .blog-layout .main.blog .content-wrap article .summary a {
-        font-weight: 900; }
-    .blog-layout .main.blog-single .content-wrap article h1 {
-      font-size: 2.667rem;
-      margin-bottom: 0; }
-    .blog-layout .main.blog-single .content-wrap article .date {
-      font-style: italic; }
-    .blog-layout .main.blog-single .content-wrap article img {
-      box-shadow: none;
-      display: block;
-      margin: 0 auto; }
-      .blog-layout .main.blog-single .content-wrap article img:hover {
-        -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
-        -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
-        box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
-    .blog-layout .main.blog-single .content-wrap article .author {
-      text-align: center;
-      width: max-content; }
-      .blog-layout .main.blog-single .content-wrap article .author img {
-        max-width: 10rem;
-        display: block;
-        margin: 0;
-        padding: 0; }
+    .blog-layout .main.blog .content-wrap article .summary a {
+      font-weight: 900; }
+  .blog-layout .main.blog-single .content-wrap article h1 {
+    font-size: 2.75rem;
+    margin-bottom: 0.25em; }
+  .blog-layout .main.blog-single .content-wrap article p.date {
+    font-style: italic;
+    margin-bottom: 2.67em; }
+  .blog-layout .main.blog-single .content-wrap article img {
+    box-shadow: none;
+    display: block;
+    margin: 0 auto; }
+    .blog-layout .main.blog-single .content-wrap article img:hover {
+      -webkit-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+      -moz-box-shadow: none 2px 0 rgba(30, 30, 30, 0.25);
+      box-shadow: none 2px 0 rgba(30, 30, 30, 0.25); }
+  .blog-layout .main.blog-single .content-wrap article .blog-meta {
+    margin-top: 7.5rem; }
+  .blog-layout .main.blog-single .content-wrap article .blog-author {
+    text-align: left; }
+    .blog-layout .main.blog-single .content-wrap article .blog-author figure {
+      display: inline-block;
+      width: 100%; }
+      .blog-layout .main.blog-single .content-wrap article .blog-author figure a {
+        position: relative;
+        background: #f4e8ca;
+        padding: 1rem;
+        display: inline-block;
+        width: 100%;
+        min-height: 12rem;
+        border-radius: 0.67em;
+        padding-left: 12rem; }
+        .blog-layout .main.blog-single .content-wrap article .blog-author figure a img {
+          position: absolute;
+          left: 1rem;
+          top: 1rem;
+          border-radius: 50%;
+          max-width: 10rem; }
+        .blog-layout .main.blog-single .content-wrap article .blog-author figure a figcaption {
+          text-align: left;
+          font-size: 1.35rem;
+          margin-top: 2.75rem; }
+  .blog-layout .main.blog-single .content-wrap article .blog-tags {
+    position: relative;
+    padding: 1rem 2rem;
+    min-height: 12rem; }
+    .blog-layout .main.blog-single .content-wrap article .blog-tags a.tag {
+      font-size: 1.25rem;
+      border-radius: 2rem;
+      background: #3FB1E5;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      margin: 2.25rem 0.25rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.075em; }
+  .blog-layout .main.blog-single .content-wrap article .button-rss {
+    display: block;
+    background: #dcf1fa;
+    border-radius: 3rem;
+    margin: 2.5rem 0 0;
+    position: absolute;
+    bottom: 0;
+    left: 5%;
+    right: 5%; }
 
 html,
 body {

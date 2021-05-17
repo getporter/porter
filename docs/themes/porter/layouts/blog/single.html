@@ -12,9 +12,22 @@
           <h1>{{ .Title }}</h1>
           <p class="date">{{ dateFormat "Jan 2, 2006" .Date }}</p>
           {{ .Content }}
+          
 
-          {{ partial "author.html" .}}
-          {{ partial "tags.html" . }}
+          <div class="row collapse blog-meta">
+            <div class="small-12 large-6 columns blog-author">
+              {{ partial "author.html" .}}
+            </div>
+            <div class="small-12 large-6 columns blog-tags">
+              {{ partial "tags.html" . }}
+
+              <a class="button button-rss" href="{{ .Site.BaseURL }}blog/index.xml">Subscribe to RSS</a>  
+            </div>
+          </div>
+          <div class="row collapse blog-meta">
+            
+
+          </div>
         </article>
       </div>
       <div class="small-2 columns">&nbsp;</div>
