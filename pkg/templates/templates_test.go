@@ -1,15 +1,18 @@
 package templates
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTemplates_GetManifest(t *testing.T) {
-	tmpl := NewTemplates()
+	c := config.NewTestConfig(t)
+	tmpl := NewTemplates(c.Config)
 
 	gotTmpl, err := tmpl.GetManifest()
 	require.NoError(t, err)
@@ -19,7 +22,8 @@ func TestTemplates_GetManifest(t *testing.T) {
 }
 
 func TestTemplates_GetRunScript(t *testing.T) {
-	tmpl := NewTemplates()
+	c := config.NewTestConfig(t)
+	tmpl := NewTemplates(c.Config)
 
 	gotTmpl, err := tmpl.GetRunScript()
 	require.NoError(t, err)
@@ -29,11 +33,16 @@ func TestTemplates_GetRunScript(t *testing.T) {
 }
 
 func TestTemplates_GetDockerfile(t *testing.T) {
-	tmpl := NewTemplates()
+	testcases := []string{"buildkit", "docker"}
+	for _, driver := range testcases {
+		c := config.NewTestConfig(t)
+		c.Data.BuildDriver = driver
+		tmpl := NewTemplates(c.Config)
 
-	gotTmpl, err := tmpl.GetDockerfile()
-	require.NoError(t, err)
+		gotTmpl, err := tmpl.GetDockerfile()
+		require.NoError(t, err)
 
-	wantTmpl, _ := ioutil.ReadFile("./templates/build/Dockerfile")
-	assert.Equal(t, wantTmpl, gotTmpl)
+		wantTmpl, _ := ioutil.ReadFile(fmt.Sprintf("./templates/build/%s.Dockerfile", driver))
+		assert.Equal(t, wantTmpl, gotTmpl)
+	}
 }

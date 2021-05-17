@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,4 +54,39 @@ func TestHelpText(t *testing.T) {
 	assert.Contains(t, helpText, "Resources:")
 	assert.Contains(t, helpText, "Aliased Commands:")
 	assert.Contains(t, helpText, "Meta Commands:")
+}
+
+func TestExperimentalFlags(t *testing.T) {
+	// do not run in parallel
+	expEnvVar := "PORTER_EXPERIMENTAL"
+	os.Unsetenv(expEnvVar)
+
+	t.Run("flag unset, env unset", func(t *testing.T) {
+		p := porter.NewTestPorter(t)
+		cmd := buildRootCommandFrom(p.Porter)
+		cmd.SetArgs([]string{})
+		cmd.Execute()
+		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
+
+	t.Run("flag set", func(t *testing.T) {
+		p := porter.NewTestPorter(t)
+		cmd := buildRootCommandFrom(p.Porter)
+		cmd.SetArgs([]string{"--experimental", experimental.BuildDrivers})
+		cmd.Execute()
+
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
+
+	t.Run("flag unset, env set", func(t *testing.T) {
+		os.Setenv(expEnvVar, experimental.BuildDrivers)
+		defer os.Unsetenv(expEnvVar)
+
+		p := porter.NewTestPorter(t)
+		cmd := buildRootCommandFrom(p.Porter)
+		cmd.SetArgs([]string{})
+		cmd.Execute()
+
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+	})
 }

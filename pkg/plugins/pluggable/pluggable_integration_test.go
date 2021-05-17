@@ -31,25 +31,24 @@ func TestPlugins_CatchStderr(t *testing.T) {
 		cfg := PluginTypeConfig{
 			Interface: secrets.PluginInterface,
 			Plugin:    &secrets.Plugin{},
-			GetDefaultPluggable: func(datastore *config.Data) string {
-				return datastore.GetDefaultSecretSource()
+			GetDefaultPluggable: func(c *config.Config) string {
+				return c.Data.DefaultSecrets
 			},
-			GetPluggable: func(datastore *config.Data, name string) (Entry, error) {
-				return datastore.GetSecretSource(name)
+			GetPluggable: func(c *config.Config, name string) (Entry, error) {
+				return c.GetSecretSource(name)
 			},
-			GetDefaultPlugin: func(datastore *config.Data) string {
-				return datastore.GetDefaultSecretsPlugin()
+			GetDefaultPlugin: func(c *config.Config) string {
+				return c.Data.DefaultSecretsPlugin
 			},
 		}
-		c.Data = &config.Data{
-			DefaultSecrets: "myplugin",
-			SecretSources: []config.SecretSource{{
-				PluginConfig: config.PluginConfig{
-					Name:         "myplugin",
-					PluginSubKey: "testplugin.vault",
-				},
-			}},
-		}
+		c.Data.DefaultSecrets = "myplugin"
+		c.Data.SecretSources = []config.SecretSource{{
+			PluginConfig: config.PluginConfig{
+				Name:         "myplugin",
+				PluginSubKey: "testplugin.vault",
+			},
+		}}
+
 		ll := NewPluginLoader(c.Config)
 		_, _, err = ll.Load(cfg)
 		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 

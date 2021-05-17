@@ -30,14 +30,14 @@ func NewSecretsPluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: secrets.PluginInterface,
 		Plugin:    &secrets.Plugin{},
-		GetDefaultPluggable: func(datastore *config.Data) string {
-			return datastore.GetDefaultSecretSource()
+		GetDefaultPluggable: func(c *config.Config) string {
+			return c.Data.DefaultSecrets
 		},
-		GetPluggable: func(datastore *config.Data, name string) (pluggable.Entry, error) {
-			return datastore.GetSecretSource(name)
+		GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
+			return c.GetSecretSource(name)
 		},
-		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetDefaultSecretsPlugin()
+		GetDefaultPlugin: func(c *config.Config) string {
+			return c.Data.DefaultSecretsPlugin
 		},
 	}
 }

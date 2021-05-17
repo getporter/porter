@@ -23,12 +23,7 @@ type DockerfileGenerator struct {
 	Mixins pkgmgmt.PackageManager
 }
 
-func NewDockerfileGenerator(
-	config *config.Config,
-	m *manifest.Manifest,
-	tmpl *templates.Templates,
-	mp pkgmgmt.PackageManager,
-) *DockerfileGenerator {
+func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *templates.Templates, mp pkgmgmt.PackageManager) *DockerfileGenerator {
 	return &DockerfileGenerator{
 		Config:    config,
 		Manifest:  m,

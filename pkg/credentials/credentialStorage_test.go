@@ -64,7 +64,7 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	// Add an unmigrated credential
 	credDir := filepath.Join(home, "credentials")
 	config.FileSystem.Mkdir(credDir, 0755)
-	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/credentials", "mybun.json"), filepath.Join(home, "credentials", "mybun.json"))
+	config.TestContext.AddTestFileFromRoot("pkg/storage/testdata/credentials/mybun.json", filepath.Join(home, "credentials", "mybun.json"))
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	mgr := storage.NewManager(config.Config, dataStore)

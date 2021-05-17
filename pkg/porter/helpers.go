@@ -54,12 +54,12 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testClaims := claims.NewTestClaimProvider(t)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := New()
+	p := NewWithConfig(tc.Config)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
 	p.Cache = testCache
-	p.Builder = NewTestBuildProvider()
+	p.builder = NewTestBuildProvider()
 	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters

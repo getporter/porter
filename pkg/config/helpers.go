@@ -12,11 +12,15 @@ type TestConfig struct {
 	TestContext *context.TestContext
 }
 
-// NewTestConfig initializes a configuration suitable for testing, with the output buffered, and an in-memory file system.
+// NewTestConfig initializes a configuration suitable for testing:
+// * buffered output,
+// * in-memory file system,
+// * does not automatically load config from ambient environment.
 func NewTestConfig(t *testing.T) *TestConfig {
 	cxt := context.NewTestContext(t)
 	cfg := New()
 	cfg.Context = cxt.Context
+	cfg.DataLoader = NoopDataLoader
 	tc := &TestConfig{
 		Config:      cfg,
 		TestContext: cxt,

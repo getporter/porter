@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"os"
 
-	"get.porter.sh/porter/pkg/config/datastore"
+	"get.porter.sh/porter/pkg/cli"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -21,9 +21,11 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 func buildRootCommand() *cobra.Command {
-	p := porter.New()
+	return buildRootCommandFrom(porter.New())
+}
+
+func buildRootCommandFrom(p *porter.Porter) *cobra.Command {
 	var printVersion bool
 
 	cmd := &cobra.Command{
@@ -34,7 +36,7 @@ func buildRootCommand() *cobra.Command {
   porter install
   porter uninstall`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			p.Config.DataLoader = datastore.FromFlagsThenEnvVarsThenConfigFile(cmd)
+			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
 			err := p.LoadData()
 			if err != nil {
 				return err
@@ -60,9 +62,13 @@ func buildRootCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.PersistentFlags().BoolVar(&p.Debug, "debug", false, "Enable debug logging")
-	cmd.PersistentFlags().BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
+	// These flags are available for every command
+	globalFlags := cmd.PersistentFlags()
+	globalFlags.BoolVar(&p.Debug, "debug", false, "Enable debug logging")
+	globalFlags.BoolVar(&p.DebugPlugins, "debug-plugins", false, "Enable plugin debug logging")
+	globalFlags.StringSliceVar(&p.Data.ExperimentalFlags, "experimental", nil, "Comma separated list of experimental features to enable. See https://porter.sh/experimental for available feature flags.")
 
+	// Flags for just the porter command only, does not apply to sub-commands
 	cmd.Flags().BoolVarP(&printVersion, "version", "v", false, "Print the application version")
 
 	cmd.AddCommand(buildVersionCommand(p))

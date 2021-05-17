@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/manifest"
-
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	// Still need to figure out what is introducing flakey-ness
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -133,7 +132,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		t.Parallel()
 
 		c := config.NewTestConfig(t)
-		c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+		c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 		require.NoError(t, err, "could not load manifest")
@@ -161,7 +160,7 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	}()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")

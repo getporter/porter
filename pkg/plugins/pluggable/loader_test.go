@@ -14,21 +14,19 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	l := NewPluginLoader(c.Config)
 
 	pluginCfg := PluginTypeConfig{
-		GetDefaultPluggable: func(datastore *config.Data) string {
-			return datastore.GetDefaultStorage()
+		GetDefaultPluggable: func(c *config.Config) string {
+			return c.Data.DefaultStorage
 		},
-		GetPluggable: func(datastore *config.Data, name string) (Entry, error) {
-			return datastore.GetStorage(name)
+		GetPluggable: func(c *config.Config, name string) (Entry, error) {
+			return c.GetStorage(name)
 		},
-		GetDefaultPlugin: func(datastore *config.Data) string {
-			return datastore.GetDefaultStoragePlugin()
+		GetDefaultPlugin: func(c *config.Config) string {
+			return c.Data.DefaultStoragePlugin
 		},
 	}
 
 	t.Run("internal plugin", func(t *testing.T) {
-		c.Data = &config.Data{
-			DefaultStoragePlugin: "filesystem",
-		}
+		c.Data.DefaultStoragePlugin = "filesystem"
 
 		err := l.selectPlugin(pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
@@ -38,9 +36,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	})
 
 	t.Run("external plugin", func(t *testing.T) {
-		c.Data = &config.Data{
-			DefaultStoragePlugin: "azure.blob",
-		}
+		c.Data.DefaultStoragePlugin = "azure.blob"
 
 		err := l.selectPlugin(pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
@@ -50,16 +46,14 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	})
 
 	t.Run("configured plugin", func(t *testing.T) {
-		c.Data = &config.Data{
-			DefaultStorage: "azure",
-			CrudStores: []config.CrudStore{
-				{
-					config.PluginConfig{
-						Name:         "azure",
-						PluginSubKey: "azure.blob",
-						Config: map[string]interface{}{
-							"env": "MyAzureConnString",
-						},
+		c.Data.DefaultStorage = "azure"
+		c.Data.CrudStores = []config.CrudStore{
+			{
+				config.PluginConfig{
+					Name:         "azure",
+					PluginSubKey: "azure.blob",
+					Config: map[string]interface{}{
+						"env": "MyAzureConnString",
 					},
 				},
 			},

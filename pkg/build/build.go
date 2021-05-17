@@ -2,6 +2,8 @@ package build
 
 import (
 	"path/filepath"
+
+	"get.porter.sh/porter/pkg/manifest"
 )
 
 var (
@@ -30,3 +32,11 @@ var (
 	// INJECT_PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in Dockerfile.
 	INJECT_PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
 )
+
+type Builder interface {
+	// BuildInvocationImage using the bundle in the build context directory
+	BuildInvocationImage(manifest *manifest.Manifest) error
+
+	// TagInvocationImage using the origTag and newTag values supplied
+	TagInvocationImage(origTag, newTag string) error
+}

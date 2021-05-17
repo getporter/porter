@@ -48,7 +48,7 @@ func TestManager_MigrateParameters(t *testing.T) {
 
 	credsDir := filepath.Join(home, "parameters")
 	config.FileSystem.Mkdir(credsDir, 0755)
-	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/parameters", "mybun.json"), filepath.Join(credsDir, "mybun.json"))
+	config.TestContext.AddTestFileFromRoot("pkg/storage/testdata/parameters/mybun.json", filepath.Join(credsDir, "mybun.json"))
 
 	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
 	mgr := storage.NewManager(config.Config, dataStore)

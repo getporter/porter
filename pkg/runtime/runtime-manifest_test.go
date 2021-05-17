@@ -705,7 +705,7 @@ WARNING: both tag (deprecated) and reference were provided for dependency "mysql
 func TestManifest_ApplyStepOutputs(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
-	cxt.AddTestFile("../manifest/testdata/porter-with-templating.yaml", config.Name)
+	cxt.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")

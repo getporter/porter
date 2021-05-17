@@ -10,7 +10,7 @@ import (
 
 func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	p := NewTestPorter(t)
-	p.TestConfig.TestContext.AddTestDirectory("../../build/testdata/bundles/mysql", "/")
+	p.TestConfig.TestContext.AddTestDirectoryFromRoot("build/testdata/bundles/mysql", "/")
 	err := p.LoadManifestFrom("/porter.yaml")
 	require.NoError(t, err)
 

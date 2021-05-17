@@ -244,7 +244,7 @@ func TestManifestConverter_buildDefaultPorterParameters(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -269,7 +269,7 @@ func TestManifestConverter_generateImages(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -310,7 +310,7 @@ func TestManifestConverter_generateBundleImages_EmptyLabels(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")
@@ -339,7 +339,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	c.TestContext.AddTestFile("../../manifest/testdata/simple.porter.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
 	require.NoError(t, err, "could not load manifest")

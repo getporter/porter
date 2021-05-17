@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/experimental"
 	"github.com/pkg/errors"
 )
 
@@ -47,16 +48,9 @@ var evalSymlinks = filepath.EvalSymlinks
 
 type DataStoreLoaderFunc func(*Config) error
 
-var _ DataStoreLoaderFunc = NoopDataLoader
-
-// NoopDataLoader skips loading the datastore.
-func NoopDataLoader(config *Config) error {
-	return nil
-}
-
 type Config struct {
 	*context.Context
-	Data       *Data
+	Data       Data
 	DataLoader DataStoreLoaderFunc
 
 	// Cache the resolved Porter home directory
@@ -64,26 +58,52 @@ type Config struct {
 
 	// Cache the resolved Porter binary path
 	porterPath string
+
+	// parsed feature flags
+	experimental *experimental.FeatureFlags
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
 		Context:    context.New(),
-		DataLoader: NoopDataLoader,
+		Data:       DefaultDataStore(),
+		DataLoader: LoadFromEnvironment(),
 	}
 }
 
 // LoadData from the datastore in PORTER_HOME.
-// This defaults to doing nothing unless DataLoader has been set.
+// This defaults to reading the configuration file and environment variables.
 func (c *Config) LoadData() error {
-	c.Data = nil
-
 	if c.DataLoader == nil {
-		c.DataLoader = NoopDataLoader
+		c.DataLoader = LoadFromEnvironment()
 	}
 
 	return c.DataLoader(c)
+}
+
+func (c *Config) GetStorage(name string) (CrudStore, error) {
+	if c != nil {
+		for _, is := range c.Data.CrudStores {
+			if is.Name == name {
+				return is, nil
+			}
+		}
+	}
+
+	return CrudStore{}, errors.New("store %q not defined")
+}
+
+func (c *Config) GetSecretSource(name string) (SecretSource, error) {
+	if c != nil {
+		for _, cs := range c.Data.SecretSources {
+			if cs.Name == name {
+				return cs, nil
+			}
+		}
+	}
+
+	return SecretSource{}, errors.New("secrets %q not defined")
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.
@@ -187,4 +207,24 @@ func (c *Config) GetBundleArchiveLogs() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, "archives"), nil
+}
+
+// FeatureFlags indicates which experimental feature flags are enabled
+func (c *Config) GetFeatureFlags() experimental.FeatureFlags {
+	if c.experimental == nil {
+		flags := experimental.ParseFlags(c.Data.ExperimentalFlags)
+		c.experimental = &flags
+	}
+	return *c.experimental
+}
+
+// IsFeatureEnabled returns true if the specified experimental flag is enabled.
+func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
+	return c.GetFeatureFlags()&flag == flag
+}
+
+// SetExperimentalFlags programmatically, overriding Config.Data.ExperimentalFlags.
+// Example: Config.SetExperimentalFlags(experimental.FlagBuildDrivers | ...)
+func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
+	c.experimental = &flags
 }

@@ -50,7 +50,7 @@ func Test_generateInternalManifest(t *testing.T) {
 			}
 			p.TestConfig.TestContext.AddTestFile("testdata/generateManifest/original.yaml", manifest)
 
-			err := tc.opts.Validate(p.Context)
+			err := tc.opts.Validate(p.Porter)
 			require.NoError(t, err)
 
 			err = p.generateInternalManifest(tc.opts)

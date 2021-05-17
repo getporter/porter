@@ -1,7 +1,10 @@
 package build
 
 import (
+	"fmt"
+	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
@@ -17,46 +20,42 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	t.Parallel()
 
-	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
-	configTpl, err := tmpl.GetManifest()
-	require.Nil(t, err)
-	c.TestContext.AddTestFileContents(configTpl, config.Name)
+	drivers := []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
+	for _, driver := range drivers {
+		t.Run(driver, func(t *testing.T) {
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
-	require.NoError(t, err, "could not load manifest")
+			c := config.NewTestConfig(t)
+			c.Data.BuildDriver = driver
+			tmpl := templates.NewTemplates(c.Config)
+			configTpl, err := tmpl.GetManifest()
+			require.Nil(t, err)
+			c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	// ignore mixins in the unit tests
-	m.Mixins = []manifest.MixinDeclaration{}
+			m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+			require.NoError(t, err, "could not load manifest")
 
-	mp := mixin.NewTestMixinProvider()
-	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	gotlines, err := g.buildDockerfile()
-	require.NoError(t, err)
+			// ignore mixins in the unit tests
+			m.Mixins = []manifest.MixinDeclaration{}
 
-	wantlines := []string{
-		"FROM debian:stretch-slim",
-		"",
-		"ARG BUNDLE_DIR",
-		"",
-		"RUN apt-get update && apt-get install -y ca-certificates",
-		"",
-		"",
-		"COPY . $BUNDLE_DIR",
-		"RUN rm $BUNDLE_DIR/porter.yaml",
-		"RUN rm -fr $BUNDLE_DIR/.cnab",
-		"COPY .cnab /cnab",
-		"WORKDIR $BUNDLE_DIR",
-		"CMD [\"/cnab/app/run\"]",
+			mp := mixin.NewTestMixinProvider()
+			g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+			gotlines, err := g.buildDockerfile()
+			require.NoError(t, err)
+			gotDockerfile := strings.Join(gotlines, "\n")
+
+			wantDockerfilePath := fmt.Sprintf("testdata/%s.Dockerfile", driver)
+			wantDockerfile, err := ioutil.ReadFile(wantDockerfilePath)
+			require.NoError(t, err, "could not read %s", wantDockerfilePath)
+			assert.Equal(t, string(wantDockerfile), gotDockerfile)
+		})
 	}
-	assert.Equal(t, wantlines, gotlines)
 }
 
 func TestPorter_buildDockerfile_alternateManifestLocation(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 
@@ -96,7 +95,7 @@ func TestPorter_buildDockerfile_separateManifestLocation(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 
@@ -144,7 +143,7 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 		t.Parallel()
 
 		c := config.NewTestConfig(t)
-		tmpl := templates.NewTemplates()
+		tmpl := templates.NewTemplates(c.Config)
 		configTpl, err := tmpl.GetManifest()
 		require.Nil(t, err)
 		c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -178,7 +177,7 @@ COPY mybin /cnab/app/
 		t.Parallel()
 
 		c := config.NewTestConfig(t)
-		tmpl := templates.NewTemplates()
+		tmpl := templates.NewTemplates(c.Config)
 		configTpl, err := tmpl.GetManifest()
 		require.Nil(t, err)
 		c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -223,7 +222,7 @@ func TestPorter_buildDockerfile_output(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -262,7 +261,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -297,7 +296,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -330,7 +329,7 @@ func TestPorter_replacePorterMixinTokenWithBuildInstructions(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -374,7 +373,7 @@ func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
@@ -418,7 +417,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 	t.Parallel()
 
 	c := config.NewTestConfig(t)
-	tmpl := templates.NewTemplates()
+	tmpl := templates.NewTemplates(c.Config)
 	configTpl, err := tmpl.GetManifest()
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)

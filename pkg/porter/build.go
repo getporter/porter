@@ -6,8 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
@@ -15,22 +14,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-type BuildProvider interface {
-	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(manifest *manifest.Manifest) error
-
-	// TagInvocationImage using the origTag and newTag values supplied
-	TagInvocationImage(origTag, newTag string) error
-}
-
 type BuildOptions struct {
 	bundleFileOptions
 	contextOptions
 	metadataOpts
+
+	// NoLint indicates if lint should be run before build.
 	NoLint bool
+
+	// Driver to use when building the invocation image.
+	Driver string
 }
 
-func (o *BuildOptions) Validate(cxt *context.Context) error {
+const BuildDriverDefault = config.BuildDriverDocker
+
+var BuildDriverAllowedValues = []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
+
+func (o *BuildOptions) Validate(p *Porter) error {
 	if o.Version != "" {
 		v, err := semver.NewVersion(o.Version)
 		if err != nil {
@@ -39,11 +39,36 @@ func (o *BuildOptions) Validate(cxt *context.Context) error {
 		o.Version = v.String()
 	}
 
-	return o.bundleFileOptions.Validate(cxt)
+	if o.Driver == "" {
+		o.Driver = p.Data.BuildDriver
+	}
+	if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
+		return errors.Errorf("invalid --driver value %s", o.Driver)
+	}
+
+	// Syncing value back to the config and we will always use the config
+	// to determine the driver
+	// This would be less awkward if we didn't do an automatic build during publish
+	p.Data.BuildDriver = o.Driver
+
+	return o.bundleFileOptions.Validate(p.Context)
+}
+
+func stringSliceContains(allowedValues []string, value string) bool {
+	for _, allowed := range allowedValues {
+		if value == allowed {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
+
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Using %s build driver\n", p.Data.BuildDriver)
+	}
 
 	// Start with a fresh .cnab directory before building
 	err := p.FileSystem.RemoveAll(build.LOCAL_CNAB)
@@ -61,7 +86,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 	}
 
 	// Capture the path to the original, user-provided manifest.
-	// This value will be referenced elsewhere, for insteance by
+	// This value will be referenced elsewhere, for instance by
 	// the digest logic (to dictate auto-rebuild)
 	p.Manifest.ManifestPath = opts.File
 
@@ -90,11 +115,15 @@ func (p *Porter) Build(opts BuildOptions) error {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
 
-	return errors.Wrap(p.Builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
+	builder := p.GetBuilder()
+	return errors.Wrap(builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
-	lintOpts := LintOptions{}
+	lintOpts := LintOptions{
+		contextOptions: NewContextOptions(p.Context),
+		PrintOptions:   printer.PrintOptions{},
+	}
 	lintOpts.RawFormat = string(printer.FormatPlaintext)
 	err := lintOpts.Validate(p.Context)
 	if err != nil {

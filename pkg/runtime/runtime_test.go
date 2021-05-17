@@ -288,7 +288,7 @@ func TestLoadImageMappingFilesNoBundle(t *testing.T) {
 
 func TestLoadImageMappingFilesBadBundle(t *testing.T) {
 	r := NewTestPorterRuntime(t)
-	r.TestContext.AddTestFile("../porter/testdata/porter.yaml", "/cnab/bundle.json")
+	r.TestContext.AddTestFileFromRoot("pkg/porter/testdata/porter.yaml", "/cnab/bundle.json")
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
 	assert.EqualError(t, err, "couldn't load runtime bundle.json: invalid character 'a' in literal null (expecting 'u')")

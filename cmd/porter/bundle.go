@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"get.porter.sh/porter/pkg/porter"
@@ -57,7 +60,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
   porter build --dir path/to/build/context
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(p.Context)
+			return opts.Validate(p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Build(opts)
@@ -73,6 +76,13 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 		"Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.StringVarP(&opts.Dir, "dir", "d", "",
 		"Path to the build context directory where all bundle assets are located.")
+	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
+		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
+
+	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
+	cmd.Flag("driver").Annotations = map[string][]string{
+		"viper-key": {"build-driver"},
+	}
 
 	return cmd
 }
