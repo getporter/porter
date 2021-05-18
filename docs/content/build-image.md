@@ -3,16 +3,15 @@ title: Building Invocation Images
 descriptions: How does Porter build an Invocation Image?
 ---
 
-When you build a Cloud Native Application Bundle (CNAB) with Porter, a bundle.json and an invocation image are created for you. How does Porter turn your _porter.yaml_ into an invocation image? This walkthrough will explain how Porter constructs the invocation image, including how mixins and other bundles allow you to compose functionality.
+When you build a Cloud Native Application Bundle (CNAB) with Porter, a `bundle.json` and an invocation image are created for you. How does Porter turn your `porter.yaml` into an invocation image? This walkthrough will explain how Porter constructs the invocation image, including how mixins and other bundles allow you to compose functionality.
 
 ## Starting From Scratch
 
-When you create a new bundle with Porter, your project is bootstrapped with a sample _porter.yaml_ and a new _cnab_ directory. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built. 
+When you create a new bundle with Porter, your project is bootstrapped with a sample `porter.yaml` and a new `cnab` directory. This scaffolding provides almost everything you need to generate your CNAB, including the invocation image. Let's use this to explain how the invocation image is built.
 
 To create a new CNAB with Porter, you first run `porter create`. The generated `porter.yaml` will look like this:
 
 ```yaml
-
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
@@ -43,7 +42,7 @@ uninstall:
         - uninstall
 ```
 
-After the scaffolding is created, you may edit the _porter.yaml_ and modify the `registry: getporter` element representing the Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
+After the scaffolding is created, you may edit the `porter.yaml` and modify the `registry: getporter` element representing the Docker registry that you can push to. Note that the bundle is not pushed during the `porter build` workflow.
 
 Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--debug` flag to see all of the output:
 
@@ -201,7 +200,7 @@ Copying mixins ===>
 Copying mixin exec ===>
 ```
 
-The first thing that happens after running `porter build`, Porter will copy its runtime plus any mixins into the `.cnab/app` directory of your bundle. 
+The first thing that happens after running `porter build`, Porter will copy its runtime plus any mixins into the `.cnab/app` directory of your bundle.
 
 Porter locates available mixins in the `$PORTER_HOME/mixins` directory. By default, the Porter home directory is located in `~/.porter`. In this example, we are using the `exec` mixin, so the `$PORTER_HOME/mixins/exec` directory will be copied into the invocation image. When a mixin is [installed](#tbd) for use with Porter, it contains binaries for multiple operating systems. The correct binary will be copied into the current `.cnab` directory for use in the invocation image.
 
@@ -226,7 +225,7 @@ WORKDIR $BUNDLE_DIR
 CMD ["/cnab/app/run"]
 ```
 
-Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the **porter.yaml**. Next, a set of CA certificates is added.  Next, contents of the current directory are copied into `/cnab/app/` in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
+Porter starts the Dockerfile by using a base image. You can customize the base image by specifying a Dockerfile template in the `porter.yaml`. Next, a set of CA certificates is added. Next, contents of the current directory are copied into `/cnab/app/` in the invocation image. This will include any contributions from the mixin executables. Finally, an entry point that conforms to the CNAB specification is added to the image.
 
 Once this is completed, the image is built:
 
@@ -377,6 +376,6 @@ Flags:
 Use "helm [command] --help" for more information about a command.
 ```
 
-The [Porter Mixin Contract](#tbd) specifies that mixins must provide a `build` sub command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the `helm` mixin, this includes installing Helm and running a `helm init --client-only` to prepare the image. At build time, Porter uses the _porter.yaml_ to determine what mixins are required for the bundle. Porter then invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
+The [Porter Mixin Contract](#tbd) specifies that mixins must provide a `build` sub command that generates Dockerfile lines to support the runtime execution of the mixin. In the case of the `helm` mixin, this includes installing Helm and running a `helm init --client-only` to prepare the image. At build time, Porter uses the `porter.yaml` to determine what mixins are required for the bundle. Porter then invokes the build sub-command for each specified mixin and appends that output to the base Dockerfile.
 
 In the end, the result is a single invocation image with all of the necessary pieces: the porter-runtime, selected mixins and any relevant configuration files, scripts, charts or manifests. That invocation image can then be executed by any tool that supports the CNAB spec, while still taking advantage of the Porter capabilities.
