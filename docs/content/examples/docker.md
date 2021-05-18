@@ -1,16 +1,14 @@
 ---
-title: "Using Docker inside Porter Bundles"
-description: "Now you can use Docker and Docker Compose from inside Porter bundles"
-date: "2020-04-23"
-authorname: "Carolyn Van Slyck"
-author: "@carolynvs"
-authorlink: "https://carolynvanslyck.com/"
-authorimage: "https://github.com/carolynvs.png"
-image: "images/porter-with-docker-twitter-card.png"
-tags: ["docker", "mixins"]
+title: "Example: Docker"
+description: "Learn how to use Docker inside a bundle"
+weight: 20
 ---
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
+
+Source: https://porter.sh/src/examples/docker
+
+The [getporter/whalesay] bundle demonstrates how to use Docker inside a bundle!
 
 Sometimes you need a hammer, and that hammer happens to be a whale 🐳. We all
 use containers as part of our pipeline: building images, running a one-off
@@ -19,7 +17,7 @@ application, or even more creative tasks that you have already
 containerized. Well now you can reuse all that hard work and logic from within
 your bundles!
 
-Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle. 
+Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle.
 
 ```
  _____________________
@@ -76,13 +74,11 @@ required:
 
 ### Install Docker
 
-You can include the Docker CLI in your bundle by using the [docker mixin], or
-if you are using Docker Compose, use the [docker-compose mixin].
+You can include the Docker CLI in your bundle by using the [docker mixin].
 
 ```yaml
 mixins:
   - docker
-  - docker-compose
 ```
 
 You can then use the respective CLIs through the mixin:
@@ -94,80 +90,14 @@ install:
     run:
       image: hello-world
       rm: true
-- docker-compose:
-    description: "Start Test Services"
-    arguments:
-    - up
-    - -d
 ```
-
-We are going to focus on just using Docker for this blog post, but here is a [full
-working example for how to use Docker Compose in a
-bundle](/src/examples/compose/).
 
 ### Use Docker
 
 In my porter.yaml, I can use the docker mixin to execute docker commands
 in my bundle:
 
-**porter.yaml**
-
-```yaml
-name: whalesay
-version: 0.1.2
-description: "An example bundle that uses docker through the magic of whalespeak"
-registry: getporter
-
-required:
-  - docker
-
-parameters:
-  - name: msg
-    description: a message for the whales to speak
-    type: string
-    default: "whale hello there!"
-    applyTo:
-      - say
-
-mixins:
-  - docker
-
-install:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - Hello World
-
-upgrade:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - World 2.0
-
-say:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - - "{{ bundle.parameters.msg }}"
-
-uninstall:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - Goodbye World
-```
+<script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/docker/porter.yaml"></script>
 
 After I have tested the bundle, I used `porter publish` to push it up to `getporter/whalesay:v0.1.2`.
 
@@ -234,15 +164,5 @@ Say Something
 execution completed successfully!
 ```
 
-This is hopefully just the first step towards first class support for Docker and
-Docker Compose within Porter bundles, especially now that [Docker Compose has an
-open specification][compose-spec]. If you are interested in collaborating with
-us to take this further, please reach out on the [porter][porter-repo], [docker mixin][docker-repo]
-[docker-compose mixin][compose-repo] repositories!
-
-[porter-repo]: https://github.com/getporter/porter/
-[compose-repo]: https://github.com/getporter/mixin-docker-compose/
-[docker-repo]: https://github.com/getporter/mixin-docker/
-[compose-spec]: https://www.compose-spec.io/
 [docker mixin]: /mixins/docker/
-[docker-compose mixin]: /mixins/docker-compose/
+[getporter/whalesay]: https://hub.docker.com/r/getporter/whalesay/
