@@ -34,6 +34,8 @@ type Manifest struct {
 	Description string `yaml:"description,omitempty"`
 	Version     string `yaml:"version,omitempty"`
 
+	Maintainers []MaintainerDefinition `yaml:"maintainers,omitempty"`
+
 	// Registry is the OCI registry and org/subdomain for the bundle
 	Registry string `yaml:"registry,omitempty"`
 
@@ -1095,4 +1097,10 @@ func GetParameterSourceForOutput(outputName string) string {
 // internally for wiring up an dependency's output to a parameter.
 func GetParameterSourceForDependency(ref DependencyOutputReference) string {
 	return fmt.Sprintf("porter-%s-%s-dep-output", ref.Dependency, ref.Output)
+}
+
+type MaintainerDefinition struct {
+	Name  string `yaml:"name,omitempty"`
+	Email string `yaml:"email,omitempty"`
+	Url   string `yaml:"url,omitempty"`
 }

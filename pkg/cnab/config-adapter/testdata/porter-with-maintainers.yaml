@@ -1,9 +1,6 @@
-mixins:
-- exec
-
-name: hello
+name: porter-hello
 description: "An example Porter configuration"
-version: v0.1.0
+version: 0.1.0
 registry: getporter
 
 maintainers:
@@ -17,6 +14,23 @@ maintainers:
 - email: "mike.doe@example.com"
   url: "https://example.com/c"
 
+credentials:
+  - name: username
+    description: Name of the database user
+    required: false
+    env: ROOT_USERNAME
+  - name: password
+    path: /tmp/password
+    applyTo:
+      - uninstall
+
+dependencies:
+  - name: mysql
+    reference: "getporter/azure-mysql:5.7"
+    
+mixins:
+- exec
+
 install:
 - exec:
     description: "Say Hello"
@@ -29,11 +43,11 @@ status:
     description: "Get World Status"
     command: bash
     flags:
-        c: echo The world is on fire
+      c: echo The world is on fire
 
 uninstall:
 - exec:
     description: "Say Goodbye"
     command: bash
     flags:
-        c: echo Goodbye World
+      c: echo Goodbye World

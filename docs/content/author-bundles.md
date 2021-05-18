@@ -38,6 +38,10 @@ version: 0.1.0
 registry: getporter
 reference: getporter/azure-wordpress
 dockerfile: dockerfile.tmpl
+maintainers:
+- name: "John Doe"
+  email: "john.doe@example.com"
+  url: "https://example.com"
 ```
 
 * `name`: The name of the bundle
@@ -55,6 +59,7 @@ dockerfile: dockerfile.tmpl
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
     See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
+* `maintainers`: OPTIONAL. A map of bundle maintainers. Per maintainer, `name`, `email`, and `url` can be specified. Every field is optional.
 
 ## Mixins
 

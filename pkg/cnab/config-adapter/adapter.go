@@ -49,6 +49,7 @@ func (c *ManifestConverter) ToBundle() (bundle.Bundle, error) {
 		Name:          c.Manifest.Name,
 		Description:   c.Manifest.Description,
 		Version:       c.Manifest.Version,
+		Maintainers:   c.generateBundleMaintainers(),
 		Custom:        make(map[string]interface{}, 1),
 	}
 	image := bundle.InvocationImage{
@@ -72,6 +73,18 @@ func (c *ManifestConverter) ToBundle() (bundle.Bundle, error) {
 	b.Custom[config.CustomPorterKey] = stamp
 
 	return b, nil
+}
+
+func (c *ManifestConverter) generateBundleMaintainers() []bundle.Maintainer {
+	m := make([]bundle.Maintainer, len(c.Manifest.Maintainers))
+	for i, item := range c.Manifest.Maintainers {
+		m[i] = bundle.Maintainer{
+			Name:  item.Name,
+			Email: item.Email,
+			URL:   item.Url,
+		}
+	}
+	return m
 }
 
 func (c *ManifestConverter) generateCustomActionDefinitions() map[string]bundle.Action {

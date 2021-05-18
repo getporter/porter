@@ -27,6 +27,25 @@ func TestLoadManifest(t *testing.T) {
 	require.Equal(t, m.Registry, "getporter", "manifest has incorrect registry")
 	require.Equal(t, m.Reference, "getporter/hello:v0.1.0", "manifest has incorrect reference")
 
+	require.Len(t, m.Maintainers, 4, "manifest has incorrect number of maintainers")
+
+	john, jane, janine, mike := m.Maintainers[0], m.Maintainers[1], m.Maintainers[2], m.Maintainers[3]
+	require.Equal(t, "John Doe", john.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "john.doe@example.com", john.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/a", john.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "Jane Doe", jane.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "", jane.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/b", jane.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "Janine Doe", janine.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "janine.doe@example.com", janine.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "", janine.Url, "manifest: Maintainer url is incorrect")
+
+	require.Equal(t, "", mike.Name, "manifest: Maintainer name is incorrect")
+	require.Equal(t, "mike.doe@example.com", mike.Email, "manifest: Maintainer email is incorrect")
+	require.Equal(t, "https://example.com/c", mike.Url, "manifest: Maintainer url is incorrect")
+
 	assert.Equal(t, []MixinDeclaration{{Name: "exec"}}, m.Mixins, "expected manifest to declare the exec mixin")
 	require.Len(t, m.Install, 1, "expected 1 install step")
 
