@@ -17,7 +17,7 @@ from previous runs, which can come in handy when troubleshooting a deployment.
 You can view the logs from the most recent execution of a bundle with the
 `porter logs` command:
 
-```console
+```bash
 $ porter logs -i whalegap
 executing install action from whalegap (installation: whalegap)
 Install WhaleGap
@@ -57,7 +57,7 @@ execution completed successfully!
 We have changed the output of the `porter show` command to provide IDs for
 previous executions of a bundle:
 
-```console
+```bash
 $ porter show whalegap
 Name: whalegap
 Created: 2021-01-27
@@ -87,7 +87,7 @@ You can view the logs from a specific run using the `--run` flag, which is
 really useful when you are figuring out how to capture text output when the
 bundle was run, or comparing a good/bad run to figure out what went wrong.
 
-```console
+```bash
 porter logs --run 01F0BXXXE9MSJZRMW0M95V4DF9
 ```
 

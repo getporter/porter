@@ -39,7 +39,7 @@ can be installed from, etc.
 The Porter CLI then references the appropriate list when a user searches,
 say, for a Terraform mixin:
 
-```console
+```bash
 $ porter mixin search Terraform
 Name        Description                           Author           URL                                     URL Type
 terraform   A mixin for using the terraform cli   Porter Authors   https://cdn.porter.sh/mixins/atom.xml   Atom Feed
@@ -49,7 +49,7 @@ terraform   A mixin for using the terraform cli   Porter Authors   https://cdn.p
 We can then install this mixin via the provided URL, which in this case is of
 the Atom feed type:
 
-```console
+```bash
 $ porter mixin install terraform --feed-url https://cdn.porter.sh/mixins/atom.xml
 installed terraform mixin v0.5.1-beta.1 (597a442)
 ```

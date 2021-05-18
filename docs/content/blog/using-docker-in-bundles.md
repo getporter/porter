@@ -19,9 +19,9 @@ application, or even more creative tasks that you have already
 containerized. Well now you can reuse all that hard work and logic from within
 your bundles!
 
-Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle. 
+Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle.
 
-```
+```bash
  _____________________
 < Challenge Accepted! >
  ---------------------
@@ -41,6 +41,7 @@ Let's walk through using my favorite container, [docker/whalesay][whalesay], in 
 [whalesay]: https://hub.docker.com/r/docker/whalesay/
 
 ## Author the bundle
+
 Writing a bundle that uses Docker has a few steps:
 
 * [Require Docker](#require-docker)
@@ -221,7 +222,7 @@ and should only be given to trusted containers, or in this case trusted bundles.
 
 Let the whales speak!
 
-```console
+```bash
 $ porter install --reference getporter/whalesay:v0.1.1 --allow-docker-host-access
 installing whalesay...
 executing install action from whalesay (bundle instance: whalesay)
@@ -245,13 +246,13 @@ execution completed successfully!
 
 I can set the flag `--allow-docker-host-access` with the `PORTER_ALLOW_DOCKER_HOST_ACCESS` environment variable so that I don't have to specify it for every command.
 
-```console
+```bash
 export PORTER_ALLOW_DOCKER_HOST_ACCESS=true
 ```
 
 Now let's see what else we can do with whalesay:
 
-```console
+```bash
 $ porter invoke whalesay --action=say --param 'msg=try it yourself!'
 invoking custom action say on whalesay...
 executing say action from whalesay (bundle instance: whalesay)

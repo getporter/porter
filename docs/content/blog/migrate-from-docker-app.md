@@ -84,7 +84,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     Porter supports the [DOCKER_HOST and DOCKER_CONTEXT environment variables](https://www.docker.com/blog/how-to-deploy-on-remote-docker-hosts-with-docker-compose/).
     You can use these to have Porter deploy your application to a remote host.
 
-    ```console
+    ```bash
     $ porter install --allow-docker-host-access
     installing my-docker-app...
     executing install action from my-docker-app (installation: my-docker-app)
@@ -96,7 +96,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 
 1. Confirm that your application was deploy with `docker ps`.
 
-    ```console
+    ```bash
     $ docker ps
     CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS          PORTS                                       NAMES
     c5428e359333   hashicorp/http-echo   "/http-echo -text 'h…"   27 minutes ago   Up 27 minutes   0.0.0.0:8080->5678/tcp, :::8080->5678/tcp   app_hello_1
@@ -104,7 +104,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 
 1. You can view your installations with `porter list`:
   
-    ```console
+    ```bash
     $ porter list
     NAME                 CREATED          MODIFIED         LAST ACTION   LAST STATUS
     my-docker-app        28 minutes ago   28 minutes ago   install       succeeded
@@ -113,7 +113,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 1. Let's look at the details of your migrated application with `porter show`.
     The output tells us that it was installed successfully and shows the history of changes made to the installation.
 
-    ```console
+    ```bash
     $ porter show my-docker-app
     Name: my-docker-app
     Created: 28 minutes ago
@@ -149,7 +149,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
   
 1. Publish your bundle to the destination registry with `porter publish`.
 
-    ```console
+    ```bash
     $ porter publish
     Pushing CNAB invocation image...
     The push refers to repository [docker.io/carolynvs/my-docker-app-installer]
@@ -192,7 +192,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     ```
 
     For example,
-    ```console
+    ```bash
     $ porter install my-app --reference carolynvs/my-docker-app:v0.1.0
     ```
 
@@ -217,7 +217,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     ```
 
     For example:
-    ```console
+    ```bash
     $ porter upgrade my-app --reference carolynvs/my-docker-app:v0.1.1 --allow-docker-host-access
     ```
 
