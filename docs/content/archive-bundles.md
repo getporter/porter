@@ -9,13 +9,13 @@ Porter allows you to share bundles by [publishing](/distribute-bundles) them to 
 
 In order to generate the archive, all of the images in the bundle **must** have been published to a registry. For this reason, you must first `publish` your bundle to a registry:
 
-```
+```bash
 porter publish --reference jeremyrickard/porter-do-bundle:v0.5.0
 ```
 
 Now you can run the `porter archive` command and designate the archive file name and bundle tag to use:
 
-```
+```bash
 porter archive --reference jeremyrickard/porter-do-bundle:v0.5.0 do-porter.tgz
 ```
 
@@ -25,7 +25,7 @@ This will generate a file in the directory named `do-porter.tgz`.
 
 The generated bundle archive is a CNAB [thick bundle](https://github.com/cnabio/cnab-spec/blob/master/104-bundle-formats.md#formatting-and-transmitting-thick-bundles). Once you have a bundle archive, you can use the `tar` command to examine the contents. If we examine the `do-porter.tgz` generated above, we would see:
 
-```
+```bash
 $ tar tvf do-porter.tgz
 drwx------  0 jeremyrickard staff       0 Oct 18 10:27 ./
 drwxr-xr-x  0 jeremyrickard staff       0 Oct 18 10:27 ./artifacts/
@@ -60,7 +60,7 @@ In this archive file, you will see the `bundle.json`, along with all of the arti
 
 Once you have a bundle archive, the next step to make it usable is to publish it to an OCI registry. To do this, the `porter publish` command is used. Given our `do-porter.tgz` bundle above, we can publish this to a new registry with the following command:
 
-```
+```bash
 $ porter publish -a do-porter.tgz --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Starting to copy image jrrporter.azurecr.io/do-porter-from-archive/porter-do@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be...
 Completed image jrrporter.azurecr.io/do-porter-from-archive/porter-do@sha256:74b8622a8b7f09a6802a3fff166c8d1827c9e78ac4e4b9e71e0de872fa5077be copy
@@ -71,7 +71,7 @@ Bundle tag jrrporter.azurecr.io/do-porter-from-archive:1.0.0 pushed successfully
 
 This command will expand the bundle archive and copy each image up to the new registry. Once complete, you can use the bundle like any other published bundle:
 
-```
+```bash
 porter explain --reference jrrporter.azurecr.io/do-porter-from-archive:1.0.0
 Name: spring-music
 Description: Run the Spring Music Service on Kubernetes and Digital Ocean PostgreSQL

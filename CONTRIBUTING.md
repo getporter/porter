@@ -99,7 +99,7 @@ before you've spent a lot of time implementing it.
 
 Since Porter is a CLI, the "solution" will usually look like this:
 
-```console
+```bash
 $ porter newcommand [OPTIONAL] [--someflag VALUE]
 example output
 ```

@@ -51,7 +51,7 @@ actions:
 ```
 
 **stdout**
-```console
+```bash
 RUN apt-get update && apt-get install -y apt-transport-https lsb-release gnupg curl
 RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.asc.gpg
 RUN echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/azure-cli.list
@@ -287,7 +287,7 @@ defaulting to `plaintext`.
  
 Example:
 
-```console
+```bash
 $ ~/.porter/mixins/exec/exec version
 exec mixin v0.13.1-beta.1 (37f3637)
 

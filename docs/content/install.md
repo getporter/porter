@@ -106,7 +106,7 @@ are installed by default.
 You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
 
-```console
+```bash
 $ porter mixin install terraform
 installed terraform mixin v0.3.0-beta.1 (0d24b85)
 ```
@@ -121,7 +121,7 @@ plugins are installed by default.
 You can update an existing plugin, or install a new plugin using the `porter plugin
 install` command:
 
-```console
+```bash
 $ porter plugin install azure --version canary
 installed azure plugin v0.1.1-10-g7071451 (7071451)
 ```

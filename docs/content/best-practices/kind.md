@@ -20,7 +20,7 @@ Here we'll look at the latter option of configuring the KinD cluster to use a [d
 
 First, we need to determine our host IP address.  I'll take the example of a Mac OSX host:
 
-```console
+```bash
 $ ifconfig en0 | awk '/inet / {print $2; }' | cut -d ' ' -f 2
 10.0.1.4
 ```
@@ -37,13 +37,13 @@ networking:
 
 After saving the config to `kind-config.yaml`, we can create our cluster:
 
-```console
+```bash
 $ kind create cluster --config kind-config.yaml
 ```
 
 Once the cluster is successfully created, the generated kubeconfig should be merged into the default location (`~/.kube/config` or the location specified by the `KUBECONFIG` env var).  We can test API server communications with `kubectl`:
 
-```console
+```bash
  $ kubectl cluster-info
 Kubernetes master is running at https://10.0.1.4:6443
 KubeDNS is running at https://10.0.1.4:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
@@ -57,7 +57,7 @@ Porter bundles that access a Kubernetes cluster when running can now be installe
 
 Here we'll generate credentials and install the [MySQL bundle](https://porter.sh/src/build/testdata/bundles/mysql):
 
-```console
+```bash
  $ porter credentials generate
 Generating new credential mysql from bundle mysql
 ==> 1 credentials required for bundle mysql

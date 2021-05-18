@@ -76,7 +76,7 @@ install:
 
 The syntax to pass a parameter to porter is the same for both regular and file parameters:
 
-```console
+```bash
 $ porter install --param mytar=./my.tar.gz
 ```
 

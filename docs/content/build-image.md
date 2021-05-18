@@ -46,7 +46,7 @@ After the scaffolding is created, you may edit the `porter.yaml` and modify the 
 
 Once you have modified the `porter.yaml`, you can run `porter build` to generate your first invocation image.  Here we add the `--debug` flag to see all of the output:
 
-```console
+```bash
 $  porter build --debug
 Resolved porter binary from /usr/local/bin/porter to /Users/sigje/.porter/porter
 Running linters for each mixin used in the manifest...
@@ -194,7 +194,7 @@ DEBUG stdin:
 
 A lot just happened by running that command! Let's walk through the output and discuss what happened.
 
-```console
+```bash
 Copying porter runtime ===>
 Copying mixins ===>
 Copying mixin exec ===>
@@ -206,7 +206,7 @@ Porter locates available mixins in the `$PORTER_HOME/mixins` directory. By defau
 
 After copying any mixins to the `.cnab` directory of the bundle, a Dockerfile is generated:
 
-```console
+```bash
 Generating Dockerfile =======>
 FROM debian:stretch
 
@@ -229,7 +229,7 @@ Porter starts the Dockerfile by using a base image. You can customize the base i
 
 Once this is completed, the image is built:
 
-```console
+```bash
 Starting Invocation Image Build =======>
 Step 1/9 : FROM debian:stretch
  ---> 5c43e435cc11
@@ -299,7 +299,7 @@ uninstall:
 
 When we run `porter build` on this, the output is different:
 
-```console
+```bash
 $ porter build --verbose
 Copying porter runtime ===>
 Copying mixins ===>
@@ -352,7 +352,7 @@ RUN apt-get update && \
 
 How did that happen? To find out, let's first look at the `helm` mixin:
 
-```console
+```bash
 ~/.porter/mixins/helm/helm
 A helm mixin for porter 👩🏽‍✈️
 

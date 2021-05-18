@@ -157,7 +157,7 @@ install:
 
 The syntax to pass a parameter to porter is the same for both regular and file parameters:
 
-```console
+```bash
 $ porter install --param mytar=./my.tar.gz
 ```
 
@@ -397,7 +397,7 @@ Here is a breakdown of all the supported fields on an image in this section of t
 
 A last note on `digest`.  Taking the example of the library `nginx` Docker image, we can get the repository digest like so:
 
-```console
+```bash
  $ docker inspect nginx | jq -r '.[].RepoDigests'
 [
   "nginx@sha256:a93c8a0b0974c967aebe868a186e5c205f4d3bcb5423a56559f2f9599074bbcd"

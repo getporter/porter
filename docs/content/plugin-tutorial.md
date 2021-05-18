@@ -68,12 +68,12 @@ Next we will save the connection string for the storage account.
 1. Define an environment variable `AZURE_STORAGE_CONNECTION_STRING` and set its value with the connection string from the previous step.
 
     **bash**
-    ```
+    ```bash
     export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
     ```
 
     **powershell**
-    ```
+    ```powershell
     $env:AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=***;AccountKey=***;EndpointSuffix=core.windows.net"
     ```
 
@@ -122,13 +122,13 @@ Now we will create a service principal and give it access to our key vault.
 1. On the app registration page, note the **Application (client) ID** and **Directory (tenant) ID**, and then define environment variables for them:
 
     **bash**
-    ```
+    ```bash
     export AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
     export AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
     ```
 
     **powershell**
-    ```
+    ```powershell
     $env:AZURE_CLIENT_ID="<APPLICATION_CLIENT_ID>"
     $env:AZURE_TENANT_ID="<DIRECTORY_TENANT_ID>"
     ```
@@ -144,12 +144,12 @@ Now we will create a service principal and give it access to our key vault.
 1. Copy the generated client secret and define an environment variable for it:
 
     **bash**
-    ```
+    ```bash
     export AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
     ```
 
     **powershell**
-    ```
+    ```powershell
     $env:AZURE_CLIENT_SECRET="<CLIENT_SECRET>"
     ```
 
@@ -206,7 +206,7 @@ plugin.
 
 Let's try out Porter with the plugin activated and see it in action!
 
-```console
+```bash
 $ porter list
 NAME           CREATED      MODIFIED     LAST ACTION   LAST STATUS
 ```
@@ -218,7 +218,7 @@ let's install another bundle and have it saved to the cloud.
 We will use the `getporter/plugins-tutorial:v0.1.0` bundle, let's use `porter
 explain` to see what credentials are necessary.
 
-```console
+```bash
 $ porter explain getporter/plugins-tutorial:v0.1.0
 Name: plugins-tutorial
 Description: Example of porter resolving credentials from a secrets store using a plugin. 
@@ -239,9 +239,9 @@ No custom actions defined
 Since the bundle needs a credential we will generate some for it using `porter
 credentials generate`. When prompted, select **secret** for how you like to set
 the credential "password" and type `password` for the secret that will be used
-to set the credential "password". 
+to set the credential "password".
 
-```console
+```bash
 $ porter credentials generate
 Generating new credential plugins-tutorial from bundle plugins-tutorial
 ==> 1 credentials required for bundle plugins-tutorial
@@ -258,7 +258,7 @@ Now we are ready to install the bundle and pass it our generated credentials. ðŸ
 Porter is using the Azure plugin to inject the password credential from Azure
 Key Vault into the bundle during install.
 
-```console
+```bash
 $ porter install -t getporter/plugins-tutorial:v0.1.0 -c plugins-tutorial
 installing plugins-tutorial...
 executing install action from plugins-tutorial (installation: plugins-tutorial)
@@ -270,7 +270,7 @@ execution completed successfully!
 The installation is recorded in Azure Blob Storage and read back out again
 by the Azure plugin when we run `porter list`.
 
-```
+```bash
 $ porter list
 NAME                CREATED          MODIFIED         LAST ACTION   LAST STATUS
 plugins-tutorial    51 seconds ago   49 seconds ago   install       success

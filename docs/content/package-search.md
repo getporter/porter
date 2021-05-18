@@ -11,7 +11,7 @@ These can be searched via [porter mixin search](/cli/porter_mixin_search/) or
 
 For example, here we search for mixins with the term `az` in the name:
 
-```console
+```bash
 $ porter mixin search az
 Name   Description                    Author           URL                                     URL Type
 az     A mixin for using the az cli   Porter Authors   https://cdn.porter.sh/mixins/atom.xml   Atom Feed
@@ -21,7 +21,7 @@ If no query is supplied, the full listing will be returned.
 
 For example, here we search for all plugins, specifying `yaml` output:
 
-```console
+```bash
 $ porter plugin search -o yaml
 - name: azure
   author: Porter Authors

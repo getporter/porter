@@ -29,7 +29,7 @@ This is useful when you have restrictions on where you can pull Docker images fr
 
 The first way that you can use the `copy` command is to copy a bundle to a new registry. This command will result in the `source` bundle being copied to the specified registry. The `name:tag` of the source bundle will be used to name the new bundle copy. For example:
 
-```
+```bash
 $ porter copy --source jeremyrickard/porter-do-bundle:v0.4.6 --destination jrrporter.azurecr.io
 Beginning bundle copy to jrrporter.azurecr.io/porter-do-bundle:v0.4.6. This may take some time.
 Starting to copy image jeremyrickard/porter-do:v0.4.6...
@@ -45,7 +45,7 @@ In this case, we copied `jeremyrickard/porter-do-bundle:v0.4.6` to the new regis
 
 In addition to specifying only the new registry, you can also specify a new tagged reference for the bundle:
 
-```
+```bash
 $ porter copy --source jeremyrickard/porter-do-bundle:v0.4.6 --destination jrrporter.azurecr.io/do-bundle:v0.1.0
 Beginning bundle copy to jrrporter.azurecr.io/porter-do-bundle:v0.4.6. This may take some time.
 Starting to copy image jeremyrickard/porter-do:v0.4.6...

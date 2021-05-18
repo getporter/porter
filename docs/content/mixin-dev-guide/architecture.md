@@ -37,7 +37,7 @@ Porter defines a contract that mixins must fulfill in order to be included in th
 
 The previous example introduced how mixins are used when a bundle is executed. In the case of the `exec` mixin, the resulting bundle invocation image already has everything needed to execute the mixin. Other mixins may require additional runtime software. The `helm` mixin, for example, requires the [Helm](https://helm.sh/) client at runtime. Porter is responsible for building the invocation image for the bundle, so it needs to know what each mixin will need so that it can be included in the bundle. The mixin is responsible for providing any relevant lines to ensure that the generated invocation image Dockerfile has all required runtime components. Porter expects that the mixin will provide any relevant Dockerfile additions through a `build` command. The `build` should output any necessary Dockerfile commands to standard out. To see this in action, consider the `helm` mixin:
 
-```console
+```bash
 $ ./bin/mixins/helm/helm build
 RUN apt-get update && \
  apt-get install -y curl && \
@@ -60,7 +60,7 @@ The [CNAB specification](https://github.com/cnabio/cnab-spec/blob/master/103-bun
 
 Porter in turn, expects that a mixin should provide a command that corresponds to each of these actions. If the corresponding action is not relevant, the mixin should still provide a command for the action and return no error. Here is `helm` mixin again for reference:
 
-```console
+```bash
 $ ./bin/mixins/helm/helm
 A helm mixin for porter 👩🏽‍✈️
 
