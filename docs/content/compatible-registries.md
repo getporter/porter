@@ -3,7 +3,7 @@ title: Compatible Registries
 description: Understanding which OCI registries work with CNAB
 ---
 
-Cloud Native Application Bundles are very new, and support for storing anything
+Cloud Native Application Bundles (CNAB) are very new, and support for storing anything
 other than container images in a registry is inconsistent. The community has
 tested a bunch of registries for compatibility with CNAB and so far here is what
 we have found.
@@ -19,9 +19,9 @@ out a particular registry and know that it will work for you.
 | **Docker Hub** | **Yes** |
 | **DigitalOcean Container Registry** | **Yes** |
 | **Amazon Elastic Container Registry (ECR)** | **[Yes*](#notes)** |
-| **Google Artifact Registry** | **Yes** | 
-| Google Cloud Registry (GCR) | No | 
-| **GitHub Container Registry (GHCR)** | **Yes** | 
+| **Google Artifact Registry** | **Yes** |
+| Google Cloud Registry (GCR) | No |
+| **GitHub Container Registry (GHCR)** | **Yes** |
 | GitHub Packages | No |
 | **Harbor 2** | **Yes** |
 | Nexus | No |
