@@ -162,7 +162,7 @@ uninstall:
           - Goodbye World
 ```
 
-After I have tested the bundle, I used `porter publish` to push it up to `getporter/whalesay:v0.1.2`.
+After I test the bundle and verify that it's ready for release, I use `porter publish` to push the new image `getporter/whalesay:v0.1.2` to the registry.
 
 ## Run that bundle
 
