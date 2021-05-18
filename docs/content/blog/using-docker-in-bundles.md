@@ -76,13 +76,11 @@ required:
 
 ### Install Docker
 
-You can include the Docker CLI in your bundle by using the [docker mixin], or
-if you are using Docker Compose, use the [docker-compose mixin].
+You can include the Docker CLI in your bundle by using the [docker mixin].
 
 ```yaml
 mixins:
   - docker
-  - docker-compose
 ```
 
 You can then use the respective CLIs through the mixin:
@@ -94,11 +92,6 @@ install:
     run:
       image: hello-world
       rm: true
-- docker-compose:
-    description: "Start Test Services"
-    arguments:
-    - up
-    - -d
 ```
 
 We are going to focus on just using Docker for this blog post, but here is a [full
@@ -237,12 +230,10 @@ execution completed successfully!
 This is hopefully just the first step towards first class support for Docker and
 Docker Compose within Porter bundles, especially now that [Docker Compose has an
 open specification][compose-spec]. If you are interested in collaborating with
-us to take this further, please reach out on the [porter][porter-repo], [docker mixin][docker-repo]
-[docker-compose mixin][compose-repo] repositories!
+us to take this further, please reach out on the [porter][porter-repo] or [docker mixin][docker-repo]
+repositories!
 
 [porter-repo]: https://github.com/getporter/porter/
-[compose-repo]: https://github.com/getporter/mixin-docker-compose/
 [docker-repo]: https://github.com/getporter/mixin-docker/
 [compose-spec]: https://www.compose-spec.io/
 [docker mixin]: /mixins/docker/
-[docker-compose mixin]: /mixins/docker-compose/
