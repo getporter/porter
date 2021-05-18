@@ -342,12 +342,14 @@ func (pd *ParameterDefinition) Validate() error {
 		pdCopy.ContentEncoding = "base64"
 	}
 
-	schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy)
-	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
-	}
-	for _, schemaValidationErr := range schemaValidationErrs {
-		result = multierror.Append(result, errors.Wrapf(err, "encountered validation error(s) for parameter %s: %v", pdCopy.Name, schemaValidationErr))
+	if pdCopy.Default != nil {
+		schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy.Default)
+		if err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating parameter %s", pdCopy.Name))
+		}
+		for _, schemaValidationErr := range schemaValidationErrs {
+			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for parameter %q: %s", pdCopy.Default, pdCopy.Name, schemaValidationErr.Error))
+		}
 	}
 
 	return result.ErrorOrNil()
@@ -696,12 +698,14 @@ func (od *OutputDefinition) Validate() error {
 		odCopy.ContentEncoding = "base64"
 	}
 
-	schemaValidationErrs, err := odCopy.Schema.Validate(od)
-	if err != nil {
-		result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating output %s", odCopy.Name))
-	}
-	for _, schemaValidationErr := range schemaValidationErrs {
-		result = multierror.Append(result, errors.Wrapf(err, "encountered validation error(s) for output %s: %v", odCopy.Name, schemaValidationErr))
+	if odCopy.Default != nil {
+		schemaValidationErrs, err := odCopy.Schema.Validate(odCopy.Default)
+		if err != nil {
+			result = multierror.Append(result, errors.Wrapf(err, "encountered error while validating output %s", odCopy.Name))
+		}
+		for _, schemaValidationErr := range schemaValidationErrs {
+			result = multierror.Append(result, fmt.Errorf("encountered an error validating the default value %v for output %q: %s", odCopy.Default, odCopy.Name, schemaValidationErr.Error))
+		}
 	}
 
 	return result.ErrorOrNil()
