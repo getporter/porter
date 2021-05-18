@@ -28,8 +28,7 @@ We have full [examples](https://porter.sh/src/examples) of Porter manifests in t
 
 ## Bundle Metadata
 
-A lot of the metadata is defined by the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md)
-although Porter does have extra fields that are specific to making Porter bundles.
+A lot of the metadata is defined by the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md) although Porter does have extra fields that are specific to making Porter bundles.
 
 ```yaml
 name: azure-wordpress
@@ -49,11 +48,10 @@ dockerfile: dockerfile.tmpl
     the bundle reference will be `getporter/porter-hello:v0.1.0` and the invocation image name will be `getporter/porter-hello-installer:v0.1.0`
 * `reference`: OPTIONAL. The bundle reference, taking precedence over any values set for the `registry`, `name` fields. The format is `REGISTRY_HOST/ORG/NAME`.  The recommended pattern is to let the Docker tag be auto-derived from the `version` field.  However, a full reference with a Docker tag included may also be specified.
    The invocation image name will also be based on this value when set. For example, if the `reference` is
-   `getporter/porter-hello`, then the final invocation image name will be `getporter/porter-hello-installer:v0.1.0`. 
+   `getporter/porter-hello`, then the final invocation image name will be `getporter/porter-hello-installer:v0.1.0`.
   
    When the version is used to default the tag, and it contains a plus sign (+), the plus sign is replaced with an underscore because while + is a valid semver delimiter for the build metadata, it is not an allowed character in a tag.
-* `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
-    See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
+* `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
 
 ## Mixins
@@ -64,8 +62,8 @@ they need to run, such as a CLI or config files, and how to execute their steps 
 Anyone can [create a mixin](/mixin-dev-guide/), here's a list of the mixins that are installed with Porter by default:
 
 * exec - run shell scripts and commands
-* helm - use the helm cli
-* azure - provision services on the Azure cloud
+* helm - use the Helm CLI
+* az - Interact with Azure using the Azure CLI
 
 Declare the mixins that your bundle uses with the `mixins` section of the manifest:
 
@@ -142,7 +140,7 @@ parameters:
 
 Porter supports passing a file as a parameter to a bundle.
 
-For instance, a bundle might declare a parameter mytar of type file, located at /root/mytar when the bundle is run:
+For instance, a bundle might declare a parameter `mytar` of type `file`, located at `/root/mytar` when the bundle is run:
 
 ```yaml
 - name: mytar
@@ -191,7 +189,7 @@ parameters:
 ## Outputs
 
 Outputs are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#outputs) to
-allow access to outputs generated during the course of executing a bundle.  These are global/bundle-wide outputs,
+allow access to outputs generated during the course of executing a bundle. These are global/bundle-wide outputs,
 as opposed to step outputs described in [Parameters, Credentials and Outputs](/wiring/).
 
 ```yaml
@@ -221,10 +219,7 @@ it must define a `path` where the output file can be located on the filesystem.
 
 ### Parameter and Output Schema
 
-The [CNAB Spec for definitions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#definitions)
-applies to both parameters and outputs.  Parameters and outputs can use [json schema 7](https://json-schema.org) 
-properties to describe acceptable values. Porter uses a slightly [modified schema][json-schema] because CNAB disallows 
-non-integer values.
+The [CNAB Spec for definitions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#definitions) applies to both parameters and outputs. Parameters and outputs can use [json schema 7](https://json-schema.org) properties to describe acceptable values. Porter uses a slightly [modified schema][json-schema] because CNAB disallows non-integer values.
 
 Below are a few examples of common json schema properties and how they are used by Porter:
 
@@ -257,7 +252,7 @@ parameters:
 ## Credentials
 
 Credentials are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/802-credential-sets.md) and allow
-you to pass in sensitive data when you execute the bundle, such as passwords or configuration files. 
+you to pass in sensitive data when you execute the bundle, such as passwords or configuration files.
 
 Learn more about [how credentials work in Porter](/credentials/).
 
@@ -286,6 +281,7 @@ credentials:
 * `applyTo`: (Optional) Designate to which actions this credential applies. When not supplied, it is assumed the credential applies to all actions.
 
 ### See Also
+
 * [porter credentials generate](/cli/porter_credentials_generate/)
 * [How Credentials Work](/how-credentials-work/)
 * [Wiring Credentials](/wiring/)
@@ -317,25 +313,18 @@ install:
 
 * `MIXIN`: The name of the mixin that will handle this step. In the example above, `helm` is the mixin.
 * `description`: A description of the step, used for logging.
-* `outputs`: Any outputs provided by the steps. The `name` is required but the rest of the the schema for the 
-output is specific to the mixin. In the example above, the mixin will make the Kubernetes secret data available as outputs.
+* `outputs`: Any outputs provided by the steps. The `name` is required but the rest of the the schema for the output is specific to the mixin. In the example above, the mixin will make the Kubernetes secret data available as outputs.
 By default, all output values are considered sensitive and will be masked in console output.
 
 ### Custom Actions
-You can also define custom actions, such as `status` or `dry-run`, and define steps for them just as you would for
-the main actions (install/upgrade/uninstall). Most of the mixins support custom actions but not all do.
 
-You have the option of declaring your custom action, though it is not required. Custom actions are defaulted 
-to `stateless: false` and `modifies: true`. [Well-known actions][well-known-actions] defined in the CNAB specification 
-are automatically defaulted, such as `dry-run`, `help`, `log`, and `status`. You do not need to declare custom 
-actions unless you want to change the defaults.
+You can also define custom actions, such as `status` or `dry-run`, and define steps for them just as you would for the main actions (install/upgrade/uninstall). Most of the mixins support custom actions but not all do.
 
-You may want to declare your custom action when the action does not make any changes, and its execution should not 
-be recorded (`stateless: true` and `modifies: false`). The `help` action is supported out-of-the-box by Porter
-and is automatically defaulted to this definition so you do not need to declare it. If you have an action that is 
-similar to `help`, but has a different name, you should declare it in the `customActions` section.
+You have the option of declaring your custom action, though it is not required. Custom actions are defaulted  to `stateless: false` and `modifies: true`. [Well-known actions][well-known-actions] defined in the CNAB specification are automatically defaulted, such as `dry-run`, `help`, `log`, and `status`. You do not need to declare custom actions unless you want to change the defaults.
 
-```
+You may want to declare your custom action when the action does not make any changes, and its execution should not be recorded (`stateless: true` and `modifies: false`). The `help` action is supported out-of-the-box by Porter and is automatically defaulted to this definition so you do not need to declare it. If you have an action that is similar to `help`, but has a different name, you should declare it in the `customActions` section.
+
+```yaml
 customActions:
   myhelp:
     description: "Print a special help message"
@@ -365,14 +354,12 @@ dependencies:
 ```
 
 * `name`: A short name for the dependent bundle that is used to reference the dependent bundle elsewhere in the bundle.
-* `reference`: The reference where the bundle can be found in an OCI registry. The format should be `REGISTRY/NAME:TAG` where TAG is 
-    the semantic version of the bundle.
+* `reference`: The reference where the bundle can be found in an OCI registry. The format should be `REGISTRY/NAME:TAG` where TAG is the semantic version of the bundle.
 * `parameters`: Optionally set default values for parameters in the bundle.
 
 ## Images
 
-The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps)
-section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
+The `images` section of the Porter manifest corresponds to the [Image Map](https://github.com/cnabio/cnab-spec/blob/master/103-bundle-runtime.md#image-maps) section of the CNAB Spec. These are images used in the bundle and declaring them enables Porter to manage the following for you:
 
 * publishing the bundle [copies referenced images into the published bundle](/distribute-bundles/#image-references-after-publishing).
 * [archiving the bundle](/archive-bundles/) includes the referenced images in the archive.
@@ -389,10 +376,9 @@ images:
 ```
 
 This information is used to generate the corresponding section of the `bundle.json` and can be
-used in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using 
-the `repository` and `digest` attributes. For example:
+used in [template expressions](/wiring), much like `parameters`, `credentials` and `outputs`, allowing you to build image references using the `repository` and `digest` attributes. For example:
 
-```
+```yaml
 image: "{{bundle.images.websvc.repository}}@{{bundle.images.websvc.digest}}"
 ```
 
@@ -439,15 +425,13 @@ You can access custom data at runtime using the `bundle.custom.KEY.SUBKEY` templ
 For example, `{{ bundle.custom.more-custom-config.enabled}}` allows you to
 access nested values from the custom section.
 
-See the [Custom Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions)
-section of the CNAB Specification for more details.
+See the [Custom Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions) section of the CNAB Specification for more details.
 
 ## Required
 
 The `required` section of a Porter manifest is intended for bundle authors to declare which
 [Required Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#required-extensions)
-known and supported by Porter are needed to run the bundle.  Hence, all extension configuration data in this section
-is processed by Porter at runtime; if unsupported extension configuration exists, Porter will error out accordingly.
+known and supported by Porter are needed to run the bundle.  Hence, all extension configuration data in this section is processed by Porter at runtime; if unsupported extension configuration exists, Porter will error out accordingly.
 
 Currently, Porter supports the following required extensions and configuration:
 
@@ -455,10 +439,9 @@ Currently, Porter supports the following required extensions and configuration:
 
 Access to the host Docker daemon is necessary to run this bundle.
 
-When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the
-[Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
+When the bundle is executed, this elevated privilege must be explicitly granted to the bundle using the [Allow Docker Host Access configuration](/configuration/#allow-docker-host-access) setting.
 
-**Name:** 
+**Name:**
 
 `docker`
 
