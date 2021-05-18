@@ -55,7 +55,7 @@ follow along with.
 ### Require Docker
 
 The user running the bundle, and Porter, needs to know that this bundle
-requires the local Docker daemon connected to the bundle. We have added a new
+requires the local Docker daemon connected to the bundle. You need to a new
 section to porter.yaml for required extensions, and defined a new prototype
 extension that says that the bundle [requires access to a Docker
 daemon](https://porter.sh/author-bundles/#docker):
@@ -94,7 +94,7 @@ install:
       rm: true
 ```
 
-We are going to focus on just using Docker for this blog post, but here is a [full
+This blog post focuses on just the docker mixin, but here is a [full
 working example for how to use Docker Compose in a
 bundle](/src/examples/compose/).
 
@@ -203,7 +203,7 @@ I can set the flag `--allow-docker-host-access` with the `PORTER_ALLOW_DOCKER_HO
 export PORTER_ALLOW_DOCKER_HOST_ACCESS=true
 ```
 
-Now let's see what else we can do with whalesay:
+Now let's see what else you can do with whalesay:
 
 ```console
 $ porter invoke whalesay --action=say --param 'msg=try it yourself!'
