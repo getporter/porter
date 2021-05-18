@@ -23,7 +23,7 @@ images:
 
 When this bundle is copied, the invocation image, along with the `backend` and `websvc` images will be copied to the new repository. If the bundle author has properly used image [wiring](/wiring/#wiring-images), the new image references will be available within the bundle at run-time.
 
-This is useful when you have restrictions on where you can pull Docker images from or would otherwise like to have control over assets you will be using. Any operation on the copied bundle will utilize these copied images as well. IIf you'd like to rename something within a registry, Porter also allows you to copy from one bundle tag to another bundle tag inside the same registry.
+This is useful when you have restrictions on where you can pull Docker images from or would otherwise like to have control over assets you will be using. Any operation on the copied bundle will utilize these copied images as well. If you'd like to rename something within a registry, Porter also allows you to copy from one bundle tag to another bundle tag inside the same registry.
 
 ## Copy A Bundle From One Registry to Another
 
