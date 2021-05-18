@@ -198,6 +198,25 @@
         "repository"
       ],
       "additionalProperties": false
+    },
+    "maintainer": {
+      "additionalProperties": false,
+      "description": "Bundle Maintainer",
+      "properties": {
+        "email": {
+          "description": "Email of the maintainer", 
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the maintainer", 
+          "type": "string"
+        },
+        "url" : {
+          "description": "Url of the maintainer", 
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "properties": {
@@ -314,6 +333,13 @@
       "description": "Custom bundle metadata",
       "type": "object",
       "additionalProperties": true
+    },
+    "maintainers": {
+      "description": "Bundle maintainers",
+      "items": {
+        "$ref": "#/definitions/maintainer"
+      },
+      "type": "array"
     }
   },
   "additionalProperties": {
