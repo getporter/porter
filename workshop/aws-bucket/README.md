@@ -29,7 +29,7 @@ credentials:
 # Try it out
 
 ## Create a bucket
-```console
+```bash
 $ porter install --cred aws
 
 installing porter-aws-bucket...
@@ -44,7 +44,7 @@ execution completed successfully!
 ```
 
 ## List buckets
-```console
+```bash
 $ porter invoke --action list --cred aws
 
 invoking custom action list on porter-aws-bucket...
@@ -61,7 +61,7 @@ execution completed successfully!
 ```
 
 ## Delete a bucket
-```console
+```bash
 $ porter uninstall --cred aws
 
 uninstalling porter-aws-bucket...

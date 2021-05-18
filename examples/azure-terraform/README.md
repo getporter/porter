@@ -9,20 +9,20 @@ This bundle will create resources in Azure. In order to do this, you'll first ne
 The bundle will use an Azure [Service Principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) in order to authenticate with Azure. Once you have an account, create a Service Principal for use with the bundle. You can do this via the Azure portal, or via the Azure CLI:
 
 1. Create a service principal with the Azure CLI:
-    ```console
+    ```bash
     az ad sp create-for-rbac --name porterraform -o table
     ```
 1. Save the values from the command output in environment variables:
 
     **Bash**
-    ```console
+    ```bash
     export AZURE_TENANT_ID=<Tenant>
     export AZURE_CLIENT_ID=<AppId>
     export AZURE_CLIENT_SECRET=<Password>
     ```
 
     **PowerShell**
-    ```console
+    ```bash
     $env:AZURE_TENANT_ID = "<Tenant>"
     $env:AZURE_CLIENT_ID = "<AppId>"
     $env:AZURE_CLIENT_SECRET = "<Password>"

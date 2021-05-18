@@ -32,16 +32,16 @@ credentials:
 # Try it out
 
 ## Create a VM
-```console
+```bash
 $ porter install --cred gcloud
 ```
 
 ## Label a VM
-```console
+```bash
 $ porter upgrade --cred gcloud
 ```
 
 ## Delete a VM
-```console
+```bash
 $ porter uninstall --cred gcloud
 ```

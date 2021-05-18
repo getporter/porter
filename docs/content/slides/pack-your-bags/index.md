@@ -22,7 +22,7 @@ to get all the materials ready.
 .center[👩🏽‍✈️ https://porter.sh/pack-your-bags/#setup 👩🏽‍✈️ ]
 
 * Clone the workshop repository
-  ```console
+  ```bash
   git clone https://github.com/getporter/porter.git
   cd porter/workshop
   ```
@@ -297,7 +297,7 @@ class: center, middle
 ---
 ## Try it out: Install a bundle
 
-```console
+```bash
 $ porter install --reference deislabs/porter-hello-velocity:latest
 ```
 
@@ -480,7 +480,7 @@ class: center
 
 ## porter create
 
-```console
+```bash
 $ porter create --help
 Create a bundle. This generates a porter bundle in the current directory.
 ```
@@ -527,7 +527,7 @@ install:
 
 ## Try it out: porter create
 
-```console
+```bash
 $ mkdir hello
 $ cd hello
 $ porter create
@@ -540,7 +540,7 @@ Dockerfile.tmpl  README.md  porter.yaml
 
 ## porter build
 
-```console
+```bash
 $ porter build --help
 Builds the bundle in the current directory by generating a Dockerfile 
 and a CNAB bundle.json, and then building the invocation image.
@@ -550,7 +550,7 @@ and a CNAB bundle.json, and then building the invocation image.
 
 ## Try it out: porter build
 
-```console
+```bash
 $ porter build
 
 Copying dependencies ===>
@@ -584,7 +584,7 @@ RUN mv /cnab/app/cnab/app/* /cnab/app && rm -r /cnab/app/cnab
 ---
 
 ### .cnab/
-```console
+```bash
 $ tree .cnab/
 .cnab
 ├── app
@@ -641,7 +641,7 @@ exec /cnab/app/porter-runtime run -f /cnab/app/porter.yaml
 
 ## porter install
 
-```console
+```bash
 $ porter install --help
 Install a bundle.
 
@@ -665,7 +665,7 @@ name: execution
 
 ## Try it out: porter install
 
-```console
+```bash
 $ porter install
 
 installing HELLO...
@@ -734,7 +734,7 @@ Modify the hello bundle to print "Hello, YOUR NAME", for example "Hello, Aarti",
 
 ### porter list
 
-```console
+```bash
 $ porter list
 NAME          CREATED         MODIFIED        LAST ACTION   LAST STATUS
 HELLO_LLAMA   5 seconds ago   3 seconds ago   install       success
@@ -751,7 +751,7 @@ name: claims
 
 Claims are records of any actions performed by CNAB compliant tools on a bundle.
 
-```console
+```bash
 $ porter show HELLO
   Name: HELLO
   Created: 2019-11-08
@@ -765,7 +765,7 @@ name: cleanup-hello
 ## Cleanup Hello World
 
 First run `porter uninstall` without any arguments:
-```console
+```bash
 $ porter uninstall
 uninstalling HELLO...
 executing porter uninstall configuration from /cnab/app/porter.yaml
@@ -775,7 +775,7 @@ execution completed successfully!
 ```
 
 Now run `porter uninstall` with the name you used for the modified bundle:
-```console
+```bash
 $ porter uninstall HELLO_LLAMA
 uninstalling HELLO_LLAMA...
 executing porter uninstall configuration from /cnab/app/porter.yaml
@@ -834,7 +834,7 @@ credential for now but be aware of the distinction and where the CNAB spec is mo
 ---
 ## porter credentials generate
 
-```console
+```bash
 $ porter credentials generate --help
 Generate a named set of credentials.
 
@@ -912,7 +912,7 @@ we all do this together
 
 Install the wordpress bundle and pass it the named set of credentials that you generated.
 
-```console
+```bash
 $ porter install --cred wordpress
 ```
 
@@ -921,7 +921,7 @@ name: cleanup-wordpress
 
 ## Cleanup Wordpress
 
-```console
+```bash
 $ porter uninstall --cred wordpress
 ```
 
@@ -1081,7 +1081,7 @@ install: # action
 
 We recommend referencing files using relative paths
 
-```console
+```bash
 $ tree
 ├── Dockerfile
 ├── README.md
@@ -1261,7 +1261,7 @@ tag: deislabs/porter-azure-wordpress-bundle:latest
 
 ## porter publish
 
-```console
+```bash
 $ porter publish --help
 Publishes a bundle by pushing the invocation image and bundle to a registry.
 
