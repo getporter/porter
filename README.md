@@ -48,9 +48,8 @@ the load and making it better every day! 🙇‍♀️
 # Do you use Porter?
 
 We want to know if you use Porter! Project priorities and funding are based on
-adoption. So if you are using Porter, add yourself to our [Adopters](ADOPTERS.md)
-page, or if it needs to stay private, email
-[porter-maintainers@lists.cncf.io](mailto:porter-maintainers@lists.cncf.io).
+adoption. So if you are using Porter, [reply to this issue](https://github.com/getporter/porter/issues/1596),
+or if it needs to stay private, email [porter-maintainers@lists.cncf.io](mailto:porter-maintainers@lists.cncf.io).
 
 # Roadmap
 

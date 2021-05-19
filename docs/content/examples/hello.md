@@ -1,5 +1,7 @@
 ---
 title: "Example: Hello World"
+description: "Learn how to install a bundle"
+weight: 0
 ---
 
 Source: https://porter.sh/src/examples/hello
