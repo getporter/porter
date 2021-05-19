@@ -1,16 +1,14 @@
 ---
-title: "Using Docker inside Porter Bundles"
-description: "Now you can use Docker and Docker Compose from inside Porter bundles"
-date: "2020-04-23"
-authorname: "Carolyn Van Slyck"
-author: "@carolynvs"
-authorlink: "https://carolynvanslyck.com/"
-authorimage: "https://github.com/carolynvs.png"
-image: "images/porter-with-docker-twitter-card.png"
-tags: ["docker", "mixins"]
+title: "Example: Docker"
+description: "Learn how to use Docker inside a bundle"
+weight: 20
 ---
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
+
+Source: https://porter.sh/src/examples/docker
+
+The [getporter/whalesay] bundle demonstrates how to use Docker inside a bundle!
 
 Sometimes you need a hammer, and that hammer happens to be a whale 🐳. We all
 use containers as part of our pipeline: building images, running a one-off
@@ -19,7 +17,7 @@ application, or even more creative tasks that you have already
 containerized. Well now you can reuse all that hard work and logic from within
 your bundles!
 
-Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle. 
+Let's walk through using my favorite container, [docker/whalesay][whalesay], in a bundle.
 
 ```
  _____________________
@@ -55,7 +53,7 @@ follow along with.
 ### Require Docker
 
 The user running the bundle, and Porter, needs to know that this bundle
-requires the local Docker daemon connected to the bundle. You need to a new
+requires the local Docker daemon connected to the bundle. We have added a new
 section to porter.yaml for required extensions, and defined a new prototype
 extension that says that the bundle [requires access to a Docker
 daemon](https://porter.sh/author-bundles/#docker):
@@ -94,75 +92,14 @@ install:
       rm: true
 ```
 
-This blog post focuses on just the docker mixin, but here is a [full
-working example for how to use Docker Compose in a
-bundle](/src/examples/compose/).
-
 ### Use Docker
 
 In my porter.yaml, I can use the docker mixin to execute docker commands
 in my bundle:
 
-**porter.yaml**
+<script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/docker/porter.yaml"></script>
 
-```yaml
-name: whalesay
-version: 0.1.2
-description: "An example bundle that uses docker through the magic of whalespeak"
-registry: getporter
-
-required:
-  - docker
-
-parameters:
-  - name: msg
-    description: a message for the whales to speak
-    type: string
-    default: "whale hello there!"
-    applyTo:
-      - say
-
-mixins:
-  - docker
-
-install:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - Hello World
-
-upgrade:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - World 2.0
-
-say:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - - "{{ bundle.parameters.msg }}"
-
-uninstall:
-  - docker:
-      run:
-        image: "docker/whalesay:latest"
-        rm: true
-        arguments:
-          - cowsay
-          - Goodbye World
-```
-
-After I test the bundle and verify that it's ready for release, I use `porter publish` to push the new image `getporter/whalesay:v0.1.2` to the registry.
+After I have tested the bundle, I used `porter publish` to push it up to `getporter/whalesay:v0.1.2`.
 
 ## Run that bundle
 
@@ -203,7 +140,7 @@ I can set the flag `--allow-docker-host-access` with the `PORTER_ALLOW_DOCKER_HO
 export PORTER_ALLOW_DOCKER_HOST_ACCESS=true
 ```
 
-Now let's see what else you can do with whalesay:
+Now let's see what else we can do with whalesay:
 
 ```console
 $ porter invoke whalesay --action=say --param 'msg=try it yourself!'
@@ -227,13 +164,5 @@ Say Something
 execution completed successfully!
 ```
 
-This is hopefully just the first step towards first class support for Docker and
-Docker Compose within Porter bundles, especially now that [Docker Compose has an
-open specification][compose-spec]. If you are interested in collaborating with
-us to take this further, please reach out on the [porter][porter-repo] or [docker mixin][docker-repo]
-repositories!
-
-[porter-repo]: https://github.com/getporter/porter/
-[docker-repo]: https://github.com/getporter/mixin-docker/
-[compose-spec]: https://www.compose-spec.io/
 [docker mixin]: /mixins/docker/
+[getporter/whalesay]: https://hub.docker.com/r/getporter/whalesay/
