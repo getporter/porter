@@ -389,10 +389,12 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
 	m := &manifest.Manifest{
-		Dependencies: []*manifest.Dependency{
-			{
-				Name: "mysql",
-				Tag:  "getporter/porter-mysql",
+		Dependencies: manifest.Dependencies{
+			RequiredDependencies: []*manifest.RequiredDependency{
+				{
+					Name: "mysql",
+					Tag:  "getporter/porter-mysql",
+				},
 			},
 		},
 		TemplateVariables: []string{
@@ -642,41 +644,41 @@ func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
 func TestDependency_Validate(t *testing.T) {
 	testcases := []struct {
 		name       string
-		dep        manifest.Dependency
+		dep        manifest.RequiredDependency
 		wantOutput string
 		wantError  string
 	}{
 		{
 			name: "tag (deprecated) supplied",
-			dep:  manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"},
+			dep:  manifest.RequiredDependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"},
 			wantOutput: `WARNING: the tag field for dependency "mysql" has been deprecated in favor of reference; please update the Porter manifest accordingly
 `,
 			wantError: "",
 		}, {
 			name: "tag (deprecated) and reference supplied",
-			dep:  manifest.Dependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.8"},
+			dep:  manifest.RequiredDependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.8"},
 			wantOutput: `WARNING: the tag field for dependency "mysql" has been deprecated in favor of reference; please update the Porter manifest accordingly
 WARNING: both tag (deprecated) and reference were provided for dependency "mysql"; using the reference value getporter/azure-mysql:v5.8
 `,
 			wantError: "",
 		}, {
 			name:       "version in reference",
-			dep:        manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"},
+			dep:        manifest.RequiredDependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "version ranges",
-			dep:        manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}},
+			dep:        manifest.RequiredDependency{Name: "mysql", Reference: "deislabs/azure-mysql", Versions: []string{"5.7.x-6"}},
 			wantOutput: "",
 			wantError:  "",
 		}, {
 			name:       "missing reference",
-			dep:        manifest.Dependency{Name: "mysql", Reference: ""},
+			dep:        manifest.RequiredDependency{Name: "mysql", Reference: ""},
 			wantOutput: "",
 			wantError:  `reference is required for dependency "mysql"`,
 		}, {
 			name:       "version double specified",
-			dep:        manifest.Dependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}},
+			dep:        manifest.RequiredDependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7", Versions: []string{"5.7.x-6"}},
 			wantOutput: "",
 			wantError:  `reference for dependency "mysql" can only specify REGISTRY/NAME when version ranges are specified`,
 		},

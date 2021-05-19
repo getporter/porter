@@ -14,9 +14,9 @@ credentials:
       - uninstall
 
 dependencies:
-  - name: mysql
-    reference: "getporter/azure-mysql:5.7"
-    
+  requires:
+    - name: mysql
+      reference: "getporter/azure-mysql:5.7"
 mixins:
 - exec
 

@@ -260,10 +260,11 @@ parameters:
     default: mywordpress
 
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
-    parameters:
-      database_name: wordpress
+  requires:
+    - name: mysql
+      reference: getporter/mysql:v0.1.3
+      parameters:
+        database_name: wordpress
 
 credentials:
   - name: kubeconfig

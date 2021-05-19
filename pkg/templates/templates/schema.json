@@ -271,11 +271,19 @@
       "description": "Parameters that can be injected into the invocation image"
     },
     "dependencies": {
+      "additionalProperties" : false,      
       "description": "Dependent bundles that must be executed with the bundle",
-      "items": {
-        "$ref": "#/definitions/dependency"
+      "properties": {
+        "requires": {
+          "description": "Required dependent bundles",
+          "items": {
+            "$ref": "#/definitions/dependency"
+          },
+          "type": "array"
+        }
       },
-      "type": "array"
+      "required": ["requires"],
+      "type": "object"
     },
     "required": {
       "description": "Required extensions for this bundle",

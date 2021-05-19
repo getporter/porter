@@ -10,11 +10,12 @@ registry: "localhost:5000"
 version: 0.1.3
 
 dependencies:
-  - name: mysql
-    reference: localhost:5000/mysql:v0.1.3
-    parameters:
-      database-name: wordpress
-      mysql-user: wordpress
+  requires:
+    - name: mysql
+      reference: localhost:5000/mysql:v0.1.3
+      parameters:
+        database-name: wordpress
+        mysql-user: wordpress
 
 credentials:
 - name: kubeconfig

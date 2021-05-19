@@ -316,16 +316,16 @@ func (c *ManifestConverter) generateBundleImages() map[string]bundle.Image {
 
 func (c *ManifestConverter) generateDependencies() *extensions.Dependencies {
 
-	if len(c.Manifest.Dependencies) == 0 {
+	if len(c.Manifest.Dependencies.RequiredDependencies) == 0 {
 		return nil
 	}
 
 	deps := &extensions.Dependencies{
-		Sequence: make([]string, 0, len(c.Manifest.Dependencies)),
-		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies)),
+		Sequence: make([]string, 0, len(c.Manifest.Dependencies.RequiredDependencies)),
+		Requires: make(map[string]extensions.Dependency, len(c.Manifest.Dependencies.RequiredDependencies)),
 	}
 
-	for _, dep := range c.Manifest.Dependencies {
+	for _, dep := range c.Manifest.Dependencies.RequiredDependencies {
 		dependencyRef := extensions.Dependency{
 			Name:   dep.Name,
 			Bundle: dep.Reference,

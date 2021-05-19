@@ -431,11 +431,21 @@
       "type": "object"
     },
     "dependencies": {
+      "additionalProperties": false,
       "description": "Dependent bundles that must be executed with the bundle",
-      "items": {
-        "$ref": "#/definitions/dependency"
+      "properties": {
+        "requires": {
+          "description": "Required dependent bundles",
+          "items": {
+            "$ref": "#/definitions/dependency"
+          },
+          "type": "array"
+        }
       },
-      "type": "array"
+      "required": [
+        "requires"
+      ],
+      "type": "object"
     },
     "description": {
       "description": "A description of the bundle",

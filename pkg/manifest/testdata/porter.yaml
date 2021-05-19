@@ -6,10 +6,11 @@ mixins:
   - exec
 
 dependencies:
-  - name: mysql
-    reference: "getporter/azure-mysql:5.7"
-    parameters:
-      database-name: wordpress
+  requires:
+    - name: mysql
+      reference: "getporter/azure-mysql:5.7"
+      parameters:
+        database-name: wordpress
 
 install:
   - exec:

@@ -347,11 +347,12 @@ mixins:
         url: "https://charts.bitnami.com/bitnami"
 
 dependencies:
-  - name: mysql
-    reference: getporter/mysql:v0.1.3
-    parameters:
-      database_name: wordpress
-      mysql_user: wordpress
+  requires:
+    - name: mysql
+      reference: getporter/mysql:v0.1.3
+      parameters:
+        database_name: wordpress
+        mysql_user: wordpress
 
 credentials:
 - name: kubeconfig
