@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"unicode"
+
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"github.com/pkg/errors"
 )
@@ -93,7 +95,7 @@ func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) error {
 	opts.RelocationMapping = cachedBundle.RelocationFilePath
 
 	if opts.Name == "" {
-		opts.Name = cachedBundle.Bundle.Name
+		opts.Name = slugify(cachedBundle.Bundle.Name)
 	}
 
 	if cachedBundle.Manifest != nil {
@@ -101,4 +103,20 @@ func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) error {
 	}
 
 	return nil
+}
+
+func slugify(value string) string {
+	var slug string
+	for _, v := range value {
+		if unicode.IsLetter(v) {
+			slug += string(unicode.ToLower(v))
+		}
+		if unicode.IsDigit(v) {
+			slug += string(v)
+		}
+		if unicode.IsSpace(v) {
+			slug += "-"
+		}
+	}
+	return slug
 }

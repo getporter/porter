@@ -185,3 +185,24 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 		require.NoError(t, err, "Validate failed")
 	})
 }
+
+func TestSlugify(t *testing.T) {
+	testData := []struct {
+		input string
+		want  string
+	}{
+		{
+			input: "Hello World",
+			want:  "hello-world",
+		},
+		{
+			input: "sup3r awEs0me! #$serviCe##$#",
+			want:  "sup3r-awes0me-service",
+		},
+	}
+
+	for _, td := range testData {
+		got := slugify(td.input)
+		assert.Equal(t, td.want, got, "Wrong slug generated for '%s', wanted '%s', got '%s'", td.input, td.want, got)
+	}
+}
