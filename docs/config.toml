@@ -46,13 +46,19 @@ pygmentsStyle = "friendly"
     name = "QuickStart"
     url = "/quickstart"
     identifier = "quickstart"
-    weight = 12
+    weight = 30
+    parent = "get-started"
+  [[menu.main]]
+    name = "QuickStart - Parameters"
+    url = "/quickstart/parameters"
+    identifier = "quickstart-parameters"
+    weight = 31
     parent = "get-started"
   [[menu.main]]
     name = "Examples"
     url = "/examples/"
     identifier = "examples"
-    weight = 13
+    weight = 50
     parent = "get-started"
 [[menu.main]]
   name = "Use Porter"
