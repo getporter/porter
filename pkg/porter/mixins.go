@@ -188,7 +188,6 @@ func (p *Porter) CreateMixin(opts MixinsCreateOptions) error {
 // replaceStringInDir walks through all the file in a designated directory and replace any occurence of a string with a particular replacement
 // while skipping specifically directory .git and file README.md
 func replaceStringInDir(dir, replaced, replacement string) error {
-
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && info.Name() == ".git" {
 			return filepath.SkipDir
