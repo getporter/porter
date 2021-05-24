@@ -4,14 +4,14 @@ descriptions: Learn how to use a bundle with parameters
 layout: single
 ---
 
-Now that you know how to install a bundle, let's look at how to customize the bundle installation with parameters.
+Now that you know how to install a bundle, let's look at how to specify parameters to customize how that bundle is installed.
 Bundle authors define parameters in bundles so that end-users can tweak how the bundle is configured at installation.
 A parameter can be a string, integer, boolean or even a json object.
 Some examples of how parameters can be used in a bundle are:
 
 * Log Level: Default the log level for an application to info. At any time a user can upgrade the bundle to change that parameter to a different value.
 * Deployment Region: Let the user specify which region, such as eastus-1, where the application should be deployed.
-* Helm Release Name: A bundle that uses Helm often will define a parameter that allows the user to set the release name for the Helm release.
+* Helm Release Name: A bundle that uses Helm will often define a parameter that allows the user to set the release name for the Helm release.
 
 For optional parameters, bundles set a default value that is used when the user does not specify a value for the parameter.
 
