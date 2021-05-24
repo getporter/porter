@@ -4,8 +4,8 @@ descriptions: Learn how to use a bundle with parameters
 layout: single
 ---
 
-Now that you know how to install a bundle, let's look at how to specify parameters to customize how that bundle is installed.
-Bundles can define parameters to allow the end-user to tweak how the bundle is configured.
+Now that you know how to install a bundle, let's look at how to customize the bundle installation with parameters.
+Bundle authors define parameters in bundles so that end-users can tweak how the bundle is configured at installation.
 A parameter can be a string, integer, boolean or even a json object.
 Some examples of how parameters can be used in a bundle are:
 
@@ -37,14 +37,38 @@ No custom actions defined
 No dependencies defined
 ```
 
-The output tells us that the bundle has one optional string parameter, name, which defaults to "llama".
-The name parameter applies to "All Actions" meaning that this parameter can be specified with every action that the bundle defines.
-Since it says that no custom actions are defined, the bundle only supports the built-in actions of install, upgrade, and uninstall.
+In the Parameters section of the output returned by explain, there is a single optional string parameter, name, with a default of "llama" that applies to "All Actions".
+This means that the name parameter can be specified with every action that the bundle defines.
+In the custom actions section of the output returned by explain, there are no custom actions defined.
+The hello-llama bundle only supports the built-in actions of install, upgrade, and uninstall.
+
+## Specifying parameters
+
+Pass parameters to a bundle with the \--param flag, where the flag value is formatted as PARAM=VALUE.
+For example:
+
+```
+porter install --param name=Robin
+```
+
+When trying out a bundle, it might work well to set individual parameter values on the command line with the --param flag.
+Parameter sets store multiple parameters and pass them to a bundle using the parameter set name.
+With parameter sets you can avoid errors, and the requirement of remembering and manually configuring parameters at the command line.
+Parameter sets store the parameter name, and the source of the parameter value which could be a:
+
+* hard-coded value
+* environment variable
+* file
+* command
+* secret
+
+Some parameters may be sensitive, for example a database connection string or oauth token.
+For improved security, and to limit exposure of sensitive values, it is recommended that you source sensitive parameter values from a secret store such as HashiCorp Vault or Azure Key Vault.
+See the list of available [plugins](/plugins/) for which secret providers are supported.
 
 ## Use the default parameter values
 
-
-First install the bundle and do not specify any parameters so that you can observe how the bundle installs without any customization.
+Install the bundle without specifying any parameters so that you can see the default behavior of the bundle.
 
 ```console
 $ porter install hello-llama --reference getporter/hello-llama:v0.1.1
@@ -57,31 +81,18 @@ execution completed successfully!
 The bundle printed "Hello, llama" using the default value for the name parameter.
 
 ## Specify a parameter with a flag
-Next upgrade the installation and change the name parameter to another value.
-Parameters are specified with the \--param flag: 
+
+Next upgrade the installation and change the name parameter to another value using the \--param flag.
 
 ```console
-$ porter upgrade hello-llama --param name=Porter
+$ porter upgrade hello-llama --param name=Michelle
 upgrading hello-llama...
 executing upgrade action from hello-llama (installation: hello-llama)
-Porter 2.0
+Michelle 2.0
 execution completed successfully!
 ```
 
 ## Create a Parameter Set
-Setting a parameter value individually on the command line with the \--param flag works well when trying out a bundle.
-When working with a bundle often though, remembering and typing out every parameter values every time is error prone.
-Parameter Sets store a set of parameter values to use with a bundle.
-Even more powerful, the value of the parameters can come from the following sources:
-
-* hard-coded value
-* environment variable
-* file
-* command output
-* secret
-
-Some parameters may be sensitive, for example a database connection string or oauth token.
-For improved security, and to limit exposure of sensitive values, it is recommended that you source those parameter values from a secret store such as Hashicorp Vault or Azure Key Vault.
 
 Create a parameter set for the hello-llama with the `porter parameters generate` command. It is an interactive command that walks through setting values for every parameter in the specified bundle.
 
