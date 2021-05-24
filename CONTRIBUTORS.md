@@ -51,3 +51,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Nicholas Carrigan](https://github.com/nhcarrigan)
 * [Stéphane Este-Gracias](https://github.com/sestegra)
 * [Jeetu Kumar](https://github.com/i-am-jeetu)
+* [Divyam Bhasin](https://github.com/divbhasin)

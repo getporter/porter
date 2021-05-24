@@ -453,7 +453,7 @@ func TestMixinDeclaration_MarshalYAML(t *testing.T) {
 	assert.Equal(t, string(wantYaml), string(gotYaml))
 }
 
-func TestValidateParameterDefinition(t *testing.T) {
+func TestValidateParameterDefinition_missingPath(t *testing.T) {
 	pd := ParameterDefinition{
 		Name: "myparam",
 		Schema: definition.Schema{
@@ -475,7 +475,23 @@ func TestValidateParameterDefinition(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidateOutputDefinition(t *testing.T) {
+func TestValidateParameterDefinition_defaultFailsValidation(t *testing.T) {
+	pd := ParameterDefinition{
+		Name: "myparam",
+		Schema: definition.Schema{
+			Type:    "string",
+			Default: 1,
+		},
+	}
+
+	err := pd.Validate()
+	assert.EqualError(t, err, `1 error occurred:
+	* encountered an error validating the default value 1 for parameter "myparam": type should be string, got integer
+
+`)
+}
+
+func TestValidateOutputDefinition_missingPath(t *testing.T) {
 	od := OutputDefinition{
 		Name: "myoutput",
 		Schema: definition.Schema{
@@ -493,6 +509,22 @@ func TestValidateOutputDefinition(t *testing.T) {
 
 	err = od.Validate()
 	assert.NoError(t, err)
+}
+
+func TestValidateOutputDefinition_defaultFailsValidation(t *testing.T) {
+	od := OutputDefinition{
+		Name: "myoutput",
+		Schema: definition.Schema{
+			Type:    "string",
+			Default: 1,
+		},
+	}
+
+	err := od.Validate()
+	assert.EqualError(t, err, `1 error occurred:
+	* encountered an error validating the default value 1 for output "myoutput": type should be string, got integer
+
+`)
 }
 
 func TestValidateImageMap(t *testing.T) {
