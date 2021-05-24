@@ -63,7 +63,7 @@ func (p *Porter) GetInstallation(opts ShowOptions) (DisplayInstallation, error) 
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
-	displayInstallation.Outputs = NewDisplayOutputs(c.Bundle, outputs, opts.Format)
+	displayInstallation.Outputs = NewDisplayValuesFromOutputs(c.Bundle, outputs)
 
 	return displayInstallation, nil
 }
@@ -81,7 +81,7 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		return printer.PrintJson(p.Out, displayInstallation)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, displayInstallation)
-	case printer.FormatTable:
+	case printer.FormatTable, printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -90,15 +90,28 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
+		fmt.Fprintf(p.Out, "Bundle: %s\n", displayInstallation.Bundle)
+		fmt.Fprintf(p.Out, "Version: %s\n", displayInstallation.Version)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
+
+		// Print parameters, if any
+		if len(displayInstallation.Parameters) > 0 {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Parameters:")
+
+			err = p.printDisplayValuesTable(displayInstallation.Parameters)
+			if err != nil {
+				return err
+			}
+		}
 
 		// Print outputs, if any
 		if len(displayInstallation.Outputs) > 0 {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Outputs:")
 
-			err = p.printOutputsTable(displayInstallation.Outputs)
+			err = p.printDisplayValuesTable(displayInstallation.Outputs)
 			if err != nil {
 				return err
 			}

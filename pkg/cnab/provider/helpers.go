@@ -16,7 +16,7 @@ var _ CNABProvider = &TestRuntime{}
 
 type TestRuntime struct {
 	*Runtime
-	TestClaims      claims.TestClaimProvider
+	TestClaims      *claims.TestClaimProvider
 	TestCredentials credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestConfig      *config.TestConfig
@@ -30,7 +30,7 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 	return NewTestRuntimeWithConfig(tc, claimStorage, credentialStorage, parameterStorage)
 }
 
-func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims claims.TestClaimProvider, testCredentials credentials.TestCredentialProvider, testParameters parameters.TestParameterProvider) *TestRuntime {
+func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims *claims.TestClaimProvider, testCredentials credentials.TestCredentialProvider, testParameters parameters.TestParameterProvider) *TestRuntime {
 	return &TestRuntime{
 		TestConfig:      tc,
 		TestClaims:      testClaims,

@@ -110,17 +110,11 @@ To see information about an installation, use the `porter show` command with the
 
 ```console
 $ porter show porter-hello
-Name: porter-hello
-Created: 2021-03-27
-Modified: 2021-05-03
-
-Outputs:
--------------------------------------------------------------------------------
-  Name                                 Type    Value
--------------------------------------------------------------------------------
-  io.cnab.outputs.invocationImageLogs  string  DEBUG: defaulting action
-                                               to CNAB_ACTION (install)
-                                               executi...
+Name: hello
+Bundle: getporter/porter-hello
+Version: 0.1.1
+Created: 2021-05-24
+Modified: 2021-05-24
 
 History:
 ------------------------------------------------------------------------
