@@ -36,6 +36,12 @@
     left: 5% !important;
   }
 
+  nav.top-bar {
+    .docs-logo {
+      display: none !important;
+    }
+  }
+
   .main {
     &.home {
       min-height: 500px;
@@ -55,6 +61,15 @@
 
     &.docs {
       padding-top: 3.5rem;
+
+      .docs-logo {
+        position: absolute;
+        z-index: 1450;
+        max-width: 50%;
+        left: 50%;
+        margin: 0.25rem auto 0 -25%;
+        display: block !important;
+      }
     }
   }
 

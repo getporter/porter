@@ -7409,7 +7409,7 @@ body {
     .sidebar h1 a {
       display: block;
       width: 100%;
-      padding: 0.333em 2.25rem;
+      padding: 0.1333em 2.25rem;
       background-color: white;
       text-align: left; }
       .sidebar h1 a img,
@@ -8106,6 +8106,9 @@ body {
       opacity: 1;
       left: -0.825em; }
 
+.main.docs {
+  padding-top: 4rem; }
+
 .main .content-wrap {
   padding-top: 1em;
   padding-bottom: 10em;
@@ -8277,6 +8280,8 @@ body {
     width: 90% !important;
     min-width: 320px !important;
     left: 5% !important; }
+  nav.top-bar .docs-logo {
+    display: none !important; }
   .main.home {
     min-height: 500px; }
     .main.home .home-featured .panels {
@@ -8287,6 +8292,13 @@ body {
     padding-top: 6.5rem; }
   .main.docs {
     padding-top: 3.5rem; }
+    .main.docs .docs-logo {
+      position: absolute;
+      z-index: 1450;
+      max-width: 50%;
+      left: 50%;
+      margin: 0.25rem auto 0 -25%;
+      display: block !important; }
   nav.home-nav ul {
     margin-left: auto;
     margin-right: auto; }
