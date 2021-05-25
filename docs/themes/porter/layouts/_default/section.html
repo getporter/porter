@@ -3,16 +3,16 @@
   <div class="container container-full">
     {{ partial "docs-sidebar.html" . }}
 
-    <div class="main page" id="scrollpane">
+    <div class="main docs page" id="scrollpane">
       {{ partial "topbar.html" . }}
 
       <div class="row full-width">
-        <div class="small-1 columns">&nbsp;</div>
-        <div class="small-10 columns list-wrap">
+        <div class="small-12 small-1 columns">&nbsp;</div>
+        <div class="small-12 medium-10 columns list-wrap">
           <h1>{{ .Title }}</h1>
           {{ .Content }}
         </div>
-        <div class="small-1 columns">&nbsp;</div>
+        <div class="small-12 medium-1 columns">&nbsp;</div>
       </div>
 
       <div class="row full-width">

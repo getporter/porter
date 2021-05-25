@@ -8265,22 +8265,47 @@ body {
     display: none; }
   .top-bar {
     left: 0; }
+    .top-bar ul.inline {
+      display: none; }
+  .blog-logo {
+    position: absolute;
+    z-index: 1450;
+    max-width: 50%;
+    left: 50%;
+    margin: 0.25rem auto 0 -25%; }
   .st-default-autocomplete {
     width: 90% !important;
     min-width: 320px !important;
     left: 5% !important; }
-  .home {
+  .main.home {
     min-height: 500px; }
-    .home .home-featured .panels {
+    .main.home .home-featured .panels {
       min-width: 100%; }
-    .home .fa {
+    .main.home .fa {
       display: none; }
+  .main.blog {
+    padding-top: 6.5rem; }
+  .main.docs {
+    padding-top: 3.5rem; }
+  nav.home-nav ul {
+    margin-left: auto;
+    margin-right: auto; }
+    nav.home-nav ul li {
+      padding: 0;
+      margin: 0; }
+      nav.home-nav ul li a {
+        background-color: #cfedfa;
+        padding: 0.25rem 1rem;
+        margin: 0 0.333rem 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.35em;
+        min-width: 15vw; }
   nav.home-nav h1 {
     position: absolute;
-    left: 50%;
+    left: 7%;
     top: 0.5rem;
-    margin-left: -22.5%;
-    max-width: 250px;
+    margin-left: -3.5%;
+    min-width: 86%;
     text-align: center; }
     nav.home-nav h1 img {
       max-width: 45%;
@@ -8294,8 +8319,14 @@ body {
     right: 0%;
     text-align: center; }
   .home #helm .billboard h1 {
-    margin-top: 1em;
-    font-size: 1.5em; }
+    font-size: 5.755vw;
+    margin: 3rem 3.5vw 1.5em;
+    padding: 0; }
+  .home #helm .billboard h2 {
+    font-size: 1rem;
+    line-height: 1.636;
+    margin: 2rem 3.5vw 5rem;
+    padding-bottom: 3.5rem; }
   .main .content-wrap h1 {
     font-size: 17.92px; }
   .main .content-wrap article {
