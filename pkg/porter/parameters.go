@@ -129,15 +129,15 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 		Bundle: bundle,
 	}
 	fmt.Fprintf(p.Out, "Generating new parameter set %s from bundle %s\n", genOpts.Name, bundle.Name)
-	numInternalParams := 0
+	numExternalParams := 0
 
 	for name := range bundle.Parameters {
-		if parameters.IsInternal(name, bundle) {
-			numInternalParams += 1
+		if !parameters.IsInternal(name, bundle) {
+			numExternalParams += 1
 		}
 	}
 
-	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", numInternalParams, bundle.Name)
+	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", numExternalParams, bundle.Name)
 
 	pset, err := genOpts.GenerateParameters()
 	if err != nil {
