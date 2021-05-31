@@ -30,6 +30,7 @@ const (
 	questionEnvVar  = "environment variable"
 	questionPath    = "file path"
 	questionCommand = "shell command"
+	questionDefault = "use default value (%s)"
 )
 
 type generator func(name string, surveyType SurveyType) (valuesource.Strategy, error)
@@ -49,7 +50,7 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
+		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, questionDefault},
 		Default: "environment variable",
 	}
 
@@ -77,13 +78,17 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "command", surveyType, name)
 	}
 
-	sourceValuePrompt := &survey.Input{
-		Message: promptMsg,
-	}
-
 	value := ""
-	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
-		return c, err
+	if source != questionDefault {
+		sourceValuePrompt := &survey.Input{
+			Message: promptMsg,
+		}
+
+		if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
+			return c, err
+		}
+	} else {
+		//set value to default value
 	}
 
 	switch source {
