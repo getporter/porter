@@ -30,6 +30,7 @@ porter bundles build [flags]
 
 ```
   -d, --dir string         Path to the build context directory where all bundle assets are located.
+      --driver string      Experimental. Driver for building the invocation image. Allowed values are: docker, buildkit (default "docker")
   -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help               help for build
       --name string        Override the bundle name
@@ -41,8 +42,9 @@ porter bundles build [flags]
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --debug                  Enable debug logging
+      --debug-plugins          Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
