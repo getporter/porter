@@ -475,6 +475,18 @@ func TestValidateParameterDefinition_missingPath(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestValidateParameterDefinition_invalidSchema(t *testing.T) {
+	pd := ParameterDefinition{
+		Name: "myparam",
+		Schema: definition.Schema{
+			Type: "invalid",
+		},
+	}
+
+	err := pd.Validate()
+	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
+}
+
 func TestValidateParameterDefinition_defaultFailsValidation(t *testing.T) {
 	pd := ParameterDefinition{
 		Name: "myparam",
@@ -509,6 +521,18 @@ func TestValidateOutputDefinition_missingPath(t *testing.T) {
 
 	err = od.Validate()
 	assert.NoError(t, err)
+}
+
+func TestValidateOutputDefinition_invalidSchema(t *testing.T) {
+	od := OutputDefinition{
+		Name: "myoutput",
+		Schema: definition.Schema{
+			Type: "invalid",
+		},
+	}
+
+	err := od.Validate()
+	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
 }
 
 func TestValidateOutputDefinition_defaultFailsValidation(t *testing.T) {
