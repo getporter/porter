@@ -49,15 +49,17 @@ ID** uniquely identifies a run, or execution of a bundle.
 ```console
 $ porter show whalegap
 Name: whalegap
+Bundle: getporter/whalegap
+Version: 0.1.0
 Created: 2021-01-27
 Modified: 2021-03-09
 
-Outputs:
--------------------------------------------------------------------------------
-  Name                                 Type    Value
--------------------------------------------------------------------------------
-  io.cnab.outputs.invocationImageLogs  string  executing install action from
-                                               whalegap (installation: wha...
+Parameters:
+---------------------------------------
+  Name     Type    Value
+---------------------------------------
+  msg      string  whale hello there!
+  release  string  whalegap
 
 History:
 --------------------------------------------------------------------------

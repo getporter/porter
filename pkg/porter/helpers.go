@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,13 +23,14 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	cnabcreds "github.com/cnabio/cnab-go/credentials"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
-	TestClaims      claims.TestClaimProvider
+	TestClaims      *claims.TestClaimProvider
 	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
@@ -205,6 +207,23 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 	require.NoError(p.T(), err)
 
 	return uniqueName
+}
+
+// CompareGoldenFile checks if the specified string matches the content of a golden test file.
+// When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
+// the new test output.
+func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
+	t := p.T()
+
+	wantSchema, err := ioutil.ReadFile(goldenFile)
+	require.NoError(t, err)
+
+	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
+		t.Logf("Updated test file %s to match latest test output", goldenFile)
+		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0755), "could not update golden file %s", goldenFile)
+	} else {
+		assert.Equal(t, string(wantSchema), got, "The test output doesn't match the expected output in %s. If this was intentional, run mage updateTestfiles to fix the tests.", goldenFile)
+	}
 }
 
 type TestBuildProvider struct {

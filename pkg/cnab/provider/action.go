@@ -29,6 +29,9 @@ type ActionArguments struct {
 	// Either a filepath to the bundle or the name of the bundle.
 	BundlePath string
 
+	// BundleReference is the OCI reference of the bundle.
+	BundleReference string
+
 	// Additional files to copy into the bundle
 	// Target Path => File Contents
 	Files map[string]string
@@ -152,6 +155,8 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	if err != nil {
 		return err
 	}
+
+	c.BundleReference = args.BundleReference
 
 	// Validate the action we are about to perform
 	err = c.Validate()

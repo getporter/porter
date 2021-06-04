@@ -4,15 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/yaml"
+	"github.com/cnabio/cnab-go/bundle"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/cnabio/cnab-go/utils/crud"
@@ -356,4 +359,102 @@ func (p *Porter) loadParameterFromFile(path string) (parameters.ParameterSet, er
 	var cs parameters.ParameterSet
 	err = json.Unmarshal(data, &cs)
 	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
+}
+
+type DisplayValue struct {
+	Name      string      `json:"name" yaml:"name"`
+	Type      string      `json:"type" yaml:"type"`
+	Sensitive bool        `json:"sensitive" yaml:"sensitive"`
+	Value     interface{} `json:"value" yaml:"value"`
+}
+
+func (v *DisplayValue) SetValue(value interface{}) {
+	switch val := value.(type) {
+	case []byte:
+		v.Value = string(val)
+	default:
+		v.Value = val
+	}
+}
+
+func (v DisplayValue) PrintValue() string {
+	if v.Sensitive {
+		return "******"
+	}
+
+	var printedValue string
+	switch val := v.Value.(type) {
+	case string:
+		printedValue = val
+	default:
+		b, err := json.Marshal(v.Value)
+		if err != nil {
+			return "error rendering value"
+		}
+		printedValue = string(b)
+	}
+	return truncateString(printedValue, 60)
+}
+
+type DisplayValues []DisplayValue
+
+func (v DisplayValues) Len() int {
+	return len(v)
+}
+
+func (v DisplayValues) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
+}
+
+func (v DisplayValues) Less(i, j int) bool {
+	return v[i].Name < v[j].Name
+}
+
+func NewDisplayValuesFromParameters(bun bundle.Bundle, params map[string]interface{}) DisplayValues {
+	// Iterate through all Bundle Outputs, fetch their metadata
+	// via their corresponding Definitions and add to rows
+	displayParams := make(DisplayValues, 0, len(params))
+	for name, value := range params {
+		def, ok := bun.Parameters[name]
+		if !ok || parameters.IsInternal(name, bun) {
+			continue
+		}
+
+		dp := &DisplayValue{Name: name}
+		dp.SetValue(value)
+
+		schema, ok := bun.Definitions[def.Definition]
+		if ok {
+			dp.Type = extensions.GetParameterType(bun, schema)
+			if schema.WriteOnly != nil && *schema.WriteOnly {
+				dp.Sensitive = true
+			}
+		} else {
+			dp.Type = "unknown"
+		}
+
+		displayParams = append(displayParams, *dp)
+	}
+
+	sort.Sort(displayParams)
+	return displayParams
+}
+
+func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
+	// Build and configure our tablewriter for the outputs
+	table := tablewriter.NewWriter(p.Out)
+	table.SetCenterSeparator("")
+	table.SetColumnSeparator("")
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
+	table.SetAutoFormatHeaders(false)
+
+	table.SetHeader([]string{"Name", "Type", "Value"})
+	for _, param := range values {
+		table.Append([]string{param.Name, param.Type, param.PrintValue()})
+	}
+	table.Render()
+
+	return nil
 }

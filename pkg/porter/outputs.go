@@ -2,15 +2,14 @@ package porter
 
 import (
 	"fmt"
+	"sort"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -84,47 +83,35 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	return nil
 }
 
-type DisplayOutput struct {
-	Name  string
-	Value string
-	Type  string
-}
-
-type DisplayOutputs []DisplayOutput
-
-func NewDisplayOutputs(bun bundle.Bundle, outputs claim.Outputs, format printer.Format) DisplayOutputs {
+func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claim.Outputs) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
-	displayOutputs := make(DisplayOutputs, outputs.Len())
+	displayOutputs := make(DisplayValues, 0, outputs.Len())
 	for i := 0; i < outputs.Len(); i++ {
 		output, _ := outputs.GetByIndex(i)
-		do := DisplayOutput{
-			Name:  output.Name,
-			Value: string(output.Value),
+		do := &DisplayValue{Name: output.Name}
+		do.SetValue(output.Value)
+		schema, ok := output.GetSchema()
+		if ok {
+			do.Type = extensions.GetParameterType(bun, &schema)
+			if schema.WriteOnly != nil && *schema.WriteOnly {
+				do.Sensitive = true
+			}
+		} else {
+			// Skip outputs not defined in the bundle, e.g. io.cnab.outputs.invocationImageLogs
+			continue
 		}
 
-		schema, exists := output.GetSchema()
-		if !exists {
-			// Allow for the tooling to inject additional outputs
-			schema = definition.Schema{ID: output.Name, Type: "unknown"}
-		}
-
-		do.Type = extensions.GetParameterType(bun, &schema)
-
-		// If table output is desired, truncate the value to a reasonable length
-		if format == printer.FormatTable {
-			do.Value = truncateString(do.Value, 60)
-		}
-
-		displayOutputs[i] = do
+		displayOutputs = append(displayOutputs, *do)
 	}
 
+	sort.Sort(displayOutputs)
 	return displayOutputs
 }
 
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
-func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, error) {
+func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
 		return nil, err
@@ -140,7 +127,7 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayOutputs, err
 		return nil, err
 	}
 
-	displayOutputs := NewDisplayOutputs(c.Bundle, outputs, opts.Format)
+	displayOutputs := NewDisplayValuesFromOutputs(c.Bundle, outputs)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +146,8 @@ func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
 		return printer.PrintJson(p.Out, outputs)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, outputs)
-	case printer.FormatTable:
-		return p.printOutputsTable(outputs)
+	case printer.FormatTable, printer.FormatPlaintext:
+		return p.printDisplayValuesTable(outputs)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -174,26 +161,6 @@ func (p *Porter) ReadBundleOutput(outputName, installation string) (string, erro
 	}
 
 	return fmt.Sprintf("%v", string(o.Value)), nil
-}
-
-func (p *Porter) printOutputsTable(outputs []DisplayOutput) error {
-	// Build and configure our tablewriter for the outputs
-	table := tablewriter.NewWriter(p.Out)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorders(tablewriter.Border{Left: false, Right: false, Bottom: false, Top: true})
-	table.SetAutoFormatHeaders(false)
-
-	// Print the outputs table
-	table.SetHeader([]string{"Name", "Type", "Value"})
-	for _, output := range outputs {
-		table.Append([]string{output.Name, output.Type, output.Value})
-	}
-	table.Render()
-
-	return nil
 }
 
 func truncateString(str string, num int) string {

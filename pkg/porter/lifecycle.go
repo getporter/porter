@@ -51,6 +51,7 @@ func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
 	args := cnabprovider.ActionArguments{
+		BundleReference:       opts.Reference,
 		Action:                action.GetAction(),
 		Installation:          opts.Name,
 		BundlePath:            opts.CNABFile,

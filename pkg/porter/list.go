@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cnabio/cnab-go/claim"
-
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
+	"github.com/cnabio/cnab-go/claim"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 )
 
@@ -21,14 +21,17 @@ type ListOptions struct {
 // DisplayInstallation holds a subset of pertinent values to be listed from installation data
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
-	Name     string
-	Created  time.Time
-	Modified time.Time
-	Action   string
-	Status   string
+	Name     string    `json:"name" yaml:"name"`
+	Created  time.Time `json:"created" yaml:"created"`
+	Modified time.Time `json:"modified" yaml:"modified"`
+	Bundle   string    `json:"bundle,omitempty" yaml:"bundle,omitempty"`
+	Version  string    `json:"version" yaml:"version"`
+	Action   string    `json:"action" yaml:"action"`
+	Status   string    `json:"status" yaml:"status"`
 
-	Outputs DisplayOutputs
-	History []InstallationAction
+	Parameters DisplayValues        `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Outputs    DisplayValues        `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	History    []InstallationAction `json:"history,omitempty" yaml:"history,omitempty"`
 }
 
 func NewDisplayInstallation(installation claim.Installation) (DisplayInstallation, error) {
@@ -52,22 +55,29 @@ func NewDisplayInstallation(installation claim.Installation) (DisplayInstallatio
 		if ok {
 			hasLogsS = strconv.FormatBool(hasLogs)
 		}
+
 		history[i] = InstallationAction{
-			ClaimID:   hc.ID,
-			Action:    hc.Action,
-			Timestamp: hc.Created,
-			Status:    hc.GetStatus(),
-			HasLogs:   hasLogsS,
+			ClaimID:    hc.ID,
+			Action:     hc.Action,
+			Parameters: hc.Parameters,
+			Timestamp:  hc.Created,
+			Bundle:     tryParseBundleRepository(hc.BundleReference),
+			Version:    hc.Bundle.Version,
+			Status:     hc.GetStatus(),
+			HasLogs:    hasLogsS,
 		}
 	}
 
 	return DisplayInstallation{
-		Name:     installation.Name,
-		Created:  installTime,
-		Modified: c.Created,
-		Action:   c.Action,
-		Status:   installation.GetLastStatus(),
-		History:  history,
+		Name:       installation.Name,
+		Bundle:     tryParseBundleRepository(c.BundleReference),
+		Version:    c.Bundle.Version,
+		Created:    installTime,
+		Modified:   c.Created,
+		Action:     c.Action,
+		Parameters: NewDisplayValuesFromParameters(c.Bundle, c.Parameters),
+		Status:     installation.GetLastStatus(),
+		History:    history,
 	}, nil
 }
 
@@ -86,11 +96,14 @@ func (l DisplayInstallations) Less(i, j int) bool {
 }
 
 type InstallationAction struct {
-	ClaimID   string
-	Action    string
-	Timestamp time.Time
-	Status    string
-	HasLogs   string
+	ClaimID    string                 `json:"claimID" yaml:"claimID"`
+	Bundle     string                 `json:"bundle,omitempty" yaml:"bundle,omitempty"`
+	Version    string                 `json:"version" yaml:"version"`
+	Action     string                 `json:"action" yaml:"action"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Timestamp  time.Time              `json:"timestamp" yaml:"timestamp"`
+	Status     string                 `json:"status" yaml:"status"`
+	HasLogs    string                 `json:"hasLogs" yaml:"hasLogs"`
 }
 
 // ListInstallations lists installed bundles.
@@ -145,4 +158,11 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func tryParseBundleRepository(bundleReference string) string {
+	if ref, err := reference.ParseNormalizedNamed(bundleReference); err == nil {
+		return reference.FamiliarName(ref)
+	}
+	return bundleReference
 }
