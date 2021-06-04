@@ -90,7 +90,9 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
-		fmt.Fprintf(p.Out, "Bundle: %s\n", displayInstallation.Bundle)
+		if displayInstallation.Bundle != "" {
+			fmt.Fprintf(p.Out, "Bundle: %s\n", displayInstallation.Bundle)
+		}
 		fmt.Fprintf(p.Out, "Version: %s\n", displayInstallation.Version)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))

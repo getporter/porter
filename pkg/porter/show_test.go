@@ -15,12 +15,14 @@ func TestPorter_ShowBundle(t *testing.T) {
 
 	testcases := []struct {
 		name       string
+		reference  string
 		format     printer.Format
 		outputFile string
 	}{
-		{name: "plain", format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
-		{name: "json", format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
-		{name: "yaml", format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
+		{name: "plain", reference: "porter-hello", format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
+		{name: "no reference, plain", reference: "", format: printer.FormatPlaintext, outputFile: "testdata/show/no-reference-expected-output.txt"},
+		{name: "json", reference: "porter-hello", format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
+		{name: "yaml", reference: "porter-hello", format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
 	}
 
 	for _, tc := range testcases {
@@ -72,11 +74,15 @@ func TestPorter_ShowBundle(t *testing.T) {
 				},
 			}
 			c1 := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, map[string]interface{}{"token": "top-secret", "logLevel": 5})
+			c1.BundleReference = tc.reference
+			require.NoError(t, p.TestClaims.SaveClaim(c1))
 			r := p.TestClaims.CreateResult(c1, claim.StatusSucceeded)
 			p.TestClaims.CreateOutput(c1, r, "foo", []byte("foo-output"))
 			p.TestClaims.CreateOutput(c1, r, "bar", []byte("bar-output"))
 
 			c2 := p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, map[string]interface{}{"token": "top-secret", "logLevel": 3})
+			c2.BundleReference = tc.reference
+			require.NoError(t, p.TestClaims.SaveClaim(c2))
 			r = p.TestClaims.CreateResult(c2, claim.StatusRunning)
 
 			err := p.ShowInstallation(opts)

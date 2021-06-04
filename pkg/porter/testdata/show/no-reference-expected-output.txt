@@ -1,0 +1,25 @@
+Name: test
+Version: 0.1.0
+Created: 2020-04-18
+Modified: 2020-04-18
+
+Parameters:
+---------------------------------
+  Name      Type     Value       
+---------------------------------
+  logLevel  integer  3           
+  token     unknown  top-secret  
+
+Outputs:
+----------------------------
+  Name  Type    Value       
+----------------------------
+  bar   string  bar-output  
+  foo   string  ******      
+
+History:
+----------------------------------------------------
+  Run ID  Action   Timestamp   Status     Has Logs  
+----------------------------------------------------
+  1       install  2020-04-18  succeeded  false     
+  3       upgrade  2020-04-18  running    false     
