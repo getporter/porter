@@ -484,6 +484,10 @@ func toInt(v int) *int {
 	return &v
 }
 
+func toFloat(v float64) *float64 {
+	return &v
+}
+
 func (c *ManifestConverter) generateCustomExtensions(b *bundle.Bundle) map[string]interface{} {
 	customExtensions := map[string]interface{}{
 		extensions.FileParameterExtensionKey: struct{}{},

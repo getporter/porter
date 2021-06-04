@@ -99,7 +99,8 @@
   },
   "definitions": {
     "connstr": {
-      "type": "string"
+      "type": "string",
+      "default": ""
     },
     "foo": {
       "type": "string",
