@@ -140,7 +140,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 		}
 	}
 
-	fmt.Fprintf(p.Out, "==> %d parameters declared for bundle %s\n", numExternalParams, bundle.Name)
+	fmt.Fprintf(p.Out, "==> %d parameter(s) declared for bundle %s\n", numExternalParams, bundle.Name)
 
 	pset, err := genOpts.GenerateParameters()
 	if err != nil {
