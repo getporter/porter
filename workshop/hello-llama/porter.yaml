@@ -1,6 +1,6 @@
-name: porter-hello-llama-bundle
-version: 0.1.0
-description: "An example Porter configuration with moar llamas"
+name: hello-llama
+version: 0.1.1
+description: "An example Porter bundle with parameters"
 registry: getporter
 
 mixins:
@@ -8,26 +8,27 @@ mixins:
 
 parameters:
 - name: name
+  description: Name of to whom we should say hello
   type: string
   default: llama
 
 install:
   - exec:
-      description: "Install Hello Llama"
-      command: bash
-      flags:
-        c: "echo Hello, {{ bundle.parameters.name }}"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "{{ bundle.parameters.name }}"
 
 upgrade:
   - exec:
-      description: "Llama 2.0"
-      command: bash
-      flags:
-        c: "echo {{ bundle.parameters.name }} 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+        - "{{ bundle.parameters.name }}"
 
 uninstall:
   - exec:
-      description: "Uninstall Hello Llama"
-      command: bash
-      flags:
-        c: "echo Goodbye, {{ bundle.parameters.name }}"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+        - "{{ bundle.parameters.name }}"
