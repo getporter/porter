@@ -484,6 +484,7 @@ func TestValidateParameterDefinition_invalidSchema(t *testing.T) {
 	}
 
 	err := pd.Validate()
+	assert.Contains(t, err.Error(), "encountered an error while validating parameter definition schema")
 	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
 }
 
@@ -532,6 +533,7 @@ func TestValidateOutputDefinition_invalidSchema(t *testing.T) {
 	}
 
 	err := od.Validate()
+	assert.Contains(t, err.Error(), "encountered an error while validating output definition schema")
 	assert.Contains(t, err.Error(), `schema not valid: error unmarshaling type from json: "invalid" is not a valid type`)
 }
 
