@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 
+	"get.porter.sh/porter/mage"
 	// mage:import
 	"get.porter.sh/porter/mage/releases"
 
@@ -49,6 +50,10 @@ func Clean() {
 // Ensure EnsureMage is installed and on the PATH.
 func EnsureMage() error {
 	return tools.EnsureMage()
+}
+
+func Debug() {
+	mage.LoadMetadatda()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures

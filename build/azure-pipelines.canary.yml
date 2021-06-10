@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
       - refs/heads/main
+      - refs/heads/release/*
 
 # Do not run on pull requests
 pr: none

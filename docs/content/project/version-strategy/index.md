@@ -30,13 +30,14 @@ Porter v1 will include a number of breaking changes that we are grouping togethe
 
 ![drawing of v1 release plan](v1-branch-strategy.jpg)
 
-* Pull requests with v1 work items are branched from the v1 branch and merged into the v1 branch.
+* Pull requests with v1 work items are branched from the release/v1 branch and merged into the release/v1 branch.
 * High severity bug fixes for the stable release of Porter are made against the main branch.
 * The goal is to only release patches for the stable version of Porter until v1.0.0 is released.
-* Commits to main are cherry-picked into the v1 branch.
-* Periodic releases of the v1 branch will be made, e.g. v1.0.0-alpha.1, v1.0.0-alpha.2, v1.0.0-beta.1, v1.0.0-rc.1.
+* Commits to main are cherry-picked or merged into the release/v1 branch.
+* Periodic releases of the release/v1 branch will be made, e.g. v1.0.0-alpha.1, v1.0.0-alpha.2, v1.0.0-beta.1, v1.0.0-rc.1.
   The final release from the v1 branch will be v1.0.0.
-* The v1 branch will be merged into main after creating the v1.0.0 release.
+* The release/v1 branch will be merged into main, and then the v1.0.0 release is cut.
 * The latest and canary builds continue to be based on builds of the main branch only.
+  We may provide v1-latest and v1-canary builds at a later date.
 
 [semver v2]: https://semver.org/spec/v2.0.0.html

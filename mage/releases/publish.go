@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
@@ -21,12 +22,14 @@ const (
 )
 
 // Prepares bin directory for publishing a package
-func preparePackageForPublish(pkgType string, name string, version string, permalink string) {
+func preparePackageForPublish(pkgType string, name string) {
+	info := mage.LoadMetadatda()
+
 	// Prepare the bin directory for generating a package feed
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
 	// We do not want a latest directory, latest entries are calculated using the most recent
 	// timestamp in the atom.xml, not from an explicit entry.
-	if permalink == "latest" {
+	if info.Permalink == "latest" {
 		return
 	}
 
@@ -35,8 +38,8 @@ func preparePackageForPublish(pkgType string, name string, version string, perma
 	if name == "porter" {
 		binDir = "bin"
 	}
-	versionDir := filepath.Join(binDir, version)
-	permalinkDir := filepath.Join(binDir, permalink)
+	versionDir := filepath.Join(binDir, info.Version)
+	permalinkDir := filepath.Join(binDir, info.Permalink)
 
 	mgx.Must(os.RemoveAll(permalinkDir))
 	log.Printf("mv %s %s\n", versionDir, permalinkDir)
@@ -44,13 +47,13 @@ func preparePackageForPublish(pkgType string, name string, version string, perma
 }
 
 // Prepares bin directory for publishing a mixin
-func PrepareMixinForPublish(mixin string, version string, permalink string) {
-	preparePackageForPublish("mixin", mixin, version, permalink)
+func PrepareMixinForPublish(mixin string, version string) {
+	preparePackageForPublish("mixin", mixin)
 }
 
 // Prepares bin directory for publishing a plugin
-func PreparePluginForPublish(plugin string, version string, permalink string) {
-	preparePackageForPublish("plugin", plugin, version, permalink)
+func PreparePluginForPublish(plugin string) {
+	preparePackageForPublish("plugin", plugin)
 }
 
 // Use GITHUB_TOKEN to log the porter bot into git
