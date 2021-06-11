@@ -59,7 +59,7 @@ test:
 	go run mage.go -v Test
 
 test-unit:
-	go run mage.to -v TestUnit
+	go run mage.go -v TestUnit
 
 test-integration:
 	go run mage.go -v TestIntegration
