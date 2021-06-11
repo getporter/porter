@@ -1,5 +1,5 @@
 # Close issues when the pull request was merged into the non-default branch
-# i.e. when we merge into the v1 branch, immediately close the issue
+# i.e. when we merge into the release/v1 branch, immediately close the issue
 
 name: Close Completed Issues
 
@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - v1
+      - release/*
 
 jobs:
   closeIssueOnPrMergeTrigger:

@@ -6,6 +6,7 @@ trigger:
   branches:
     include:
       - refs/heads/main
+      - refs/heads/release/*
 
 # Only test a PR when requested with a GitHub comment, /azp run porter-integration
 pr:

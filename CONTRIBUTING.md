@@ -81,8 +81,8 @@ When you create your first pull request, add your name to the bottom of our
 
 ## Which branch to use
 
-For issues that are in the v1 milestone, your branch should be against the **v1** branch.
-When you open the pull request, it should again target the v1 branch.
+For issues that are in the v1 milestone, your branch should be against the **release/v1** branch.
+When you open the pull request, it should again target the release/v1 branch.
 
 For everything else, your branch should be against the **main** branch.
 

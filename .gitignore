@@ -2,6 +2,7 @@
 /bin
 /porter
 .DS_Store
+/build/git_askpass.sh
 
 .cnab
 examples/**/Dockerfile
