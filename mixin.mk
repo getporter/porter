@@ -33,27 +33,11 @@ endif
 build: build-client build-runtime
 
 build-runtime:
-	mkdir -p $(BINDIR)/runtimes
-	GOARCH=$(RUNTIME_ARCH) GOOS=$(RUNTIME_PLATFORM) $(XBUILD) -o $(BINDIR)/runtimes/$(MIXIN)-runtime$(FILE_EXT) ./cmd/$(MIXIN)
+	go run mage.go -v BuildRuntime $(PKG) $(MIXIN) $(BINDIR)
 
 build-client:
-	mkdir -p $(BINDIR)
-	$(GO) build -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(MIXIN)$(FILE_EXT) ./cmd/$(MIXIN)
+	go run mage.go -v BuildClient $(PKG) $(MIXIN) $(BINDIR)
 
 xbuild-all:
-	$(foreach OS, $(SUPPORTED_PLATFORMS), \
-		$(foreach ARCH, $(SUPPORTED_ARCHES), \
-				$(MAKE) $(MAKE_OPTS) CLIENT_PLATFORM=$(OS) CLIENT_ARCH=$(ARCH) MIXIN=$(MIXIN) xbuild -f mixin.mk; \
-		))
-	@# Copy most recent build into bin/dev so that subsequent build steps can easily find it, not used for publishing
-	rm -fr $(BINDIR)/dev
-	cp -R $(BINDIR)/$(VERSION) $(BINDIR)/dev
-	mage PrepareMixinForPublish $(MIXIN) $(VERSION) $(PERMALINK)
+	go run mage.go -v XBuildAll $(PKG) $(MIXIN) $(BINDIR)
 
-xbuild: $(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT)
-$(BINDIR)/$(VERSION)/$(MIXIN)-$(CLIENT_PLATFORM)-$(CLIENT_ARCH)$(FILE_EXT):
-	mkdir -p $(dir $@)
-	GOOS=$(CLIENT_PLATFORM) GOARCH=$(CLIENT_ARCH) $(XBUILD) -o $@ ./cmd/$(MIXIN)
-
-clean:
-	-rm -fr bin/mixins/$(MIXIN)

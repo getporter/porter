@@ -47,7 +47,7 @@ func preparePackageForPublish(pkgType string, name string) {
 }
 
 // Prepares bin directory for publishing a mixin
-func PrepareMixinForPublish(mixin string, version string) {
+func PrepareMixinForPublish(mixin string) {
 	preparePackageForPublish("mixin", mixin)
 }
 
@@ -76,8 +76,10 @@ exec echo "$GITHUB_TOKEN"
 	must.Command("git", "config", "core.askPass", script).In(dir).RunV()
 }
 
-func publishPackage(pkgType string, name string, version string, permalink string) {
+func publishPackage(pkgType string, name string) {
 	mg.Deps(tools.EnsureGitHubClient, ConfigureGitBot)
+
+	info := mage.LoadMetadatda()
 
 	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
@@ -91,33 +93,35 @@ func publishPackage(pkgType string, name string, version string, permalink strin
 		}
 	}
 	remote := fmt.Sprintf("https://%s.git", repo)
-	versionDir := filepath.Join("bin", pkgType+"s", name, version)
+	versionDir := filepath.Join("bin", pkgType+"s", name, info.Version)
 
 	// Move the permalink tag. The existing release automatically points to the tag.
-	must.RunV("git", "tag", permalink, version+"^{}", "-f")
-	must.RunV("git", "push", "-f", remote, permalink)
+	must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+	must.RunV("git", "push", "-f", remote, info.Permalink)
 
 	// Create or update GitHub release for the permalink (canary/latest) with the version's binaries
-	AddFilesToRelease(repo, permalink, versionDir)
+	AddFilesToRelease(repo, info.Permalink, versionDir)
 
-	if permalink == "latest" {
+	if info.Permalink == "latest" {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
-		AddFilesToRelease(repo, version, versionDir)
+		AddFilesToRelease(repo, info.Version, versionDir)
 	}
 }
 
 // Publish a mixin's binaries.
-func PublishMixin(mixin string, version string, permalink string) {
-	publishPackage("mixin", mixin, version, permalink)
+func PublishMixin(mixin string) {
+	publishPackage("mixin", mixin)
 }
 
 // Publish a plugin's binaries.
-func PublishPlugin(plugin string, version string, permalink string) {
-	publishPackage("plugin", plugin, version, permalink)
+func PublishPlugin(plugin string) {
+	publishPackage("plugin", plugin)
 
 }
 
-func publishPackageFeed(pkgType string, name string, version string) {
+func publishPackageFeed(pkgType string, name string) {
+	info := mage.LoadMetadatda()
+
 	// Clone the packages repository
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
 		os.RemoveAll(packagesRepo)
@@ -131,19 +135,19 @@ func publishPackageFeed(pkgType string, name string, version string) {
 
 	generatePackageFeed(pkgType)
 
-	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, version, pkgType)).
+	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, info.Version, pkgType)).
 		In(packagesRepo).RunV()
 	must.Command("git", "push").In(packagesRepo).RunV()
 }
 
 // Generate an updated mixin feed and publishes it.
-func PublishMixinFeed(mixin string, version string) {
-	publishPackageFeed("mixin", mixin, version)
+func PublishMixinFeed(mixin string) {
+	publishPackageFeed("mixin", mixin)
 }
 
 // Generate an updated plugin feed and publishes it.
-func PublishPluginFeed(plugin string, version string) {
-	publishPackageFeed("plugin", plugin, version)
+func PublishPluginFeed(plugin string) {
+	publishPackageFeed("plugin", plugin)
 }
 
 func generatePackageFeed(pkgType string) {

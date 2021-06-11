@@ -1,12 +1,9 @@
 SHELL = bash
+PKG = get.porter.sh/porter
 
 # --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
 MAKE_OPTS ?= --no-print-directory
-
 REGISTRY ?= getporterci
-DUAL_PUBLISH ?= false
-VERSION ?= $(shell git describe --tags --match v* 2> /dev/null || echo v0)
-PERMALINK ?= $(shell git describe --tags --exact-match --match v* &> /dev/null && echo latest || echo canary)
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
@@ -36,18 +33,17 @@ endif
 INT_MIXINS = exec
 
 .PHONY: build
-build: build-porter docs-gen build-mixins clean-packr get-mixins
+build: build-porter docs-gen build-mixin-exec clean-packr get-mixins
 
 build-porter: generate
-	$(MAKE) $(MAKE_OPTS) build MIXIN=porter -f mixin.mk BINDIR=bin
+	go run mage.go -v BuildAll $(PKG) porter bin
 
 build-porter-client: generate
-	$(MAKE) $(MAKE_OPTS) build-client MIXIN=porter -f mixin.mk BINDIR=bin
+	go run mage.go -v BuildClient $(PKG) porter bin
 	$(MAKE) $(MAKE_OPTS) clean-packr
 
-build-mixins: $(addprefix build-mixin-,$(INT_MIXINS))
-build-mixin-%: generate
-	$(MAKE) $(MAKE_OPTS) build MIXIN=$* -f mixin.mk
+build-mixin-exec: generate
+	go run mage.go -v BuildAll $(PKG) exec bin/mixins/exec
 
 generate: packr2
 	$(GO) mod tidy
@@ -68,11 +64,11 @@ endif
 xbuild-all: xbuild-porter xbuild-mixins
 
 xbuild-porter: generate
-	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=porter -f mixin.mk BINDIR=bin
+	go run mage.go -v XBuildAll $(PKG) porter bin
 
 xbuild-mixins: $(addprefix xbuild-mixin-,$(INT_MIXINS))
 xbuild-mixin-%: generate
-	$(MAKE) $(MAKE_OPTS) xbuild-all MIXIN=$* -f mixin.mk
+	go run mage.go -v XBuildAll $(PKG) exec bin/mixins/exec
 
 get-mixins:
 	go run mage.go GetMixins
@@ -111,24 +107,18 @@ docs-stop-preview:
 publish: publish-bin publish-mixins publish-images
 
 publish-bin:
-	go run mage.go -v PublishPorter $(VERSION) $(PERMALINK)
+	go run mage.go -v PublishPorter
 
 publish-mixins:
-	go run mage.go -v PublishMixinFeed exec $(VERSION)
+	go run mage.go -v PublishMixinFeed exec
 
 .PHONY: build-images
 build-images:
-	REGISTRY=$(REGISTRY) VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/build-images.sh
-	if [[ "$(DUAL_PUBLISH)" == "true" ]]; then \
-		REGISTRY=ghcr.io/getporter VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/build-images.sh; \
-	fi
+	go run mage.go -v BuildImages
 
 .PHONY: publish-images
-publish-images: build-images
-	REGISTRY=$(REGISTRY) VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh
-	if [[ "$(DUAL_PUBLISH)" == "true" ]]; then \
-		REGISTRY=ghcr.io/getporter VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./scripts/publish-images.sh; \
-	fi
+publish-images:
+	go run mage.go -v PublishImages
 
 start-local-docker-registry:
 	@docker run -d -p 5000:5000 --name registry registry:2
