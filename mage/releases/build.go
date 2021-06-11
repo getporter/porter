@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"get.porter.sh/porter/mage"
 	"github.com/carolynvs/magex/mgx"
@@ -23,23 +24,26 @@ func getLDFLAGS(pkg string) string {
 	return fmt.Sprintf("-w -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", pkg, info.Version, pkg, info.Commit)
 }
 
-func BuildRuntime(pkg string, name string, binDir string) error {
+func build(pkg, cmd, outPath, goos, goarch string) error {
 	ldflags := getLDFLAGS(pkg)
 
-	runtimeDir := filepath.Join(binDir, "runtimes")
-	os.MkdirAll(runtimeDir, 0750)
-	return shx.Command("go", "build", "-ldflags", ldflags, "-o", filepath.Join(runtimeDir, name+"-runtime"+xplat.FileExt()), "./cmd/"+name).
-		Env("GO111MODULE=on", "GOARCH="+runtimeArch, "GOOS="+runtimePlatform, "CGO_ENABLED=0").
+	os.MkdirAll(filepath.Dir(outPath), 0750)
+	outPath += xplat.FileExt()
+	srcPath := "./cmd/" + cmd
+
+	return shx.Command("go", "build", "-ldflags", ldflags, "-o", outPath, srcPath).
+		Env("CGO_ENABLED=0", "GO111MODULE=on", "GOOS="+goos, "GOARCH="+goarch).
 		RunV()
 }
 
-func BuildClient(pkg string, name string, binDir string) error {
-	ldflags := getLDFLAGS(pkg)
+func BuildRuntime(pkg string, name string, binDir string) error {
+	outPath := filepath.Join(binDir, "runtimes", name+"-runtime")
+	return build(pkg, name, outPath, runtimePlatform, runtimeArch)
+}
 
-	os.MkdirAll(binDir, 0750)
-	return shx.Command("go", "build", "-ldflags", ldflags, "-o", filepath.Join(binDir, name+xplat.FileExt()), "./cmd/"+name).
-		Env("GO111MODULE=on", "CGO_ENABLED=0").
-		RunV()
+func BuildClient(pkg string, name string, binDir string) error {
+	outPath := filepath.Join(binDir, name)
+	return build(pkg, name, outPath, runtime.GOOS, runtime.GOARCH)
 }
 
 func BuildAll(pkg string, name string, binDir string) error {
@@ -54,13 +58,9 @@ func BuildAll(pkg string, name string, binDir string) error {
 }
 
 func XBuild(pkg string, name string, binDir string, goos string, goarch string) error {
-	ldflags := getLDFLAGS(pkg)
 	info := mage.LoadMetadatda()
-	outputPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s%s", name, goos, goarch, xplat.FileExt()))
-	os.MkdirAll(filepath.Dir(outputPath), 0750)
-	return shx.Command("go", "build", "-ldflags", ldflags, "-o", outputPath, "./cmd/"+name).
-		Env("GO111MODULE=on", "GOARCH="+goarch, "GOOS="+goos, "CGO_ENABLED=0").
-		RunV()
+	outPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s%s", name, goos, goarch, xplat.FileExt()))
+	return build(pkg, name, outPath, goos, goarch)
 }
 
 func XBuildAll(pkg string, name string, binDir string) {

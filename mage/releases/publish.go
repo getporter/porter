@@ -29,7 +29,7 @@ func preparePackageForPublish(pkgType string, name string) {
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
 	// We do not want a latest directory, latest entries are calculated using the most recent
 	// timestamp in the atom.xml, not from an explicit entry.
-	if info.Permalink == "latest" {
+	if info.IsTaggedRelease {
 		return
 	}
 
@@ -102,7 +102,7 @@ func publishPackage(pkgType string, name string) {
 	// Create or update GitHub release for the permalink (canary/latest) with the version's binaries
 	AddFilesToRelease(repo, info.Permalink, versionDir)
 
-	if info.Permalink == "latest" {
+	if info.IsTaggedRelease {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
 		AddFilesToRelease(repo, info.Version, versionDir)
 	}

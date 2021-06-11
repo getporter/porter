@@ -5,7 +5,7 @@ set -euo pipefail
 # REGISTRY, PERMALINK and VERSION must be set before calling this script
 # It is intended to only be executed by make publish
 
-if [[ "$PERMALINK" == "latest" ]]; then
+if [[ "$PERMALINK" == *latest ]]; then
   docker push $REGISTRY/porter:$VERSION
   docker push $REGISTRY/porter-agent:$VERSION
   docker push $REGISTRY/workshop:$VERSION

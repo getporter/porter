@@ -26,17 +26,22 @@ type GitMetadata struct {
 
 	// Commit is the hash of the current commit
 	Commit string
+
+	// IsTaggedRelease indicates if the build is for a versioned tag
+	IsTaggedRelease bool
 }
 
 // LoadMetadatda populates the status of the current working copy: current version, tag and permalink
 func LoadMetadatda() GitMetadata {
 	loadMetadata.Do(func() {
 		gitMetadata = GitMetadata{
-			Version:   getVersion(),
-			Commit:    getCommit(),
-			Permalink: getPermalink(),
+			Version: getVersion(),
+			Commit:  getCommit(),
 		}
 
+		gitMetadata.Permalink, gitMetadata.IsTaggedRelease = getPermalink()
+
+		log.Println("Tagged Release:", gitMetadata.IsTaggedRelease)
 		log.Println("Permalink:", gitMetadata.Permalink)
 		log.Println("Version:", gitMetadata.Version)
 		log.Println("Commit:", gitMetadata.Commit)
@@ -88,12 +93,14 @@ func getBranchName() string {
 	return strings.Replace(firstMatchingBranch, "origin/", "", 1)
 }
 
-func getPermalink() string {
+func getPermalink() (string, bool) {
 	// Use latest for tagged commits
+	taggedRelease := false
 	permalinkSuffix := "canary"
 	err := shx.RunS("git", "describe", "--tags", "--match=v*", "--exact")
 	if err == nil {
 		permalinkSuffix = "latest"
+		taggedRelease = true
 	}
 
 	// Get the current branch name, or the name of the branch we tagged from
@@ -102,8 +109,8 @@ func getPermalink() string {
 	// Build a permalink such as "canary", "latest", "v1-latest", etc
 	switch branch {
 	case "main":
-		return permalinkSuffix
+		return permalinkSuffix, taggedRelease
 	default:
-		return fmt.Sprintf("%s-%s", strings.TrimPrefix(branch, "release/"), permalinkSuffix)
+		return fmt.Sprintf("%s-%s", strings.TrimPrefix(branch, "release/"), permalinkSuffix), taggedRelease
 	}
 }

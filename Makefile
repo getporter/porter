@@ -33,7 +33,7 @@ endif
 INT_MIXINS = exec
 
 .PHONY: build
-build: build-porter docs-gen build-mixin-exec clean-packr get-mixins
+build: build-porter docs-gen build-mixins clean-packr get-mixins
 
 build-porter: generate
 	go run mage.go -v BuildAll $(PKG) porter bin
@@ -42,7 +42,7 @@ build-porter-client: generate
 	go run mage.go -v BuildClient $(PKG) porter bin
 	$(MAKE) $(MAKE_OPTS) clean-packr
 
-build-mixin-exec: generate
+build-mixins: generate
 	go run mage.go -v BuildAll $(PKG) exec bin/mixins/exec
 
 generate: packr2
@@ -66,8 +66,7 @@ xbuild-all: xbuild-porter xbuild-mixins
 xbuild-porter: generate
 	go run mage.go -v XBuildAll $(PKG) porter bin
 
-xbuild-mixins: $(addprefix xbuild-mixin-,$(INT_MIXINS))
-xbuild-mixin-%: generate
+xbuild-mixins: generate
 	go run mage.go -v XBuildAll $(PKG) exec bin/mixins/exec
 
 get-mixins:
@@ -76,7 +75,7 @@ get-mixins:
 verify:
 	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
 
-test: clean-last-testrun build test-unit test-integration test-smoke
+test: build test-unit test-integration test-smoke
 
 test-unit:
 	PORTER_UPDATE_TEST_FILES=$(PORTER_UPDATE_TEST_FILES) $(GO) test ./...
@@ -205,8 +204,6 @@ setup-dco:
 
 clean:
 	go run mage.go clean
-
-
 
 clean-packr: packr2
 	cd cmd/porter && packr2 clean

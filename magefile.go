@@ -191,7 +191,7 @@ func PublishPorter() {
 	releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
 	releases.AddFilesToRelease(repo, info.Permalink, execVersionDir)
 
-	if info.Permalink == "latest" {
+	if info.IsTaggedRelease {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
 		releases.AddFilesToRelease(repo, info.Version, porterVersionDir)
 		releases.AddFilesToRelease(repo, info.Version, execVersionDir)
