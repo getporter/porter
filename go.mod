@@ -3,6 +3,10 @@ module get.porter.sh/porter
 go 1.16
 
 replace (
+	// Fixes https://github.com/cnabio/cnab-go/pull/262
+	// https://github.com/carolynvs/cnab-go/tree/skip-validate-optional-empty-parameters
+	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.20.0-porter.2
+
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
