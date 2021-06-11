@@ -70,8 +70,6 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make verify
-            displayName: "Verify"
           - bash: make test-unit
             displayName: "Unit Test"
       - job: build_examples

@@ -121,8 +121,21 @@ func porter(args ...string) shx.PreparedCommand {
 
 // Update golden test files to match the new test outputs
 func UpdateTestfiles() {
-	must.Command("make", "test-unit").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
-	must.Command("make", "test-unit").RunV()
+	must.Command("go", "test", "./...").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
+	must.RunV("make", "test-unit")
+}
+
+// Run all tests known to human-kind
+func Test() {
+	mg.Deps(TestUnit, TestSmoke, TestIntegration)
+}
+
+// Run unit tests and verify integration tests compile
+func TestUnit() {
+	must.RunV("go", "test", "./...")
+
+	// Verify integration tests compile since we don't run them automatically on pull requests
+	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
 }
 
 // Run smoke tests to quickly check if Porter is broken

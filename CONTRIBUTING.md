@@ -109,7 +109,7 @@ example output
 We recommend running the following every time:
 
 ```
-make verify build test-unit
+make build test-unit
 ```
 
 If your test modified anything related to running a bundle, also run:
@@ -274,6 +274,7 @@ it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
 * **Clean** removes artifacts from previous builds and test runs.
+* **TestUnit** runs the unit tests.
 * **TestSmoke** runs a small suite of tests using the Porter CLI to validate
   that Porter is (mostly) working.
 * **TestIntegration** runs our integration tests, which run the bundles
@@ -282,7 +283,8 @@ example.
   This is mostly useful for when you change the schema of porter.yaml which will
   break TestPorter_PrintManifestSchema. Run this target to fix it.
   Learn more about [golden files].
-  
+* **Test** runs all the tests.
+
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
 ### Make Targets
@@ -299,10 +301,8 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
 * `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
   This is useful when you are working on the exec or kubernetes mixin.
 * `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
-* `test-unit` runs the unit tests.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
-* `test` runs all the tests.
 * `setup-dco` installs a git commit hook that automatically signsoff your commit
   messages per the DCO requirement.
 
