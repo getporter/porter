@@ -3,7 +3,7 @@ title: azure plugin
 description: Integrate Porter with Azure Cloud
 ---
 
-<img src="/images/mixins/azure.png" class="mixin-logo" style="width: 300px"/>
+<img src="/images/plugins/azure.png" class="mixin-logo" style="width: 300px"/>
 
 Integrate Porter with Azure Cloud.
 
