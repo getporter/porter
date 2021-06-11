@@ -67,24 +67,6 @@ func TestLoadManifest(t *testing.T) {
 	assert.Equal(t, "exec", mixin, "unexpected status step mixin")
 }
 
-func TestLoadManifest_DeprecatedFields(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	cxt.AddTestFile("testdata/porter-with-deprecated-fields.yaml", config.Name)
-
-	m, err := LoadManifestFrom(cxt.Context, config.Name)
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, m, "manifest was nil")
-	require.Equal(t,
-		"WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.\n"+
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-			"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
-		cxt.GetOutput())
-
-	require.Equal(t, "getporter/porter-hello:v0.1.0", m.Reference, "manifest has incorrect bundle tag")
-	require.Equal(t, "getporter/porter-hello-installer:v0.1.0", m.Image, "image has the incorrect value")
-}
-
 func TestLoadManifestWithDependencies(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
@@ -340,49 +322,6 @@ func TestSetDefaults(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
 		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("tag (deprecated) and registry provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Registry:  "myregistry/myorg",
-		}
-		err := m.validateMetadata(cxt.Context)
-		require.NoError(t, err)
-		require.Equal(t,
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n",
-			cxt.GetOutput())
-
-		err = m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
-	})
-
-	t.Run("tag (deprecated) and reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
-		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			BundleTag: "getporter/mybun:v1.2.3",
-			Reference: "myregistry/myorg/mybun:v1.2.3",
-		}
-		err := m.validateMetadata(cxt.Context)
-		require.NoError(t, err)
-		require.Equal(t,
-			"WARNING: the tag field has been deprecated; please replace with a value for the registry field on the Porter manifest instead\n"+
-				"===> See https://porter.sh/author-bundles/#bundle-metadata for more details\n"+
-				"WARNING: both tag (deprecated) and reference were provided; using the reference value myregistry/myorg/mybun:v1.2.3 for the bundle reference\n",
-			cxt.GetOutput())
-
-		err = m.SetDefaults()
-		require.NoError(t, err)
-		assert.Equal(t, "myregistry/myorg/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "myregistry/myorg/mybun-installer:v1.2.3", m.Image)
 	})
 }
 
