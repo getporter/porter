@@ -12,11 +12,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	// mage:import
 	"get.porter.sh/porter/mage/releases"
 
+	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tests"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
@@ -34,8 +36,7 @@ import (
 // var Default = Build
 
 const (
-	registryContainer = "registry"
-	mixinsURL         = "https://cdn.porter.sh/mixins/"
+	mixinsURL = "https://cdn.porter.sh/mixins/"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}
@@ -49,6 +50,10 @@ func Clean() {
 // Ensure EnsureMage is installed and on the PATH.
 func EnsureMage() error {
 	return tools.EnsureMage()
+}
+
+func Debug() {
+	mage.LoadMetadatda()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
@@ -128,15 +133,50 @@ func TestSmoke() error {
 	return shx.Command("go", "test", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
+func getRegistry() string {
+	registry := os.Getenv("REGISTRY")
+	if registry == "" {
+		registry = "getporterci"
+	}
+	return registry
+}
+
+func getDualPublish() bool {
+	dualPublish, _ := strconv.ParseBool(os.Getenv("DUAL_PUBLISH"))
+	return dualPublish
+}
+
+func BuildImages() {
+	info := mage.LoadMetadatda()
+
+	must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
+	if getDualPublish() {
+		must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY=ghcr.io/getporter").RunV()
+	}
+}
+
+func PublishImages() {
+	mg.Deps(BuildImages)
+
+	info := mage.LoadMetadatda()
+
+	must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
+	if getDualPublish() {
+		must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY=ghcr.io/getporter").RunV()
+	}
+}
+
 // Publish the porter binaries and install scripts.
-func PublishPorter(version string, permalink string) {
+func PublishPorter() {
 	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	// Copy install scripts into version directory
-	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+version, "PERMALINK="+permalink).RunV()
+	info := mage.LoadMetadatda()
 
-	porterVersionDir := filepath.Join("bin", version)
-	execVersionDir := filepath.Join("bin/mixins/exec", version)
+	// Copy install scripts into version directory
+	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink).RunV()
+
+	porterVersionDir := filepath.Join("bin", info.Version)
+	execVersionDir := filepath.Join("bin/mixins/exec", info.Version)
 	var repo = os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
 		repo = "github.com/getporter/porter"
@@ -144,17 +184,17 @@ func PublishPorter(version string, permalink string) {
 	remote := fmt.Sprintf("https://%s.git", repo)
 
 	// Move the permalink tag. The existing release automatically points to the tag.
-	must.RunV("git", "tag", permalink, version+"^{}", "-f")
-	must.RunV("git", "push", "-f", remote, permalink)
+	must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+	must.RunV("git", "push", "-f", remote, info.Permalink)
 
 	// Create or update GitHub release for the permalink (canary/latest) with the version's assets (porter binaries, exec binaries and install scripts)
-	releases.AddFilesToRelease(repo, permalink, porterVersionDir)
-	releases.AddFilesToRelease(repo, permalink, execVersionDir)
+	releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
+	releases.AddFilesToRelease(repo, info.Permalink, execVersionDir)
 
-	if permalink == "latest" {
+	if info.IsTaggedRelease {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
-		releases.AddFilesToRelease(repo, version, porterVersionDir)
-		releases.AddFilesToRelease(repo, version, execVersionDir)
+		releases.AddFilesToRelease(repo, info.Version, porterVersionDir)
+		releases.AddFilesToRelease(repo, info.Version, execVersionDir)
 	}
 }
 
