@@ -3,6 +3,7 @@
 /porter
 *-packr.go
 .DS_Store
+/build/git_askpass.sh
 
 .cnab
 examples/**/Dockerfile
