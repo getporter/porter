@@ -1,0 +1,65 @@
+{
+  "name": "test",
+  "created": "2020-04-18T01:02:03.000000004Z",
+  "modified": "2020-04-18T01:02:03.000000004Z",
+  "bundle": "porter-hello",
+  "version": "0.1.0",
+  "action": "upgrade",
+  "status": "running",
+  "parameters": [
+    {
+      "name": "logLevel",
+      "type": "integer",
+      "sensitive": false,
+      "value": 3
+    },
+    {
+      "name": "token",
+      "type": "unknown",
+      "sensitive": false,
+      "value": "top-secret"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "bar",
+      "type": "string",
+      "sensitive": false,
+      "value": "bar-output"
+    },
+    {
+      "name": "foo",
+      "type": "string",
+      "sensitive": true,
+      "value": "foo-output"
+    }
+  ],
+  "history": [
+    {
+      "claimID": "1",
+      "bundle": "porter-hello",
+      "version": "0.1.0",
+      "action": "install",
+      "parameters": {
+        "logLevel": 5,
+        "token": "top-secret"
+      },
+      "timestamp": "2020-04-18T01:02:03.000000004Z",
+      "status": "succeeded",
+      "hasLogs": "false"
+    },
+    {
+      "claimID": "3",
+      "bundle": "porter-hello",
+      "version": "0.1.0",
+      "action": "upgrade",
+      "parameters": {
+        "logLevel": 3,
+        "token": "top-secret"
+      },
+      "timestamp": "2020-04-18T01:02:03.000000004Z",
+      "status": "running",
+      "hasLogs": "false"
+    }
+  ]
+}

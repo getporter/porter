@@ -251,6 +251,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	depArgs := cnabprovider.ActionArguments{
+		BundleReference:   dep.Reference,
 		Action:            e.parentArgs.Action,
 		BundlePath:        dep.CNABFile,
 		Installation:      extensions.BuildPrerequisiteInstallationName(e.parentArgs.Installation, dep.Alias),

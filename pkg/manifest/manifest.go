@@ -344,6 +344,11 @@ func (pd *ParameterDefinition) Validate() error {
 		pdCopy.ContentEncoding = "base64"
 	}
 
+	// Validate the Parameter Definition schema itself
+	if _, err := pdCopy.Schema.ValidateSchema(); err != nil {
+		return multierror.Append(result, errors.Wrapf(err, "encountered an error while validating definition for parameter %q", pdCopy.Name))
+	}
+
 	if pdCopy.Default != nil {
 		schemaValidationErrs, err := pdCopy.Schema.Validate(pdCopy.Default)
 		if err != nil {
@@ -702,6 +707,11 @@ func (od *OutputDefinition) Validate() error {
 		}
 		odCopy.Type = "string"
 		odCopy.ContentEncoding = "base64"
+	}
+
+	// Validate the Output Definition schema itself
+	if _, err := odCopy.Schema.ValidateSchema(); err != nil {
+		return multierror.Append(result, errors.Wrapf(err, "encountered an error while validating definition for output %q", odCopy.Name))
 	}
 
 	if odCopy.Default != nil {

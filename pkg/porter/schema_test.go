@@ -2,7 +2,6 @@ package porter
 
 import (
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/ghodss/yaml" // We are not using go-yaml because of serialization problems with jsonschema, don't use this library elsewhere
@@ -17,18 +16,7 @@ func TestPorter_PrintManifestSchema(t *testing.T) {
 	err := p.PrintManifestSchema()
 	require.NoError(t, err)
 
-	gotSchema := p.TestConfig.TestContext.GetOutput()
-
-	goldenSchema := "testdata/schema.json"
-	wantSchema, err := ioutil.ReadFile(goldenSchema)
-	require.NoError(t, err)
-
-	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
-		t.Logf("Updated test file %s to match latest porter schema", goldenSchema)
-		require.NoError(t, ioutil.WriteFile(goldenSchema, []byte(gotSchema), 0755), "could not update golden file %s", goldenSchema)
-	} else {
-		assert.Equal(t, string(wantSchema), gotSchema, "Porter schema has changed. If this was intentional, run mage updateTestfiles to fix the tests.")
-	}
+	p.CompareGoldenFile("testdata/schema.json", p.TestConfig.TestContext.GetOutput())
 }
 
 func TestPorter_ValidateManifestSchema(t *testing.T) {
