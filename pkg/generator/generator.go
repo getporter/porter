@@ -33,16 +33,16 @@ const (
 	questionDefault = "use default value (%s)"
 )
 
-type generator func(name string, surveyType SurveyType) (valuesource.Strategy, error)
+type generator func(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error)
 
-func genEmptySet(name string, surveyType SurveyType) (valuesource.Strategy, error) {
+func genEmptySet(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error) {
 	return valuesource.Strategy{
 		Name:   name,
 		Source: valuesource.Source{Value: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error) {
+func genSurvey(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return valuesource.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
@@ -50,7 +50,7 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, questionDefault},
+		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, fmt.Sprintf(questionDefault, defaultVal)},
 		Default: "environment variable",
 	}
 
@@ -88,14 +88,14 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 			return c, err
 		}
 	} else {
-		//set value to default value
+		value = defaultVal
 	}
 
 	switch source {
 	case questionSecret:
 		c.Source.Key = secrets.SourceSecret
 		c.Source.Value = value
-	case questionValue:
+	case questionValue, questionDefault:
 		c.Source.Key = host.SourceValue
 		c.Source.Value = value
 	case questionEnvVar:
