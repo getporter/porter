@@ -34,7 +34,7 @@ require (
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.19.0
-	github.com/cnabio/cnab-to-oci v0.3.1-beta1
+	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 // indirect
 	github.com/containerd/containerd v1.3.0
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
@@ -50,7 +50,6 @@ require (
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/gogo/googleapis v1.3.2 // indirect
 	github.com/google/go-containerregistry v0.0.0-20191015185424-71da34e4d9b3
-	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-plugin v1.4.0
@@ -63,12 +62,12 @@ require (
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.4.1
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.6.1
+	github.com/spf13/viper v1.7.0
+	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
