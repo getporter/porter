@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tools"
@@ -168,20 +169,20 @@ func GeneratePluginFeed() {
 
 // AddFilesToRelease uploads the files in the specified directory to a GitHub release.
 // If the release does not exist already, it will be created with empty release notes.
-func AddFilesToRelease(repo string, version string, dir string) {
+func AddFilesToRelease(repo string, tag string, dir string) {
 	files := listFiles(dir)
 
 	// Mark canary releases as a draft
 	draft := ""
-	if version == "canary" {
+	if strings.HasPrefix(tag, "canary") {
 		draft = "-p"
 	}
 
-	if releaseExists(repo, version) {
-		must.Command("gh", "release", "upload", "--clobber", "-R", repo, version).
+	if releaseExists(repo, tag) {
+		must.Command("gh", "release", "upload", "--clobber", "-R", repo, tag).
 			Args(files...).RunV()
 	} else {
-		must.Command("gh", "release", "create", "-R", repo, "-t", version, "--notes=", draft, version).
+		must.Command("gh", "release", "create", "-R", repo, "-t", tag, "--notes=", draft, tag).
 			CollapseArgs().Args(files...).RunV()
 	}
 }

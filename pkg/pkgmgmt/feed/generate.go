@@ -127,7 +127,7 @@ var versionRegex = regexp.MustCompile(`\d+-g[a-z0-9]+`)
 
 // As a safety measure, skip versions that shouldn't be put in the feed, we only want canary and tagged releases.
 func shouldPublishVersion(version string) bool {
-	if strings.HasSuffix(version, "canary") {
+	if strings.HasPrefix(version, "canary") {
 		// Publish canary permalinks
 		return true
 	}
