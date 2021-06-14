@@ -13,6 +13,11 @@ pool:
 variables:
   GOVERSION: "1.16"
 
+parameters:
+  - name: buildExamples
+    type: boolean
+    default: false
+
 stages:
   - stage: Setup
     jobs:
@@ -72,8 +77,8 @@ stages:
             displayName: "Configure Agent"
           - bash: make test-unit
             displayName: "Unit Test"
-      - job: build_examples
-        displayName: "Build Examples"
+      - job: validate_examples
+        displayName: "Validate Examples"
         dependsOn: build
         steps:
           - task: DownloadPipelineArtifact@2
@@ -86,6 +91,9 @@ stages:
             displayName: "Setup Bin"
           - bash: make lint-examples
             displayName: "Lint Examples"
+          - bash: make build-examples
+            displayName: "Build Examples"
+            condition: ${{parameters.buildExamples}}
       - job: build_docker
         dependsOn: xbuild
         steps:
