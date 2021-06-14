@@ -94,6 +94,11 @@ func getBranchName() string {
 }
 
 func getPermalink() (string, bool) {
+	// Use dev for pull requests
+	if _, pr := os.LookupEnv("SYSTEM_PULLREQUEST_SOURCEBRANCH"); pr {
+		return "dev", false
+	}
+
 	// Use latest for tagged commits
 	taggedRelease := false
 	permalinkSuffix := "canary"
