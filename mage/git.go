@@ -31,8 +31,8 @@ type GitMetadata struct {
 	IsTaggedRelease bool
 }
 
-// LoadMetadatda populates the status of the current working copy: current version, tag and permalink
-func LoadMetadatda() GitMetadata {
+// LoadMetadata populates the status of the current working copy: current version, tag and permalink
+func LoadMetadata() GitMetadata {
 	loadMetadata.Do(func() {
 		gitMetadata = GitMetadata{
 			Version: getVersion(),
@@ -94,6 +94,11 @@ func getBranchName() string {
 }
 
 func getPermalink() (string, bool) {
+	// Use dev for pull requests
+	if _, pr := os.LookupEnv("SYSTEM_PULLREQUEST_SOURCEBRANCH"); pr {
+		return "dev", false
+	}
+
 	// Use latest for tagged commits
 	taggedRelease := false
 	permalinkSuffix := "canary"

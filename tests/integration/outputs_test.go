@@ -36,7 +36,7 @@ func TestExecOutputs(t *testing.T) {
 	opts.Format = printer.FormatTable
 	displayOutputs, err := p.ListBundleOutputs(&opts)
 	require.NoError(t, err, "ListBundleOutputs failed")
-	var kubeconfigOutput *porter.DisplayOutput
+	var kubeconfigOutput *porter.DisplayValue
 	for _, do := range displayOutputs {
 		if do.Name == "kubeconfig" {
 			kubeconfigOutput = &do

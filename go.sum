@@ -274,8 +274,8 @@ github.com/cloudflare/cfssl v1.4.1/go.mod h1:KManx/OJPb5QY+y0+o/898AMcM128sF0bUR
 github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:eaZPlJWD+G9wseg1BuRXlHnjntPMrywMsyxf+LTOdP4=
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
 github.com/cnabio/cnab-go v0.10.0-beta1/go.mod h1:5c4uOP6ZppR4nUGtCMAElscRiYEUi44vNQwtSAvISXk=
-github.com/cnabio/cnab-go v0.20.0 h1:OGVYz8CGgNS/Cl1xWYIhPbZeTBEB7Xdq6bq9Y1E0wCA=
-github.com/cnabio/cnab-go v0.20.0/go.mod h1:v7CyqKN9TPZgvUKcvxK4P+WwjLuVvedw9wZVvKPDGTk=
+github.com/cnabio/cnab-go v0.20.1 h1:hAwoPF73Y8uXsOl6x3J9dYFaUS37F2GiJCi5/h9BwpA=
+github.com/cnabio/cnab-go v0.20.1/go.mod h1:v7CyqKN9TPZgvUKcvxK4P+WwjLuVvedw9wZVvKPDGTk=
 github.com/cnabio/cnab-to-oci v0.3.1-beta1 h1:qAuLRt+2J7U7wIB5YG+COtS630NQCf4G1h1p0Yk6llo=
 github.com/cnabio/cnab-to-oci v0.3.1-beta1/go.mod h1:8BomA5Vye+3V/Kd2NSFblCBmp1rJV5NfXBYKbIGT5Rw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=

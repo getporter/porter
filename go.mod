@@ -27,7 +27,7 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.20.0
+	github.com/cnabio/cnab-go v0.20.1
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/console v1.0.1
 	github.com/containerd/containerd v1.5.0-beta.1

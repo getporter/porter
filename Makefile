@@ -55,19 +55,17 @@ xbuild-mixins:
 get-mixins:
 	go run mage.go GetMixins
 
-verify:
-	@echo 'verify does nothing for now but keeping it as a placeholder for a bit'
-
-test: build test-unit test-integration test-smoke
+test:
+	go run mage.go -v Test
 
 test-unit:
-	PORTER_UPDATE_TEST_FILES=$(PORTER_UPDATE_TEST_FILES) $(GO) test ./...
+	go run mage.go -v TestUnit
 
 test-integration:
-	go run mage.go TestIntegration
+	go run mage.go -v TestIntegration
 
 test-smoke:
-	go run mage.go testSmoke
+	go run mage.go -v TestSmoke
 
 .PHONY: docs
 docs:

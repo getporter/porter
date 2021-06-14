@@ -78,8 +78,6 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make verify
-            displayName: "Verify"
           - bash: make test-unit
             displayName: "Unit Test"
       - job: integration_test

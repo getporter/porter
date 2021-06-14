@@ -59,7 +59,7 @@ func EnsureMage() error {
 }
 
 func Debug() {
-	mage.LoadMetadatda()
+	mage.LoadMetadata()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
@@ -121,8 +121,21 @@ func porter(args ...string) shx.PreparedCommand {
 
 // Update golden test files to match the new test outputs
 func UpdateTestfiles() {
-	must.Command("make", "test-unit").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
-	must.Command("make", "test-unit").RunV()
+	must.Command("go", "test", "./...").Env("PORTER_UPDATE_TEST_FILES=true").RunV()
+	must.RunV("make", "test-unit")
+}
+
+// Run all tests known to human-kind
+func Test() {
+	mg.Deps(TestUnit, TestSmoke, TestIntegration)
+}
+
+// Run unit tests and verify integration tests compile
+func TestUnit() {
+	must.RunV("go", "test", "./...")
+
+	// Verify integration tests compile since we don't run them automatically on pull requests
+	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
 }
 
 // Run smoke tests to quickly check if Porter is broken
@@ -153,7 +166,7 @@ func getDualPublish() bool {
 }
 
 func BuildImages() {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
 	if getDualPublish() {
@@ -164,7 +177,7 @@ func BuildImages() {
 func PublishImages() {
 	mg.Deps(BuildImages)
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
 	if getDualPublish() {
@@ -176,7 +189,7 @@ func PublishImages() {
 func PublishPorter() {
 	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink).RunV()
