@@ -20,7 +20,7 @@ var (
 )
 
 func getLDFLAGS(pkg string) string {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 	return fmt.Sprintf("-w -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", pkg, info.Version, pkg, info.Commit)
 }
 
@@ -58,7 +58,7 @@ func BuildAll(pkg string, name string, binDir string) error {
 }
 
 func XBuild(pkg string, name string, binDir string, goos string, goarch string) error {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 	outPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s%s", name, goos, goarch, xplat.FileExt()))
 	return build(pkg, name, outPath, goos, goarch)
 }
@@ -74,7 +74,7 @@ func XBuildAll(pkg string, name string, binDir string) {
 
 	mgx.Must(g.Wait())
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Copy most recent build into bin/dev so that subsequent build steps can easily find it, not used for publishing
 	os.RemoveAll(filepath.Join(binDir, "dev"))

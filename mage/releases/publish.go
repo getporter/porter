@@ -23,7 +23,7 @@ const (
 
 // Prepares bin directory for publishing a package
 func preparePackageForPublish(pkgType string, name string) {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Prepare the bin directory for generating a package feed
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
@@ -79,7 +79,7 @@ exec echo "$GITHUB_TOKEN"
 func publishPackage(pkgType string, name string) {
 	mg.Deps(tools.EnsureGitHubClient, ConfigureGitBot)
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
@@ -120,7 +120,7 @@ func PublishPlugin(plugin string) {
 }
 
 func publishPackageFeed(pkgType string, name string) {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Clone the packages repository
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
