@@ -3,10 +3,6 @@ module get.porter.sh/porter
 go 1.16
 
 replace (
-	// Fixes https://github.com/cnabio/cnab-go/pull/262
-	// https://github.com/carolynvs/cnab-go/tree/skip-validate-optional-empty-parameters
-	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.20.0-porter.2
-
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
@@ -31,7 +27,7 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.20.0
+	github.com/cnabio/cnab-go v0.20.1
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/containerd/console v1.0.1
 	github.com/containerd/containerd v1.5.0-beta.1
