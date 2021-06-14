@@ -59,7 +59,7 @@ func EnsureMage() error {
 }
 
 func Debug() {
-	mage.LoadMetadatda()
+	mage.LoadMetadata()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
@@ -153,7 +153,7 @@ func getDualPublish() bool {
 }
 
 func BuildImages() {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
 	if getDualPublish() {
@@ -164,7 +164,7 @@ func BuildImages() {
 func PublishImages() {
 	mg.Deps(BuildImages)
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
 	if getDualPublish() {
@@ -176,7 +176,7 @@ func PublishImages() {
 func PublishPorter() {
 	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink).RunV()
