@@ -82,7 +82,7 @@ func GetMixins() error {
 		mixinTag = "canary"
 	}
 
-	mixins := []string{"helm", "arm", "terraform", "kubernetes"}
+	mixins := []string{"docker", "docker-compose", "helm", "arm", "terraform", "kubernetes"}
 	var errG errgroup.Group
 	for _, mixin := range mixins {
 		mixinDir := filepath.Join("bin/mixins/", mixin)
