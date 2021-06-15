@@ -38,6 +38,6 @@ Porter v1 will include a number of breaking changes that we are grouping togethe
   The final release from the v1 branch will be v1.0.0.
 * The release/v1 branch will be merged into main, and then the v1.0.0 release is cut.
 * The latest and canary builds continue to be based on builds of the main branch only.
-  We may provide v1-latest and v1-canary builds at a later date.
+  We may provide latest-v1 and canary-v1 builds at a later date.
 
 [semver v2]: https://semver.org/spec/v2.0.0.html

@@ -31,6 +31,11 @@ type GitMetadata struct {
 	IsTaggedRelease bool
 }
 
+func (m GitMetadata) ShouldPublishPermalink() bool {
+	// For now don't publish canary-v1 or latest-v1 to keep things simpler
+	return m.Permalink == "canary" || m.Permalink == "latest"
+}
+
 // LoadMetadata populates the status of the current working copy: current version, tag and permalink
 func LoadMetadata() GitMetadata {
 	loadMetadata.Do(func() {
@@ -101,21 +106,21 @@ func getPermalink() (string, bool) {
 
 	// Use latest for tagged commits
 	taggedRelease := false
-	permalinkSuffix := "canary"
+	permalinkPrefix := "canary"
 	err := shx.RunS("git", "describe", "--tags", "--match=v*", "--exact")
 	if err == nil {
-		permalinkSuffix = "latest"
+		permalinkPrefix = "latest"
 		taggedRelease = true
 	}
 
 	// Get the current branch name, or the name of the branch we tagged from
 	branch := getBranchName()
 
-	// Build a permalink such as "canary", "latest", "v1-latest", etc
+	// Build a permalink such as "canary", "latest", "latest-v1", or "canary-v1"
 	switch branch {
 	case "main":
-		return permalinkSuffix, taggedRelease
+		return permalinkPrefix, taggedRelease
 	default:
-		return fmt.Sprintf("%s-%s", strings.TrimPrefix(branch, "release/"), permalinkSuffix), taggedRelease
+		return fmt.Sprintf("%s-%s", permalinkPrefix, strings.TrimPrefix(branch, "release/")), taggedRelease
 	}
 }
