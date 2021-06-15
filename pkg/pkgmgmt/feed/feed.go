@@ -41,12 +41,15 @@ func (feed *MixinFeed) Search(mixin string, version string) *MixinFileset {
 		return fileset
 	}
 
-	// Return the highest version of the requested mixin according to semver
+	// Return the highest version of the requested mixin according to semver, ignoring pre-releases
 	if version == "latest" {
 		var latestVersion *semver.Version
 		for version := range versions {
 			v, err := semver.NewVersion(version)
 			if err != nil {
+				continue
+			}
+			if v.Prerelease() != "" {
 				continue
 			}
 			if latestVersion == nil || v.GreaterThan(latestVersion) {
@@ -109,5 +112,14 @@ func (e MixinEntries) Swap(i, j int) {
 }
 
 func (e MixinEntries) Less(i, j int) bool {
-	return e[i].GetLastUpdated().Before(e[j].GetLastUpdated())
+	// Sort by LastUpdated, Mixin, Version
+	entryI := e[i]
+	entryJ := e[j]
+	if entryI.GetLastUpdated().Equal(entryJ.GetLastUpdated()) {
+		if entryI.Mixin == entryJ.Mixin {
+			return entryI.Version < entryJ.Version
+		}
+		return entryI.Mixin < entryJ.Mixin
+	}
+	return entryI.GetLastUpdated().Before(entryJ.GetLastUpdated())
 }

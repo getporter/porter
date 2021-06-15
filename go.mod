@@ -28,7 +28,7 @@ require (
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.20.1
-	github.com/cnabio/cnab-to-oci v0.3.1-beta1
+	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/console v1.0.1
 	github.com/containerd/containerd v1.5.0-beta.1
 	github.com/docker/buildx v0.5.1
@@ -51,12 +51,12 @@ require (
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.5.1
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
