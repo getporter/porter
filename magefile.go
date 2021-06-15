@@ -148,11 +148,50 @@ func getDualPublish() bool {
 
 func BuildImages() {
 	info := mage.LoadMetadata()
+	registry := getRegistry()
 
-	must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
+	buildImages(registry, info)
 	if getDualPublish() {
-		must.Command("./scripts/build-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY=ghcr.io/getporter").RunV()
+		buildImages("ghcr.io/getporter", info)
 	}
+}
+
+func buildImages(registry string, info mage.GitMetadata) {
+	var g errgroup.Group
+
+	g.Go(func() error {
+		img := fmt.Sprintf("%s/porter:%s", registry, info.Version)
+		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".")
+		if err != nil {
+			return err
+		}
+
+		err = shx.Run("docker", "tag", img, fmt.Sprintf("%s/porter:%s", registry, info.Permalink))
+		if err != nil {
+			return err
+		}
+
+		// porter-agent does a FROM porter so they can't go in parallel
+		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
+		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", "build/images/agent")
+		if err != nil {
+			return err
+		}
+
+		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/porter-agent:%s", registry, info.Permalink))
+	})
+
+	g.Go(func() error {
+		img := fmt.Sprintf("%s/workshop:%s", registry, info.Version)
+		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".")
+		if err != nil {
+			return err
+		}
+
+		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/workshop:%s", registry, info.Permalink))
+	})
+
+	mgx.Must(g.Wait())
 }
 
 func PublishImages() {
@@ -160,10 +199,33 @@ func PublishImages() {
 
 	info := mage.LoadMetadata()
 
-	must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY="+getRegistry()).RunV()
+	pushImagesTo(getRegistry(), info)
 	if getDualPublish() {
-		must.Command("./scripts/publish-images.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink, "REGISTRY=ghcr.io/getporter").RunV()
+		pushImagesTo("ghcr.io/getporter", info)
 	}
+}
+
+// Only push tagged versions, canary and latest
+func pushImagesTo(registry string, info mage.GitMetadata) {
+	if info.IsTaggedRelease {
+		pushImages(registry, info.Version)
+	}
+
+	if info.ShouldPublishPermalink() {
+		pushImages(registry, info.Permalink)
+	} else {
+		fmt.Println("Skipping image publish for permalink", info.Permalink)
+	}
+}
+
+func pushImages(registry string, tag string) {
+	pushImage(fmt.Sprintf("%s/porter:%s", registry, tag))
+	pushImage(fmt.Sprintf("%s/porter-agent:%s", registry, tag))
+	pushImage(fmt.Sprintf("%s/workshop:%s", registry, tag))
+}
+
+func pushImage(img string) {
+	must.RunV("docker", "push", img)
 }
 
 // Publish the porter binaries and install scripts.
@@ -183,13 +245,17 @@ func PublishPorter() {
 	}
 	remote := fmt.Sprintf("https://%s.git", repo)
 
-	// Move the permalink tag. The existing release automatically points to the tag.
-	must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
-	must.RunV("git", "push", "-f", remote, info.Permalink)
-
 	// Create or update GitHub release for the permalink (canary/latest) with the version's assets (porter binaries, exec binaries and install scripts)
-	releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
-	releases.AddFilesToRelease(repo, info.Permalink, execVersionDir)
+	if info.ShouldPublishPermalink() {
+		// Move the permalink tag. The existing release automatically points to the tag.
+		must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+		must.RunV("git", "push", "-f", remote, info.Permalink)
+
+		releases.AddFilesToRelease(repo, info.Permalink, porterVersionDir)
+		releases.AddFilesToRelease(repo, info.Permalink, execVersionDir)
+	} else {
+		fmt.Println("Skipping publish binaries for permalink", info.Permalink)
+	}
 
 	if info.IsTaggedRelease {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets

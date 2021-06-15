@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tools"
@@ -95,15 +96,19 @@ func publishPackage(pkgType string, name string) {
 	remote := fmt.Sprintf("https://%s.git", repo)
 	versionDir := filepath.Join("bin", pkgType+"s", name, info.Version)
 
-	// Move the permalink tag. The existing release automatically points to the tag.
-	must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
-	must.RunV("git", "push", "-f", remote, info.Permalink)
-
 	// Create or update GitHub release for the permalink (canary/latest) with the version's binaries
-	AddFilesToRelease(repo, info.Permalink, versionDir)
+	if info.ShouldPublishPermalink() {
+		// Move the permalink tag. The existing release automatically points to the tag.
+		must.RunV("git", "tag", info.Permalink, info.Version+"^{}", "-f")
+		must.RunV("git", "push", "-f", remote, info.Permalink)
 
+		AddFilesToRelease(repo, info.Permalink, versionDir)
+	} else {
+		fmt.Println("Skipping publish package for permalink", info.Permalink)
+	}
+
+	// Create GitHub release for the exact version (v1.2.3) and attach assets
 	if info.IsTaggedRelease {
-		// Create GitHub release for the exact version (v1.2.3) and attach assets
 		AddFilesToRelease(repo, info.Version, versionDir)
 	}
 }
@@ -116,11 +121,15 @@ func PublishMixin(mixin string) {
 // Publish a plugin's binaries.
 func PublishPlugin(plugin string) {
 	publishPackage("plugin", plugin)
-
 }
 
 func publishPackageFeed(pkgType string, name string) {
 	info := mage.LoadMetadata()
+
+	if !info.ShouldPublishPermalink() {
+		fmt.Println("Skipping publish package feed for permalink", info.Permalink)
+		return
+	}
 
 	// Clone the packages repository
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
@@ -168,20 +177,20 @@ func GeneratePluginFeed() {
 
 // AddFilesToRelease uploads the files in the specified directory to a GitHub release.
 // If the release does not exist already, it will be created with empty release notes.
-func AddFilesToRelease(repo string, version string, dir string) {
+func AddFilesToRelease(repo string, tag string, dir string) {
 	files := listFiles(dir)
 
 	// Mark canary releases as a draft
 	draft := ""
-	if version == "canary" {
+	if strings.HasPrefix(tag, "canary") {
 		draft = "-p"
 	}
 
-	if releaseExists(repo, version) {
-		must.Command("gh", "release", "upload", "--clobber", "-R", repo, version).
+	if releaseExists(repo, tag) {
+		must.Command("gh", "release", "upload", "--clobber", "-R", repo, tag).
 			Args(files...).RunV()
 	} else {
-		must.Command("gh", "release", "create", "-R", repo, "-t", version, "--notes=", draft, version).
+		must.Command("gh", "release", "create", "-R", repo, "-t", tag, "--notes=", draft, tag).
 			CollapseArgs().Args(files...).RunV()
 	}
 }
