@@ -825,6 +825,7 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 		}
 		// Delete known deprecated fields with no yaml tags
 		if key == "invocationImage" || key == "tag" {
+			fmt.Fprintf(cxt.Out, "WARNING: The %q field has been deprecated and can no longer be user-specified; ignoring.\n", key)
 			delete(unmappedData, key)
 		}
 	}
