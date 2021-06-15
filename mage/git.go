@@ -31,8 +31,8 @@ type GitMetadata struct {
 	IsTaggedRelease bool
 }
 
-// LoadMetadatda populates the status of the current working copy: current version, tag and permalink
-func LoadMetadatda() GitMetadata {
+// LoadMetadata populates the status of the current working copy: current version, tag and permalink
+func LoadMetadata() GitMetadata {
 	loadMetadata.Do(func() {
 		gitMetadata = GitMetadata{
 			Version: getVersion(),
