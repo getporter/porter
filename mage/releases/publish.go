@@ -126,7 +126,7 @@ func PublishPlugin(plugin string) {
 func publishPackageFeed(pkgType string, name string) {
 	info := mage.LoadMetadata()
 
-	if !info.ShouldPublishPermalink() {
+	if !(info.Permalink == "canary" || info.IsTaggedRelease) {
 		fmt.Println("Skipping publish package feed for permalink", info.Permalink)
 		return
 	}
