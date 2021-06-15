@@ -63,6 +63,10 @@ func TestGenerate(t *testing.T) {
 	tc.FileSystem.Create("bin/latest/helm-linux-amd64")
 	tc.FileSystem.Create("bin/latest/helm-windows-amd64.exe")
 
+	tc.FileSystem.Create("bin/canary-v1/exec-darwin-amd64")
+	tc.FileSystem.Create("bin/canary-v1/exec-linux-amd64")
+	tc.FileSystem.Create("bin/canary-v1/exec-windows-amd64.exe")
+
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
 		SearchDirectory: "bin",

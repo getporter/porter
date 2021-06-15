@@ -31,6 +31,11 @@ type GitMetadata struct {
 	IsTaggedRelease bool
 }
 
+func (m GitMetadata) ShouldPublishPermalink() bool {
+	// For now don't publish canary-v1 or latest-v1 to keep things simpler
+	return m.Permalink == "canary" || m.Permalink == "latest"
+}
+
 // LoadMetadata populates the status of the current working copy: current version, tag and permalink
 func LoadMetadata() GitMetadata {
 	loadMetadata.Do(func() {
