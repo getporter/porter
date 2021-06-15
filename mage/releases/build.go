@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/mage"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
-	"github.com/carolynvs/magex/xplat"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -20,7 +19,7 @@ var (
 )
 
 func getLDFLAGS(pkg string) string {
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 	return fmt.Sprintf("-w -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", pkg, info.Version, pkg, info.Commit)
 }
 
@@ -28,12 +27,19 @@ func build(pkg, cmd, outPath, goos, goarch string) error {
 	ldflags := getLDFLAGS(pkg)
 
 	os.MkdirAll(filepath.Dir(outPath), 0750)
-	outPath += xplat.FileExt()
+	outPath += fileExt(goos)
 	srcPath := "./cmd/" + cmd
 
 	return shx.Command("go", "build", "-ldflags", ldflags, "-o", outPath, srcPath).
 		Env("CGO_ENABLED=0", "GO111MODULE=on", "GOOS="+goos, "GOARCH="+goarch).
 		RunV()
+}
+
+func fileExt(goos string) string {
+	if goos == "windows" {
+		return ".exe"
+	}
+	return ""
 }
 
 func BuildRuntime(pkg string, name string, binDir string) error {
@@ -58,9 +64,10 @@ func BuildAll(pkg string, name string, binDir string) error {
 }
 
 func XBuild(pkg string, name string, binDir string, goos string, goarch string) error {
-	info := mage.LoadMetadatda()
-	outPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s%s", name, goos, goarch, xplat.FileExt()))
-	return build(pkg, name, outPath, goos, goarch)
+	info := mage.LoadMetadata()
+	// file extension is added by the build call
+	outPathPrefix := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s", name, goos, goarch))
+	return build(pkg, name, outPathPrefix, goos, goarch)
 }
 
 func XBuildAll(pkg string, name string, binDir string) {
@@ -74,7 +81,7 @@ func XBuildAll(pkg string, name string, binDir string) {
 
 	mgx.Must(g.Wait())
 
-	info := mage.LoadMetadatda()
+	info := mage.LoadMetadata()
 
 	// Copy most recent build into bin/dev so that subsequent build steps can easily find it, not used for publishing
 	os.RemoveAll(filepath.Join(binDir, "dev"))

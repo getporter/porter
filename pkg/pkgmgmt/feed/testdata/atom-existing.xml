@@ -10,6 +10,26 @@
     <category term="exec"/>
     <category term="helm"/>
     <entry>
+        <id>https://cdn.porter.sh/mixins/v2-latest/helm</id>
+        <title>helm @ v2-latest</title>
+        <updated>2013-02-4T00:00:00Z</updated>
+        <category term="helm"/>
+        <content>v2-latest</content>
+        <link rel="download" href="https://cdn.porter.sh/mixins/v2-latest/helm-darwin-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/v2-latest/helm-linux-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/v2-latest/helm-windows-amd64.exe" />
+    </entry>
+    <entry>
+        <id>https://cdn.porter.sh/mixins/canary/exec</id>
+        <title>exec @ canary</title>
+        <updated>2013-02-3T00:00:00Z</updated>
+        <category term="exec"/>
+        <content>canary</content>
+        <link rel="download" href="https://cdn.porter.sh/mixins/canary/exec-darwin-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/canary/exec-linux-amd64" />
+        <link rel="download" href="https://cdn.porter.sh/mixins/canary/exec-windows-amd64.exe" />
+    </entry>
+    <entry>
         <id>https://cdn.porter.sh/mixins/v1.2.3/helm</id>
         <title>helm @ v1.2.3</title>
         <updated>2013-02-03T00:00:00Z</updated>
