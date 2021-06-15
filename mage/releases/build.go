@@ -59,7 +59,8 @@ func BuildAll(pkg string, name string, binDir string) error {
 
 func XBuild(pkg string, name string, binDir string, goos string, goarch string) error {
 	info := mage.LoadMetadata()
-	outPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s%s", name, goos, goarch, xplat.FileExt()))
+	// file extension is added by the build call
+	outPath := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s", name, goos, goarch))
 	return build(pkg, name, outPath, goos, goarch)
 }
 
