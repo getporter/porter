@@ -253,7 +253,7 @@ func PublishPorter() {
 	info := mage.LoadMetadata()
 
 	// Copy install scripts into version directory
-	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION="+info.Version, "PERMALINK="+info.Permalink).RunV()
+	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + info.Version).RunV()
 
 	porterVersionDir := filepath.Join("bin", info.Version)
 	execVersionDir := filepath.Join("bin/mixins/exec", info.Version)
