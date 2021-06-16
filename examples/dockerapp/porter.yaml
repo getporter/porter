@@ -1,7 +1,7 @@
 name: my-docker-app
 version: 0.1.0
 description: My amazing docker app
-registry: carolynvs
+registry: getporter 
 
 required:
 - docker:
