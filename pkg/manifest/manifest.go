@@ -43,11 +43,6 @@ type Manifest struct {
 	// in the format REGISTRY/NAME or REGISTRY/NAME:TAG
 	Reference string `yaml:"reference,omitempty"`
 
-	// BundleTag is the name of the bundle in the format REGISTRY/NAME:TAG
-	// It doesn't map to any field in the manifest as it has been deprecated
-	// and isn't meant to be user-specified
-	BundleTag string `yaml:"-"`
-
 	// DockerTag is the Docker tag portion of the published invocation
 	// image and bundle.  It will only be set at time of publishing.
 	DockerTag string `yaml:"-"`
@@ -162,26 +157,13 @@ func (m *Manifest) validateMetadata(cxt *context.Context) error {
 		return errors.New("bundle name must be set")
 	}
 
-	if m.BundleTag == "" && m.Registry == "" && m.Reference == "" {
+	if m.Registry == "" && m.Reference == "" {
 		return errors.New("a registry or reference value must be provided")
 	}
 
 	if m.Reference != "" && m.Registry != "" {
 		fmt.Fprintf(cxt.Out, "WARNING: both registry and reference were provided; "+
 			"using the reference value of %s for the bundle reference\n", m.Reference)
-	}
-
-	// Check the deprecated tag field (still allowing use for time being)
-	if m.BundleTag != "" {
-		fmt.Fprintln(cxt.Out, "WARNING: the tag field has been deprecated; "+
-			"please replace with a value for the registry field on the Porter manifest instead")
-		fmt.Fprintln(cxt.Out, "===> See https://porter.sh/author-bundles/#bundle-metadata for more details")
-		if m.Reference != "" {
-			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided; "+
-				"using the reference value %s for the bundle reference\n", m.Reference)
-		} else {
-			m.Reference = m.BundleTag
-		}
 	}
 
 	// Allow for the user to have specified the version with a leading v prefix but save it as
@@ -841,14 +823,9 @@ func UnmarshalManifest(cxt *context.Context, manifestData []byte) (*Manifest, er
 		if _, found := knownFields[key]; found {
 			delete(unmappedData, key)
 		}
-		// Print deprecation notice for this field
-		if key == "invocationImage" {
-			fmt.Fprintln(cxt.Out, "WARNING: The invocationImage field has been deprecated and can no longer be user-specified; ignoring.")
-			delete(unmappedData, key)
-		}
-		// Print deprecation notice for this field
-		if key == "tag" {
-			manifest.BundleTag = unmappedData[key].(string)
+		// Delete known deprecated fields with no yaml tags
+		if key == "invocationImage" || key == "tag" {
+			fmt.Fprintf(cxt.Out, "WARNING: The %q field has been deprecated and can no longer be user-specified; ignoring.\n", key)
 			delete(unmappedData, key)
 		}
 	}
