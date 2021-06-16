@@ -1,7 +1,12 @@
 trigger:
-  branches:
+  tags:
     include:
-      - refs/tags/v*
+      - "v*"
+    exclude:
+      # We tag a release for canary-v1 or latest-v1 because of how we host our binaries with GitHub releases.
+      # Do not trigger another release when we create these tags during the release process, preventing an infinite recursion of release builds.
+      - "latest*"
+      - "canary*"
 
 # Do not run on pull requests
 pr: none

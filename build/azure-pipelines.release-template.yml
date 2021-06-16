@@ -223,5 +223,5 @@ stages:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: getporter-registry
               command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-bundle
+          - script: REGISTRY=${{parameters.registry}} make publish-examples
             displayName: "Publish Example Bundles"

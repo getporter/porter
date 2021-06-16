@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 
@@ -29,6 +30,11 @@ type GitMetadata struct {
 
 	// IsTaggedRelease indicates if the build is for a versioned tag
 	IsTaggedRelease bool
+}
+
+func (m GitMetadata) ShouldPublishPermalink() bool {
+	// For now don't publish canary-v1 or latest-v1 to keep things simpler
+	return m.Permalink == "canary" || m.Permalink == "latest"
 }
 
 // LoadMetadata populates the status of the current working copy: current version, tag and permalink
@@ -73,44 +79,73 @@ func getVersion() string {
 	return "v0.0.0"
 }
 
-// Get the name of the current branch, or the branch that contains the current tag
+// Return either "main", "v*", or "dev" for all other branches.
 func getBranchName() string {
-	// pull request
-	if branch, ok := os.LookupEnv("SYSTEM_PULLREQUEST_SOURCEBRANCH"); ok {
-		return branch
+	gitOutput, _ := must.OutputS("git", "for-each-ref", "--contains", "HEAD", "--format=%(refname)")
+	refs := strings.Split(gitOutput, "\n")
+
+	return pickBranchName(refs)
+}
+
+// Return either "main", "v*", or "dev" for all other branches.
+func pickBranchName(refs []string) string {
+	var branch string
+
+	if b, ok := os.LookupEnv("SYSTEM_PULLREQUEST_SOURCEBRANCH"); ok {
+		// pull request
+		branch = b
+	} else if b, ok := os.LookupEnv("BUILD_SOURCEBRANCHNAME"); ok {
+		// branch build
+		branch = b
+	} else {
+		// tag build
+		// Detect if this was a tag on main or a release
+		sort.Strings(refs) // put main ahead of release/v*
+		for _, ref := range refs {
+			// Ignore tags
+			if strings.HasSuffix(ref, "refs/tags") {
+				continue
+			}
+
+			// Only match main and release/v* branches
+			if strings.HasSuffix(ref, "/main") || strings.Contains(ref, "/release/v") {
+				branch = ref
+				break
+			}
+		}
 	}
 
-	// branch build
-	if branch, ok := os.LookupEnv("BUILD_SOURCEBRANCHNAME"); ok {
-		return branch
+	// Convert the ref name into a branch name, e.g. refs/heads/main -> main
+	branch = strings.NewReplacer("refs/heads/", "", "refs/remotes/origin/", "").Replace(branch)
+
+	// Only use the following branch names "main", "release/v*", and "dev" for everything else
+	if branch != "main" && !strings.HasPrefix(branch, "release/v") {
+		branch = "dev"
 	}
 
-	// tag build
-	// Use the first branch that contains the current commit
-	matches, _ := must.OutputS("git", "for-each-ref", "--contains", "HEAD", "--format=%(refname:short)")
-	firstMatchingBranch := strings.Split(matches, "\n")[0]
-	// The matching branch may be a remote branch, just get its name
-	return strings.Replace(firstMatchingBranch, "origin/", "", 1)
+	// Convert release/v1 -> v1
+	branch = strings.ReplaceAll(branch, "release/", "")
+	return branch
 }
 
 func getPermalink() (string, bool) {
 	// Use latest for tagged commits
 	taggedRelease := false
-	permalinkSuffix := "canary"
+	permalinkPrefix := "canary"
 	err := shx.RunS("git", "describe", "--tags", "--match=v*", "--exact")
 	if err == nil {
-		permalinkSuffix = "latest"
+		permalinkPrefix = "latest"
 		taggedRelease = true
 	}
 
 	// Get the current branch name, or the name of the branch we tagged from
 	branch := getBranchName()
 
-	// Build a permalink such as "canary", "latest", "v1-latest", etc
+	// Build a permalink such as "canary", "latest", "latest-v1", or "dev-canary"
 	switch branch {
 	case "main":
-		return permalinkSuffix, taggedRelease
+		return permalinkPrefix, taggedRelease
 	default:
-		return fmt.Sprintf("%s-%s", strings.TrimPrefix(branch, "release/"), permalinkSuffix), taggedRelease
+		return fmt.Sprintf("%s-%s", permalinkPrefix, strings.TrimPrefix(branch, "release/")), taggedRelease
 	}
 }

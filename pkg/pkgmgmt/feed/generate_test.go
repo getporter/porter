@@ -63,12 +63,9 @@ func TestGenerate(t *testing.T) {
 	tc.FileSystem.Create("bin/latest/helm-linux-amd64")
 	tc.FileSystem.Create("bin/latest/helm-windows-amd64.exe")
 
-	tc.FileSystem.Create("bin/v2-latest/helm-darwin-amd64")
-	tc.FileSystem.Create("bin/v2-latest/helm-linux-amd64")
-	tc.FileSystem.Create("bin/v2-latest/helm-windows-amd64.exe")
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-darwin-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-linux-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-windows-amd64.exe", up4, up4)
+	tc.FileSystem.Create("bin/canary-v1/exec-darwin-amd64")
+	tc.FileSystem.Create("bin/canary-v1/exec-linux-amd64")
+	tc.FileSystem.Create("bin/canary-v1/exec-windows-amd64.exe")
 
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
@@ -229,13 +226,6 @@ func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
 	tc.FileSystem.Chtimes("bin/canary/exec-darwin-amd64", up10, up10)
 	tc.FileSystem.Chtimes("bin/canary/exec-linux-amd64", up10, up10)
 	tc.FileSystem.Chtimes("bin/canary/exec-windows-amd64.exe", up10, up10)
-
-	tc.FileSystem.Create("bin/v2-latest/helm-darwin-amd64")
-	tc.FileSystem.Create("bin/v2-latest/helm-linux-amd64")
-	tc.FileSystem.Create("bin/v2-latest/helm-windows-amd64.exe")
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-darwin-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-linux-amd64", up4, up4)
-	tc.FileSystem.Chtimes("bin/v2-latest/helm-windows-amd64.exe", up4, up4)
 
 	opts := GenerateOptions{
 		AtomFile:        "atom.xml",
