@@ -30,7 +30,6 @@ const (
 	questionEnvVar  = "environment variable"
 	questionPath    = "file path"
 	questionCommand = "shell command"
-	questionDefault = "use default value (%s)"
 )
 
 type generator func(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error)
@@ -47,10 +46,17 @@ func genSurvey(name string, surveyType SurveyType, defaultVal string) (valuesour
 		return valuesource.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
 
+	options := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
+	questionDefault := fmt.Sprintf("use default value (%s)", defaultVal)
+
+	if defaultVal != "" {
+		options = append(options, questionDefault)
+	}
+
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand, fmt.Sprintf(questionDefault, defaultVal)},
+		Options: options,
 		Default: "environment variable",
 	}
 
