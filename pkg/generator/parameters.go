@@ -52,10 +52,8 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters
 		if parameters.IsInternal(name, opts.Bundle) {
 			continue
 		}
-		defaultVal, err := getDefaultParamValue(opts.Bundle, name)
-		if err != nil {
-			return pset, err
-		}
+		defaultVal, _ := getDefaultParamValue(opts.Bundle, name)
+
 		c, err := fn(name, surveyParameters, defaultVal)
 		if err != nil {
 			return pset, err
@@ -67,7 +65,6 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters
 }
 
 func getDefaultParamValue(bun bundle.Bundle, name string) (string, error) {
-	// write logic to get default value of given param
 	for p, v := range bun.Parameters {
 		if p == name {
 			def, ok := bun.Definitions[v.Definition]
@@ -78,7 +75,9 @@ func getDefaultParamValue(bun bundle.Bundle, name string) (string, error) {
 				return "", fmt.Errorf("parameter definition for %s is empty", name)
 			}
 
-			return fmt.Sprintf("%s", def.Default), nil
+			if def.Default != nil {
+				return fmt.Sprintf("%s", def.Default), nil
+			}
 		}
 	}
 	return "", nil
