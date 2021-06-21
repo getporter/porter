@@ -1,0 +1,3 @@
+config:
+  exec:
+    additionalConfig: "not allowed"

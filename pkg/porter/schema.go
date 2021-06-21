@@ -87,18 +87,6 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items.anyOf type, expected []interface{} but got %T", mixinItemsSchema["anyOf"])
 	}
 
-	// Build enum schema to add to mixinItemsAnyOfSchema, for populating config-less mixin item options
-	mixinEnumsSchemaStr := `{"enum":[]}`
-	mixinEnumsSchema := make(jsonSchema)
-	err := json.Unmarshal([]byte(mixinEnumsSchemaStr), &mixinEnumsSchema)
-	if err != nil && p.Debug {
-		fmt.Fprintln(p.Err, errors.Wrapf(err, "could not unmarshal mixin enums schema %q", mixinEnumsSchemaStr))
-	}
-	mixinEnumsSchemaEntries, ok := mixinEnumsSchema["enum"].([]interface{})
-	if !ok {
-		return nil, errors.Errorf("error casting mixin enums array type, expected []interface{} but got %T", mixinEnumsSchema["enum"])
-	}
-
 	coreActions := []string{"install", "upgrade", "uninstall"} // custom actions are defined in json schema as additionalProperties
 	actionSchemas := make(map[string]jsonSchema, len(coreActions)+1)
 	for _, action := range coreActions {
@@ -134,15 +122,8 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 			continue
 		}
 
-		// Check the mixin's definitions schema
-		mixinDefinitionsSchema, ok := mixinSchemaMap["definitions"].(jsonSchema)
-		if !ok && p.Debug {
-			fmt.Fprintln(p.Err, errors.Errorf("mixin %q schema has invalid definitions type, expected map[string]interface{} but got %T", mixin, mixinDefinitionsSchema))
-			continue
-		}
-
 		// Add the config schema ref that will be added to the list of valid mixin items
-		mixinItem := fmt.Sprintf(`{"$ref": "#/mixin.%s/definitions/%s"}`, mixin, "config")
+		mixinItem := fmt.Sprintf(`{"$ref": "#/mixin.%s/definitions/config"}`, mixin)
 		mixinItemSchema := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinItem), &mixinItemSchema)
 		if err != nil && p.Debug {
@@ -151,8 +132,12 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 		}
 		mixinItemsAnyOfSchema = append(mixinItemsAnyOfSchema, mixinItemSchema)
 
-		// Also add the mixin name to the enum list (when/if used without any config)
-		mixinEnumsSchemaEntries = append(mixinEnumsSchemaEntries, mixin)
+		// Validate the mixin's definitions schema
+		mixinDefinitionsSchema, ok := mixinSchemaMap["definitions"].(jsonSchema)
+		if !ok && p.Debug {
+			fmt.Fprintln(p.Err, errors.Errorf("mixin %q schema has invalid definitions type, expected map[string]interface{} but got %T", mixin, mixinDefinitionsSchema))
+			continue
+		}
 
 		// If the mixin declares a config schema, make sure it is valid json schema
 		if mixinDefinitionsSchema["config"] != nil {
@@ -162,8 +147,10 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 				continue
 			}
 		} else { // Add default config schema
-			defaultConfigSchema := fmt.Sprintf(`{"type":"object","additionalProperties":false,"properties":{"%s":{"type": "object"}},"required":["%s"]}`, mixin, mixin)
-
+			defaultConfigSchema := fmt.Sprintf(
+				`{"type":["string","object"],"additionalProperties":false,"properties":{"%s":{"anyOf":[{"type":"object"},{"enum":["%s"]}]}},"required":["%s"]}`,
+				mixin, mixin, mixin,
+			)
 			defaultConfigSchemaMap := make(jsonSchema)
 			err := json.Unmarshal([]byte(defaultConfigSchema), &defaultConfigSchemaMap)
 			if err != nil && p.Debug {
@@ -215,12 +202,6 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}
 	}
-
-	// Prepend the enum schema of mixin names to the anyOf list
-	// With anyOf, the first match 'wins', so we put this first because
-	// config-less mixin declarations still are probably the most common
-	mixinEnumsSchema["enum"] = mixinEnumsSchemaEntries
-	mixinItemsAnyOfSchema = append([]interface{}{mixinEnumsSchema}, mixinItemsAnyOfSchema...)
 
 	// Save the updated arrays into the json schema document
 	mixinItemsSchema["anyOf"] = mixinItemsAnyOfSchema

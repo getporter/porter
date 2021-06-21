@@ -39,6 +39,8 @@ func TestMixin_ValidateSchema(t *testing.T) {
 		{"invoke", "testdata/invoke-input.yaml", ""},
 		{"uninstall", "testdata/uninstall-input.yaml", ""},
 		{"invalid command", "testdata/invalid-args-input.yaml", "Additional property args is not allowed"},
+		{"mixin-config-supported", "testdata/mixin-config-supported.yaml", ""},
+		{"mixin-config-unsupported", "testdata/mixin-config-unsupported.yaml", "Invalid type. Expected: string, given: object"},
 	}
 
 	for _, tc := range testcases {
