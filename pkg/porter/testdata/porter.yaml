@@ -46,7 +46,8 @@ outputs:
     path: /root/.kube/config
 
 mixins:
-  - exec
+  - exec:
+      extraConfig: true
 
 install:
   - exec:

@@ -259,6 +259,18 @@
       "type": "array"
     },
     "definitions": {
+      "config": {
+        "additionalProperties": false,
+        "properties": {
+          "exec": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "exec"
+        ],
+        "type": "object"
+      },
       "exec": {
         "additionalProperties": false,
         "description": "A step that is executed by the exec mixin",
@@ -493,13 +505,22 @@
       "type": "array"
     },
     "mixins": {
+      "additionalItems": false,
       "items": {
-        "enum": [
-          "exec"
-        ],
-        "type": "string"
+        "anyOf": [
+          {
+            "enum": [
+              "exec"
+            ]
+          },
+          {
+            "$ref": "#/mixin.exec/definitions/config"
+          }
+        ]
       },
-      "type": "array"
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
     },
     "name": {
       "description": "The name of the bundle",
