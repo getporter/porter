@@ -13,6 +13,37 @@ application.
 
 <p align="center">Learn all about Porter at <a href="https://porter.sh">porter.sh</a></p>
 
+# <a name="mixins"></a>Porter Mixins
+
+Mixins provide out-of-the-box support for interacting with different tools and services from inside a bundle. You can always create a mixin, or use the exec mixin and a Custom Dockerfile if a custom mixin doesn't exist yet.
+
+[Porter Mixins](https://porter.sh/mixins/) are available for below platform's:
+
+| Platform                                                                                                                                                                                                                        | Supported?  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------: |
+| <img src="docs\static\images\mixins\docker_icon.png" width="20" height="20" vertical-align="middle" /> [Docker](https://porter.sh/mixins/docker/)                                            |     ✔️      |
+| <img src="docs\static\images\mixins\docker-compose.png" width="20" height="20" vertical-align="middle" /> [Docker-Compose](https://porter.sh/mixins/docker-compose/)            |     ✔️      |
+| <img src="docs\static\images\mixins\kubernetes.svg" width="20" height="20" vertical-align="middle" /> [Kubernetes](https://porter.sh/mixins/kubernetes/)            |     ✔️      |
+| <img src="docs\static\images\mixins\helm.svg" width="20" height="20" vertical-align="middle" /> [Helm](https://porter.sh/mixins/helm/)            |     ✔️      |
+| <img src="docs\static\images\mixins\gcp.png" width="20" height="20" vertical-align="middle" /> [GCloud](https://porter.sh/mixins/gcloud/)            |     ✔️      |
+| <img src="docs\static\images\mixins\terraform_icon.png" width="20" height="20" vertical-align="middle" /> [Terraform](https://porter.sh/mixins/terraform/)            |     ✔️      |
+| <img src="docs\static\images\mixins\aws.svg" width="20" height="20" vertical-align="middle" /> [aws](https://porter.sh/mixins/aws/)            |     ✔️      |
+| <img src="docs\static\images\plugins\azure.png" width="20" height="20" vertical-align="middle" /> [Azure](https://porter.sh/mixins/azure/)            |     ✔️      |
+| <img src="docs\static\images\mixins\exec.png" width="20" height="20" vertical-align="middle" /> [exec](https://porter.sh/mixins/exec/)            |     ✔️      |
+
+# <a name="Plugins"></a>Porter Plugins
+
+Plugins let you store Porter's data and retrieve secrets from an external service.
+
+[Porter Plugins](https://porter.sh/plugins/) are available for below platform's:
+
+| Platform                                                                                                                                                                                                                        | Supported?  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------: |
+| <img src="docs\static\images\plugins\hashicorp.png" width="20" height="20" vertical-align="middle" /> [Hashicorp](https://porter.sh/plugins/hashicorp/)                                            |     ✔️      |
+| <img src="docs\static\images\plugins\azure.png" width="20" height="20" vertical-align="middle" /> [Azure](https://porter.sh/plugins/azure/)            |     ✔️      |
+| <img src="docs\static\images\mixins\kubernetes.svg" width="20" height="20" vertical-align="middle" /> [Kubernetes](https://porter.sh/plugins/kubernetes/)            |     ✔️      |
+
+
 # Contact
 
 * [Mailing List] - Great for following the project at a high level because it is
