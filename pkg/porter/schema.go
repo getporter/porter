@@ -72,19 +72,31 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 		return nil, errors.Errorf("root porter manifest schema has invalid additionalProperties type, expected map[string]interface{} but got %T", manifestSchema["additionalProperties"])
 	}
 
-	mixinSchema, ok := propertiesSchema["mixins"].(jsonSchema)
+	mixinsSchema, ok := propertiesSchema["mixins"].(jsonSchema)
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins type, expected map[string]interface{} but got %T", propertiesSchema["mixins"])
 	}
 
-	mixinItemsSchema, ok := mixinSchema["items"].(jsonSchema)
+	mixinItemsSchema, ok := mixinsSchema["items"].(jsonSchema)
 	if !ok {
-		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items type, expected map[string]interface{} but got %T", mixinSchema["items"])
+		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items type, expected map[string]interface{} but got %T", mixinsSchema["items"])
 	}
 
 	mixinItemsAnyOfSchema, ok := mixinItemsSchema["anyOf"].([]interface{})
 	if !ok {
 		return nil, errors.Errorf("root porter manifest schema has invalid properties.mixins.items.anyOf type, expected []interface{} but got %T", mixinItemsSchema["anyOf"])
+	}
+
+	// Build enum schema to add to mixinItemsAnyOfSchema, for populating config-less mixin item options
+	mixinEnumsSchemaStr := `{"enum":[]}`
+	mixinEnumsSchema := make(jsonSchema)
+	err := json.Unmarshal([]byte(mixinEnumsSchemaStr), &mixinEnumsSchema)
+	if err != nil && p.Debug {
+		fmt.Fprintln(p.Err, errors.Wrapf(err, "could not unmarshal mixin enums schema %q", mixinEnumsSchemaStr))
+	}
+	mixinEnumsSchemaEntries, ok := mixinEnumsSchema["enum"].([]interface{})
+	if !ok {
+		return nil, errors.Errorf("error casting mixin enums array type, expected []interface{} but got %T", mixinEnumsSchema["enum"])
 	}
 
 	coreActions := []string{"install", "upgrade", "uninstall"} // custom actions are defined in json schema as additionalProperties
@@ -123,7 +135,7 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 		}
 
 		// Add the config schema ref that will be added to the list of valid mixin items
-		mixinItem := fmt.Sprintf(`{"$ref": "#/mixin.%s/definitions/config"}`, mixin)
+		mixinItem := fmt.Sprintf(`{"$ref":"#/mixin.%s/definitions/config"}`, mixin)
 		mixinItemSchema := make(jsonSchema)
 		err = json.Unmarshal([]byte(mixinItem), &mixinItemSchema)
 		if err != nil && p.Debug {
@@ -131,6 +143,9 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 			continue
 		}
 		mixinItemsAnyOfSchema = append(mixinItemsAnyOfSchema, mixinItemSchema)
+
+		// Also add the mixin name to the enum list (when/if used without any config)
+		mixinEnumsSchemaEntries = append(mixinEnumsSchemaEntries, mixin)
 
 		// Validate the mixin's definitions schema
 		mixinDefinitionsSchema, ok := mixinSchemaMap["definitions"].(jsonSchema)
@@ -147,10 +162,8 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 				continue
 			}
 		} else { // Add default config schema
-			defaultConfigSchema := fmt.Sprintf(
-				`{"type":["string","object"],"additionalProperties":false,"properties":{"%s":{"anyOf":[{"type":"object"},{"enum":["%s"]}]}},"required":["%s"]}`,
-				mixin, mixin, mixin,
-			)
+			defaultConfigSchema := fmt.Sprintf(`{"type":"object","additionalProperties":false,"properties":{"%s":{"type": "object"}},"required":["%s"]}`, mixin, mixin)
+
 			defaultConfigSchemaMap := make(jsonSchema)
 			err := json.Unmarshal([]byte(defaultConfigSchema), &defaultConfigSchemaMap)
 			if err != nil && p.Debug {
@@ -202,6 +215,13 @@ func (p *Porter) injectMixinSchemas(manifestSchema jsonSchema) (jsonSchema, erro
 			actionItemSchema["anyOf"] = actionAnyOfSchema
 		}
 	}
+
+	// Prepend the enum schema of mixin names to the anyOf list as
+	// this will be the first checked for auto-fill in IDEs.
+	// If config is added to a mixin entry, the corresponding object schema
+	// will then be checked.
+	mixinEnumsSchema["enum"] = mixinEnumsSchemaEntries
+	mixinItemsAnyOfSchema = append([]interface{}{mixinEnumsSchema}, mixinItemsAnyOfSchema...)
 
 	// Save the updated arrays into the json schema document
 	mixinItemsSchema["anyOf"] = mixinItemsAnyOfSchema

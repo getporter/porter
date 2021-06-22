@@ -1,25 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "config": {
-      "additionalProperties": false,
-      "properties": {
-        "exec": {
-          "anyOf": [
-            {
-              "$comment": "The exec mixin does not currently support any additional configuration",
-              "enum": [
-                "exec"
-              ]
-            }
-          ]
-        }
-      },
-      "required": [
-        "exec"
-      ],
-      "type": "string"
-    },
     "installStep": {
       "type": "object",
       "properties": {
@@ -163,8 +144,7 @@
       "items": {
         "$ref": "#/definitions/uninstallStep"
       }
-    },
-    "config": {"$ref": "#/definitions/config"}
+    }
   },
   "additionalProperties": {
     "type": "array",

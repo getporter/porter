@@ -264,7 +264,8 @@
         "anyOf": []
       },
       "additionalItems": false,
-      "uniqueItems": true
+      "uniqueItems": true,
+      "description": "A list of mixin declarations, each with optional configuration"
     },
     "name": {
       "type": "string",

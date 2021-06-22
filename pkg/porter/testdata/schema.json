@@ -263,20 +263,13 @@
         "additionalProperties": false,
         "properties": {
           "exec": {
-            "anyOf": [
-              {
-                "$comment": "The exec mixin does not currently support any additional configuration",
-                "enum": [
-                  "exec"
-                ]
-              }
-            ]
+            "type": "object"
           }
         },
         "required": [
           "exec"
         ],
-        "type": "string"
+        "type": "object"
       },
       "exec": {
         "additionalProperties": false,
@@ -423,9 +416,6 @@
       }
     },
     "properties": {
-      "config": {
-        "$ref": "#/mixin.exec/definitions/config"
-      },
       "install": {
         "items": {
           "$ref": "#/mixin.exec/definitions/installStep"
@@ -516,8 +506,14 @@
     },
     "mixins": {
       "additionalItems": false,
+      "description": "A list of mixin declarations, each with optional configuration",
       "items": {
         "anyOf": [
+          {
+            "enum": [
+              "exec"
+            ]
+          },
           {
             "$ref": "#/mixin.exec/definitions/config"
           }
