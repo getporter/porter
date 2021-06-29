@@ -155,4 +155,5 @@ porter uninstall hello-llama
 
 In this QuickStart, you learned how to see the parameters defined on a bundle, their default values, and customize the installation of a bundle by specifying alternate values.
 
+* [QuickStart: Pass credentials to a bundle](/quickstart/credentials/)
 * [Understanding how parameters are resolved](/parameters)
