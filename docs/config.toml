@@ -38,21 +38,27 @@ pygmentsStyle = "friendly"
   url = "#"
   [[menu.main]]
     name = "Install Porter"
-    url = "/install"
+    url = "/install/"
     identifier = "install"
     weight = 11
     parent = "get-started"
   [[menu.main]]
     name = "QuickStart"
-    url = "/quickstart"
+    url = "/quickstart/"
     identifier = "quickstart"
     weight = 30
     parent = "get-started"
   [[menu.main]]
     name = "QuickStart - Parameters"
-    url = "/quickstart/parameters"
+    url = "/quickstart/parameters/"
     identifier = "quickstart-parameters"
     weight = 31
+    parent = "get-started"
+  [[menu.main]]
+    name = "QuickStart - Credentials"
+    url = "/quickstart/credentials/"
+    identifier = "quickstart-credentials"
+    weight = 32
     parent = "get-started"
   [[menu.main]]
     name = "Examples"
