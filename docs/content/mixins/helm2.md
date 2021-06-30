@@ -1,16 +1,18 @@
 ---
-title: helm mixin
-description: Manage a Helm release with the helm CLI
+title: helm v2 mixin
+description: Manage a Helm release with the helm v2 CLI
 ---
 
 <img src="/images/mixins/helm.svg" class="mixin-logo" style="width: 150px"/>
 
-This is a [Helm](https://helm.sh) mixin for
-[Porter](https://github.com/getporter/porter). It executes the appropriate helm
+This is a [Helm](https://helm.sh) v2 mixin for
+[Porter](https://github.com/getporter/porter). It executes the appropriate helm v2
 command based on which action it is included within: `install`, `upgrade`, or
 `delete`.
 
 Source: https://github.com/getporter/helm-mixin
+
+⚠️ Helm v2 is no longer supported. Check out the [helm v3](/mixins/helm3/) mixin!
 
 ### Install or Upgrade
 
