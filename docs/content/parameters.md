@@ -66,3 +66,7 @@ applies to parameter sources as well.
 
 [generate]: /cli/porter_parameters_generate/
 [edit]: /cli/porter_parameters_edit/
+
+## Related
+
+* [QuickStart: Use parameters with a bundle](/quickstart/parameters/)

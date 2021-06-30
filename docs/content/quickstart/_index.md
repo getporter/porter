@@ -152,5 +152,5 @@ porter uninstall porter-hello
 
 In this QuickStart, you learned how to use some of the features of the porter CLI to explain a bundle, install and manage its lifecycle.
 
-* [Use parameters with a bundle](/quickstart/parameters/)
+* [QuickStart: Use parameters with a bundle](/quickstart/parameters/)
 * [Learn more about use cases for bundles](/learning/#the-devil-is-in-the-deployments-bundle-use-cases)

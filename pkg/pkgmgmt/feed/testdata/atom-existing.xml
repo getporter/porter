@@ -8,7 +8,6 @@
         <uri>https://porter.sh/mixins</uri>
     </author>
     <category term="exec"/>
-    <category term="helm"/>
     <entry>
         <id>https://cdn.porter.sh/mixins/canary/exec</id>
         <title>exec @ canary</title>
