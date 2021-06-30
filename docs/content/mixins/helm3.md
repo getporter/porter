@@ -62,7 +62,7 @@ install:
 Upgrade
 
 ```yaml
-install:
+upgrade:
   - helm3:
       description: "Description of the command"
       name: RELEASE_NAME
@@ -91,7 +91,7 @@ uninstall:
 
 #### Outputs
 
-The mixin supports saving secrets from Kuberentes as outputs.
+The mixin supports saving secrets from Kubernetes as outputs.
 
 ```yaml
 outputs:
