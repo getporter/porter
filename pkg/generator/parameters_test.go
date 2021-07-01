@@ -146,7 +146,7 @@ func TestDefaultParameters(t *testing.T) {
 
 	val, err = getDefaultParamValue(bun, secondParamName)
 	assert.NoError(t, err, "valid default value for parameter should not give error")
-	assert.Equal(t, val, "")
+	assert.Equal(t, val, nil)
 }
 
 func TestMalformedDefaultParameter(t *testing.T) {
