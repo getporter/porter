@@ -32,16 +32,16 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error)
+type generator func(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error)
 
-func genEmptySet(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error) {
+func genEmptySet(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error) {
 	return valuesource.Strategy{
 		Name:   name,
 		Source: valuesource.Source{Value: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType, defaultVal string) (valuesource.Strategy, error) {
+func genSurvey(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return valuesource.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
 	}
@@ -49,7 +49,7 @@ func genSurvey(name string, surveyType SurveyType, defaultVal string) (valuesour
 	options := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
 	questionDefault := fmt.Sprintf("use default value (%s)", defaultVal)
 
-	if defaultVal != "" {
+	if defaultVal != nil {
 		options = append(options, questionDefault)
 	}
 
@@ -93,15 +93,13 @@ func genSurvey(name string, surveyType SurveyType, defaultVal string) (valuesour
 		if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
 			return c, err
 		}
-	} else {
-		value = defaultVal
 	}
 
 	switch source {
 	case questionSecret:
 		c.Source.Key = secrets.SourceSecret
 		c.Source.Value = value
-	case questionValue, questionDefault:
+	case questionValue:
 		c.Source.Key = host.SourceValue
 		c.Source.Value = value
 	case questionEnvVar:
