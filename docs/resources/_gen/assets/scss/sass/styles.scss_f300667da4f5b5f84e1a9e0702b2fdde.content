@@ -6531,7 +6531,7 @@ nav.home-nav {
     padding-top: 1em; }
   #helm.home .content p, #helm.home .content ul, #helm.home .content li {
     color: white;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     line-height: 1.4;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     letter-spacing: 0;
@@ -6568,7 +6568,6 @@ nav.home-nav {
       color: #27759A;
       margin: 0.25em 0 0.5em;
       font-size: 1.5rem;
-      padding-top: 90px;
       position: relative;
       font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-weight: 600;
@@ -6582,13 +6581,15 @@ nav.home-nav {
         left: 50%;
         font-size: 0.6em;
         margin-left: -5em; }
+    #helm.home .helm-features h3:not(:first-child) {
+      padding-top: 2em; }
     #helm.home .helm-features .columns {
       position: relative; }
     #helm.home .helm-features img {
       top: 0;
       left: 50%; }
     #helm.home .helm-features p {
-      font-size: 1em;
+      font-size: 1.5em;
       padding: 0 5%; }
       #helm.home .helm-features p code {
         border: none; }
@@ -6687,7 +6688,7 @@ nav.home-nav {
         margin: -0.25em 0 0.667em; }
       #helm.home .helm-community .helm-community-blocks section p {
         color: #27759A;
-        font-size: 1rem; }
+        font-size: 1.4rem; }
       #helm.home .helm-community .helm-community-blocks section a {
         color: #464646; }
       #helm.home .helm-community .helm-community-blocks section iframe {
@@ -6790,7 +6791,7 @@ nav.home-nav {
 .copyright {
   background: #3FB1E5;
   color: white;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   padding: 1rem; }
   .copyright a, .copyright a:focus, .copyright a:visited {
     color: #464646; }
@@ -6952,7 +6953,7 @@ nav.home-nav {
     font-size: 2.25rem; }
   #helm .billboard h2 {
     margin: 1rem 12.5%;
-    font-size: 1rem; }
+    font-size: 1.5rem; }
   .contrib-logos-1 img,
   .contrib-logos-2 img {
     max-height: 80px; }
@@ -7819,7 +7820,7 @@ body {
       .home #helm .billboard h2 {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         color: #277A9F;
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         margin-bottom: 30px; }
       .home #helm .billboard .helm-logo {
         position: absolute;
