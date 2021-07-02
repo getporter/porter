@@ -20,7 +20,7 @@ replace (
 	github.com/hashicorp/go-plugin => github.com/getporter/go-plugin v1.4.0-improved-configuration.1
 
 	// local-keyword-registry
-	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8
+	github.com/qri-io/jsonschema => github.com/carolynvs/jsonschema v0.2.1-0.20210602145235-283986347fba
 
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20190830141801-acfa387b8d69
 )
