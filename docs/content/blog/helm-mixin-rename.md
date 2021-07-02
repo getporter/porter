@@ -16,7 +16,7 @@ Last year Helm v2 was put on ice and all new development and support going forwa
 The helm mixin was developed before Helm v3 and only supports Helm v2, so the time has come for us all to say goodbye to helm mixin and upgrade to the helm3 mixin.
 
 Luckily for us [Mohamed Chorfa maintains the helm3 mixin][helm3] and that is the recommended mixin to use going forward.
-If you have previously installing the helm mixin with `porter mixins install helm` the new command is:
+If you have previously installed the helm mixin with `porter mixins install helm` the new command is:
 
 ```
 porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
