@@ -75,6 +75,18 @@
                   <li>Works with and improves existing tools, such as bash, cloud CLIs, terraform and helm. You don't rewrite your existing deployments to start using Porter.</li>
                   <li>Reliable deployments because the client environment: cli versions, installed commands, configuration... is dependable and consistent.</li>
                 </ul>
+
+                <h2>When would I use Porter?</h2>
+                <p>Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!</p>
+                <ul class="emoji-list">
+                  <li><span class="emoji">📦</span> Package everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks.</li>
+                  <li><span class="emoji">🔏</span> Sign the bundle and verify its signature before installing as part of your supply chain security solution.</li>
+                  <li><span class="emoji">🕑</span> Save time because the bundle contains the exact version of your deployment tools. Users don’t need to find and install tools or switch between versions.</li>
+                  <li><span class="emoji">🗂</span> View rich metadata about a deployment. Run porter explain to quickly see how to customize an installation with parameters, what credentials are needed by the bundle. There is no need for detailed installation documentation.</li>
+                  <li><span class="emoji">🧠</span> Reduce the operational knowledge required to manage an application. Often deployments involve multiple tools, such as terraform, AND helm, AND kubectl; all glued together with bash scripts. Bundles abstract away the details of a deployment, and provide a consistent set of commands to deploy any application.</li>
+                  <li><span class="emoji">💁‍♀️</span> Manage deployments securely as a team. Porter uses secure just-in-time credential injection and remembers the parameters last used to deploy. Teammates don’t need to hunt down the proper values themselves, or copy sensitive credentials into local environment variables or files. Secrets remain secure in a secret store such as Hashcorp Vault or Azure Key Vault.</li>
+                </ul>
+                <p>These are just some of the reasons why working with bundles with the tools embedded inside is helpful vs. using the same tools standalone.</p>
               </div>
             </div>
           </div>
