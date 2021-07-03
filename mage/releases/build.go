@@ -16,6 +16,7 @@ var (
 	runtimeArch         = "amd64"
 	runtimePlatform     = "linux"
 	supportedClientGOOS = []string{"linux", "darwin", "windows"}
+	supportedClientArch = []string{"amd64", "arm64"}
 )
 
 func getLDFLAGS(pkg string) string {
@@ -73,10 +74,17 @@ func XBuild(pkg string, name string, binDir string, goos string, goarch string) 
 func XBuildAll(pkg string, name string, binDir string) {
 	var g errgroup.Group
 	for _, goos := range supportedClientGOOS {
-		goos := goos
-		g.Go(func() error {
-			return XBuild(pkg, name, binDir, goos, "amd64")
-		})
+		for _, arch := range supportedClientArch {
+			goos := goos
+			arch := arch
+			// skip windows arm64
+			if arch == "arm64" && goos == "windows" {
+				continue
+			}
+			g.Go(func() error {
+				return XBuild(pkg, name, binDir, goos, arch)
+			})
+		}
 	}
 
 	mgx.Must(g.Wait())
