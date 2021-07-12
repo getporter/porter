@@ -224,7 +224,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		pc.Required = v.Required
 		pc.ApplyTo = generateApplyToString(v.ApplyTo)
 
-		if action == "" || v.AppliesTo(action) {
+		if shouldIncludeInExplainOutput(&v, action) {
 			creds = append(creds, pc)
 		}
 	}
@@ -250,7 +250,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		pp.Required = v.Required
 		pp.Description = v.Description
 
-		if action == "" || v.AppliesTo(action) {
+		if shouldIncludeInExplainOutput(&v, action) {
 			params = append(params, pp)
 		}
 	}
@@ -271,7 +271,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		po.ApplyTo = generateApplyToString(v.ApplyTo)
 		po.Description = v.Description
 
-		if v.AppliesTo(action) {
+		if shouldIncludeInExplainOutput(&v, action) {
 			outputs = append(outputs, po)
 		}
 	}
@@ -298,6 +298,16 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 	pb.Parameters = params
 	pb.Dependencies = dependencies
 	return &pb, nil
+}
+
+// shouldIncludeInExplainOutput determine if a scoped item such as a credential, parameter or output
+// should be included in the explain output.
+func shouldIncludeInExplainOutput(scoped bundle.Scoped, action string) bool {
+	if action == "" {
+		return true
+	}
+
+	return bundle.AppliesTo(scoped, action)
 }
 
 func generateApplyToString(appliesTo []string) string {
