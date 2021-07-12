@@ -319,6 +319,10 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 			"debug": {
 				Definition: "string",
 			},
+			"someoutput": {
+				Definition: "string",
+				ApplyTo: []string{"install"},
+			},
 		},
 		Custom: map[string]interface{}{
 			"sh.porter": map[string]interface{}{
@@ -330,14 +334,32 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	}
 
 	pb, err := generatePrintable(bun, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(pb.Outputs))
-	d := pb.Outputs[0]
-	assert.Equal(t, "string", fmt.Sprintf("%v", d.Type))
+	require.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included because the action is unset")
+	debugOutput := pb.Outputs[0]
+	assert.Equal(t, "string", fmt.Sprintf("%v", debugOutput.Type))
+	assert.Equal(t, "debug", debugOutput.Name)
+	assert.Equal(t, "All Actions", debugOutput.ApplyTo)
+
+	someOutput := pb.Outputs[1]
+	assert.Equal(t, "string", fmt.Sprintf("%v", someOutput.Type))
+	assert.Equal(t, "someoutput", someOutput.Name)
+	assert.Equal(t, "install", someOutput.ApplyTo)
+
 	assert.Equal(t, 0, len(pb.Parameters))
 	assert.Equal(t, 0, len(pb.Credentials))
 	assert.Equal(t, 0, len(pb.Actions))
+
+	// Check outputs for install action
+	pb, err = generatePrintable(bun, "install")
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(pb.Outputs),"expected someoutput to be included")
+
+	// Check outputs for upgrade action action (someoutput doesn't apply)
+	pb, err = generatePrintable(bun, "upgrade")
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(pb.Outputs), "expected someoutput to be excluded by its applyTo")
 }
 
 func TestExplain_generatePrintableBundleCreds(t *testing.T) {
