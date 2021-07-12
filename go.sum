@@ -241,8 +241,8 @@ github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4z
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
-github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8 h1:16VbsGehowzXze3ILYSMz1TH8GtnlrMij3/sUDGTrRo=
-github.com/carolynvs/jsonschema v0.2.1-0.20210120214917-11cc5e4545c8/go.mod h1:g7DPkiOsK1xv6T/Ao5scXRkd+yTFygcANPBaaqW+VrI=
+github.com/carolynvs/jsonschema v0.2.1-0.20210602145235-283986347fba h1:mjN+V+g5m08sWxTlQ2UNj2kdO4FLH1AuDS0l/2aIw7U=
+github.com/carolynvs/jsonschema v0.2.1-0.20210602145235-283986347fba/go.mod h1:g7DPkiOsK1xv6T/Ao5scXRkd+yTFygcANPBaaqW+VrI=
 github.com/carolynvs/magex v0.6.0 h1:rzz4RnBiR8hr2WYEsmq+mqkRLEstPnEK8ZP9MgxNY9Y=
 github.com/carolynvs/magex v0.6.0/go.mod h1:hqaEkr9TAv+kFb/5wgDiTdszF13rpe0Q+bWHmTe6N74=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
