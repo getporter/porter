@@ -14,6 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/distribution/reference"
@@ -293,6 +294,8 @@ func (pd *ParameterDefinitions) UnmarshalYAML(unmarshal func(interface{}) error)
 	return nil
 }
 
+var _ bundle.Scoped = &ParameterDefinition{}
+
 // ParameterDefinition defines a single parameter for a CNAB bundle
 type ParameterDefinition struct {
 	Name      string          `yaml:"name"`
@@ -305,6 +308,10 @@ type ParameterDefinition struct {
 	Destination Location `yaml:",inline,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+}
+
+func (pd *ParameterDefinition) GetApplyTo() []string {
+	return pd.ApplyTo
 }
 
 func (pd *ParameterDefinition) Validate() error {
@@ -356,15 +363,7 @@ func (pd *ParameterDefinition) DeepCopy() *ParameterDefinition {
 // AppliesTo returns a boolean value specifying whether or not
 // the Parameter applies to the provided action
 func (pd *ParameterDefinition) AppliesTo(action string) bool {
-	if len(pd.ApplyTo) == 0 {
-		return true
-	}
-	for _, act := range pd.ApplyTo {
-		if action == act {
-			return true
-		}
-	}
-	return false
+	return bundle.AppliesTo(pd, action)
 }
 
 // exemptFromInstall returns true if a parameter definition:

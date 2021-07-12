@@ -18,3 +18,14 @@
     float: none;
 }
 
+#helm.home .content .emoji-list {
+    list-style: none;
+}
+
+#helm.home .content .emoji-list li:not(:last-child) {
+    padding-bottom: 1em;
+}
+
+.emoji-list .emoji {
+    font-size: 2rem;
+}
