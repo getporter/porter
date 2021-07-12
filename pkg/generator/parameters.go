@@ -62,7 +62,12 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters
 		if err != nil {
 			return pset, err
 		}
-		pset.Parameters = append(pset.Parameters, c)
+
+		// If any of name or source info is missing, do not include this
+		// parameter in the parameter set
+		if c.Name != "" && c.Source.Key != "" && c.Source.Value != "" {
+			pset.Parameters = append(pset.Parameters, c)
+		}
 	}
 
 	return pset, nil

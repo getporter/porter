@@ -93,6 +93,8 @@ func genSurvey(name string, surveyType SurveyType, defaultVal interface{}) (valu
 		if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
 			return c, err
 		}
+	} else {
+		return valuesource.Strategy{}, nil
 	}
 
 	switch source {
