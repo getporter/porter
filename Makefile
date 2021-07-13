@@ -153,7 +153,7 @@ build-examples:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),build-examples)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build --debug
 endif
 
 .PHONY: publish-examples
@@ -161,7 +161,7 @@ publish-examples:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-examples)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY)
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY) --debug
 endif
 
 SCHEMA_VERSION     := cnab-core-1.0.1
