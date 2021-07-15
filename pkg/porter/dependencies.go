@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -23,7 +23,7 @@ type dependencyExecutioner struct {
 	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
-	Claims   claim.Provider
+	Claims   claims.Provider
 
 	// These are populated by Prepare, call it or perish in inevitable errors
 	parentAction BundleAction
@@ -52,8 +52,6 @@ type queuedDependency struct {
 	extensions.DependencyLock
 	CNABFile   string
 	Parameters map[string]string
-
-	outputs claim.Outputs
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
@@ -142,7 +140,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 
 		bun = cachedBundle.Bundle
 	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.ReadLastClaim(e.parentOpts.Name)
+		c, err := e.Claims.GetLastRun(e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -251,6 +249,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	depArgs := cnabprovider.ActionArguments{
+		// TODO(carolynvs): set the bundle digest
 		BundleReference:   dep.Reference,
 		Action:            e.parentArgs.Action,
 		BundlePath:        dep.CNABFile,
@@ -288,15 +287,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
-		return e.Claims.DeleteInstallation(depArgs.Installation)
+		return e.Claims.RemoveInstallation(depArgs.Namespace, depArgs.Installation)
 	}
-
-	// Collect expected outputs via claim
-	outputs, err := e.Claims.ReadLastOutputs(depArgs.Installation)
-	if err != nil {
-		return err
-	}
-	dep.outputs = outputs
-
 	return nil
 }

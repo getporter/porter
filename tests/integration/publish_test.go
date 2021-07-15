@@ -14,8 +14,8 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle

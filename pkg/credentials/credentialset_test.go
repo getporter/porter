@@ -1,0 +1,113 @@
+package credentials
+
+import (
+	"testing"
+	"time"
+
+	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/secrets"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/schema"
+)
+
+func TestCNABSpecVersion(t *testing.T) {
+	version, err := schema.GetSemver(CNABSpecVersion)
+	require.NoError(t, err)
+	assert.Equal(t, DefaultSchemaVersion, version)
+}
+
+func TestNewCredentialSet(t *testing.T) {
+	cs := NewCredentialSet("dev", "mycreds", secrets.Strategy{
+		Name: "password",
+		Source: secrets.Source{
+			Key:   "env",
+			Value: "MY_PASSWORD",
+		},
+	})
+
+	assert.Equal(t, "mycreds", cs.Name, "Name was not set")
+	assert.Equal(t, "dev", cs.Namespace, "Namespace was not set")
+	assert.NotEmpty(t, cs.Created, "Created was not set")
+	assert.NotEmpty(t, cs.Modified, "Modified was not set")
+	assert.Equal(t, cs.Created, cs.Modified, "Created and Modified should have the same timestamp")
+	assert.Equal(t, DefaultSchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
+	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
+}
+
+func TestValidate(t *testing.T) {
+	t.Run("valid - credential specified", func(t *testing.T) {
+		spec := map[string]bundle.Credential{
+			"kubeconfig": {},
+		}
+		values := secrets.Set{
+			"kubeconfig": "top secret creds",
+		}
+		err := Validate(values, spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the credential was specified")
+	})
+
+	t.Run("valid - credential not required", func(t *testing.T) {
+		spec := map[string]bundle.Credential{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: false},
+		}
+		values := secrets.Set{}
+		err := Validate(values, spec, "install")
+		require.NoError(t, err, "expected Validate to pass because the credential isn't required")
+	})
+
+	t.Run("valid - missing inapplicable credential", func(t *testing.T) {
+		spec := map[string]bundle.Credential{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		values := secrets.Set{}
+		err := Validate(values, spec, "custom")
+		require.NoError(t, err, "expected Validate to pass because the credential isn't applicable to the custom action")
+	})
+
+	t.Run("invalid - missing required credential", func(t *testing.T) {
+		spec := map[string]bundle.Credential{
+			"kubeconfig": {ApplyTo: []string{"install"}, Required: true},
+		}
+		values := secrets.Set{}
+		err := Validate(values, spec, "install")
+		require.Error(t, err, "expected Validate to fail because the credential applies to the specified action and is required")
+		assert.Contains(t, err.Error(), "bundle requires credential")
+	})
+}
+
+func TestMarshal(t *testing.T) {
+	now, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z07:00")
+
+	orig := CredentialSet{
+		SchemaVersion: "schemaVersion",
+		Namespace:     "namespace",
+		Name:          "name",
+		Created:       now,
+		Modified:      now,
+		Credentials: []secrets.Strategy{
+			{
+				Name: "cred1",
+				Source: secrets.Source{
+					Key:   "secret",
+					Value: "mysecret",
+				},
+			},
+		},
+	}
+
+	formats := []string{"json", "yaml"}
+	for _, format := range formats {
+		t.Run(format, func(t *testing.T) {
+			raw, err := encoding.Marshal(format, orig)
+			require.NoError(t, err)
+
+			var copy CredentialSet
+			err = encoding.Unmarshal(format, raw, &copy)
+			require.NoError(t, err)
+			assert.Equal(t, orig, copy)
+		})
+	}
+}

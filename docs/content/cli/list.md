@@ -29,8 +29,9 @@ porter list [flags]
 ### Options
 
 ```
-  -h, --help            help for list
-  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -h, --help               help for list
+  -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
+  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```
 
 ### Options inherited from parent commands

@@ -25,11 +25,18 @@ type PluginLoader struct {
 
 	SelectedPluginKey    *plugins.PluginKey
 	SelectedPluginConfig interface{}
+
+	// called for internal plugins (starts with porter.*) to create an instance of
+	// the plugin without going through a separate binary.
+	createInternalPlugin InternalPluginHandler
 }
 
-func NewPluginLoader(c *config.Config) *PluginLoader {
+type InternalPluginHandler func(key string, config interface{}) (protocol plugins.Plugin, err error)
+
+func NewPluginLoader(c *config.Config, createInternalPlugin InternalPluginHandler) *PluginLoader {
 	return &PluginLoader{
-		Config: c,
+		Config:               c,
+		createInternalPlugin: createInternalPlugin,
 	}
 }
 
@@ -44,22 +51,30 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 	l.SelectedPluginKey.Interface = pluginType.Interface
 
+	if l.DebugPlugins {
+		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
+		if l.SelectedPluginConfig != nil {
+			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
+		}
+	}
+
 	var pluginCommand *exec.Cmd
 	if l.SelectedPluginKey.IsInternal {
-		porterPath, err := l.GetPorterPath()
+		plugin, err := l.createInternalPlugin(l.SelectedPluginKey.String(), l.SelectedPluginConfig)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "could not determine the path to the porter client")
+			return nil, func() {}, err
 		}
 
-		pluginCommand = l.NewCommand(porterPath, "plugin", "run", l.SelectedPluginKey.String())
-	} else {
-		pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
+		return plugin, func() { plugin.Close() }, plugin.Connect()
 	}
+
+	pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
+
 	configReader, err := l.readPluginConfig()
 	if err != nil {
 		return nil, nil, err
@@ -71,10 +86,6 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	pluginCommand.Env = l.Environ()
 
 	if l.DebugPlugins {
-		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
-		if l.SelectedPluginConfig != nil {
-			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
-		}
 		fmt.Fprintln(l.Err, strings.Join(pluginCommand.Args, " "))
 	}
 
@@ -98,11 +109,15 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 
 	var errbuf bytes.Buffer
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: plugins.HandshakeConfig,
-		Plugins:         pluginTypes,
-		Cmd:             pluginCommand,
-		Logger:          logger,
-		Stderr:          &errbuf,
+		HandshakeConfig: plugin.HandshakeConfig{
+			ProtocolVersion:  pluginType.ProtocolVersion,
+			MagicCookieKey:   plugins.HandshakeConfig.MagicCookieKey,
+			MagicCookieValue: plugins.HandshakeConfig.MagicCookieValue,
+		},
+		Plugins: pluginTypes,
+		Cmd:     pluginCommand,
+		Logger:  logger,
+		Stderr:  &errbuf,
 	})
 	cleanup := func() {
 		client.Kill()

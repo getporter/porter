@@ -5,31 +5,32 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/editor"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/yaml"
-
+	"get.porter.sh/porter/pkg/storage"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	credentials "github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/utils/crud"
-	tablewriter "github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
 // CredentialShowOptions represent options for Porter's credential show command
 type CredentialShowOptions struct {
 	printer.PrintOptions
-	Name string
+	Name      string
+	Namespace string
 }
 
 type CredentialEditOptions struct {
-	Name string
+	Name      string
+	Namespace string
 }
 
 // ListCredentials lists saved credential sets.
 func (p *Porter) ListCredentials(opts ListOptions) error {
-	creds, err := p.Credentials.ReadAll()
+	creds, err := p.Credentials.ListCredentialSets(opts.Namespace)
 	if err != nil {
 		return err
 	}
@@ -52,10 +53,10 @@ func (p *Porter) ListCredentials(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Name, tp.Format(cr.Modified)}
+				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, creds, printCredRow,
-			"NAME", "MODIFIED")
+			"NAMESPACE", "NAME", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -117,8 +118,9 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	}
 	genOpts := generator.GenerateCredentialsOptions{
 		GenerateOptions: generator.GenerateOptions{
-			Name:   name,
-			Silent: opts.Silent,
+			Name:      name,
+			Namespace: opts.Namespace,
+			Silent:    opts.Silent,
 		},
 		Credentials: bundle.Credentials,
 	}
@@ -133,7 +135,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 	cs.Created = time.Now()
 	cs.Modified = cs.Created
 
-	err = p.Credentials.Save(cs)
+	err = p.Credentials.UpsertCredentialSet(cs)
 	return errors.Wrapf(err, "unable to save credentials")
 }
 
@@ -157,12 +159,13 @@ func (o *CredentialEditOptions) Validate(args []string) error {
 
 // EditCredential edits the credentials of the provided name.
 func (p *Porter) EditCredential(opts CredentialEditOptions) error {
-	credSet, err := p.Credentials.Read(opts.Name)
+	credSet, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
 
-	contents, err := yaml.Marshal(credSet)
+	// TODO(carolynvs): support editing in yaml, json or toml
+	contents, err := encoding.MarshalYaml(credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to load credentials")
 	}
@@ -173,7 +176,7 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrap(err, "unable to open editor to edit credentials")
 	}
 
-	err = yaml.Unmarshal(output, &credSet)
+	err = encoding.UnmarshalYaml(output, &credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to process credentials")
 	}
@@ -184,7 +187,7 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 	}
 
 	credSet.Modified = time.Now()
-	err = p.Credentials.Save(credSet)
+	err = p.Credentials.UpdateCredentialSet(credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save credentials")
 	}
@@ -195,17 +198,22 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
-	credSet, err := p.Credentials.Read(opts.Name)
+	credSet, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
-	case printer.FormatJson:
-		return printer.PrintJson(p.Out, credSet)
-	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, credSet)
+	case printer.FormatJson, printer.FormatYaml:
+		result, err := encoding.Marshal(string(opts.Format), credSet)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(p.Out, string(result))
+		return nil
 	case printer.FormatTable:
+		ds := NewDisplayCredentialSet(credSet)
+
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -218,8 +226,10 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		var rows [][]string
 
 		// Iterate through all CredentialStrategies and add to rows
-		for _, cs := range credSet.Credentials {
-			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
+		for _, cs := range ds.Credentials {
+			for k, v := range cs.Source {
+				rows = append(rows, []string{cs.Name, v, k})
+			}
 		}
 
 		// Build and configure our tablewriter
@@ -232,9 +242,10 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		table.SetAutoFormatHeaders(false)
 
 		// First, print the CredentialSet metadata
-		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Modified))
+		fmt.Fprintf(p.Out, "Name: %s\n", ds.Name)
+		fmt.Fprintf(p.Out, "Namespace: %s\n", ds.Namespace)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(ds.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(ds.Modified))
 
 		// Now print the table
 		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
@@ -250,20 +261,21 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 
 // CredentialDeleteOptions represent options for Porter's credential delete command
 type CredentialDeleteOptions struct {
-	Name string
+	Name      string
+	Namespace string
 }
 
 // DeleteCredential deletes the credential set corresponding to the provided
 // names.
 func (p *Porter) DeleteCredential(opts CredentialDeleteOptions) error {
-	err := p.Credentials.Delete(opts.Name)
-	if err == crud.ErrRecordDoesNotExist {
+	err := p.Credentials.RemoveCredentialSet(opts.Namespace, opts.Name)
+	if errors.Is(err, storage.ErrNotFound{}) {
 		if p.Debug {
-			fmt.Fprintln(p.Err, "credential set does not exist")
+			fmt.Fprintln(p.Err, err)
 		}
 		return nil
 	}
-	return errors.Wrapf(err, "unable to delete credential")
+	return errors.Wrapf(err, "unable to delete credential set")
 }
 
 // Validate validates the args provided Porter's credential delete command
@@ -284,4 +296,37 @@ func validateCredentialName(args []string) error {
 	default:
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
+}
+
+type DisplayCredentialSet struct {
+	SchemaVersion string                  `json:"schemaVersion" yaml:"schemaVersion"`
+	Namespace     string                  `json:"namespace" yaml:"namespace"`
+	Name          string                  `json:"name" yaml:"name"`
+	Created       time.Time               `json:"created" yaml:"created"`
+	Modified      time.Time               `json:"modified" yaml:"modified"`
+	Credentials   []DisplaySecretStrategy `json:"credentials" yaml:"credentials"`
+}
+
+type DisplaySecretStrategy struct {
+	Name   string            `json:"name" yaml:"name"`
+	Source map[string]string `json:"source" yaml:"source"`
+}
+
+func NewDisplayCredentialSet(creds credentials.CredentialSet) DisplayCredentialSet {
+	ds := DisplayCredentialSet{
+		SchemaVersion: string(creds.SchemaVersion),
+		Namespace:     creds.Namespace,
+		Name:          creds.Name,
+		Created:       creds.Created,
+		Modified:      creds.Modified,
+		Credentials:   make([]DisplaySecretStrategy, len(creds.Credentials)),
+	}
+
+	for i, cred := range creds.Credentials {
+		ds.Credentials[i] = DisplaySecretStrategy{
+			Name:   cred.Name,
+			Source: map[string]string{cred.Source.Key: cred.Source.Value},
+		}
+	}
+	return ds
 }

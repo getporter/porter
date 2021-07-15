@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -63,8 +62,8 @@ func (p *Porter) GetInstallationLogs(opts *LogsShowOptions) (string, bool, error
 	installation := opts.sharedOptions.Name
 
 	if opts.ClaimID != "" {
-		return claim.GetLogs(p.Claims, opts.ClaimID)
+		return p.Claims.GetLogs(opts.ClaimID)
 	}
 
-	return claim.GetLastLogs(p.Claims, installation)
+	return p.Claims.GetLastLogs(opts.Namespace, installation)
 }

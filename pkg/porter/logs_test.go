@@ -3,9 +3,9 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,9 +65,11 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 func TestPorter_ShowInstallationLogs(t *testing.T) {
 	t.Run("no logs found", func(t *testing.T) {
 		p := NewTestPorter(t)
-		b := bundle.Bundle{}
-		c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-		p.TestClaims.CreateResult(c, claim.StatusSucceeded)
+		defer p.Teardown()
+
+		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
+		p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 
 		var opts LogsShowOptions
 		opts.Name = "test"
@@ -80,12 +82,15 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		const testLogs = "some mighty fine logs"
 
 		p := NewTestPorter(t)
-		b := bundle.Bundle{}
-		c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-		r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		p.TestClaims.CreateOutput(c, r, claim.OutputInvocationImageLogs, []byte(testLogs))
-		r.OutputMetadata.SetGeneratedByBundle(claim.OutputInvocationImageLogs, false)
-		p.TestClaims.SaveResult(r)
+		defer p.Teardown()
+
+		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
+		r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded), func(r *claims.Result) {
+			r.OutputMetadata.SetGeneratedByBundle(cnab.OutputInvocationImageLogs, false)
+		})
+
+		p.TestClaims.CreateOutput(r.NewOutput(cnab.OutputInvocationImageLogs, []byte(testLogs)))
 
 		var opts LogsShowOptions
 		opts.Name = "test"

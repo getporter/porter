@@ -18,7 +18,7 @@ const (
 	DriverNameDebug = "debug"
 )
 
-func (r *Runtime) newDriver(driverName string, claimName string, args ActionArguments) (driver.Driver, error) {
+func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Driver, error) {
 	var driverImpl driver.Driver
 	var err error
 

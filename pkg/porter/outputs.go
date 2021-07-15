@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	claims "get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab/extensions"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
-
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -72,18 +71,17 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	if err != nil {
 		return err
 	}
-	name := opts.sharedOptions.Name
 
-	output, err := p.ReadBundleOutput(opts.Output, name)
+	output, err := p.ReadBundleOutput(opts.Output, opts.Name, opts.Namespace)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read output '%s' for installation '%s'", opts.Output, name)
+		return errors.Wrapf(err, "unable to read output '%s' for installation '%s/%s'", opts.Output, opts.Namespace, opts.Name)
 	}
 
 	fmt.Fprintln(p.Out, output)
 	return nil
 }
 
-func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claim.Outputs) DisplayValues {
+func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claims.Outputs) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
 	displayOutputs := make(DisplayValues, 0, outputs.Len())
@@ -91,7 +89,7 @@ func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claim.Outputs) Displ
 		output, _ := outputs.GetByIndex(i)
 		do := &DisplayValue{Name: output.Name}
 		do.SetValue(output.Value)
-		schema, ok := output.GetSchema()
+		schema, ok := output.GetSchema(bun)
 		if ok {
 			do.Type = extensions.GetParameterType(bun, &schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
@@ -117,12 +115,12 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, erro
 		return nil, err
 	}
 
-	c, err := p.Claims.ReadLastClaim(opts.Name)
+	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
+	outputs, err := p.Claims.GetLastOutputs(opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +152,8 @@ func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
 }
 
 // ReadBundleOutput reads a bundle output from an installation
-func (p *Porter) ReadBundleOutput(outputName, installation string) (string, error) {
-	o, err := p.Claims.ReadLastOutput(installation, outputName)
+func (p *Porter) ReadBundleOutput(outputName, installation, namespace string) (string, error) {
+	o, err := p.Claims.GetLastOutput(namespace, installation, outputName)
 	if err != nil {
 		return "", err
 	}

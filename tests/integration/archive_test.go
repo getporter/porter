@@ -18,8 +18,8 @@ func TestArchive(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests

@@ -36,7 +36,7 @@ func ExampleInstall() {
 		log.Fatal(err)
 	}
 
-	installation, err := p.GetInstallation(showOpts)
+	installation, _, err := p.GetInstallation(showOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

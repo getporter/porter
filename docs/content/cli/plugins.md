@@ -7,10 +7,6 @@ url: /cli/porter_plugins/
 
 Plugin commands. Plugins enable Porter to work on different cloud providers and systems.
 
-### Synopsis
-
-Plugin commands. Plugins enable Porter to work on different cloud providers and systems.
-
 ### Options
 
 ```

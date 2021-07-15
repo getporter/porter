@@ -10,13 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddReloccation(t *testing.T) {
+func TestAddRelocation(t *testing.T) {
 	t.Parallel()
 
 	data, err := ioutil.ReadFile("testdata/relocation-mapping.json")
 	require.NoError(t, err)
 
 	d := NewTestRuntime(t)
+	defer d.Teardown()
 
 	args := ActionArguments{
 		RelocationMapping: "/cnab/app/relocation-mapping.json",

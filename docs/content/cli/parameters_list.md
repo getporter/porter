@@ -18,14 +18,17 @@ porter parameters list [flags]
 ### Examples
 
 ```
-  porter parameters list [-o table|json|yaml]
+  porter parameters list
+  porter parameters list --namespace prod -o json
+  porter parameters list --namespace "*"
 ```
 
 ### Options
 
 ```
-  -h, --help            help for list
-  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -h, --help               help for list
+  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.
+  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```
 
 ### Options inherited from parent commands

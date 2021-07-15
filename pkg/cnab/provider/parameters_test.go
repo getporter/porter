@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,8 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
+
 	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
 	}
@@ -37,6 +40,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	b := bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
@@ -62,6 +66,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	// Here we set default values, but expect nil/empty
 	// values for parameters that do not apply to a given action
@@ -121,6 +126,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -150,6 +156,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	b := bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -179,6 +186,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
@@ -224,6 +232,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -233,7 +243,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
 		require.NoError(t, err)
@@ -245,6 +255,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -258,7 +270,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 			Params:       overrides,
 		}
 		params, err := r.loadParameters(b, args)
@@ -271,6 +283,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -278,13 +292,14 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := r.ProcessBundle("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b })
+		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
 		require.NoError(t, err)
@@ -296,6 +311,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -307,13 +324,14 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 			"foo": "foo_override",
 		}
 
-		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
+		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
+		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 			Params:       overrides,
 		}
 		params, err := r.loadParameters(b, args)
@@ -326,6 +344,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -333,7 +353,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := r.ProcessBundle("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		fooBun := bundle.Bundle{
+		bun := bundle.Bundle{
 			Name:    "foo-setup",
 			Version: bundle.CNABSpecVersion,
 			InvocationImages: []bundle.InvocationImage{
@@ -350,13 +370,15 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 				"connstr": {Type: "string"},
 			},
 		}
-		c := r.TestClaims.CreateClaim("mybun-mysql", claim.ActionInstall, fooBun, nil)
-		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		r.TestClaims.CreateOutput(c, cr, "connstr", []byte("connstr value"))
+
+		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun })
+		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
 		require.NoError(t, err)
@@ -368,6 +390,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
@@ -375,18 +399,19 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := r.ProcessBundle("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		// foo is set by a the user
+		// foo is set by a user
 		// bar is set by a parameter source
 		// baz is set by the bundle default
-		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
-		cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-		r.TestClaims.CreateOutput(c, cr, "foo", []byte("foo_source"))
-		r.TestClaims.CreateOutput(c, cr, "bar", []byte("bar_source"))
-		r.TestClaims.CreateOutput(c, cr, "baz", []byte("baz_source"))
+		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
+		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
+		r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar_source")))
+		r.TestClaims.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
 
 		args := ActionArguments{
 			Installation: "mybun",
-			Action:       claim.ActionUpgrade,
+			Action:       cnab.ActionUpgrade,
 			Params:       map[string]string{"foo": "foo_override"},
 		}
 		params, err := r.loadParameters(b, args)
@@ -403,78 +428,79 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 // This is intended to cover the matrix of cases around parameter value resolution.
 // It exercises the matrix for all supported actions.
 func Test_Paramapalooza(t *testing.T) {
-	actions := []string{"install", "upgrade", "uninstall", "zombies"}
-	for _, action := range actions {
-		t.Run(action, func(t *testing.T) {
-			testcases := []struct {
-				name            string
-				required        bool
-				provided        bool
-				defaultExists   bool
-				appliesToAction bool
-				expectedVal     interface{}
-				expectedErr     string
-			}{
-				// Are you ready to enter the Matrix?
-				{"required, provided, default exists, applies to action",
-					true, true, true, true, "my-param-value", "",
-				},
-				{"required, provided, default exists, does not apply to action",
-					true, true, true, false, nil, "",
-				},
-				{"required, provided, default does not exist, applies to action",
-					true, true, false, true, "my-param-value", "",
-				},
-				{"required, provided, default does not exist, does not apply to action",
-					true, true, false, false, nil, "",
-				},
-				// As of writing, bundle.ValuesOrDefaults in cnab-go requires a specific override
-				// be provided if applicable to an action.
-				// Otherwise, it errors out and does not look up/use default in this case.
-				{"required, not provided, default exists, applies to action",
-					true, false, true, true, nil, "invalid parameters: parameter \"my-param\" is required",
-				},
-				{"required, not provided, default exists, does not apply to action",
-					true, false, true, false, nil, "",
-				},
-				{"required, not provided, default does not exist, applies to action",
-					true, false, false, true, nil, "invalid parameters: parameter \"my-param\" is required",
-				},
-				{"required, not provided, default does not exist, does not apply to action",
-					true, false, false, false, nil, "",
-				},
-				{"not required, provided, default exists, applies to action",
-					false, true, true, true, "my-param-value", "",
-				},
-				{"not required, provided, default exists, does not apply to action",
-					false, true, true, false, nil, "",
-				},
-				{"not required, provided, default does not exist, applies to action",
-					false, true, false, true, "my-param-value", "",
-				},
-				{"not required, provided, default does not exist, does not apply to action",
-					false, true, false, false, nil, "",
-				},
-				{"not required, not provided, default exists, applies to action",
-					false, false, true, true, "my-param-default", "",
-				},
-				{"not required, not provided, default exists, does not apply to action",
-					false, false, true, false, nil, "",
-				},
-				{"not required, not provided, default does not exist, applies to action",
-					false, false, false, true, nil, "",
-				},
-				{"not required, not provided, default does not exist, does not apply to action",
-					false, false, false, false, nil, "",
-				},
-			}
+	testcases := []struct {
+		Name            string
+		Required        bool
+		Provided        bool
+		DefaultExists   bool
+		AppliesToAction bool
+		ExpectedVal     interface{}
+		ExpectedErr     string
+	}{
+		// Are you ready to enter the Matrix?
+		{Name: "required, provided, default exists, applies to action",
+			Required: true, Provided: true, DefaultExists: true, AppliesToAction: true, ExpectedVal: "my-param-value",
+		},
+		{"required, provided, default exists, does not apply to action",
+			true, true, true, false, nil, "",
+		},
+		{"required, provided, default does not exist, applies to action",
+			true, true, false, true, "my-param-value", "",
+		},
+		{"required, provided, default does not exist, does not apply to action",
+			true, true, false, false, nil, "",
+		},
+		// As of writing, bundle.ValuesOrDefaults in cnab-go requires a specific override
+		// be provided if applicable to an action.
+		// Otherwise, it errors out and does not look up/use default in this case.
+		{"required, not provided, default exists, applies to action",
+			true, false, true, true, nil, "invalid parameters: parameter \"my-param\" is required",
+		},
+		{"required, not provided, default exists, does not apply to action",
+			true, false, true, false, nil, "",
+		},
+		{"required, not provided, default does not exist, applies to action",
+			true, false, false, true, nil, "invalid parameters: parameter \"my-param\" is required",
+		},
+		{"required, not provided, default does not exist, does not apply to action",
+			true, false, false, false, nil, "",
+		},
+		{"not required, provided, default exists, applies to action",
+			false, true, true, true, "my-param-value", "",
+		},
+		{"not required, provided, default exists, does not apply to action",
+			false, true, true, false, nil, "",
+		},
+		{"not required, provided, default does not exist, applies to action",
+			false, true, false, true, "my-param-value", "",
+		},
+		{"not required, provided, default does not exist, does not apply to action",
+			false, true, false, false, nil, "",
+		},
+		{"not required, not provided, default exists, applies to action",
+			false, false, true, true, "my-param-default", "",
+		},
+		{"not required, not provided, default exists, does not apply to action",
+			false, false, true, false, nil, "",
+		},
+		{"not required, not provided, default does not exist, applies to action",
+			false, false, false, true, nil, "",
+		},
+		{"not required, not provided, default does not exist, does not apply to action",
+			false, false, false, false, nil, "",
+		},
+	}
 
-			for _, tc := range testcases {
-				t.Run(tc.name, func(t *testing.T) {
-					t.Parallel()
+	for _, tc := range testcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			actions := []string{"install", "upgrade", "uninstall", "zombies"}
+			for _, action := range actions {
+				t.Run(action, func(t *testing.T) {
+					//t.Parallel()
 					tc := tc
 
-					d := NewTestRuntime(t)
+					r := NewTestRuntime(t)
+					defer r.Teardown()
 
 					bun := bundle.Bundle{
 						Name:          "mybuns",
@@ -501,7 +527,7 @@ func Test_Paramapalooza(t *testing.T) {
 						Parameters: map[string]bundle.Parameter{
 							"my-param": {
 								Definition: "my-param",
-								Required:   tc.required,
+								Required:   tc.Required,
 								Destination: &bundle.Location{
 									EnvironmentVariable: "MY_PARAM",
 								},
@@ -509,11 +535,11 @@ func Test_Paramapalooza(t *testing.T) {
 						},
 					}
 
-					if tc.defaultExists {
+					if tc.DefaultExists {
 						bun.Definitions["my-param"].Default = "my-param-default"
 					}
 
-					if !tc.appliesToAction {
+					if !tc.AppliesToAction {
 						param := bun.Parameters["my-param"]
 						param.ApplyTo = []string{"non-applicable-action"}
 						bun.Parameters["my-param"] = param
@@ -525,7 +551,7 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args
-					if tc.provided {
+					if tc.Provided {
 						args.Params = map[string]string{
 							"my-param": "my-param-value",
 						}
@@ -537,31 +563,32 @@ func Test_Paramapalooza(t *testing.T) {
 						bytes, err := json.Marshal(bun)
 						require.NoError(t, err)
 
-						err = d.FileSystem.WriteFile("bundle.json", bytes, 0644)
+						err = r.FileSystem.WriteFile("bundle.json", bytes, 0644)
 						require.NoError(t, err)
 
 						args.BundlePath = "bundle.json"
 					} else {
 						// For all other actions, a claim is expected to exist
 						// so we create one here and add the bundle to the claim
-						claim, err := claim.New("test", claim.ActionInstall, bun, nil)
-						require.NoError(t, err)
-
-						err = d.claims.SaveClaim(claim)
-						require.NoError(t, err)
+						i := claims.NewInstallation("", "test")
+						require.NoError(t, r.claims.InsertInstallation(i), "error creating existing testing installation")
+						c := i.NewRun(cnab.ActionInstall)
+						c.Bundle = bun
+						require.NoError(t, r.claims.InsertRun(c), "error adding existing test run")
+						require.NoError(t, r.claims.InsertResult(c.NewResult(cnab.StatusSucceeded)), "error setting existing run status")
 					}
 
-					err := d.Execute(args)
-					if tc.expectedErr != "" {
-						require.EqualError(t, err, tc.expectedErr)
+					err := r.Execute(args)
+					if tc.ExpectedErr != "" {
+						require.EqualError(t, err, tc.ExpectedErr)
 					} else {
 						require.NoError(t, err)
 
 						if action != "uninstall" {
 							// Verify the updated param value on the generated claim
-							updatedClaim, err := d.claims.ReadLastClaim("test")
+							updatedClaim, err := r.claims.GetLastRun("", "test")
 							require.NoError(t, err)
-							require.Equal(t, tc.expectedVal, updatedClaim.Parameters["my-param"])
+							require.Equal(t, tc.ExpectedVal, updatedClaim.Parameters["my-param"])
 						}
 					}
 				})
@@ -574,6 +601,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 	bun, err := r.ProcessBundle("bundle.json")
@@ -596,13 +624,15 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 			"connstr": {Type: "string"},
 		},
 	}
-	c := r.TestClaims.CreateClaim("mybun-mysql", claim.ActionInstall, fooBun, nil)
-	cr := r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-	r.TestClaims.CreateOutput(c, cr, "connstr", []byte("connstr value"))
+	i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
+	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = fooBun })
+	cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
-	c = r.TestClaims.CreateClaim("mybun", claim.ActionInstall, bun, nil)
-	cr = r.TestClaims.CreateResult(c, claim.StatusSucceeded)
-	r.TestClaims.CreateOutput(c, cr, "bar", []byte("bar value"))
+	i = r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
+	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun })
+	cr = r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 
 	args := ActionArguments{
 		Installation: "mybun",
@@ -610,7 +640,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	got, err := r.resolveParameterSources(bun, args)
 	require.NoError(t, err, "resolveParameterSources failed")
 
-	want := valuesource.Set{
+	want := secrets.Set{
 		"bar":     "bar value",
 		"connstr": "connstr value",
 	}

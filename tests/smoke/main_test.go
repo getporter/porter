@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/storage/plugins/filesystem"
 	"github.com/carolynvs/magex/shx"
+	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +33,8 @@ type Test struct {
 //
 // Always defer Test.Teardown(), even when an error is returned.
 func NewTest(t *testing.T) (Test, error) {
+	os.Setenv(mg.VerboseEnv, "true")
+
 	var err error
 	test := &Test{T: t}
 
@@ -44,6 +48,8 @@ func NewTest(t *testing.T) (Test, error) {
 		return *test, err
 	}
 
+	os.Setenv("PORTER_HOME", test.PorterHomeDir)
+
 	err = test.PorterE("help")
 	if err != nil {
 		return *test, err
@@ -54,22 +60,40 @@ func NewTest(t *testing.T) (Test, error) {
 		return *test, err
 	}
 
-	return *test, nil
+	return *test, test.startMongo()
+}
+
+func (t Test) startMongo() error {
+	c := context.NewTestContext(t.T)
+	conn, err := filesystem.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test")
+	defer conn.Close()
+	if err != nil {
+		return err
+	}
+
+	// Start with a fresh database
+	err = conn.RemoveDatabase()
+	return err
 }
 
 // Run a porter command and fail the test if the command returns an error.
 func (t Test) RequirePorter(args ...string) {
-	err := t.PorterE(args...)
+	err := t.Porter(args...).RunV()
 	require.NoError(t.T, err)
 }
 
 // Run a porter command, printing stderr when the command fails.
 func (t Test) PorterE(args ...string) error {
-	args = append(args, "--debug")
-	p := shx.Command(t.PorterPath, args...).Stdout(nil)
-	p.Cmd.Env = []string{"PORTER_HOME=" + t.PorterHomeDir}
-	err := p.Run()
+	err := t.Porter(args...).RunE()
 	return errors.Wrapf(err, "error running porter %s", args)
+}
+
+// Build a porter command, ready to be executed or further customized.
+func (t Test) Porter(args ...string) shx.PreparedCommand {
+	args = append(args, "--debug")
+	return shx.Command(t.PorterPath, args...).
+		In(t.TestDir).
+		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 
 func (t Test) Teardown() {
@@ -115,5 +139,6 @@ func (t *Test) createPorterHome() error {
 		return errors.Wrap(err, "could not copy mixins/ into test PORTER_HOME")
 	}
 
+	cxt.CopyFile("testdata/config.toml", filepath.Join(t.PorterHomeDir, "config.toml"))
 	return nil
 }

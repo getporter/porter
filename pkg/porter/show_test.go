@@ -3,10 +3,11 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,23 +16,25 @@ func TestPorter_ShowBundle(t *testing.T) {
 
 	testcases := []struct {
 		name       string
-		reference  string
+		repo       string
 		format     printer.Format
 		outputFile string
 	}{
-		{name: "plain", reference: "porter-hello", format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
-		{name: "no reference, plain", reference: "", format: printer.FormatPlaintext, outputFile: "testdata/show/no-reference-expected-output.txt"},
-		{name: "json", reference: "porter-hello", format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
-		{name: "yaml", reference: "porter-hello", format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
+		{name: "plain", repo: "getporter/wordpress", format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
+		{name: "no reference, plain", repo: "", format: printer.FormatPlaintext, outputFile: "testdata/show/no-reference-expected-output.txt"},
+		{name: "json", repo: "getporter/wordpress", format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
+		{name: "yaml", repo: "getporter/wordpress", format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
 
 			opts := ShowOptions{
 				sharedOptions: sharedOptions{
-					Name: "test",
+					Namespace: "dev",
+					Name:      "mywordpress",
 				},
 				PrintOptions: printer.PrintOptions{
 					Format: tc.format,
@@ -41,7 +44,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			// Create test claims
 			writeOnly := true
 			b := bundle.Bundle{
-				Name:    "porter-hello",
+				Name:    "wordpress",
 				Version: "0.1.0",
 				Definitions: definition.Definitions{
 					"secretString": &definition.Schema{
@@ -73,17 +76,28 @@ func TestPorter_ShowBundle(t *testing.T) {
 					},
 				},
 			}
-			c1 := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, map[string]interface{}{"token": "top-secret", "logLevel": 5})
-			c1.BundleReference = tc.reference
-			require.NoError(t, p.TestClaims.SaveClaim(c1))
-			r := p.TestClaims.CreateResult(c1, claim.StatusSucceeded)
-			p.TestClaims.CreateOutput(c1, r, "foo", []byte("foo-output"))
-			p.TestClaims.CreateOutput(c1, r, "bar", []byte("bar-output"))
+			i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
+				i.BundleVersion = "0.1.0"
+				i.BundleRepository = tc.repo
+				i.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
+				i.Labels = map[string]string{
+					"io.cnab/app":        "wordpress",
+					"io.cnab/appVersion": "v1.2.3",
+				}
+				i.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3}
+			})
+			r := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
+				r.Bundle = b
+				if tc.repo != "" {
+					r.BundleReference = tc.repo + ":0.1.0"
+				}
 
-			c2 := p.TestClaims.CreateClaim("test", claim.ActionUpgrade, b, map[string]interface{}{"token": "top-secret", "logLevel": 3})
-			c2.BundleReference = tc.reference
-			require.NoError(t, p.TestClaims.SaveClaim(c2))
-			r = p.TestClaims.CreateResult(c2, claim.StatusRunning)
+			})
+			i.Status.RunID = r.ID
+			i.Status.Action = r.Action
+			i.Status.ResultStatus = cnab.StatusSucceeded
+			i.Status.InstallationCompleted = true
+			require.NoError(t, p.TestClaims.UpdateInstallation(i))
 
 			err := p.ShowInstallation(opts)
 			require.NoError(t, err, "ShowInstallation failed")

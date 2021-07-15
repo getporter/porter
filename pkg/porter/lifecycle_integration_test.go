@@ -10,6 +10,8 @@ import (
 
 func TestInstallFromTag_ManageFromClaim(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	cacheDir, _ := p.Cache.GetCacheDir()
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 

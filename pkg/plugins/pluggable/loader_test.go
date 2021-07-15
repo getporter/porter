@@ -11,7 +11,9 @@ import (
 
 func TestPluginLoader_SelectPlugin(t *testing.T) {
 	c := config.NewTestConfig(t)
-	l := NewPluginLoader(c.Config)
+	l := NewPluginLoader(c.Config, func(string, interface{}) (plugins.Plugin, error) {
+		return nil, nil
+	})
 
 	pluginCfg := PluginTypeConfig{
 		GetDefaultPluggable: func(c *config.Config) string {

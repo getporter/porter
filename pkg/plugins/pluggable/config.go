@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
-// Entry defines a configuration entry for an item that that can be managed by a plugin.
+// Entry defines a configuration entry for an item that can be managed by a plugin.
 type Entry interface {
 	GetName() string
 	GetPluginSubKey() string
@@ -32,4 +32,7 @@ type PluginTypeConfig struct {
 	// GetDefaultPlugin is the function on porter's configuration
 	// to retrieve the default plugin to use for a type of plugin, e.g. "storage-plugin"
 	GetDefaultPlugin func(c *config.Config) string
+
+	// ProtocolVersion is the version of the protocol used by this plugin.
+	ProtocolVersion uint
 }

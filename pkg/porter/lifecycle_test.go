@@ -14,6 +14,7 @@ import (
 
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	home, err := p.TestConfig.GetHomeDir()
 	t.Logf("home dir is: %s", home)
@@ -39,6 +40,7 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 
 func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.TestRegistry.MockPullBundle = func(tag string, insecureRegistry bool) (bun bundle.Bundle, reloMap *relocation.ImageRelocationMap, err error) {
 		return bundle.Bundle{}, nil, errors.New("unable to pull bundle deislabs/kubekahn:latest")
@@ -57,6 +59,7 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 
 func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	// mess up the cache
 	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
@@ -74,6 +77,7 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	err := p.Create()
 	require.NoError(t, err)
@@ -89,6 +93,8 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 
 func TestPorter_BuildActionArgs(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	cxt := p.TestConfig.TestContext
 
 	// Add manifest which is used to parse parameter sets
@@ -170,6 +176,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 func TestManifestIgnoredWithTag(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	t.Run("ignore manifest in cwd if tag present", func(t *testing.T) {
 		opts := BundleActionOptions{}
 		opts.Reference = "deislabs/kubekahn:latest"

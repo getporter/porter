@@ -16,11 +16,11 @@ directories under ~/.porter. Installation records of a bundle being
 executed, including claim receipts, action results and outputs, are saved to
 the /claims, /results and /outputs directories under ~/.porter.
 
-A storage plugin can implement the [crud.Store interface][crudstore] and change
+A storage plugin can implement the [crudstore.Protocol interface][crudstore] and change
 where those files are saved. For example, the [Azure plugin](/plugins/azure/)
 saves them to Azure Blob Storage.
 
-[crudstore]: https://github.com/cnabio/cnab-go/blob/8ae1722acdeaddc1e720803ca496920c5a4698a2/utils/crud/store.go#L4-L9
+[crudstore]: https://github.com/getporter/porter/blob/release/v1/pkg/storage/crudstore/protocol.go
 
 ## Secrets
 

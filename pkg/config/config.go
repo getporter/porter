@@ -79,7 +79,18 @@ func (c *Config) LoadData() error {
 		c.DataLoader = LoadFromEnvironment()
 	}
 
-	return c.DataLoader(c)
+	if err := c.DataLoader(c); err != nil {
+		return err
+	}
+
+	if c.Debug {
+		ns := "(global)"
+		if c.Data.Namespace != "" {
+			ns = c.Data.Namespace
+		}
+		fmt.Fprintf(c.Err, "Using %s namespace from configuration\n", ns)
+	}
+	return nil
 }
 
 func (c *Config) GetStorage(name string) (CrudStore, error) {
@@ -91,7 +102,7 @@ func (c *Config) GetStorage(name string) (CrudStore, error) {
 		}
 	}
 
-	return CrudStore{}, errors.New("store %q not defined")
+	return CrudStore{}, errors.Errorf("store '%s' not defined", name)
 }
 
 func (c *Config) GetSecretSource(name string) (SecretSource, error) {

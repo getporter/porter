@@ -342,8 +342,13 @@ func TestIntegration() {
 	if runTest != "" {
 		run = "-run=" + runTest
 	}
+
+	verbose := ""
+	if mg.Verbose() {
+		verbose = "-v"
+	}
 	must.RunV("go", "build", "-o", "bin/testplugin", "./cmd/testplugin")
-	must.Command("go", "test", "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
+	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
 
 func Install() {

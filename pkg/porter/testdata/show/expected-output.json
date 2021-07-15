@@ -1,65 +1,25 @@
 {
-  "name": "test",
+  "schemaVersion": "1.0.0-DRAFT.1",
+  "name": "mywordpress",
+  "namespace": "dev",
   "created": "2020-04-18T01:02:03.000000004Z",
   "modified": "2020-04-18T01:02:03.000000004Z",
-  "bundle": "porter-hello",
-  "version": "0.1.0",
-  "action": "upgrade",
-  "status": "running",
-  "parameters": [
-    {
-      "name": "logLevel",
-      "type": "integer",
-      "sensitive": false,
-      "value": 3
-    },
-    {
-      "name": "token",
-      "type": "unknown",
-      "sensitive": false,
-      "value": "top-secret"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "bar",
-      "type": "string",
-      "sensitive": false,
-      "value": "bar-output"
-    },
-    {
-      "name": "foo",
-      "type": "string",
-      "sensitive": true,
-      "value": "foo-output"
-    }
-  ],
-  "history": [
-    {
-      "claimID": "1",
-      "bundle": "porter-hello",
-      "version": "0.1.0",
-      "action": "install",
-      "parameters": {
-        "logLevel": 5,
-        "token": "top-secret"
-      },
-      "timestamp": "2020-04-18T01:02:03.000000004Z",
-      "status": "succeeded",
-      "hasLogs": "false"
-    },
-    {
-      "claimID": "3",
-      "bundle": "porter-hello",
-      "version": "0.1.0",
-      "action": "upgrade",
-      "parameters": {
-        "logLevel": 3,
-        "token": "top-secret"
-      },
-      "timestamp": "2020-04-18T01:02:03.000000004Z",
-      "status": "running",
-      "hasLogs": "false"
-    }
-  ]
+  "bundleRepository": "getporter/wordpress",
+  "bundleVersion": "0.1.0",
+  "bundleDigest": "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9",
+  "labels": {
+    "io.cnab/app": "wordpress",
+    "io.cnab/appVersion": "v1.2.3"
+  },
+  "parameters": {
+    "logLevel": 3,
+    "token": "top-secret"
+  },
+  "status": {
+    "runId": "1",
+    "action": "upgrade",
+    "resultId": "",
+    "resultStatus": "succeeded",
+    "installationCompleted": true
+  }
 }

@@ -16,13 +16,13 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
-	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
-	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,6 +30,7 @@ import (
 type TestPorter struct {
 	*Porter
 	TestConfig      *config.TestConfig
+	TestStore       storage.TestStore
 	TestClaims      *claims.TestClaimProvider
 	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
@@ -50,13 +51,14 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
-	testCredentials := credentials.NewTestCredentialProvider(t, tc)
-	testParameters := parameters.NewTestParameterProvider(t, tc)
+	testStore := storage.NewTestStore(tc.TestContext)
+	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore)
+	testParameters := parameters.NewTestParameterProviderFor(t, testStore)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
-	testClaims := claims.NewTestClaimProvider(t)
+	testClaims := claims.NewTestClaimProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := NewWithConfig(tc.Config)
+	p := NewFor(tc.Config, testStore)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
@@ -65,43 +67,44 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
-	p.CNAB = cnabprovider.NewTestRuntimeWithConfig(tc, testClaims, testCredentials, testParameters)
+	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
 	p.Registry = testRegistry
 
 	return &TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
+		TestStore:       testStore,
 		TestClaims:      testClaims,
-		TestCredentials: &testCredentials,
-		TestParameters:  &testParameters,
+		TestCredentials: testCredentials,
+		TestParameters:  testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
 		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
 }
 
+func (p *TestPorter) Teardown() error {
+	err := p.TestStore.Teardown()
+	p.TestConfig.TestContext.Teardown()
+	return err
+}
+
 func (p *TestPorter) SetupIntegrationTest() {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewWithConfig(p.Config)
-
-	/*
-		// Update test providers to use the instances we just reset above
-		// We mostly don't use test providers for integration tests, but a few provide
-		// useful helper methods that are still nice to have.
-		hostSecrets := &host.SecretStore{}
-		p.TestCredentials.SecretsStore = secrets.NewSecretStore(hostSecrets)
-		p.TestParameters.SecretsStore = secrets.NewSecretStore(hostSecrets)
-	*/
+	p.Porter = NewFor(p.Config, p.TestStore)
 
 	// Run the test in a temp directory
-	testDir, homeDir := p.TestConfig.SetupIntegrationTest()
+	testDir, _ := p.TestConfig.SetupIntegrationTest()
 	p.TestDir = testDir
 	p.CreateBundleDir()
 
-	// Copy test credentials into porter home, with KUBECONFIG replaced properly
-	p.AddTestFile(filepath.Join(p.RepoRoot, "build/testdata/schema.json"), filepath.Join(homeDir, "schema.json"))
+	// Write out a storage schema so that we don't trigger a migration check
+	err := p.Storage.WriteSchema()
+	require.NoError(t, err, "failed to set the storage schema")
+
+	// Load test credentials, with KUBECONFIG replaced properly
 	kubeconfig := p.Getenv("KUBECONFIG")
 	if kubeconfig == "" {
 		home := p.Getenv("HOME")
@@ -112,10 +115,10 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)
 	// update the kubeconfig reference in the credentials to match what's on people's dev machine
 	ciCredsB = []byte(strings.Replace(string(ciCredsB), "KUBECONFIGPATH", kubeconfig, -1))
-	var testCreds cnabcreds.CredentialSet
-	err = yaml.Unmarshal(ciCredsB, &testCreds)
+	var testCreds credentials.CredentialSet
+	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
-	err = p.Credentials.Save(testCreds)
+	err = p.Credentials.UpsertCredentialSet(testCreds)
 	require.NoError(t, err, "could not save test credentials")
 }
 
@@ -153,10 +156,6 @@ func (p *TestPorter) CreateBundleDir() string {
 
 func (p *TestPorter) T() *testing.T {
 	return p.TestConfig.TestContext.T
-}
-
-func (p *TestPorter) CleanupIntegrationTest() {
-	p.TestConfig.TestContext.Cleanup()
 }
 
 func (p *TestPorter) ReadBundle(path string) bundle.Bundle {

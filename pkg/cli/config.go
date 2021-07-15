@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -33,7 +34,11 @@ func LoadHierarchicalConfig(cmd *cobra.Command) config.DataStoreLoaderFunc {
 				}
 			}
 
-			if !f.Changed && v.IsSet(viperKey) {
+			if f.Changed {
+				// Apply the flag to viper
+				v.Set(viperKey, getViperValue(flags, f))
+			} else if v.IsSet(viperKey) {
+				// Apply viper to the flag
 				val := getFlagValue(v, viperKey)
 				flags.Set(f.Name, val)
 			}
@@ -55,4 +60,29 @@ func getFlagValue(v *viper.Viper, key string) string {
 	default:
 		return fmt.Sprintf("%v", val)
 	}
+}
+
+func getViperValue(flags *pflag.FlagSet, f *pflag.Flag) interface{} {
+	var out interface{}
+	var err error
+
+	// This is not an exhaustive list, if we need more types supported, it'll panic, and then we can add it.
+	switch f.Value.Type() {
+	case "int":
+		out, err = flags.GetInt(f.Name)
+	case "string":
+		out, err = flags.GetString(f.Name)
+	case "bool":
+		out, err = flags.GetBool(f.Name)
+	case "stringSlice":
+		out, err = flags.GetStringSlice(f.Name)
+	default:
+		panic(errors.Errorf("unsupported type for conversion between flag %s and viper configuration: %T", f.Name, f.Value.Type()))
+	}
+
+	if err != nil {
+		panic(errors.Wrapf(err, "error parsing config key %s as %T", f.Name, f.Value.Type()))
+	}
+
+	return out
 }

@@ -3,9 +3,9 @@ package extensions
 import (
 	"fmt"
 
+	claim "get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 )
 
 // IsPorterBundle determines if the bundle was created by Porter.

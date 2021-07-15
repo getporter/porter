@@ -18,14 +18,17 @@ porter credentials list [flags]
 ### Examples
 
 ```
-  porter credentials list [-o table|json|yaml]
+  porter credentials list
+  porter credentials list --namespace prod
+  porter credentials list --namespace "*"
 ```
 
 ### Options
 
 ```
-  -h, --help            help for list
-  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -h, --help               help for list
+  -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.
+  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```
 
 ### Options inherited from parent commands

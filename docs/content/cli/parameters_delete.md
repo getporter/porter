@@ -18,7 +18,8 @@ porter parameters delete NAME [flags]
 ### Options
 
 ```
-  -h, --help   help for delete
+  -h, --help               help for delete
+  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

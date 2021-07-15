@@ -2,10 +2,8 @@ package parameters
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
-	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 )
 
@@ -36,18 +34,6 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 	}
 
 	return variables, nil
-}
-
-// Load a ParameterSet from a file at a given path.
-//
-// It does not load the individual parameters.
-func Load(path string) (ParameterSet, error) {
-	var pset ParameterSet
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return pset, err
-	}
-	return pset, yaml.Unmarshal(data, &pset)
 }
 
 // IsInternal determines if the provided param is an internal parameter

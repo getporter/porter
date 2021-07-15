@@ -17,6 +17,7 @@ func TestPrintVersion(t *testing.T) {
 	pkg.Version = "v1.2.3"
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := VersionOpts{}
 	err := opts.Validate()
@@ -35,6 +36,7 @@ func TestPrintJsonVersion(t *testing.T) {
 	pkg.Version = "v1.2.3"
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := VersionOpts{}
 	opts.RawFormat = string(printer.FormatJson)
@@ -59,6 +61,7 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 	pkg.Version = "v1.2.3"
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := VersionOpts{System: true}
 	opts.RawFormat = string(printer.FormatJson)
@@ -95,6 +98,7 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 	pkg.Version = "v1.2.3"
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := VersionOpts{System: true}
 	err := opts.Validate()

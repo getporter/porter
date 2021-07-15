@@ -10,6 +10,8 @@ import (
 
 func TestBuildListMixinsCommand_DefaultFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+
 	cmd := buildMixinsListCommand(p.Porter)
 
 	err := cmd.PreRunE(cmd, []string{})
@@ -20,6 +22,8 @@ func TestBuildListMixinsCommand_DefaultFormat(t *testing.T) {
 
 func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+
 	cmd := buildMixinsListCommand(p.Porter)
 	cmd.ParseFlags([]string{"-o", "json"})
 
@@ -31,6 +35,8 @@ func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
 
 func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+
 	cmd := buildMixinsListCommand(p.Porter)
 	cmd.ParseFlags([]string{"-o", "flarts"})
 
@@ -42,6 +48,8 @@ func TestBuildListMixinsCommand_BadFormat(t *testing.T) {
 
 func TestBuildMixinInstallCommand(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+
 	cmd := BuildMixinInstallCommand(p.Porter)
 	err := cmd.ParseFlags([]string{"--url", "https://example.com/mixins/helm"})
 	require.NoError(t, err)
@@ -52,6 +60,8 @@ func TestBuildMixinInstallCommand(t *testing.T) {
 
 func TestBuildMixinInstallCommand_NoMixinName(t *testing.T) {
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+
 	cmd := BuildMixinInstallCommand(p.Porter)
 
 	err := cmd.PreRunE(cmd, []string{})

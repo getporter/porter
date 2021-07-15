@@ -105,6 +105,7 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
@@ -133,6 +134,7 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", "porter.yaml")
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
@@ -160,6 +162,8 @@ func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
 
 func TestSharedOptions_LoadParameters(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	opts := sharedOptions{}
 	opts.Params = []string{"A=1", "B=2"}
 

@@ -27,8 +27,9 @@ porter installations delete [INSTALLATION] [flags]
 ### Options
 
 ```
-      --force   Force a delete the installation, regardless of last completed action
-  -h, --help    help for delete
+      --force              Force a delete the installation, regardless of last completed action
+  -h, --help               help for delete
+  -n, --namespace string   Namespace in which the installation is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

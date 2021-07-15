@@ -16,6 +16,7 @@ func TestExplain_generateActionsTableNoActions(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printActionsExplainTable(&bun)
 	expected := "Name   Description   Modifies Installation   Stateless\n"
@@ -29,6 +30,7 @@ func TestExplain_generateActionsBlockNoActions(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printActionsExplainBlock(&bun)
 	expected := "No custom actions defined\n\n"
@@ -41,6 +43,7 @@ func TestExplain_generateCredentialsTableNoCreds(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printCredentialsExplainTable(&bun)
 	expected := "Name   Description   Required   Applies To\n"
@@ -53,6 +56,7 @@ func TestExplain_generateCredentialsBlockNoCreds(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printCredentialsExplainBlock(&bun)
 	expected := "No credentials defined\n\n"
@@ -65,6 +69,7 @@ func TestExplain_generateOutputsTableNoOutputs(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printOutputsExplainTable(&bun)
 	expected := "Name   Description   Type   Applies To\n"
@@ -77,6 +82,7 @@ func TestExplain_generateOutputsBlockNoOutputs(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printOutputsExplainBlock(&bun)
 	expected := "No outputs defined\n\n"
@@ -89,6 +95,7 @@ func TestExplain_generateParametersTableNoParams(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printParametersExplainTable(&bun)
 	expected := "Name   Description   Type   Default   Required   Applies To\n"
@@ -101,6 +108,7 @@ func TestExplain_generateParametersBlockNoParams(t *testing.T) {
 	bun := PrintableBundle{}
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.printParametersExplainBlock(&bun)
 	expected := "No parameters defined\n\n"
@@ -110,8 +118,8 @@ func TestExplain_generateParametersBlockNoParams(t *testing.T) {
 }
 
 func TestExplain_validateBadFormat(t *testing.T) {
-
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := ExplainOpts{}
 	opts.RawFormat = "vpml"
@@ -122,6 +130,8 @@ func TestExplain_validateBadFormat(t *testing.T) {
 
 func TestExplain_generateTable(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
@@ -143,6 +153,8 @@ func TestExplain_generateTable(t *testing.T) {
 
 func TestExplain_generateJSON(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
@@ -164,6 +176,8 @@ func TestExplain_generateJSON(t *testing.T) {
 
 func TestExplain_generateYAML(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/params-bundle.json", "params-bundle.json")
 	b, err := p.CNAB.LoadBundle("params-bundle.json")
 
@@ -321,7 +335,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 			},
 			"someoutput": {
 				Definition: "string",
-				ApplyTo: []string{"install"},
+				ApplyTo:    []string{"install"},
 			},
 		},
 		Custom: map[string]interface{}{
@@ -354,7 +368,7 @@ func TestExplain_generatePrintableBundleOutputs(t *testing.T) {
 	// Check outputs for install action
 	pb, err = generatePrintable(bun, "install")
 	require.NoError(t, err)
-	assert.Equal(t, 2, len(pb.Outputs),"expected someoutput to be included")
+	assert.Equal(t, 2, len(pb.Outputs), "expected someoutput to be included")
 
 	// Check outputs for upgrade action action (someoutput doesn't apply)
 	pb, err = generatePrintable(bun, "upgrade")
@@ -503,6 +517,8 @@ func TestExplain_generatePrintableBundleDependencies(t *testing.T) {
 
 func TestExplain_generateJSONForDependencies(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/explain/dependencies-bundle.json", "dependencies-bundle.json")
 	b, err := p.CNAB.LoadBundle("dependencies-bundle.json")
 

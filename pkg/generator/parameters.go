@@ -35,7 +35,7 @@ func (opts *GenerateParametersOptions) GenerateParameters() (parameters.Paramete
 }
 
 func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters.ParameterSet, error) {
-	pset := parameters.NewParameterSet(opts.Name)
+	pset := parameters.NewParameterSet(opts.Namespace, opts.Name)
 
 	if strings.ContainsAny(opts.Name, "./\\") {
 		return pset, fmt.Errorf("parameter set name '%s' cannot contain the following characters: './\\'", opts.Name)

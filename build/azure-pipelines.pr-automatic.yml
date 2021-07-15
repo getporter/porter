@@ -87,6 +87,10 @@ stages:
               source: current
               artifact: build-bin
               path: bin
+          - task: GoTool@0
+            displayName: "Set Go Version"
+            inputs:
+              version: "$(GOVERSION)"
           - script: go run mage.go SetBinExecutable
             displayName: "Setup Bin"
           - bash: make lint-examples
@@ -98,6 +102,7 @@ stages:
         dependsOn: xbuild
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: "$(GOVERSION)"
           - task: DownloadPipelineArtifact@2

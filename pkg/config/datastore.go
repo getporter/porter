@@ -34,6 +34,9 @@ type Data struct {
 	// DefaultSecrets to use when one is not specified by a flag.
 	DefaultSecrets string `mapstructure:"default-secrets"`
 
+	// Namespace is the default namespace for commands that do not override it with a flag.
+	Namespace string `mapstructure:"namespace"`
+
 	// SecretSources defined in the configuration file.
 	SecretSources []SecretSource `mapstructure:"secrets"`
 }

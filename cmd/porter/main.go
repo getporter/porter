@@ -16,11 +16,15 @@ var includeDocsCommand = false
 var usageText string
 
 func main() {
-	cmd := buildRootCommand()
+	p := porter.New()
+	defer p.Close()
+
+	cmd := buildRootCommandFrom(p)
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
+
 func buildRootCommand() *cobra.Command {
 	return buildRootCommandFrom(porter.New())
 }
@@ -36,17 +40,20 @@ func buildRootCommandFrom(p *porter.Porter) *cobra.Command {
   porter install
   porter uninstall`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-			err := p.LoadData()
-			if err != nil {
-				return err
-			}
-
 			// Enable swapping out stdout/stderr for testing
 			p.Out = cmd.OutOrStdout()
 			p.Err = cmd.OutOrStderr()
 
-			return nil
+			// Only run init logic that could fail for commands that
+			// really need it, skip it for commands that should NEVER
+			// fail.
+			switch cmd.Name() {
+			case "porter", "help", "version", "docs":
+				return nil
+			default:
+				p.DataLoader = cli.LoadHierarchicalConfig(cmd)
+				return p.LoadData()
+			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printVersion {

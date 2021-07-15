@@ -1,10 +1,10 @@
 package exec
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/exec/builder"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/yaml"
@@ -118,7 +118,7 @@ func (m *Mixin) PrintLintResults() error {
 		return err
 	}
 
-	b, err := json.MarshalIndent(results, "", "  ")
+	b, err := encoding.MarshalJson(results)
 	if err != nil {
 		return errors.Wrapf(err, "could not marshal lint results %#v", results)
 	}

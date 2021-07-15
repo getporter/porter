@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/cnab"
 )
 
 // IsCoreAction determines if the value is a core action from the CNAB spec.
@@ -15,5 +15,5 @@ func IsCoreAction(value string) bool {
 }
 
 func GetCoreActions() []string {
-	return []string{claim.ActionInstall, claim.ActionUpgrade, claim.ActionUninstall}
+	return []string{cnab.ActionInstall, cnab.ActionUpgrade, cnab.ActionUninstall}
 }

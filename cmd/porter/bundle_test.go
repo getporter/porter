@@ -148,8 +148,8 @@ func TestBuildValidate_Driver(t *testing.T) {
 		{name: "no flag", wantDriver: "docker"},
 		{name: "invalid flag", args: "--driver=missing-driver", wantError: "invalid --driver value missing-driver"},
 		{name: "valid flag", args: "--driver=buildkit", wantDriver: "buildkit"},
-		{name: "invalid config", args: "--driver=", configDriver: "invalid-driver", wantError: "invalid --driver value invalid-driver"},
-		{name: "valid config", args: "--driver=", configDriver: "buildkit", wantDriver: "buildkit"}, // passing an empty flag to trigger defaulting it to the config value
+		{name: "invalid config", args: "", configDriver: "invalid-driver", wantError: "invalid --driver value invalid-driver"},
+		{name: "valid config", args: "", configDriver: "buildkit", wantDriver: "buildkit"}, // passing an empty flag to trigger defaulting it to the config value
 	}
 
 	for _, tc := range testcases {
@@ -158,6 +158,8 @@ func TestBuildValidate_Driver(t *testing.T) {
 			defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
 			p := porter.NewTestPorter(t)
+			defer p.Teardown()
+
 			rootCmd := buildRootCommandFrom(p.Porter)
 
 			fullArgs := []string{"build", tc.args}

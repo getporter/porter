@@ -20,5 +20,5 @@ func TestPrintYaml(t *testing.T) {
 	err := PrintYaml(b, v)
 
 	require.Nil(t, err)
-	require.Equal(t, "a: foo\nb: true\n\n", b.String())
+	require.Equal(t, "a: foo\nb: true\n", b.String())
 }

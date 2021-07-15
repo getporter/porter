@@ -42,6 +42,8 @@ func buildBundleOutputListCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
 
@@ -66,6 +68,8 @@ func buildBundleOutputShowCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.Name, "installation", "i", "",
 		"Specify the installation to which the output belongs.")
 

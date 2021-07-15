@@ -3,9 +3,9 @@ package porter
 import (
 	"fmt"
 	"io"
-	"strings"
 
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -27,7 +27,7 @@ func NewUninstallOptions() UninstallOptions {
 }
 
 func (o UninstallOptions) GetAction() string {
-	return claim.ActionUninstall
+	return cnab.ActionUninstall
 }
 
 func (o UninstallOptions) GetActionVerb() string {
@@ -77,7 +77,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
-	deperator := newDependencyExecutioner(p, claim.ActionUninstall)
+	deperator := newDependencyExecutioner(p, cnab.ActionUninstall)
 	err = deperator.Prepare(opts)
 	if err != nil {
 		return err
@@ -97,8 +97,10 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		uninstallErrs = multierror.Append(uninstallErrs, err)
 
 		// If the installation is not found, no further action is needed
-		if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) {
-			return uninstallErrs
+		err := errors.Cause(err)
+		if errors.Is(err, storage.ErrNotFound{}) {
+			// TODO(carolynvs): find and fix all checks for not found
+			return err
 		}
 
 		if len(deperator.deps) > 0 && !opts.ForceDelete {
@@ -120,7 +122,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 
 	if opts.shouldDelete() {
 		fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
-		return p.Claims.DeleteInstallation(opts.Name)
+		return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
 	}
 	return nil
 }

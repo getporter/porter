@@ -1,7 +1,13 @@
-Name: test
-Version: 0.1.0
+Name: mywordpress
+Namespace: dev
 Created: 2020-04-18
 Modified: 2020-04-18
+Version: 0.1.0
+Digest: sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9
+
+Labels:
+  io.cnab/app: wordpress
+  io.cnab/appVersion: v1.2.3
 
 Parameters:
 ---------------------------------
@@ -10,16 +16,6 @@ Parameters:
   logLevel  integer  3           
   token     unknown  top-secret  
 
-Outputs:
-----------------------------
-  Name  Type    Value       
-----------------------------
-  bar   string  bar-output  
-  foo   string  ******      
-
-History:
-----------------------------------------------------
-  Run ID  Action   Timestamp   Status     Has Logs  
-----------------------------------------------------
-  1       install  2020-04-18  succeeded  false     
-  3       upgrade  2020-04-18  running    false     
+Status:
+  Last Action: upgrade
+  Status: succeeded

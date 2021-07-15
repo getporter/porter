@@ -12,6 +12,8 @@ import (
 
 func TestPorter_Lint(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 	mixins := p.Mixins.(*mixin.TestMixinProvider)
@@ -63,6 +65,8 @@ exec:
 	for _, tc := range testcases {
 		t.Run(tc.format, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
+
 			p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 			mixins := p.Mixins.(*mixin.TestMixinProvider)

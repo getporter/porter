@@ -15,10 +15,17 @@ Edit a named parameter set.
 porter parameters edit [flags]
 ```
 
+### Examples
+
+```
+  porter parameter edit debug-tweaks --namespace dev
+```
+
 ### Options
 
 ```
-  -h, --help   help for edit
+  -h, --help               help for edit
+  -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

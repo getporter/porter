@@ -51,9 +51,11 @@ func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
 	args := cnabprovider.ActionArguments{
+		// TODO(carolynvs): set the bundle digest
 		BundleReference:       opts.Reference,
 		Action:                action.GetAction(),
 		Installation:          opts.Name,
+		Namespace:             opts.Namespace,
 		BundlePath:            opts.CNABFile,
 		Params:                make(map[string]string, len(opts.combinedParameters)),
 		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),

@@ -19,8 +19,8 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle
@@ -39,8 +39,8 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Install a bundle
@@ -80,8 +80,8 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials
@@ -102,8 +102,8 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Create a bundle that uses credentials

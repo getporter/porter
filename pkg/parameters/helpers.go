@@ -5,51 +5,82 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/in-memory"
-	"github.com/cnabio/cnab-go/utils/crud"
+	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/encoding"
+	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
+	"get.porter.sh/porter/pkg/storage"
+	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 )
 
-var _ ParameterProvider = &TestParameterProvider{}
+var _ Provider = &TestParameterProvider{}
 
 type TestParameterProvider struct {
-	T          *testing.T
-	TestConfig *config.TestConfig
+	*ParameterStore
+
+	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
-	TestSecrets *inmemorysecrets.Store
-	*ParameterStorage
+	TestSecrets   *inmemorysecrets.Store
+	TestDocuments storage.Store
 }
 
-func NewTestParameterProvider(t *testing.T, tc *config.TestConfig) TestParameterProvider {
-	backingSecrets := inmemorysecrets.NewStore()
-	backingParams := crud.NewBackingStore(crud.NewMockStore())
-	paramStore := NewParameterStore(backingParams)
-	return TestParameterProvider{
-		T:           t,
-		TestConfig:  tc,
-		TestSecrets: backingSecrets,
-		ParameterStorage: &ParameterStorage{
-			ParametersStore: paramStore,
-			SecretsStore:    secrets.NewSecretStore(backingSecrets),
+func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
+	tc := context.NewTestContext(t)
+	testStore := storage.NewTestStore(tc)
+	return NewTestParameterProviderFor(t, testStore)
+}
+
+func NewTestParameterProviderFor(t *testing.T, testStore storage.Store) *TestParameterProvider {
+	testSecrets := inmemorysecrets.NewStore()
+	return &TestParameterProvider{
+		T:             t,
+		TestDocuments: testStore,
+		TestSecrets:   testSecrets,
+		ParameterStore: &ParameterStore{
+			Documents: testStore,
+			Secrets:   testSecrets,
 		},
 	}
 }
 
-func (p *TestParameterProvider) AddTestParameters(path string) {
-	cs, err := Load(path)
+type hasTeardown interface {
+	Teardown() error
+}
+
+func (p TestParameterProvider) Teardown() error {
+	// sometimes we are testing with a mock that needs to be released at the end of the test
+	if ts, ok := p.TestDocuments.(hasTeardown); ok {
+		return ts.Teardown()
+	} else {
+		return p.TestDocuments.Close()
+	}
+}
+
+// Load a ParameterSet from a test file at a given path.
+//
+// It does not load the individual parameters.
+func (p TestParameterProvider) Load(path string) (ParameterSet, error) {
+	fs := aferox.NewAferox(".", afero.NewOsFs())
+	var pset ParameterSet
+	err := encoding.UnmarshalFile(fs, path, &pset)
+
+	return pset, errors.Wrapf(err, "error reading %s as a parameter set", path)
+}
+
+func (p TestParameterProvider) AddTestParameters(path string) {
+	ps, err := p.Load(path)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
 	}
 
-	err = p.ParameterStorage.Save(cs)
+	err = p.ParameterStore.InsertParameterSet(ps)
 	if err != nil {
-		p.T.Fatal(errors.Wrap(err, "could not load test parameters into in memory parameter storage"))
+		p.T.Fatal(errors.Wrap(err, "could not load test parameters"))
 	}
 }
 
-func (p *TestParameterProvider) AddTestParametersDirectory(dir string) {
+func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		p.T.Fatal(errors.Wrapf(err, "could not list test directory %s", dir))

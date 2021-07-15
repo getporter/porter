@@ -3,8 +3,10 @@ package porter
 import (
 	"testing"
 
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,28 +21,28 @@ func TestDeleteInstallation(t *testing.T) {
 	}{
 		{
 			name:      "not yet installed",
-			wantError: "unable to read status for installation test: Installation does not exist",
+			wantError: "not found",
 		}, {
 			name:                "last action not uninstall; no --force",
 			lastAction:          "install",
-			lastActionStatus:    claim.StatusSucceeded,
+			lastActionStatus:    cnab.StatusSucceeded,
 			installationRemains: true,
 			wantError:           ErrUnsafeInstallationDeleteRetryForce.Error(),
 		}, {
 			name:                "last action failed uninstall; no --force",
 			lastAction:          "uninstall",
-			lastActionStatus:    claim.StatusFailed,
+			lastActionStatus:    cnab.StatusFailed,
 			installationRemains: true,
 			wantError:           ErrUnsafeInstallationDeleteRetryForce.Error(),
 		}, {
 			name:             "last action not uninstall; --force",
 			lastAction:       "install",
-			lastActionStatus: claim.StatusSucceeded,
+			lastActionStatus: cnab.StatusSucceeded,
 			force:            true,
 		}, {
 			name:             "last action failed uninstall; --force",
 			lastAction:       "uninstall",
-			lastActionStatus: claim.StatusFailed,
+			lastActionStatus: cnab.StatusFailed,
 			force:            true,
 		},
 	}
@@ -48,13 +50,15 @@ func TestDeleteInstallation(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
 
 			var err error
 
 			// Create test claim
 			if tc.lastAction != "" {
-				c := p.TestClaims.CreateClaim("test", tc.lastAction, bundle.Bundle{}, nil)
-				_ = p.TestClaims.CreateResult(c, tc.lastActionStatus)
+				i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+				c := p.TestClaims.CreateRun(i.NewRun(tc.lastAction))
+				_ = p.TestClaims.CreateResult(c.NewResult(tc.lastActionStatus))
 			}
 
 			opts := DeleteOptions{}
@@ -63,16 +67,17 @@ func TestDeleteInstallation(t *testing.T) {
 
 			err = p.DeleteInstallation(opts)
 			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantError)
 			} else {
 				require.NoError(t, err, "expected DeleteInstallation to succeed")
 			}
 
-			_, err = p.Claims.ReadInstallation("test")
+			_, err = p.Claims.GetInstallation("", "test")
 			if tc.installationRemains {
 				require.NoError(t, err, "expected installation to exist")
 			} else {
-				require.EqualError(t, err, "Installation does not exist")
+				require.ErrorIs(t, err, storage.ErrNotFound{})
 			}
 		})
 	}

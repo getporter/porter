@@ -7,10 +7,6 @@ url: /cli/porter_plugins_list/
 
 List installed plugins
 
-### Synopsis
-
-List installed plugins
-
 ```
 porter plugins list [flags]
 ```

@@ -72,7 +72,6 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
   author: Porter Authors
   description: A mixin for using the az cli
   url: https://cdn.porter.sh/mixins/atom.xml
-
 `,
 	}, {
 		name:   "mixin name multiple match",
@@ -92,6 +91,7 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
@@ -138,7 +138,6 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
   author: Porter Authors
   description: Integrate Porter with Azure. Store Porter's data in Azure Cloud and secure your bundle's secrets in Azure Key Vault.
   url: https://cdn.porter.sh/plugins/atom.xml
-
 `,
 	}, {
 		name:    "plugin name no match",
@@ -150,6 +149,7 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{

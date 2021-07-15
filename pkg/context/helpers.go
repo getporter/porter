@@ -109,7 +109,7 @@ func (c *TestContext) AddCleanupDir(dir string) {
 	c.cleanupDirs = append(c.cleanupDirs, dir)
 }
 
-func (c *TestContext) Cleanup() {
+func (c *TestContext) Teardown() {
 	for _, dir := range c.cleanupDirs {
 		c.FileSystem.RemoveAll(dir)
 	}

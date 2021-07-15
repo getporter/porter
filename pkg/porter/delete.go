@@ -3,8 +3,8 @@ package porter
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/context"
-	claims "github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -42,20 +42,15 @@ func (p *Porter) DeleteInstallation(opts DeleteOptions) error {
 		return err
 	}
 
-	installation, err := p.Claims.ReadInstallationStatus(opts.Name)
+	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read status for installation %s", opts.Name)
 	}
 
-	claim, err := installation.GetLastClaim()
-	if err != nil {
-		return errors.Wrapf(err, "unable to read most recent record for installation %s", opts.Name)
-	}
-
-	if (claim.Action != claims.ActionUninstall || installation.GetLastStatus() != claims.StatusSucceeded) && !opts.Force {
+	if (installation.Status.Action != cnab.ActionUninstall || installation.Status.ResultStatus != cnab.StatusSucceeded) && !opts.Force {
 		return ErrUnsafeInstallationDeleteRetryForce
 	}
 
 	fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
-	return p.Claims.DeleteInstallation(opts.Name)
+	return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
 }

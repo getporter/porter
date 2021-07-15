@@ -4,18 +4,17 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/manifest"
-
 	"get.porter.sh/porter/pkg/secrets"
-
-	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPorter_applyDefaultOptions(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	err := p.Create()
 	require.NoError(t, err)
 
@@ -42,6 +41,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 
 func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := NewInstallOptions()
 	err := opts.Validate([]string{}, p.Porter)
@@ -117,21 +117,21 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 
 func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	cacheDir, _ := p.Cache.GetCacheDir()
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
 
 	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-	cs := credentials.NewCredentialSet("wordpress",
-		valuesource.Strategy{
-			Name: "kubeconfig",
-			Source: valuesource.Source{
-				Key:   secrets.SourceSecret,
-				Value: "kubeconfig",
-			},
-		})
+	cs := credentials.NewCredentialSet("", "wordpress", secrets.Strategy{
+		Name: "kubeconfig",
+		Source: secrets.Source{
+			Key:   secrets.SourceSecret,
+			Value: "kubeconfig",
+		},
+	})
 	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
-	err := p.Credentials.Save(cs)
+	err := p.Credentials.InsertCredentialSet(cs)
 	require.NoError(t, err, "Credentials.Save failed")
 
 	opts := NewInstallOptions()
