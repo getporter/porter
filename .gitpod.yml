@@ -1,10 +1,5 @@
 tasks:
   - name: Runs docs server
-    init: |
-          TEMP_DEB="$(mktemp)" &&
-          wget -O "$TEMP_DEB" 'https://github.com/gohugoio/hugo/releases/download/v0.86.0/hugo_0.86.0_Linux-64bit.deb' &&
-          sudo dpkg -i "$TEMP_DEB"
-          rm -f "$TEMP_DEB"
     command:  |
               cd docs
               hugo server -D -F --noHTTPCache --baseUrl $(gp url 1313) --appendPort=false 
