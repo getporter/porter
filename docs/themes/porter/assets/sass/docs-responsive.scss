@@ -3,6 +3,8 @@
 @media only screen and (max-width: 64.063em) {
   .container-full {
     padding-left: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
 
   .left-off-canvas-toggle .fa {
@@ -155,6 +157,8 @@
   }
 
   aside.left-off-canvas-menu {
+    height:100vh;
+    overflow-y: auto;
     ul {
       background: $blue2 !important;
 
