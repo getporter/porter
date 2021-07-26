@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommandWiring(t *testing.T) {
@@ -38,4 +40,39 @@ func TestCommandWiring(t *testing.T) {
 			assert.Equal(t, osargs[len(osargs)-1], cmd.Name())
 		})
 	}
+}
+
+func TestHelp(t *testing.T) {
+	t.Run("no args", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
+
+	t.Run("help", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{"help"})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
+
+	t.Run("--help", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{"--help"})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
 }
