@@ -210,6 +210,33 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 				ContentEncoding: "base64",
 			},
 		},
+		{
+			"notype-file",
+			bundle.Parameter{
+				Definition: "notype-file-parameter",
+				Destination: &bundle.Location{
+					Path: "/root/.porter/config.toml",
+				},
+				Required: true,
+			},
+			definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+			},
+		},
+		{
+			"notype-string",
+			bundle.Parameter{
+				Definition: "notype-string-parameter",
+				Destination: &bundle.Location{
+					EnvironmentVariable: "NOTYPE_STRING",
+				},
+				Required: true,
+			},
+			definition.Schema{
+				Type: "string",
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -374,13 +401,20 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 				Description: "Description of kubeconfig",
 			},
 		},
+		"notype-string": {
+			Name: "notype-string",
+		},
+		"notype-file": {
+			Name: "notype-file",
+			Path: "/root/.kube/config",
+		},
 	}
 
 	a.Manifest.Outputs = outputDefinitions
 
 	defs := make(definition.Definitions, len(a.Manifest.Outputs))
 	outputs := a.generateBundleOutputs(&defs)
-	require.Len(t, defs, 3)
+	require.Len(t, defs, 5)
 
 	wantOutputDefinitions := map[string]bundle.Output{
 		"output1": {
@@ -402,6 +436,14 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Description: "Description of kubeconfig",
 			Path:        "/cnab/app/outputs/kubeconfig",
 		},
+		"notype-string": {
+			Definition: "notype-string-output",
+			Path:       "/cnab/app/outputs/notype-string",
+		},
+		"notype-file": {
+			Definition: "notype-file-output",
+			Path:       "/cnab/app/outputs/notype-file",
+		},
 	}
 
 	require.Equal(t, wantOutputDefinitions, outputs)
@@ -420,6 +462,13 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Type:            "string",
 			ContentEncoding: "base64",
 			Description:     "Description of kubeconfig",
+		},
+		"notype-string-output": &definition.Schema{
+			Type: "string",
+		},
+		"notype-file-output": &definition.Schema{
+			Type:            "string",
+			ContentEncoding: "base64",
 		},
 	}
 
