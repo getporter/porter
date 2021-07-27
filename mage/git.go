@@ -94,9 +94,11 @@ func pickBranchName(refs []string) string {
 	if b, ok := os.LookupEnv("SYSTEM_PULLREQUEST_SOURCEBRANCH"); ok {
 		// pull request
 		branch = b
-	} else if b, ok := os.LookupEnv("BUILD_SOURCEBRANCHNAME"); ok {
+	} else if b, ok := os.LookupEnv("BUILD_SOURCEBRANCH"); ok && !strings.HasPrefix(b, "refs/tags/") {
 		// branch build
-		branch = b
+		// BUILD_SOURCEBRANCHNAME has the short name, e.g. main. BUILD_SOURCEBRANCH has the full name, e.g. refs/heads/main
+		// They are populated for both tags and branches
+		branch = os.Getenv("BUILD_SOURCEBRANCHNAME")
 	} else {
 		// tag build
 		// Detect if this was a tag on main or a release
