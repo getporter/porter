@@ -54,7 +54,7 @@ func buildRootCommand() *cobra.Command {
 				}
 				return versionCmd.RunE(cmd, args)
 			}
-			return nil
+			return cmd.Help()
 		},
 		SilenceUsage: true,
 	}

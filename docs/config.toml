@@ -377,6 +377,11 @@ pygmentsStyle = "friendly"
     identifier = "cnab"
     parent = "references"
   [[menu.main]]
+    name = "Project Short Links"
+    url = "/project/short-links/"
+    identifier = "short-links"
+    parent = "references"
+  [[menu.main]]
     name = "Version Strategy"
     url = "/project/version-strategy/"
     identifier = "version-strategy"
