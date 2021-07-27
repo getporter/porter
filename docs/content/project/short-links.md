@@ -27,6 +27,6 @@ The Porter website has a number of useful short links defined to help you quickl
 * [/calendar](/calendar/): The Porter community calendar.
 * [/videos](/videos/): The Porter YouTube channel.
 * VERSION/FILE_PATH: Downloads a Porter release asset from our GitHub releases.
-    * [/latest/install-mac.sh](/v0.38.4/install-mac.sh): Downloads the macOS Porter installation script for the most recent stable version of Porter.
+    * [/latest/install-mac.sh](/latest/install-mac.sh): Downloads the macOS Porter installation script for the most recent stable version of Porter.
     * [/v0.38.4/porter-darwin-amd64](/v0.38.4/porter-darwin-amd64): Downloads the macOS Porter binary for v0.38.4
   
