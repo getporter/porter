@@ -32,24 +32,31 @@ const (
 	questionCommand = "shell command"
 )
 
-type generator func(name string, surveyType SurveyType) (valuesource.Strategy, error)
+type generator func(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error)
 
-func genEmptySet(name string, surveyType SurveyType) (valuesource.Strategy, error) {
+func genEmptySet(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error) {
 	return valuesource.Strategy{
 		Name:   name,
 		Source: valuesource.Source{Value: "TODO"},
 	}, nil
 }
 
-func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error) {
+func genSurvey(name string, surveyType SurveyType, defaultVal interface{}) (valuesource.Strategy, error) {
 	if surveyType != surveyCredentials && surveyType != surveyParameters {
 		return valuesource.Strategy{}, fmt.Errorf("unsupported survey type: %s", surveyType)
+	}
+
+	options := []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand}
+	questionDefault := fmt.Sprintf("use default value (%s)", defaultVal)
+
+	if defaultVal != nil {
+		options = append(options, questionDefault)
 	}
 
 	// extra space-suffix to align question and answer. Unfortunately misaligns help text
 	sourceTypePrompt := &survey.Select{
 		Message: fmt.Sprintf("How would you like to set %s %q\n ", surveyType, name),
-		Options: []string{questionSecret, questionValue, questionEnvVar, questionPath, questionCommand},
+		Options: options,
 		Default: "environment variable",
 	}
 
@@ -77,13 +84,17 @@ func genSurvey(name string, surveyType SurveyType) (valuesource.Strategy, error)
 		promptMsg = fmt.Sprintf(sourceValuePromptTemplate, "command", surveyType, name)
 	}
 
-	sourceValuePrompt := &survey.Input{
-		Message: promptMsg,
-	}
-
 	value := ""
-	if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
-		return c, err
+	if source != questionDefault {
+		sourceValuePrompt := &survey.Input{
+			Message: promptMsg,
+		}
+
+		if err := survey.AskOne(sourceValuePrompt, &value, nil); err != nil {
+			return c, err
+		}
+	} else {
+		return valuesource.Strategy{}, nil
 	}
 
 	switch source {

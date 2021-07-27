@@ -117,3 +117,64 @@ func TestSkipParameters(t *testing.T) {
 	assert.Equal(t, "skip-params", pset.Name, "Name was not set")
 	require.Empty(t, pset.Parameters, "parameter set should have empty parameters section")
 }
+
+func TestDefaultParameters(t *testing.T) {
+	firstParamName := "test"
+	secondParamName := "test2"
+	defaultVal := "example"
+
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{
+			firstParamName: &definition.Schema{
+				Default: defaultVal,
+			},
+			secondParamName: &definition.Schema{},
+		},
+		Parameters: map[string]bundle.Parameter{
+			firstParamName: {
+				Definition: firstParamName,
+			},
+			secondParamName: {
+				Definition: secondParamName,
+			},
+		},
+	}
+
+	val, err := getDefaultParamValue(bun, firstParamName)
+	assert.NoError(t, err, "valid default value for parameter should not give error")
+	assert.Equal(t, val, defaultVal)
+
+	val, err = getDefaultParamValue(bun, secondParamName)
+	assert.NoError(t, err, "valid default value for parameter should not give error")
+	assert.Equal(t, val, nil)
+}
+
+func TestMalformedDefaultParameter(t *testing.T) {
+	firstParamName := "test"
+
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{},
+		Parameters: map[string]bundle.Parameter{
+			firstParamName: {
+				Definition: firstParamName,
+			},
+		},
+	}
+
+	_, err := getDefaultParamValue(bun, firstParamName)
+	assert.NotNil(t, err, "should give error when bundle has no parameter definitions")
+
+	bun2 := bundle.Bundle{
+		Definitions: definition.Definitions{
+			firstParamName: nil,
+		},
+		Parameters: map[string]bundle.Parameter{
+			firstParamName: {
+				Definition: firstParamName,
+			},
+		},
+	}
+
+	_, err = getDefaultParamValue(bun2, firstParamName)
+	assert.NotNil(t, err, "parameter with missing definition should give error when fetching it's default value")
+}

@@ -52,12 +52,40 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters
 		if parameters.IsInternal(name, opts.Bundle) {
 			continue
 		}
-		c, err := fn(name, surveyParameters)
+		defaultVal, err := getDefaultParamValue(opts.Bundle, name)
+
 		if err != nil {
 			return pset, err
 		}
-		pset.Parameters = append(pset.Parameters, c)
+
+		c, err := fn(name, surveyParameters, defaultVal)
+		if err != nil {
+			return pset, err
+		}
+
+		// If any of name or source info is missing, do not include this
+		// parameter in the parameter set
+		if c.Name != "" && c.Source.Key != "" && c.Source.Value != "" {
+			pset.Parameters = append(pset.Parameters, c)
+		}
 	}
 
 	return pset, nil
+}
+
+func getDefaultParamValue(bun bundle.Bundle, name string) (interface{}, error) {
+	for p, v := range bun.Parameters {
+		if p == name {
+			def, ok := bun.Definitions[v.Definition]
+			if !ok {
+				return "", fmt.Errorf("unable to find definition for parameter %s", name)
+			}
+			if def == nil {
+				return "", fmt.Errorf("parameter definition for %s is empty", name)
+			}
+
+			return def.Default, nil
+		}
+	}
+	return "", nil
 }
