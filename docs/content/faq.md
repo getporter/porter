@@ -144,5 +144,8 @@ The Azure mixins are going to be full fledged tools that communicate with the
 Azure APIs, and provide an improved user experience. It all depends on how much
 time you want to invest, and what you are starting from.
 
+## Does the Porter has its own Registry like DockerHub, ACR,Quay etc?
+NO Porter does has its own Registry, rather use an OCI compliant artifact store.And now DockerHub is also OCI compliant registry .The list of registries that works with CNAB ie bundles [here](https://porter.sh/compatible-registries/) .
+
 [CNAB Core Spec]: https://github.com/cnabio/cnab-spec/blob/main/100-CNAB.md
 [CNAB Dependencies Spec]: https://github.com/cnabio/cnab-spec/blob/main/500-CNAB-dependencies.md
