@@ -1,9 +1,8 @@
-/board              https://github.com/orgs/getporter/projects/1
-/board/*            https://github.com/orgs/getporter/projects/1?card_filter_query=label:":splat"
-/roadmap            https://github.com/getporter/porter/projects/4
-
+/board                  https://github.com/orgs/getporter/projects/1
 # All pull requests in the getporter organization
-/pull-requests      https://github.com/pulls?q=is:open+is:pr+user:getporter
+/board/pull-requests    https://github.com/pulls?q=is:open+is:pr+user:getporter
+/board/*                https://github.com/orgs/getporter/projects/1?card_filter_query=label:":splat"
+/roadmap                https://github.com/getporter/porter/projects/4
 
 # Redirect source code links
 /:repo/src/*        https://github.com/getporter/:repo/blob/main/:splat
