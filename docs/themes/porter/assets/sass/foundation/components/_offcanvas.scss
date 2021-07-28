@@ -142,11 +142,12 @@ $menu-slide: "transform 500ms ease" !default;
 }
 
 // OFF CANVAS WRAP
-// Wrap visible content and prevent scroll bars
+// Wrap visible content and prevent horizontal scroll bars
 @mixin off-canvas-wrap {
   @include kill-flicker;
   @include wrap-base;
-  overflow: hidden;
+  overflow-y: visible;
+  overflow-x: clip;
   &.move-right,
   &.move-left,
   &.move-bottom,
