@@ -54,3 +54,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Divyam Bhasin](https://github.com/divbhasin)
 * [Ritesh Yadav](https://github.com/DARK-art108)
 * [Jérémy Audiger](https://github.com/jaudiger)
+* [Om More](https://github.com/thisisommore)
