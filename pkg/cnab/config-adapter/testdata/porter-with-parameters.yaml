@@ -49,6 +49,9 @@ parameters:
   - name: afile
     type: file
     path: /root/.kube/config
+  - name: notype-file
+    path: /root/.porter/config.toml
+  - name: notype-string
 
 mixins:
   - exec
