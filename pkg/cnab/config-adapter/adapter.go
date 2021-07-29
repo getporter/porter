@@ -175,6 +175,17 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			}
 		}
 
+		if param.Type == nil {
+			// Default to a file type if the param is stored in a file
+			if param.Destination.Path != "" {
+				param.Type = "file"
+			} else {
+				// Assume it's a string otherwise
+				param.Type = "string"
+			}
+			fmt.Fprintf(c.Out, "Defaulting the type of parameter %s to %s\n", param.Name, param.Type)
+		}
+
 		defName := c.addDefinition(param.Name, "parameter", param.Schema, defs)
 		p.Definition = defName
 		params[param.Name] = p
@@ -209,6 +220,17 @@ func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) 
 
 			if output.Sensitive {
 				output.Schema.WriteOnly = toBool(true)
+			}
+
+			if output.Type == nil {
+				// Default to a file type if the param is stored in a file
+				if output.Path != "" {
+					output.Type = "file"
+				} else {
+					// Assume it's a string otherwise
+					output.Type = "string"
+				}
+				fmt.Fprintf(c.Out, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
 			}
 
 			defName := c.addDefinition(output.Name, "output", output.Schema, defs)

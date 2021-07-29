@@ -1,7 +1,7 @@
 body.home {
   @include helvetica;
   overflow-x: hidden;
-
+  
   .row {
   max-width: 72rem;
   }
@@ -26,7 +26,9 @@ body.home {
     }
   }
 }
-
+html,body {
+  height: 100%;
+}
 nav.home-nav {
   position: absolute;
   min-height: 300px;
@@ -902,6 +904,9 @@ nav.home-nav {
     display: none;
   }
 
+  .off-canvas-wrap {
+    height:100%;
+  }
 
   // required to enforce "sticky" menu items when hamburger is clicked
   .off-canvas-wrap.move-left {
