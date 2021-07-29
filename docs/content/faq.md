@@ -144,23 +144,24 @@ The Azure mixins are going to be full fledged tools that communicate with the
 Azure APIs, and provide an improved user experience. It all depends on how much
 time you want to invest, and what you are starting from.
 
-## Does the Porter has its own Registry like DockerHub, ACR,Quay etc?
+## Does the Porter has its own registry?
 
- No, Porter does have its Registry, rather use an OCI compliant artifact store. And now DockerHub is also OCI compliant registry. The list of registries that works with CNAB ie bundles [here](https://porter.sh/compatible-registries/) .
+ No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](https://porter.sh/compatible-registries/) that have been tested with Porter.
 
-## What is the use of Mixins?
+## What do mixins do?
 
 Mixins provide the following features:
  * Install a tool into the bundle. It handles editing your dockerfile for you.
  * Mixins can adapt imperative command line tools to work with desired state. 
-   >For example, the uninstall command should be re-runnable. I should be able to re-run porter uninstall if there was an error and it     should pick up where it left off. Most command line tools are imperative though, and don’t handle errors in a way that works well with that (e.g. returning a failure when you attempt to delete something that   is already deleted).
+ 
+    For example, the uninstall command should be re-runnable. I should be able to re-run porter uninstall if there was an error and it should pick up where it left off. Most command line tools are imperative though, and don’t handle errors in a way that works well with that (e.g. returning a failure when you attempt to delete something that   is already deleted).
  * Mixins provide rich metadata that end-users can use to both understand what a bundle will do, and companies can limit what bundles they allow based on both the mixins present and what functionality of the mi   xin is used.
  * Mixins help collect outputs from steps, and reuse those as arguments to subsequent steps. 
-   >For example, the helm mixin can create a database and generate an output with the connection string. The terraform mixin can then use that connection string as an input variable, or even expose that output to the end-user when the bundle finishes running.
+    For example, the helm mixin can create a database and generate an output with the connection string. The terraform mixin can then use that connection string as an input variable, or even expose that output to the end-user when the bundle finishes running.
  
 You never have to use mixins, other than the built-in exec. You could write a custom dockerfile and then call a bash script. But most people find that working with mixins is easier.
 
-## Are Porter Bundles and Docker-Compose the same?
+## What is the different between Porter and existing DevOps tools?
 
 Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!
  * Packages everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks.
@@ -172,10 +173,10 @@ Porter is never a replacement for an existing tool. Think of it as doing extra n
  * You can put together the necessary parameters and credentials so your teammates don’t need to each hunt down the proper values themselves, or even worse copy sensitive credentials into local environment variables on every machine that does the deployment. Secrets stay in a secret store and aren’t copied around.
 Those are just some of the reasons why working with bundles with the tools embedded inside is helpful vs using the same tools standalone.
 
-## Where can I use Porter in Day to Day Projects?
+## Do you have suggestions for bundles that I could make?
 
  * Create a bundle for a side project. It handles setting up any infrastructure, such as creating a VM or other cloud resources, and it then also deploys your app. Maybe pushing your serverless function as one example, or running a helm chart. 
- * This is useful because often we figure out how to do these things while working on the project and then after not having time for the project most people forget how to deploy their project. That makes it super hard to start back up on the project! So using bundles helps make the best use of your limited side project time
+   This is useful because often we figure out how to do these things while working on the project and then after not having time for the project most people forget how to deploy their project. That makes it super hard to start back up on the project! So using bundles helps make the best use of your limited side project time
 * Create a bundle for an open source project. Pick a project that you like, maybe wordpress, mysql or discourse, and then write a bundle that will deploy the software to a cloud provider. This is a fun one because other people can use your bundle!
 
 [CNAB Core Spec]: https://github.com/cnabio/cnab-spec/blob/main/100-CNAB.md
