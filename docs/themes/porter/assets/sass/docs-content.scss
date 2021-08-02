@@ -164,7 +164,7 @@
     color: black;
     border: none;
     padding: 0.75em 1em;
-    margin: 0.25em 0 2.5em;
+    margin: 0 0 2.5em;
     font-size: 1rem;
 
     code {
@@ -278,5 +278,14 @@
   embed,
   .youtube-player {
     min-height: 320px;
+  }
+}
+
+.copy-button-container {
+  display: flex;
+  justify-content: flex-end;
+  .copy-button {
+      margin-bottom: 0;
+      padding: 4px;
   }
 }
