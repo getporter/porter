@@ -1,7 +1,9 @@
-document.querySelectorAll("pre").forEach(ele => {
-    var codeElement = ele.querySelector("code")
+document.querySelectorAll("pre").forEach(preElement => {
+    var codeElement = preElement.querySelector("code")
 
-    if (codeElement != null) {
+    /* There should be code element inside pre element and
+       code element should not have language-console class */
+    if (codeElement != null && !codeElement.classList.contains("language-console")) {
         var copyButtonContainer = document.createElement('div')
         copyButtonContainer.classList.add("copy-button-container")
         var copyButton = document.createElement('button');
@@ -16,10 +18,13 @@ document.querySelectorAll("pre").forEach(ele => {
             }).catch(e => {
                 copyButton.innerText = "error"
             })
+
+            // Restore original "copy" text on button after 900 milliseconds
             setTimeout(() => innerText = "copy", 900)
         });
 
-        ele.parentElement.insertBefore(copyButtonContainer, ele)
+        // Insert before pre element so that it can appear in top of code block
+        preElement.parentElement.insertBefore(copyButtonContainer, preElement)
     }
 })
 
