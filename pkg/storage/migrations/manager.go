@@ -243,15 +243,15 @@ func (m *Manager) Migrate() (string, error) {
 
 	var migrationErr *multierror.Error
 	if m.ShouldMigrateClaims() {
-		fmt.Fprintf(w, "Claims schema is out-of-date (want: %s got: %s)\n", claims.CNABSpecVersion, m.schema.Claims)
+		fmt.Fprintf(w, "Installations schema is out-of-date (want: %s got: %s)\n", claims.SchemaVersion, m.schema.Installations)
 		err = m.migrateClaims()
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
-		fmt.Fprintln(w, "Claims schema is up-to-date")
+		fmt.Fprintln(w, "Installations schema is up-to-date")
 	}
 
 	if m.ShouldMigrateCredentials() {
-		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", credentials.CNABSpecVersion, m.schema.Credentials)
+		fmt.Fprintf(w, "Credentials schema is out-of-date (want: %s got: %s)\n", credentials.SchemaVersion, m.schema.Credentials)
 		err = m.migrateCredentials(w)
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
@@ -259,7 +259,7 @@ func (m *Manager) Migrate() (string, error) {
 	}
 
 	if m.ShouldMigrateParameters() {
-		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", parameters.CNABSpecVersion, m.schema.Parameters)
+		fmt.Fprintf(w, "Parameters schema is out-of-date (want: %s got: %s)\n", parameters.SchemaVersion, m.schema.Parameters)
 		err = m.migrateParameters(w)
 		migrationErr = multierror.Append(migrationErr, err)
 	} else {
@@ -311,7 +311,7 @@ func (m *Manager) initEmptyPorterHome() (bool, error) {
 
 // ShouldMigrateClaims determines if the claims storage system requires a migration.
 func (m *Manager) ShouldMigrateClaims() bool {
-	return string(m.schema.Claims) != claims.CNABSpecVersion
+	return m.schema.Installations != claims.SchemaVersion
 }
 
 func (m *Manager) migrateClaims() error {
@@ -339,25 +339,23 @@ func (m *Manager) WriteSchema() error {
 // NewSchema creates a new schema document for the current version of the CNAB spec used by Porter.
 func NewSchema() storage.Schema {
 	return storage.NewSchema(
-		schema.Version(claims.CNABSpecVersion),
-		schema.Version(credentials.CNABSpecVersion),
-		schema.Version(parameters.CNABSpecVersion))
+		claims.SchemaVersion,
+		credentials.SchemaVersion,
+		parameters.SchemaVersion)
 }
 
 // ShouldMigrateCredentials determines if the credentials storage system requires a migration.
 func (m *Manager) ShouldMigrateCredentials() bool {
-	return string(m.schema.Credentials) != credentials.CNABSpecVersion
+	return m.schema.Credentials != credentials.SchemaVersion
 }
 
 func (m *Manager) migrateCredentials(w io.Writer) error {
 	return nil
 }
 
-// ShouldMigrateParameters determines if the parameters storage system requires a migration.
+// ShouldMigrateParameters determines if the parameter set documents requires a migration.
 func (m *Manager) ShouldMigrateParameters() bool {
-	// Can't reference parameters.CNABSpecVersion because it causes a circular dependency
-	// It will be resolved when parametersets move to cnab-go
-	return string(m.schema.Parameters) != parameters.CNABSpecVersion
+	return m.schema.Parameters != parameters.SchemaVersion
 }
 
 func (m *Manager) migrateParameters(w io.Writer) error {

@@ -5,11 +5,18 @@ import (
 	"strings"
 
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/schema"
 )
 
-// PorterInternal is a string that can be used to designate a parameter
-// as internal to Porter
-const PorterInternal = "porter-internal"
+const (
+	// SchemaVersion represents the version associated with the schema
+	// for parameter set documents.
+	SchemaVersion = schema.Version("1.0.0")
+
+	// PorterInternal is a string that can be used to designate a parameter
+	// as internal to Porter
+	PorterInternal = "porter-internal"
+)
 
 // ParseVariableAssignments converts a string array of variable assignments
 // into a map of keys and values

@@ -61,7 +61,7 @@ func TestManager_ShouldMigrateCredentials(t *testing.T) {
 	}{
 		{"old schema", "cnab-credentialsets-1.0.0-DRAFT", true},
 		{"missing schema", "", true},
-		{"current schema", credentials.CNABSpecVersion, false},
+		{"current schema", string(credentials.SchemaVersion), false},
 	}
 
 	for _, tc := range testcases {
@@ -87,7 +87,7 @@ func TestManager_ShouldMigrateClaims(t *testing.T) {
 	}{
 		{"old schema", "cnab-claim-1.0.0-DRAFT", true},
 		{"missing schema", "", true},
-		{"current schema", claims.CNABSpecVersion, false},
+		{"current schema", string(claims.SchemaVersion), false},
 	}
 
 	for _, tc := range testcases {
@@ -251,7 +251,7 @@ func TestManager_ShouldMigrateParameters(t *testing.T) {
 	}{
 		{"old schema", "cnab-parametersets-1.0.0-DRAFT", true},
 		{"missing schema", "", true},
-		{"current schema", parameters.CNABSpecVersion, false},
+		{"current schema", string(parameters.SchemaVersion), false},
 	}
 
 	for _, tc := range testcases {

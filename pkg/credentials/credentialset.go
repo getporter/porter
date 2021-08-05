@@ -7,20 +7,13 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
-	cnabcreds "github.com/cnabio/cnab-go/credentials"
 	"github.com/cnabio/cnab-go/schema"
 )
 
 const (
-	// DefaultSchemaVersion is the default SchemaVersion value
-	// set on new CredentialSet instances, and is the semver portion
-	// of CNABSpecVersion.
-	DefaultSchemaVersion = cnabcreds.DefaultSchemaVersion
-
-	// CNABSpecVersion represents the CNAB Spec version of the Credentials
-	// that this library implements
-	// This value is prefixed with e.g. `cnab-credentials-` so isn't itself valid semver.
-	CNABSpecVersion string = cnabcreds.CNABSpecVersion
+	// SchemaVersion represents the version associated with the schema
+	// credential set documents.
+	SchemaVersion = schema.Version("1.0.0")
 )
 
 var _ storage.Document = &CredentialSet{}
@@ -50,7 +43,7 @@ type CredentialSet struct {
 func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
-		SchemaVersion: DefaultSchemaVersion,
+		SchemaVersion: SchemaVersion,
 		Name:          name,
 		Namespace:     namespace,
 		Created:       now,

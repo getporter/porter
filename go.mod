@@ -4,7 +4,7 @@ go 1.16
 
 replace (
 	// install-spec-wip
-	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.20.2-0.20210730140706-514d2841dc72
+	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.20.2-0.20210805155536-9a543e0636f4
 
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
@@ -14,8 +14,6 @@ replace (
 
 	// go.mod doesn't propogate replacements in the dependency graph so I'm copying this from github.com/moby/buildkit
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
-
-	github.com/qri-io/jsonschema => github.com/qri-io/jsonschema v0.2.2-0.20210723092138-2eb22ee8115f
 
 	// Fixes https://github.com/spf13/viper/issues/761
 	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.2.0.20210514172839-3ea827168363
@@ -30,7 +28,7 @@ require (
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cloudflare/cfssl v1.4.1
-	github.com/cnabio/cnab-go v0.20.2
+	github.com/cnabio/cnab-go v0.21.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/console v1.0.1
 	github.com/containerd/containerd v1.5.0-beta.1
@@ -41,6 +39,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
+	github.com/gobuffalo/logger v1.0.4 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
 	github.com/google/go-containerregistry v0.1.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect

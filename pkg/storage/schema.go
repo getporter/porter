@@ -4,20 +4,28 @@ import "github.com/cnabio/cnab-go/schema"
 
 var _ Document = Schema{}
 
-// TODO(carolynvs): do we want to use porter schema versions instead of relying on cnab?
 type Schema struct {
-	ID          string         `json:"_id"`
-	Claims      schema.Version `json:"claims"`
+	ID string `json:"_id"`
+
+	// Installations is the schema for the installation documents.
+	Installations schema.Version `json:"installations"`
+
+	// Claims is the schema for the old CNAB claim spec. DEPRECATED.
+	Claims schema.Version `json:"claims,omitempty"`
+
+	// Credentials is the schema for the credential spec documents.
 	Credentials schema.Version `json:"credentials"`
-	Parameters  schema.Version `json:"parameters"`
+
+	// Parameters is the schema for the parameter spec documents.
+	Parameters schema.Version `json:"parameters"`
 }
 
-func NewSchema(claims schema.Version, creds schema.Version, params schema.Version) Schema {
+func NewSchema(installations schema.Version, creds schema.Version, params schema.Version) Schema {
 	return Schema{
-		ID:          "schema",
-		Claims:      claims,
-		Credentials: creds,
-		Parameters:  params,
+		ID:            "schema",
+		Installations: installations,
+		Credentials:   creds,
+		Parameters:    params,
 	}
 }
 

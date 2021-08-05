@@ -10,14 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/schema"
 )
-
-func TestCNABSpecVersion(t *testing.T) {
-	version, err := schema.GetSemver(CNABSpecVersion)
-	require.NoError(t, err)
-	assert.Equal(t, DefaultSchemaVersion, version)
-}
 
 func TestNewCredentialSet(t *testing.T) {
 	cs := NewCredentialSet("dev", "mycreds", secrets.Strategy{
@@ -33,7 +26,7 @@ func TestNewCredentialSet(t *testing.T) {
 	assert.NotEmpty(t, cs.Created, "Created was not set")
 	assert.NotEmpty(t, cs.Modified, "Modified was not set")
 	assert.Equal(t, cs.Created, cs.Modified, "Created and Modified should have the same timestamp")
-	assert.Equal(t, DefaultSchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
+	assert.Equal(t, SchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
 

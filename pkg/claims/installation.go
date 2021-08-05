@@ -9,6 +9,12 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
+const (
+	// SchemaVersion represents the version associated with the schema
+	// for all installation documents: installations, runs, results and outputs.
+	SchemaVersion = schema.Version("1.0.0")
+)
+
 var _ storage.Document = Installation{}
 
 type Installation struct {
