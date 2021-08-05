@@ -26,7 +26,7 @@ You may have data stored in an additional remote location depending on the
 plugin that you are using. Open up your Porter config file located at
 ~/.porter/config.toml.
 
-* If you don't have one, congratulations!, you are using the filesystem plugin 
+* If you don't have one, congratulations!, you are using the mongodb-docker plugin 
   and all of your data is in Porter home.
 * If you do have a config file, take a look and determine if you are using a 
   different storage plugin.

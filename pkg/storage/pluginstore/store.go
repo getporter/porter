@@ -5,8 +5,8 @@ import (
 	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/storage/plugins/filesystem"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
+	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 )
@@ -50,8 +50,8 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 
 func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	switch key {
-	case filesystem.PluginKey:
-		return filesystem.NewPlugin(s.Context, pluginConfig)
+	case mongodb_docker.PluginKey:
+		return mongodb_docker.NewPlugin(s.Context, pluginConfig)
 	case mongodb.PluginKey:
 		return mongodb.NewPlugin(s.Context, pluginConfig)
 	default:

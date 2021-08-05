@@ -45,7 +45,7 @@ type Data struct {
 func DefaultDataStore() Data {
 	return Data{
 		BuildDriver:          BuildDriverDocker,
-		DefaultStoragePlugin: "filesystem",
+		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
 	}
 }

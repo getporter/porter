@@ -7,8 +7,8 @@ import (
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/storage/plugins/filesystem"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
+	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"github.com/cloudflare/cfssl/scan/crypto/md5"
 )
 
@@ -76,7 +76,7 @@ func (s *TestStoragePlugin) useDevDatabase() error {
 }
 
 func (s *TestStoragePlugin) runTestDatabase() error {
-	testMongo, err := filesystem.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database)
+	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database)
 	if err != nil {
 		return err
 	}

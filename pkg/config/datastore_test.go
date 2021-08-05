@@ -9,7 +9,7 @@ import (
 
 func TestData_GetDefaultStoragePlugin(t *testing.T) {
 	c := New()
-	assert.Equal(t, "filesystem", c.Data.DefaultStoragePlugin, "Built-in filesystem plugin should be used when config is missing")
+	assert.Equal(t, "mongodb-docker", c.Data.DefaultStoragePlugin, "Built-in mongodb-docker plugin should be used when config is missing")
 }
 
 func TestData_StorageAccessors(t *testing.T) {

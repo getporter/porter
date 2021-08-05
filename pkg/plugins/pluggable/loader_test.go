@@ -28,12 +28,12 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	}
 
 	t.Run("internal plugin", func(t *testing.T) {
-		c.Data.DefaultStoragePlugin = "filesystem"
+		c.Data.DefaultStoragePlugin = "mongodb-docker"
 
 		err := l.selectPlugin(pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
-		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "filesystem", IsInternal: true}, l.SelectedPluginKey)
+		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "mongodb-docker", IsInternal: true}, l.SelectedPluginKey)
 		assert.Nil(t, l.SelectedPluginConfig)
 	})
 

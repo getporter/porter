@@ -1,4 +1,4 @@
-package filesystem
+package mongodb_docker
 
 import (
 	"context"
@@ -15,7 +15,9 @@ import (
 
 var _ plugins.StoragePlugin = &Store{}
 
-// Store is a local filesystem store that stores data in the porter home directory.
+// Store is a storage plugin for porter suitable for running on machines
+// that have not configured proper storage, i.e. a mongo database.
+// It runs mongodb in a docker container and stores its data in a docker volume.
 type Store struct {
 	plugins.StorageProtocol
 	context *portercontext.Context
@@ -36,7 +38,7 @@ func (s *Store) Connect() error {
 	}
 
 	// Run mongo in a container storing its data in a volume
-	container := "porter-filesystem-plugin"
+	container := "porter-mongodb-docker-plugin"
 	dataVol := container + "-data"
 
 	conn, err := EnsureMongoIsRunning(s.context, container, s.config.Port, dataVol, s.config.Database)
@@ -50,7 +52,7 @@ func (s *Store) Connect() error {
 
 func (s *Store) Close() error {
 	// leave the container running for performance purposes
-	//exec.Command("docker", "rm", "-f", "porter-filesystem-plugin")
+	//exec.Command("docker", "rm", "-f", "porter-mongodb-docker-plugin")
 	return nil
 }
 
@@ -99,7 +101,7 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 			if exitErr, ok := err.(*exec.ExitError); ok {
 				fmt.Fprintf(c.Err, string(exitErr.Stderr))
 			}
-			return errors.Wrapf(err, "error running a mongo container for the filesystem plugin")
+			return errors.Wrapf(err, "error running a mongo container for the mongodb-docker plugin")
 		}
 		return nil
 	}

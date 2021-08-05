@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/storage/plugins/filesystem"
+	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
 	"github.com/pkg/errors"
@@ -65,7 +65,7 @@ func NewTest(t *testing.T) (Test, error) {
 
 func (t Test) startMongo() error {
 	c := context.NewTestContext(t.T)
-	conn, err := filesystem.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test")
+	conn, err := mongodb_docker.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test")
 	defer conn.Close()
 	if err != nil {
 		return err
