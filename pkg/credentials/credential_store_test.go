@@ -20,17 +20,17 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 
 	require.NoError(t, cp.InsertCredentialSet(cs))
 
-	creds, err := cp.ListCredentialSets("dev")
+	creds, err := cp.ListCredentialSets("dev", "", nil)
 	require.NoError(t, err)
 	require.Len(t, creds, 1, "expected 1 credential set")
 	require.Equal(t, cs.Name, creds[0].Name, "expected to retrieve secreks credentials")
 	require.Equal(t, cs.Namespace, creds[0].Namespace, "expected to retrieve secreks credentials")
 
-	creds, err = cp.ListCredentialSets("")
+	creds, err = cp.ListCredentialSets("", "", nil)
 	require.NoError(t, err)
 	require.Len(t, creds, 0, "expected no global credential sets")
 
-	creds, err = cp.ListCredentialSets("*")
+	creds, err = cp.ListCredentialSets("*", "", nil)
 	require.NoError(t, err)
 	require.Len(t, creds, 1, "expected 1 credential set defined in all namespaces")
 

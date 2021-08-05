@@ -130,12 +130,13 @@ The first argument is the name of the installation to create. This defaults to t
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
-  porter bundle install MyAppFromReference --reference getporter/kubernetes:v0.1.0
+  porter bundle install MyAppFromReference --reference getporter/kubernetes:v0.1.0 --namespace dev
   porter bundle install --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
   porter bundle install --driver debug
+  porter bundle install --label env=dev --label owner=myuser
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p)
@@ -162,6 +163,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
+	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
+		"Associate the specified labels with the installation. May be specified multiple times.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return cmd
 }

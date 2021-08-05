@@ -50,6 +50,7 @@ porter parameters generate [NAME] [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for generate
       --insecure-registry   Don't require TLS for the registry
+  -l, --label strings       Associate the specified labels with the parameter set. May be specified multiple times.
   -n, --namespace string    Namespace in which the parameter set is defined. Defaults to the global namespace.
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```

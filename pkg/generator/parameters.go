@@ -31,6 +31,8 @@ func (opts *GenerateParametersOptions) GenerateParameters() (parameters.Paramete
 	if err != nil {
 		return parameters.ParameterSet{}, err
 	}
+
+	pset.Labels = opts.Labels
 	return pset, nil
 }
 

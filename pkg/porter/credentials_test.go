@@ -45,15 +45,18 @@ func TestGenerateNameProvided(t *testing.T) {
 	opts := CredentialOptions{
 		Silent: true,
 	}
+	opts.Namespace = "dev"
 	opts.Name = "kool-kred"
+	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
 	err := opts.Validate(nil, p.Context)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
-	_, err = p.Credentials.GetCredentialSet("", "kool-kred")
+	creds, err := p.Credentials.GetCredentialSet(opts.Namespace, "kool-kred")
 	require.NoError(t, err, "expected credential to have been generated")
+	assert.Equal(t, map[string]string{"env": "dev"}, creds.Labels)
 }
 
 func TestGenerateBadNameProvided(t *testing.T) {

@@ -19,7 +19,7 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := InstallOptions{
-		&BundleActionOptions{
+		BundleActionOptions: &BundleActionOptions{
 			sharedOptions: sharedOptions{
 				bundleFileOptions: bundleFileOptions{
 					File: "porter.yaml",
@@ -82,7 +82,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{
-				&BundleActionOptions{
+				BundleActionOptions: &BundleActionOptions{
 					sharedOptions: sharedOptions{
 						Driver: tc.driver,
 					},

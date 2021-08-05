@@ -26,9 +26,8 @@ type Provider interface {
 	// GetInstallation retrieves an Installation document by name.
 	GetInstallation(namespace string, name string) (Installation, error)
 
-	// ListInstallations returns Installation documents sorted in ascending order by name.
-	ListInstallations(namespace string) ([]Installation, error)
-
+	// ListInstallations returns Installations sorted in ascending order by the namespace and then name.
+	ListInstallations(namespace string, name string, labels map[string]string) ([]Installation, error)
 	// ListRuns returns Run documents sorted in ascending order by ID.
 	ListRuns(namespace string, installation string) ([]Run, error)
 

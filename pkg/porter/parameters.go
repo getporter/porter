@@ -39,7 +39,7 @@ type ParameterEditOptions struct {
 
 // ListParameters lists saved parameter sets.
 func (p *Porter) ListParameters(opts ListOptions) error {
-	params, err := p.Parameters.ListParameterSets(opts.Namespace)
+	params, err := p.Parameters.ListParameterSets(opts.Namespace, opts.Name, opts.ParseLabels())
 	if err != nil {
 		return err
 	}
@@ -75,6 +75,11 @@ func (p *Porter) ListParameters(opts ListOptions) error {
 type ParameterOptions struct {
 	BundleActionOptions
 	Silent bool
+	Labels []string
+}
+
+func (o ParameterOptions) ParseLabels() map[string]string {
+	return parseLabels(o.Labels)
 }
 
 // Validate prepares for an action and validates the options.
@@ -130,6 +135,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 		GenerateOptions: generator.GenerateOptions{
 			Name:      name,
 			Namespace: opts.Namespace,
+			Labels:    opts.ParseLabels(),
 			Silent:    opts.Silent,
 		},
 		Bundle: bundle,
@@ -255,6 +261,16 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 		fmt.Fprintf(p.Out, "Name: %s\n", paramSet.Name)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(paramSet.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(paramSet.Modified))
+
+		// Print labels, if any
+		if len(paramSet.Labels) > 0 {
+			fmt.Fprintln(p.Out, "Labels:")
+
+			for k, v := range paramSet.Labels {
+				fmt.Fprintf(p.Out, "  %s: %s\n", k, v)
+			}
+			fmt.Fprintln(p.Out)
+		}
 
 		// Now print the table
 		table.SetHeader([]string{"Name", "Local Source", "Source Type"})

@@ -1,7 +1,9 @@
 package porter
 
 import (
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
 
@@ -11,6 +13,9 @@ var _ BundleAction = NewInstallOptions()
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
 	*BundleActionOptions
+
+	// Labels to apply to the installation.
+	Labels []string
 }
 
 func (o InstallOptions) Validate(args []string, p *Porter) error {
@@ -28,6 +33,10 @@ func (o InstallOptions) Validate(args []string, p *Porter) error {
 	return nil
 }
 
+func (o InstallOptions) ParseLabels() map[string]string {
+	return parseLabels(o.Labels)
+}
+
 func (o InstallOptions) GetAction() string {
 	return cnab.ActionInstall
 }
@@ -43,5 +52,21 @@ func NewInstallOptions() InstallOptions {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
+	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	if err == nil {
+		// Validate that we are not overwriting an existing installation
+		if i.Status.InstallationCompleted {
+			return errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade.")
+		}
+	} else if errors.Is(err, storage.ErrNotFound{}) {
+		// Create the installation record
+		i = claims.NewInstallation(opts.Namespace, opts.Name)
+		i.Labels = opts.ParseLabels()
+		err = p.Claims.InsertInstallation(i)
+		if err != nil {
+			return errors.Wrap(err, "error saving installation record")
+		}
+	}
+
 	return p.ExecuteAction(opts)
 }

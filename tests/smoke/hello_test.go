@@ -31,7 +31,7 @@ func TestHelloBundle(t *testing.T) {
 	// Do not run these commands in a bundle directory
 	os.Chdir(test.TestDir)
 
-	test.RequirePorter("install", "mybuns", "--reference", ref, "--namespace=dev")
+	test.RequirePorter("install", "mybuns", "--reference", ref, "--namespace=dev", "--label", "test=true")
 
 	// Should not see the installation in the global namespace
 	output, err := test.Porter("list", "--output=json").Output()
@@ -63,6 +63,20 @@ func TestHelloBundle(t *testing.T) {
 	require.Len(t, installations, 1, "expected one installation to be returned by porter list")
 	require.Equal(t, "mybuns", installations[0]["name"], "expected the mybuns installation to be output by porter list")
 	require.Equal(t, "test", installations[0]["namespace"], "expected the installation to be in the test namespace")
+
+	// Search by name
+	output, err = test.Porter("list", "mybuns", "--namespace=*", "--output=json").Output()
+	require.NoError(t, err)
+	installations = []map[string]interface{}{}
+	require.NoError(t, json.Unmarshal([]byte(output), &installations))
+	require.Len(t, installations, 2, "expected two installations named mybuns")
+
+	// Search by label
+	output, err = test.Porter("list", "--label", "test=true", "--namespace=*", "--output=json").Output()
+	require.NoError(t, err)
+	installations = []map[string]interface{}{}
+	require.NoError(t, json.Unmarshal([]byte(output), &installations))
+	require.Len(t, installations, 1, "expected one installations labeled with test=true")
 
 	// Validate that we can't accidentally overwrite an installation
 	var outputE bytes.Buffer

@@ -12,11 +12,13 @@ List installed bundles
 List all bundles installed by Porter.
 
 A listing of bundles currently installed by Porter will be provided, along with metadata such as creation time, last action, last status, etc.
+Optionally filters the results name, which returns all results whose name contain the provided query.
+The results may also be filtered by associated labels and the namespace in which the installation is defined. 
 
 Optional output formats include json and yaml.
 
 ```
-porter list [flags]
+porter list [QUERY] [flags]
 ```
 
 ### Examples
@@ -24,12 +26,15 @@ porter list [flags]
 ```
   porter list
   porter list -o json
+  porter list --label owner=me
+  porter list my
 ```
 
 ### Options
 
 ```
   -h, --help               help for list
+  -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
   -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
   -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```

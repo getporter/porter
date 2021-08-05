@@ -84,6 +84,8 @@ will then provide it to the bundle in the correct location. `,
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the credential set is defined. Defaults to the global namespace.")
+	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
+		"Associate the specified labels with the credential set. May be specified multiple times.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -97,13 +99,18 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "list",
+		Use:     "list [QUERY]",
 		Aliases: []string{"ls"},
 		Short:   "List credentials",
-		Long:    `List named sets of credentials defined by the user.`,
+		Long: `List named sets of credentials defined by the user.
+
+Optionally filters the results name, which returns all results whose name contain the provided query.
+The results may also be filtered by associated labels and the namespace in which the credential set is defined.`,
 		Example: `  porter credentials list
   porter credentials list --namespace prod
-  porter credentials list --namespace "*"`,
+  porter credentials list --namespace "*"
+  porter credentials list kube
+  porter credentials list --label env=dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.ParseFormat()
 		},
@@ -115,6 +122,8 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
+	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
+		"Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 

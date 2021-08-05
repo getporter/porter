@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // AggregateOptions is the set of options available to the Aggregate operation on any
@@ -66,10 +67,6 @@ type FindOptions struct {
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
 	Filter interface{}
 
-	// Group specifies how to group the results.
-	// See https://docs.mongodb.com/manual/reference/operator/aggregation/group/
-	Group interface{}
-
 	// Select is a projection document. The entire document is returned by default.
 	// See https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/
 	Select interface{}
@@ -82,7 +79,6 @@ func (o FindOptions) ToPluginOptions(collection string) plugins.FindOptions {
 		Skip:       o.Skip,
 		Limit:      o.Limit,
 		Filter:     o.Filter,
-		Group:      o.Group,
 	}
 }
 
@@ -242,4 +238,22 @@ func convertToRawJsonDocument(in interface{}, raw interface{}) error {
 	}
 
 	return json.Unmarshal(data, raw)
+}
+
+// CreateListFiler builds a query for a list of documents by:
+// * matching namespace
+// * name contains substring
+// * labels contains all matches
+func CreateListFiler(namespace string, name string, labels map[string]string) bson.M {
+	filter := make(bson.M, 3)
+	if namespace != "*" {
+		filter["namespace"] = namespace
+	}
+	if name != "" {
+		filter["name"] = bson.M{"$regex": name}
+	}
+	for k, v := range labels {
+		filter["labels."+k] = v
+	}
+	return filter
 }

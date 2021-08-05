@@ -119,17 +119,14 @@ func (s ClaimStore) Initialize() error {
 	return bigErr.ErrorOrNil()
 }
 
-func (s ClaimStore) ListInstallations(namespace string) ([]Installation, error) {
+func (s ClaimStore) ListInstallations(namespace string, name string, labels map[string]string) ([]Installation, error) {
 	var out []Installation
-	opts := storage.FindOptions{
-		Sort: []string{"namespace", "name"},
+	findOpts := storage.FindOptions{
+		Sort:   []string{"namespace", "name"},
+		Filter: storage.CreateListFiler(namespace, name, labels),
 	}
-	if namespace != "*" {
-		opts.Filter = bson.M{
-			"namespace": namespace,
-		}
-	}
-	err := s.store.Find(CollectionInstallations, opts, &out)
+
+	err := s.store.Find(CollectionInstallations, findOpts, &out)
 	return out, err
 }
 

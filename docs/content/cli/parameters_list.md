@@ -11,8 +11,11 @@ List parameter sets
 
 List named sets of parameters defined by the user.
 
+Optionally filters the results name, which returns all results whose name contain the provided query.
+The results may also be filtered by associated labels and the namespace in which the parameter set is defined.
+
 ```
-porter parameters list [flags]
+porter parameters list [QUERY] [flags]
 ```
 
 ### Examples
@@ -21,12 +24,15 @@ porter parameters list [flags]
   porter parameters list
   porter parameters list --namespace prod -o json
   porter parameters list --namespace "*"
+  porter parameters list myapp
+  porter parameters list --label env=dev
 ```
 
 ### Options
 
 ```
   -h, --help               help for list
+  -l, --label strings      Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.
   -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.
   -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```

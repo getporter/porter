@@ -32,6 +32,8 @@ func GenerateCredentials(opts GenerateCredentialsOptions) (credentials.Credentia
 	if err != nil {
 		return credentials.CredentialSet{}, err
 	}
+
+	credSet.Labels = opts.Labels
 	return credSet, nil
 }
 

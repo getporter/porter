@@ -28,6 +28,9 @@ type ParameterSet struct {
 	// Modified timestamp of the parameter set.
 	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 
+	// Labels applied to the parameter set.
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+
 	// Parameters is a list of parameter specs.
 	Parameters []secrets.Strategy `json:"parameters" yaml:"parameters" toml:"parameters"`
 }
