@@ -80,7 +80,7 @@ func (s *Store) Connect() error {
 	store, ok := raw.(plugins.SecretsProtocol)
 	if !ok {
 		cleanup()
-		return errors.Errorf("the interface exposed by the %s plugin was not secrets.CredentialStore", l.SelectedPluginKey)
+		return errors.Errorf("the interface exposed by the %s plugin was not plugins.SecretsProtocol", l.SelectedPluginKey)
 	}
 
 	s.plugin = store

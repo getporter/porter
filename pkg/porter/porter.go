@@ -97,7 +97,7 @@ func (p *Porter) Connect() error {
 	return p.Storage.Connect()
 }
 
-// Close releases resourced used by Porter before terminating the application.
+// Close releases resources used by Porter before terminating the application.
 func (p *Porter) Close() error {
 	if p.Debug {
 		fmt.Fprintln(p.Err, "Closing plugins")

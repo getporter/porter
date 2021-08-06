@@ -15,7 +15,7 @@ type Plugin interface {
 	Connect() error
 
 	// Close the connection to the plugin.
-	// Save to call multiple times.
+	// Safe to call multiple times.
 	Close() error
 }
 

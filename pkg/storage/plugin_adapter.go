@@ -13,7 +13,7 @@ import (
 var _ Store = PluginAdapter{}
 
 // PluginAdapter converts between the low-level plugin.StorageProtocol which
-// operators on bson documents, and the document types stored by Porter which are
+// operates on bson documents, and the document types stored by Porter which are
 // marshaled using json.
 //
 // Specifically it handles converting from bson.Raw to the type specified by

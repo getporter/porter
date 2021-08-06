@@ -24,7 +24,7 @@ func (m *TestManager) Teardown() error {
 	return m.testPlugin.Teardown()
 }
 
-// UnsetSchema allows tests to pre-emptively set the schema document.
+// SetSchema allows tests to pre-emptively set the schema document.
 func (m *TestManager) SetSchema(schema storage.Schema) {
 	m.schema = schema
 	m.initialized = true

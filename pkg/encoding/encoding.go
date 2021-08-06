@@ -23,12 +23,12 @@ func MarshalYaml(in interface{}) ([]byte, error) {
 	return Marshal(Yaml, in)
 }
 
-// MarshalJson converts the input struct to yaml.
+// MarshalJson converts the input struct to json.
 func MarshalJson(in interface{}) ([]byte, error) {
 	return Marshal(Json, in)
 }
 
-// MarshalToml converts the input to yaml.
+// MarshalToml converts the input to toml.
 func MarshalToml(in interface{}) ([]byte, error) {
 	return Marshal(Toml, in)
 }

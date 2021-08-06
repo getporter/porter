@@ -121,9 +121,7 @@ func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		session.Close()
-	}()
+	defer session.Close()
 
 	query := s.buildQuery(session, opts)
 
