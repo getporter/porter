@@ -59,15 +59,15 @@ func (p TestCredentialProvider) Teardown() error {
 	}
 }
 
-// Load a ParameterSet from a test file at a given path.
+// Load a CredentialSet from a test file at a given path.
 //
-// It does not load the individual parameters.
+// It does not load the individual credentials.
 func (p TestCredentialProvider) Load(path string) (CredentialSet, error) {
 	fs := aferox.NewAferox(".", afero.NewOsFs())
 	var cset CredentialSet
 	err := encoding.UnmarshalFile(fs, path, &cset)
 
-	return cset, errors.Wrapf(err, "error reading %s as a parameter set", path)
+	return cset, errors.Wrapf(err, "error reading %s as a credential set", path)
 }
 
 func (p TestCredentialProvider) AddTestCredentials(path string) {
