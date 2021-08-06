@@ -15,7 +15,7 @@ import (
 
 func TestManager_LoadSchema(t *testing.T) {
 	t.Run("valid schema", func(t *testing.T) {
-		schema := storage.NewSchema("cnab-claim-1.0.0-DRAFT", "cnab-credentials-1.0.0-DRAFT", "")
+		schema := storage.NewSchema(claims.SchemaVersion, credentials.SchemaVersion, parameters.SchemaVersion)
 
 		c := config.NewTestConfig(t)
 		m := NewTestManager(c)

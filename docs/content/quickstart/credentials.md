@@ -147,8 +147,9 @@ The contents of the file are shown below:
 
 ```json
 {
-  "schemaVersion": "1.0.0-DRAFT+b6c701f",
+  "schemaVersion": "1.0.0",
   "name": "github",
+  "namespace": "",
   "created": "2021-06-29T09:44:32.16657-05:00",
   "modified": "2021-06-29T09:44:32.16657-05:00",
   "credentials": [

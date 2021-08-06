@@ -209,7 +209,7 @@ func TestShowCredential_Found(t *testing.T) {
 			name:   "json",
 			format: printer.FormatJson,
 			wantOutput: `{
-  "schemaVersion": "1.0.0-DRAFT+b6c701f",
+  "schemaVersion": "1.0.0",
   "namespace": "dev",
   "name": "kool-kreds",
   "created": "2019-06-24T16:07:57.415378-05:00",
@@ -246,7 +246,7 @@ func TestShowCredential_Found(t *testing.T) {
 		{
 			name:   "yaml",
 			format: printer.FormatYaml,
-			wantOutput: `schemaVersion: 1.0.0-DRAFT+b6c701f
+			wantOutput: `schemaVersion: 1.0.0
 namespace: dev
 name: kool-kreds
 created: 2019-06-24T16:07:57.415378-05:00

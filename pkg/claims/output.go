@@ -3,32 +3,26 @@ package claims
 import (
 	"sort"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ storage.Document = Output{}
 
 type Output struct {
-	Name         string `json:"name"`
-	Namespace    string `json:"namespace"`
-	Installation string `json:"installation"`
-	RunID        string `json:"runId"`
-	ResultID     string `json:"resultId"`
-	Value        []byte `json:"value"`
+	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	Name          string         `json:"name" yaml:"name" toml:"name"`
+	Namespace     string         `json:"namespace" yaml:"namespace" toml:"namespace"`
+	Installation  string         `json:"installation" yaml:"installation" toml:"installation"`
+	RunID         string         `json:"runId" yaml:"runId" toml:"runId"`
+	ResultID      string         `json:"resultId" yaml:"resultId" toml:"resultId"`
+	Value         []byte         `json:"value" yaml:"value" toml:"value"`
 }
 
 func (o Output) DefaultDocumentFilter() interface{} {
 	return map[string]interface{}{"resultId": o.ResultID, "name": o.Name}
-}
-
-func (o Output) ToCNAB() cnab.Output {
-	return cnab.Output{
-		Name:  "",
-		Value: nil,
-	}
 }
 
 // GetSchema returns the schema for the output from the specified bundle, or

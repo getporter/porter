@@ -8,18 +8,6 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 )
 
-const (
-	// DefaultSchemaVersion is the default SchemaVersion value
-	// set on new ParameterSet instances, and is the semver portion
-	// of CNABSpecVersion.
-	DefaultSchemaVersion = schema.Version("1.0.0-DRAFT+TODO")
-
-	// CNABSpecVersion represents the CNAB Spec version of the Parameters
-	// that this library implements.
-	// This value is prefixed with e.g. `cnab-parametersets-` so isn't itself valid semver.
-	CNABSpecVersion string = "cnab-parametersets-" + string(DefaultSchemaVersion)
-)
-
 var _ storage.Document = ParameterSet{}
 
 // ParameterSet represents a collection of parameters and their
@@ -48,7 +36,7 @@ type ParameterSet struct {
 func NewParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
 	now := time.Now()
 	ps := ParameterSet{
-		SchemaVersion: DefaultSchemaVersion,
+		SchemaVersion: SchemaVersion,
 		Namespace:     namespace,
 		Name:          name,
 		Created:       now,

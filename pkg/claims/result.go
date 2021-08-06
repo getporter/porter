@@ -5,11 +5,15 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/schema"
 )
 
 var _ storage.Document = Result{}
 
 type Result struct {
+	// SchemaVersion of the document.
+	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+
 	// ID of the result.
 	ID string `json:"_id" yaml:"_id" toml:"_id"`
 
@@ -45,31 +49,20 @@ func (r Result) DefaultDocumentFilter() interface{} {
 
 func NewResult() Result {
 	return Result{
-		ID:      cnab.NewULID(),
-		Created: time.Now(),
-	}
-}
-
-func (r Result) ToCNAB() cnab.Result {
-	return cnab.Result{
-		ID:             r.ID,
-		Namespace:      r.Namespace,
-		ClaimID:        r.RunID,
-		Created:        r.Created,
-		Message:        r.Message,
-		Status:         r.Status,
-		OutputMetadata: r.OutputMetadata,
-		Custom:         r.Custom,
+		SchemaVersion: SchemaVersion,
+		ID:            cnab.NewULID(),
+		Created:       time.Now(),
 	}
 }
 
 func (r Result) NewOutput(name string, data []byte) Output {
 	return Output{
-		Name:         name,
-		Namespace:    r.Namespace,
-		Installation: r.Installation,
-		RunID:        r.RunID,
-		ResultID:     r.ID,
-		Value:        data,
+		SchemaVersion: SchemaVersion,
+		Name:          name,
+		Namespace:     r.Namespace,
+		Installation:  r.Installation,
+		RunID:         r.RunID,
+		ResultID:      r.ID,
+		Value:         data,
 	}
 }

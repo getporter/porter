@@ -13,13 +13,13 @@ var _ storage.Document = Run{}
 
 // Run represents the execution of an installation's bundle.
 type Run struct {
-	// SchemaVersion is the version of the claim schema.
-	SchemaVersion schema.Version `json:"schemaVersion"`
+	// SchemaVersion of the document.
+	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
-	// ID of the claim.
+	// ID of the Run.
 	ID string `json:"_id" yaml:"_id", toml:"_id"`
 
-	// Created timestamp of the claim.
+	// Created timestamp of the Run.
 	Created time.Time `json:"created" yaml:"created", toml:"created"`
 
 	// Namespace of the installation.
@@ -59,7 +59,7 @@ func (r Run) DefaultDocumentFilter() interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion: CNABSchemaVersion(),
+		SchemaVersion: SchemaVersion,
 		ID:            cnab.NewULID(),
 		Revision:      cnab.NewULID(),
 		Created:       time.Now(),
@@ -90,7 +90,7 @@ func (r Run) IsModifyingAction() (bool, error) {
 // ToCNAB associated with the Run.
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
-		SchemaVersion:   r.SchemaVersion,
+		SchemaVersion:   CNABSchemaVersion(),
 		ID:              r.ID,
 		Namespace:       r.Namespace,
 		Installation:    r.Installation,
@@ -118,6 +118,7 @@ func (r Run) NewResult(status string) Result {
 // NewResultFrom creates a result from the output of a CNAB run.
 func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 	return Result{
+		SchemaVersion:  SchemaVersion,
 		ID:             cnabResult.ID,
 		Namespace:      r.Namespace,
 		Installation:   r.Installation,

@@ -43,7 +43,7 @@ type Installation struct {
 	BundleDigest string `json:"bundleDigest,omitempty" yaml:"bundleDigest,omitempty" toml:"bundleDigest,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
-	// TODO(carolynvs): remove an dpopulate in tocnab
+	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
 	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
 
 	// Labels applied to the installation.
@@ -68,7 +68,7 @@ func (i Installation) DefaultDocumentFilter() interface{} {
 func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
-		SchemaVersion: CNABSchemaVersion(),
+		SchemaVersion: SchemaVersion,
 		Namespace:     namespace,
 		Name:          name,
 		Created:       now,
@@ -80,7 +80,7 @@ func (i Installation) ToCNAB() cnab.Installation {
 	// TODO(carolynvs): Remove installation status from the cnab struct
 	// in general look over what is actually needed to be specified on an installation doc. Does it need to be in the spec?
 	return cnab.Installation{
-		SchemaVersion:    i.SchemaVersion,
+		SchemaVersion:    CNABSchemaVersion(),
 		Name:             i.Name,
 		Namespace:        i.Namespace,
 		BundleRepository: i.BundleRepository,
