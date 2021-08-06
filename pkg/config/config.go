@@ -84,7 +84,7 @@ func (c *Config) LoadData() error {
 	}
 
 	if c.Debug {
-		ns := "(global)"
+		ns := "''"
 		if c.Data.Namespace != "" {
 			ns = c.Data.Namespace
 		}
