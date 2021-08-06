@@ -18,7 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
-	secretplugins "get.porter.sh/porter/pkg/secrets/pluginstore"
+	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/migrations"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
@@ -63,7 +63,7 @@ func NewFor(c *config.Config, store storage.Store) *Porter {
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
-	secretStorage := secretplugins.NewStore(c)
+	secretStorage := secretsplugin.NewStore(c)
 	claimStorage := claims.NewClaimStore(storageManager)
 	credStorage := credentials.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := parameters.NewParameterStore(storageManager, secretStorage)

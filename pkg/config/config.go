@@ -93,28 +93,28 @@ func (c *Config) LoadData() error {
 	return nil
 }
 
-func (c *Config) GetStorage(name string) (CrudStore, error) {
+func (c *Config) GetStorage(name string) (StoragePlugin, error) {
 	if c != nil {
-		for _, is := range c.Data.CrudStores {
+		for _, is := range c.Data.StoragePlugins {
 			if is.Name == name {
 				return is, nil
 			}
 		}
 	}
 
-	return CrudStore{}, errors.Errorf("store '%s' not defined", name)
+	return StoragePlugin{}, errors.Errorf("store '%s' not defined", name)
 }
 
-func (c *Config) GetSecretSource(name string) (SecretSource, error) {
+func (c *Config) GetSecretsPlugin(name string) (SecretsPlugin, error) {
 	if c != nil {
-		for _, cs := range c.Data.SecretSources {
+		for _, cs := range c.Data.SecretsPlugin {
 			if cs.Name == name {
 				return cs, nil
 			}
 		}
 	}
 
-	return SecretSource{}, errors.New("secrets %q not defined")
+	return SecretsPlugin{}, errors.New("secrets %q not defined")
 }
 
 // GetHomeDir determines the absolute path to the porter home directory.

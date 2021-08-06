@@ -38,7 +38,7 @@ func NewSecretsPluginConfig() pluggable.PluginTypeConfig {
 			return c.Data.DefaultSecrets
 		},
 		GetPluggable: func(c *config.Config, name string) (pluggable.Entry, error) {
-			return c.GetSecretSource(name)
+			return c.GetSecretsPlugin(name)
 		},
 		GetDefaultPlugin: func(c *config.Config) string {
 			return c.Data.DefaultSecretsPlugin

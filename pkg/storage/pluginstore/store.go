@@ -76,7 +76,7 @@ func (s *Store) Connect() error {
 	store, ok := raw.(plugins.StorageProtocol)
 	if !ok {
 		cleanup()
-		return errors.Errorf("the interface exposed by the %s plugin was not crudstore.StorageProtocol", l.SelectedPluginKey)
+		return errors.Errorf("the interface exposed by the %s plugin was not plugins.StorageProtocol", l.SelectedPluginKey)
 	}
 
 	s.plugin = store

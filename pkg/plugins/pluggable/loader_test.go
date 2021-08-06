@@ -49,7 +49,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("configured plugin", func(t *testing.T) {
 		c.Data.DefaultStorage = "azure"
-		c.Data.CrudStores = []config.CrudStore{
+		c.Data.StoragePlugins = []config.StoragePlugin{
 			{
 				config.PluginConfig{
 					Name:         "azure",
@@ -65,6 +65,6 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
-		assert.Equal(t, c.Data.CrudStores[0].Config, l.SelectedPluginConfig)
+		assert.Equal(t, c.Data.StoragePlugins[0].Config, l.SelectedPluginConfig)
 	})
 }

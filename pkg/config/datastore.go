@@ -25,8 +25,8 @@ type Data struct {
 	// Use Config.IsFeatureEnabled instead of parsing directly.
 	ExperimentalFlags []string `mapstructure:"experimental"`
 
-	// CrudStores defined in the configuration file.
-	CrudStores []CrudStore `mapstructure:"storage"`
+	// StoragePlugins defined in the configuration file.
+	StoragePlugins []StoragePlugin `mapstructure:"storage"`
 
 	// DefaultSecretsPlugin is the plugin to use when no plugin is specified.
 	DefaultSecretsPlugin string `mapstructure:"default-secrets-plugin"`
@@ -37,8 +37,8 @@ type Data struct {
 	// Namespace is the default namespace for commands that do not override it with a flag.
 	Namespace string `mapstructure:"namespace"`
 
-	// SecretSources defined in the configuration file.
-	SecretSources []SecretSource `mapstructure:"secrets"`
+	// SecretsPlugin defined in the configuration file.
+	SecretsPlugin []SecretsPlugin `mapstructure:"secrets"`
 }
 
 // DefaultDataStore used when no config file is found.
@@ -50,13 +50,13 @@ func DefaultDataStore() Data {
 	}
 }
 
-// SecretSource is the plugin stanza for secrets.
-type SecretSource struct {
+// SecretsPlugin is the plugin stanza for secrets.
+type SecretsPlugin struct {
 	PluginConfig `mapstructure:",squash"`
 }
 
-// CrudStore is the plugin stanza for storage.
-type CrudStore struct {
+// StoragePlugin is the plugin stanza for storage.
+type StoragePlugin struct {
 	PluginConfig `mapstructure:",squash"`
 }
 
