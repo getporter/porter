@@ -236,14 +236,22 @@ func Test_bundleFileOptions(t *testing.T) {
 	testcases := []struct {
 		name         string
 		opts         bundleFileOptions
+		inBundleDir  bool
 		setup        func(*context.Context, bundleFileOptions) error
 		wantFile     string
 		wantCNABFile string
 		wantError    string
 	}{
 		{
-			name:         "no opts",
+			name:        "no bundle specified",
+			opts:        bundleFileOptions{},
+			inBundleDir: false,
+			setup:       func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			wantError:   "No bundle specified",
+		}, {
+			name:         "in bundle directory",
 			opts:         bundleFileOptions{},
+			inBundleDir:  true,
 			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     config.Name,
 			wantCNABFile: build.LOCAL_BUNDLE,
@@ -253,6 +261,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				ReferenceSet: true,
 			},
+			inBundleDir:  true,
 			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
@@ -262,6 +271,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
+			inBundleDir:  true,
 			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
@@ -271,6 +281,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				File: "alternate/porter.yaml",
 			},
+			inBundleDir:  true,
 			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
@@ -280,6 +291,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
+			inBundleDir: true,
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.Dir, 0700)
 			},
@@ -291,6 +303,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				File: "alternate/porter.yaml",
 			},
+			inBundleDir: true,
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, 0700)
 			},
@@ -303,6 +316,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				Dir:  "path/to/bundle",
 				File: "alternate/porter.yaml",
 			},
+			inBundleDir: true,
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
 				err := ctx.FileSystem.MkdirAll(opts.File, 0700)
 				if err != nil {
@@ -319,16 +333,19 @@ func Test_bundleFileOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cxt := context.NewTestContext(t)
 
-			// Create default local manifest
-			_, err := cxt.FileSystem.Create(config.Name)
-			require.NoError(t, err)
+			if tc.inBundleDir {
+				// Create default local manifest
+				_, err := cxt.FileSystem.Create(config.Name)
+				require.NoError(t, err)
+			}
 
-			err = tc.setup(cxt.Context, tc.opts)
+			err := tc.setup(cxt.Context, tc.opts)
 			require.NoError(t, err)
 
 			err = tc.opts.Validate(cxt.Context)
 			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
+				require.Error(t, err, tc.wantError)
+				assert.Contains(t, err.Error(), tc.wantError)
 			} else {
 				require.NoError(t, err)
 

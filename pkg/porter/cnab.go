@@ -170,6 +170,8 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 		if manifestExists {
 			o.File = config.Name
 			o.defaultCNABFile()
+		} else {
+			return errors.New("No bundle specified. Either --reference, --file or --cnab-file must be specified or porter must be run in a directory that contains a porter.yaml")
 		}
 	}
 
