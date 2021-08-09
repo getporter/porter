@@ -3,9 +3,10 @@ package cnabprovider
 import (
 	"testing"
 
-	"github.com/cnabio/cnab-go/bundle"
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,25 +18,25 @@ func TestRuntime_Uninstall(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
-		existingClaim, err := claim.New("mybuns", claim.ActionInstall, bundle.Bundle{}, nil)
-		require.NoError(t, err, "New claim failed")
-		err = r.claims.SaveClaim(existingClaim)
-		require.NoError(t, err, "SaveClaim failed")
+		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybuns"))
+		r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
 
 		args := ActionArguments{
-			Action:       claim.ActionUninstall,
+			Action:       cnab.ActionUninstall,
 			Installation: "mybuns",
 			BundlePath:   "bundle.json",
 		}
-		err = r.Execute(args)
+		err := r.Execute(args)
 		require.NoError(t, err, "Uninstall failed")
 
-		c, err := r.claims.ReadLastClaim(args.Installation)
-		require.NoError(t, err, "ReadLastClaim failed")
+		c, err := r.claims.GetLastRun(args.Namespace, args.Installation)
+		require.NoError(t, err, "GetLastRun failed")
 
-		assert.Equal(t, claim.ActionUninstall, c.Action, "wrong action recorded")
+		assert.Equal(t, cnab.ActionUninstall, c.Action, "wrong action recorded")
 		assert.Equal(t, args.Installation, c.Installation, "wrong installation name recorded")
 	})
 
@@ -43,15 +44,16 @@ func TestRuntime_Uninstall(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		defer r.Teardown()
+
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "bundle.json")
 
 		args := ActionArguments{
-			Action:       claim.ActionUninstall,
+			Action:       cnab.ActionUninstall,
 			Installation: "mybuns",
 			BundlePath:   "bundle.json",
 		}
 		err := r.Execute(args)
-		require.Error(t, err, "Uninstall should have failed")
-		assert.Contains(t, err.Error(), "Installation does not exist")
+		require.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 }

@@ -15,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
@@ -171,11 +170,11 @@ func (m *RuntimeManifest) GetOutputs() map[string]string {
 
 func (m *RuntimeManifest) setStepsByAction() error {
 	switch m.Action {
-	case claim.ActionInstall:
+	case cnab.ActionInstall:
 		m.steps = m.Install
-	case claim.ActionUninstall:
+	case cnab.ActionUninstall:
 		m.steps = m.Uninstall
-	case claim.ActionUpgrade:
+	case cnab.ActionUpgrade:
 		m.steps = m.Upgrade
 	default:
 		customAction, ok := m.CustomActions[m.Action]

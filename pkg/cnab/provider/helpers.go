@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 )
 
@@ -16,28 +17,38 @@ var _ CNABProvider = &TestRuntime{}
 
 type TestRuntime struct {
 	*Runtime
+	TestStorage     storage.TestStore
 	TestClaims      *claims.TestClaimProvider
-	TestCredentials credentials.TestCredentialProvider
+	TestCredentials *credentials.TestCredentialProvider
 	TestParameters  *parameters.TestParameterProvider
 	TestConfig      *config.TestConfig
 }
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
-	claimStorage := claims.NewTestClaimProvider(t)
-	credentialStorage := credentials.NewTestCredentialProvider(t, tc)
-	parameterStorage := parameters.NewTestParameterProvider(t, tc)
-	return NewTestRuntimeWithConfig(tc, claimStorage, credentialStorage, parameterStorage)
+	testStorage := storage.NewTestStore(tc.TestContext)
+	testClaims := claims.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
+	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage)
+	testParameters := parameters.NewTestParameterProviderFor(tc.TestContext.T, testStorage)
+
+	return NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
 }
 
-func NewTestRuntimeWithConfig(tc *config.TestConfig, testClaims *claims.TestClaimProvider, testCredentials credentials.TestCredentialProvider, testParameters parameters.TestParameterProvider) *TestRuntime {
+func NewTestRuntimeFor(tc *config.TestConfig, testClaims *claims.TestClaimProvider, testCredentials *credentials.TestCredentialProvider, testParameters *parameters.TestParameterProvider) *TestRuntime {
 	return &TestRuntime{
 		TestConfig:      tc,
 		TestClaims:      testClaims,
 		TestCredentials: testCredentials,
-		TestParameters:  &testParameters,
-		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testParameters),
+		TestParameters:  testParameters,
+		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials),
 	}
+}
+
+func (t *TestRuntime) Teardown() error {
+	t.TestClaims.Teardown()
+	t.TestCredentials.Teardown()
+	t.TestParameters.Teardown()
+	return nil
 }
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {

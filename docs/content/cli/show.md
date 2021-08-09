@@ -28,8 +28,9 @@ Optional output formats include json and yaml.
 ### Options
 
 ```
-  -h, --help            help for show
-  -o, --output string   Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -h, --help               help for show
+  -n, --namespace string   Namespace in which the installation is defined. Defaults to the global namespace.
+  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```
 
 ### Options inherited from parent commands

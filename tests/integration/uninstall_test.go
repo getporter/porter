@@ -3,10 +3,11 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/storage"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +26,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 		{
 			name:         "not yet installed",
 			notInstalled: true,
-			wantError:    "1 error occurred:\n\t* could not load installation porter-hello: Installation does not exist\n\n",
+			wantError:    "Installation not found",
 		}, {
 			name:                "no --delete",
 			installationRemains: true,
@@ -38,7 +39,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 			uninstallFails:      true,
 			delete:              true,
 			installationRemains: true,
-			wantError:           fmt.Sprintf("2 errors occurred:\n\t* Command driver (uninstall) failed executing bundle: exit status 1\n\t* %s\n\n", porter.ErrUnsafeInstallationDeleteRetryForceDelete.Error()),
+			wantError:           porter.ErrUnsafeInstallationDeleteRetryForceDelete.Error(),
 		}, {
 			name:           "uninstall fails; --force-delete",
 			uninstallFails: true,
@@ -49,9 +50,8 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := porter.NewTestPorter(t)
-
+			defer p.Teardown()
 			p.SetupIntegrationTest()
-			defer p.CleanupIntegrationTest()
 			p.Debug = false
 
 			err := p.Create()
@@ -94,16 +94,17 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 
 			err = p.UninstallBundle(opts)
 			if tc.wantError != "" {
-				require.EqualError(t, err, tc.wantError)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantError)
 			} else {
 				require.NoError(t, err, "UninstallBundle failed")
 			}
 
-			_, err = p.Claims.ReadInstallation(opts.Name)
+			_, err = p.Claims.GetInstallation(opts.Namespace, opts.Name)
 			if tc.installationRemains {
 				require.NoError(t, err, "Installation is expected to exist")
 			} else {
-				require.EqualError(t, err, "Installation does not exist")
+				require.ErrorIs(t, err, storage.ErrNotFound{})
 			}
 		})
 	}

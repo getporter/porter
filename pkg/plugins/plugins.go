@@ -8,9 +8,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Plugin is a general interface for interacting with Porter plugins.
+type Plugin interface {
+	// Connect establishes a connection to the plugin.
+	// Safe to call multiple times, the existing connection is reused.
+	Connect() error
+
+	// Close the connection to the plugin.
+	// Safe to call multiple times.
+	Close() error
+}
+
 // HandshakeConfig is common handshake config between Porter and its plugins.
 var HandshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
 	MagicCookieKey:   "PORTER",
 	MagicCookieValue: "bbc2dd71-def4-4311-906e-e98dc27208ce",
 }
@@ -33,7 +43,6 @@ func ParsePluginKey(value string) (PluginKey, error) {
 
 	switch len(parts) {
 	case 1:
-		key.IsInternal = true
 		key.Binary = "porter"
 		key.Implementation = parts[0]
 	case 2:
@@ -44,7 +53,11 @@ func ParsePluginKey(value string) (PluginKey, error) {
 		key.Binary = parts[1]
 		key.Implementation = parts[2]
 	default:
-		return PluginKey{}, errors.New("invalid plugin key %q, allowed format is [INTERFACE].BINARY.IMPLEMENTATION")
+		return PluginKey{}, errors.New("invalid plugin key '%s', allowed format is [INTERFACE].BINARY.IMPLEMENTATION")
+	}
+
+	if key.Binary == "porter" {
+		key.IsInternal = true
 	}
 
 	return key, nil

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -47,6 +48,9 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 
 		// Try to read config
 		v.AddConfigPath(home)
+		if cfg.Debug {
+			fmt.Fprintln(cfg.Err, "reading Porter config from", home)
+		}
 		err = v.ReadInConfig()
 		if err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

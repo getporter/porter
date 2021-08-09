@@ -5,10 +5,11 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,6 +23,7 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	require.NoError(t, err)
 
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	want := `---------------------------------------------------------------------------------
   Name     Type    Value                                                         
@@ -61,6 +63,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
+			defer p.Teardown()
 
 			// Create test claim
 			writeOnly := true
@@ -91,11 +94,12 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 				},
 			}
 
-			c := p.TestClaims.CreateClaim("test", claim.ActionInstall, b, nil)
-			r := p.TestClaims.CreateResult(c, claim.StatusSucceeded)
-			p.TestClaims.CreateOutput(c, r, "foo", []byte("foo-output"))
-			p.TestClaims.CreateOutput(c, r, "bar", []byte("bar-output"))
-			p.TestClaims.CreateOutput(c, r, "longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf"))
+			i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
+			c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b })
+			r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
+			p.TestClaims.CreateOutput(r.NewOutput("foo", []byte("foo-output")))
+			p.TestClaims.CreateOutput(r.NewOutput("bar", []byte("bar-output")))
+			p.TestClaims.CreateOutput(r.NewOutput("longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf")))
 
 			opts := OutputListOptions{
 				sharedOptions: sharedOptions{

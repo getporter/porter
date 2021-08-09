@@ -16,8 +16,8 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest() // This creates a temp porter home directory
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	// Crux for this test: change Porter's home dir to a relative path
@@ -43,8 +43,8 @@ func TestInstall_fileParam(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", false)
@@ -62,8 +62,8 @@ func TestInstall_fileParam(t *testing.T) {
 	output := p.TestConfig.TestContext.GetOutput()
 	require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	outputs, err := p.Claims.ReadLastOutputs(p.Manifest.Name)
-	require.NoError(t, err, "ReadLastOutput failed")
+	outputs, err := p.Claims.GetLastOutputs("", p.Manifest.Name)
+	require.NoError(t, err, "GetLastOutput failed")
 	myfile, ok := outputs.GetByName("myfile")
 	require.True(t, ok, "expected myfile output to be persisted")
 	assert.Equal(t, "Hello World!", string(myfile.Value), "expected output to match the decoded file contents")
@@ -76,8 +76,8 @@ func TestInstall_fileParam_fromReference(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", true)
@@ -107,8 +107,8 @@ func TestInstall_withDockerignore(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
+	defer p.Teardown()
 	p.SetupIntegrationTest()
-	defer p.CleanupIntegrationTest()
 	p.Debug = false
 
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)

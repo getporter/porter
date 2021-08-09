@@ -70,7 +70,7 @@
     "schemaVersion": {
       "description": "Version of the parameter set schema to which this document adheres",
       "type": "string",
-      "default": "1.0.0-DRAFT+TODO"
+      "default": "1.0.0"
     }
   },
   "required": [

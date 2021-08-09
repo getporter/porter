@@ -7,10 +7,6 @@ url: /cli/porter_schema/
 
 Print the JSON schema for the Porter manifest
 
-### Synopsis
-
-Print the JSON schema for the Porter manifest
-
 ```
 porter schema [flags]
 ```

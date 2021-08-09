@@ -1,8 +1,6 @@
 package porter
 
-import (
-	"github.com/cnabio/cnab-go/claim"
-)
+import "get.porter.sh/porter/pkg/cnab"
 
 var _ BundleAction = NewInstallOptions()
 
@@ -13,7 +11,7 @@ type InstallOptions struct {
 }
 
 func (o InstallOptions) GetAction() string {
-	return claim.ActionInstall
+	return cnab.ActionInstall
 }
 
 func (o InstallOptions) GetActionVerb() string {
@@ -21,7 +19,7 @@ func (o InstallOptions) GetActionVerb() string {
 }
 
 func NewInstallOptions() InstallOptions {
-	return InstallOptions{&BundleActionOptions{}}
+	return InstallOptions{BundleActionOptions: &BundleActionOptions{}}
 }
 
 // InstallBundle accepts a set of pre-validated InstallOptions and uses

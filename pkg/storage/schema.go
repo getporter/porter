@@ -2,8 +2,33 @@ package storage
 
 import "github.com/cnabio/cnab-go/schema"
 
+var _ Document = Schema{}
+
 type Schema struct {
-	Claims      schema.Version `json:"claims"`
+	ID string `json:"_id"`
+
+	// Installations is the schema for the installation documents.
+	Installations schema.Version `json:"installations"`
+
+	// Claims is the schema for the old CNAB claim spec. DEPRECATED.
+	Claims schema.Version `json:"claims,omitempty"`
+
+	// Credentials is the schema for the credential spec documents.
 	Credentials schema.Version `json:"credentials"`
-	Parameters  schema.Version `json:"parameters"`
+
+	// Parameters is the schema for the parameter spec documents.
+	Parameters schema.Version `json:"parameters"`
+}
+
+func NewSchema(installations schema.Version, creds schema.Version, params schema.Version) Schema {
+	return Schema{
+		ID:            "schema",
+		Installations: installations,
+		Credentials:   creds,
+		Parameters:    params,
+	}
+}
+
+func (s Schema) DefaultDocumentFilter() interface{} {
+	return map[string]interface{}{"_id": "schema"}
 }

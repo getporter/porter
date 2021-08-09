@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/credentials"
-	"github.com/cnabio/cnab-go/valuesource"
 	"github.com/pkg/errors"
 )
 
-func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
+func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (secrets.Set, error) {
 	if len(args.CredentialIdentifiers) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}
@@ -19,14 +19,14 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (values
 	// The strategy here is "last one wins". We loop through each credential file and
 	// calculate its credentials. Then we insert them into the creds map in the order
 	// in which they were supplied on the CLI.
-	resolvedCredentials := valuesource.Set{}
+	resolvedCredentials := secrets.Set{}
 	for _, name := range args.CredentialIdentifiers {
 		var cset credentials.CredentialSet
 		var err error
 		if r.isPathy(name) {
 			cset, err = r.loadCredentialFromFile(name)
 		} else {
-			cset, err = r.credentials.Read(name)
+			cset, err = r.credentials.GetCredentialSet(args.Namespace, name)
 		}
 		if err != nil {
 			return nil, err
@@ -46,8 +46,6 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (values
 
 // isPathy checks to see if a name looks like a path.
 func (r *Runtime) isPathy(name string) bool {
-	// TODO: export back outta Compton
-
 	return strings.Contains(name, string(filepath.Separator))
 }
 

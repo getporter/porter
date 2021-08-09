@@ -27,6 +27,7 @@ porter installations output show NAME [--installation|-i INSTALLATION] [flags]
 ```
   -h, --help                  help for show
   -i, --installation string   Specify the installation to which the output belongs.
+  -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

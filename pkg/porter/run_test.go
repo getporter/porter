@@ -3,17 +3,18 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPorter_Run(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	// Mock the mixin test runner and verify that we are calling runtime mixins, e.g. exec-runtime and not exec
 	mp := p.Mixins.(*mixin.TestMixinProvider)
@@ -28,7 +29,7 @@ func TestPorter_Run(t *testing.T) {
 	p.FileSystem.Create("/root/.kube/config")
 
 	opts := NewRunOptions(p.Config)
-	opts.Action = claim.ActionInstall
+	opts.Action = cnab.ActionInstall
 	opts.File = "porter.yaml"
 
 	err := opts.Validate()
@@ -40,6 +41,8 @@ func TestPorter_Run(t *testing.T) {
 
 func TestPorter_defaultDebugToOff(t *testing.T) {
 	p := New() // Don't use the test porter, it has debug on by default
+	defer p.Close()
+
 	opts := NewRunOptions(p.Config)
 
 	err := opts.defaultDebug()
@@ -49,6 +52,8 @@ func TestPorter_defaultDebugToOff(t *testing.T) {
 
 func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
 	p := New() // Don't use the test porter, it has debug on by default
+	defer p.Close()
+
 	p.Setenv(config.EnvDEBUG, "true")
 
 	opts := NewRunOptions(p.Config)

@@ -1,15 +1,15 @@
 package printer
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 
+	"get.porter.sh/porter/pkg/encoding"
 	"github.com/pkg/errors"
 )
 
 func PrintJson(out io.Writer, v interface{}) error {
-	b, err := json.MarshalIndent(v, "", "  ")
+	b, err := encoding.MarshalJson(v)
 	if err != nil {
 		return errors.Wrap(err, "could not marshal value to json")
 	}

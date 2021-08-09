@@ -15,6 +15,7 @@ import (
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 	opts := PublishOptions{}
@@ -24,6 +25,7 @@ func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 
 func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := PublishOptions{}
 	err := opts.Validate(p.Context)
@@ -38,6 +40,7 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 
 func TestPublish_Validate_ArchivePath(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	opts := PublishOptions{
 		ArchiveFile: "mybuns.tgz",
@@ -144,6 +147,7 @@ func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	bun := bundle.Bundle{
 		Name: "mybuns",
@@ -190,6 +194,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
@@ -223,6 +228,8 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	bun := bundle.Bundle{Name: "myreg/mybuns"}
 	tag := "myreg/mybuns"
 

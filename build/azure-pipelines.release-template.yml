@@ -142,6 +142,7 @@ stages:
           vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
           - task: DownloadPipelineArtifact@2
@@ -164,6 +165,7 @@ stages:
           vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
           - task: DownloadPipelineArtifact@2
@@ -200,6 +202,7 @@ stages:
           vmImage: ${{variables.vmImage}}
         steps:
           - task: GoTool@0
+            displayName: "Set Go Version"
             inputs:
               version: ${{parameters.goVersion}}
           - task: DownloadPipelineArtifact@2

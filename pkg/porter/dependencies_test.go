@@ -3,18 +3,20 @@ package porter
 import (
 	"testing"
 
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDependencyExecutioner_ExecuteBeforePrepare(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestDirectoryFromRoot("build/testdata/bundles/mysql", "/")
 	err := p.LoadManifestFrom("/porter.yaml")
 	require.NoError(t, err)
 
-	e := newDependencyExecutioner(p.Porter, claim.ActionInstall)
+	e := newDependencyExecutioner(p.Porter, cnab.ActionInstall)
 
 	// Try to call execute without prepare
 	err = e.Execute()

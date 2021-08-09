@@ -26,9 +26,10 @@ func buildParametersEditCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ParameterEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "edit",
-		Short: "Edit Parameter Set",
-		Long:  `Edit a named parameter set.`,
+		Use:     "edit",
+		Short:   "Edit Parameter Set",
+		Long:    `Edit a named parameter set.`,
+		Example: `  porter parameter edit debug-tweaks --namespace dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
@@ -36,6 +37,11 @@ func buildParametersEditCommand(p *porter.Porter) *cobra.Command {
 			return p.EditParameter(opts)
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. Defaults to the global namespace.")
+
 	return cmd
 }
 
@@ -62,7 +68,7 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 parameter set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter parameter generate
-  porter parameter generate myparamset --reference getporter/porter-hello:v0.1.0
+  porter parameter generate myparamset --reference getporter/porter-hello:v0.1.0 --namespace dev
   porter parameter generate myparamset --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter parameter generate myparamset --file myapp/porter.yaml
   porter parameter generate myparamset --cnab-file myapp/bundle.json
@@ -76,6 +82,8 @@ will then provide it to the bundle in the correct location. `,
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -93,7 +101,9 @@ func buildParametersListCommand(p *porter.Porter) *cobra.Command {
 		Aliases: []string{"ls"},
 		Short:   "List parameter sets",
 		Long:    `List named sets of parameters defined by the user.`,
-		Example: `  porter parameters list [-o table|json|yaml]`,
+		Example: `  porter parameters list
+  porter parameters list --namespace prod -o json
+  porter parameters list --namespace "*"`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.ParseFormat()
 		},
@@ -103,6 +113,8 @@ func buildParametersListCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 
@@ -112,7 +124,7 @@ func buildParametersListCommand(p *porter.Porter) *cobra.Command {
 func buildParametersDeleteCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ParameterDeleteOptions{}
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "delete NAME",
 		Short: "Delete a Parameter Set",
 		Long:  `Delete a named parameter set.`,
@@ -123,6 +135,12 @@ func buildParametersDeleteCommand(p *porter.Porter) *cobra.Command {
 			return p.DeleteParameter(opts)
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. Defaults to the global namespace.")
+
+	return cmd
 }
 
 func buildParametersShowCommand(p *porter.Porter) *cobra.Command {
@@ -142,6 +160,8 @@ func buildParametersShowCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 

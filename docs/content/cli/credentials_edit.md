@@ -15,10 +15,17 @@ Edit a named credential set.
 porter credentials edit [flags]
 ```
 
+### Examples
+
+```
+  porter credentials edit github --namespace dev
+```
+
 ### Options
 
 ```
-  -h, --help   help for edit
+  -h, --help               help for edit
+  -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

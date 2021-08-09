@@ -1,7 +1,7 @@
 package porter
 
 import (
-	"github.com/cnabio/cnab-go/claim"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +18,7 @@ func NewUpgradeOptions() UpgradeOptions {
 }
 
 func (o UpgradeOptions) GetAction() string {
-	return claim.ActionUpgrade
+	return cnab.ActionUpgrade
 }
 
 func (o UpgradeOptions) GetActionVerb() string {

@@ -12,6 +12,7 @@ import (
 
 func TestCreate(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	err := p.Create()
 	require.NoError(t, err)
@@ -44,6 +45,8 @@ func TestCreate(t *testing.T) {
 
 func TestCreateWithBuildkit(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.SetExperimentalFlags(experimental.FlagBuildDrivers)
 	p.Data.BuildDriver = config.BuildDriverBuildkit
 

@@ -1,5 +1,5 @@
 ---
-title: Kubernetes plugin
+title: Kubernetes Plugin
 description: Integrate Porter with Kubernetes
 ---
 

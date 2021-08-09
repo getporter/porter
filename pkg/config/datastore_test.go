@@ -9,7 +9,7 @@ import (
 
 func TestData_GetDefaultStoragePlugin(t *testing.T) {
 	c := New()
-	assert.Equal(t, "filesystem", c.Data.DefaultStoragePlugin, "Built-in filesystem plugin should be used when config is missing")
+	assert.Equal(t, "mongodb-docker", c.Data.DefaultStoragePlugin, "Built-in mongodb-docker plugin should be used when config is missing")
 }
 
 func TestData_StorageAccessors(t *testing.T) {
@@ -17,7 +17,7 @@ func TestData_StorageAccessors(t *testing.T) {
 		Data: Data{
 			DefaultStoragePlugin: "blorpy",
 			DefaultStorage:       "dev",
-			CrudStores: []CrudStore{
+			StoragePlugins: []StoragePlugin{
 				{PluginConfig{
 					Name:         "dev",
 					PluginSubKey: "hashicorp.vault",
@@ -31,9 +31,9 @@ func TestData_StorageAccessors(t *testing.T) {
 
 	store, err := c.GetStorage("dev")
 	require.NoError(t, err, "GetStorage failed")
-	require.NotNil(t, store, "GetStorage returned a nil CrudStore")
-	assert.Equal(t, "dev", store.Name, "CrudStore.Name returned the wrong value")
-	assert.Equal(t, "hashicorp.vault", store.PluginSubKey, "CrudStore.PluginSubKey returned the wrong value")
+	require.NotNil(t, store, "GetStorage returned a nil StoragePlugin")
+	assert.Equal(t, "dev", store.Name, "StoragePlugin.Name returned the wrong value")
+	assert.Equal(t, "hashicorp.vault", store.PluginSubKey, "StoragePlugin.PluginSubKey returned the wrong value")
 }
 
 func TestData_GetDefaultSecretsPlugin(t *testing.T) {
@@ -46,7 +46,7 @@ func TestData_SecretAccessors(t *testing.T) {
 		Data: Data{
 			DefaultSecretsPlugin: "topsekret",
 			DefaultSecrets:       "prod",
-			SecretSources: []SecretSource{
+			SecretsPlugin: []SecretsPlugin{
 				{PluginConfig{
 					Name:         "prod",
 					PluginSubKey: "azure.keyvault",
@@ -56,11 +56,11 @@ func TestData_SecretAccessors(t *testing.T) {
 	}
 
 	assert.Equal(t, "topsekret", c.Data.DefaultSecretsPlugin, "GetDefaultSecretsPlugin returned the wrong value")
-	assert.Equal(t, "prod", c.Data.DefaultSecrets, "GetDefaultSecretSource returned the wrong value")
+	assert.Equal(t, "prod", c.Data.DefaultSecrets, "GetDefaultSecretsPlugin returned the wrong value")
 
-	source, err := c.GetSecretSource("prod")
-	require.NoError(t, err, "GetSecretSource failed")
-	require.NotNil(t, source, "GetSecretSource returned a nil SecretSource")
-	assert.Equal(t, "prod", source.Name, "SecretSource.Name returned the wrong value")
-	assert.Equal(t, "azure.keyvault", source.PluginSubKey, "SecretSource.PluginSubKey returned the wrong value")
+	source, err := c.GetSecretsPlugin("prod")
+	require.NoError(t, err, "GetSecretsPlugin failed")
+	require.NotNil(t, source, "GetSecretsPlugin returned a nil SecretsPlugin")
+	assert.Equal(t, "prod", source.Name, "SecretsPlugin.Name returned the wrong value")
+	assert.Equal(t, "azure.keyvault", source.PluginSubKey, "SecretsPlugin.PluginSubKey returned the wrong value")
 }

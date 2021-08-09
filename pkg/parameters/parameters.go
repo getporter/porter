@@ -2,16 +2,21 @@ package parameters
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
-	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/schema"
 )
 
-// PorterInternal is a string that can be used to designate a parameter
-// as internal to Porter
-const PorterInternal = "porter-internal"
+const (
+	// SchemaVersion represents the version associated with the schema
+	// for parameter set documents.
+	SchemaVersion = schema.Version("1.0.0")
+
+	// PorterInternal is a string that can be used to designate a parameter
+	// as internal to Porter
+	PorterInternal = "porter-internal"
+)
 
 // ParseVariableAssignments converts a string array of variable assignments
 // into a map of keys and values
@@ -36,18 +41,6 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 	}
 
 	return variables, nil
-}
-
-// Load a ParameterSet from a file at a given path.
-//
-// It does not load the individual parameters.
-func Load(path string) (ParameterSet, error) {
-	var pset ParameterSet
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return pset, err
-	}
-	return pset, yaml.Unmarshal(data, &pset)
 }
 
 // IsInternal determines if the provided param is an internal parameter

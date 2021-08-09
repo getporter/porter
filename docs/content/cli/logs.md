@@ -20,7 +20,7 @@ porter logs [flags]
 ### Examples
 
 ```
-  porter logs --installation wordpress
+  porter logs --installation wordpress --namespace dev
   porter installations logs show --run 01EZSWJXFATDE24XDHS5D5PWK6
 ```
 
@@ -29,6 +29,7 @@ porter logs [flags]
 ```
   -h, --help                  help for logs
   -i, --installation string   The installation that generated the logs.
+  -n, --namespace string      Namespace in which the installation is defined. Defaults to the global namespace.
   -r, --run string            The bundle run that generated the logs.
 ```
 

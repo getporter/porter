@@ -1,5 +1,5 @@
 ---
-title: azure plugin
+title: Azure Plugin
 description: Integrate Porter with Azure Cloud
 ---
 

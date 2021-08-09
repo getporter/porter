@@ -26,5 +26,5 @@ jobs:
         displayName: "Configure Agent"
       - bash: make build
         displayName: "Native Build"
-      - bash: mage TestIntegration
+      - bash: mage -v TestIntegration
         displayName: "Integration Test"

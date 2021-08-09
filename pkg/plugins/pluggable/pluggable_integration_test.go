@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/require"
 )
@@ -35,21 +36,24 @@ func TestPlugins_CatchStderr(t *testing.T) {
 				return c.Data.DefaultSecrets
 			},
 			GetPluggable: func(c *config.Config, name string) (Entry, error) {
-				return c.GetSecretSource(name)
+				return c.GetSecretsPlugin(name)
 			},
 			GetDefaultPlugin: func(c *config.Config) string {
 				return c.Data.DefaultSecretsPlugin
 			},
 		}
 		c.Data.DefaultSecrets = "myplugin"
-		c.Data.SecretSources = []config.SecretSource{{
+		c.Data.SecretsPlugin = []config.SecretsPlugin{{
 			PluginConfig: config.PluginConfig{
 				Name:         "myplugin",
 				PluginSubKey: "testplugin.vault",
 			},
 		}}
 
-		ll := NewPluginLoader(c.Config)
+		createInternalPlugin := func(string, interface{}) (plugins.Plugin, error) {
+			return nil, nil
+		}
+		ll := NewPluginLoader(c.Config, createInternalPlugin)
 		_, _, err = ll.Load(cfg)
 		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 
 

@@ -3,10 +3,10 @@ package secrets
 import (
 	"net/rpc"
 
-	cnabsecrets "github.com/cnabio/cnab-go/secrets"
+	"get.porter.sh/porter/pkg/secrets/plugins"
 )
 
-var _ cnabsecrets.Store = &Client{}
+var _ plugins.SecretsProtocol = &Client{}
 
 type Client struct {
 	client *rpc.Client
@@ -23,7 +23,7 @@ func (g *Client) Resolve(keyName string, keyValue string) (string, error) {
 }
 
 type Server struct {
-	Impl cnabsecrets.Store
+	Impl plugins.SecretsProtocol
 }
 
 func (s *Server) Resolve(args map[string]interface{}, resp *string) error {

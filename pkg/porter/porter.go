@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
 	"get.porter.sh/porter/pkg/build/docker"
@@ -15,10 +17,13 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/secrets"
+	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/storage/migrations"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
-	"github.com/cnabio/cnab-go/claim"
+	"github.com/hashicorp/go-multierror"
 )
 
 // Porter is the logic behind the porter client.
@@ -31,32 +36,37 @@ type Porter struct {
 	builder build.Builder
 
 	Cache       cache.BundleCache
-	Credentials credentials.CredentialProvider
-	Parameters  parameters.ParameterProvider
-	Claims      claim.Provider
+	Credentials credentials.Provider
+	Parameters  parameters.Provider
+	Claims      claims.Provider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
 	Manifest    *manifest.Manifest
 	Mixins      mixin.MixinProvider
 	Plugins     plugins.PluginProvider
 	CNAB        cnabprovider.CNABProvider
-	Storage     storage.StorageProvider
+	Secrets     secrets.Store
+	Storage     storage.Provider
 }
 
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
 	c.LoadData()
-	return NewWithConfig(c)
+
+	storagePlugin := pluginstore.NewStore(c)
+	storage := storage.NewPluginAdapter(storagePlugin)
+	return NewFor(c, storage)
 }
 
-func NewWithConfig(c *config.Config) *Porter {
+func NewFor(c *config.Config, store storage.Store) *Porter {
 	cache := cache.New(c)
-	storagePlugin := pluginstore.NewStore(c)
-	storageManager := storage.NewManager(c, storagePlugin)
-	claimStorage := claims.NewClaimStorage(storageManager)
-	credStorage := credentials.NewCredentialStorage(storageManager)
-	paramStorage := parameters.NewParameterStorage(storageManager)
+
+	storageManager := migrations.NewManager(c, store)
+	secretStorage := secretsplugin.NewStore(c)
+	claimStorage := claims.NewClaimStore(storageManager)
+	credStorage := credentials.NewCredentialStore(storageManager, secretStorage)
+	paramStorage := parameters.NewParameterStore(storageManager, secretStorage)
 	return &Porter{
 		Config:      c,
 		Cache:       cache,
@@ -64,12 +74,48 @@ func NewWithConfig(c *config.Config) *Porter {
 		Claims:      claimStorage,
 		Credentials: credStorage,
 		Parameters:  paramStorage,
+		Secrets:     secretStorage,
 		Registry:    cnabtooci.NewRegistry(c.Context),
 		Templates:   templates.NewTemplates(c),
 		Mixins:      mixin.NewPackageManager(c),
 		Plugins:     plugins.NewPackageManager(c),
-		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage, paramStorage),
+		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
 	}
+}
+
+func (p *Porter) Connect() error {
+	if p.Debug {
+		fmt.Fprintln(p.Err, "Porter.Connect()")
+	}
+
+	// Start up our plugins
+	// TODO(carolynvs): have each plugin store (storage and secrets) connect on demand by wrapping the underlying store like the manager does.
+	err := p.Secrets.Connect()
+	if err != nil {
+		return err
+	}
+	return p.Storage.Connect()
+}
+
+// Close releases resources used by Porter before terminating the application.
+func (p *Porter) Close() error {
+	if p.Debug {
+		fmt.Fprintln(p.Err, "Closing plugins")
+	}
+
+	// Shutdown our plugins
+	var bigErr *multierror.Error
+
+	err := p.Secrets.Close()
+	if err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
+	err = p.Storage.Close()
+	if err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+	return bigErr.ErrorOrNil()
 }
 
 func (p *Porter) LoadManifest() error {

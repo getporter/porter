@@ -26,9 +26,10 @@ func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.CredentialEditOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "edit",
-		Short: "Edit Credential",
-		Long:  `Edit a named credential set.`,
+		Use:     "edit",
+		Short:   "Edit Credential",
+		Long:    `Edit a named credential set.`,
+		Example: `  porter credentials edit github --namespace dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
@@ -36,6 +37,11 @@ func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 			return p.EditCredential(opts)
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. Defaults to the global namespace.")
+
 	return cmd
 }
 
@@ -62,7 +68,7 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
-  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0
+  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0 --namespace test
   porter credential generate kubecred --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
   porter credential generate kubecred --file myapp/porter.yaml
   porter credential generate kubecred --cnab-file myapp/bundle.json
@@ -76,6 +82,8 @@ will then provide it to the bundle in the correct location. `,
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.File, "file", "f", "",
 		"Path to the porter manifest file. Defaults to the bundle in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "",
@@ -93,7 +101,9 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 		Aliases: []string{"ls"},
 		Short:   "List credentials",
 		Long:    `List named sets of credentials defined by the user.`,
-		Example: `  porter credentials list [-o table|json|yaml]`,
+		Example: `  porter credentials list
+  porter credentials list --namespace prod
+  porter credentials list --namespace "*"`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.ParseFormat()
 		},
@@ -103,6 +113,8 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 
@@ -112,10 +124,11 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 func buildCredentialsDeleteCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.CredentialDeleteOptions{}
 
-	return &cobra.Command{
-		Use:   "delete NAME",
-		Short: "Delete a Credential",
-		Long:  `Delete a named credential set.`,
+	cmd := &cobra.Command{
+		Use:     "delete NAME",
+		Short:   "Delete a Credential",
+		Long:    `Delete a named credential set.`,
+		Example: `  porter credentials delete github --namespace dev`,
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
@@ -123,16 +136,23 @@ func buildCredentialsDeleteCommand(p *porter.Porter) *cobra.Command {
 			return p.DeleteCredential(opts)
 		},
 	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. Defaults to the global namespace.")
+
+	return cmd
 }
 
 func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.CredentialShowOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "show",
-		Short:   "Show a Credential",
-		Long:    `Show a particular credential set, including all named credentials and their corresponding mappings.`,
-		Example: `  porter credential show NAME [-o table|json|yaml]`,
+		Use:   "show",
+		Short: "Show a Credential",
+		Long:  `Show a particular credential set, including all named credentials and their corresponding mappings.`,
+		Example: `  porter credential show github --namespace dev
+  porter credential show prodcluster --output json`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
@@ -142,6 +162,8 @@ func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 

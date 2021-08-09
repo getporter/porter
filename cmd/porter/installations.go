@@ -47,6 +47,8 @@ Optional output formats include json and yaml.`,
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Filter the installations by namespace. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 
@@ -74,6 +76,8 @@ Optional output formats include json and yaml.
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
 
@@ -100,6 +104,8 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.BoolVar(&opts.Force, "force", false,
 		"Force a delete the installation, regardless of last completed action")
 

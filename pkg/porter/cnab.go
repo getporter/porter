@@ -80,6 +80,9 @@ func (o *bundleFileOptions) Validate(cxt *context.Context) error {
 type sharedOptions struct {
 	bundleFileOptions
 
+	// Namespace of the installation.
+	Namespace string
+
 	// Name of the installation. Defaults to the name of the bundle.
 	Name string
 
@@ -264,7 +267,7 @@ func (o *sharedOptions) parseParams() error {
 // parseParamSets parses the variable assignments in ParameterSets.
 func (o *sharedOptions) parseParamSets(p *Porter) error {
 	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(o.ParameterSets)
+		parsed, err := p.loadParameterSets(o.Namespace, o.ParameterSets)
 		if err != nil {
 			return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
 		}

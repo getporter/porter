@@ -15,10 +15,17 @@ Delete a named credential set.
 porter credentials delete NAME [flags]
 ```
 
+### Examples
+
+```
+  porter credentials delete github --namespace dev
+```
+
 ### Options
 
 ```
-  -h, --help   help for delete
+  -h, --help               help for delete
+  -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace.
 ```
 
 ### Options inherited from parent commands

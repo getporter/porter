@@ -16,6 +16,7 @@ import (
 
 func TestPorter_Build(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
@@ -83,6 +84,8 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("failing lint should stop build", func(t *testing.T) {
 		p := NewTestPorter(t)
+		defer p.Teardown()
+
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
@@ -100,6 +103,8 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 	t.Run("ignores lint error with --no-lint", func(t *testing.T) {
 		p := NewTestPorter(t)
+		defer p.Teardown()
+
 		testMixins := p.Mixins.(*mixin.TestMixinProvider)
 		testMixins.LintResults = lintResults
 
@@ -118,6 +123,8 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 
 func TestPorter_paramRequired(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
 	err := p.LoadManifest()
@@ -139,6 +146,7 @@ func TestPorter_paramRequired(t *testing.T) {
 
 func TestBuildOptions_Validate(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
 
 	testcases := []struct {
 		name       string
@@ -194,6 +202,8 @@ func TestBuildOptions_Validate(t *testing.T) {
 
 func TestBuildOptions_Defaults(t *testing.T) {
 	p := NewTestPorter(t)
+	defer p.Teardown()
+
 	t.Run("default driver", func(t *testing.T) {
 		opts := BuildOptions{}
 		err := opts.Validate(p.Porter)

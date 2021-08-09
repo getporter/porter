@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/valuesource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,52 +50,55 @@ func TestParseVariableAssignments_MissingVariableName(t *testing.T) {
 	}
 }
 
-func TestLoad(t *testing.T) {
+func TestTestParameterProvider_Load(t *testing.T) {
+	p := NewTestParameterProvider(t)
+	defer p.Teardown()
+
 	t.Run("unsuccessful load", func(t *testing.T) {
-		_, err := Load("paramset.json")
-		require.EqualError(t, err, "open paramset.json: no such file or directory")
+		_, err := p.Load("paramset.json")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no such file or directory")
 	})
 
 	t.Run("successful load, unsuccessful unmarshal", func(t *testing.T) {
-		pset, err := Load("testdata/paramset_bad.json")
-		require.EqualError(t, err,
-			"yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `myparam...` into parameters.ParameterSet")
-		require.Empty(t, pset)
+		_, err := p.Load("testdata/paramset_bad.json")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "error reading testdata/paramset_bad.json as a parameter set")
 	})
 
 	t.Run("successful load, successful unmarshal", func(t *testing.T) {
-		expected := NewParameterSet("mybun",
-			valuesource.Strategy{
+		expected := NewParameterSet("", "mybun",
+			secrets.Strategy{
 				Name: "param_env",
-				Source: valuesource.Source{
+				Source: secrets.Source{
 					Key:   "env",
 					Value: "PARAM_ENV",
 				},
 			},
-			valuesource.Strategy{
+			secrets.Strategy{
 				Name: "param_value",
-				Source: valuesource.Source{
+				Source: secrets.Source{
 					Key:   "value",
 					Value: "param_value",
 				},
 			},
-			valuesource.Strategy{
+			secrets.Strategy{
 				Name: "param_command",
-				Source: valuesource.Source{
+				Source: secrets.Source{
 					Key:   "command",
 					Value: "echo hello world",
 				},
 			},
-			valuesource.Strategy{
+			secrets.Strategy{
 				Name: "param_path",
-				Source: valuesource.Source{
+				Source: secrets.Source{
 					Key:   "path",
 					Value: "/path/to/param",
 				},
 			},
-			valuesource.Strategy{
+			secrets.Strategy{
 				Name: "param_secret",
-				Source: valuesource.Source{
+				Source: secrets.Source{
 					Key:   "secret",
 					Value: "param_secret",
 				},
@@ -102,7 +106,7 @@ func TestLoad(t *testing.T) {
 		expected.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
 		expected.Modified = expected.Created
 
-		pset, err := Load("testdata/paramset.json")
+		pset, err := p.Load("testdata/paramset.json")
 		require.NoError(t, err)
 		require.Equal(t, expected, pset)
 	})

@@ -160,6 +160,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return cmd
 }
@@ -206,6 +208,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace of the specified installation. Defaults to the global namespace.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -255,6 +259,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace of the specified installation. Defaults to the global namespace.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -308,6 +314,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Delete all records associated with the installation, assuming the uninstall action succeeds")
 	f.BoolVar(&opts.ForceDelete, "force-delete", false,
 		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace of the specified installation. Defaults to the global namespace.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd

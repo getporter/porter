@@ -11,15 +11,15 @@ import (
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/editor"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/cnabio/cnab-go/utils/crud"
-	"github.com/cnabio/cnab-go/valuesource"
 	tablewriter "github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -27,17 +27,19 @@ import (
 // ParameterShowOptions represent options for Porter's parameter show command
 type ParameterShowOptions struct {
 	printer.PrintOptions
-	Name string
+	Name      string
+	Namespace string
 }
 
 // ParameterEditOptions represent iptions for Porter's parameter edit command
 type ParameterEditOptions struct {
-	Name string
+	Name      string
+	Namespace string
 }
 
 // ListParameters lists saved parameter sets.
 func (p *Porter) ListParameters(opts ListOptions) error {
-	params, err := p.Parameters.ReadAll()
+	params, err := p.Parameters.ListParameterSets(opts.Namespace)
 	if err != nil {
 		return err
 	}
@@ -60,10 +62,10 @@ func (p *Porter) ListParameters(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Name, tp.Format(cr.Modified)}
+				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, params, printParamRow,
-			"NAME", "MODIFIED")
+			"NAMESPACE", "NAME", "MODIFIED")
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
@@ -126,8 +128,9 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 	}
 	genOpts := generator.GenerateParametersOptions{
 		GenerateOptions: generator.GenerateOptions{
-			Name:   name,
-			Silent: opts.Silent,
+			Name:      name,
+			Namespace: opts.Namespace,
+			Silent:    opts.Silent,
 		},
 		Bundle: bundle,
 	}
@@ -150,7 +153,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 	pset.Created = time.Now()
 	pset.Modified = pset.Created
 
-	err = p.Parameters.Save(pset)
+	err = p.Parameters.UpsertParameterSet(pset)
 	return errors.Wrapf(err, "unable to save parameter set")
 }
 
@@ -174,12 +177,12 @@ func (o *ParameterEditOptions) Validate(args []string) error {
 
 // EditParameter edits the parameters of the provided name.
 func (p *Porter) EditParameter(opts ParameterEditOptions) error {
-	paramSet, err := p.Parameters.Read(opts.Name)
+	paramSet, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
 
-	contents, err := yaml.Marshal(paramSet)
+	contents, err := encoding.MarshalYaml(paramSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to load parameter set")
 	}
@@ -190,7 +193,7 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 		return errors.Wrap(err, "unable to open editor to edit parameter set")
 	}
 
-	err = yaml.Unmarshal(output, &paramSet)
+	err = encoding.UnmarshalYaml(output, &paramSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to process parameter set")
 	}
@@ -201,7 +204,7 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 	}
 
 	paramSet.Modified = time.Now()
-	err = p.Parameters.Save(paramSet)
+	err = p.Parameters.UpdateParameterSet(paramSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save parameter set")
 	}
@@ -212,7 +215,7 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 // ShowParameter shows the parameter set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
-	paramSet, err := p.Parameters.Read(opts.Name)
+	paramSet, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -267,16 +270,17 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 
 // ParameterDeleteOptions represent options for Porter's parameter delete command
 type ParameterDeleteOptions struct {
-	Name string
+	Name      string
+	Namespace string
 }
 
 // DeleteParameter deletes the parameter set corresponding to the provided
 // names.
 func (p *Porter) DeleteParameter(opts ParameterDeleteOptions) error {
-	err := p.Parameters.Delete(opts.Name)
-	if err != nil && strings.Contains(err.Error(), crud.ErrRecordDoesNotExist.Error()) {
+	err := p.Parameters.RemoveParameterSet(opts.Namespace, opts.Name)
+	if errors.Is(err, storage.ErrNotFound{}) {
 		if p.Debug {
-			fmt.Fprintln(p.Err, "parameter set does not exist")
+			fmt.Fprintln(p.Err, err)
 		}
 		return nil
 	}
@@ -304,8 +308,8 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(params []string) (valuesource.Set, error) {
-	resolvedParameters := valuesource.Set{}
+func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.Set, error) {
+	resolvedParameters := secrets.Set{}
 	for _, name := range params {
 		var pset parameters.ParameterSet
 		var err error
@@ -314,7 +318,7 @@ func (p *Porter) loadParameterSets(params []string) (valuesource.Set, error) {
 		if strings.Contains(name, string(filepath.Separator)) {
 			pset, err = p.loadParameterFromFile(name)
 		} else {
-			pset, err = p.Parameters.Read(name)
+			pset, err = p.Parameters.GetParameterSet(namespace, name)
 		}
 		if err != nil {
 			return nil, err

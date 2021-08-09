@@ -10,13 +10,13 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/docker/distribution/reference"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -378,11 +378,11 @@ func (pd *ParameterDefinition) exemptFromInstall() bool {
 // based on the provided manifest
 func (pd *ParameterDefinition) UpdateApplyTo(m *Manifest) {
 	if pd.exemptFromInstall() {
-		applyTo := []string{claim.ActionUninstall}
+		applyTo := []string{cnab.ActionUninstall}
 		// The core action "Upgrade" is technically still optional
 		// so only add it if it is declared in the manifest
 		if m.Upgrade != nil {
-			applyTo = append(applyTo, claim.ActionUpgrade)
+			applyTo = append(applyTo, cnab.ActionUpgrade)
 		}
 		// Add all custom actions
 		for action := range m.CustomActions {

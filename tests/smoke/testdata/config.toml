@@ -1,0 +1,12 @@
+debug = false
+debug-plugins = false
+default-storage = "testdb"
+experimental = ["build-drivers"]
+build-driver = "buildkit"
+
+[[storage]]
+  name = "testdb"
+  plugin = "mongodb"
+
+[storage.config]
+  url = "mongodb://localhost:27017/porter-smoke-test"

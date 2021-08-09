@@ -7,10 +7,6 @@ url: /cli/porter/
 
 I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
 
-### Synopsis
-
-I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
-
 ```
 porter [flags]
 ```

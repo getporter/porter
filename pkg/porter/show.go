@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -36,51 +37,38 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 	return so.PrintOptions.Validate(ShowDefaultFormat, ShowAllowedFormats)
 }
 
-// GetInstallation retrieves information about an installation.
-func (p *Porter) GetInstallation(opts ShowOptions) (DisplayInstallation, error) {
+// GetInstallation retrieves information about an installation, including its most recent run.
+func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, claims.Run, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
-		return DisplayInstallation{}, err
+		return claims.Installation{}, claims.Run{}, err
 	}
 
-	installation, err := p.Claims.ReadInstallation(opts.Name)
+	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
-		return DisplayInstallation{}, err
+		return claims.Installation{}, claims.Run{}, err
 	}
 
-	outputs, err := p.Claims.ReadLastOutputs(opts.Name)
+	run, err := p.Claims.GetRun(installation.Status.RunID)
 	if err != nil {
-		return DisplayInstallation{}, err
+		return claims.Installation{}, claims.Run{}, err
 	}
-
-	displayInstallation, err := NewDisplayInstallation(installation)
-	if err != nil {
-		// There isn't an installation to display
-		return DisplayInstallation{}, err
-	}
-
-	c, err := installation.GetLastClaim()
-	if err != nil {
-		return DisplayInstallation{}, err
-	}
-	displayInstallation.Outputs = NewDisplayValuesFromOutputs(c.Bundle, outputs)
-
-	return displayInstallation, nil
+	return installation, run, nil
 }
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
 func (p *Porter) ShowInstallation(opts ShowOptions) error {
-	displayInstallation, err := p.GetInstallation(opts)
+	installation, run, err := p.GetInstallation(opts)
 	if err != nil {
 		return err
 	}
 
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, displayInstallation)
+		return printer.PrintJson(p.Out, installation)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, displayInstallation)
+		return printer.PrintYaml(p.Out, installation)
 	case printer.FormatTable, printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
@@ -88,14 +76,28 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			Now: func() time.Time { return now },
 		}
 
+		displayInstallation := NewDisplayInstallation(installation, &run)
+
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
+		fmt.Fprintf(p.Out, "Namespace: %s\n", displayInstallation.Namespace)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
 		if displayInstallation.Bundle != "" {
 			fmt.Fprintf(p.Out, "Bundle: %s\n", displayInstallation.Bundle)
 		}
 		fmt.Fprintf(p.Out, "Version: %s\n", displayInstallation.Version)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
+		fmt.Fprintf(p.Out, "Digest: %s\n", displayInstallation.Digest)
+
+		// Print labels, if any
+		if len(displayInstallation.Labels) > 0 {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Labels:")
+
+			for _, label := range displayInstallation.Labels {
+				fmt.Fprintf(p.Out, "  %s\n", label)
+			}
+		}
 
 		// Print parameters, if any
 		if len(displayInstallation.Parameters) > 0 {
@@ -108,28 +110,13 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			}
 		}
 
-		// Print outputs, if any
-		if len(displayInstallation.Outputs) > 0 {
-			fmt.Fprintln(p.Out)
-			fmt.Fprintln(p.Out, "Outputs:")
-
-			err = p.printDisplayValuesTable(displayInstallation.Outputs)
-			if err != nil {
-				return err
-			}
-		}
-
+		// Print the status
 		fmt.Fprintln(p.Out)
-		fmt.Fprintln(p.Out, "History:")
-		historyRow :=
-			func(v interface{}) []string {
-				a, ok := v.(InstallationAction)
-				if !ok {
-					return nil
-				}
-				return []string{a.ClaimID, a.Action, tp.Format(a.Timestamp), a.Status, a.HasLogs}
-			}
-		return printer.PrintTableSection(p.Out, displayInstallation.History, historyRow, "Run ID", "Action", "Timestamp", "Status", "Has Logs")
+		fmt.Fprintln(p.Out, "Status:")
+		fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Action)
+		fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status)
+
+		return nil
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}

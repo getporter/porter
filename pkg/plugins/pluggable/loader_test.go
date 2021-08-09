@@ -11,7 +11,9 @@ import (
 
 func TestPluginLoader_SelectPlugin(t *testing.T) {
 	c := config.NewTestConfig(t)
-	l := NewPluginLoader(c.Config)
+	l := NewPluginLoader(c.Config, func(string, interface{}) (plugins.Plugin, error) {
+		return nil, nil
+	})
 
 	pluginCfg := PluginTypeConfig{
 		GetDefaultPluggable: func(c *config.Config) string {
@@ -26,12 +28,12 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 	}
 
 	t.Run("internal plugin", func(t *testing.T) {
-		c.Data.DefaultStoragePlugin = "filesystem"
+		c.Data.DefaultStoragePlugin = "mongodb-docker"
 
 		err := l.selectPlugin(pluginCfg)
 		require.NoError(t, err, "error selecting plugin")
 
-		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "filesystem", IsInternal: true}, l.SelectedPluginKey)
+		assert.Equal(t, &plugins.PluginKey{Binary: "porter", Implementation: "mongodb-docker", IsInternal: true}, l.SelectedPluginKey)
 		assert.Nil(t, l.SelectedPluginConfig)
 	})
 
@@ -47,7 +49,7 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 
 	t.Run("configured plugin", func(t *testing.T) {
 		c.Data.DefaultStorage = "azure"
-		c.Data.CrudStores = []config.CrudStore{
+		c.Data.StoragePlugins = []config.StoragePlugin{
 			{
 				config.PluginConfig{
 					Name:         "azure",
@@ -63,6 +65,6 @@ func TestPluginLoader_SelectPlugin(t *testing.T) {
 		require.NoError(t, err, "error selecting plugin")
 
 		assert.Equal(t, &plugins.PluginKey{Binary: "azure", Implementation: "blob", IsInternal: false}, l.SelectedPluginKey)
-		assert.Equal(t, c.Data.CrudStores[0].Config, l.SelectedPluginConfig)
+		assert.Equal(t, c.Data.StoragePlugins[0].Config, l.SelectedPluginConfig)
 	})
 }

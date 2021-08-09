@@ -3,10 +3,9 @@ package cnabprovider
 import (
 	"encoding/base64"
 	"fmt"
-	"strings"
 
-	"github.com/cnabio/cnab-go/claim"
-	"github.com/cnabio/cnab-go/valuesource"
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
@@ -18,7 +17,7 @@ import (
 // files and combines both with the default parameters to create a full set
 // of parameters.
 func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
-	mergedParams := make(valuesource.Set, len(args.Params))
+	mergedParams := make(secrets.Set, len(args.Params))
 	paramSources, err := r.resolveParameterSources(bun, args)
 	if err != nil {
 		return nil, err
@@ -93,7 +92,7 @@ func (r *Runtime) getUnconvertedValueFromRaw(b bundle.Bundle, def *definition.Sc
 	return rawValue, nil
 }
 
-func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
+func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArguments) (secrets.Set, error) {
 	parameterSources, required, err := r.Extensions.GetParameterSources()
 	if err != nil {
 		return nil, err
@@ -103,7 +102,7 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 		return nil, nil
 	}
 
-	values := valuesource.Set{}
+	values := secrets.Set{}
 	for parameterName, parameterSource := range parameterSources {
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
 			var installation string
@@ -117,11 +116,10 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 				outputName = source.OutputName
 			}
 
-			output, err := r.claims.ReadLastOutput(installation, outputName)
+			output, err := r.claims.GetLastOutput(args.Namespace, installation, outputName)
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
-				if strings.Contains(err.Error(), claim.ErrInstallationNotFound.Error()) ||
-					strings.Contains(err.Error(), claim.ErrOutputNotFound.Error()) {
+				if errors.Is(err, storage.ErrNotFound{}) {
 					continue
 				}
 				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
@@ -133,12 +131,12 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 				return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
 			}
 
-			def, ok := output.GetSchema()
+			def, ok := bun.Definitions[param.Definition]
 			if !ok {
 				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 			}
 
-			if extensions.IsFileType(bun, &def) {
+			if extensions.IsFileType(bun, def) {
 				values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
 			} else {
 				values[parameterName] = string(output.Value)

@@ -3,8 +3,10 @@ package cnabprovider
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,9 +22,9 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 	}
 
 	type result struct {
-		claim *claim.Claim
-		temp  bool
-		err   error
+		run  claims.Run
+		temp bool
+		err  error
 	}
 
 	type test struct {
@@ -41,12 +43,16 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 			},
 			"other": {
 				Stateless: false,
+				Modifies:  true,
 			},
 		},
 	}
 
-	d := NewTestRuntime(t)
-	eClaim := d.TestClaims.CreateClaim("exists", claim.ActionInstall, bun, nil)
+	r := NewTestRuntime(t)
+	defer r.Teardown()
+
+	installation := r.TestClaims.CreateInstallation(claims.NewInstallation("dev", "exists"))
+	lastRun := r.TestClaims.CreateRun(installation.NewRun(cnab.ActionInstall))
 
 	tests := []test{
 		{
@@ -58,37 +64,34 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 			},
 			want: result{
 				temp: true,
-				err:  nil,
-				claim: &claim.Claim{
+				run: claims.Run{
 					Installation: "nonexistent",
 					Bundle:       bun,
 				},
 			},
 		},
 		{
-			name: "stateless action, existing claim should result in non temp claim",
+			name: "stateless action, existing claim should result in temp claim",
 			in: input{
 				bun,
-				"install",
+				"blah",
 				"exists",
 			},
 			want: result{
-				claim: &eClaim,
-				temp:  false,
-				err:   nil,
+				run:  lastRun,
+				temp: true,
 			},
 		},
 		{
-			name: "stateful action, existing claim should result in non temp claim",
+			name: "modifies and stateful action, existing claim should result in non temp claim",
 			in: input{
 				bun,
-				"install",
+				"other",
 				"exists",
 			},
 			want: result{
-				claim: &eClaim,
-				temp:  false,
-				err:   nil,
+				run:  lastRun,
+				temp: false,
 			},
 		},
 		{
@@ -99,9 +102,9 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 				"nonexist",
 			},
 			want: result{
-				claim: &eClaim,
-				temp:  false,
-				err:   errors.Wrap(claim.ErrInstallationNotFound, "could not load installation nonexist"),
+				run:  lastRun,
+				temp: false,
+				err:  storage.ErrNotFound{},
 			},
 		},
 	}
@@ -111,29 +114,30 @@ func TestRuntime_ClaimPersistence(t *testing.T) {
 			in := tc.in
 			want := tc.want
 
-			f, err := d.FileSystem.Create("bundle.json")
+			f, err := r.FileSystem.Create("bundle.json")
 			require.NoError(t, err, "could not open bundle.json")
 			_, err = tc.in.bun.WriteTo(f)
 			require.NoError(t, err, "could not write to bundle.json")
 
 			args := ActionArguments{
 				Action:       in.action,
+				Namespace:    "dev",
 				Installation: in.installation,
 				BundlePath:   "bundle.json",
 			}
-			runErr := d.Execute(args)
-			c, claimErr := d.claims.ReadLastClaim(in.installation)
+			runErr := r.Execute(args)
+			c, claimErr := r.claims.GetLastRun(args.Namespace, args.Installation)
 
 			if want.err == nil {
 				require.NoErrorf(t, runErr, "Invoke failed")
 				if want.temp {
-					require.Error(t, claimErr, "temp claim should not be persisted")
+					require.True(t, claimErr != nil || c.Action != args.Action, "temp claim should not be persisted")
 				} else {
 					require.NoError(t, claimErr, "the claim could not be read back")
 					assert.Equal(t, in.action, c.Action, "claim saved with wrong action")
 				}
 			} else {
-				require.EqualErrorf(t, runErr, want.err.Error(), "Invoke returned an unexpected error")
+				require.ErrorIs(t, errors.Cause(runErr), want.err, "Invoke returned an unexpected error")
 			}
 		})
 	}
@@ -143,11 +147,12 @@ func TestInvoke_NoClaimBubblesUpError(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
+	defer r.Teardown()
 
 	args := ActionArguments{
 		Action:       "custom-action",
 		Installation: "mybuns",
 	}
 	err := r.Execute(args)
-	require.EqualError(t, err, "could not load installation mybuns: Installation does not exist")
+	require.ErrorIs(t, err, storage.ErrNotFound{})
 }

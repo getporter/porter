@@ -1,9 +1,9 @@
 package query
 
 import (
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/claim"
 	"github.com/pkg/errors"
 )
 
@@ -55,9 +55,9 @@ func (g ManifestGenerator) buildInputForMixin(mixinName string) BuildInput {
 		}
 		input.Actions[action] = mixinSteps
 	}
-	filterSteps(claim.ActionInstall, g.Manifest.Install)
-	filterSteps(claim.ActionUpgrade, g.Manifest.Upgrade)
-	filterSteps(claim.ActionUninstall, g.Manifest.Uninstall)
+	filterSteps(cnab.ActionInstall, g.Manifest.Install)
+	filterSteps(cnab.ActionUpgrade, g.Manifest.Upgrade)
+	filterSteps(cnab.ActionUninstall, g.Manifest.Uninstall)
 
 	for action, steps := range g.Manifest.CustomActions {
 		filterSteps(action, steps)
