@@ -88,13 +88,18 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 }
 
 func TestPorter_BuildActionArgs(t *testing.T) {
-	p := NewTestPorter(t)
-	cxt := p.TestConfig.TestContext
+	t.Run("no bundle set", func(t *testing.T) {
+		p := NewTestPorter(t)
+		opts := NewInstallOptions()
+		opts.Name = "mybuns"
 
-	// Add manifest which is used to parse parameter sets
-	cxt.AddTestFile("testdata/porter.yaml", config.Name)
+		err := opts.Validate(nil, p.Porter)
+		require.Error(t, err, "Validate should fail")
+		assert.Contains(t, err.Error(), "No bundle specified")
+	})
 
 	t.Run("porter.yaml set", func(t *testing.T) {
+		p := NewTestPorter(t)
 		opts := NewInstallOptions()
 		opts.File = "porter.yaml"
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
@@ -110,6 +115,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 	// Just do a quick check that things are populated correctly when a bundle.json is passed
 	t.Run("bundle.json set", func(t *testing.T) {
+		p := NewTestPorter(t)
 		opts := NewInstallOptions()
 		opts.CNABFile = "/bundle.json"
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
@@ -123,6 +129,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 	})
 
 	t.Run("remaining fields", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		opts := InstallOptions{
 			BundleActionOptions: &BundleActionOptions{
 				sharedOptions: sharedOptions{

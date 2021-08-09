@@ -13,8 +13,8 @@ func TestValidateInstallCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "install", ""},
-		{"invalid param", "install --param A:B", "invalid parameter (A:B), must be in name=value format"},
+		{"no args", "install -r getporter/porter-hello:v0.1.1", ""},
+		{"invalid param", "install --param A:B -r getporter/porter-hello:v0.1.1", "invalid parameter (A:B), must be in name=value format"},
 	}
 
 	for _, tc := range testcases {
@@ -43,8 +43,8 @@ func TestValidateUninstallCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "uninstall", ""},
-		{"invalid param", "uninstall --param A:B", "invalid parameter (A:B), must be in name=value format"},
+		{"no args", "uninstall mybuns", ""},
+		{"invalid param", "uninstall mybuns --param A:B", "invalid parameter (A:B), must be in name=value format"},
 	}
 
 	for _, tc := range testcases {
@@ -73,8 +73,8 @@ func TestValidateInvokeCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "invoke", "--action is required"},
-		{"action specified", "invoke --action status", ""},
+		{"no action", "invoke mybuns", "--action is required"},
+		{"action specified", "invoke mybuns --action status", ""},
 	}
 
 	for _, tc := range testcases {
