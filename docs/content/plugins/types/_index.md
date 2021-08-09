@@ -1,6 +1,7 @@
 ---
 title: Plugin Types
 description: Learn more about available extension points and types of plugins in Porter
+weight: 0
 ---
 
 Porter is extensible and supports a couple extension points where you can alter

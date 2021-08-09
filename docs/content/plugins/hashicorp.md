@@ -1,5 +1,5 @@
 ---
-title: Hashicorp plugin
+title: Hashicorp Plugin
 description: Integrate Porter with Hashicorp
 ---
 
