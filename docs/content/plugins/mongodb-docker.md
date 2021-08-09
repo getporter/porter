@@ -15,17 +15,14 @@ or remove the container. Removing the volume will result in data loss.
 
 ## Plugin Configuration
 
-To use the mongodb plugin, add the following config to porter's [config file]. Replace `conn_str` with the
-connection string for your MongoDB server.
-
 No configuration is required to use the default storage plugin. However, you may
 configure the port if there is a conflict with the default port, 27018.
 
 ```toml
-default-storage = "local"
+default-storage = "mymongo"
 
 [[storage]]
-  name = "local"
+  name = "mymongo"
   plugin = "mongodb-docker"
 
   [storage.config]
