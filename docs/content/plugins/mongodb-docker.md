@@ -15,8 +15,7 @@ or remove the container. Removing the volume will result in data loss.
 
 ## Plugin Configuration
 
-To use the mongodb plugin, add the following config to porter's config file
-(default location: `~/.porter/config.toml`). Replace `conn_str` with the
+To use the mongodb plugin, add the following config to porter's [config file]. Replace `conn_str` with the
 connection string for your MongoDB server.
 
 No configuration is required to use the default storage plugin. However, you may
@@ -32,6 +31,8 @@ default-storage = "local"
   [storage.config]
     port = "27019"
 ```
+
+[config file]: /configuration/#config-file
 
 ## Config Parameters
 

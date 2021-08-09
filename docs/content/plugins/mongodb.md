@@ -8,8 +8,7 @@ store its data in a MongoDB server. This plugin is suitable for production use.
 
 ## Plugin Configuration
 
-To use the mongodb plugin, add the following config to porter's config file
-(default location: `~/.porter/config.toml`). Replace `conn_str` with the
+To use the mongodb plugin, add the following config to porter's [config file]. Replace `conn_str` with the
 connection string for your MongoDB server.
 
 ```toml
@@ -22,6 +21,8 @@ default-secrets = "mymongo"
   [storage.config]
     url = "conn_str"
 ```
+
+[config file]: /configuration/#config-file
 
 ## Config Parameters
 
