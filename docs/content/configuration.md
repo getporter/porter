@@ -19,12 +19,16 @@ You may set a default value for a configuration value in the config file,
 override it in a shell session with an environment variable and then override
 both in a particular command with a flag.
 
+* [Set Current Namespace](#namespace)
 * [Enable Debug Output](#debug)
 * [Debug Plugins](#debug-plugins)
 * [Output Formatting](#output)
 * [Allow Docker Host Access](#allow-docker-host-access)
 
 ## Flags
+
+### Namespace
+`--namespace` specifies the current namespace.
 
 ### Debug
 
@@ -86,6 +90,7 @@ Below is an example configuration file in TOML
 
 **~/.porter/config.toml**
 ```toml
+namespace = "dev"
 debug = true
 debug-plugins = true
 output = "json"

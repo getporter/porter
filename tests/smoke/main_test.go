@@ -25,6 +25,10 @@ type Test struct {
 	// PorterPath is the path to the porter binary used for the test.
 	PorterPath string
 
+	// RepoRoot is the root of the porter repository.
+	// Useful for constructing paths that won't break when the test is moved.
+	RepoRoot string
+
 	// T is the test helper.
 	T *testing.T
 }
@@ -117,6 +121,7 @@ func (t *Test) createPorterHome() error {
 
 	cxt := context.NewTestContext(t.T)
 	cxt.UseFilesystem()
+	t.RepoRoot = cxt.FindRepoRoot()
 
 	ext := ""
 	if runtime.GOOS == "windows" {
@@ -139,5 +144,6 @@ func (t *Test) createPorterHome() error {
 	}
 
 	cxt.CopyFile("testdata/config.toml", filepath.Join(t.PorterHomeDir, "config.toml"))
+
 	return nil
 }

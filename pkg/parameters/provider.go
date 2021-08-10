@@ -2,10 +2,13 @@ package parameters
 
 import (
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 )
 
 // Provider interface for managing sets of parameters.
 type Provider interface {
+	GetDataStore() storage.Store
+
 	// ResolveAll parameter values in the parameter set.
 	ResolveAll(params ParameterSet) (secrets.Set, error)
 

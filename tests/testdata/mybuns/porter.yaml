@@ -10,7 +10,6 @@ credentials:
   - name: username
     description: "The name you want on the audit log"
     env: USERNAME
-    required: false
 
 parameters:
   - name: log_level

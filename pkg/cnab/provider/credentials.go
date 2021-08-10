@@ -1,13 +1,15 @@
 package cnabprovider
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"strings"
 
 	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 )
 
@@ -26,8 +28,21 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (secret
 		if r.isPathy(name) {
 			cset, err = r.loadCredentialFromFile(name)
 		} else {
-			cset, err = r.credentials.GetCredentialSet(args.Namespace, name)
+			// Try to get the creds in the local namespace first, fallback to the global creds
+			query := storage.FindOptions{
+				Sort: []string{"-namespace"},
+				Filter: bson.M{
+					"name": name,
+					"$or": []bson.M{
+						{"namespace": ""},
+						{"namespace": args.Namespace},
+					},
+				},
+			}
+			store := r.credentials.GetDataStore()
+			err = store.FindOne(credentials.CollectionCredentials, query, &cset)
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -50,12 +65,7 @@ func (r *Runtime) isPathy(name string) bool {
 }
 
 func (r *Runtime) loadCredentialFromFile(path string) (credentials.CredentialSet, error) {
-	data, err := r.FileSystem.ReadFile(path)
-	if err != nil {
-		return credentials.CredentialSet{}, errors.Wrapf(err, "could not read file %s", path)
-	}
-
 	var cs credentials.CredentialSet
-	err = json.Unmarshal(data, &cs)
+	err := encoding.UnmarshalFile(r.FileSystem, path, &cs)
 	return cs, errors.Wrapf(err, "error loading credential set in %s", path)
 }

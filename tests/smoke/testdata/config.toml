@@ -1,3 +1,4 @@
+namespace = "dev"
 debug = false
 debug-plugins = false
 default-storage = "testdb"

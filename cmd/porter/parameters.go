@@ -13,11 +13,42 @@ func buildParametersCommands(p *porter.Porter) *cobra.Command {
 		Short:       "Parameter set commands",
 	}
 
+	cmd.AddCommand(buildParametersApplyCommand(p))
 	cmd.AddCommand(buildParametersEditCommand(p))
 	cmd.AddCommand(buildParametersGenerateCommand(p))
 	cmd.AddCommand(buildParametersListCommand(p))
 	cmd.AddCommand(buildParametersDeleteCommand(p))
 	cmd.AddCommand(buildParametersShowCommand(p))
+
+	return cmd
+}
+
+func buildParametersApplyCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ApplyOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "apply FILE",
+		Short: "Apply changes to a parameter set",
+		Long: `Apply changes from the specified file to a parameter set. If the parameter set doesn't already exist, it is created.
+
+Supported file extensions: json and yaml.
+
+You can use the generate and show commands to create the initial file:
+  porter parameters generate myparams --reference SOME_BUNDLE
+  porter parameters show myparams --output yaml > myparams.yaml
+`,
+		Example: `  porter parameters apply --file myparams.yaml`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context, args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.ParametersApply(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the parameter set is defined. The namespace in the file, if set, takes precedence.")
 
 	return cmd
 }
