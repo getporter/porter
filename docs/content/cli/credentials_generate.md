@@ -35,8 +35,9 @@ porter credentials generate [NAME] [flags]
 
 ```
   porter credential generate
-  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0 --namespace test
-  porter credential generate kubecred --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter credential generate kubecred --reference getporter/mysql:v0.1.4 --namespace test
+  porter credential generate kubekred --label owner=myname --reference getporter/mysql:v0.1.4
+  porter credential generate kubecred --reference localhost:5000/getporter/mysql:v0.1.4 --insecure-registry --force
   porter credential generate kubecred --file myapp/porter.yaml
   porter credential generate kubecred --cnab-file myapp/bundle.json
 
@@ -50,6 +51,7 @@ porter credentials generate [NAME] [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for generate
       --insecure-registry   Don't require TLS for the registry
+  -l, --label strings       Associate the specified labels with the credential set. May be specified multiple times.
   -n, --namespace string    Namespace in which the credential set is defined. Defaults to the global namespace.
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```

@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -101,11 +100,10 @@ func (s CredentialStore) InsertCredentialSet(cset CredentialSet) error {
 	return s.Documents.Insert(CollectionCredentials, opts)
 }
 
-func (s CredentialStore) ListCredentialSets(namespace string) ([]CredentialSet, error) {
+func (s CredentialStore) ListCredentialSets(namespace string, name string, labels map[string]string) ([]CredentialSet, error) {
 	var out []CredentialSet
-	opts := storage.FindOptions{}
-	if namespace != "*" {
-		opts.Filter = bson.M{"namespace": namespace}
+	opts := storage.FindOptions{
+		Filter: storage.CreateListFiler(namespace, name, labels),
 	}
 	err := s.Documents.Find(CollectionCredentials, opts, &out)
 	return out, err

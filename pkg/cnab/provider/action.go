@@ -137,6 +137,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	installation, err := r.claims.GetInstallation(args.Namespace, args.Installation)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
+			// This may not exist because it's an invoked command running before install
 			installation = claims.NewInstallation(args.Namespace, args.Installation)
 		} else {
 			return errors.Wrapf(err, "could not retrieve the installation record")
@@ -150,13 +151,6 @@ func (r *Runtime) Execute(args ActionArguments) error {
 			instNotFound := storage.ErrNotFound{Collection: claims.CollectionInstallations}
 			return errors.Wrapf(instNotFound, "Installation not found: %s. Only stateless actions, such as dry-run, can execute against a bundle that hasn't been installed yet", args.Installation)
 		}
-	}
-
-	// Validate that we are not overwriting an existing installation
-	if args.Action == cnab.ActionInstall && installation.Status.InstallationCompleted {
-		installationDump, _ := json.Marshal(installation)
-		fmt.Fprintln(r.Err, string(installationDump))
-		return errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade.")
 	}
 
 	// If the user didn't override the bundle definition, use the one

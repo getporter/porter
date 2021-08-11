@@ -8,7 +8,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -93,11 +92,10 @@ func (s ParameterStore) InsertParameterSet(cset ParameterSet) error {
 	return s.Documents.Insert(CollectionParameters, opts)
 }
 
-func (s ParameterStore) ListParameterSets(namespace string) ([]ParameterSet, error) {
+func (s ParameterStore) ListParameterSets(namespace string, name string, labels map[string]string) ([]ParameterSet, error) {
 	var out []ParameterSet
-	opts := storage.FindOptions{}
-	if namespace != "*" {
-		opts.Filter = bson.M{"namespace": namespace}
+	opts := storage.FindOptions{
+		Filter: storage.CreateListFiler(namespace, name, labels),
 	}
 	err := s.Documents.Find(CollectionParameters, opts, &out)
 	return out, err

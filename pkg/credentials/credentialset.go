@@ -35,6 +35,9 @@ type CredentialSet struct {
 	// Modified timestamp.
 	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 
+	// Labels applied to the credential set.
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+
 	// Credentials is a list of credential resolution strategies.
 	Credentials []secrets.Strategy `json:"credentials" yaml:"credentials" toml:"credentials"`
 }

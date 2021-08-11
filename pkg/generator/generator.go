@@ -13,6 +13,7 @@ type GenerateOptions struct {
 	// Name of the parameter or credential set.
 	Name      string
 	Namespace string
+	Labels    map[string]string
 
 	// Should we survey?
 	Silent bool

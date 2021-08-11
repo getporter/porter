@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -16,6 +17,34 @@ import (
 type ListOptions struct {
 	printer.PrintOptions
 	Namespace string
+	Name      string
+	Labels    []string
+}
+
+func (o *ListOptions) Validate() error {
+	return o.ParseFormat()
+}
+
+func (o ListOptions) ParseLabels() map[string]string {
+	return parseLabels(o.Labels)
+}
+
+func parseLabels(raw []string) map[string]string {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	labelMap := make(map[string]string, len(raw))
+	for _, label := range raw {
+		parts := strings.SplitN(label, "=", 2)
+		k := parts[0]
+		v := ""
+		if len(parts) > 1 {
+			v = parts[1]
+		}
+		labelMap[k] = v
+	}
+	return labelMap
 }
 
 // DisplayInstallation holds a subset of pertinent values to be listed from installation data
@@ -104,7 +133,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 
 // ListInstallations lists installed bundles.
 func (p *Porter) ListInstallations(opts ListOptions) ([]claims.Installation, error) {
-	installations, err := p.Claims.ListInstallations(opts.Namespace)
+	installations, err := p.Claims.ListInstallations(opts.Namespace, opts.Name, opts.ParseLabels())
 	return installations, errors.Wrap(err, "could not list installations")
 }
 

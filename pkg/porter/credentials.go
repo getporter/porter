@@ -30,7 +30,7 @@ type CredentialEditOptions struct {
 
 // ListCredentials lists saved credential sets.
 func (p *Porter) ListCredentials(opts ListOptions) error {
-	creds, err := p.Credentials.ListCredentialSets(opts.Namespace)
+	creds, err := p.Credentials.ListCredentialSets(opts.Namespace, opts.Name, opts.ParseLabels())
 	if err != nil {
 		return err
 	}
@@ -62,9 +62,15 @@ func (p *Porter) ListCredentials(opts ListOptions) error {
 	}
 }
 
+// CredentialsOptions are the set of options available to Porter.GenerateCredentials
 type CredentialOptions struct {
 	BundleActionOptions
 	Silent bool
+	Labels []string
+}
+
+func (o CredentialOptions) ParseLabels() map[string]string {
+	return parseLabels(o.Labels)
 }
 
 // Validate prepares for an action and validates the options.
@@ -120,6 +126,7 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 		GenerateOptions: generator.GenerateOptions{
 			Name:      name,
 			Namespace: opts.Namespace,
+			Labels:    opts.ParseLabels(),
 			Silent:    opts.Silent,
 		},
 		Credentials: bundle.Credentials,
@@ -212,8 +219,6 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		fmt.Fprintln(p.Out, string(result))
 		return nil
 	case printer.FormatTable:
-		ds := NewDisplayCredentialSet(credSet)
-
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -226,10 +231,8 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		var rows [][]string
 
 		// Iterate through all CredentialStrategies and add to rows
-		for _, cs := range ds.Credentials {
-			for k, v := range cs.Source {
-				rows = append(rows, []string{cs.Name, v, k})
-			}
+		for _, cs := range credSet.Credentials {
+			rows = append(rows, []string{cs.Name, cs.Source.Value, cs.Source.Key})
 		}
 
 		// Build and configure our tablewriter
@@ -242,10 +245,20 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		table.SetAutoFormatHeaders(false)
 
 		// First, print the CredentialSet metadata
-		fmt.Fprintf(p.Out, "Name: %s\n", ds.Name)
-		fmt.Fprintf(p.Out, "Namespace: %s\n", ds.Namespace)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(ds.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(ds.Modified))
+		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
+		fmt.Fprintf(p.Out, "Namespace: %s\n", credSet.Namespace)
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Modified))
+
+		// Print labels, if any
+		if len(credSet.Labels) > 0 {
+			fmt.Fprintln(p.Out, "Labels:")
+
+			for k, v := range credSet.Labels {
+				fmt.Fprintf(p.Out, "  %s: %s\n", k, v)
+			}
+			fmt.Fprintln(p.Out)
+		}
 
 		// Now print the table
 		table.SetHeader([]string{"Name", "Local Source", "Source Type"})
@@ -296,37 +309,4 @@ func validateCredentialName(args []string) error {
 	default:
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
-}
-
-type DisplayCredentialSet struct {
-	SchemaVersion string                  `json:"schemaVersion" yaml:"schemaVersion"`
-	Namespace     string                  `json:"namespace" yaml:"namespace"`
-	Name          string                  `json:"name" yaml:"name"`
-	Created       time.Time               `json:"created" yaml:"created"`
-	Modified      time.Time               `json:"modified" yaml:"modified"`
-	Credentials   []DisplaySecretStrategy `json:"credentials" yaml:"credentials"`
-}
-
-type DisplaySecretStrategy struct {
-	Name   string            `json:"name" yaml:"name"`
-	Source map[string]string `json:"source" yaml:"source"`
-}
-
-func NewDisplayCredentialSet(creds credentials.CredentialSet) DisplayCredentialSet {
-	ds := DisplayCredentialSet{
-		SchemaVersion: string(creds.SchemaVersion),
-		Namespace:     creds.Namespace,
-		Name:          creds.Name,
-		Created:       creds.Created,
-		Modified:      creds.Modified,
-		Credentials:   make([]DisplaySecretStrategy, len(creds.Credentials)),
-	}
-
-	for i, cred := range creds.Credentials {
-		ds.Credentials[i] = DisplaySecretStrategy{
-			Name:   cred.Name,
-			Source: map[string]string{cred.Source.Key: cred.Source.Value},
-		}
-	}
-	return ds
 }

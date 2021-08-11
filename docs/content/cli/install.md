@@ -24,12 +24,13 @@ porter install [INSTALLATION] [flags]
 
 ```
   porter install
-  porter install MyAppFromReference --reference getporter/kubernetes:v0.1.0
+  porter install MyAppFromReference --reference getporter/kubernetes:v0.1.0 --namespace dev
   porter install --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter install MyAppInDev --file myapp/bundle.json
   porter install --parameter-set azure --param test-mode=true --param header-color=blue
   porter install --cred azure --cred kubernetes
   porter install --driver debug
+  porter install --label env=dev --label owner=myuser
 
 ```
 
@@ -44,6 +45,7 @@ porter install [INSTALLATION] [flags]
       --force                      Force a fresh pull of the bundle
   -h, --help                       help for install
       --insecure-registry          Don't require TLS for the registry
+  -l, --label strings              Associate the specified labels with the installation. May be specified multiple times.
   -n, --namespace string           Create the installation in the specified namespace. Defaults to the global namespace.
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.

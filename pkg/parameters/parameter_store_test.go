@@ -13,7 +13,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	paramStore := NewTestParameterProvider(t)
 	defer paramStore.Teardown()
 
-	params, err := paramStore.ListParameterSets("dev")
+	params, err := paramStore.ListParameterSets("dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
@@ -31,16 +31,16 @@ func TestParameterStore_CRUD(t *testing.T) {
 	err = paramStore.InsertParameterSet(myParamSet)
 	require.NoError(t, err, "Insert should successfully save")
 
-	params, err = paramStore.ListParameterSets("dev")
+	params, err = paramStore.ListParameterSets("dev", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet.Name, params[0].Name, "expected to retrieve myparams")
 
-	params, err = paramStore.ListParameterSets("")
+	params, err = paramStore.ListParameterSets("", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 0, "expected no global parameter sets")
 
-	params, err = paramStore.ListParameterSets("*")
+	params, err = paramStore.ListParameterSets("*", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set defined in all namespaces")
 
@@ -51,7 +51,7 @@ func TestParameterStore_CRUD(t *testing.T) {
 	err = paramStore.RemoveParameterSet(myParamSet.Namespace, myParamSet.Name)
 	require.NoError(t, err, "Remove should successfully delete the parameter set")
 
-	params, err = paramStore.ListParameterSets("dev")
+	params, err = paramStore.ListParameterSets("dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 

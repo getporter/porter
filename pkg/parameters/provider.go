@@ -13,7 +13,7 @@ type Provider interface {
 	Validate(params ParameterSet) error
 
 	InsertParameterSet(params ParameterSet) error
-	ListParameterSets(namespace string) ([]ParameterSet, error)
+	ListParameterSets(namespace string, name string, labels map[string]string) ([]ParameterSet, error)
 	GetParameterSet(namespace string, name string) (ParameterSet, error)
 	UpdateParameterSet(params ParameterSet) error
 	UpsertParameterSet(params ParameterSet) error
