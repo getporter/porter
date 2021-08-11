@@ -228,7 +228,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		args := ActionArguments{
@@ -249,7 +249,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		overrides := map[string]string{
@@ -275,7 +275,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		c := r.TestClaims.CreateClaim("mybun", claim.ActionInstall, b, nil)
@@ -300,7 +300,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		overrides := map[string]string{
@@ -330,7 +330,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		fooBun := bundle.Bundle{
@@ -372,7 +372,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-		b, err := r.ProcessBundle("bundle.json")
+		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
 		// foo is set by a the user
@@ -576,7 +576,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	r := NewTestRuntime(t)
 
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
-	bun, err := r.ProcessBundle("bundle.json")
+	bun, err := r.ProcessBundleFromFile("bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
 	fooBun := bundle.Bundle{

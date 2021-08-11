@@ -94,17 +94,26 @@ func (r *Runtime) getUnconvertedValueFromRaw(b bundle.Bundle, def *definition.Sc
 }
 
 func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArguments) (valuesource.Set, error) {
+	if r.Debug {
+		fmt.Fprintln(r.Err, "Resolving parameter sources...")
+	}
 	parameterSources, required, err := r.Extensions.GetParameterSources()
 	if err != nil {
 		return nil, err
 	}
 
 	if !required {
+		if r.Debug {
+			fmt.Fprintln(r.Err, "No parameter sources defined!")
+		}
 		return nil, nil
 	}
 
 	values := valuesource.Set{}
 	for parameterName, parameterSource := range parameterSources {
+		if r.Debug {
+			fmt.Fprintln(r.Err, "Resolving parameter source", parameterName)
+		}
 		for _, rawSource := range parameterSource.ListSourcesByPriority() {
 			var installation string
 			var outputName string
