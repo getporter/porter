@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCommandWiring(t *testing.T) {
@@ -44,16 +45,39 @@ func TestCommandWiring(t *testing.T) {
 	}
 }
 
-func TestHelpText(t *testing.T) {
-	rootCmd := buildRootCommand()
-	var buf bytes.Buffer
-	rootCmd.SetOut(&buf)
-	rootCmd.SetArgs([]string{"help"})
-	rootCmd.Execute()
-	helpText := buf.String()
-	assert.Contains(t, helpText, "Resources:")
-	assert.Contains(t, helpText, "Aliased Commands:")
-	assert.Contains(t, helpText, "Meta Commands:")
+func TestHelp(t *testing.T) {
+	t.Run("no args", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
+
+	t.Run("help", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{"help"})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
+
+	t.Run("--help", func(t *testing.T) {
+		var output bytes.Buffer
+		rootCmd := buildRootCommand()
+		rootCmd.SetArgs([]string{"--help"})
+		rootCmd.SetOut(&output)
+
+		err := rootCmd.Execute()
+		require.NoError(t, err)
+		assert.Contains(t, output.String(), "Usage")
+	})
 }
 
 func TestExperimentalFlags(t *testing.T) {

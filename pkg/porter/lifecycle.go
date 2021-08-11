@@ -39,7 +39,16 @@ func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 		}
 	}
 
-	return o.sharedOptions.Validate(args, porter)
+	err := o.sharedOptions.Validate(args, porter)
+	if err != nil {
+		return err
+	}
+
+	if o.Name == "" && o.File == "" && o.CNABFile == "" && o.Reference == "" {
+		return errors.New("No bundle specified. Either an installation name, --reference, --file or --cnab-file must be specified or the current directory must contain a porter.yaml file.")
+	}
+
+	return nil
 }
 
 func (o *BundleActionOptions) GetOptions() *BundleActionOptions {

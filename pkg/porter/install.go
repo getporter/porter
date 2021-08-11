@@ -1,6 +1,9 @@
 package porter
 
-import "get.porter.sh/porter/pkg/cnab"
+import (
+	"get.porter.sh/porter/pkg/cnab"
+	"github.com/pkg/errors"
+)
 
 var _ BundleAction = NewInstallOptions()
 
@@ -8,6 +11,21 @@ var _ BundleAction = NewInstallOptions()
 // Porter handles defaulting any missing values.
 type InstallOptions struct {
 	*BundleActionOptions
+}
+
+func (o InstallOptions) Validate(args []string, p *Porter) error {
+	err := o.BundleActionOptions.Validate(args, p)
+	if err != nil {
+		return err
+	}
+
+	// Install requires special logic because the bundle must always be specified, including a name isn't enough.
+	// So we have a slight repeat of the logic performed in by the generic bundle action args
+	if o.File == "" && o.CNABFile == "" && o.Reference == "" {
+		return errors.New("No bundle specified. Either --reference, --file or --cnab-file must be specified or the current directory must contain a porter.yaml file.")
+	}
+
+	return nil
 }
 
 func (o InstallOptions) GetAction() string {

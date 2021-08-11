@@ -127,7 +127,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	var err error
 
 	if args.BundlePath != "" {
-		b, err = r.ProcessBundle(args.BundlePath)
+		b, err = r.ProcessBundleFromFile(args.BundlePath)
 		if err != nil {
 			return err
 		}
@@ -162,7 +162,14 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	// If the user didn't override the bundle definition, use the one
 	// from the existing claim
 	if lastRun.ID != "" && args.BundlePath == "" {
-		b = lastRun.Bundle
+		b, err = r.ProcessBundle(lastRun.Bundle)
+		if err != nil {
+			return err
+		}
+	}
+	if r.Debug {
+		b.WriteTo(r.Err)
+		fmt.Fprintln(r.Err)
 	}
 
 	params, err := r.loadParameters(b, args)
