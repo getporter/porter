@@ -26,6 +26,7 @@ porter list [flags]
 ```
   porter list
   porter list -o json
+  porter list --all-namespaces,
   porter list --label owner=myname --namespace dev
   porter list --name myapp
 ```
@@ -33,6 +34,7 @@ porter list [flags]
 ### Options
 
 ```
+      --all-namespaces     Include all namespaces in the results.
   -h, --help               help for list
   -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the installations where the name contains the specified substring.

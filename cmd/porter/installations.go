@@ -40,6 +40,7 @@ The results may also be filtered by associated labels and the namespace in which
 Optional output formats include json and yaml.`,
 		Example: `  porter installations list
   porter installations list -o json
+  porter installations list --all-namespaces,
   porter installations list --label owner=myname --namespace dev
   porter installations list --name myapp`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -53,6 +54,8 @@ Optional output formats include json and yaml.`,
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Filter the installations by namespace. Defaults to the global namespace.")
+	f.BoolVar(&opts.AllNamespaces, "all-namespaces", false,
+		"Include all namespaces in the results.")
 	f.StringVar(&opts.Name, "name", "",
 		"Filter the installations where the name contains the specified substring.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,

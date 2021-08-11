@@ -38,8 +38,13 @@ type ParameterEditOptions struct {
 }
 
 // ListParameters lists saved parameter sets.
-func (p *Porter) ListParameters(opts ListOptions) error {
-	params, err := p.Parameters.ListParameterSets(opts.Namespace, opts.Name, opts.ParseLabels())
+func (p *Porter) ListParameters(opts ListOptions) ([]parameters.ParameterSet, error) {
+	return p.Parameters.ListParameterSets(opts.GetNamespace(), opts.Name, opts.ParseLabels())
+}
+
+// PrintParameters prints saved parameter sets.
+func (p *Porter) PrintParameters(opts ListOptions) error {
+	params, err := p.ListParameters(opts)
 	if err != nil {
 		return err
 	}

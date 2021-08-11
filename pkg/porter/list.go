@@ -16,13 +16,21 @@ import (
 // ListOptions represent generic options for use by Porter's list commands
 type ListOptions struct {
 	printer.PrintOptions
-	Namespace string
+	AllNamespaces bool
+	Namespace     string
 	Name      string
 	Labels    []string
 }
 
 func (o *ListOptions) Validate() error {
 	return o.ParseFormat()
+}
+
+func (o ListOptions) GetNamespace() string {
+	if o.AllNamespaces {
+		return "*"
+	}
+	return o.Namespace
 }
 
 func (o ListOptions) ParseLabels() map[string]string {
@@ -133,7 +141,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 
 // ListInstallations lists installed bundles.
 func (p *Porter) ListInstallations(opts ListOptions) ([]claims.Installation, error) {
-	installations, err := p.Claims.ListInstallations(opts.Namespace, opts.Name, opts.ParseLabels())
+	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())
 	return installations, errors.Wrap(err, "could not list installations")
 }
 

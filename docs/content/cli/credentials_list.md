@@ -23,7 +23,7 @@ porter credentials list [flags]
 ```
   porter credentials list
   porter credentials list --namespace prod
-  porter credentials list --namespace "*"
+  porter credentials list --all-namespaces,
   porter credentials list --name myapp
   porter credentials list --label env=dev
 ```
@@ -31,6 +31,7 @@ porter credentials list [flags]
 ### Options
 
 ```
+      --all-namespaces     Include all namespaces in the results.
   -h, --help               help for list
   -l, --label strings      Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the credential sets where the name contains the specified substring.

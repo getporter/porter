@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
@@ -121,7 +122,7 @@ func TestCredentialsList_None(t *testing.T) {
 
 			listOpts := ListOptions{}
 			listOpts.Format = tc.format
-			err := p.ListCredentials(listOpts)
+			err := p.PrintCredentials(listOpts)
 			if tc.errorMsg != "" {
 				require.Equal(t, err.Error(), tc.errorMsg)
 			} else {
@@ -136,7 +137,7 @@ func TestCredentialsList_None(t *testing.T) {
 	}
 }
 
-func TestCredentialsList(t *testing.T) {
+func TestPorter_PrintCredentials(t *testing.T) {
 	testcases := []CredentialsListTest{
 		{
 			name:         "json",
@@ -174,7 +175,7 @@ func TestCredentialsList(t *testing.T) {
 			listOpts := ListOptions{}
 			listOpts.Namespace = "dev"
 			listOpts.Format = tc.format
-			err := p.ListCredentials(listOpts)
+			err := p.PrintCredentials(listOpts)
 			require.NoError(t, err)
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -183,6 +184,45 @@ func TestCredentialsList(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test filtering
+func TestPorter_ListCredentials(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("", "shared-mysql"))
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("dev", "carolyn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("dev", "vaughn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "staging-wordpress"))
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "iat-wordpress"))
+	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "shared-mysql"))
+
+	t.Run("all-namespaces", func(t *testing.T) {
+		opts := ListOptions{AllNamespaces: true}
+		results, err := p.ListCredentials(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 6)
+	})
+
+	t.Run("local namespace", func(t *testing.T) {
+		opts := ListOptions{Namespace: "dev"}
+		results, err := p.ListCredentials(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 2)
+
+		opts = ListOptions{Namespace: "test"}
+		results, err = p.ListCredentials(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 3)
+	})
+
+	t.Run("global namespace", func(t *testing.T) {
+		opts := ListOptions{Namespace: ""}
+		results, err := p.ListCredentials(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 1)
+	})
 }
 
 type CredentialShowTest struct {

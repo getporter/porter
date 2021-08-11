@@ -4,6 +4,7 @@ import (
 	"sort"
 	"testing"
 
+	"get.porter.sh/porter/pkg/parameters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,4 +44,42 @@ func TestGenerateParameterSet(t *testing.T) {
 	creds, err := p.Parameters.GetParameterSet(opts.Namespace, "kool-params")
 	require.NoError(t, err, "expected parameter to have been generated")
 	assert.Equal(t, map[string]string{"env": "dev"}, creds.Labels)
+}
+
+func TestPorter_ListParameters(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("", "shared-mysql"))
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("dev", "carolyn-wordpress"))
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("dev", "vaughn-wordpress"))
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "staging-wordpress"))
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "iat-wordpress"))
+	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "shared-mysql"))
+
+	t.Run("all-namespaces", func(t *testing.T) {
+		opts := ListOptions{AllNamespaces: true}
+		results, err := p.ListParameters(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 6)
+	})
+
+	t.Run("local namespace", func(t *testing.T) {
+		opts := ListOptions{Namespace: "dev"}
+		results, err := p.ListParameters(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 2)
+
+		opts = ListOptions{Namespace: "test"}
+		results, err = p.ListParameters(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 3)
+	})
+
+	t.Run("global namespace", func(t *testing.T) {
+		opts := ListOptions{Namespace: ""}
+		results, err := p.ListParameters(opts)
+		require.NoError(t, err)
+		assert.Len(t, results, 1)
+	})
 }

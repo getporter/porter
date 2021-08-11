@@ -29,8 +29,13 @@ type CredentialEditOptions struct {
 }
 
 // ListCredentials lists saved credential sets.
-func (p *Porter) ListCredentials(opts ListOptions) error {
-	creds, err := p.Credentials.ListCredentialSets(opts.Namespace, opts.Name, opts.ParseLabels())
+func (p *Porter) ListCredentials(opts ListOptions) ([]credentials.CredentialSet, error) {
+	return p.Credentials.ListCredentialSets(opts.GetNamespace(), opts.Name, opts.ParseLabels())
+}
+
+// PrintCredentials prints saved credential sets.
+func (p *Porter) PrintCredentials(opts ListOptions) error {
+	creds, err := p.ListCredentials(opts)
 	if err != nil {
 		return err
 	}

@@ -68,14 +68,14 @@ func TestHelloBundle(t *testing.T) {
 	require.Equal(t, "test", installations[0]["namespace"], "expected the installation to be in the test namespace")
 
 	// Search by name
-	output, err = test.Porter("list", "--name=mybuns", "--namespace=*", "--output=json").Output()
+	output, err = test.Porter("list", "--name=mybuns", "--all-namespaces", "--output=json").Output()
 	require.NoError(t, err)
 	installations = []map[string]interface{}{}
 	require.NoError(t, json.Unmarshal([]byte(output), &installations))
 	require.Len(t, installations, 2, "expected two installations named mybuns")
 
 	// Search by label
-	output, err = test.Porter("list", "--label", "test=true", "--namespace=*", "--output=json").Output()
+	output, err = test.Porter("list", "--label", "test=true", "--all-namespaces", "--output=json").Output()
 	require.NoError(t, err)
 	installations = []map[string]interface{}{}
 	require.NoError(t, json.Unmarshal([]byte(output), &installations))
