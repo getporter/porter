@@ -7,10 +7,6 @@ url: /cli/porter_installations_output/
 
 Output commands
 
-### Synopsis
-
-Output commands
-
 ### Options
 
 ```

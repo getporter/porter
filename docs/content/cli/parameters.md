@@ -7,10 +7,6 @@ url: /cli/porter_parameters/
 
 Parameter set commands
 
-### Synopsis
-
-Parameter set commands
-
 ### Options
 
 ```

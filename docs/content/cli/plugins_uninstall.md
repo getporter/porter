@@ -7,10 +7,6 @@ url: /cli/porter_plugins_uninstall/
 
 Uninstall a plugin
 
-### Synopsis
-
-Uninstall a plugin
-
 ```
 porter plugins uninstall NAME [flags]
 ```

@@ -7,10 +7,6 @@ url: /cli/porter_mixins_uninstall/
 
 Uninstall a mixin
 
-### Synopsis
-
-Uninstall a mixin
-
 ```
 porter mixins uninstall NAME [flags]
 ```
