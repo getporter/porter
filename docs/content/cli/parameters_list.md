@@ -24,7 +24,7 @@ porter parameters list [flags]
   porter parameters list
   porter parameters list --namespace prod -o json
   porter parameters list --namespace "*"
-  porter parameters list myapp
+  porter parameters list --name myapp
   porter parameters list --label env=dev
 ```
 

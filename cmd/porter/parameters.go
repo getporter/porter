@@ -110,7 +110,7 @@ The results may also be filtered by associated labels and the namespace in which
 		Example: `  porter parameters list
   porter parameters list --namespace prod -o json
   porter parameters list --namespace "*"
-  porter parameters list myapp
+  porter parameters list --name myapp
   porter parameters list --label env=dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()
