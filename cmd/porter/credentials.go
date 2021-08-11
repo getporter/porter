@@ -109,20 +109,22 @@ Optionally filters the results name, which returns all results whose name contai
 The results may also be filtered by associated labels and the namespace in which the credential set is defined.`,
 		Example: `  porter credentials list
   porter credentials list --namespace prod
-  porter credentials list --namespace "*"
+  porter credentials list --all-namespaces,
   porter credentials list --name myapp
   porter credentials list --label env=dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ListCredentials(opts)
+			return p.PrintCredentials(opts)
 		},
 	}
 
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
+	f.BoolVar(&opts.AllNamespaces, "all-namespaces", false,
+		"Include all namespaces in the results.")
 	f.StringVar(&opts.Name, "name", "",
 		"Filter the credential sets where the name contains the specified substring.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,

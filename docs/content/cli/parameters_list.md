@@ -23,7 +23,7 @@ porter parameters list [flags]
 ```
   porter parameters list
   porter parameters list --namespace prod -o json
-  porter parameters list --namespace "*"
+  porter parameters list --all-namespaces,
   porter parameters list --name myapp
   porter parameters list --label env=dev
 ```
@@ -31,6 +31,7 @@ porter parameters list [flags]
 ### Options
 
 ```
+      --all-namespaces     Include all namespaces in the results.
   -h, --help               help for list
   -l, --label strings      Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the parameter sets where the name contains the specified substring.
