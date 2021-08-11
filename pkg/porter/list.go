@@ -21,13 +21,7 @@ type ListOptions struct {
 	Labels    []string
 }
 
-func (o *ListOptions) Validate(args []string) error {
-	if len(args) == 1 {
-		o.Name = args[0]
-	} else if len(args) > 1 {
-		return errors.Errorf("only one positional argument may be specified, the installation name, but multiple were received: %s", args)
-	}
-
+func (o *ListOptions) Validate() error {
 	return o.ParseFormat()
 }
 

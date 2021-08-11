@@ -68,8 +68,9 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 parameter set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter parameter generate
-  porter parameter generate myparamset --reference getporter/porter-hello:v0.1.0 --namespace dev
-  porter parameter generate myparamset --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter parameter generate myparamset --reference getporter/hello-llama:v0.1.1 --namespace dev
+  porter parameter generate myparamset --label owner=myname --reference getporter/hello-llama:v0.1.1
+  porter parameter generate myparamset --reference localhost:5000/getporter/hello-llama:v0.1.1 --insecure-registry --force
   porter parameter generate myparamset --file myapp/porter.yaml
   porter parameter generate myparamset --cnab-file myapp/bundle.json
 `,
@@ -99,7 +100,7 @@ func buildParametersListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "list [QUERY]",
+		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "List parameter sets",
 		Long: `List named sets of parameters defined by the user.
@@ -112,7 +113,7 @@ The results may also be filtered by associated labels and the namespace in which
   porter parameters list myapp
   porter parameters list --label env=dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.ParseFormat()
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.ListParameters(opts)
@@ -122,6 +123,8 @@ The results may also be filtered by associated labels and the namespace in which
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
+	f.StringVar(&opts.Name, "name", "",
+		"Filter the parameter sets where the name contains the specified substring.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",

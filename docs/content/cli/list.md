@@ -18,7 +18,7 @@ The results may also be filtered by associated labels and the namespace in which
 Optional output formats include json and yaml.
 
 ```
-porter list [QUERY] [flags]
+porter list [flags]
 ```
 
 ### Examples
@@ -26,8 +26,8 @@ porter list [QUERY] [flags]
 ```
   porter list
   porter list -o json
-  porter list --label owner=me
-  porter list my
+  porter list --label owner=myname --namespace dev
+  porter list --name myapp
 ```
 
 ### Options
@@ -35,6 +35,7 @@ porter list [QUERY] [flags]
 ```
   -h, --help               help for list
   -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --name string        Filter the installations where the name contains the specified substring.
   -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
   -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```

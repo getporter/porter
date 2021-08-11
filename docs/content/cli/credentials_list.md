@@ -15,7 +15,7 @@ Optionally filters the results name, which returns all results whose name contai
 The results may also be filtered by associated labels and the namespace in which the credential set is defined.
 
 ```
-porter credentials list [QUERY] [flags]
+porter credentials list [flags]
 ```
 
 ### Examples
@@ -24,7 +24,7 @@ porter credentials list [QUERY] [flags]
   porter credentials list
   porter credentials list --namespace prod
   porter credentials list --namespace "*"
-  porter credentials list kube
+  porter credentials list --name myapp
   porter credentials list --label env=dev
 ```
 
@@ -33,6 +33,7 @@ porter credentials list [QUERY] [flags]
 ```
   -h, --help               help for list
   -l, --label strings      Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --name string        Filter the credential sets where the name contains the specified substring.
   -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.
   -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```

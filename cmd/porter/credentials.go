@@ -68,8 +68,9 @@ When you wish to install, upgrade or delete a bundle, Porter will use the
 credential set to determine where to read the necessary information from and
 will then provide it to the bundle in the correct location. `,
 		Example: `  porter credential generate
-  porter credential generate kubecred --reference getporter/porter-hello:v0.1.0 --namespace test
-  porter credential generate kubecred --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter credential generate kubecred --reference getporter/mysql:v0.1.4 --namespace test
+  porter credential generate kubekred --label owner=myname --reference getporter/mysql:v0.1.4
+  porter credential generate kubecred --reference localhost:5000/getporter/mysql:v0.1.4 --insecure-registry --force
   porter credential generate kubecred --file myapp/porter.yaml
   porter credential generate kubecred --cnab-file myapp/bundle.json
 `,
@@ -99,7 +100,7 @@ func buildCredentialsListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "list [QUERY]",
+		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "List credentials",
 		Long: `List named sets of credentials defined by the user.
@@ -109,10 +110,10 @@ The results may also be filtered by associated labels and the namespace in which
 		Example: `  porter credentials list
   porter credentials list --namespace prod
   porter credentials list --namespace "*"
-  porter credentials list kube
+  porter credentials list --name myapp
   porter credentials list --label env=dev`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.ParseFormat()
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.ListCredentials(opts)
@@ -122,6 +123,8 @@ The results may also be filtered by associated labels and the namespace in which
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.")
+	f.StringVar(&opts.Name, "name", "",
+		"Filter the credential sets where the name contains the specified substring.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",

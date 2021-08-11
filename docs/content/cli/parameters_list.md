@@ -15,7 +15,7 @@ Optionally filters the results name, which returns all results whose name contai
 The results may also be filtered by associated labels and the namespace in which the parameter set is defined.
 
 ```
-porter parameters list [QUERY] [flags]
+porter parameters list [flags]
 ```
 
 ### Examples
@@ -33,6 +33,7 @@ porter parameters list [QUERY] [flags]
 ```
   -h, --help               help for list
   -l, --label strings      Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.
+      --name string        Filter the parameter sets where the name contains the specified substring.
   -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.
   -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
 ```

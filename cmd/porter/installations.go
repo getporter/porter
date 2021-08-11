@@ -29,7 +29,7 @@ func buildInstallationsListCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "list [QUERY]",
+		Use:   "list",
 		Short: "List installed bundles",
 		Long: `List all bundles installed by Porter.
 
@@ -40,10 +40,10 @@ The results may also be filtered by associated labels and the namespace in which
 Optional output formats include json and yaml.`,
 		Example: `  porter installations list
   porter installations list -o json
-  porter installations list --label owner=me
-  porter installations list my`,
+  porter installations list --label owner=myname --namespace dev
+  porter installations list --name myapp`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args)
+			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.PrintInstallations(opts)
@@ -53,6 +53,8 @@ Optional output formats include json and yaml.`,
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Filter the installations by namespace. Defaults to the global namespace.")
+	f.StringVar(&opts.Name, "name", "",
+		"Filter the installations where the name contains the specified substring.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
