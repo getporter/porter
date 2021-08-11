@@ -7,10 +7,6 @@ url: /cli/porter_mixins/
 
 Mixin commands. Mixins assist with authoring bundles.
 
-### Synopsis
-
-Mixin commands. Mixins assist with authoring bundles.
-
 ### Options
 
 ```

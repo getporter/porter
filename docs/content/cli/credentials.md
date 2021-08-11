@@ -7,10 +7,6 @@ url: /cli/porter_credentials/
 
 Credentials commands
 
-### Synopsis
-
-Credentials commands
-
 ### Options
 
 ```

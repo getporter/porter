@@ -7,10 +7,6 @@ url: /cli/porter_mixins_feed/
 
 Feed commands
 
-### Synopsis
-
-Feed commands
-
 ### Options
 
 ```

@@ -7,10 +7,6 @@ url: /cli/porter_version/
 
 Print the application version
 
-### Synopsis
-
-Print the application version
-
 ```
 porter version [flags]
 ```

@@ -7,10 +7,6 @@ url: /cli/porter_mixins_list/
 
 List installed mixins
 
-### Synopsis
-
-List installed mixins
-
 ```
 porter mixins list [flags]
 ```

@@ -7,10 +7,6 @@ url: /cli/porter_plugins_show/
 
 Show details about an installed plugin
 
-### Synopsis
-
-Show details about an installed plugin
-
 ```
 porter plugins show [flags]
 ```
