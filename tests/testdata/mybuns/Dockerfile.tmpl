@@ -1,0 +1,13 @@
+FROM debian:stretch-slim
+
+ARG BUNDLE_DIR
+
+RUN apt-get update && apt-get install -y ca-certificates
+
+ENV CUSTOM_VAR=boop
+ENV USERNAME=root
+
+# PORTER_MIXINS
+
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+COPY . $BUNDLE_DIR

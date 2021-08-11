@@ -10,13 +10,17 @@ func (r *Runtime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 	return cnab.LoadBundle(r.Context, bundleFile)
 }
 
-func (r *Runtime) ProcessBundle(bundleFile string) (bundle.Bundle, error) {
+func (r *Runtime) ProcessBundleFromFile(bundleFile string) (bundle.Bundle, error) {
 	b, err := r.LoadBundle(bundleFile)
 	if err != nil {
 		return bundle.Bundle{}, err
 	}
 
-	err = b.Validate()
+	return r.ProcessBundle(b)
+}
+
+func (r *Runtime) ProcessBundle(b bundle.Bundle) (bundle.Bundle, error) {
+	err := b.Validate()
 	if err != nil {
 		return b, errors.Wrap(err, "invalid bundle")
 	}

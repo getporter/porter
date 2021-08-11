@@ -53,3 +53,5 @@ and we will add you. **All** contributors belong here. 💯
 * [Jeetu Kumar](https://github.com/i-am-jeetu)
 * [Divyam Bhasin](https://github.com/divbhasin)
 * [Ritesh Yadav](https://github.com/DARK-art108)
+* [Jérémy Audiger](https://github.com/jaudiger)
+* [Om More](https://github.com/thisisommore)

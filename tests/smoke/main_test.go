@@ -29,7 +29,7 @@ type Test struct {
 	T *testing.T
 }
 
-// NewTest sets up for an smoke test.
+// NewTest sets up for a smoke test.
 //
 // Always defer Test.Teardown(), even when an error is returned.
 func NewTest(t *testing.T) (Test, error) {
@@ -92,7 +92,6 @@ func (t Test) PorterE(args ...string) error {
 func (t Test) Porter(args ...string) shx.PreparedCommand {
 	args = append(args, "--debug")
 	return shx.Command(t.PorterPath, args...).
-		In(t.TestDir).
 		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 

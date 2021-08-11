@@ -106,7 +106,6 @@ Learn more about [how parameters work in Porter](/parameters/).
 ```yaml
 parameters:
 - name: mysql_user
-  type: string
   default: azureuser
 - name: mysql_password
   type: string
@@ -131,7 +130,8 @@ parameters:
 ```
 
 * `name`: The name of the parameter.
-* `type`: The data type of the parameter: string, integer, number, boolean, array, [object](#object-parameters), or [file](#file-parameters).
+* `type`: The data type of the parameter: string, integer, number, boolean, array, [object](#object-parameters), or [file](#file-parameters).  When omitted,
+  Porter will attempt to detect the type and default it to either file or string.
 * `default`: (Optional) The default value for the parameter, which will be used if not supplied elsewhere.
 * `env`: (Optional) The name for the destination environment variable in the bundle. Defaults to the name of the parameter in upper case, if path is not specified.
 * `path`: (Optional) The destination file path in the bundle.
@@ -226,7 +226,6 @@ as opposed to step outputs described in [Parameters, Credentials and Outputs](/w
 ```yaml
 outputs:
 - name: mysql_user
-  type: string
   description: "MySQL user name"
 - name: mysql_password
   type: string
@@ -239,7 +238,8 @@ outputs:
 ```
 
 * `name`: The name of the output.
-* `type`: The data type of the output: string, integer, number, boolean.
+* `type`: The data type of the output: string, integer, number, boolean.  When omitted, Porter will attempt to detect 
+  the type and default it to either file or string.
 * `applyTo`: (Optional) Restrict this output to a given list of actions. If empty or missing, applies to all actions.
 * `description`: (Optional) A brief description of the given output.
 * `sensitive`: (Optional) Designate an output as sensitive. Defaults to false.

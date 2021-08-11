@@ -1,6 +1,6 @@
 FROM docker:dind
 
-ENV HELM_VER 2.17.0
+ENV HELM_VER v2.17.0
 
 RUN mkdir -p /root/.porter/runtimes && \
     mkdir -p /root/.porter/mixins/exec/runtimes
@@ -11,7 +11,7 @@ RUN apk add bash \
             bash-completion \
             jq \
             ca-certificates && \
-    curl -o helm.tgz https://storage.googleapis.com/kubernetes-helm/helm-v${HELM_VER}-linux-amd64.tar.gz && \
+    curl -o helm.tgz https://get.helm.sh/helm-${HELM_VER}-linux-amd64.tar.gz && \
     tar -xzf helm.tgz && \
     mv linux-amd64/helm /usr/local/bin && \
     rm helm.tgz && \

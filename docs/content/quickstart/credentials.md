@@ -51,7 +51,7 @@ This means that the github-token credential is required to run porter install or
 Create a credential set for the credentials-tutorial bundle with the `porter credentials generate` command. It is an interactive command that walks through setting values for every credential in the specified bundle.
 
 ```console
-$ porter parameters generate github --reference getporter/credentials-tutorial:v0.1.0
+$ porter credentials generate github --reference getporter/credentials-tutorial:v0.1.0
 Generating new credential github from bundle credentials-tutorial
 ==> 1 credentials required for bundle credentials-tutorial
 ? How would you like to set credential "github-token"

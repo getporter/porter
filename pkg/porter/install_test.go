@@ -39,21 +39,6 @@ func TestPorter_applyDefaultOptions(t *testing.T) {
 	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
 }
 
-func TestPorter_applyDefaultOptions_NoManifest(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	opts := NewInstallOptions()
-	err := opts.Validate([]string{}, p.Porter)
-	require.NoError(t, err)
-
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	require.NoError(t, err)
-
-	assert.Equal(t, "", opts.Name, "opts.Name should be empty because the manifest was not available to default from")
-	assert.Equal(t, &manifest.Manifest{}, p.Manifest, "p.Manifest should be initialized to an empty manifest")
-}
-
 func TestInstallOptions_validateInstallationName(t *testing.T) {
 	testcases := []struct {
 		name      string

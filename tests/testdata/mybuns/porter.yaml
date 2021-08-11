@@ -1,0 +1,74 @@
+# This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
+
+name: mybuns
+version: 0.1.0
+description: "A very thorough test bundle"
+registry: localhost:5000
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: username
+    description: "The name you want on the audit log"
+    env: USERNAME
+    required: false
+
+parameters:
+  - name: log_level
+    description: "How unhelpful would you like the logs to be?"
+    type: integer
+    minimum: 1
+    maximum: 11
+    default: 5
+  - name: magic_file
+    description: "Pay no attention to the generated magic file"
+    type: file
+    path: /cnab/app/magic
+    source:
+      output: magic_file
+
+outputs:
+  - name: magic_file
+    type: file
+    path: /cnab/app/magic
+    applyTo:
+      - install
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "Let's make some magic"
+      command: ./helpers.sh
+      arguments:
+        - makeMagic
+        - "{{ bundle.credentials.username }} is a unicorn"
+  - exec:
+      description: "install"
+      command: ./helpers.sh
+      arguments:
+        - install
+
+upgrade:
+  - exec:
+      description: "Ensure magic"
+      command: ./helpers.sh
+      arguments:
+        - ensureMagic
+  - exec:
+      description: "upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Ensure Magic"
+      command: ./helpers.sh
+      arguments:
+        - ensureMagic
+  - exec:
+      description: "uninstall"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
