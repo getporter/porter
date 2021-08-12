@@ -91,8 +91,6 @@ func (o ParameterOptions) ParseLabels() map[string]string {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (g *ParameterOptions) Validate(args []string, cxt *context.Context) error {
-	g.checkForDeprecatedTagValue()
-
 	err := g.validateParamName(args)
 	if err != nil {
 		return err
