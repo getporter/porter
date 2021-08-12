@@ -37,7 +37,7 @@ You can use the generate and show commands to create the initial file:
   porter parameters generate myparams --reference SOME_BUNDLE
   porter parameters show myparams --output yaml > myparams.yaml
 `,
-		Example: `  porter parameters apply --file myparams.yaml`,
+		Example: `  porter parameters apply myparams.yaml`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context, args)
 		},

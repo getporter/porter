@@ -25,7 +25,7 @@ porter credentials apply FILE [flags]
 ### Examples
 
 ```
-  porter credentials apply --file mycreds.yaml
+  porter credentials apply mycreds.yaml
 ```
 
 ### Options

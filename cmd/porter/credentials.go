@@ -37,7 +37,7 @@ You can use the generate and show commands to create the initial file:
   porter credentials generate mycreds --reference SOME_BUNDLE
   porter credentials show mycreds --output yaml > mycreds.yaml
 `,
-		Example: `  porter credentials apply --file mycreds.yaml`,
+		Example: `  porter credentials apply mycreds.yaml`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context, args)
 		},

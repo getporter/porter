@@ -25,7 +25,7 @@ porter parameters apply FILE [flags]
 ### Examples
 
 ```
-  porter parameters apply --file myparams.yaml
+  porter parameters apply myparams.yaml
 ```
 
 ### Options
