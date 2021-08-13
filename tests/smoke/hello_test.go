@@ -17,6 +17,10 @@ func TestHelloBundle(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 
+	// This variable isn't set on windows and the mybuns bundle relies on it
+	os.Setenv("USER", "porterci")
+	defer os.Unsetenv("USER")
+
 	test, err := NewTest(t)
 	defer test.Teardown()
 	require.NoError(t, err, "test setup failed")
@@ -32,10 +36,20 @@ func TestHelloBundle(t *testing.T) {
 	os.Chdir(test.TestDir)
 
 	test.RequirePorter("install", "hello", "--reference", "getporter/porter-hello:v0.1.1", "--namespace=")
-	test.RequirePorter("install", "mybuns", "--reference", ref, "--namespace=dev", "--label", "test=true")
+
+	// Import a parameter and credential set for the bundle
+	shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/params/mybuns.yaml"), "./myparams.yaml")
+	shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "./mycreds.yaml")
+	test.RequirePorter("parameters", "apply", "myparams.yaml", "--namespace=")
+	test.RequirePorter("credentials", "apply", "mycreds.yaml", "--namespace=")
+
+	// Install the bundle and verify the correct output is printed
+	output, err := test.Porter("install", "mybuns", "--reference", ref, "--label", "test=true", "-p=mybuns", "-c=mybuns").OutputV()
+	require.NoError(t, err)
+	require.Contains(t, output, "Hello, *******")
 
 	// Should not see the mybuns installation in the global namespace
-	output, err := test.Porter("list", "--namespace=", "--output=json").Output()
+	output, err = test.Porter("list", "--namespace=", "--output=json").Output()
 	require.NoError(t, err)
 	var installations []map[string]interface{}
 	require.NoError(t, json.Unmarshal([]byte(output), &installations))
@@ -56,7 +70,7 @@ func TestHelloBundle(t *testing.T) {
 	status := installations[0]["status"].(map[string]interface{})
 	require.Equal(t, true, status["installationCompleted"], "expected the installation to complete successfully")
 
-	test.RequirePorter("install", "mybuns", "--reference", ref, "--namespace=test")
+	test.RequirePorter("install", "mybuns", "--reference", ref, "--namespace=test", "-c=mybuns")
 
 	// Should see the other installation in the test namespace
 	output, err = test.Porter("list", "--namespace=test", "--output=json").Output()
@@ -83,16 +97,16 @@ func TestHelloBundle(t *testing.T) {
 
 	// Validate that we can't accidentally overwrite an installation
 	var outputE bytes.Buffer
-	_, _, err = test.Porter("install", "mybuns", "--reference", ref, "--namespace=dev").Stderr(&outputE).Exec()
+	_, _, err = test.Porter("install", "mybuns", "--reference", ref, "--namespace=dev", "-c=mybuns").Stderr(&outputE).Exec()
 	require.Error(t, err, "porter should have prevented overwriting an installation")
 	require.Contains(t, outputE.String(), "The installation has already been successfully installed")
 
 	test.RequirePorter("installation", "show", "mybuns", "--namespace=dev")
 
-	test.RequirePorter("upgrade", "mybuns", "--namespace=dev")
+	test.RequirePorter("upgrade", "mybuns", "--namespace=dev", "-c=mybuns")
 	test.RequirePorter("installation", "show", "mybuns", "--namespace=dev")
 
-	test.RequirePorter("uninstall", "mybuns", "--namespace=dev")
+	test.RequirePorter("uninstall", "mybuns", "--namespace=dev", "-c=mybuns")
 	test.RequirePorter("installation", "show", "mybuns", "--namespace=dev")
 	test.RequirePorter("installation", "delete", "mybuns", "--namespace=dev")
 

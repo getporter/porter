@@ -315,3 +315,68 @@ func validateCredentialName(args []string) error {
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}
 }
+
+type ApplyOptions struct {
+	Namespace string
+	File      string
+}
+
+func (o *ApplyOptions) Validate(cxt *context.Context, args []string) error {
+	switch len(args) {
+	case 0:
+		return errors.New("a file argument is required")
+	case 1:
+		o.File = args[0]
+	default:
+		return errors.New("only one file argument may be specified")
+	}
+
+	info, err := cxt.FileSystem.Stat(o.File)
+	if err != nil {
+		return errors.Wrapf(err, "invalid file argument %s", o.File)
+	}
+	if info.IsDir() {
+		return errors.Errorf("invalid file argument %s, must be a file not a directory", o.File)
+	}
+
+	return nil
+}
+
+func (p *Porter) CredentialsApply(o ApplyOptions) error {
+	namespace, err := p.getNamespaceFromFile(o)
+
+	var creds credentials.CredentialSet
+	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)
+	if err != nil {
+		return errors.Wrapf(err, "could not load %s as a credential set", o.File)
+	}
+
+	creds.Namespace = namespace
+	creds.Modified = time.Now()
+
+	err = p.Credentials.Validate(creds)
+	if err != nil {
+		return errors.Wrap(err, "credential set is invalid")
+	}
+
+	return p.Credentials.UpsertCredentialSet(creds)
+}
+
+func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
+	// Check if the namespace was set in the file, if not, use the namespace set on the command
+	var raw map[string]interface{}
+	err := encoding.UnmarshalFile(p.FileSystem, o.File, &raw)
+	if err != nil {
+		return "", errors.Wrapf(err, "invalid --file '%s'", o.File)
+	}
+
+	if rawNamespace, ok := raw["namespace"]; ok {
+		if ns, ok := rawNamespace.(string); ok {
+			return ns, nil
+		} else {
+			return "", errors.New("invalid namespace specified in file, must be a string")
+		}
+	}
+
+	return o.Namespace, nil
+}

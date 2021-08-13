@@ -45,6 +45,10 @@ func (s CredentialStore) Initialize() error {
 	return err
 }
 
+func (s CredentialStore) GetDataStore() storage.Store {
+	return s.Documents
+}
+
 /*
 	Secrets
 */

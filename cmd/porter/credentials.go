@@ -13,11 +13,42 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 		Short:       "Credentials commands",
 	}
 
+	cmd.AddCommand(buildCredentialsApplyCommand(p))
 	cmd.AddCommand(buildCredentialsEditCommand(p))
 	cmd.AddCommand(buildCredentialsGenerateCommand(p))
 	cmd.AddCommand(buildCredentialsListCommand(p))
 	cmd.AddCommand(buildCredentialsDeleteCommand(p))
 	cmd.AddCommand(buildCredentialsShowCommand(p))
+
+	return cmd
+}
+
+func buildCredentialsApplyCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ApplyOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "apply FILE",
+		Short: "Apply changes to a credential set",
+		Long: `Apply changes from the specified file to a credential set. If the credential set doesn't already exist, it is created.
+
+Supported file extensions: json and yaml.
+
+You can use the generate and show commands to create the initial file:
+  porter credentials generate mycreds --reference SOME_BUNDLE
+  porter credentials show mycreds --output yaml > mycreds.yaml
+`,
+		Example: `  porter credentials apply mycreds.yaml`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context, args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.CredentialsApply(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the credential set is defined. The namespace in the file, if set, takes precedence.")
 
 	return cmd
 }

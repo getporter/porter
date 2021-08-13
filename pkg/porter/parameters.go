@@ -18,6 +18,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/globalsign/mgo/bson"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	tablewriter "github.com/olekukonko/tablewriter"
@@ -339,7 +340,19 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 		if strings.Contains(name, string(filepath.Separator)) {
 			pset, err = p.loadParameterFromFile(name)
 		} else {
-			pset, err = p.Parameters.GetParameterSet(namespace, name)
+			// Try to get the params in the local namespace first, fallback to the global creds
+			query := storage.FindOptions{
+				Sort: []string{"-namespace"},
+				Filter: bson.M{
+					"name": name,
+					"$or": []bson.M{
+						{"namespace": ""},
+						{"namespace": namespace},
+					},
+				},
+			}
+			store := p.Parameters.GetDataStore()
+			err = store.FindOne(parameters.CollectionParameters, query, &pset)
 		}
 		if err != nil {
 			return nil, err
@@ -376,13 +389,8 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 }
 
 func (p *Porter) loadParameterFromFile(path string) (parameters.ParameterSet, error) {
-	data, err := p.FileSystem.ReadFile(path)
-	if err != nil {
-		return parameters.ParameterSet{}, errors.Wrapf(err, "could not read file %s", path)
-	}
-
 	var cs parameters.ParameterSet
-	err = json.Unmarshal(data, &cs)
+	err := encoding.UnmarshalFile(p.FileSystem, path, &cs)
 	return cs, errors.Wrapf(err, "error loading parameter set in %s", path)
 }
 
@@ -482,4 +490,24 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 	table.Render()
 
 	return nil
+}
+
+func (p *Porter) ParametersApply(o ApplyOptions) error {
+	namespace, err := p.getNamespaceFromFile(o)
+
+	var params parameters.ParameterSet
+	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)
+	if err != nil {
+		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
+	}
+
+	params.Namespace = namespace
+	params.Modified = time.Now()
+
+	err = p.Parameters.Validate(params)
+	if err != nil {
+		return errors.Wrap(err, "parameter set is invalid")
+	}
+
+	return p.Parameters.UpsertParameterSet(params)
 }

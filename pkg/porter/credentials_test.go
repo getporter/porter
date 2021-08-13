@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
@@ -419,4 +420,39 @@ func TestCredentialsDelete(t *testing.T) {
 			assert.ErrorIs(t, err, storage.ErrNotFound{})
 		})
 	}
+}
+
+func TestApplyOptions_Validate(t *testing.T) {
+	t.Run("no file specified", func(t *testing.T) {
+		tc := context.NewTestContext(t)
+		opts := ApplyOptions{}
+		err := opts.Validate(tc.Context, nil)
+		require.EqualError(t, err, "a file argument is required")
+	})
+
+	t.Run("one file specified", func(t *testing.T) {
+		tc := context.NewTestContext(t)
+		tc.AddTestFileFromRoot("tests/testdata/creds/mybuns.yaml", "mybuns.yaml")
+		opts := ApplyOptions{}
+		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
+		require.NoError(t, err)
+		assert.Equal(t, "mybuns.yaml", opts.File)
+	})
+
+	t.Run("missing file specified", func(t *testing.T) {
+		tc := context.NewTestContext(t)
+		opts := ApplyOptions{}
+		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid file argument")
+	})
+
+	t.Run("two files specified", func(t *testing.T) {
+		tc := context.NewTestContext(t)
+		opts := ApplyOptions{}
+		err := opts.Validate(tc.Context, []string{"mybuns.yaml", "yourbuns.yaml"})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "only one file argument may be specified")
+	})
+
 }

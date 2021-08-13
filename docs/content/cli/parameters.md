@@ -24,6 +24,7 @@ Parameter set commands
 ### SEE ALSO
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter parameters apply](/cli/porter_parameters_apply/)	 - Apply changes to a parameter set
 * [porter parameters delete](/cli/porter_parameters_delete/)	 - Delete a Parameter Set
 * [porter parameters edit](/cli/porter_parameters_edit/)	 - Edit Parameter Set
 * [porter parameters generate](/cli/porter_parameters_generate/)	 - Generate Parameter Set

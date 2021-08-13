@@ -45,6 +45,10 @@ func (s ParameterStore) Initialize() error {
 	return err
 }
 
+func (s ParameterStore) GetDataStore() storage.Store {
+	return s.Documents
+}
+
 func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
 	resolvedParams := make(secrets.Set)
 	var resolveErrors error

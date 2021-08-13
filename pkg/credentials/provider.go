@@ -1,9 +1,13 @@
 package credentials
 
-import "get.porter.sh/porter/pkg/secrets"
+import (
+	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
+)
 
 // Provider is Porter's interface for managing and resolving credentials.
 type Provider interface {
+	GetDataStore() storage.Store
 	ResolveAll(creds CredentialSet) (secrets.Set, error)
 	Validate(creds CredentialSet) error
 	InsertCredentialSet(creds CredentialSet) error
