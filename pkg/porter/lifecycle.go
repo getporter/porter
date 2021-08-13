@@ -5,6 +5,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
+	"get.porter.sh/porter/pkg/encoding"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -60,42 +61,37 @@ func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 }
 
 func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleReference, error) {
-	// Return the referenced bundle
+	var bundleRef cnab.BundleReference
+
+	// load the referenced bundle
 	if opts.Reference != "" {
 		cachedBundle, err := p.prepullBundleByReference(opts)
 		if err != nil {
 			return cnab.BundleReference{}, errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
 		}
-		return cachedBundle.BundleReference, nil
-	}
 
-	// Return the local bundle source
-	if opts.File != "" {
-		// Return the local bundle source
-		err := p.applyDefaultOptions(&opts.sharedOptions)
+		bundleRef = cachedBundle.BundleReference
+		opts.File = cachedBundle.ManifestPath
+		opts.CNABFile = cachedBundle.BundlePath
+	} else if opts.File != "" { // load the local bundle source
+		localBundle, err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 		if err != nil {
 			return cnab.BundleReference{}, err
 		}
-		return p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
-	}
-
-	// Return the cnab bundle
-	if opts.CNABFile != "" {
+		bundleRef = localBundle
+	} else if opts.CNABFile != "" { // load the cnab bundle definition
 		bun, err := p.CNAB.LoadBundle(opts.CNABFile)
 		if err != nil {
 			return cnab.BundleReference{}, err
 		}
-		return cnab.BundleReference{Definition: bun}, nil
-	}
-
-	// Return the bundle associated with the installation
-	if opts.Name != "" {
+		bundleRef = cnab.BundleReference{Definition: bun}
+	} else if opts.Name != "" { // Return the bundle associated with the installation
 		lastRun, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
 		if err != nil {
 			return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
 		}
 
-		bundleRef := cnab.BundleReference{
+		bundleRef = cnab.BundleReference{
 			Definition: lastRun.Bundle,
 			Digest:     digest.Digest(lastRun.BundleDigest)}
 
@@ -105,33 +101,41 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 				return cnab.BundleReference{}, errors.Wrapf(err, "invalid bundle reference, %s, found on the last bundle run record %s", lastRun.BundleReference, lastRun.ID)
 			}
 		}
-
-		return bundleRef, nil
+	} else { // Nothing was referenced
+		return cnab.BundleReference{}, errors.New("No bundle specified")
 	}
 
-	// Nothing was referenced
-	return cnab.BundleReference{}, errors.New("No bundle specified")
+	if opts.Name == "" {
+		opts.Name = bundleRef.Definition.Name
+	}
+
+	return bundleRef, nil
 }
 
 // BuildActionArgs converts an instance of user-provided action options into prepared arguments
 // that can be used to execute the action.
-func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArguments, error) {
+func (p *Porter) BuildActionArgs(installation claims.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
+	bundleRef, err := p.resolveBundleReference(opts)
+
+	if opts.RelocationMapping != "" {
+		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
+		if err != nil {
+			return cnabprovider.ActionArguments{}, errors.Wrapf(err, "could not parse the relocation mapping file at %s", opts.RelocationMapping)
+		}
+	}
+
 	args := cnabprovider.ActionArguments{
-		// TODO(carolynvs): set the bundle digest
-		BundleReference:       opts.Reference,
 		Action:                action.GetAction(),
-		Installation:          opts.Name,
-		Namespace:             opts.Namespace,
-		BundlePath:            opts.CNABFile,
-		Params:                make(map[string]string, len(opts.combinedParameters)),
+		Installation:          installation,
+		BundleReference:       bundleRef,
+		Params:                make(map[string]string, len(opts.combinedParameters)), // TODO(carolynvs): set on the installation record
 		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),
 		Driver:                opts.Driver,
-		RelocationMapping:     opts.RelocationMapping,
 		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
 	}
 
-	err := opts.LoadParameters(p)
+	err = opts.LoadParameters(p)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}

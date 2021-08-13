@@ -62,7 +62,7 @@ func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
 	e.parentAction = parentAction
 	e.parentOpts = parentAction.GetOptions()
 
-	parentArgs, err := e.porter.BuildActionArgs(parentAction)
+	parentArgs, err := e.porter.BuildActionArgs(claims.Installation{}, parentAction)
 	if err != nil {
 		return err
 	}
@@ -249,16 +249,16 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 }
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
-	depArgs := cnabprovider.ActionArguments{
-		// TODO(carolynvs): set the bundle digest
-		BundleReference:   dep.Reference,
-		Action:            e.parentArgs.Action,
-		BundlePath:        dep.CNABFile,
-		Installation:      extensions.BuildPrerequisiteInstallationName(e.parentArgs.Installation, dep.Alias),
-		Driver:            e.parentArgs.Driver,
-		Params:            dep.Parameters,
-		RelocationMapping: dep.RelocationMapping,
+	depInstallation := claims.NewInstallation(e.parentOpts.Namespace,
+		extensions.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias))
 
+	depArgs := cnabprovider.ActionArguments{
+		BundleReference: dep.BundleReference,
+		Action:          e.parentArgs.Action,
+		Installation:    depInstallation,
+		Driver: e.parentArgs.Driver,
+		AllowDockerHostAccess: e.parentOpts.AllowAccessToDockerHost,
+		Params: dep.Parameters,
 		// For now, assume it's okay to give the dependency the same credentials as the parent
 		CredentialIdentifiers: e.parentArgs.CredentialIdentifiers,
 	}
@@ -288,7 +288,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
-		return e.Claims.RemoveInstallation(depArgs.Namespace, depArgs.Installation)
+		return e.Claims.RemoveInstallation(depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
 	return nil
 }

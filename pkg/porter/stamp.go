@@ -46,6 +46,14 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) (cnab.Bundl
 
 // IsBundleUpToDate checks the hash of the manifest against the hash in cnab/bundle.json.
 func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
+	if opts.File == "" {
+		return false, errors.New("File is required")
+	}
+	err := p.LoadManifestFrom(opts.File)
+	if err != nil {
+		return false, err
+	}
+
 	if exists, _ := p.FileSystem.Exists(opts.CNABFile); exists {
 		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {

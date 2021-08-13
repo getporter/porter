@@ -301,32 +301,6 @@ func validateCredentialName(args []string) error {
 	}
 }
 
-type ApplyOptions struct {
-	Namespace string
-	File      string
-}
-
-func (o *ApplyOptions) Validate(cxt *context.Context, args []string) error {
-	switch len(args) {
-	case 0:
-		return errors.New("a file argument is required")
-	case 1:
-		o.File = args[0]
-	default:
-		return errors.New("only one file argument may be specified")
-	}
-
-	info, err := cxt.FileSystem.Stat(o.File)
-	if err != nil {
-		return errors.Wrapf(err, "invalid file argument %s", o.File)
-	}
-	if info.IsDir() {
-		return errors.Errorf("invalid file argument %s, must be a file not a directory", o.File)
-	}
-
-	return nil
-}
-
 func (p *Porter) CredentialsApply(o ApplyOptions) error {
 	namespace, err := p.getNamespaceFromFile(o)
 

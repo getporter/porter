@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCopyReferenceOnly(t *testing.T) {
@@ -83,7 +84,7 @@ func TestValidateCopyArgs(t *testing.T) {
 				Destination: "blah.acr.io",
 			},
 			true,
-			"invalid value for --source, specified value should be of the form REGISTRY/bundle:tag or REGISTRY/bundle@sha: invalid reference format",
+			"invalid value for --source",
 		},
 		{
 			"bad source, invalid digest ref",
@@ -92,7 +93,7 @@ func TestValidateCopyArgs(t *testing.T) {
 				Destination: "blah.acr.io",
 			},
 			true,
-			"invalid value for --source, specified value should be of the form REGISTRY/bundle:tag or REGISTRY/bundle@sha: invalid reference format",
+			"invalid value for --source",
 		},
 		{
 			"digest to reference only should fail",
@@ -108,8 +109,8 @@ func TestValidateCopyArgs(t *testing.T) {
 	for _, test := range tests {
 		err := test.Opts.Validate()
 		if test.ExpectError {
-			assert.Error(t, err)
-			assert.EqualError(t, err, test.ExpectedError)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.ExpectedError)
 		} else {
 			assert.NoError(t, err)
 		}
@@ -151,7 +152,7 @@ func TestCopyGenerateBundleRef(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			src := cnab.MustParseOCIReference(test.Opts.Source)
 			newRef := generateNewBundleRef(src, test.Opts.Destination)
-			assert.Equal(t, test.Expected, newRef, fmt.Sprintf("%s: expected %s got %s", test.Name, test.Expected, newRef))
+			assert.Equal(t, test.Expected, newRef.String(), fmt.Sprintf("%s: expected %s got %s", test.Name, test.Expected, newRef))
 		})
 	}
 }

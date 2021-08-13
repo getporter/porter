@@ -73,18 +73,16 @@ func NewRun(namespace string, installation string) Run {
 // or for stateful actions. Stateless actions do not require an existing
 // installation or credentials, and are for actions such as documentation, dry-run, etc.
 func (r Run) ShouldRecord() bool {
-	stateless := false
-	if customAction, ok := r.Bundle.Actions[r.Action]; ok {
-		stateless = customAction.Stateless
-	}
-	modifies, _ := r.IsModifyingAction()
-	return modifies || !stateless
-}
+	// Assume all actions modify bundle resources, and should be recorded.
+	stateful := true
+	modifies := true
 
-// IsModifyingAction returns if the specified action modifies bundle resources.
-func (r Run) IsModifyingAction() (bool, error) {
-	action, err := r.Bundle.GetAction(r.Action)
-	return action.Modifies, err
+	if action, err := r.Bundle.GetAction(r.Action); err == nil {
+		modifies = action.Modifies
+		stateful = !action.Stateless
+	}
+
+	return modifies || stateful
 }
 
 // ToCNAB associated with the Run.

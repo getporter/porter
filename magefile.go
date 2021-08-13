@@ -148,7 +148,8 @@ func TestSmoke() error {
 		v = "-v"
 	}
 
-	return shx.Command("go", "test", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
+	// Adding -count to prevent go from caching the test results.
+	return shx.Command("go", "test", "-count=1", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
 func getRegistry() string {

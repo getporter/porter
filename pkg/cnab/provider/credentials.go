@@ -35,7 +35,7 @@ func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (secret
 					"name": name,
 					"$or": []bson.M{
 						{"namespace": ""},
-						{"namespace": args.Namespace},
+						{"namespace": args.Installation.Namespace},
 					},
 				},
 			}

@@ -18,6 +18,7 @@ func (p *Porter) applyDefaultOptions(opts *sharedOptions) error {
 	// Ensure that we have a manifest initialized, even if it's just an empty one
 	// This happens for non-porter bundles using --cnab-file or --reference
 	if p.Manifest == nil {
+		// TODO(carolynvs): change this to fix https://github.com/getporter/porter/issues/1024, we should hydrate a manifest from the bundle.json so that it is always available
 		p.Manifest = &manifest.Manifest{}
 	}
 

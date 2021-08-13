@@ -118,17 +118,21 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 			var outputName string
 			switch source := rawSource.(type) {
 			case extensions.OutputParameterSource:
-				installation = args.Installation
+				installation = args.Installation.Name
 				outputName = source.OutputName
 			case extensions.DependencyOutputParameterSource:
-				installation = extensions.BuildPrerequisiteInstallationName(args.Installation, source.Dependency)
+				// TODO(carolynvs): does this need to take namespace into account
+				installation = extensions.BuildPrerequisiteInstallationName(args.Installation.Name, source.Dependency)
 				outputName = source.OutputName
 			}
 
-			output, err := r.claims.GetLastOutput(args.Namespace, installation, outputName)
+			output, err := r.claims.GetLastOutput(args.Installation.Namespace, installation, outputName)
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
 				if errors.Is(err, storage.ErrNotFound{}) {
+					if r.Debug {
+						fmt.Fprintf(r.Err, "No previous output found for %s from %s/%s\n", outputName, args.Installation.Namespace, installation)
+					}
 					continue
 				}
 				// Otherwise, something else has happened, perhaps bad data or connectivity problems, we can't ignore it
