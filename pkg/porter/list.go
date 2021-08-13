@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
-	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 )
 
@@ -18,8 +17,8 @@ type ListOptions struct {
 	printer.PrintOptions
 	AllNamespaces bool
 	Namespace     string
-	Name      string
-	Labels    []string
+	Name          string
+	Labels        []string
 }
 
 func (o *ListOptions) Validate() error {
@@ -132,7 +131,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 		Action:     run.Action,
 		Parameters: run.Parameters,
 		Timestamp:  run.Created,
-		Bundle:     tryParseBundleRepository(run.BundleReference),
+		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
 		// TODO(carolynvs): Add command to view all installation runs
 		//Status: run.GetStatus(),
@@ -183,11 +182,4 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
-}
-
-func tryParseBundleRepository(bundleReference string) string {
-	if ref, err := reference.ParseNormalizedNamed(bundleReference); err == nil {
-		return reference.FamiliarName(ref)
-	}
-	return bundleReference
 }

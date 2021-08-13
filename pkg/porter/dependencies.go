@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
@@ -50,13 +51,11 @@ func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
 
 type queuedDependency struct {
 	extensions.DependencyLock
-	CNABFile   string
-	Parameters map[string]string
+	BundleReference cnab.BundleReference
+	Parameters      map[string]string
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
-
-	RelocationMapping string
 }
 
 func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
@@ -138,7 +137,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 			return errors.Wrapf(err, "could not resolve bundle")
 		}
 
-		bun = cachedBundle.Bundle
+		bun = cachedBundle.Definition
 	} else if e.parentOpts.Name != "" {
 		c, err := e.Claims.GetLastRun(e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
@@ -178,27 +177,29 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 		InsecureRegistry: e.parentOpts.InsecureRegistry,
 		Force:            e.parentOpts.Force,
 	}
+	if err := pullOpts.Validate(); err != nil {
+		return errors.Wrapf(err, "error preparing dependency %s", dep.Alias)
+	}
 	cachedDep, err := e.Resolver.Resolve(pullOpts)
 	if err != nil {
 		return errors.Wrapf(err, "error pulling dependency %s", dep.Alias)
 	}
-	dep.CNABFile = cachedDep.BundlePath
-	dep.RelocationMapping = cachedDep.RelocationFilePath
+	dep.BundleReference = cachedDep.BundleReference
 
-	err = cachedDep.Bundle.Validate()
+	err = cachedDep.Definition.Validate()
 	if err != nil {
 		return errors.Wrapf(err, "invalid bundle %s", dep.Alias)
 	}
 
 	// Cache the bundle.json for later
-	dep.cnabFileContents, err = e.FileSystem.ReadFile(dep.CNABFile)
+	dep.cnabFileContents, err = e.FileSystem.ReadFile(cachedDep.BundlePath)
 	if err != nil {
-		return errors.Wrapf(err, "error reading %s", dep.CNABFile)
+		return errors.Wrapf(err, "error reading %s", cachedDep.BundlePath)
 	}
 
 	// Make a lookup of which parameters are defined in the dependent bundle
 	depParams := map[string]struct{}{}
-	for paramName := range cachedDep.Bundle.Parameters {
+	for paramName := range cachedDep.Definition.Parameters {
 		depParams[paramName] = struct{}{}
 	}
 

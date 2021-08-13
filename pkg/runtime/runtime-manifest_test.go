@@ -870,12 +870,14 @@ func TestResolveImage(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		got := &manifest.MappedImage{}
-		err := resolveImage(got, test.reference)
-		assert.NoError(t, err)
-		assert.Equal(t, test.want.Repository, got.Repository)
-		assert.Equal(t, test.want.Tag, got.Tag)
-		assert.Equal(t, test.want.Digest, got.Digest)
+		t.Run(test.name, func(t *testing.T) {
+			got := &manifest.MappedImage{}
+			err := resolveImage(got, test.reference)
+			assert.NoError(t, err)
+			assert.Equal(t, test.want.Repository, got.Repository)
+			assert.Equal(t, test.want.Tag, got.Tag)
+			assert.Equal(t, test.want.Digest, got.Digest)
+		})
 	}
 }
 
@@ -888,33 +890,36 @@ func TestResolveImageErrors(t *testing.T) {
 		{
 			name:      "no algo digest",
 			reference: "getporter/porter-hello@8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
-			want:      "unable to parse docker image %s: invalid reference format",
+			want:      "invalid reference format",
 		},
 		{
 			name:      "bad digest",
 			reference: "getporter/porter-hello@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f",
-			want:      "unable to parse docker image %s: invalid checksum digest length",
+			want:      "invalid checksum digest length",
 		},
 		{
 			name:      "bad digest algo",
 			reference: "getporter/porter-hello@sha356:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
-			want:      "unable to parse docker image %s: unsupported digest algorithm",
+			want:      "unsupported digest algorithm",
 		},
 		{
 			name:      "malformed tagged ref",
 			reference: "getporter/porter-hello@latest",
-			want:      "unable to parse docker image %s: invalid reference format",
+			want:      "invalid reference format",
 		},
 		{
 			name:      "too many ports tagged ref",
 			reference: "deislabs:8080:8080/porter-hello:latest",
-			want:      "unable to parse docker image %s: invalid reference format",
+			want:      "invalid reference format",
 		},
 	}
 	for _, test := range tests {
-		got := &manifest.MappedImage{}
-		err := resolveImage(got, test.reference)
-		assert.EqualError(t, err, fmt.Sprintf(test.want, test.reference))
+		t.Run(test.name, func(t *testing.T) {
+			got := &manifest.MappedImage{}
+			err := resolveImage(got, test.reference)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.want)
+		})
 	}
 }
 

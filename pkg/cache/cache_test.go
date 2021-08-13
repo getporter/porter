@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
@@ -14,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
+var (
 	kahn1dot0Hash  = "887e7e65e39277f8744bd00278760b06"
-	kahn1dot01     = "deislabs/kubekahn:1.0"
+	kahn1dot01     = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
 	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
-	kahnlatest     = "deislabs/kubekahn:latest"
+	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 )
 
 func TestFindBundleCacheExists(t *testing.T) {
@@ -31,7 +32,7 @@ func TestFindBundleCacheExists(t *testing.T) {
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	c := New(cfg.Config)
 
-	_, ok, err := c.FindBundle("deislabs/kubekahn:latest")
+	_, ok, err := c.FindBundle(kahnlatest)
 	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.False(t, ok, "the bundle shouldn't exist")
 }
@@ -46,7 +47,7 @@ func TestFindBundleCacheDoesNotExist(t *testing.T) {
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 	c := New(cfg.Config)
 
-	_, ok, err := c.FindBundle("deislabs/kubekahn:latest")
+	_, ok, err := c.FindBundle(kahnlatest)
 	assert.NoError(t, err, "the cache dir doesn't exist, but this shouldn't be an error")
 	assert.False(t, ok, "the bundle shouldn't exist")
 }
@@ -65,6 +66,7 @@ func TestFindBundleBundleCached(t *testing.T) {
 	foundIt, err := cfg.Config.FileSystem.Exists(expectedCacheFile)
 	require.True(t, foundIt, "test data not loaded")
 	c := New(cfg.Config)
+
 	cb, ok, err := c.FindBundle(kahn1dot01)
 	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.True(t, ok, "the bundle should exist")
@@ -92,7 +94,7 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 	require.NoError(t, err, "bundle should have been valid")
 
 	c := New(cfg.Config)
-	cb, err := c.StoreBundle(kahn1dot01, bun, nil)
+	cb, err := c.StoreBundle(cnab.BundleReference{Reference: kahn1dot01, Definition: bun})
 
 	home, err := cfg.Config.GetHomeDir()
 	require.NoError(t, err, "should have had a porter home dir")
@@ -120,7 +122,7 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 
 	c := New(cfg.Config)
 	var reloMap relocation.ImageRelocationMap
-	cb, err := c.StoreBundle(kahn1dot01, bun, &reloMap)
+	cb, err := c.StoreBundle(cnab.BundleReference{Reference: kahn1dot01, Definition: bun, RelocationMap: reloMap})
 
 	expectedCacheDirectory := filepath.Join(cacheDir, kahn1dot0Hash)
 	expectedCacheCNABDirectory := filepath.Join(expectedCacheDirectory, "cnab")
@@ -133,8 +135,8 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 func TestStoreRelocationMapping(t *testing.T) {
 	tests := []struct {
 		name              string
-		relocationMapping *relocation.ImageRelocationMap
-		tag               string
+		relocationMapping relocation.ImageRelocationMap
+		tag               cnab.OCIReference
 		bundle            bundle.Bundle
 		wantedReloPath    string
 		err               error
@@ -143,7 +145,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			name:   "relocation file gets a path",
 			bundle: bundle.Bundle{},
 			tag:    kahn1dot01,
-			relocationMapping: &relocation.ImageRelocationMap{
+			relocationMapping: relocation.ImageRelocationMap{
 				"asd": "asdf",
 			},
 			wantedReloPath: path.Join("/.porter/cache", kahn1dot0Hash, "cnab", "relocation-mapping.json"),
@@ -164,7 +166,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 			cfg := config.NewTestConfig(t)
 			c := New(cfg.Config)
 
-			cb, err := c.StoreBundle(tc.tag, tc.bundle, tc.relocationMapping)
+			cb, err := c.StoreBundle(cnab.BundleReference{Reference: tc.tag, Definition: tc.bundle, RelocationMap: tc.relocationMapping})
 			assert.NoError(t, err, fmt.Sprintf("didn't expect storage error for test %s", tc.name))
 			assert.Equal(t, tc.wantedReloPath, cb.RelocationFilePath, "didn't get expected path for store")
 
@@ -177,7 +179,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 func TestStoreManifest(t *testing.T) {
 	tests := []struct {
 		name                string
-		tag                 string
+		tag                 cnab.OCIReference
 		bundle              bundle.Bundle
 		shouldCacheManifest bool
 		err                 error
@@ -224,7 +226,7 @@ func TestStoreManifest(t *testing.T) {
 			cfg.TestContext.AddTestDirectory("testdata", cacheDir)
 			c := New(cfg.Config)
 
-			cb, err := c.StoreBundle(tc.tag, tc.bundle, nil)
+			cb, err := c.StoreBundle(cnab.BundleReference{Reference: tc.tag, Definition: tc.bundle})
 			require.NoError(t, err, "StoreBundle failed")
 
 			cachedManifestExists, _ := cfg.FileSystem.Exists(cb.BuildManifestPath())
@@ -250,7 +252,7 @@ func TestCache_StoreBundle_Overwrite(t *testing.T) {
 
 	// Setup an existing bundle with some extraneous junk that would not
 	// be overwritten
-	cb := CachedBundle{Tag: kahn1dot01}
+	cb := CachedBundle{BundleReference: cnab.BundleReference{Reference: kahn1dot01}}
 	cb.SetCacheDir(cacheDir)
 	cfg.FileSystem.Create(cb.BuildManifestPath())
 	cfg.FileSystem.Create(cb.BuildRelocationFilePath())
@@ -258,7 +260,7 @@ func TestCache_StoreBundle_Overwrite(t *testing.T) {
 	cfg.FileSystem.Create(junkPath)
 
 	// Refresh the cache
-	cb, err := c.StoreBundle(cb.Tag, bundle.Bundle{}, nil)
+	cb, err := c.StoreBundle(cb.BundleReference)
 	require.NoError(t, err, "StoreBundle failed")
 
 	exists, _ := cfg.FileSystem.Exists(cb.BuildBundlePath())

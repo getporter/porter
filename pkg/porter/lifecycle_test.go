@@ -2,14 +2,22 @@ package porter
 
 import (
 	"errors"
+	"path"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+var (
+	kahn1dot0Hash  = "887e7e65e39277f8744bd00278760b06"
+	kahn1dot01     = cnab.MustParseOCIReference("deislabs/kubekahn:1.0")
+	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
+	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 )
 
 func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
@@ -22,17 +30,19 @@ func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
 	require.NoError(t, err, "should have had a porter cache dir")
 	t.Logf("cache dir is: %s", cacheDir)
 	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
-	fullPath := filepath.Join(cacheDir, "887e7e65e39277f8744bd00278760b06/cnab/bundle.json")
+	fullPath := filepath.Join(cacheDir, path.Join(kahn1dot0Hash, "/cnab/bundle.json"))
 	fileExists, err := p.FileSystem.Exists(fullPath)
 	require.True(t, fileExists, "this test requires that the file exist")
-	_, ok, err := p.Cache.FindBundle("deislabs/kubekahn:1.0")
+	_, ok, err := p.Cache.FindBundle(kahn1dot01)
 	assert.True(t, ok, "should have found the bundle...")
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
 			Reference: "deislabs/kubekahn:1.0",
 		},
 	}
-	err = p.prepullBundleByReference(b)
+	err = b.Validate(nil, p.Porter)
+	require.NoError(t, err)
+	_, err = p.prepullBundleByReference(b)
 	assert.NoError(t, err, "pulling bundle should not have resulted in an error")
 	assert.Equal(t, "mysql", b.Name, "name should have matched testdata bundle")
 	assert.Equal(t, fullPath, b.CNABFile, "the prepare method should have set the file to the fullpath")
@@ -42,8 +52,8 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	p.TestRegistry.MockPullBundle = func(tag string, insecureRegistry bool) (bun bundle.Bundle, reloMap *relocation.ImageRelocationMap, err error) {
-		return bundle.Bundle{}, nil, errors.New("unable to pull bundle deislabs/kubekahn:latest")
+	p.TestRegistry.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error) {
+		return cnab.BundleReference{}, errors.New("unable to pull bundle deislabs/kubekahn:latest")
 	}
 
 	b := &BundleActionOptions{
@@ -51,7 +61,9 @@ func TestBundlePullUpdateOpts_pullError(t *testing.T) {
 			Reference: "deislabs/kubekahn:latest",
 		},
 	}
-	err := p.prepullBundleByReference(b)
+	err := b.Validate(nil, p.Porter)
+	require.NoError(t, err)
+	_, err = p.prepullBundleByReference(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to pull bundle deislabs/kubekahn:latest")
 
@@ -62,15 +74,17 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	defer p.Teardown()
 
 	// mess up the cache
-	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
+	p.FileSystem.WriteFile(path.Join("/root/.porter/cache", kahn1dot0Hash, "/cnab/bundle.json"), []byte(""), 0644)
 
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{
 			Reference: "deislabs/kubekahn:1.0",
 		},
 	}
+	err := b.Validate(nil, p.Porter)
+	require.NoError(t, err)
 
-	err := p.prepullBundleByReference(b)
+	_, err = p.prepullBundleByReference(b)
 	assert.Error(t, err, "pulling bundle should have resulted in an error")
 	assert.Contains(t, err.Error(), "unable to parse cached bundle file")
 }
@@ -106,7 +120,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 	t.Run("porter.yaml set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
-		
+
 		opts := NewInstallOptions()
 		opts.File = "porter.yaml"
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
@@ -114,10 +128,10 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(opts)
+		args, err := p.BuildActionArgs(claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		assert.Equal(t, ".cnab/bundle.json", args.BundlePath, "BundlePath not populated correctly")
+		assert.NotEmpty(t, args.BundleReference.Definition)
 	})
 
 	// Just do a quick check that things are populated correctly when a bundle.json is passed
@@ -129,10 +143,10 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(opts)
+		args, err := p.BuildActionArgs(claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		assert.Equal(t, opts.CNABFile, args.BundlePath, "BundlePath was not populated correctly")
+		assert.NotEmpty(t, args.BundleReference.Definition, "BundlePath was not populated correctly")
 	})
 
 	t.Run("remaining fields", func(t *testing.T) {
@@ -165,7 +179,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(opts)
+		args, err := p.BuildActionArgs(claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		expectedParams := map[string]string{
@@ -179,7 +193,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
 		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.Equal(t, opts.Name, args.Installation, "Installation not populated correctly")
-		assert.Equal(t, opts.RelocationMapping, args.RelocationMapping, "RelocationMapping not populated correctly")
+		assert.Equal(t, opts.RelocationMapping, args.BundleReference.RelocationMap, "RelocationMapping not populated correctly")
 	})
 }
 

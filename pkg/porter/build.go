@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
 
@@ -166,8 +167,8 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(invocationImage string, digest string) error {
-	imageDigests := map[string]string{invocationImage: digest}
+func (p *Porter) buildBundle(invocationImage string, digest digest.Digest) error {
+	imageDigests := map[string]string{invocationImage: digest.String()}
 
 	mixins, err := p.getUsedMixins()
 

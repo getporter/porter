@@ -3,9 +3,9 @@ package extensions
 import (
 	"sort"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/docker/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/pkg/errors"
 )
@@ -40,7 +40,7 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 
 		lock := DependencyLock{
 			Alias:     dep.Name,
-			Reference: reference.FamiliarString(ref),
+			Reference: ref.String(),
 		}
 		q = append(q, lock)
 	}
@@ -49,28 +49,28 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (reference.NamedTagged, error) {
-	ref, err := reference.ParseNormalizedNamed(dep.Bundle)
+func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (cnab.OCIReference, error) {
+	ref, err := cnab.ParseOCIReference(dep.Bundle)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
+		return cnab.OCIReference{}, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
 	}
 
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
 	if dep.Version == nil || len(dep.Version.Ranges) == 0 {
 		// Check if they specified an explicit tag in referenced bundle already
-		if taggedRef, ok := ref.(reference.NamedTagged); ok {
-			return taggedRef, nil
+		if ref.HasTag() {
+			return ref, nil
 		}
 
 		tag, err := s.determineDefaultTag(dep)
 		if err != nil {
-			return nil, err
+			return cnab.OCIReference{}, err
 		}
 
-		return reference.WithTag(ref, tag)
+		return ref.WithTag(tag)
 	}
 
-	return nil, errors.Errorf("not implemented: dependency version range specified for %s", name)
+	return cnab.OCIReference{}, errors.Errorf("not implemented: dependency version range specified for %s", name)
 }
 
 func (s *DependencySolver) determineDefaultTag(dep Dependency) (string, error) {

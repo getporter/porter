@@ -103,27 +103,14 @@ func (g *CredentialOptions) validateCredName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
 func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
-	err := p.prepullBundleByReference(&opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
 	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking credentials generate")
+		return err
 	}
 
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	if err != nil {
-		return err
-	}
-	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
-
-	if err != nil {
-		return err
-	}
 	name := opts.Name
 	if name == "" {
-		name = bundle.Name
+		name = bundleRef.Definition.Name
 	}
 	genOpts := generator.GenerateCredentialsOptions{
 		GenerateOptions: generator.GenerateOptions{
@@ -132,10 +119,10 @@ func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
 			Labels:    opts.ParseLabels(),
 			Silent:    opts.Silent,
 		},
-		Credentials: bundle.Credentials,
+		Credentials: bundleRef.Definition.Credentials,
 	}
-	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundle.Name)
-	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundle.Name)
+	fmt.Fprintf(p.Out, "Generating new credential %s from bundle %s\n", genOpts.Name, bundleRef.Definition.Name)
+	fmt.Fprintf(p.Out, "==> %d credentials required for bundle %s\n", len(genOpts.Credentials), bundleRef.Definition.Name)
 
 	cs, err := generator.GenerateCredentials(genOpts)
 	if err != nil {
