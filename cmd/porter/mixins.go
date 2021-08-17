@@ -210,8 +210,8 @@ func buildMixinsCreateCommand(p *porter.Porter) *cobra.Command {
 The first argument is the name of the mixin to create and is required.
 A flag of --author to declare the author of the mixin is also a required input.
 You can also specify where to put mixin directory. It will default to the current directory.`,
-		Example: ` porter mixin create MyMixin --author MyName
-		porter mixin create MyMixin --author MyName --dir path/to/mymixin
+		Example: ` porter mixin create MyMixin --author "My Name"
+		porter mixin create MyMixin --author "My Name" --dir path/to/mymixin
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
