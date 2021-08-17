@@ -55,6 +55,12 @@ type Installation struct {
 	// Does not include defaults, or values resolved from parameter sources.
 	Parameters map[string]interface{} `json:"parameters" yaml:"parameters" toml:"parameters"`
 
+	// CredentialSets that should be included when the bundle is reconciled.
+	CredentialSets []string `json:"credentialSets" yaml:"credentialSets" toml:"credentialSets"`
+
+	// ParameterSets that should be included when the bundle is reconciled.
+	ParameterSets []string `json:"parameterSets" yaml:"parameterSets" toml:"parameterSets"`
+
 	// Status of the installation.
 	Status InstallationStatus `json:"status" yaml:"status" toml:"status"`
 }

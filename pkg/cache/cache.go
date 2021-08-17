@@ -9,7 +9,9 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
 
@@ -93,6 +95,11 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 		return CachedBundle{}, errors.Wrapf(err, "error writing to cnab/bundle.json for %s", cb.Reference)
 	}
 
+	err = c.cacheMetadata(&cb)
+	if err != nil {
+		return CachedBundle{}, err
+	}
+
 	err = c.cacheManifest(&cb)
 	if err != nil {
 		return CachedBundle{}, err
@@ -120,6 +127,22 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	}
 
 	return cb, nil
+}
+
+// cacheMetadata stores additional metadata about the bundle.
+func (c *Cache) cacheMetadata(cb *CachedBundle) error {
+	meta := Metadata{
+		Reference: cb.Reference,
+		Digest:    cb.Digest,
+	}
+	path := cb.BuildMetadataPath()
+	return encoding.MarshalFile(c.FileSystem, path, meta)
+}
+
+// Metadata associated with a cached bundle.
+type Metadata struct {
+	Reference cnab.OCIReference `json:"reference"`
+	Digest    digest.Digest     `json:"digest"`
 }
 
 // cacheManifest extracts the porter.yaml from the bundle, if present and caches it

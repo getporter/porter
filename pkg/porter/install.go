@@ -52,8 +52,11 @@ func NewInstallOptions() InstallOptions {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
-	// TODO(carolynvs): this is being called twice
-	_, err := p.resolveBundleReference(opts.BundleActionOptions)
+	// Figure out which bundle/installation we are working with
+	bundleRef, err := p.resolveBundleReference(opts.BundleActionOptions)
+	if err != nil {
+		return err
+	}
 
 	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err == nil {
@@ -68,11 +71,59 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		return errors.Wrapf(err, "could not retrieve the installation record")
 	}
 
+	err = p.applyActionOptionsToInstallation(i, opts.BundleActionOptions)
+	if err != nil {
+		return err
+	}
+	i.TrackBundle(bundleRef.Reference)
 	i.Labels = opts.ParseLabels()
 	err = p.Claims.UpsertInstallation(i)
 	if err != nil {
 		return errors.Wrap(err, "error saving installation record")
 	}
 
+	// Run install using the updated installation record
 	return p.ExecuteAction(i, opts)
+}
+
+// Remember the parameters and credentials used with the bundle last.
+// Appends any newly specified parameters, parameter/credential sets to the installation record.
+// Users are expected to edit the installation record if they don't want that behavior.
+func (p *Porter) applyActionOptionsToInstallation(i claims.Installation, opts *BundleActionOptions) error {
+	// Record the parameters specified by the user, with flags taking precedence over parameter set values
+	err := opts.LoadParameters(p)
+	if err != nil {
+		return err
+	}
+	if i.Parameters == nil {
+		i.Parameters = make(map[string]interface{}, len(opts.combinedParameters))
+	}
+	for k, v := range opts.combinedParameters {
+		i.Parameters[k] = v
+	}
+	// Record the names of the parameter sets used
+	for _, ps := range opts.ParameterSets {
+		if isParameterSetFile, _ := p.FileSystem.Exists(ps); isParameterSetFile {
+			continue
+		}
+		for _, existing := range i.ParameterSets {
+			if existing == ps {
+				continue
+			}
+		}
+		i.ParameterSets = append(i.ParameterSets, ps)
+	}
+	// Record the names of the credential sets used
+	for _, cs := range opts.CredentialIdentifiers {
+		if isCredentialSetFile, _ := p.FileSystem.Exists(cs); isCredentialSetFile {
+			continue
+		}
+		for _, existing := range i.ParameterSets {
+			if existing == cs {
+				continue
+			}
+		}
+		i.CredentialSets = append(i.CredentialSets, cs)
+	}
+	return nil
 }

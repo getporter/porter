@@ -182,7 +182,7 @@ The first argument is the installation name to upgrade. This defaults to the nam
 
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
-		Example: `  porter bundle upgrade
+		Example: `  porter bundle upgrade --version 0.2.0
   porter bundle upgrade --reference getporter/kubernetes:v0.1.0
   porter bundle upgrade --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
@@ -215,6 +215,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
+	f.StringVar(&opts.Version, "version", "",
+		"Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd

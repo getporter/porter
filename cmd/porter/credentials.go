@@ -106,7 +106,7 @@ will then provide it to the bundle in the correct location. `,
   porter credential generate kubecred --cnab-file myapp/bundle.json
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.GenerateCredentials(opts)

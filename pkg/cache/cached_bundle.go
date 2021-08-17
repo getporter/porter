@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
@@ -64,6 +65,11 @@ func (cb *CachedBundle) BuildRelocationFilePath() string {
 // BuildManifestPath generates the potential location of the manifest, if it existed.
 func (cb *CachedBundle) BuildManifestPath() string {
 	return filepath.Join(cb.cacheDir, config.Name)
+}
+
+// BuildMetadataPath generates the location of the cache metadata.
+func (cb *CachedBundle) BuildMetadataPath() string {
+	return filepath.Join(cb.cacheDir, "metadata.json")
 }
 
 // Load starts from the bundle tag, and hydrates the cached bundle from the cache.

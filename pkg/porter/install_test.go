@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,35 +67,4 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestPorter_InstallBundle_WithDepsFromTag(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	cacheDir, _ := p.Cache.GetCacheDir()
-	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
-
-	// Make some fake credentials to give to the install operation, they won't be used because it's a dummy driver
-	cs := credentials.NewCredentialSet("", "wordpress", secrets.Strategy{
-		Name: "kubeconfig",
-		Source: secrets.Source{
-			Key:   secrets.SourceSecret,
-			Value: "kubeconfig",
-		},
-	})
-	p.TestCredentials.TestSecrets.AddSecret("kubeconfig", "abc123")
-	err := p.Credentials.InsertCredentialSet(cs)
-	require.NoError(t, err, "Credentials.Save failed")
-
-	opts := NewInstallOptions()
-	opts.Driver = DebugDriver
-	opts.Reference = "localhost:5000/wordpress:v0.1.3"
-	opts.CredentialIdentifiers = []string{"wordpress"}
-	opts.Params = []string{"wordpress-password=mypassword"}
-	err = opts.Validate(nil, p.Porter)
-	require.NoError(t, err, "Validate install options failed")
-
-	err = p.InstallBundle(opts)
-	require.NoError(t, err, "InstallBundle failed")
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
@@ -81,18 +80,18 @@ func (o CredentialOptions) ParseLabels() map[string]string {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error {
-	err := g.validateCredName(args)
+func (o *CredentialOptions) Validate(args []string, p *Porter) error {
+	err := o.validateCredName(args)
 	if err != nil {
 		return err
 	}
 
-	return g.bundleFileOptions.Validate(cxt)
+	return o.BundleActionOptions.Validate(args, p)
 }
 
-func (g *CredentialOptions) validateCredName(args []string) error {
+func (o *CredentialOptions) validateCredName(args []string) error {
 	if len(args) == 1 {
-		g.Name = args[0]
+		o.Name = args[0]
 	} else if len(args) > 1 {
 		return errors.Errorf("only one positional argument may be specified, the credential name, but multiple were received: %s", args)
 	}

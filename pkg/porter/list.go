@@ -68,21 +68,25 @@ type DisplayInstallation struct {
 	Action    string
 	Status    string
 
-	Parameters DisplayValues
-	Labels     []string
+	Parameters     DisplayValues
+	Labels         []string
+	ParameterSets  []string
+	CredentialSets []string
 }
 
 func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
 	di := DisplayInstallation{
-		Name:      installation.Name,
-		Namespace: installation.Namespace,
-		Bundle:    installation.BundleRepository,
-		Version:   installation.BundleVersion,
-		Digest:    installation.BundleDigest,
-		Created:   installation.Created,
-		Modified:  installation.Modified,
-		Action:    installation.Status.Action,
-		Status:    installation.Status.ResultStatus,
+		Name:           installation.Name,
+		Namespace:      installation.Namespace,
+		Bundle:         installation.BundleRepository,
+		Version:        installation.BundleVersion,
+		Digest:         installation.BundleDigest,
+		ParameterSets:  installation.ParameterSets,
+		CredentialSets: installation.CredentialSets,
+		Created:        installation.Created,
+		Modified:       installation.Modified,
+		Action:         installation.Status.Action,
+		Status:         installation.Status.ResultStatus,
 	}
 
 	labels := make([]string, 0, len(installation.Labels))

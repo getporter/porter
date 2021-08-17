@@ -114,6 +114,24 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			}
 		}
 
+		// Print parameter sets, if any
+		if len(displayInstallation.ParameterSets) > 0 {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Parameter Sets:")
+			for _, ps := range displayInstallation.ParameterSets {
+				fmt.Fprintf(p.Out, "  - %s\n", ps)
+			}
+		}
+
+		// Print credential sets, if any
+		if len(displayInstallation.CredentialSets) > 0 {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Credential Sets:")
+			for _, cs := range displayInstallation.CredentialSets {
+				fmt.Fprintf(p.Out, "  - %s\n", cs)
+			}
+		}
+
 		// Print the status (it may not be present if it's newly created using apply)
 		if installation.Status != (claims.InstallationStatus{}) {
 			fmt.Fprintln(p.Out)
