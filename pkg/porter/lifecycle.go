@@ -26,7 +26,7 @@ type BundleActionOptions struct {
 }
 
 func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
-	o.checkForDeprecatedTagValue()
+	var err error
 
 	if o.Reference != "" {
 		// Ignore anything set based on the bundle directory we are in, go off of the tag
@@ -39,7 +39,7 @@ func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 		}
 	}
 
-	err := o.sharedOptions.Validate(args, porter)
+	err = o.sharedOptions.Validate(args, porter)
 	if err != nil {
 		return err
 	}

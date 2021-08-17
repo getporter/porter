@@ -82,8 +82,6 @@ func (o CredentialOptions) ParseLabels() map[string]string {
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
 func (g *CredentialOptions) Validate(args []string, cxt *context.Context) error {
-	g.checkForDeprecatedTagValue()
-
 	err := g.validateCredName(args)
 	if err != nil {
 		return err
