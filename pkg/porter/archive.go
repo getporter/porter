@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/imagestore"
@@ -78,7 +79,7 @@ type exporter struct {
 	fs                    aferox.Aferox
 	out                   io.Writer
 	logs                  io.Writer
-	bundle                bundle.Bundle
+	bundle                cnab.ExtendedBundle
 	destination           io.Writer
 	imageStoreConstructor imagestore.Constructor
 	imageStore            imagestore.Store
@@ -158,7 +159,7 @@ func (ex *exporter) chtimes(path string) error {
 
 // prepareArtifacts pulls all images, verifies their digests and
 // saves them to a directory called artifacts/ in the bundle directory
-func (ex *exporter) prepareArtifacts(bun bundle.Bundle) error {
+func (ex *exporter) prepareArtifacts(bun cnab.ExtendedBundle) error {
 	for _, image := range bun.Images {
 		if err := ex.addImage(image.BaseImage); err != nil {
 			return err

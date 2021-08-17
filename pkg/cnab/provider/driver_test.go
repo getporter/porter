@@ -3,7 +3,7 @@ package cnabprovider
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -79,7 +79,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply no override, so expect Privileged to be false
-		r.Extensions[extensions.DockerExtensionKey] = extensions.Docker{}
+		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{}
 		r.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -108,7 +108,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply an override, so expect Privileged to be set to the override
-		r.Extensions[extensions.DockerExtensionKey] = extensions.Docker{
+		r.Extensions[cnab.DockerExtensionKey] = cnab.Docker{
 			Privileged: true,
 		}
 		r.FileSystem.Create("/var/run/docker.sock")

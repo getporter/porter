@@ -8,10 +8,10 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -117,12 +117,8 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	return hex.EncodeToString(digest[:]), nil
 }
 
-func IsPorterBundle(bun bundle.Bundle) bool {
-	_, ok := bun.Custom[config.CustomPorterKey]
-	return ok
-}
-
-func LoadStamp(bun bundle.Bundle) (Stamp, error) {
+func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
+	// TODO(carolynvs): can we simplify some of this by using the extended bundle?
 	data, ok := bun.Custom[config.CustomPorterKey]
 	if !ok {
 		return Stamp{}, errors.Errorf("porter stamp (custom.%s) was not present on the bundle", config.CustomPorterKey)

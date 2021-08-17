@@ -1,4 +1,4 @@
-package extensions
+package cnab
 
 import (
 	"io/ioutil"
@@ -15,11 +15,13 @@ func TestReadDependencyProperties(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/bundle.json")
 	require.NoError(t, err, "cannot read bundle file")
 
-	bun, err := bundle.Unmarshal(data)
+	b, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
-	assert.True(t, HasDependencies(*bun))
 
-	deps, err := ReadDependencies(*bun)
+	bun := ExtendedBundle{*b}
+	assert.True(t, bun.HasDependencies())
+
+	deps, err := bun.ReadDependencies()
 
 	assert.NotNil(t, deps, "Dependencies was not populated")
 	assert.Len(t, deps.Requires, 2, "Dependencies.Requires is the wrong length")
@@ -42,7 +44,7 @@ func TestDependencies_ListBySequence(t *testing.T) {
 
 	sequenceMock := []string{"nginx", "storage", "mysql"}
 
-	bun := bundle.Bundle{
+	bun := ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesExtensionKey: Dependencies{
 				Sequence: sequenceMock,
@@ -66,9 +68,9 @@ func TestDependencies_ListBySequence(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
-	rawDeps, err := ReadDependencies(bun)
+	rawDeps, err := bun.ReadDependencies()
 	orderedDeps := rawDeps.ListBySequence()
 
 	require.NoError(t, err, "unable to read dependencies extension data")
@@ -90,16 +92,16 @@ func TestSupportsDependencies(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
-		}
+		}}
 
-		assert.True(t, SupportsDependencies(b))
+		assert.True(t, b.SupportsDependencies())
 	})
 	t.Run("unsupported", func(t *testing.T) {
-		b := bundle.Bundle{}
+		b := ExtendedBundle{}
 
-		assert.False(t, SupportsDependencies(b))
+		assert.False(t, b.SupportsDependencies())
 	})
 }
 
@@ -107,20 +109,20 @@ func TestHasDependencies(t *testing.T) {
 	t.Parallel()
 
 	t.Run("has dependencies", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
 			Custom: map[string]interface{}{
 				DependenciesExtensionKey: struct{}{},
 			},
-		}
+		}}
 
-		assert.True(t, HasDependencies(b))
+		assert.True(t, b.HasDependencies())
 	})
 	t.Run("no dependencies", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{DependenciesExtensionKey},
-		}
+		}}
 
-		assert.False(t, HasDependencies(b))
+		assert.False(t, b.HasDependencies())
 	})
 }

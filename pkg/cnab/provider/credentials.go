@@ -4,16 +4,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
 )
 
-func (r *Runtime) loadCredentials(b bundle.Bundle, args ActionArguments) (secrets.Set, error) {
+func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
 	if len(args.CredentialIdentifiers) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}

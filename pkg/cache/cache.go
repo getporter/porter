@@ -125,7 +125,7 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 // cacheManifest extracts the porter.yaml from the bundle, if present and caches it
 // in the same cache directory as the rest of the bundle.
 func (c *Cache) cacheManifest(cb *CachedBundle) error {
-	if configadapter.IsPorterBundle(cb.Definition) {
+	if cb.Definition.IsPorterBundle() {
 		stamp, err := configadapter.LoadStamp(cb.Definition)
 		if err != nil {
 			fmt.Fprintf(c.Err, "WARNING: Bundle %s was created by porter but could not load the Porter stamp. This may be because it was created by an older version of Porter.\n", cb.Reference)

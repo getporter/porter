@@ -1,4 +1,4 @@
-package extensions
+package cnab
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 func TestDependencySolver_ResolveDependencies(t *testing.T) {
 	t.Parallel()
 
-	bun := bundle.Bundle{
+	bun := ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			DependenciesExtensionKey: Dependencies{
 				Requires: map[string]Dependency{
@@ -25,7 +25,7 @@ func TestDependencySolver_ResolveDependencies(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
 	s := DependencySolver{}
 	locks, err := s.ResolveDependencies(bun)

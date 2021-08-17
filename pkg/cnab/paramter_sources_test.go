@@ -1,4 +1,4 @@
-package extensions
+package cnab
 
 import (
 	"io/ioutil"
@@ -58,11 +58,12 @@ func TestReadParameterSourcesProperties(t *testing.T) {
 	data, err := ioutil.ReadFile("testdata/bundle.json")
 	require.NoError(t, err, "cannot read bundle file")
 
-	bun, err := bundle.Unmarshal(data)
+	b, err := bundle.Unmarshal(data)
 	require.NoError(t, err, "could not unmarshal the bundle")
-	assert.True(t, HasParameterSources(*bun))
+	bun := ExtendedBundle{*b}
+	assert.True(t, bun.HasParameterSources())
 
-	ps, err := ReadParameterSources(*bun)
+	ps, err := bun.ReadParameterSources()
 	require.NoError(t, err, "could not read parameter sources")
 
 	want := ParameterSources{}
@@ -87,16 +88,16 @@ func TestSupportsParameterSources(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
-		}
+		}}
 
-		assert.True(t, SupportsParameterSources(b))
+		assert.True(t, b.SupportsParameterSources())
 	})
 	t.Run("unsupported", func(t *testing.T) {
-		b := bundle.Bundle{}
+		b := ExtendedBundle{}
 
-		assert.False(t, SupportsParameterSources(b))
+		assert.False(t, b.SupportsParameterSources())
 	})
 }
 
@@ -104,20 +105,20 @@ func TestHasParameterSources(t *testing.T) {
 	t.Parallel()
 
 	t.Run("has parameter sources", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
 			Custom: map[string]interface{}{
 				ParameterSourcesExtensionKey: struct{}{},
 			},
-		}
+		}}
 
-		assert.True(t, HasParameterSources(b))
+		assert.True(t, b.HasParameterSources())
 	})
 	t.Run("no parameter sources", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{ParameterSourcesExtensionKey},
-		}
+		}}
 
-		assert.False(t, HasParameterSources(b))
+		assert.False(t, b.HasParameterSources())
 	})
 }

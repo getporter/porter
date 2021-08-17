@@ -12,6 +12,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
@@ -158,14 +159,14 @@ func (p *TestPorter) T() *testing.T {
 	return p.TestConfig.TestContext.T
 }
 
-func (p *TestPorter) ReadBundle(path string) bundle.Bundle {
+func (p *TestPorter) ReadBundle(path string) cnab.ExtendedBundle {
 	bunD, err := ioutil.ReadFile(path)
 	require.NoError(p.T(), err, "ReadFile failed for %s", path)
 
 	bun, err := bundle.Unmarshal(bunD)
 	require.NoError(p.T(), err, "Unmarshal failed for bundle at %s", path)
 
-	return *bun
+	return cnab.ExtendedBundle{*bun}
 }
 
 func (p *TestPorter) RandomString(len int) string {

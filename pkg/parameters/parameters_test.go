@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,50 +107,5 @@ func TestTestParameterProvider_Load(t *testing.T) {
 		pset, err := p.Load("testdata/paramset.json")
 		require.NoError(t, err)
 		require.Equal(t, expected, pset)
-	})
-}
-
-func TestIsInternal(t *testing.T) {
-	bun := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type: "string",
-			},
-			"porter-debug": &definition.Schema{
-				Type:    "string",
-				Comment: PorterInternal,
-			},
-		},
-		Parameters: map[string]bundle.Parameter{
-			"foo": {
-				Definition: "foo",
-			},
-			"baz": {
-				Definition: "baz",
-			},
-			"porter-debug": {
-				Definition: "porter-debug",
-			},
-		},
-	}
-
-	t.Run("empty bundle", func(t *testing.T) {
-		require.False(t, IsInternal("foo", bundle.Bundle{}))
-	})
-
-	t.Run("param does not exist", func(t *testing.T) {
-		require.False(t, IsInternal("bar", bun))
-	})
-
-	t.Run("definition does not exist", func(t *testing.T) {
-		require.False(t, IsInternal("baz", bun))
-	})
-
-	t.Run("is not internal", func(t *testing.T) {
-		require.False(t, IsInternal("foo", bun))
-	})
-
-	t.Run("is internal", func(t *testing.T) {
-		require.True(t, IsInternal("porter-debug", bun))
 	})
 }

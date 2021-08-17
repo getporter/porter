@@ -1,11 +1,11 @@
 package cnabprovider
 
 import (
-	"github.com/cnabio/cnab-go/bundle"
+	"get.porter.sh/porter/pkg/cnab"
 )
 
 // CNABProvider is the interface Porter uses to communicate with the CNAB runtime
 type CNABProvider interface {
-	LoadBundle(bundleFile string) (bundle.Bundle, error)
+	LoadBundle(bundleFile string) (cnab.ExtendedBundle, error)
 	Execute(arguments ActionArguments) error
 }

@@ -1,10 +1,9 @@
-package extensions
+package cnab
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -156,8 +155,8 @@ type DependencyOutputParameterSource struct {
 // ReadParameterSources is a convenience method for returning a bonafide
 // ParameterSources reference after reading from the applicable section from
 // the provided bundle
-func ReadParameterSources(bun bundle.Bundle) (ParameterSources, error) {
-	raw, err := ParameterSourcesReader(bun)
+func (b ExtendedBundle) ReadParameterSources() (ParameterSources, error) {
+	raw, err := b.ParameterSourcesReader()
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +172,15 @@ func ReadParameterSources(bun bundle.Bundle) (ParameterSources, error) {
 // ParameterSourcesReader is a Reader for the ParameterSourcesExtension,
 // which reads from the applicable section in the provided bundle and
 // returns a the raw data in the form of an interface
-func ParameterSourcesReader(bun bundle.Bundle) (interface{}, error) {
-	data, ok := bun.Custom[ParameterSourcesExtensionKey]
+func ParameterSourcesReader(bun ExtendedBundle) (interface{}, error) {
+	return bun.ParameterSourcesReader()
+}
+
+// ParameterSourcesReader is a Reader for the ParameterSourcesExtension,
+// which reads from the applicable section in the provided bundle and
+// returns a the raw data in the form of an interface
+func (b ExtendedBundle) ParameterSourcesReader() (interface{}, error) {
+	data, ok := b.Custom[ParameterSourcesExtensionKey]
 	if !ok {
 		return nil, errors.Errorf("attempted to read parameter sources from bundle but none are defined")
 	}
@@ -196,8 +202,8 @@ func ParameterSourcesReader(bun bundle.Bundle) (interface{}, error) {
 }
 
 // SupportsParameterSources checks if the bundle supports parameter sources.
-func SupportsParameterSources(b bundle.Bundle) bool {
-	return SupportsExtension(b, ParameterSourcesExtensionKey)
+func (b ExtendedBundle) SupportsParameterSources() bool {
+	return b.SupportsExtension(ParameterSourcesExtensionKey)
 }
 
 // GetParameterSources checks if the parameter sources extension is present and returns its
@@ -215,7 +221,7 @@ func (e ProcessedExtensions) GetParameterSources() (ParameterSources, bool, erro
 }
 
 // HasParameterSources returns whether or not the bundle has parameter sources defined.
-func HasParameterSources(b bundle.Bundle) bool {
+func (b ExtendedBundle) HasParameterSources() bool {
 	_, ok := b.Custom[ParameterSourcesExtensionKey]
 	return ok
 }

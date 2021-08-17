@@ -92,7 +92,7 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 		}
 
 		bundleRef = cnab.BundleReference{
-			Definition: lastRun.Bundle,
+			Definition: cnab.ExtendedBundle{lastRun.Bundle},
 			Digest:     digest.Digest(lastRun.BundleDigest)}
 
 		if lastRun.BundleReference != "" {

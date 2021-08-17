@@ -34,7 +34,7 @@ func TestBundleResolver_Resolve_ForcePull(t *testing.T) {
 
 	opts := BundlePullOptions{
 		Reference: kahnlatest.String(),
-		Force: true,
+		Force:     true,
 	}
 	require.NoError(t, opts.Validate())
 	resolver.Resolve(opts)
@@ -83,13 +83,13 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 	cacheSearched := false
 	testCache.FindBundleMock = func(ref cnab.OCIReference) (cache.CachedBundle, bool, error) {
 		cacheSearched = true
-		return cache.CachedBundle{BundleReference:cnab.BundleReference{Reference: ref}}, false, nil
+		return cache.CachedBundle{BundleReference: cnab.BundleReference{Reference: ref}}, false, nil
 	}
 
 	pulled := false
 	testReg.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
 		pulled = true
-		return cnab.BundleReference{Reference: ref,}, nil
+		return cnab.BundleReference{Reference: ref}, nil
 	}
 
 	opts := BundlePullOptions{}

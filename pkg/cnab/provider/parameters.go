@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
@@ -16,7 +16,7 @@ import (
 // loadParameters accepts a set of parameter overrides as well as parameter set
 // files and combines both with the default parameters to create a full set
 // of parameters.
-func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[string]interface{}, error) {
+func (r *Runtime) loadParameters(bun cnab.ExtendedBundle, args ActionArguments) (map[string]interface{}, error) {
 	mergedParams := make(secrets.Set, len(args.Params))
 	paramSources, err := r.resolveParameterSources(bun, args)
 	if err != nil {
@@ -75,12 +75,12 @@ func (r *Runtime) loadParameters(bun bundle.Bundle, args ActionArguments) (map[s
 
 	}
 
-	return bundle.ValuesOrDefaults(typedParams, &bun, args.Action)
+	return bundle.ValuesOrDefaults(typedParams, &bun.Bundle, args.Action)
 }
 
-func (r *Runtime) getUnconvertedValueFromRaw(b bundle.Bundle, def *definition.Schema, key, rawValue string) (string, error) {
+func (r *Runtime) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definition.Schema, key, rawValue string) (string, error) {
 	// the parameter value (via rawValue) may represent a file on the local filesystem
-	if extensions.IsFileType(b, def) {
+	if b.IsFileType(def) {
 		if _, err := r.FileSystem.Stat(rawValue); err == nil {
 			bytes, err := r.FileSystem.ReadFile(rawValue)
 			if err != nil {
@@ -92,7 +92,7 @@ func (r *Runtime) getUnconvertedValueFromRaw(b bundle.Bundle, def *definition.Sc
 	return rawValue, nil
 }
 
-func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArguments) (secrets.Set, error) {
+func (r *Runtime) resolveParameterSources(bun cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
 	if r.Debug {
 		fmt.Fprintln(r.Err, "Resolving parameter sources...")
 	}
@@ -117,12 +117,12 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 			var installation string
 			var outputName string
 			switch source := rawSource.(type) {
-			case extensions.OutputParameterSource:
+			case cnab.OutputParameterSource:
 				installation = args.Installation.Name
 				outputName = source.OutputName
-			case extensions.DependencyOutputParameterSource:
+			case cnab.DependencyOutputParameterSource:
 				// TODO(carolynvs): does this need to take namespace into account
-				installation = extensions.BuildPrerequisiteInstallationName(args.Installation.Name, source.Dependency)
+				installation = cnab.BuildPrerequisiteInstallationName(args.Installation.Name, source.Dependency)
 				outputName = source.OutputName
 			}
 
@@ -149,7 +149,7 @@ func (r *Runtime) resolveParameterSources(bun bundle.Bundle, args ActionArgument
 				return nil, fmt.Errorf("definition %s not defined in bundle", param.Definition)
 			}
 
-			if extensions.IsFileType(bun, def) {
+			if bun.IsFileType(def) {
 				values[parameterName] = base64.StdEncoding.EncodeToString(output.Value)
 			} else {
 				values[parameterName] = string(output.Value)

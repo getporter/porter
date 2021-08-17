@@ -303,6 +303,9 @@ func validateCredentialName(args []string) error {
 
 func (p *Porter) CredentialsApply(o ApplyOptions) error {
 	namespace, err := p.getNamespaceFromFile(o)
+	if err != nil {
+		return err
+	}
 
 	var creds credentials.CredentialSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &creds)

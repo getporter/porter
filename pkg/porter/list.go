@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/pkg/errors"
@@ -93,7 +94,8 @@ func NewDisplayInstallation(installation claims.Installation, run *claims.Run) D
 
 	// This is unset when we are just listing installations
 	if run != nil {
-		di.Parameters = NewDisplayValuesFromParameters(run.Bundle, installation.Parameters)
+		bun := cnab.ExtendedBundle{run.Bundle}
+		di.Parameters = NewDisplayValuesFromParameters(bun, installation.Parameters)
 	}
 
 	return di

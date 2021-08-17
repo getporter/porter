@@ -1,10 +1,9 @@
-package extensions
+package cnab
 
 import (
 	"fmt"
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,8 +13,8 @@ func TestProcessRequiredExtensions(t *testing.T) {
 	t.Run("supported", func(t *testing.T) {
 		t.Parallel()
 
-		bun := cnab.ReadTestBundle(t, "testdata/bundle.json")
-		exts, err := ProcessRequiredExtensions(bun)
+		bun := ReadTestBundle(t, "testdata/bundle.json")
+		exts, err := bun.ProcessRequiredExtensions()
 		require.NoError(t, err, "could not process required extensions")
 
 		expected := ProcessedExtensions{
@@ -58,16 +57,16 @@ func TestProcessRequiredExtensions(t *testing.T) {
 	t.Run("supported unprocessable", func(t *testing.T) {
 		t.Parallel()
 
-		bun := cnab.ReadTestBundle(t, "testdata/bundle-supported-unprocessable.json")
-		_, err := ProcessRequiredExtensions(bun)
+		bun := ReadTestBundle(t, "testdata/bundle-supported-unprocessable.json")
+		_, err := bun.ProcessRequiredExtensions()
 		require.EqualError(t, err, "unable to process extension: io.cnab.docker: no custom extension configuration found")
 	})
 
 	t.Run("unsupported", func(t *testing.T) {
 		t.Parallel()
 
-		bun := cnab.ReadTestBundle(t, "testdata/bundle-unsupported-required.json")
-		_, err := ProcessRequiredExtensions(bun)
+		bun := ReadTestBundle(t, "testdata/bundle-unsupported-required.json")
+		_, err := bun.ProcessRequiredExtensions()
 		require.EqualError(t, err, "unsupported required extension: donuts")
 	})
 }

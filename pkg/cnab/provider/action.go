@@ -126,7 +126,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 
 	// Create a record for the run we are about to execute
 	var currentRun = args.Installation.NewRun(args.Action)
-	currentRun.Bundle = b
+	currentRun.Bundle = b.Bundle
 	if args.BundleReference.Reference != (cnab.OCIReference{}) {
 		currentRun.BundleReference = args.BundleReference.Reference.String()
 	}
@@ -134,11 +134,11 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	currentRun.Parameters = params
 
 	// Validate the action
-	if _, err := currentRun.Bundle.GetAction(currentRun.Action); err != nil {
-		return errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, currentRun.Bundle.Name)
+	if _, err := b.GetAction(currentRun.Action); err != nil {
+		return errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, b.Name)
 	}
 
-	creds, err := r.loadCredentials(currentRun.Bundle, args)
+	creds, err := r.loadCredentials(b, args)
 	if err != nil {
 		return errors.Wrap(err, "could not load credentials")
 	}

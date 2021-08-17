@@ -5,10 +5,9 @@ import (
 	"sort"
 
 	claims "get.porter.sh/porter/pkg/claims"
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -81,7 +80,7 @@ func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
 	return nil
 }
 
-func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claims.Outputs) DisplayValues {
+func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs claims.Outputs) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
 	displayOutputs := make(DisplayValues, 0, outputs.Len())
@@ -91,7 +90,7 @@ func NewDisplayValuesFromOutputs(bun bundle.Bundle, outputs claims.Outputs) Disp
 		do.SetValue(output.Value)
 		schema, ok := output.GetSchema(bun)
 		if ok {
-			do.Type = extensions.GetParameterType(bun, &schema)
+			do.Type = bun.GetParameterType(&schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
 				do.Sensitive = true
 			}
@@ -125,7 +124,8 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, erro
 		return nil, err
 	}
 
-	displayOutputs := NewDisplayValuesFromOutputs(c.Bundle, outputs)
+	bun := cnab.ExtendedBundle{c.Bundle}
+	displayOutputs := NewDisplayValuesFromOutputs(bun, outputs)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -19,9 +18,9 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	r := NewTestRuntime(t)
 	defer r.Teardown()
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
-	}
+	}}
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -41,13 +40,13 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	r := NewTestRuntime(t)
 	defer r.Teardown()
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
 			"foo": {
 				Definition: "foo",
 			},
 		},
-	}
+	}}
 
 	overrides := map[string]string{
 		"foo": "bar",
@@ -69,7 +68,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 
 	// Here we set default values, but expect nil/empty
 	// values for parameters that do not apply to a given action
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -101,7 +100,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
 	overrides := map[string]string{
 		"foo":  "FOO",
@@ -127,7 +126,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	r := NewTestRuntime(t)
 	defer r.Teardown()
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type:    "string",
@@ -142,7 +141,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
 	args := ActionArguments{Action: "action"}
 	params, err := r.loadParameters(b, args)
@@ -157,7 +156,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	r := NewTestRuntime(t)
 	defer r.Teardown()
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
 				Type: "string",
@@ -172,7 +171,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 				Required: true,
 			},
 		},
-	}
+	}}
 
 	args := ActionArguments{Action: "action"}
 	params, err := r.loadParameters(b, args)
@@ -189,9 +188,9 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		RequiredExtensions: []string{
-			extensions.FileParameterExtensionKey,
+			cnab.FileParameterExtensionKey,
 		},
 		Definitions: definition.Definitions{
 			"foo": &definition.Schema{
@@ -208,7 +207,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
 	overrides := map[string]string{
 		"foo": "/path/to/file",
@@ -292,7 +291,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b })
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b.Bundle })
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
@@ -352,26 +351,8 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		b, err := r.ProcessBundleFromFile("bundle.json")
 		require.NoError(t, err, "ProcessBundle failed")
 
-		bun := bundle.Bundle{
-			Name:    "foo-setup",
-			Version: bundle.CNABSpecVersion,
-			InvocationImages: []bundle.InvocationImage{
-				{
-					BaseImage: bundle.BaseImage{
-						ImageType: "docker",
-						Image:     "getporter/foo-setup:latest",
-					},
-				},
-			},
-			Outputs: map[string]bundle.Output{
-				"connstr": {Definition: "connstr"}},
-			Definitions: map[string]*definition.Schema{
-				"connstr": {Type: "string"},
-			},
-		}
-
 		i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
-		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun })
+		c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b.Bundle })
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
@@ -501,7 +482,7 @@ func Test_Paramapalooza(t *testing.T) {
 					r := NewTestRuntime(t)
 					defer r.Teardown()
 
-					bun := bundle.Bundle{
+					bun := cnab.ExtendedBundle{bundle.Bundle{
 						Name:          "mybuns",
 						Version:       "1.0.0",
 						SchemaVersion: "v1.0.0",
@@ -532,7 +513,7 @@ func Test_Paramapalooza(t *testing.T) {
 								},
 							},
 						},
-					}
+					}}
 
 					if tc.DefaultExists {
 						bun.Definitions["my-param"].Default = "my-param-default"
@@ -586,30 +567,13 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	bun, err := r.ProcessBundleFromFile("bundle.json")
 	require.NoError(t, err, "ProcessBundle failed")
 
-	fooBun := bundle.Bundle{
-		Name:    "foo-setup",
-		Version: bundle.CNABSpecVersion,
-		InvocationImages: []bundle.InvocationImage{
-			{
-				BaseImage: bundle.BaseImage{
-					ImageType: "docker",
-					Image:     "getporter/foo-setup:latest",
-				},
-			},
-		},
-		Outputs: map[string]bundle.Output{
-			"connstr": {Definition: "connstr"}},
-		Definitions: map[string]*definition.Schema{
-			"connstr": {Type: "string"},
-		},
-	}
 	i := r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun-mysql"))
-	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = fooBun })
+	c := r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun.Bundle })
 	cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
 	i = r.TestClaims.CreateInstallation(claims.NewInstallation("", "mybun"))
-	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun })
+	c = r.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = bun.Bundle })
 	cr = r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 

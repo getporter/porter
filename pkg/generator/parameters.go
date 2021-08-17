@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/bundle"
 )
 
 // GenerateParametersOptions are the options to generate a Parameter Set
@@ -15,7 +15,7 @@ type GenerateParametersOptions struct {
 	GenerateOptions
 
 	// Bundle to generate parameters from
-	Bundle bundle.Bundle
+	Bundle cnab.ExtendedBundle
 }
 
 // GenerateParameters will generate a parameter set based on the given options
@@ -51,7 +51,7 @@ func (opts *GenerateParametersOptions) genParameterSet(fn generator) (parameters
 	sort.Strings(parameterNames)
 
 	for _, name := range parameterNames {
-		if parameters.IsInternal(name, opts.Bundle) {
+		if opts.Bundle.IsInternalParameter(name) {
 			continue
 		}
 		c, err := fn(name, surveyParameters)

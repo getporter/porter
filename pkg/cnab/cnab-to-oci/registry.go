@@ -74,7 +74,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 	bundleRef := cnab.BundleReference{
 		Reference:     ref,
 		Digest:        digest,
-		Definition:    *bun,
+		Definition:    cnab.ExtendedBundle{*bun},
 		RelocationMap: reloMap,
 	}
 
@@ -90,13 +90,13 @@ func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry b
 
 	resolver := r.createResolver(insecureRegistries)
 
-	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
+	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
 	bundleRef.RelocationMap = rm
 
-	d, err := remotes.Push(context.Background(), &bundleRef.Definition, rm, bundleRef.Reference.Named, resolver, true)
+	d, err := remotes.Push(context.Background(), &bundleRef.Definition.Bundle, rm, bundleRef.Reference.Named, resolver, true)
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrapf(err, "error pushing the bundle to %s", bundleRef.Reference)
 	}

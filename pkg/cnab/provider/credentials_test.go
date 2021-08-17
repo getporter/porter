@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
@@ -32,7 +33,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	err := r.credentials.InsertCredentialSet(cs1)
 	require.NoError(t, err, "Save credential set failed")
 
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Credentials: map[string]bundle.Credential{
 			"password": {
 				Location: bundle.Location{
@@ -45,7 +46,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
 	args := ActionArguments{CredentialIdentifiers: []string{"mycreds", "/db-creds.json"}, Action: "install"}
 	gotValues, err := r.loadCredentials(b, args)
@@ -59,8 +60,8 @@ func TestRuntime_loadCredentials(t *testing.T) {
 }
 
 func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
-	getBundle := func(required bool) bundle.Bundle {
-		return bundle.Bundle{
+	getBundle := func(required bool) cnab.ExtendedBundle {
+		return cnab.ExtendedBundle{bundle.Bundle{
 			Credentials: map[string]bundle.Credential{
 				"password": {
 					Location: bundle.Location{
@@ -70,6 +71,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 					ApplyTo:  []string{"install", "upgrade", "uninstall"},
 				},
 			},
+		},
 		}
 	}
 

@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"bytes"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -10,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	portercontext "get.porter.sh/porter/pkg/context"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/opencontainers/go-digest"
@@ -263,8 +261,8 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	return p.refreshCachedBundle(bundleRef)
 }
 
-// extractBundle extracts a bundle using the provided opts and returnsthe extracted bundle
-func (p *Porter) extractBundle(tmpDir, source string) (bundle.Bundle, error) {
+// extractBundle extracts a bundle using the provided opts and returns the extracted bundle
+func (p *Porter) extractBundle(tmpDir, source string) (cnab.ExtendedBundle, error) {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Extracting bundle from archive %s...\n", source)
 	}
@@ -273,15 +271,15 @@ func (p *Porter) extractBundle(tmpDir, source string) (bundle.Bundle, error) {
 	imp := packager.NewImporter(source, tmpDir, l)
 	err := imp.Import()
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
+		return cnab.ExtendedBundle{}, errors.Wrapf(err, "failed to extract bundle from archive %s", source)
 	}
 
 	bun, err := l.Load(filepath.Join(tmpDir, strings.TrimSuffix(filepath.Base(source), ".tgz"), "bundle.json"))
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
+		return cnab.ExtendedBundle{}, errors.Wrapf(err, "failed to load bundle from archive %s", source)
 	}
 
-	return *bun, nil
+	return cnab.ExtendedBundle{*bun}, nil
 }
 
 // pushUpdatedImage uses the provided layout to find the provided origImg,
@@ -306,7 +304,7 @@ func pushUpdatedImage(layout registry.Layout, origImg string, newImgName image.N
 }
 
 // updateBundleWithNewImage updates a bundle with a new image (with digest) at the provided index
-func (p *Porter) updateBundleWithNewImage(bun bundle.Bundle, newImg image.Name, digest image.Digest, index interface{}) error {
+func (p *Porter) updateBundleWithNewImage(bun cnab.ExtendedBundle, newImg image.Name, digest image.Digest, index interface{}) error {
 	taggedImage, err := p.rewriteImageWithDigest(newImg.String(), digest.String())
 	if err != nil {
 		return errors.Wrapf(err, "unable to update image reference for %s", newImg.String())
@@ -359,22 +357,21 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	return newImgName, nil
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(digest digest.Digest, manifestPath string) (bundle.Bundle, error) {
+func (p *Porter) rewriteBundleWithInvocationImageDigest(digest digest.Digest, manifestPath string) (cnab.ExtendedBundle, error) {
 	taggedImage, err := p.rewriteImageWithDigest(p.Manifest.Image, digest.String())
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to update invocation image reference")
+		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to update invocation image reference")
 	}
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
 	err = p.buildBundle(taggedImage, digest)
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
+		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
 	}
 
-	b, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
-	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
+	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
 	if err != nil {
-		return bundle.Bundle{}, errors.Wrap(err, "unable to load CNAB bundle")
+		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to load CNAB bundle")
 	}
 
 	return bun, nil

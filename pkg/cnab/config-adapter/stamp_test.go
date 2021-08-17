@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-go/bundle"
@@ -41,7 +42,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 func TestConfig_LoadStamp(t *testing.T) {
 	t.Parallel()
 
-	bun := &bundle.Bundle{
+	bun := cnab.ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: map[string]interface{}{
 				"manifestDigest": simpleManifestDigest,
@@ -51,9 +52,9 @@ func TestConfig_LoadStamp(t *testing.T) {
 				},
 			},
 		},
-	}
+	}}
 
-	stamp, err := LoadStamp(*bun)
+	stamp, err := LoadStamp(bun)
 	require.NoError(t, err)
 	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
@@ -63,15 +64,15 @@ func TestConfig_LoadStamp(t *testing.T) {
 func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	t.Parallel()
 
-	bun := &bundle.Bundle{
+	bun := cnab.ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: []string{
 				simpleManifestDigest,
 			},
 		},
-	}
+	}}
 
-	stamp, err := LoadStamp(*bun)
+	stamp, err := LoadStamp(bun)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not unmarshal the porter stamp")
 	assert.Equal(t, Stamp{}, stamp)

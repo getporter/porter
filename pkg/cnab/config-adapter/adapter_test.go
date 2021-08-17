@@ -6,10 +6,9 @@ import (
 	"os"
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/parameters"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
@@ -46,7 +45,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	assert.Contains(t, bun.Parameters, "porter-debug", "porter-debug parameter was not defined")
 	assert.Contains(t, bun.Definitions, "porter-debug-parameter", "porter-debug definition was not defined")
 
-	assert.True(t, extensions.HasDependencies(bun), "Dependencies was not populated")
+	assert.True(t, bun.HasDependencies(), "Dependencies was not populated")
 
 	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
 }
@@ -481,30 +480,30 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 
 	testcases := []struct {
 		name    string
-		wantDep extensions.Dependency
+		wantDep cnab.Dependency
 	}{
-		{"no-version", extensions.Dependency{
+		{"no-version", cnab.Dependency{
 			Name:   "mysql",
 			Bundle: "getporter/azure-mysql:5.7",
 		}},
-		{"no-ranges", extensions.Dependency{
+		{"no-ranges", cnab.Dependency{
 			Name:   "ad",
 			Bundle: "getporter/azure-active-directory",
-			Version: &extensions.DependencyVersion{
+			Version: &cnab.DependencyVersion{
 				AllowPrereleases: true,
 			},
 		}},
-		{"with-ranges", extensions.Dependency{
+		{"with-ranges", cnab.Dependency{
 			Name:   "storage",
 			Bundle: "getporter/azure-blob-storage",
-			Version: &extensions.DependencyVersion{
+			Version: &cnab.DependencyVersion{
 				Ranges: []string{
 					"1.x - 2",
 					"2.1 - 3.x",
 				},
 			},
 		}},
-		{"with-tag", extensions.Dependency{
+		{"with-tag", cnab.Dependency{
 			Name:   "dep-with-tag",
 			Bundle: "getporter/dep-bun:v0.1.0",
 		}},
@@ -527,7 +526,7 @@ func TestManifestConverter_generateDependencies(t *testing.T) {
 			require.Len(t, deps.Requires, 4, "incorrect number of dependencies were generated")
 			require.Equal(t, []string{"mysql", "ad", "storage", "dep-with-tag"}, deps.Sequence, "incorrect sequence was generated")
 
-			var dep *extensions.Dependency
+			var dep *cnab.Dependency
 			for _, d := range deps.Requires {
 				if d.Bundle == tc.wantDep.Bundle {
 					dep = &d
@@ -570,10 +569,10 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 
 	b, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	sources, err := extensions.ReadParameterSources(b)
+	sources, err := b.ReadParameterSources()
 	require.NoError(t, err, "ReadParameterSources failed")
 
-	want := extensions.ParameterSources{}
+	want := cnab.ParameterSources{}
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
 	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
@@ -596,7 +595,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 	outputDef := definition.Schema{
 		Type: "string",
 	}
-	b := bundle.Bundle{
+	b := cnab.ExtendedBundle{bundle.Bundle{
 		Outputs: map[string]bundle.Output{
 			"msg": {
 				Definition: "stringDef",
@@ -608,7 +607,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		Definitions: map[string]*definition.Schema{
 			"stringDef": &outputDef,
 		},
-	}
+	}}
 
 	t.Run("generate parameter", func(t *testing.T) {
 		t.Parallel()
@@ -623,7 +622,7 @@ func TestNewManifestConverter_generateOutputWiringParameter(t *testing.T) {
 		assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
 		assert.NotSame(t, outputDef, paramDef, "wiring parameter definition should be a copy")
 		assert.Equal(t, outputDef.Type, paramDef.Type, "output def and param def should have the same type")
-		assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
+		assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	})
 
 	t.Run("param with hyphen", func(t *testing.T) {
@@ -657,7 +656,7 @@ func TestNewManifestConverter_generateDependencyOutputWiringParameter(t *testing
 	assert.Equal(t, "PORTER_MYSQL_MYSQL_PASSWORD_DEP_OUTPUT", param.Destination.EnvironmentVariable, "unexpected destination environment variable set")
 
 	assert.Equal(t, "https://porter.sh/generated-bundle/#porter-parameter-source-definition", paramDef.ID, "wiring parameter should have a schema id set")
-	assert.Equal(t, parameters.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
+	assert.Equal(t, cnab.PorterInternal, paramDef.Comment, "wiring parameter should be flagged as internal")
 	assert.Empty(t, paramDef.Type, "dependency output types are of unknown types and should not be defined")
 }
 
@@ -708,7 +707,7 @@ func TestManifestConverter_generateCustomExtensions_withRequired(t *testing.T) {
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Contains(t, bun.Custom, extensions.FileParameterExtensionKey)
+	assert.Contains(t, bun.Custom, cnab.FileParameterExtensionKey)
 	assert.Contains(t, bun.Custom, "requiredExtension1")
 	assert.Contains(t, bun.Custom, "requiredExtension2")
 	assert.Equal(t, map[string]interface{}{"config": true}, bun.Custom["requiredExtension2"])

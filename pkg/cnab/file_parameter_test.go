@@ -1,4 +1,4 @@
-package extensions
+package cnab
 
 import (
 	"testing"
@@ -35,15 +35,15 @@ func TestSupportsFileParameters(t *testing.T) {
 	t.Parallel()
 
 	t.Run("supported", func(t *testing.T) {
-		b := bundle.Bundle{
+		b := ExtendedBundle{bundle.Bundle{
 			RequiredExtensions: []string{FileParameterExtensionKey},
-		}
+		}}
 
-		assert.True(t, SupportsFileParameters(b))
+		assert.True(t, b.SupportsFileParameters())
 	})
 	t.Run("unsupported", func(t *testing.T) {
-		b := bundle.Bundle{}
+		b := ExtendedBundle{bundle.Bundle{}}
 
-		assert.False(t, SupportsFileParameters(b))
+		assert.False(t, b.SupportsFileParameters())
 	})
 }

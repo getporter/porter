@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"bytes"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -89,8 +88,7 @@ func TestCacheWriteNoCacheDir(t *testing.T) {
 
 	cfg := config.NewTestConfig(t)
 	cfg.TestContext.AddTestFile("testdata/cnab/bundle.json", "/cnab/bundle.json")
-	b, err := cfg.FileSystem.ReadFile("/cnab/bundle.json")
-	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
+	bun, err := cnab.LoadBundle(cfg.Context, "/cnab/bundle.json")
 	require.NoError(t, err, "bundle should have been valid")
 
 	c := New(cfg.Config)
@@ -116,8 +114,7 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 	cacheDir := filepath.Join(home, "cache")
 	cfg.TestContext.AddTestFile("testdata/cnab/bundle.json", "/cnab/bundle.json")
 	cfg.TestContext.AddTestDirectory("testdata", cacheDir)
-	b, err := cfg.FileSystem.ReadFile("/cnab/bundle.json")
-	bun, err := bundle.ParseReader(bytes.NewBuffer(b))
+	bun, err := cnab.LoadBundle(cfg.Context, "/cnab/bundle.json")
 	require.NoError(t, err, "bundle should have been valid")
 
 	c := New(cfg.Config)
@@ -137,13 +134,13 @@ func TestStoreRelocationMapping(t *testing.T) {
 		name              string
 		relocationMapping relocation.ImageRelocationMap
 		tag               cnab.OCIReference
-		bundle            bundle.Bundle
+		bundle            cnab.ExtendedBundle
 		wantedReloPath    string
 		err               error
 	}{
 		{
 			name:   "relocation file gets a path",
-			bundle: bundle.Bundle{},
+			bundle: cnab.ExtendedBundle{},
 			tag:    kahn1dot01,
 			relocationMapping: relocation.ImageRelocationMap{
 				"asd": "asdf",
@@ -153,7 +150,7 @@ func TestStoreRelocationMapping(t *testing.T) {
 		{
 			name:           "no relocation file gets no path",
 			tag:            kahnlatest,
-			bundle:         bundle.Bundle{},
+			bundle:         cnab.ExtendedBundle{},
 			wantedReloPath: "",
 		},
 	}
@@ -180,38 +177,38 @@ func TestStoreManifest(t *testing.T) {
 	tests := []struct {
 		name                string
 		tag                 cnab.OCIReference
-		bundle              bundle.Bundle
+		bundle              cnab.ExtendedBundle
 		shouldCacheManifest bool
 		err                 error
 	}{
 		{
 			name: "embedded manifest",
-			bundle: bundle.Bundle{
+			bundle: cnab.ExtendedBundle{bundle.Bundle{
 				Custom: map[string]interface{}{
 					"sh.porter": map[string]interface{}{
 						"manifest": "bmFtZTogSEVMTE9fQ1VTVE9NCnZlcnNpb246IDAuMS4wCmRlc2NyaXB0aW9uOiAiQSBidW5kbGUgd2l0aCBhIGN1c3RvbSBhY3Rpb24iCnRhZzogZ2V0cG9ydGVyL3BvcnRlci1oZWxsbzp2MC4xLjAKaW52b2NhdGlvbkltYWdlOiBnZXRwb3J0ZXIvcG9ydGVyLWhlbGxvLWluc3RhbGxlcjowLjEuMAoKY3JlZGVudGlhbHM6CiAgLSBuYW1lOiBteS1maXJzdC1jcmVkCiAgICBlbnY6IE1ZX0ZJUlNUX0NSRUQKICAtIG5hbWU6IG15LXNlY29uZC1jcmVkCiAgICBkZXNjcmlwdGlvbjogIk15IHNlY29uZCBjcmVkIgogICAgcGF0aDogL3BhdGgvdG8vbXktc2Vjb25kLWNyZWQKCmltYWdlczogCiAgIHNvbWV0aGluZzoKICAgICAgZGVzY3JpcHRpb246ICJhbiBpbWFnZSIKICAgICAgaW1hZ2VUeXBlOiAiZG9ja2VyIgogICAgICByZXBvc2l0b3J5OiAiZ2V0cG9ydGVyL2JvbyIKCnBhcmFtZXRlcnM6CiAgLSBuYW1lOiBteS1maXJzdC1wYXJhbQogICAgdHlwZTogaW50ZWdlcgogICAgZGVmYXVsdDogOQogICAgZW52OiBNWV9GSVJTVF9QQVJBTQogICAgYXBwbHlUbzoKICAgICAgLSAiaW5zdGFsbCIKICAtIG5hbWU6IG15LXNlY29uZC1wYXJhbQogICAgZGVzY3JpcHRpb246ICJNeSBzZWNvbmQgcGFyYW1ldGVyIgogICAgdHlwZTogc3RyaW5nCiAgICBkZWZhdWx0OiBzcHJpbmctbXVzaWMtZGVtbwogICAgcGF0aDogL3BhdGgvdG8vbXktc2Vjb25kLXBhcmFtCiAgICBzZW5zaXRpdmU6IHRydWUKCm91dHB1dHM6CiAgLSBuYW1lOiBteS1maXJzdC1vdXRwdXQKICAgIHR5cGU6IHN0cmluZwogICAgYXBwbHlUbzoKICAgICAgLSAiaW5zdGFsbCIKICAgICAgLSAidXBncmFkZSIKICAgIHNlbnNpdGl2ZTogdHJ1ZQogIC0gbmFtZTogbXktc2Vjb25kLW91dHB1dAogICAgZGVzY3JpcHRpb246ICJNeSBzZWNvbmQgb3V0cHV0IgogICAgdHlwZTogYm9vbGVhbgogICAgc2Vuc2l0aXZlOiBmYWxzZQogIC0gbmFtZToga3ViZWNvbmZpZwogICAgdHlwZTogZmlsZQogICAgcGF0aDogL3Jvb3QvLmt1YmUvY29uZmlnCgptaXhpbnM6CiAgLSBleGVjCgppbnN0YWxsOgogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJJbnN0YWxsIEhlbGxvIFdvcmxkIgogICAgICBjb21tYW5kOiBiYXNoCiAgICAgIGZsYWdzOgogICAgICAgIGM6IGVjaG8gSGVsbG8gV29ybGQKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIldvcmxkIDIuMCIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIFdvcmxkIDIuMAoKem9tYmllczoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiVHJpZ2dlciB6b21iaWUgYXBvY2FseXBzZSIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIG9oIG5vZXMgbXkgYnJhaW5zCgp1bmluc3RhbGw6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIlVuaW5zdGFsbCBIZWxsbyBXb3JsZCIKICAgICAgY29tbWFuZDogYmFzaAogICAgICBmbGFnczoKICAgICAgICBjOiBlY2hvIEdvb2RieWUgV29ybGQK",
 					},
 				},
-			},
+			}},
 			tag:                 kahn1dot01,
 			shouldCacheManifest: true,
 		},
 		{
 			name: "porter stamp, no manifest",
-			bundle: bundle.Bundle{
+			bundle: cnab.ExtendedBundle{bundle.Bundle{
 				Custom: map[string]interface{}{
 					"sh.porter": map[string]interface{}{
 						"manifestDigest": "abc123",
 					},
 				},
-			},
+			}},
 			tag:                 kahn1dot01,
 			shouldCacheManifest: false,
 		},
 		{
 			name:   "no embedded manifest",
 			tag:    kahnlatest,
-			bundle: bundle.Bundle{},
+			bundle: cnab.ExtendedBundle{},
 		},
 	}
 
