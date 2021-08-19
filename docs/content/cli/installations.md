@@ -27,7 +27,12 @@ Commands for working with installations of a bundle
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+
 * [porter installations delete](/cli/porter_installations_delete/)	 - Delete an installation
 * [porter installations list](/cli/porter_installations_list/)	 - List installed bundles
 * [porter installations logs](/cli/porter_installations_logs/)	 - Installation Logs commands

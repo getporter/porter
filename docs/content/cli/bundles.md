@@ -27,7 +27,12 @@ Commands for working with bundles. These all have shortcuts so that you can call
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+
 * [porter bundles archive](/cli/porter_bundles_archive/)	 - Archive a bundle from a reference
 * [porter bundles build](/cli/porter_bundles_build/)	 - Build a bundle
 * [porter bundles copy](/cli/porter_bundles_copy/)	 - Copy a bundle
