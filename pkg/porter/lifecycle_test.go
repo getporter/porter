@@ -1,9 +1,6 @@
 package porter
 
 import (
-	"errors"
-	"path"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -20,75 +17,6 @@ var (
 	kahnlatestHash = "fd4bbe38665531d10bb653140842a370"
 	kahnlatest     = cnab.MustParseOCIReference("deislabs/kubekahn:latest")
 )
-
-func TestBundlePullUpdateOpts_bundleCached(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	home, err := p.TestConfig.GetHomeDir()
-	t.Logf("home dir is: %s", home)
-	cacheDir, err := p.Cache.GetCacheDir()
-	require.NoError(t, err, "should have had a porter cache dir")
-	t.Logf("cache dir is: %s", cacheDir)
-	p.TestConfig.TestContext.AddTestDirectory("testdata/cache", cacheDir)
-	fullPath := filepath.Join(cacheDir, path.Join(kahn1dot0Hash, "/cnab/bundle.json"))
-	fileExists, err := p.FileSystem.Exists(fullPath)
-	require.True(t, fileExists, "this test requires that the file exist")
-	_, ok, err := p.Cache.FindBundle(kahn1dot01)
-	assert.True(t, ok, "should have found the bundle...")
-	b := &BundleActionOptions{
-		BundlePullOptions: BundlePullOptions{
-			Reference: "deislabs/kubekahn:1.0",
-		},
-	}
-	err = b.Validate(nil, p.Porter)
-	require.NoError(t, err)
-	_, err = p.prepullBundleByReference(b)
-	assert.NoError(t, err, "pulling bundle should not have resulted in an error")
-	assert.Equal(t, "mysql", b.Name, "name should have matched testdata bundle")
-	assert.Equal(t, fullPath, b.CNABFile, "the prepare method should have set the file to the fullpath")
-}
-
-func TestBundlePullUpdateOpts_pullError(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.TestRegistry.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error) {
-		return cnab.BundleReference{}, errors.New("unable to pull bundle deislabs/kubekahn:latest")
-	}
-
-	b := &BundleActionOptions{
-		BundlePullOptions: BundlePullOptions{
-			Reference: "deislabs/kubekahn:latest",
-		},
-	}
-	err := b.Validate(nil, p.Porter)
-	require.NoError(t, err)
-	_, err = p.prepullBundleByReference(b)
-	assert.Error(t, err, "pulling bundle should have resulted in an error")
-	assert.Contains(t, err.Error(), "unable to pull bundle deislabs/kubekahn:latest")
-
-}
-
-func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	// mess up the cache
-	p.FileSystem.WriteFile(path.Join("/root/.porter/cache", kahn1dot0Hash, "/cnab/bundle.json"), []byte(""), 0644)
-
-	b := &BundleActionOptions{
-		BundlePullOptions: BundlePullOptions{
-			Reference: "deislabs/kubekahn:1.0",
-		},
-	}
-	err := b.Validate(nil, p.Porter)
-	require.NoError(t, err)
-
-	_, err = p.prepullBundleByReference(b)
-	assert.Error(t, err, "pulling bundle should have resulted in an error")
-	assert.Contains(t, err.Error(), "unable to parse cached bundle file")
-}
 
 func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	p := NewTestPorter(t)

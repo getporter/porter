@@ -70,13 +70,29 @@ func (cb *CachedBundle) BuildManifestPath() string {
 func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	// Check that the bundle exists
 	cb.BundlePath = cb.BuildBundlePath()
-	bundleExists, err := cxt.FileSystem.Exists(cb.BundlePath)
+	bundleExists, err := cxt.FileSystem.Exists(cb.BuildMetadataPath())
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BundlePath)
+		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BuildMetadataPath())
 	}
 	if !bundleExists {
 		return false, nil
 	}
+
+	metaPath := cb.BuildMetadataPath()
+	metaExists, err := cxt.FileSystem.Exists(metaPath)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to access bundle metadata %s at %s", cb.Reference, metaPath)
+	}
+	if !metaExists {
+		// consider this a miss, recache with the metadata
+		return false, nil
+	}
+	var meta Metadata
+	err = encoding.UnmarshalFile(cxt.FileSystem, metaPath, &meta)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to parse cached bundle metadata %s at %s", cb.Reference, metaPath)
+	}
+	cb.Digest = meta.Digest
 
 	// Check for the optional relocation mapping next to it
 	reloPath := cb.BuildRelocationFilePath()
