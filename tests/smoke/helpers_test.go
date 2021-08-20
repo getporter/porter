@@ -55,7 +55,7 @@ func (t Test) ShowInstallation(namespace string, name string) (claims.Installati
 	return installation, nil
 }
 
-func (t Test) AssertInstallationExists(namespace string, name string) claims.Installation {
+func (t Test) RequireInstallationExists(namespace string, name string) claims.Installation {
 	installation, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
 	require.Equal(t.T, name, installation.Name, "incorrect installation name")
@@ -63,12 +63,12 @@ func (t Test) AssertInstallationExists(namespace string, name string) claims.Ins
 	return installation
 }
 
-func (t Test) AssertInstallationNotFound(namespace string, name string) {
+func (t Test) RequireInstallationNotFound(namespace string, name string) {
 	_, err := t.ShowInstallation(namespace, name)
-	t.AssertNotFoundReturned(err)
+	t.RequireNotFoundReturned(err)
 }
 
-func (t Test) AssertNotFoundReturned(err error) {
+func (t Test) RequireNotFoundReturned(err error) {
 	require.Error(t.T, err)
 	require.Contains(t.T, err.Error(), "not found")
 }
@@ -98,7 +98,7 @@ func (t Test) ListInstallations(allNamespaces bool, namespace string, name strin
 	return installations, nil
 }
 
-func (t Test) AssertInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
+func (t Test) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
 	for _, i := range list {
 		if i.Namespace == namespace && i.Name == name {
 			return i

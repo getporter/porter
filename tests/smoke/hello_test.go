@@ -34,7 +34,7 @@ func TestHelloBundle(t *testing.T) {
 	// Run a stateless action before we install and make sure nothing is persisted
 	var outputE bytes.Buffer
 	test.RequirePorter("invoke", "mybuns", "--action=dry-run", "--reference", myBunsRef, "-c=mybuns")
-	test.AssertInstallationNotFound("dev", "mybuns")
+	test.RequireInstallationNotFound("dev", "mybuns")
 
 	// Install the bundle and verify the correct output is printed
 	output, err := test.Porter("install", "mybuns", "--reference", myBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns").OutputV()
@@ -42,15 +42,15 @@ func TestHelloBundle(t *testing.T) {
 	require.Contains(t, output, "Hello, *******")
 
 	// Should not see the mybuns installation in the global namespace
-	test.AssertInstallationNotFound("", "mybuns")
+	test.RequireInstallationNotFound("", "mybuns")
 
 	// Should see the installation in the dev namespace, it should be successful
-	installation := test.AssertInstallationExists("dev", "mybuns")
+	installation := test.RequireInstallationExists("dev", "mybuns")
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
 	// Run a no-op action to check the status and check that the run was persisted
 	test.RequirePorter("invoke", "mybuns", "--action=status", "-c=mybuns")
-	installation = test.AssertInstallationExists("dev", "mybuns")
+	installation = test.RequireInstallationExists("dev", "mybuns")
 	require.Equal(t, "install", installation.Status.Action) // Install should be the last modifying action
 	// TODO(carolynvs): check that status shows up as a run
 
@@ -85,20 +85,20 @@ func TestHelloBundle(t *testing.T) {
 	// Uninstall and remove the installation
 	test.RequirePorter("uninstall", "mybuns", "--namespace=dev", "-c=mybuns")
 	test.RequirePorter("installation", "delete", "mybuns", "--namespace=dev")
-	test.AssertInstallationNotFound("dev", "mybuns")
+	test.RequireInstallationNotFound("dev", "mybuns")
 
 	// Let's test some negatives!
 
 	// Cannot perform a modifying or stateful action without an installation
 	_, err = test.RunPorter("upgrade", "missing", "--reference", myBunsRef)
-	test.AssertNotFoundReturned(err)
+	test.RequireNotFoundReturned(err)
 
 	_, err = test.RunPorter("uninstall", "missing", "--reference", myBunsRef)
-	test.AssertNotFoundReturned(err)
+	test.RequireNotFoundReturned(err)
 
 	_, err = test.RunPorter("invoke", "--action=boom", "missing", "--reference", myBunsRef)
-	test.AssertNotFoundReturned(err)
+	test.RequireNotFoundReturned(err)
 
 	_, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", myBunsRef)
-	test.AssertNotFoundReturned(err)
+	test.RequireNotFoundReturned(err)
 }

@@ -24,5 +24,5 @@ func TestDesiredState(t *testing.T) {
 
 	// Import an installation where the namespace is empty in the file
 	test.RequirePorter("installation", "apply", "imported-buns.yaml", "--namespace", "operator")
-	test.AssertInstallationExists("operator", "imported-buns")
+	test.RequireInstallationExists("operator", "imported-buns")
 }
