@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -11,10 +12,13 @@ import (
 )
 
 func TestNewDriver_Docker(t *testing.T) {
-	t.Parallel()
+	// Do not run in parallel as it manipulates environment variables
+	assertPullAlways := func(r *TestRuntime) {
+		assert.Equal(t, os.Getenv("PULL_ALWAYS"), "1", "The docker driver should always have PULL_ALWAYS enabled")
+	}
 
 	t.Run("vanilla docker", func(t *testing.T) {
-		t.Parallel()
+		os.Unsetenv("PULL_ALWAYS")
 
 		r := NewTestRuntime(t)
 		defer r.Teardown()
@@ -22,11 +26,12 @@ func TestNewDriver_Docker(t *testing.T) {
 		driver, err := r.newDriver(DriverNameDocker, ActionArguments{})
 
 		require.NoError(t, err)
-		assert.IsType(t, driver, &docker.Driver{})
+		require.IsType(t, driver, &docker.Driver{})
+		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access", func(t *testing.T) {
-		t.Parallel()
+		os.Unsetenv("PULL_ALWAYS")
 
 		r := NewTestRuntime(t)
 		defer r.Teardown()
@@ -40,11 +45,10 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
+		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access, mismatch driver name", func(t *testing.T) {
-		t.Parallel()
-
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -58,8 +62,6 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, missing docker daemon", func(t *testing.T) {
-		t.Parallel()
-
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -72,7 +74,7 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, default config", func(t *testing.T) {
-		t.Parallel()
+		os.Unsetenv("PULL_ALWAYS")
 
 		r := NewTestRuntime(t)
 		defer r.Teardown()
@@ -98,10 +100,11 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 		require.Equal(t, false, containerHostCfg.Privileged)
+		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access, privileged true", func(t *testing.T) {
-		t.Parallel()
+		os.Unsetenv("PULL_ALWAYS")
 
 		r := NewTestRuntime(t)
 		defer r.Teardown()
@@ -129,5 +132,6 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 		require.Equal(t, true, containerHostCfg.Privileged)
+		assertPullAlways(r)
 	})
 }
