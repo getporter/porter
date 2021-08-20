@@ -33,8 +33,13 @@ func buildRootCommandFrom(p *porter.Porter) *cobra.Command {
 	var printVersion bool
 
 	cmd := &cobra.Command{
-		Use:   "porter",
-		Short: "I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool",
+		Use: "porter",
+		Short: `With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+`,
 		Example: `  porter create
   porter build
   porter install
