@@ -203,15 +203,15 @@ func buildMixinsCreateCommand(p *porter.Porter) *cobra.Command {
 	opts := porter.MixinsCreateOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "create NAME --author YOURNAME [--dir /path/to/mixin/dir]",
+		Use:   "create NAME --author \"My Name\" --username mygithubusername [--dir /path/to/mixin/dir]",
 		Short: "Create a new mixin project based on the getporter/skeletor repository",
 		Long: `Create a new mixin project based on the getporter/skeletor repository.
-
 The first argument is the name of the mixin to create and is required.
-A flag of --author to declare the author of the mixin is also a required input.
+A flag of --author to declare the author of the mixin is a required input.
+A flag of --username to specify the GitHub's username of the mixin's author is a required input.
 You can also specify where to put mixin directory. It will default to the current directory.`,
-		Example: ` porter mixin create MyMixin --author "My Name"
-		porter mixin create MyMixin --author "My Name" --dir path/to/mymixin
+		Example: ` porter mixin create MyMixin --author "My Name" --username mygithubusername
+		porter mixin create MyMixin --author "My Name" --username mygithubusername --dir path/to/mymixin
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(args, p.Context)
@@ -223,6 +223,7 @@ You can also specify where to put mixin directory. It will default to the curren
 
 	f := cmd.Flags()
 	f.StringVar(&opts.AuthorName, "author", "", "Name of the mixin's author.")
+	f.StringVar(&opts.AuthorUsername, "username", "", "GitHub's username of the mixin's author.")
 	f.StringVar(&opts.DirPath, "dir", "", "Path to the designated location of the mixin's directory.")
 
 	return cmd

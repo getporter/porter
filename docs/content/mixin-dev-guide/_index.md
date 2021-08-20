@@ -3,8 +3,12 @@ title: Developing Mixins
 description: Creating and Extending Mixins for Porter
 ---
 
-The easiest way to make a mixin right now is to use start from our template repository:
+You can develop a mixin utilizing our template repository as a start at <https://github.com/getporter/skeletor>
+or by using `porter mixin create` command as exemplified below:
 
-<https://github.com/getporter/skeletor>
+```bash
+porter mixin create MyMixinName --author "My Name" --username mygithubusername [--dir path/to/mymixin]
+```
+
 
 ## See Also

@@ -120,9 +120,10 @@ func (p *Porter) CreateMixinFeedTemplate() error {
 
 // MixinsCreateOptions represent options for Porter's mixin create command
 type MixinsCreateOptions struct {
-	MixinName  string
-	AuthorName string
-	DirPath    string
+	MixinName      string
+	AuthorName     string
+	AuthorUsername string
+	DirPath        string
 }
 
 func (o *MixinsCreateOptions) Validate(args []string, cxt *context.Context) error {
@@ -137,7 +138,11 @@ func (o *MixinsCreateOptions) Validate(args []string, cxt *context.Context) erro
 	o.MixinName = args[0]
 
 	if o.AuthorName == "" {
-		return errors.New("must provide a value for --author")
+		return errors.New("must provide a value for flag --author")
+	}
+
+	if o.AuthorUsername == "" {
+		return errors.New("must provide a value for flag --username")
 	}
 
 	if o.DirPath == "" {
@@ -169,8 +174,8 @@ func (p *Porter) CreateMixin(opts MixinsCreateOptions) error {
 	}
 
 	replacementList := map[string]string{
-		"get.porter.sh/mixin/skeletor":       fmt.Sprintf("github.com/%s/%s", opts.AuthorName, opts.MixinName),
-		"PKG = get.porter.sh/mixin/$(MIXIN)": fmt.Sprintf("PKG = github.com/%s/%s", opts.AuthorName, opts.MixinName),
+		"get.porter.sh/mixin/skeletor":       fmt.Sprintf("github.com/%s/%s", opts.AuthorUsername, opts.MixinName),
+		"PKG = get.porter.sh/mixin/$(MIXIN)": fmt.Sprintf("PKG = github.com/%s/%s", opts.AuthorUsername, opts.MixinName),
 		"skeletor":                           opts.MixinName,
 		"YOURNAME":                           opts.AuthorName,
 	}
@@ -181,6 +186,8 @@ func (p *Porter) CreateMixin(opts MixinsCreateOptions) error {
 			return err
 		}
 	}
+
+	fmt.Fprintf(p.Out, "Created %s mixin", opts.MixinName)
 
 	return nil
 }
