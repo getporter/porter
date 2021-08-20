@@ -18,6 +18,10 @@ parameters:
     minimum: 1
     maximum: 11
     default: 5
+  - name: chaos_monkey
+    description: "Set to true to make the bundle fail"
+    type: boolean
+    default: false
   - name: magic_file
     description: "Pay no attention to the generated magic file"
     type: file
@@ -61,12 +65,18 @@ install:
       command: ./helpers.sh
       arguments:
         - makeMagic
-        - "{{ bundle.credentials.username }} is a unicorn"
+        - "'{{ bundle.credentials.username }} is a unicorn'"
   - exec:
       description: "install"
       command: ./helpers.sh
       arguments:
         - install
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"
 
 dry-run:
   - exec:
@@ -100,6 +110,12 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"
 
 uninstall:
   - exec:
@@ -112,3 +128,9 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"
