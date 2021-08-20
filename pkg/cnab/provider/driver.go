@@ -48,7 +48,7 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	}
 
 	if driverName == "docker" {
-		// Always ensure that the local docker cache has the repository digests for the
+		// Always ensure that the local docker cache has the repository digests for the invocation image
 		os.Setenv("PULL_ALWAYS", "1")
 	}
 
