@@ -87,11 +87,18 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		fmt.Fprintf(p.Out, "Namespace: %s\n", displayInstallation.Namespace)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
-		if displayInstallation.Bundle != "" {
-			fmt.Fprintf(p.Out, "Bundle: %s\n", displayInstallation.Bundle)
+
+		if displayInstallation.TrackedRepository != "" {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Bundle:")
+			fmt.Fprintf(p.Out, "  Repository: %s\n", displayInstallation.TrackedRepository)
+			if displayInstallation.TrackedVersion != "" {
+				fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.TrackedVersion)
+			}
+			if displayInstallation.TrackedDigest != "" {
+				fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.TrackedDigest)
+			}
 		}
-		fmt.Fprintf(p.Out, "Version: %s\n", displayInstallation.Version)
-		fmt.Fprintf(p.Out, "Digest: %s\n", displayInstallation.Digest)
 
 		// Print labels, if any
 		if len(displayInstallation.Labels) > 0 {
@@ -136,8 +143,11 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		if installation.Status != (claims.InstallationStatus{}) {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Status:")
-			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Action)
-			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status)
+			fmt.Fprintf(p.Out, "  Reference: %s\n", displayInstallation.StatusReference)
+			fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.StatusVersion)
+			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.StatusLastAction)
+			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.StatusText)
+			fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.StatusDigest)
 		}
 
 		return nil

@@ -25,7 +25,7 @@ func TestGenerateNoName(t *testing.T) {
 		Silent: true,
 	}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Context)
+	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(opts)
@@ -51,7 +51,7 @@ func TestGenerateNameProvided(t *testing.T) {
 	opts.Name = "kool-kred"
 	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Context)
+	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(opts)
@@ -72,7 +72,7 @@ func TestGenerateBadNameProvided(t *testing.T) {
 	}
 	opts.Name = "this.isabadname"
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Context)
+	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(opts)

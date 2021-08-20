@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
 
@@ -44,6 +45,9 @@ type Installation struct {
 	// BundleDigest is the current digest of the bundle.
 	BundleDigest string `json:"bundleDigest,omitempty" yaml:"bundleDigest,omitempty" toml:"bundleDigest,omitempty"`
 
+	// BundleTag is the OCI tag of the current bundle definition.
+	BundleTag string `json:"bundleTag,omitempty" yaml:"bundleTag,omitempty" toml:"bundleTag,omitempty"`
+
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
 	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
@@ -53,20 +57,61 @@ type Installation struct {
 
 	// Parameters specified by the user through overrides or parameter sets.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters map[string]interface{} `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
-	CredentialSets []string `json:"credentialSets" yaml:"credentialSets" toml:"credentialSets"`
+	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets" yaml:"parameterSets" toml:"parameterSets"`
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Status of the installation.
-	Status InstallationStatus `json:"status" yaml:"status" toml:"status"`
+	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 }
 
 func (i Installation) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
+}
+
+func (i Installation) GetBundleReference() (cnab.OCIReference, bool, error) {
+	if i.BundleRepository == "" {
+		return cnab.OCIReference{}, false, nil
+	}
+
+	ref, err := cnab.ParseOCIReference(i.BundleRepository)
+	if err != nil {
+		return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid BundleRepository %s", i.BundleRepository)
+	}
+
+	if i.BundleDigest != "" {
+		d, err := digest.Parse(i.BundleDigest)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid BundleDigest %s", i.BundleDigest)
+		}
+
+		ref, err = ref.WithDigest(d)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleDigest %s", i.BundleRepository, i.BundleDigest)
+		}
+		return ref, true, nil
+	}
+
+	if i.BundleVersion != "" {
+		v, err := semver.NewVersion(i.BundleVersion)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.New("invalid BundleVersion")
+		}
+
+		// The bundle version feature can only be used with standard naming conventions
+		// TODO(carolynvs): do we want to support desired state with non-standard snowflakes?
+		ref, err = ref.WithTag("v" + v.String())
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleVersion %s", i.BundleRepository, i.BundleVersion)
+		}
+		return ref, true, nil
+	}
+
+	return cnab.OCIReference{}, false, errors.New("Invalid installation, either BundleDigest or BundleVersion must be specified")
 }
 
 func (i Installation) DefaultDocumentFilter() interface{} {
@@ -113,6 +158,9 @@ func (i Installation) NewRun(action string) Run {
 func (i *Installation) ApplyResult(run Run, result Result) {
 	// Update the installation with the last modifying action
 	if action, err := run.Bundle.GetAction(run.Action); err == nil && action.Modifies {
+		i.Status.BundleReference = run.BundleReference
+		i.Status.BundleVersion = run.Bundle.Version
+		i.Status.BundleDigest = run.BundleDigest
 		i.Status.RunID = run.ID
 		i.Status.Action = run.Action
 		i.Status.ResultID = result.ID
@@ -131,7 +179,10 @@ func (i *Installation) Apply(input Installation) {
 	i.BundleRepository = input.BundleRepository
 	i.BundleDigest = input.BundleDigest
 	i.BundleVersion = input.BundleVersion
+	i.BundleTag = input.BundleTag
 	i.Parameters = input.Parameters
+	i.CredentialSets = input.CredentialSets
+	i.ParameterSets = input.ParameterSets
 	i.Labels = input.Labels
 }
 
@@ -154,9 +205,11 @@ func (i *Installation) Validate() error {
 	}
 
 	if i.BundleVersion != "" {
-		if _, err := semver.NewVersion(i.BundleVersion); err != nil {
+		v, err := semver.NewVersion(i.BundleVersion)
+		if err != nil {
 			return errors.Wrapf(err, "Invalid bundleVersion. Must be a valid v2 semver value.")
 		}
+		i.BundleVersion = v.String()
 	}
 
 	if i.BundleRepository != "" && i.BundleDigest == "" && i.BundleVersion == "" {
@@ -164,6 +217,19 @@ func (i *Installation) Validate() error {
 	}
 
 	return nil
+}
+
+// TrackBundle updates the bundle that the installation is tracking.
+func (i *Installation) TrackBundle(ref cnab.OCIReference) {
+	// Determine if the bundle is managed by version, digest or tag
+	i.BundleRepository = ref.Repository()
+	if ref.HasVersion() {
+		i.BundleVersion = ref.Version()
+	} else if ref.HasDigest() {
+		i.BundleDigest = ref.Digest().String()
+	} else {
+		i.BundleTag = ref.Tag()
+	}
 }
 
 // InstallationStatus's purpose is to assist with making porter list be able to display everything
@@ -185,4 +251,13 @@ type InstallationStatus struct {
 	// Once that state is reached, Porter should not allow it to be reinstalled as a protection from installations
 	// being overwritten.
 	InstallationCompleted bool `json:"installationCompleted" yaml:"installationCompleted" toml:"installationCompleted"`
+
+	// BundleReference of the bundle that last altered the installation state.
+	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`
+
+	// BundleVersion is the version of the bundle that last altered the installation state.
+	BundleVersion string `json:"bundleVersion" yaml:"bundleVersion" toml:"bundleVersion"`
+
+	// BundleDigest is the digest of the bundle that last altered the installation state.
+	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
 }
