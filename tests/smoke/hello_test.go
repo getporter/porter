@@ -75,9 +75,12 @@ func TestHelloBundle(t *testing.T) {
 
 	// Validate that we can't accidentally overwrite an installation
 	outputE.Truncate(0)
-	_, _, err = test.Porter("install", "mybuns", "--reference", myBunsRef, "--namespace=dev", "-c=mybuns").Stderr(&outputE).Exec()
+	_, _, err = test.Porter("install", "mybuns", "--reference", myBunsRef, "--namespace=test", "-c=mybuns").Stderr(&outputE).Exec()
 	require.Error(t, err, "porter should have prevented overwriting an installation")
 	require.Contains(t, outputE.String(), "The installation has already been successfully installed")
+
+	// We should be able to repeat install with --force
+	test.RequirePorter("install", "mybuns", "--reference", myBunsRef, "--namespace=test", "-c=mybuns", "--force")
 
 	// Upgrade our installation
 	test.RequirePorter("upgrade", "mybuns", "--namespace=dev", "-c=mybuns")
