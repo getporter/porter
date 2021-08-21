@@ -22,16 +22,17 @@ const (
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
 
 type Context struct {
-	Debug              bool
-	DebugPlugins       bool
-	verbose            bool
-	environ            map[string]string
-	FileSystem         aferox.Aferox
-	In                 io.Reader
-	Out                io.Writer
-	Err                io.Writer
-	NewCommand         CommandBuilder
-	PlugInDebugContext *PluginDebugContext
+	Debug               bool
+	DebugPlugins        bool
+	verbose             bool
+	ShowSensitiveValues bool
+	environ             map[string]string
+	FileSystem          aferox.Aferox
+	In                  io.Reader
+	Out                 io.Writer
+	Err                 io.Writer
+	NewCommand          CommandBuilder
+	PlugInDebugContext  *PluginDebugContext
 }
 
 // New creates a new context in the specified directory.
