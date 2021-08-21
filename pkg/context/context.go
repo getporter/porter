@@ -47,8 +47,8 @@ func New() *Context {
 		environ:    getEnviron(),
 		FileSystem: aferox.NewAferox(pwd, afero.NewOsFs()),
 		In:         os.Stdin,
-		Out:        NewCensoredWriter(os.Stdout),
-		Err:        NewCensoredWriter(os.Stderr),
+		Out:        os.Stdout,
+		Err:        os.Stderr,
 	}
 	c.defaultNewCommand()
 	c.PlugInDebugContext = NewPluginDebugContext(c)
@@ -266,7 +266,7 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams
 func (c *Context) SetSensitiveValues(vals []string) {
-	if len(vals) > 0 {
+	if len(vals) > 0 && !c.ShowSensitiveValues {
 		out := NewCensoredWriter(c.Out)
 		out.SetSensitiveValues(vals)
 		c.Out = out
@@ -274,5 +274,11 @@ func (c *Context) SetSensitiveValues(vals []string) {
 		err := NewCensoredWriter(c.Err)
 		err.SetSensitiveValues(vals)
 		c.Err = err
+	} else if len(vals) > 0 && c.ShowSensitiveValues {
+		for _, val := range vals {
+			if strings.TrimSpace(val) != "" {
+				c.Out.Write([]byte(fmt.Sprintln(val)))
+			}
+		}
 	}
 }
