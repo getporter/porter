@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	myBunsRef = "localhost:5000/mybuns:v0.1.1"
-	myDbRef   = "localhost:5000/mydb:v0.1.0 "
+	myBunsRef = "localhost:5000/mybuns:v0.1.2"
+	myDbRef   = "localhost:5000/mydb:v0.1.0"
 )
 
 func (t Test) PrepareTestBundle() {
@@ -22,17 +22,17 @@ func (t Test) PrepareTestBundle() {
 	os.Setenv("USER", "porterci")
 
 	// Check if another test has already set up the test bundle
-	err := shx.RunE("docker", "pull", "localhost:5000/mybuns-installer:v0.1.1")
+	err := shx.RunE("docker", "pull", "localhost:5000/mybuns-installer:v0.1.2")
 	if err == nil {
 		return
 	}
 
 	// Build and publish an interesting test bundle and its dependency
-	t.MakeTestBundle("mydb")
-	t.MakeTestBundle("mybuns")
+	t.MakeTestBundle("mydb", myDbRef)
+	t.MakeTestBundle("mybuns", myBunsRef)
 }
 
-func (t Test) MakeTestBundle(name string) {
+func (t Test) MakeTestBundle(name string, ref string) {
 	err := shx.Copy(filepath.Join(t.RepoRoot, "tests/testdata", name), t.TestDir, shx.CopyRecursive)
 	require.NoError(t.T, err)
 
@@ -41,7 +41,7 @@ func (t Test) MakeTestBundle(name string) {
 	os.Chdir(filepath.Join(t.TestDir, name))
 
 	t.RequirePorter("build")
-	t.RequirePorter("publish", "--reference", myBunsRef)
+	t.RequirePorter("publish", "--reference", ref)
 }
 
 func (t Test) ShowInstallation(namespace string, name string) (claims.Installation, error) {
