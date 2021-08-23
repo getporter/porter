@@ -3,9 +3,7 @@ package porter
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab/extensions"
@@ -333,11 +331,9 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 	for _, name := range params {
 		var pset parameters.ParameterSet
 		var err error
-		// If name looks pathy, attempt to load from a file
-		// Else, read from Porter's parameters store
-		if strings.Contains(name, string(filepath.Separator)) {
-			pset, err = p.loadParameterFromFile(name)
-		} else {
+		// Try reading parameters from file ...
+		if pset, err = p.loadParameterFromFile(name); err != nil {
+			// ... otherwise treat as a named set and read from Porter's parameter store.
 			// Try to get the params in the local namespace first, fallback to the global creds
 			query := storage.FindOptions{
 				Sort: []string{"-namespace"},
