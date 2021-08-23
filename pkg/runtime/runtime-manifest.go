@@ -454,6 +454,15 @@ func (m *RuntimeManifest) Initialize() error {
 				return fmt.Errorf("unable to acquire value for parameter %s", paramName)
 			}
 
+			// TODO(carolynvs): hack around parameters ALWAYS being injected even when empty files mess things up
+			// I'm not sure yet why it's injecting as null instead of "" (as required by the spec)
+			// We want to get the null -> "" fixed, and also not write files into the bundle when unset.
+			// that's a cnab change somewhere probably
+			// the problem is in injectParameters in cnab-go
+			if string(bytes) == "null" {
+				m.FileSystem.Remove(param.Destination.Path)
+				continue
+			}
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
 			if err != nil {
 				return errors.Wrapf(err, "unable to decode parameter %s", paramName)
