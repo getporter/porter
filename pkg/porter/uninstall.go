@@ -67,14 +67,14 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
-	err := p.prepullBundleByReference(opts.BundleActionOptions)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before uninstall")
-	}
-
-	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+	_, err := p.resolveBundleReference(opts.BundleActionOptions)
 	if err != nil {
 		return err
+	}
+
+	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	if err != nil {
+		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 	}
 
 	deperator := newDependencyExecutioner(p, cnab.ActionUninstall)
@@ -83,7 +83,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
-	actionArgs, err := p.BuildActionArgs(opts)
+	actionArgs, err := p.BuildActionArgs(installation, opts)
 	if err != nil {
 		return err
 	}

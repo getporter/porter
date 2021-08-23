@@ -6,6 +6,9 @@ replace (
 	// install-spec-wip
 	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.20.2-0.20210805155536-9a543e0636f4
 
+	// return-digest
+	github.com/cnabio/cnab-to-oci => github.com/carolynvs/cnab-to-oci v0.3.0-beta4.0.20210812163007-0766f78b7ee1
+
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
@@ -55,6 +58,7 @@ require (
 	github.com/moby/buildkit v0.8.1-0.20201205083753-0af7b1b9c693
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/olekukonko/tablewriter v0.0.4
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.8.0
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1

@@ -46,24 +46,11 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return fmt.Errorf("parent directory %q does not exist", dir)
 	}
 
-	err := p.prepullBundleByReference(&opts.BundleActionOptions)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before building archive")
-	}
-
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	if err != nil {
-		return err
-	}
-	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
 
-	bun, err := p.CNAB.LoadBundle(opts.CNABFile)
-	if err != nil {
-		return errors.Wrap(err, "couldn't open bundle for archiving")
-	}
 	// This allows you to export thin or thick bundles, we only support generating "thick" archives
 	ctor, err := construction.NewConstructor(false)
 	if err != nil {
@@ -76,7 +63,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		fs:                    p.Config.FileSystem,
 		out:                   p.Config.Out,
 		logs:                  p.Config.Out,
-		bundle:                bun,
+		bundle:                bundleRef.Definition,
 		destination:           dest,
 		imageStoreConstructor: ctor,
 	}

@@ -5,39 +5,10 @@ import (
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestPorter_applyDefaultOptions(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	err := p.Create()
-	require.NoError(t, err)
-
-	opts := InstallOptions{
-		BundleActionOptions: &BundleActionOptions{
-			sharedOptions: sharedOptions{
-				bundleFileOptions: bundleFileOptions{
-					File: "porter.yaml",
-				},
-			},
-		},
-	}
-	err = opts.Validate([]string{}, p.Porter)
-	require.NoError(t, err)
-
-	p.Debug = true
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	require.NoError(t, err)
-
-	assert.NotNil(t, p.Manifest, "Manifest should be loaded")
-	assert.NotEqual(t, &manifest.Manifest{}, p.Manifest, "Manifest should not be empty")
-	assert.Equal(t, p.Manifest.Name, opts.Name, "opts.Name should be set using the available manifest")
-}
 
 func TestInstallOptions_validateInstallationName(t *testing.T) {
 	testcases := []struct {

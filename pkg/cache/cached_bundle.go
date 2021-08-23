@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
@@ -21,11 +20,8 @@ type CachedBundle struct {
 	// cacheDir is the cache directory for the bundle (not the general cache directory)
 	cacheDir string
 
-	// Tag of the cached bundle.
-	Tag string
-
-	// Bundle is the cached bundle definition.
-	Bundle bundle.Bundle
+	// BundleReference contains common bundle metadata, such as the definition.
+	cnab.BundleReference
 
 	// BundlePath is the location of the bundle.json in the cache.
 	BundlePath string
@@ -38,9 +34,6 @@ type CachedBundle struct {
 	// ManifestPath is the optional location of the porter.yaml in the cache.
 	ManifestPath string
 
-	// RelocationMap is the optional relocation map enclosed in the bundle.
-	RelocationMap *relocation.ImageRelocationMap
-
 	// RelocationFilePath is the optional location of the relocation file in the cache.
 	RelocationFilePath string
 }
@@ -49,7 +42,7 @@ type CachedBundle struct {
 func (cb *CachedBundle) GetBundleID() string {
 	// hash the tag, tags have characters that won't work as part of a path
 	// so hashing here to get a path friendly name
-	bid := md5.Sum([]byte(cb.Tag))
+	bid := md5.Sum([]byte(cb.Reference.String()))
 	return hex.EncodeToString(bid[:])
 }
 
@@ -79,7 +72,7 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	cb.BundlePath = cb.BuildBundlePath()
 	bundleExists, err := cxt.FileSystem.Exists(cb.BundlePath)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Tag, cb.BundlePath)
+		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BundlePath)
 	}
 	if !bundleExists {
 		return false, nil
@@ -89,7 +82,7 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	reloPath := cb.BuildRelocationFilePath()
 	reloExists, err := cxt.FileSystem.Exists(reloPath)
 	if err != nil {
-		return true, errors.Wrapf(err, "unable to read relocation mapping %s at %s", cb.Tag, reloPath)
+		return true, errors.Wrapf(err, "unable to read relocation mapping %s at %s", cb.Reference, reloPath)
 	}
 	if reloExists {
 		cb.RelocationFilePath = reloPath
@@ -99,7 +92,7 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	manifestPath := cb.BuildManifestPath()
 	manifestExists, err := cxt.FileSystem.Exists(manifestPath)
 	if err != nil {
-		return true, errors.Wrapf(err, "unable to read manifest %s at %s", cb.Tag, manifestPath)
+		return true, errors.Wrapf(err, "unable to read manifest %s at %s", cb.Reference, manifestPath)
 	}
 	if manifestExists {
 		cb.ManifestPath = manifestPath
@@ -109,7 +102,7 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	if err != nil {
 		return true, errors.Wrapf(err, "unable to parse cached bundle file at %s", cb.BundlePath)
 	}
-	cb.Bundle = bun
+	cb.Definition = bun
 
 	if cb.RelocationFilePath != "" {
 		data, err := cxt.FileSystem.ReadFile(cb.RelocationFilePath)
@@ -117,8 +110,8 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 			return true, errors.Wrapf(err, "unable to read cached relocation file at %s", cb.RelocationFilePath)
 		}
 
-		reloMap := &relocation.ImageRelocationMap{}
-		err = json.Unmarshal(data, reloMap)
+		reloMap := relocation.ImageRelocationMap{}
+		err = json.Unmarshal(data, &reloMap)
 		if err != nil {
 			return true, errors.Wrapf(err, "unable to parse cached relocation file at %s", cb.RelocationFilePath)
 		}

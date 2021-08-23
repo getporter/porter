@@ -6,18 +6,16 @@ import (
 
 	"strings"
 
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-to-oci/relocation"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
-	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
-	"github.com/docker/docker/registry"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -46,15 +44,10 @@ func NewRegistry(c *portercontext.Context) *Registry {
 }
 
 // PullBundle pulls a bundle from an OCI registry. Returns the bundle, and an optional image relocation mapping, if applicable.
-func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle, *relocation.ImageRelocationMap, error) {
-	ref, err := reference.ParseNormalizedNamed(tag)
-	if err != nil {
-		return bundle.Bundle{}, nil, errors.Wrap(err, "invalid bundle tag format, expected REGISTRY/name:tag")
-	}
-
+func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
 	var insecureRegistries []string
 	if insecureRegistry {
-		reg := reference.Domain(ref)
+		reg := ref.Registry()
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
@@ -68,56 +61,55 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle,
 		fmt.Fprintln(r.Err, msg.String())
 	}
 
-	bun, reloMap, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
+	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
-		return bundle.Bundle{}, nil, errors.Wrap(err, "unable to pull remote bundle")
+		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull remote bundle")
 	}
 
 	invocationImage := bun.InvocationImages[0]
 	if invocationImage.Digest == "" {
-		return bundle.Bundle{}, nil,
-			NewErrNoContentDigest(invocationImage.Image)
+		return cnab.BundleReference{}, NewErrNoContentDigest(invocationImage.Image)
 	}
 
-	if len(reloMap) == 0 {
-		return *bun, nil, nil
+	bundleRef := cnab.BundleReference{
+		Reference:     ref,
+		Digest:        digest,
+		Definition:    *bun,
+		RelocationMap: reloMap,
 	}
-	return *bun, &reloMap, nil
+
+	return bundleRef, nil
 }
 
-func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
-	ref, err := ParseOCIReference(tag) //tag from manifest
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
-	}
+func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry bool) (cnab.BundleReference, error) {
 	var insecureRegistries []string
 	if insecureRegistry {
-		reg := reference.Domain(ref)
+		reg := bundleRef.Reference.Registry()
 		insecureRegistries = append(insecureRegistries, reg)
 	}
 
 	resolver := r.createResolver(insecureRegistries)
 
-	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
+	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
 	if err != nil {
-		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
+		return cnab.BundleReference{}, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
-	d, err := remotes.Push(context.Background(), &bun, rm, ref, resolver, true)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error pushing the bundle to %s", tag)
-	}
-	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
+	bundleRef.RelocationMap = rm
 
-	if len(rm) == 0 {
-		return nil, nil
+	d, err := remotes.Push(context.Background(), &bundleRef.Definition, rm, bundleRef.Reference.Named, resolver, true)
+	if err != nil {
+		return cnab.BundleReference{}, errors.Wrapf(err, "error pushing the bundle to %s", bundleRef.Reference)
 	}
-	return &rm, nil
+	bundleRef.Digest = d.Digest
+
+	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", bundleRef.Reference, d.Digest)
+	return bundleRef, nil
 }
 
 // PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
 // the expected format of the invocationImage is REGISTRY/NAME:TAG.
 // Returns the image digest from the registry.
-func (r *Registry) PushInvocationImage(invocationImage string) (string, error) {
+func (r *Registry) PushInvocationImage(invocationImage string) (digest.Digest, error) {
 	cli, err := r.getDockerClient()
 	if err != nil {
 		return "", err
@@ -125,12 +117,12 @@ func (r *Registry) PushInvocationImage(invocationImage string) (string, error) {
 
 	ctx := context.Background()
 
-	ref, err := ParseOCIReference(invocationImage)
+	ref, err := cnab.ParseOCIReference(invocationImage)
 	if err != nil {
 		return "", err
 	}
 	// Resolve the Repository name from fqn to RepositoryInfo
-	repoInfo, err := registry.ParseRepositoryInfo(ref)
+	repoInfo, err := ref.ParseRepositoryInfo()
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +158,7 @@ func (r *Registry) PushInvocationImage(invocationImage string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "unable to inspect docker image")
 	}
-	return string(dist.Descriptor.Digest), nil
+	return dist.Descriptor.Digest, nil
 }
 
 func (r *Registry) createResolver(insecureRegistries []string) containerdRemotes.Resolver {
@@ -195,8 +187,4 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 		return nil, err
 	}
 	return cli, nil
-}
-
-func ParseOCIReference(ociRef string) (reference.Named, error) {
-	return reference.ParseNormalizedNamed(ociRef)
 }

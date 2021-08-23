@@ -113,27 +113,14 @@ func (g *ParameterOptions) validateParamName(args []string) error {
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
 func (p *Porter) GenerateParameters(opts ParameterOptions) error {
-	err := p.prepullBundleByReference(&opts.BundleActionOptions)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking parameters generate")
-	}
-
-	err = p.applyDefaultOptions(&opts.sharedOptions)
-	if err != nil {
-		return err
-	}
-	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-	bundle, err := p.CNAB.LoadBundle(opts.CNABFile)
+	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
 
 	if err != nil {
 		return err
 	}
 	name := opts.Name
 	if name == "" {
-		name = bundle.Name
+		name = bundleRef.Definition.Name
 	}
 	genOpts := generator.GenerateParametersOptions{
 		GenerateOptions: generator.GenerateOptions{
@@ -142,18 +129,18 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 			Labels:    opts.ParseLabels(),
 			Silent:    opts.Silent,
 		},
-		Bundle: bundle,
+		Bundle: bundleRef.Definition,
 	}
-	fmt.Fprintf(p.Out, "Generating new parameter set %s from bundle %s\n", genOpts.Name, bundle.Name)
+	fmt.Fprintf(p.Out, "Generating new parameter set %s from bundle %s\n", genOpts.Name, bundleRef.Definition.Name)
 	numExternalParams := 0
 
-	for name := range bundle.Parameters {
-		if !parameters.IsInternal(name, bundle) {
+	for name := range bundleRef.Definition.Parameters {
+		if !parameters.IsInternal(name, bundleRef.Definition) {
 			numExternalParams += 1
 		}
 	}
 
-	fmt.Fprintf(p.Out, "==> %d parameter(s) declared for bundle %s\n", numExternalParams, bundle.Name)
+	fmt.Fprintf(p.Out, "==> %d parameter(s) declared for bundle %s\n", numExternalParams, bundleRef.Definition.Name)
 
 	pset, err := genOpts.GenerateParameters()
 	if err != nil {

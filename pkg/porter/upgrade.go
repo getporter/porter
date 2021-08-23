@@ -28,15 +28,9 @@ func (o UpgradeOptions) GetActionVerb() string {
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
-	err := p.prepullBundleByReference(opts.BundleActionOptions)
+	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before upgrade")
+		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 	}
-
-	err = p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-
-	return p.ExecuteAction(opts)
+	return p.ExecuteAction(installation, opts)
 }

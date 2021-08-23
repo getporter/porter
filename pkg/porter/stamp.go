@@ -3,6 +3,7 @@ package porter
 import (
 	"fmt"
 
+	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"github.com/pkg/errors"
@@ -10,9 +11,9 @@ import (
 
 // ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
-func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
+func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) (cnab.BundleReference, error) {
 	if opts.File == "" {
-		return nil
+		return cnab.BundleReference{}, nil
 	}
 
 	upToDate, err := p.IsBundleUpToDate(opts)
@@ -27,13 +28,32 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) error {
 		opts.CNABFile = ""
 		buildOpts := BuildOptions{bundleFileOptions: opts}
 		buildOpts.Validate(p)
-		return p.Build(buildOpts)
+		err := p.Build(buildOpts)
+		if err != nil {
+			return cnab.BundleReference{}, err
+		}
 	}
-	return nil
+
+	bun, err := cnab.LoadBundle(p.Context, build.LOCAL_BUNDLE)
+	if err != nil {
+		return cnab.BundleReference{}, err
+	}
+
+	return cnab.BundleReference{
+		Definition: bun,
+	}, nil
 }
 
 // IsBundleUpToDate checks the hash of the manifest against the hash in cnab/bundle.json.
 func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
+	if opts.File == "" {
+		return false, errors.New("File is required")
+	}
+	err := p.LoadManifestFrom(opts.File)
+	if err != nil {
+		return false, err
+	}
+
 	if exists, _ := p.FileSystem.Exists(opts.CNABFile); exists {
 		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {

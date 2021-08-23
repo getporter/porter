@@ -17,8 +17,8 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/docker/distribution/reference"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
 
@@ -550,13 +550,12 @@ type MappedImage struct {
 
 func (mi *MappedImage) Validate() error {
 	if mi.Digest != "" {
-		anchoredDigestRegex := regexp.MustCompile(`^` + reference.DigestRegexp.String() + `$`)
-		if !anchoredDigestRegex.MatchString(mi.Digest) {
-			return reference.ErrDigestInvalidFormat
+		if _, err := digest.Parse(mi.Digest); err != nil {
+			return err
 		}
 	}
 
-	if _, err := reference.Parse(mi.Repository); err != nil {
+	if _, err := cnab.ParseOCIReference(mi.Repository); err != nil {
 		return err
 	}
 
@@ -863,14 +862,14 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	}
 
 	if m.Reference == "" && m.Registry != "" {
-		repo, err := reference.ParseNormalizedNamed(path.Join(m.Registry, m.Name))
+		repo, err := cnab.ParseOCIReference(path.Join(m.Registry, m.Name))
 		if err != nil {
 			return errors.Wrapf(err, "invalid bundle reference %s", path.Join(m.Registry, m.Name))
 		}
-		m.Reference = repo.Name()
+		m.Reference = repo.Repository()
 	}
 
-	bundleRef, err := reference.ParseNormalizedNamed(m.Reference)
+	bundleRef, err := cnab.ParseOCIReference(m.Reference)
 	if err != nil {
 		return errors.Wrapf(err, "invalid bundle reference %s", m.Reference)
 	}
@@ -882,51 +881,48 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 
 	// If the docker tag is initially missing from bundleTag, update with
 	// returned dockerTag
-	switch v := bundleRef.(type) {
-	case reference.Named:
-		bundleRef, err = reference.WithTag(v, dockerTag)
+	if !bundleRef.HasTag() {
+		bundleRef, err = bundleRef.WithTag(dockerTag)
 		if err != nil {
 			return errors.Wrapf(err, "could not set bundle tag to %q", dockerTag)
 		}
-		m.Reference = reference.FamiliarString(bundleRef)
+		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := reference.ParseNormalizedNamed(bundleRef.Name() + "-installer")
+	imageName, err := cnab.ParseOCIReference(bundleRef.Repository() + "-installer")
 	if err != err {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Name()+"-installer")
+		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository()+"-installer")
 	}
-	imageRef, err := reference.WithTag(imageName, dockerTag)
+	imageRef, err := imageName.WithTag(dockerTag)
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
 	}
-	m.Image = reference.FamiliarString(imageRef)
+	m.Image = imageRef.String()
 
 	return nil
 }
 
 // getDockerTagFromBundleRef returns the Docker tag portion of the bundle tag,
 // using the bundle version as a fallback
-func (m *Manifest) getDockerTagFromBundleRef(bundleRef reference.Named) (string, error) {
+func (m *Manifest) getDockerTagFromBundleRef(bundleRef cnab.OCIReference) (string, error) {
 	// If the manifest has a DockerTag override already set (e.g. on publish), use this
 	if m.DockerTag != "" {
 		return m.DockerTag, nil
 	}
 
-	var dockerTag string
-	switch v := bundleRef.(type) {
-	case reference.Tagged:
-		dockerTag = v.Tag()
-	case reference.Named:
-		// Docker tag is missing from the provided bundle tag, so default it
-		// to use the manifest version prefixed with v
-		// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
-		cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
-		dockerTag = fmt.Sprintf("v%s", cleanTag)
-	case reference.Digested:
+	if bundleRef.HasTag() {
+		return bundleRef.Tag(), nil
+	}
+
+	if bundleRef.HasDigest() {
 		return "", errors.New("invalid bundle tag format, must be an OCI image tag")
 	}
 
-	return dockerTag, nil
+	// Docker tag is missing from the provided bundle tag, so default it
+	// to use the manifest version prefixed with v
+	// Example: bundle version is 1.0.0, so the bundle tag is v1.0.0
+	cleanTag := strings.ReplaceAll(m.Version, "+", "_") // Semver may include a + which is not allowed in a docker tag, e.g. v1.0.0-alpha.1+buildmetadata, change that to v1.0.0-alpha.1_buildmetadata
+	return fmt.Sprintf("v%s", cleanTag), nil
 }
 
 func readFromFile(cxt *context.Context, path string) ([]byte, error) {

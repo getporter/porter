@@ -1,0 +1,7 @@
+schemaVersion: 1.0.0
+name: imported-buns
+labels:
+  generator: porter-operator
+  generatorVersion: v0.2.0
+bundleRepository: localhost:5000/mybuns
+bundleVersion: v0.1.0

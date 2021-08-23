@@ -152,23 +152,12 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 }
 
 func (p *Porter) Explain(o ExplainOpts) error {
-	err := p.prepullBundleByReference(&o.BundleActionOptions)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
-	}
-
-	err = p.applyDefaultOptions(&o.sharedOptions)
+	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
 	if err != nil {
 		return err
 	}
-	err = p.ensureLocalBundleIsUpToDate(o.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-	bundle, err := p.CNAB.LoadBundle(o.CNABFile)
-	// Print Bundle Details
 
-	pb, err := generatePrintable(bundle, o.Action)
+	pb, err := generatePrintable(bundleRef.Definition, o.Action)
 	if err != nil {
 		return errors.Wrap(err, "unable to print bundle")
 	}

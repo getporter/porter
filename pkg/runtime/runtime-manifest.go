@@ -16,7 +16,6 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
-	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 )
 
@@ -500,25 +499,24 @@ func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.I
 
 func resolveImage(image *manifest.MappedImage, refString string) error {
 	//figure out what type of Reference it is so we can extract useful things for our image map
-	ref, err := reference.Parse(refString)
+	ref, err := cnab.ParseOCIReference(refString)
 	if err != nil {
-		return errors.Wrapf(err, "unable to parse docker image %s", refString)
+		return err
 	}
-	switch v := ref.(type) {
-	case reference.Canonical:
-		if tagged, ok := ref.(reference.NamedTagged); ok {
-			image.Tag = tagged.Tag()
-		}
-		image.Repository = v.Name()
-		image.Digest = v.Digest().String()
 
-	case reference.NamedTagged:
-		image.Tag = v.Tag()
-		image.Repository = v.Name()
-	case reference.Named:
-		image.Repository = v.Name()
-		image.Tag = "latest" //Populate this with latest so that the {{ can reference something }}
+	image.Repository = ref.Repository()
+	if ref.HasDigest() {
+		image.Digest = ref.Digest().String()
 	}
+
+	if ref.HasTag() {
+		image.Tag = ref.Tag()
+	}
+
+	if ref.IsRepositoryOnly(){
+		image.Tag = "latest" // Populate this with latest so that the {{ can reference something }}
+	}
+
 	return nil
 }
 

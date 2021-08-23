@@ -1,9 +1,9 @@
 package porter
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -29,71 +29,47 @@ type PrintableImage struct {
 }
 
 func (p *Porter) Inspect(o ExplainOpts) error {
-	err := p.prepullBundleByReference(&o.BundleActionOptions)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before invoking explain command")
-	}
-
-	err = p.applyDefaultOptions(&o.sharedOptions)
+	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
 	if err != nil {
 		return err
 	}
-	err = p.ensureLocalBundleIsUpToDate(o.bundleFileOptions)
-	if err != nil {
-		return err
-	}
-	bundle, err := p.CNAB.LoadBundle(o.CNABFile)
-	if err != nil {
-		return errors.Wrap(err, "unable to load bundle")
-	}
-	var reloMap map[string]string
-	if o.RelocationMapping != "" {
-		reloBytes, err := p.FileSystem.ReadFile(o.RelocationMapping)
-		if err != nil {
-			return errors.Wrap(err, "unable to read provided relocation mapping")
-		}
-		err = json.Unmarshal(reloBytes, &reloMap)
-		if err != nil {
-			return errors.Wrap(err, "unable to load provided relocation mapping")
-		}
-	}
 
-	ib, err := generateInspectableBundle(bundle, reloMap)
+	ib, err := generateInspectableBundle(bundleRef)
 	if err != nil {
 		return errors.Wrap(err, "unable to inspect bundle")
 	}
 	return p.printBundleInspect(o, ib)
 }
 
-func generateInspectableBundle(bun bundle.Bundle, reloMap map[string]string) (*InspectableBundle, error) {
+func generateInspectableBundle(bundleRef cnab.BundleReference) (*InspectableBundle, error) {
 	ib := &InspectableBundle{
-		Name:        bun.Name,
-		Description: bun.Description,
-		Version:     bun.Version,
+		Name:        bundleRef.Definition.Name,
+		Description: bundleRef.Definition.Description,
+		Version:     bundleRef.Definition.Version,
 	}
-	ib.InvocationImages, ib.Images = handleInspectRelocate(bun, reloMap)
+	ib.InvocationImages, ib.Images = handleInspectRelocate(bundleRef)
 	return ib, nil
 }
 
-func handleInspectRelocate(bun bundle.Bundle, reloMap map[string]string) ([]PrintableInvocationImage, []PrintableImage) {
+func handleInspectRelocate(bundleRef cnab.BundleReference) ([]PrintableInvocationImage, []PrintableImage) {
 	invoImages := []PrintableInvocationImage{}
-	for _, invoImage := range bun.InvocationImages {
+	for _, invoImage := range bundleRef.Definition.InvocationImages {
 		pii := PrintableInvocationImage{
 			InvocationImage: invoImage,
 		}
-		if mappedInvo, ok := reloMap[invoImage.Image]; ok {
+		if mappedInvo, ok := bundleRef.RelocationMap[invoImage.Image]; ok {
 			pii.Original = pii.Image
 			pii.Image = mappedInvo
 		}
 		invoImages = append(invoImages, pii)
 	}
 	images := []PrintableImage{}
-	for alias, image := range bun.Images {
+	for alias, image := range bundleRef.Definition.Images {
 		pi := PrintableImage{
 			Name:  alias,
 			Image: image,
 		}
-		if mappedImg, ok := reloMap[image.Image]; ok {
+		if mappedImg, ok := bundleRef.RelocationMap[image.Image]; ok {
 			pi.Original = pi.Image.Image
 			pi.Image.Image = mappedImg
 		}

@@ -8,12 +8,9 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/action"
 	cnabaction "github.com/cnabio/cnab-go/action"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver"
-	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -23,20 +20,11 @@ type ActionArguments struct {
 	// Action to execute, e.g. install, upgrade.
 	Action string
 
-	// Namespace of the installation.
-	Namespace string
-
 	// Name of the installation.
-	Installation string
+	Installation claims.Installation
 
-	// Either a filepath to the bundle or the name of the bundle.
-	BundlePath string
-
-	// BundleReference is the OCI reference of the bundle.
-	BundleReference string
-
-	// BundleDigest is the digest of the pulled bundle.
-	BundleDigest string
+	// BundleReference is the set of information necessary to execute a bundle.
+	BundleReference cnab.BundleReference
 
 	// Additional files to copy into the bundle
 	// Target Path => File Contents
@@ -46,13 +34,11 @@ type ActionArguments struct {
 	Params map[string]string
 
 	// Either a filepath to a credential file or the name of a set of a credentials.
+	// TODO: move to the installation record
 	CredentialIdentifiers []string
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
-
-	// Path to an optional relocation mapping file
-	RelocationMapping string
 
 	// Give the bundle privileged access to the docker daemon.
 	AllowDockerHostAccess bool
@@ -81,7 +67,7 @@ func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 		}
 
 		// Add claim.json to file list as well, if exists
-		claim, err := r.claims.GetLastRun(args.Namespace, args.Installation)
+		claim, err := r.claims.GetLastRun(args.Installation.Namespace, args.Installation.Name)
 		if err == nil {
 			claimBytes, err := json.Marshal(claim)
 			if err != nil {
@@ -98,19 +84,19 @@ func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 // to the operation's files.
 func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc {
 	return func(op *driver.Operation) error {
-		if args.RelocationMapping != "" {
-			b, err := r.FileSystem.ReadFile(args.RelocationMapping)
+		if len(args.BundleReference.RelocationMap) > 0 {
+			b, err := json.MarshalIndent(args.BundleReference.RelocationMap, "", "    ")
 			if err != nil {
-				return errors.Wrap(err, "unable to add relocation mapping")
+				return errors.Wrapf(err, "error marshaling relocation mapping file")
 			}
+
 			op.Files["/cnab/app/relocation-mapping.json"] = string(b)
-			var reloMap relocation.ImageRelocationMap
-			err = json.Unmarshal(b, &reloMap)
+
 			// If the invocation image is present in the relocation mapping, we need
 			// to update the operation and set the new image reference. Unfortunately,
 			// the relocation mapping is just reference => reference, so there isn't a
 			// great way to check for the invocation image.
-			if mappedInvo, ok := reloMap[op.Image.Image]; ok {
+			if mappedInvo, ok := args.BundleReference.RelocationMap[op.Image.Image]; ok {
 				op.Image.Image = mappedInvo
 			}
 		}
@@ -123,44 +109,11 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		return errors.New("action is required")
 	}
 
-	var b bundle.Bundle
-	var err error
-
-	if args.BundlePath != "" {
-		b, err = r.ProcessBundleFromFile(args.BundlePath)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Load the installation
-	installation, err := r.claims.GetInstallation(args.Namespace, args.Installation)
+	b, err := r.ProcessBundle(args.BundleReference.Definition)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound{}) {
-			// This may not exist because it's an invoked command running before install
-			installation = claims.NewInstallation(args.Namespace, args.Installation)
-		} else {
-			return errors.Wrapf(err, "could not retrieve the installation record")
-		}
+		return err
 	}
 
-	lastRun, err := r.claims.GetLastRun(args.Namespace, args.Installation)
-	if err != nil {
-		// Only install and stateless actions can execute without an initial installation
-		if !(args.Action == cnab.ActionInstall || b.Actions[args.Action].Stateless) {
-			instNotFound := storage.ErrNotFound{Collection: claims.CollectionInstallations}
-			return errors.Wrapf(instNotFound, "Installation not found: %s. Only stateless actions, such as dry-run, can execute against a bundle that hasn't been installed yet", args.Installation)
-		}
-	}
-
-	// If the user didn't override the bundle definition, use the one
-	// from the existing claim
-	if lastRun.ID != "" && args.BundlePath == "" {
-		b, err = r.ProcessBundle(lastRun.Bundle)
-		if err != nil {
-			return err
-		}
-	}
 	if r.Debug {
 		b.WriteTo(r.Err)
 		fmt.Fprintln(r.Err)
@@ -172,10 +125,12 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	}
 
 	// Create a record for the run we are about to execute
-	var currentRun = installation.NewRun(args.Action)
+	var currentRun = args.Installation.NewRun(args.Action)
 	currentRun.Bundle = b
-	currentRun.BundleReference = args.BundleReference
-	currentRun.BundleDigest = args.BundleDigest
+	if args.BundleReference.Reference != (cnab.OCIReference{}) {
+		currentRun.BundleReference = args.BundleReference.Reference.String()
+	}
+	currentRun.BundleDigest = args.BundleReference.Digest.String()
 	currentRun.Parameters = params
 
 	// Validate the action
@@ -197,7 +152,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	a.SaveLogs = true
 
 	if currentRun.ShouldRecord() {
-		err = r.SaveRun(installation, currentRun, cnab.StatusRunning)
+		err = r.SaveRun(args.Installation, currentRun, cnab.StatusRunning)
 		if err != nil {
 			return errors.Wrap(err, "could not save the pending action's status, the bundle was not executed")
 		}
@@ -210,11 +165,11 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	if currentRun.ShouldRecord() {
 		if err != nil {
 			err = r.appendFailedResult(err, currentRun)
-			return errors.Wrapf(err, "failed to %s the bundle", args.Action)
+			return errors.Wrapf(err, "failed to record that %s for installation %s failed", args.Action, args.Installation.Name)
 		}
-		return r.SaveOperationResult(opResult, installation, currentRun, currentRun.NewResultFrom(result))
+		return r.SaveOperationResult(opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
 	} else {
-		return errors.Wrapf(err, "failed to %s the bundle", args.Action)
+		return errors.Wrapf(err, "execution of %s for installation %s failed", args.Action, args.Installation.Name)
 	}
 }
 

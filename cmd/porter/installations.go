@@ -18,6 +18,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 
 	cmd.AddCommand(buildInstallationsListCommand(p))
 	cmd.AddCommand(buildInstallationShowCommand(p))
+	cmd.AddCommand(buildInstallationApplyCommand(p))
 	cmd.AddCommand(buildInstallationOutputsCommands(p))
 	cmd.AddCommand(buildInstallationDeleteCommand(p))
 	cmd.AddCommand(buildInstallationLogCommands(p))
@@ -91,6 +92,35 @@ Optional output formats include json and yaml.
 		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "table",
 		"Specify an output format.  Allowed values: table, json, yaml")
+
+	return &cmd
+}
+
+func buildInstallationApplyCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.ApplyOptions{}
+
+	cmd := cobra.Command{
+		Use:   "apply FILE",
+		Short: "Apply changes to an installation",
+		Long: `Apply changes from the specified file to an installation. If the installation doesn't already exist, it is created.
+
+When the namespace is not set in the file, the current namespace is used.
+
+You can use the show command to create the initial file:
+  porter installation show mybuns --output yaml > mybuns.yaml
+`,
+		Example: `  porter installation apply myapp.yaml`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(p.Context, args)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.InstallationApply(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the namespace defined in the file.")
 
 	return &cmd
 }

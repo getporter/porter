@@ -6,7 +6,9 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -103,24 +105,59 @@ func (i Installation) NewRun(action string) Run {
 // ApplyResult updates cached status data on the installation from the
 // last bundle run.
 func (i *Installation) ApplyResult(run Run, result Result) {
-	i.Status.RunID = run.ID
-	i.Status.Action = run.Action
-	i.Status.ResultID = result.ID
-	i.Status.ResultStatus = result.Status
+	// Update the installation with the last modifying action
+	if action, err := run.Bundle.GetAction(run.Action); err == nil && action.Modifies {
+		i.Status.RunID = run.ID
+		i.Status.Action = run.Action
+		i.Status.ResultID = result.ID
+		i.Status.ResultStatus = result.Status
+	}
 
 	if !i.Status.InstallationCompleted && run.Action == cnab.ActionInstall && result.Status == cnab.StatusSucceeded {
 		i.Status.InstallationCompleted = true
 	}
+}
 
-	// TODO(carolynvs): set this before running the bundle, it should trigger the execution
-	/*
-		repo, _, _, err := cnab.ParseBundleReference(run.BundleReference)
-		if err == nil {
-			i.BundleRepository = repo
-			i.BundleVersion = run.Bundle.Version // Use this instead of the tag because the tag doesn't have to be the version
-			i.BundleDigest = run.BundleDigest    // Use the actual digest of the bundle executed
+// Apply user-provided changes to an existing installation.
+// Only updates fields that users are allowed to modify.
+// For example, Name, Namespace and Status cannot be modified.
+func (i *Installation) Apply(input Installation) {
+	i.BundleRepository = input.BundleRepository
+	i.BundleDigest = input.BundleDigest
+	i.BundleVersion = input.BundleVersion
+	i.Parameters = input.Parameters
+	i.Labels = input.Labels
+}
+
+// Validate the installation document and report the first error.
+func (i *Installation) Validate() error {
+	if SchemaVersion != i.SchemaVersion {
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, SchemaVersion)
+	}
+
+	// We can change these to better checks if we consolidate our logic around the various ways we let you
+	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
+	// Until then, these are pretty weak checks
+
+	if i.BundleRepository != "" {
+		ref, err := cnab.ParseOCIReference(i.BundleRepository)
+		if err != nil {
+			return errors.Wrapf(err, "invalid bundleRepository %s", i.BundleRepository)
 		}
-	*/
+		i.BundleRepository = ref.Repository()
+	}
+
+	if i.BundleVersion != "" {
+		if _, err := semver.NewVersion(i.BundleVersion); err != nil {
+			return errors.Wrapf(err, "Invalid bundleVersion. Must be a valid v2 semver value.")
+		}
+	}
+
+	if i.BundleRepository != "" && i.BundleDigest == "" && i.BundleVersion == "" {
+		return errors.Errorf("either the bundleVersion or the bundleDigest must be provided.")
+	}
+
+	return nil
 }
 
 // InstallationStatus's purpose is to assist with making porter list be able to display everything
