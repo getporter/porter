@@ -40,22 +40,21 @@ func isCopyReferenceOnly(dest string) bool {
 	return ref.IsRepositoryOnly()
 }
 
-func generateNewBundleRef(source cnab.OCIReference, dest string) cnab.OCIReference {
+func generateNewBundleRef(source cnab.OCIReference, dest string) (cnab.OCIReference, error) {
 	if isCopyReferenceOnly(dest) {
 		srcVal := source.String()
 		bundleNameRef := srcVal[strings.LastIndex(srcVal, "/")+1:]
 		dest = fmt.Sprintf("%s/%s", dest, bundleNameRef)
 	}
-	destRef, err := cnab.ParseOCIReference(dest)
-	if err != nil {
-		panic(err)
-	}
-	return destRef
+	return cnab.ParseOCIReference(dest)
 }
 
 // CopyBundle copies a bundle from one repository to another
 func (p *Porter) CopyBundle(c *CopyOpts) error {
-	destinationRef := generateNewBundleRef(c.sourceRef, c.Destination)
+	destinationRef, err := generateNewBundleRef(c.sourceRef, c.Destination)
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationRef)
 	bunRef, err := p.Registry.PullBundle(c.sourceRef, c.InsecureRegistry)
