@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	"get.porter.sh/porter/pkg/cnab/extensions"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
@@ -47,7 +48,7 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 		return nil, err
 	}
 
-	if driverName == "docker" {
+	if driverName == "docker" && r.shouldPullInvocationImage(args.BundleReference.Definition){
 		// Always ensure that the local docker cache has the repository digests for the invocation image
 		os.Setenv("PULL_ALWAYS", "1")
 	}
@@ -65,6 +66,16 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	}
 
 	return driverImpl, nil
+}
+
+func (r *Runtime) shouldPullInvocationImage(b bundle.Bundle) bool {
+	// When the invocation image is expected to have a repository digest, we should always try to pull it
+	for _, ii := range b.InvocationImages {
+		if ii.Digest != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.Driver, error) {

@@ -4,7 +4,9 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/extensions"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/cnabio/cnab-go/driver/docker"
@@ -13,13 +15,60 @@ import (
 
 func TestNewDriver_Docker(t *testing.T) {
 	// Do not run in parallel as it manipulates environment variables
-	assertPullAlways := func(r *TestRuntime) {
-		assert.Equal(t, os.Getenv("PULL_ALWAYS"), "1", "The docker driver should always have PULL_ALWAYS enabled")
+	assertPullAlways := func(t *testing.T, shouldPull bool) {
+		if shouldPull {
+			assert.Equal(t, "1", os.Getenv("PULL_ALWAYS"),  "PULL_ALWAYS should be set")
+		} else {
+			assert.NotEqual(t, "1", os.Getenv("PULL_ALWAYS"),  "PULL_ALWAYS should NOT be set")
+		}
 	}
 
-	t.Run("vanilla docker", func(t *testing.T) {
+	t.Run("do not pull if missing repo digests", func(t *testing.T) {
 		os.Unsetenv("PULL_ALWAYS")
 
+		r := NewTestRuntime(t)
+		defer r.Teardown()
+
+		b := bundle.Bundle{InvocationImages: []bundle.InvocationImage{
+			{BaseImage: bundle.BaseImage{
+				Image: "getporter/porter-hello-installer",
+				Digest: "",
+			}},
+		}}
+		args := ActionArguments{
+			BundleReference: cnab.BundleReference{Definition: b},
+		}
+		driver, err := r.newDriver(DriverNameDocker, args)
+
+		require.NoError(t, err)
+		require.IsType(t, driver, &docker.Driver{})
+		assertPullAlways(t, false)
+	})
+
+	t.Run("pull image when repo digest set", func(t *testing.T) {
+		os.Unsetenv("PULL_ALWAYS")
+
+		r := NewTestRuntime(t)
+		defer r.Teardown()
+
+		// Pull the image because we have a digest set
+		b := bundle.Bundle{InvocationImages: []bundle.InvocationImage{
+			{BaseImage: bundle.BaseImage{
+				Image: "getporter/porter-hello-installer",
+				Digest: "sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687",
+			}},
+		}}
+		args := ActionArguments{
+			BundleReference: cnab.BundleReference{Definition: b},
+		}
+		driver, err := r.newDriver(DriverNameDocker, args)
+
+		require.NoError(t, err)
+		require.IsType(t, driver, &docker.Driver{})
+		assertPullAlways(t, true)
+	})
+
+	t.Run("vanilla docker", func(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -27,12 +76,9 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		require.NoError(t, err)
 		require.IsType(t, driver, &docker.Driver{})
-		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access", func(t *testing.T) {
-		os.Unsetenv("PULL_ALWAYS")
-
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -45,7 +91,6 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.IsType(t, driver, &docker.Driver{})
-		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access, mismatch driver name", func(t *testing.T) {
@@ -74,8 +119,6 @@ func TestNewDriver_Docker(t *testing.T) {
 	})
 
 	t.Run("docker with host access, default config", func(t *testing.T) {
-		os.Unsetenv("PULL_ALWAYS")
-
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -100,12 +143,9 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 		require.Equal(t, false, containerHostCfg.Privileged)
-		assertPullAlways(r)
 	})
 
 	t.Run("docker with host access, privileged true", func(t *testing.T) {
-		os.Unsetenv("PULL_ALWAYS")
-
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
@@ -132,6 +172,5 @@ func TestNewDriver_Docker(t *testing.T) {
 		containerHostCfg, err := dockerish.GetContainerHostConfig()
 		require.NoError(t, err)
 		require.Equal(t, true, containerHostCfg.Privileged)
-		assertPullAlways(r)
 	})
 }
