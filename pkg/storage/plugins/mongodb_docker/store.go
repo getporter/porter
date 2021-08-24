@@ -106,7 +106,26 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 		return nil
 	}
 	containerStatus, err := exec.Command("docker", "container", "inspect", container).Output()
-	if err != nil || !strings.Contains(string(containerStatus), `"Status": "running"`) {
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && strings.Contains(strings.ToLower(string(exitErr.Stderr)), "no such") { // Container doesn't exist
+			if err = startMongo(); err != nil {
+				return nil, err
+			}
+		} else {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				fmt.Fprintf(c.Err, string(exitErr.Stderr))
+			}
+			return nil, errors.Wrapf(err, "error inspecting container %s", container)
+		}
+	} else if !strings.Contains(string(containerStatus), `"Status": "running"`) { // Container is stopped
+		err = exec.Command("docker", "rm", "-f", container).Run()
+		if err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				fmt.Fprintf(c.Err, string(exitErr.Stderr))
+			}
+			return nil, errors.Wrapf(err, "error cleaning up stopped container %s", container)
+		}
+
 		if err = startMongo(); err != nil {
 			return nil, err
 		}
