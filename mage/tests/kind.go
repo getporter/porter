@@ -229,6 +229,13 @@ func StopDockerRegistry() error {
 	return nil
 }
 
+func RestartDockerRegistry() error {
+	if err := StopDockerRegistry(); err!=nil{
+		return err
+	}
+	return StartDockerRegistry()
+}
+
 func isContainerRunning(name string) bool {
 	out, _ := shx.OutputS("docker", "container", "inspect", "-f", "{{.State.Running}}", name)
 	running, _ := strconv.ParseBool(out)

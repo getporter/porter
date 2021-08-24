@@ -39,7 +39,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make build
+          - bash: mage build
             displayName: "Native Build"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
@@ -58,7 +58,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make xbuild-all
+          - bash: mage XBuildAll
             displayName: "Cross Compile"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Release Binaries"
@@ -78,7 +78,7 @@ stages:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make test-unit
+          - bash: mage TestUnit
             displayName: "Unit Test"
       - job: integration_test
         displayName: "Integration Test"
@@ -128,7 +128,7 @@ stages:
             inputs:
               version: ${{parameters.goVersion}}
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
-            displayName: "Configure Agent"
+            displayName: "Setup Bin"
           - script: mage TestSmoke
             displayName: "Run Smoke Tests"
 
@@ -151,10 +151,10 @@ stages:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
           - script: |
-              make publish-bin publish-mixins
+              mage PublishPorter PublishMixins
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
             displayName: "Publish Porter Binaries"
@@ -174,7 +174,7 @@ stages:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
           - task: Docker@1
             displayName: Docker Hub Login
@@ -182,7 +182,7 @@ stages:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
               command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-images
+          - script: REGISTRY=${{parameters.registry}} mage PublishImages
             displayName: "Publish Docker Images to ${{parameters.registry}}"
           - task: Docker@1 # Support publishing to our old registry on Docker Hub and to our new location on GHCR while we migrate
             displayName: GHCR Login
@@ -191,7 +191,7 @@ stages:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: ghcr.io/getporter
               command: login
-          - script: REGISTRY=ghcr.io/getporter make publish-images
+          - script: REGISTRY=ghcr.io/getporter mage PublishImages
             displayName: "Publish Docker Images to ghcr.io/getporter"
             condition: ${{parameters.dualPublish}}
 
@@ -211,7 +211,7 @@ stages:
               source: current
               artifact: build-bin
               path: bin
-          - script: go run mage.go SetBinExecutable
+          - script: go run mage.go ConfigureAgent SetBinExecutable
             displayName: "Setup Bin"
           - bash: |
               set -e
