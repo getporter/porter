@@ -101,4 +101,11 @@ func TestHelloBundle(t *testing.T) {
 
 	_, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", myBunsRef)
 	test.RequireNotFoundReturned(err)
+
+	// Test that outputs are collected when a bundle fails
+	err = test.Porter("install", "fail-with-outputs", "--reference", myBunsRef, "-c=mybuns", "--param", "chaos_monkey=true").Run()
+	require.Error(t, err, "the chaos monkey should have failed the installation")
+	magicOutput, err := test.Porter("installation", "outputs", "show", "magic_file", "-i=fail-with-outputs").Output()
+	require.NoError(t, err, "the output should have been saved even though the bundle failed")
+	require.Contains(t, magicOutput, "is a unicorn")
 }

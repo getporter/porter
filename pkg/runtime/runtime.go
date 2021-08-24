@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/hashicorp/go-multierror"
+
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
@@ -66,61 +68,70 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
 	}
 
+	var executionErr error
 	for _, step := range r.RuntimeManifest.GetSteps() {
-		if step != nil {
-			err := r.RuntimeManifest.ResolveStep(step)
-			if err != nil {
-				return errors.Wrap(err, "unable to resolve step")
-			}
-
-			description, _ := step.GetDescription()
-			if len(description) > 0 {
-				fmt.Fprintln(r.Out, description)
-			}
-
-			// Hand over values needing masking in context output streams
-			r.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
-
-			input := &ActionInput{
-				action: r.RuntimeManifest.Action,
-				Steps:  []*manifest.Step{step},
-			}
-			inputBytes, _ := yaml.Marshal(input)
-			cmd := pkgmgmt.CommandOptions{
-				Command: string(r.RuntimeManifest.Action),
-				Input:   string(inputBytes),
-				Runtime: true,
-			}
-			err = r.mixins.Run(r.Context, step.GetMixinName(), cmd)
-			if err != nil {
-				return errors.Wrap(err, "mixin execution failed")
-			}
-
-			outputs, err := r.readMixinOutputs()
-			if err != nil {
-				return errors.Wrap(err, "could not read step outputs")
-			}
-
-			err = r.RuntimeManifest.ApplyStepOutputs(outputs)
-			if err != nil {
-				return err
-			}
-
-			// Apply any Bundle Outputs declared in this step
-			err = r.applyStepOutputsToBundle(outputs)
-			if err != nil {
-				return err
-			}
+		executionErr = r.executeStep(step)
+		if executionErr != nil {
+			break
 		}
 	}
 
 	err = r.applyUnboundBundleOutputs()
 	if err != nil {
+		// Log but allow the bundle to gracefully exit
+		fmt.Fprintln(r.Err, err)
+	}
+
+	if executionErr == nil {
+		fmt.Fprintln(r.Out, "execution completed successfully!")
+	}
+	return executionErr // Report the success of the bundle back up the chain
+}
+
+func (r *PorterRuntime) executeStep(step *manifest.Step) error {
+	if step == nil {
+		return nil
+	}
+	err := r.RuntimeManifest.ResolveStep(step)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve step")
+	}
+
+	description, _ := step.GetDescription()
+	if len(description) > 0 {
+		fmt.Fprintln(r.Out, description)
+	}
+
+	// Hand over values needing masking in context output streams
+	r.Context.SetSensitiveValues(r.RuntimeManifest.GetSensitiveValues())
+
+	input := &ActionInput{
+		action: r.RuntimeManifest.Action,
+		Steps:  []*manifest.Step{step},
+	}
+	inputBytes, _ := yaml.Marshal(input)
+	cmd := pkgmgmt.CommandOptions{
+		Command: string(r.RuntimeManifest.Action),
+		Input:   string(inputBytes),
+		Runtime: true,
+	}
+	err = r.mixins.Run(r.Context, step.GetMixinName(), cmd)
+	if err != nil {
+		return errors.Wrap(err, "mixin execution failed")
+	}
+
+	outputs, err := r.readMixinOutputs()
+	if err != nil {
+		return errors.Wrap(err, "could not read step outputs")
+	}
+
+	err = r.RuntimeManifest.ApplyStepOutputs(outputs)
+	if err != nil {
 		return err
 	}
 
-	fmt.Fprintln(r.Out, "execution completed successfully!")
-	return nil
+	// Apply any Bundle Outputs declared in this step
+	return r.applyStepOutputsToBundle(outputs)
 }
 
 func (r *PorterRuntime) createOutputsDir() error {
@@ -166,6 +177,11 @@ func (r *PorterRuntime) applyUnboundBundleOutputs() error {
 		return err
 	}
 
+	if len(r.RuntimeManifest.Outputs) > 0 {
+		fmt.Fprintln(r.Out, "Collecting bundle outputs...")
+	}
+
+	var bigErr *multierror.Error
 	outputs := r.RuntimeManifest.GetOutputs()
 	for _, outputDef := range r.RuntimeManifest.Outputs {
 		// Ignore outputs that have already been set
@@ -182,12 +198,13 @@ func (r *PorterRuntime) applyUnboundBundleOutputs() error {
 			outpath := filepath.Join(config.BundleOutputsDir, outputDef.Name)
 			err = r.CopyFile(outputDef.Path, outpath)
 			if err != nil {
-				return errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath)
+				err = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath))
+				continue
 			}
 		}
 	}
 
-	return nil
+	return bigErr.ErrorOrNil()
 }
 
 func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool {
