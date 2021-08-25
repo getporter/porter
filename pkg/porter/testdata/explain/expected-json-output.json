@@ -12,5 +12,9 @@
       "description": "",
       "required": false
     }
+  ],
+  "mixins": [
+    "helm",
+    "terraform"
   ]
 }

@@ -52,8 +52,6 @@ namespace                          string                         false      All
 wordpress-name                     string   porter-ci-wordpress   false      All Actions
 wordpress-password                 string   <nil>                 true       install,upgrade
 
-No outputs defined
-
 Actions:
 Name   Description   Modifies Installation   Stateless
 ping   ping          true                    false
@@ -70,16 +68,6 @@ $ porter explain --reference getporter/porter-hello:v0.1.0
 Name: HELLO
 Description: An example Porter configuration
 Version: 0.1.0
-
-No credentials defined
-
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
 ```
 
 ## Install a Bundle

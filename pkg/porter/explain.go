@@ -327,15 +327,16 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printCredentialsExplainBlock(bun *PrintableBundle) error {
-	if len(bun.Credentials) > 0 {
-		fmt.Fprintln(p.Out, "Credentials:")
-		err := p.printCredentialsExplainTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print credentials table")
-		}
-	} else {
-		fmt.Fprintln(p.Out, "No credentials defined")
+	if len(bun.Credentials) == 0 {
+		return nil
 	}
+	
+	fmt.Fprintln(p.Out, "Credentials:")
+	err := p.printCredentialsExplainTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print credentials table")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
 }
@@ -352,15 +353,16 @@ func (p *Porter) printCredentialsExplainTable(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printParametersExplainBlock(bun *PrintableBundle) error {
-	if len(bun.Parameters) > 0 {
-		fmt.Fprintln(p.Out, "Parameters:")
-		err := p.printParametersExplainTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print parameters table")
-		}
-	} else {
-		fmt.Fprintln(p.Out, "No parameters defined")
+	if len(bun.Parameters) == 0 {
+		return nil
 	}
+
+	fmt.Fprintln(p.Out, "Parameters:")
+	err := p.printParametersExplainTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print parameters table")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
 }
@@ -377,15 +379,16 @@ func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printOutputsExplainBlock(bun *PrintableBundle) error {
-	if len(bun.Outputs) > 0 {
-		fmt.Fprintln(p.Out, "Outputs:")
-		err := p.printOutputsExplainTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print outputs table")
-		}
-	} else {
-		fmt.Fprintln(p.Out, "No outputs defined")
+	if len(bun.Outputs) == 0 {
+		return nil
 	}
+
+	fmt.Fprintln(p.Out, "Outputs:")
+	err := p.printOutputsExplainTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print outputs table")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
 }
@@ -403,15 +406,16 @@ func (p *Porter) printOutputsExplainTable(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printActionsExplainBlock(bun *PrintableBundle) error {
-	if len(bun.Actions) > 0 {
-		fmt.Fprintln(p.Out, "Actions:")
-		err := p.printActionsExplainTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print actions block")
-		}
-	} else {
-		fmt.Fprintln(p.Out, "No custom actions defined")
+	if len(bun.Actions) == 0 {
+		return nil
 	}
+
+	fmt.Fprintln(p.Out, "Actions:")
+	err := p.printActionsExplainTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print actions block")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
 }
@@ -430,15 +434,16 @@ func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 
 // Dependencies
 func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
-	if len(bun.Dependencies) > 0 {
-		fmt.Fprintln(p.Out, "Dependencies:")
-		err := p.printDependenciesExplainTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print dependencies table")
-		}
-	} else {
-		fmt.Fprintln(p.Out, "No dependencies defined")
+	if len(bun.Dependencies) == 0 {
+		return nil
 	}
+
+	fmt.Fprintln(p.Out, "Dependencies:")
+	err := p.printDependenciesExplainTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print dependencies table")
+	}
+
 	fmt.Fprintln(p.Out, "") // force a blank line after this block
 	return nil
 }

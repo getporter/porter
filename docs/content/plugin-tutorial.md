@@ -228,12 +228,6 @@ Version: 0.1.0
 Credentials:
 Name       Description                                                                         Required
 password   Password for installing the world. We recommend getting this from a secret store.   true
-
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
 ```
 
 Since the bundle needs a credential we will generate some for it using `porter

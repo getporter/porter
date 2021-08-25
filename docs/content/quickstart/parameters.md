@@ -24,17 +24,10 @@ Description: An example Porter bundle with parameters
 Version: 0.1.0
 Porter Version: v0.38.1-32-gb76f5c1c
 
-No credentials defined
-
 Parameters:
 Name   Description                           Type     Default   Required   Applies To
 name   Name of to whom we should say hello   string   llama     false      All Actions
 
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
 ```
 
 In the Parameters section of the output returned by explain, there is a single optional string parameter, name, with a default of "llama" that applies to "All Actions".
