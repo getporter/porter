@@ -103,7 +103,7 @@ func (i Installation) GetBundleReference() (cnab.OCIReference, bool, error) {
 		}
 
 		// The bundle version feature can only be used with standard naming conventions
-		// TODO(carolynvs): do we want to support desired state with non-standard snowflakes?
+		// everyone else can use the tag field if they do weird things
 		ref, err = ref.WithTag("v" + v.String())
 		if err != nil {
 			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleVersion %s", i.BundleRepository, i.BundleVersion)
@@ -111,7 +111,15 @@ func (i Installation) GetBundleReference() (cnab.OCIReference, bool, error) {
 		return ref, true, nil
 	}
 
-	return cnab.OCIReference{}, false, errors.New("Invalid installation, either BundleDigest or BundleVersion must be specified")
+	if i.BundleTag != "" {
+		ref, err = ref.WithTag(i.BundleTag)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleTag %s", i.BundleRepository, i.BundleTag)
+		}
+		return ref, true, nil
+	}
+
+	return cnab.OCIReference{}, false, errors.New("Invalid installation, either BundleDigest, BundleVersion or BundleTag must be specified")
 }
 
 func (i Installation) DefaultDocumentFilter() interface{} {
@@ -195,28 +203,8 @@ func (i *Installation) Validate() error {
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
 	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
 	// Until then, these are pretty weak checks
-
-	if i.BundleRepository != "" {
-		ref, err := cnab.ParseOCIReference(i.BundleRepository)
-		if err != nil {
-			return errors.Wrapf(err, "invalid bundleRepository %s", i.BundleRepository)
-		}
-		i.BundleRepository = ref.Repository()
-	}
-
-	if i.BundleVersion != "" {
-		v, err := semver.NewVersion(i.BundleVersion)
-		if err != nil {
-			return errors.Wrapf(err, "Invalid bundleVersion. Must be a valid v2 semver value.")
-		}
-		i.BundleVersion = v.String()
-	}
-
-	if i.BundleRepository != "" && i.BundleDigest == "" && i.BundleVersion == "" {
-		return errors.Errorf("either the bundleVersion or the bundleDigest must be provided.")
-	}
-
-	return nil
+	_, _, err := i.GetBundleReference()
+	return errors.Wrapf(err, "could not determine the fully-qualified bundle reference")
 }
 
 // TrackBundle updates the bundle that the installation is tracking.

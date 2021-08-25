@@ -21,13 +21,15 @@ func TestInstallation_GetBundleReference(t *testing.T) {
 		repo    string
 		digest  string
 		version string
+		tag string
 		wantRef string
 		wantErr string
 	}{
 		{name: "repo missing", wantRef: ""},
-		{name: "incomplete reference", repo: "getporter/porter-hello", wantErr: "either BundleDigest or BundleVersion must be specified"},
+		{name: "incomplete reference", repo: "getporter/porter-hello", wantErr: "Invalid installation"},
 		{name: "version specified", repo: "getporter/porter-hello", version: "v0.1.1", wantRef: "getporter/porter-hello:v0.1.1"},
 		{name: "digest specified", repo: "getporter/porter-hello", digest: "sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062", wantRef: "getporter/porter-hello@sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062"},
+		{name: "tag specified", repo: "getporter/porter-hello", tag: "latest", wantRef: "getporter/porter-hello:latest"},
 	}
 
 	for _, tc := range testcases {
@@ -36,6 +38,7 @@ func TestInstallation_GetBundleReference(t *testing.T) {
 				BundleRepository: tc.repo,
 				BundleDigest:     tc.digest,
 				BundleVersion:    tc.version,
+				BundleTag: tc.tag,
 			}
 
 			ref, ok, err := i.GetBundleReference()
