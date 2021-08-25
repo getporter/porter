@@ -10,7 +10,8 @@ registry: getporter
 mixins:
   - arm
   - exec
-  - terraform
+  - terraform:
+      clientVersion: 1.0.4
 
 ## This section defines what credentials are used for the bundle. In this case, we are operating
 ## against Azure, so we need some Azure Service Principal information.
@@ -94,7 +95,6 @@ install:
 
   - terraform:
       description: "Create Azure CosmosDB and Event Hubs"
-      input: false
       backendConfig:
         key: "{{ bundle.name }}.tfstate"
         storage_account_name: "{{ bundle.parameters.storage_account_name }}"
@@ -115,7 +115,6 @@ install:
 upgrade:
   - terraform:
       description: "Update Azure CosmosDB and Event Hubs"
-      input: false
       vars:
         subscription_id: "{{bundle.credentials.subscription_id}}"
         tenant_id: "{{bundle.credentials.tenant_id}}"
