@@ -24,7 +24,7 @@ jobs:
           version: "$(GOVERSION)"
       - script: go run mage.go ConfigureAgent
         displayName: "Configure Agent"
-      - bash: make build
+      - bash: mage build
         displayName: "Native Build"
       - bash: mage -v TestIntegration
         displayName: "Integration Test"

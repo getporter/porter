@@ -16,10 +16,10 @@ import (
 	"strings"
 
 	// mage:import
-	"get.porter.sh/porter/mage/releases"
+	"get.porter.sh/porter/mage/tests"
 
 	"get.porter.sh/porter/mage"
-	"get.porter.sh/porter/mage/tests"
+	"get.porter.sh/porter/mage/releases"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg/gopath"
@@ -36,6 +36,7 @@ import (
 // var Default = Build
 
 const (
+	PKG = "get.porter.sh/porter"
 	GoVersion = ">=1.16"
 	mixinsURL = "https://cdn.porter.sh/mixins/"
 )
@@ -45,6 +46,42 @@ var must = shx.CommandBuilder{StopOnError: true}
 // Check if we have the right version of Go
 func CheckGoVersion() {
 	tools.EnforceGoVersion(GoVersion)
+}
+
+// Build the porter and the exec mixin
+func Build() {
+	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin)
+	mg.Deps(GetMixins)
+}
+
+// Build the porter client and runtime
+func BuildPorter() {
+	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+// Build the exec mixin client and runtime
+func BuildExecMixin() {
+	mgx.Must(releases.BuildAll(PKG, "exec", "bin/mixins/exec"))
+}
+
+// Cross-compile porter and the exec mixin
+func XBuildAll() {
+	mg.Deps(XBuildPorter, XBuildMixins)
+}
+
+// Cross-compile porter
+func XBuildPorter() {
+	releases.XBuildAll(PKG, "porter", "bin")
+}
+
+// Cross-compile the exec mixin
+func XBuildMixins() {
+	releases.XBuildAll(PKG, "exec", "bin/mixins/exec")
+}
+
+// Generate cli documentation for the website
+func DocsGen() {
+	must.RunV("go", "run", "--tags=docs", "./cmd/porter", "docs")
 }
 
 // Cleanup workspace after building or running tests.
@@ -140,7 +177,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.SerialDeps(tests.StopDockerRegistry, tests.StartDockerRegistry)
+	mg.Deps(tests.RestartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
@@ -283,6 +320,11 @@ func PublishPorter() {
 	}
 }
 
+// Publish internal porter mixins, like exec.
+func PublishMixins() {
+	releases.PublishMixinFeed("exec")
+}
+
 // Copy the cross-compiled binaries from xbuild into bin.
 func UseXBuildBinaries() error {
 	pwd, _ := os.Getwd()
@@ -352,6 +394,7 @@ func TestIntegration() {
 	must.Command("go", "test", verbose, "-timeout=30m", run, "-tags=integration", "./...").CollapseArgs().RunV()
 }
 
+// Copy the locally built porter and exec binaries to PORTER_HOME
 func Install() {
 	porterHome := getPorterHome()
 	fmt.Println("installing Porter from bin to", porterHome)

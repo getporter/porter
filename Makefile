@@ -33,27 +33,8 @@ endif
 INT_MIXINS = exec
 
 .PHONY: build
-build: build-porter docs-gen build-mixins get-mixins
-
-build-porter:
-	go run mage.go -v BuildAll $(PKG) porter bin
-
-build-porter-client:
-	go run mage.go -v BuildClient $(PKG) porter bin
-
-build-mixins:
-	go run mage.go -v BuildAll $(PKG) exec bin/mixins/exec
-
-xbuild-all: xbuild-porter xbuild-mixins
-
-xbuild-porter:
-	go run mage.go -v XBuildAll $(PKG) porter bin
-
-xbuild-mixins:
-	go run mage.go -v XBuildAll $(PKG) exec bin/mixins/exec
-
-get-mixins:
-	go run mage.go GetMixins
+build:
+	go run mage.go -v Build
 
 test:
 	go run mage.go -v Test
@@ -70,9 +51,6 @@ test-smoke:
 .PHONY: docs
 docs:
 	hugo --source docs/ $(BASEURL_FLAG)
-
-docs-gen:
-	$(GO) run --tags=docs ./cmd/porter docs
 
 docs-preview: docs-stop-preview
 	@docker run -d -v $$PWD:/src -p 1313:1313 --name porter-docs -w /src/docs \
@@ -99,14 +77,6 @@ build-images:
 .PHONY: publish-images
 publish-images:
 	go run mage.go -v PublishImages
-
-start-local-docker-registry:
-	@docker run -d -p 5000:5000 --name registry registry:2
-
-stop-local-docker-registry:
-	@if $$(docker inspect registry > /dev/null 2>&1); then \
-		docker rm -f registry ; \
-	fi
 
 # all-bundles loops through all items under the dir provided by the first argument
 # and if the item is a sub-directory containing a porter.yaml file,

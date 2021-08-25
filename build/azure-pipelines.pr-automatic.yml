@@ -41,7 +41,7 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make build
+          - bash: mage build
             displayName: "Native Build"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Native Binaries"
@@ -58,7 +58,7 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make xbuild-all
+          - bash: mage XBuildAll
             displayName: "Cross Compile"
           - task: PublishPipelineArtifact@0
             displayName: "Publish Release Binaries"
@@ -75,7 +75,7 @@ stages:
               version: "$(GOVERSION)"
           - script: go run mage.go ConfigureAgent
             displayName: "Configure Agent"
-          - bash: make test-unit
+          - bash: mage TestUnit
             displayName: "Unit Test"
       - job: validate_examples
         displayName: "Validate Examples"
@@ -111,9 +111,9 @@ stages:
               source: current
               artifact: xbuild-bin
               path: bin
-          - script: go run mage.go UseXBuildBinaries
+          - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
-          - script: make build-images
+          - script: mage BuildImages
             displayName: "Build Docker Images"
       - job: smoke_test
         displayName: "Run smoke tests on"

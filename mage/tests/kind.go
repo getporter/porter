@@ -82,7 +82,7 @@ func setClusterNamespace(name string) {
 
 // Create a KIND cluster named porter.
 func CreateTestCluster() {
-	mg.Deps(tools.EnsureKind, StartDockerRegistry)
+	mg.Deps(tools.EnsureKind, RestartDockerRegistry)
 
 	// Determine host ip to populate kind config api server details
 	// https://kind.sigs.k8s.io/docs/user/configuration/#api-server
@@ -227,6 +227,13 @@ func StopDockerRegistry() error {
 		return removeContainer(getRegistryName())
 	}
 	return nil
+}
+
+func RestartDockerRegistry() error {
+	if err := StopDockerRegistry(); err!=nil{
+		return err
+	}
+	return StartDockerRegistry()
 }
 
 func isContainerRunning(name string) bool {

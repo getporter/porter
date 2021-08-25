@@ -109,13 +109,13 @@ example output
 We recommend running the following every time:
 
 ```
-make build test-unit
+mage Build TestUnit
 ```
 
 If your test modified anything related to running a bundle, also run:
 
 ```
-make test-integration
+mage TestIntegration
 ```
 
 If you want to know _all_ the targets that the CI runs, look at
@@ -251,7 +251,7 @@ Here are the key steps, if you run into trouble, the tutorial has more details:
 
 1. Install Go version 1.16 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
-1. Run `make build install` from within the newly cloned repository.
+1. Run `mage Build Install` from within the newly cloned repository.
 
 If you are planning on contributing back to the project, you'll need to
 [fork](https://guides.github.com/activities/forking/) and clone your fork. If
@@ -273,34 +273,31 @@ Mage targets are not case-sensitive, but in our docs we use camel case to make
 it easier to read. You can run either `mage TestSmoke` or `mage testsmoke` for
 example.
 
+* **Build** builds all binaries, porter and internal mixins.
+  * **BuildClient** just builds the porter client for your operating system.
+    It does not build the porter-runtime binary. Useful when you just want to do a
+    build and don't remember the proper way to call `go build` yourself.
+  * **BuildPorter**     builds both the porter client and runtime.
 * **Clean** removes artifacts from previous builds and test runs.
-* **TestUnit** runs the unit tests.
-* **TestSmoke** runs a small suite of tests using the Porter CLI to validate
-  that Porter is (mostly) working.
-* **TestIntegration** runs our integration tests, which run the bundles
-  against a test KIND cluster.
 * **UpdateTestfiles** updates the "golden" test files to match the latest test output.
   This is mostly useful for when you change the schema of porter.yaml which will
   break TestPorter_PrintManifestSchema. Run this target to fix it.
   Learn more about [golden files].
 * **Test** runs all the tests.
+  * **TestUnit** runs the unit tests
+  * **TestSmoke** runs a small suite of tests using the Porter CLI to validate
+    that Porter is (mostly) working.
+  * **TestIntegration** runs our integration tests, which run the bundles
+    against a test KIND cluster.
+* **Install** installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
 ### Make Targets
 
 Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
-`make build`.
+`make setup-dco`.
 
-* `build` builds all binaries, porter and internal mixins.
-* `build-porter-client` just builds the porter client for your operating system.
-  It does not build the porter-runtime binary. Useful when you just want to do a
-  build and don't remember the proper way to call `go build` yourself.
-* `build-porter` builds both the porter client and runtime.
-* `install-porter` installs porter from source into your home directory **$(HOME)/.porter**.
-* `install-mixins` installs the mixins from source into **$(HOME)/.porter/**.
-  This is useful when you are working on the exec or kubernetes mixin.
-* `install` installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
 * `docs-preview` hosts the docs site. See [Preview
   Documentation](#preview-documentation).
 * `setup-dco` installs a git commit hook that automatically signsoff your commit
@@ -309,12 +306,12 @@ Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
 ## Test Porter
 
 We have a few different kinds of tests in Porter. You can run all tests types
-with `make test`.
+with `mage test`.
 
 ### Unit Tests
  
 ```
-make test-unit
+mage TestUnit
 ```
 
 Should not rely on Docker, or try to really run bundles without key components
@@ -326,7 +323,7 @@ Fast! 🏎💨 This takes about 15s - 3 minutes, depending on your computer hard
 ### Integration Tests
 
 ```
-make test-integration
+mage TestIntegration
 ```
 
 These tests run parts of Porter, using the Porter structs instead of the cli.
@@ -343,7 +340,7 @@ when you push commits to your pull request instead.
 When I am troubleshooting an integration test, I will run just the single test
 locally by using `go test -run TESTNAME ./...`. If the test needs infrastructure, 
 we have scripts that you can use, like `mage StartDockerRegistry` or 
-`make -f Makefile.kind install-kind create-kind-cluster`.
+`mage EnsureTestCluster`.
 
 Slow! 🐢 This takes between 8-16 minutes, depending on your computer hardware.
 
@@ -360,7 +357,7 @@ Short! We want this to always be something you can run in under 3 minutes.
 
 ## Install mixins
 
-When you run `make build`, the canary\* build of mixins are automatically
+When you run `mage build`, the canary\* build of mixins are automatically
 installed into your bin directory in the root of the repository. You can use
 `porter mixin install NAME` to install the latest released version of a mixin.
 
@@ -443,8 +440,8 @@ the future. If you don't see your post, change the date to today's date.
 
 Our commands are documented at <https://porter.sh/cli> and that documentation is
 generated by our CLI. You should regenerate that documentation when you change
-any files in **cmd/porter** by running `make docs-gen` which is run every time
-you run `make build`.
+any files in **cmd/porter** by running `mage DocsGen` which is run every time
+you run `mage build`.
 
 # Code structure and practices
 
