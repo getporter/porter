@@ -15,3 +15,4 @@ No custom actions defined
 
 No dependencies defined
 
+This bundle uses the following tools: helm, terraform.

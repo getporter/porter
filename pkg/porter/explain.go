@@ -31,6 +31,7 @@ type PrintableBundle struct {
 	Outputs       []PrintableOutput     `json:"outputs,omitempty" yaml:"outputs,omitempty"`
 	Actions       []PrintableAction     `json:"customActions,omitempty" yaml:"customActions,omitempty"`
 	Dependencies  []PrintableDependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	Mixins        []string              `json:"mixins" yaml:"mixins"`
 }
 
 type PrintableCredential struct {
@@ -184,25 +185,35 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		stamp = configadapter.Stamp{}
 	}
 
+	solver := &cnab.DependencySolver{}
+	deps, err := solver.ResolveDependencies(bun)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error resolving bundle dependencies")
+	}
+
 	pb := PrintableBundle{
 		Name:          bun.Name,
 		Description:   bun.Description,
 		Version:       bun.Version,
 		PorterVersion: stamp.Version,
+		Actions:       make([]PrintableAction, 0, len(bun.Actions)),
+		Credentials:   make([]PrintableCredential, 0, len(bun.Credentials)),
+		Parameters:    make([]PrintableParameter, 0, len(bun.Parameters)),
+		Outputs:       make([]PrintableOutput, 0, len(bun.Outputs)),
+		Dependencies:  make([]PrintableDependency, 0, len(deps)),
+		Mixins:        make([]string, 0, len(stamp.Mixins)),
 	}
 
-	actions := make([]PrintableAction, 0, len(bun.Actions))
 	for a, v := range bun.Actions {
 		pa := PrintableAction{}
 		pa.Name = a
 		pa.Description = v.Description
 		pa.Modifies = v.Modifies
 		pa.Stateless = v.Stateless
-		actions = append(actions, pa)
+		pb.Actions = append(pb.Actions, pa)
 	}
-	sort.Sort(SortPrintableAction(actions))
+	sort.Sort(SortPrintableAction(pb.Actions))
 
-	creds := make([]PrintableCredential, 0, len(bun.Credentials))
 	for c, v := range bun.Credentials {
 		pc := PrintableCredential{}
 		pc.Name = c
@@ -211,12 +222,11 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		pc.ApplyTo = generateApplyToString(v.ApplyTo)
 
 		if shouldIncludeInExplainOutput(&v, action) {
-			creds = append(creds, pc)
+			pb.Credentials = append(pb.Credentials, pc)
 		}
 	}
-	sort.Sort(SortPrintableCredential(creds))
+	sort.Sort(SortPrintableCredential(pb.Credentials))
 
-	params := make([]PrintableParameter, 0, len(bun.Parameters))
 	for p, v := range bun.Parameters {
 		if bun.IsInternalParameter(p) {
 			continue
@@ -237,12 +247,11 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		pp.Description = v.Description
 
 		if shouldIncludeInExplainOutput(&v, action) {
-			params = append(params, pp)
+			pb.Parameters = append(pb.Parameters, pp)
 		}
 	}
-	sort.Sort(SortPrintableParameter(params))
+	sort.Sort(SortPrintableParameter(pb.Parameters))
 
-	outputs := make([]PrintableOutput, 0, len(bun.Outputs))
 	for o, v := range bun.Outputs {
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
@@ -258,31 +267,25 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		po.Description = v.Description
 
 		if shouldIncludeInExplainOutput(&v, action) {
-			outputs = append(outputs, po)
+			pb.Outputs = append(pb.Outputs, po)
 		}
 	}
-	sort.Sort(SortPrintableOutput(outputs))
+	sort.Sort(SortPrintableOutput(pb.Outputs))
 
-	solver := &cnab.DependencySolver{}
-	deps, err := solver.ResolveDependencies(bun)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error executing dependencies")
-	}
-
-	dependencies := make([]PrintableDependency, 0, len(deps))
 	for _, dep := range deps {
 		pd := PrintableDependency{}
 		pd.Alias = dep.Alias
 		pd.Reference = dep.Reference
 
-		dependencies = append(dependencies, pd)
+		pb.Dependencies = append(pb.Dependencies, pd)
 	}
+	// dependencies are sorted by their dependency sequence already
 
-	pb.Actions = actions
-	pb.Credentials = creds
-	pb.Outputs = outputs
-	pb.Parameters = params
-	pb.Dependencies = dependencies
+	for mixin := range stamp.Mixins {
+		pb.Mixins = append(pb.Mixins, mixin)
+	}
+	sort.Strings(pb.Mixins)
+
 	return &pb, nil
 }
 
@@ -318,6 +321,8 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	p.printOutputsExplainBlock(bun)
 	p.printActionsExplainBlock(bun)
 	p.printDependenciesExplainBlock(bun)
+
+	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
 	return nil
 }
 
