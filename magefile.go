@@ -140,7 +140,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.Deps(tests.StartDockerRegistry)
+	mg.SerialDeps(tests.StopDockerRegistry, tests.StartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
