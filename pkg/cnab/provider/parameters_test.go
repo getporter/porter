@@ -1,7 +1,6 @@
 package cnabprovider
 
 import (
-	"encoding/json"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -242,7 +241,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
@@ -269,7 +268,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		}
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 			Params:       overrides,
 		}
@@ -298,7 +297,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
@@ -330,7 +329,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 			Params:       overrides,
 		}
@@ -377,7 +376,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 		}
 		params, err := r.loadParameters(b, args)
@@ -410,7 +409,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestClaims.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
 
 		args := ActionArguments{
-			Installation: "mybun",
+			Installation: claims.Installation{Name: "mybun"},
 			Action:       cnab.ActionUpgrade,
 			Params:       map[string]string{"foo": "foo_override"},
 		}
@@ -496,7 +495,7 @@ func Test_Paramapalooza(t *testing.T) {
 			actions := []string{"install", "upgrade", "uninstall", "zombies"}
 			for _, action := range actions {
 				t.Run(action, func(t *testing.T) {
-					//t.Parallel()
+					t.Parallel()
 					tc := tc
 
 					r := NewTestRuntime(t)
@@ -504,7 +503,7 @@ func Test_Paramapalooza(t *testing.T) {
 
 					bun := bundle.Bundle{
 						Name:          "mybuns",
-						Version:       "v1.0.0",
+						Version:       "1.0.0",
 						SchemaVersion: "v1.0.0",
 						Actions: map[string]bundle.Action{
 							"zombies": {
@@ -546,8 +545,9 @@ func Test_Paramapalooza(t *testing.T) {
 					}
 
 					args := ActionArguments{
-						Action:       action,
-						Installation: "test",
+						Action:          action,
+						Installation:    claims.Installation{Name: "test"},
+						BundleReference: cnab.BundleReference{Definition: bun},
 					}
 					// If param is provided (via --param/--param-file)
 					// it will be attached to args
@@ -555,27 +555,6 @@ func Test_Paramapalooza(t *testing.T) {
 						args.Params = map[string]string{
 							"my-param": "my-param-value",
 						}
-					}
-
-					// If action is install, no claim is expected to exist
-					// so we write a bundle and pull it in via ActionArguments
-					if action == "install" {
-						bytes, err := json.Marshal(bun)
-						require.NoError(t, err)
-
-						err = r.FileSystem.WriteFile("bundle.json", bytes, 0644)
-						require.NoError(t, err)
-
-						args.BundlePath = "bundle.json"
-					} else {
-						// For all other actions, a claim is expected to exist
-						// so we create one here and add the bundle to the claim
-						i := claims.NewInstallation("", "test")
-						require.NoError(t, r.claims.InsertInstallation(i), "error creating existing testing installation")
-						c := i.NewRun(cnab.ActionInstall)
-						c.Bundle = bun
-						require.NoError(t, r.claims.InsertRun(c), "error adding existing test run")
-						require.NoError(t, r.claims.InsertResult(c.NewResult(cnab.StatusSucceeded)), "error setting existing run status")
 					}
 
 					err := r.Execute(args)
@@ -635,7 +614,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 
 	args := ActionArguments{
-		Installation: "mybun",
+		Installation: claims.Installation{Name: "mybun"},
 	}
 	got, err := r.resolveParameterSources(bun, args)
 	require.NoError(t, err, "resolveParameterSources failed")

@@ -2,19 +2,24 @@ package porter
 
 import (
 	"get.porter.sh/porter/pkg/cache"
-	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/pkg/errors"
 )
 
 type BundlePullOptions struct {
 	Reference        string
+	ref              cnab.OCIReference
 	InsecureRegistry bool
 	Force            bool
 }
 
+func (b *BundlePullOptions) Validate() error {
+	return b.validateReference()
+}
 
-func (b BundlePullOptions) validateReference() error {
-	_, err := cnabtooci.ParseOCIReference(b.Reference)
+func (b *BundlePullOptions) validateReference() error {
+	var err error
+	b.ref, err = cnab.ParseOCIReference(b.Reference)
 	if err != nil {
 		return errors.Wrap(err, "invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag")
 	}

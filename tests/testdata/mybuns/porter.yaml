@@ -18,10 +18,17 @@ parameters:
     minimum: 1
     maximum: 11
     default: 5
+  - name: chaos_monkey
+    description: "Set to true to make the bundle fail"
+    type: boolean
+    default: false
   - name: magic_file
     description: "Pay no attention to the generated magic file"
     type: file
     path: /cnab/app/magic
+    applyTo:
+      - upgrade
+      - uninstall
     source:
       output: magic_file
 
@@ -32,8 +39,25 @@ outputs:
     applyTo:
       - install
 
+dependencies:
+  required:
+    - name: db
+      reference: "localhost:5000/mydb:v0.1.0"
+      parameters:
+        database: bigdb
+
 mixins:
   - exec
+
+customActions:
+  dry-run:
+    description: "Make sure it will work before you run it"
+    stateless: true
+    modifies: false
+  status:
+    description: "Print the installation status"
+    stateless: false
+    modifies: false
 
 install:
   - exec:
@@ -41,12 +65,39 @@ install:
       command: ./helpers.sh
       arguments:
         - makeMagic
-        - "{{ bundle.credentials.username }} is a unicorn"
+        - "'{{ bundle.credentials.username }} is a unicorn'"
   - exec:
       description: "install"
       command: ./helpers.sh
       arguments:
         - install
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"
+
+dry-run:
+  - exec:
+      description: "Check some things"
+      command: echo
+      arguments:
+        - "All clear!"
+
+status:
+  - exec:
+      description: "Print status"
+      command: echo
+      arguments:
+        - "LGTM"
+
+boom:
+  - exec:
+      description: "modify the bundle in unknowable ways"
+      command: echo
+      arguments:
+        - "YOLO"
 
 upgrade:
   - exec:
@@ -59,6 +110,12 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"
 
 uninstall:
   - exec:
@@ -71,3 +128,9 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
+  - exec:
+      description: "roll the dice with your chaos monkey"
+      command: ./helpers.sh
+      arguments:
+        - chaos_monkey
+        - "{{ bundle.parameters.chaos_monkey }}"

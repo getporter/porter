@@ -30,5 +30,13 @@ uninstall() {
   fi
 }
 
+chaos_monkey() {
+  if [[ "$1" == "true" ]]; then
+    echo "a chaos monkey appears. you have died"
+    exit 1
+  fi
+
+}
+
 # Call the requested function and pass the arguments as-is
 "$@"

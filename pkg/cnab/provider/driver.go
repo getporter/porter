@@ -1,8 +1,6 @@
 package cnabprovider
 
 import (
-	"os"
-
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
@@ -47,11 +45,6 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 		return nil, err
 	}
 
-	if driverName == "docker" {
-		// Always ensure that the local docker cache has the repository digests for the invocation image
-		os.Setenv("PULL_ALWAYS", "1")
-	}
-
 	if configurable, ok := driverImpl.(driver.Configurable); ok {
 		driverCfg := make(map[string]string)
 		// Load any driver-specific config out of the environment
@@ -74,16 +67,9 @@ func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.D
 		return nil, errors.Errorf("allow-docker-host-access was specified but could not detect a local docker daemon running by checking for %s", dockerSock)
 	}
 
-	d, err := drivers.LookupDriver(r.Context, "docker")
-	if err != nil {
-		return nil, err
-	}
+	d := &docker.Driver{}
+	d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
 
-	dockerDriver, ok := d.(*docker.Driver)
-	if !ok {
-		return nil, errors.New("could not create a Docker driver")
-	}
-	dockerDriver.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
 		// Equivalent of using: --privileged
 		// Required for DinD, or "Docker-in-Docker"
 		hostCfg.Privileged = config.Privileged
@@ -103,5 +89,5 @@ func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.D
 
 		return nil
 	})
-	return d, nil
+	return driver.Driver(d), nil
 }

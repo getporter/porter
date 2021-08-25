@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -179,7 +179,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 	err = p.updateBundleWithNewImage(bun, newInvImgName, digest, 0)
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "docker.io/myneworg/myinvimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
+	require.Equal(t, "myneworg/myinvimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
 	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Digest)
 
 	// update image
@@ -188,7 +188,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 	err = p.updateBundleWithNewImage(bun, newImgName, digest, "myimg")
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "docker.io/myneworg/myimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
+	require.Equal(t, "myneworg/myimg@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
 	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Digest)
 }
 
@@ -196,15 +196,17 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	bun := bundle.Bundle{Name: "myreg/mybuns"}
-	tag := "myreg/mybuns"
+	bundleRef := cnab.BundleReference{
+		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
+		Definition: bundle.Bundle{Name: "myreg/mybuns"},
+	}
 
 	// No-Op; bundle does not yet exist in cache
-	err := p.refreshCachedBundle(bun, tag, nil)
+	err := p.refreshCachedBundle(bundleRef)
 	require.NoError(t, err, "should have not errored out if bundle does not yet exist in cache")
 
 	// Save bundle in cache
-	cachedBundle, err := p.Cache.StoreBundle(tag, bun, nil)
+	cachedBundle, err := p.Cache.StoreBundle(bundleRef)
 	require.NoError(t, err, "should have successfully stored bundle")
 
 	// Get file mod time
@@ -213,7 +215,7 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 	origBunPathTime := file.ModTime()
 
 	// Should refresh cache
-	err = p.refreshCachedBundle(bun, tag, nil)
+	err = p.refreshCachedBundle(bundleRef)
 	require.NoError(t, err, "should have successfully updated the cache")
 
 	// Get file mod time
@@ -230,19 +232,21 @@ func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	bun := bundle.Bundle{Name: "myreg/mybuns"}
-	tag := "myreg/mybuns"
+	bundleRef := cnab.BundleReference{
+		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
+		Definition: bundle.Bundle{Name: "myreg/mybuns"},
+	}
 
-	p.TestCache.FindBundleMock = func(s string) (cachedBundle cache.CachedBundle, found bool, err error) {
+	p.TestCache.FindBundleMock = func(ref cnab.OCIReference) (cachedBundle cache.CachedBundle, found bool, err error) {
 		// force the bundle to be found
 		return cache.CachedBundle{}, true, nil
 	}
-	p.TestCache.StoreBundleMock = func(s string, b bundle.Bundle, relocationMap *relocation.ImageRelocationMap) (cachedBundle cache.CachedBundle, err error) {
+	p.TestCache.StoreBundleMock = func(bundleRef cnab.BundleReference) (cachedBundle cache.CachedBundle, err error) {
 		// sabotage the bundle refresh
 		return cache.CachedBundle{}, errors.New("error trying to store bundle")
 	}
 
-	err := p.refreshCachedBundle(bun, tag, nil)
+	err := p.refreshCachedBundle(bundleRef)
 	require.NoError(t, err, "should have not errored out even if cache.StoreBundle does")
 
 	gotStderr := p.TestConfig.TestContext.GetError()

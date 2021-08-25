@@ -4,11 +4,14 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/stretchr/testify/require"
 )
 
 const debugDriver = "debug"
@@ -53,6 +56,12 @@ func (t *TestRuntime) Teardown() error {
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
 	return t.Runtime.LoadBundle(bundleFile)
+}
+
+func (t *TestRuntime) LoadTestBundle(bundleFile string) bundle.Bundle {
+	bun, err := cnab.LoadBundle(context.New(), bundleFile)
+	require.NoError(t.TestConfig.TestContext.T, err)
+	return bun
 }
 
 func (t *TestRuntime) Execute(args ActionArguments) error {

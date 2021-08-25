@@ -28,7 +28,7 @@ func TestPorter_Build(t *testing.T) {
 	junkExists, _ := p.FileSystem.DirExists(junkDir)
 	assert.True(t, junkExists, "failed to create junk files for the test")
 
-	err = p.LoadManifest()
+	err = p.LoadManifestFrom(config.Name)
 	require.NoError(t, err)
 
 	opts := BuildOptions{}
@@ -127,7 +127,7 @@ func TestPorter_paramRequired(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
-	err := p.LoadManifest()
+	err := p.LoadManifestFrom(config.Name)
 	require.NoError(t, err)
 
 	err = p.buildBundle("foo", "digest")

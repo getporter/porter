@@ -38,22 +38,26 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, claims.Run, error) {
+func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, *claims.Run, error) {
 	err := p.applyDefaultOptions(&opts.sharedOptions)
 	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
+		return claims.Installation{}, nil, err
 	}
 
 	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
+		return claims.Installation{}, nil, err
 	}
 
-	run, err := p.Claims.GetRun(installation.Status.RunID)
-	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
+	if installation.Status.RunID != "" {
+		run, err := p.Claims.GetRun(installation.Status.RunID)
+		if err != nil {
+			return claims.Installation{}, nil, err
+		}
+		return installation, &run, nil
 	}
-	return installation, run, nil
+
+	return installation, nil, nil
 }
 
 // ShowInstallation shows a bundle installation, along with any
@@ -76,7 +80,7 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			Now: func() time.Time { return now },
 		}
 
-		displayInstallation := NewDisplayInstallation(installation, &run)
+		displayInstallation := NewDisplayInstallation(installation, run)
 
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
@@ -110,11 +114,13 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			}
 		}
 
-		// Print the status
-		fmt.Fprintln(p.Out)
-		fmt.Fprintln(p.Out, "Status:")
-		fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Action)
-		fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status)
+		// Print the status (it may not be present if it's newly created using apply)
+		if installation.Status != (claims.InstallationStatus{}) {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Status:")
+			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Action)
+			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status)
+		}
 
 		return nil
 	default:

@@ -52,21 +52,27 @@ func NewInstallOptions() InstallOptions {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(opts InstallOptions) error {
+	// TODO(carolynvs): this is being called twice
+	_, err := p.resolveBundleReference(opts.BundleActionOptions)
+
 	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
-		if i.Status.InstallationCompleted {
-			return errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade.")
+		if i.Status.InstallationCompleted && !opts.Force {
+			return errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade. You can skip this check by using the --force flag.")
 		}
 	} else if errors.Is(err, storage.ErrNotFound{}) {
 		// Create the installation record
 		i = claims.NewInstallation(opts.Namespace, opts.Name)
-		i.Labels = opts.ParseLabels()
-		err = p.Claims.InsertInstallation(i)
-		if err != nil {
-			return errors.Wrap(err, "error saving installation record")
-		}
+	} else {
+		return errors.Wrapf(err, "could not retrieve the installation record")
 	}
 
-	return p.ExecuteAction(opts)
+	i.Labels = opts.ParseLabels()
+	err = p.Claims.UpsertInstallation(i)
+	if err != nil {
+		return errors.Wrap(err, "error saving installation record")
+	}
+
+	return p.ExecuteAction(i, opts)
 }

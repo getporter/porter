@@ -3,23 +3,16 @@ package porter
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/claims"
 )
 
 // ExecuteAction runs the specified action. Supported actions are: install, upgrade, invoke.
 // The uninstall action works in reverse so it's implemented separately.
-func (p *Porter) ExecuteAction(action BundleAction) error {
+func (p *Porter) ExecuteAction(installation claims.Installation, action BundleAction) error {
 	actionOpts := action.GetOptions()
 
-	err := p.prepullBundleByReference(actionOpts)
-	if err != nil {
-		return errors.Wrap(err, "unable to pull bundle before installation")
-	}
-
-	err = p.ensureLocalBundleIsUpToDate(actionOpts.bundleFileOptions)
-	if err != nil {
-		return err
-	}
+	// TODO(carolynvs): this is being called twice
+	_, err := p.resolveBundleReference(actionOpts)
 
 	deperator := newDependencyExecutioner(p, action.GetAction())
 	err = deperator.Prepare(action)
@@ -32,7 +25,7 @@ func (p *Porter) ExecuteAction(action BundleAction) error {
 		return err
 	}
 
-	actionArgs, err := p.BuildActionArgs(action)
+	actionArgs, err := p.BuildActionArgs(installation, action)
 	if err != nil {
 		return err
 	}

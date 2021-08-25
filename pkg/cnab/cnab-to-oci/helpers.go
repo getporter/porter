@@ -1,39 +1,39 @@
 package cnabtooci
 
 import (
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-to-oci/relocation"
+	"get.porter.sh/porter/pkg/cnab"
+	"github.com/opencontainers/go-digest"
 )
 
 var _ RegistryProvider = &TestRegistry{}
 
 type TestRegistry struct {
-	MockPullBundle          func(tag string, insecureRegistry bool) (bun bundle.Bundle, reloMap *relocation.ImageRelocationMap, err error)
-	MockPushBundle          func(bun bundle.Bundle, tag string, insecureRegistry bool) (reloMap *relocation.ImageRelocationMap, err error)
-	MockPushInvocationImage func(invocationImage string) (imageDigest string, err error)
+	MockPullBundle          func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error)
+	MockPushBundle          func(bundleRef cnab.BundleReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error)
+	MockPushInvocationImage func(invocationImage string) (imageDigest digest.Digest, err error)
 }
 
 func NewTestRegistry() *TestRegistry {
 	return &TestRegistry{}
 }
 
-func (t TestRegistry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle, *relocation.ImageRelocationMap, error) {
+func (t TestRegistry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
 	if t.MockPullBundle != nil {
-		return t.MockPullBundle(tag, insecureRegistry)
+		return t.MockPullBundle(ref, insecureRegistry)
 	}
 
-	return bundle.Bundle{}, nil, nil
+	return cnab.BundleReference{Reference: ref}, nil
 }
 
-func (t TestRegistry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
+func (t TestRegistry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry bool) (cnab.BundleReference, error) {
 	if t.MockPushBundle != nil {
-		return t.MockPushBundle(bun, tag, insecureRegistry)
+		return t.MockPushBundle(bundleRef, insecureRegistry)
 	}
 
-	return nil, nil
+	return bundleRef, nil
 }
 
-func (t TestRegistry) PushInvocationImage(invocationImage string) (string, error) {
+func (t TestRegistry) PushInvocationImage(invocationImage string) (digest.Digest, error) {
 	if t.MockPushInvocationImage != nil {
 		return t.MockPushInvocationImage(invocationImage)
 	}

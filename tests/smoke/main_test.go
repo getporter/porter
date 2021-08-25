@@ -1,6 +1,9 @@
+// +build smoke
+
 package smoke
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,6 +19,8 @@ import (
 )
 
 type Test struct {
+	originalPwd string
+
 	// TestDir is the temp directory created for the test.
 	TestDir string
 
@@ -33,14 +38,25 @@ type Test struct {
 	T *testing.T
 }
 
+// Make sure the porter binary that we are using is okay
+func TestPorterBinary(t *testing.T) {
+	test, err := NewTest(t)
+	defer test.Teardown()
+	require.NoError(t, err)
+
+	test.RequirePorter("help")
+	test.RequirePorter("version")
+}
+
 // NewTest sets up for a smoke test.
 //
 // Always defer Test.Teardown(), even when an error is returned.
 func NewTest(t *testing.T) (Test, error) {
+	pwd, _ := os.Getwd()
 	os.Setenv(mg.VerboseEnv, "true")
 
 	var err error
-	test := &Test{T: t}
+	test := &Test{T: t, originalPwd: pwd}
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
@@ -53,16 +69,6 @@ func NewTest(t *testing.T) (Test, error) {
 	}
 
 	os.Setenv("PORTER_HOME", test.PorterHomeDir)
-
-	err = test.PorterE("help")
-	if err != nil {
-		return *test, err
-	}
-
-	err = test.PorterE("version")
-	if err != nil {
-		return *test, err
-	}
 
 	return *test, test.startMongo()
 }
@@ -86,10 +92,15 @@ func (t Test) RequirePorter(args ...string) {
 	require.NoError(t.T, err)
 }
 
-// Run a porter command, printing stderr when the command fails.
-func (t Test) PorterE(args ...string) error {
-	err := t.Porter(args...).RunE()
-	return errors.Wrapf(err, "error running porter %s", args)
+// Run a porter command returning stderr when it fails
+func (t Test) RunPorter(args ...string) (string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	_, _, err := t.Porter(args...).Stdout(&stdout).Stderr(&stderr).Exec()
+	if err != nil {
+		return stdout.String(), errors.New(stderr.String())
+	}
+	return stdout.String(), nil
 }
 
 // Build a porter command, ready to be executed or further customized.
@@ -105,23 +116,23 @@ func (t Test) Teardown() {
 
 	t.T.Log("Removing temp test directory")
 	os.RemoveAll(t.TestDir)
+
+	// Reset the current directory for the next test
+	os.Chdir(t.originalPwd)
 }
 
 // Create a test PORTER_HOME directory.
 func (t *Test) createPorterHome() error {
-	binDir, err := filepath.Abs("../../bin")
-	if err != nil {
-		return errors.Wrap(err, "could not find the absolute path to bin/")
-	}
+	cxt := context.NewTestContext(t.T)
+	cxt.UseFilesystem()
+	t.RepoRoot = cxt.FindRepoRoot()
 
+	var err error
+	binDir := filepath.Join(t.RepoRoot, "bin")
 	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
 	if err != nil {
 		return errors.Wrap(err, "could not create temp PORTER_HOME directory")
 	}
-
-	cxt := context.NewTestContext(t.T)
-	cxt.UseFilesystem()
-	t.RepoRoot = cxt.FindRepoRoot()
 
 	ext := ""
 	if runtime.GOOS == "windows" {

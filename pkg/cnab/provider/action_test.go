@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
 
@@ -19,11 +20,8 @@ func TestAddRelocation(t *testing.T) {
 	d := NewTestRuntime(t)
 	defer d.Teardown()
 
-	args := ActionArguments{
-		RelocationMapping: "/cnab/app/relocation-mapping.json",
-	}
-
-	d.TestConfig.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
+	var args ActionArguments
+	require.NoError(t, json.Unmarshal(data, &args.BundleReference.RelocationMap))
 
 	opConf := d.AddRelocation(args)
 

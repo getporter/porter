@@ -140,7 +140,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.Deps(tests.StartDockerRegistry)
+	mg.SerialDeps(tests.StopDockerRegistry, tests.StartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
@@ -148,7 +148,8 @@ func TestSmoke() error {
 		v = "-v"
 	}
 
-	return shx.Command("go", "test", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
+	// Adding -count to prevent go from caching the test results.
+	return shx.Command("go", "test", "-count=1", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
 }
 
 func getRegistry() string {
