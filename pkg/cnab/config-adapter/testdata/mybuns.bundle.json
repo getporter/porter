@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "v1.0.0",
+  "name": "mybuns",
+  "version": "0.1.2",
+  "description": "A very thorough test bundle",
+  "invocationImages": [
+    {
+      "imageType": "docker",
+      "image": "localhost:5000/mybuns-installer:v0.1.2"
+    }
+  ],
+  "actions": {
+    "boom": {
+      "modifies": true,
+      "description": "boom"
+    },
+    "dry-run": {
+      "stateless": true,
+      "description": "Make sure it will work before you run it"
+    },
+    "status": {
+      "description": "Print the installation status"
+    }
+  },
+  "parameters": {
+    "cfg": {
+      "definition": "cfg-parameter",
+      "description": "A json config file",
+      "destination": {
+        "path": "/cnab/app/buncfg.json"
+      }
+    },
+    "chaos_monkey": {
+      "definition": "chaos_monkey-parameter",
+      "description": "Set to true to make the bundle fail",
+      "destination": {
+        "env": "CHAOS_MONKEY"
+      }
+    },
+    "log_level": {
+      "definition": "log_level-parameter",
+      "description": "How unhelpful would you like the logs to be?",
+      "destination": {
+        "env": "LOG_LEVEL"
+      }
+    },
+    "porter-debug": {
+      "definition": "porter-debug-parameter",
+      "description": "Print debug information from Porter when executing the bundle",
+      "destination": {
+        "env": "PORTER_DEBUG"
+      }
+    },
+    "porter-state": {
+      "definition": "porter-state",
+      "description": "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+      "destination": {
+        "path": "/porter/state.tgz"
+      }
+    }
+  },
+  "credentials": {
+    "username": {
+      "env": "USERNAME",
+      "description": "The name you want on the audit log",
+      "required": true
+    }
+  },
+  "outputs": {
+    "mylogs": {
+      "definition": "mylogs-output",
+      "applyTo": [
+        "install",
+        "upgrade"
+      ],
+      "path": "/cnab/app/outputs/mylogs"
+    },
+    "porter-state": {
+      "definition": "porter-state",
+      "description": "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+      "path": "/cnab/app/outputs/porter-state"
+    }
+  },
+  "definitions": {
+    "cfg-parameter": {
+      "contentEncoding": "base64",
+      "default": "",
+      "description": "A json config file",
+      "type": "string"
+    },
+    "chaos_monkey-parameter": {
+      "default": false,
+      "description": "Set to true to make the bundle fail",
+      "type": "boolean"
+    },
+    "log_level-parameter": {
+      "default": 5,
+      "description": "How unhelpful would you like the logs to be?",
+      "maximum": 11,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "mylogs-output": {
+      "type": "string"
+    },
+    "porter-debug-parameter": {
+      "$comment": "porter-internal",
+      "$id": "https://porter.sh/generated-bundle/#porter-debug",
+      "default": false,
+      "description": "Print debug information from Porter when executing the bundle",
+      "type": "boolean"
+    },
+    "porter-state": {
+      "$comment": "porter-internal",
+      "$id": "https://porter.sh/generated-bundle/#porter-state",
+      "contentEncoding": "base64",
+      "description": "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+      "type": "string"
+    }
+  },
+  "requiredExtensions": [
+    "sh.porter.file-parameters",
+    "io.cnab.parameter-sources"
+  ],
+  "custom": {
+    "io.cnab.parameter-sources": {
+      "porter-state": {
+        "priority": [
+          "output"
+        ],
+        "sources": {
+          "output": {
+            "name": "porter-state"
+          }
+        }
+      }
+    },
+    "sh.porter": {
+      "manifestDigest": "",
+      "mixins": {
+        "exec": {}
+      },
+      "manifest": "IyBUaGlzIGlzIGEgdGVzdCBidW5kbGUgdGhhdCBtYWtlcyBubyBsb2dpY2FsIHNlbnNlLCBidXQgaXQgZG9lcyBleGVyY2lzZSBsb3RzIG9mIGRpZmZlcmVudCBidW5kbGUgZmVhdHVyZXMKCm5hbWU6IG15YnVucwp2ZXJzaW9uOiAwLjEuMgpkZXNjcmlwdGlvbjogIkEgdmVyeSB0aG9yb3VnaCB0ZXN0IGJ1bmRsZSIKcmVnaXN0cnk6IGxvY2FsaG9zdDo1MDAwCmRvY2tlcmZpbGU6IERvY2tlcmZpbGUudG1wbAoKY3JlZGVudGlhbHM6CiAgLSBuYW1lOiB1c2VybmFtZQogICAgZGVzY3JpcHRpb246ICJUaGUgbmFtZSB5b3Ugd2FudCBvbiB0aGUgYXVkaXQgbG9nIgogICAgZW52OiBVU0VSTkFNRQoKcGFyYW1ldGVyczoKICAtIG5hbWU6IGxvZ19sZXZlbAogICAgZGVzY3JpcHRpb246ICJIb3cgdW5oZWxwZnVsIHdvdWxkIHlvdSBsaWtlIHRoZSBsb2dzIHRvIGJlPyIKICAgIHR5cGU6IGludGVnZXIKICAgIG1pbmltdW06IDEKICAgIG1heGltdW06IDExCiAgICBkZWZhdWx0OiA1CiAgLSBuYW1lOiBjaGFvc19tb25rZXkKICAgIGRlc2NyaXB0aW9uOiAiU2V0IHRvIHRydWUgdG8gbWFrZSB0aGUgYnVuZGxlIGZhaWwiCiAgICB0eXBlOiBib29sZWFuCiAgICBkZWZhdWx0OiBmYWxzZQogIC0gbmFtZTogY2ZnCiAgICBkZXNjcmlwdGlvbjogIkEganNvbiBjb25maWcgZmlsZSIKICAgIHR5cGU6IGZpbGUKICAgIGRlZmF1bHQ6ICcnCiAgICBwYXRoOiBidW5jZmcuanNvbgoKb3V0cHV0czoKICAtIG5hbWU6IG15bG9ncwogICAgYXBwbHlUbzoKICAgICAgLSBpbnN0YWxsCiAgICAgIC0gdXBncmFkZQoKc3RhdGU6CiAgLSBuYW1lOiBtYWdpY19maWxlCiAgICBwYXRoOiBtYWdpYy50eHQKCmRlcGVuZGVuY2llczoKICByZXF1aXJlZDoKICAgIC0gbmFtZTogZGIKICAgICAgcmVmZXJlbmNlOiAibG9jYWxob3N0OjUwMDAvbXlkYjp2MC4xLjAiCiAgICAgIHBhcmFtZXRlcnM6CiAgICAgICAgZGF0YWJhc2U6IGJpZ2RiCgptaXhpbnM6CiAgLSBleGVjCgpjdXN0b21BY3Rpb25zOgogIGRyeS1ydW46CiAgICBkZXNjcmlwdGlvbjogIk1ha2Ugc3VyZSBpdCB3aWxsIHdvcmsgYmVmb3JlIHlvdSBydW4gaXQiCiAgICBzdGF0ZWxlc3M6IHRydWUKICAgIG1vZGlmaWVzOiBmYWxzZQogIHN0YXR1czoKICAgIGRlc2NyaXB0aW9uOiAiUHJpbnQgdGhlIGluc3RhbGxhdGlvbiBzdGF0dXMiCiAgICBzdGF0ZWxlc3M6IGZhbHNlCiAgICBtb2RpZmllczogZmFsc2UKCmluc3RhbGw6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIkxldCdzIG1ha2Ugc29tZSBtYWdpYyIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIG1ha2VNYWdpYwogICAgICAgIC0gIid7eyBidW5kbGUuY3JlZGVudGlhbHMudXNlcm5hbWUgfX0gaXMgYSB1bmljb3JuJyIKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiaW5zdGFsbCIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIGluc3RhbGwKICAgICAgb3V0cHV0czoKICAgICAgICAtIG5hbWU6IG15bG9ncwogICAgICAgICAgcmVnZXg6ICIoLiopIgogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJyb2xsIHRoZSBkaWNlIHdpdGggeW91ciBjaGFvcyBtb25rZXkiCiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSBjaGFvc19tb25rZXkKICAgICAgICAtICJ7eyBidW5kbGUucGFyYW1ldGVycy5jaGFvc19tb25rZXkgfX0iCgpkcnktcnVuOgogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJDaGVjayBzb21lIHRoaW5ncyIKICAgICAgY29tbWFuZDogZWNobwogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSAiQWxsIGNsZWFyISIKCnN0YXR1czoKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiUHJpbnQgY29uZmlnIgogICAgICBjb21tYW5kOiBjYXQKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gInt7IGJ1bmRsZS5wYXJhbWV0ZXJzLmNmZyB9fSIKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAiUHJpbnQgbWFnaWMiCiAgICAgIGNvbW1hbmQ6IGNhdAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSBtYWdpYy50eHQKCmJvb206CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIm1vZGlmeSB0aGUgYnVuZGxlIGluIHVua25vd2FibGUgd2F5cyIKICAgICAgY29tbWFuZDogZWNobwogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSAiWU9MTyIKCnVwZ3JhZGU6CiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogIkVuc3VyZSBtYWdpYyIKICAgICAgY29tbWFuZDogLi9oZWxwZXJzLnNoCiAgICAgIGFyZ3VtZW50czoKICAgICAgICAtIGVuc3VyZU1hZ2ljCiAgLSBleGVjOgogICAgICBkZXNjcmlwdGlvbjogInVwZ3JhZGUiCiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSB1cGdyYWRlCiAgICAgIG91dHB1dHM6CiAgICAgICAgLSBuYW1lOiBteWxvZ3MKICAgICAgICAgIHJlZ2V4OiAiKC4qKSIKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAicm9sbCB0aGUgZGljZSB3aXRoIHlvdXIgY2hhb3MgbW9ua2V5IgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gY2hhb3NfbW9ua2V5CiAgICAgICAgLSAie3sgYnVuZGxlLnBhcmFtZXRlcnMuY2hhb3NfbW9ua2V5IH19IgoKdW5pbnN0YWxsOgogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJFbnN1cmUgTWFnaWMiCiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSBlbnN1cmVNYWdpYwogIC0gZXhlYzoKICAgICAgZGVzY3JpcHRpb246ICJ1bmluc3RhbGwiCiAgICAgIGNvbW1hbmQ6IC4vaGVscGVycy5zaAogICAgICBhcmd1bWVudHM6CiAgICAgICAgLSB1bmluc3RhbGwKICAtIGV4ZWM6CiAgICAgIGRlc2NyaXB0aW9uOiAicm9sbCB0aGUgZGljZSB3aXRoIHlvdXIgY2hhb3MgbW9ua2V5IgogICAgICBjb21tYW5kOiAuL2hlbHBlcnMuc2gKICAgICAgYXJndW1lbnRzOgogICAgICAgIC0gY2hhb3NfbW9ua2V5CiAgICAgICAgLSAie3sgYnVuZGxlLnBhcmFtZXRlcnMuY2hhb3NfbW9ua2V5IH19Igo=",
+      "version": "",
+      "commit": ""
+    },
+    "sh.porter.file-parameters": {}
+  }
+}

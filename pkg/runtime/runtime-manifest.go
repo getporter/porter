@@ -1,9 +1,13 @@
 package runtime
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -15,7 +19,13 @@ import (
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+)
+
+const (
+	// Path to the archive of the state from the previous run
+	statePath = "/porter/state.tgz"
 )
 
 type RuntimeManifest struct {
@@ -424,41 +434,205 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 	return nil
 }
 
-// Prepare prepares the runtime environment prior to step execution
-func (m *RuntimeManifest) Prepare() error {
+// Init prepares the runtime environment prior to step execution
+func (m *RuntimeManifest) Initialize() error {
 	// For parameters of type "file", we may need to decode files on the filesystem
 	// before execution of the step/action
-	for _, param := range m.Parameters {
-		// Update ApplyTo per parameter definition and manifest
-		param.UpdateApplyTo(m.Manifest)
-
-		if !param.AppliesTo(string(m.Action)) {
+	for paramName, param := range m.bundle.Parameters {
+		def, hasDef := m.bundle.Definitions[param.Definition]
+		if !hasDef {
 			continue
 		}
-
-		if param.Type == "file" {
+		if m.bundle.IsFileType(def) {
 			if param.Destination.Path == "" {
-				return fmt.Errorf("destination path is not supplied for parameter %s", param.Name)
+				return fmt.Errorf("destination path is not supplied for parameter %s", paramName)
 			}
 
 			// Porter by default places parameter value into file determined by Destination.Path
 			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
-				return fmt.Errorf("unable to acquire value for parameter %s", param.Name)
+				return fmt.Errorf("unable to acquire value for parameter %s", paramName)
 			}
 
 			decoded, err := base64.StdEncoding.DecodeString(string(bytes))
 			if err != nil {
-				return errors.Wrapf(err, "unable to decode parameter %s", param.Name)
+				return errors.Wrapf(err, "unable to decode parameter %s", paramName)
 			}
 
 			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, os.ModePerm)
 			if err != nil {
-				return errors.Wrapf(err, "unable to write decoded parameter %s", param.Name)
+				return errors.Wrapf(err, "unable to write decoded parameter %s", paramName)
 			}
 		}
 	}
+
+	return m.unpackStateBag()
+}
+
+// Unpack each state variable from /porter/state.tgz and copy it to its
+// declared location in the bundle.
+func (m *RuntimeManifest) unpackStateBag() error {
+	_, err := m.FileSystem.Open(statePath)
+	os.IsNotExist(err)
+	if os.IsNotExist(err) || len(m.StateBag) == 0 {
+		fmt.Fprintln(m.Out, "No existing bundle state to unpack")
+		return nil
+	}
+
+	fmt.Fprintln(m.Out, "Unpacking bundle state...")
+	// Unpack the state file and copy its contents to where the bundle expects them
+	// state var name -> path in bundle
+	stateFiles := make(map[string]string, len(m.StateBag))
+	for _, s := range m.StateBag {
+		stateFiles[s.Name] = s.Path
+	}
+
+	unpackStateFile := func(tr *tar.Reader, header *tar.Header) error {
+		name := strings.TrimPrefix(header.Name, "porter-state/")
+		dest := stateFiles[name]
+		fmt.Fprintln(m.Out, "  -", name, "->", dest)
+
+		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+		if err != nil {
+			return errors.Wrapf(err, "error creating state file %s", dest)
+		}
+		defer f.Close()
+
+		_, err = io.Copy(f, tr)
+		return errors.Wrapf(err, "error unpacking state file %s", dest)
+	}
+
+	stateArchive, err := m.FileSystem.Open(statePath)
+	if err != nil {
+		return err
+	}
+
+	gzr, err := gzip.NewReader(stateArchive)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+		} else if header.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		unpackStateFile(tr, header)
+	}
+
 	return nil
+}
+
+// Finalize cleans up the bundle before its completion.
+func (m *RuntimeManifest) Finalize() error {
+	var bigErr *multierror.Error
+
+	if err := m.applyUnboundBundleOutputs(); err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
+	// Always try to persist state, even when errors occur
+	if err := m.packStateBag(); err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
+	return bigErr.ErrorOrNil()
+}
+
+// Pack each state variable into /porter/state/tgz.
+func (m *RuntimeManifest) packStateBag() error {
+	fmt.Fprintln(m.Out, "Packing bundle state...")
+	packStateFile := func(tw *tar.Writer, s manifest.StateBagEntry) error {
+		fi, err := m.FileSystem.Stat(s.Path)
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		fmt.Fprintln(m.Out, "  -", s.Path)
+		header, err := tar.FileInfoHeader(fi, fi.Name())
+		if err != nil {
+			return errors.Wrapf(err, "error creating tar header for state variable %s from path %s", s.Name, s.Path)
+		}
+		header.Name = filepath.Join("porter-state", s.Name)
+
+		if err := tw.WriteHeader(header); err != nil {
+			return errors.Wrapf(err, "error writing tar header for state variable %s", s.Name)
+		}
+
+		f, err := os.Open(s.Path)
+		if err != nil {
+			return errors.Wrapf(err, "error reading state file %s for variable %s", s.Path, s.Name)
+		}
+
+		_, err = io.Copy(tw, f)
+		return errors.Wrapf(err, "error archiving state file %s for variable %s", s.Path, s.Name)
+	}
+
+	// Save directly to the final output location since we've already collected outputs at this point
+	stateArchive, err := m.FileSystem.Create("/cnab/app/outputs/porter-state")
+	if err != nil {
+		return err
+	}
+
+	gzw := gzip.NewWriter(stateArchive)
+	defer gzw.Close()
+
+	tw := tar.NewWriter(gzw)
+	defer tw.Close()
+
+	// Persist as many of the state vars as possible, even if one fails
+	var bigErr *multierror.Error
+	for _, s := range m.StateBag {
+		err := packStateFile(tw, s)
+		if err != nil {
+			bigErr = multierror.Append(bigErr, err)
+		}
+	}
+
+	return bigErr.ErrorOrNil()
+}
+
+// applyUnboundBundleOutputs find outputs that haven't been bound yet by a step,
+// and if they can be bound, i.e. they grab a file from the bundle's filesystem,
+// apply the output.
+func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
+	if len(m.Outputs) > 0 {
+		fmt.Fprintln(m.Out, "Collecting bundle outputs...")
+	}
+
+	var bigErr *multierror.Error
+	outputs := m.GetOutputs()
+	for name, outputDef := range m.bundle.Outputs {
+		// Ignore outputs that have already been set
+		if output := outputs[name]; output != "" {
+			fmt.Fprintln(m.Out, "  -", name)
+			continue
+		}
+
+		// We can only deal with outputs that are based on a file right now
+		if outputDef.Path == "" {
+			continue
+		}
+
+		if outputDef.AppliesTo(m.Action) {
+			outpath := filepath.Join(config.BundleOutputsDir, name)
+			err := m.CopyFile(manifest.ResolvePath(outputDef.Path), outpath)
+			if err != nil {
+				err = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath))
+				continue
+			}
+			fmt.Fprintln(m.Out, "  -", name)
+		}
+	}
+
+	return bigErr.ErrorOrNil()
 }
 
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the

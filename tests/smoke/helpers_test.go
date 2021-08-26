@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testBundleBuilt = false
+
 const (
 	myBunsRef = "localhost:5000/mybuns:v0.1.2"
 	myDbRef   = "localhost:5000/mydb:v0.1.0"
@@ -21,15 +23,12 @@ func (t Test) PrepareTestBundle() {
 	// This variable isn't set on windows and the mybuns bundle relies on it
 	os.Setenv("USER", "porterci")
 
-	// Check if another test has already set up the test bundle
-	err := shx.RunE("docker", "pull", "localhost:5000/mybuns-installer:v0.1.2")
-	if err == nil {
-		return
+	if !testBundleBuilt {
+		// Build and publish an interesting test bundle and its dependency
+		t.MakeTestBundle("mydb", myDbRef)
+		t.MakeTestBundle("mybuns", myBunsRef)
+		testBundleBuilt = true
 	}
-
-	// Build and publish an interesting test bundle and its dependency
-	t.MakeTestBundle("mydb", myDbRef)
-	t.MakeTestBundle("mybuns", myBunsRef)
 }
 
 func (t Test) MakeTestBundle(name string, ref string) {

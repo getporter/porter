@@ -21,6 +21,7 @@ func TestHelloBundle(t *testing.T) {
 	require.NoError(t, err, "test setup failed")
 
 	test.PrepareTestBundle()
+	shx.Copy("testdata/buncfg.json", test.TestDir)
 	os.Chdir(test.TestDir)
 
 	test.RequirePorter("install", "hello", "--reference", "getporter/porter-hello:v0.1.1", "--namespace=")
@@ -49,7 +50,13 @@ func TestHelloBundle(t *testing.T) {
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
 	// Run a no-op action to check the status and check that the run was persisted
-	test.RequirePorter("invoke", "mybuns", "--action=status", "-c=mybuns")
+	// Also checks that we are processing file parameters properly, when templated and read from the filesystem
+	output, err = test.RunPorter("invoke", "mybuns", "--action=status", "-c=mybuns", "--param", "cfg=./buncfg.json")
+	require.NoError(t, err)
+	require.Contains(t, output, `{"color": "blue"}`, "templated file parameter was not decoded properly")
+	require.Contains(t, output, `is a unicorn`, "state file parameter was not decoded properly")
+
+	// Check that the last action is still install, a noop action shouldn't update the installation status
 	installation = test.RequireInstallationExists("dev", "mybuns")
 	require.Equal(t, "install", installation.Status.Action) // Install should be the last modifying action
 	// TODO(carolynvs): check that status shows up as a run
@@ -106,9 +113,9 @@ func TestHelloBundle(t *testing.T) {
 	test.RequireNotFoundReturned(err)
 
 	// Test that outputs are collected when a bundle fails
-	err = test.Porter("install", "fail-with-outputs", "--reference", myBunsRef, "-c=mybuns", "--param", "chaos_monkey=true").Run()
+	err = test.Porter("install", "fail-with-outputs", "--reference", myBunsRef, "-c=mybuns", "-p=mybuns", "--param", "chaos_monkey=true").Run()
 	require.Error(t, err, "the chaos monkey should have failed the installation")
-	magicOutput, err := test.Porter("installation", "outputs", "show", "magic_file", "-i=fail-with-outputs").Output()
+	myLogs, err := test.Porter("installation", "outputs", "show", "mylogs", "-i=fail-with-outputs").Output()
 	require.NoError(t, err, "the output should have been saved even though the bundle failed")
-	require.Contains(t, magicOutput, "is a unicorn")
+	require.Contains(t, myLogs, "Hello, porterci")
 }

@@ -61,7 +61,7 @@ func TestResolveMapParam(t *testing.T) {
 	assert.Equal(t, "Ralpha", val)
 	assert.NotContains(t, "place", pms, "parameters that don't apply to the current action should not be resolved")
 
-	err = rm.Prepare()
+	err = rm.Initialize()
 	assert.NoError(t, err)
 }
 
@@ -181,73 +181,6 @@ func TestResolveMapParamUnknown(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.Error(t, err)
 	assert.Equal(t, "unable to render step template Parameters:\n  Thing: '{{bundle.parameters.person}}'\ndescription: a test step\n: Missing variable \"person\"", err.Error())
-}
-
-func TestPrepare_fileParam(t *testing.T) {
-	cxt := context.NewTestContext(t)
-
-	cxt.AddTestFile("testdata/file-param", "/cnab/app/install")
-
-	m := &manifest.Manifest{
-		Parameters: manifest.ParameterDefinitions{
-			"file-param": {
-				Name: "file-param",
-				Destination: manifest.Location{
-					Path: "/cnab/app/install",
-				},
-				Schema: definition.Schema{
-					Type: "file",
-				},
-			},
-			"upgrade-file-param": {
-				Name:    "upgrade-file-param",
-				ApplyTo: []string{string(cnab.ActionUpgrade)},
-				Destination: manifest.Location{
-					Path: "/cnab/app/upgrade",
-				},
-				Schema: definition.Schema{
-					Type: "file",
-				},
-			},
-		},
-	}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description": "a test step",
-			"Parameters": map[string]interface{}{
-				"file-param": "{{bundle.parameters.file-param}}",
-			},
-		},
-	}
-
-	before, _ := yaml.Marshal(s)
-	t.Logf("Before:\n %s", before)
-	err := rm.ResolveStep(s)
-	require.NoError(t, err)
-	after, _ := yaml.Marshal(s)
-	t.Logf("After:\n %s", after)
-	assert.NotNil(t, s.Data)
-	t.Logf("Length of data:%d", len(s.Data))
-	assert.NotEmpty(t, s.Data["Parameters"])
-	for k, v := range s.Data {
-		t.Logf("Key %s, value: %s, type: %T", k, v, v)
-	}
-	pms, ok := s.Data["Parameters"].(map[string]interface{})
-	assert.True(t, ok)
-	val, ok := pms["file-param"].(string)
-	assert.True(t, ok)
-	assert.Equal(t, "/cnab/app/install", val)
-
-	err = rm.Prepare()
-	require.NoError(t, err)
-
-	bytes, err := cxt.FileSystem.ReadFile("/cnab/app/install")
-	require.NoError(t, err)
-	assert.Equal(t, "Hello World!", string(bytes), "expected file contents to equal the decoded parameter value")
-
-	upgradeFileExists, _ := cxt.FileSystem.Exists("/cnab/app/upgrade")
-	assert.False(t, upgradeFileExists, "the file for the parameter that only applies to the upgrade action should not exist")
 }
 
 func TestResolveArrayUnknown(t *testing.T) {

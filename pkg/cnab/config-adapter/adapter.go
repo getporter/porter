@@ -3,6 +3,7 @@ package configadapter
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -60,7 +61,7 @@ func (c *ManifestConverter) ToBundle() (cnab.ExtendedBundle, error) {
 	}
 
 	b.Actions = c.generateCustomActionDefinitions()
-	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs))
+	b.Definitions = make(definition.Definitions, len(c.Manifest.Parameters)+len(c.Manifest.Outputs)+len(c.Manifest.StateBag))
 	b.InvocationImages = []bundle.InvocationImage{image}
 	b.Parameters = c.generateBundleParameters(&b.Definitions)
 	b.Outputs = c.generateBundleOutputs(&b.Definitions)
@@ -168,7 +169,8 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		}
 
 		// If the default is empty, set required to true.
-		if param.Default == nil {
+		// State parameters are always optional, and don't have a default
+		if param.Default == nil && !param.IsState {
 			p.Required = true
 		}
 
@@ -179,7 +181,7 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 		if !param.Destination.IsEmpty() {
 			p.Destination = &bundle.Location{
 				EnvironmentVariable: param.Destination.EnvironmentVariable,
-				Path:                param.Destination.Path,
+				Path:                manifest.ResolvePath(param.Destination.Path),
 			}
 		} else {
 			p.Destination = &bundle.Location{
@@ -198,8 +200,16 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 			fmt.Fprintf(c.Out, "Defaulting the type of parameter %s to %s\n", param.Name, param.Type)
 		}
 
-		defName := c.addDefinition(param.Name, "parameter", param.Schema, defs)
-		p.Definition = defName
+		// Create a definition that matches the parameter if one isn't already defined
+		if _, ok := (*defs)[param.Name]; !ok {
+			kind := "parameter"
+			if param.IsState {
+				kind = "state"
+			}
+
+			defName := c.addDefinition(param.Name, kind, param.Schema, defs)
+			p.Definition = defName
+		}
 		params[param.Name] = p
 	}
 
@@ -215,46 +225,62 @@ func (c *ManifestConverter) generateBundleParameters(defs *definition.Definition
 }
 
 func (c *ManifestConverter) generateBundleOutputs(defs *definition.Definitions) map[string]bundle.Output {
-	var outputs map[string]bundle.Output
+	outputs := make(map[string]bundle.Output, len(c.Manifest.Outputs))
 
-	if len(c.Manifest.Outputs) > 0 {
-		outputs = make(map[string]bundle.Output, len(c.Manifest.Outputs))
-
-		for _, output := range c.Manifest.Outputs {
-			o := bundle.Output{
-				Definition:  output.Name,
-				Description: output.Description,
-				ApplyTo:     output.ApplyTo,
-				// must be a standard Unix path as this will be inside of the container
-				// (only linux containers supported currently)
-				Path: path.Join(config.BundleOutputsDir, output.Name),
-			}
-
-			if output.Sensitive {
-				output.Schema.WriteOnly = toBool(true)
-			}
-
-			if output.Type == nil {
-				// Default to a file type if the param is stored in a file
-				if output.Path != "" {
-					output.Type = "file"
-				} else {
-					// Assume it's a string otherwise
-					output.Type = "string"
-				}
-				fmt.Fprintf(c.Out, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
-			}
-
-			defName := c.addDefinition(output.Name, "output", output.Schema, defs)
-			o.Definition = defName
-			outputs[output.Name] = o
+	addOutput := func(output manifest.OutputDefinition) {
+		o := bundle.Output{
+			Definition:  output.Name,
+			Description: output.Description,
+			ApplyTo:     output.ApplyTo,
+			// must be a standard Unix path as this will be inside of the container
+			// (only linux containers supported currently)
+			Path: path.Join(config.BundleOutputsDir, output.Name),
 		}
+
+		if output.Sensitive {
+			output.Schema.WriteOnly = toBool(true)
+		}
+
+		if output.Type == nil {
+			// Default to a file type if the param is stored in a file
+			if output.Path != "" {
+				output.Type = "file"
+			} else {
+				// Assume it's a string otherwise
+				output.Type = "string"
+			}
+			fmt.Fprintf(c.Out, "Defaulting the type of output %s to %s\n", output.Name, output.Type)
+		}
+
+		// Create a definition that matches the output if one isn't already defined
+		if _, ok := (*defs)[output.Name]; !ok {
+			kind := "output"
+			if output.IsState {
+				kind = "state"
+			}
+
+			defName := c.addDefinition(output.Name, kind, output.Schema, defs)
+			o.Definition = defName
+		}
+		outputs[output.Name] = o
 	}
+
+	for _, o := range c.Manifest.Outputs {
+		addOutput(o)
+	}
+
+	for _, o := range c.buildDefaultPorterOutputs() {
+		addOutput(o)
+	}
+
 	return outputs
 }
 
 func (c *ManifestConverter) addDefinition(name string, kind string, def definition.Schema, defs *definition.Definitions) string {
-	defName := name + "-" + kind
+	defName := name
+	if !strings.HasSuffix(name, kind) {
+		defName = name + "-" + kind
+	}
 
 	// file is a porter specific type, swap it out for something CNAB understands
 	if def.Type == "file" {
@@ -282,6 +308,37 @@ func (c *ManifestConverter) buildDefaultPorterParameters() []manifest.ParameterD
 				Comment:     cnab.PorterInternal,
 			},
 		},
+		{
+			Name:    "porter-state",
+			IsState: true,
+			Destination: manifest.Location{
+				Path: "/porter/state.tgz",
+			},
+			Schema: definition.Schema{
+				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+				Type:            "string",
+				ContentEncoding: "base64",
+				Comment:         cnab.PorterInternal,
+			},
+		},
+	}
+}
+
+func (c *ManifestConverter) buildDefaultPorterOutputs() []manifest.OutputDefinition {
+	return []manifest.OutputDefinition{
+		{
+			Name:    "porter-state",
+			IsState: true,
+			Path:    "/cnab/app/outputs/porter-state.tgz",
+			Schema: definition.Schema{
+				ID:              "https://porter.sh/generated-bundle/#porter-state",
+				Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+				Type:            "string",
+				ContentEncoding: "base64",
+				Comment:         cnab.PorterInternal,
+			},
+		},
 	}
 }
 
@@ -292,7 +349,7 @@ func (c *ManifestConverter) generateBundleCredentials() map[string]bundle.Creden
 			Description: cred.Description,
 			Required:    cred.Required,
 			Location: bundle.Location{
-				Path:                cred.Path,
+				Path:                manifest.ResolvePath(cred.Path),
 				EnvironmentVariable: cred.EnvironmentVariable,
 			},
 			ApplyTo: cred.ApplyTo,
@@ -370,8 +427,10 @@ func (c *ManifestConverter) generateDependencies() *cnab.Dependencies {
 func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cnab.ParameterSources {
 	ps := cnab.ParameterSources{}
 
-	// Parameter sources come from two places, indirectly from our template wiring
-	// and directly when they use `source` on a parameter
+	// Parameter sources come from three places
+	// 1. indirectly from our template wiring
+	// 2. indirectly from state variables
+	// 3. directly when they use `source` on a parameter
 
 	// Directly wired outputs to parameters
 	for _, p := range c.Manifest.Parameters {
@@ -392,6 +451,10 @@ func (c *ManifestConverter) generateParameterSources(b *cnab.ExtendedBundle) cna
 		}
 		ps[p.Name] = pso
 	}
+
+	// Directly wired state variables
+	// All state variables are persisted in a single file, porter-state.tgz
+	ps["porter-state"] = c.generateOutputParameterSource("porter-state")
 
 	// bundle.outputs.OUTPUT
 	for _, outputDef := range c.Manifest.GetTemplatedOutputs() {
