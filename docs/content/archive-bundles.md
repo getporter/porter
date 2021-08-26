@@ -96,6 +96,4 @@ space_name      Name for DO Space                                               
 Outputs:
 Name         Description                                Type     Applies To
 service_ip   IP Address assigned to the Load Balancer   string   All Actions
-
-No custom actions defined
 ```

@@ -125,16 +125,17 @@ func (p *Porter) printInvocationImageInspectTable(bun *InspectableBundle) error 
 }
 
 func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
-	fmt.Fprintln(p.Out, "Images:")
-	if len(bun.Images) > 0 {
-		err := p.printImagesInspectTable(bun)
-		if err != nil {
-			return errors.Wrap(err, "unable to print images table")
-		}
-		fmt.Fprintln(p.Out, "") // force a blank line after this block
-	} else {
-		fmt.Fprintln(p.Out, "No images defined")
+	if len(bun.Images) == 0 {
+		return nil
 	}
+
+	fmt.Fprintln(p.Out, "Images:")
+	err := p.printImagesInspectTable(bun)
+	if err != nil {
+		return errors.Wrap(err, "unable to print images table")
+	}
+	fmt.Fprintln(p.Out, "") // force a blank line after this block
+
 	return nil
 }
 

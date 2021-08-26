@@ -12,111 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExplain_generateActionsTableNoActions(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printActionsExplainTable(&bun)
-	expected := "Name   Description   Modifies Installation   Stateless\n"
-
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateActionsBlockNoActions(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printActionsExplainBlock(&bun)
-	expected := "No custom actions defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateCredentialsTableNoCreds(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printCredentialsExplainTable(&bun)
-	expected := "Name   Description   Required   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateCredentialsBlockNoCreds(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printCredentialsExplainBlock(&bun)
-	expected := "No credentials defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateOutputsTableNoOutputs(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printOutputsExplainTable(&bun)
-	expected := "Name   Description   Type   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateOutputsBlockNoOutputs(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printOutputsExplainBlock(&bun)
-	expected := "No outputs defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateParametersTableNoParams(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printParametersExplainTable(&bun)
-	expected := "Name   Description   Type   Default   Required   Applies To\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
-func TestExplain_generateParametersBlockNoParams(t *testing.T) {
-	bun := PrintableBundle{}
-
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.printParametersExplainBlock(&bun)
-	expected := "No parameters defined\n\n"
-	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, expected, gotOutput)
-	t.Log(gotOutput)
-}
-
 func TestExplain_validateBadFormat(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
@@ -169,9 +64,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-json-output.json")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-json-output.json", gotOutput)
 }
 
 func TestExplain_generateYAML(t *testing.T) {
@@ -193,9 +86,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-yaml-output.yaml")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-yaml-output.yaml", gotOutput)
 }
 
 func TestExplain_generatePrintableBundleParams(t *testing.T) {
@@ -533,7 +424,6 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-json-dependencies-output.json")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+
+	p.CompareGoldenFile("testdata/explain/expected-json-dependencies-output.json", gotOutput)
 }

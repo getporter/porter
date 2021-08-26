@@ -32,8 +32,6 @@ space_name      Name for DO Space                                               
 Outputs:
 Name         Description                                Type     Applies To
 service_ip   IP Address assigned to the Load Balancer   string   install,upgrade
-
-No custom actions defined
 ```
 
 The `porter explain` command will show what credentials and parameters are required for the bundle, what outputs are generated, and what custom actions have been defined. For `parameters`, this command will also show you the default value, if one has been provided. Additionally, the user can quickly see what actions a `parameter` or `output` apply to.

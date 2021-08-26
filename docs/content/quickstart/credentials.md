@@ -33,14 +33,6 @@ Porter Version: v0.38.1
 Credentials:
 Name           Description                                                                                                   Required   Applies To
 github-token   A GitHub Personal Access Token. Generate one at https://github.com/settings/tokens. No scopes are required.   true       install,upgrade
-
-No parameters defined
-
-No outputs defined
-
-No custom actions defined
-
-No dependencies defined
 ```
 
 In the Credentials section of the output returned by explain, there is a single required credential, github-token, that applies to the install and upgrade actions.
