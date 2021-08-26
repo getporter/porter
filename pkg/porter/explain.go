@@ -5,10 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/context"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -21,7 +20,7 @@ type ExplainOpts struct {
 	Action string
 }
 
-// PrintableBundle holds a subset of pertinent values to be explained from a bundle.Bundle
+// PrintableBundle holds a subset of pertinent values to be explained from a bundle
 type PrintableBundle struct {
 	Name          string                `json:"name" yaml:"name"`
 	Description   string                `json:"description,omitempty" yaml:"description,omitempty"`
@@ -177,7 +176,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	}
 }
 
-func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, error) {
+func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle, error) {
 	var stamp configadapter.Stamp
 
 	stamp, err := configadapter.LoadStamp(bun)
@@ -219,7 +218,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 
 	params := make([]PrintableParameter, 0, len(bun.Parameters))
 	for p, v := range bun.Parameters {
-		if parameters.IsInternal(p, bun) {
+		if bun.IsInternalParameter(p) {
 			continue
 		}
 		def, ok := bun.Definitions[v.Definition]
@@ -231,7 +230,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 		}
 		pp := PrintableParameter{}
 		pp.Name = p
-		pp.Type = extensions.GetParameterType(bun, def)
+		pp.Type = bun.GetParameterType(def)
 		pp.Default = def.Default
 		pp.ApplyTo = generateApplyToString(v.ApplyTo)
 		pp.Required = v.Required
@@ -264,7 +263,7 @@ func generatePrintable(bun bundle.Bundle, action string) (*PrintableBundle, erro
 	}
 	sort.Sort(SortPrintableOutput(outputs))
 
-	solver := &extensions.DependencySolver{}
+	solver := &cnab.DependencySolver{}
 	deps, err := solver.ResolveDependencies(bun)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error executing dependencies")

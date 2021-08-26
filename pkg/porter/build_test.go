@@ -50,18 +50,14 @@ func TestPorter_Build(t *testing.T) {
 	junkExists, _ = p.FileSystem.DirExists(junkDir)
 	assert.False(t, junkExists, "junk files were not cleaned up before building")
 
-	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)
-	require.NoError(t, err)
-
-	bun := &bundle.Bundle{}
-	err = json.Unmarshal(bundleBytes, bun)
+	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 
 	assert.Equal(t, bun.Name, "porter-hello")
 	assert.Equal(t, bun.Version, "0.1.0")
 	assert.Equal(t, bun.Description, "An example Porter configuration")
 
-	stamp, err := configadapter.LoadStamp(*bun)
+	stamp, err := configadapter.LoadStamp(bun)
 	require.NoError(t, err)
 	assert.Equal(t, "d421a6249dfbdba79e26e866da7533d59590565708dfdb32423cf989f588d0ea", stamp.ManifestDigest)
 

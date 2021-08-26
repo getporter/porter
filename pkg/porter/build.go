@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -185,7 +185,7 @@ func (p *Porter) buildBundle(invocationImage string, digest digest.Digest) error
 	return p.writeBundle(bun)
 }
 
-func (p Porter) writeBundle(b bundle.Bundle) error {
+func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
 	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer f.Close()
 	if err != nil {

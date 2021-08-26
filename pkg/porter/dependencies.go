@@ -6,12 +6,10 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -50,7 +48,7 @@ func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
 }
 
 type queuedDependency struct {
-	extensions.DependencyLock
+	cnab.DependencyLock
 	BundleReference cnab.BundleReference
 	Parameters      map[string]string
 
@@ -124,7 +122,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.Ac
 
 func (e *dependencyExecutioner) identifyDependencies() error {
 	// Load parent CNAB bundle definition
-	var bun bundle.Bundle
+	var bun cnab.ExtendedBundle
 	if e.parentOpts.CNABFile != "" {
 		bundle, err := e.CNAB.LoadBundle(e.parentOpts.CNABFile)
 		if err != nil {
@@ -144,13 +142,13 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 			return err
 		}
 
-		bun = c.Bundle
+		bun = cnab.ExtendedBundle{c.Bundle}
 	} else {
 		// If we hit here, there is a bug somewhere
 		return errors.New("identifyDependencies failed to load the bundle because no bundle was specified. Please report this bug to https://github.com/getporter/porter/issues/new/choose")
 	}
 
-	solver := &extensions.DependencySolver{}
+	solver := &cnab.DependencySolver{}
 	locks, err := solver.ResolveDependencies(bun)
 	if err != nil {
 		return err
@@ -250,15 +248,15 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 	depInstallation := claims.NewInstallation(e.parentOpts.Namespace,
-		extensions.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias))
+		cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias))
 
 	depArgs := cnabprovider.ActionArguments{
-		BundleReference: dep.BundleReference,
-		Action:          e.parentArgs.Action,
-		Installation:    depInstallation,
-		Driver: e.parentArgs.Driver,
+		BundleReference:       dep.BundleReference,
+		Action:                e.parentArgs.Action,
+		Installation:          depInstallation,
+		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowAccessToDockerHost,
-		Params: dep.Parameters,
+		Params:                dep.Parameters,
 		// For now, assume it's okay to give the dependency the same credentials as the parent
 		CredentialIdentifiers: e.parentArgs.CredentialIdentifiers,
 	}

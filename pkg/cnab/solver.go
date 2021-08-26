@@ -1,11 +1,9 @@
-package extensions
+package cnab
 
 import (
 	"sort"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/pkg/errors"
 )
@@ -15,15 +13,16 @@ type DependencyLock struct {
 	Reference string
 }
 
+// TODO: move this logic onto the new ExtendedBundle struct
 type DependencySolver struct {
 }
 
-func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyLock, error) {
-	if !HasDependencies(bun) {
+func (s *DependencySolver) ResolveDependencies(bun ExtendedBundle) ([]DependencyLock, error) {
+	if !bun.HasDependencies() {
 		return nil, nil
 	}
 
-	rawDeps, err := ReadDependencies(bun)
+	rawDeps, err := bun.ReadDependencies()
 	// We need make sure the Dependencies are ordered by the desired sequence
 	orderedDeps := rawDeps.ListBySequence()
 
@@ -49,10 +48,10 @@ func (s *DependencySolver) ResolveDependencies(bun bundle.Bundle) ([]DependencyL
 }
 
 // ResolveVersion returns the bundle name, its version and any error.
-func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (cnab.OCIReference, error) {
-	ref, err := cnab.ParseOCIReference(dep.Bundle)
+func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (OCIReference, error) {
+	ref, err := ParseOCIReference(dep.Bundle)
 	if err != nil {
-		return cnab.OCIReference{}, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
+		return OCIReference{}, errors.Wrapf(err, "error parsing dependency (%s) bundle %q as OCI reference", name, dep.Bundle)
 	}
 
 	// Here is where we could split out this logic into multiple strategy funcs / structs if necessary
@@ -64,13 +63,13 @@ func (s *DependencySolver) ResolveVersion(name string, dep Dependency) (cnab.OCI
 
 		tag, err := s.determineDefaultTag(dep)
 		if err != nil {
-			return cnab.OCIReference{}, err
+			return OCIReference{}, err
 		}
 
 		return ref.WithTag(tag)
 	}
 
-	return cnab.OCIReference{}, errors.Errorf("not implemented: dependency version range specified for %s", name)
+	return OCIReference{}, errors.Errorf("not implemented: dependency version range specified for %s", name)
 }
 
 func (s *DependencySolver) determineDefaultTag(dep Dependency) (string, error) {

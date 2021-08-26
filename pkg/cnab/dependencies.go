@@ -1,10 +1,9 @@
-package extensions
+package cnab
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -61,8 +60,8 @@ type DependencyVersion struct {
 // ReadDependencies is a convenience method for returning a bonafide
 // Dependencies reference after reading from the applicable section from
 // the provided bundle
-func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
-	raw, err := DependencyReader(bun)
+func (b ExtendedBundle) ReadDependencies() (Dependencies, error) {
+	raw, err := b.DependencyReader()
 	if err != nil {
 		return Dependencies{}, err
 	}
@@ -77,10 +76,17 @@ func ReadDependencies(bun bundle.Bundle) (Dependencies, error) {
 }
 
 // DependencyReader is a Reader for the DependenciesExtension, which reads
-// from the applicable section in the provided bundle and returns a the raw
+// from the applicable section in the provided bundle and returns the raw
 // data in the form of an interface
-func DependencyReader(bun bundle.Bundle) (interface{}, error) {
-	data, ok := bun.Custom[DependenciesExtensionKey]
+func DependencyReader(bun ExtendedBundle) (interface{}, error) {
+	return bun.DependencyReader()
+}
+
+// DependencyReader is a Reader for the DependenciesExtension, which reads
+// from the applicable section in the provided bundle and returns the raw
+// data in the form of an interface
+func (b ExtendedBundle) DependencyReader() (interface{}, error) {
+	data, ok := b.Custom[DependenciesExtensionKey]
 	if !ok {
 		return nil, errors.Errorf("attempted to read dependencies from bundle but none are defined")
 	}
@@ -100,12 +106,12 @@ func DependencyReader(bun bundle.Bundle) (interface{}, error) {
 }
 
 // SupportsDependencies checks if the bundle supports dependencies
-func SupportsDependencies(b bundle.Bundle) bool {
-	return SupportsExtension(b, DependenciesExtensionKey)
+func (b ExtendedBundle) SupportsDependencies() bool {
+	return b.SupportsExtension(DependenciesExtensionKey)
 }
 
 // HasParameterSources returns whether or not the bundle has parameter sources defined.
-func HasDependencies(b bundle.Bundle) bool {
+func (b ExtendedBundle) HasDependencies() bool {
 	_, ok := b.Custom[DependenciesExtensionKey]
 	return ok
 }

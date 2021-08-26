@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
@@ -15,7 +15,6 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/globalsign/mgo/bson"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -133,7 +132,7 @@ func (p *Porter) GenerateParameters(opts ParameterOptions) error {
 	numExternalParams := 0
 
 	for name := range bundleRef.Definition.Parameters {
-		if !parameters.IsInternal(name, bundleRef.Definition) {
+		if !bundleRef.Definition.IsInternalParameter(name) {
 			numExternalParams += 1
 		}
 	}
@@ -424,13 +423,13 @@ func (v DisplayValues) Less(i, j int) bool {
 	return v[i].Name < v[j].Name
 }
 
-func NewDisplayValuesFromParameters(bun bundle.Bundle, params map[string]interface{}) DisplayValues {
+func NewDisplayValuesFromParameters(bun cnab.ExtendedBundle, params map[string]interface{}) DisplayValues {
 	// Iterate through all Bundle Outputs, fetch their metadata
 	// via their corresponding Definitions and add to rows
 	displayParams := make(DisplayValues, 0, len(params))
 	for name, value := range params {
 		def, ok := bun.Parameters[name]
-		if !ok || parameters.IsInternal(name, bun) {
+		if !ok || bun.IsInternalParameter(name) {
 			continue
 		}
 
@@ -439,7 +438,7 @@ func NewDisplayValuesFromParameters(bun bundle.Bundle, params map[string]interfa
 
 		schema, ok := bun.Definitions[def.Definition]
 		if ok {
-			dp.Type = extensions.GetParameterType(bun, schema)
+			dp.Type = bun.GetParameterType(schema)
 			if schema.WriteOnly != nil && *schema.WriteOnly {
 				dp.Sensitive = true
 			}
@@ -475,6 +474,9 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 
 func (p *Porter) ParametersApply(o ApplyOptions) error {
 	namespace, err := p.getNamespaceFromFile(o)
+	if err != nil {
+		return err
+	}
 
 	var params parameters.ParameterSet
 	err = encoding.UnmarshalFile(p.FileSystem, o.File, &params)

@@ -1,9 +1,8 @@
-package extensions
+package cnab
 
 import (
 	"encoding/json"
 
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -34,9 +33,16 @@ type Docker struct {
 
 // DockerExtensionReader is a Reader for the DockerExtension,
 // which reads from the applicable section in the provided bundle and
-// returns a the raw data in the form of an interface
-func DockerExtensionReader(bun bundle.Bundle) (interface{}, error) {
-	data, ok := bun.Custom[DockerExtensionKey]
+// returns the raw data in the form of an interface
+func DockerExtensionReader(bun ExtendedBundle) (interface{}, error) {
+	return bun.DockerExtensionReader()
+}
+
+// DockerExtensionReader is a Reader for the DockerExtension,
+// which reads from the applicable section in the provided bundle and
+// returns the raw data in the form of an interface
+func (b ExtendedBundle) DockerExtensionReader() (interface{}, error) {
+	data, ok := b.Custom[DockerExtensionKey]
 	if !ok {
 		return nil, errors.New("no custom extension configuration found")
 	}

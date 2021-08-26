@@ -38,7 +38,7 @@ func TestRun_ShouldRecord(t *testing.T) {
 		b := bundle.Bundle{
 			Actions: map[string]bundle.Action{
 				"dry-run": {
-					Modifies: false,
+					Modifies:  false,
 					Stateless: true,
 				},
 			},
@@ -52,7 +52,7 @@ func TestRun_ShouldRecord(t *testing.T) {
 		b := bundle.Bundle{
 			Actions: map[string]bundle.Action{
 				"audit": {
-					Modifies: false,
+					Modifies:  false,
 					Stateless: false,
 				},
 			},
@@ -66,7 +66,7 @@ func TestRun_ShouldRecord(t *testing.T) {
 		b := bundle.Bundle{
 			Actions: map[string]bundle.Action{
 				"editstuff": {
-					Modifies: true,
+					Modifies:  true,
 					Stateless: false,
 				},
 			},
@@ -77,7 +77,7 @@ func TestRun_ShouldRecord(t *testing.T) {
 	})
 
 	t.Run("missing definition", func(t *testing.T) {
-		b := bundle.Bundle{		}
+		b := bundle.Bundle{}
 
 		r := Run{Bundle: b, Action: "missing"}
 		assert.True(t, r.ShouldRecord())

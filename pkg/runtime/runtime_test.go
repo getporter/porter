@@ -283,7 +283,8 @@ func TestLoadImageMappingFilesNoBundle(t *testing.T) {
 	r := NewTestPorterRuntime(t)
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
-	assert.EqualError(t, err, "couldn't read runtime bundle.json: open /cnab/bundle.json: file does not exist")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot read bundle")
 }
 
 func TestLoadImageMappingFilesBadBundle(t *testing.T) {
@@ -291,7 +292,8 @@ func TestLoadImageMappingFilesBadBundle(t *testing.T) {
 	r.TestContext.AddTestFileFromRoot("pkg/porter/testdata/porter.yaml", "/cnab/bundle.json")
 	r.TestContext.AddTestFile("testdata/relocation-mapping.json", "/cnab/app/relocation-mapping.json")
 	_, _, err := r.getImageMappingFiles()
-	assert.EqualError(t, err, "couldn't load runtime bundle.json: invalid character 'a' in literal null (expecting 'u')")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot load bundle")
 }
 
 func TestLoadImageMappingFilesGoodFiles(t *testing.T) {

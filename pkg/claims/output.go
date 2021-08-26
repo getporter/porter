@@ -3,8 +3,8 @@ package claims
 import (
 	"sort"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/schema"
 )
@@ -27,7 +27,7 @@ func (o Output) DefaultDocumentFilter() interface{} {
 
 // GetSchema returns the schema for the output from the specified bundle, or
 // false if the schema is not defined.
-func (o Output) GetSchema(b bundle.Bundle) (definition.Schema, bool) {
+func (o Output) GetSchema(b cnab.ExtendedBundle) (definition.Schema, bool) {
 	if def, ok := b.Outputs[o.Name]; ok {
 		if schema, ok := b.Definitions[def.Definition]; ok {
 			return *schema, ok

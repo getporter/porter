@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"github.com/hashicorp/go-multierror"
 
 	"get.porter.sh/porter/pkg/config"
@@ -12,8 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/yaml"
-	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
@@ -249,26 +248,23 @@ func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 	return outputs, nil
 }
 
-func (r *PorterRuntime) getImageMappingFiles() (*bundle.Bundle, relocation.ImageRelocationMap, error) {
-	l := loader.New()
-	bunBytes, err := r.FileSystem.ReadFile("/cnab/bundle.json")
+func (r *PorterRuntime) getImageMappingFiles() (cnab.ExtendedBundle, relocation.ImageRelocationMap, error) {
+	// TODO(carolynvs): switch to returning a BundleReference
+	b, err := cnab.LoadBundle(r.Context, "/cnab/bundle.json")
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "couldn't read runtime bundle.json")
+		return cnab.ExtendedBundle{}, nil, err
 	}
-	rtb, err := l.LoadData(bunBytes)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "couldn't load runtime bundle.json")
-	}
+
 	var reloMap relocation.ImageRelocationMap
 	if _, err := r.FileSystem.Stat("/cnab/app/relocation-mapping.json"); err == nil {
 		reloBytes, err := r.FileSystem.ReadFile("/cnab/app/relocation-mapping.json")
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "couldn't read relocation file")
+			return cnab.ExtendedBundle{}, nil, errors.Wrap(err, "couldn't read relocation file")
 		}
 		err = json.Unmarshal(reloBytes, &reloMap)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "couldn't load relocation file")
+			return cnab.ExtendedBundle{}, nil, errors.Wrap(err, "couldn't load relocation file")
 		}
 	}
-	return rtb, reloMap, nil
+	return b, reloMap, nil
 }

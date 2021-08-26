@@ -1,8 +1,8 @@
 package cnabprovider
 
 import (
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
@@ -37,7 +37,7 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	} else {
 		if dockerRequired {
 			return nil, errors.Errorf("extension %q is required but allow-docker-host-access was not enabled",
-				extensions.DockerExtensionKey)
+				cnab.DockerExtensionKey)
 		}
 		driverImpl, err = drivers.LookupDriver(r.Context, driverName)
 	}
@@ -60,7 +60,7 @@ func (r *Runtime) newDriver(driverName string, args ActionArguments) (driver.Dri
 	return driverImpl, nil
 }
 
-func (r *Runtime) dockerDriverWithHostAccess(config extensions.Docker) (driver.Driver, error) {
+func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver, error) {
 	const dockerSock = "/var/run/docker.sock"
 
 	if exists, _ := r.FileSystem.Exists(dockerSock); !exists {

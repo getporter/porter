@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/cnab/extensions"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
@@ -26,10 +25,10 @@ type RuntimeManifest struct {
 	Action string
 
 	// bundle is the executing bundle definition
-	bundle bundle.Bundle
+	bundle cnab.ExtendedBundle
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
-	bundles map[string]bundle.Bundle
+	bundles map[string]cnab.ExtendedBundle
 
 	steps           manifest.Steps
 	outputs         map[string]string
@@ -83,7 +82,7 @@ func (m *RuntimeManifest) GetInstallationName() string {
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
-	m.bundles = make(map[string]bundle.Bundle, len(m.Dependencies.RequiredDependencies))
+	m.bundles = make(map[string]cnab.ExtendedBundle, len(m.Dependencies.RequiredDependencies))
 	for _, dep := range m.Dependencies.RequiredDependencies {
 		bunD, err := GetDependencyDefinition(m.Context, dep.Name)
 		if err != nil {
@@ -95,7 +94,7 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 			return errors.Wrapf(err, "error unmarshaling bundle definition for dependency %s", dep.Name)
 		}
 
-		m.bundles[dep.Name] = *bun
+		m.bundles[dep.Name] = cnab.ExtendedBundle{*bun}
 	}
 
 	return nil
@@ -286,7 +285,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	// Externally injected outputs (bundle level outputs and dependency outputs) are
 	// injected through parameter sources.
-	bunExt, err := extensions.ProcessRequiredExtensions(m.bundle)
+	bunExt, err := m.bundle.ProcessRequiredExtensions()
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +305,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 		for _, s := range sources.ListSourcesByPriority() {
 			switch ps := s.(type) {
-			case extensions.DependencyOutputParameterSource:
+			case cnab.DependencyOutputParameterSource:
 				outRef := manifest.DependencyOutputReference{Dependency: ps.Dependency, Output: ps.OutputName}
 
 				// Ignore anything that isn't templated, because that's what we are building the source data for
@@ -336,7 +335,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 					m.setSensitiveValue(value)
 				}
 
-			case extensions.OutputParameterSource:
+			case cnab.OutputParameterSource:
 				// Ignore anything that isn't templated, because that's what we are building the source data for
 				if _, isTemplated := templatedOutputs[ps.OutputName]; !isTemplated {
 					continue
@@ -464,7 +463,7 @@ func (m *RuntimeManifest) Prepare() error {
 
 // ResolveImages updates the RuntimeManifest to properly reflect the image map passed to the bundle via the
 // mounted bundle.json and relocation mapping
-func (m *RuntimeManifest) ResolveImages(bun *bundle.Bundle, reloMap relocation.ImageRelocationMap) error {
+func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocation.ImageRelocationMap) error {
 	// It only makes sense to process this if the runtime manifest has images defined. If none are defined
 	// return early
 	if len(m.ImageMap) == 0 {
@@ -513,7 +512,7 @@ func resolveImage(image *manifest.MappedImage, refString string) error {
 		image.Tag = ref.Tag()
 	}
 
-	if ref.IsRepositoryOnly(){
+	if ref.IsRepositoryOnly() {
 		image.Tag = "latest" // Populate this with latest so that the {{ can reference something }}
 	}
 

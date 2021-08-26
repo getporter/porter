@@ -2,11 +2,10 @@ package cnabprovider
 
 import (
 	"get.porter.sh/porter/pkg/claims"
-	"get.porter.sh/porter/pkg/cnab/extensions"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +16,7 @@ type Runtime struct {
 	credentials credentials.Provider
 	parameters  parameters.Provider
 	claims      claims.Provider
-	Extensions  extensions.ProcessedExtensions
+	Extensions  cnab.ProcessedExtensions
 }
 
 func NewRuntime(c *config.Config, claims claims.Provider, credentials credentials.Provider) *Runtime {
@@ -25,12 +24,12 @@ func NewRuntime(c *config.Config, claims claims.Provider, credentials credential
 		Config:      c,
 		claims:      claims,
 		credentials: credentials,
-		Extensions:  extensions.ProcessedExtensions{},
+		Extensions:  cnab.ProcessedExtensions{},
 	}
 }
 
-func (r *Runtime) ProcessRequiredExtensions(b bundle.Bundle) error {
-	exts, err := extensions.ProcessRequiredExtensions(b)
+func (r *Runtime) ProcessRequiredExtensions(b cnab.ExtendedBundle) error {
+	exts, err := b.ProcessRequiredExtensions()
 	if err != nil {
 		return errors.Wrap(err, "unable to process required extensions")
 	}

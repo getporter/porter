@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,11 +53,11 @@ func (t *TestRuntime) Teardown() error {
 	return nil
 }
 
-func (t *TestRuntime) LoadBundle(bundleFile string) (bundle.Bundle, error) {
+func (t *TestRuntime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error) {
 	return t.Runtime.LoadBundle(bundleFile)
 }
 
-func (t *TestRuntime) LoadTestBundle(bundleFile string) bundle.Bundle {
+func (t *TestRuntime) LoadTestBundle(bundleFile string) cnab.ExtendedBundle {
 	bun, err := cnab.LoadBundle(context.New(), bundleFile)
 	require.NoError(t.TestConfig.TestContext.T, err)
 	return bun
