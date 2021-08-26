@@ -76,14 +76,14 @@ func (b ExtendedBundle) ReadDependencies() (Dependencies, error) {
 }
 
 // DependencyReader is a Reader for the DependenciesExtension, which reads
-// from the applicable section in the provided bundle and returns a the raw
+// from the applicable section in the provided bundle and returns the raw
 // data in the form of an interface
 func DependencyReader(bun ExtendedBundle) (interface{}, error) {
 	return bun.DependencyReader()
 }
 
 // DependencyReader is a Reader for the DependenciesExtension, which reads
-// from the applicable section in the provided bundle and returns a the raw
+// from the applicable section in the provided bundle and returns the raw
 // data in the form of an interface
 func (b ExtendedBundle) DependencyReader() (interface{}, error) {
 	data, ok := b.Custom[DependenciesExtensionKey]

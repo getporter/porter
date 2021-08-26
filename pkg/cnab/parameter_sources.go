@@ -171,14 +171,14 @@ func (b ExtendedBundle) ReadParameterSources() (ParameterSources, error) {
 
 // ParameterSourcesReader is a Reader for the ParameterSourcesExtension,
 // which reads from the applicable section in the provided bundle and
-// returns a the raw data in the form of an interface
+// returns the raw data in the form of an interface
 func ParameterSourcesReader(bun ExtendedBundle) (interface{}, error) {
 	return bun.ParameterSourcesReader()
 }
 
 // ParameterSourcesReader is a Reader for the ParameterSourcesExtension,
 // which reads from the applicable section in the provided bundle and
-// returns a the raw data in the form of an interface
+// returns the raw data in the form of an interface
 func (b ExtendedBundle) ParameterSourcesReader() (interface{}, error) {
 	data, ok := b.Custom[ParameterSourcesExtensionKey]
 	if !ok {

@@ -33,14 +33,14 @@ type Docker struct {
 
 // DockerExtensionReader is a Reader for the DockerExtension,
 // which reads from the applicable section in the provided bundle and
-// returns a the raw data in the form of an interface
+// returns the raw data in the form of an interface
 func DockerExtensionReader(bun ExtendedBundle) (interface{}, error) {
 	return bun.DockerExtensionReader()
 }
 
 // DockerExtensionReader is a Reader for the DockerExtension,
 // which reads from the applicable section in the provided bundle and
-// returns a the raw data in the form of an interface
+// returns the raw data in the form of an interface
 func (b ExtendedBundle) DockerExtensionReader() (interface{}, error) {
 	data, ok := b.Custom[DockerExtensionKey]
 	if !ok {

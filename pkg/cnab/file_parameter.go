@@ -17,14 +17,14 @@ var FileParameterExtension = RequiredExtension{
 }
 
 // FileParameterReader is a Reader for the FileParameterExtension.
-// The extension does not have any data, it's presence indicates that
+// The extension does not have any data, its presence indicates that
 // parameters of type "file" should be supported by the tooling.
 func FileParameterReader(b ExtendedBundle) (interface{}, error) {
 	return b.FileParameterReader()
 }
 
 // FileParameterReader is a Reader for the FileParameterExtension.
-// The extension does not have any data, it's presence indicates that
+// The extension does not have any data, its presence indicates that
 // parameters of type "file" should be supported by the tooling.
 func (b ExtendedBundle) FileParameterReader() (interface{}, error) {
 	return nil, nil
