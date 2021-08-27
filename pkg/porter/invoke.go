@@ -41,18 +41,20 @@ func (o InvokeOptions) Validate(args []string, p *Porter) error {
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses
 // them to upgrade a bundle.
 func (p *Porter) InvokeBundle(opts InvokeOptions) error {
+	// Figure out which bundle/installation we are working with
 	bundleRef, err := p.resolveBundleReference(opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
 
-	action, err := bundleRef.Definition.GetAction(opts.Action)
-	if err != nil {
-		return fmt.Errorf("invalid --action %s", opts.Action)
-	}
-
 	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
+		action, actionErr := bundleRef.Definition.GetAction(opts.Action)
+		if actionErr != nil {
+			return fmt.Errorf("invalid --action %s", opts.Action)
+		}
+
+		// Only allow actions on a non-existing installation when it won't change anything
 		if action.Modifies || !action.Stateless {
 			return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 		}

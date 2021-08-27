@@ -8,8 +8,10 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/encoding"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-to-oci/relocation"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -67,8 +69,8 @@ func TestFindBundleBundleCached(t *testing.T) {
 	c := New(cfg.Config)
 
 	cb, ok, err := c.FindBundle(kahn1dot01)
-	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
-	assert.True(t, ok, "the bundle should exist")
+	require.NoError(t, err, "the cache dir should exist, no error should have happened")
+	require.True(t, ok, "the bundle should exist")
 	assert.Equal(t, expectedCacheFile, cb.BundlePath)
 }
 
@@ -78,7 +80,7 @@ func TestFindBundleBundleNotCached(t *testing.T) {
 	cfg := config.NewTestConfig(t)
 	c := New(cfg.Config)
 	cb, ok, err := c.FindBundle(kahnlatest)
-	assert.NoError(t, err, "the cache dir should exist, no error should have happened")
+	require.NoError(t, err, "the cache dir should exist, no error should have happened")
 	assert.False(t, ok, "the bundle should not exist")
 	assert.Empty(t, cb.BundlePath, "should not have a path")
 }
@@ -119,7 +121,13 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 
 	c := New(cfg.Config)
 	var reloMap relocation.ImageRelocationMap
-	cb, err := c.StoreBundle(cnab.BundleReference{Reference: kahn1dot01, Definition: bun, RelocationMap: reloMap})
+	bundleRef := cnab.BundleReference{
+		Reference:     kahn1dot01,
+		Definition:    bun,
+		RelocationMap: reloMap,
+		Digest:        digest.Digest("sha256:2249472f86d0cea9ac8809331931e9100e1d0464afff3d2869bbb8dedfe2d396"),
+	}
+	cb, err := c.StoreBundle(bundleRef)
 
 	expectedCacheDirectory := filepath.Join(cacheDir, kahn1dot0Hash)
 	expectedCacheCNABDirectory := filepath.Join(expectedCacheDirectory, "cnab")
@@ -127,6 +135,11 @@ func TestCacheWriteCacheDirExists(t *testing.T) {
 
 	assert.Equal(t, expectedCacheFile, cb.BundlePath)
 	assert.NoError(t, err, "storing bundle should have succeeded")
+
+	var meta Metadata
+	expectedMetaFile := filepath.Join(expectedCacheDirectory, "metadata.json")
+	require.NoError(t, encoding.UnmarshalFile(cfg.FileSystem, expectedMetaFile, &meta))
+	assert.Equal(t, Metadata{Reference: bundleRef.Reference, Digest: bundleRef.Digest}, meta, "incorrect metadata.json persisted")
 }
 
 func TestStoreRelocationMapping(t *testing.T) {

@@ -18,6 +18,17 @@ const (
 	Toml = "toml"
 )
 
+// MarshalFile encodes the specified struct to a file.
+// Supported file extensions are: yaml, yml, json, and toml.
+func MarshalFile(fs aferox.Aferox, path string, in interface{}) error {
+	format := strings.TrimPrefix(filepath.Ext(path), ".")
+	data, err := Marshal(format, in)
+	if err != nil {
+		return err
+	}
+	return fs.WriteFile(path, data, 0700)
+}
+
 // MarshalYaml converts the input to yaml.
 func MarshalYaml(in interface{}) ([]byte, error) {
 	return Marshal(Yaml, in)

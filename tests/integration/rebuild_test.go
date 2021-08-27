@@ -89,7 +89,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate([]string{}, p.Context)
+	err := credentialOptions.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.GenerateCredentials(credentialOptions)
 	assert.NoError(t, err)
@@ -111,7 +111,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate([]string{}, p.Context)
+	err := credentialOptions.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.GenerateCredentials(credentialOptions)
 	require.NoError(t, err)

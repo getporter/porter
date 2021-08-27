@@ -15,7 +15,7 @@ type BundleResolver struct {
 // Returns the location of the bundle or an error
 func (r *BundleResolver) Resolve(opts BundlePullOptions) (cache.CachedBundle, error) {
 	if !opts.Force {
-		cachedBundle, ok, err := r.Cache.FindBundle(opts.ref)
+		cachedBundle, ok, err := r.Cache.FindBundle(opts.GetReference())
 		if err != nil {
 			return cache.CachedBundle{}, errors.Wrapf(err, "unable to load bundle %s from cache", opts.Reference)
 		}
@@ -25,7 +25,7 @@ func (r *BundleResolver) Resolve(opts BundlePullOptions) (cache.CachedBundle, er
 		}
 	}
 
-	bundleRef, err := r.Registry.PullBundle(opts.ref, opts.InsecureRegistry)
+	bundleRef, err := r.Registry.PullBundle(opts.GetReference(), opts.InsecureRegistry)
 	if err != nil {
 		return cache.CachedBundle{}, err
 	}

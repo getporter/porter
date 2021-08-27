@@ -23,7 +23,7 @@ porter bundles upgrade [INSTALLATION] [flags]
 ### Examples
 
 ```
-  porter bundle upgrade
+  porter bundle upgrade --version 0.2.0
   porter bundle upgrade --reference getporter/kubernetes:v0.1.0
   porter bundle upgrade --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
@@ -48,6 +48,7 @@ porter bundles upgrade [INSTALLATION] [flags]
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
   -r, --reference string           Use a bundle in an OCI registry specified by the given reference.
+      --version string             Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.
 ```
 
 ### Options inherited from parent commands

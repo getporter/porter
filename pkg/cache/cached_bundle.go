@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
@@ -66,17 +67,38 @@ func (cb *CachedBundle) BuildManifestPath() string {
 	return filepath.Join(cb.cacheDir, config.Name)
 }
 
+// BuildMetadataPath generates the location of the cache metadata.
+func (cb *CachedBundle) BuildMetadataPath() string {
+	return filepath.Join(cb.cacheDir, "metadata.json")
+}
+
 // Load starts from the bundle tag, and hydrates the cached bundle from the cache.
 func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	// Check that the bundle exists
 	cb.BundlePath = cb.BuildBundlePath()
-	bundleExists, err := cxt.FileSystem.Exists(cb.BundlePath)
+	bundleExists, err := cxt.FileSystem.Exists(cb.BuildMetadataPath())
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BundlePath)
+		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BuildMetadataPath())
 	}
 	if !bundleExists {
 		return false, nil
 	}
+
+	metaPath := cb.BuildMetadataPath()
+	metaExists, err := cxt.FileSystem.Exists(metaPath)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to access bundle metadata %s at %s", cb.Reference, metaPath)
+	}
+	if !metaExists {
+		// consider this a miss, recache with the metadata
+		return false, nil
+	}
+	var meta Metadata
+	err = encoding.UnmarshalFile(cxt.FileSystem, metaPath, &meta)
+	if err != nil {
+		return false, errors.Wrapf(err, "unable to parse cached bundle metadata %s at %s", cb.Reference, metaPath)
+	}
+	cb.Digest = meta.Digest
 
 	// Check for the optional relocation mapping next to it
 	reloPath := cb.BuildRelocationFilePath()

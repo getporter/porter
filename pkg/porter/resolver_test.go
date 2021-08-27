@@ -55,16 +55,16 @@ func TestBundleResolver_Resolve_CacheHit(t *testing.T) {
 	cacheSearched := false
 	testCache.FindBundleMock = func(ref cnab.OCIReference) (cache.CachedBundle, bool, error) {
 		cacheSearched = true
-		return cache.CachedBundle{}, true, nil
+		return cache.CachedBundle{BundleReference: cnab.BundleReference{Reference: ref}}, true, nil
 	}
 
 	pulled := false
 	testReg.MockPullBundle = func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error) {
 		pulled = true
-		return cnab.BundleReference{}, nil
+		return cnab.BundleReference{Reference: ref}, nil
 	}
 
-	opts := BundlePullOptions{}
+	opts := BundlePullOptions{Reference: "getporter/porter-hello:v0.1.1"}
 	resolver.Resolve(opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")
@@ -83,7 +83,7 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 	cacheSearched := false
 	testCache.FindBundleMock = func(ref cnab.OCIReference) (cache.CachedBundle, bool, error) {
 		cacheSearched = true
-		return cache.CachedBundle{BundleReference: cnab.BundleReference{Reference: ref}}, false, nil
+		return cache.CachedBundle{}, false, nil
 	}
 
 	pulled := false
@@ -92,7 +92,7 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 		return cnab.BundleReference{Reference: ref}, nil
 	}
 
-	opts := BundlePullOptions{}
+	opts := BundlePullOptions{Reference: "getporter/porter-hello:v0.1.1"}
 	resolver.Resolve(opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")

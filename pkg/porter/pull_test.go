@@ -14,7 +14,7 @@ func TestBundlePullOptions_validtag(t *testing.T) {
 
 	err := opts.Validate()
 	require.NoError(t, err, "valid tag should not produce an error")
-	assert.Equal(t, opts.Reference, opts.ref.String())
+	assert.Equal(t, opts.Reference, opts.GetReference().String())
 }
 
 func TestBundlePullOptions_invalidtag(t *testing.T) {

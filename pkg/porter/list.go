@@ -58,31 +58,41 @@ func parseLabels(raw []string) map[string]string {
 // DisplayInstallation holds a subset of pertinent values to be listed from installation data
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
-	Name      string
-	Namespace string
-	Created   time.Time
-	Modified  time.Time
-	Bundle    string
-	Version   string
-	Digest    string
-	Action    string
-	Status    string
+	Name              string
+	Namespace         string
+	Created           time.Time
+	Modified          time.Time
+	TrackedRepository string
+	TrackedVersion    string
+	TrackedDigest     string
+	StatusLastAction  string
+	StatusText        string
+	StatusReference   string
+	StatusVersion     string
+	StatusDigest      string
 
-	Parameters DisplayValues
-	Labels     []string
+	Parameters     DisplayValues
+	Labels         []string
+	ParameterSets  []string
+	CredentialSets []string
 }
 
 func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
 	di := DisplayInstallation{
-		Name:      installation.Name,
-		Namespace: installation.Namespace,
-		Bundle:    installation.BundleRepository,
-		Version:   installation.BundleVersion,
-		Digest:    installation.BundleDigest,
-		Created:   installation.Created,
-		Modified:  installation.Modified,
-		Action:    installation.Status.Action,
-		Status:    installation.Status.ResultStatus,
+		Name:              installation.Name,
+		Namespace:         installation.Namespace,
+		TrackedRepository: installation.BundleRepository,
+		TrackedVersion:    installation.BundleVersion,
+		TrackedDigest:     installation.BundleDigest,
+		ParameterSets:     installation.ParameterSets,
+		CredentialSets:    installation.CredentialSets,
+		Created:           installation.Created,
+		Modified:          installation.Modified,
+		StatusReference:   installation.Status.BundleReference,
+		StatusVersion:     installation.Status.BundleVersion,
+		StatusDigest:      installation.Status.BundleDigest,
+		StatusLastAction:  installation.Status.Action,
+		StatusText:        installation.Status.ResultStatus,
 	}
 
 	labels := make([]string, 0, len(installation.Labels))
@@ -177,7 +187,7 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Action, cl.Status}
+				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.StatusLastAction, cl.StatusText}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")

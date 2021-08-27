@@ -127,9 +127,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	// Create a record for the run we are about to execute
 	var currentRun = args.Installation.NewRun(args.Action)
 	currentRun.Bundle = b.Bundle
-	if args.BundleReference.Reference != (cnab.OCIReference{}) {
-		currentRun.BundleReference = args.BundleReference.Reference.String()
-	}
+	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 	currentRun.Parameters = params
 

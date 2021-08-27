@@ -67,6 +67,7 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(opts UninstallOptions) error {
+	// Figure out which bundle/installation we are working with
 	_, err := p.resolveBundleReference(opts.BundleActionOptions)
 	if err != nil {
 		return err

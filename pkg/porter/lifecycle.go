@@ -28,6 +28,8 @@ type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowAccessToDockerHost bool
+
+	bundleRef *cnab.BundleReference
 }
 
 func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
@@ -61,18 +63,30 @@ func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 }
 
 func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleReference, error) {
+	// Some actions need to resolve this early
+	if opts.bundleRef != nil {
+		return *opts.bundleRef, nil
+	}
+
 	var bundleRef cnab.BundleReference
 
-	// load the referenced bundle
-	if opts.Reference != "" {
-		cachedBundle, err := p.prepullBundleByReference(opts)
+	useReference := func(ref cnab.OCIReference) error {
+		pullOpts := *opts // make a copy just to do the pull
+		pullOpts.Reference = ref.String()
+		cachedBundle, err := p.prepullBundleByReference(&pullOpts)
 		if err != nil {
-			return cnab.BundleReference{}, errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
+			return errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
 		}
 
 		bundleRef = cachedBundle.BundleReference
-		opts.File = cachedBundle.ManifestPath
-		opts.CNABFile = cachedBundle.BundlePath
+		return nil
+	}
+
+	// load the referenced bundle
+	if opts.Reference != "" {
+		if err := useReference(opts.GetReference()); err != nil {
+			return cnab.BundleReference{}, err
+		}
 	} else if opts.File != "" { // load the local bundle source
 		localBundle, err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 		if err != nil {
@@ -86,19 +100,33 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 		}
 		bundleRef = cnab.BundleReference{Definition: bun}
 	} else if opts.Name != "" { // Return the bundle associated with the installation
-		lastRun, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+		i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 		if err != nil {
-			return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
+			return cnab.BundleReference{}, errors.Wrapf(err, "installation %s/%s not found", opts.Namespace, opts.Name)
 		}
-
-		bundleRef = cnab.BundleReference{
-			Definition: cnab.ExtendedBundle{lastRun.Bundle},
-			Digest:     digest.Digest(lastRun.BundleDigest)}
-
-		if lastRun.BundleReference != "" {
-			bundleRef.Reference, err = cnab.ParseOCIReference(lastRun.BundleReference)
+		if i.Status.BundleReference != "" {
+			ref, err := cnab.ParseOCIReference(i.Status.BundleReference)
 			if err != nil {
-				return cnab.BundleReference{}, errors.Wrapf(err, "invalid bundle reference, %s, found on the last bundle run record %s", lastRun.BundleReference, lastRun.ID)
+				return cnab.BundleReference{}, errors.Wrapf(err, "installation.Status.BundleReference is invalid")
+			}
+			if err := useReference(ref); err != nil {
+				return cnab.BundleReference{}, err
+			}
+		} else { // The bundle was installed from source
+			lastRun, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+			if err != nil {
+				return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
+			}
+
+			bundleRef = cnab.BundleReference{
+				Definition: cnab.ExtendedBundle{lastRun.Bundle},
+				Digest:     digest.Digest(lastRun.BundleDigest)}
+
+			if lastRun.BundleReference != "" {
+				bundleRef.Reference, err = cnab.ParseOCIReference(lastRun.BundleReference)
+				if err != nil {
+					return cnab.BundleReference{}, errors.Wrapf(err, "invalid bundle reference, %s, found on the last bundle run record %s", lastRun.BundleReference, lastRun.ID)
+				}
 			}
 		}
 	} else { // Nothing was referenced
@@ -109,6 +137,7 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 		opts.Name = bundleRef.Definition.Name
 	}
 
+	opts.bundleRef = &bundleRef
 	return bundleRef, nil
 }
 
@@ -163,7 +192,6 @@ func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) (cache.Cach
 		return cache.CachedBundle{}, errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
 	}
 
-	opts.CNABFile = cachedBundle.BundlePath
 	opts.RelocationMapping = cachedBundle.RelocationFilePath
 
 	if opts.Name == "" {

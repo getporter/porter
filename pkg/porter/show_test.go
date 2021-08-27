@@ -14,16 +14,17 @@ import (
 func TestPorter_ShowBundle(t *testing.T) {
 	t.Parallel()
 
+	ref := "getporter/wordpress:v0.1.0"
 	testcases := []struct {
 		name       string
-		repo       string
+		ref        string
 		format     printer.Format
 		outputFile string
 	}{
-		{name: "plain", repo: "getporter/wordpress", format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
-		{name: "no reference, plain", repo: "", format: printer.FormatPlaintext, outputFile: "testdata/show/no-reference-expected-output.txt"},
-		{name: "json", repo: "getporter/wordpress", format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
-		{name: "yaml", repo: "getporter/wordpress", format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
+		{name: "plain", ref: ref, format: printer.FormatPlaintext, outputFile: "testdata/show/expected-output.txt"},
+		{name: "no reference, plain", format: printer.FormatPlaintext, outputFile: "testdata/show/no-reference-expected-output.txt"},
+		{name: "json", ref: ref, format: printer.FormatJson, outputFile: "testdata/show/expected-output.json"},
+		{name: "yaml", ref: ref, format: printer.FormatYaml, outputFile: "testdata/show/expected-output.yaml"},
 	}
 
 	for _, tc := range testcases {
@@ -77,25 +78,22 @@ func TestPorter_ShowBundle(t *testing.T) {
 				},
 			}
 			i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
-				i.BundleVersion = "0.1.0"
-				i.BundleRepository = tc.repo
-				i.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
+				if tc.ref != "" {
+					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
+				}
 				i.Labels = map[string]string{
 					"io.cnab/app":        "wordpress",
 					"io.cnab/appVersion": "v1.2.3",
 				}
 				i.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3}
 			})
-			r := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
+			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
 				r.Bundle = b
-				if tc.repo != "" {
-					r.BundleReference = tc.repo + ":0.1.0"
-				}
-
+				r.BundleReference = tc.ref
+				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
 			})
-			i.Status.RunID = r.ID
-			i.Status.Action = r.Action
-			i.Status.ResultStatus = cnab.StatusSucceeded
+			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
+			i.ApplyResult(run, result)
 			i.Status.InstallationCompleted = true
 			require.NoError(t, p.TestClaims.UpdateInstallation(i))
 

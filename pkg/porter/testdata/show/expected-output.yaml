@@ -5,7 +5,6 @@ created: 2020-04-18T01:02:03.000000004Z
 modified: 2020-04-18T01:02:03.000000004Z
 bundleRepository: getporter/wordpress
 bundleVersion: 0.1.0
-bundleDigest: sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9
 labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3
@@ -15,6 +14,9 @@ parameters:
 status:
   runId: "1"
   action: upgrade
-  resultId: ""
+  resultId: "2"
   resultStatus: succeeded
   installationCompleted: true
+  bundleReference: getporter/wordpress:v0.1.0
+  bundleVersion: 0.1.0
+  bundleDigest: sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9

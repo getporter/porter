@@ -8,7 +8,7 @@ import (
 
 type BundlePullOptions struct {
 	Reference        string
-	ref              cnab.OCIReference
+	_ref             *cnab.OCIReference
 	InsecureRegistry bool
 	Force            bool
 }
@@ -17,12 +17,23 @@ func (b *BundlePullOptions) Validate() error {
 	return b.validateReference()
 }
 
+func (b *BundlePullOptions) GetReference() cnab.OCIReference {
+	if b._ref == nil {
+		ref, err := cnab.ParseOCIReference(b.Reference)
+		if err != nil {
+			panic(err)
+		}
+		b._ref = &ref
+	}
+	return *b._ref
+}
+
 func (b *BundlePullOptions) validateReference() error {
-	var err error
-	b.ref, err = cnab.ParseOCIReference(b.Reference)
+	ref, err := cnab.ParseOCIReference(b.Reference)
 	if err != nil {
 		return errors.Wrap(err, "invalid value for --reference, specified value should be of the form REGISTRY/bundle:tag")
 	}
+	b._ref = &ref
 	return nil
 }
 

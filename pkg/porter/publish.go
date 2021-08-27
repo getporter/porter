@@ -248,7 +248,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 	}
 
 	bundleRef := cnab.BundleReference{
-		Reference:  opts.ref,
+		Reference:  opts.GetReference(),
 		Definition: bun,
 	}
 	bundleRef, err = p.Registry.PushBundle(bundleRef, opts.InsecureRegistry)

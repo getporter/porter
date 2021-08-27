@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/editor"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/generator"
@@ -88,18 +87,18 @@ func (o ParameterOptions) ParseLabels() map[string]string {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (g *ParameterOptions) Validate(args []string, cxt *context.Context) error {
-	err := g.validateParamName(args)
+func (o *ParameterOptions) Validate(args []string, p *Porter) error {
+	err := o.validateParamName(args)
 	if err != nil {
 		return err
 	}
 
-	return g.bundleFileOptions.Validate(cxt)
+	return o.BundleActionOptions.Validate(args, p)
 }
 
-func (g *ParameterOptions) validateParamName(args []string) error {
+func (o *ParameterOptions) validateParamName(args []string) error {
 	if len(args) == 1 {
-		g.Name = args[0]
+		o.Name = args[0]
 	} else if len(args) > 1 {
 		return errors.Errorf("only one positional argument may be specified, the parameter set name, but multiple were received: %s", args)
 	}
