@@ -118,7 +118,7 @@ func (m *Manager) Aggregate(collection string, opts storage.AggregateOptions, ou
 	return m.store.Aggregate(collection, opts, out)
 }
 
-func (m *Manager) Count(collection string, opts storage.CountOptions) (int, error) {
+func (m *Manager) Count(collection string, opts storage.CountOptions) (int64, error) {
 	if err := m.Connect(); err != nil {
 		return 0, err
 	}

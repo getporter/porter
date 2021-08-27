@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var _ Document = TestDocument{}
@@ -58,4 +60,15 @@ func TestUpdateOptions_ToPluginOptions(t *testing.T) {
 
 	wantRawDoc := map[string]interface{}{"_id": "aid", "name": "a"}
 	require.Equal(t, wantRawDoc, gotOpts.Document)
+}
+
+func TestFindOptions_ToPluginOptions(t *testing.T) {
+	so := FindOptions{
+		Sort: []string{"-_id", "name"},
+	}
+	po := so.ToPluginOptions("mythings")
+	wantSortDoc := bson.D{
+		bson.E{Key: "_id", Value: -1},
+		bson.E{Key: "name", Value: 1}}
+	assert.Equal(t, wantSortDoc, po.Sort)
 }

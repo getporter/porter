@@ -9,8 +9,8 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {

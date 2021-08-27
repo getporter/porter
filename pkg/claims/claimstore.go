@@ -2,10 +2,9 @@ package claims
 
 import (
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -39,11 +38,8 @@ func (s ClaimStore) Initialize() error {
 
 	// query installations by a namespace (list) or namespace + name (get)
 	err := s.store.EnsureIndex(CollectionInstallations, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "name"},
-			Unique:     true,
-			Background: true,
-		},
+		Keys:   []string{"namespace", "name"},
+		Unique: true,
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -51,10 +47,7 @@ func (s ClaimStore) Initialize() error {
 
 	// query runs by installation (list)
 	err = s.store.EnsureIndex(CollectionRuns, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "installation"},
-			Background: true,
-		},
+		Keys: []string{"namespace", "installation"},
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -62,10 +55,7 @@ func (s ClaimStore) Initialize() error {
 
 	// query results by installation (delete or batch get)
 	err = s.store.EnsureIndex(CollectionResults, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "installation"},
-			Background: true,
-		},
+		Keys: []string{"namespace", "installation"},
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -73,10 +63,7 @@ func (s ClaimStore) Initialize() error {
 
 	// query results by run (list)
 	err = s.store.EnsureIndex(CollectionResults, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"runId"},
-			Background: true,
-		},
+		Keys: []string{"runId"},
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -84,10 +71,7 @@ func (s ClaimStore) Initialize() error {
 
 	// query most recent outputs by run (porter installation run show, when we list outputs)
 	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "installation", "-resultId"},
-			Background: true,
-		},
+		Keys: []string{"namespace", "installation", "-resultId"},
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -95,11 +79,8 @@ func (s ClaimStore) Initialize() error {
 
 	// query outputs by result (list)
 	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"resultId", "name"},
-			Unique:     true,
-			Background: true,
-		},
+		Keys:   []string{"resultId", "name"},
+		Unique: true,
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
@@ -107,10 +88,7 @@ func (s ClaimStore) Initialize() error {
 
 	// query most recent outputs by name for an installation
 	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "installation", "name", "-resultId"},
-			Background: true,
-		},
+		Keys: []string{"namespace", "installation", "name", "-resultId"},
 	})
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)

@@ -7,8 +7,8 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
-	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var _ plugins.StoragePlugin = &Store{}
@@ -107,7 +107,7 @@ func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
 	return s.plugin.Aggregate(opts)
 }
 
-func (s *Store) Count(opts plugins.CountOptions) (int, error) {
+func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
 	if err := s.Connect(); err != nil {
 		return 0, err
 	}

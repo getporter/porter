@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"github.com/globalsign/mgo/bson"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var _ Store = PluginAdapter{}
@@ -59,7 +59,7 @@ func (a PluginAdapter) EnsureIndex(collection string, opts EnsureIndexOptions) e
 	return a.plugin.EnsureIndex(opts.ToPluginOptions(collection))
 }
 
-func (a PluginAdapter) Count(collection string, opts CountOptions) (int, error) {
+func (a PluginAdapter) Count(collection string, opts CountOptions) (int64, error) {
 	err := a.Connect()
 	if err != nil {
 		return 0, err
@@ -115,7 +115,7 @@ func (a PluginAdapter) unmarshalSlice(bsonResults []bson.Raw, out interface{}) e
 	tmpResults := make([]bson.M, len(bsonResults))
 	for i, bsonResult := range bsonResults {
 		var result bson.M
-		err := bson.Unmarshal(bsonResult.Data, &result)
+		err := bson.Unmarshal(bsonResult, &result)
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ func (a PluginAdapter) unmarshal(bsonResult bson.Raw, out interface{}) error {
 	// We want to go from bson.Raw -> bson.M -> json -> out (typed struct)
 
 	var tmpResult bson.M
-	err := bson.Unmarshal(bsonResult.Data, &tmpResult)
+	err := bson.Unmarshal(bsonResult, &tmpResult)
 	if err != nil {
 		return err
 	}
