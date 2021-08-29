@@ -41,7 +41,7 @@ func (s *Store) Connect() error {
 	container := "porter-mongodb-docker-plugin"
 	dataVol := container + "-data"
 
-	conn, err := EnsureMongoIsRunning(s.context, container, s.config.Port, dataVol, s.config.Database)
+	conn, err := EnsureMongoIsRunning(s.context, container, s.config.Port, dataVol, s.config.Database, s.config.Timeout)
 	if err != nil {
 		return err
 	}
@@ -53,10 +53,18 @@ func (s *Store) Connect() error {
 func (s *Store) Close() error {
 	// leave the container running for performance purposes
 	//exec.Command("docker", "rm", "-f", "porter-mongodb-docker-plugin")
+
+	// close the connection to the mongodb running in the container
+	if conn, ok := s.StorageProtocol.(*mongodb.Store); ok {
+		return conn.Close()
+	}
+
+	s.StorageProtocol = nil
+
 	return nil
 }
 
-func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string) (*mongodb.Store, error) {
+func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string, queryTimeout time.Duration) (*mongodb.Store, error) {
 	if dataVol != "" {
 		err := exec.Command("docker", "volume", "inspect", dataVol).Run()
 		if err != nil {
@@ -136,9 +144,10 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 		fmt.Fprintln(c.Err, "waiting for the mongo service to be ready")
 	}
 	mongoPluginCfg := mongodb.PluginConfig{
-		URL: fmt.Sprintf("mongodb://localhost:%s/%s", port, dbName),
+		URL:     fmt.Sprintf("mongodb://localhost:%s/%s?connect=direct", port, dbName),
+		Timeout: queryTimeout,
 	}
-	timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeout, cancel := context.WithTimeout(context.Background(), 10*queryTimeout)
 	defer cancel()
 	for {
 		select {
@@ -148,10 +157,9 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 			conn := mongodb.NewStore(c, mongoPluginCfg)
 			err := conn.Connect()
 			if err == nil {
-				_, err = conn.Find(plugins.FindOptions{Collection: "config"})
-				if err == nil {
-					return conn, nil
-				}
+				return conn, nil
+			} else if c.Debug {
+				fmt.Fprintln(c.Err, errors.Wrapf(err, "mongodb isn't ready yet"))
 			}
 		}
 	}

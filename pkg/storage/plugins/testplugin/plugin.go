@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"runtime"
+	"time"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
@@ -58,7 +59,7 @@ func (s *TestStoragePlugin) Setup() error {
 
 func (s *TestStoragePlugin) useDevDatabase() error {
 	cfg := mongodb.PluginConfig{
-		URL: fmt.Sprintf("mongodb://localhost:27017/%s", s.database),
+		URL: fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
 	}
 	devMongo := mongodb.NewStore(s.tc.Context, cfg)
 	err := devMongo.Connect()
@@ -76,7 +77,7 @@ func (s *TestStoragePlugin) useDevDatabase() error {
 }
 
 func (s *TestStoragePlugin) runTestDatabase() error {
-	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database)
+	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database, 10*time.Second)
 	if err != nil {
 		return err
 	}
@@ -86,10 +87,9 @@ func (s *TestStoragePlugin) runTestDatabase() error {
 
 // Teardown stops the test mongo instance and cleans up any temporary files.
 func (s *TestStoragePlugin) Teardown() error {
-	s.Close()
-
 	if s.Store != nil {
-		return s.Store.RemoveDatabase()
+		s.Store.RemoveDatabase()
+		return s.Close()
 	}
 	return nil
 }
@@ -99,11 +99,11 @@ func (s *TestStoragePlugin) Connect() error {
 	return s.Setup()
 }
 
-// Close does nothing, keep an open connection to the test database until the
-// test is torn down.
+// Close the connection to the database.
 func (s *TestStoragePlugin) Close() error {
-	// do nothing
-	return nil
+	err := s.Store.Close()
+	s.Store = nil
+	return err
 }
 
 func generateDatabaseName(testName string) string {

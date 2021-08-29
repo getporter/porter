@@ -1,6 +1,8 @@
 package mongodb
 
 import (
+	"time"
+
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/mitchellh/mapstructure"
@@ -12,11 +14,14 @@ const PluginKey = plugins.PluginInterface + ".porter.mongodb"
 // PluginConfig are the configuration settings that can be defined for the
 // mongodb plugin in porter.yaml
 type PluginConfig struct {
-	URL string `mapstructure:"url"`
+	URL     string        `mapstructure:"url"`
+	Timeout time.Duration `mapstructure:"timeout,omitempty"`
 }
 
 func NewPlugin(cxt *context.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
-	cfg := PluginConfig{}
+	cfg := PluginConfig{
+		Timeout: 2,
+	}
 	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
 		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)
 	}

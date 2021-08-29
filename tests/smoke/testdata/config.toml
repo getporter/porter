@@ -10,4 +10,4 @@ build-driver = "buildkit"
   plugin = "mongodb"
 
 [storage.config]
-  url = "mongodb://localhost:27017/porter-smoke-test"
+  url = "mongodb://localhost:27017/porter-smoke-test?connect=direct"

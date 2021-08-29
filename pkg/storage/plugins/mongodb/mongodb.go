@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -29,6 +28,7 @@ type Store struct {
 	url      string
 	database string
 	client   *mongo.Client
+	timeout  time.Duration
 }
 
 // NewStore creates a new storage engine that uses MongoDB.
@@ -36,6 +36,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	return &Store{
 		Context: c,
 		url:     cfg.URL,
+		timeout: cfg.Timeout,
 	}
 }
 
@@ -59,18 +60,24 @@ func (s *Store) Connect() error {
 		fmt.Fprintf(s.Err, "Connecting to mongo database %s at %s\n", s.database, connStr.Hosts)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.url))
+	client, err := mongo.Connect(cxt, options.Client().ApplyURI(s.url))
+	if err != nil {
+		return err
+	}
 
 	s.client = client
-	return client.Ping(context.Background(), readpref.Primary())
+	return s.Ping()
 }
 
 func (s *Store) Close() error {
 	if s.client != nil {
-		s.client.Disconnect(context.Background())
+		cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+		defer cancel()
+
+		s.client.Disconnect(cxt)
 		s.client = nil
 	}
 	return nil
@@ -78,13 +85,18 @@ func (s *Store) Close() error {
 
 // Ping the connected session to check if everything is okay.
 func (s *Store) Ping() error {
-	return s.client.Ping(context.Background(), readpref.Primary())
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.Ping(cxt, readpref.Primary())
 }
 
 func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	// TODO(carolynvs): wrap each call with session.refresh  on error and a single retry
 	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
 	cur, err := c.Aggregate(cxt, opts.Pipeline)
 	if err != nil {
 		return nil, err
@@ -100,9 +112,10 @@ func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
 // EnsureIndexes makes sure that the specified indexes exist and are
 // defined appropriately.
 func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
-	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
 
+	c := s.getCollection(opts.Collection)
 	indexOpts := mongo.IndexModel{
 		Keys:    opts.Keys,
 		Options: options.Index(),
@@ -115,15 +128,18 @@ func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
 }
 
 func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
 	return c.CountDocuments(cxt, opts.Filter)
 }
 
 func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
-	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
 
+	c := s.getCollection(opts.Collection)
 	findOpts := s.buildFindOptions(opts)
 	cur, err := c.Find(cxt, opts.Filter, findOpts)
 	if err != nil {
@@ -161,23 +177,28 @@ func (s *Store) buildFindOptions(opts plugins.FindOptions) *options.FindOptions 
 }
 
 func (s *Store) Insert(opts plugins.InsertOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
 	_, err := c.InsertMany(cxt, opts.Documents)
 	return err
 }
 
 func (s *Store) Patch(opts plugins.PatchOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
 	_, err := c.UpdateOne(cxt, opts.QueryDocument, opts.Transformation)
 	return err
 }
 
 func (s *Store) Remove(opts plugins.RemoveOptions) error {
-	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
 
+	c := s.getCollection(opts.Collection)
 	if opts.All {
 		_, err := c.DeleteMany(cxt, opts.Filter)
 		return err
@@ -187,8 +208,10 @@ func (s *Store) Remove(opts plugins.RemoveOptions) error {
 }
 
 func (s *Store) Update(opts plugins.UpdateOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	c := s.getCollection(opts.Collection)
-	cxt := context.Background()
 	_, err := c.ReplaceOne(cxt, opts.Filter, opts.Document, &options.ReplaceOptions{Upsert: &opts.Upsert})
 	return err
 }
@@ -199,22 +222,9 @@ func (s *Store) getCollection(collection string) *mongo.Collection {
 
 // RemoveDatabase removes the current database.
 func (s *Store) RemoveDatabase() error {
-	cxt := context.Background()
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
 
 	fmt.Fprintf(s.Err, "Dropping database %s!\n", s.database)
 	return s.client.Database(s.database).Drop(cxt)
-}
-
-func parseConnectionString(dialStr string) (host string, port string, database string, err error) {
-	u, err := url.Parse(dialStr)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	if u.Path != "" {
-		return u.Host, u.Port(), strings.Trim(u.Path, "/"), nil
-	}
-	// If this returns empty, then the driver is supposed to substitute in the
-	// default database.
-	return "", "", "", nil
 }
