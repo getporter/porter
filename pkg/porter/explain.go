@@ -228,9 +228,10 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	sort.Sort(SortPrintableCredential(pb.Credentials))
 
 	for p, v := range bun.Parameters {
-		if bun.IsInternalParameter(p) {
+		if bun.IsInternalParameter(p) || bun.ParameterHasSource(p) {
 			continue
 		}
+
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
 			return nil, fmt.Errorf("unable to find definition %s", v.Definition)
@@ -253,6 +254,10 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	sort.Sort(SortPrintableParameter(pb.Parameters))
 
 	for o, v := range bun.Outputs {
+		if bun.IsInternalOutput(o) {
+			continue
+		}
+
 		def, ok := bun.Definitions[v.Definition]
 		if !ok {
 			return nil, fmt.Errorf("unable to find definition %s", v.Definition)
@@ -330,7 +335,7 @@ func (p *Porter) printCredentialsExplainBlock(bun *PrintableBundle) error {
 	if len(bun.Credentials) == 0 {
 		return nil
 	}
-	
+
 	fmt.Fprintln(p.Out, "Credentials:")
 	err := p.printCredentialsExplainTable(bun)
 	if err != nil {
