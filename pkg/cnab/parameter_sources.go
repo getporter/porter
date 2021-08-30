@@ -2,7 +2,6 @@ package cnab
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -209,7 +208,6 @@ func (b ExtendedBundle) SupportsParameterSources() bool {
 // GetParameterSources checks if the parameter sources extension is present and returns its
 // extension configuration.
 func (e ProcessedExtensions) GetParameterSources() (ParameterSources, bool, error) {
-	fmt.Printf("Processed bundle extensions:\n%#v\n", e)
 	rawExt, required := e[ParameterSourcesExtensionKey]
 
 	ext, ok := rawExt.(ParameterSources)
