@@ -6,38 +6,32 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/claims"
-	"github.com/carolynvs/magex/shx"
+	"get.porter.sh/porter/tests/testdata"
 	"github.com/stretchr/testify/require"
 )
 
 var testBundleBuilt = false
 
-const (
-	MyBunsRef = "localhost:5000/mybuns:v0.1.2"
-	MyDbRef   = "localhost:5000/mydb:v0.1.0"
-)
-
+// PrepareTestBundle ensures that the mybuns test bundle has been built.
 func (t Tester) PrepareTestBundle() {
 	// This variable isn't set on windows and the mybuns bundle relies on it
 	os.Setenv("USER", "porterci")
 
-	if !testBundleBuilt {
-		// Build and publish an interesting test bundle and its dependency
-		t.MakeTestBundle("mydb", MyDbRef)
-		t.MakeTestBundle("mybuns", MyBunsRef)
-		testBundleBuilt = true
-	}
+	// Build and publish an interesting test bundle and its dependency
+	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
+	t.MakeTestBundle(testdata.MyBuns, testdata.MyBunsRef)
+
+	// Import a parameter and credential set for the bundle into the global namespace
+	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/mybuns.yaml"), "--namespace=")
+	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 }
 
 func (t Tester) MakeTestBundle(name string, ref string) {
-	err := shx.Copy(filepath.Join(t.RepoRoot, "tests/testdata", name), t.TestDir, shx.CopyRecursive)
-	require.NoError(t.T, err)
-
 	pwd, _ := os.Getwd()
 	defer os.Chdir(pwd)
-	os.Chdir(filepath.Join(t.TestDir, name))
+	os.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
 
-	t.RequirePorter("build")
+	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
 	t.RequirePorter("publish", "--reference", ref)
 }
 

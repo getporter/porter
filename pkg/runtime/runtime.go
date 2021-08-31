@@ -130,22 +130,9 @@ func (r *PorterRuntime) executeStep(step *manifest.Step) error {
 	return r.applyStepOutputsToBundle(outputs)
 }
 
-func (r *PorterRuntime) createOutputsDir() error {
-	// Ensure outputs directory exists
-	if err := r.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
-		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
-	}
-	return nil
-}
-
 // applyStepOutputsToBundle writes the provided step outputs to the proper location
 // in the bundle execution environment.
 func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) error {
-	err := r.createOutputsDir()
-	if err != nil {
-		return err
-	}
-
 	for outputKey, outputValue := range outputs {
 		bundleOutput, ok := r.RuntimeManifest.Outputs[outputKey]
 		if !ok {

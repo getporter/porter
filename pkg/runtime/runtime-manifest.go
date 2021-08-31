@@ -436,13 +436,22 @@ func (m *RuntimeManifest) ResolveStep(step *manifest.Step) error {
 
 // Init prepares the runtime environment prior to step execution
 func (m *RuntimeManifest) Initialize() error {
+	if err := m.createOutputsDir(); err != nil {
+		return err
+	}
+
 	// For parameters of type "file", we may need to decode files on the filesystem
 	// before execution of the step/action
 	for paramName, param := range m.bundle.Parameters {
+		if !param.AppliesTo(m.Action) {
+			continue
+		}
+
 		def, hasDef := m.bundle.Definitions[param.Definition]
 		if !hasDef {
 			continue
 		}
+
 		if m.bundle.IsFileType(def) {
 			if param.Destination.Path == "" {
 				return fmt.Errorf("destination path is not supplied for parameter %s", paramName)
@@ -451,7 +460,7 @@ func (m *RuntimeManifest) Initialize() error {
 			// Porter by default places parameter value into file determined by Destination.Path
 			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
-				return fmt.Errorf("unable to acquire value for parameter %s", paramName)
+				return errors.Wrapf(err, "unable to acquire value for parameter %s", paramName)
 			}
 
 			// TODO(carolynvs): hack around parameters ALWAYS being injected even when empty files mess things up
@@ -478,11 +487,18 @@ func (m *RuntimeManifest) Initialize() error {
 	return m.unpackStateBag()
 }
 
+func (m *RuntimeManifest) createOutputsDir() error {
+	// Ensure outputs directory exists
+	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
+		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
+	}
+	return nil
+}
+
 // Unpack each state variable from /porter/state.tgz and copy it to its
 // declared location in the bundle.
 func (m *RuntimeManifest) unpackStateBag() error {
 	_, err := m.FileSystem.Open(statePath)
-	os.IsNotExist(err)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
 		fmt.Fprintln(m.Out, "No existing bundle state to unpack")
 		return nil
@@ -619,25 +635,39 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 	var bigErr *multierror.Error
 	outputs := m.GetOutputs()
 	for name, outputDef := range m.bundle.Outputs {
-		// Ignore outputs that have already been set
-		if output := outputs[name]; output != "" {
-			fmt.Fprintln(m.Out, "  -", name)
-			continue
-		}
+		outputSrcPath := m.Outputs[name].Path
 
 		// We can only deal with outputs that are based on a file right now
-		if outputDef.Path == "" {
+		if outputSrcPath == "" {
 			continue
 		}
 
-		if outputDef.AppliesTo(m.Action) {
-			outpath := filepath.Join(config.BundleOutputsDir, name)
-			err := m.CopyFile(manifest.ResolvePath(outputDef.Path), outpath)
-			if err != nil {
-				err = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath))
+		if !outputDef.AppliesTo(m.Action) {
+			continue
+		}
+
+		// Print the output that we've collected
+		fmt.Fprintln(m.Out, "  -", name)
+		if _, hasOutput := outputs[name]; !hasOutput {
+			// Use the path as originally defined in the manifest
+			// TODO(carolynvs): When we switch to driving everything completely
+			// from the bundle.json, we need to find a better way to get the original path value that the user specified.
+			// We don't force people to output files immediately to /cnab/app/outputs and so that original location should
+			// be persisted somewhere in the bundle.json (probably in custom)
+			srcPath := manifest.ResolvePath(outputSrcPath)
+			if _, err := m.FileSystem.Stat(srcPath); err != nil {
 				continue
 			}
-			fmt.Fprintln(m.Out, "  -", name)
+			dstPath := filepath.Join(config.BundleOutputsDir, name)
+			if dstExists, _ := m.FileSystem.Exists(dstPath); dstExists {
+				continue
+			}
+
+			err := m.CopyFile(srcPath, dstPath)
+			if err != nil {
+				bigErr = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", srcPath, dstPath))
+				continue
+			}
 		}
 	}
 
