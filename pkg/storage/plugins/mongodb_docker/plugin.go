@@ -1,8 +1,6 @@
 package mongodb_docker
 
 import (
-	"time"
-
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/mitchellh/mapstructure"
@@ -14,9 +12,11 @@ const PluginKey = plugins.PluginInterface + ".porter.mongodb-docker"
 
 // PluginConfig supported by the mongodb-docker plugin as defined in porter.yaml
 type PluginConfig struct {
-	Port     string        `mapstructure:"port,omitempty"`
-	Database string        `mapstructure:"database,omitempty"`
-	Timeout  time.Duration `mapstructure:"timeout,omitempty"`
+	Port     string `mapstructure:"port,omitempty"`
+	Database string `mapstructure:"database,omitempty"`
+
+	// Timeout in seconds
+	Timeout int `mapstructure:"timeout,omitempty"`
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin

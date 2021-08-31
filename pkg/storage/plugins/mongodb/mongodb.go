@@ -36,7 +36,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	return &Store{
 		Context: c,
 		url:     cfg.URL,
-		timeout: cfg.Timeout,
+		timeout: time.Duration(cfg.Timeout) * time.Second,
 	}
 }
 

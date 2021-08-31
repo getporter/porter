@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"runtime"
-	"time"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
@@ -77,7 +76,7 @@ func (s *TestStoragePlugin) useDevDatabase() error {
 }
 
 func (s *TestStoragePlugin) runTestDatabase() error {
-	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database, 10*time.Second)
+	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database, 10)
 	if err != nil {
 		return err
 	}

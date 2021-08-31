@@ -75,7 +75,7 @@ func NewTest(t *testing.T) (Test, error) {
 
 func (t Test) startMongo() error {
 	c := context.NewTestContext(t.T)
-	conn, err := mongodb_docker.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test")
+	conn, err := mongodb_docker.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test", 2)
 	defer conn.Close()
 	if err != nil {
 		return err

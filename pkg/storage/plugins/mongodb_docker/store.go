@@ -64,7 +64,7 @@ func (s *Store) Close() error {
 	return nil
 }
 
-func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string, queryTimeout time.Duration) (*mongodb.Store, error) {
+func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {
 	if dataVol != "" {
 		err := exec.Command("docker", "volume", "inspect", dataVol).Run()
 		if err != nil {
@@ -145,9 +145,9 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 	}
 	mongoPluginCfg := mongodb.PluginConfig{
 		URL:     fmt.Sprintf("mongodb://localhost:%s/%s?connect=direct", port, dbName),
-		Timeout: queryTimeout,
+		Timeout: timeoutSeconds,
 	}
-	timeout, cancel := context.WithTimeout(context.Background(), 10*queryTimeout)
+	timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	for {
 		select {
