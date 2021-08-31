@@ -1,8 +1,7 @@
 package plugins
 
 import (
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // StorageProtocol is the interface that storage plugins must implement.
@@ -17,7 +16,7 @@ type StorageProtocol interface {
 
 	// Count the number of results that match an optional query.
 	// When the query is omitted, the entire collection is counted.
-	Count(opts CountOptions) (int, error)
+	Count(opts CountOptions) (int64, error)
 
 	// Find queries a collection, optionally projecting a subset of fields, and
 	// then returns the results as a list of bson documents.
@@ -39,8 +38,9 @@ type StorageProtocol interface {
 // EnsureIndexOptions is the set of options available to the
 // StorageProtocol.EnsureIndex operation.
 type EnsureIndexOptions struct {
-	Collection string `bson:"collection"`
-	mgo.Index  `bson:",inline"`
+	Collection string      `bson:"collection"`
+	Keys       interface{} `json:"keys"`
+	Unique     bool        `json:"unique"`
 }
 
 // AggregateOptions is the set of options available to the
@@ -72,14 +72,13 @@ type FindOptions struct {
 	Collection string
 
 	// Sort is a list of field names by which the results should be sorted.
-	// Prefix a field with "-" to sort in reverse order.
-	Sort []string
+	Sort interface{}
 
 	// Skip is the number of results to skip past and exclude from the results.
-	Skip int
+	Skip int64
 
 	// Limit is the number of results to return.
-	Limit int
+	Limit int64
 
 	// Select is a projection document
 	// See https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/

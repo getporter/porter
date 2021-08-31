@@ -12,8 +12,11 @@ const PluginKey = plugins.PluginInterface + ".porter.mongodb-docker"
 
 // PluginConfig supported by the mongodb-docker plugin as defined in porter.yaml
 type PluginConfig struct {
-	Port     string `mapstructure:"port"`
-	Database string `mapstructure:"database"`
+	Port     string `mapstructure:"port,omitempty"`
+	Database string `mapstructure:"database,omitempty"`
+
+	// Timeout in seconds
+	Timeout int `mapstructure:"timeout,omitempty"`
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin
@@ -21,6 +24,7 @@ func NewPlugin(cxt *context.Context, pluginConfig interface{}) (plugins.StorageP
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",
+		Timeout:  2,
 	}
 	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
 		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)

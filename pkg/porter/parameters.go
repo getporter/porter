@@ -14,7 +14,7 @@ import (
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 
 	dtprinter "github.com/carolynvs/datetime-printer"
 	tablewriter "github.com/olekukonko/tablewriter"

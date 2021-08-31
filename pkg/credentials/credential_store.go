@@ -7,7 +7,6 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/secrets/host"
-	"github.com/globalsign/mgo"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -36,11 +35,8 @@ func NewCredentialStore(storage storage.Store, secrets secrets.Store) *Credentia
 func (s CredentialStore) Initialize() error {
 	// query credentials by namespace + name
 	err := s.Documents.EnsureIndex(CollectionCredentials, storage.EnsureIndexOptions{
-		Index: mgo.Index{
-			Key:        []string{"namespace", "name"},
-			Unique:     true,
-			Background: true,
-		},
+		Keys:   []string{"namespace", "name"},
+		Unique: true,
 	})
 	return err
 }

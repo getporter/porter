@@ -2,10 +2,10 @@ package storage
 
 import (
 	"encoding/json"
+	"strings"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // AggregateOptions is the set of options available to the Aggregate operation on any
@@ -25,13 +25,38 @@ func (o AggregateOptions) ToPluginOptions(collection string) plugins.AggregateOp
 
 // EnsureIndexOptions is the set of options available to the EnsureIndex operation.
 type EnsureIndexOptions struct {
-	mgo.Index
+	Keys   []string `json:"keys"`
+	Unique bool     `json:"unique"`
+}
+
+// Convert from a simplified sort specifier like []{"-key"}
+// to a mongodb sort document like []{{Key: "key", Value: -1}}
+func convertSortKeys(values []string) interface{} {
+	if len(values) == 0 {
+		return nil
+	}
+
+	keys := make(bson.D, len(values))
+	for i, key := range values {
+		sortKey := key
+		sortOrder := 1
+		if strings.HasPrefix(key, "-") {
+			sortKey = strings.Trim(key, "-")
+			sortOrder = -1
+		}
+		keys[i] = bson.E{
+			Key:   sortKey,
+			Value: sortOrder,
+		}
+	}
+	return keys
 }
 
 func (o EnsureIndexOptions) ToPluginOptions(collection string) plugins.EnsureIndexOptions {
 	return plugins.EnsureIndexOptions{
 		Collection: collection,
-		Index:      o.Index,
+		Keys:       convertSortKeys(o.Keys),
+		Unique:     o.Unique,
 	}
 }
 
@@ -44,6 +69,9 @@ type CountOptions struct {
 }
 
 func (o CountOptions) ToPluginOptions(collection string) plugins.CountOptions {
+	if o.Filter == nil {
+		o.Filter = bson.M{}
+	}
 	return plugins.CountOptions{
 		Collection: collection,
 		Filter:     o.Filter,
@@ -58,10 +86,10 @@ type FindOptions struct {
 	Sort []string
 
 	// Skip is the number of results to skip past and exclude from the results.
-	Skip int
+	Skip int64
 
 	// Limit is the number of results to return.
-	Limit int
+	Limit int64
 
 	// Filter specifies a filter the results.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
@@ -73,9 +101,12 @@ type FindOptions struct {
 }
 
 func (o FindOptions) ToPluginOptions(collection string) plugins.FindOptions {
+	if o.Filter == nil {
+		o.Filter = bson.M{}
+	}
 	return plugins.FindOptions{
 		Collection: collection,
-		Sort:       o.Sort,
+		Sort:       convertSortKeys(o.Sort),
 		Skip:       o.Skip,
 		Limit:      o.Limit,
 		Filter:     o.Filter,

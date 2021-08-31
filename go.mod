@@ -41,7 +41,6 @@ require (
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/gobuffalo/logger v1.0.4 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
 	github.com/google/go-containerregistry v0.1.2
@@ -69,6 +68,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0
+	go.mongodb.org/mongo-driver v1.7.1
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

@@ -4,7 +4,7 @@ import (
 	"net/rpc"
 
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var _ plugins.StorageProtocol = &Client{}
@@ -22,8 +22,8 @@ func (g *Client) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
 	return results, err
 }
 
-func (g *Client) Count(opts plugins.CountOptions) (int, error) {
-	var count int
+func (g *Client) Count(opts plugins.CountOptions) (int64, error) {
+	var count int64
 	args := map[string]interface{}{
 		"opts": opts,
 	}
@@ -90,7 +90,7 @@ func (s *Server) Aggregate(args map[string]interface{}, resp *[]bson.Raw) error 
 	return err
 }
 
-func (s *Server) Count(args map[string]interface{}, resp *int) error {
+func (s *Server) Count(args map[string]interface{}, resp *int64) error {
 	var err error
 	*resp, err = s.Impl.Count(args["opts"].(plugins.CountOptions))
 	return err

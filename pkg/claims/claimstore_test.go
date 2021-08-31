@@ -259,6 +259,7 @@ func TestClaimStore_Run(t *testing.T) {
 
 func TestClaimStore_Results(t *testing.T) {
 	cp := generateClaimData(t)
+	defer cp.Teardown()
 
 	barRuns, err := cp.ListRuns("dev", "bar")
 	require.NoError(t, err, "ListRuns failed")
@@ -291,6 +292,7 @@ func TestClaimStore_Results(t *testing.T) {
 
 func TestClaimStore_Outputs(t *testing.T) {
 	cp := generateClaimData(t)
+	defer cp.Teardown()
 
 	fooRuns, err := cp.ListRuns("dev", "foo")
 	require.NoError(t, err, "ListRuns failed")

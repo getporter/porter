@@ -14,7 +14,7 @@ type Store interface {
 
 	// Count the number of results that match an optional query.
 	// When the query is omitted, the entire collection is counted.
-	Count(collection string, opts CountOptions) (int, error)
+	Count(collection string, opts CountOptions) (int64, error)
 
 	// EnsureIndex makes sure that the specified index exists as specified.
 	// If it does exist with a different definition, the index is recreated.

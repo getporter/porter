@@ -20,6 +20,7 @@ default-secrets = "mymongo"
 
   [storage.config]
     url = "conn_str"
+    timeout = 10 # time in seconds
 ```
 
 [config file]: /configuration/#config-file
@@ -47,3 +48,8 @@ localhost at the default port 27017, using the database name "mydb".
 ```
 "mongodb://localhost:27017/mydb"
 ```
+
+### timeout
+
+Sets the timeout (in seconds) used for database queries.
+The default timeout is 2 seconds.
