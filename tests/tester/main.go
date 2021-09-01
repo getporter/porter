@@ -1,6 +1,4 @@
-// +build smoke
-
-package smoke
+package tester
 
 import (
 	"bytes"
@@ -18,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Test struct {
+type Tester struct {
 	originalPwd string
 
 	// TestDir is the temp directory created for the test.
@@ -50,13 +48,13 @@ func TestPorterBinary(t *testing.T) {
 
 // NewTest sets up for a smoke test.
 //
-// Always defer Test.Teardown(), even when an error is returned.
-func NewTest(t *testing.T) (Test, error) {
+// Always defer Tester.Teardown(), even when an error is returned.
+func NewTest(t *testing.T) (Tester, error) {
 	pwd, _ := os.Getwd()
 	os.Setenv(mg.VerboseEnv, "true")
 
 	var err error
-	test := &Test{T: t, originalPwd: pwd}
+	test := &Tester{T: t, originalPwd: pwd}
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
@@ -73,7 +71,7 @@ func NewTest(t *testing.T) (Test, error) {
 	return *test, test.startMongo()
 }
 
-func (t Test) startMongo() error {
+func (t Tester) startMongo() error {
 	c := context.NewTestContext(t.T)
 	conn, err := mongodb_docker.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", "porter-smoke-test", 2)
 	defer conn.Close()
@@ -87,13 +85,13 @@ func (t Test) startMongo() error {
 }
 
 // Run a porter command and fail the test if the command returns an error.
-func (t Test) RequirePorter(args ...string) {
+func (t Tester) RequirePorter(args ...string) {
 	err := t.Porter(args...).RunV()
 	require.NoError(t.T, err)
 }
 
 // Run a porter command returning stderr when it fails
-func (t Test) RunPorter(args ...string) (string, error) {
+func (t Tester) RunPorter(args ...string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	_, _, err := t.Porter(args...).Stdout(&stdout).Stderr(&stderr).Exec()
@@ -104,13 +102,13 @@ func (t Test) RunPorter(args ...string) (string, error) {
 }
 
 // Build a porter command, ready to be executed or further customized.
-func (t Test) Porter(args ...string) shx.PreparedCommand {
+func (t Tester) Porter(args ...string) shx.PreparedCommand {
 	args = append(args, "--debug")
 	return shx.Command(t.PorterPath, args...).
 		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 
-func (t Test) Teardown() {
+func (t Tester) Teardown() {
 	t.T.Log("Removing temp test PORTER_HOME")
 	os.RemoveAll(t.PorterHomeDir)
 
@@ -122,7 +120,7 @@ func (t Test) Teardown() {
 }
 
 // Create a test PORTER_HOME directory.
-func (t *Test) createPorterHome() error {
+func (t *Tester) createPorterHome() error {
 	cxt := context.NewTestContext(t.T)
 	cxt.UseFilesystem()
 	t.RepoRoot = cxt.FindRepoRoot()

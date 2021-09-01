@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/tests/tester"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +17,7 @@ import (
 func TestHelloBundle(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
-	test, err := NewTest(t)
+	test, err := tester.NewTest(t)
 	defer test.Teardown()
 	require.NoError(t, err, "test setup failed")
 
@@ -34,11 +35,11 @@ func TestHelloBundle(t *testing.T) {
 
 	// Run a stateless action before we install and make sure nothing is persisted
 	var outputE bytes.Buffer
-	test.RequirePorter("invoke", "mybuns", "--action=dry-run", "--reference", myBunsRef, "-c=mybuns")
+	test.RequirePorter("invoke", "mybuns", "--action=dry-run", "--reference", tester.MyBunsRef, "-c=mybuns")
 	test.RequireInstallationNotFound("dev", "mybuns")
 
 	// Install the bundle and verify the correct output is printed
-	output, err := test.Porter("install", "mybuns", "--reference", myBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns").OutputV()
+	output, err := test.Porter("install", "mybuns", "--reference", tester.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns").OutputV()
 	require.NoError(t, err)
 	require.Contains(t, output, "Hello, *******")
 
@@ -62,7 +63,7 @@ func TestHelloBundle(t *testing.T) {
 	// TODO(carolynvs): check that status shows up as a run
 
 	// Install in the test namespace
-	test.RequirePorter("install", "mybuns", "--reference", myBunsRef, "--namespace=test", "-c=mybuns")
+	test.RequirePorter("install", "mybuns", "--reference", tester.MyBunsRef, "--namespace=test", "-c=mybuns")
 
 	// Let's try out list filtering!
 	// Search by namespace
@@ -82,12 +83,12 @@ func TestHelloBundle(t *testing.T) {
 
 	// Validate that we can't accidentally overwrite an installation
 	outputE.Truncate(0)
-	_, _, err = test.Porter("install", "mybuns", "--reference", myBunsRef, "--namespace=test", "-c=mybuns").Stderr(&outputE).Exec()
+	_, _, err = test.Porter("install", "mybuns", "--reference", tester.MyBunsRef, "--namespace=test", "-c=mybuns").Stderr(&outputE).Exec()
 	require.Error(t, err, "porter should have prevented overwriting an installation")
 	require.Contains(t, outputE.String(), "The installation has already been successfully installed")
 
 	// We should be able to repeat install with --force
-	test.RequirePorter("install", "mybuns", "--reference", myBunsRef, "--namespace=test", "-c=mybuns", "--force")
+	test.RequirePorter("install", "mybuns", "--reference", tester.MyBunsRef, "--namespace=test", "-c=mybuns", "--force")
 
 	// Upgrade our installation
 	test.RequirePorter("upgrade", "mybuns", "--namespace=dev", "-c=mybuns")
@@ -100,20 +101,20 @@ func TestHelloBundle(t *testing.T) {
 	// Let's test some negatives!
 
 	// Cannot perform a modifying or stateful action without an installation
-	_, err = test.RunPorter("upgrade", "missing", "--reference", myBunsRef)
+	_, err = test.RunPorter("upgrade", "missing", "--reference", tester.MyBunsRef)
 	test.RequireNotFoundReturned(err)
 
-	_, err = test.RunPorter("uninstall", "missing", "--reference", myBunsRef)
+	_, err = test.RunPorter("uninstall", "missing", "--reference", tester.MyBunsRef)
 	test.RequireNotFoundReturned(err)
 
-	_, err = test.RunPorter("invoke", "--action=boom", "missing", "--reference", myBunsRef)
+	_, err = test.RunPorter("invoke", "--action=boom", "missing", "--reference", tester.MyBunsRef)
 	test.RequireNotFoundReturned(err)
 
-	_, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", myBunsRef)
+	_, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", tester.MyBunsRef)
 	test.RequireNotFoundReturned(err)
 
 	// Test that outputs are collected when a bundle fails
-	err = test.Porter("install", "fail-with-outputs", "--reference", myBunsRef, "-c=mybuns", "-p=mybuns", "--param", "chaos_monkey=true").Run()
+	err = test.Porter("install", "fail-with-outputs", "--reference", tester.MyBunsRef, "-c=mybuns", "-p=mybuns", "--param", "chaos_monkey=true").Run()
 	require.Error(t, err, "the chaos monkey should have failed the installation")
 	myLogs, err := test.Porter("installation", "outputs", "show", "mylogs", "-i=fail-with-outputs").Output()
 	require.NoError(t, err, "the output should have been saved even though the bundle failed")

@@ -1,6 +1,4 @@
-// +build smoke
-
-package smoke
+package tester
 
 import (
 	"encoding/json"
@@ -15,23 +13,23 @@ import (
 var testBundleBuilt = false
 
 const (
-	myBunsRef = "localhost:5000/mybuns:v0.1.2"
-	myDbRef   = "localhost:5000/mydb:v0.1.0"
+	MyBunsRef = "localhost:5000/mybuns:v0.1.2"
+	MyDbRef   = "localhost:5000/mydb:v0.1.0"
 )
 
-func (t Test) PrepareTestBundle() {
+func (t Tester) PrepareTestBundle() {
 	// This variable isn't set on windows and the mybuns bundle relies on it
 	os.Setenv("USER", "porterci")
 
 	if !testBundleBuilt {
 		// Build and publish an interesting test bundle and its dependency
-		t.MakeTestBundle("mydb", myDbRef)
-		t.MakeTestBundle("mybuns", myBunsRef)
+		t.MakeTestBundle("mydb", MyDbRef)
+		t.MakeTestBundle("mybuns", MyBunsRef)
 		testBundleBuilt = true
 	}
 }
 
-func (t Test) MakeTestBundle(name string, ref string) {
+func (t Tester) MakeTestBundle(name string, ref string) {
 	err := shx.Copy(filepath.Join(t.RepoRoot, "tests/testdata", name), t.TestDir, shx.CopyRecursive)
 	require.NoError(t.T, err)
 
@@ -43,7 +41,7 @@ func (t Test) MakeTestBundle(name string, ref string) {
 	t.RequirePorter("publish", "--reference", ref)
 }
 
-func (t Test) ShowInstallation(namespace string, name string) (claims.Installation, error) {
+func (t Tester) ShowInstallation(namespace string, name string) (claims.Installation, error) {
 	output, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
 	if err != nil {
 		return claims.Installation{}, err
@@ -54,7 +52,7 @@ func (t Test) ShowInstallation(namespace string, name string) (claims.Installati
 	return installation, nil
 }
 
-func (t Test) RequireInstallationExists(namespace string, name string) claims.Installation {
+func (t Tester) RequireInstallationExists(namespace string, name string) claims.Installation {
 	installation, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
 	require.Equal(t.T, name, installation.Name, "incorrect installation name")
@@ -62,17 +60,17 @@ func (t Test) RequireInstallationExists(namespace string, name string) claims.In
 	return installation
 }
 
-func (t Test) RequireInstallationNotFound(namespace string, name string) {
+func (t Tester) RequireInstallationNotFound(namespace string, name string) {
 	_, err := t.ShowInstallation(namespace, name)
 	t.RequireNotFoundReturned(err)
 }
 
-func (t Test) RequireNotFoundReturned(err error) {
+func (t Tester) RequireNotFoundReturned(err error) {
 	require.Error(t.T, err)
 	require.Contains(t.T, err.Error(), "not found")
 }
 
-func (t Test) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
+func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
 	args := []string{
 		"list",
 		"--output=json",
@@ -97,7 +95,7 @@ func (t Test) ListInstallations(allNamespaces bool, namespace string, name strin
 	return installations, nil
 }
 
-func (t Test) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
+func (t Tester) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
 	for _, i := range list {
 		if i.Namespace == namespace && i.Name == name {
 			return i
