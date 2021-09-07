@@ -10,7 +10,6 @@ CLIENT_ARCH = $(shell go env GOARCH)
 CLIENT_GOPATH = $(shell go env GOPATH)
 RUNTIME_PLATFORM = linux
 RUNTIME_ARCH = amd64
-BASEURL_FLAG ?=
 PORTER_UPDATE_TEST_FILES ?=
 
 GO = go
@@ -50,17 +49,7 @@ test-smoke:
 
 .PHONY: docs
 docs:
-	hugo --source docs/ $(BASEURL_FLAG)
-
-docs-preview: docs-stop-preview
-	@docker run -d -v $$PWD:/src -p 1313:1313 --name porter-docs -w /src/docs \
-	klakegg/hugo:0.78.1-ext-alpine server -D -F --noHTTPCache --watch --bind=0.0.0.0
-	# Wait for the documentation web server to finish rendering
-	@until docker logs porter-docs | grep -m 1  "Web Server is available"; do : ; done
-	@open "http://localhost:1313/docs/"
-
-docs-stop-preview:
-	@docker rm -f porter-docs &> /dev/null || true
+	go run mage.go -v docs
 
 publish: publish-bin publish-mixins publish-images
 
