@@ -574,7 +574,7 @@ func (m *RuntimeManifest) Finalize() error {
 // Pack each state variable into /porter/state/tgz.
 func (m *RuntimeManifest) packStateBag() error {
 	fmt.Fprintln(m.Out, "Packing bundle state...")
-	packStateFile := func(tw *tar.Writer, s manifest.StateBagEntry) error {
+	packStateFile := func(tw *tar.Writer, s manifest.StateVariable) error {
 		fi, err := m.FileSystem.Stat(s.Path)
 		if os.IsNotExist(err) {
 			return nil

@@ -15,6 +15,7 @@ The manifest is made up of multiple components:
 * [Outputs](#outputs)
 * [Parameter and Output Schema](#parameter-and-output-schema)
 * [Credentials](#credentials)
+* [State](#state)
 * [Bundle Actions](#bundle-actions)
 * [Dependencies](#dependencies)
 * [Images](#images)
@@ -318,6 +319,33 @@ credentials:
 * [porter credentials generate](/cli/porter_credentials_generate/)
 * [How Credentials Work](/how-credentials-work/)
 * [Wiring Credentials](/wiring/)
+
+## State
+
+Porter provides a state bag that allows you to persist state associated with the bundle.
+If the specified file is present when the bundle completes, Porter saves the
+file and then injects that file back into the bundle when it is run again.
+
+For example, when the terraform mixin is run by default it saves its state to two files:
+terraform/terraform.tfstate and terraform/terraform.tfvars.json. While you may configure
+a remote Terraform backend, you can also take advantage of Porter's state bag to persist
+these files. This simplifies the setup and infrastructure required of the end-user when
+they run your bundle.
+
+```yaml
+state:
+  - name: tfstate
+    path: terraform/terraform.tfstate
+  - name: tfvars
+    path: terraform/terraform.tfvars.json
+```
+
+| Field       | Usage    | Description |
+| ----------  | -------- | ----------- |
+| name        | Required | The name of the state variable. |
+| path        | Required | The path of the file containing the state value. Relative paths are assumed to be relative to the bundle directory (/cnab/app). |
+| description | Optional | A description of the variable and how it is used in the bundle. |
+| mixin       | Optional<br/>Reserved for future use | The name of the mixin that manages this state variable. |
 
 ## Bundle Actions
 
