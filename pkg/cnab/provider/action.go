@@ -30,11 +30,11 @@ type ActionArguments struct {
 	// Target Path => File Contents
 	Files map[string]string
 
-	// Params is the set of user-specified parameter values to pass to the bundle.
-	Params map[string]string
+	// Params is the fully resolved set of parameters.
+	Params map[string]interface{}
 
 	// Either a filepath to a credential file or the name of a set of a credentials.
-	// TODO: move to the installation record
+	// TODO(carolynvs): use the values on the installation record?
 	CredentialIdentifiers []string
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
@@ -119,17 +119,12 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		fmt.Fprintln(r.Err)
 	}
 
-	params, err := r.loadParameters(b, args)
-	if err != nil {
-		return errors.Wrap(err, "invalid parameters")
-	}
-
 	// Create a record for the run we are about to execute
 	var currentRun = args.Installation.NewRun(args.Action)
 	currentRun.Bundle = b.Bundle
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
-	currentRun.Parameters = params
+	currentRun.Parameters = args.Params
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {
@@ -156,7 +151,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		}
 	}
 
-	r.printDebugInfo(creds, params)
+	r.printDebugInfo(creds, args.Params)
 
 	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(args)...)
 

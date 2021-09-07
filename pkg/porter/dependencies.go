@@ -50,7 +50,7 @@ func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
 type queuedDependency struct {
 	cnab.DependencyLock
 	BundleReference cnab.BundleReference
-	Parameters      map[string]string
+	Parameters      map[string]interface{}
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
@@ -216,7 +216,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				}
 
 				if dep.Parameters == nil {
-					dep.Parameters = make(map[string]string, 1)
+					dep.Parameters = make(map[string]interface{}, 1)
 				}
 				dep.Parameters[paramName] = value
 			}
@@ -236,7 +236,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 			}
 
 			if dep.Parameters == nil {
-				dep.Parameters = make(map[string]string, 1)
+				dep.Parameters = make(map[string]interface{}, 1)
 			}
 			dep.Parameters[paramName] = value
 			delete(e.parentArgs.Params, key)

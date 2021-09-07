@@ -96,9 +96,10 @@ func (p *Porter) applyActionOptionsToInstallation(i claims.Installation, opts *B
 		return err
 	}
 	if i.Parameters == nil {
-		i.Parameters = make(map[string]interface{}, len(opts.combinedParameters))
+		i.Parameters = make(map[string]interface{}, len(opts.parsedParams))
 	}
-	for k, v := range opts.combinedParameters {
+	// Record the user-specified parameter values
+	for k, v := range opts.parsedParams {
 		i.Parameters[k] = v
 	}
 	// Record the names of the parameter sets used
