@@ -55,7 +55,7 @@ type Installation struct {
 	// Labels applied to the installation.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
-	// Parameters specified by the user through overrides or parameter sets.
+	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 

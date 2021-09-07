@@ -105,7 +105,7 @@ func NewDisplayInstallation(installation claims.Installation, run *claims.Run) D
 	// This is unset when we are just listing installations
 	if run != nil {
 		bun := cnab.ExtendedBundle{run.Bundle}
-		di.Parameters = NewDisplayValuesFromParameters(bun, installation.Parameters)
+		di.Parameters = NewDisplayValuesFromParameters(bun, run.Parameters)
 	}
 
 	return di

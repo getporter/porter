@@ -114,9 +114,9 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		expectedParams := map[string]string{
-			"PARAM1":       "VALUE1",
-			"PARAM2":       "VALUE2",
-			"porter-debug": "true",
+			"my-first-param":  "VALUE1",
+			"my-second-param": "VALUE2",
+			"porter-debug":    "true",
 		}
 
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
