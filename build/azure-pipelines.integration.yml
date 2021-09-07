@@ -9,7 +9,7 @@ pr:
   autoCancel: true # Cancel an outdated build when people push new changes to their PR
 
 pool:
-  vmImage: "Ubuntu 16.04"
+  vmImage: "ubuntu-latest"
 
 variables:
   GOVERSION: "1.16"
