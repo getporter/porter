@@ -8,10 +8,10 @@ pr:
   autoCancel: true
 
 pool:
-  vmImage: "Ubuntu 16.04"
+  vmImage: "ubuntu-latest"
 
 variables:
-  GOVERSION: "1.13.10"
+  GOVERSION: "1.16"
 
 parameters:
   - name: buildExamples
