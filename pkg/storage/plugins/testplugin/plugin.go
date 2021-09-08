@@ -58,7 +58,8 @@ func (s *TestStoragePlugin) Setup() error {
 
 func (s *TestStoragePlugin) useDevDatabase() error {
 	cfg := mongodb.PluginConfig{
-		URL: fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
+		URL:     fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
+		Timeout: 10,
 	}
 	devMongo := mongodb.NewStore(s.tc.Context, cfg)
 	err := devMongo.Connect()

@@ -33,10 +33,14 @@ type Store struct {
 
 // NewStore creates a new storage engine that uses MongoDB.
 func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = 10 // default to 10 seconds
+	}
 	return &Store{
 		Context: c,
 		url:     cfg.URL,
-		timeout: time.Duration(cfg.Timeout) * time.Second,
+		timeout: time.Duration(timeout) * time.Second,
 	}
 }
 
