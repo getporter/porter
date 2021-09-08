@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,4 +28,14 @@ func GenerateDatabaseName(testName string) string {
 		safeTestName = fmt.Sprintf("%x", md5.Sum([]byte(safeTestName)))
 	}
 	return fmt.Sprintf("porter_%s", safeTestName)
+}
+
+// This is the same as require.Contains but it prints the output string without
+// newlines escaped so that it's easier to read.
+func RequireOutputContains(t *testing.T, output string, substring string) {
+	ok := assert.Contains(t, output, substring)
+	if !ok {
+		t.Errorf("%s\ndoes not contain\n%s", output, substring)
+		t.FailNow()
+	}
 }

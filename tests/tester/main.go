@@ -128,7 +128,7 @@ func (t Tester) Teardown() {
 	os.RemoveAll(t.TestDir)
 
 	// Reset the current directory for the next test
-	os.Chdir(t.originalPwd)
+	t.Chdir(t.originalPwd)
 }
 
 // Create a test PORTER_HOME directory.
@@ -155,4 +155,9 @@ func (t *Tester) createPorterHome() error {
 	require.NoError(t.T, err, "could not copy config.toml into test PORTER_HOME")
 
 	return nil
+}
+
+func (t Tester) Chdir(dir string) {
+	t.TestContext.Chdir(dir)
+	os.Chdir(dir)
 }

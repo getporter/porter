@@ -1,6 +1,7 @@
 package cnab
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/context"
@@ -87,4 +88,60 @@ func (b ExtendedBundle) GetParameterType(def *definition.Schema) string {
 func (b ExtendedBundle) IsFileType(def *definition.Schema) bool {
 	return b.SupportsFileParameters() &&
 		def.Type == "string" && def.ContentEncoding == "base64"
+}
+
+// ConvertParameterValue converts a parameter's value from an unknown type,
+// it could be a string from stdin or another Go type, into the type of the
+// parameter as defined in the bundle.
+func (b ExtendedBundle) ConvertParameterValue(key string, value interface{}) (interface{}, error) {
+	param, ok := b.Parameters[key]
+	if !ok {
+		return nil, fmt.Errorf("unable to convert the parameters' value to the destination parameter type because parameter %s not defined in bundle", key)
+	}
+
+	def, ok := b.Definitions[param.Definition]
+	if !ok {
+		return nil, fmt.Errorf("unable to convert the parameters' value to the destination parameter type because parameter %s has no definition", key)
+	}
+
+	if def.Type != nil {
+		switch t := value.(type) {
+		case string:
+			typedValue, err := def.ConvertValue(t)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to convert parameter's %s value %s to the destination parameter type %s", key, value, def.Type)
+			}
+			return typedValue, nil
+		case json.Number:
+			switch def.Type {
+			case "integer":
+				return t.Int64()
+			case "number":
+				return t.Float64()
+			default:
+				return t.String(), nil
+			}
+		default:
+			return t, nil
+		}
+	} else {
+		return value, nil
+	}
+}
+
+// WriteParameterToString changes a parameter's value from its type as
+// defined by the bundle to its runtime string representation.
+// The value should have already been converted to its bundle representation
+// by calling ConvertParameterValue.
+func (b ExtendedBundle) WriteParameterToString(paramName string, value interface{}) (string, error) {
+	if value == nil {
+		return "", nil
+	}
+
+	if stringVal, ok := value.(string); ok {
+		return stringVal, nil
+	}
+
+	contents, err := json.Marshal(value)
+	return string(contents), errors.Wrapf(err, "could not marshal the value for parameter %s to a json string: %#v", paramName, value)
 }

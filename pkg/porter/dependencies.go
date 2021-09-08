@@ -258,6 +258,8 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = claims.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+			// For now, assume it's okay to give the dependency the same credentials as the parent
+			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
 			if err = e.Claims.InsertInstallation(depInstallation); err != nil {
 				return err
 			}
@@ -273,8 +275,6 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowAccessToDockerHost,
 		Params:                dep.Parameters,
-		// For now, assume it's okay to give the dependency the same credentials as the parent
-		CredentialIdentifiers: e.parentArgs.CredentialIdentifiers,
 	}
 
 	// Determine if we're working with UninstallOptions, to inform deletion and

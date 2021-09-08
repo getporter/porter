@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
@@ -33,10 +34,6 @@ type ActionArguments struct {
 
 	// Params is the fully resolved set of parameters.
 	Params map[string]interface{}
-
-	// Either a filepath to a credential file or the name of a set of a credentials.
-	// TODO(carolynvs): use the values on the installation record?
-	CredentialIdentifiers []string
 
 	// Driver is the CNAB-compliant driver used to run bundle actions.
 	Driver string
@@ -126,6 +123,10 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 	currentRun.Parameters = args.Params
+	currentRun.CredentialSets = args.Installation.CredentialSets
+	sort.Strings(currentRun.CredentialSets)
+	currentRun.ParameterSets = args.Installation.ParameterSets
+	sort.Strings(currentRun.ParameterSets)
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {

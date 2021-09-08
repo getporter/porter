@@ -70,7 +70,7 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 		i.BundleTag = ""
 	}
 
-	err = p.applyActionOptionsToInstallation(i, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)
 	i.Modified = time.Now()
 	err = i.Validate()
 	if err != nil {

@@ -184,7 +184,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
-	require.Equal(t, 456, params["bar"], "expected param 'bar' to be updated")
+	require.EqualValues(t, 456, params["bar"], "expected param 'bar' to be updated")
 	require.Equal(t, nil, params["true"], "expected param 'true' to be nil as it does not apply")
 }
 

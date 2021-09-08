@@ -3,7 +3,6 @@
 package smoke
 
 import (
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/tests"
@@ -23,7 +22,7 @@ func TestHelloBundle(t *testing.T) {
 
 	test.PrepareTestBundle()
 	require.NoError(t, shx.Copy("testdata/buncfg.json", test.TestDir))
-	os.Chdir(test.TestDir)
+	test.Chdir(test.TestDir)
 
 	// Run a stateless action before we install and make sure nothing is persisted
 	_, output := test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns")

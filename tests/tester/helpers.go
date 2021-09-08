@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests/testdata"
+	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,8 +17,9 @@ var testBundleBuilt = false
 
 // PrepareTestBundle ensures that the mybuns test bundle has been built.
 func (t Tester) PrepareTestBundle() {
-	// This variable isn't set on windows and the mybuns bundle relies on it
+	// These are environment variables referenced by the mybuns credential set
 	os.Setenv("USER", "porterci")
+	os.Setenv("ALT_USER", "porterci2")
 
 	// Build and publish an interesting test bundle and its dependency
 	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
@@ -29,8 +32,14 @@ func (t Tester) PrepareTestBundle() {
 
 func (t Tester) MakeTestBundle(name string, ref string) {
 	pwd, _ := os.Getwd()
-	defer os.Chdir(pwd)
-	os.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
+	defer t.Chdir(pwd)
+	t.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
+
+	// TODO(carolynvs): porter publish detection of needing a build should do this
+	output, err := shx.OutputS("docker", "inspect", strings.Replace(ref, name, name+"-installer", 1))
+	if output == "[]" || err != nil {
+		t.RequirePorter("build")
+	}
 
 	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
 	t.RequirePorter("publish", "--reference", ref)
@@ -103,6 +112,7 @@ func (t Tester) RequireInstallationInList(namespace, name string, list []claims.
 
 // EditYaml applies a set of yq transformations to a file.
 func (t Tester) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
+	t.T.Log("Editing", path)
 	yq := yaml.NewEditor(t.TestContext.Context)
 
 	require.NoError(t.T, yq.ReadFile(path))

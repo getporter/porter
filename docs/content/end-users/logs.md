@@ -1,6 +1,8 @@
 ---
 title: View Logs
 description: View logs from previous runs of Porter
+aliases:
+- operators/logs/
 ---
 
 You can view the logs from the most recent execution of a bundle with the

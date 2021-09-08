@@ -121,9 +121,8 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		}
 
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
-		assert.Equal(t, opts.CredentialIdentifiers, args.CredentialIdentifiers, "CredentialIdentifiers not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
-		assert.Equal(t, expectedParams, args.Params, "Params not populated correctly")
+		assert.EqualValues(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.Equal(t, existingInstall, args.Installation, "Installation not populated correctly")
 		wantReloMap := relocation.ImageRelocationMap{"gabrtv/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687": "my.registry/microservice@sha256:cca460afa270d4c527981ef9ca4989346c56cf9b20217dcea37df1ece8120687"}
 		assert.Equal(t, wantReloMap, args.BundleReference.RelocationMap, "RelocationMapping not populated correctly")

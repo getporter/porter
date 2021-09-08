@@ -1,7 +1,12 @@
 schemaVersion: 1.0.0
-name: imported-buns
+name: mybuns
 labels:
   generator: porter-operator
   generatorVersion: v0.2.0
+  thing: "1"
 bundleRepository: localhost:5000/mybuns
-bundleVersion: v0.1.0
+bundleVersion: v0.1.2
+credentialSets:
+  - mybuns
+parameterSets:
+  - mybuns

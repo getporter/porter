@@ -174,3 +174,4 @@ porter uninstall credentials-tutorial
 In this QuickStart, you learned how to see the credentials defined on a bundle, generate a credential set telling Porter where to find the credentials values, and pass credentials when executing a bundle.
 
 * [Understanding how credentials are resolved](/credentials/)
+* [Manage an installation using desired state](/quickstart/desired-state/)

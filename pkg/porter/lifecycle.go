@@ -24,7 +24,11 @@ type BundleAction interface {
 	// for the action.
 	GetActionVerb() string
 
+	// GetOptions returns the common bundle action options used to execute the bundle.
 	GetOptions() *BundleActionOptions
+
+	// Validate the action before it is executed.
+	Validate(args []string, p *Porter) error
 }
 
 type BundleActionOptions struct {
@@ -149,6 +153,9 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 func (p *Porter) BuildActionArgs(installation claims.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
 	bundleRef, err := p.resolveBundleReference(opts)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
 
 	if opts.RelocationMapping != "" {
 		err := encoding.UnmarshalFile(p.FileSystem, opts.RelocationMapping, &bundleRef.RelocationMap)
@@ -186,14 +193,9 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 		Installation:          installation,
 		BundleReference:       bundleRef,
 		Params:                resolvedParams,
-		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
 	}
-
-	// Do a safe copy so that modifications to the args aren't also made to the
-	// original options, which is confusing to debug
-	copy(args.CredentialIdentifiers, opts.CredentialIdentifiers)
 
 	return args, nil
 }
