@@ -18,6 +18,9 @@ Parameters:
   logLevel  integer  3           
   token     unknown  top-secret  
 
+Parameter Sets:
+  - dev-env
+
 Status:
   Reference: getporter/wordpress:v0.1.0
   Version: 0.1.0
