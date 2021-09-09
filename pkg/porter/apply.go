@@ -48,6 +48,10 @@ func (p *Porter) InstallationApply(opts ApplyOptions) error {
 	}
 	input.Namespace = namespace
 
+	if err = input.Validate(); err != nil {
+		return errors.Wrap(err, "invalid installation")
+	}
+
 	existingInstallation, err := p.Claims.GetInstallation(input.Namespace, input.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {

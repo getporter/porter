@@ -312,6 +312,10 @@ func (p *Porter) CredentialsApply(o ApplyOptions) error {
 		return errors.Wrapf(err, "could not load %s as a credential set", o.File)
 	}
 
+	if err = creds.Validate(); err != nil {
+		return errors.Wrap(err, "invalid credential set")
+	}
+
 	creds.Namespace = namespace
 	creds.Modified = time.Now()
 
