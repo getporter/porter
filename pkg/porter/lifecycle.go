@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
@@ -166,7 +167,16 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 	if p.Debug {
 		fmt.Fprintln(p.Err, "resolving parameters for installation", installation)
 	}
-	resolvedParams, err := p.resolveParameters(installation, bundleRef.Definition, action.GetAction(), opts.combinedParameters)
+
+	// Do not resolve parameters from dependencies
+	params := make(map[string]string, len(opts.combinedParameters))
+	for k, v := range opts.combinedParameters {
+		if strings.Contains(k, "#") {
+			continue
+		}
+		params[k] = v
+	}
+	resolvedParams, err := p.resolveParameters(installation, bundleRef.Definition, action.GetAction(), params)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
