@@ -114,3 +114,51 @@ func TestExtendedBundle_IsInternalParameter(t *testing.T) {
 		require.True(t, bun.IsInternalParameter("porter-debug"))
 	})
 }
+
+func TestExtendedBundle_IsSensitiveParameter(t *testing.T) {
+	sensitive := true
+	bun := ExtendedBundle{bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &sensitive,
+			},
+			"porter-debug": &definition.Schema{
+				Type:    "string",
+				Comment: PorterInternal,
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {
+				Definition: "foo",
+			},
+			"baz": {
+				Definition: "baz",
+			},
+			"porter-debug": {
+				Definition: "porter-debug",
+			},
+		},
+	}}
+
+	t.Run("empty bundle", func(t *testing.T) {
+		b := ExtendedBundle{}
+		require.False(t, b.IsSensitiveParameter("foo"))
+	})
+
+	t.Run("param does not exist", func(t *testing.T) {
+		require.False(t, bun.IsSensitiveParameter("bar"))
+	})
+
+	t.Run("definition does not exist", func(t *testing.T) {
+		require.False(t, bun.IsSensitiveParameter("baz"))
+	})
+
+	t.Run("is not sensitive", func(t *testing.T) {
+		require.False(t, bun.IsSensitiveParameter("porter-debug"))
+	})
+
+	t.Run("is sensitive", func(t *testing.T) {
+		require.True(t, bun.IsSensitiveParameter("foo"))
+	})
+}

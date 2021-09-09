@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -151,7 +152,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		}
 	}
 
-	r.printDebugInfo(creds, args.Params)
+	r.printDebugInfo(b, creds, args.Params)
 
 	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(args)...)
 
@@ -234,18 +235,28 @@ func (r *Runtime) appendFailedResult(opErr error, run claims.Run) error {
 	return multierror.Append(opErr, resultErr).ErrorOrNil()
 }
 
-func (r *Runtime) printDebugInfo(creds secrets.Set, params map[string]interface{}) {
+func (r *Runtime) printDebugInfo(b cnab.ExtendedBundle, creds secrets.Set, params map[string]interface{}) {
 	if r.Debug {
-		// only print out the names of the credentials, not the contents, cuz they big and sekret
-		credKeys := make([]string, 0, len(creds))
-		for k := range creds {
-			credKeys = append(credKeys, k)
+		dump := &bytes.Buffer{}
+		secrets := make([]string, 0, len(params)+len(creds))
+
+		fmt.Fprintf(dump, "params:\n")
+		for k, v := range params {
+			if b.IsSensitiveParameter(k) {
+				// TODO(carolynvs): When we consolidate our conversion logic of parameters into strings, let's use it here.
+				// https://github.com/cnabio/cnab-go/issues/270
+				secrets = append(secrets, fmt.Sprintf("%v", v))
+			}
+			fmt.Fprintf(dump, "  - %s: %v\n", k, v)
 		}
-		// param values may also be sensitive, so just print names
-		paramKeys := make([]string, 0, len(params))
-		for k := range params {
-			paramKeys = append(paramKeys, k)
+
+		fmt.Fprintf(dump, "creds:\n")
+		for k, v := range creds {
+			secrets = append(secrets, fmt.Sprintf("%v", v))
+			fmt.Fprintf(dump, "  - %s: %v\n", k, v)
 		}
-		fmt.Fprintf(r.Err, "params: %v\ncreds: %v\n", paramKeys, credKeys)
+
+		r.Context.SetSensitiveValues(secrets)
+		fmt.Fprintln(r.Err, dump.String())
 	}
 }

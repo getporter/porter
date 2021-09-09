@@ -48,6 +48,16 @@ func (b ExtendedBundle) IsInternalParameter(param string) bool {
 	return false
 }
 
+// IsSensitiveParameter determines if the parameter contains a sensitive value.
+func (b ExtendedBundle) IsSensitiveParameter(param string) bool {
+	if param, exists := b.Parameters[param]; exists {
+		if def, exists := b.Definitions[param.Definition]; exists {
+			return def.WriteOnly != nil && *def.WriteOnly
+		}
+	}
+	return false
+}
+
 // GetParameterType determines the type of parameter accounting for
 // Porter-specific parameter types like file.
 func (b ExtendedBundle) GetParameterType(def *definition.Schema) string {
