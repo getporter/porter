@@ -24,28 +24,30 @@ type dependencyExecutioner struct {
 	CNAB     cnabprovider.CNABProvider
 	Claims   claims.Provider
 
+	parentInstallation claims.Installation
+	parentAction       BundleAction
+	parentOpts         *BundleActionOptions
+
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentAction BundleAction
-	parentOpts   *BundleActionOptions
-	parentArgs   cnabprovider.ActionArguments
-	deps         []*queuedDependency
+	parentArgs cnabprovider.ActionArguments
+	deps       []*queuedDependency
 }
 
-func newDependencyExecutioner(p *Porter, action BundleAction, actionArgs cnabprovider.ActionArguments) *dependencyExecutioner {
+func newDependencyExecutioner(p *Porter, installation claims.Installation, action BundleAction) *dependencyExecutioner {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		porter:       p,
-		parentAction: action,
-		parentOpts:   action.GetOptions(),
-		parentArgs:   actionArgs,
-		Context:      p.Context,
-		Manifest:     p.Manifest,
-		Resolver:     resolver,
-		CNAB:         p.CNAB,
-		Claims:       p.Claims,
+		porter:             p,
+		parentInstallation: installation,
+		parentAction:       action,
+		parentOpts:         action.GetOptions(),
+		Context:            p.Context,
+		Manifest:           p.Manifest,
+		Resolver:           resolver,
+		CNAB:               p.CNAB,
+		Claims:             p.Claims,
 	}
 }
 
@@ -59,7 +61,13 @@ type queuedDependency struct {
 }
 
 func (e *dependencyExecutioner) Prepare() error {
-	err := e.identifyDependencies()
+	parentActionArgs, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
+	if err != nil {
+		return err
+	}
+	e.parentArgs = parentActionArgs
+
+	err = e.identifyDependencies()
 	if err != nil {
 		return err
 	}
@@ -92,7 +100,12 @@ func (e *dependencyExecutioner) Execute() error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.ActionArguments) {
+func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.ActionArguments, error) {
+	args, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
+
 	if args.Files == nil {
 		args.Files = make(map[string]string, 2*len(e.deps))
 	}
@@ -105,12 +118,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.Ac
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 
-	// Remove parameters for dependencies
-	for key := range args.Params {
-		if strings.Contains(key, "#") {
-			delete(args.Params, key)
-		}
-	}
+	return args, nil
 }
 
 func (e *dependencyExecutioner) identifyDependencies() error {
@@ -218,7 +226,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentArgs.Params {
+	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]

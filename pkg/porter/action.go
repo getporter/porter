@@ -11,13 +11,8 @@ import (
 func (p *Porter) ExecuteAction(installation claims.Installation, action BundleAction) error {
 	actionOpts := action.GetOptions()
 
-	actionArgs, err := p.BuildActionArgs(installation, action)
-	if err != nil {
-		return err
-	}
-
-	deperator := newDependencyExecutioner(p, action, actionArgs)
-	err = deperator.Prepare()
+	deperator := newDependencyExecutioner(p, installation, action)
+	err := deperator.Prepare()
 	if err != nil {
 		return err
 	}
@@ -27,7 +22,10 @@ func (p *Porter) ExecuteAction(installation claims.Installation, action BundleAc
 		return err
 	}
 
-	deperator.PrepareRootActionArguments(&actionArgs)
+	actionArgs, err := deperator.PrepareRootActionArguments()
+	if err != nil {
+		return err
+	}
 
 	fmt.Fprintf(p.Out, "%s %s...\n", action.GetActionVerb(), actionOpts.Name)
 	return p.CNAB.Execute(actionArgs)
