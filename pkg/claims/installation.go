@@ -220,6 +220,14 @@ func (i *Installation) TrackBundle(ref cnab.OCIReference) {
 	}
 }
 
+// SetLabel on the installation.
+func (i *Installation) SetLabel(key string, value string) {
+	if i.Labels == nil {
+		i.Labels = make(map[string]string, 1)
+	}
+	i.Labels[key] = value
+}
+
 // InstallationStatus's purpose is to assist with making porter list be able to display everything
 // with a single database query. Do not replicate data available on Run and Result here.
 type InstallationStatus struct {

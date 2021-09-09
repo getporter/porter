@@ -1,6 +1,8 @@
 package porter
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
@@ -159,6 +161,10 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 	err = opts.LoadParameters(p)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
+	}
+
+	if p.Debug {
+		fmt.Fprintln(p.Err, "resolving parameters for installation", installation)
 	}
 	resolvedParams, err := p.resolveParameters(installation, bundleRef.Definition, action.GetAction(), opts.combinedParameters)
 	if err != nil {
