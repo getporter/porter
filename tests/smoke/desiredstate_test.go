@@ -25,17 +25,17 @@ func TestDesiredState(t *testing.T) {
 	os.Chdir(test.TestDir)
 
 	// Try to import an installation with an invalid schema
-	_, err = test.RunPorter("installation", "apply", filepath.Join(test.RepoRoot, "tests/testdata/installations/invalid-schema.yaml"))
+	_, _, err = test.RunPorter("installation", "apply", filepath.Join(test.RepoRoot, "tests/testdata/installations/invalid-schema.yaml"))
 	require.Error(t, err, "apply should have failed because the schema of the imported document is incorrect")
 	require.Contains(t, err.Error(), "invalid installation")
 
 	// Try to import a credential set with an invalid schema
-	_, err = test.RunPorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/invalid-schema.yaml"))
+	_, _, err = test.RunPorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/invalid-schema.yaml"))
 	require.Error(t, err, "apply should have failed because the schema of the imported document is incorrect")
 	require.Contains(t, err.Error(), "invalid credential set")
 
 	// Try to import a parameter set with an invalid schema
-	_, err = test.RunPorter("parameters", "apply", filepath.Join(test.RepoRoot, "tests/testdata/params/invalid-schema.yaml"))
+	_, _, err = test.RunPorter("parameters", "apply", filepath.Join(test.RepoRoot, "tests/testdata/params/invalid-schema.yaml"))
 	require.Error(t, err, "apply should have failed because the schema of the imported document is incorrect")
 	require.Contains(t, err.Error(), "invalid parameter set")
 

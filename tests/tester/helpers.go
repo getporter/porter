@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests/testdata"
 	"github.com/stretchr/testify/require"
 )
@@ -36,13 +37,13 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 }
 
 func (t Tester) ShowInstallation(namespace string, name string) (claims.Installation, error) {
-	output, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
+	stdout, _, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
 	if err != nil {
 		return claims.Installation{}, err
 	}
 
 	var installation claims.Installation
-	require.NoError(t.T, json.Unmarshal([]byte(output), &installation))
+	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installation))
 	return installation, nil
 }
 
@@ -79,13 +80,13 @@ func (t Tester) ListInstallations(allNamespaces bool, namespace string, name str
 		args = append(args, "--label", l)
 	}
 
-	output, err := t.RunPorter(args...)
+	stdout, _, err := t.RunPorter(args...)
 	if err != nil {
 		return nil, err
 	}
 
 	var installations []claims.Installation
-	require.NoError(t.T, json.Unmarshal([]byte(output), &installations))
+	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installations))
 	return installations, nil
 }
 
@@ -101,7 +102,7 @@ func (t Tester) RequireInstallationInList(namespace, name string, list []claims.
 }
 
 // EditYaml applies a set of yq transformations to a file.
-func (t Test) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
+func (t Tester) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
 	yq := yaml.NewEditor(t.TestContext.Context)
 
 	require.NoError(t.T, yq.ReadFile(path))
