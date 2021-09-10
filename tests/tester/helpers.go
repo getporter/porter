@@ -99,3 +99,14 @@ func (t Tester) RequireInstallationInList(namespace, name string, list []claims.
 	t.T.Fatalf("expected %s/%s to be in the list of installations", namespace, name)
 	return claims.Installation{}
 }
+
+// EditYaml applies a set of yq transformations to a file.
+func (t Test) EditYaml(path string, transformations ...func(yq *yaml.Editor) error) {
+	yq := yaml.NewEditor(t.TestContext.Context)
+
+	require.NoError(t.T, yq.ReadFile(path))
+	for _, transform := range transformations {
+		require.NoError(t.T, transform(yq))
+	}
+	require.NoError(t.T, yq.WriteFile(path))
+}

@@ -1,4 +1,4 @@
-package manifest
+package yaml
 
 import (
 	"bytes"
@@ -20,10 +20,9 @@ var (
 
 // Editor can modify the yaml in a Porter manifest.
 type Editor struct {
-	context  *context.Context
-	manifest *Manifest
-	yq       yqlib.YqLib
-	node     *yaml.Node
+	context *context.Context
+	yq      yqlib.YqLib
+	node    *yaml.Node
 }
 
 func NewEditor(cxt *context.Context) *Editor {
