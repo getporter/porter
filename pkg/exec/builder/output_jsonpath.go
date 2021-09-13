@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -45,7 +46,9 @@ func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout s
 
 		if outputJson == nil {
 			if stdout != "" {
-				err := json.Unmarshal([]byte(stdout), &outputJson)
+				d := json.NewDecoder(bytes.NewBuffer([]byte(stdout)))
+				d.UseNumber()
+				err := d.Decode(&outputJson)
 				if err != nil {
 					return errors.Wrapf(err, "error unmarshaling stdout as json %s", stdout)
 				}

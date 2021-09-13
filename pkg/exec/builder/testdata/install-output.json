@@ -1,6 +1,8 @@
 [
   {
     "index": 0,
+    "_id": 123123123,
+    "_bigId": 1.23123123e+08,
     "canIpForward": false,
     "cpuPlatform": "Intel Haswell",
     "creationTimestamp": "2019-08-10T07:19:58.684-07:00",
