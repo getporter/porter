@@ -51,3 +51,14 @@ uninstall:
 #  - name: mysql_user
 #    type: string
 #    default: wordpress
+
+# Below is an example of how to define state variables
+# for the terraform mixin. This allows you to track
+# terraform state using the bundle instead of configuring
+# a remote backend.
+# See https://porter.sh/author-bundles/#state
+#state:
+#  - name: tfstate
+#    path: terraform/terraform.tfstate
+#  - name: tfvars
+#    path: terraform/terraform.tfvars.json

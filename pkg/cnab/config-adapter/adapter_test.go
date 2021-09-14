@@ -1,6 +1,7 @@
 package configadapter
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,6 +16,37 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestManifestConverter(t *testing.T) {
+	t.Parallel()
+
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
+
+	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	require.NoError(t, err, "could not load manifest")
+
+	a := NewManifestConverter(c.Context, m, nil, nil)
+
+	bun, err := a.ToBundle()
+	require.NoError(t, err, "ToBundle failed")
+
+	// Compare the regular json, not the canonical, because that's hard to diff
+	prepBundleForDiff(&bun.Bundle)
+	bunD, err := json.MarshalIndent(bun, "", "  ")
+	require.NoError(t, err)
+	c.TestContext.CompareGoldenFile("testdata/mybuns.bundle.json", string(bunD))
+}
+
+func prepBundleForDiff(b *bundle.Bundle) {
+	// Unset the digest when we are comparing test bundle files because
+	// otherwise the digest changes based on the version of the porter binary +
+	// mixins that generated it, which makes the file change a lot
+	// unnecessarily.
+	stamp := b.Custom[cnab.PorterExtension].(Stamp)
+	stamp.ManifestDigest = ""
+	b.Custom[cnab.PorterExtension] = stamp
+}
 
 func TestManifestConverter_ToBundle(t *testing.T) {
 	t.Parallel()
@@ -47,7 +79,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 
 	assert.True(t, bun.HasDependencies(), "Dependencies was not populated")
 
-	assert.Nil(t, bun.Outputs, "expected outputs section not to exist in generated bundle")
+	assert.Len(t, bun.Outputs, 1, "expected one output for the bundle state")
 }
 
 func TestManifestConverter_generateBundleCredentials(t *testing.T) {
@@ -414,7 +446,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 
 	defs := make(definition.Definitions, len(a.Manifest.Outputs))
 	outputs := a.generateBundleOutputs(&defs)
-	require.Len(t, defs, 5)
+	require.Len(t, defs, 6)
 
 	wantOutputDefinitions := map[string]bundle.Output{
 		"output1": {
@@ -444,6 +476,11 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Definition: "notype-file-output",
 			Path:       "/cnab/app/outputs/notype-file",
 		},
+		"porter-state": {
+			Description: "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
+			Definition:  "porter-state",
+			Path:        "/cnab/app/outputs/porter-state",
+		},
 	}
 
 	require.Equal(t, wantOutputDefinitions, outputs)
@@ -467,6 +504,13 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 			Type: "string",
 		},
 		"notype-file-output": &definition.Schema{
+			Type:            "string",
+			ContentEncoding: "base64",
+		},
+		"porter-state": &definition.Schema{
+			ID:              "https://porter.sh/generated-bundle/#porter-state",
+			Comment:         "porter-internal",
+			Description:     "Supports persisting state for bundles. Porter internal parameter that should not be set manually.",
 			Type:            "string",
 			ContentEncoding: "base64",
 		},
@@ -575,6 +619,7 @@ func TestManifestConverter_generateParameterSources(t *testing.T) {
 	want := cnab.ParameterSources{}
 	want.SetParameterFromOutput("porter-msg-output", "msg")
 	want.SetParameterFromOutput("tfstate", "tfstate")
+	want.SetParameterFromOutput("porter-state", "porter-state")
 	want.SetParameterFromDependencyOutput("porter-mysql-mysql-password-dep-output", "mysql", "mysql-password")
 	want.SetParameterFromDependencyOutput("root-password", "mysql", "mysql-root-password")
 
@@ -690,7 +735,7 @@ func TestManifestConverter_generateRequiredExtensions(t *testing.T) {
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
 
-	expected := []string{"sh.porter.file-parameters", "requiredExtension1", "requiredExtension2"}
+	expected := []string{"sh.porter.file-parameters", "io.cnab.parameter-sources", "requiredExtension1", "requiredExtension2"}
 	assert.Equal(t, expected, bun.RequiredExtensions)
 }
 
@@ -800,7 +845,7 @@ func TestManifestConverter_generateCustomMetadata(t *testing.T) {
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
-	assert.Len(t, bun.Custom, 3)
+	assert.Len(t, bun.Custom, 4)
 
 	f, err := ioutil.TempFile("", "")
 	require.NoError(t, err, "Failed to create bundle file")

@@ -211,7 +211,7 @@ func StartDockerRegistry() error {
 		return nil
 	}
 
-	err := removeContainer(getRegistryName())
+	err := RemoveContainer(getRegistryName())
 	if err != nil {
 		return err
 	}
@@ -224,13 +224,13 @@ func StartDockerRegistry() error {
 func StopDockerRegistry() error {
 	if containerExists(getRegistryName()) {
 		fmt.Println("Stopping local docker registry")
-		return removeContainer(getRegistryName())
+		return RemoveContainer(getRegistryName())
 	}
 	return nil
 }
 
 func RestartDockerRegistry() error {
-	if err := StopDockerRegistry(); err!=nil{
+	if err := StopDockerRegistry(); err != nil {
 		return err
 	}
 	return StartDockerRegistry()
@@ -247,7 +247,8 @@ func containerExists(name string) bool {
 	return err == nil
 }
 
-func removeContainer(name string) error {
+// Remove the specified container, if it is present.
+func RemoveContainer(name string) error {
 	stderr := bytes.Buffer{}
 	_, _, err := shx.Command("docker", "rm", "-f", name).Stderr(&stderr).Stdout(nil).Exec()
 	// Gracefully handle the container already being gone

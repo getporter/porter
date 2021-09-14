@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -70,37 +69,6 @@ func TestInstall_fileParam(t *testing.T) {
 	myotherfile, ok := outputs.GetByName("myotherfile")
 	require.True(t, ok, "expected myotherfile output to be persisted")
 	assert.Equal(t, "Hello Other World!", string(myotherfile.Value), "expected output 'myotherfile' to match the decoded file contents")
-}
-
-func TestInstall_fileParam_fromReference(t *testing.T) {
-	t.Parallel()
-
-	p := porter.NewTestPorter(t)
-	defer p.Teardown()
-	p.SetupIntegrationTest()
-	p.Debug = false
-
-	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", true)
-	reference := fmt.Sprintf("localhost:5000/%s:v0.1.0", bundleName)
-
-	publishOpts := porter.PublishOptions{}
-	publishOpts.Reference = reference
-	err := publishOpts.Validate(p.Context)
-	require.NoError(t, err, "validation of publish opts for bundle failed")
-
-	err = p.Publish(publishOpts)
-	require.NoError(t, err, "publish of bundle failed")
-
-	installOpts := porter.NewInstallOptions()
-	installOpts.Reference = reference
-	installOpts.Params = []string{"myfile=./myfile"}
-	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
-
-	err = installOpts.Validate([]string{}, p.Porter)
-	require.NoError(t, err)
-
-	err = p.InstallBundle(installOpts)
-	require.NoError(t, err)
 }
 
 func TestInstall_withDockerignore(t *testing.T) {

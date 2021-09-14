@@ -1,7 +1,7 @@
 # This is a test bundle that makes no logical sense, but it does exercise lots of different bundle features
 
 name: mybuns
-version: 0.1.0
+version: 0.1.2
 description: "A very thorough test bundle"
 registry: localhost:5000
 dockerfile: Dockerfile.tmpl
@@ -22,22 +22,21 @@ parameters:
     description: "Set to true to make the bundle fail"
     type: boolean
     default: false
-  - name: magic_file
-    description: "Pay no attention to the generated magic file"
+  - name: cfg
+    description: "A json config file"
     type: file
-    path: /cnab/app/magic
-    applyTo:
-      - upgrade
-      - uninstall
-    source:
-      output: magic_file
+    default: ''
+    path: buncfg.json
 
 outputs:
-  - name: magic_file
-    type: file
-    path: /cnab/app/magic
+  - name: mylogs
     applyTo:
       - install
+      - upgrade
+
+state:
+  - name: magic_file
+    path: magic.txt
 
 dependencies:
   required:
@@ -71,6 +70,9 @@ install:
       command: ./helpers.sh
       arguments:
         - install
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
   - exec:
       description: "roll the dice with your chaos monkey"
       command: ./helpers.sh
@@ -87,10 +89,15 @@ dry-run:
 
 status:
   - exec:
-      description: "Print status"
-      command: echo
+      description: "Print config"
+      command: cat
       arguments:
-        - "LGTM"
+        - "{{ bundle.parameters.cfg }}"
+  - exec:
+      description: "Print magic"
+      command: cat
+      arguments:
+        - magic.txt
 
 boom:
   - exec:
@@ -110,6 +117,9 @@ upgrade:
       command: ./helpers.sh
       arguments:
         - upgrade
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
   - exec:
       description: "roll the dice with your chaos monkey"
       command: ./helpers.sh

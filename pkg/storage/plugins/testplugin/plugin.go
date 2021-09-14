@@ -2,14 +2,13 @@ package testplugin
 
 import (
 	"fmt"
-	"regexp"
 	"runtime"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
-	"github.com/cloudflare/cfssl/scan/crypto/md5"
+	"get.porter.sh/porter/tests"
 )
 
 var (
@@ -44,7 +43,7 @@ func (s *TestStoragePlugin) Setup() error {
 		return nil
 	}
 
-	s.database = generateDatabaseName(s.tc.T.Name())
+	s.database = tests.GenerateDatabaseName(s.tc.T.Name())
 
 	// Try to connect to a dev instance of mongo, otherwise run a one off mongo instance
 	err := s.useDevDatabase()
@@ -103,16 +102,4 @@ func (s *TestStoragePlugin) Close() error {
 	err := s.Store.Close()
 	s.Store = nil
 	return err
-}
-
-func generateDatabaseName(testName string) string {
-	reg, err := regexp.Compile(`[^a-zA-Z0-9_]+`)
-	if err != nil {
-		panic(err)
-	}
-	safeTestName := reg.ReplaceAllString(testName, "_")
-	if len(safeTestName) > 50 {
-		safeTestName = fmt.Sprintf("%x", md5.Sum([]byte(safeTestName)))
-	}
-	return fmt.Sprintf("porter_%s", safeTestName)
 }

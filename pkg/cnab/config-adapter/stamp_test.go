@@ -143,6 +143,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		require.NoError(t, err, "DigestManifest failed")
 
 		pkg.Version = "foo"
+		defer func() { pkg.Version = "" }()
 		newDigest, err := a.DigestManifest()
 		require.NoError(t, err, "DigestManifest failed")
 		assert.NotEqual(t, newDigest, digest, "expected the digest to be different due to the updated pkg version")

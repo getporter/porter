@@ -8,11 +8,11 @@ install() {
 }
 
 makeMagic() {
-  echo $1 > /cnab/app/magic
+  echo $1 > /cnab/app/magic.txt
 }
 
 ensureMagic() {
-  if ! test -f "/cnab/app/magic"; then
+  if ! test -f "magic.txt"; then
     echo "No magic detected"
     exit 1
   fi

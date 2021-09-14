@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -193,7 +194,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 	assert.Equal(t, want, string(bytes))
 }
 
-func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
+func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 	const srcPath = "/root/.kube/config"
 	const outputName = "kubeconfig"
 
@@ -249,22 +250,33 @@ func TestPorterRuntime_ApplyUnboundBundleOutputs_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := NewTestPorterRuntime(t)
+			c := context.NewTestContext(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
 				Outputs: manifest.OutputDefinitions{
 					tc.def.Name: tc.def,
 				},
 			}
-			r.RuntimeManifest = NewRuntimeManifest(r.Context, cnab.ActionInstall, m)
+			rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
+			rm.bundle = cnab.ExtendedBundle{bundle.Bundle{
+				Definitions: map[string]*definition.Schema{
+					tc.def.Name: &tc.def.Schema,
+				},
+				Outputs: map[string]bundle.Output{
+					tc.def.Name: {
+						Definition: tc.def.Name,
+						Path:       tc.def.Path,
+					},
+				},
+			}}
 
-			_, err := r.FileSystem.Create(srcPath)
+			_, err := rm.FileSystem.Create(srcPath)
 			require.NoError(t, err)
 
-			err = r.applyUnboundBundleOutputs()
+			err = rm.applyUnboundBundleOutputs()
 			require.NoError(t, err)
 
-			exists, _ := r.FileSystem.Exists("/cnab/app/outputs/" + outputName)
+			exists, _ := rm.FileSystem.Exists("/cnab/app/outputs/" + outputName)
 			assert.Equal(t, exists, tc.shouldBind)
 		})
 	}

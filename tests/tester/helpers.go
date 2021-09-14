@@ -1,6 +1,4 @@
-// +build smoke
-
-package smoke
+package tester
 
 import (
 	"encoding/json"
@@ -8,43 +6,36 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/claims"
-	"github.com/carolynvs/magex/shx"
+	"get.porter.sh/porter/tests/testdata"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	myBunsRef = "localhost:5000/mybuns:v0.1.2"
-	myDbRef   = "localhost:5000/mydb:v0.1.0"
-)
+var testBundleBuilt = false
 
-func (t Test) PrepareTestBundle() {
+// PrepareTestBundle ensures that the mybuns test bundle has been built.
+func (t Tester) PrepareTestBundle() {
 	// This variable isn't set on windows and the mybuns bundle relies on it
 	os.Setenv("USER", "porterci")
 
-	// Check if another test has already set up the test bundle
-	err := shx.RunE("docker", "pull", "localhost:5000/mybuns-installer:v0.1.2")
-	if err == nil {
-		return
-	}
-
 	// Build and publish an interesting test bundle and its dependency
-	t.MakeTestBundle("mydb", myDbRef)
-	t.MakeTestBundle("mybuns", myBunsRef)
+	t.MakeTestBundle(testdata.MyDb, testdata.MyDbRef)
+	t.MakeTestBundle(testdata.MyBuns, testdata.MyBunsRef)
+
+	// Import a parameter and credential set for the bundle into the global namespace
+	t.RequirePorter("parameters", "apply", filepath.Join(t.RepoRoot, "tests/testdata/params/mybuns.yaml"), "--namespace=")
+	t.RequirePorter("credentials", "apply", filepath.Join(t.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 }
 
-func (t Test) MakeTestBundle(name string, ref string) {
-	err := shx.Copy(filepath.Join(t.RepoRoot, "tests/testdata", name), t.TestDir, shx.CopyRecursive)
-	require.NoError(t.T, err)
-
+func (t Tester) MakeTestBundle(name string, ref string) {
 	pwd, _ := os.Getwd()
 	defer os.Chdir(pwd)
-	os.Chdir(filepath.Join(t.TestDir, name))
+	os.Chdir(filepath.Join(t.RepoRoot, "tests/testdata/", name))
 
-	t.RequirePorter("build")
+	// Rely on the auto build functionality to avoid long slow rebuilds when nothing has changed
 	t.RequirePorter("publish", "--reference", ref)
 }
 
-func (t Test) ShowInstallation(namespace string, name string) (claims.Installation, error) {
+func (t Tester) ShowInstallation(namespace string, name string) (claims.Installation, error) {
 	output, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
 	if err != nil {
 		return claims.Installation{}, err
@@ -55,7 +46,7 @@ func (t Test) ShowInstallation(namespace string, name string) (claims.Installati
 	return installation, nil
 }
 
-func (t Test) RequireInstallationExists(namespace string, name string) claims.Installation {
+func (t Tester) RequireInstallationExists(namespace string, name string) claims.Installation {
 	installation, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
 	require.Equal(t.T, name, installation.Name, "incorrect installation name")
@@ -63,17 +54,17 @@ func (t Test) RequireInstallationExists(namespace string, name string) claims.In
 	return installation
 }
 
-func (t Test) RequireInstallationNotFound(namespace string, name string) {
+func (t Tester) RequireInstallationNotFound(namespace string, name string) {
 	_, err := t.ShowInstallation(namespace, name)
 	t.RequireNotFoundReturned(err)
 }
 
-func (t Test) RequireNotFoundReturned(err error) {
+func (t Tester) RequireNotFoundReturned(err error) {
 	require.Error(t.T, err)
 	require.Contains(t.T, err.Error(), "not found")
 }
 
-func (t Test) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
+func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
 	args := []string{
 		"list",
 		"--output=json",
@@ -98,7 +89,7 @@ func (t Test) ListInstallations(allNamespaces bool, namespace string, name strin
 	return installations, nil
 }
 
-func (t Test) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
+func (t Tester) RequireInstallationInList(namespace, name string, list []claims.Installation) claims.Installation {
 	for _, i := range list {
 		if i.Namespace == namespace && i.Name == name {
 			return i

@@ -66,6 +66,7 @@ type Manifest struct {
 	CustomActions           map[string]Steps                  `yaml:"-"`
 	CustomActionDefinitions map[string]CustomActionDefinition `yaml:"customActions,omitempty"`
 
+	StateBag     StateBag              `yaml:"state,omitempty"`
 	Parameters   ParameterDefinitions  `yaml:"parameters,omitempty"`
 	Credentials  CredentialDefinitions `yaml:"credentials,omitempty"`
 	Dependencies Dependencies          `yaml:"dependencies,omitempty"`
@@ -308,6 +309,9 @@ type ParameterDefinition struct {
 	Destination Location `yaml:",inline,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+
+	// IsState identifies if the parameter was generated from a state variable
+	IsState bool
 }
 
 func (pd *ParameterDefinition) GetApplyTo() []string {
@@ -462,7 +466,6 @@ func (cd *CredentialDefinition) UnmarshalYAML(unmarshal func(interface{}) error)
 	return nil
 }
 
-// TODO: use cnab-go's bundle.Location instead, once yaml tags have been added
 // Location represents a Parameter or Credential location in an InvocationImage
 type Location struct {
 	Path                string `yaml:"path,omitempty"`
@@ -659,6 +662,9 @@ type OutputDefinition struct {
 	Path string `yaml:"path,omitempty"`
 
 	definition.Schema `yaml:",inline"`
+
+	// IsState identifies if the output was generated from a state variable
+	IsState bool
 }
 
 // DeepCopy copies a ParameterDefinition and returns the copy
@@ -925,6 +931,21 @@ func (m *Manifest) getDockerTagFromBundleRef(bundleRef cnab.OCIReference) (strin
 	return fmt.Sprintf("v%s", cleanTag), nil
 }
 
+// ResolvePath resolves a path specified in the Porter manifest into
+// an absolute path, assuming the current directory is /cnab/app.
+// Returns an empty string when the specified value is empty.
+func ResolvePath(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	if path.IsAbs(value) {
+		return value
+	}
+
+	return path.Join("/cnab/app", value)
+}
+
 func readFromFile(cxt *context.Context, path string) ([]byte, error) {
 	if exists, _ := cxt.FileSystem.Exists(path); !exists {
 		return nil, errors.Errorf("the specified porter configuration file %s does not exist", path)
@@ -1093,4 +1114,22 @@ type MaintainerDefinition struct {
 	Name  string `yaml:"name,omitempty"`
 	Email string `yaml:"email,omitempty"`
 	Url   string `yaml:"url,omitempty"`
+}
+
+// StateBag is the set of state files and variables that Porter should
+// track between bundle executions.
+type StateBag []StateVariable
+
+type StateVariable struct {
+	// Name of the state variable
+	Name string `yaml:"name"`
+
+	// Description of the state variable and how it's used by the bundle
+	Description string `yaml:"description,omitempty"`
+
+	// Mixin is the name of the mixin that manages the state variable.
+	Mixin string `yaml:"mixin,omitempty"`
+
+	// Location defines where the state variable is located in the bundle.
+	Location `yaml:",inline"`
 }
