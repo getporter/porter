@@ -624,7 +624,7 @@ func (m *RuntimeManifest) packStateBag() error {
 	return bigErr.ErrorOrNil()
 }
 
-// applyUnboundBundleOutputs find outputs that haven't been bound yet by a step,
+// applyUnboundBundleOutputs finds outputs that haven't been bound yet by a step,
 // and if they can be bound, i.e. they grab a file from the bundle's filesystem,
 // apply the output.
 func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
