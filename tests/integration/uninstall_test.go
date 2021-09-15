@@ -5,107 +5,52 @@ package integration
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/porter"
-	"get.porter.sh/porter/pkg/storage"
-	"github.com/stretchr/testify/assert"
+	"get.porter.sh/porter/tests"
+	"get.porter.sh/porter/tests/testdata"
+	"get.porter.sh/porter/tests/tester"
 	"github.com/stretchr/testify/require"
 )
 
 func TestUninstall_DeleteInstallation(t *testing.T) {
 	t.Parallel()
 
-	testcases := []struct {
-		name                string
-		notInstalled        bool
-		uninstallFails      bool
-		delete              bool
-		forceDelete         bool
-		installationRemains bool
-		wantError           string
-	}{
-		{
-			name:         "not yet installed",
-			notInstalled: true,
-			wantError:    "Installation not found",
-		}, {
-			name:                "no --delete",
-			installationRemains: true,
-		}, {
-			name:      "--delete",
-			delete:    true,
-			wantError: "",
-		}, {
-			name:                "uninstall fails; --delete",
-			uninstallFails:      true,
-			delete:              true,
-			installationRemains: true,
-			wantError:           porter.ErrUnsafeInstallationDeleteRetryForceDelete.Error(),
-		}, {
-			name:           "uninstall fails; --force-delete",
-			uninstallFails: true,
-			forceDelete:    true,
-		},
-	}
+	test, err := tester.NewTest(t)
+	defer test.Teardown()
+	require.NoError(t, err, "test setup failed")
+	test.PrepareTestBundle()
 
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			p := porter.NewTestPorter(t)
-			defer p.Teardown()
-			p.SetupIntegrationTest()
-			p.Debug = false
+	// Check that we can't uninstall a bundle that hasn't been installed already
+	_, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns")
+	test.RequireNotFoundReturned(err)
 
-			err := p.Create()
-			require.NoError(t, err)
+	// Install bundle
+	test.RequirePorter("install", testdata.MyBuns, "-r", testdata.MyBunsRef, "-c=mybuns")
 
-			// Install bundle
-			if !tc.notInstalled {
-				opts := porter.NewInstallOptions()
-				opts.Driver = "debug"
+	// Uninstall the bundle
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns")
 
-				err = opts.Validate(nil, p.Porter)
-				require.NoError(t, err, "Validate install options failed")
+	// Check that the record remains
+	test.RequireInstallationExists(test.CurrentNamespace(), testdata.MyBuns)
 
-				err = p.InstallBundle(opts)
-				require.NoError(t, err, "InstallBundle failed")
-			}
+	// Uninstall and delete
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns", "--delete")
 
-			// Set up command driver
-			driver := porter.TestDriver{
-				Name:     "uninstall",
-				Filepath: "testdata/drivers/exit-driver.sh",
-			}
-			if tc.uninstallFails {
-				driver.Filepath = "testdata/drivers/exit-driver-fail.sh"
-			}
+	// The record should be gone
+	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
-			path := p.Getenv("PATH")
-			dir := p.AddTestDriver(driver)
-			defer p.Setenv("PATH", path)
-			defer p.TestConfig.TestContext.FileSystem.RemoveAll(dir)
+	// Re-Install the bundle
+	test.RequirePorter("install", testdata.MyBuns, "-r", testdata.MyBunsRef, "-c=mybuns")
 
-			// Uninstall bundle with custom command driver
-			opts := porter.NewUninstallOptions()
-			opts.Delete = tc.delete
-			opts.ForceDelete = tc.forceDelete
-			opts.Driver = driver.Name
+	// Uninstall the bundle, attempt to delete it, but have the uninstall fail
+	_, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns", "--param", "chaos_monkey=true", "--delete")
+	tests.RequireErrorContains(t, err, "it is unsafe to delete an installation when the last action wasn't a successful uninstall")
 
-			err = opts.Validate(nil, p.Porter)
-			require.NoError(t, err, "Validate uninstall options failed")
+	// Check that the record remains
+	test.RequireInstallationExists(test.CurrentNamespace(), testdata.MyBuns)
 
-			err = p.UninstallBundle(opts)
-			if tc.wantError != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tc.wantError)
-			} else {
-				require.NoError(t, err, "UninstallBundle failed")
-			}
+	// Uninstall the bundle, even though uninstall is failing, and force delete it
+	test.RequirePorter("uninstall", testdata.MyBuns, "-c=mybuns", "--force-delete")
 
-			_, err = p.Claims.GetInstallation(opts.Namespace, opts.Name)
-			if tc.installationRemains {
-				require.NoError(t, err, "Installation is expected to exist")
-			} else {
-				require.ErrorIs(t, err, storage.ErrNotFound{})
-			}
-		})
-	}
+	// The record should be gone
+	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 }

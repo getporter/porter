@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"get.porter.sh/porter/tests/tester"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ import (
 func TestDesiredState(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
-	test, err := NewTest(t)
+	test, err := tester.NewTest(t)
 	defer test.Teardown()
 	require.NoError(t, err, "test setup failed")
 

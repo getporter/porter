@@ -290,6 +290,8 @@ example.
   * **TestIntegration** runs our integration tests, which run the bundles
     against a test KIND cluster.
 * **Install** installs porter _and_ the mixins from source into **$(HOME)/.porter/**.
+* **DocsPreview** hosts the docs site. See [Preview Documentation](#preview-documentation).
+* **DocsGen** generates the CLI documentation for the website. This is run automatically by build.
 
 [golden files]: https://ieftimov.com/post/testing-in-go-golden-files/
 
@@ -298,8 +300,6 @@ example.
 Below are the most common developer tasks. Run a target with `make TARGET`, e.g.
 `make setup-dco`.
 
-* `docs-preview` hosts the docs site. See [Preview
-  Documentation](#preview-documentation).
 * `setup-dco` installs a git commit hook that automatically signsoff your commit
   messages per the DCO requirement.
 
@@ -391,7 +391,7 @@ We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
 [Netlify](netlify.com). You don't have to install Hugo locally because the
 preview happens inside a docker container.
 
-1. Run `make docs-preview` to start serving the docs. It will watch the file
+1. Run `mage DocsPreview` to start serving the docs. It will watch the file
 system for changes.
 1. Our make rule should open <http://localhost:1313/docs> to preview the
 site/docs.

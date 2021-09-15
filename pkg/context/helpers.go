@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -278,4 +280,21 @@ func (c *TestContext) hasChild(dir string, childName string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// CompareGoldenFile checks if the specified string matches the content of a golden test file.
+// When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
+// the new test output.
+func (c *TestContext) CompareGoldenFile(goldenFile string, got string) {
+	t := c.T
+
+	wantSchema, err := ioutil.ReadFile(goldenFile)
+	require.NoError(t, err)
+
+	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
+		t.Logf("Updated test file %s to match latest test output", goldenFile)
+		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0755), "could not update golden file %s", goldenFile)
+	} else {
+		assert.Equal(t, string(wantSchema), got, "The test output doesn't match the expected output in %s. If this was intentional, run mage updateTestfiles to fix the tests.", goldenFile)
+	}
 }

@@ -46,7 +46,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 	// Prepare prepares the runtime environment prior to step execution.
 	// As an example, for parameters of type "file", we may need to decode file contents
 	// on the filesystem before execution of the step/action
-	err = r.RuntimeManifest.Prepare()
+	err = r.RuntimeManifest.Initialize()
 	if err != nil {
 		return err
 	}
@@ -67,24 +67,21 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
 	}
 
-	var executionErr error
+	var bigErr *multierror.Error
 	for _, step := range r.RuntimeManifest.GetSteps() {
-		executionErr = r.executeStep(step)
-		if executionErr != nil {
+		err = r.executeStep(step)
+		if err != nil {
+			bigErr = multierror.Append(bigErr, err)
 			break
 		}
 	}
 
-	err = r.applyUnboundBundleOutputs()
+	err = r.RuntimeManifest.Finalize()
 	if err != nil {
-		// Log but allow the bundle to gracefully exit
-		fmt.Fprintln(r.Err, err)
+		bigErr = multierror.Append(bigErr, err)
 	}
 
-	if executionErr == nil {
-		fmt.Fprintln(r.Out, "execution completed successfully!")
-	}
-	return executionErr // Report the success of the bundle back up the chain
+	return bigErr.ErrorOrNil()
 }
 
 func (r *PorterRuntime) executeStep(step *manifest.Step) error {
@@ -133,22 +130,9 @@ func (r *PorterRuntime) executeStep(step *manifest.Step) error {
 	return r.applyStepOutputsToBundle(outputs)
 }
 
-func (r *PorterRuntime) createOutputsDir() error {
-	// Ensure outputs directory exists
-	if err := r.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
-		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
-	}
-	return nil
-}
-
 // applyStepOutputsToBundle writes the provided step outputs to the proper location
 // in the bundle execution environment.
 func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) error {
-	err := r.createOutputsDir()
-	if err != nil {
-		return err
-	}
-
 	for outputKey, outputValue := range outputs {
 		bundleOutput, ok := r.RuntimeManifest.Outputs[outputKey]
 		if !ok {
@@ -165,45 +149,6 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 		}
 	}
 	return nil
-}
-
-// applyUnboundBundleOutputs find outputs that haven't been bound yet by a step,
-// and if they can be bound, i.e. they grab a file from the bundle's filesystem,
-// apply the output.
-func (r *PorterRuntime) applyUnboundBundleOutputs() error {
-	err := r.createOutputsDir()
-	if err != nil {
-		return err
-	}
-
-	if len(r.RuntimeManifest.Outputs) > 0 {
-		fmt.Fprintln(r.Out, "Collecting bundle outputs...")
-	}
-
-	var bigErr *multierror.Error
-	outputs := r.RuntimeManifest.GetOutputs()
-	for _, outputDef := range r.RuntimeManifest.Outputs {
-		// Ignore outputs that have already been set
-		if output := outputs[outputDef.Name]; output != "" {
-			continue
-		}
-
-		// We can only deal with outputs that are based on a file right now
-		if outputDef.Path == "" {
-			continue
-		}
-
-		if r.shouldApplyOutput(outputDef) {
-			outpath := filepath.Join(config.BundleOutputsDir, outputDef.Name)
-			err = r.CopyFile(outputDef.Path, outpath)
-			if err != nil {
-				err = multierror.Append(bigErr, errors.Wrapf(err, "unable to copy output file from %s to %s", outputDef.Path, outpath))
-				continue
-			}
-		}
-	}
-
-	return bigErr.ErrorOrNil()
 }
 
 func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool {

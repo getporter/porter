@@ -223,3 +223,14 @@ func (b ExtendedBundle) HasParameterSources() bool {
 	_, ok := b.Custom[ParameterSourcesExtensionKey]
 	return ok
 }
+
+// ParameterHasSource determines if the specified parameter has a parameter
+// source defined.
+func (b ExtendedBundle) ParameterHasSource(paramName string) bool {
+	sources, err := b.ReadParameterSources()
+	if err != nil {
+		return false
+	}
+	_, hasSource := sources[paramName]
+	return hasSource
+}

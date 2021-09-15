@@ -37,11 +37,22 @@ func (b ExtendedBundle) IsPorterBundle() bool {
 	return madeByPorter
 }
 
-// IsInternalParameter determines if the provided param is an internal parameter
-// to Porter after analyzing the provided bundle
-func (b ExtendedBundle) IsInternalParameter(param string) bool {
-	if param, exists := b.Parameters[param]; exists {
+// IsInternalParameter determines if the provided parameter is internal
+// to Porter after analyzing the provided bundle.
+func (b ExtendedBundle) IsInternalParameter(name string) bool {
+	if param, exists := b.Parameters[name]; exists {
 		if def, exists := b.Definitions[param.Definition]; exists {
+			return def.Comment == PorterInternal
+		}
+	}
+	return false
+}
+
+// IsInternalOutput determines if the provided output is internal
+// to Porter after analyzing the provided bundle.
+func (b ExtendedBundle) IsInternalOutput(name string) bool {
+	if output, exists := b.Outputs[name]; exists {
+		if def, exists := b.Definitions[output.Definition]; exists {
 			return def.Comment == PorterInternal
 		}
 	}

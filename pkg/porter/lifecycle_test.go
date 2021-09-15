@@ -117,6 +117,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 			"my-first-param":  1,
 			"my-second-param": "VALUE2",
 			"porter-debug":    true,
+			"porter-state":    nil,
 		}
 
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
