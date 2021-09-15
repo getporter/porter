@@ -55,7 +55,7 @@ type Installation struct {
 	// Labels applied to the installation.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
-	// Parameters specified by the user through overrides or parameter sets.
+	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
@@ -218,6 +218,14 @@ func (i *Installation) TrackBundle(ref cnab.OCIReference) {
 	} else {
 		i.BundleTag = ref.Tag()
 	}
+}
+
+// SetLabel on the installation.
+func (i *Installation) SetLabel(key string, value string) {
+	if i.Labels == nil {
+		i.Labels = make(map[string]string, 1)
+	}
+	i.Labels[key] = value
 }
 
 // InstallationStatus's purpose is to assist with making porter list be able to display everything

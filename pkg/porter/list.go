@@ -58,54 +58,24 @@ func parseLabels(raw []string) map[string]string {
 // DisplayInstallation holds a subset of pertinent values to be listed from installation data
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
-	Name              string
-	Namespace         string
-	Created           time.Time
-	Modified          time.Time
-	TrackedRepository string
-	TrackedVersion    string
-	TrackedDigest     string
-	StatusLastAction  string
-	StatusText        string
-	StatusReference   string
-	StatusVersion     string
-	StatusDigest      string
+	claims.Installation `json:",inline" yaml:",inline"`
 
-	Parameters     DisplayValues
-	Labels         []string
-	ParameterSets  []string
-	CredentialSets []string
+	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
+}
+
+type DisplayInstallationMetadata struct {
+	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
 }
 
 func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
 	di := DisplayInstallation{
-		Name:              installation.Name,
-		Namespace:         installation.Namespace,
-		TrackedRepository: installation.BundleRepository,
-		TrackedVersion:    installation.BundleVersion,
-		TrackedDigest:     installation.BundleDigest,
-		ParameterSets:     installation.ParameterSets,
-		CredentialSets:    installation.CredentialSets,
-		Created:           installation.Created,
-		Modified:          installation.Modified,
-		StatusReference:   installation.Status.BundleReference,
-		StatusVersion:     installation.Status.BundleVersion,
-		StatusDigest:      installation.Status.BundleDigest,
-		StatusLastAction:  installation.Status.Action,
-		StatusText:        installation.Status.ResultStatus,
+		Installation: installation,
 	}
-
-	labels := make([]string, 0, len(installation.Labels))
-	for k, v := range installation.Labels {
-		labels = append(labels, fmt.Sprintf("%s: %s", k, v))
-	}
-	sort.Strings(labels)
-	di.Labels = labels
 
 	// This is unset when we are just listing installations
 	if run != nil {
 		bun := cnab.ExtendedBundle{run.Bundle}
-		di.Parameters = NewDisplayValuesFromParameters(bun, installation.Parameters)
+		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.Parameters)
 	}
 
 	return di
@@ -163,18 +133,18 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 		return err
 	}
 
+	var displayInstallations DisplayInstallations
+	for _, installation := range installations {
+		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, nil))
+	}
+	sort.Sort(sort.Reverse(displayInstallations))
+
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, installations)
+		return printer.PrintJson(p.Out, displayInstallations)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, installations)
+		return printer.PrintYaml(p.Out, displayInstallations)
 	case printer.FormatTable:
-		var displayInstallations DisplayInstallations
-		for _, installation := range installations {
-			displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, nil))
-		}
-		sort.Sort(sort.Reverse(displayInstallations))
-
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -187,7 +157,7 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.StatusLastAction, cl.StatusText}
+				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Status.Action, cl.Status.ResultStatus}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")

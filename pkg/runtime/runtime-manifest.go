@@ -460,6 +460,9 @@ func (m *RuntimeManifest) Initialize() error {
 			// Porter by default places parameter value into file determined by Destination.Path
 			bytes, err := m.FileSystem.ReadFile(param.Destination.Path)
 			if err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
 				return errors.Wrapf(err, "unable to acquire value for parameter %s", paramName)
 			}
 

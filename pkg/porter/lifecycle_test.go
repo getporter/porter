@@ -91,7 +91,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 					},
 					Name: "MyInstallation",
 					Params: []string{
-						"PARAM1=VALUE1",
+						"my-first-param=1",
 					},
 					ParameterSets: []string{
 						"porter-hello",
@@ -113,10 +113,11 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		args, err := p.BuildActionArgs(existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
-		expectedParams := map[string]string{
-			"PARAM1":       "VALUE1",
-			"PARAM2":       "VALUE2",
-			"porter-debug": "true",
+		expectedParams := map[string]interface{}{
+			"my-first-param":  1,
+			"my-second-param": "VALUE2",
+			"porter-debug":    true,
+			"porter-state":    nil,
 		}
 
 		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")

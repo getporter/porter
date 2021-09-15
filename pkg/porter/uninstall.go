@@ -78,17 +78,16 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 	}
 
-	deperator := newDependencyExecutioner(p, cnab.ActionUninstall)
-	err = deperator.Prepare(opts)
+	deperator := newDependencyExecutioner(p, installation, opts)
+	err = deperator.Prepare()
 	if err != nil {
 		return err
 	}
 
-	actionArgs, err := p.BuildActionArgs(installation, opts)
+	actionArgs, err := deperator.PrepareRootActionArguments()
 	if err != nil {
 		return err
 	}
-	deperator.PrepareRootActionArguments(&actionArgs)
 
 	fmt.Fprintf(p.Out, "%s %s...\n", opts.GetActionVerb(), opts.Name)
 	err = p.CNAB.Execute(actionArgs)

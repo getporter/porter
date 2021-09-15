@@ -1,6 +1,9 @@
 package porter
 
 import (
+	"fmt"
+	"strings"
+
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
@@ -154,26 +157,42 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 		}
 	}
 
-	args := cnabprovider.ActionArguments{
-		Action:                action.GetAction(),
-		Installation:          installation,
-		BundleReference:       bundleRef,
-		Params:                make(map[string]string, len(opts.combinedParameters)), // TODO(carolynvs): set on the installation record
-		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),
-		Driver:                opts.Driver,
-		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
-	}
-
+	// Resolve the final set of typed parameters, taking into account the user overrides, parameter sources
+	// and defaults
 	err = opts.LoadParameters(p)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
 
+	if p.Debug {
+		fmt.Fprintln(p.Err, "resolving parameters for installation", installation)
+	}
+
+	// Do not resolve parameters from dependencies
+	params := make(map[string]string, len(opts.combinedParameters))
+	for k, v := range opts.combinedParameters {
+		if strings.Contains(k, "#") {
+			continue
+		}
+		params[k] = v
+	}
+	resolvedParams, err := p.resolveParameters(installation, bundleRef.Definition, action.GetAction(), params)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
+
+	args := cnabprovider.ActionArguments{
+		Action:                action.GetAction(),
+		Installation:          installation,
+		BundleReference:       bundleRef,
+		Params:                resolvedParams,
+		CredentialIdentifiers: make([]string, len(opts.CredentialIdentifiers)),
+		Driver:                opts.Driver,
+		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
+	}
+
 	// Do a safe copy so that modifications to the args aren't also made to the
 	// original options, which is confusing to debug
-	for k, v := range opts.combinedParameters {
-		args.Params[k] = v
-	}
 	copy(args.CredentialIdentifiers, opts.CredentialIdentifiers)
 
 	return args, nil

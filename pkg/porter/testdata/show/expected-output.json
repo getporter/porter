@@ -11,9 +11,11 @@
     "io.cnab/appVersion": "v1.2.3"
   },
   "parameters": {
-    "logLevel": 3,
-    "token": "top-secret"
+    "logLevel": 3
   },
+  "parameterSets": [
+    "dev-env"
+  ],
   "status": {
     "runId": "1",
     "action": "upgrade",
@@ -23,5 +25,21 @@
     "bundleReference": "getporter/wordpress:v0.1.0",
     "bundleVersion": "0.1.0",
     "bundleDigest": "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
+  },
+  "_calculated": {
+    "resolvedParameters": [
+      {
+        "name": "logLevel",
+        "type": "integer",
+        "sensitive": false,
+        "value": 3
+      },
+      {
+        "name": "token",
+        "type": "unknown",
+        "sensitive": false,
+        "value": "top-secret"
+      }
+    ]
   }
 }

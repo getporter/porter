@@ -104,11 +104,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	require.NoError(t, err, "failed to set the storage schema")
 
 	// Load test credentials, with KUBECONFIG replaced properly
-	kubeconfig := p.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
-		home := p.Getenv("HOME")
-		kubeconfig = filepath.Join(home, ".kube/config")
-	}
+	kubeconfig := filepath.Join(p.RepoRoot, "kind.config")
 	ciCredsPath := filepath.Join(p.RepoRoot, "build/testdata/credentials/ci.json")
 	ciCredsB, err := p.FileSystem.ReadFile(ciCredsPath)
 	require.NoError(t, err, "could not read test credentials %s", ciCredsPath)

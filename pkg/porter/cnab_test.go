@@ -126,8 +126,8 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
-		"PARAM2": "VALUE2",
-		"foo":    "foo_value",
+		"my-second-param": "VALUE2",
+		"foo":             "foo_value",
 	}
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }

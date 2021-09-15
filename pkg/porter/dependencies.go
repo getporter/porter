@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
+	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -18,53 +19,53 @@ type dependencyExecutioner struct {
 	*context.Context
 	porter *Porter
 
-	Action   string
 	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
 	Claims   claims.Provider
 
+	parentInstallation claims.Installation
+	parentAction       BundleAction
+	parentOpts         *BundleActionOptions
+
 	// These are populated by Prepare, call it or perish in inevitable errors
-	parentAction BundleAction
-	parentOpts   *BundleActionOptions
-	parentArgs   cnabprovider.ActionArguments
-	deps         []*queuedDependency
+	parentArgs cnabprovider.ActionArguments
+	deps       []*queuedDependency
 }
 
-func newDependencyExecutioner(p *Porter, action string) *dependencyExecutioner {
+func newDependencyExecutioner(p *Porter, installation claims.Installation, action BundleAction) *dependencyExecutioner {
 	resolver := BundleResolver{
 		Cache:    p.Cache,
 		Registry: p.Registry,
 	}
 	return &dependencyExecutioner{
-		porter:   p,
-		Action:   action,
-		Context:  p.Context,
-		Manifest: p.Manifest,
-		Resolver: resolver,
-		CNAB:     p.CNAB,
-		Claims:   p.Claims,
+		porter:             p,
+		parentInstallation: installation,
+		parentAction:       action,
+		parentOpts:         action.GetOptions(),
+		Context:            p.Context,
+		Manifest:           p.Manifest,
+		Resolver:           resolver,
+		CNAB:               p.CNAB,
+		Claims:             p.Claims,
 	}
 }
 
 type queuedDependency struct {
 	cnab.DependencyLock
 	BundleReference cnab.BundleReference
-	Parameters      map[string]string
+	Parameters      map[string]interface{}
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
 }
 
-func (e *dependencyExecutioner) Prepare(parentAction BundleAction) error {
-	e.parentAction = parentAction
-	e.parentOpts = parentAction.GetOptions()
-
-	parentArgs, err := e.porter.BuildActionArgs(claims.Installation{}, parentAction)
+func (e *dependencyExecutioner) Prepare() error {
+	parentActionArgs, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
 	if err != nil {
 		return err
 	}
-	e.parentArgs = parentArgs
+	e.parentArgs = parentActionArgs
 
 	err = e.identifyDependencies()
 	if err != nil {
@@ -99,7 +100,12 @@ func (e *dependencyExecutioner) Execute() error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.ActionArguments) {
+func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.ActionArguments, error) {
+	args, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
+	if err != nil {
+		return cnabprovider.ActionArguments{}, err
+	}
+
 	if args.Files == nil {
 		args.Files = make(map[string]string, 2*len(e.deps))
 	}
@@ -112,12 +118,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments(args *cnabprovider.Ac
 		args.Files[target] = string(dep.cnabFileContents)
 	}
 
-	// Remove parameters for dependencies
-	for key := range args.Params {
-		if strings.Contains(key, "#") {
-			delete(args.Params, key)
-		}
-	}
+	return args, nil
 }
 
 func (e *dependencyExecutioner) identifyDependencies() error {
@@ -216,7 +217,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				}
 
 				if dep.Parameters == nil {
-					dep.Parameters = make(map[string]string, 1)
+					dep.Parameters = make(map[string]interface{}, 1)
 				}
 				dep.Parameters[paramName] = value
 			}
@@ -225,7 +226,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 
 	// Handle any parameter overrides for the dependency defined on the command line
 	// --param DEP#PARAM=VALUE
-	for key, value := range e.parentArgs.Params {
+	for key, value := range e.parentOpts.combinedParameters {
 		parts := strings.Split(key, "#")
 		if len(parts) > 1 && parts[0] == dep.Alias {
 			paramName := parts[1]
@@ -236,7 +237,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 			}
 
 			if dep.Parameters == nil {
-				dep.Parameters = make(map[string]string, 1)
+				dep.Parameters = make(map[string]interface{}, 1)
 			}
 			dep.Parameters[paramName] = value
 			delete(e.parentArgs.Params, key)
@@ -247,8 +248,23 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 }
 
 func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
-	depInstallation := claims.NewInstallation(e.parentOpts.Namespace,
-		cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias))
+	// TODO(carolynvs): We should really switch up how the deperator works so that
+	// even the root bundle uses the execution engine here. This would set up how
+	// we want dependencies and mixins as bundles to work in the future.
+
+	depName := cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
+	depInstallation, err := e.Claims.GetInstallation(e.parentOpts.Namespace, depName)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			depInstallation = claims.NewInstallation(e.parentOpts.Namespace, depName)
+			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
+			if err = e.Claims.InsertInstallation(depInstallation); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 
 	depArgs := cnabprovider.ActionArguments{
 		BundleReference:       dep.BundleReference,
@@ -270,7 +286,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 
 	var executeErrs error
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
-	err := e.CNAB.Execute(depArgs)
+	err = e.CNAB.Execute(depArgs)
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 

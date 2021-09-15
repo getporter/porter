@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -68,11 +69,13 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		return err
 	}
 
+	displayInstallation := NewDisplayInstallation(installation, run)
+
 	switch opts.Format {
 	case printer.FormatJson:
-		return printer.PrintJson(p.Out, installation)
+		return printer.PrintJson(p.Out, displayInstallation)
 	case printer.FormatYaml:
-		return printer.PrintYaml(p.Out, installation)
+		return printer.PrintYaml(p.Out, displayInstallation)
 	case printer.FormatTable, printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
@@ -80,23 +83,21 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			Now: func() time.Time { return now },
 		}
 
-		displayInstallation := NewDisplayInstallation(installation, run)
-
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", displayInstallation.Namespace)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
 
-		if displayInstallation.TrackedRepository != "" {
+		if displayInstallation.BundleRepository != "" {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Bundle:")
-			fmt.Fprintf(p.Out, "  Repository: %s\n", displayInstallation.TrackedRepository)
-			if displayInstallation.TrackedVersion != "" {
-				fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.TrackedVersion)
+			fmt.Fprintf(p.Out, "  Repository: %s\n", displayInstallation.BundleRepository)
+			if displayInstallation.BundleVersion != "" {
+				fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.BundleVersion)
 			}
-			if displayInstallation.TrackedDigest != "" {
-				fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.TrackedDigest)
+			if displayInstallation.BundleDigest != "" {
+				fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.BundleDigest)
 			}
 		}
 
@@ -105,7 +106,14 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Labels:")
 
-			for _, label := range displayInstallation.Labels {
+			// Print labels in alphabetical order
+			labels := make([]string, 0, len(installation.Labels))
+			for k, v := range installation.Labels {
+				labels = append(labels, fmt.Sprintf("%s: %s", k, v))
+			}
+			sort.Strings(labels)
+
+			for _, label := range labels {
 				fmt.Fprintf(p.Out, "  %s\n", label)
 			}
 		}
@@ -115,7 +123,7 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Parameters:")
 
-			err = p.printDisplayValuesTable(displayInstallation.Parameters)
+			err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)
 			if err != nil {
 				return err
 			}
@@ -143,11 +151,11 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		if installation.Status != (claims.InstallationStatus{}) {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Status:")
-			fmt.Fprintf(p.Out, "  Reference: %s\n", displayInstallation.StatusReference)
-			fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.StatusVersion)
-			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.StatusLastAction)
-			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.StatusText)
-			fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.StatusDigest)
+			fmt.Fprintf(p.Out, "  Reference: %s\n", displayInstallation.Status.BundleReference)
+			fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.Status.BundleVersion)
+			fmt.Fprintf(p.Out, "  Last Action: %s\n", displayInstallation.Status.Action)
+			fmt.Fprintf(p.Out, "  Status: %s\n", displayInstallation.Status.ResultStatus)
+			fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.Status.BundleDigest)
 		}
 
 		return nil
