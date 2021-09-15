@@ -79,6 +79,10 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 					"longfoo": &definition.Schema{
 						Type: "string",
 					},
+					"porter-state": &definition.Schema{
+						Type:    "string",
+						Comment: "porter-internal", // This output should be hidden because it's internal
+					},
 				},
 				Outputs: map[string]bundle.Output{
 					"foo": {
@@ -91,6 +95,10 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 					"longfoo": {
 						Definition: "longfoo",
 					},
+					"porter-state": {
+						Definition: "porter-state",
+						Path:       "/cnab/app/outputs/porter-state.tgz",
+					},
 				},
 			}
 
@@ -100,6 +108,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			p.TestClaims.CreateOutput(r.NewOutput("foo", []byte("foo-output")))
 			p.TestClaims.CreateOutput(r.NewOutput("bar", []byte("bar-output")))
 			p.TestClaims.CreateOutput(r.NewOutput("longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf")))
+			p.TestClaims.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")))
 
 			opts := OutputListOptions{
 				sharedOptions: sharedOptions{
