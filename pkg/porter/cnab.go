@@ -239,6 +239,8 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
 func (o *sharedOptions) LoadParameters(p *Porter) error {
+	// This is called in multiple code paths, so exit early if
+	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
 		return nil
 	}
