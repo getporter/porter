@@ -86,6 +86,11 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs claims.Outputs
 	displayOutputs := make(DisplayValues, 0, outputs.Len())
 	for i := 0; i < outputs.Len(); i++ {
 		output, _ := outputs.GetByIndex(i)
+
+		if bun.IsInternalOutput(output.Name) {
+			continue
+		}
+
 		do := &DisplayValue{Name: output.Name}
 		do.SetValue(output.Value)
 		schema, ok := output.GetSchema(bun)
