@@ -187,7 +187,7 @@ func (p *Porter) CreateMixin(opts MixinsCreateOptions) error {
 		}
 	}
 
-	fmt.Fprintf(p.Out, "Created %s mixin", opts.MixinName)
+	fmt.Fprintf(p.Out, "Created %s mixin\n", opts.MixinName)
 
 	return nil
 }
