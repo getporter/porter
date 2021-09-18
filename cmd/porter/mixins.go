@@ -224,8 +224,8 @@ You can also specify where to put the mixin directory. It will default to the cu
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&opts.AuthorName, "author", "", "Name of the mixin's author.")
-	f.StringVar(&opts.AuthorUsername, "username", "", "GitHub's username of the mixin's author.")
+	f.StringVar(&opts.AuthorName, "author", "", "Your full name.")
+	f.StringVar(&opts.AuthorUsername, "username", "", "Your GitHub username.")
 	f.StringVar(&opts.DirPath, "dir", "", "Path to the designated location of the mixin's directory.")
 
 	return cmd
