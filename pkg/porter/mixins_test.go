@@ -67,19 +67,16 @@ func TestPorter_UninstallMixin(t *testing.T) {
 func TestPorter_CreateMixin(t *testing.T) {
 	p := NewTestPorter(t)
 
-	homeDir, err := os.UserHomeDir()
+	tempDir, err := p.FileSystem.TempDir("", "porter")
 	require.NoError(t, err)
 
-	porterTempDir := homeDir + "/temp"
-
-	err = os.Mkdir(porterTempDir, 0755)
-	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
 
 	opts := MixinsCreateOptions{
 		MixinName:      "MyMixin",
 		AuthorName:     "Author Name",
 		AuthorUsername: "username",
-		DirPath:        porterTempDir,
+		DirPath:        tempDir,
 	}
 
 	err = p.CreateMixin(opts)
@@ -88,7 +85,4 @@ func TestPorter_CreateMixin(t *testing.T) {
 	wantOutput := `Created MyMixin mixin`
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
-
-	err = os.RemoveAll(porterTempDir)
-	require.NoError(t, err)
 }
