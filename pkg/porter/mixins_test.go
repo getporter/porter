@@ -82,7 +82,7 @@ func TestPorter_CreateMixin(t *testing.T) {
 	err = p.CreateMixin(opts)
 	require.NoError(t, err)
 
-	wantOutput := `Created MyMixin mixin`
+	wantOutput := "Created MyMixin mixin\n"
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotOutput)
 }
