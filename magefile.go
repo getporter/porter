@@ -77,25 +77,38 @@ func ConfigureAgent() error {
 
 // Install mixins used by tests and example bundles, if not already installed
 func GetMixins() error {
-	mixinTag := os.Getenv("MIXIN_TAG")
-	if mixinTag == "" {
-		mixinTag = "canary"
+	defaultMixinVersion := os.Getenv("MIXIN_TAG")
+	if defaultMixinVersion == "" {
+		defaultMixinVersion = "canary"
 	}
 
-	mixins := []string{"docker", "docker-compose", "helm", "arm", "terraform", "kubernetes"}
+	mixins := []struct {
+		name    string
+		feed    string
+		version string
+	}{
+		{name: "docker"},
+		{name: "docker-compose"},
+		{name: "arm"},
+		{name: "terraform"},
+		{name: "kubernetes"},
+		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "latest"},
+	}
 	var errG errgroup.Group
 	for _, mixin := range mixins {
-		mixinDir := filepath.Join("bin/mixins/", mixin)
+		mixin := mixin
+		mixinDir := filepath.Join("bin/mixins/", mixin.name)
 		if _, err := os.Stat(mixinDir); err == nil {
-			log.Println("Mixin already installed into bin:", mixin)
+			log.Println("Mixin already installed into bin:", mixin.name)
 			continue
 		}
 
-		mixin := mixin
 		errG.Go(func() error {
-			log.Println("Installing mixin:", mixin)
-			mixinURL := mixinsURL + mixin
-			return porter("mixin", "install", mixin, "--version", mixinTag, "--url", mixinURL).Run()
+			log.Println("Installing mixin:", mixin.name)
+			if mixin.version == "" {
+				mixin.version = defaultMixinVersion
+			}
+			return porter("mixin", "install", mixin.name, "--version", mixin.version, "--feed-url", mixin.feed).Run()
 		})
 	}
 
