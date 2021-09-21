@@ -6,7 +6,7 @@ authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
 authorlink: "https://carolynvanslyck.com/"
 authorimage: "https://github.com/carolynvs.png"
-tags: ["roadmap"]
+tags: ["roadmap", "v1"]
 ---
 
 Like a farmer asking "when it's gonna rain?", I am often asked "when you gonna ship v1?"
