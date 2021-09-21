@@ -4,27 +4,27 @@ description: "An etcd-operator bundle"
 registry: getporter
 
 mixins:
-  - helm
+  - helm3
 
 credentials:
 - name: kubeconfig
   path: /root/.kube/config
 
 install:
-  - helm:
+  - helm3:
       description: "Install etcd-operator"
       name: myetcd-operator
       chart: stable/etcd-operator
       namespace: etcd-operator
 
 upgrade:
-  - helm:
+  - helm3:
       description: "Upgrade etcd-operator"
       name: myetcd-operator
       chart: stable/etcd-operator
 
 uninstall:
-  - helm:
+  - helm3:
       description: "Uninstall etcd-operator"
       releases:
       - myetcd-operator

@@ -29,8 +29,6 @@ to get all the materials ready.
 * [Install Porter](https://porter.sh/install)
 * Create a [Docker Hub](https://hub.docker.com/signup) account if you don't have one
 * Create a Kubernetes Cluster on [macOS](https://docs.docker.com/docker-for-mac/kubernetes/) or [Windows](https://docs.docker.com/docker-for-windows/kubernetes/)
-* [Install Helm 2](https://helm.sh/docs/install/)
-* Initialize Helm on your cluster by running `helm init`
 
 
 ---
@@ -955,7 +953,7 @@ Declare any mixins that you are going to use
 ```yaml
 mixins:
   - azure
-  - helm
+  - helm3
 ```
 
 ---
@@ -1113,7 +1111,7 @@ install:
 
 ```yaml
 install:
-- helm:
+- helm3:
     ...
     outputs:
     - name: mysql-password

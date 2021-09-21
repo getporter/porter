@@ -86,8 +86,7 @@ func BuildMixinInstallCommand(p *porter.Porter) *cobra.Command {
 		Long: `Install a mixin.
 
 By default mixins are downloaded from the official Porter mixin feed at https://cdn.porter.sh/mixins/atom.xml. To download from a mirror, set the environment variable PORTER_MIRROR, or mirror in the Porter config file, with the value to replace https://cdn.porter.sh with.`,
-		Example: `  porter mixin install helm --url https://cdn.porter.sh/mixins/helm
-  porter mixin install helm --feed-url https://cdn.porter.sh/mixins/atom.xml
+		Example: `  porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
   porter mixin install azure --version v0.4.0-ralpha.1+dubonnet --url https://cdn.porter.sh/mixins/azure
   porter mixin install kubernetes --version canary --url https://cdn.porter.sh/mixins/kubernetes`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

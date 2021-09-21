@@ -1,6 +1,6 @@
 mixins:
 - exec
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -30,7 +30,7 @@ parameters:
   default: porter-ci-mysql
 
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: "{{ bundle.parameters.mysql-name }}"
     chart: bitnami/mysql
@@ -56,7 +56,7 @@ ping:
         - ping
 
 upgrade:
-  - helm:
+  - helm3:
       description: "Upgrade MySQL"
       name: "{{ bundle.parameters.mysql-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
@@ -71,7 +71,7 @@ upgrade:
         key: mysql-password
 
 uninstall:
-- helm:
+- helm3:
     description: "Uninstall MySQL"
     purge: true
     releases:

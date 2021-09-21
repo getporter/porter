@@ -493,7 +493,7 @@ type MixinDeclaration struct {
 // UnmarshalYAML allows mixin declarations to either be a normal list of strings
 // mixins:
 // - exec
-// - helm
+// - helm3
 // or allow some entries to have config data defined
 // - az:
 //     extensions:
@@ -532,7 +532,7 @@ func (m *MixinDeclaration) UnmarshalYAML(unmarshal func(interface{}) error) erro
 // MarshalYAML allows mixin declarations to either be a normal list of strings
 // mixins:
 // - exec
-// - helm
+// - helm3
 // or allow some entries to have config data defined
 // - az:
 //     extensions:

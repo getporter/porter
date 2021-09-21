@@ -25,7 +25,7 @@ and set the release name to the installation name of the bundle:
 
 ```yaml
 install:
-  helm:
+  helm3:
     description: Install myapp
     name: "{{ installation.name }}"
     chart: charts/myapp
@@ -88,7 +88,7 @@ Once a parameter has been declared in the `porter.yaml`, Porter provides a simpl
 
 ```yaml
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
@@ -194,7 +194,7 @@ Once an output has been declared, it can be referenced in the same way as parame
 For example, given the install step above, we can use the `MYSQL_URL` with the helm mixin in the following way:
 
 ```yaml
-  - helm:
+  - helm3:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
@@ -250,7 +250,7 @@ Now you can use the custom values in your actions like so:
 
 ```yaml
 install:
-  helm:
+  helm3:
     description: Install myapp
     chart: charts/myapp
     set:
@@ -274,7 +274,7 @@ images:
 These images will be used to build the `bundle.json` images section, but can also be referenced using the same syntax you would use for referencing `parameters`, `credentials`, and `outputs`.
 
 ```yaml
-  - helm:
+  - helm3:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
@@ -296,7 +296,7 @@ version: 0.1.3
 registry: getporter
 
 mixins:
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -315,7 +315,7 @@ parameters:
   env: MYSQL_USER
 
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
@@ -341,7 +341,7 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -373,7 +373,7 @@ parameters:
   default: ''
 
 install:
-- helm:
+- helm3:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
   chart: bitnami/wordpress
@@ -395,7 +395,7 @@ The wordpress bundle declares a dependency on the `mysql` bundle, which we saw a
 
 ```yaml
 install:
-- helm:
+- helm3:
   description: "Install Wordpress"
   name: "{{ bundle.parameters.wordpress-name }}"
   chart: bitnami/wordpress
@@ -417,7 +417,7 @@ It is possible to reference multiple parameters, credentials and/or outputs in a
 
 ```yaml
 install:
-- helm:
+- helm3:
     description: "Install Java App"
     name: "{{ bundle.parameters.cool-app}}"
     chart: bitnami/wordpress

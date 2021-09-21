@@ -3,7 +3,7 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -25,7 +25,7 @@ parameters:
   default: 30030
 
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: porter-workshop-mysql
     chart: bitnami/mysql
@@ -40,7 +40,7 @@ install:
       secret: porter-workshop-mysql
       key: mysql-password
 
-- helm:
+- helm3:
     description: "Helm Install Wordpress"
     name: porter-workshop-wordpress
     chart: bitnami/wordpress
@@ -59,7 +59,7 @@ install:
       service.nodePorts.http: "{{ bundle.parameters.port }}"
 
 uninstall:
-  - helm:
+  - helm3:
       description: "Helm Uninstall Wordpress"
       purge: true
       releases:

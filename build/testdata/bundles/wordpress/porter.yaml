@@ -1,6 +1,6 @@
 mixins:
 - exec
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -36,7 +36,7 @@ parameters:
   default: ''
 
 install:
-  - helm:
+  - helm3:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
@@ -54,7 +54,7 @@ install:
           key: wordpress-password
 
 upgrade:
-  - helm:
+  - helm3:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
@@ -73,7 +73,7 @@ ping:
         - ping
 
 uninstall:
-  - helm:
+  - helm3:
       description: "Uninstall Wordpress"
       purge: true
       releases: 

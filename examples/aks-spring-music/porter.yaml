@@ -6,7 +6,7 @@ registry: getporter
 
 mixins:
   - exec
-  - helm
+  - helm3
   - arm
   - kubernetes
 
@@ -89,7 +89,7 @@ install:
         - name: "COSMOSDB_CONNECTION_STRING"
           key: "connection_string"
           
-  - helm:
+  - helm3:
       description: "Helm Install Spring Music Demo App"
       name: aks-spring-music-helm
       chart: /cnab/app/charts/spring-music

@@ -35,10 +35,6 @@ import (
 // If not set, running mage will list available targets
 // var Default = Build
 
-const (
-	mixinsURL = "https://cdn.porter.sh/mixins/"
-)
-
 var must = shx.CommandBuilder{StopOnError: true}
 
 // Cleanup workspace after building or running tests.
@@ -92,8 +88,7 @@ func GetMixins() error {
 		{name: "arm"},
 		{name: "terraform"},
 		{name: "kubernetes"},
-		{name: "helm"},
-		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "latest"},
+		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.14"},
 	}
 	var errG errgroup.Group
 	for _, mixin := range mixins {

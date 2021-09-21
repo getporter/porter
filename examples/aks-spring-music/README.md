@@ -7,7 +7,7 @@ The bundle leverages a base Dockerfile (Dockerfile.tmpl) to customize the result
 * The `arm` mixin is used to create an AKS cluster using ARM. This requires subscription and tenant info.
 * The `exec` mixin uses an Azure Service Principal to access via the CLI and install Helm's Tiller into an AKS cluster.
 * The `kubernetes` mixin applys RBAC policies for Helm
-* The `helm` mixin deploys the chart into the AKS cluster.
+* The `helm3` mixin deploys the chart into the AKS cluster.
 
 
 ### Prerequisites
