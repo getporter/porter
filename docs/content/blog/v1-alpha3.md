@@ -1,6 +1,6 @@
 ---
-title: "Porter 1.0.0-alpha.3 is here!"
-description: "Check out the new features introduced in Porter v1.0.0-alpha.3"
+title: "1.0.0-alpha.3 is here!"
+description: "Check out the new features such as MongoDB, namespaces, bundle state and credential import."
 date: "2021-09-21"
 authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
