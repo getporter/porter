@@ -22,12 +22,12 @@ A v1 version of our documentation is available at https://release-v1.porter.sh.
 Safety first! In this release we have removed support for deprecated flags such as --tag and fields like tag in porter.yaml.
 If you have been ignoring a warning message in Porter's output for months, now is the time to fix those messages before upgrading.
 
-## MongoDb Support
+## MongoDB Support
 Porter now stores its data in MongoDB! We no longer store installation records on the filesystem, though we still do have a ~/.porter directory with our configuration and cache.
-In dev and test, Porter by default runs MongoDB in a container for you on porter 27018 and connects to it.
+In dev and test, Porter by default runs MongoDB in a container for you on port 27018 and connects to it.
 The mongodb-docker plugin stores the underlying mongo data in a Docker volume, but persistence is not guaranteed which
 is why this is only for non-production environments.
-Once Porter v1 is ready for production, the mongodbF` storage plugin is what you should use to connect to an existing MongoDB server.
+Once Porter v1 is ready for production, the mongodb storage plugin is what you should use to connect to an existing MongoDB server.
 
 ```toml
 default-storage = "mydb"
@@ -86,27 +86,26 @@ Bundle authors can now declare that certain files are "state" and should be pres
 A prime example is the tfstate and tfvars files created by the terraform mixin.
 Now instead of using the old method of declaring those files as both parameters and outputs, you should declare them as **state** and Porter will ensure that they are always available to your bundle.
 
-This corrects the problem where if an installation that used the terraform mixin, without a remote backend configured, failed to install, on subsequent install runs the resources originally created by terraform were not recorded and reused, leaving it up to the user to manually cleanup resources.
-With state, when install fails and is repeated, the terraform mixin is able to pick up where it left off.
+This corrects the problem encountered by installations using the terraform mixin wherein resources created by terraform were not recorded and reused after a failed install, leaving it up to the user to manually clean up resources.
 
 ## Import credentials and parameter sets
 Use the apply command to import a credential or parameter set from a file.
 
 ```
 porter credentials apply mycreds.yaml
-porter credentials apply myparams.json
+porter parameters apply myparams.json
 ```
 
 You can export a credential or parameter set to a file with the show command.
 
 ```
 porter credentials show mycreds --output yaml > mycreds.yaml
-porter credentials show myparams --output json > myparams.json
+porter parameters show myparams --output json > myparams.json
 ```
 
 # Install the v1 Prerelease
 
-We would love for you to try out v1.0.0-alpha.3 and send us any feedback that you have! Keep in mind that the v1 prerelease is not suitable for running with production workloads, and that data migrations will not be provided or supported for v1 prerelease.
+We would love for you to try out v1.0.0-alpha.3 and send us any feedback that you have! Keep in mind that the v1 prerelease is not suitable for running with production workloads, and that data migrations will not be provided or supported for v1 prereleases.
 The prerelease is intended for you to try out the new features in Porter, and provide feedback but won't work with existing installations.
 
 One way to try out Porter without messing with your current installation of Porter is to install Porter into a different 
