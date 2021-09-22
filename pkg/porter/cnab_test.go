@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
@@ -278,7 +277,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				Dir: "path/to/bundle",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
+				return ctx.FileSystem.MkdirAll(opts.Dir, 0700)
 			},
 			wantFile:     config.Name,
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
@@ -289,7 +288,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				return ctx.FileSystem.MkdirAll(opts.File, os.ModePerm)
+				return ctx.FileSystem.MkdirAll(opts.File, 0700)
 			},
 			wantFile:     "/alternate/porter.yaml",
 			wantCNABFile: build.LOCAL_BUNDLE,
@@ -301,11 +300,11 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				err := ctx.FileSystem.MkdirAll(opts.File, os.ModePerm)
+				err := ctx.FileSystem.MkdirAll(opts.File, 0700)
 				if err != nil {
 					return err
 				}
-				return ctx.FileSystem.MkdirAll(opts.Dir, os.ModePerm)
+				return ctx.FileSystem.MkdirAll(opts.Dir, 0700)
 			},
 			wantFile:     "/alternate/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",

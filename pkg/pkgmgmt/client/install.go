@@ -65,7 +65,7 @@ func (fs *FileSystem) savePackageInfo(opts pkgmgmt.InstallOptions) error {
 	if err != nil {
 		return errors.Wrapf(err, "error marshalling to %s package cache.json", fs.PackageType)
 	}
-	err = fs.FileSystem.WriteFile(cacheJSONPath, updatedPkgInfo, 0644)
+	err = fs.FileSystem.WriteFile(cacheJSONPath, updatedPkgInfo, 0600)
 
 	if err != nil {
 		return errors.Wrapf(err, "error adding package info to %s cache.json", fs.PackageType)
@@ -182,7 +182,7 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 
 	cleanup := func() {}
 	if !parentDirExists {
-		err = fs.FileSystem.MkdirAll(parentDir, 0755)
+		err = fs.FileSystem.MkdirAll(parentDir, 0700)
 		if err != nil {
 			errors.Wrapf(err, "unable to create parent directory %s", parentDir)
 		}
@@ -199,7 +199,7 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 	defer destFile.Close()
 
 	if executable {
-		err = fs.FileSystem.Chmod(destPath, 0755)
+		err = fs.FileSystem.Chmod(destPath, 0700)
 		if err != nil {
 			cleanup()
 			return errors.Wrapf(err, "could not set the file as executable at %s", destPath)

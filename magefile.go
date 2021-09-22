@@ -66,7 +66,7 @@ func ConfigureAgent() error {
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
 	gobin := gopath.GetGopathBin()
-	err = os.MkdirAll(gobin, 0755)
+	err = os.MkdirAll(gobin, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
 	}
@@ -286,7 +286,7 @@ func UseXBuildBinaries() error {
 		log.Printf("Copying %s to %s", src, dest)
 
 		destDir := filepath.Dir(dest)
-		os.MkdirAll(destDir, 0755)
+		os.MkdirAll(destDir, 0700)
 
 		err := sh.Copy(dest, src)
 		if err != nil {
@@ -299,7 +299,7 @@ func UseXBuildBinaries() error {
 
 // Run `chmod +x -R bin`.
 func SetBinExecutable() error {
-	err := chmodRecursive("bin", 0755)
+	err := chmodRecursive("bin", 0700)
 	return errors.Wrap(err, "could not set +x on the test bin")
 }
 
@@ -333,7 +333,7 @@ func Install() {
 	fmt.Println("installing Porter from bin to", porterHome)
 
 	// Copy porter binaries
-	mgx.Must(os.MkdirAll(porterHome, 0750))
+	mgx.Must(os.MkdirAll(porterHome, 0700))
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -349,7 +349,7 @@ func Install() {
 		mixin := fi.Name()
 		srcDir := filepath.Join(mixinsDir, mixin)
 		destDir := filepath.Join(porterHome, "mixins", mixin)
-		mgx.Must(os.MkdirAll(destDir, 0750))
+		mgx.Must(os.MkdirAll(destDir, 0700))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))

@@ -25,7 +25,7 @@ func TestPorter_PrintManifestSchema(t *testing.T) {
 
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
 		t.Logf("Updated test file %s to match latest porter schema", goldenSchema)
-		require.NoError(t, ioutil.WriteFile(goldenSchema, []byte(gotSchema), 0755), "could not update golden file %s", goldenSchema)
+		require.NoError(t, ioutil.WriteFile(goldenSchema, []byte(gotSchema), 0600), "could not update golden file %s", goldenSchema)
 	} else {
 		assert.Equal(t, string(wantSchema), gotSchema, "Porter schema has changed. If this was intentional, run mage updateTestfiles to fix the tests.")
 	}

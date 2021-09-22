@@ -3,7 +3,6 @@ package runtime
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 
@@ -455,7 +454,7 @@ func (m *RuntimeManifest) Prepare() error {
 				return errors.Wrapf(err, "unable to decode parameter %s", param.Name)
 			}
 
-			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, os.ModePerm)
+			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, 0600)
 			if err != nil {
 				return errors.Wrapf(err, "unable to write decoded parameter %s", param.Name)
 			}

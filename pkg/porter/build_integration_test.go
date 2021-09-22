@@ -1,7 +1,11 @@
+// +build integration
+
 package porter
 
 import (
 	"encoding/json"
+	"io/fs"
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/build"
@@ -9,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +21,8 @@ import (
 
 func TestPorter_Build(t *testing.T) {
 	p := NewTestPorter(t)
+	p.SetupIntegrationTest() // Build on the filesystem so we can test file permissions
+	defer p.CleanupIntegrationTest()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.Nil(t, err)
@@ -23,7 +30,7 @@ func TestPorter_Build(t *testing.T) {
 
 	// Create some junk in the previous .cnab directory, build should clean it up and not copy it into the bundle
 	junkDir := ".cnab/test/junk"
-	require.NoError(t, p.FileSystem.MkdirAll(junkDir, 0755), "could not create test junk files")
+	require.NoError(t, p.FileSystem.MkdirAll(junkDir, 0700), "could not create test junk files")
 	junkExists, _ := p.FileSystem.DirExists(junkDir)
 	assert.True(t, junkExists, "failed to create junk files for the test")
 
@@ -36,14 +43,31 @@ func TestPorter_Build(t *testing.T) {
 	err = p.Build(opts)
 	require.NoError(t, err)
 
-	bundleJSONExists, err := p.FileSystem.Exists(build.LOCAL_BUNDLE)
+	// Check file permissions on .cnab contents
+	bundleJSONStats, err := p.FileSystem.Stat(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
-	require.True(t, bundleJSONExists, "%s wasn't written", build.LOCAL_BUNDLE)
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_BUNDLE, os.FileMode(0600), bundleJSONStats.Mode())
 
-	f, _ := p.FileSystem.Stat(build.LOCAL_BUNDLE)
-	if f.Size() == 0 {
-		t.Fatalf("%s is empty", build.LOCAL_BUNDLE)
-	}
+	runStats, err := p.FileSystem.Stat(build.LOCAL_RUN)
+	require.NoError(t, err)
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_RUN, os.FileMode(0700), runStats.Mode())
+
+	manifestStats, err := p.FileSystem.Stat(build.LOCAL_MANIFEST)
+	require.NoError(t, err)
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_MANIFEST, os.FileMode(0600), manifestStats.Mode())
+
+	err = p.FileSystem.Walk(build.LOCAL_MIXINS, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		tests.AssertFilePermissionsEqual(t, path, os.FileMode(0700), runStats.Mode())
+		return nil
+	})
+	require.NoError(t, err)
 
 	// Check that the junk files were cleaned up
 	junkExists, _ = p.FileSystem.DirExists(junkDir)
@@ -62,7 +86,7 @@ func TestPorter_Build(t *testing.T) {
 
 	stamp, err := configadapter.LoadStamp(*bun)
 	require.NoError(t, err)
-	assert.Equal(t, "d421a6249dfbdba79e26e866da7533d59590565708dfdb32423cf989f588d0ea", stamp.ManifestDigest)
+	assert.NotEmpty(t, stamp.ManifestDigest)
 
 	debugParam, ok := bun.Parameters["porter-debug"]
 	require.True(t, ok, "porter-debug parameter was not defined")

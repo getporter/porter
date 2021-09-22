@@ -156,7 +156,7 @@ func (p *Porter) buildBundle(invocationImage string, digest string) error {
 }
 
 func (p Porter) writeBundle(b bundle.Bundle) error {
-	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	defer f.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)

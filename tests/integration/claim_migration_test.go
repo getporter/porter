@@ -26,7 +26,7 @@ func TestClaimMigration_List(t *testing.T) {
 	claimsDir := filepath.Join(home, "claims")
 
 	// Create unmigrated claim data
-	p.FileSystem.Mkdir(claimsDir, 0755)
+	p.FileSystem.Mkdir(claimsDir, 0700)
 	p.AddTestFile(filepath.Join(p.RepoRoot, "pkg/storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 	p.FileSystem.Remove(filepath.Join(home, "schema.json"))
 

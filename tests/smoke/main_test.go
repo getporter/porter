@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/tests"
 	"github.com/carolynvs/magex/shx"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -116,4 +117,12 @@ func (t *Test) createPorterHome() error {
 	}
 
 	return nil
+}
+
+// RequireFileMode checks that all files in the specified path match the specifed
+// file mode. Uses a glob pattern to match.
+func (t *Test) RequireFileMode(path string, mode os.FileMode) {
+	if !tests.AssertDirectoryPermissionsEqual(t.T, path, mode) {
+		t.T.FailNow()
+	}
 }

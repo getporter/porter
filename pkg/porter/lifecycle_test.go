@@ -59,7 +59,7 @@ func TestBundlePullUpdateOpts_cacheLies(t *testing.T) {
 	p := NewTestPorter(t)
 
 	// mess up the cache
-	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0644)
+	p.FileSystem.WriteFile("/root/.porter/cache/887e7e65e39277f8744bd00278760b06/cnab/bundle.json", []byte(""), 0600)
 
 	b := &BundleActionOptions{
 		BundlePullOptions: BundlePullOptions{

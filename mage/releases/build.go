@@ -26,7 +26,7 @@ func getLDFLAGS(pkg string) string {
 func build(pkg, cmd, outPath, goos, goarch string) error {
 	ldflags := getLDFLAGS(pkg)
 
-	os.MkdirAll(filepath.Dir(outPath), 0750)
+	os.MkdirAll(filepath.Dir(outPath), 0700)
 	outPath += fileExt(goos)
 	srcPath := "./cmd/" + cmd
 

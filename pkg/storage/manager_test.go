@@ -121,7 +121,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 			defer config.TestContext.Cleanup()
 
 			claimsDir := filepath.Join(home, "claims")
-			config.FileSystem.Mkdir(claimsDir, 0755)
+			config.FileSystem.Mkdir(claimsDir, 0700)
 			config.TestContext.AddTestFile(filepath.Join("testdata/claims", tc.fileName+".json"), filepath.Join(claimsDir, tc.fileName+".json"))
 
 			dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
@@ -155,7 +155,7 @@ func TestManager_MigrateClaims(t *testing.T) {
 		config.SetHomeDir(home)
 		defer config.TestContext.Cleanup()
 
-		config.CopyDirectory(filepath.Join("testdata", "migrated"), home, false)
+		config.TestContext.AddTestDirectory(filepath.Join("testdata", "migrated"), home, 0600)
 
 		dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))
 		mgr := NewManager(config.Config, dataStore)
@@ -202,7 +202,7 @@ func TestManager_MigrateInstallClaim(t *testing.T) {
 	claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
-	config.FileSystem.Mkdir(claimsDir, 0755)
+	config.FileSystem.Mkdir(claimsDir, 0700)
 	config.TestContext.AddTestFile("testdata/claims/installed.json", filepath.Join(claimsDir, "installed.json"))
 
 	_, err := mgr.Migrate()
@@ -233,7 +233,7 @@ func TestManager_MigrateUpgradeClaim(t *testing.T) {
 	claimStore := claim.NewClaimStore(mgr, nil, nil)
 
 	claimsDir := filepath.Join(home, "claims")
-	config.FileSystem.Mkdir(claimsDir, 0755)
+	config.FileSystem.Mkdir(claimsDir, 0700)
 	config.TestContext.AddTestFile("testdata/claims/upgraded.json", filepath.Join(claimsDir, "upgraded.json"))
 
 	_, err := mgr.Migrate()
@@ -290,7 +290,7 @@ func TestManager_MigrateCredentials(t *testing.T) {
 	defer config.TestContext.Cleanup()
 
 	credsDir := filepath.Join(home, "credentials")
-	config.FileSystem.Mkdir(credsDir, 0755)
+	config.FileSystem.Mkdir(credsDir, 0700)
 	config.TestContext.AddTestFile(filepath.Join("testdata/credentials", "mybun.json"), filepath.Join(credsDir, "mybun.json"))
 
 	dataStore := crud.NewBackingStore(filesystem.NewStore(*config.Config, hclog.NewNullLogger()))

@@ -67,7 +67,7 @@ func configureGitBotIn(dir string) {
 	contents := `#!/bin/sh
 exec echo "$GITHUB_TOKEN"
 `
-	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), 0755))
+	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), 0700))
 
 	pwd, _ := os.Getwd()
 	script := filepath.Join(pwd, askpass)
