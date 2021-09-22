@@ -171,7 +171,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, pb)
 	case printer.FormatTable:
-		return p.printBundleExplainTable(pb)
+		return p.printBundleExplainTable(pb, o.Reference)
 	default:
 		return fmt.Errorf("invalid format: %s", o.Format)
 	}
@@ -312,7 +312,7 @@ func generateApplyToString(appliesTo []string) string {
 
 }
 
-func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
+func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference string) error {
 	fmt.Fprintf(p.Out, "Name: %s\n", bun.Name)
 	fmt.Fprintf(p.Out, "Description: %s\n", bun.Description)
 	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
@@ -326,6 +326,7 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle) error {
 	p.printOutputsExplainBlock(bun)
 	p.printActionsExplainBlock(bun)
 	p.printDependenciesExplainBlock(bun)
+	p.printInstallationInstructionBlock(bun, bundleReference)
 
 	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
 	return nil
@@ -463,4 +464,39 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 			return []interface{}{o.Alias, o.Reference}
 		}
 	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Reference")
+}
+
+func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleReference string) error {
+	fmt.Fprint(p.Out, "To install this bundle run the following command, passing --param KEY=VALUE for any parameters you want to customize:\n")
+
+	var bundleReferenceFlag string
+	if bundleReference != "" {
+		bundleReferenceFlag += " --reference " + bundleReference
+	}
+
+	// Generate any predefined credentials first
+	for _, credential := range bun.Credentials {
+		fmt.Fprintf(p.Out, "porter credentials generate %s%s\n", credential.Name, bundleReferenceFlag)
+	}
+
+	// Bundle installation instruction
+	var requiredParameterFlags string
+	for _, parameter := range bun.Parameters {
+		if parameter.Required {
+			requiredParameterFlags += parameter.Name + "=TODO "
+		}
+	}
+
+	if requiredParameterFlags != "" {
+		requiredParameterFlags += " --param "
+	}
+
+	var credentialFlags string
+	for _, credential := range bun.Credentials {
+		credentialFlags += " --cred " + credential.Name + " "
+	}
+
+	fmt.Fprintf(p.Out, "porter install%s%s%s\n\n", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
+
+	return nil
 }
