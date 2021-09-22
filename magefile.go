@@ -92,6 +92,7 @@ func GetMixins() error {
 		{name: "arm"},
 		{name: "terraform"},
 		{name: "kubernetes"},
+		{name: "helm"},
 		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "latest"},
 	}
 	var errG errgroup.Group
