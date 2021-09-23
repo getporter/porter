@@ -40,6 +40,7 @@ install:
     set:
       db.name: "{{ bundle.parameters.database-name}}"
       db.user: "{{ bundle.parameters.mysql-user }}"
+      service.type: "NodePort"
     outputs:
     - name: mysql-root-password
       secret: "{{ bundle.parameters.mysql-name }}"
