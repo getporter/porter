@@ -13,10 +13,10 @@ Examples of a credential would be: a GitHub Personal Access Token, your cloud pr
 We classify those values as credentials so that when different people execute that bundle, they provide their own personal credentials and execute the bundle with their user permissions.
 In contrast, a database connection string used by your application is considered only to be a sensitive parameter because regardless of who is installing the bundle, the same connection string should be used.
 
-**If you want to use different values depending on the person executing the bundle, use credentials. Otherwise use sensitive parameters.**
+**If you want to use different values depending on the person executing the bundle, use credentials. Otherwise, use sensitive parameters.**
 
 This is a convention recommended by Porter to avoid a situation where Sally installs a bundle with her personal credentials, and then every time another user subsequently upgrades the bundle, her credentials are re-used, making it look like Sally ran the upgrades.
-Ultimately the difference between the parameters and credentisl is that credentials are never stored or reused by a bundle.
+Ultimately the difference between the parameters and credentials is that credentials are never stored or reused by a bundle.
 
 Credentials are injected into a bundle as either an environment variable or a file.
 Depending on the bundle, a credential can apply to all actions (install/upgrade/uninstall) or may only apply to a particular action.
@@ -58,7 +58,7 @@ Generating new credential github from bundle credentials-tutorial
 ```
 
 This creates a credential set named github.
-View the parameter set with the `porter parameters show` command:
+View the credential set with the `porter credentials show` command:
 
 ```console
 $ porter credentials show github
@@ -74,7 +74,7 @@ Modified: 21 minutes ago
 
 The output shows that the credential set has one credential defined: github-token. The credential's value is not stored in the credential set, instead it only stores a mapping from the credential name to a location where the credential can be resolved, in this case an environment variable named GITHUB_TOKEN.
 
-In production it is a best practice to source sensitive values, either parameters or credentials, from a secret store, such as Hashicorp Vault or Azure Key Vault.
+In production, it is a best practice to source sensitive values, either parameters or credentials, from a secret store, such as Hashicorp Vault or Azure Key Vault.
 Avoid storing sensitive values in files or environment variables on developer and CI machines which could be compromised.
 See the list of available [plugins](/plugins/) for which secret providers are supported.
 
