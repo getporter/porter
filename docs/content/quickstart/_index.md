@@ -78,7 +78,7 @@ To install a bundle, you use the `porter install` command.
 porter install porter-hello --reference getporter/porter-hello:v0.1.0
 ```
 
-In this example, you are installing the v0.1.0 version of the getporter/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to hello.
+In this example, you are installing the v0.1.0 version of the getporter/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
 
 ## List Bundle Installations
 
