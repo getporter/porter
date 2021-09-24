@@ -6,7 +6,7 @@ mixins:
         url: "https://charts.bitnami.com/bitnami"
 
 name: mysql
-version: "0.1.3"
+version: 0.1.4
 registry: "localhost:5000"
 
 credentials:
@@ -24,10 +24,14 @@ parameters:
   env: MYSQL_USER
 - name: namespace
   type: string
-  default: ''
+  default: 'mysql'
 - name: mysql-name
   type: string
   default: porter-ci-mysql
+- name: probe-timeout
+  description: Timeout for liveness and readiness probes
+  type: integer
+  default: 1
 
 install:
 - helm3:
@@ -40,7 +44,8 @@ install:
     set:
       db.name: "{{ bundle.parameters.database-name}}"
       db.user: "{{ bundle.parameters.mysql-user }}"
-      service.type: "NodePort"
+      primary.readinessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
+      primary.livenessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
     outputs:
     - name: mysql-root-password
       secret: "{{ bundle.parameters.mysql-name }}"

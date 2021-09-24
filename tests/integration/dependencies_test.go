@@ -65,9 +65,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	installOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
-		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#namespace=" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	// Add a supplemental parameter set to vet dep param resolution
 	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-for-dependencies.json")}
@@ -84,8 +82,8 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	assert.Equal(p.T(), claim.StatusSucceeded, i.GetLastStatus(), "the dependency wasn't recorded as being installed successfully")
 	c, err := i.GetLastClaim()
 	require.NoError(p.T(), err, "GetLastClaim failed")
-	assert.Equal(p.T(), "porter-ci-mysql-"+namespace, c.Parameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
-	assert.Equal(p.T(), "mydb", c.Parameters["database-name"], "the dependency param value for 'dabaase-name' is incorrect")
+	assert.Equal(p.T(), "porter-ci-mysql", c.Parameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
+	assert.Equal(p.T(), float64(2), c.Parameters["probe-timeout"], "the dependency param value for 'probe-timeout' is incorrect")
 
 	// Verify that the bundle claim is present
 	i, err = p.Claims.ReadInstallationStatus("wordpress")
@@ -99,10 +97,6 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Delete = true
-	uninstallOptions.Params = []string{
-		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
-	}
 	err := uninstallOptions.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 
@@ -126,9 +120,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
-		"wordpress-name=porter-ci-wordpress-" + namespace,
 		"mysql#namespace=" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of upgrade opts for root bundle failed")
@@ -160,8 +152,6 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	invokeOpts.Params = []string{
 		"wordpress-password=mypassword",
 		"namespace=" + namespace,
-		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
 	}
 	err := invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of invoke opts for root bundle failed")
@@ -190,10 +180,8 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	uninstallOptions := porter.NewUninstallOptions()
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
-		"wordpress-password=mypassword",
 		"namespace=" + namespace,
-		"wordpress-name=porter-ci-wordpress-" + namespace,
-		"mysql#mysql-name=porter-ci-mysql-" + namespace,
+		"mysql#namespace=" + namespace,
 	}
 	err := uninstallOptions.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
