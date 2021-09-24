@@ -23,6 +23,7 @@ type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowAccessToDockerHost bool
+	NoLogs                  bool
 }
 
 func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
@@ -68,6 +69,7 @@ func (p *Porter) BuildActionArgs(action BundleAction) (cnabprovider.ActionArgume
 		Driver:                opts.Driver,
 		RelocationMapping:     opts.RelocationMapping,
 		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
+		PersistLogs:           !opts.NoLogs,
 	}
 
 	err := opts.LoadParameters(p)

@@ -48,6 +48,7 @@ porter uninstall [INSTALLATION] [flags]
       --force-delete               UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.
   -h, --help                       help for uninstall
       --insecure-registry          Don't require TLS for the registry
+      --no-logs                    Do not persist the bundle execution logs
       --param strings              Define an individual parameter in the form NAME=VALUE. Overrides parameters otherwise set via --parameter-set. May be specified multiple times.
   -p, --parameter-set strings      Name of a parameter set file for the bundle. May be either a named set of parameters or a filepath, and specified multiple times.
   -r, --reference string           Use a bundle in an OCI registry specified by the given reference.

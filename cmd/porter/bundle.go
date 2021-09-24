@@ -150,6 +150,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return cmd
 }
@@ -196,6 +198,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -245,6 +249,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Credential to use when installing the bundle. May be either a named set of credentials or a filepath, and specified multiple times.")
 	f.StringVarP(&opts.Driver, "driver", "d", porter.DefaultDriver,
 		"Specify a driver to use. Allowed values: docker, debug")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -298,6 +304,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Delete all records associated with the installation, assuming the uninstall action succeeds")
 	f.BoolVar(&opts.ForceDelete, "force-delete", false,
 		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
