@@ -22,6 +22,7 @@ func buildInstallationCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildInstallationOutputsCommands(p))
 	cmd.AddCommand(buildInstallationDeleteCommand(p))
 	cmd.AddCommand(buildInstallationLogCommands(p))
+	cmd.AddCommand(buildInstallationRunsCommands(p))
 
 	return cmd
 }
@@ -149,6 +150,48 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 		"Namespace in which the installation is defined. Defaults to the global namespace.")
 	f.BoolVar(&opts.Force, "force", false,
 		"Force a delete the installation, regardless of last completed action")
+
+	return &cmd
+}
+
+func buildInstallationRunsCommands(p *porter.Porter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "runs",
+		Aliases: []string{"run"},
+		Short:   "Commands for working with runs of an Installation",
+		Long:    "Commands for working with runs of an Installation",
+	}
+
+	cmd.AddCommand(buildInstallationRunsListCommand(p))
+
+	return cmd
+}
+
+func buildInstallationRunsListCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.RunListOptions{}
+
+	cmd := cobra.Command{
+		Use:   "list",
+		Short: "List runs of an Installation",
+		Long:  "List runs of an Installation",
+		Example: `  porter installation runs list [NAME] [--namespace NAMESPACE] [--output FORMAT]
+
+  porter installations runs list --name myapp --namespace dev
+
+`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args, p.Context)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.PrintInstallationRuns(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVarP(&opts.Namespace, "namespace", "n", "",
+		"Namespace in which the installation is defined. Defaults to the global namespace.")
+	f.StringVarP(&opts.RawFormat, "output", "o", "table",
+		"Specify an output format.  Allowed values: table, json, yaml")
 
 	return &cmd
 }

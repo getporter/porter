@@ -103,7 +103,8 @@ type DisplayRun struct {
 	Version    string                 `json:"version" yaml:"version"`
 	Action     string                 `json:"action" yaml:"action"`
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Timestamp  time.Time              `json:"timestamp" yaml:"timestamp"`
+	Started    time.Time              `json:"started" yaml:"started"`
+	Stopped    time.Time              `json:"stopped" yaml:"stopped"`
 	Status     string                 `json:"status" yaml:"status"`
 }
 
@@ -112,7 +113,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 		ClaimID:    run.ID,
 		Action:     run.Action,
 		Parameters: run.Parameters,
-		Timestamp:  run.Created,
+		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
 		// TODO(carolynvs): Add command to view all installation runs

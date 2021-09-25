@@ -28,8 +28,9 @@ type Provider interface {
 
 	// ListInstallations returns Installations sorted in ascending order by the namespace and then name.
 	ListInstallations(namespace string, name string, labels map[string]string) ([]Installation, error)
+
 	// ListRuns returns Run documents sorted in ascending order by ID.
-	ListRuns(namespace string, installation string) ([]Run, error)
+	ListRuns(namespace string, installation string) ([]Run, map[string][]Result, error)
 
 	// ListResults returns Result documents sorted in ascending order by ID.
 	ListResults(runID string) ([]Result, error)
