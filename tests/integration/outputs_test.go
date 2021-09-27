@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -74,7 +75,7 @@ func CleanupCurrentBundle(p *porter.TestPorter) {
 	err := uninstallOpts.Validate([]string{}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for current bundle")
 
-	err = p.UninstallBundle(uninstallOpts)
+	err = p.UninstallBundle(nil, uninstallOpts)
 	assert.NoError(p.T(), err, "uninstall failed for current bundle")
 }
 
@@ -87,7 +88,7 @@ func installExecOutputsBundle(p *porter.TestPorter) {
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(p.T(), err)
 }
 
@@ -96,7 +97,7 @@ func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 	statusOpts.Action = action
 	err := statusOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
-	err = p.InvokeBundle(statusOpts)
+	err = p.InvokeBundle(nil, statusOpts)
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
 }
 
@@ -115,7 +116,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err, "install should have succeeded")
 
 	// Upgrade the bundle
@@ -123,7 +124,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UpgradeBundle(upgradeOpts)
+	err = p.UpgradeBundle(nil, upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
 	// Uninstall the bundle
@@ -131,6 +132,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	uninstallOpts := porter.NewUninstallOptions()
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UninstallBundle(uninstallOpts)
+	err = p.UninstallBundle(nil, uninstallOpts)
 	require.NoError(t, err, "uninstall should have succeeded")
 }

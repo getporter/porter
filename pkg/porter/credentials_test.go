@@ -1,12 +1,13 @@
 package porter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
@@ -28,7 +29,7 @@ func TestGenerateNoName(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(context.Background(), opts)
 	require.NoError(t, err, "no error should have existed")
 
 	creds, err := p.Credentials.GetCredentialSet("", "porter-hello")
@@ -54,7 +55,7 @@ func TestGenerateNameProvided(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(context.Background(), opts)
 	require.NoError(t, err, "no error should have existed")
 	creds, err := p.Credentials.GetCredentialSet(opts.Namespace, "kool-kred")
 	require.NoError(t, err, "expected credential to have been generated")
@@ -75,7 +76,7 @@ func TestGenerateBadNameProvided(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(opts)
+	err = p.GenerateCredentials(context.Background(), opts)
 	require.Error(t, err, "name is invalid, we should have had an error")
 	_, err = p.Credentials.GetCredentialSet("", "this.isabadname")
 	require.Error(t, err, "expected credential to not exist")
@@ -360,14 +361,14 @@ func TestCredentialsDelete(t *testing.T) {
 
 func TestApplyOptions_Validate(t *testing.T) {
 	t.Run("no file specified", func(t *testing.T) {
-		tc := context.NewTestContext(t)
+		tc := portercontext.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, nil)
 		require.EqualError(t, err, "a file argument is required")
 	})
 
 	t.Run("one file specified", func(t *testing.T) {
-		tc := context.NewTestContext(t)
+		tc := portercontext.NewTestContext(t)
 		tc.AddTestFileFromRoot("tests/testdata/creds/mybuns.yaml", "mybuns.yaml")
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
@@ -376,7 +377,7 @@ func TestApplyOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("missing file specified", func(t *testing.T) {
-		tc := context.NewTestContext(t)
+		tc := portercontext.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
 		require.Error(t, err)
@@ -384,7 +385,7 @@ func TestApplyOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("two files specified", func(t *testing.T) {
-		tc := context.NewTestContext(t)
+		tc := portercontext.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml", "yourbuns.yaml"})
 		require.Error(t, err)

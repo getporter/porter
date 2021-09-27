@@ -14,6 +14,7 @@
   * [Makefile explained](#makefile-explained)
   * [Install mixins](#install-mixins)
   * [Preview documentation](#preview-documentation)
+  * [View a trace of a Porter command](#view-a-trace-of-a-porter-command)
   * [Write a blog post](#write-a-blog-post)
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
@@ -435,6 +436,42 @@ a new blog post and then preview it:
     
 Our pull request preview and the live site will not show posts with a date in
 the future. If you don't see your post, change the date to today's date.
+
+## View a trace of a Porter command
+
+Porter has an experimental feature, structured-logs, that sends trace data about the commands run to an OpenTelemetry backend.
+It can be very helpful when figuring out why a command failed because you can see the values of variables and stack traces.
+
+In development, you can use the [otel-jaeger bundle] to set up a development instance of Jaeger, which gives you a nice website to see each command run.
+
+```
+porter install --reference carolynvs/otel-jaeger:v0.1.0 --allow-docker-host-access
+```
+
+Then to turn on tracing in Porter, set the following environment variables.
+This tells Porter to turn on tracing, and connect to OpenTelemetry server that you just installed.
+
+**Posix**
+```bash
+export PORTER_EXPERIMENTAL="structured-logs"
+export PORTER_TELEMETRY_ENABLED="true"
+export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+export OTEL_EXPORTER_OTLP_INSECURE="true"
+```
+
+**Powershell**
+```powershell
+$env:PORTER_EXPERIMENTAL="structured-logs"
+$env:PORTER_TELEMETRY_ENABLED="true"
+$env:OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+$env:OTEL_EXPORTER_OTLP_INSECURE="true"
+```
+
+Next run a Porter command to generate some trace data, such as `porter list`.
+Then go to the Jaeger website to see your data: http://localhost:16686.
+On the Jaeger dashboard, select "porter" from the service drop down, and click "Find Traces".
+
+[otel-jaeger bundle]: https://github.com/getporter/example-bundles/tree/main/otel-jaeger
 
 ## Command Documentation
 

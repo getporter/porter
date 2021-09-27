@@ -8,6 +8,7 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
 	"github.com/pkg/errors"
 )
@@ -40,7 +41,7 @@ type bundleFileOptions struct {
 	Dir string
 }
 
-func (o *bundleFileOptions) Validate(cxt *context.Context) error {
+func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 	var err error
 
 	err = o.validateBundleFiles(cxt)

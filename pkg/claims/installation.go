@@ -1,6 +1,8 @@
 package claims
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +12,8 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -179,6 +183,14 @@ func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
 	}
 
 	return nil
+}
+
+func (i Installation) AddToTrace(ctx context.Context) {
+	span := trace.SpanFromContext(ctx)
+	doc, _ := json.Marshal(i)
+	span.SetAttributes(
+		attribute.String("installation", i.String()),
+		attribute.String("installationDefinition", string(doc)))
 }
 
 // InstallationStatus's purpose is to assist with making porter list be able to display everything

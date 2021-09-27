@@ -64,7 +64,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 
 	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull remote bundle")
+		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull bundle")
 	}
 
 	invocationImage := bun.InvocationImages[0]

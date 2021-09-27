@@ -1,13 +1,16 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"io"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ BundleAction = NewUninstallOptions()
@@ -66,9 +69,11 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
-func (p *Porter) UninstallBundle(opts UninstallOptions) error {
+func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(opts.BundleActionOptions)
+	_, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -84,7 +89,7 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	deperator := newDependencyExecutioner(p, installation, opts)
-	err = deperator.Prepare()
+	err = deperator.Prepare(ctx)
 	if err != nil {
 		return err
 	}
@@ -94,8 +99,9 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		return err
 	}
 
-	fmt.Fprintf(p.Out, "%s %s...\n", opts.GetActionVerb(), opts.Name)
-	err = p.CNAB.Execute(actionArgs)
+	span := trace.SpanFromContext(ctx)
+	log.Infof("%s bundle", opts.GetActionVerb())
+	err = p.CNAB.Execute(ctx, actionArgs)
 
 	var uninstallErrs error
 	if err != nil {
@@ -104,7 +110,6 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 		// If the installation is not found, no further action is needed
 		err := errors.Cause(err)
 		if errors.Is(err, storage.ErrNotFound{}) {
-			// TODO(carolynvs): find and fix all checks for not found
 			return err
 		}
 
@@ -120,13 +125,13 @@ func (p *Porter) UninstallBundle(opts UninstallOptions) error {
 	}
 
 	// TODO: See https://github.com/getporter/porter/issues/465 for flag to allow keeping around the dependencies
-	err = opts.handleUninstallErrs(p.Out, deperator.Execute())
+	err = opts.handleUninstallErrs(p.Out, deperator.Execute(ctx))
 	if err != nil {
 		return err
 	}
 
 	if opts.shouldDelete() {
-		fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
+		p.Log.Info(span, "deleting installation records")
 		return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
 	}
 	return nil

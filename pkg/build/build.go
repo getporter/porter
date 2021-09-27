@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/manifest"
@@ -38,8 +39,8 @@ var (
 
 type Builder interface {
 	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(manifest *manifest.Manifest) error
+	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error
 
 	// TagInvocationImage using the origTag and newTag values supplied
-	TagInvocationImage(origTag, newTag string) error
+	TagInvocationImage(ctx context.Context, origTag, newTag string) error
 }

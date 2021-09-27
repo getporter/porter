@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -101,8 +102,8 @@ func (o *CredentialOptions) validateCredName(args []string) error {
 // GenerateCredentials builds a new credential set based on the given options. This can be either
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate credentials
-func (p *Porter) GenerateCredentials(opts CredentialOptions) error {
-	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
+func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -359,7 +360,7 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	var raw map[string]interface{}
 	err := encoding.UnmarshalFile(p.FileSystem, o.File, &raw)
 	if err != nil {
-		return "", errors.Wrapf(err, "invalid --file '%s'", o.File)
+		return "", errors.Wrapf(err, "invalid file '%s'", o.File)
 	}
 
 	if rawNamespace, ok := raw["namespace"]; ok {

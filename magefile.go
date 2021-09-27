@@ -58,7 +58,12 @@ func Build() {
 
 // Build the porter client and runtime
 func BuildPorter() {
+	mg.Deps(Tidy)
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+func Tidy() error {
+	return shx.Run("go", "mod", "tidy")
 }
 
 // Build the exec mixin client and runtime
@@ -190,7 +195,13 @@ func Test() {
 
 // Run unit tests and verify integration tests compile
 func TestUnit() {
-	must.RunV("go", "test", "./...")
+	// Only do verbose output of tests when called with `mage -v TestSmoke`
+	v := ""
+	if mg.Verbose() {
+		v = "-v"
+	}
+
+	must.Command("go", "test", v, "./...").CollapseArgs().RunV()
 
 	// Verify integration tests compile since we don't run them automatically on pull requests
 	must.Run("go", "test", "-run=non", "-tags=integration", "./...")

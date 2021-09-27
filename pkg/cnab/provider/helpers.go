@@ -1,12 +1,13 @@
 package cnabprovider
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
@@ -58,14 +59,14 @@ func (t *TestRuntime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error)
 }
 
 func (t *TestRuntime) LoadTestBundle(bundleFile string) cnab.ExtendedBundle {
-	bun, err := cnab.LoadBundle(context.New(), bundleFile)
+	bun, err := cnab.LoadBundle(portercontext.New(), bundleFile)
 	require.NoError(t.TestConfig.TestContext.T, err)
 	return bun
 }
 
-func (t *TestRuntime) Execute(args ActionArguments) error {
+func (t *TestRuntime) Execute(ctx context.Context, args ActionArguments) error {
 	if args.Driver == "" {
 		args.Driver = debugDriver
 	}
-	return t.Runtime.Execute(args)
+	return t.Runtime.Execute(ctx, args)
 }

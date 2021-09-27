@@ -207,14 +207,20 @@ pygmentsStyle = "friendly"
       [[menu.main]]
         name = "Copy a Bundle"
         identifier = "copy-bundles"
-        url = "/copy-bundles"
+        url = "/copy-bundles/"
         weight = 5
         parent = "tasks-administrators"
       [[menu.main]]
         name = "Move a bundle across an airgap"
         identifier = "archive-bundles"
-        url = "/archive-bundles"
+        url = "/archive-bundles/"
         weight = 6
+        parent = "tasks-administrators"
+      [[menu.main]]
+        name = "Collect Diagnostics"
+        identifier = "diagnostics"
+        url = "/administrators/diagnostics/"
+        weight = 100
         parent = "tasks-administrators"
 
   # Developers
