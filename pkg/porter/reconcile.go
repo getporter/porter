@@ -24,7 +24,7 @@ type ReconcileOptions struct {
 	DryRun bool
 }
 
-// reconcileInstallation compares the desired state of an installation
+// ReconcileInstallation compares the desired state of an installation
 // as stored in the installation record with the current state of the
 // installation. If they are not in sync, the appropriate bundle action
 // is executed to bring them in sync.
@@ -113,7 +113,7 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 	return p.ExecuteAction(opts.Installation, actionOpts)
 }
 
-// IsInSync determines if the desired state of the installation matches
+// IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
 func (p *Porter) IsInstallationInSync(i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
 	// Have we successfully completed the install action?

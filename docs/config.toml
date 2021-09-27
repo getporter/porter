@@ -369,6 +369,11 @@ pygmentsStyle = "friendly"
     identifier = "configuration"
     parent = "references"
   [[menu.main]]
+    name = "File Formats"
+    url = "/reference/file-formats/"
+    identifier = "file-formats"
+    parent = "references"
+  [[menu.main]]
     name = "Docker Images"
     url = "/docker-images/"
     identifer = "docker-images"

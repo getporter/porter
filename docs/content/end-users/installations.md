@@ -12,11 +12,21 @@ Installation names must be unique within a namespace.
 Installations that are not defined in a namespace are considered global, and may be referenced both by other global resources and namespaced resources.
 
 There are two ways to manage installations: [imperative commands](#imperative-commands) or [desired state](#desired-state). 
+They are not mutually exclusive, and you can switch back and forth between them at any time.
 
 ## Imperative Commands
 
 **Imperative** commands such as [porter install] or [porter upgrade].
 This is a great way to try out Porter and become familiar with a new bundle when testing it locally.
+You can also use it to automate Porter, if that fits into your workflows better than desired state.
+In this mode, Porter handles creating and modifying the installation resources for you.
+
+You can use the following command to export the current installation definition to a file.
+This is one way to create or update an installation file without figuring out what should go in the file.
+
+```
+porter installation show NAME --output yaml 1>installation.yaml
+```
 
 ## Desired State
 
@@ -29,7 +39,7 @@ However, if you changed a parameter value for the installation, or the bundle ve
 The following will result in Porter executing the bundle:
 * The installation has not completed successfully yet.
 * The bundle reference has changed. The bundle reference is resolved using the bundleRepository, bundleVersion, bundleDigest, and bundleTag fields.
-* The resolved parameter values have changed, either because an associated parameter set has change, the parameters defined on the bundle have changed, or the values resolved by any parameter sets have changed.
+* The resolved parameter values have changed, either because an associated parameter set has changed, the parameters defined on the bundle have changed, or the values resolved by any parameter sets have changed.
 * The list of credential set names have changed. Currently, Porter does not compare resolved credential values.
 * The porter installation apply command was run with the --force.
 
@@ -40,6 +50,7 @@ With a GitOps workflow, you define the desired state of your applications and in
 
 * [Install a bundle using imperative commands with the](/quickstart/)
 * [Define an installation in a file and manage it using desired state](/quickstart/desired-state/)
+* [Reference: File Formats](/reference/file-formats/)
 
 [porter installation list]: /cli/porter_installations_list/
 [porter installation show]: /cli/porter_installations_show/
