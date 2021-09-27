@@ -1204,7 +1204,7 @@ exclude: true
 
 ```yaml
 install:
-- helm:
+- helm3:
     ...
     outputs:
     - name: mysql-password

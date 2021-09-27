@@ -1,6 +1,6 @@
 mixins:
   - arm
-  - helm:
+  - helm3:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
@@ -60,7 +60,7 @@ install:
         - name: "MYSQL_HOST"
           key: "MYSQL_HOST"
 
-  - helm:
+  - helm3:
       description: "Helm Install Wordpress"
       name: porter-ci-wordpress
       chart: bitnami/wordpress
@@ -81,7 +81,7 @@ uninstall:
   # - arm:
   #     description: "Uninstall Mysql"
   #     name: mysql-azure-porter-demo-wordpress
-  - helm:
+  - helm3:
       description: "Helm Uninstall Wordpress"
       purge: true
       releases:

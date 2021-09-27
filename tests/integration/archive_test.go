@@ -23,7 +23,7 @@ func TestArchive(t *testing.T) {
 	p.Debug = false
 
 	// Use a fixed bundle to work with so that we can rely on the registry and layer digests
-	const reference = "getporter/mysql:v0.1.3"
+	const reference = "getporter/mysql:v0.1.4"
 
 	// Archive bundle
 	archive1Opts := porter.ArchiveOptions{}
@@ -60,7 +60,7 @@ func TestArchive(t *testing.T) {
 	publishFromArchiveOpts := porter.PublishOptions{
 		ArchiveFile: archiveFile1,
 		BundlePullOptions: porter.BundlePullOptions{
-			Reference: fmt.Sprintf("localhost:5000/archived-mysql:v0.1.3"),
+			Reference: fmt.Sprintf("localhost:5000/archived-mysql:v0.1.4"),
 		},
 	}
 	err = publishFromArchiveOpts.Validate(p.Context)

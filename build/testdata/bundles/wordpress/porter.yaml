@@ -1,20 +1,21 @@
 mixins:
 - exec
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
 
 name: wordpress
+version: 0.1.4
 registry: "localhost:5000"
-version: 0.1.3
 
 dependencies:
   - name: mysql
-    reference: localhost:5000/mysql:v0.1.3
+    reference: localhost:5000/mysql:v0.1.4
     parameters:
       database-name: wordpress
       mysql-user: wordpress
+      namespace: wordpress
 
 credentials:
 - name: kubeconfig
@@ -33,10 +34,10 @@ parameters:
     - upgrade
 - name: namespace
   type: string
-  default: ''
+  default: 'wordpress'
 
 install:
-  - helm:
+  - helm3:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
@@ -45,16 +46,20 @@ install:
       replace: true
       set:
         wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
+        externalDatabase.host: "porter-ci-mysql.{{ bundle.parameters.namespace }}.svc.cluster.local"
+        externalDatabase.database: "wordpress"
+        externalDatabase.user: "wordpress"
         externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
         externalDatabase.port: 3306
         mariadb.enabled: false
+        service.type: NodePort
       outputs:
         - name: wordpress-password
           secret: "{{ bundle.parameters.wordpress-name }}"
           key: wordpress-password
 
 upgrade:
-  - helm:
+  - helm3:
       description: "Upgrade Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
@@ -73,7 +78,7 @@ ping:
         - ping
 
 uninstall:
-  - helm:
+  - helm3:
       description: "Uninstall Wordpress"
       purge: true
       releases: 
