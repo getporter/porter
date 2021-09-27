@@ -72,6 +72,11 @@ func buildDataLoader(viperCfg func(v *viper.Viper)) config.DataStoreLoaderFunc {
 
 		cfg.Data = &data
 
+		// I am persisting this so that when I check file permissions
+		// I know which file in PORTER_HOME was the loaded config file,
+		//since it could have been config.toml/json/yaml.
+		cfg.ConfigFilePath = v.ConfigFileUsed()
+
 		return nil
 	}
 }

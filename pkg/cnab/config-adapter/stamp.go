@@ -56,7 +56,7 @@ func (s Stamp) WriteManifest(cxt *context.Context, path string) error {
 		return err
 	}
 
-	err = cxt.FileSystem.WriteFile(path, manifestB, 0644)
+	err = cxt.FileSystem.WriteFile(path, manifestB, 0600)
 	return errors.Wrapf(err, "could not save decoded manifest to %s", path)
 }
 

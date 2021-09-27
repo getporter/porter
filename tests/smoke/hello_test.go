@@ -4,6 +4,7 @@ package smoke
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
@@ -33,4 +34,9 @@ func TestHelloBundle(t *testing.T) {
 
 	test.RequirePorter("uninstall", "mybuns")
 	test.RequirePorter("installation", "show", "mybuns")
+
+	// Verify file permissions on PORTER_HOME
+	test.RequireFileMode(filepath.Join(test.PorterHomeDir, "claims", "*"), 0600)
+	test.RequireFileMode(filepath.Join(test.PorterHomeDir, "results", "*"), 0600)
+	test.RequireFileMode(filepath.Join(test.PorterHomeDir, "outputs", "*"), 0600)
 }

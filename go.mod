@@ -3,10 +3,10 @@ module get.porter.sh/porter
 go 1.13
 
 replace (
-	// This points to a tag off of the porter branch. This branch has whatever unmerged PRs that are currently
-	// outstanding. The tagging scheme is LATEST_TAG_FROM_CNABGO-porter.N where N allows for us to make multiple
+	// This points to a tag off of the porter-stable branch, since cnab-go main has diverged to support Porter v1.
+	// The tagging scheme is LATEST_TAG_FROM_CNABGO-porter.N where N allows for us to make multiple
 	// tags based on the same underlying version of cnab-go.
-	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.19.0-porter.3
+	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.19.0-porter.4
 
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...

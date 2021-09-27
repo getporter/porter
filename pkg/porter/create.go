@@ -46,9 +46,9 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		return err
 	}
 
-	var mode os.FileMode = 0644
+	var mode os.FileMode = 0600
 	if filepath.Ext(dest) == ".sh" {
-		mode = 0755
+		mode = 0700
 	}
 
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)

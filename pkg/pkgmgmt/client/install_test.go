@@ -6,12 +6,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,10 +39,16 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	err = p.Install(opts)
 	require.NoError(t, err)
 
-	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/mypkg/mypkg")
-	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/mypkg/runtimes/mypkg-runtime")
-	assert.True(t, runtimeExists)
+	clientPath := "/root/.porter/packages/mypkg/mypkg"
+	clientStats, err := p.FileSystem.Stat(clientPath)
+	require.NoError(t, err)
+	wantMode := os.FileMode(0700)
+	tests.AssertFilePermissionsEqual(t, clientPath, wantMode, clientStats.Mode())
+
+	runtimePath := "/root/.porter/packages/mypkg/runtimes/mypkg-runtime"
+	runtimeStats, _ := p.FileSystem.Stat(runtimePath)
+	require.NoError(t, err)
+	tests.AssertFilePermissionsEqual(t, runtimePath, wantMode, runtimeStats.Mode())
 }
 
 func TestFileSystem_InstallFromFeedUrl(t *testing.T) {

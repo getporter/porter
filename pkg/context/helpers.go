@@ -115,13 +115,26 @@ func (c *TestContext) Cleanup() {
 	}
 }
 
-func (c *TestContext) AddTestFile(src, dest string) []byte {
+// mode is optional and only the first one passed is used.
+func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte {
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
 	}
 
-	err = c.FileSystem.WriteFile(dest, data, os.ModePerm)
+	var perms os.FileMode
+	if len(mode) == 0 {
+		ext := filepath.Ext(dest)
+		if ext == ".sh" || ext == "" {
+			perms = 0700
+		} else {
+			perms = 0600
+		}
+	} else {
+		perms = mode[0]
+	}
+
+	err = c.FileSystem.WriteFile(dest, data, perms)
 	if err != nil {
 		c.T.Fatal(errors.Wrapf(err, "error writing file %s to test filesystem", dest))
 	}
@@ -130,10 +143,11 @@ func (c *TestContext) AddTestFile(src, dest string) []byte {
 }
 
 func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
-	return c.FileSystem.WriteFile(dest, file, os.ModePerm)
+	return c.FileSystem.WriteFile(dest, file, 0600)
 }
 
-func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
+// mode is optional and should only be specified once
+func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMode) {
 	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -148,10 +162,10 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
 
 		if info.IsDir() {
-			return c.FileSystem.MkdirAll(dest, os.ModePerm)
+			return c.FileSystem.MkdirAll(dest, 0700)
 		}
 
-		c.AddTestFile(path, dest)
+		c.AddTestFile(path, dest, mode...)
 		return nil
 	})
 	if err != nil {
@@ -185,7 +199,7 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		}
 	}
 
-	err = c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
+	err = c.FileSystem.Chmod(newfile.Name(), 0700)
 	if err != nil {
 		c.T.Fatal(err)
 	}

@@ -157,7 +157,7 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 
 	// Add an unmigrated parameter
 	credDir := filepath.Join(home, "parameters")
-	config.FileSystem.Mkdir(credDir, 0755)
+	config.FileSystem.Mkdir(credDir, 0700)
 	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/parameters", "mybun.json"), filepath.Join(home, "parameters", "mybun.json"))
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
@@ -185,7 +185,7 @@ func TestParameterStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) 
 	defer config.TestContext.Cleanup()
 
 	// Add migrated credentials data
-	config.CopyDirectory(filepath.Join("../storage/testdata", "migrated"), home, false)
+	config.TestContext.AddTestDirectory(filepath.Join("../storage/testdata", "migrated"), home, 0600)
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	mgr := storage.NewManager(config.Config, dataStore)

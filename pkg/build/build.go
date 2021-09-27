@@ -24,6 +24,9 @@ var (
 	// user-provided manifest and any dynamic overrides
 	LOCAL_MANIFEST = filepath.Join(LOCAL_APP, "porter.yaml")
 
+	// LOCAL_MIXINS is the path where Porter stages the /cnab/app/mixins directory.
+	LOCAL_MIXINS = filepath.Join(LOCAL_APP, "mixins")
+
 	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
 	BUNDLE_DIR = "/cnab/app"
 

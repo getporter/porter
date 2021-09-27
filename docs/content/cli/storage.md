@@ -28,5 +28,6 @@ Manage the data stored by Porter, such as credentials and installation data.
 ### SEE ALSO
 
 * [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter storage fix-permissions](/cli/porter_storage_fix-permissions/)	 - Fix the permissions on your PORTER_HOME directory
 * [porter storage migrate](/cli/porter_storage_migrate/)	 - Migrate active storage account
 

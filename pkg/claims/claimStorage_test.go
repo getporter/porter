@@ -23,7 +23,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 
 	// Add an unmigrated claim
 	claimsDir := filepath.Join(home, "claims")
-	config.FileSystem.Mkdir(claimsDir, 0755)
+	config.FileSystem.Mkdir(claimsDir, 0700)
 	config.TestContext.AddTestFile(filepath.Join("../storage/testdata/claims", "upgraded.json"), filepath.Join(home, "claims", "mybun.json"))
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
@@ -54,7 +54,7 @@ func TestClaimStorage_OperationAllowedWhenNoMigrationDetected(t *testing.T) {
 	defer config.TestContext.Cleanup()
 
 	// Add migrated claims data
-	config.CopyDirectory(filepath.Join("../storage/testdata", "migrated"), home, false)
+	config.TestContext.AddTestDirectory(filepath.Join("../storage/testdata", "migrated"), home, 0600)
 
 	dataStore := filesystem.NewStore(*config.Config, hclog.NewNullLogger())
 	mgr := storage.NewManager(config.Config, dataStore)

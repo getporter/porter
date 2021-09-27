@@ -68,7 +68,7 @@ func useCluster() bool {
 		}
 		os.Setenv("KUBECONFIG", currentKubeConfig)
 
-		err := ioutil.WriteFile(Kubeconfig, []byte(contents), 0644)
+		err := ioutil.WriteFile(Kubeconfig, []byte(contents), 0600)
 		mgx.Must(errors.Wrapf(err, "error writing %s", Kubeconfig))
 		return true
 	}
@@ -115,7 +115,7 @@ func CreateTestCluster() {
 		Address: ipAddress,
 	}
 	err = kindCfgTmpl.Execute(&kindCfgContents, kindCfgData)
-	err = ioutil.WriteFile("kind.config.yaml", kindCfgContents.Bytes(), 0644)
+	err = ioutil.WriteFile("kind.config.yaml", kindCfgContents.Bytes(), 0600)
 	mgx.Must(errors.Wrap(err, "could not write kind config file"))
 	defer os.Remove("kind.config.yaml")
 
