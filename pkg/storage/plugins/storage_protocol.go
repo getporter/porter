@@ -38,9 +38,21 @@ type StorageProtocol interface {
 // EnsureIndexOptions is the set of options available to the
 // StorageProtocol.EnsureIndex operation.
 type EnsureIndexOptions struct {
-	Collection string      `bson:"collection"`
-	Keys       interface{} `json:"keys"`
-	Unique     bool        `json:"unique"`
+	// Indices to create if not found.
+	Indices []Index
+}
+
+// Index on a collection.
+type Index struct {
+	// Collection name to which the index applies.
+	Collection string
+
+	// Keys describes the fields and their sort order.
+	// Example: {"namespace": 1, "name": 1}
+	Keys interface{}
+
+	// Unique specifies if the index should enforce that the indexed fields for each document are unique.
+	Unique bool
 }
 
 // AggregateOptions is the set of options available to the

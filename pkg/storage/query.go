@@ -25,8 +25,21 @@ func (o AggregateOptions) ToPluginOptions(collection string) plugins.AggregateOp
 
 // EnsureIndexOptions is the set of options available to the EnsureIndex operation.
 type EnsureIndexOptions struct {
-	Keys   []string `json:"keys"`
-	Unique bool     `json:"unique"`
+	// Indices to create if not found.
+	Indices []Index
+}
+
+// Index on a collection.
+type Index struct {
+	// Collection name to which the index applies.
+	Collection string
+
+	// Keys describes the fields and their sort order.
+	// Example: ["namespace", "name", "-timestamp"]
+	Keys []string
+
+	// Unique specifies if the index should enforce that the indexed fields for each document are unique.
+	Unique bool
 }
 
 // Convert from a simplified sort specifier like []{"-key"}
@@ -52,12 +65,18 @@ func convertSortKeys(values []string) interface{} {
 	return keys
 }
 
-func (o EnsureIndexOptions) ToPluginOptions(collection string) plugins.EnsureIndexOptions {
-	return plugins.EnsureIndexOptions{
-		Collection: collection,
-		Keys:       convertSortKeys(o.Keys),
-		Unique:     o.Unique,
+func (o EnsureIndexOptions) ToPluginOptions() plugins.EnsureIndexOptions {
+	opts := plugins.EnsureIndexOptions{
+		Indices: make([]plugins.Index, len(o.Indices)),
 	}
+	for i, index := range o.Indices {
+		opts.Indices[i] = plugins.Index{
+			Collection: index.Collection,
+			Keys:       convertSortKeys(index.Keys),
+			Unique:     index.Unique,
+		}
+	}
+	return opts
 }
 
 // CountOptions is the set of options available to the Count operation on any

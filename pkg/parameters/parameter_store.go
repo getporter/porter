@@ -33,12 +33,13 @@ func NewParameterStore(storage storage.Store, secrets secrets.Store) *ParameterS
 
 // Initialize the backend storage with any necessary schema changes, such as indexes.
 func (s ParameterStore) Initialize() error {
-	// query parameters by namespace + name
-	err := s.Documents.EnsureIndex(CollectionParameters, storage.EnsureIndexOptions{
-		Keys:   []string{"namespace", "name"},
-		Unique: true,
-	})
-	return err
+	indices := storage.EnsureIndexOptions{
+		Indices: []storage.Index{
+			// query parameters by namespace + name
+			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
+		},
+	}
+	return s.Documents.EnsureIndex(indices)
 }
 
 func (s ParameterStore) GetDataStore() storage.Store {

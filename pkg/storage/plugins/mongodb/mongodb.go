@@ -73,7 +73,7 @@ func (s *Store) Connect() error {
 	}
 
 	s.client = client
-	return s.Ping()
+	return nil
 }
 
 func (s *Store) Close() error {
@@ -119,16 +119,31 @@ func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
 	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	c := s.getCollection(opts.Collection)
-	indexOpts := mongo.IndexModel{
-		Keys:    opts.Keys,
-		Options: options.Index(),
-	}
-	indexOpts.Options.SetUnique(opts.Unique)
-	indexOpts.Options.SetBackground(true)
+	indices := make(map[string][]mongo.IndexModel, len(opts.Indices))
+	for _, index := range opts.Indices {
+		model := mongo.IndexModel{
+			Keys:    index.Keys,
+			Options: options.Index(),
+		}
+		model.Options.SetUnique(index.Unique)
+		model.Options.SetBackground(true)
 
-	_, err := c.Indexes().CreateOne(cxt, indexOpts)
-	return err
+		c, ok := indices[index.Collection]
+		if !ok {
+			c = make([]mongo.IndexModel, 0, 1)
+		}
+		c = append(c, model)
+		indices[index.Collection] = c
+	}
+
+	for collectionName, models := range indices {
+		c := s.getCollection(collectionName)
+		if _, err := c.Indexes().CreateMany(cxt, models); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Store) Count(opts plugins.CountOptions) (int64, error) {

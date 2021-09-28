@@ -33,12 +33,13 @@ func NewCredentialStore(storage storage.Store, secrets secrets.Store) *Credentia
 
 // Initialize the underlying storage with any additional schema changes, such as indexes.
 func (s CredentialStore) Initialize() error {
-	// query credentials by namespace + name
-	err := s.Documents.EnsureIndex(CollectionCredentials, storage.EnsureIndexOptions{
-		Keys:   []string{"namespace", "name"},
-		Unique: true,
-	})
-	return err
+	indices := storage.EnsureIndexOptions{
+		Indices: []storage.Index{
+			// query credentials by namespace + name
+			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
+		},
+	}
+	return s.Documents.EnsureIndex(indices)
 }
 
 func (s CredentialStore) GetDataStore() storage.Store {
