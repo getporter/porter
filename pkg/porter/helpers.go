@@ -22,6 +22,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
 )
@@ -189,7 +190,7 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 		return m.Name
 	}
 
-	e := manifest.NewEditor(p.Context)
+	e := yaml.NewEditor(p.Context)
 	err = e.ReadFile(testManifest)
 	require.NoError(p.T(), err)
 

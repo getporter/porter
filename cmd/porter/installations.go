@@ -103,13 +103,16 @@ func buildInstallationApplyCommand(p *porter.Porter) *cobra.Command {
 		Use:   "apply FILE",
 		Short: "Apply changes to an installation",
 		Long: `Apply changes from the specified file to an installation. If the installation doesn't already exist, it is created.
+The installation's bundle is automatically executed if changes are detected.
 
 When the namespace is not set in the file, the current namespace is used.
 
 You can use the show command to create the initial file:
   porter installation show mybuns --output yaml > mybuns.yaml
 `,
-		Example: `  porter installation apply myapp.yaml`,
+		Example: `  porter installation apply myapp.yaml
+  porter installation apply myapp.yaml --dry-run
+  porter installation apply myapp.yaml --force`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p.Context, args)
 		},
@@ -121,7 +124,10 @@ You can use the show command to create the initial file:
 	f := cmd.Flags()
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace in which the installation is defined. Defaults to the namespace defined in the file.")
-
+	f.BoolVar(&opts.Force, "force", false,
+		"Force the bundle to be executed when no changes are detected.")
+	f.BoolVar(&opts.DryRun, "dry-run", false,
+		"Evaluate if the bundle would be executed based on the changes in the file.")
 	return &cmd
 }
 

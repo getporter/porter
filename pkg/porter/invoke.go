@@ -62,5 +62,9 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 		// Create an ephemeral installation just for this run
 		installation = claims.Installation{Namespace: opts.Namespace, Name: opts.Name}
 	}
+	err = p.applyActionOptionsToInstallation(&installation, opts.BundleActionOptions)
+	if err != nil {
+		return err
+	}
 	return p.ExecuteAction(installation, opts)
 }

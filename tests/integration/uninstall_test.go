@@ -20,7 +20,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 	test.PrepareTestBundle()
 
 	// Check that we can't uninstall a bundle that hasn't been installed already
-	_, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns")
+	_, _, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns")
 	test.RequireNotFoundReturned(err)
 
 	// Install bundle
@@ -42,7 +42,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 	test.RequirePorter("install", testdata.MyBuns, "-r", testdata.MyBunsRef, "-c=mybuns")
 
 	// Uninstall the bundle, attempt to delete it, but have the uninstall fail
-	_, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns", "--param", "chaos_monkey=true", "--delete")
+	_, _, err = test.RunPorter("uninstall", testdata.MyBuns, "-c=mybuns", "--param", "chaos_monkey=true", "--delete")
 	tests.RequireErrorContains(t, err, "it is unsafe to delete an installation when the last action wasn't a successful uninstall")
 
 	// Check that the record remains

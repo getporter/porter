@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -59,6 +60,13 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 
 func (s CredentialSet) DefaultDocumentFilter() interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
+}
+
+func (s CredentialSet) Validate() error {
+	if SchemaVersion != s.SchemaVersion {
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
+	}
+	return nil
 }
 
 // Validate compares the given credentials with the spec.

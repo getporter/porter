@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/pkg/errors"
 )
 
 var _ storage.Document = ParameterSet{}
@@ -52,4 +53,11 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 
 func (s ParameterSet) DefaultDocumentFilter() interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
+}
+
+func (s ParameterSet) Validate() error {
+	if SchemaVersion != s.SchemaVersion {
+		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
+	}
+	return nil
 }

@@ -1,0 +1,84 @@
+{
+    "$id": "https://cnab.io/v1/installation.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+      "name": {
+        "description": "The name of the installation.",
+        "type": "string"
+      },
+      "namespace": {
+        "description": "The namespace in which the installation is defined.",
+        "type": "string"
+      },
+      "created": {
+        "description": "The date created, as an ISO-8601 Extended Format date string, as specified in the ECMAScript standard",
+        "type": "string"
+      },
+      "modified": {
+        "description": "The date modified, as an ISO-8601 Extended Format date string, as specified in the ECMAScript standard",
+        "type": "string"
+      },
+      "bundleRepository": {
+        "description": "The OCI repository of the current bundle definition, e.g. getporter/porter-hello",
+        "type": "string"
+      },
+      "bundleVersion": {
+        "description": "The current version of the bundle, e.g. 0.1.1. A leading v prefix is allowed.",
+        "type": "string"
+      },
+      "bundleDigest": {
+        "description": "The current repository digest of the bundle, e.g. sha256:abc123",
+        "type": "string"
+      },
+      "bundleTag": {
+        "description": "The OCI tag of the current bundle definition, e.g. latest or v0.1.1",
+        "type": "string"
+      },
+      "labels": {
+        "description": "Set of labels associated with the installation.",
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "parameters": {
+        "description": "Parameters specified by the user through overrides. Sensitive values should be set via a parameter set.",
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "parameterSets": {
+        "description": "Names of parameter sets to use with the installation.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "credentialSets": {
+        "description": "Names of credential sets to use with the installation.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "custom": {
+        "$comment": "reserved for custom extensions",
+        "type": "object",
+        "additionalProperties": true
+      },
+      "schemaVersion": {
+        "description": "Version of the installation schema to which this document adheres",
+        "type": "string",
+        "default": "1.0.0"
+      }
+    },
+    "required": [
+      "name",
+      "bundleRepository"
+    ],
+    "title": "Installation json schema",
+    "type": "object",
+    "additionalProperties": false
+  }
+  

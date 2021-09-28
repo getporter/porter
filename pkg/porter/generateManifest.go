@@ -2,7 +2,7 @@ package porter
 
 import (
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
 )
 
@@ -23,7 +23,7 @@ func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
 	}
 
-	e := manifest.NewEditor(p.Context)
+	e := yaml.NewEditor(p.Context)
 	err = e.ReadFile(opts.File)
 	if err != nil {
 		return err

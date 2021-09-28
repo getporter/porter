@@ -228,6 +228,20 @@ func (i *Installation) SetLabel(key string, value string) {
 	i.Labels[key] = value
 }
 
+// ConvertParameterValues converts each parameter from an unknown type to
+// the type specified for that parameter on the bundle.
+func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
+	for paramName, rawParamValue := range i.Parameters {
+		typedValue, err := b.ConvertParameterValue(paramName, rawParamValue)
+		if err != nil {
+			return err
+		}
+		i.Parameters[paramName] = typedValue
+	}
+
+	return nil
+}
+
 // InstallationStatus's purpose is to assist with making porter list be able to display everything
 // with a single database query. Do not replicate data available on Run and Result here.
 type InstallationStatus struct {

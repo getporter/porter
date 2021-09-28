@@ -3,6 +3,7 @@ package cnabprovider
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
@@ -48,7 +49,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	}}
 
-	args := ActionArguments{CredentialIdentifiers: []string{"mycreds", "/db-creds.json"}, Action: "install"}
+	args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds", "/db-creds.json"}}, Action: "install"}
 	gotValues, err := r.loadCredentials(b, args)
 	require.NoError(t, err, "loadCredentials failed")
 
@@ -133,7 +134,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		require.NoError(t, err, "Save credential set failed")
 
 		b := getBundle(true)
-		args := ActionArguments{CredentialIdentifiers: []string{"mycreds"}, Action: "install"}
+		args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
 		gotValues, err := r.loadCredentials(b, args)
 		require.NoError(t, err, "loadCredentials failed")
 		assert.Equal(t, secrets.Set{"password": "mypassword"}, gotValues)

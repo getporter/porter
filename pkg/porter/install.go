@@ -71,7 +71,7 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 		return errors.Wrapf(err, "could not retrieve the installation record")
 	}
 
-	err = p.applyActionOptionsToInstallation(i, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (p *Porter) InstallBundle(opts InstallOptions) error {
 // Remember the parameters and credentials used with the bundle last.
 // Appends any newly specified parameters, parameter/credential sets to the installation record.
 // Users are expected to edit the installation record if they don't want that behavior.
-func (p *Porter) applyActionOptionsToInstallation(i claims.Installation, opts *BundleActionOptions) error {
+func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *BundleActionOptions) error {
 	// Record the parameters specified by the user, with flags taking precedence over parameter set values
 	err := opts.LoadParameters(p)
 	if err != nil {

@@ -487,6 +487,10 @@ func (p *Porter) ParametersApply(o ApplyOptions) error {
 		return errors.Wrapf(err, "could not load %s as a parameter set", o.File)
 	}
 
+	if err = params.Validate(); err != nil {
+		return errors.Wrap(err, "invalid parameter set")
+	}
+
 	params.Namespace = namespace
 	params.Modified = time.Now()
 

@@ -10,6 +10,7 @@ Apply changes to an installation
 ### Synopsis
 
 Apply changes from the specified file to an installation. If the installation doesn't already exist, it is created.
+The installation's bundle is automatically executed if changes are detected.
 
 When the namespace is not set in the file, the current namespace is used.
 
@@ -25,11 +26,15 @@ porter installations apply FILE [flags]
 
 ```
   porter installation apply myapp.yaml
+  porter installation apply myapp.yaml --dry-run
+  porter installation apply myapp.yaml --force
 ```
 
 ### Options
 
 ```
+      --dry-run            Evaluate if the bundle would be executed based on the changes in the file.
+      --force              Force the bundle to be executed when no changes are detected.
   -h, --help               help for apply
   -n, --namespace string   Namespace in which the installation is defined. Defaults to the namespace defined in the file.
 ```

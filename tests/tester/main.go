@@ -2,6 +2,7 @@ package tester
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,6 +21,9 @@ type Tester struct {
 
 	// unique database name assigned to the test
 	dbName string
+
+	// TestContext is a porter context for the filesystem.
+	TestContext *context.TestContext
 
 	// TestDir is the temp directory created for the test.
 	TestDir string
@@ -42,6 +46,10 @@ func NewTest(t *testing.T) (Tester, error) {
 	var err error
 	pwd, _ := os.Getwd()
 	test := &Tester{T: t, originalPwd: pwd}
+
+	test.TestContext = context.NewTestContext(t)
+	test.TestContext.UseFilesystem()
+	test.RepoRoot = test.TestContext.FindRepoRoot()
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
@@ -67,8 +75,7 @@ func (t Tester) CurrentNamespace() string {
 }
 
 func (t Tester) startMongo() error {
-	c := context.NewTestContext(t.T)
-	conn, err := mongodb_docker.EnsureMongoIsRunning(c.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 2)
+	conn, err := mongodb_docker.EnsureMongoIsRunning(t.TestContext.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 2)
 	defer conn.Close()
 	if err != nil {
 		return err
@@ -80,29 +87,30 @@ func (t Tester) startMongo() error {
 }
 
 // Run a porter command and fail the test if the command returns an error.
-// Returns stdout.
-func (t Tester) RequirePorter(args ...string) string {
+func (t Tester) RequirePorter(args ...string) (string, string) {
 	t.T.Helper()
-	output, err := t.RunPorter(args...)
+	stdout, output, err := t.RunPorter(args...)
 	require.NoError(t.T, err)
-	return output
+	return stdout, output
 }
 
-// Run a porter command returning stdout and stderr as an error if the command fails.
-func (t Tester) RunPorter(args ...string) (string, error) {
+// Run a porter command returning stderr when it fails
+func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string, err error) {
 	t.T.Helper()
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := t.buildPorterCommand(args...).Stdout(&stdout).Stderr(&stderr)
+	// Copy stderr to stdout so we can return the "full" output printed to the console
+	stdoutBuf := &bytes.Buffer{}
+	stderrBuf := &bytes.Buffer{}
+	output := &bytes.Buffer{}
+	cmd := t.buildPorterCommand(args...)
 	t.T.Log(cmd.String())
-	ran, _, err := cmd.Exec()
+	ran, _, err := cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output)).Exec()
 	if err != nil {
 		if ran {
-			err = errors.New(stderr.String())
+			err = errors.New(stderrBuf.String())
 		}
-		return stdout.String(), err
+		return stdoutBuf.String(), output.String(), err
 	}
-	return stdout.String(), nil
+	return stdoutBuf.String(), output.String(), nil
 }
 
 // Build a porter command, ready to be executed or further customized.
@@ -120,15 +128,11 @@ func (t Tester) Teardown() {
 	os.RemoveAll(t.TestDir)
 
 	// Reset the current directory for the next test
-	os.Chdir(t.originalPwd)
+	t.Chdir(t.originalPwd)
 }
 
 // Create a test PORTER_HOME directory.
 func (t *Tester) createPorterHome() error {
-	cxt := context.NewTestContext(t.T)
-	cxt.UseFilesystem()
-	t.RepoRoot = cxt.FindRepoRoot()
-
 	var err error
 	binDir := filepath.Join(t.RepoRoot, "bin")
 	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
@@ -151,4 +155,9 @@ func (t *Tester) createPorterHome() error {
 	require.NoError(t.T, err, "could not copy config.toml into test PORTER_HOME")
 
 	return nil
+}
+
+func (t Tester) Chdir(dir string) {
+	t.TestContext.Chdir(dir)
+	os.Chdir(dir)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
-	if len(args.CredentialIdentifiers) == 0 {
+	if len(args.Installation.CredentialSets) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}
 
@@ -22,7 +22,7 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 	// calculate its credentials. Then we insert them into the creds map in the order
 	// in which they were supplied on the CLI.
 	resolvedCredentials := secrets.Set{}
-	for _, name := range args.CredentialIdentifiers {
+	for _, name := range args.Installation.CredentialSets {
 		var cset credentials.CredentialSet
 		var err error
 		if r.isPathy(name) {

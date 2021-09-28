@@ -61,6 +61,12 @@ pygmentsStyle = "friendly"
     weight = 32
     parent = "get-started"
   [[menu.main]]
+    name = "QuickStart - Desired State"
+    url = "/quickstart/desired-state/"
+    identifier = "quickstart-desired-state"
+    weight = 32
+    parent = "get-started"
+  [[menu.main]]
     name = "Examples"
     url = "/examples/"
     identifier = "examples"
@@ -68,14 +74,20 @@ pygmentsStyle = "friendly"
     parent = "get-started"
 [[menu.main]]
   name = "Use Porter"
-  identifier = "operators"
+  identifier = "end-users"
   weight = 20
   [[menu.main]]
-    name = "View logs"
-    url = "/operators/logs/"
-    identifier = "operators-logs"
+    name = "Manage Installations"
+    url = "/end-users/installations/"
+    identifier = "end-users-installations"
     weight = 51
-    parent = "operators"
+    parent = "end-users"
+  [[menu.main]]
+    name = "View logs"
+    url = "/end-users/logs/"
+    identifier = "end-users-logs"
+    weight = 52
+    parent = "end-users"
 
 [[menu.main]]
   name = "Contribute"
@@ -355,6 +367,11 @@ pygmentsStyle = "friendly"
     name = "Configuration"
     url = "/configuration"
     identifier = "configuration"
+    parent = "references"
+  [[menu.main]]
+    name = "File Formats"
+    url = "/reference/file-formats/"
+    identifier = "file-formats"
     parent = "references"
   [[menu.main]]
     name = "Docker Images"

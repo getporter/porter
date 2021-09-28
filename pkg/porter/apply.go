@@ -1,11 +1,12 @@
 package porter
 
 import (
-	"time"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/pkg/errors"
 )
@@ -13,7 +14,17 @@ import (
 type ApplyOptions struct {
 	Namespace string
 	File      string
+
+	// Force the installation to be re-applied regardless of anything being changed or not
+	Force bool
+
+	// DryRun only checks if the changes would trigger a bundle run
+	DryRun bool
 }
+
+const ApplyDefaultFormat = printer.FormatPlaintext
+
+var ApplyAllowedFormats = printer.Formats{printer.FormatPlaintext, printer.FormatYaml, printer.FormatJson}
 
 func (o *ApplyOptions) Validate(cxt *context.Context, args []string) error {
 	switch len(args) {
@@ -48,26 +59,47 @@ func (p *Porter) InstallationApply(opts ApplyOptions) error {
 	}
 	input.Namespace = namespace
 
-	existingInstallation, err := p.Claims.GetInstallation(input.Namespace, input.Name)
+	if err = input.Validate(); err != nil {
+		return errors.Wrap(err, "invalid installation")
+	}
+
+	installation, err := p.Claims.GetInstallation(input.Namespace, input.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
 			return errors.Wrapf(err, "could not query for an existing installation document for %s", input)
 		}
 
 		// Create a new installation
-		now := time.Now()
-		input.Created = now
-		input.Modified = now
-		input.Status = claims.InstallationStatus{}
-		err = p.Claims.InsertInstallation(input)
-		return errors.Wrapf(err, "could not insert installation document %s", input)
+		installation = claims.NewInstallation(input.Namespace, input.Name)
+		installation.Apply(input)
+
+		if !opts.DryRun {
+			if err = p.Claims.InsertInstallation(installation); err != nil {
+				return err
+			}
+		}
+		fmt.Fprintf(p.Err, "Created %s installation\n", installation)
+	} else {
+		// Apply the specified changes to the installation
+		installation.Apply(input)
+		if err := installation.Validate(); err != nil {
+			return err
+		}
+
+		if !opts.DryRun {
+			if err := p.Claims.UpdateInstallation(installation); err != nil {
+				return err
+			}
+		}
+		fmt.Fprintf(p.Err, "Updated %s installation\n", installation)
 	}
 
-	// Apply the specified changes to the installation
-	existingInstallation.Apply(input)
-	if err := existingInstallation.Validate(); err != nil {
-		return err
+	reconcileOpts := ReconcileOptions{
+		Namespace:    input.Namespace,
+		Name:         input.Name,
+		Installation: installation,
+		Force:        opts.Force,
+		DryRun:       opts.DryRun,
 	}
-
-	return p.Claims.UpdateInstallation(existingInstallation)
+	return p.ReconcileInstallation(reconcileOpts)
 }

@@ -86,12 +86,10 @@
   },
   "required": [
     "name",
-    "created",
-    "modified",
     "parameters",
     "schemaVersion"
   ],
-  "title": "CNAB Parameter Set json schema",
+  "title": "Parameter Set json schema",
   "type": "object",
   "additionalProperties": false
 }

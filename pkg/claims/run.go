@@ -44,8 +44,19 @@ type Run struct {
 	// TODO(carolynvs): populate this
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest", toml:"bundleDigest"`
 
-	// Parameters are the key/value pairs that were passed in during the operation.
-	Parameters map[string]interface{} `json:"parameters" yaml:"parameters", toml:"parameters"`
+	// ParameterOverrides are the key/value parameter overrides (taking precedence over
+	// parameters specified in a parameter set) specified during the run.
+	ParameterOverrides map[string]interface{} `json:"parameterOverrides" yaml:"parameterOverrides", toml:"parameterOverrides"`
+
+	// CredentialSets is a list of the credential set names used during the run.
+	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
+
+	// ParameterSets is the list of parameter set names used during the run.
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+
+	// Parameters is the full set of resolved parameters stored on the claim.
+	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
+	Parameters map[string]interface{} `json:"parameters" yaml:"parameters" toml:"parameters"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
