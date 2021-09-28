@@ -29,6 +29,7 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
+* [porter mixins create](/cli/porter_mixins_create/)	 - Create a new mixin project based on the getporter/skeletor repository
 * [porter mixins feed](/cli/porter_mixins_feed/)	 - Feed commands
 * [porter mixins install](/cli/porter_mixins_install/)	 - Install a mixin
 * [porter mixins list](/cli/porter_mixins_list/)	 - List installed mixins

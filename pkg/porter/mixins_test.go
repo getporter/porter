@@ -1,11 +1,13 @@
 package porter
 
 import (
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,4 +62,27 @@ func TestPorter_UninstallMixin(t *testing.T) {
 	wantOutput := "Uninstalled exec mixin"
 	gotoutput := p.TestConfig.TestContext.GetOutput()
 	assert.Contains(t, wantOutput, gotoutput)
+}
+
+func TestPorter_CreateMixin(t *testing.T) {
+	p := NewTestPorter(t)
+
+	tempDir, err := p.FileSystem.TempDir("", "porter")
+	require.NoError(t, err)
+
+	defer os.RemoveAll(tempDir)
+
+	opts := MixinsCreateOptions{
+		MixinName:      "MyMixin",
+		AuthorName:     "Author Name",
+		AuthorUsername: "username",
+		DirPath:        tempDir,
+	}
+
+	err = p.CreateMixin(opts)
+	require.NoError(t, err)
+
+	wantOutput := "Created MyMixin mixin\n"
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	assert.Contains(t, wantOutput, gotOutput)
 }
