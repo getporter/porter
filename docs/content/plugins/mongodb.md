@@ -52,4 +52,4 @@ localhost at the default port 27017, using the database name "mydb".
 ### timeout
 
 Sets the timeout (in seconds) used for database queries.
-The default timeout is 2 seconds.
+The default timeout is 10 seconds.
