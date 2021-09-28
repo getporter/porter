@@ -28,12 +28,17 @@ func TestHelloBundle(t *testing.T) {
 
 	test.RequirePorter("install", "--reference", ref)
 	test.RequirePorter("installation", "show", "mybuns")
+	test.RequirePorter("installation", "logs", "show", "-i=mybuns")
 
 	test.RequirePorter("upgrade", "mybuns")
 	test.RequirePorter("installation", "show", "mybuns")
 
-	test.RequirePorter("uninstall", "mybuns")
+	// Check that we can disable logs from persisting
+	test.RequirePorter("uninstall", "mybuns", "--no-logs")
 	test.RequirePorter("installation", "show", "mybuns")
+	_, _, err = test.RunPorter("installation", "logs", "show", "-i=mybuns")
+	require.Error(t, err, "expected log retrieval to fail")
+	require.Contains(t, err.Error(), "no logs found")
 
 	// Verify file permissions on PORTER_HOME
 	test.RequireFileMode(filepath.Join(test.PorterHomeDir, "claims", "*"), 0600)

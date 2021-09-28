@@ -1,6 +1,8 @@
 package smoke
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -45,12 +47,15 @@ func NewTest(t *testing.T) (Test, error) {
 		return *test, err
 	}
 
-	err = test.PorterE("help")
+	os.Setenv("PORTER_HOME", test.PorterHomeDir)
+	os.Setenv("PATH", test.PorterHomeDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	_, _, err = test.RunPorter("help")
 	if err != nil {
 		return *test, err
 	}
 
-	err = test.PorterE("version")
+	_, _, err = test.RunPorter("version")
 	if err != nil {
 		return *test, err
 	}
@@ -60,17 +65,34 @@ func NewTest(t *testing.T) (Test, error) {
 
 // Run a porter command and fail the test if the command returns an error.
 func (t Test) RequirePorter(args ...string) {
-	err := t.PorterE(args...)
+	_, _, err := t.RunPorter(args...)
 	require.NoError(t.T, err)
 }
 
-// Run a porter command, printing stderr when the command fails.
-func (t Test) PorterE(args ...string) error {
+// Run a porter command returning stderr when it fails
+func (t Test) RunPorter(args ...string) (stdout string, combinedoutput string, err error) {
+	t.T.Helper()
+	// Copy stderr to stdout so we can return the "full" output printed to the console
+	stdoutBuf := &bytes.Buffer{}
+	stderrBuf := &bytes.Buffer{}
+	output := &bytes.Buffer{}
+	cmd := t.buildPorterCommand(args...)
+	t.T.Log(cmd.String())
+	ran, _, err := cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output)).Exec()
+	if err != nil {
+		if ran {
+			err = errors.New(stderrBuf.String())
+		}
+		return stdoutBuf.String(), output.String(), err
+	}
+	return stdoutBuf.String(), output.String(), nil
+}
+
+// Build a porter command, ready to be executed or further customized.
+func (t Test) buildPorterCommand(args ...string) shx.PreparedCommand {
 	args = append(args, "--debug")
-	p := shx.Command(t.PorterPath, args...).Stdout(nil)
-	p.Cmd.Env = []string{"PORTER_HOME=" + t.PorterHomeDir}
-	err := p.Run()
-	return errors.Wrapf(err, "error running porter %s", args)
+	return shx.Command("porter", args...).
+		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 
 func (t Test) Teardown() {
