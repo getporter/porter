@@ -15,6 +15,15 @@ type Data struct {
 	// Available values are: docker, buildkit.
 	BuildDriver string `mapstructure:"build-driver"`
 
+	// RuntimeDriver is the driver to use when executing bundles.
+	// Available values are: docker, kubernetes.
+	RuntimeDriver string `mapstructure:"runtime-driver"`
+
+	// AllowDockerHostAccess grants bundles access to the underlying docker host
+	// upon which it is running so that it can do things like build and run containers.
+	// It's a security risk.
+	AllowDockerHostAccess bool `mapstructure:"allow-docker-host-access"`
+
 	// DefaultStoragePlugin is the storage plugin to use when no named storage is specified.
 	DefaultStoragePlugin string `mapstructure:"default-storage-plugin"`
 

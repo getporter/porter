@@ -273,7 +273,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 		Action:                e.parentArgs.Action,
 		Installation:          depInstallation,
 		Driver:                e.parentArgs.Driver,
-		AllowDockerHostAccess: e.parentOpts.AllowAccessToDockerHost,
+		AllowDockerHostAccess: e.parentOpts.AllowDockerHostAccess,
 		Params:                dep.Parameters,
 	}
 
