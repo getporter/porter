@@ -16,16 +16,19 @@ Source: https://github.com/MChorfa/porter-helm3
 
 ### Install or Upgrade
 
+Currently we only support the installation via `--feed-url`. Please make sure to install the mixin as follow:
+
 ```shell
 porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
 ```
+
 ### Mixin Configuration
 
 Helm client version configuration. You can define others minors and patch versions up and down
 
 ```yaml
 - helm3:
-    clientVersion: v3.6.3
+    clientVersion: v3.7.0
 ```
 
 Repositories
@@ -49,10 +52,12 @@ install:
       chart: STABLE_CHART_NAME
       version: CHART_VERSION
       namespace: NAMESPACE
-      replace: BOOL # Remove it if upsert is set to true. This is unsafe in production
       devel: BOOL
       wait: BOOL # default true
-      upsert: BOOL # default false. If set to true `upgrade --install` will be executed
+      noHooks: BOOL # disable pre/post upgrade hooks (default false)
+      skipCrds: BOOL # if set, no CRDs will be installed (default false)
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
       set:
         VAR1: VALUE1
         VAR2: VALUE2
@@ -75,6 +80,10 @@ upgrade:
       resetValues: BOOL
       reuseValues: BOOL
       wait: BOOL # default true
+      noHooks: BOOL # disable pre/post upgrade hooks (default false)
+      skipCrds: BOOL # if set, no CRDs will be installed (default false)
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
       set:
         VAR1: VALUE1
         VAR2: VALUE2
@@ -94,6 +103,10 @@ uninstall:
       releases:
         - RELEASE_NAME1
         - RELEASE_NAME2
+      wait: BOOL # default false, if set It will wait for as long as --timeout
+      noHooks: BOOL # prevent hooks from running during uninstallation
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
 ```
 
 #### Outputs
@@ -130,7 +143,7 @@ install:
       chart: stable/mysql
       version: 0.10.2
       namespace: mydb
-      replace: true
+      skipCrds: true
       set:
         mysqlDatabase: wordpress
         mysqlUser: wordpress
@@ -164,6 +177,7 @@ upgrade:
       wait: true
       resetValues: true
       reuseValues: false
+      noHooks: true
       set:
         mysqlDatabase: mydb
         mysqlUser: myuser
@@ -184,4 +198,22 @@ uninstall:
       namespace: mydb
       releases:
         - mydb
+      wait: true
+      noHooks: true
+```
+
+Execute
+
+```yaml
+login:
+  - helm3:
+      description: "Login to OCI registry"
+      arguments:
+        - registry
+        - login
+        - localhost:5000
+        - "--insecure"
+      flags:
+        u: myuser
+        p: mypass
 ```
