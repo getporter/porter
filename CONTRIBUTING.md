@@ -394,8 +394,8 @@ debug the plugin.
 
 ## Preview documentation
 
-We use [Hugo](gohugo.io) to build our documentation site, and it is hosted on
-[Netlify](netlify.com). You don't have to install Hugo locally because the
+We use [Hugo](https://gohugo.io) to build our documentation site, and it is hosted on
+[Netlify](https://netlify.com). You don't have to install Hugo locally because the
 preview happens inside a docker container.
 
 1. Run `make docs-preview` to start serving the docs. It will watch the file
