@@ -10,7 +10,7 @@ tags: ["mixins", "helm"]
 ---
 
 If you use Helm in your bundles, then you are going to want the latest helm3 mixin release!
-With improved defaults, and new flags supported, the [helm3 v0.1.14 mixin](https://github.com/MChorfa/porter-helm3/releases/tag/v0.1.14) will help make your bundles more reliable.
+With improved defaults, and new flags supported, the [helm3 v0.1.15 mixin](https://github.com/MChorfa/porter-helm3/releases/tag/v0.1.15) will help make your bundles more reliable.
 <!--more-->
 
 If you are still using the [deprecated helm mixin](/blog/helm-mixin-rename/), now's the time to switch over to
@@ -29,15 +29,17 @@ Now the mixin always uses `helm upgrade --install` which improves reliability wh
 The mixin specifies `--create-namespace` by default so that the release namespaces is created automatically when it is not already present.
 
 ### Atomic
-In the v0.1.13 release, the `--atomic` flag is now specified by default, failed helm releases are rolled back so that
+The `--atomic` flag is now specified by default, failed helm releases are rolled back so that
 your release is always in a working state.
 
 ## New Settings
 
-The helm3 mixin now has settings for the `--no-hooks` and `--skip-crds` helm flags:
+The helm3 mixin now supports additional Helm flags:
 
 * The `noHooks` setting prevents hooks from being executed and defaults to false.
 * The `skipCrds` setting skips installing CRDs during upgrade. By default, CRDs are installed if not already present.
+* The `timeout` setting sets how long Helm will wait for the release to complete successfully before rolling it back (due to the atomic behavior).
+* The `debug` setting gives you more insight into why a release failed and was rolled back.
 
 ## Removed Settings
 
