@@ -125,11 +125,11 @@ func (m *Manager) Count(collection string, opts storage.CountOptions) (int64, er
 	return m.store.Count(collection, opts)
 }
 
-func (m *Manager) EnsureIndex(collection string, opts storage.EnsureIndexOptions) error {
+func (m *Manager) EnsureIndex(opts storage.EnsureIndexOptions) error {
 	if err := m.Connect(); err != nil {
 		return err
 	}
-	return m.store.EnsureIndex(collection, opts)
+	return m.store.EnsureIndex(opts)
 }
 
 func (m *Manager) Find(collection string, opts storage.FindOptions, out interface{}) error {

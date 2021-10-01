@@ -2,7 +2,6 @@ package claims
 
 import (
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -34,67 +33,26 @@ func NewClaimStore(datastore storage.Store) ClaimStore {
 }
 
 func (s ClaimStore) Initialize() error {
-	var bigErr *multierror.Error
-
-	// query installations by a namespace (list) or namespace + name (get)
-	err := s.store.EnsureIndex(CollectionInstallations, storage.EnsureIndexOptions{
-		Keys:   []string{"namespace", "name"},
-		Unique: true,
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
+	opts := storage.EnsureIndexOptions{
+		Indices: []storage.Index{
+			// query installations by a namespace (list) or namespace + name (get)
+			{Collection: CollectionInstallations, Keys: []string{"namespace", "name"}, Unique: true},
+			// query runs by installation (list)
+			{Collection: CollectionRuns, Keys: []string{"namespace", "installation"}},
+			// query results by installation (delete or batch get)
+			{Collection: CollectionResults, Keys: []string{"namespace", "installation"}},
+			// query results by run (list)
+			{Collection: CollectionResults, Keys: []string{"runId"}},
+			// query most recent outputs by run (porter installation run show, when we list outputs)
+			{Collection: CollectionOutputs, Keys: []string{"namespace", "installation", "-resultId"}},
+			// query outputs by result (list)
+			{Collection: CollectionOutputs, Keys: []string{"resultId", "name"}, Unique: true},
+			// query most recent outputs by name for an installation
+			{Collection: CollectionOutputs, Keys: []string{"namespace", "installation", "name", "-resultId"}},
+		},
 	}
 
-	// query runs by installation (list)
-	err = s.store.EnsureIndex(CollectionRuns, storage.EnsureIndexOptions{
-		Keys: []string{"namespace", "installation"},
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	// query results by installation (delete or batch get)
-	err = s.store.EnsureIndex(CollectionResults, storage.EnsureIndexOptions{
-		Keys: []string{"namespace", "installation"},
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	// query results by run (list)
-	err = s.store.EnsureIndex(CollectionResults, storage.EnsureIndexOptions{
-		Keys: []string{"runId"},
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	// query most recent outputs by run (porter installation run show, when we list outputs)
-	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Keys: []string{"namespace", "installation", "-resultId"},
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	// query outputs by result (list)
-	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Keys:   []string{"resultId", "name"},
-		Unique: true,
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	// query most recent outputs by name for an installation
-	err = s.store.EnsureIndex(CollectionOutputs, storage.EnsureIndexOptions{
-		Keys: []string{"namespace", "installation", "name", "-resultId"},
-	})
-	if err != nil {
-		bigErr = multierror.Append(bigErr, err)
-	}
-
-	return bigErr.ErrorOrNil()
+	return s.store.EnsureIndex(opts)
 }
 
 func (s ClaimStore) ListInstallations(namespace string, name string, labels map[string]string) ([]Installation, error) {

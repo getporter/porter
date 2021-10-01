@@ -24,7 +24,7 @@ func NewPlugin(cxt *context.Context, pluginConfig interface{}) (plugins.StorageP
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",
-		Timeout:  2,
+		Timeout:  10,
 	}
 	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
 		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)

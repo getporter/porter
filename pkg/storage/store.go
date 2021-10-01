@@ -18,7 +18,7 @@ type Store interface {
 
 	// EnsureIndex makes sure that the specified index exists as specified.
 	// If it does exist with a different definition, the index is recreated.
-	EnsureIndex(collection string, opts EnsureIndexOptions) error
+	EnsureIndex(opts EnsureIndexOptions) error
 
 	// Find queries a collection, optionally projecting a subset of fields, into
 	// the specified out value.

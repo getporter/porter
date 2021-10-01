@@ -127,11 +127,10 @@ func TestStamp_DecodeManifest(t *testing.T) {
 }
 
 func TestConfig_DigestManifest(t *testing.T) {
-	t.Parallel()
+	// Do not run in parallel, it modifies global state
+	defer func() { pkg.Version = "" }()
 
 	t.Run("updated version", func(t *testing.T) {
-		t.Parallel()
-
 		c := config.NewTestConfig(t)
 		c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 

@@ -50,13 +50,13 @@ func (a PluginAdapter) Aggregate(collection string, opts AggregateOptions, out i
 	return a.unmarshalSlice(rawResults, out)
 }
 
-func (a PluginAdapter) EnsureIndex(collection string, opts EnsureIndexOptions) error {
+func (a PluginAdapter) EnsureIndex(opts EnsureIndexOptions) error {
 	err := a.Connect()
 	if err != nil {
 		return err
 	}
 
-	return a.plugin.EnsureIndex(opts.ToPluginOptions(collection))
+	return a.plugin.EnsureIndex(opts.ToPluginOptions())
 }
 
 func (a PluginAdapter) Count(collection string, opts CountOptions) (int64, error) {
