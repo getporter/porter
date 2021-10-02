@@ -1,42 +1,5 @@
-[
-  {
-    "claimID": "1",
-    "version": "",
-    "action": "install",
-    "started": "2020-04-18T01:02:03.000000004Z",
-    "stopped": "0001-01-01T00:00:00Z",
-    "status": "succeeded"
-  },
-  {
-    "claimID": "2",
-    "version": "",
-    "action": "uninstall",
-    "started": "2020-04-18T01:02:03.000000004Z",
-    "stopped": "0001-01-01T00:00:00Z",
-    "status": ""
-  }
-]
-- claimID: "1"
-  version: ""
-  action: install
-  started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
-  status: succeeded
-- claimID: "2"
-  version: ""
-  action: uninstall
-  started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
-  status: ""
-- claimID: "4"
-  version: ""
-  action: install
-  started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
-  status: succeeded
-- claimID: "5"
-  version: ""
-  action: uninstall
-  started: 2020-04-18T01:02:03.000000004Z
-  stopped: 0001-01-01T00:00:00Z
-  status: ""
+--------------------------------------------------------
+  Run ID  Action     Started     Stopped     Status     
+--------------------------------------------------------
+  1       install    2020-04-18  0001-01-01  succeeded  
+  2       uninstall  2020-04-18  0001-01-01  succeeded  

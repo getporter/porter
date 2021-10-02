@@ -53,26 +53,32 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 	})
+}
 
+func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 	outputTestcases := []struct {
 		name       string
 		format     printer.Format
 		outputFile string
 	}{
-		{name: "json", format: printer.FormatJson, outputFile: "testdata/runs/expected-output.json"},
 		{name: "yaml", format: printer.FormatYaml, outputFile: "testdata/runs/expected-output.yaml"},
-		{name: "plain", format: printer.FormatPlaintext, outputFile: "testdata/runs/expected-output.txt"},
+		{name: "json", format: printer.FormatJson, outputFile: "testdata/runs/expected-output.json"},
+		{name: "table", format: printer.FormatTable, outputFile: "testdata/runs/expected-output.txt"},
 	}
 
 	for _, tc := range outputTestcases {
+		p := NewTestPorter(t)
+		defer p.Teardown()
+
 		installation := p.TestClaims.CreateInstallation(claims.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)
 
 		installRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionInstall), p.TestClaims.SetMutableRunValues)
 		uninstallRun := p.TestClaims.CreateRun(installation.NewRun(cnab.ActionUninstall), p.TestClaims.SetMutableRunValues)
 		result := p.TestClaims.CreateResult(installRun.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
+		result2 := p.TestClaims.CreateResult(uninstallRun.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 
 		installation.ApplyResult(installRun, result)
-		installation.ApplyResult(uninstallRun, result)
+		installation.ApplyResult(uninstallRun, result2)
 		installation.Status.InstallationCompleted = true
 
 		require.NoError(t, p.TestClaims.UpdateInstallation(installation))
