@@ -16,6 +16,8 @@ Source: https://github.com/MChorfa/porter-helm3
 
 ### Install or Upgrade
 
+Currently we only support the installation via `--feed-url`. Please make sure to install the mixin as follow:
+
 ```shell
 porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
 ```
@@ -26,7 +28,7 @@ Helm client version configuration. You can define others minors and patch versio
 
 ```yaml
 - helm3:
-    clientVersion: v3.3.4
+    clientVersion: v3.7.0
 ```
 
 Repositories
@@ -50,13 +52,19 @@ install:
       chart: STABLE_CHART_NAME
       version: CHART_VERSION
       namespace: NAMESPACE
-      replace: BOOL # Remove it if upsert is set to true. This is unsafe in production
       devel: BOOL
       wait: BOOL # default true
-      upsert: BOOL # default false. If set to true `upgrade --install` will be executed
+      noHooks: BOOL # disable pre/post upgrade hooks (default false)
+      skipCrds: BOOL # if set, no CRDs will be installed (default false)
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
       set:
         VAR1: VALUE1
         VAR2: VALUE2
+      values: # Array of paths to: Set/Override multiple values and multi-lines values
+        - PATH_TO_THE_VALUES_FILE_1
+        - PATH_TO_THE_VALUES_FILE_2
+        - PATH_TO_THE_VALUES_FILE_3
 ```
 
 Upgrade
@@ -72,9 +80,17 @@ upgrade:
       resetValues: BOOL
       reuseValues: BOOL
       wait: BOOL # default true
+      noHooks: BOOL # disable pre/post upgrade hooks (default false)
+      skipCrds: BOOL # if set, no CRDs will be installed (default false)
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
       set:
         VAR1: VALUE1
         VAR2: VALUE2
+      values: # Array of paths to: Set/Override multiple values and multi-line values
+        - PATH_TO_THE_VALUES_FILE_1
+        - PATH_TO_THE_VALUES_FILE_2
+        - PATH_TO_THE_VALUES_FILE_3
 ```
 
 Uninstall
@@ -86,7 +102,11 @@ uninstall:
       namespace: NAMESPACE
       releases:
         - RELEASE_NAME1
-        - RELASE_NAME2
+        - RELEASE_NAME2
+      wait: BOOL # default false, if set It will wait for as long as --timeout
+      noHooks: BOOL # prevent hooks from running during uninstallation
+      timeout:  DURATION # time to wait for any individual Kubernetes operation
+      debug: BOOL # enable verbose output (default false)
 ```
 
 #### Outputs
@@ -123,10 +143,14 @@ install:
       chart: stable/mysql
       version: 0.10.2
       namespace: mydb
-      replace: true
+      skipCrds: true
       set:
         mysqlDatabase: wordpress
         mysqlUser: wordpress
+      values:
+        - "./manifests/values_1.yaml"
+        - "./manifests/values_2.yaml"
+        - "./manifests/values_3.yaml"
       outputs:
         - name: mysql-root-password
           secret: mydb-mysql
@@ -153,11 +177,16 @@ upgrade:
       wait: true
       resetValues: true
       reuseValues: false
+      noHooks: true
       set:
         mysqlDatabase: mydb
         mysqlUser: myuser
         livenessProbe.initialDelaySeconds: 30
         persistence.enabled: true
+      values:
+        - "./manifests/values_1.yaml"
+        - "./manifests/values_2.yaml"
+        - "./manifests/values_3.yaml"
 ```
 
 Uninstall
@@ -169,4 +198,22 @@ uninstall:
       namespace: mydb
       releases:
         - mydb
+      wait: true
+      noHooks: true
+```
+
+Execute
+
+```yaml
+login:
+  - helm3:
+      description: "Login to OCI registry"
+      arguments:
+        - registry
+        - login
+        - localhost:5000
+        - "--insecure"
+      flags:
+        u: myuser
+        p: mypass
 ```

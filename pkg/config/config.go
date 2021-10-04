@@ -53,6 +53,9 @@ type Config struct {
 	Data       Data
 	DataLoader DataStoreLoaderFunc
 
+	// ConfigFilePath is the path to the loaded configuration file
+	ConfigFilePath string
+
 	// Cache the resolved Porter home directory
 	porterHome string
 

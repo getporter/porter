@@ -117,7 +117,6 @@ func (c *TestContext) Teardown() {
 	}
 }
 
-// AddTestFileFromRoot adds a test file where the filepath is relative to the root of the repository.
 // Use this when the testfile you are referencing is in a different directory than the test.
 func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
 	pathFromRoot := filepath.Join(c.FindRepoRoot(), src)
@@ -125,7 +124,8 @@ func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
 }
 
 // AddTestFile adds a test file where the filepath is relative to the test directory.
-func (c *TestContext) AddTestFile(src, dest string) []byte {
+// mode is optional and only the first one passed is used.
+func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte {
 	if strings.Contains(src, "..") {
 		c.T.Fatal(errors.New("Use AddTestFileFromRoot when referencing a test file in a different directory than the test"))
 	}
@@ -135,7 +135,19 @@ func (c *TestContext) AddTestFile(src, dest string) []byte {
 		c.T.Fatal(errors.Wrapf(err, "error reading file %s from host filesystem", src))
 	}
 
-	err = c.FileSystem.WriteFile(dest, data, os.ModePerm)
+	var perms os.FileMode
+	if len(mode) == 0 {
+		ext := filepath.Ext(dest)
+		if ext == ".sh" || ext == "" {
+			perms = 0700
+		} else {
+			perms = 0600
+		}
+	} else {
+		perms = mode[0]
+	}
+
+	err = c.FileSystem.WriteFile(dest, data, perms)
 	if err != nil {
 		c.T.Fatal(errors.Wrapf(err, "error writing file %s to test filesystem", dest))
 	}
@@ -144,10 +156,9 @@ func (c *TestContext) AddTestFile(src, dest string) []byte {
 }
 
 func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
-	return c.FileSystem.WriteFile(dest, file, os.ModePerm)
+	return c.FileSystem.WriteFile(dest, file, 0600)
 }
 
-// AddTestDirectoryFromRoot adds a test directory where the filepath is relative to the root of the repository.
 // Use this when the directory you are referencing is in a different directory than the test.
 func (c *TestContext) AddTestDirectoryFromRoot(srcDir, destDir string) {
 	pathFromRoot := filepath.Join(c.FindRepoRoot(), srcDir)
@@ -155,7 +166,8 @@ func (c *TestContext) AddTestDirectoryFromRoot(srcDir, destDir string) {
 }
 
 // AddTestDirectory adds a test directory where the filepath is relative to the test directory.
-func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
+// mode is optional and should only be specified once
+func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMode) {
 	if strings.Contains(srcDir, "..") {
 		c.T.Fatal(errors.New("Use AddTestDirectoryFromRoot when referencing a test directory in a different directory than the test"))
 	}
@@ -174,10 +186,10 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string) {
 		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
 
 		if info.IsDir() {
-			return c.FileSystem.MkdirAll(dest, os.ModePerm)
+			return c.FileSystem.MkdirAll(dest, 0700)
 		}
 
-		c.AddTestFile(path, dest)
+		c.AddTestFile(path, dest, mode...)
 		return nil
 	})
 	if err != nil {
@@ -211,7 +223,7 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		}
 	}
 
-	err = c.FileSystem.Chmod(newfile.Name(), os.ModePerm)
+	err = c.FileSystem.Chmod(newfile.Name(), 0700)
 	if err != nil {
 		c.T.Fatal(err)
 	}
@@ -293,7 +305,7 @@ func (c *TestContext) CompareGoldenFile(goldenFile string, got string) {
 
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
-		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0755), "could not update golden file %s", goldenFile)
+		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0600), "could not update golden file %s", goldenFile)
 	} else {
 		assert.Equal(t, string(wantSchema), got, "The test output doesn't match the expected output in %s. If this was intentional, run mage updateTestfiles to fix the tests.", goldenFile)
 	}

@@ -4,9 +4,9 @@
   "modified": "2020-06-23T13:31:44.692834-06:00",
   "parameters": [
     {
-      "name": "mysql#database-name",
+      "name": "mysql#probe-timeout",
       "source": {
-        "value": "mydb"
+        "value": "2"
       }
     }
   ]

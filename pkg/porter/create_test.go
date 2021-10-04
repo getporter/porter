@@ -1,12 +1,14 @@
 package porter
 
 import (
+	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
-
 	"github.com/stretchr/testify/assert"
+
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,30 +19,31 @@ func TestCreate(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	configFileExists, err := p.FileSystem.Exists("porter.yaml")
+	configFileStats, err := p.FileSystem.Stat("porter.yaml")
 	require.NoError(t, err)
-	assert.True(t, configFileExists)
+	tests.AssertFilePermissionsEqual(t, "porter.yaml", os.FileMode(0600), configFileStats.Mode())
 
 	// Verify that helpers is present and executable
 	helperFileStats, err := p.FileSystem.Stat("helpers.sh")
 	require.NoError(t, err)
-	assert.Equal(t, "-rwxr-xr-x", helperFileStats.Mode().String())
+	tests.AssertFilePermissionsEqual(t, "helpers.sh", os.FileMode(0700), helperFileStats.Mode())
 
-	dockerfileExists, err := p.FileSystem.Exists("Dockerfile.tmpl")
+	dockerfileStats, err := p.FileSystem.Stat("Dockerfile.tmpl")
 	require.NoError(t, err)
-	assert.True(t, dockerfileExists)
+	tests.AssertFilePermissionsEqual(t, "Dockerfile.tmpl", os.FileMode(0600), dockerfileStats.Mode())
 
-	readmeExists, err := p.FileSystem.Exists("README.md")
+	readmeStats, err := p.FileSystem.Stat("README.md")
 	require.NoError(t, err)
-	assert.True(t, readmeExists)
+	tests.AssertFilePermissionsEqual(t, "README.md", os.FileMode(0600), readmeStats.Mode())
 
-	gitignore, err := p.FileSystem.Exists(".gitignore")
+	gitignoreStats, err := p.FileSystem.Stat(".gitignore")
 	require.NoError(t, err)
-	assert.True(t, gitignore)
+	tests.AssertFilePermissionsEqual(t, ".gitignore", os.FileMode(0600), gitignoreStats.Mode())
 
-	dockerignore, err := p.FileSystem.Exists(".dockerignore")
+	dockerignoreStats, err := p.FileSystem.Stat(".dockerignore")
 	require.NoError(t, err)
-	assert.True(t, dockerignore)
+	tests.AssertFilePermissionsEqual(t, ".dockerignore", os.FileMode(0600), dockerignoreStats.Mode())
+
 }
 
 func TestCreateWithBuildkit(t *testing.T) {

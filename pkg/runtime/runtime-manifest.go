@@ -480,7 +480,7 @@ func (m *RuntimeManifest) Initialize() error {
 				return errors.Wrapf(err, "unable to decode parameter %s", paramName)
 			}
 
-			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, os.ModePerm)
+			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, 0600)
 			if err != nil {
 				return errors.Wrapf(err, "unable to write decoded parameter %s", paramName)
 			}
@@ -492,7 +492,7 @@ func (m *RuntimeManifest) Initialize() error {
 
 func (m *RuntimeManifest) createOutputsDir() error {
 	// Ensure outputs directory exists
-	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, 0755); err != nil {
+	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, 0700); err != nil {
 		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
 	}
 	return nil

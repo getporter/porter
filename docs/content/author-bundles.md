@@ -89,7 +89,7 @@ mixins:
 - az:
     extensions:
     - azure-cli-iot-ext
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -355,7 +355,7 @@ Each step has a mixin, a `description`, and optionally `outputs`.
 
 ```yaml
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: mydb
     chart: bitnami/mysql

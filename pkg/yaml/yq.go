@@ -3,6 +3,7 @@ package yaml
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"sync"
 
 	"get.porter.sh/porter/pkg/config"
@@ -74,7 +75,7 @@ func (e *Editor) ReadFile(src string) error {
 }
 
 func (e *Editor) WriteFile(dest string) error {
-	destFile, err := e.context.FileSystem.Create(dest)
+	destFile, err := e.context.FileSystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return errors.Wrapf(err, "could not open destination manifest location %s", config.Name)
 	}

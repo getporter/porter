@@ -16,7 +16,7 @@ install:
       command: ./helpers/{{ parameters.scriptName }}.sh
       arguments:
         - "{{ installation.name }}"
-  - helm:
+  - helm3:
       description: "Install Java App"
       name: "{{ bundle.parameters.cool-app}}"
       chart: bitnami/wordpress
@@ -52,7 +52,7 @@ In the example below, we install a helm chart and set the release name to the in
 
 ```yaml
 install:
-  helm:
+  helm3:
     description: Install myapp
     name: "{{ installation.name }}"
     chart: charts/myapp
@@ -82,7 +82,7 @@ custom:
     version: "0.2.0"
 
 install:
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "{{ installation.name }}"
       chart: "{{ bundle.custom.chart.name }}"
@@ -104,7 +104,7 @@ parameters:
     env: RELEASE_NAMESPACE
 
 install:
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "myRelease"
       chart: "myChart"
@@ -124,7 +124,7 @@ parameters:
     env: MYSQL_PASSWORD
 
 install:
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "myRelease"
       chart: "myChart"
@@ -149,7 +149,7 @@ install:
       outputs:
         - name: username
           regex: "(.*)" # Capture all of stdout
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "myRelease"
       chart: "myChart"
@@ -179,7 +179,7 @@ dependencies:
       reference: getporter/mysql:v0.1.3
 
 install:
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "myRelease"
       chart: "myChart"
@@ -206,7 +206,7 @@ images:
       digest: "sha256:85b1a9b4b60a4cf73a23517dad677e64edf467107fa7d58fce9c50e6a3e4c914"
 
 install:
-  - helm:
+  - helm3:
       description: "Install my chart"
       name: "mysqlServer"
       chart: "mysql"

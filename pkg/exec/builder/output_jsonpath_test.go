@@ -64,6 +64,8 @@ func TestJsonPathOutputs(t *testing.T) {
 		{"array", "$[*].id", `["1085517466897181794"]`},
 		{"object", "$[0].tags", `{"fingerprint":"42WmSpB8rSM="}`},
 		{"integer", "$[0].index", `0`},
+		{"big integer", "$[0]._id", `123123123`},
+		{"exponential notation", "$[0]._bigId", `1.23123123e+08`},
 		{"boolean", "$[0].deletionProtection", `false`},
 		{"string", "$[0].cpuPlatform", `Intel Haswell`},
 	}

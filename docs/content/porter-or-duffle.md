@@ -101,7 +101,7 @@ version: 0.1.0
 registry: getporter
 
 mixins:
-  - helm:
+  - helm3:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
@@ -116,7 +116,7 @@ parameters:
     default: mywordpress
 
 install:
-  - helm:
+  - helm3:
       description: "Install MySQL"
       name: mywordpress-mysql
       chart: bitnami/mysql
@@ -132,7 +132,7 @@ install:
         - name: dbpassword
           secret: mywordpress-mysql
           key: mysql-password
-  - helm:
+  - helm3:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress
@@ -144,7 +144,7 @@ install:
         externalDatabase.password: "{{ bundle.outputs.dbpassword }}"
 
 uninstall:
-  - helm:
+  - helm3:
       description: "Uninstall Wordpress Helm Chart"
       releases:
       - "{{ bundle.parameters.wordpress-name }}"
@@ -209,7 +209,7 @@ version: 0.1.3
 registry: getporter
 
 mixins:
-  - helm:
+  - helm3:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
@@ -224,7 +224,7 @@ parameters:
     default: mydb
 
 install:
-  - helm:
+  - helm3:
       description: "Install MySQL"
       name: mysql
       chart: bitnami/mysql
@@ -245,7 +245,7 @@ install:
 #### Wordpress Porter Manifest
 ```yaml
 mixins:
-  - helm:
+  - helm3:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
@@ -271,7 +271,7 @@ credentials:
     path: /root/.kube/config
 
 install:
-  - helm:
+  - helm3:
       description: "Install Wordpress"
       name: "{{ bundle.parameters.wordpress-name }}"
       chart: bitnami/wordpress

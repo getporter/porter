@@ -1,6 +1,6 @@
 mixins:
 - exec
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -24,13 +24,17 @@ parameters:
   env: MYSQL_USER
 - name: namespace
   type: string
-  default: ''
+  default: 'mysql'
 - name: mysql-name
   type: string
   default: porter-ci-mysql
+- name: probe-timeout
+  description: Timeout for liveness and readiness probes
+  type: integer
+  default: 1
 
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: "{{ bundle.parameters.mysql-name }}"
     chart: bitnami/mysql
@@ -40,6 +44,8 @@ install:
     set:
       db.name: "{{ bundle.parameters.database-name}}"
       db.user: "{{ bundle.parameters.mysql-user }}"
+      primary.readinessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
+      primary.livenessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
     outputs:
     - name: mysql-root-password
       secret: "{{ bundle.parameters.mysql-name }}"
@@ -56,7 +62,7 @@ ping:
         - ping
 
 upgrade:
-  - helm:
+  - helm3:
       description: "Upgrade MySQL"
       name: "{{ bundle.parameters.mysql-name }}"
       namespace: "{{ bundle.parameters.namespace }}"
@@ -71,7 +77,7 @@ upgrade:
         key: mysql-password
 
 uninstall:
-- helm:
+- helm3:
     description: "Uninstall MySQL"
     purge: true
     releases:

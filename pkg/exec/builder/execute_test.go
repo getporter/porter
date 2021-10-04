@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 func TestExecuteSingleStepAction(t *testing.T) {
 	c := context.NewTestContext(t)
 
-	err := c.FileSystem.WriteFile("config.txt", []byte("abc123"), 0644)
+	err := c.FileSystem.WriteFile("config.txt", []byte("abc123"), 0600)
 	require.NoError(t, err)
 
 	a := TestAction{

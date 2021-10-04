@@ -55,7 +55,7 @@ func LoadMetadata() GitMetadata {
 
 	// Save github action environment variables
 	if githubEnv, ok := os.LookupEnv("GITHUB_ENV"); ok {
-		err := ioutil.WriteFile(githubEnv, []byte("PERMALINK="+gitMetadata.Permalink), 0644)
+		err := ioutil.WriteFile(githubEnv, []byte("PERMALINK="+gitMetadata.Permalink), 0600)
 		mgx.Must(errors.Wrapf(err, "couldn't persist PERMALINK to a GitHub Actions environment variable"))
 	}
 

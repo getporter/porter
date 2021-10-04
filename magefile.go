@@ -110,7 +110,7 @@ func ConfigureAgent() error {
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
 	gobin := gopath.GetGopathBin()
-	err = os.MkdirAll(gobin, 0755)
+	err = os.MkdirAll(gobin, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
 	}
@@ -121,25 +121,38 @@ func ConfigureAgent() error {
 
 // Install mixins used by tests and example bundles, if not already installed
 func GetMixins() error {
-	mixinTag := os.Getenv("MIXIN_TAG")
-	if mixinTag == "" {
-		mixinTag = "canary"
+	defaultMixinVersion := os.Getenv("MIXIN_TAG")
+	if defaultMixinVersion == "" {
+		defaultMixinVersion = "canary"
 	}
 
-	mixins := []string{"docker", "docker-compose", "helm", "arm", "terraform", "kubernetes"}
+	mixins := []struct {
+		name    string
+		feed    string
+		version string
+	}{
+		{name: "docker"},
+		{name: "docker-compose"},
+		{name: "arm"},
+		{name: "terraform"},
+		{name: "kubernetes"},
+		{name: "helm3", feed: "https://mchorfa.github.io/porter-helm3/atom.xml", version: "v0.1.14"},
+	}
 	var errG errgroup.Group
 	for _, mixin := range mixins {
-		mixinDir := filepath.Join("bin/mixins/", mixin)
+		mixin := mixin
+		mixinDir := filepath.Join("bin/mixins/", mixin.name)
 		if _, err := os.Stat(mixinDir); err == nil {
-			log.Println("Mixin already installed into bin:", mixin)
+			log.Println("Mixin already installed into bin:", mixin.name)
 			continue
 		}
 
-		mixin := mixin
 		errG.Go(func() error {
-			log.Println("Installing mixin:", mixin)
-			mixinURL := mixinsURL + mixin
-			return porter("mixin", "install", mixin, "--version", mixinTag, "--url", mixinURL).Run()
+			log.Println("Installing mixin:", mixin.name)
+			if mixin.version == "" {
+				mixin.version = defaultMixinVersion
+			}
+			return porter("mixin", "install", mixin.name, "--version", mixin.version, "--feed-url", mixin.feed).Run()
 		})
 	}
 
@@ -349,7 +362,7 @@ func UseXBuildBinaries() error {
 		log.Printf("Copying %s to %s", src, dest)
 
 		destDir := filepath.Dir(dest)
-		os.MkdirAll(destDir, 0755)
+		os.MkdirAll(destDir, 0700)
 
 		err := sh.Copy(dest, src)
 		if err != nil {
@@ -362,7 +375,7 @@ func UseXBuildBinaries() error {
 
 // Run `chmod +x -R bin`.
 func SetBinExecutable() error {
-	err := chmodRecursive("bin", 0755)
+	err := chmodRecursive("bin", 0700)
 	return errors.Wrap(err, "could not set +x on the test bin")
 }
 
@@ -401,7 +414,7 @@ func Install() {
 	fmt.Println("installing Porter from bin to", porterHome)
 
 	// Copy porter binaries
-	mgx.Must(os.MkdirAll(porterHome, 0750))
+	mgx.Must(os.MkdirAll(porterHome, 0700))
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -417,7 +430,7 @@ func Install() {
 		mixin := fi.Name()
 		srcDir := filepath.Join(mixinsDir, mixin)
 		destDir := filepath.Join(porterHome, "mixins", mixin)
-		mgx.Must(os.MkdirAll(destDir, 0750))
+		mgx.Must(os.MkdirAll(destDir, 0700))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))

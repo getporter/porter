@@ -84,7 +84,7 @@ Use "helm [command] --help" for more information about a command.
 Porter will pass the entire step, in YAML form, to the mixin. Porter expects the step YAML to have a `description` field and an array of optional `outputs`, and allows each mixin to process the remaining structure of the YAML as needed. For example, the `helm` mixin expects to be passed a YAML document like this:
 
 ```yaml
-helm:
+helm3:
   description: "Install MySQL"
   name: porter-ci-mysql
   chart: bitnami/mysql

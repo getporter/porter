@@ -58,7 +58,7 @@ func (p *Porter) Archive(opts ArchiveOptions) error {
 		return err
 	}
 
-	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0644)
+	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0600)
 
 	exp := &exporter{
 		fs:                    p.Config.FileSystem,
@@ -97,7 +97,7 @@ func (ex *exporter) export() error {
 	}
 	defer ex.fs.RemoveAll(archiveDir)
 
-	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, 0666)
+	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}
