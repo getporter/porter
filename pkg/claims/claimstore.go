@@ -66,8 +66,11 @@ func (s ClaimStore) ListInstallations(namespace string, name string, labels map[
 	return out, err
 }
 
-func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, error) {
-	var out []Run
+func(s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[string][]Result, error) {
+	var runs []Run
+	var err error
+	var results []Result
+
 	opts := storage.FindOptions{
 		Sort: []string{"_id"},
 		Filter: bson.M{
@@ -75,8 +78,29 @@ func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, erro
 			"installation": installation,
 		},
 	}
-	err := s.store.Find(CollectionRuns, opts, &out)
-	return out, err
+	err = s.store.Find(CollectionRuns, opts, &runs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = s.store.Find(CollectionResults, opts, &results)
+	if err != nil {
+		return runs, nil, err
+	}
+
+	resultsMap := make(map[string][]Result, len(runs))
+
+	for _, run := range runs {
+		resultsMap[run.ID] = []Result{}
+	}
+
+	for _, res := range results {
+		if _, ok := resultsMap[res.RunID]; ok {
+			resultsMap[res.RunID] = append(resultsMap[res.RunID], res)
+		}
+	}
+
+	return runs, resultsMap, err
 }
 
 func (s ClaimStore) ListResults(runID string) ([]Result, error) {

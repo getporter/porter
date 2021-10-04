@@ -38,5 +38,6 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 * [porter installations list](/cli/porter_installations_list/)	 - List installed bundles
 * [porter installations logs](/cli/porter_installations_logs/)	 - Installation Logs commands
 * [porter installations output](/cli/porter_installations_output/)	 - Output commands
+* [porter installations runs](/cli/porter_installations_runs/)	 - Commands for working with runs of an Installation
 * [porter installations show](/cli/porter_installations_show/)	 - Show an installation of a bundle
 

@@ -207,10 +207,11 @@ func TestClaimStore_Run(t *testing.T) {
 	cp := generateClaimData(t)
 
 	t.Run("ListRuns", func(t *testing.T) {
-		runs, err := cp.ListRuns("dev", "foo")
+		runs, resultsMap, err := cp.ListRuns("dev", "foo")
 		require.NoError(t, err, "Failed to read claims: %s", err)
 
 		require.Len(t, runs, 4, "Expected 4 runs")
+		require.Len(t, resultsMap, 4, "Results expected to have 4 runs")
 		assert.Equal(t, cnab.ActionInstall, runs[0].Action)
 		assert.Equal(t, cnab.ActionUpgrade, runs[1].Action)
 		assert.Equal(t, "test", runs[2].Action)
@@ -219,13 +220,14 @@ func TestClaimStore_Run(t *testing.T) {
 
 	t.Run("ListRuns - bundle not yet run", func(t *testing.T) {
 		// It's now possible for someone to create an installation and not immediately have any runs.
-		runs, err := cp.ListRuns("dev", "missing")
+		runs, resultsMap, err := cp.ListRuns("dev", "missing")
 		require.NoError(t, err)
 		assert.Empty(t, runs)
+		assert.Empty(t, resultsMap)
 	})
 
 	t.Run("GetRun", func(t *testing.T) {
-		runs, err := cp.ListRuns("dev", "foo")
+		runs, _, err := cp.ListRuns("dev", "foo")
 		require.NoError(t, err, "ListRuns failed")
 
 		assert.NotEmpty(t, runs, "no claims were found")
@@ -261,15 +263,17 @@ func TestClaimStore_Results(t *testing.T) {
 	cp := generateClaimData(t)
 	defer cp.Teardown()
 
-	barRuns, err := cp.ListRuns("dev", "bar")
+	barRuns, resultsMap, err := cp.ListRuns("dev", "bar")
 	require.NoError(t, err, "ListRuns failed")
 	require.Len(t, barRuns, 1, "expected 1 claim")
+	require.Len(t, resultsMap, 1, "expected 1 claim")
 	runID := barRuns[0].ID // this claim has multiple results
 
 	t.Run("ListResults", func(t *testing.T) {
 		results, err := cp.ListResults(runID)
 		require.NoError(t, err, "ListResults failed")
 		assert.Len(t, results, 2, "expected 2 results")
+		assert.Len(t, resultsMap[runID], 2, "expected 2 results for runID in results map")
 	})
 
 	t.Run("GetResult", func(t *testing.T) {
@@ -294,7 +298,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 	cp := generateClaimData(t)
 	defer cp.Teardown()
 
-	fooRuns, err := cp.ListRuns("dev", "foo")
+	fooRuns, _, err := cp.ListRuns("dev", "foo")
 	require.NoError(t, err, "ListRuns failed")
 	require.NotEmpty(t, fooRuns, "expected foo to have a run")
 	foo := fooRuns[1]
@@ -304,7 +308,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 	fooResult := fooResults[0]
 	resultID := fooResult.ID // this result has an output
 
-	barRuns, err := cp.ListRuns("dev", "bar")
+	barRuns, _, err := cp.ListRuns("dev", "bar")
 	require.NoError(t, err, "ReadAllClaims failed")
 	require.Len(t, barRuns, 1, "expected bar to have a run")
 	barRun := barRuns[0]
