@@ -455,7 +455,7 @@ Here's how to build porter so that you can use it locally:
    That cluster has a local registry running that you can publish to, and it will pull images from it, 
    running on localhost:5000.
 1. Run the following command from the porter repository to build the Porter Agent image, and publish it
-   to the test cluster's registry. `mage LocalPorterAgentBuild`.
+   to the test cluster's registry. `mage XBuildAll LocalPorterAgentBuild`.
 1. Edit your AgentConfig in the Porter Operator and set it to use your local build of the porter-agent.
 
 ```yaml
