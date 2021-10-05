@@ -49,7 +49,7 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 		// Try to read config
 		v.AddConfigPath(home)
 		if cfg.Debug {
-			fmt.Fprintln(cfg.Err, "reading Porter config from", home)
+			fmt.Fprintln(cfg.Err, "detecting Porter config in", home)
 		}
 		err = v.ReadInConfig()
 		if err != nil {
@@ -58,6 +58,9 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 			}
 		}
 
+		if cfg.Debug {
+			fmt.Fprintln(cfg.Err, "loaded Porter config from", v.ConfigFileUsed())
+		}
 		err = v.Unmarshal(&cfg.Data)
 		return errors.Wrapf(err, "error unmarshaling config at %q", v.ConfigFileUsed())
 	}

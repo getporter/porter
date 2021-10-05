@@ -101,7 +101,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 					},
 					Driver: "docker",
 				},
-				AllowAccessToDockerHost: true,
+				AllowDockerHostAccess: true,
 			},
 		}
 		p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
@@ -120,7 +120,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 			"porter-state":    nil,
 		}
 
-		assert.Equal(t, opts.AllowAccessToDockerHost, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
+		assert.Equal(t, opts.AllowDockerHostAccess, args.AllowDockerHostAccess, "AllowDockerHostAccess not populated correctly")
 		assert.Equal(t, opts.Driver, args.Driver, "Driver not populated correctly")
 		assert.EqualValues(t, expectedParams, args.Params, "Params not populated correctly")
 		assert.Equal(t, existingInstall, args.Installation, "Installation not populated correctly")
@@ -146,5 +146,43 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
+	})
+}
+
+func TestBundleActionOptions_Validate(t *testing.T) {
+	t.Run("allow docker host access", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.DataLoader = config.LoadFromEnvironment()
+		p.FileSystem.WriteFile("/root/.porter/config.yaml", []byte("allow-docker-host-access: true"), 0600)
+		require.NoError(t, p.LoadData())
+
+		opts := NewInstallOptions()
+		opts.Reference = "getporter/porter-hello:v0.1.1"
+		require.NoError(t, opts.Validate(nil, p.Porter))
+		assert.True(t, opts.AllowDockerHostAccess)
+	})
+
+	t.Run("driver flag unset", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.DataLoader = config.LoadFromEnvironment()
+		p.FileSystem.WriteFile("/root/.porter/config.yaml", []byte("runtime-driver: kubernetes"), 0600)
+		require.NoError(t, p.LoadData())
+
+		opts := NewInstallOptions()
+		opts.Reference = "getporter/porter-hello:v0.1.1"
+		require.NoError(t, opts.Validate(nil, p.Porter))
+		assert.Equal(t, "kubernetes", opts.Driver)
+	})
+	t.Run("driver flag set", func(t *testing.T) {
+		p := NewTestPorter(t)
+		p.DataLoader = config.LoadFromEnvironment()
+		p.FileSystem.WriteFile("/root/.porter/config.yaml", []byte("driver: kubernetes"), 0600)
+		require.NoError(t, p.LoadData())
+
+		opts := NewInstallOptions()
+		opts.Driver = "docker"
+		opts.Reference = "getporter/porter-hello:v0.1.1"
+		require.NoError(t, opts.Validate(nil, p.Porter))
+		assert.Equal(t, "docker", opts.Driver)
 	})
 }

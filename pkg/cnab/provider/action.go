@@ -138,6 +138,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 		return errors.Wrap(err, "could not load credentials")
 	}
 
+	fmt.Fprintf(r.Err, "Using runtime driver %s\n", args.Driver)
 	driver, err := r.newDriver(args.Driver, args)
 	if err != nil {
 		return errors.Wrap(err, "unable to instantiate driver")

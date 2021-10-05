@@ -262,13 +262,24 @@ func PublishImages() {
 	}
 }
 
+// Builds the porter-agent image and publishes it to a local test cluster with the Porter Operator.
+func LocalPorterAgentBuild() {
+	// Publish to the local registry/cluster setup by the Porter Operator.
+	os.Setenv("REGISTRY", "localhost:5000")
+	// Force the image to be pushed to the registry even though it's a local dev build.
+	os.Setenv("PORTER_FORCE_PUBLISH", "true")
+
+	mg.SerialDeps(XBuildPorter, PublishImages)
+}
+
 // Only push tagged versions, canary and latest
 func pushImagesTo(registry string, info mage.GitMetadata) {
 	if info.IsTaggedRelease {
 		pushImages(registry, info.Version)
 	}
 
-	if info.ShouldPublishPermalink() {
+	force, _ := strconv.ParseBool(os.Getenv("PORTER_FORCE_PUBLISH"))
+	if info.ShouldPublishPermalink() || force {
 		pushImages(registry, info.Permalink)
 	} else {
 		fmt.Println("Skipping image publish for permalink", info.Permalink)

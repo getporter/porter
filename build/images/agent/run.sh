@@ -8,6 +8,7 @@ if test -n "$(find /porter-config -maxdepth 1 -name 'config.*' -print -quit)"; t
   cp -L /porter-config/config.* /root/.porter/
   ls | grep config.*
   cat /root/.porter/config.*
+  echo ""
 fi
 
 # Print the version of porter we are using for this run
