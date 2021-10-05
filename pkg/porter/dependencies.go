@@ -54,7 +54,7 @@ func newDependencyExecutioner(p *Porter, installation claims.Installation, actio
 type queuedDependency struct {
 	cnab.DependencyLock
 	BundleReference cnab.BundleReference
-	Parameters      map[string]interface{}
+	Parameters      map[string]string
 
 	// cache of the CNAB file contents
 	cnabFileContents []byte
@@ -217,7 +217,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 				}
 
 				if dep.Parameters == nil {
-					dep.Parameters = make(map[string]interface{}, 1)
+					dep.Parameters = make(map[string]string, 1)
 				}
 				dep.Parameters[paramName] = value
 			}
@@ -237,7 +237,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 			}
 
 			if dep.Parameters == nil {
-				dep.Parameters = make(map[string]interface{}, 1)
+				dep.Parameters = make(map[string]string, 1)
 			}
 			dep.Parameters[paramName] = value
 			delete(e.parentArgs.Params, key)
@@ -268,13 +268,19 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 		}
 	}
 
+	resolvedParameters, err := e.porter.resolveParameters(depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	if err != nil {
+		return errors.Wrapf(err, "error resolving parameters for dependency %s", dep.Alias)
+	}
+
 	depArgs := cnabprovider.ActionArguments{
 		BundleReference:       dep.BundleReference,
 		Action:                e.parentArgs.Action,
 		Installation:          depInstallation,
 		Driver:                e.parentArgs.Driver,
 		AllowDockerHostAccess: e.parentOpts.AllowAccessToDockerHost,
-		Params:                dep.Parameters,
+		Params:                resolvedParameters,
+		PersistLogs:           e.parentArgs.PersistLogs,
 	}
 
 	// Determine if we're working with UninstallOptions, to inform deletion and
