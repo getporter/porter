@@ -301,9 +301,19 @@ func validateCredentialName(args []string) error {
 }
 
 func (p *Porter) CredentialsApply(o ApplyOptions) error {
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
+	}
+
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
 		return err
+	}
+
+	if p.Debug {
+		// ignoring any error here, printing debug info isn't critical
+		contents, _ := p.FileSystem.ReadFile(o.File)
+		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
 	var creds credentials.CredentialSet
@@ -324,7 +334,13 @@ func (p *Porter) CredentialsApply(o ApplyOptions) error {
 		return errors.Wrap(err, "credential set is invalid")
 	}
 
-	return p.Credentials.UpsertCredentialSet(creds)
+	err = p.Credentials.UpsertCredentialSet(creds)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(p.Err, "Applied %s credential set\n", creds)
+	return nil
 }
 
 func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {

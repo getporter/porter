@@ -476,9 +476,19 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 }
 
 func (p *Porter) ParametersApply(o ApplyOptions) error {
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
+	}
+
 	namespace, err := p.getNamespaceFromFile(o)
 	if err != nil {
 		return err
+	}
+
+	if p.Debug {
+		// ignoring any error here, printing debug info isn't critical
+		contents, _ := p.FileSystem.ReadFile(o.File)
+		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
 	var params parameters.ParameterSet
@@ -499,7 +509,13 @@ func (p *Porter) ParametersApply(o ApplyOptions) error {
 		return errors.Wrap(err, "parameter set is invalid")
 	}
 
-	return p.Parameters.UpsertParameterSet(params)
+	err = p.Parameters.UpsertParameterSet(params)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(p.Err, "Applied %s parameter set\n", params)
+	return nil
 }
 
 // resolveParameters accepts a set of parameter assignments and combines them

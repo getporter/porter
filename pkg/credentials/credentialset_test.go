@@ -104,3 +104,15 @@ func TestMarshal(t *testing.T) {
 		})
 	}
 }
+
+func TestCredentialSet_String(t *testing.T) {
+	t.Run("global namespace", func(t *testing.T) {
+		cs := CredentialSet{Name: "mycreds"}
+		assert.Equal(t, "/mycreds", cs.String())
+	})
+
+	t.Run("local namespace", func(t *testing.T) {
+		cs := CredentialSet{Namespace: "dev", Name: "mycreds"}
+		assert.Equal(t, "dev/mycreds", cs.String())
+	})
+}
