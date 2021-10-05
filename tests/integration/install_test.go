@@ -82,7 +82,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 
 	// Create .dockerignore file which ignores the helpers script
-	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0644)
+	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0600)
 	require.NoError(t, err)
 
 	opts := porter.NewInstallOptions()

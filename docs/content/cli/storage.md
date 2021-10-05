@@ -34,5 +34,6 @@ Most commands require a Docker daemon, either local or remote.
 
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
+* [porter storage fix-permissions](/cli/porter_storage_fix-permissions/)	 - Fix the permissions on your PORTER_HOME directory
 * [porter storage migrate](/cli/porter_storage_migrate/)	 - Migrate active storage account
 

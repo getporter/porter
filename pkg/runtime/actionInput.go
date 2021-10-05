@@ -12,7 +12,7 @@ type ActionInput struct {
 
 // MarshalYAML marshals the step nested under the action
 // install:
-// - helm:
+// - helm3:
 //   ...
 // Solution from https://stackoverflow.com/a/42547226
 func (a *ActionInput) MarshalYAML() (interface{}, error) {

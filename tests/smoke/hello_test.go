@@ -40,6 +40,9 @@ func TestHelloBundle(t *testing.T) {
 	installation := test.RequireInstallationExists(test.CurrentNamespace(), testdata.MyBuns)
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
+	// Logs should have been persisted for the run
+	test.RequirePorter("installation", "logs", "show", "-i=mybuns")
+
 	// Run a no-op action to check the status and check that the run was persisted
 	// Also checks that we are processing file parameters properly, when templated and read from the filesystem
 	_, output = test.RequirePorter("invoke", testdata.MyBuns, "--action=status", "-c=mybuns", "--param", "cfg=./buncfg.json")
@@ -51,8 +54,11 @@ func TestHelloBundle(t *testing.T) {
 	require.Equal(t, "install", installation.Status.Action) // Install should be the last modifying action
 	// TODO(carolynvs): check that status shows up as a run
 
-	// Install in the test namespace
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns")
+	// Install in the test namespace, and do not persist the logs
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--no-logs")
+	_, _, err = test.RunPorter("installation", "logs", "show", "--namespace=test", "-i=mybuns")
+	require.Error(t, err, "expected log retrieval to fail")
+	require.Contains(t, err.Error(), "no logs found")
 
 	// Let's try out list filtering!
 	// Search by namespace

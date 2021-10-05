@@ -88,16 +88,22 @@ For example, if the `jsonPath` expression was `$[*].id` and the command sent the
 ]
 ```
 
-Then then output would have the following contents:
+Then the output would have the following contents:
 
 ```json
 ["1085517466897181794"]
 ```
 
 When you are developing your jsonPath expression, you can specify the --debug
-flag and the full json document with your query are printed to stderr so that you
+flag, and the full json document with your query are printed to stderr so that you
 can troubleshoot and improve your query based on the real result of the mixin's
 execution.
+
+Note: Porter attempts to preserve the original format of numeric values, so if the value
+is in scientific notation, the captured output should also be in scientific notation.
+Conversely, if the original number was _not_ in scientific notation, then the captured
+value should also not be in scientific notation. Please open a bug if you find that the
+format doesn't match what you expected.
 
 #### Regular Expressions
 

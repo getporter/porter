@@ -40,6 +40,9 @@ type ActionArguments struct {
 
 	// Give the bundle privileged access to the docker daemon.
 	AllowDockerHostAccess bool
+
+	// PersistLogs specifies if the invocation image output should be saved as an output.
+	PersistLogs bool
 }
 
 func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
@@ -145,7 +148,7 @@ func (r *Runtime) Execute(args ActionArguments) error {
 	}
 
 	a := cnabaction.New(driver)
-	a.SaveLogs = true
+	a.SaveLogs = args.PersistLogs
 
 	if currentRun.ShouldRecord() {
 		err = r.SaveRun(args.Installation, currentRun, cnab.StatusRunning)

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +38,7 @@ func TestArchive(t *testing.T) {
 
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
-	require.Equal(p.T(), os.FileMode(0644), info.Mode())
+	tests.AssertFilePermissionsEqual(t, archiveFile1, os.FileMode(0600), info.Mode())
 
 	hash1 := getHash(p, archiveFile1)
 

@@ -20,8 +20,7 @@ porter mixins install NAME [flags]
 ### Examples
 
 ```
-  porter mixin install helm --url https://cdn.porter.sh/mixins/helm
-  porter mixin install helm --feed-url https://cdn.porter.sh/mixins/atom.xml
+  porter mixin install helm3 --feed-url https://mchorfa.github.io/porter-helm3/atom.xml
   porter mixin install azure --version v0.4.0-ralpha.1+dubonnet --url https://cdn.porter.sh/mixins/azure
   porter mixin install kubernetes --version canary --url https://cdn.porter.sh/mixins/kubernetes
 ```

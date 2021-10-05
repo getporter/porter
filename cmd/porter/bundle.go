@@ -167,6 +167,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Create the installation in the specified namespace. Defaults to the global namespace.")
 	f.StringSliceVarP(&opts.Labels, "label", "l", nil,
 		"Associate the specified labels with the installation. May be specified multiple times.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return cmd
 }
@@ -217,6 +219,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Namespace of the specified installation. Defaults to the global namespace.")
 	f.StringVar(&opts.Version, "version", "",
 		"Version to which the installation should be upgraded. This represents the version of the bundle, which assumes the convention of setting the bundle tag to its version.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -268,6 +272,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Specify a driver to use. Allowed values: docker, debug")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd
@@ -323,6 +329,8 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"UNSAFE. Delete all records associated with the installation, even if uninstall fails. This is intended for cleaning up test data and is not recommended for production environments.")
 	f.StringVarP(&opts.Namespace, "namespace", "n", "",
 		"Namespace of the specified installation. Defaults to the global namespace.")
+	f.BoolVar(&opts.NoLogs, "no-logs", false,
+		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
 	return cmd

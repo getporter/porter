@@ -62,7 +62,7 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		return errors.Wrap(err, "unable to resolve bundle images")
 	}
 
-	err = r.FileSystem.MkdirAll(context.MixinOutputsDir, 0755)
+	err = r.FileSystem.MkdirAll(context.MixinOutputsDir, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
 	}
@@ -142,7 +142,7 @@ func (r *PorterRuntime) applyStepOutputsToBundle(outputs map[string]string) erro
 		if r.shouldApplyOutput(bundleOutput) {
 			outpath := filepath.Join(config.BundleOutputsDir, bundleOutput.Name)
 
-			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0755)
+			err := r.FileSystem.WriteFile(outpath, []byte(outputValue), 0600)
 			if err != nil {
 				return errors.Wrapf(err, "unable to write output file %s", outpath)
 			}

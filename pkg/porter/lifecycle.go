@@ -35,7 +35,8 @@ type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowDockerHostAccess bool
-
+	NoLogs                  bool
+	
 	bundleRef *cnab.BundleReference
 }
 
@@ -207,6 +208,7 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 		Params:                resolvedParams,
 		Driver:                opts.Driver,
 		AllowDockerHostAccess: opts.AllowDockerHostAccess,
+		PersistLogs:           !opts.NoLogs,
 	}
 
 	return args, nil

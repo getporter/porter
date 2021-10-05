@@ -255,12 +255,12 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 		return err
 	}
 	if !exists {
-		if err := c.FileSystem.MkdirAll(MixinOutputsDir, os.ModePerm); err != nil {
+		if err := c.FileSystem.MkdirAll(MixinOutputsDir, 0700); err != nil {
 			return errors.Wrap(err, "couldn't make output directory")
 		}
 	}
 
-	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, os.ModePerm)
+	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, 0600)
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams

@@ -32,7 +32,7 @@ func TestFilePathOutputs(t *testing.T) {
 	}
 
 	wantCfg := "abc123"
-	err := c.FileSystem.WriteFile("config.txt", []byte(wantCfg), 0644)
+	err := c.FileSystem.WriteFile("config.txt", []byte(wantCfg), 0600)
 	require.NoError(t, err, "could not write config.txt")
 
 	err = ProcessFileOutputs(c.Context, step)

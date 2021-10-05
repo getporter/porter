@@ -16,7 +16,7 @@ type Action struct {
 // install:
 //   exec:
 //     ...
-//   helm:
+//   helm3:
 //     ...
 func (a Action) MarshalYAML() (interface{}, error) {
 	return map[string]interface{}{a.Name: a.Steps}, nil

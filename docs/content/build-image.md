@@ -271,7 +271,7 @@ In many cases, however, mixins will have build time requirements. Next let's see
 
 ```yaml
 mixins:
-- helm:
+- helm3:
     repositories:
       bitnami:
         url: "https://charts.bitnami.com/bitnami"
@@ -285,13 +285,13 @@ credentials:
   path: /root/.kube/config
 
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
     version: "6.14.2"
 uninstall:
-- helm:
+- helm3:
     description: "Uninstall MySQL"
     releases:
     - porter-ci-mysql

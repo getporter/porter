@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
 	"github.com/carolynvs/magex/shx"
 	"github.com/stretchr/testify/require"
@@ -120,4 +121,12 @@ func (t Tester) EditYaml(path string, transformations ...func(yq *yaml.Editor) e
 		require.NoError(t.T, transform(yq))
 	}
 	require.NoError(t.T, yq.WriteFile(path))
+}
+
+// RequireFileMode checks that all files in the specified path match the specifed
+// file mode. Uses a glob pattern to match.
+func (t *Tester) RequireFileMode(path string, mode os.FileMode) {
+	if !tests.AssertDirectoryPermissionsEqual(t.T, path, mode) {
+		t.T.FailNow()
+	}
 }

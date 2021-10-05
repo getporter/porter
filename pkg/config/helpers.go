@@ -59,7 +59,7 @@ func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
 	c.SetPorterPath(filepath.Join(homeDir, "porter"))
 
 	// Copy bin dir contents to the home directory
-	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir)
+	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir, 0700)
 
 	return testDir, homeDir
 }

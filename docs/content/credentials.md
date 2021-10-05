@@ -3,6 +3,7 @@ title: Credentials
 description: The lifecycle of a credential from definition, to resolution, and finally injection at runtime
 aliases:
 - /how-credentials-work/
+- /best-practices/credentials/
 ---
 
 When you are authoring a bundle, you can define what credentials your bundle

@@ -55,7 +55,7 @@ installation via `porter install --param db_name=mydb -p myparamset`.
 The bundle author may have decided to supply a default value for a given
 parameter as well.  This value would be used when neither a user-specified
 value nor a parameter set value is supplied.  See the `Parameters` section in
-the [Author Bundles](/author-bundlesd#parameters/) doc for more info.
+the [Author Bundles](/author-bundles#parameters/) doc for more info.
 
 ## Q & A
 

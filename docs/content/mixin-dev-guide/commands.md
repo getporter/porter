@@ -182,7 +182,7 @@ Example:
 **stdin**
 ```yaml
 install:
-- helm:
+- helm3:
     description: "Install MySQL"
     name: porter-ci-mysql
     chart: bitnami/mysql
@@ -220,7 +220,7 @@ parameters:
     type: string
 ...
 upgrade:
-- helm:
+- helm3:
     description: "Upgrade MySQL"
     name: porter-ci-mysql
     replace: true
@@ -247,7 +247,7 @@ Example:
 **stdin**
 ```yaml
 uninstall:
-- helm:
+- helm3:
     description: "Uninstall MySQL"
     purge: true
     releases:

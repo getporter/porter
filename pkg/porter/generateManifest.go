@@ -18,7 +18,7 @@ type metadataOpts struct {
 // designated by build.LOCAL_MANIFEST
 func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 	// Create the local app dir if it does not already exist
-	err := p.FileSystem.MkdirAll(build.LOCAL_APP, 0755)
+	err := p.FileSystem.MkdirAll(build.LOCAL_APP, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
 	}

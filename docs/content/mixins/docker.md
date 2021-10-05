@@ -229,7 +229,7 @@ You can specify either the tag or the digest.
 
 #### Syntax
 Username and password are optional because the mixin will default to using environment variables provided by DOCKER_USERNAME and DOCKER_PASSWORD from a parameter or a credential.
-See an [example](/examples/docker-mixin-test/README.md#notes-on-docker-login) for how to use 
+See an [example](/docker-mixin/src/examples/docker-mixin-test/README.md#notes-on-docker-login) for how to use 
 docker login and securely provide your username and password.
 ```yaml
 - docker:

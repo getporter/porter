@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"os"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cache"
@@ -48,7 +47,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	err := opts.Validate(p.Context)
 	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
 
-	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), os.ModePerm)
+	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), 0600)
 	err = opts.Validate(p.Context)
 	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 

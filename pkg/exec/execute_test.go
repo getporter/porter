@@ -13,7 +13,7 @@ import (
 func TestMixin_Execute(t *testing.T) {
 	m := NewTestMixin(t)
 
-	err := m.FileSystem.WriteFile("config.txt", []byte("abc123"), 0644)
+	err := m.FileSystem.WriteFile("config.txt", []byte("abc123"), 0600)
 	require.NoError(t, err)
 
 	stdin, err := ioutil.ReadFile("testdata/outputs.yaml")

@@ -45,7 +45,7 @@ func (g *DockerfileGenerator) GenerateDockerFile() error {
 		fmt.Fprintln(g.Out, contents)
 	}
 
-	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), 0644)
+	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), 0600)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
@@ -200,12 +200,12 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 		return err
 	}
 
-	err = g.FileSystem.MkdirAll(LOCAL_APP, 0755)
+	err = g.FileSystem.MkdirAll(LOCAL_APP, 0700)
 	if err != nil {
 		return err
 	}
 
-	err = g.FileSystem.WriteFile(LOCAL_RUN, runTmpl, 0755)
+	err = g.FileSystem.WriteFile(LOCAL_RUN, runTmpl, 0700)
 	if err != nil {
 		return errors.Wrapf(err, "failed to write %s", LOCAL_RUN)
 	}
@@ -237,7 +237,7 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 		return err
 	}
 
-	err = g.Context.CopyDirectory(mixinDir, filepath.Join(LOCAL_APP, "mixins"), true)
+	err = g.Context.CopyDirectory(mixinDir, LOCAL_MIXINS, true)
 	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
 }
 

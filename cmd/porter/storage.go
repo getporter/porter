@@ -18,6 +18,7 @@ func buildStorageCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	cmd.AddCommand(buildStorageMigrateCommand(p))
+	cmd.AddCommand(buildStorageFixPermissionsCommand(p))
 
 	return &cmd
 }
@@ -31,6 +32,17 @@ func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.MigrateStorage()
+		},
+	}
+}
+
+func buildStorageFixPermissionsCommand(p *porter.Porter) *cobra.Command {
+	return &cobra.Command{
+		Use:   "fix-permissions",
+		Short: "Fix the permissions on your PORTER_HOME directory",
+		Long:  `This will reset the permissions on your PORTER_HOME directory to the least permissions required, where only the current user has permissions.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return p.FixPermissions()
 		},
 	}
 }
