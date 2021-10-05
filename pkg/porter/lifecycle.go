@@ -34,7 +34,7 @@ type BundleAction interface {
 type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
-	AllowAccessToDockerHost bool
+	AllowDockerHostAccess bool
 	NoLogs                  bool
 	
 	bundleRef *cnab.BundleReference
@@ -53,6 +53,18 @@ func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 			return err
 		}
 	}
+
+	// When you run porter installation apply, there are some settings from porter install
+	// that aren't exposed as flags. This allows the user to set them in the config file
+	// and we will use them before running the bundle.
+	if o.Driver == "" {
+		// We have both porter build --driver, and porter install --driver
+		// So in the config file it's named build-driver and runtime-driver
+		// This is why we check first before applying the value. Only apply the config
+		// file setting if they didn't specify a flag.
+		o.Driver = porter.Config.Data.RuntimeDriver
+	}
+	o.AllowDockerHostAccess = porter.Config.Data.AllowDockerHostAccess
 
 	err = o.sharedOptions.Validate(args, porter)
 	if err != nil {
@@ -195,7 +207,7 @@ func (p *Porter) BuildActionArgs(installation claims.Installation, action Bundle
 		BundleReference:       bundleRef,
 		Params:                resolvedParams,
 		Driver:                opts.Driver,
-		AllowDockerHostAccess: opts.AllowAccessToDockerHost,
+		AllowDockerHostAccess: opts.AllowDockerHostAccess,
 		PersistLogs:           !opts.NoLogs,
 	}
 
