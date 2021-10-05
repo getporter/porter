@@ -266,7 +266,7 @@ func PublishImages() {
 func LocalPorterAgentBuild() {
 	// Publish to the local registry/cluster setup by the Porter Operator.
 	os.Setenv("REGISTRY", "localhost:5000")
-	// Force the image to be pushes to the registry even though its a local dev build.
+	// Force the image to be pushed to the registry even though it's a local dev build.
 	os.Setenv("PORTER_FORCE_PUBLISH", "true")
 
 	mg.SerialDeps(XBuildPorter, PublishImages)
