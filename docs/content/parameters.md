@@ -15,7 +15,9 @@ Parameter values are resolved from a combination of supplied parameter set
 files, user-specified overrides and defaults defined by the bundle itself.
 The resolved values are added to a claim receipt, which is passed in to
 the bundle execution environment, e.g. the docker container, when the bundle
-action is executed (install/upgrade/uninstall/invoke).
+action is executed (install/upgrade/uninstall/invoke). Parameters are restricted
+to a list of [allowable data
+types](https://porter.sh/author-bundles/#parameters).
 
 ## Parameter Sets
 
