@@ -7,7 +7,7 @@ aliases:
 
 When you are authoring a bundle, you can define parameters that are required by
 your bundle. These parameters are restricted to a list of [allowable data
-types](/author-bundles/#parameters) and are used to define parameters such as
+types](/author-bundles/#parameter-types) and are used to define parameters such as
 username and password values for a backing database, or the region that a
 certain resource should be deployed in, etc. Then in your action's steps you can
 reference the parameters using porter's template language `{{
