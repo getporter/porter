@@ -48,9 +48,19 @@ func (o *ApplyOptions) Validate(cxt *context.Context, args []string) error {
 }
 
 func (p *Porter) InstallationApply(opts ApplyOptions) error {
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Reading input file %s...\n", opts.File)
+	}
+
 	namespace, err := p.getNamespaceFromFile(opts)
 	if err != nil {
 		return err
+	}
+
+	if p.Debug {
+		// ignoring any error here, printing debug info isn't critical
+		contents, _ := p.FileSystem.ReadFile(opts.File)
+		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
 	var input claims.Installation

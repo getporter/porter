@@ -1,6 +1,7 @@
 package parameters
 
 import (
+	"fmt"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -60,4 +61,8 @@ func (s ParameterSet) Validate() error {
 		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
 	}
 	return nil
+}
+
+func (s ParameterSet) String() string {
+	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
 }

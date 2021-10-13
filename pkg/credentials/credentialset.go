@@ -69,6 +69,10 @@ func (s CredentialSet) Validate() error {
 	return nil
 }
 
+func (s CredentialSet) String() string {
+	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+}
+
 // Validate compares the given credentials with the spec.
 //
 // This will result in an error only when the following conditions are true:

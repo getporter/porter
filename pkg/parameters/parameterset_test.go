@@ -25,3 +25,15 @@ func TestNewParameterSet(t *testing.T) {
 	assert.Equal(t, SchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
 	assert.Len(t, cs.Parameters, 1, "Parameters should be initialized with 1 value")
 }
+
+func TestParameterSet_String(t *testing.T) {
+	t.Run("global namespace", func(t *testing.T) {
+		ps := ParameterSet{Name: "myparams"}
+		assert.Equal(t, "/myparams", ps.String())
+	})
+
+	t.Run("local namespace", func(t *testing.T) {
+		ps := ParameterSet{Namespace: "dev", Name: "myparams"}
+		assert.Equal(t, "dev/myparams", ps.String())
+	})
+}
