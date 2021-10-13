@@ -154,8 +154,10 @@ func TestBuildValidate_Driver(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			os.Setenv("PORTER_BUILD_DRIVER", tc.configDriver)
-			defer os.Unsetenv("PORTER_BUILD_DRIVER")
+			if tc.configDriver != "" {
+				os.Setenv("PORTER_BUILD_DRIVER", tc.configDriver)
+				defer os.Unsetenv("PORTER_BUILD_DRIVER")
+			}
 
 			p := porter.NewTestPorter(t)
 			defer p.Teardown()

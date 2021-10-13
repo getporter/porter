@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +9,10 @@ import (
 )
 
 func TestFromConfigFile(t *testing.T) {
+	// Do not run in parallel, it sets environment variables
+	os.Setenv("PORTER_DEFAULT_STORAGE", "")
+	defer os.Unsetenv("PORTER_DEFAULT_STORAGE")
+
 	c := NewTestConfig(t)
 	c.SetHomeDir("/root/.porter")
 
@@ -17,6 +22,7 @@ func TestFromConfigFile(t *testing.T) {
 	err := c.LoadData()
 	require.NoError(t, err, "dataloader failed")
 	assert.True(t, c.Debug, "config.Debug was not set correctly")
+	assert.Empty(t, c.Data.DefaultStorage, "The config file value should be overridden by an empty env var")
 }
 
 func TestData_Marshal(t *testing.T) {

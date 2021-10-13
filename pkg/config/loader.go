@@ -36,6 +36,10 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 		v := viper.New()
 		v.SetFs(cfg.FileSystem)
 
+		// Consider an empty environment variable as "set", so that you can do things like
+		// PORTER_DEFAULT_STORAGE="" and have that override what's in the config file.
+		v.AllowEmptyEnv(true)
+
 		// Initialize empty config
 		err := v.SetDefaultsFrom(cfg.Data)
 		if err != nil {
