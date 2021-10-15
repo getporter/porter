@@ -7,7 +7,7 @@ Parameters:
 Name     Description   Type     Default   Required   Applies To
 region                 string   mars      false      All Actions
 
+This bundle uses the following tools: helm, terraform.
+
 To install this bundle run the following command, passing --param KEY=VALUE for any parameters you want to customize:
 porter install
-
-This bundle uses the following tools: helm, terraform.

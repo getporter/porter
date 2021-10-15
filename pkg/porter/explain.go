@@ -467,6 +467,7 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 }
 
 func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleReference string) error {
+	fmt.Fprintln(p.Out)
 	fmt.Fprint(p.Out, "To install this bundle run the following command, passing --param KEY=VALUE for any parameters you want to customize:\n")
 
 	var bundleReferenceFlag string
@@ -474,9 +475,9 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 		bundleReferenceFlag += " --reference " + bundleReference
 	}
 
-	// Generate any predefined credentials first
-	for _, credential := range bun.Credentials {
-		fmt.Fprintf(p.Out, "porter credentials generate %s%s\n", credential.Name, bundleReferenceFlag)
+	// Generate predefined credential set first.
+	if len(bun.Credentials) > 0 {
+		fmt.Fprintf(p.Out, "porter credentials generate mycreds%s\n", bundleReferenceFlag)
 	}
 
 	// Bundle installation instruction
@@ -488,15 +489,15 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 	}
 
 	if requiredParameterFlags != "" {
-		requiredParameterFlags += " --param "
+		requiredParameterFlags = " --param " + requiredParameterFlags
 	}
 
 	var credentialFlags string
-	for _, credential := range bun.Credentials {
-		credentialFlags += " --cred " + credential.Name + " "
+	if len(bun.Credentials) > 0 {
+		credentialFlags += "--cred mycreds"
 	}
 
-	fmt.Fprintf(p.Out, "porter install%s%s%s\n\n", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
+	fmt.Fprintf(p.Out, "porter install%s%s%s\n", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
 
 	return nil
 }
