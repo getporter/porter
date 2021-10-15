@@ -326,9 +326,9 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 	p.printOutputsExplainBlock(bun)
 	p.printActionsExplainBlock(bun)
 	p.printDependenciesExplainBlock(bun)
-	p.printInstallationInstructionBlock(bun, bundleReference)
 
 	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
+	p.printInstallationInstructionBlock(bun, bundleReference)
 	return nil
 }
 
