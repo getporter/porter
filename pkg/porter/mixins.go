@@ -33,7 +33,7 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 	}
 
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		printMixinRow :=
 			func(v interface{}) []interface{} {
 				m, ok := v.(mixin.Metadata)

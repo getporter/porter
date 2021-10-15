@@ -11,13 +11,13 @@ import (
 )
 
 func TestPorter_PrintPlugins(t *testing.T) {
-	t.Run("table", func(t *testing.T) {
+	t.Run("plaintext", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
-				Format: printer.FormatTable,
+				Format: printer.FormatPlaintext,
 			},
 		}
 		err := p.PrintPlugins(opts)
@@ -135,12 +135,12 @@ unknown   v1.0      Porter Authors
 }
 
 func TestPorter_ShowPlugin(t *testing.T) {
-	t.Run("table", func(t *testing.T) {
+	t.Run("plaintext", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
-		opts.Format = printer.FormatTable
+		opts.Format = printer.FormatPlaintext
 		err := p.ShowPlugin(opts)
 		require.NoError(t, err, "ShowPlugin failed")
 

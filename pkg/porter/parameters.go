@@ -55,7 +55,7 @@ func (p *Porter) PrintParameters(opts ListOptions) error {
 		return printer.PrintJson(p.Out, params)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, params)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -222,7 +222,7 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 		return printer.PrintJson(p.Out, paramSet)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, paramSet)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{

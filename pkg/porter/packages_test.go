@@ -76,7 +76,7 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
 	}, {
 		name:   "mixin name multiple match",
 		mixin:  "ku",
-		format: printer.FormatTable,
+		format: printer.FormatPlaintext,
 		wantOutput: `Name         Description                           Author           URL                                                                 URL Type
 kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/atom.xml                               Atom Feed
 kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   Download

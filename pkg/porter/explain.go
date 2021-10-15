@@ -170,7 +170,7 @@ func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
 		return printer.PrintJson(p.Out, pb)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, pb)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		return p.printBundleExplainTable(pb)
 	default:
 		return fmt.Errorf("invalid format: %s", o.Format)

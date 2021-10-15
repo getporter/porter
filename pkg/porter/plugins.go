@@ -53,7 +53,7 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 	}
 
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		printRow :=
 			func(v interface{}) []interface{} {
 				m, ok := v.(plugins.Metadata)
@@ -103,7 +103,7 @@ func (p *Porter) ShowPlugin(opts ShowPluginOptions) error {
 	}
 
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// Build and configure our tablewriter
 		// TODO: make this a function and reuse it in printer/table.go
 		table := tablewriter.NewWriter(p.Out)

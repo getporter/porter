@@ -84,7 +84,7 @@ func (p *Porter) printBundleInspect(o ExplainOpts, ib *InspectableBundle) error 
 		return printer.PrintJson(p.Out, ib)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, ib)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		return p.printBundleInspectTable(ib)
 	default:
 		return fmt.Errorf("invalid format: %s", o.Format)

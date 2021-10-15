@@ -109,8 +109,8 @@ func TestCredentialsList_None(t *testing.T) {
 			errorMsg:     "",
 		},
 		{
-			name:         "table",
-			format:       printer.FormatTable,
+			name:         "plaintext",
+			format:       printer.FormatPlaintext,
 			wantContains: []string{"NAME   MODIFIED\n"},
 			errorMsg:     "",
 		},
@@ -153,14 +153,14 @@ func TestPorter_PrintCredentials(t *testing.T) {
 			errorMsg:     "",
 		},
 		{
-			name:         "table",
-			format:       printer.FormatTable,
+			name:         "plaintext",
+			format:       printer.FormatPlaintext,
 			wantContains: []string{"NAMESPACE   NAME         MODIFIED\ndev         kool-kreds   2019-06-24"},
 			errorMsg:     "",
 		},
 		{
 			name:         "error",
-			format:       printer.FormatTable,
+			format:       printer.FormatPlaintext,
 			wantContains: []string{},
 			errorMsg:     "",
 		},
@@ -238,7 +238,7 @@ func TestShowCredential_NotFound(t *testing.T) {
 
 	opts := CredentialShowOptions{
 		PrintOptions: printer.PrintOptions{
-			Format: printer.FormatTable,
+			Format: printer.FormatPlaintext,
 		},
 		Name: "non-existent-cred",
 	}
@@ -312,8 +312,8 @@ credentials:
 `,
 		},
 		{
-			name:   "table",
-			format: printer.FormatTable,
+			name:   "plaintext",
+			format: printer.FormatPlaintext,
 			wantOutput: `Name: kool-kreds
 Namespace: dev
 Created: 2019-06-24
@@ -355,7 +355,7 @@ Modified: 2019-06-24
 
 func TestShowCredential_PreserveCase(t *testing.T) {
 	opts := CredentialShowOptions{}
-	opts.RawFormat = string(printer.FormatTable)
+	opts.RawFormat = string(printer.FormatPlaintext)
 
 	err := opts.Validate([]string{"porter-hello"})
 	require.NoError(t, err, "Validate failed")

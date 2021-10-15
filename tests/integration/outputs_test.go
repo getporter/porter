@@ -33,7 +33,7 @@ func TestExecOutputs(t *testing.T) {
 	// Verify that its bundle level file output was captured
 	opts := porter.OutputListOptions{}
 	opts.Name = p.Manifest.Name
-	opts.Format = printer.FormatTable
+	opts.Format = printer.FormatPlaintext
 	displayOutputs, err := p.ListBundleOutputs(&opts)
 	require.NoError(t, err, "ListBundleOutputs failed")
 	var kubeconfigOutput *porter.DisplayValue
