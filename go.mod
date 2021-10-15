@@ -30,7 +30,6 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/cnabio/cnab-go v0.21.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/console v1.0.1
