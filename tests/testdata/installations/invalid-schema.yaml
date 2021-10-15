@@ -1,5 +1,6 @@
 schemaVersion: 0.38.5
 name: invalid-schema
 namespace: dev
-bundleRepository: getporter/porter-hello
-bundleVersion: 0.1.1
+bundle:
+  repository: getporter/porter-hello
+  version: 0.1.1

@@ -15,18 +15,18 @@ func TestInstallation_String(t *testing.T) {
 	assert.Equal(t, "dev/mybun", i.String())
 }
 
-func TestInstallation_GetBundleReference(t *testing.T) {
+func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 	testcases := []struct {
 		name    string
 		repo    string
 		digest  string
 		version string
-		tag string
+		tag     string
 		wantRef string
 		wantErr string
 	}{
 		{name: "repo missing", wantRef: ""},
-		{name: "incomplete reference", repo: "getporter/porter-hello", wantErr: "Invalid installation"},
+		{name: "incomplete reference", repo: "getporter/porter-hello", wantErr: "Invalid bundle reference"},
 		{name: "version specified", repo: "getporter/porter-hello", version: "v0.1.1", wantRef: "getporter/porter-hello:v0.1.1"},
 		{name: "digest specified", repo: "getporter/porter-hello", digest: "sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062", wantRef: "getporter/porter-hello@sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062"},
 		{name: "tag specified", repo: "getporter/porter-hello", tag: "latest", wantRef: "getporter/porter-hello:latest"},
@@ -34,14 +34,14 @@ func TestInstallation_GetBundleReference(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			i := Installation{
-				BundleRepository: tc.repo,
-				BundleDigest:     tc.digest,
-				BundleVersion:    tc.version,
-				BundleTag: tc.tag,
+			b := OCIReferenceParts{
+				Repository: tc.repo,
+				Digest:     tc.digest,
+				Version:    tc.version,
+				Tag:        tc.tag,
 			}
 
-			ref, ok, err := i.GetBundleReference()
+			ref, ok, err := b.GetBundleReference()
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErr)

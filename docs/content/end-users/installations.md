@@ -38,7 +38,7 @@ However, if you changed a parameter value for the installation, or the bundle ve
 
 The following will result in Porter executing the bundle:
 * The installation has not completed successfully yet.
-* The bundle reference has changed. The bundle reference is resolved using the bundleRepository, bundleVersion, bundleDigest, and bundleTag fields.
+* The bundle reference has changed. The bundle reference is resolved using the repository, version, digest, and tag fields.
 * The resolved parameter values have changed, either because an associated parameter set has changed, the parameters defined on the bundle have changed, or the values resolved by any parameter sets have changed.
 * The list of credential set names have changed. Currently, Porter does not compare resolved credential values.
 * The porter installation apply command was run with the --force.
