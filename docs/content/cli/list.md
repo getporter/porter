@@ -39,7 +39,7 @@ porter list [flags]
   -l, --label strings      Filter the installations by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the installations where the name contains the specified substring.
   -n, --namespace string   Filter the installations by namespace. Defaults to the global namespace.
-  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

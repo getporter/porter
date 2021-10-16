@@ -38,7 +38,7 @@ porter inspect [flags]
       --force               Force a fresh pull of the bundle
   -h, --help                help for inspect
       --insecure-registry   Don't require TLS for the registry
-  -o, --output string       Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string       Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
   -r, --reference string    Use a bundle in an OCI registry specified by the given reference.
 ```
 

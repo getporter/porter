@@ -15,7 +15,7 @@ porter plugins show [flags]
 
 ```
   -h, --help            help for show
-  -o, --output string   Output format, allowed values are: table, json, yaml (default "table")
+  -o, --output string   Output format, allowed values are: table, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

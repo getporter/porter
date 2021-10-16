@@ -149,7 +149,7 @@ func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
 		return printer.PrintJson(p.Out, outputs)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, outputs)
-	case printer.FormatTable, printer.FormatPlaintext:
+	case printer.FormatPlaintext:
 		return p.printDisplayValuesTable(outputs)
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)

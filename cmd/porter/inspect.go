@@ -32,8 +32,8 @@ like parameters, credentials, outputs and custom actions available.
 	f := cmd.Flags()
 	f.StringVarP(&opts.File, "file", "f", "", "Path to the Porter manifest. Defaults to `porter.yaml` in the current directory.")
 	f.StringVar(&opts.CNABFile, "cnab-file", "", "Path to the CNAB bundle.json file.")
-	f.StringVarP(&opts.RawFormat, "output", "o", "table",
-		"Specify an output format.  Allowed values: table, json, yaml")
+	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
+		"Specify an output format.  Allowed values: plaintext, json, yaml")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 	return &cmd
 }

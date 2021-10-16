@@ -69,7 +69,7 @@ func (p *Porter) SearchPackages(opts SearchOptions) error {
 // PrintPackages prints the provided package list according to the provided options
 func (p *Porter) PrintPackages(opts SearchOptions, list pkgmgmt.PackageList) error {
 	switch opts.Format {
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		printMixinRow :=
 			func(v interface{}) []interface{} {
 				m, ok := v.(pkgmgmt.PackageListing)

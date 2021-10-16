@@ -36,7 +36,7 @@ porter credentials list [flags]
   -l, --label strings      Filter the credential sets by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the credential sets where the name contains the specified substring.
   -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace. Use * to list across all namespaces.
-  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

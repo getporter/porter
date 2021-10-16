@@ -40,7 +40,7 @@ func buildPluginsListCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Output format, allowed values are: table, json, yaml")
 
 	return cmd
@@ -69,7 +69,7 @@ By default the community plugin index at https://cdn.porter.sh/plugins/index.jso
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&opts.RawFormat, "output", "o", "table",
+	flags.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Output format, allowed values are: table, json, yaml")
 	flags.StringVar(&opts.Mirror, "mirror", pkgmgmt.DefaultPackageMirror,
 		"Mirror of official Porter assets")
@@ -91,7 +91,7 @@ func buildPluginShowCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "table",
+	cmd.Flags().StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Output format, allowed values are: table, json, yaml")
 
 	return cmd

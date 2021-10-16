@@ -2,11 +2,9 @@ package porter
 
 import (
 	"sort"
-	"time"
 
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
-	dtprinter "github.com/carolynvs/datetime-printer"
 )
 
 // RunListOptions represent options for showing runs of an installation
@@ -98,21 +96,7 @@ func (p *Porter) PrintInstallationRuns(opts RunListOptions) error {
 		return printer.PrintYaml(p.Out, displayRuns)
 	case printer.FormatPlaintext:
 		return printer.PrintPlaintext(p.Out, displayRuns)
-	case printer.FormatTable:
-		now := time.Now()
-		tp := dtprinter.DateTimePrinter{
-			Now: func() time.Time { return now },
-		}
 
-		row :=
-			func(v interface{}) []string {
-				a, ok := v.(DisplayRun)
-				if !ok {
-					return nil
-				}
-				return []string{a.ClaimID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
-			}
-		return printer.PrintTableSection(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
 	}
 
 	return nil

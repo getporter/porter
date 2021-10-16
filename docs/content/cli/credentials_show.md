@@ -27,7 +27,7 @@ porter credentials show [flags]
 ```
   -h, --help               help for show
   -n, --namespace string   Namespace in which the credential set is defined. Defaults to the global namespace.
-  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands
