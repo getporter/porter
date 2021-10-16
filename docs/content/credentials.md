@@ -60,8 +60,8 @@ before executing the step. Credentials are also available directly through the
 environment variable or path used in its declaration.
 
 Once the bundle finishes executing, the credentials are NOT recorded in the
-installation history. Parameters are recorded there so that you can view them
-later using `porter installations show NAME --output json`.
+installation history. Credentials are recorded there so that you can view them
+later using `porter credentials show NAME --output json`.
 
 ## Q & A
 
