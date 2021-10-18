@@ -94,9 +94,10 @@ func (s CredentialStore) Validate(creds CredentialSet) error {
   Document Storage
 */
 
-func (s CredentialStore) InsertCredentialSet(cset CredentialSet) error {
+func (s CredentialStore) InsertCredentialSet(creds CredentialSet) error {
+	creds.SchemaVersion = SchemaVersion
 	opts := storage.InsertOptions{
-		Documents: []interface{}{cset},
+		Documents: []interface{}{creds},
 	}
 	return s.Documents.Insert(CollectionCredentials, opts)
 }
@@ -123,6 +124,7 @@ func (s CredentialStore) GetCredentialSet(namespace string, name string) (Creden
 }
 
 func (s CredentialStore) UpdateCredentialSet(creds CredentialSet) error {
+	creds.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: creds,
 	}
@@ -130,6 +132,7 @@ func (s CredentialStore) UpdateCredentialSet(creds CredentialSet) error {
 }
 
 func (s CredentialStore) UpsertCredentialSet(creds CredentialSet) error {
+	creds.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: creds,
 		Upsert:   true,

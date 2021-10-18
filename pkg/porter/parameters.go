@@ -209,14 +209,24 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 	return nil
 }
 
+type DisplayParameterSet struct {
+	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
+	SchemaType              string `json:"schemaType" yaml:"schemaType"`
+	parameters.ParameterSet `yaml:",inline"`
+}
+
 // ShowParameter shows the parameter set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
-	paramSet, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
+	ps, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
 
+	paramSet := DisplayParameterSet{
+		SchemaType:   "ParameterSet",
+		ParameterSet: ps,
+	}
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, paramSet)

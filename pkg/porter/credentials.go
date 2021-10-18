@@ -191,12 +191,23 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 	return nil
 }
 
+type DisplayCredentialSet struct {
+	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
+	SchemaType                string `json:"schemaType" yaml:"schemaType"`
+	credentials.CredentialSet `yaml:",inline"`
+}
+
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
 func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
-	credSet, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
+	cs, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
 	if err != nil {
 		return err
+	}
+
+	credSet := DisplayCredentialSet{
+		SchemaType:    "CredentialSet",
+		CredentialSet: cs,
 	}
 
 	switch opts.Format {
