@@ -1,3 +1,4 @@
+schemaType: Installation
 schemaVersion: 1.0.0
 name: mywordpress
 namespace: dev

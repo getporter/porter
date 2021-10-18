@@ -12,6 +12,7 @@ Credential sets can be defined in either json or yaml.
 You can use this [json schema][cs-schema] to validate a credential set file.
 
 ```yaml
+schemaType: CredentialSet
 schemaVersion: 1.0.0
 name: mycreds
 namespace: staging
@@ -32,6 +33,7 @@ credentials:
 
 | Field  | Required  | Description  |
 |---|---|---|
+| schemaType  | false  | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
 | schemaVersion  | true  | The version of the Credential Set schema used in this file.  |
 | name  | true  | The name of the credential set.  |
 | namespace  | false  | The namespace in which the credential set is defined. Defaults to the empty (global) namespace.  |
@@ -46,6 +48,7 @@ Parameter sets can be defined in either json or yaml.
 You can use this [json schema][ps-schema] to validate a parameter set file.
 
 ```yaml
+schemaType: ParameterSet
 schemaVersion: 1.0.0
 name: myparams
 namespace: staging
@@ -66,6 +69,7 @@ parameters:
 
 | Field  | Required  | Description  |
 |---|---|---|
+| schemaType  | false  | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
 | schemaVersion  | true  | The version of the Parameter Set schema used in this file.  |
 | name  | true  | The name of the parameter set.  |
 | namespace  | false  | The namespace in which the parameter set is defined. Defaults to the empty (global) namespace.  |
@@ -83,6 +87,7 @@ Either the bundle digest, version, or tag must be specified.
 When more than one is specified, Porter selects the most specific field available, preferring digest the most, then version, and then falling back to tag last.
 
 ```yaml
+schemaType: Installation
 schemaVersion: 1.0.0
 name: myinstallation
 namespace: staging
@@ -105,6 +110,7 @@ parameters:
 
 | Field  | Required  | Description  |
 |---|---|---|
+| schemaType  | false  | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
 | schemaVersion  | true  | The version of the Installation schema used in this file.  |
 | name  | true  | The name of the parameter set.  |
 | namespace  | false  | The namespace in which the parameter set is defined. Defaults to the empty (global) namespace.  |

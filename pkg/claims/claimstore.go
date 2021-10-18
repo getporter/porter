@@ -66,7 +66,7 @@ func (s ClaimStore) ListInstallations(namespace string, name string, labels map[
 	return out, err
 }
 
-func(s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[string][]Result, error) {
+func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[string][]Result, error) {
 	var runs []Run
 	var err error
 	var results []Result
@@ -260,6 +260,7 @@ func (s ClaimStore) GetLastLogs(namespace string, installation string) (string, 
 }
 
 func (s ClaimStore) InsertInstallation(installation Installation) error {
+	installation.SchemaVersion = SchemaVersion
 	opts := storage.InsertOptions{
 		Documents: []interface{}{installation},
 	}
@@ -288,6 +289,7 @@ func (s ClaimStore) InsertOutput(output Output) error {
 }
 
 func (s ClaimStore) UpdateInstallation(installation Installation) error {
+	installation.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: installation,
 	}
@@ -303,6 +305,7 @@ func (s ClaimStore) UpsertRun(run Run) error {
 }
 
 func (s ClaimStore) UpsertInstallation(installation Installation) error {
+	installation.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Upsert:   true,
 		Document: installation,

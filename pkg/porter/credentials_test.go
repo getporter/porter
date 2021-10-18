@@ -226,12 +226,6 @@ func TestPorter_ListCredentials(t *testing.T) {
 	})
 }
 
-type CredentialShowTest struct {
-	name       string
-	format     printer.Format
-	wantOutput string
-}
-
 func TestShowCredential_NotFound(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
@@ -248,85 +242,27 @@ func TestShowCredential_NotFound(t *testing.T) {
 }
 
 func TestShowCredential_Found(t *testing.T) {
+	type CredentialShowTest struct {
+		name               string
+		format             printer.Format
+		expectedOutputFile string
+	}
+
 	testcases := []CredentialShowTest{
 		{
-			name:   "json",
-			format: printer.FormatJson,
-			wantOutput: `{
-  "schemaVersion": "1.0.0",
-  "namespace": "dev",
-  "name": "kool-kreds",
-  "created": "2019-06-24T16:07:57.415378-05:00",
-  "modified": "2019-06-24T16:07:57.415378-05:00",
-  "credentials": [
-    {
-      "name": "kool-config",
-      "source": {
-        "path": "/path/to/kool-config"
-      }
-    },
-    {
-      "name": "kool-envvar",
-      "source": {
-        "env": "KOOL_ENV_VAR"
-      }
-    },
-    {
-      "name": "kool-cmd",
-      "source": {
-        "command": "echo 'kool'"
-      }
-    },
-    {
-      "name": "kool-val",
-      "source": {
-        "value": "kool"
-      }
-    }
-  ]
-}
-`,
+			name:               "json",
+			format:             printer.FormatJson,
+			expectedOutputFile: "testdata/credentials/kool-kreds.json",
 		},
 		{
-			name:   "yaml",
-			format: printer.FormatYaml,
-			wantOutput: `schemaVersion: 1.0.0
-namespace: dev
-name: kool-kreds
-created: 2019-06-24T16:07:57.415378-05:00
-modified: 2019-06-24T16:07:57.415378-05:00
-credentials:
-  - name: kool-config
-    source:
-      path: /path/to/kool-config
-  - name: kool-envvar
-    source:
-      env: KOOL_ENV_VAR
-  - name: kool-cmd
-    source:
-      command: echo 'kool'
-  - name: kool-val
-    source:
-      value: kool
-
-`,
+			name:               "yaml",
+			format:             printer.FormatYaml,
+			expectedOutputFile: "testdata/credentials/kool-kreds.yaml",
 		},
 		{
-			name:   "table",
-			format: printer.FormatTable,
-			wantOutput: `Name: kool-kreds
-Namespace: dev
-Created: 2019-06-24
-Modified: 2019-06-24
-
---------------------------------------------------
-  Name         Local Source          Source Type  
---------------------------------------------------
-  kool-config  /path/to/kool-config  path         
-  kool-envvar  KOOL_ENV_VAR          env          
-  kool-cmd     echo 'kool'           command      
-  kool-val     kool                  value        
-`,
+			name:               "table",
+			format:             printer.FormatTable,
+			expectedOutputFile: "testdata/credentials/kool-kreds.txt",
 		},
 	}
 
@@ -346,9 +282,9 @@ Modified: 2019-06-24
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
 			err := p.ShowCredential(opts)
-			assert.NoError(t, err, "an error should not have occurred")
+			require.NoError(t, err, "an error should not have occurred")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
-			assert.Equal(t, tc.wantOutput, gotOutput)
+			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)
 		})
 	}
 }

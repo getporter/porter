@@ -79,6 +79,11 @@
         "type": "object",
         "additionalProperties": true
       },
+      "schemaType": {
+        "description": "The resource type of the current document.",
+        "type": "string",
+        "default": "Installation"
+      },
       "schemaVersion": {
         "description": "Version of the installation schema to which this document adheres",
         "type": "string",

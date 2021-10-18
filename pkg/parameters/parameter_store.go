@@ -86,9 +86,10 @@ func (s ParameterStore) Validate(params ParameterSet) error {
 	return errors
 }
 
-func (s ParameterStore) InsertParameterSet(cset ParameterSet) error {
+func (s ParameterStore) InsertParameterSet(params ParameterSet) error {
+	params.SchemaVersion = SchemaVersion
 	opts := storage.InsertOptions{
-		Documents: []interface{}{cset},
+		Documents: []interface{}{params},
 	}
 	return s.Documents.Insert(CollectionParameters, opts)
 }
@@ -115,6 +116,7 @@ func (s ParameterStore) GetParameterSet(namespace string, name string) (Paramete
 }
 
 func (s ParameterStore) UpdateParameterSet(params ParameterSet) error {
+	params.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: params,
 	}
@@ -122,6 +124,7 @@ func (s ParameterStore) UpdateParameterSet(params ParameterSet) error {
 }
 
 func (s ParameterStore) UpsertParameterSet(params ParameterSet) error {
+	params.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: params,
 		Upsert:   true,
