@@ -46,7 +46,7 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 		lastRun = &r
 	}
 
-	ref, ok, err := opts.Installation.GetBundleReference()
+	ref, ok, err := opts.Installation.Bundle.GetBundleReference()
 	if err != nil {
 		return err
 	}

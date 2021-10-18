@@ -65,9 +65,9 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 	if opts.Reference != "" {
 		i.TrackBundle(opts.GetReference())
 	} else if opts.Version != "" {
-		i.BundleVersion = opts.Version
-		i.BundleDigest = ""
-		i.BundleTag = ""
+		i.Bundle.Version = opts.Version
+		i.Bundle.Digest = ""
+		i.Bundle.Tag = ""
 	}
 
 	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)

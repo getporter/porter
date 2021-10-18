@@ -79,8 +79,8 @@ parameters:
 Installations can be defined in either json or yaml.
 You can use this [json schema][inst-schema] to validate an installation file.
 
-Either bundleVersion, bundleTag or bundleDigest must be specified.
-When the bundleDigest is specified in addition to the version or tag, it is used to validate the bundle that was pulled using the other fields.
+Either the bundle digest, version, or tag must be specified.
+When more than one is specified, Porter selects the most specific field available, preferring digest the most, then version, and then falling back to tag last.
 
 ```yaml
 schemaVersion: 1.0.0
@@ -89,11 +89,12 @@ namespace: staging
 labels:
   team: marketing
   customer: bigbucks
-bundleRepository: getporter/porter-hello
-# Only one of the following fields must be specified: bundleVersion, bundleDigest, or bundleTag
-bundleVersion: 0.1.1
-bundleDigest: sha256:ace0eda3e3be35a979cec764a3321b4c7d0b9e4bb3094d20d3ff6782961a8d54
-bundleTag: latest
+bundle:
+  repository: getporter/porter-hello
+  # One of the following fields must be specified: digest, version, or tag
+  digest: sha256:ace0eda3e3be35a979cec764a3321b4c7d0b9e4bb3094d20d3ff6782961a8d54
+  version: 0.1.1
+  tag: latest
 parameterSets:
   - myparams
 credentialSets:
@@ -108,14 +109,16 @@ parameters:
 | name  | true  | The name of the parameter set.  |
 | namespace  | false  | The namespace in which the parameter set is defined. Defaults to the empty (global) namespace.  |
 | labels  | false | A set of key-value pairs associated with the parameter set. |
-| bundleRepository | true | The repository where the bundle is published. | 
-| bundleVersion | false* | The bundle version. |
-| bundleTag | false* | The bundle tag. This is useful when you do not use Porter's convention of defaulting the bundle tag to the bundle version. |
-| bundleDigest | false* | The bundle repository digest. |
+| bundle  | true | A reference to where the bundle is published |
+| bundle.repository | true | The repository where the bundle is published. | 
+| bundle.digest | false* | The bundle repository digest. |
+| bundle.version | false* | The bundle version. |
+| bundle.tag | false* | The bundle tag. This is useful when you do not use Porter's convention of defaulting the bundle tag to the bundle version. |
 | parameterSets | false | A list of parameter set names. |
 | credentialSets | false | A list of credential set names. |
 | parameters | false | Additional parameter values to use with the installation. Overrides any parameters defined in the associated parameter sets. |
 
+\* The bundle section requires a repository and one of the following fields: digest, version, or tag.
 
 [cs-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/credential-set.schema.json
 [ps-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/parameter-set.schema.json
