@@ -29,6 +29,8 @@ const (
 	// Name of the KIND cluster used for testing
 	DefaultKindClusterName = "porter"
 
+	DefaultNetworkName = "porter"
+
 	// Relative location of the KUBECONFIG for the test cluster
 	Kubeconfig = "kind.config"
 
@@ -46,6 +48,9 @@ func EnsureTestCluster() {
 
 	if !useCluster() {
 		CreateTestCluster()
+	}
+	if !isOnDockerNetwork(getRegistryName(), DefaultNetworkName) {
+		mgx.Must(RestartDockerRegistry())
 	}
 }
 
@@ -119,10 +124,8 @@ func CreateTestCluster() {
 	mgx.Must(errors.Wrap(err, "could not write kind config file"))
 	defer os.Remove("kind.config.yaml")
 
-	must.Run("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml")
-
-	// Connect the kind and registry containers on the same network
-	must.Run("docker", "network", "connect", "kind", getRegistryName())
+	must.Command("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml").
+		Env("KIND_EXPERIMENTAL_DOCKER_NETWORK=" + DefaultNetworkName).Run()
 
 	// Document the local registry
 	kubectl("apply", "-f", "mage/tests/local-registry.yaml").Run()
@@ -133,10 +136,6 @@ func DeleteTestCluster() {
 	mg.Deps(tools.EnsureKind)
 
 	must.RunE("kind", "delete", "cluster", "--name", getKindClusterName())
-
-	if isOnDockerNetwork(getRegistryName(), "kind") {
-		must.RunE("docker", "network", "disconnect", "kind", getRegistryName())
-	}
 }
 
 func kubectl(args ...string) shx.PreparedCommand {
@@ -204,9 +203,22 @@ func isDockerReady() (bool, error) {
 	return err == nil, nil
 }
 
+func EnsurePorterNetwork() error {
+	if NetworkExists(DefaultNetworkName) {
+		return nil
+	}
+
+	return shx.RunE("docker", "network", "create", DefaultNetworkName, "-d=bridge", "-o", "com.docker.network.bridge.enable_ip_masquerade=true")
+}
+
+func NetworkExists(name string) bool {
+	err := shx.RunE("docker", "network", "inspect", name)
+	return err == nil
+}
+
 // Start a Docker registry to use with the tests.
 func StartDockerRegistry() error {
-	mg.Deps(StartDocker)
+	mg.SerialDeps(StartDocker, EnsurePorterNetwork)
 	if isContainerRunning(getRegistryName()) {
 		return nil
 	}
@@ -217,7 +229,7 @@ func StartDockerRegistry() error {
 	}
 
 	fmt.Println("Starting local docker registry")
-	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--name", getRegistryName(), "registry:2")
+	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--network="+DefaultNetworkName, "--name", getRegistryName(), "registry:2")
 }
 
 // Stop the Docker registry used by the tests.
@@ -250,7 +262,7 @@ func containerExists(name string) bool {
 // Remove the specified container, if it is present.
 func RemoveContainer(name string) error {
 	stderr := bytes.Buffer{}
-	_, _, err := shx.Command("docker", "rm", "-f", name).Stderr(&stderr).Stdout(nil).Exec()
+	_, _, err := shx.Command("docker", "rm", "-vf", name).Stderr(&stderr).Stdout(nil).Exec()
 	// Gracefully handle the container already being gone
 	if err != nil && !strings.Contains(stderr.String(), "No such container") {
 		return err
