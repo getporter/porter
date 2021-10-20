@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	cnabclaims "github.com/cnabio/cnab-go/claim"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -103,10 +104,12 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 	foo := cp.CreateInstallation(NewInstallation("dev", "foo"))
 	run := cp.CreateRun(foo.NewRun(cnab.ActionInstall), setBun)
 	result := cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
+	cp.CreateOutput(result.NewOutput(cnabclaims.OutputInvocationImageLogs, []byte("install logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("install output1")))
 
 	run = cp.CreateRun(foo.NewRun(cnab.ActionUpgrade), setBun)
 	result = cp.CreateResult(run.NewResult(cnab.StatusSucceeded))
+	cp.CreateOutput(result.NewOutput(cnabclaims.OutputInvocationImageLogs, []byte("upgrade logs")))
 	cp.CreateOutput(result.NewOutput("output1", []byte("upgrade output1")))
 	cp.CreateOutput(result.NewOutput("output2", []byte("upgrade output2")))
 	// Test bug in how we read output names by having the name include characters from the result id
@@ -321,11 +324,12 @@ func TestClaimStore_Outputs(t *testing.T) {
 	t.Run("ListOutputs", func(t *testing.T) {
 		outputs, err := cp.ListOutputs(resultID)
 		require.NoError(t, err, "ListResults failed")
-		assert.Len(t, outputs, 3, "expected 2 outputs")
+		assert.Len(t, outputs, 4, "expected 2 outputs")
 
 		assert.Equal(t, outputs[0].Name, resultID+"-output3")
-		assert.Equal(t, outputs[1].Name, "output1")
-		assert.Equal(t, outputs[2].Name, "output2")
+		assert.Equal(t, outputs[1].Name, cnabclaims.OutputInvocationImageLogs)
+		assert.Equal(t, outputs[2].Name, "output1")
+		assert.Equal(t, outputs[3].Name, "output2")
 	})
 
 	t.Run("ListOutputs - no outputs", func(t *testing.T) {
@@ -338,7 +342,7 @@ func TestClaimStore_Outputs(t *testing.T) {
 		outputs, err := cp.GetLastOutputs("dev", "foo")
 
 		require.NoError(t, err, "GetLastOutputs failed")
-		assert.Equal(t, 3, outputs.Len(), "wrong number of outputs identified")
+		assert.Equal(t, 4, outputs.Len(), "wrong number of outputs identified")
 
 		gotOutput1, hasOutput1 := outputs.GetByName("output1")
 		assert.True(t, hasOutput1, "should have found output1")
@@ -367,5 +371,13 @@ func TestClaimStore_Outputs(t *testing.T) {
 		o, err := cp.GetLastOutput("dev", "missing", "output1")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 		assert.Empty(t, o)
+	})
+
+	t.Run("GetLastLogs", func(t *testing.T) {
+		logs, hasLogs, err := cp.GetLastLogs("dev", "foo")
+
+		require.NoError(t, err, "GetLastLogs failed")
+		assert.True(t, hasLogs, "expected logs to be found")
+		assert.Equal(t, "upgrade logs", logs, "did not find the most recent logs for foo")
 	})
 }
