@@ -244,7 +244,7 @@ func (s ClaimStore) GetLogs(runID string) (string, bool, error) {
 func (s ClaimStore) GetLastLogs(namespace string, installation string) (string, bool, error) {
 	var out Output
 	opts := storage.FindOptions{
-		Sort: []string{"resultId"}, // get logs from the last result for a run
+		Sort: []string{"-resultId"}, // get logs from the last result for a run
 		Filter: bson.M{
 			"namespace":    namespace,
 			"installation": installation,
