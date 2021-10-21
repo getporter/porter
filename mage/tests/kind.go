@@ -2,7 +2,6 @@ package tests
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -11,17 +10,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strconv"
-	"strings"
-	"time"
 
+	"get.porter.sh/porter/mage/docker"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
-	"github.com/magefile/mage/sh"
 	"github.com/pkg/errors"
 )
 
@@ -29,13 +24,8 @@ const (
 	// Name of the KIND cluster used for testing
 	DefaultKindClusterName = "porter"
 
-	DefaultNetworkName = "porter"
-
 	// Relative location of the KUBECONFIG for the test cluster
 	Kubeconfig = "kind.config"
-
-	// Container name of the local registry
-	DefaultRegistryName = "registry"
 )
 
 var (
@@ -49,9 +39,7 @@ func EnsureTestCluster() {
 	if !useCluster() {
 		CreateTestCluster()
 	}
-	if !isOnDockerNetwork(getRegistryName(), DefaultNetworkName) {
-		mgx.Must(RestartDockerRegistry())
-	}
+	mgx.Must(docker.StartDockerRegistry())
 }
 
 // get the config of the current kind cluster, if available
@@ -87,7 +75,7 @@ func setClusterNamespace(name string) {
 
 // Create a KIND cluster named porter.
 func CreateTestCluster() {
-	mg.Deps(tools.EnsureKind, RestartDockerRegistry)
+	mg.Deps(tools.EnsureKind, docker.RestartDockerRegistry)
 
 	// Determine host ip to populate kind config api server details
 	// https://kind.sigs.k8s.io/docs/user/configuration/#api-server
@@ -124,8 +112,7 @@ func CreateTestCluster() {
 	mgx.Must(errors.Wrap(err, "could not write kind config file"))
 	defer os.Remove("kind.config.yaml")
 
-	must.Command("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml").
-		Env("KIND_EXPERIMENTAL_DOCKER_NETWORK=" + DefaultNetworkName).Run()
+	must.Run("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml")
 
 	// Document the local registry
 	kubectl("apply", "-f", "mage/tests/local-registry.yaml").Run()
@@ -141,133 +128,6 @@ func DeleteTestCluster() {
 func kubectl(args ...string) shx.PreparedCommand {
 	kubeconfig := fmt.Sprintf("KUBECONFIG=%s", os.Getenv("KUBECONFIG"))
 	return must.Command("kubectl", args...).Env(kubeconfig)
-}
-
-func isOnDockerNetwork(container string, network string) bool {
-	networkId, _ := shx.OutputE("docker", "network", "inspect", network, "-f", "{{.Id}}")
-	networks, _ := shx.OutputE("docker", "inspect", container, "-f", "{{json .NetworkSettings.Networks}}")
-	return strings.Contains(networks, networkId)
-}
-
-// Ensure the docker daemon is started and ready to accept connections.
-func StartDocker() error {
-	switch runtime.GOOS {
-	case "windows":
-		err := shx.RunS("powershell", "-c", "Get-Process 'Docker Desktop'")
-		if err != nil {
-			fmt.Println("Starting Docker Desktop")
-			cmd := shx.Command(`C:\Program Files\Docker\Docker\Docker Desktop.exe`)
-			err := cmd.Cmd.Start()
-			if err != nil {
-				return errors.Wrapf(err, "could not start Docker Desktop")
-			}
-		}
-	}
-
-	ready, err := isDockerReady()
-	if err != nil {
-		return err
-	}
-
-	if ready {
-		return nil
-	}
-
-	fmt.Println("Waiting for the docker service to be ready")
-	cxt, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-	defer cancel()
-	for {
-		select {
-		case <-cxt.Done():
-			return errors.New("a timeout was reached waiting for the docker service to become unavailable")
-		default:
-			// Wait and check again
-			// Writing a dot on a single line so the CI logs show our progress, instead of a bunch of dots at the end
-			fmt.Println(".")
-			time.Sleep(time.Second)
-
-			if ready, _ := isDockerReady(); ready {
-				fmt.Println("Docker service is ready!")
-				return nil
-			}
-		}
-	}
-}
-
-func isDockerReady() (bool, error) {
-	err := shx.RunS("docker", "ps")
-	if !sh.CmdRan(err) {
-		return false, errors.Wrap(err, "could not run docker")
-	}
-
-	return err == nil, nil
-}
-
-func EnsurePorterNetwork() error {
-	if NetworkExists(DefaultNetworkName) {
-		return nil
-	}
-
-	return shx.RunE("docker", "network", "create", DefaultNetworkName, "-d=bridge", "-o", "com.docker.network.bridge.enable_ip_masquerade=true")
-}
-
-func NetworkExists(name string) bool {
-	err := shx.RunE("docker", "network", "inspect", name)
-	return err == nil
-}
-
-// Start a Docker registry to use with the tests.
-func StartDockerRegistry() error {
-	mg.SerialDeps(StartDocker, EnsurePorterNetwork)
-	if isContainerRunning(getRegistryName()) {
-		return nil
-	}
-
-	err := RemoveContainer(getRegistryName())
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Starting local docker registry")
-	return shx.RunE("docker", "run", "-d", "-p", "5000:5000", "--network="+DefaultNetworkName, "--name", getRegistryName(), "registry:2")
-}
-
-// Stop the Docker registry used by the tests.
-func StopDockerRegistry() error {
-	if containerExists(getRegistryName()) {
-		fmt.Println("Stopping local docker registry")
-		return RemoveContainer(getRegistryName())
-	}
-	return nil
-}
-
-func RestartDockerRegistry() error {
-	if err := StopDockerRegistry(); err != nil {
-		return err
-	}
-	return StartDockerRegistry()
-}
-
-func isContainerRunning(name string) bool {
-	out, _ := shx.OutputS("docker", "container", "inspect", "-f", "{{.State.Running}}", name)
-	running, _ := strconv.ParseBool(out)
-	return running
-}
-
-func containerExists(name string) bool {
-	err := shx.RunS("docker", "inspect", name)
-	return err == nil
-}
-
-// Remove the specified container, if it is present.
-func RemoveContainer(name string) error {
-	stderr := bytes.Buffer{}
-	_, _, err := shx.Command("docker", "rm", "-vf", name).Stderr(&stderr).Stdout(nil).Exec()
-	// Gracefully handle the container already being gone
-	if err != nil && !strings.Contains(stderr.String(), "No such container") {
-		return err
-	}
-	return nil
 }
 
 // Ensure kubectl is installed.
@@ -305,11 +165,4 @@ func getKindClusterName() string {
 		return name
 	}
 	return DefaultKindClusterName
-}
-
-func getRegistryName() string {
-	if name, ok := os.LookupEnv("REGISTRY_NAME"); ok {
-		return name
-	}
-	return DefaultRegistryName
 }

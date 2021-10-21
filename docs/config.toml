@@ -72,10 +72,41 @@ pygmentsStyle = "friendly"
     identifier = "examples"
     weight = 50
     parent = "get-started"
+
+[[menu.main]]
+  name = "Contribute"
+  url = "/contribute/"
+  identifier = "contribute"
+  weight = 20
+  [[menu.main]]
+  name = "New Contributor Guide"
+  url = "/contribute/"
+  identifier = "contribute-overview"
+  weight = 51
+  parent = "contribute"
+  [[menu.main]]
+  name = "Contributing Tutorial"
+  url = "/contribute/tutorial/"
+  identifier = "contributing-tutorial"
+  weight = 52
+  parent = "contribute"
+  [[menu.main]]
+  name = "Contributing Guide"
+  url = "/contribute/guide/"
+  identifier = "contributing-guide"
+  weight = 53
+  parent = "contribute"
+  [[menu.main]]
+  name = "Make a Proposal"
+  url = "/contribute/proposals/"
+  identifier = "proposals"
+  weight = 54
+  parent = "contribute"
+
 [[menu.main]]
   name = "Use Porter"
   identifier = "end-users"
-  weight = 20
+  weight = 30
   [[menu.main]]
     name = "Manage Installations"
     url = "/end-users/installations/"
@@ -90,38 +121,37 @@ pygmentsStyle = "friendly"
     parent = "end-users"
 
 [[menu.main]]
-  name = "Contribute"
-  url = "/contribute/"
-  identifier = "contribute"
+  name = "Porter Operator"
+  identifier = "operator"
   weight = 50
   [[menu.main]]
-    name = "New Contributor Guide"
-    url = "/contribute/"
-    identifier = "contribute-overview"
-    weight = 51
-    parent = "contribute"
+    name = "Overview"
+    identifier = "operator-overview"
+    url = "/operator/"
+    weight = 1
+    parent = "operator"
   [[menu.main]]
-    name = "Contributing Tutorial"
-    url = "/contribute/tutorial/"
-    identifier = "contributing-tutorial"
-    weight = 52
-    parent = "contribute"
+    name = "QuickStart"
+    identifier = "operator-quickstart"
+    url = "/operator/quickstart/"
+    weight = 2
+    parent = "operator"
   [[menu.main]]
-    name = "Contributing Guide"
-    url = "/contribute/guide/"
-    identifier = "contributing-guide"
-    weight = 53
-    parent = "contribute"
+    name = "Install"
+    identifier = "operator-install"
+    url = "/operator/install/"
+    weight = 3
+    parent = "operator"
   [[menu.main]]
-    name = "Make a Proposal"
-    url = "/contribute/proposals/"
-    identifier = "proposals"
-    weight = 54
-    parent = "contribute"
+    name = "File Formats"
+    identifier = "operator-file-formats"
+    url = "/operator/file-formats/"
+    weight = 10
+    parent = "operator"
 
 [[menu.main]]
   name = "Porter Commands"
-  url = "/cli"
+  url = "/cli/"
   identifier = "cli"
   weight = 102
   [[menu.main]]

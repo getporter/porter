@@ -14,10 +14,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
+	"get.porter.sh/porter/mage/docker"
 	// mage:import
 	"get.porter.sh/porter/mage/tests"
+	// mage:import
+	_ "get.porter.sh/porter/mage/docs"
 
 	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/releases"
@@ -191,7 +193,7 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
-	mg.Deps(tests.RestartDockerRegistry)
+	mg.Deps(docker.RestartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
@@ -459,36 +461,4 @@ func getPorterHome() string {
 		porterHome = filepath.Join(home, ".porter")
 	}
 	return porterHome
-}
-
-// Generate Porter's static website
-func Docs() {
-	cmd := must.Command("hugo", "--source", "docs/")
-	baseURL := os.Getenv("BASEURL")
-	if baseURL != "" {
-		cmd.Args("-b", baseURL)
-	}
-	cmd.RunV()
-}
-
-// Preview the website documentation
-func DocsPreview() {
-	const container = "porter-docs"
-	tests.RemoveContainer(container)
-
-	pwd, _ := os.Getwd()
-	must.Run("docker", "run", "-d", "-v", pwd+":/src",
-		"-p", "1313:1313", "--name", "porter-docs", "-w", "/src/docs",
-		"klakegg/hugo:0.78.1-ext-alpine", "server", "-D", "-F", "--noHTTPCache",
-		"--watch", "--bind=0.0.0.0")
-
-	for {
-		output, _ := must.OutputS("docker", "logs", "porter-docs")
-		if strings.Contains(output, "Web Server is available") {
-			break
-		}
-		time.Sleep(time.Second)
-	}
-
-	must.Run("open", "http://localhost:1313/docs/")
 }

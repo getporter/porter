@@ -5,6 +5,7 @@ title: File Formats
 * [Credential Sets](#credential-set)
 * [Parameter Sets](#parameter-set)
 * [Installation](#installation)
+* [Porter Operator File Formats](/operator/file-formats/)
 
 ## Credential Set
 
