@@ -97,8 +97,6 @@ func (p *Porter) PrintInstallationRuns(opts RunListOptions) error {
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, displayRuns)
 	case printer.FormatPlaintext:
-		return printer.PrintPlaintext(p.Out, displayRuns)
-	case printer.FormatTable:
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
 			Now: func() time.Time { return now },

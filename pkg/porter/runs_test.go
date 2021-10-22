@@ -1,9 +1,10 @@
 package porter
 
 import (
+	"testing"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
-	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +64,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 	}{
 		{name: "yaml", format: printer.FormatYaml, outputFile: "testdata/runs/expected-output.yaml"},
 		{name: "json", format: printer.FormatJson, outputFile: "testdata/runs/expected-output.json"},
-		{name: "table", format: printer.FormatTable, outputFile: "testdata/runs/expected-output.txt"},
+		{name: "plaintext", format: printer.FormatPlaintext, outputFile: "testdata/runs/expected-output.txt"},
 	}
 
 	for _, tc := range outputTestcases {

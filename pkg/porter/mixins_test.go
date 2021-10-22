@@ -18,7 +18,7 @@ func TestPorter_PrintMixins(t *testing.T) {
 
 	opts := PrintMixinsOptions{
 		PrintOptions: printer.PrintOptions{
-			Format: printer.FormatTable,
+			Format: printer.FormatPlaintext,
 		},
 	}
 	err := p.PrintMixins(opts)

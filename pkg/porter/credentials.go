@@ -44,7 +44,7 @@ func (p *Porter) PrintCredentials(opts ListOptions) error {
 		return printer.PrintJson(p.Out, creds)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, creds)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{
@@ -218,7 +218,7 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		}
 		fmt.Fprintln(p.Out, string(result))
 		return nil
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{

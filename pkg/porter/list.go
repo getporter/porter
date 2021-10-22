@@ -147,7 +147,7 @@ func (p *Porter) PrintInstallations(opts ListOptions) error {
 		return printer.PrintJson(p.Out, displayInstallations)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, displayInstallations)
-	case printer.FormatTable:
+	case printer.FormatPlaintext:
 		// have every row use the same "now" starting ... NOW!
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{

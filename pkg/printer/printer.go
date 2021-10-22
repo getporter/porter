@@ -10,7 +10,6 @@ type Format string
 
 const (
 	FormatJson      Format = "json"
-	FormatTable     Format = "table"
 	FormatYaml      Format = "yaml"
 	FormatPlaintext Format = "plaintext"
 )
@@ -31,7 +30,7 @@ func (f Formats) String() string {
 func (p *PrintOptions) ParseFormat() error {
 	format := Format(p.RawFormat)
 	switch format {
-	case FormatTable, FormatJson, FormatYaml, FormatPlaintext:
+	case FormatJson, FormatYaml, FormatPlaintext:
 		p.Format = format
 		return nil
 	default:

@@ -9,9 +9,9 @@ import (
 
 func TestParseFormat(t *testing.T) {
 	testcases := map[string]bool{
-		"table": true,
-		"json":  true,
-		"human": false,
+		"plaintext": true,
+		"json":      true,
+		"human":     false,
 	}
 
 	for name, valid := range testcases {

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ShowAllowedFormats = []printer.Format{printer.FormatTable, printer.FormatYaml, printer.FormatJson}
-	ShowDefaultFormat  = printer.FormatTable
+	ShowAllowedFormats = []printer.Format{printer.FormatPlaintext, printer.FormatYaml, printer.FormatJson}
+	ShowDefaultFormat  = printer.FormatPlaintext
 )
 
 // ShowOptions represent options for showing a particular installation
@@ -76,7 +76,7 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		return printer.PrintJson(p.Out, displayInstallation)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, displayInstallation)
-	case printer.FormatTable, printer.FormatPlaintext:
+	case printer.FormatPlaintext:
 		// Set up human friendly time formatter
 		now := time.Now()
 		tp := dtprinter.DateTimePrinter{

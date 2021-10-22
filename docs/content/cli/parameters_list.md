@@ -36,7 +36,7 @@ porter parameters list [flags]
   -l, --label strings      Filter the parameter sets by a label formatted as: KEY=VALUE. May be specified multiple times.
       --name string        Filter the parameter sets where the name contains the specified substring.
   -n, --namespace string   Namespace in which the parameter set is defined. Defaults to the global namespace. Use * to list across all namespaces.
-  -o, --output string      Specify an output format.  Allowed values: table, json, yaml (default "table")
+  -o, --output string      Specify an output format.  Allowed values: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

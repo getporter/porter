@@ -33,7 +33,7 @@ func TestExplain_generateTable(t *testing.T) {
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
-	opts.RawFormat = "table"
+	opts.RawFormat = "plaintext"
 
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)

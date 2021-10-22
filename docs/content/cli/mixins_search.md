@@ -30,7 +30,7 @@ porter mixins search [QUERY] [flags]
 ```
   -h, --help            help for search
       --mirror string   Mirror of official Porter assets (default "https://cdn.porter.sh")
-  -o, --output string   Output format, allowed values are: table, json, yaml (default "table")
+  -o, --output string   Output format, allowed values are: plaintext, json, yaml (default "plaintext")
 ```
 
 ### Options inherited from parent commands

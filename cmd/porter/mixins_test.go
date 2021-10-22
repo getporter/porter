@@ -17,7 +17,7 @@ func TestBuildListMixinsCommand_DefaultFormat(t *testing.T) {
 	err := cmd.PreRunE(cmd, []string{})
 
 	require.Nil(t, err)
-	assert.Equal(t, "table", cmd.Flag("output").Value.String())
+	assert.Equal(t, "plaintext", cmd.Flag("output").Value.String())
 }
 
 func TestBuildListMixinsCommand_AlternateFormat(t *testing.T) {
