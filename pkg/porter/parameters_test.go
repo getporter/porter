@@ -626,7 +626,7 @@ func TestShowParameters_NotFound(t *testing.T) {
 
 	opts := ParameterShowOptions{
 		PrintOptions: printer.PrintOptions{
-			Format: printer.FormatTable,
+			Format: printer.FormatPlaintext,
 		},
 		Name: "non-existent-param",
 	}
@@ -654,8 +654,8 @@ func TestShowParameters_Found(t *testing.T) {
 			expectedOutputFile: "testdata/parameters/mypset.yaml",
 		},
 		{
-			name:               "table",
-			format:             printer.FormatTable,
+			name:               "plaintext",
+			format:             printer.FormatPlaintext,
 			expectedOutputFile: "testdata/parameters/mypset.txt",
 		},
 	}
