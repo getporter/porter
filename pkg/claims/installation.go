@@ -36,17 +36,8 @@ type Installation struct {
 	// Modified timestamp of the installation.
 	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 
-	// BundleRepository is the OCI repository of the current bundle definition.
-	BundleRepository string `json:"bundleRepository,omitempty" yaml:"bundleRepository,omitempty" toml:"bundleRepository,omitempty"`
-
-	// BundleVersion is the current version of the bundle.
-	BundleVersion string `json:"bundleVersion,omitempty" yaml:"bundleVersion,omitempty" toml:"bundleVersion,omitempty"`
-
-	// BundleDigest is the current digest of the bundle.
-	BundleDigest string `json:"bundleDigest,omitempty" yaml:"bundleDigest,omitempty" toml:"bundleDigest,omitempty"`
-
-	// BundleTag is the OCI tag of the current bundle definition.
-	BundleTag string `json:"bundleTag,omitempty" yaml:"bundleTag,omitempty" toml:"bundleTag,omitempty"`
+	// Bundle specifies the bundle reference to use with the installation.
+	Bundle OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
@@ -73,55 +64,6 @@ func (i Installation) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
 }
 
-func (i Installation) GetBundleReference() (cnab.OCIReference, bool, error) {
-	if i.BundleRepository == "" {
-		return cnab.OCIReference{}, false, nil
-	}
-
-	ref, err := cnab.ParseOCIReference(i.BundleRepository)
-	if err != nil {
-		return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid BundleRepository %s", i.BundleRepository)
-	}
-
-	if i.BundleDigest != "" {
-		d, err := digest.Parse(i.BundleDigest)
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid BundleDigest %s", i.BundleDigest)
-		}
-
-		ref, err = ref.WithDigest(d)
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleDigest %s", i.BundleRepository, i.BundleDigest)
-		}
-		return ref, true, nil
-	}
-
-	if i.BundleVersion != "" {
-		v, err := semver.NewVersion(i.BundleVersion)
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.New("invalid BundleVersion")
-		}
-
-		// The bundle version feature can only be used with standard naming conventions
-		// everyone else can use the tag field if they do weird things
-		ref, err = ref.WithTag("v" + v.String())
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleVersion %s", i.BundleRepository, i.BundleVersion)
-		}
-		return ref, true, nil
-	}
-
-	if i.BundleTag != "" {
-		ref, err = ref.WithTag(i.BundleTag)
-		if err != nil {
-			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the BundleRepository %s and BundleTag %s", i.BundleRepository, i.BundleTag)
-		}
-		return ref, true, nil
-	}
-
-	return cnab.OCIReference{}, false, errors.New("Invalid installation, either BundleDigest, BundleVersion or BundleTag must be specified")
-}
-
 func (i Installation) DefaultDocumentFilter() interface{} {
 	return map[string]interface{}{"namespace": i.Namespace, "name": i.Name}
 }
@@ -144,9 +86,9 @@ func (i Installation) ToCNAB() cnab.Installation {
 		SchemaVersion:    CNABSchemaVersion(),
 		Name:             i.Name,
 		Namespace:        i.Namespace,
-		BundleRepository: i.BundleRepository,
-		BundleVersion:    i.BundleVersion,
-		BundleDigest:     i.BundleDigest,
+		BundleRepository: i.Bundle.Repository,
+		BundleVersion:    i.Bundle.Version,
+		BundleDigest:     i.Bundle.Digest,
 		Created:          i.Created,
 		Modified:         i.Modified,
 		Custom:           i.Custom,
@@ -184,10 +126,7 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
 func (i *Installation) Apply(input Installation) {
-	i.BundleRepository = input.BundleRepository
-	i.BundleDigest = input.BundleDigest
-	i.BundleVersion = input.BundleVersion
-	i.BundleTag = input.BundleTag
+	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters
 	i.CredentialSets = input.CredentialSets
 	i.ParameterSets = input.ParameterSets
@@ -203,20 +142,20 @@ func (i *Installation) Validate() error {
 	// We can change these to better checks if we consolidate our logic around the various ways we let you
 	// install from a bundle definition https://github.com/getporter/porter/issues/1024#issuecomment-899828081
 	// Until then, these are pretty weak checks
-	_, _, err := i.GetBundleReference()
+	_, _, err := i.Bundle.GetBundleReference()
 	return errors.Wrapf(err, "could not determine the fully-qualified bundle reference")
 }
 
 // TrackBundle updates the bundle that the installation is tracking.
 func (i *Installation) TrackBundle(ref cnab.OCIReference) {
 	// Determine if the bundle is managed by version, digest or tag
-	i.BundleRepository = ref.Repository()
+	i.Bundle.Repository = ref.Repository()
 	if ref.HasVersion() {
-		i.BundleVersion = ref.Version()
+		i.Bundle.Version = ref.Version()
 	} else if ref.HasDigest() {
-		i.BundleDigest = ref.Digest().String()
+		i.Bundle.Digest = ref.Digest().String()
 	} else {
-		i.BundleTag = ref.Tag()
+		i.Bundle.Tag = ref.Tag()
 	}
 }
 
@@ -270,4 +209,73 @@ type InstallationStatus struct {
 
 	// BundleDigest is the digest of the bundle that last altered the installation state.
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
+}
+
+// OCIReferenceParts is our storage representation of cnab.OCIReference
+// with the parts explicitly stored separately so that they are queryable.
+type OCIReferenceParts struct {
+	// Repository is the OCI repository of the bundle.
+	// For example, "getporter/porter-hello".
+	Repository string `json:"repository,omitempty" yaml:"repository,omitempty" toml:"repository,omitempty"`
+
+	// Version is the current version of the bundle.
+	// For example, "1.2.3".
+	Version string `json:"version,omitempty" yaml:"version,omitempty" toml:"version,omitempty"`
+
+	// Digest is the current digest of the bundle.
+	// For example, "sha256:abc123"
+	Digest string `json:"digest,omitempty" yaml:"digest,omitempty" toml:"digest,omitempty"`
+
+	// Tag is the OCI tag of the bundle.
+	// For example, "latest".
+	Tag string `json:"tag,omitempty" yaml:"tag,omitempty" toml:"tag,omitempty"`
+}
+
+func (r OCIReferenceParts) GetBundleReference() (cnab.OCIReference, bool, error) {
+	if r.Repository == "" {
+		return cnab.OCIReference{}, false, nil
+	}
+
+	ref, err := cnab.ParseOCIReference(r.Repository)
+	if err != nil {
+		return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid bundle Repository %s", r.Repository)
+	}
+
+	if r.Digest != "" {
+		d, err := digest.Parse(r.Digest)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "invalid bundle Digest %s", r.Digest)
+		}
+
+		ref, err = ref.WithDigest(d)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Digest %s", r.Repository, r.Digest)
+		}
+		return ref, true, nil
+	}
+
+	if r.Version != "" {
+		v, err := semver.NewVersion(r.Version)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.New("invalid BundleVersion")
+		}
+
+		// The bundle version feature can only be used with standard naming conventions
+		// everyone else can use the tag field if they do weird things
+		ref, err = ref.WithTag("v" + v.String())
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Version %s", r.Repository, r.Version)
+		}
+		return ref, true, nil
+	}
+
+	if r.Tag != "" {
+		ref, err = ref.WithTag(r.Tag)
+		if err != nil {
+			return cnab.OCIReference{}, false, errors.Wrapf(err, "error joining the bundle Repository %s and Tag %s", r.Repository, r.Tag)
+		}
+		return ref, true, nil
+	}
+
+	return cnab.OCIReference{}, false, errors.New("Invalid bundle reference, either Digest, Version, or Tag must be specified")
 }

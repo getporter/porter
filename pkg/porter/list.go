@@ -58,8 +58,9 @@ func parseLabels(raw []string) map[string]string {
 // DisplayInstallation holds a subset of pertinent values to be listed from installation data
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
-	claims.Installation `json:",inline" yaml:",inline"`
-
+	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
+	SchemaType                  string `json:"schemaType" yaml:"schemaType"`
+	claims.Installation         `yaml:",inline"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
 }
 
@@ -69,6 +70,7 @@ type DisplayInstallationMetadata struct {
 
 func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
 	di := DisplayInstallation{
+		SchemaType:   "Installation",
 		Installation: installation,
 	}
 

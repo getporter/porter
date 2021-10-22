@@ -7,7 +7,10 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -615,4 +618,66 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 		"connstr": "connstr value",
 	}
 	assert.Equal(t, want, got, "resolved incorrect parameter values")
+}
+
+func TestShowParameters_NotFound(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	opts := ParameterShowOptions{
+		PrintOptions: printer.PrintOptions{
+			Format: printer.FormatTable,
+		},
+		Name: "non-existent-param",
+	}
+
+	err := p.ShowParameter(opts)
+	assert.ErrorIs(t, err, storage.ErrNotFound{})
+}
+
+func TestShowParameters_Found(t *testing.T) {
+	type ParameterShowTest struct {
+		name               string
+		format             printer.Format
+		expectedOutputFile string
+	}
+
+	testcases := []ParameterShowTest{
+		{
+			name:               "json",
+			format:             printer.FormatJson,
+			expectedOutputFile: "testdata/parameters/mypset.json",
+		},
+		{
+			name:               "yaml",
+			format:             printer.FormatYaml,
+			expectedOutputFile: "testdata/parameters/mypset.yaml",
+		},
+		{
+			name:               "table",
+			format:             printer.FormatTable,
+			expectedOutputFile: "testdata/parameters/mypset.txt",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Teardown()
+
+			opts := ParameterShowOptions{
+				PrintOptions: printer.PrintOptions{
+					Format: tc.format,
+				},
+				Name: "mypset",
+			}
+
+			p.TestParameters.AddTestParameters("testdata/paramset.json")
+
+			err := p.ShowParameter(opts)
+			require.NoError(t, err, "an error should not have occurred")
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)
+		})
+	}
 }

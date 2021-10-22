@@ -4,8 +4,9 @@ labels:
   generator: porter-operator
   generatorVersion: v0.2.0
   thing: "1"
-bundleRepository: localhost:5000/mybuns
-bundleVersion: v0.1.2
+bundle:
+  repository: localhost:5000/mybuns
+  version: v0.1.2
 credentialSets:
   - mybuns
 parameterSets:

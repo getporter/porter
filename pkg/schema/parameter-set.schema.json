@@ -78,6 +78,11 @@
       "type": "object",
       "additionalProperties": true
     },
+    "schemaType": {
+      "description": "The resource type of the current document.",
+      "type": "string",
+      "default": "ParameterSet"
+    },
     "schemaVersion": {
       "description": "Version of the parameter set schema to which this document adheres",
       "type": "string",

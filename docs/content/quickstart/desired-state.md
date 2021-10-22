@@ -105,8 +105,9 @@ Create a file named installation.yaml, paste the following definition into the f
 ```yaml
 schemaVersion: 1.0.0
 name: desired-state
-bundleRepository: getporter/credentials-tutorial
-bundleVersion: 0.2.0
+bundle:
+  repository: getporter/credentials-tutorial
+  version: 0.2.0
 parameterSets:
   - credentials-tutorial
 credentialSets:
@@ -196,8 +197,9 @@ The installation.yaml file should look like this:
 ```yaml
 schemaVersion: 1.0.0
 name: desired-state
-bundleRepository: getporter/credentials-tutorial
-bundleVersion: 0.2.0
+bundle:
+  repository: getporter/credentials-tutorial
+  version: 0.2.0
 parameterSets:
   - credentials-tutorial
 credentialSets:

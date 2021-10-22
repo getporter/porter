@@ -1,10 +1,12 @@
+schemaType: Installation
 schemaVersion: 1.0.0
 name: mywordpress
 namespace: dev
 created: 2020-04-18T01:02:03.000000004Z
 modified: 2020-04-18T01:02:03.000000004Z
-bundleRepository: getporter/wordpress
-bundleVersion: 0.1.0
+bundle:
+  repository: getporter/wordpress
+  version: 0.1.0
 labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3

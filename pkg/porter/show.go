@@ -89,15 +89,15 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Modified))
 
-		if displayInstallation.BundleRepository != "" {
+		if displayInstallation.Bundle.Repository != "" {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Bundle:")
-			fmt.Fprintf(p.Out, "  Repository: %s\n", displayInstallation.BundleRepository)
-			if displayInstallation.BundleVersion != "" {
-				fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.BundleVersion)
+			fmt.Fprintf(p.Out, "  Repository: %s\n", displayInstallation.Bundle.Repository)
+			if displayInstallation.Bundle.Version != "" {
+				fmt.Fprintf(p.Out, "  Version: %s\n", displayInstallation.Bundle.Version)
 			}
-			if displayInstallation.BundleDigest != "" {
-				fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.BundleDigest)
+			if displayInstallation.Bundle.Digest != "" {
+				fmt.Fprintf(p.Out, "  Digest: %s\n", displayInstallation.Bundle.Digest)
 			}
 		}
 
