@@ -384,7 +384,7 @@ local changes](#use-the-locally-built-porter), let's rebuild and test your chang
 
 1. Build porter to incorporate your new command by running `make build`.
 1. Run `porter hello --help` to see the helptext for your command.
-1. Run `porter --name YOURNAME` to try out your new command.
+1. Run `porter hello --name YOURNAME` to try out your new command.
 
 ```bash
 $ porter hello --name Carolyn
