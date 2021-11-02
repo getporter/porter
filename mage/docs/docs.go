@@ -84,6 +84,7 @@ func linkOperatorDocs() {
 
 	repoPath := prepareOperatorRepo()
 	mgx.Must(os.Symlink(filepath.Join(repoPath, "docs/content"), docsDest))
+	must.RunV("bash", "-c", "ls "+docsDest)
 }
 
 // returns the location of the docs repo
