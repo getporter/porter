@@ -37,7 +37,7 @@ func Docs() {
 }
 
 func removePreviewContainer() {
-	mgx.Must(docker.RemoveContainer(PreviewContainer))
+	docker.RemoveContainer(PreviewContainer)
 }
 
 // Preview the website documentation.
