@@ -83,8 +83,10 @@ func linkOperatorDocs() {
 	}
 
 	repoPath := prepareOperatorRepo()
-	mgx.Must(os.Symlink(filepath.Join(repoPath, "docs/content"), docsDest))
-	must.RunV("bash", "-c", "ls "+docsDest)
+	contentPath, _ := filepath.Abs("docs/content")
+	relPath, _ := filepath.Rel(contentPath, filepath.Join(repoPath, "docs/content"))
+	log.Println("ln -s", relPath, docsDest)
+	mgx.Must(os.Symlink(relPath, docsDest))
 }
 
 // returns the location of the docs repo
@@ -103,7 +105,7 @@ func prepareOperatorRepo() string {
 	}
 
 	// Clone the repo
-	cloneDestination := "docs/sources/operator"
+	cloneDestination, _ := filepath.Abs("docs/sources/operator")
 	_, err := os.Stat(cloneDestination)
 	if err == nil { // Already cloned
 		log.Println("Operator repository already cloned, skipping")
