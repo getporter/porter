@@ -33,6 +33,14 @@ func (t TestRegistry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry
 	return nil, nil
 }
 
+func (t TestRegistry) PushBundleWithRelocationMap(bun bundle.Bundle, tag string, reloMap relocation.ImageRelocationMap, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
+	if t.MockPushBundle != nil {
+		return t.MockPushBundle(bun, tag, insecureRegistry)
+	}
+
+	return nil, nil
+}
+
 func (t TestRegistry) PushInvocationImage(invocationImage string) (string, error) {
 	if t.MockPushInvocationImage != nil {
 		return t.MockPushInvocationImage(invocationImage)

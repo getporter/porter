@@ -114,6 +114,36 @@ func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bo
 	return &rm, nil
 }
 
+// Pushes a bundle while using a relocationMap to correctly locate copied images. Identical to above, except for remotes.WithRelocationMap(reloMap)
+func (r *Registry) PushBundleWithRelocationMap(bun bundle.Bundle, tag string, reloMap relocation.ImageRelocationMap, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
+	ref, err := ParseOCIReference(tag) //tag from manifest
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
+	}
+	var insecureRegistries []string
+	if insecureRegistry {
+		reg := reference.Domain(ref)
+		insecureRegistries = append(insecureRegistries, reg)
+	}
+
+	resolver := r.createResolver(insecureRegistries)
+
+	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(reloMap))
+	if err != nil {
+		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
+	}
+	d, err := remotes.Push(context.Background(), &bun, rm, ref, resolver, true)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error pushing the bundle to %s", tag)
+	}
+	fmt.Fprintf(r.Out, "Bundle tag %s pushed successfully, with digest %q\n", ref, d.Digest)
+
+	if len(rm) == 0 {
+		return nil, nil
+	}
+	return &rm, nil
+}
+
 // PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
 // the expected format of the invocationImage is REGISTRY/NAME:TAG.
 // Returns the image digest from the registry.

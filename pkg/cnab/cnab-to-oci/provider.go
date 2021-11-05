@@ -13,6 +13,9 @@ type RegistryProvider interface {
 	// PushBundle pushes a bundle to an OCI registry.
 	PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error)
 
+	// PushBundle pushes a bundle to an OCI registry, using the provided relocationMap
+	PushBundleWithRelocationMap(bun bundle.Bundle, tag string, reloMap relocation.ImageRelocationMap, insecureRegistry bool) (*relocation.ImageRelocationMap, error)
+
 	// PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
 	// the expected format of the invocationImage is REGISTRY/NAME:TAG.
 	// Returns the image digest from the registry.
