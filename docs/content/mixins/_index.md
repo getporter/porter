@@ -11,7 +11,7 @@ Mixins make Porter special. They are the building blocks that you use when autho
 Mixins are adapters between the Porter and an existing tool or system. They know how to talk to Porter to include everything
 they need to run, such as a CLI or config files, and how to execute their steps in the Porter manifest.
 
-There are [many mixins](/mixins/) created both by the Porter Authors and the community.
+There are [many mixins](/mixins/) created by the Porter community.
 Only the [exec mixin](/mixins/exec/) is installed by default.
 
 
