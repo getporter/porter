@@ -3,8 +3,10 @@
 package smoke
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
@@ -35,7 +37,7 @@ func TestCopy(t *testing.T) {
 
 	// Build an interesting test bundle
 	origRef := fmt.Sprintf("localhost:%s/mybuns:v0.1.1", tempRegistryPort)
-	shx.Copy("../testdata/mybuns", ".", shx.CopyRecursive)
+	require.NoError(t, shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/mybuns"), ".", shx.CopyRecursive))
 	os.Chdir("mybuns")
 	test.RequirePorter("build")
 	test.RequirePorter("publish", "--reference", origRef)
@@ -50,7 +52,11 @@ func TestCopy(t *testing.T) {
 	finalRef := "localhost:5000/copy-copy-mybuns:v0.1.1"
 	test.RequirePorter("copy", "--source", copiedRef, "--destination", finalRef)
 
-	inspectOutput, _, err := test.RunPorter("inspect", finalRef, "--output=json")
-	require.NoError(t, err, "could not inspect the final copy of the bundle")
-	fmt.Println(inspectOutput)
+	// Get the original image from the relocation map
+	inspectOutput, _, err := test.RunPorter("inspect", "-r", finalRef, "--output=json")
+	var inspectRaw map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(inspectOutput), &inspectRaw))
+	images := inspectRaw["invocationImages"].([]interface{})
+	invocationImage := images[0].(map[string]interface{})
+	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("localhost:%s/mybuns-installer:v0.1.1", tempRegistryPort))
 }

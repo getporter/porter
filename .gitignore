@@ -4,6 +4,7 @@
 *-packr.go
 .DS_Store
 /build/git_askpass.sh
+tests/smoke/mybuns/
 
 .cnab
 examples/**/Dockerfile
