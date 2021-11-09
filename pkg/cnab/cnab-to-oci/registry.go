@@ -68,7 +68,7 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle,
 		fmt.Fprintln(r.Err, msg.String())
 	}
 
-	bun, reloMap, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
+	bun, reloMap, _, err := remotes.Pull(context.Background(), ref, r.createResolver(insecureRegistries))
 	if err != nil {
 		return bundle.Bundle{}, nil, errors.Wrap(err, "unable to pull remote bundle")
 	}
