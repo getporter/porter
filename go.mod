@@ -8,6 +8,10 @@ replace (
 	// tags based on the same underlying version of cnab-go.
 	github.com/cnabio/cnab-go => github.com/getporter/cnab-go v0.19.0-porter.4
 
+	// return-copy-error
+	// See https://github.com/cnabio/cnab-to-oci/pull/113
+	github.com/cnabio/cnab-to-oci => github.com/getporter/cnab-to-oci v0.3.1-porter.1
+
 	// See https://github.com/containerd/containerd/issues/3031
 	// When I try to just use the require, go is shortening it to v2.7.1+incompatible which then fails to build...
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible

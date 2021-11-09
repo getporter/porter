@@ -125,8 +125,6 @@ github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiK
 github.com/cloudflare/cfssl v1.4.1/go.mod h1:KManx/OJPb5QY+y0+o/898AMcM128sF0bURvoVUSjTo=
 github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:eaZPlJWD+G9wseg1BuRXlHnjntPMrywMsyxf+LTOdP4=
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
-github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8 h1:oi/g+7v0mVYfp5iETwm7DO6SFxpsq0hCN3fzywA6Lrk=
-github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8/go.mod h1:nl9mHZV0Tvj6ZirWkjpiWuVp71RenwUQ98KHA9ZY27g=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 h1:9atoWyI9RtXFwf7UDbme/6M8Ud0rFrx+Q3ZWgSnsxtw=
 github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340/go.mod h1:s5q4SojHctfxANBDvMeIaIovkq29IP48TKAxnhYRxvo=
@@ -220,6 +218,8 @@ github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/getporter/cnab-go v0.19.0-porter.4 h1:HnAP2LdeYiAi0GX0r7RBd0MdtGN0IurC/inXXzyBzZw=
 github.com/getporter/cnab-go v0.19.0-porter.4/go.mod h1:kRvp8b/q/qbayAj/TSztifSnz/5MVxaH0gYn/Vk9YwI=
+github.com/getporter/cnab-to-oci v0.3.1-porter.1 h1:FGVALQRe57uZwivLQW/BoTqyXMw1Og7HqdxBURL/u6k=
+github.com/getporter/cnab-to-oci v0.3.1-porter.1/go.mod h1:EM5BN83Hf0YCBQrkdYNuT2XamG9BfKBDxGuA0I3nZ3U=
 github.com/getporter/go-plugin v1.4.0-improved-configuration.1 h1:Y5P+fuDCpuvf5zkgtNpRA9ltbIPulH6sp1zEn9YjJP4=
 github.com/getporter/go-plugin v1.4.0-improved-configuration.1/go.mod h1:5fGEH17QVwTTcR0zV7yhDPLLmFX9YSZ38b18Udy6vYQ=
 github.com/getsentry/raven-go v0.0.0-20180121060056-563b81fc02b7/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
