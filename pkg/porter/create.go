@@ -27,7 +27,7 @@ func (p *Porter) Create() error {
 		return err
 	}
 
-	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "Dockerfile.tmpl")
+	err = p.CopyTemplate(p.Templates.GetDockerfileTemplate, "template.Dockerfile")
 	if err != nil {
 		return err
 	}

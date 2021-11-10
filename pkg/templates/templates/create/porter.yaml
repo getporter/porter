@@ -11,7 +11,7 @@ registry: getporter
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
 # See https://porter.sh/custom-dockerfile/
-#dockerfile: Dockerfile.tmpl
+#dockerfile: template.Dockerfile
 
 mixins:
   - exec

@@ -10,7 +10,7 @@ to full control over your bundle's invocation image, for example to install
 additional software used by the bundle.
 
 When you run `porter create` template Dockerfile is created for you
-in the current directory named **Dockerfile.tmpl**:
+in the current directory named **template.Dockerfile**:
 
 ```Dockerfile
 FROM debian:stretch-slim
@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y ca-certificates
 # and to set the CMD appropriately for the CNAB specification.
 #
 # Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: Dockerfile.tmpl
+# dockerfile: template.Dockerfile
 
 # You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.
@@ -41,7 +41,7 @@ Add the following line to your **porter.yaml** file to instruct porter to use
 the template, instead of generating one from scratch:
 
 ```yaml
-dockerfile: Dockerfile.tmpl
+dockerfile: template.Dockerfile
 ```
 
 It is your responsibility to provide a suitable base image, for example one that
@@ -73,7 +73,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # and to set the CMD appropriately for the CNAB specification.
 #
 # Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: Dockerfile.tmpl
+# dockerfile: template.Dockerfile
 
 # You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.
