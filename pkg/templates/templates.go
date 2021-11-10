@@ -56,7 +56,7 @@ func (t *Templates) GetDockerignore() ([]byte, error) {
 	return dockerignore, nil
 }
 
-// GetDockerfileTemplate returns a Dockerfile.tmpl file for use in new bundles.
+// GetDockerfileTemplate returns a template.Dockerfile file for use in new bundles.
 func (t *Templates) GetDockerfileTemplate() ([]byte, error) {
 	tmpl := fmt.Sprintf("templates/create/template.%s.Dockerfile", t.Data.BuildDriver)
 	return t.fs.ReadFile(tmpl)

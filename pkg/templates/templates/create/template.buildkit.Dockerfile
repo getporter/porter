@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # and to set the CMD appropriately for the CNAB specification.
 #
 # Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: Dockerfile.tmpl
+# dockerfile: template.Dockerfile
 
 # You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.

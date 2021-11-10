@@ -28,9 +28,9 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	tests.AssertFilePermissionsEqual(t, "helpers.sh", os.FileMode(0700), helperFileStats.Mode())
 
-	dockerfileStats, err := p.FileSystem.Stat("Dockerfile.tmpl")
+	dockerfileStats, err := p.FileSystem.Stat("template.Dockerfile")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, "Dockerfile.tmpl", os.FileMode(0600), dockerfileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, "template.Dockerfile", os.FileMode(0600), dockerfileStats.Mode())
 
 	readmeStats, err := p.FileSystem.Stat("README.md")
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestCreateWithBuildkit(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	dockerfile, err := p.FileSystem.ReadFile("Dockerfile.tmpl")
+	dockerfile, err := p.FileSystem.ReadFile("template.Dockerfile")
 	require.NoError(t, err, "could not read template dockerfile")
 
 	assert.Contains(t, string(dockerfile), "# syntax=docker/dockerfile:1.2")
