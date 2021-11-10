@@ -58,7 +58,7 @@ func (t *Templates) GetDockerignore() ([]byte, error) {
 
 // GetDockerfileTemplate returns a Dockerfile.tmpl file for use in new bundles.
 func (t *Templates) GetDockerfileTemplate() ([]byte, error) {
-	tmpl := fmt.Sprintf("templates/create/template.%s.Dockerfile", t.Data.BuildDriver)
+	tmpl := fmt.Sprintf("templates/create/template.%s.Dockerfile", t.GetBuildDriver())
 	return t.fs.ReadFile(tmpl)
 }
 
@@ -75,6 +75,6 @@ func (t *Templates) GetSchema() ([]byte, error) {
 
 // GetDockerfile returns the default Dockerfile for invocation images.
 func (t *Templates) GetDockerfile() ([]byte, error) {
-	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", t.Data.BuildDriver)
+	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", t.GetBuildDriver())
 	return t.fs.ReadFile(tmpl)
 }

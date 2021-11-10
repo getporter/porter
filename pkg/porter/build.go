@@ -41,7 +41,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 	}
 
 	if o.Driver == "" {
-		o.Driver = p.Data.BuildDriver
+		o.Driver = p.GetBuildDriver()
 	}
 	if !stringSliceContains(BuildDriverAllowedValues, o.Driver) {
 		return errors.Errorf("invalid --driver value %s", o.Driver)
@@ -68,7 +68,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
 	if p.Debug {
-		fmt.Fprintf(p.Err, "Using %s build driver\n", p.Data.BuildDriver)
+		fmt.Fprintf(p.Err, "Using %s build driver\n", p.GetBuildDriver())
 	}
 
 	// Start with a fresh .cnab directory before building

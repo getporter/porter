@@ -81,3 +81,12 @@ func TestConfigExperimentalFlags(t *testing.T) {
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 	})
 }
+
+func TestConfig_GetBuildDriver(t *testing.T) {
+	c := NewTestConfig(t)
+	c.Data.BuildDriver = BuildDriverBuildkit
+	require.Equal(t, BuildDriverDocker, c.GetBuildDriver(), "Default to docker when experimental is false, even when a build driver is set")
+
+	c.SetExperimentalFlags(experimental.FlagBuildDrivers)
+	require.Equal(t, BuildDriverBuildkit, c.GetBuildDriver(), "Use the specified driver when the build driver feature is enabled")
+}

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/templates"
@@ -26,6 +27,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 
 			c := config.NewTestConfig(t)
 			c.Data.BuildDriver = driver
+			c.SetExperimentalFlags(experimental.FlagBuildDrivers)
 			tmpl := templates.NewTemplates(c.Config)
 			configTpl, err := tmpl.GetManifest()
 			require.Nil(t, err)
