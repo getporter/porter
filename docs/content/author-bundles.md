@@ -70,7 +70,7 @@ maintainers:
 Mixins are adapters between the Porter and an existing tool or system. They know how to talk to Porter to include everything
 they need to run, such as a CLI or config files, and how to execute their steps in the Porter manifest.
 
-There are [many mixins](/mixins/) created the Porter community.
+There are [many mixins](/mixins/) created by the Porter community.
 Only the [exec mixin](/mixins/exec/) is installed by default.
 
 Declare the mixins that your bundle uses with the `mixins` section of the manifest:
