@@ -152,6 +152,15 @@
         }
       }
 
+      &.toctree-l2 {
+        ul {
+          display: block !important;
+        }
+      }
+
+      &.toctree-l3 {
+        padding-left: 2em;
+      }
       ul {
         margin: 0;
         padding: 0.5em 0 1.25em;

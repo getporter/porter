@@ -12,7 +12,13 @@ $(document).ready(function() {
   var activeLink = $(".sidebar-nav a[href='" + curPage + "'], .sidebar-nav a[href='" + curPage2 + "']");
   activeLink.addClass('active');
 
-  // Try to open the parent menu
+  // Try to open the parent menus
+  var parentMenu = activeLink.closest('li.toctree-l2');
+  if(parentMenu) {
+    var parentLink = parentMenu.children('a');
+    parentLink.addClass('active').attr({state: "open"});
+  }
+
   var parentMenu = activeLink.closest('li.toctree-l1');
   var parentLink = parentMenu.children('a');
   parentLink.addClass('active').attr({state: "open"});
@@ -21,15 +27,19 @@ $(document).ready(function() {
 
   // if menu is closed when clicked, expand it
   $('.toctree-l1 > a').click(function() {
-
     //Make the titles of open accordions dead links
     if ($(this).attr('state') == 'open') {return false;}
 
     //Clicking on a title of a closed accordion
     if($(this).attr('state') != 'open' && $(this).siblings().size() > 0) {
-      $('.toctree-l1 > ul').hide();
-      $('.toctree-l1 > a').attr('state', '');
+      $('.toctree-l1 > ul, .toctree-l2 > ul').hide();
+      $('.toctree-l1 > a, .toctree-l2 > a').attr('state', '');
       $(this).attr('state', 'open');
+      let nestedTrees = this.nextElementSibling.querySelectorAll('ul');
+      for (let i = 0; i < nestedTrees.length; i++) {
+        let tree = nestedTrees[0]
+        tree.style.display = "block"
+      }
       $(this).next().slideDown(function(){});
       return false;
     }

@@ -5,8 +5,11 @@ aliases:
 - /authoring-bundles/
 ---
 
-Porter generates a bundle from its manifest, porter.yaml.
-Manifests use [templates] for variable substitution.
+Use the [porter create](/cli/porter_create) command to scaffold a new bundle in the current directory.
+The bundle is defined by its manifest, a porter.yaml file.
+The manifest supports variable substitution through [templates].
+You can [customize the Dockerfile](/custom-dockerfile/) used to build the bundle installer.
+
 The manifest is made up of multiple components:
 
 * [Bundle Metadata](#bundle-metadata)
@@ -67,11 +70,8 @@ maintainers:
 Mixins are adapters between the Porter and an existing tool or system. They know how to talk to Porter to include everything
 they need to run, such as a CLI or config files, and how to execute their steps in the Porter manifest.
 
-Anyone can [create a mixin](/mixin-dev-guide/), here's a list of the mixins that are installed with Porter by default:
-
-* exec - run shell scripts and commands
-* helm - use the helm cli
-* azure - provision services on the Azure cloud
+There are [many mixins](/mixins/) created by the Porter community.
+Only the [exec mixin](/mixins/exec/) is installed by default.
 
 Declare the mixins that your bundle uses with the `mixins` section of the manifest:
 

@@ -10,6 +10,7 @@ We have a few release types available for you to use:
 
 * [Latest](#latest)
 * [Canary](#canary)
+* [Prerelease](#prerelease)
 * [Older Version](#older-version)
 
 You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
@@ -67,6 +68,66 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 
 ```
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
+```
+
+# Prerelease
+
+We would love for you to try out [v1 prerelease] and send us any feedback that you have!
+Keep in mind that prereleases are not suitable for production workloads. Data migrations will not be provided or supported for prereleases.
+Prereleases are intended for you to try out potential new features in Porter and provide feedback about the direction of the feature. They won't work with existing installations.
+
+You can try out different versions of Porter without impacting your current version of Porter by installing to a different location via a modified PORTER_HOME environment variable.
+
+**MacOS**
+
+```bash
+export PORTER_HOME=~/.porterv1
+export VERSION="v1.0.0-alpha.5"
+curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```bash
+export PORTER_HOME=~/.porterv1
+export PATH=$PORTER_HOME:$PATH
+# Check that you are using the desired version of porter
+porter version
+```
+
+**Linux**
+
+```bash
+export PORTER_HOME=~/.porterv1
+export VERSION="v1.0.0-alpha.5"
+curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```bash
+export PORTER_HOME=~/.porterv1
+export PATH=$PORTER_HOME:$PATH
+# Check that you are using the desired version of porter
+porter version
+```
+
+**Windows**
+
+```powershell
+$PORTER_HOME="$env:USERPROFILE\.porterv1"
+$VERSION="v1.0.0-alpha.5"
+(New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
+.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```powershell
+$env:PORTER_HOME="$env:USERPROFILE\.porterv1"
+$env:PATH+=";$env:PORTER_HOME"
+# Check that you are using the desired version of porter
+porter version
 ```
 
 # Older Version
@@ -195,3 +256,4 @@ plugins/
 ```
 
 [exec mixin]: /mixins/exec/
+[v1 prerelease]: /tags/v1/

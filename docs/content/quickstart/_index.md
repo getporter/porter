@@ -1,6 +1,6 @@
 ---
-title: QuickStart Guide
-descriptions: Get started using Porter
+title: "QuickStart: Bundles"
+descriptions: Learn about bundles and how to install them with Porter
 layout: single
 ---
 

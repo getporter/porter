@@ -20,9 +20,25 @@
               </a>
               <ul class="sub-menu current">
                 {{ range .Children.ByWeight }}
-                  <li class="toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
-                    <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
-                  </li>
+                  {{ if .HasChildren }}
+                    <li class="sidebar-nav-item toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                      <a class="reference internal" href="#" state="">
+                        {{ .Pre }}
+                        <span class="ripple">{{ .Name }}</span>
+                      </a>
+                      <ul class="sub-menu current">
+                      {{ range .Children.ByWeight }}
+                        <li class="toctree-l3 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                          <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
+                        </li>
+                      {{ end }}
+                      </ul>
+                    </li>
+                  {{ else }}
+                    <li class="toctree-l2 {{ if eq $currentPage.URL .URL }}active{{ end }}">
+                      <a href="{{ .URL }}" title="{{ .Name }}">{{ .Name }}</a>
+                    </li>
+                  {{ end }}
                 {{ end }}
               </ul>
             </li>
