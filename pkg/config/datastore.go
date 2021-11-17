@@ -13,6 +13,7 @@ type Data struct {
 
 	// BuildDriver is the driver to use when building bundles.
 	// Available values are: docker, buildkit.
+	// Do not use directly, use Config.GetBuildDriver.
 	BuildDriver string `mapstructure:"build-driver"`
 
 	// RuntimeDriver is the driver to use when executing bundles.

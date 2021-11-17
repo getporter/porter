@@ -242,3 +242,13 @@ func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
 func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 	c.experimental = &flags
 }
+
+// GetBuildDriver determines the correct build driver to use, taking
+// into account experimental flags.
+// Use this instead of Config.Data.BuildDriver directly.
+func (c *Config) GetBuildDriver() string {
+	if c.IsFeatureEnabled(experimental.FlagBuildDrivers) {
+		return c.Data.BuildDriver
+	}
+	return BuildDriverDocker
+}

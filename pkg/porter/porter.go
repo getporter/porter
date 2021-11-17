@@ -12,7 +12,6 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
@@ -137,14 +136,11 @@ func (p *Porter) LoadManifestFrom(file string) error {
 // NewBuilder creates a Builder based on the current configuration.
 func (p *Porter) GetBuilder() build.Builder {
 	if p.builder == nil {
-		if p.IsFeatureEnabled(experimental.FlagBuildDrivers) {
-			switch p.Config.Data.BuildDriver {
-			case config.BuildDriverBuildkit:
-				p.builder = buildkit.NewBuilder(p.Context)
-			case config.BuildDriverDocker:
-				p.builder = docker.NewBuilder(p.Context)
-			}
-		} else {
+		switch p.GetBuildDriver() {
+		case config.BuildDriverBuildkit:
+			p.builder = buildkit.NewBuilder(p.Context)
+		case config.BuildDriverDocker:
+		default:
 			p.builder = docker.NewBuilder(p.Context)
 		}
 	}
