@@ -13,6 +13,7 @@ import (
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/opencontainers/go-digest"
@@ -187,4 +188,31 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 		return nil, err
 	}
 	return cli, nil
+}
+
+func (r *Registry) IsInvocationImageExists(invocationImage string) (bool, error) {
+	ctx := context.Background()
+
+	cli, err := r.getDockerClient()
+	if err != nil {
+		return false, err
+	}
+
+	ref, err := cnab.ParseOCIReference(invocationImage)
+	if err != nil {
+		return false, err
+	}
+
+	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: ref.Repository()})}
+
+	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
+	if err != nil {
+		return false, err
+	}
+
+	if len(imageSummaries) == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

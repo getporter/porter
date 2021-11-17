@@ -17,4 +17,6 @@ type RegistryProvider interface {
 	// the expected format of the invocationImage is REGISTRY/NAME:TAG.
 	// Returns the image digest from the registry.
 	PushInvocationImage(invocationImage string) (digest.Digest, error)
+
+	IsInvocationImageExists(invocationImage string) (bool, error)
 }
