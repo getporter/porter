@@ -139,7 +139,6 @@ func (p *Porter) GetBuilder() build.Builder {
 		switch p.GetBuildDriver() {
 		case config.BuildDriverBuildkit:
 			p.builder = buildkit.NewBuilder(p.Context)
-		case config.BuildDriverDocker:
 		default:
 			p.builder = docker.NewBuilder(p.Context)
 		}
