@@ -40,9 +40,10 @@ require (
 	github.com/cnabio/cnab-go v0.19.0
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/cgroups v0.0.0-20200710171044-318312a37340 // indirect
-	github.com/containerd/containerd v1.3.0
+	github.com/containerd/containerd v1.4.12
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect
+	github.com/containerd/go-runc v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.0.0 // indirect
 	github.com/containerd/typeurl v1.0.0 // indirect
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
@@ -63,6 +64,7 @@ require (
 	github.com/mmcdole/gofeed v1.0.0-beta2
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/olekukonko/tablewriter v0.0.4
+	github.com/opencontainers/selinux v1.9.1 // indirect
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.4.1
