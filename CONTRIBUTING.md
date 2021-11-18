@@ -483,7 +483,6 @@ dependency injection and testing strategies.
     * **provider**: handles communicating with mixins
   * **porter**: the implementation of the porter commands. Every command in Porter
     has a corresponding function in here.
-      packr
     * **version**: reusable library used by all the mixins for implementing their
   * **templates**: files that need to be compiled into the porter binary with
       version command.
