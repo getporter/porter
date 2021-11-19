@@ -159,7 +159,7 @@ func (p *Porter) publishFromFile(opts PublishOptions) error {
 		return err
 	}
 
-	rm, err := p.Registry.PushBundle(bun, p.Manifest.Reference, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, p.Manifest.Reference, nil, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		}
 	}
 
-	rm, err := p.Registry.PushBundle(bun, opts.Reference, opts.InsecureRegistry)
+	rm, err := p.Registry.PushBundle(bun, opts.Reference, nil, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
