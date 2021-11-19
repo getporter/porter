@@ -19,6 +19,7 @@ func buildCredentialsCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildCredentialsListCommand(p))
 	cmd.AddCommand(buildCredentialsDeleteCommand(p))
 	cmd.AddCommand(buildCredentialsShowCommand(p))
+	cmd.AddCommand(buildCredentialsCreateCommand(p))
 
 	return cmd
 }
@@ -211,6 +212,31 @@ func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
 		"Namespace in which the credential set is defined. Defaults to the global namespace.")
 	f.StringVarP(&opts.RawFormat, "output", "o", "plaintext",
 		"Specify an output format.  Allowed values: plaintext, json, yaml")
+
+	return cmd
+}
+
+func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
+	opts := porter.CredentialCreateOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a Credential",
+		Long:  "Create a new blank resource for the definition of a Credential Set.",
+		Example: `
+		porter credentials create FILE [--output yaml|json]
+		porter credentials create credential-set.json
+		porter credentials create credential-set --output yaml`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return opts.Validate(args)
+		},
+		RunE: func(cmd *cobra.Command, argrs []string) error {
+			return p.CreateCredential(opts)
+		},
+	}
+
+	f := cmd.Flags()
+	f.StringVar(&opts.OutputType, "output", "", "Credential set resource file format")
 
 	return cmd
 }

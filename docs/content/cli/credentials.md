@@ -30,6 +30,7 @@ Most commands require a Docker daemon, either local or remote.
 Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 
 * [porter credentials apply](/cli/porter_credentials_apply/)	 - Apply changes to a credential set
+* [porter credentials create](/cli/porter_credentials_create/)	 - Create a Credential
 * [porter credentials delete](/cli/porter_credentials_delete/)	 - Delete a Credential
 * [porter credentials edit](/cli/porter_credentials_edit/)	 - Edit Credential
 * [porter credentials generate](/cli/porter_credentials_generate/)	 - Generate Credential Set

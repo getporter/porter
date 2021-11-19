@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/credentials"
@@ -371,4 +372,75 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	}
 
 	return o.Namespace, nil
+}
+
+// CredentialCreateOptions represent options for Porter's credential create command
+type CredentialCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *CredentialCreateOptions) Validate(args []string) error {
+	if len(args) < 1 || args[0] == "" {
+		return errors.New("file name is required")
+	}
+
+	if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	o.FileName = args[0]
+
+	if o.OutputType == "" && !(strings.HasSuffix(o.FileName, ".json") || strings.HasSuffix(o.FileName, ".yaml")) {
+		return errors.New("resource file format should be defined by using FILENAME or --output flag")
+	}
+
+	if o.OutputType != "" && (strings.HasSuffix(o.FileName, ".json") || strings.HasSuffix(o.FileName, ".yaml")) {
+		if len(strings.Split(o.FileName, ".")) < 2 {
+			return errors.New("invalid fileName format")
+		}
+
+		if o.OutputType != strings.Split(o.FileName, ".")[1] {
+			return errors.New("fileName input and --output flag define different file format")
+		}
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
+	var fileFormat string
+	if opts.OutputType != "" {
+		fileFormat = opts.OutputType
+	}
+
+	var fileName string
+	if strings.HasSuffix(opts.FileName, ".json") || strings.HasSuffix(opts.FileName, ".yaml") {
+		if len(strings.Split(opts.FileName, ".")) < 2 {
+			return errors.New("invalid fileName format")
+		}
+
+		fileFormat = strings.Split(opts.FileName, ".")[1]
+		fileName = strings.Split(opts.FileName, ".")[0]
+	} else {
+		fileName = opts.FileName
+	}
+
+	fmt.Fprintln(p.Out, "creating porter credential set in the current directory")
+
+	if fileFormat == "json" {
+		err := p.CopyTemplate(p.Templates.GetCredentialSetJSON, fileName+".json")
+		if err != nil {
+			return err
+		}
+	} else if fileFormat == "yaml" {
+		err := p.CopyTemplate(p.Templates.GetCredentialSetYAML, fileName+".yaml")
+		if err != nil {
+			return err
+		}
+	} else {
+		return errors.New(fmt.Sprintf("unknown file format: %s", fileFormat))
+	}
+
+	return nil
 }

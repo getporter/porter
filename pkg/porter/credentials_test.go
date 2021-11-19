@@ -392,3 +392,102 @@ func TestApplyOptions_Validate(t *testing.T) {
 	})
 
 }
+
+func TestCredentialsCreateOptions_Validate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		args       []string
+		outputType string
+		wantErr    string
+	}{
+		{
+			name:       "no fileName defined",
+			args:       []string{},
+			outputType: "",
+			wantErr:    "file name is required",
+		},
+		{
+			name:       "two positional arguments",
+			args:       []string{"credential-set1", "credential-set2"},
+			outputType: "",
+			wantErr:    "only one positional argument may be specified",
+		},
+		{
+			name:       "no file format defined",
+			args:       []string{"credential-set"},
+			outputType: "",
+			wantErr:    "resource file format should be defined by using FILENAME or --output flag",
+		},
+		{
+			name:       "different file format",
+			args:       []string{"credential-set.json"},
+			outputType: "yaml",
+			wantErr:    "fileName input and --output flag define different file format",
+		},
+		{
+			name:       "different file format",
+			args:       []string{"credential-set.yaml"},
+			outputType: "json",
+			wantErr:    "fileName input and --output flag define different file format",
+		},
+		{
+			name:       "valid input: format defined by fileName argument",
+			args:       []string{"credential-set.yaml"},
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: format defined by --output flag",
+			args:       []string{"credential-set"},
+			outputType: "json",
+			wantErr:    "",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := CredentialCreateOptions{OutputType: tc.outputType}
+			err := opts.Validate(tc.args)
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestCredentialsCreate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		fileName   string
+		outputType string
+	}{
+		{
+			name:       "valid input: file format in file name",
+			fileName:   "fileName.json",
+			outputType: "",
+		},
+		{
+			name:       "valid input: file format in outputType",
+			fileName:   "fileName",
+			outputType: "json",
+		},
+		{
+			name:       "valid input: same file format in fileName and outputType",
+			fileName:   "fileName.json",
+			outputType: "json",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Teardown()
+
+			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
+			err := p.CreateCredential(opts)
+			require.NoError(t, err, "no error should have existed")
+		})
+	}
+}
