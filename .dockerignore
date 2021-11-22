@@ -1,4 +1,5 @@
 *
 
 !bin/dev/porter-linux-amd64
+!bin/dev/agent-linux-amd64
 !bin/mixins/exec/dev/exec-linux-amd64
