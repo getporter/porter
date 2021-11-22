@@ -41,7 +41,6 @@ import (
 const (
 	PKG       = "get.porter.sh/porter"
 	GoVersion = ">=1.16"
-	mixinsURL = "https://cdn.porter.sh/mixins/"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}
@@ -51,9 +50,9 @@ func CheckGoVersion() {
 	tools.EnforceGoVersion(GoVersion)
 }
 
-// Build the porter and the exec mixin
+// Builds all code artifacts in the repository
 func Build() {
-	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin)
+	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
 	mg.Deps(GetMixins)
 }
 
@@ -67,9 +66,15 @@ func BuildExecMixin() {
 	mgx.Must(releases.BuildAll(PKG, "exec", "bin/mixins/exec"))
 }
 
+// Build the porter agent
+func BuildAgent() {
+	// the agent is only used embedded in a docker container, so we only build for linux
+	releases.XBuild(PKG, "agent", "bin", "linux", "amd64")
+}
+
 // Cross-compile porter and the exec mixin
 func XBuildAll() {
-	mg.Deps(XBuildPorter, XBuildMixins)
+	mg.Deps(XBuildPorter, XBuildMixins, BuildAgent)
 }
 
 // Cross-compile porter
@@ -245,7 +250,7 @@ func buildImages(registry string, info mage.GitMetadata) {
 
 		// porter-agent does a FROM porter so they can't go in parallel
 		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
-		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", "build/images/agent")
+		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".")
 		if err != nil {
 			return err
 		}
@@ -284,7 +289,7 @@ func LocalPorterAgentBuild() {
 	// Force the image to be pushed to the registry even though it's a local dev build.
 	os.Setenv("PORTER_FORCE_PUBLISH", "true")
 
-	mg.SerialDeps(XBuildPorter, PublishImages)
+	mg.SerialDeps(XBuildPorter, BuildAgent, PublishImages)
 }
 
 // Only push tagged versions, canary and latest
