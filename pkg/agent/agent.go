@@ -19,7 +19,7 @@ var (
 )
 
 // The porter agent wraps the porter cli,
-// handling coping config files from a mounted
+// handling copying config files from a mounted
 // volume into PORTER_HOME
 // Returns any errors and if the porter command was executed
 func Execute(porterCommand []string, porterHome string, porterConfig string) (error, bool) {

@@ -8,7 +8,7 @@ import (
 )
 
 // The porter agent wraps the porter cli,
-// handling coping config files from a mounted
+// handling copying config files from a mounted
 // volume into PORTER_HOME
 func main() {
 	porterHome := os.Getenv("PORTER_HOME")
