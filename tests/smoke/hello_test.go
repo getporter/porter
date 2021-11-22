@@ -18,7 +18,7 @@ func TestHelloBundle(t *testing.T) {
 
 	// Build an interesting test bundle
 	ref := "localhost:5000/mybuns:v0.1.1"
-	shx.Copy("../testdata/mybuns", ".", shx.CopyRecursive)
+	require.NoError(t, shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/mybuns"), ".", shx.CopyRecursive))
 	os.Chdir("mybuns")
 	test.RequirePorter("build")
 	test.RequirePorter("publish", "--reference", ref)

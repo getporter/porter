@@ -20,11 +20,18 @@ type Test struct {
 	// TestDir is the temp directory created for the test.
 	TestDir string
 
+	// TestContext is a porter context for the filesystem.
+	TestContext *context.TestContext
+
 	// PorterHomeDir is the temp PORTER_HOME directory for the test.
 	PorterHomeDir string
 
 	// PorterPath is the path to the porter binary used for the test.
 	PorterPath string
+
+	// RepoRoot is the root of the porter repository.
+	// Useful for constructing paths that won't break when the test is moved.
+	RepoRoot string
 
 	// T is the test helper.
 	T *testing.T
@@ -36,6 +43,10 @@ type Test struct {
 func NewTest(t *testing.T) (Test, error) {
 	var err error
 	test := &Test{T: t}
+
+	test.TestContext = context.NewTestContext(t)
+	test.TestContext.UseFilesystem()
+	test.RepoRoot = test.TestContext.FindRepoRoot()
 
 	test.TestDir, err = ioutil.TempDir("", "porter-test")
 	if err != nil {
@@ -85,6 +96,7 @@ func (t Test) RunPorter(args ...string) (stdout string, combinedoutput string, e
 		}
 		return stdoutBuf.String(), output.String(), err
 	}
+	t.T.Log(output.String())
 	return stdoutBuf.String(), output.String(), nil
 }
 
@@ -105,7 +117,9 @@ func (t Test) Teardown() {
 
 // Create a test PORTER_HOME directory.
 func (t *Test) createPorterHome() error {
-	binDir, err := filepath.Abs("../../bin")
+	var err error
+	binDir := filepath.Join(t.RepoRoot, "bin")
+	t.PorterHomeDir, err = ioutil.TempDir("", "porter")
 	if err != nil {
 		return errors.Wrap(err, "could not find the absolute path to bin/")
 	}

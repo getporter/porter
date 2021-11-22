@@ -56,11 +56,11 @@ func generateNewBundleRef(source, dest string) string {
 func (p *Porter) CopyBundle(c *CopyOpts) error {
 	destinationRef := generateNewBundleRef(c.Source, c.Destination)
 	fmt.Fprintf(p.Out, "Beginning bundle copy to %s. This may take some time.\n", destinationRef)
-	bun, _, err := p.Registry.PullBundle(c.Source, c.InsecureRegistry)
+	bun, reloMap, err := p.Registry.PullBundle(c.Source, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to pull bundle before copying")
 	}
-	_, err = p.Registry.PushBundle(bun, destinationRef, c.InsecureRegistry)
+	_, err = p.Registry.PushBundle(bun, destinationRef, *reloMap, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy bundle to new location")
 	}

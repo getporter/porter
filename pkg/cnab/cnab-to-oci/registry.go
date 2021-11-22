@@ -85,7 +85,7 @@ func (r *Registry) PullBundle(tag string, insecureRegistry bool) (bundle.Bundle,
 	return *bun, &reloMap, nil
 }
 
-func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
+func (r *Registry) PushBundle(bun bundle.Bundle, tag string, reloMap relocation.ImageRelocationMap, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
 	ref, err := ParseOCIReference(tag) //tag from manifest
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid bundle tag reference. expected value is REGISTRY/bundle:tag")
@@ -98,7 +98,11 @@ func (r *Registry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bo
 
 	resolver := r.createResolver(insecureRegistries)
 
-	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
+	// Initialize the relocation map if necessary
+	if reloMap == nil {
+		reloMap = make(relocation.ImageRelocationMap)
+	}
+	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(reloMap))
 	if err != nil {
 		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
