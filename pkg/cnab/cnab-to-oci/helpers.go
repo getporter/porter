@@ -25,7 +25,7 @@ func (t TestRegistry) PullBundle(tag string, insecureRegistry bool) (bundle.Bund
 	return bundle.Bundle{}, nil, nil
 }
 
-func (t TestRegistry) PushBundle(bun bundle.Bundle, tag string, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
+func (t TestRegistry) PushBundle(bun bundle.Bundle, tag string, reloMap relocation.ImageRelocationMap, insecureRegistry bool) (*relocation.ImageRelocationMap, error) {
 	if t.MockPushBundle != nil {
 		return t.MockPushBundle(bun, tag, insecureRegistry)
 	}

@@ -98,6 +98,10 @@ func (r *Registry) PushBundle(bun bundle.Bundle, tag string, reloMap relocation.
 
 	resolver := r.createResolver(insecureRegistries)
 
+	// Initialize the relocation map if necessary
+	if reloMap == nil {
+		reloMap = make(relocation.ImageRelocationMap)
+	}
 	rm, err := remotes.FixupBundle(context.Background(), &bun, ref, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(reloMap))
 	if err != nil {
 		return nil, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
