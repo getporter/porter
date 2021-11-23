@@ -6,8 +6,9 @@ replace (
 	// install-spec-wip
 	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.20.2-0.20210805155536-9a543e0636f4
 
-	// return-digest
-	github.com/cnabio/cnab-to-oci => github.com/carolynvs/cnab-to-oci v0.3.0-beta4.0.20210812163007-0766f78b7ee1
+	// return-copy-error
+	// See https://github.com/cnabio/cnab-to-oci/pull/113
+	github.com/cnabio/cnab-to-oci => github.com/getporter/cnab-to-oci v0.3.1-porter.1
 
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
@@ -41,7 +42,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/gobuffalo/logger v1.0.4 // indirect
-	github.com/gobuffalo/packr/v2 v2.8.1 // indirect
+	github.com/gobuffalo/packr/v2 v2.8.1
 	github.com/google/go-cmp v0.5.4
 	github.com/google/go-containerregistry v0.1.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect
