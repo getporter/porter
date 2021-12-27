@@ -56,3 +56,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Jérémy Audiger](https://github.com/jaudiger)
 * [Om More](https://github.com/thisisommore)
 * [Avinash Upadhyaya](https://github.com/avinashupadhya99)
+* [Mike Barkas](https://github.com/mikebarkas)
