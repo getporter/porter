@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,5 +23,7 @@ func TestCompletion(t *testing.T) {
 
 		err := p.Execute()
 		require.NoError(t, err)
+		// Test the output of the command contains a specific string for bash.
+		assert.Contains(t, out.String(), "bash completion for porter")
 	})
 }

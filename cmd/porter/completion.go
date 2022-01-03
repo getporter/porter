@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 )
@@ -10,9 +8,10 @@ import (
 func buildCompletionCommand(p *porter.Porter) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:                   "completion [bash|zsh|fish|powershell]",
-		Short:                 "Generate completion script",
-		Long:                  "Capture the output of the completion command to a file for your shell environment.",
+		Use:   "completion [bash|zsh|fish|powershell]",
+		Short: "Generate completion script",
+		Long: `Save the output of this command to a file and load the file into your shell.
+For additional details see: https://porter.sh/install#command-completion`,
 		Example:               "porter completion bash > /usr/local/etc/bash_completions.d/porter",
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
@@ -20,13 +19,13 @@ func buildCompletionCommand(p *porter.Porter) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			switch args[0] {
 			case "bash":
-				cmd.Root().GenBashCompletion(os.Stdout)
+				cmd.Root().GenBashCompletion(p.Out)
 			case "zsh":
-				cmd.Root().GenZshCompletion(os.Stdout)
+				cmd.Root().GenZshCompletion(p.Out)
 			case "fish":
-				cmd.Root().GenFishCompletion(os.Stdout, true)
+				cmd.Root().GenFishCompletion(p.Out, true)
 			case "powershell":
-				cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+				cmd.Root().GenPowerShellCompletionWithDesc(p.Out)
 			}
 		},
 	}
