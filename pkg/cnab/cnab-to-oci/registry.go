@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
@@ -90,7 +91,11 @@ func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry b
 
 	resolver := r.createResolver(insecureRegistries)
 
-	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
+	// Initialize the relocation map if necessary
+	if bundleRef.RelocationMap == nil {
+		bundleRef.RelocationMap = make(relocation.ImageRelocationMap)
+	}
+	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(bundleRef.RelocationMap))
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}

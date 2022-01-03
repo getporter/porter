@@ -102,6 +102,14 @@ See [Using Mixins](/use-mixins) to learn more about how mixins work.
 Parameters are part of the [CNAB Spec](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#parameters) and
 allow you to pass in configuration values when you execute the bundle.
 
+### Parameter Types
+
+* string
+* integer
+* number
+* boolean
+* [file](#file-parameters)
+
 Learn more about [how parameters work in Porter](/parameters/).
 
 ```yaml
