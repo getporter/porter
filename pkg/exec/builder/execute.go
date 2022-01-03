@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os/exec"
 	"strings"
 
 	"get.porter.sh/porter/pkg/context"
@@ -44,6 +44,18 @@ type HasCustomDashes interface {
 
 type SuppressesOutput interface {
 	SuppressesOutput() bool
+}
+
+// HasErrorHandling is implemented by mixin commands that want to handle errors
+// themselves, and possibly allow failed commands to either pass, or to improve
+// the displayed error message
+type HasErrorHandling interface {
+	HandleError(cxt *context.Context, err ExitError, stdout string, stderr string) error
+}
+
+type ExitError interface {
+	error
+	ExitCode() int
 }
 
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
@@ -125,21 +137,23 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 
 	// Setup output streams for command
 	// If Step suppresses output, update streams accordingly
-	output := &bytes.Buffer{}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 	suppressOutput := false
 	if suppressable, ok := step.(SuppressesOutput); ok {
 		suppressOutput = suppressable.SuppressesOutput()
 	}
 
 	if suppressOutput {
-		cmd.Stdout = io.MultiWriter(ioutil.Discard, output)
-		cmd.Stderr = ioutil.Discard
+		// We still capture the output, but we won't print it
+		cmd.Stdout = stdout
+		cmd.Stderr = stderr
 		if cxt.Debug {
 			fmt.Fprintf(cxt.Err, "DEBUG: output suppressed for command %s\n", prettyCmd)
 		}
 	} else {
-		cmd.Stdout = io.MultiWriter(cxt.Out, output)
-		cmd.Stderr = cxt.Err
+		cmd.Stdout = io.MultiWriter(cxt.Out, stdout)
+		cmd.Stderr = io.MultiWriter(cxt.Err, stderr)
 		if cxt.Debug {
 			fmt.Fprintln(cxt.Err, prettyCmd)
 		}
@@ -151,11 +165,22 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 	}
 
 	err = cmd.Wait()
+
+	// Check if the command knows how to handle and recover from its own errors
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if handler, ok := step.(HasErrorHandling); ok {
+				err = handler.HandleError(cxt, exitErr, stdout.String(), stderr.String())
+			}
+		}
+	}
+
+	// Ok, now check if we still have a problem
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("error running command %s", prettyCmd))
 	}
 
-	return output.String(), nil
+	return stdout.String(), nil
 }
 
 var whitespace = string([]rune{space, newline, tab})

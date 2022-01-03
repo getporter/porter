@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -12,11 +13,14 @@ import (
 )
 
 const (
-	MockedCommandEnv   = "MOCK_COMMAND"
-	ExpectedCommandEnv = "EXPECTED_COMMAND"
+	MockedCommandEnv           = "MOCK_COMMAND"
+	ExpectedCommandEnv         = "EXPECTED_COMMAND"
+	ExpectedCommandExitCodeEnv = "EXPECTED_COMMAND_EXIT_CODE"
+	ExpectedCommandErrorEnv    = "EXPECTED_COMMAND_ERROR"
 )
 
 func TestMainWithMockedCommandHandlers(m *testing.M) {
+
 	// Fake out executing a command
 	// It's okay to use os.LookupEnv here because it's running in it's own process, and won't impact running tests in parallel.
 	if _, mockCommand := os.LookupEnv(MockedCommandEnv); mockCommand {
@@ -39,7 +43,16 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 				os.Exit(127)
 			}
 		}
-		os.Exit(0)
+
+		if wantError, ok := os.LookupEnv(ExpectedCommandErrorEnv); ok {
+			fmt.Fprintln(os.Stderr, wantError)
+		}
+
+		exitCode := 0
+		if wantCode, ok := os.LookupEnv(ExpectedCommandExitCodeEnv); ok {
+			exitCode, _ = strconv.Atoi(wantCode)
+		}
+		os.Exit(exitCode)
 	}
 
 	// Otherwise, run the tests

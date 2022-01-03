@@ -10,6 +10,9 @@ install:
       project: porterci
       zone: us-central1-a
       machine-type: f1-micro
+    ignoreError:
+      output:
+        contains: ["already exists"]
     outputs:
       - name: vms
         jsonPath: "$[*].id"
