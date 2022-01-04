@@ -194,3 +194,50 @@ plugins/
   - index.json
   - PLUGIN/PERMALINK/PLUGIN-GOOS-GOARCH[FILE_EXT]
 ```
+
+# Command Completion
+
+Porter provides autocompletion support for Bash, Fish, Zsh, and PowerShell.
+
+> If you use Bash the completion script depends on Bash v4.1 or newer and bash-completion v2.
+
+> The default version for macOS is Bash v3.2 and bash-completion v1. The completion command will not work properly with these versions.
+> The Kubernetes project has detailed information for upgrading Bash and installing bash-completion [here].
+
+[here]: https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion
+
+### Initial Setup
+The initial setup is to generate a completion script file and have your shell environment source it when you start your shell.
+
+ The completion command will generate its output to standard out and you can capture the output into a file. This file should be put in a place where your shell reads completion files.
+
+An example for Bash:
+```bash
+porter completion bash > /usr/local/etc/bash_completion.d/porter
+```
+
+Once your completion script file is in place you will have to source it for your current shell or start a new shell session.
+
+
+### Completion Usage
+
+To list available commands for Porter, in your terminal run
+```console
+$ porter [tab][tab]
+```
+
+To find a specific command that starts with _bu_
+```console
+$ porter bu[tab][tab]
+
+build    bundles
+```
+Commands that have sub-commands will be displayed with completions as well
+
+```console
+$ porter credentials [tab][tab]
+
+delete    edit    generate    list    show
+```
+
+> Note: Completion commands are available for Porter's built in commands and flags, future plans include dynamic completion for your project.
