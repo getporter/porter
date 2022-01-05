@@ -11,6 +11,9 @@ Build a bundle
 
 Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
 
+Porter uses the docker driver as the default build driver, an alternate driver may be supplied via --driver or the PORTER_BUILD_DRIVER environment variable.
+
+
 ```
 porter build [flags]
 ```
