@@ -105,6 +105,7 @@ Create a file named installation.yaml, paste the following definition into the f
 ```yaml
 schemaVersion: 1.0.0
 name: desired-state
+active: true
 bundle:
   repository: getporter/credentials-tutorial
   version: 0.2.0
@@ -255,12 +256,34 @@ The installation is out-of-sync, running the upgrade action...
 Skipping bundle execution because --dry-run was specified
 ```
 
-## Cleanup
+## Uninstall
 
-To clean up the resources installed from this QuickStart, use the `porter uninstall` command.
+Installations have a field named **active** that control if the installation should be installed and managed by Porter.
+After a bundle has been installed, set active to false on the installation to uninstall it.
 
+Edit installation.yaml, set active to false, and then save the file.
+
+```yaml
+active: false
 ```
-porter uninstall desired-state
+
+The installation.yaml file should look like this:
+
+```yaml
+schemaVersion: 1.0.0
+name: desired-state
+active: false
+# remaining fields are not relevant to uninstalling
+```
+
+Now, apply the installation.yaml file to trigger an uninstall:
+
+```console
+$ porter installation apply installation.yaml
+Updated quickstart/desired-state installation
+Triggering because the installation is now inactive
+The installation is out-of-sync, running the uninstall action...
+# bundle output truncated for brevity
 ```
 
 ## Next Steps

@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 )
 
 type TestContext struct {
@@ -49,6 +50,9 @@ func NewTestContext(t *testing.T) *TestContext {
 	innerContext.In = &bytes.Buffer{}
 	innerContext.Out = aggOut
 	innerContext.Err = aggErr
+	innerContext.ConfigureLogging(LogConfiguration{
+		LogLevel: zapcore.DebugLevel,
+	})
 	innerContext.PlugInDebugContext = &PluginDebugContext{
 		DebuggerPort:           "2735",
 		RunPlugInInDebugger:    "",

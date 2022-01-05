@@ -25,8 +25,8 @@ func TestNewDisplayInstallation(t *testing.T) {
 		di := NewDisplayInstallation(i, nil)
 
 		require.Equal(t, di.Name, i.Name, "invalid installation name")
-		require.Equal(t, di.Created, i.Created, "invalid created time")
-		require.Equal(t, di.Modified, i.Modified, "invalid modified time")
+		require.Equal(t, di.Status.Created, i.Status.Created, "invalid created time")
+		require.Equal(t, di.Status.Modified, i.Status.Modified, "invalid modified time")
 		require.Equal(t, cnab.ActionUpgrade, di.Status.Action, "invalid last action")
 		require.Equal(t, cnab.StatusRunning, di.Status.ResultStatus, "invalid last status")
 	})
@@ -43,8 +43,8 @@ func TestNewDisplayInstallation(t *testing.T) {
 		di := NewDisplayInstallation(i, nil)
 
 		require.Equal(t, di.Name, i.Name, "invalid installation name")
-		require.Equal(t, i.Created, di.Created, "invalid created time")
-		require.Equal(t, i.Modified, di.Modified, "invalid modified time")
+		require.Equal(t, i.Status.Created, di.Status.Created, "invalid created time")
+		require.Equal(t, i.Status.Modified, di.Status.Modified, "invalid modified time")
 		require.Empty(t, di.Status.Action, "invalid last action")
 		require.Empty(t, di.Status.ResultStatus, "invalid last status")
 	})

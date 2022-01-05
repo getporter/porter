@@ -45,11 +45,26 @@ func TestDesiredState(t *testing.T) {
 	test.RequirePorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/mybuns.yaml"), "--namespace=")
 	test.RequirePorter("credentials", "apply", filepath.Join(test.RepoRoot, "tests/testdata/creds/alt-mybuns.yaml"), "--namespace=")
 
-	// Import an installation where the namespace is empty in the file
 	mgx.Must(shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), "mybuns.yaml"))
-	_, output, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
+
+	// Import an inactive installation, should do nothing
+	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
+		return yq.SetValue("active", "false")
+	})
+	_, stderr, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
-	require.Contains(t, output, "The installation is out-of-sync, running the install action")
+	require.Contains(t, stderr, "Ignoring because the installation is inactive")
+
+	// Now set it to active so that it will be installed
+	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
+		return yq.SetValue("active", "true")
+	})
+
+	// Import an installation, since the file is missing a namespace, it should use the --namespace flag value
+	output, stderr, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
+	require.NoError(t, err)
+	require.Contains(t, stderr, "The installation is out-of-sync, running the install action")
+	require.Contains(t, stderr, "Triggering because the installation has not completed successfully yet")
 	test.RequireInstallationExists("operator", "mybuns")
 
 	// Repeat the apply command, there should be no changes detected. Using dry run because we just want to know if it _would_ be re-executed.
@@ -89,4 +104,12 @@ func TestDesiredState(t *testing.T) {
 	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
 	tests.RequireOutputContains(t, output, "The installation is out-of-sync, running the upgrade action")
+
+	// Uninstall by setting active: false
+	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
+		return yq.SetValue("active", "false")
+	})
+	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
+	require.NoError(t, err)
+	tests.RequireOutputContains(t, output, "The installation is out-of-sync, running the uninstall action")
 }

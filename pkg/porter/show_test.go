@@ -96,7 +96,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			})
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 			i.ApplyResult(run, result)
-			i.Status.InstallationCompleted = true
+			i.Status.Installed = &now
 			require.NoError(t, p.TestClaims.UpdateInstallation(i))
 
 			err := p.ShowInstallation(opts)
