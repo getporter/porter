@@ -29,3 +29,7 @@
 .emoji-list .emoji {
     font-size: 2rem;
 }
+
+#doc-version-picker {
+    margin: 1em;
+}
