@@ -1,4 +1,4 @@
-package mage
+package releases
 
 import (
 	"fmt"
@@ -14,9 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var gitMetadata GitMetadata
-var loadMetadata sync.Once
-var must = shx.CommandBuilder{StopOnError: true}
+var (
+	gitMetadata  GitMetadata
+	loadMetadata sync.Once
+)
 
 type GitMetadata struct {
 	// Permalink is the version alias, e.g. latest, or canary

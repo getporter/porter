@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"get.porter.sh/porter/mage"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"golang.org/x/sync/errgroup"
@@ -19,7 +18,7 @@ var (
 )
 
 func getLDFLAGS(pkg string) string {
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 	return fmt.Sprintf("-w -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", pkg, info.Version, pkg, info.Commit)
 }
 
@@ -64,7 +63,7 @@ func BuildAll(pkg string, name string, binDir string) error {
 }
 
 func XBuild(pkg string, name string, binDir string, goos string, goarch string) error {
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 	// file extension is added by the build call
 	outPathPrefix := filepath.Join(binDir, info.Version, fmt.Sprintf("%s-%s-%s", name, goos, goarch))
 	return build(pkg, name, outPathPrefix, goos, goarch)
@@ -81,7 +80,7 @@ func XBuildAll(pkg string, name string, binDir string) {
 
 	mgx.Must(g.Wait())
 
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 
 	// Copy most recent build into bin/dev so that subsequent build steps can easily find it, not used for publishing
 	os.RemoveAll(filepath.Join(binDir, "dev"))

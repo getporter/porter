@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
@@ -19,12 +18,14 @@ import (
 var must = shx.CommandBuilder{StopOnError: true}
 
 const (
-	packagesRepo = "bin/mixins/.packages"
+	packagesRepo      = "bin/mixins/.packages"
+	ReleaseRepository = "PORTER_RELEASE_REPOSITORY"
+	PackagesRemote    = "PORTER_PACKAGES_REMOTE"
 )
 
 // Prepares bin directory for publishing a package
 func preparePackageForPublish(pkgType string, name string) {
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 
 	// Prepare the bin directory for generating a package feed
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
@@ -80,9 +81,9 @@ exec echo "$GITHUB_TOKEN"
 func publishPackage(pkgType string, name string) {
 	mg.Deps(tools.EnsureGitHubClient, ConfigureGitBot)
 
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 
-	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
+	repo := os.Getenv(ReleaseRepository)
 	if repo == "" {
 		switch pkgType {
 		case "mixin":
@@ -124,7 +125,7 @@ func PublishPlugin(plugin string) {
 }
 
 func publishPackageFeed(pkgType string, name string) {
-	info := mage.LoadMetadata()
+	info := LoadMetadata()
 
 	if !(info.Permalink == "canary" || info.IsTaggedRelease) {
 		fmt.Println("Skipping publish package feed for permalink", info.Permalink)
@@ -135,7 +136,7 @@ func publishPackageFeed(pkgType string, name string) {
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
 		os.RemoveAll(packagesRepo)
 	}
-	remote := os.Getenv("PORTER_PACKAGES_REMOTE")
+	remote := os.Getenv(PackagesRemote)
 	if remote == "" {
 		remote = fmt.Sprintf("https://github.com/getporter/packages.git")
 	}
