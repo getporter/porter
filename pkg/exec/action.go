@@ -105,6 +105,9 @@ type Instruction struct {
 	Flags           builder.Flags `yaml:"flags,omitempty"`
 	Outputs         []Output      `yaml:"outputs,omitempty"`
 	SuppressOutput  bool          `yaml:"suppress-output,omitempty"`
+
+	// Allow the user to ignore some errors
+	builder.IgnoreErrorHandler `yaml:"ignoreError,omitempty"`
 }
 
 func (s Step) GetCommand() string {

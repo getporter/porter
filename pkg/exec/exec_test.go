@@ -62,6 +62,53 @@ func TestMixin_ExecuteCommand(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestMixin_ErrorHandling(t *testing.T) {
+	testcases := []struct {
+		name      string
+		handler   builder.IgnoreErrorHandler
+		wantError string
+	}{
+		{name: "legit error", handler: builder.IgnoreErrorHandler{}, wantError: "error running command"},
+		{name: "all", handler: builder.IgnoreErrorHandler{All: true}},
+		{name: "exit code", handler: builder.IgnoreErrorHandler{ExitCodes: []int{1}}},
+		{name: "contains", handler: builder.IgnoreErrorHandler{Output: builder.IgnoreErrorWithOutput{Contains: []string{"already exists"}}}},
+		{name: "regex", handler: builder.IgnoreErrorHandler{Output: builder.IgnoreErrorWithOutput{Regex: []string{".* exists"}}}},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			step := Step{
+				Instruction: Instruction{
+					Command:            "bash",
+					Arguments:          []string{"-c", "echo Hello World"},
+					IgnoreErrorHandler: tc.handler,
+				},
+			}
+			action := Action{
+				Name:  "install",
+				Steps: []Step{step},
+			}
+			b, _ := yaml.Marshal(action)
+
+			m := NewTestMixin(t)
+			m.In = bytes.NewReader(b)
+
+			m.Setenv(test.ExpectedCommandEnv, `bash -c echo Hello World`)
+			m.Setenv(test.ExpectedCommandExitCodeEnv, "1")
+			m.Setenv(test.ExpectedCommandErrorEnv, "thing already exists")
+
+			err := m.Execute(ExecuteOptions{})
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantError)
+			}
+		})
+	}
+}
+
 func TestMixin_Install(t *testing.T) {
 	h := NewTestMixin(t)
 	h.TestContext.AddTestDirectory("testdata", "testdata")

@@ -71,6 +71,8 @@ func NewTestCommand(c *Context) CommandBuilder {
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
 			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
+			fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, c.Getenv(test.ExpectedCommandExitCodeEnv)),
+			fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, c.Getenv(test.ExpectedCommandErrorEnv)),
 		}
 
 		return cmd
