@@ -15,17 +15,17 @@ import (
 	"strconv"
 	"strings"
 
+	"get.porter.sh/porter/mage"
+
 	"get.porter.sh/porter/mage/docker"
 	// mage:import
 	"get.porter.sh/porter/mage/tests"
 	// mage:import
 	_ "get.porter.sh/porter/mage/docs"
 
-	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/releases"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
@@ -104,26 +104,13 @@ func EnsureMage() error {
 }
 
 func Debug() {
-	mage.LoadMetadata()
+	releases.LoadMetadata()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
 // that GOPATH/bin is in PATH.
 func ConfigureAgent() error {
-	err := EnsureMage()
-	if err != nil {
-		return err
-	}
-
-	// Instruct Azure DevOps to add GOPATH/bin to PATH
-	gobin := gopath.GetGopathBin()
-	err = os.MkdirAll(gobin, 0700)
-	if err != nil {
-		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
-	}
-	fmt.Printf("Adding %s to the PATH\n", gobin)
-	fmt.Printf("##vso[task.prependpath]%s\n", gobin)
-	return nil
+	return mage.ConfigureAgent()
 }
 
 // Install mixins used by tests and example bundles, if not already installed
@@ -224,7 +211,7 @@ func getDualPublish() bool {
 }
 
 func BuildImages() {
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 	registry := getRegistry()
 
 	buildImages(registry, info)
@@ -233,7 +220,7 @@ func BuildImages() {
 	}
 }
 
-func buildImages(registry string, info mage.GitMetadata) {
+func buildImages(registry string, info releases.GitMetadata) {
 	var g errgroup.Group
 
 	g.Go(func() error {
@@ -274,7 +261,7 @@ func buildImages(registry string, info mage.GitMetadata) {
 func PublishImages() {
 	mg.Deps(BuildImages)
 
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 
 	pushImagesTo(getRegistry(), info)
 	if getDualPublish() {
@@ -293,7 +280,7 @@ func LocalPorterAgentBuild() {
 }
 
 // Only push tagged versions, canary and latest
-func pushImagesTo(registry string, info mage.GitMetadata) {
+func pushImagesTo(registry string, info releases.GitMetadata) {
 	if info.IsTaggedRelease {
 		pushImages(registry, info.Version)
 	}
@@ -320,7 +307,7 @@ func pushImage(img string) {
 func PublishPorter() {
 	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 
 	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + info.Version).RunV()
