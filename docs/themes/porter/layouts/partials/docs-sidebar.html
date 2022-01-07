@@ -9,7 +9,11 @@
 
     <nav class="sidebar-nav">
       <ul class="current sidebar-main">
-
+        <div id="doc-version-picker">
+          Version:
+           <strong>v0.38</strong> |
+           <a href="https://release-v1.porter.sh/docs/">v1.0.0</a>
+        </div>
         {{ $currentPage := . }}
         {{ range .Site.Menus.main }}
           {{ if .HasChildren }}
