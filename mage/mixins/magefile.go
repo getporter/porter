@@ -56,12 +56,22 @@ func (m Magefile) Test() {
 	must.RunV(filepath.Join(m.BinDir, m.MixinName+xplat.FileExt()), "version")
 }
 
-// Publish the mixin
+// Publish the mixin and its mixin feed
 func (m Magefile) Publish() {
-	mg.Deps(tools.EnsurePorter)
+	mg.SerialDeps(m.PublishBinaries, m.PublishMixinFeed)
+}
 
+// Publish binaries to a github release
+// Requires PORTER_RELEASE_REPOSITORY to be set to github.com/USERNAME/REPO
+func (m Magefile) PublishBinaries() {
 	releases.PrepareMixinForPublish(m.MixinName)
 	releases.PublishMixin(m.MixinName)
+}
+
+// Publish a mixin feed
+// Requires PORTER_PACKAGES_REMOTE to be set to git@github.com:USERNAME/REPO.git
+func (m Magefile) PublishMixinFeed() {
+	mg.Deps(tools.EnsurePorter)
 	releases.PublishMixinFeed(m.MixinName)
 }
 
