@@ -73,8 +73,6 @@ exec echo "$GITHUB_TOKEN"
 	pwd, _ := os.Getwd()
 	script := filepath.Join(pwd, askpass)
 
-	must.Command("git", "config", "user.name", "Porter Bot").In(dir).RunV()
-	must.Command("git", "config", "user.email", "bot@porter.sh").In(dir).RunV()
 	must.Command("git", "config", "core.askPass", script).In(dir).RunV()
 }
 
@@ -145,7 +143,7 @@ func publishPackageFeed(pkgType string, name string) {
 
 	generatePackageFeed(pkgType)
 
-	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, info.Version, pkgType)).
+	must.Command("git", "-c", "user.name='Porter Bot'", "-c", "user.email=bot@porter.sh", "commit", "--signoff", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, info.Version, pkgType)).
 		In(packagesRepo).RunV()
 	must.Command("git", "push").In(packagesRepo).RunV()
 }
