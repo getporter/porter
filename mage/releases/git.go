@@ -71,7 +71,7 @@ func getCommit() string {
 
 // Get a description of the commit, e.g. v0.30.1 (latest) or v0.30.1-32-gfe72ff73 (canary)
 func getVersion() string {
-	version, _ := must.OutputS("git", "describe", "--tags", "--match=v*")
+	version, _ := shx.OutputS("git", "describe", "--tags", "--match=v*")
 	if version != "" {
 		return version
 	}
