@@ -190,7 +190,7 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 	return cli, nil
 }
 
-func (r *Registry) IsInvocationImageExists(invocationImage string) (bool, error) {
+func (r *Registry) IsImageCached(invocationImage string) (bool, error) {
 	ctx := context.Background()
 
 	cli, err := r.getDockerClient()
@@ -198,16 +198,11 @@ func (r *Registry) IsInvocationImageExists(invocationImage string) (bool, error)
 		return false, err
 	}
 
-	ref, err := cnab.ParseOCIReference(invocationImage)
-	if err != nil {
-		return false, err
-	}
-
-	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: ref.Repository()})}
+	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: invocationImage})}
 
 	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
 	if err != nil {
-		return false, err
+		return false, errors.Wrapf(err, "could not list images")
 	}
 
 	if len(imageSummaries) == 0 {

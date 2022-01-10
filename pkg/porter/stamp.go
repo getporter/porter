@@ -62,14 +62,14 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 
 		// Check whether invocation images exist in host registry.
 		for _, invocationImage := range bun.InvocationImages {
-			isInvocationImageExists, err := p.Registry.IsInvocationImageExists(invocationImage.Image)
+			isImageCached, err := p.Registry.IsImageCached(invocationImage.Image)
 			if err != nil {
-				return false, errors.Wrapf(err, "error while checking for existing invocation image")
+				return false, err
 			}
 
-			if !isInvocationImageExists {
+			if !isImageCached {
 				if p.Debug {
-					fmt.Fprintln(p.Err, errors.New(fmt.Sprintf("Invocation image %s doesn't exist in host registry, will need to build first", invocationImage.Image)))
+					fmt.Fprintln(p.Err, errors.New(fmt.Sprintf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)))
 				}
 				return false, nil
 			}

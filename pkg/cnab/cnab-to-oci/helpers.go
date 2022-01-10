@@ -8,10 +8,10 @@ import (
 var _ RegistryProvider = &TestRegistry{}
 
 type TestRegistry struct {
-	MockPullBundle              func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error)
-	MockPushBundle              func(bundleRef cnab.BundleReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error)
-	MockPushInvocationImage     func(invocationImage string) (imageDigest digest.Digest, err error)
-	MockIsInvocationImageExists func(invocationImage string) (bool, error)
+	MockPullBundle          func(ref cnab.OCIReference, insecureRegistry bool) (cnab.BundleReference, error)
+	MockPushBundle          func(bundleRef cnab.BundleReference, insecureRegistry bool) (bundleReference cnab.BundleReference, err error)
+	MockPushInvocationImage func(invocationImage string) (imageDigest digest.Digest, err error)
+	MockIsImageCached       func(invocationImage string) (bool, error)
 }
 
 func NewTestRegistry() *TestRegistry {
@@ -41,9 +41,9 @@ func (t TestRegistry) PushInvocationImage(invocationImage string) (digest.Digest
 	return "", nil
 }
 
-func (t TestRegistry) IsInvocationImageExists(invocationImage string) (bool, error) {
-	if t.MockIsInvocationImageExists != nil {
-		return t.MockIsInvocationImageExists(invocationImage)
+func (t TestRegistry) IsImageCached(invocationImage string) (bool, error) {
+	if t.MockIsImageCached != nil {
+		return t.MockIsImageCached(invocationImage)
 	}
 
 	return true, nil

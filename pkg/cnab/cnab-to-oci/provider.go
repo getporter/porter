@@ -18,5 +18,6 @@ type RegistryProvider interface {
 	// Returns the image digest from the registry.
 	PushInvocationImage(invocationImage string) (digest.Digest, error)
 
-	IsInvocationImageExists(invocationImage string) (bool, error)
+	// IsImageCached checks whether a particular invocation image exists in the local image cache.
+	IsImageCached(invocationImage string) (bool, error)
 }
