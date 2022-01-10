@@ -122,7 +122,7 @@ uninstall:
 These mixin commands are idempotent and handle errors automatically for you.
 This lets you focus on the resources you need, and spend less time figuring out how to automate a command-line tool to work in a way it wasn't designed for.
 
-The example mixin, Skeletor, has been updated with an example custom command to help get you started.
+The example mixin, [Skeletor], has been updated with an example custom command to help get you started.
 
 ## Try it out
 
@@ -132,3 +132,5 @@ You can quickly add the same error handling behavior to your mixin, or create a 
 
 Give it a try and let us know how it works for you!
 If there is a mixin that you would like to use this new error handling with, let us know, and we can help make that happen more quickly.
+
+[Skeletor]: https://github.com/getporter/skeletor
