@@ -126,7 +126,7 @@ The example mixin, Skeletor, has been updated with an example custom command to 
 
 ## Try it out
 
-Bundle authors, try out moving some of that custom error handling logic out of bash scripts and move it into your exec mixin calls.
+Bundle authors, try moving some of that custom error handling logic out of bash scripts and into your exec mixin calls.
 Mixin authors, take a look at how the az mixin uses the exec mixin library to add error handling.
 You can quickly add the same error handling behavior to your mixin, or create a custom command that handles errors automatically.
 
