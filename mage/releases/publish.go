@@ -163,7 +163,7 @@ func PublishPluginFeed(plugin string) {
 func generatePackageFeed(pkgType string) {
 	pkgDir := pkgType + "s"
 	feedFile := filepath.Join(packagesRepo, pkgDir, "atom.xml")
-	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
+	must.RunV("porter", "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
 }
 
 // Generate a mixin feed from any mixin versions in bin/mixins.
