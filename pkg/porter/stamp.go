@@ -60,6 +60,21 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
 		}
 
+		// Check whether invocation images exist in host registry.
+		for _, invocationImage := range bun.InvocationImages {
+			isImageCached, err := p.Registry.IsImageCached(invocationImage.Image)
+			if err != nil {
+				return false, err
+			}
+
+			if !isImageCached {
+				if p.Debug {
+					fmt.Fprintln(p.Err, errors.New(fmt.Sprintf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)))
+				}
+				return false, nil
+			}
+		}
+
 		oldStamp, err := configadapter.LoadStamp(bun)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
