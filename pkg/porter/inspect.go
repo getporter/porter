@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -28,8 +29,8 @@ type PrintableImage struct {
 	Original string `json:"originalImage" yaml:"originalImage"`
 }
 
-func (p *Porter) Inspect(o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
+func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
 	if err != nil {
 		return err
 	}

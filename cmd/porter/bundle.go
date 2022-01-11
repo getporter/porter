@@ -66,7 +66,7 @@ Porter uses the docker driver as the default build driver, an alternate driver m
 			return opts.Validate(p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Build(opts)
+			return p.Build(cmd.Context(), opts)
 		},
 	}
 
@@ -147,7 +147,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallBundle(opts)
+			return p.InstallBundle(cmd.Context(), opts)
 		},
 	}
 
@@ -204,7 +204,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UpgradeBundle(opts)
+			return p.UpgradeBundle(cmd.Context(), opts)
 		},
 	}
 
@@ -261,7 +261,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InvokeBundle(opts)
+			return p.InvokeBundle(cmd.Context(), opts)
 		},
 	}
 
@@ -320,7 +320,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallBundle(opts)
+			return p.UninstallBundle(cmd.Context(), opts)
 		},
 	}
 
@@ -376,7 +376,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Publish(opts)
+			return p.Publish(cmd.Context(), opts)
 		},
 	}
 
@@ -408,7 +408,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Archive(opts)
+			return p.Archive(cmd.Context(), opts)
 		},
 	}
 

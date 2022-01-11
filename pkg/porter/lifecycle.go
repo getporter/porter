@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -35,8 +36,8 @@ type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowDockerHostAccess bool
-	NoLogs                  bool
-	
+	NoLogs                bool
+
 	bundleRef *cnab.BundleReference
 }
 
@@ -82,7 +83,7 @@ func (o *BundleActionOptions) GetOptions() *BundleActionOptions {
 	return o
 }
 
-func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleReference, error) {
+func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionOptions) (cnab.BundleReference, error) {
 	// Some actions need to resolve this early
 	if opts.bundleRef != nil {
 		return *opts.bundleRef, nil
@@ -95,7 +96,7 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 		pullOpts.Reference = ref.String()
 		cachedBundle, err := p.prepullBundleByReference(&pullOpts)
 		if err != nil {
-			return errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
+			return err
 		}
 
 		bundleRef = cachedBundle.BundleReference
@@ -108,7 +109,7 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 			return cnab.BundleReference{}, err
 		}
 	} else if opts.File != "" { // load the local bundle source
-		localBundle, err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
+		localBundle, err := p.ensureLocalBundleIsUpToDate(ctx, opts.bundleFileOptions)
 		if err != nil {
 			return cnab.BundleReference{}, err
 		}
@@ -163,9 +164,9 @@ func (p *Porter) resolveBundleReference(opts *BundleActionOptions) (cnab.BundleR
 
 // BuildActionArgs converts an instance of user-provided action options into prepared arguments
 // that can be used to execute the action.
-func (p *Porter) BuildActionArgs(installation claims.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
+func (p *Porter) BuildActionArgs(ctx context.Context, installation claims.Installation, action BundleAction) (cnabprovider.ActionArguments, error) {
 	opts := action.GetOptions()
-	bundleRef, err := p.resolveBundleReference(opts)
+	bundleRef, err := p.resolveBundleReference(ctx, opts)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
@@ -224,7 +225,7 @@ func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) (cache.Cach
 
 	cachedBundle, err := p.PullBundle(opts.BundlePullOptions)
 	if err != nil {
-		return cache.CachedBundle{}, errors.Wrapf(err, "unable to pull bundle %s", opts.Reference)
+		return cache.CachedBundle{}, err
 	}
 
 	opts.RelocationMapping = cachedBundle.RelocationFilePath

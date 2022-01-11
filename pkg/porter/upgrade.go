@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -49,9 +50,9 @@ func (o UpgradeOptions) GetActionVerb() string {
 
 // UpgradeBundle accepts a set of pre-validated UpgradeOptions and uses
 // them to upgrade a bundle.
-func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
+func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	// Figure out which bundle/installation we are working with
-	_, err := p.resolveBundleReference(opts.BundleActionOptions)
+	_, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -83,10 +84,10 @@ func (p *Porter) UpgradeBundle(opts UpgradeOptions) error {
 
 	// Re-resolve the bundle after we have figured out the version we are upgrading to
 	opts.bundleRef = nil
-	_, err = p.resolveBundleReference(opts.BundleActionOptions)
+	_, err = p.resolveBundleReference(ctx, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
 
-	return p.ExecuteAction(i, opts)
+	return p.ExecuteAction(ctx, i, opts)
 }

@@ -118,8 +118,6 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
-		// TODO(carolynvs): Add command to view all installation runs
-		//Status: run.GetStatus(),
 	}
 }
 

@@ -2,16 +2,27 @@ package context
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
+	cnabclaims "github.com/cnabio/cnab-go/claim"
+	"github.com/mattn/go-colorable"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/attribute"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -32,6 +43,18 @@ type Context struct {
 	Err                io.Writer
 	NewCommand         CommandBuilder
 	PlugInDebugContext *PluginDebugContext
+
+	// Logging and Tracing configuration
+	// a consistent id that is set on the context and emitted in the logs
+	// Helps correlate logs with a workflow.
+	correlationId    string
+	Log              tracing.RootLogger
+	logLevel         zapcore.Level
+	logFile          afero.File
+	timestampLogs    bool
+	tracer           trace.Tracer
+	traceCloser      *sdktrace.TracerProvider
+	traceServiceName string
 }
 
 // New creates a new context in the specified directory.
@@ -43,15 +66,138 @@ func New() *Context {
 	pwd, _ := os.Getwd()
 
 	c := &Context{
-		environ:    getEnviron(),
-		FileSystem: aferox.NewAferox(pwd, afero.NewOsFs()),
-		In:         os.Stdin,
-		Out:        NewCensoredWriter(os.Stdout),
-		Err:        NewCensoredWriter(os.Stderr),
+		environ:       getEnviron(),
+		FileSystem:    aferox.NewAferox(pwd, afero.NewOsFs()),
+		In:            os.Stdin,
+		Out:           NewCensoredWriter(os.Stdout),
+		Err:           NewCensoredWriter(os.Stderr),
+		correlationId: cnabclaims.MustNewULID(), // not using cnab package because that creates a cycle
+		timestampLogs: true,
 	}
+
+	c.ConfigureLogging(LogConfiguration{})
 	c.defaultNewCommand()
 	c.PlugInDebugContext = NewPluginDebugContext(c)
+
 	return c
+}
+
+func (c *Context) makeLogEncoding() zapcore.EncoderConfig {
+	enc := zap.NewProductionEncoderConfig()
+	if c.timestampLogs {
+		enc.EncodeTime = zapcore.ISO8601TimeEncoder
+	} else { // used for testing, so we don't have unique timestamps in the logs
+		enc.EncodeTime = func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString("")
+		}
+	}
+	return enc
+}
+
+type LogConfiguration struct {
+	LogToFile            bool
+	LogDirectory         string
+	LogLevel             zapcore.Level
+	StructuredLogs       bool
+	TelemetryEnabled     bool
+	TelemetryEndpoint    string
+	TelemetryProtocol    string
+	TelemetryInsecure    bool
+	TelemetryCertificate string
+	TelemetryCompression string
+	TelemetryTimeout     string
+	TelemetryHeaders     map[string]string
+}
+
+// ConfigureLogging applies different configuration to our logging and tracing.
+func (c *Context) ConfigureLogging(cfg LogConfiguration) {
+	// Cleanup in case logging has been configured before
+	c.logLevel = cfg.LogLevel
+
+	encoding := c.makeLogEncoding()
+	consoleLogger := c.makeConsoleLogger(encoding, cfg.StructuredLogs)
+
+	// make a temporary logger that we can use until we've completely initialized the full logger
+	tmpLog := zap.New(consoleLogger)
+
+	var err error
+	fileLogger := zapcore.NewNopCore()
+	if cfg.LogToFile {
+		fileLogger, err = c.configureFileLog(encoding, cfg.LogDirectory)
+		if err != nil {
+			tmpLog.Error(errors.Wrap(err, "could not configure a file logger").Error())
+		} else {
+			tmpLog.Debug("Writing logs to " + c.logFile.Name())
+		}
+	}
+	tmpLog = zap.New(zapcore.NewTee(consoleLogger, fileLogger))
+
+	if cfg.TelemetryEnabled {
+		// Only initialize the tracer once per command
+		if c.traceCloser == nil {
+			err = c.configureTelemetry(tmpLog, cfg)
+			if err != nil {
+				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
+			}
+		}
+	} else {
+		c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
+	}
+
+	c.Log = tracing.NewLogger(tmpLog, c.tracer, attribute.String("correlationId", c.correlationId))
+}
+
+func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLogs bool) zapcore.Core {
+	stderr := c.Err
+	if f, ok := stderr.(*os.File); ok {
+		if isatty.IsTerminal(f.Fd()) {
+			stderr = colorable.NewColorable(f)
+			encoding.EncodeLevel = zapcore.LowercaseColorLevelEncoder
+		}
+	}
+
+	// if structured-logs feature isn't enabled, keep the logs looking like they do now, with just the message printed
+	if !structuredLogs {
+		encoding.TimeKey = ""
+		encoding.LevelKey = ""
+	}
+	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
+	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logLevel)
+}
+
+func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (zapcore.Core, error) {
+	if err := c.FileSystem.MkdirAll(dir, 0700); err != nil {
+		return nil, err
+	}
+
+	// Write the logs to a file
+	logfile := filepath.Join(dir, c.correlationId+".json")
+	if c.logFile == nil { // We may have already opened this logfile, and we are just changing the log level
+		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			return zapcore.NewNopCore(), errors.Wrapf(err, "could not start log file at %s", logfile)
+		}
+		c.logFile = f
+	}
+
+	// Split logs to the console and file
+	fileEncoder := zapcore.NewJSONEncoder(encoding)
+	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logLevel), nil
+}
+
+func (c *Context) Close() error {
+	c.closeLogger()
+	if c.traceCloser != nil {
+		c.traceCloser.Shutdown(context.TODO())
+	}
+	return nil
+}
+
+func (c *Context) closeLogger() {
+	if c.logFile != nil {
+		c.logFile.Close()
+		c.logFile = nil
+	}
 }
 
 func (c *Context) defaultNewCommand() {

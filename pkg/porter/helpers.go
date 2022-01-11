@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -218,10 +219,10 @@ func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
 
-func (t *TestBuildProvider) BuildInvocationImage(manifest *manifest.Manifest) error {
+func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
 	return nil
 }
 
-func (t *TestBuildProvider) TagInvocationImage(origTag, newTag string) error {
+func (t *TestBuildProvider) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
 	return nil
 }

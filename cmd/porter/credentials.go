@@ -109,7 +109,7 @@ will then provide it to the bundle in the correct location. `,
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.GenerateCredentials(opts)
+			return p.GenerateCredentials(cmd.Context(), opts)
 		},
 	}
 

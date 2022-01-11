@@ -47,7 +47,7 @@ func TestDesiredState(t *testing.T) {
 
 	// Import an installation where the namespace is empty in the file
 	mgx.Must(shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), "mybuns.yaml"))
-	output, _, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
+	_, output, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
 	require.Contains(t, output, "The installation is out-of-sync, running the install action")
 	test.RequireInstallationExists("operator", "mybuns")

@@ -49,6 +49,12 @@ type Data struct {
 
 	// SecretsPlugin defined in the configuration file.
 	SecretsPlugin []SecretsPlugin `mapstructure:"secrets"`
+
+	// Logs are settings related to Porter's log files.
+	Logs LogConfig `mapstructure:"logs"`
+
+	// Telemetry are settings related to Porter's tracing with open telemetry.
+	Telemetry TelemetryConfig `mapstructure:telemetry`
 }
 
 // DefaultDataStore used when no config file is found.
@@ -57,6 +63,7 @@ func DefaultDataStore() Data {
 		BuildDriver:          BuildDriverDocker,
 		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
+		Logs:                 LogConfig{Level: "info"},
 	}
 }
 

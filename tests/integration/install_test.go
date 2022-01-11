@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	require.NoError(t, err)
 
 	// Install the bundle, assert no error occurs due to Porter home as relative path
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err)
 }
 
@@ -55,7 +56,7 @@ func TestInstall_fileParam(t *testing.T) {
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err)
 
 	output := p.TestConfig.TestContext.GetOutput()
@@ -90,7 +91,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify Porter uses the .dockerignore file (no helpers script added to installer image)
-	err = p.InstallBundle(opts)
+	err = p.InstallBundle(context.Background(), opts)
 	// The following line would be seen from the daemon, but is printed directly to stdout:
 	// Error: couldn't run command ./helpers.sh dump-config: fork/exec ./helpers.sh: no such file or directory
 	// We should check this once https://github.com/cnabio/cnab-go/issues/78 is closed

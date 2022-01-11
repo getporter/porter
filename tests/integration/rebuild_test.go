@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	assert.NoError(t, err, "install should have succeeded")
 }
 
@@ -49,7 +50,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(installOpts)
+	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
@@ -65,7 +66,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UpgradeBundle(upgradeOpts)
+	err = p.UpgradeBundle(nil, upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -91,7 +92,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	credentialOptions.Silent = true
 	err := credentialOptions.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.GenerateCredentials(credentialOptions)
+	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	assert.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -113,7 +114,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	credentialOptions.Silent = true
 	err := credentialOptions.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.GenerateCredentials(credentialOptions)
+	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	require.NoError(t, err)
 
 	// Modify the porter.yaml to trigger a rebuild
@@ -130,7 +131,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	p.Manifest = nil
 
 	// Re-generate the credentials
-	err = p.GenerateCredentials(credentialOptions)
+	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	require.NoError(t, err)
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
