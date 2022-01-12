@@ -75,7 +75,7 @@ func CleanupCurrentBundle(p *porter.TestPorter) {
 	err := uninstallOpts.Validate([]string{}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for current bundle")
 
-	err = p.UninstallBundle(nil, uninstallOpts)
+	err = p.UninstallBundle(context.Background(), uninstallOpts)
 	assert.NoError(p.T(), err, "uninstall failed for current bundle")
 }
 
@@ -97,7 +97,7 @@ func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 	statusOpts.Action = action
 	err := statusOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
-	err = p.InvokeBundle(nil, statusOpts)
+	err = p.InvokeBundle(context.Background(), statusOpts)
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
 }
 
@@ -124,7 +124,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UpgradeBundle(nil, upgradeOpts)
+	err = p.UpgradeBundle(context.Background(), upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
 	// Uninstall the bundle
@@ -132,6 +132,6 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	uninstallOpts := porter.NewUninstallOptions()
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UninstallBundle(nil, uninstallOpts)
+	err = p.UninstallBundle(context.Background(), uninstallOpts)
 	require.NoError(t, err, "uninstall should have succeeded")
 }

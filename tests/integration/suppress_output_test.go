@@ -40,7 +40,7 @@ func TestSuppressOutput(t *testing.T) {
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InvokeBundle(nil, invokeOpts)
+	err = p.InvokeBundle(context.Background(), invokeOpts)
 	require.NoError(t, err)
 
 	// Uninstall
@@ -48,7 +48,7 @@ func TestSuppressOutput(t *testing.T) {
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.UninstallBundle(nil, uninstallOpts)
+	err = p.UninstallBundle(context.Background(), uninstallOpts)
 	require.NoError(t, err)
 
 	gotCmdOutput := p.TestConfig.TestContext.GetOutput()

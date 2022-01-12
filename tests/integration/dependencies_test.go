@@ -105,7 +105,7 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	err := uninstallOptions.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 
-	err = p.UninstallBundle(nil, uninstallOptions)
+	err = p.UninstallBundle(context.Background(), uninstallOptions)
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency installation is deleted
@@ -130,7 +130,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	err := upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of upgrade opts for root bundle failed")
 
-	err = p.UpgradeBundle(nil, upgradeOpts)
+	err = p.UpgradeBundle(context.Background(), upgradeOpts)
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
 	// Verify that the dependency claim is upgraded
@@ -161,7 +161,7 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	err := invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of invoke opts for root bundle failed")
 
-	err = p.InvokeBundle(nil, invokeOpts)
+	err = p.InvokeBundle(context.Background(), invokeOpts)
 	require.NoError(p.T(), err, "invoke of root bundle failed")
 
 	// Verify that the dependency claim is invoked
@@ -191,7 +191,7 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	err := uninstallOptions.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of uninstall opts for root bundle failed")
 
-	err = p.UninstallBundle(nil, uninstallOptions)
+	err = p.UninstallBundle(context.Background(), uninstallOptions)
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency claim is uninstalled

@@ -66,7 +66,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	upgradeOpts := porter.NewUpgradeOptions()
 	err = upgradeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.UpgradeBundle(nil, upgradeOpts)
+	err = p.UpgradeBundle(context.Background(), upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

@@ -37,7 +37,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	invokeOpts.Action = "zombies"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InvokeBundle(nil, invokeOpts)
+	err = p.InvokeBundle(context.Background(), invokeOpts)
 	require.NoError(t, err, "invoke should have succeeded")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()
