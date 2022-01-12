@@ -1,4 +1,4 @@
-package mage
+package releases
 
 import (
 	"os"
