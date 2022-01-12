@@ -161,7 +161,15 @@ func PublishPluginFeed(plugin string) {
 func generatePackageFeed(pkgType string) {
 	pkgDir := pkgType + "s"
 	feedFile := filepath.Join(packagesRepo, pkgDir, "atom.xml")
-	must.RunV("porter", "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
+
+	// Try to use a local copy of porter first, otherwise use the
+	// one installed in GOAPTH/bin
+	porterPath := "bin/porter"
+	if _, err := os.Stat(porterPath); err != nil {
+		porterPath = "porter"
+		tools.EnsurePorter()
+	}
+	must.RunV(porterPath, "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
 }
 
 // Generate a mixin feed from any mixin versions in bin/mixins.
