@@ -78,17 +78,14 @@ func (m Magefile) PublishMixinFeed() {
 // Test out publish locally, with your github forks
 // Assumes that you forked and kept the repository name unchanged.
 func (m Magefile) TestPublish(username string) {
-	// Backup the git config file, publish will set the user to a bot
-	mgx.Must(shx.Copy(".git/config", ".git/config.bak"))
-
-	os.Setenv(releases.ReleaseRepository, fmt.Sprintf("github.com/%s/%s-mixin", username, m.MixinName))
-	os.Setenv(releases.PackagesRemote, fmt.Sprintf("https://github.com/%s/packages.git", username))
+	mixinRepo := fmt.Sprintf("github.com/%s/%s-mixin", username, m.MixinName)
+	pkgRepo := fmt.Sprintf("https://github.com/%s/packages.git", username)
+	fmt.Printf("Publishing a release to %s and committing a mixin feed to %s\n", mixinRepo, pkgRepo)
+	fmt.Printf("If you use different repository names, set %s and %s then call mage Publish instead.\n", releases.ReleaseRepository, releases.PackagesRemote)
+	os.Setenv(releases.ReleaseRepository, mixinRepo)
+	os.Setenv(releases.PackagesRemote, pkgRepo)
 
 	m.Publish()
-
-	// Restore the original git config
-	os.Remove(".git/config")
-	os.Rename(".git/config.bak", ".git/config")
 }
 
 // Install the mixin
