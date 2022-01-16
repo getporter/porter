@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
@@ -30,6 +31,10 @@ func NewBuilder(cxt *portercontext.Context) *Builder {
 }
 
 func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
+	log.Printf("p.Manifest on build/docker.go = %+v", manifest)
+
+	a := "JOBEL"
+
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
@@ -39,6 +44,7 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 		Dockerfile:     filepath.ToSlash(build.DOCKER_FILE),
 		BuildArgs: map[string]*string{
 			"BUNDLE_DIR": &build.BUNDLE_DIR,
+			"JOBEL":      &a,
 		},
 	}
 

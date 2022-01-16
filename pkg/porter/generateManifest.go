@@ -1,6 +1,9 @@
 package porter
 
 import (
+	"fmt"
+	"regexp"
+
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
@@ -38,6 +41,19 @@ func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 	if opts.Version != "" {
 		if err = e.SetValue("version", opts.Version); err != nil {
 			return err
+		}
+	}
+
+	numberRegex := regexp.MustCompile(`\d`)
+
+	if opts.parsedCustoms != nil {
+		for k, v := range opts.parsedCustoms {
+			if v != "true" && v != "false" && !numberRegex.MatchString(v) {
+				v = fmt.Sprintf("\"%s\"", v)
+			}
+			if err = e.SetValue("custom."+k, v); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -58,6 +58,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
+  porter build --custom test-mode=true --custom version=0.2.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
@@ -78,6 +79,8 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
+	f.StringSliceVar(&opts.Customs, "custom", nil,
+		"Define an individual key-value pair for custom section in the form of NAME=VALUE. May be specified multiple times.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{

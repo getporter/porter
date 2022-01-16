@@ -35,8 +35,8 @@ type BundleActionOptions struct {
 	sharedOptions
 	BundlePullOptions
 	AllowDockerHostAccess bool
-	NoLogs                  bool
-	
+	NoLogs                bool
+
 	bundleRef *cnab.BundleReference
 }
 
