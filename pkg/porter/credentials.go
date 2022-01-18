@@ -381,10 +381,6 @@ type CredentialCreateOptions struct {
 }
 
 func (o *CredentialCreateOptions) Validate(args []string) error {
-	if len(args) < 1 || args[0] == "" {
-		return errors.New("file name is required")
-	}
-
 	if len(args) > 1 {
 		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
 	}
