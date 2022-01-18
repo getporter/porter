@@ -54,7 +54,7 @@ type Data struct {
 	Logs LogConfig `mapstructure:"logs"`
 
 	// Telemetry are settings related to Porter's tracing with open telemetry.
-	Telemetry TelemetryConfig `mapstructure:telemetry`
+	Telemetry TelemetryConfig `mapstructure:"telemetry"`
 }
 
 // DefaultDataStore used when no config file is found.
