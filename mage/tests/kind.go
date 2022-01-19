@@ -39,6 +39,7 @@ func EnsureTestCluster() {
 	if !useCluster() {
 		CreateTestCluster()
 	}
+
 	mgx.Must(docker.StartDockerRegistry())
 }
 
@@ -112,7 +113,8 @@ func CreateTestCluster() {
 	mgx.Must(errors.Wrap(err, "could not write kind config file"))
 	defer os.Remove("kind.config.yaml")
 
-	must.Run("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml")
+	must.Command("kind", "create", "cluster", "--name", getKindClusterName(), "--config", "kind.config.yaml").
+		Env("KIND_EXPERIMENTAL_DOCKER_NETWORK=" + docker.DefaultNetworkName).Run()
 
 	// Document the local registry
 	kubectl("apply", "-f", "mage/tests/local-registry.yaml").Run()
