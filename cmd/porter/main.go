@@ -45,7 +45,7 @@ func main() {
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error a the root span as well
+			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
 			return 1
 		}

@@ -55,6 +55,7 @@ func NewInstallOptions() InstallOptions {
 // them to install a bundle.
 func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	ctx, log := p.Log.StartSpan(ctx, "InstallBundle")
+	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
 	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
