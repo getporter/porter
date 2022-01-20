@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -63,9 +64,13 @@ func Execute(porterCommand []string, porterHome string, porterConfig string) (er
 	}
 
 	// Remind everyone the version of Porter we are using
+	fmt.Fprintf(stderr, "porter version\n")
 	cmd := exec.Command(porter, "version")
-	cmd.Stdout = stdout
+	cmd.Stdout = stderr // send all non-bundle output to stderr
 	cmd.Stderr = stderr
+	if err = cmd.Run(); err != nil {
+		return errors.Wrap(err, "porter version check failed"), false
+	}
 
 	// Run the specified porter command
 	fmt.Fprintf(stderr, "porter %s\n", strings.Join(porterCommand, " "))
