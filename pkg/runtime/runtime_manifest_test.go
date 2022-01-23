@@ -31,7 +31,7 @@ func TestResolveMapParam(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PERSON", "Ralpha")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
 - name: person
 - name: place
@@ -40,7 +40,7 @@ parameters:
 install:
 - mymixin:
     Parameters:
-      Thing: "{{ bundle.parameters.person }}"
+      Thing: ${ bundle.parameters.person }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -65,7 +65,7 @@ install:
 func TestResolvePathParam(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0-alpha.2
 parameters:
 - name: person
   path: person.txt
@@ -73,7 +73,7 @@ parameters:
 install:
 - mymixin:
     Parameters:
-      Thing: "{{ bundle.parameters.person }}"
+      Thing: ${ bundle.parameters.person }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -137,11 +137,11 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 func TestResolveMapParamUnknown(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 install:
 - mymixin:
     Parameters:
-      Thing: "{{bundle.parameters.person}}"
+      Thing: ${bundle.parameters.person}
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -154,14 +154,14 @@ install:
 func TestResolveArrayUnknown(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 parameters:
 - name: name
 
 install:
 - exec:
     Arguments:
-      - "{{bundle.parameters.person}}"
+      - ${bundle.parameters.person}
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -175,14 +175,14 @@ func TestResolveArray(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PERSON", "Ralpha")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 parameters:
 - name: person
 
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.parameters.person }}"
+    - ${ bundle.parameters.person }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -203,7 +203,7 @@ func TestResolveSensitiveParameter(t *testing.T) {
 	pCtx.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
 	pCtx.Setenv("REGULAR_PARAM", "regular param value")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 parameters:
 - name: sensitive_param
   sensitive: true
@@ -212,8 +212,8 @@ parameters:
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.parameters.sensitive_param }}"
-    - "{{ bundle.parameters.regular_param }}"
+    - ${ bundle.parameters.sensitive_param }
+    - ${ bundle.parameters.regular_param }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -241,7 +241,7 @@ func TestResolveCredential(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 	pCtx.Setenv("PASSWORD", "deliciou$dubonnet")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 credentials:
 - name: password
   env: PASSWORD
@@ -249,7 +249,7 @@ credentials:
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.credentials.password }}"
+    - ${ bundle.credentials.password }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -275,7 +275,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 	pCtx.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 	pCtx.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 dependencies:
   requires: 
   - name: mysql
@@ -285,8 +285,8 @@ dependencies:
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.dependencies.mysql.outputs.password }}"
-    - "{{ bundle.dependencies.mysql.outputs.root-password }}"
+    - ${ bundle.dependencies.mysql.outputs.password }
+    - ${ bundle.dependencies.mysql.outputs.root-password }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	ps := cnab.ParameterSources{}
@@ -385,11 +385,11 @@ func TestResolveSliceWithAMap(t *testing.T) {
 func TestResolveMissingStepOutputs(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 install:
 - mymixin:
     Arguments:
-    - "jdbc://{{bundle.outputs.database_url}}:{{bundle.outputs.database_port}}"
+    - jdbc://${bundle.outputs.database_url}:${bundle.outputs.database_port}
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -400,7 +400,7 @@ install:
 
 func TestResolveSensitiveOutputs(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 outputs:
 - name: username
 - name: password
@@ -409,8 +409,8 @@ outputs:
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.outputs.username }}"
-    - "{{ bundle.outputs.password }}"
+    - ${ bundle.outputs.username }
+    - ${ bundle.outputs.password }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	rm.outputs = map[string]string{
@@ -437,11 +437,13 @@ install:
 
 func TestManifest_ResolveBundleName(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
+name: mybuns
+
 install:
 - mymixin:
     Arguments:
-    - "{{ bundle.name }}"
+    - ${ bundle.name }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -608,7 +610,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 	// Try to access an images entry that doesn't exist
 	pCtx := portercontext.NewTestContext(t)
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0-alpha.2
 images:
   something:
     repository: "blah/blah"
@@ -617,7 +619,7 @@ images:
 install:
 - mymixin:
     Arguments:
-      "{{ bundle.images.notsomething.digest }}"
+      - ${ bundle.images.notsomething.digest }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -866,7 +868,7 @@ func TestResolveStepEncoding(t *testing.T) {
 	wantValue := `{"test":"value"}`
 	pCtx.Setenv("TEST", wantValue)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 parameters:
 - name: test
   env: TEST
@@ -874,7 +876,7 @@ parameters:
 install:
 - mymixin:
     Flags:
-      c: '{{bundle.parameters.test}}'
+      c: '${bundle.parameters.test}'
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -895,11 +897,11 @@ func TestResolveInstallation(t *testing.T) {
 	pCtx.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
 	pCtx.Setenv(config.EnvPorterInstallationName, "mybun")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 install:
 - mymixin:
-    ns: "{{ installation.namespace }}"
-    release: "{{ installation.name }}"
+    ns: ${ installation.namespace }
+    release: ${ installation.name }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -917,7 +919,7 @@ install:
 func TestResolveCustomMetadata(t *testing.T) {
 	pCtx := portercontext.NewTestContext(t)
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 custom:
   foo: foobar
   myApp:
@@ -926,8 +928,9 @@ custom:
 
 install:
 - mymixin:
-    release: "{{ bundle.custom.foo }}"
-    featureA: "{{ bundle.custom.myApp.featureFlags.featureA }}"
+    release: ${ bundle.custom.foo }
+    featureA: ${ bundle.custom.myApp.featureFlags.featureA }
+    notabool: "${ bundle.custom.myApp.featureFlags.featureA }"
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]
@@ -942,7 +945,8 @@ install:
 	require.NoError(t, err, "ResolveStep failed")
 
 	assert.Equal(t, "foobar", mixin["release"], "custom metadata was not rendered")
-	assert.Equal(t, "true", mixin["featureA"], "nested custom metadata was not rendered")
+	assert.Equal(t, true, mixin["featureA"], "nested custom metadata was not rendered, an unquoted boolean should render as a bool")
+	assert.Equal(t, "true", mixin["notabool"], "a quoted boolean should render as a string")
 }
 
 func TestResolveEnvironmentVariable(t *testing.T) {
@@ -950,11 +954,11 @@ func TestResolveEnvironmentVariable(t *testing.T) {
 	pCtx.Setenv("foo", "foo-value")
 	pCtx.Setenv("BAR", "bar-value")
 
-	mContent := `name: mybuns
+	mContent := `schemaVersion: 1.0.0
 install:
 - mymixin:
-    someInput: "{{ env.foo }}"
-    moreInput: "{{ env.BAR }}"
+    someInput: ${ env.foo }
+    moreInput: ${ env.BAR }
 `
 	rm := runtimeManifestFromStepYaml(t, pCtx, mContent)
 	s := rm.Install[0]

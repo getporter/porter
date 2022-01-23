@@ -39,9 +39,9 @@ type RuntimeManifest struct {
 	// bundle is the executing bundle definition
 	bundle cnab.ExtendedBundle
 
-	// manifestYAML is the porter.yaml loaded into YQ so that we can
+	// editor is the porter.yaml loaded into YQ so that we can
 	// do advanced stuff with the manifest, like just read out the yaml for a particular step.
-	manifestYAML *yaml.Editor
+	editor *yaml.Editor
 
 	// bundles is map of the dependencies bundle definitions, keyed by the alias used in the root manifest
 	bundles map[string]cnab.ExtendedBundle
@@ -61,11 +61,6 @@ func NewRuntimeManifest(cxt *portercontext.Context, action string, manifest *man
 
 func (m *RuntimeManifest) Validate() error {
 	err := m.loadBundle()
-	if err != nil {
-		return err
-	}
-
-	err = m.loadManifest()
 	if err != nil {
 		return err
 	}
@@ -96,21 +91,6 @@ func (m *RuntimeManifest) loadBundle() error {
 	}
 
 	m.bundle = b
-	return nil
-}
-
-func (m *RuntimeManifest) loadManifest() error {
-	if m.manifestYAML != nil {
-		return nil
-	}
-
-	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
-	yq := yaml.NewEditor(m.Context)
-	if err := yq.ReadFile(m.ManifestPath); err != nil {
-		return fmt.Errorf("error loading yaml editor for %s", m.ManifestPath)
-	}
-
-	m.manifestYAML = yq
 	return nil
 }
 
@@ -431,10 +411,6 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 // ResolveStep will walk through the Step's data and resolve any placeholder
 // data using the definitions in the manifest, like parameters or credentials.
 func (m *RuntimeManifest) ResolveStep(stepIndex int, step *manifest.Step) error {
-	if err := m.loadManifest(); err != nil {
-		return err
-	}
-
 	// Refresh our template data
 	sourceData, err := m.buildSourceData()
 	if err != nil {
@@ -443,27 +419,20 @@ func (m *RuntimeManifest) ResolveStep(stepIndex int, step *manifest.Step) error 
 
 	// Get the original yaml for the current step
 	stepPath := fmt.Sprintf("%s[%d]", m.Action, stepIndex)
-	stepNode, err := m.manifestYAML.GetNode(stepPath)
+	stepTemplate, err := m.getStepTemplate(stepPath)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err)
-	}
-	var stepTemplate bytes.Buffer
-	enc := yaml3.NewEncoder(&stepTemplate)
-	defer enc.Close()
-	if err := enc.Encode(stepNode); err != nil {
-		return fmt.Errorf("error re-encoding porter.yaml for templating: %w", err)
+		return err
 	}
 
 	if m.Debug {
 		fmt.Fprintf(m.Err, "=== Step Data ===\n%v\n", sourceData)
-		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", stepTemplate.String())
+		fmt.Fprintf(m.Err, "=== Step Template ===\n%v\n", stepTemplate)
 	}
 
-	// Render the step template, returning an error if undefined variables are used
 	mustache.AllowMissingVariables = false
-	rendered, err := mustache.RenderRaw(stepTemplate.String(), true, sourceData)
+	rendered, err := mustache.RenderRaw(stepTemplate, true, sourceData)
 	if err != nil {
-		return fmt.Errorf("unable to render step template %s: %w", stepTemplate.String(), err)
+		return fmt.Errorf("unable to render step template %s: %w", stepTemplate, err)
 	}
 
 	if m.Debug {
@@ -778,6 +747,42 @@ func (m *RuntimeManifest) ResolveImages(bun cnab.ExtendedBundle, reloMap relocat
 		}
 	}
 	return nil
+}
+
+func (m *RuntimeManifest) getEditor() (*yaml.Editor, error) {
+	if m.editor != nil {
+		return m.editor, nil
+	}
+
+	// Get the original porter.yaml with additional yaml metadata so that we can look at just the current step's yaml
+	yq := yaml.NewEditor(m.Context)
+	if err := yq.ReadFile(m.ManifestPath); err != nil {
+		return nil, fmt.Errorf("error loading yaml editor from %s", m.ManifestPath)
+	}
+
+	return yq, nil
+}
+
+func (m *RuntimeManifest) getStepTemplate(stepPath string) (string, error) {
+	yq, err := m.getEditor()
+	if err != nil {
+		return "", err
+	}
+
+	stepNode, err := yq.GetNode(stepPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to retrieve original yaml for step %s: %w", stepPath, err)
+	}
+
+	var stepYAML bytes.Buffer
+	enc := yaml3.NewEncoder(&stepYAML)
+	defer enc.Close()
+	if err := enc.Encode(stepNode); err != nil {
+		return "", fmt.Errorf("error re-encoding porter.yaml for templating: %w", err)
+	}
+
+	stepTemplate := m.GetTemplatePrefix() + stepYAML.String()
+	return stepTemplate, nil
 }
 
 func resolveImage(image *manifest.MappedImage, refString string) error {

@@ -17,14 +17,14 @@ mixins:
 install:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
-      repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
-      tag: "{{bundle.images.something.tag}}"
+      image: "${bundle.images.something.repository}@${bundle.images.something.digest}"
+      repo: "${bundle.images.something.repository}"
+      digest: "${bundle.images.something.digest}"
+      tag: "${bundle.images.something.tag}"
 uninstall:
   - searcher:
       description: "A Step"
-      image: "{{bundle.images.something.repository}}@{{bundle.images.something.digest}}"
-      repo: "{{bundle.images.something.repository}}"
-      digest: "{{bundle.images.something.digest}}"
-      tag: "{{bundle.images.something.tag}}"
+      image: "${bundle.images.something.repository}@${bundle.images.something.digest}"
+      repo: "${bundle.images.something.repository}"
+      digest: "${bundle.images.something.digest}"
+      tag: "${bundle.images.something.tag}"

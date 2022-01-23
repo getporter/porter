@@ -17,7 +17,7 @@ install:
       description: "Install Hello World"
       command: bash
       flags:
-        c: "{{ bundle.parameters.command }}"
+        c: "${ bundle.parameters.command }"
 
 
 uninstall:
