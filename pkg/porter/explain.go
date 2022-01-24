@@ -328,6 +328,21 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 	p.printDependenciesExplainBlock(bun)
 
 	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
+
+	// Check whether the bundle requires docker mixin and warn for host access.
+	var requireDocker bool = false
+	for _, mixin := range bun.Mixins {
+		if mixin == "docker" {
+			requireDocker = true
+		}
+	}
+
+	if requireDocker {
+		fmt.Fprintln(p.Out, "") // force a blank line before this block
+		fmt.Fprintf(p.Out, "🚨 This bundle will grant docker access to the host, make sure the publisher of this bundle is trusted.")
+		fmt.Fprintln(p.Out, "") // force a blank line after this block
+	}
+
 	p.printInstallationInstructionBlock(bun, bundleReference)
 	return nil
 }
@@ -497,7 +512,22 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 		credentialFlags += "--cred mycreds"
 	}
 
-	fmt.Fprintf(p.Out, "porter install%s%s%s\n", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
+	porterInstallCommand := fmt.Sprintf("porter install%s%s%s", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
+
+	// Check whether the bundle requires docker mixin and add flag for host access for install command.
+	var requireDocker bool = false
+	for _, mixin := range bun.Mixins {
+		if mixin == "docker" {
+			requireDocker = true
+		}
+	}
+
+	if requireDocker {
+		porterInstallCommand += " --allow-docker-host-access"
+	}
+
+	fmt.Fprintf(p.Out, porterInstallCommand)
+	fmt.Fprintln(p.Out, "") // force a blank line after this block
 
 	return nil
 }
