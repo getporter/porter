@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,6 +17,7 @@ import (
 
 type RootLogger interface {
 	StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
 	Debug(span trace.Span, msg string, attrs ...attribute.KeyValue)
 	Debugf(span trace.Span, format string, args ...interface{})
 	Info(span trace.Span, msg string, attrs ...attribute.KeyValue)
@@ -50,21 +53,37 @@ func NewLogger(logger *zap.Logger, tracer trace.Tracer, attrs ...attribute.KeyVa
 }
 
 func (l traceLogger) StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	childCtx, childSpan := l.Tracer.Start(ctx, op)
+
+	l.addAttributesToSpan(childCtx, childSpan, attrs...)
+
+	return NewScopedLogger(childCtx, childSpan, l)
+}
+
+func (l traceLogger) StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	childCtx, childSpan := l.Tracer.Start(ctx, callerFunc(0))
+
+	l.addAttributesToSpan(childCtx, childSpan, attrs...)
+
+	return NewScopedLogger(childCtx, childSpan, l)
+}
+
+func (l traceLogger) addAttributesToSpan(ctx context.Context, span trace.Span, attrs ...attribute.KeyValue) {
 	type HasParentSpan interface {
 		ParentSpanID() trace.SpanID
 	}
-	childCtx, childSpan := l.Tracer.Start(ctx, op)
-	childSpan.SetAttributes(attrs...)
+
+	span.SetAttributes(attrs...)
 
 	isRootSpan := true
-	if s, ok := childSpan.(HasParentSpan); ok {
+	if s, ok := span.(HasParentSpan); ok {
 		isRootSpan = !s.ParentSpanID().IsValid()
 	}
+	// TODO: why do we set root span attributes onto child span as well?
 	if isRootSpan {
-		childSpan.SetAttributes(l.rootAttrs...)
+		span.SetAttributes(l.rootAttrs...)
 	}
 
-	return NewScopedLogger(childCtx, childSpan, l)
 }
 
 func (l traceLogger) Debug(span trace.Span, msg string, attrs ...attribute.KeyValue) {
@@ -195,6 +214,12 @@ func (n consoleLogger) StartSpan(ctx context.Context, op string, attrs ...attrib
 	return NewScopedLogger(childCtx, childSpan, n)
 }
 
+func (n consoleLogger) StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	childCtx, childSpan := n.tracer.Start(ctx, callerFunc(0))
+	childSpan.SetAttributes(attrs...)
+	return NewScopedLogger(childCtx, childSpan, n)
+}
+
 func (n consoleLogger) StartSpanInLog(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
 	return n.StartSpan(ctx, op, attrs...)
 }
@@ -230,4 +255,29 @@ func (n consoleLogger) Error(span trace.Span, err error, attrs ...attribute.KeyV
 
 func (n consoleLogger) Errorf(span trace.Span, msg string, args ...interface{}) error {
 	return n.Error(span, errors.Errorf(msg, args...))
+}
+
+func callerFunc(frames int) string {
+	var pc [1]uintptr
+	// we expect there're 3 functions(runtime.Callers, callerFunc,
+	// StartSpanNamedFromCaller) the stack before the actual caller functions
+	// we would like to find. If no function is found on the stack, return
+	// unknown
+	if runtime.Callers(frames+3, pc[:]) != 1 {
+		return "unknown"
+	}
+	// translate the PC into function information
+	frame, _ := runtime.CallersFrames(pc[:]).Next()
+	if frame.Function == "" {
+		return "unknown"
+	}
+
+	// extract function name from the return value which contains the complete
+	// import path for a function
+	// for example: "github.com/getporter/poter.ListInstallations"
+	slash_pieces := strings.Split(frame.Function, "/")
+	// the function name will be the last substring in the slice after the dot
+	// for example: [github.com getporter poter.ListInstallations]
+	dot_pieces := strings.SplitN(slash_pieces[len(slash_pieces)-1], ".", 2)
+	return dot_pieces[len(dot_pieces)-1]
 }

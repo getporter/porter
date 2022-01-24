@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/pkg/errors"
 )
@@ -125,8 +124,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 
 // ListInstallations lists installed bundles.
 func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]claims.Installation, error) {
-	log := tracing.LoggerFromContext(ctx)
-	ctx, log = log.StartSpanNamed()
+	_, log := p.Log.StartSpanNamedByCaller(ctx)
 	defer log.EndSpan()
 
 	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())

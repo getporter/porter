@@ -2,8 +2,6 @@ package tracing
 
 import (
 	"context"
-	"runtime"
-	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -11,7 +9,6 @@ import (
 
 type ScopedLogger interface {
 	StartSpan(op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
-	StartSpanNamed(attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
 	EndSpan(opts ...trace.SpanEndOption)
 	Debug(msg string, attrs ...attribute.KeyValue)
 	Debugf(format string, args ...interface{})
@@ -64,10 +61,6 @@ func (l scopedTraceLogger) StartSpan(op string, attrs ...attribute.KeyValue) (co
 	return l.rootLogger.StartSpan(l.ctx, op, attrs...)
 }
 
-func (l scopedTraceLogger) StartSpanNamed(attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	return l.rootLogger.StartSpan(l.ctx, callerFunc(0), attrs...)
-}
-
 func (l scopedTraceLogger) Debug(msg string, attrs ...attribute.KeyValue) {
 	l.rootLogger.Debug(l.span, msg, attrs...)
 }
@@ -98,18 +91,4 @@ func (l scopedTraceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 
 func (l scopedTraceLogger) Errorf(msg string, args ...interface{}) error {
 	return l.rootLogger.Errorf(l.span, msg, args...)
-}
-
-func callerFunc(frames int) string {
-	var pc [1]uintptr
-	if runtime.Callers(frames+3, pc[:]) != 1 {
-		return "unknown"
-	}
-	frame, _ := runtime.CallersFrames(pc[:]).Next()
-	if frame.Function == "" {
-		return "unknown"
-	}
-	slash_pieces := strings.Split(frame.Function, "/")
-	dot_pieces := strings.SplitN(slash_pieces[len(slash_pieces)-1], ".", 2)
-	return dot_pieces[len(dot_pieces)-1]
 }
