@@ -4,7 +4,6 @@ labels:
   generator: porter-operator
   generatorVersion: v0.2.0
   thing: "1"
-active: true
 bundle:
   repository: localhost:5000/mybuns
   version: v0.1.2

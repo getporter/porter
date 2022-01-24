@@ -16,38 +16,35 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 	bun, err := cnab.LoadBundle(cxt, filepath.Join("testdata/bundle.json"))
 	require.NoError(t, err)
 
-	t.Run("inactive not yet installed", func(t *testing.T) {
+	t.Run("new installation with uninstalled true", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: false,
+			Uninstalled: true,
 		}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
 		require.NoError(t, err)
 		assert.True(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Ignoring because the installation is inactive")
+		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
 	})
 
-	t.Run("active not yet installed", func(t *testing.T) {
+	t.Run("new installation with uninstalled false", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := claims.Installation{
-			Active: true,
-		}
+		i := claims.Installation{}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
 		require.NoError(t, err)
 		assert.False(t, insync)
 		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the installation has not completed successfully yet")
 	})
 
-	t.Run("active installed - no changes", func(t *testing.T) {
+	t.Run("installed - no changes", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: true,
 			Status: claims.InstallationStatus{
 				Installed: &now,
 			},
@@ -66,12 +63,11 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		// Nothing is printed out in this case, the calling function will print "up-to-date" for us
 	})
 
-	t.Run("active installed - bundle digest changed", func(t *testing.T) {
+	t.Run("installed - bundle digest changed", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: true,
 			Status: claims.InstallationStatus{
 				Installed:    &now,
 				BundleDigest: "olddigest",
@@ -88,12 +84,11 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the bundle definition has changed")
 	})
 
-	t.Run("active installed - param changed", func(t *testing.T) {
+	t.Run("installed - param changed", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: true,
 			Status: claims.InstallationStatus{
 				Installed: &now,
 			},
@@ -112,12 +107,11 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	})
 
-	t.Run("active installed - credential set changed", func(t *testing.T) {
+	t.Run("installed - credential set changed", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active:         true,
 			CredentialSets: []string{"newcreds"},
 			Status: claims.InstallationStatus{
 				Installed: &now,
@@ -139,12 +133,12 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 
 	})
 
-	t.Run("inactive installed", func(t *testing.T) {
+	t.Run("installed - uninstalled change to true", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: false,
+			Uninstalled: true, // trigger uninstall
 			Status: claims.InstallationStatus{
 				Installed: &now,
 			},
@@ -152,15 +146,15 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewUninstallOptions())
 		require.NoError(t, err)
 		assert.False(t, insync)
-		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because the installation is now inactive")
+		assert.Contains(t, p.TestConfig.TestContext.GetError(), "Triggering because installation.uninstalled is true")
 	})
 
-	t.Run("inactive uninstalled", func(t *testing.T) {
+	t.Run("uninstalled: uninstalled set to back to false", func(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
 		i := claims.Installation{
-			Active: false,
+			Uninstalled: false,
 			Status: claims.InstallationStatus{
 				Installed:   &now,
 				Uninstalled: &now,

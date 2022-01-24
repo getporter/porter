@@ -2,7 +2,6 @@ schemaType: Installation
 schemaVersion: 1.0.0
 name: mywordpress
 namespace: dev
-active: true
 bundle:
   repository: getporter/wordpress
   version: 0.1.0

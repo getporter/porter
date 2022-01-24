@@ -86,7 +86,6 @@ func (p *Porter) ShowInstallation(opts ShowOptions) error {
 		// Print installation details
 		fmt.Fprintf(p.Out, "Name: %s\n", displayInstallation.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", displayInstallation.Namespace)
-		fmt.Fprintf(p.Out, "Active: %t\n", displayInstallation.Active)
 		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(displayInstallation.Status.Created))
 		fmt.Fprintf(p.Out, "Modified: %s\n", tp.Format(displayInstallation.Status.Modified))
 

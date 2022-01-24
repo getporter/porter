@@ -1,6 +1,5 @@
 Name: mywordpress
 Namespace: dev
-Active: true
 Created: 2020-04-18
 Modified: 2020-04-18
 

@@ -92,7 +92,7 @@ schemaType: Installation
 schemaVersion: 1.0.0
 name: myinstallation
 namespace: staging
-active: true
+uninstalled: false
 labels:
   team: marketing
   customer: bigbucks
@@ -116,7 +116,7 @@ parameters:
 | schemaVersion  | true  | The version of the Installation schema used in this file.  |
 | name  | true  | The name of the parameter set.  |
 | namespace  | false  | The namespace in which the parameter set is defined. Defaults to the empty (global) namespace.  |
-| active | false | Specifies if the installation should be installed. Defaults to false. |
+| uninstalled | false | Specifies if the installation should be uninstalled. Defaults to false. |
 | labels  | false | A set of key-value pairs associated with the parameter set. |
 | bundle  | true | A reference to where the bundle is published |
 | bundle.repository | true | The repository where the bundle is published. | 

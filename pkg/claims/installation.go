@@ -34,9 +34,8 @@ type Installation struct {
 	// Namespace in which the installation is defined.
 	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
 
-	// Active specifies if the installation should exist.
-	// It can be used to delay triggering an installation, or to uninstall.
-	Active bool `json:"active" yaml:"active" toml:"active"`
+	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
+	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
 
 	// Bundle specifies the bundle reference to use with the installation.
 	Bundle OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
@@ -76,7 +75,6 @@ func NewInstallation(namespace string, name string) Installation {
 		SchemaVersion: SchemaVersion,
 		Namespace:     namespace,
 		Name:          name,
-		Active:        true,
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -130,7 +128,7 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
 func (i *Installation) Apply(input Installation) {
-	i.Active = input.Active
+	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters
 	i.CredentialSets = input.CredentialSets

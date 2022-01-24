@@ -47,17 +47,17 @@ func TestDesiredState(t *testing.T) {
 
 	mgx.Must(shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), "mybuns.yaml"))
 
-	// Import an inactive installation, should do nothing
+	// Import an installation with uninstalled=true, should do nothing
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
-		return yq.SetValue("active", "false")
+		return yq.SetValue("uninstalled", "true")
 	})
 	_, stderr, err := test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)
-	require.Contains(t, stderr, "Ignoring because the installation is inactive")
+	require.Contains(t, stderr, "Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
 
-	// Now set it to active so that it will be installed
+	// Now set uninstalled = false so that it's installed for the first time
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
-		return yq.SetValue("active", "true")
+		return yq.SetValue("uninstalled", "false")
 	})
 
 	// Import an installation, since the file is missing a namespace, it should use the --namespace flag value
@@ -105,9 +105,9 @@ func TestDesiredState(t *testing.T) {
 	require.NoError(t, err)
 	tests.RequireOutputContains(t, output, "The installation is out-of-sync, running the upgrade action")
 
-	// Uninstall by setting active: false
+	// Uninstall by setting uninstalled: true
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
-		return yq.SetValue("active", "false")
+		return yq.SetValue("uninstalled", "true")
 	})
 	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator")
 	require.NoError(t, err)

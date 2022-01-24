@@ -62,10 +62,10 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC
 	var actionOpts BundleAction
 	if opts.Installation.IsInstalled() {
-		if opts.Installation.Active {
-			actionOpts = NewUpgradeOptions()
-		} else {
+		if opts.Installation.Uninstalled {
 			actionOpts = NewUninstallOptions()
+		} else {
+			actionOpts = NewUpgradeOptions()
 		}
 	} else {
 		actionOpts = NewInstallOptions()
@@ -137,22 +137,23 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 		return true, nil
 	}
 
-	if i.Active {
+	// Should we uninstall it?
+	if i.Uninstalled {
+		// Only try to uninstall if it's been installed before
+		if i.IsInstalled() {
+			log.Info("Triggering because installation.uninstalled is true")
+			return false, nil
+		}
+
+		// Otherwise ignore this installation
+		log.Info("Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
+		return true, nil
+	} else {
 		// Should we install it?
 		if !i.IsInstalled() {
 			log.Info("Triggering because the installation has not completed successfully yet")
 			return false, nil
 		}
-	} else {
-		// Should we uninstall it?
-		if i.IsInstalled() {
-			log.Info("Triggering because the installation is now inactive")
-			return false, nil
-		}
-
-		// Otherwise ignore inactive
-		log.Info("Ignoring because the installation is inactive")
-		return true, nil
 	}
 
 	// We want to upgrade but we don't have values to compare against
