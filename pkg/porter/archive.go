@@ -6,14 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/imagestore"
 	"github.com/cnabio/cnab-go/imagestore/construction"
-	"github.com/docker/docker/pkg/archive"
+	"github.com/mholt/archiver/v4"
 	"github.com/pkg/errors"
 )
 
@@ -60,6 +59,10 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 	}
 
 	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return errors.Wrapf(err, "couldn't create archive file %s", opts.ArchiveFile)
+	}
+	defer dest.Close()
 
 	exp := &exporter{
 		fs:                    p.Config.FileSystem,
@@ -117,45 +120,34 @@ func (ex *exporter) export() error {
 		return fmt.Errorf("error preparing artifacts: %s", err)
 	}
 
-	if err := ex.chtimes(archiveDir); err != nil {
-		return fmt.Errorf("error preparing artifacts: %s", err)
-	}
-
-	tarOptions := &archive.TarOptions{
-		Compression:      archive.Gzip,
-		IncludeFiles:     []string{"."},
-		IncludeSourceDir: true,
-	}
-	rc, err := archive.TarWithOptions(archiveDir, tarOptions)
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-
-	_, err = io.Copy(ex.destination, rc)
-	return err
+	return ex.compressArchive(archiveDir)
 }
 
-// chtimes updates all paths under the provided archive path with a constant
-// atime and mtime (Unix time 0), such that the shasum of the resulting archive
-// will not change between repeated archival executions using the same bundle.
-// See: https://unix.stackexchange.com/questions/346789/compressing-two-identical-folders-give-different-result
-func (ex *exporter) chtimes(path string) error {
-	err := filepath.Walk(path,
-		func(subpath string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			err = ex.fs.Chtimes(subpath, time.Unix(0, 0), time.Unix(0, 0))
-			if err != nil {
-				return err
-			}
-			return nil
-		})
+func (ex *exporter) compressArchive(src string) error {
+	// Archive the items inside the source directory without including it as a top-level directory
+	childItems, err := ex.fs.ReadDir(src)
+	if err != nil {
+		return errors.Wrapf(err, "error reading directory %s", src)
+	}
+
+	files := make(map[string]string, len(childItems))
+	for _, child := range childItems {
+		srcFile := filepath.Join(src, child.Name())
+		files[srcFile] = child.Name()
+	}
+
+	arFiles, err := archiver.FilesFromDisk(&archiver.FromDiskOptions{ClearAttributes: true}, files)
 	if err != nil {
 		return err
 	}
-	return nil
+	format := archiver.CompressedArchive{
+		Compression: archiver.Gz{},
+		Archival:    archiver.Tar{},
+	}
+
+	// create the archive
+	err = format.Archive(context.Background(), ex.destination, arFiles)
+	return errors.Wrapf(err, "error archiving the bundle")
 }
 
 // prepareArtifacts pulls all images, verifies their digests and

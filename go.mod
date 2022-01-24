@@ -53,6 +53,7 @@ require (
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-colorable v0.1.7
 	github.com/mattn/go-isatty v0.0.12
+	github.com/mholt/archiver/v4 v4.0.0-alpha.3.0.20220125191045-b11054fae6f9
 	github.com/mikefarah/yq/v3 v3.0.0-20201020025845-ccb718cd0f59
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/mmcdole/gofeed v1.0.0-beta2
