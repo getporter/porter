@@ -1,7 +1,7 @@
 ---
 title: "Ignoring Mixin Errors and Idempotent Actions"
 description: "Porter now supports ignoring the errors from a mixin. The az mixin takes advantage of this new feature to manage resource groups."
-date: "2022-01-07"
+date: "2022-01-25"
 authorname: "Carolyn Van Slyck"
 author: "@carolynvs"
 authorlink: "https://twitter.com/carolynvs"
@@ -11,25 +11,21 @@ summary: |
     Porter now supports ignoring the errors from a mixin. The az mixin takes advantage of this new feature to manage resource groups.
 ---
 
-When is an error not really an error?
-Questions like this come up regularly when automating deployments.
-For example, when I repeat a script that creates a resource, I don't want it to error out because the resource already exists.
-A lot of command-line tools weren't designed in a way that works well with bundles.
-An installation could fail halfway through and need to be repeated.
-This is why we encourage bundle authors to use custom mixins, instead of just the exec mixin, because mixins are designed to work with bundles and give you **idemponent** behavior.
-Mixins should do what's necessary to match the desired state in the bundle and handle recoverable errors.
+Previously, if you needed to handle an error in a bundle, you had to switch from Porter's declarative mixin syntax to a bash script.
+But not anymore! The exec mixin has just added support for determining if the error returned by a command is fatal, and should stop the bundle, or if the error can be ignored. 
 
-Since we can't have a custom mixin for every tool and situation though, the exec mixin just got smarter.
-You can now handle errors directly from the exec mixin without having to fall back to writing scripts.
+A common scenario for ignoring errors is during the install action.
+When an install fails halfway through, the user will try again by repeating the install command.
+If a resource was created during the first install, repeating a command that creates a resource could result in an error because the resource already exists.
+Some command-line tools handle this gracefully, while others return an error.
+The exec mixin now lets you decide if that error is fatal based on the command's return code or output.
 
 Let's take a look at a few different ways that you can handle errors from the exec mixin.
 
 ## Ignore All Errors
 
-Sometimes you want to run a command but don't really care if it fails.
-Now I won't tell you what to do in production, but when debugging a bundle, this can be handy.
-
-The snippet below will run a command, and Porter will ignore any errors returned by the command, and continue executing the next step in the action.
+You can ignore all errors that are returned by a command, and continue executing the next step in the action.
+This can be useful in a couple scenarios such as debugging while writing a bundle, when a command always returns a non-zero exit code, or when you want to try calling a command and keep going regardless of whether it worked.
 
 ```yaml
 install:
@@ -43,10 +39,7 @@ install:
 ## Ignore Exit Codes
 
 Sometimes you get lucky, and the command that you are using has well-defined exit codes.
-In the example below, the made-up thing command returns 2 when the resource already exists.
-We can check for that and ignore the error when we try to create a thing that already exists.
-
-You can ignore multiple exit codes, and if any match, then the command's error is ignored.
+For the following example, the behavior of thing responds with the exit code [2] when the resource already exists.
 
 ```yaml
 install:
@@ -58,6 +51,10 @@ install:
       ignoreError:
         exitCodes: [2]
 ```
+
+In this example, since you don't care about the implied error as the desired outcome is the existence of resource, you configure porter to ignore the [2] exit code.
+
+You can ignore multiple exit codes, and if any match, then the command's error is ignored.
 
 ## Ignore Output Containing a String
 
@@ -127,7 +124,7 @@ The example mixin, [Skeletor], has been updated with an example custom command t
 ## Try it out
 
 Bundle authors, try moving some of that custom error handling logic out of bash scripts and into your exec mixin calls.
-Mixin authors, take a look at how the az mixin uses the exec mixin library to add error handling.
+Mixin authors, take a look at how the skeletor mixin template uses the get.porter.sh/porter/pkg/exec/builder package to include error handling.
 You can quickly add the same error handling behavior to your mixin, or create a custom command that handles errors automatically.
 
 Give it a try and let us know how it works for you!
