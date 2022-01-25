@@ -263,12 +263,30 @@ func callerFunc(frames int) string {
 		return "unknown"
 	}
 
-	// extract function name from the return value which contains the complete
-	// import path for a function
-	// for example: "github.com/getporter/porter.ListInstallations"
-	slash_pieces := strings.Split(frame.Function, "/")
-	// the function name will be the last substring in the slice after the dot
-	// for example: [github.com getporter poter.ListInstallations]
-	dot_pieces := strings.SplitN(slash_pieces[len(slash_pieces)-1], ".", 2)
-	return dot_pieces[len(dot_pieces)-1]
+	fnName, ok := extractFuncName(frame.Function)
+	if !ok {
+		return "unknown"
+	}
+
+	return fnName
+
+}
+
+// extractFuncName returns function names from a qualified full import path.
+// for example: "github.com/getporter/porter.ListInstallations", "main.Install"
+func extractFuncName(fn string) (string, bool) {
+	lastSlashIdx := strings.LastIndex(fn, "/")
+	if lastSlashIdx+1 >= len(fn) {
+		// a function name ended with a "/"
+		return "", false
+	}
+
+	qualifiedName := fn[lastSlashIdx+1:]
+	packageDotPos := strings.Index(qualifiedName, ".")
+	if packageDotPos < 0 || packageDotPos+1 >= len(qualifiedName) {
+		// qualifiedName ended with a "."
+		return "", false
+	}
+
+	return qualifiedName[packageDotPos+1:], true
 }

@@ -103,7 +103,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	out := ioutil.Discard
 	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-		ctx, log = log.StartSpan(attribute.String("source", "porter.build.buildkit"))
+		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
 		defer log.EndSpan()
 		out = unstructuredLogger{log}
 	}
