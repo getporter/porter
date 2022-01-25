@@ -29,7 +29,7 @@ func main() {
 
 		// Trace the command that called porter, e.g. porter installation show
 		calledCommand, formattedCommand := getCalledCommand(rootCmd)
-		ctx, log := p.Log.StartSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
+		ctx, log := p.Log.StartSpanWithName(context.Background(), calledCommand, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {

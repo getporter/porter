@@ -31,7 +31,7 @@ func TestClaimMigration_List(t *testing.T) {
 	err := p.MigrateStorage()
 	require.NoError(t, err, "MigrateStorage failed")
 
-	installations, err := p.ListInstallations(context.TODO(), porter.ListOptions{})
+	installations, err := p.ListInstallations(context.Background(), porter.ListOptions{})
 	require.NoError(t, err, "could not list installations")
 	require.Len(t, installations, 1, "expected one installation")
 	assert.Equal(t, "mybun", installations[0].Name, "unexpected list of installation names")

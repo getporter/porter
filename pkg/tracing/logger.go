@@ -16,8 +16,8 @@ import (
 )
 
 type RootLogger interface {
-	StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
-	StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
 	Debug(span trace.Span, msg string, attrs ...attribute.KeyValue)
 	Debugf(span trace.Span, format string, args ...interface{})
 	Info(span trace.Span, msg string, attrs ...attribute.KeyValue)
@@ -52,38 +52,31 @@ func NewLogger(logger *zap.Logger, tracer trace.Tracer, attrs ...attribute.KeyVa
 	}
 }
 
-func (l traceLogger) StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	childCtx, childSpan := l.Tracer.Start(ctx, op)
-
-	l.addAttributesToSpan(childCtx, childSpan, attrs...)
-
-	return NewScopedLogger(childCtx, childSpan, l)
-}
-
-func (l traceLogger) StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	childCtx, childSpan := l.Tracer.Start(ctx, callerFunc(0))
-
-	l.addAttributesToSpan(childCtx, childSpan, attrs...)
-
-	return NewScopedLogger(childCtx, childSpan, l)
-}
-
-func (l traceLogger) addAttributesToSpan(ctx context.Context, span trace.Span, attrs ...attribute.KeyValue) {
+// StartSpanWithName creates a span with the name provided by the caller.
+func (l traceLogger) StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
 	type HasParentSpan interface {
 		ParentSpanID() trace.SpanID
 	}
 
-	span.SetAttributes(attrs...)
+	childCtx, childSpan := l.Tracer.Start(ctx, op)
+
+	childSpan.SetAttributes(attrs...)
 
 	isRootSpan := true
-	if s, ok := span.(HasParentSpan); ok {
+	if s, ok := childSpan.(HasParentSpan); ok {
 		isRootSpan = !s.ParentSpanID().IsValid()
 	}
-	// TODO: why do we set root span attributes onto child span as well?
+
 	if isRootSpan {
-		span.SetAttributes(l.rootAttrs...)
+		childSpan.SetAttributes(l.rootAttrs...)
 	}
 
+	return NewScopedLogger(childCtx, childSpan, l)
+}
+
+// StartSpanWithName creates a span with the caller's function name.
+func (l traceLogger) StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return l.StartSpanWithName(ctx, callerFunc(0), attrs...)
 }
 
 func (l traceLogger) Debug(span trace.Span, msg string, attrs ...attribute.KeyValue) {
@@ -208,20 +201,18 @@ func newConsoleLogger() RootLogger {
 	}
 }
 
-func (n consoleLogger) StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+func (n consoleLogger) StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
 	childCtx, childSpan := n.tracer.Start(ctx, op)
 	childSpan.SetAttributes(attrs...)
 	return NewScopedLogger(childCtx, childSpan, n)
 }
 
-func (n consoleLogger) StartSpanNamedByCaller(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	childCtx, childSpan := n.tracer.Start(ctx, callerFunc(0))
-	childSpan.SetAttributes(attrs...)
-	return NewScopedLogger(childCtx, childSpan, n)
+func (n consoleLogger) StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return n.StartSpanWithName(ctx, callerFunc(0), attrs...)
 }
 
-func (n consoleLogger) StartSpanInLog(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	return n.StartSpan(ctx, op, attrs...)
+func (n consoleLogger) StartSpanInLog(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return n.StartSpanWithName(ctx, callerFunc(0), attrs...)
 }
 
 func (n consoleLogger) Debug(span trace.Span, msg string, attrs ...attribute.KeyValue) {
@@ -274,7 +265,7 @@ func callerFunc(frames int) string {
 
 	// extract function name from the return value which contains the complete
 	// import path for a function
-	// for example: "github.com/getporter/poter.ListInstallations"
+	// for example: "github.com/getporter/porter.ListInstallations"
 	slash_pieces := strings.Split(frame.Function, "/")
 	// the function name will be the last substring in the slice after the dot
 	// for example: [github.com getporter poter.ListInstallations]

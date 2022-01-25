@@ -124,7 +124,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 
 // ListInstallations lists installed bundles.
 func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]claims.Installation, error) {
-	_, log := p.Log.StartSpanNamedByCaller(ctx)
+	_, log := p.Log.StartSpan(ctx)
 	defer log.EndSpan()
 
 	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())
@@ -132,7 +132,7 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]cla
 }
 
 // PrintInstallations prints installed bundles.
-func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) (err error) {
+func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
 	installations, err := p.ListInstallations(ctx, opts)
 	if err != nil {
 		return err
