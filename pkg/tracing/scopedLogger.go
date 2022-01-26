@@ -8,7 +8,8 @@ import (
 )
 
 type ScopedLogger interface {
-	StartSpan(op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpan(attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpanWithName(ops string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
 	EndSpan(opts ...trace.SpanEndOption)
 	Debug(msg string, attrs ...attribute.KeyValue)
 	Debugf(format string, args ...interface{})
@@ -57,8 +58,12 @@ func (l scopedTraceLogger) EndSpan(opts ...trace.SpanEndOption) {
 	l.span.End(opts...)
 }
 
-func (l scopedTraceLogger) StartSpan(op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	return l.rootLogger.StartSpan(l.ctx, op, attrs...)
+func (l scopedTraceLogger) StartSpan(attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return l.rootLogger.StartSpanWithName(l.ctx, callerFunc(0), attrs...)
+}
+
+func (l scopedTraceLogger) StartSpanWithName(ops string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return l.rootLogger.StartSpanWithName(l.ctx, ops, attrs...)
 }
 
 func (l scopedTraceLogger) Debug(msg string, attrs ...attribute.KeyValue) {

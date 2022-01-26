@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -122,14 +123,17 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 }
 
 // ListInstallations lists installed bundles.
-func (p *Porter) ListInstallations(opts ListOptions) ([]claims.Installation, error) {
+func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]claims.Installation, error) {
+	_, log := p.Log.StartSpan(ctx)
+	defer log.EndSpan()
+
 	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())
 	return installations, errors.Wrap(err, "could not list installations")
 }
 
 // PrintInstallations prints installed bundles.
-func (p *Porter) PrintInstallations(opts ListOptions) error {
-	installations, err := p.ListInstallations(opts)
+func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
+	installations, err := p.ListInstallations(ctx, opts)
 	if err != nil {
 		return err
 	}
