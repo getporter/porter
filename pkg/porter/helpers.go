@@ -91,7 +91,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	}
 
 	// Start a tracing span for the test, so that we can capture logs
-	tp.RootContext, tp.RootLog = p.Log.StartSpan(context.Background(), t.Name())
+	tp.RootContext, tp.RootLog = p.Log.StartSpanWithName(context.Background(), t.Name())
 
 	return &tp
 }
