@@ -66,7 +66,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
-		if i.Status.InstallationCompleted && !opts.Force {
+		if i.IsInstalled() && !opts.Force {
 			err = errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade. You can skip this check by using the --force flag.")
 			return log.Error(err)
 		}
