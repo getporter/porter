@@ -97,7 +97,7 @@ func (l DisplayInstallations) Swap(i, j int) {
 }
 
 func (l DisplayInstallations) Less(i, j int) bool {
-	return l[i].Modified.Before(l[j].Modified)
+	return l[i].Status.Modified.Before(l[j].Status.Modified)
 }
 
 type DisplayRun struct {
@@ -162,7 +162,7 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Status.Action, cl.Status.ResultStatus}
+				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
