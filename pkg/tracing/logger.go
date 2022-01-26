@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
@@ -14,7 +16,8 @@ import (
 )
 
 type RootLogger interface {
-	StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
+	StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger)
 	Debug(span trace.Span, msg string, attrs ...attribute.KeyValue)
 	Debugf(span trace.Span, format string, args ...interface{})
 	Info(span trace.Span, msg string, attrs ...attribute.KeyValue)
@@ -49,22 +52,31 @@ func NewLogger(logger *zap.Logger, tracer trace.Tracer, attrs ...attribute.KeyVa
 	}
 }
 
-func (l traceLogger) StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+// StartSpanWithName creates a span with the name provided by the caller.
+func (l traceLogger) StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
 	type HasParentSpan interface {
 		ParentSpanID() trace.SpanID
 	}
+
 	childCtx, childSpan := l.Tracer.Start(ctx, op)
+
 	childSpan.SetAttributes(attrs...)
 
 	isRootSpan := true
 	if s, ok := childSpan.(HasParentSpan); ok {
 		isRootSpan = !s.ParentSpanID().IsValid()
 	}
+
 	if isRootSpan {
 		childSpan.SetAttributes(l.rootAttrs...)
 	}
 
 	return NewScopedLogger(childCtx, childSpan, l)
+}
+
+// StartSpanWithName creates a span with the caller's function name.
+func (l traceLogger) StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return l.StartSpanWithName(ctx, callerFunc(0), attrs...)
 }
 
 func (l traceLogger) Debug(span trace.Span, msg string, attrs ...attribute.KeyValue) {
@@ -189,14 +201,18 @@ func newConsoleLogger() RootLogger {
 	}
 }
 
-func (n consoleLogger) StartSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+func (n consoleLogger) StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
 	childCtx, childSpan := n.tracer.Start(ctx, op)
 	childSpan.SetAttributes(attrs...)
 	return NewScopedLogger(childCtx, childSpan, n)
 }
 
-func (n consoleLogger) StartSpanInLog(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
-	return n.StartSpan(ctx, op, attrs...)
+func (n consoleLogger) StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return n.StartSpanWithName(ctx, callerFunc(0), attrs...)
+}
+
+func (n consoleLogger) StartSpanInLog(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, ScopedLogger) {
+	return n.StartSpanWithName(ctx, callerFunc(0), attrs...)
 }
 
 func (n consoleLogger) Debug(span trace.Span, msg string, attrs ...attribute.KeyValue) {
@@ -230,4 +246,47 @@ func (n consoleLogger) Error(span trace.Span, err error, attrs ...attribute.KeyV
 
 func (n consoleLogger) Errorf(span trace.Span, msg string, args ...interface{}) error {
 	return n.Error(span, errors.Errorf(msg, args...))
+}
+
+func callerFunc(frames int) string {
+	var pc [1]uintptr
+	// we expect there're 3 functions(runtime.Callers, callerFunc,
+	// StartSpanNamedFromCaller) the stack before the actual caller functions
+	// we would like to find. If no function is found on the stack, return
+	// unknown
+	if runtime.Callers(frames+3, pc[:]) != 1 {
+		return "unknown"
+	}
+	// translate the PC into function information
+	frame, _ := runtime.CallersFrames(pc[:]).Next()
+	if frame.Function == "" {
+		return "unknown"
+	}
+
+	fnName, ok := extractFuncName(frame.Function)
+	if !ok {
+		return "unknown"
+	}
+
+	return fnName
+
+}
+
+// extractFuncName returns function names from a qualified full import path.
+// for example: "github.com/getporter/porter.ListInstallations", "main.Install"
+func extractFuncName(fn string) (string, bool) {
+	lastSlashIdx := strings.LastIndex(fn, "/")
+	if lastSlashIdx+1 >= len(fn) {
+		// a function name ended with a "/"
+		return "", false
+	}
+
+	qualifiedName := fn[lastSlashIdx+1:]
+	packageDotPos := strings.Index(qualifiedName, ".")
+	if packageDotPos < 0 || packageDotPos+1 >= len(qualifiedName) {
+		// qualifiedName ended with a "."
+		return "", false
+	}
+
+	return qualifiedName[packageDotPos+1:], true
 }

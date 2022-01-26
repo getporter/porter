@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -63,26 +64,26 @@ func TestPorter_ListInstallations(t *testing.T) {
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
-		results, err := p.ListInstallations(opts)
+		results, err := p.ListInstallations(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 6)
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: "dev"}
-		results, err := p.ListInstallations(opts)
+		results, err := p.ListInstallations(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 
 		opts = ListOptions{Namespace: "test"}
-		results, err = p.ListInstallations(opts)
+		results, err = p.ListInstallations(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 3)
 	})
 
 	t.Run("global namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: ""}
-		results, err := p.ListInstallations(opts)
+		results, err := p.ListInstallations(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})

@@ -62,7 +62,7 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 
 func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
 	log := tracing.LoggerFromContext(ctx)
-	ctx, log = log.StartSpan("BuildInvocationImage", attribute.String("image", manifest.Image))
+	ctx, log = log.StartSpan(attribute.String("image", manifest.Image))
 	defer log.EndSpan()
 
 	log.Info("Building invocation image")
@@ -115,7 +115,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 
 	out := ioutil.Discard
 	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-		ctx, log = log.StartSpan("buildkit", attribute.String("source", "porter.build.buildkit"))
+		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
 		defer log.EndSpan()
 		out = unstructuredLogger{log}
 	}

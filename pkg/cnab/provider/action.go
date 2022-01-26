@@ -108,7 +108,7 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 }
 
 func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
-	ctx, log := r.Log.StartSpan(ctx, "Execute Bundle",
+	ctx, log := r.Log.StartSpan(ctx,
 		attribute.String("action", args.Action),
 		attribute.Bool("allowDockerHostAccess", args.AllowDockerHostAccess),
 		attribute.String("driver", args.Driver))

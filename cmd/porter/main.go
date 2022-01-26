@@ -29,7 +29,7 @@ func main() {
 
 		// Trace the command that called porter, e.g. porter installation show
 		calledCommand, formattedCommand := getCalledCommand(rootCmd)
-		ctx, log := p.Log.StartSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
+		ctx, log := p.Log.StartSpanWithName(context.Background(), calledCommand, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
@@ -45,7 +45,7 @@ func main() {
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error a the root span as well
+			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
 			return 1
 		}

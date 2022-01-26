@@ -50,7 +50,9 @@ func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error
 }
 
 func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error {
-	ctx, log := p.Log.StartSpan(ctx, "InstallationApply")
+	ctx, log := p.Log.StartSpan(ctx)
+	defer log.EndSpan()
+
 	log.Debugf("Reading input file %s", opts.File)
 
 	namespace, err := p.getNamespaceFromFile(opts)
