@@ -44,16 +44,31 @@ type Context struct {
 	NewCommand         CommandBuilder
 	PlugInDebugContext *PluginDebugContext
 
+	//
 	// Logging and Tracing configuration
+	//
+
 	// a consistent id that is set on the context and emitted in the logs
 	// Helps correlate logs with a workflow.
-	correlationId    string
-	Log              tracing.RootLogger
-	logLevel         zapcore.Level
-	logFile          afero.File
-	timestampLogs    bool
-	tracer           trace.Tracer
-	traceCloser      *sdktrace.TracerProvider
+	correlationId string
+
+	// logLevel filters the messages written to the console and logfile
+	logLevel zapcore.Level
+	logFile  afero.File
+
+	// indicates if log timestamps should be printed to the console
+	timestampLogs bool
+
+	// handles sending tracing data to an otel collector
+	tracer trace.Tracer
+
+	// handles send log data to the console/logfile
+	logger *zap.Logger
+
+	// cleans up resources associated with the tracer when porter completes
+	traceCloser *sdktrace.TracerProvider
+
+	// the service name sent to the otel collector when we send tracing data
 	traceServiceName string
 }
 
@@ -80,6 +95,14 @@ func New() *Context {
 	c.PlugInDebugContext = NewPluginDebugContext(c)
 
 	return c
+}
+
+// StartRootSpan creates the root tracing span for the porter application.
+// This should only be done once.
+func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
+	childCtx, span := c.tracer.Start(ctx, op)
+	span.SetAttributes(attrs...)
+	return tracing.NewRootLogger(childCtx, span, c.logger, c.tracer)
 }
 
 func (c *Context) makeLogEncoding() zapcore.EncoderConfig {
@@ -144,7 +167,7 @@ func (c *Context) ConfigureLogging(cfg LogConfiguration) {
 		c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
 	}
 
-	c.Log = tracing.NewLogger(tmpLog, c.tracer, attribute.String("correlationId", c.correlationId))
+	c.logger = tmpLog
 }
 
 func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLogs bool) zapcore.Core {

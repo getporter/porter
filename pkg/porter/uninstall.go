@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var _ BundleAction = NewUninstallOptions()
@@ -70,7 +69,8 @@ func (opts *UninstallDeleteOptions) handleUninstallErrs(out io.Writer, err error
 // UninstallBundle accepts a set of pre-validated UninstallOptions and uses
 // them to uninstall a bundle.
 func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) error {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with
 	_, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
@@ -99,7 +99,6 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return err
 	}
 
-	span := trace.SpanFromContext(ctx)
 	log.Infof("%s bundle", opts.GetActionVerb())
 	err = p.CNAB.Execute(ctx, actionArgs)
 
@@ -131,7 +130,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 	}
 
 	if opts.shouldDelete() {
-		p.Log.Info(span, "deleting installation records")
+		log.Info("deleting installation records")
 		return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
 	}
 	return nil

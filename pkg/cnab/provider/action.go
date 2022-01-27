@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
@@ -108,13 +109,11 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 }
 
 func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
-	ctx, log := r.Log.StartSpan(ctx,
+	ctx, log := tracing.StartSpan(ctx,
 		attribute.String("action", args.Action),
 		attribute.Bool("allowDockerHostAccess", args.AllowDockerHostAccess),
 		attribute.String("driver", args.Driver))
-	defer func() {
-		log.EndSpan()
-	}()
+	defer log.EndSpan()
 	args.BundleReference.AddToTrace(ctx)
 	args.Installation.AddToTrace(ctx)
 

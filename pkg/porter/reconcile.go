@@ -34,7 +34,7 @@ type ReconcileOptions struct {
 // This is only used for install/upgrade actions triggered by applying a file
 // to an installation. For uninstall or invoke, you should call those directly.
 func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOptions) error {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx)
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Reconciling %s/%s installation\n", opts.Namespace, opts.Name)
 	}
@@ -127,7 +127,8 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 // IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
 func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 
 	// Only print out info messages if we are triggering a bundle run. Otherwise, keep the explanations in debug output.
 
