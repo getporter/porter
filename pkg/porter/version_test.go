@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,12 +106,6 @@ func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
 	require.Nil(t, err)
 	p.PrintVersion(opts)
 
-	versionOutput := "porter v1.2.3 (abc123)"
-	mixinsOutput := "exec   v1.0      Porter Authors"
-	systemOutput := fmt.Sprintf("os: %s\narch: %s", runtime.GOOS, runtime.GOARCH)
-
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Contains(t, gotOutput, versionOutput)
-	assert.Contains(t, gotOutput, mixinsOutput)
-	assert.Contains(t, gotOutput, systemOutput)
+	test.CompareGoldenFile(t, "testdata/version/version-output.txt", gotOutput)
 }

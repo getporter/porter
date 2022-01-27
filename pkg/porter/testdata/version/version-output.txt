@@ -1,0 +1,14 @@
+porter v1.2.3 (abc123)
+
+System
+-------
+os: darwin
+arch: amd64
+
+Mixins
+-------
+---------------------------------
+  Name  Version  Author          
+---------------------------------
+  exec  v1.0     Porter Authors  
+
