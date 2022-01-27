@@ -40,6 +40,7 @@ func TestExplain_generateTable(t *testing.T) {
 
 	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
+
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	test.CompareGoldenFile(t, "testdata/explain/expected-table-output.txt", gotOutput)
 }

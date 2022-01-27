@@ -84,6 +84,7 @@ type PrintableDependency struct {
 }
 
 type PrintableParameter struct {
+	param       *bundle.Parameter
 	Name        string      `json:"name" yaml:"name"`
 	Type        interface{} `json:"type" yaml:"type"`
 	Default     interface{} `json:"default" yaml:"default"`
@@ -230,6 +231,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	sort.Sort(SortPrintableCredential(pb.Credentials))
 
 	for p, v := range bun.Parameters {
+		v := v // Go closures are funny like that
 		if bun.IsInternalParameter(p) || bun.ParameterHasSource(p) {
 			continue
 		}
@@ -241,7 +243,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		if def == nil {
 			return nil, fmt.Errorf("empty definition for %s", v.Definition)
 		}
-		pp := PrintableParameter{}
+		pp := PrintableParameter{param: &v}
 		pp.Name = p
 		pp.Type = bun.GetParameterType(def)
 		pp.Default = def.Default
@@ -485,7 +487,8 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 	// Bundle installation instruction
 	var requiredParameterFlags string
 	for _, parameter := range bun.Parameters {
-		if parameter.Required {
+		// Only include parameters required for install
+		if parameter.Required && shouldIncludeInExplainOutput(parameter.param, cnab.ActionInstall) {
 			requiredParameterFlags += parameter.Name + "=TODO "
 		}
 	}
