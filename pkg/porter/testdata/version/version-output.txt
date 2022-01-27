@@ -2,11 +2,10 @@ porter v1.2.3 (abc123)
 
 System
 -------
-os: darwin
+os: linux
 arch: amd64
 
 Mixins
--------
 ---------------------------------
   Name  Version  Author          
 ---------------------------------

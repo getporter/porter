@@ -102,7 +102,6 @@ os: {{.SysInfo.OS}}
 arch: {{.SysInfo.Arch}}
 {{if .Mixins}}
 Mixins
--------
 {{.Mixins.PrintMixinsTable}}{{end}}
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)

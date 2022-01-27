@@ -95,6 +95,11 @@ func TestPrintDebugInfoJsonVersion(t *testing.T) {
 }
 
 func TestPrintDebugInfoPlainTextVersion(t *testing.T) {
+	// Only run this on linux + amd64 machines to simplify the test (it has different output based on the os/arch)
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		t.Skip("skipping test because it is only for linux/amd64")
+	}
+
 	pkg.Commit = "abc123"
 	pkg.Version = "v1.2.3"
 
