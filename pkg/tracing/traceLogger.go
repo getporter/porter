@@ -16,16 +16,39 @@ import (
 
 // TraceLogger how porter emits traces and logs to any configured listeners.
 type TraceLogger interface {
+	// StartSpan retrieves a logger from the current context and starts a new span
+	// named after the current function.
 	StartSpan(attrs ...attribute.KeyValue) (context.Context, TraceLogger)
+
+	// StartSpanWithName retrieves a logger from the current context and starts a span with
+	// the specified name.
 	StartSpanWithName(ops string, attrs ...attribute.KeyValue) (context.Context, TraceLogger)
+
+	// EndSpan finishes the span and submits it to the otel endpoint.
 	EndSpan(opts ...trace.SpanEndOption)
+
+	// Debug logs a message at the debug level.
 	Debug(msg string, attrs ...attribute.KeyValue)
+
+	// Debugf formats a message and logs it at the debug level.
 	Debugf(format string, args ...interface{})
+
+	// Info logs a message at the info level.
 	Info(msg string, attrs ...attribute.KeyValue)
+
+	// Infof formats a message and logs it at the info level.
 	Infof(format string, args ...interface{})
+
+	// Warn logs a message at the warning level.
 	Warn(msg string, attrs ...attribute.KeyValue)
+
+	// Warnf formats a message and prints it at the warning level.
 	Warnf(format string, args ...interface{})
+
+	// Error logs a message at the error level, when the specified error is not nil.
 	Error(err error, attrs ...attribute.KeyValue) error
+
+	// Errorf formats an error message and logs it at the error level.
 	Errorf(msg string, args ...interface{}) error
 }
 
@@ -58,57 +81,69 @@ func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tr
 	return l
 }
 
+// EndSpan finishes the span and submits it to the otel endpoint.
 func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 	l.span.End(opts...)
 }
 
+// StartSpan retrieves a logger from the current context and starts a new span
+// named after the current function.
 func (l traceLogger) StartSpan(attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
 	return l.StartSpanWithName(callerFunc(), attrs...)
 }
 
+// StartSpanWithName retrieves a logger from the current context and starts a span with
+// the specified name.
 func (l traceLogger) StartSpanWithName(op string, attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
 	childCtx, childSpan := l.tracer.Start(l.ctx, op)
 	childSpan.SetAttributes(attrs...)
 	return childCtx, newTraceLogger(childCtx, childSpan, l.logger, l.tracer)
 }
 
+// Debug logs a message at the debug level.
 func (l traceLogger) Debug(msg string, attrs ...attribute.KeyValue) {
-	l.logger.Debug(msg, ConvertAttributesToFields(attrs)...)
+	l.logger.Debug(msg, convertAttributesToFields(attrs)...)
 
 	addLogToSpan(l.span, msg, "debug", attrs...)
 }
 
+// Debugf formats a message and logs it at the debug level.
 func (l traceLogger) Debugf(format string, args ...interface{}) {
 	l.Debug(fmt.Sprintf(format, args...))
 }
 
+// Info logs a message at the info level.
 func (l traceLogger) Info(msg string, attrs ...attribute.KeyValue) {
-	l.logger.Info(msg, ConvertAttributesToFields(attrs)...)
+	l.logger.Info(msg, convertAttributesToFields(attrs)...)
 
 	addLogToSpan(l.span, msg, "info", attrs...)
 }
 
+// Infof formats a message and logs it at the info level.
 func (l traceLogger) Infof(format string, args ...interface{}) {
 	l.Info(fmt.Sprintf(format, args...))
 }
 
+// Warn logs a message at the warning level.
 func (l traceLogger) Warn(msg string, attrs ...attribute.KeyValue) {
-	l.logger.Warn(msg, ConvertAttributesToFields(attrs)...)
+	l.logger.Warn(msg, convertAttributesToFields(attrs)...)
 
 	addLogToSpan(l.span, msg, "warn", attrs...)
 }
 
+// Warnf formats a message and prints it at the warning level.
 func (l traceLogger) Warnf(format string, args ...interface{}) {
 	l.Warn(fmt.Sprintf(format, args...))
 }
 
+// Error logs a message at the error level, when the specified error is not nil.
 func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	if err == nil {
 		return err
 	}
 
 	msg := err.Error()
-	l.logger.Error(msg, ConvertAttributesToFields(attrs)...)
+	l.logger.Error(msg, convertAttributesToFields(attrs)...)
 
 	attrs = append(attrs, attribute.String("level", "error"))
 
@@ -131,6 +166,7 @@ func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	return err
 }
 
+// Errorf formats an error message and logs it at the error level.
 func (l traceLogger) Errorf(msg string, args ...interface{}) error {
 	return l.Error(errors.Errorf(msg, args...))
 }

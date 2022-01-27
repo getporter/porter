@@ -47,22 +47,22 @@ func StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Contex
 	return log.StartSpan(attrs...)
 }
 
-// StartSpan retrieves a logger from the current context and starts a span with
+// StartSpanWithName retrieves a logger from the current context and starts a span with
 // the specified name.
 func StartSpanWithName(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
 	log := LoggerFromContext(ctx)
 	return log.StartSpanWithName(op, attrs...)
 }
 
-func ConvertAttributesToFields(attrs []attribute.KeyValue) []zap.Field {
+func convertAttributesToFields(attrs []attribute.KeyValue) []zap.Field {
 	fields := make([]zap.Field, len(attrs))
 	for i, attr := range attrs {
-		fields[i] = ConvertAttributeToField(attr)
+		fields[i] = convertAttributeToField(attr)
 	}
 	return fields
 }
 
-func ConvertAttributeToField(attr attribute.KeyValue) zapcore.Field {
+func convertAttributeToField(attr attribute.KeyValue) zapcore.Field {
 	key := string(attr.Key)
 
 	switch attr.Value.Type() {
