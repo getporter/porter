@@ -119,13 +119,11 @@ uninstall:
 These mixin commands are idempotent and handle errors automatically for you.
 This lets you focus on the resources you need, and spend less time figuring out how to automate a command-line tool to work in a way it wasn't designed for.
 
-The example mixin, [Skeletor], has been updated with an example custom command to help get you started.
-
 ## Try it out
 
 Bundle authors, try moving some of that custom error handling logic out of bash scripts and into your exec mixin calls.
-Mixin authors, take a look at how the skeletor mixin template uses the get.porter.sh/porter/pkg/exec/builder package to include error handling.
-You can quickly add the same error handling behavior to your mixin, or create a custom command that handles errors automatically.
+Mixin authors, take a look at how the [Skeletor] mixin template source [uses the get.porter.sh/porter/pkg/exec/builder package to include error handling](https://github.com/getporter/skeletor/blob/6261f95d7583d581a778d755612827d7d979e40e/pkg/skeletor/action.go#L112-L115).
+You can quickly add the same error handling behavior to your mixin, or create a custom command that handles errors automatically by looking at the [source for the az group command](https://github.com/getporter/az-mixin/blob/v0.6.0/pkg/az/group.go).
 
 Give it a try and let us know how it works for you!
 If there is a mixin that you would like to use this new error handling with, let us know, and we can help make that happen more quickly.
