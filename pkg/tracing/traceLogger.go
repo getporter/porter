@@ -63,7 +63,7 @@ func (l traceLogger) EndSpan(opts ...trace.SpanEndOption) {
 }
 
 func (l traceLogger) StartSpan(attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
-	return l.StartSpanWithName(callerFunc(0), attrs...)
+	return l.StartSpanWithName(callerFunc(), attrs...)
 }
 
 func (l traceLogger) StartSpanWithName(op string, attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
@@ -174,28 +174,37 @@ func findStack(err error) errors.StackTrace {
 	return nil
 }
 
-func callerFunc(frames int) string {
-	var pc [1]uintptr
-	// we expect there're 3 functions(runtime.Callers, callerFunc,
-	// StartSpanNamedFromCaller) the stack before the actual caller functions
-	// we would like to find. If no function is found on the stack, return
-	// unknown
-	if runtime.Callers(frames+3, pc[:]) != 1 {
-		return "unknown"
-	}
-	// translate the PC into function information
-	frame, _ := runtime.CallersFrames(pc[:]).Next()
-	if frame.Function == "" {
-		return "unknown"
+func callerFunc() string {
+	callerUnknown := "unknown"
+
+	// Depending on how this is called, the real function that we are targeting
+	// may be a variable number of frames up the stack
+	// Only look 10 frames up the stack
+	for i := 0; i < 10; i++ {
+		var pc [1]uintptr
+		if runtime.Callers(i+2, pc[:]) != 1 {
+			return callerUnknown
+		}
+		// translate the PC into function information
+		frame, _ := runtime.CallersFrames(pc[:]).Next()
+		if frame.Function == "" {
+			return callerUnknown
+		}
+
+		// Locate the function that first called into the tracing package
+		if strings.HasPrefix(frame.Function, "get.porter.sh/porter/pkg/tracing.") {
+			continue
+		}
+
+		fnName, ok := extractFuncName(frame.Function)
+		if !ok {
+			return callerUnknown
+		}
+
+		return fnName
 	}
 
-	fnName, ok := extractFuncName(frame.Function)
-	if !ok {
-		return "unknown"
-	}
-
-	return fnName
-
+	return callerUnknown
 }
 
 // extractFuncName returns function names from a qualified full import path.
