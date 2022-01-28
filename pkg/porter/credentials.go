@@ -53,12 +53,12 @@ func (p *Porter) PrintCredentials(opts ListOptions) error {
 		}
 
 		printCredRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				cr, ok := v.(credentials.CredentialSet)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, creds, printCredRow,
 			"NAMESPACE", "NAME", "MODIFIED")

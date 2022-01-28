@@ -55,12 +55,12 @@ func (p *Porter) PrintPlugins(opts PrintPluginsOptions) error {
 	switch opts.Format {
 	case printer.FormatPlaintext:
 		printRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				m, ok := v.(plugins.Metadata)
 				if !ok {
 					return nil
 				}
-				return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+				return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 			}
 		return printer.PrintTable(p.Out, installedPlugins, printRow, "Name", "Version", "Author")
 	case printer.FormatJson:

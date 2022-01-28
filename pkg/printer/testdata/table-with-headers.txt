@@ -1,0 +1,10 @@
+---------------------------------------
+  A    B                               
+---------------------------------------
+  foo  a really long bit of text       
+       that really should be           
+       wrapped nicely so that the      
+       entire table doesn't expand     
+       infinitely wide                 
+  baz  qux                             
+  123  true                            

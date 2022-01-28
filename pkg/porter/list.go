@@ -158,12 +158,12 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 		}
 
 		row :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				cl, ok := v.(DisplayInstallation)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
+				return []string{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")
