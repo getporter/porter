@@ -3,99 +3,171 @@ title: Configuration
 description: Controlling Porter with its config file, environment variables and flags
 ---
 
+Porter has a hierarchical configuration system that loads configuration values in the following precedence order:
+
+* Flags (highest)
+* Environment Variables
+* Config File (lowest)
+
+You may set a default value for a configuration value in the config file, override it with an environment variable, and then override both for a particular command with a flag.
+
 * [Flags](#flags)
 * [Environment Variables](#environment-variables)
 * [Config File](#config-file)
 * [Experimental Feature Flags](#experimental-feature-flags)
   * [Build Drivers](#build-drivers)
   * [Structured Logs](#structured-logs)
-
-Porter's configuration system has a precedence order:
-
-* Flags (highest)
-* Environment Variables
-* Config File (lowest)
-
-You may set a default value for a configuration value in the config file,
-override it in a shell session with an environment variable and then override
-both in a particular command with a flag.
-
-* [Set Current Namespace](#namespace)
-* [Enable Debug Output](#debug)
-* [Debug Plugins](#debug-plugins)
-* [Output Formatting](#output)
+* [Common Configuration Settings](#common-configuration-settings)
+  * [Set Current Namespace](#namespace)
+  * [Enable Debug Output](#debug)
+  * [Debug Plugins](#debug-plugins)
+  * [Output Formatting](#output)
 * [Allow Docker Host Access](#allow-docker-host-access)
 
 ## Flags
 
-### Namespace
-`--namespace` specifies the current namespace.
-
-### Debug
-
-`--debug` is a flag that is understood not only by the porter client but also the
-runtime and most mixins. They may use it to print additional information that
-may be useful when you think you may have found a bug, when you want to know
-what commands they are executing, or when you need really verbose output to send
-to the developers.
-
-### Debug Plugins
-
-`--debug-plugins` controls if logs related to communication
-between porter and its plugins should be printed when debugging. This can be _very_
-verbose, so it is not turned on by default when debug is true.
-
-### Output
-
-`--output` controls the format of the output printed by porter. Each command
-supports a different set of allowed outputs though usually there is some
-combination of: `table`, `json` and `yaml`.
-
-### Allow Docker Host Access
-
-`--allow-docker-host-access` controls whether the local Docker daemon
-should be made available to executing bundles. This flag is available for the
-following commands: [install], [upgrade], [invoke] and [uninstall]. When this
-value is set to true, bundles are executed in a privileged container with the
-docker socket mounted. This allows you to use Docker from within your bundle,
-such as `docker push`, `docker-compose`, or docker-in-docker.
-
-🚨 **There are security implications to enabling access! You should trust any
-bundles that you execute with this setting enabled as it gives them elevated 
-access to the host machine.**
-
-⚠️️ This configuration setting is only available when you are in an environment 
-that provides access to the local docker daemon. Therefore it does not work with
-the Azure Cloud Shell driver.
+Nearly all of Porter's configuration, except global configuration such as secret accounts, storage accounts, or telemetry, are configurable by flags.
+Use the `porter help` command to view available flags.
 
 ## Environment Variables
 
-Flags have corresponding environment variables that you can use so that you
-don't need to manually set the flag every time. The flag will default to the
-value of the environment variable, when defined.
+Flags have corresponding environment variables that you can use so that you don't need to manually set the flag every time.
+The flag will default to the value of the environment variable, when defined.
+Global configuration settings can also be specified with an environment variable.
+For example, the experimental config file setting maps to PORTER_EXPERIMENTAL, and accepts a comma-separated list of values.
 
-`--flag` has a corresponding environment variable of `PORTER_FLAG` and `--another-flag`
-corresponds to the environment variable `PORTER_ANOTHER_FLAG`.
+\--flag maps to the environment variable of PORTER_FLAG.
+Dashes in the flag name are represented as underscores in the environment variable name.
+So \--another-flag maps to the environment variable PORTER_ANOTHER_FLAG
 
-For example, you can set `PORTER_DEBUG=true` and then all subsequent porter
-commands will act as though the `--debug` flag was passed.
+For example, you can set PORTER_OUTPUT=json and then all subsequent porter commands will act as though the \--output=json flag was passed.
 
 ## Config File
 
-Common settings can be defaulted in the config file. The config file is located in
-the PORTER_HOME directory (**~/.porter**), is named **config** and can be in any
-of the following file types: JSON, TOML, YAML, HCL, envfile and Java Properties
-files.
+Porter's configuration file is located in the PORTER_HOME directory, by default ~/.porter/.
+The file name should be config.FILE_EXTENSION, where the file extension can be json, toml, yaml, or hcl.
+For example, If you defined the configuration in YAML, the file is named config.yaml.
 
-Below is an example configuration file in TOML
+Do not embed sensitive data in the configuration file.
+Instead, use templates to inject environment variables or secrets in the configuration file.
+Environment variables are specified with ${env.NAME}, where name is case-sensitive.
+Secrets are specified with ${secret.KEY} and case sensitivity depends upon the secrets plugin used.
 
-**~/.porter/config.toml**
+Below is an example configuration file in TOML:
+
 ```toml
+# ~/.porter/config.toml
+
+# Set the default namespace
 namespace = "dev"
+
+# Include debug logs
 debug = true
+
+# Include debug logs from the plugins
 debug-plugins = true
+
+# Default command output to JSON
 output = "json"
+
+# Allow all bundles access to the Docker Host
 allow-docker-host-access = true
+
+# Enable experimental v1 features
+experimental = ["build-drivers", "structured-logs"]
+
+# Use Docker buildkit to build the bundle
+build-driver = "buildkit"
+
+# Use the storage configuration named devdb
+default-storage = "devdb"
+
+# When default-storage is not set, use the mongodb-docker plugin.
+# This mode does not support additional configuration for the plugin.
+# If the plugin requires configuration, use default-storage and define
+# the configuration in the storage section.
+default-storage-plugin = "mongodb-docker"
+
+# Use the secrets configuration named mysecrets
+default-secrets = "mysecrets"
+
+# When default-secrets is not set, use the kubernetes.secret plugin.
+# This mode does not support additional configuration for the plugin.
+# If the plugin requires configuration, use default-secrets and define
+# the configuration in the secrets section.
+default-secrets-plugin = "kubernetes.secret"
+
+# Defines storage accounts
+[[storage]]
+  # The storage account name
+  name = "cosmos"
+
+  # The plugin used to access the storage account
+  plugin = "mongodb"
+
+  # Additional configuration for storage account
+  # These values vary depending on the plugin used
+  [storage.config]
+    # The mongodb connection string
+    url = "${secret.porter-db-connection-string}"
+    
+    # Timeout for database queries
+    timeout = 300
+
+# Define secret store accounts
+[[secrets]]
+  # The secret store name
+  name = "mysecrets"
+  
+  # The plugin used to access the secret store account
+  plugin = "azure.keyvault"
+
+  # Additional configuration for secret store account
+  # These values vary depending on the plugin used
+  [secrets.config]
+    # The name of the secret vault
+    vault = "topsecret"
+    
+    # The subscription where the vault is defined
+    subscription-id = "${env.AZURE_SUBSCRIPTION_ID}"
+
+# Log command output to a file in PORTER_HOME/logs/
+[logs]
+  # Log command output to a file
+  enabled = true
+
+  # Sets the log level for what is written to the file
+  # Allowed values: debug, info, warn, error
+  level = "info"
+
+# Send trace and log data to an Open Telemetry collector
+[telemetry]
+  # Enable trace collection
+  enabled = true
+
+  # Send telemetry via the grpc protocol
+  # Allowed values: http/protobuf, grpc
+  protocol = "grpc"
+
+  # The Open Telemetry collector endpoint
+  endpoint = "127.0.0.1:4318"
+
+  # Specify if the collector endpoint is secured with TLS
+  insecure = true
+
+  # Specify a certificate to connect to the collector endpoint
+  certificate = "/home/me/some-cert.pem"
+
+  # The compression type used when communicating with the collector endpoint
+  compression = "gzip"
+ 
+  # The timeout enforced when communicating with the collector endpoint
+  timeout = "3s"
+
+  # Additional headers to send to the open telemetry collector
+  [telemetry.headers]
+    environment = "dev"
+    owner = "myusername"
 ```
 
 ## Experimental Feature Flags
@@ -104,11 +176,11 @@ Porter sometimes uses feature flags to release new functionality for users to
 evaluate, without affecting the stability of Porter. You can enable an experimental
 feature by:
 
-* Using the experimental global flag `--experimental flagA,flagB`.
+* Using the experimental global flag \--experimental flagA,flagB.
   The value is a comma-separated list of strings.
-* Setting the PORTER_EXPERIMENTAL environment variable like so `PORTER_EXPERIMENTAL=flagA,flagB`.
+* Setting the PORTER_EXPERIMENTAL environment variable like so PORTER_EXPERIMENTAL=flagA,flagB.
   The value is a comma-separated list of strings.
-* Setting the experimental field in the configuration file like so `experimental = ["flagA","flagB"]`.
+* Setting the experimental field in the configuration file like so experimental = ["flagA","flagB"].
   The value is an array of strings.
 
 ### Build Drivers
@@ -117,11 +189,11 @@ The **build-drivers** experimental feature flag enables using a different
 driver to build OCI images used by the bundle, such as the installer.
 
 You can set your desired driver with either using `porter build --driver`,
-`PORTER_BUILD_DRIVER` environment variable, or in the configuration file with
-`build-driver = "DRIVER"`
+PORTER_BUILD_DRIVER environment variable, or in the configuration file with
+build-driver = "DRIVER".
 
-The default driver is [Docker], and the full list of available drivers
-is below.
+The default driver is docker, and the full list of available drivers
+is below:
 
 * **Docker**: Build an OCI image using the [Docker library], without buildkit support.
   This requires access to a Docker daemon, either locally or remote.
@@ -213,3 +285,61 @@ experimental = ["structured-logs"]
 ```
 
 [otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md
+
+## Common Configuration Settings
+
+Some configuration settings are applicable to many of Porter's commands and to save time you may want to set these values in the configuration file or with environment variables.
+
+### Namespace
+\--namespace specifies the current namespace.
+It is set with the PORTER_NAMESPACE environment variable.
+
+```toml
+namespace = "dev"
+```
+
+### Debug
+
+\--debug is a flag that is understood not only by the porter client but also the runtime and most mixins.
+They may use it to print additional information that may be useful when you think you may have found a bug, when you want to know what commands they are executing, or when you need really verbose output to send
+to the developers.
+It is set with the PORTER_DEBUG environment variable.
+
+```toml
+debug = true
+```
+
+### Debug Plugins
+
+\--debug-plugins controls if logs related to communication between porter and its plugins should be printed when debugging.
+This can be _very_ verbose, so it is not turned on by default when debug is true.
+It is set with the PORTER_DEBUG_PLUGINS environment variable.
+
+```toml
+debug-plugins = true
+```
+
+### Output
+
+\--output controls the format of the command output printed by porter.
+It is set with the PORTER_OUTPUT environment variable.
+Each command supports a different set of allowed outputs though usually there is some combination of: plaintext, json, and yaml.
+
+```toml
+output = "json"
+```
+
+### Allow Docker Host Access
+
+\--allow-docker-host-access controls whether the local Docker daemon or host should be made available to executing bundles.
+It is set with the PORTER_ALLOW_DOCKER_HOST_ACCESS environment variable.
+
+This flag is available for the following commands: install, upgrade], invoke, and uninstall.
+When this value is set to true, bundles are executed in a privileged container with the docker socket mounted.
+This allows you to use Docker from within your bundle, such as `docker push`, `docker-compose`, or docker-in-docker.
+
+🚨 **There are security implications to enabling access!
+You should trust any bundles that you execute with this setting enabled as it gives them elevated access to the host machine.**
+
+⚠️️ This configuration setting is only available when you are in an environment that provides access to the local docker daemon.
+Therefore, it does not work with the Azure Cloud Shell driver.

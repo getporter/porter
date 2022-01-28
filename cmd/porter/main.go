@@ -23,7 +23,12 @@ var usageText string
 
 func main() {
 	run := func() int {
+		ctx := context.Background()
 		p := porter.New()
+		if err := p.Connect(ctx); err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 
 		rootCmd := buildRootCommandFrom(p)
 
@@ -116,8 +121,9 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			case "porter", "help", "version", "docs":
 				return nil
 			default:
+				// Reload configuration with the now parsed cli flags
 				p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-				err := p.LoadData()
+				err := p.Connect(cmd.Context())
 				if err != nil {
 					return err
 				}
