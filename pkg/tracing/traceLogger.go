@@ -253,7 +253,7 @@ func extractFuncName(fn string) (string, bool) {
 	}
 
 	qualifiedName := fn[lastSlashIdx+1:]
-	packageDotPos := strings.Index(qualifiedName, ".")
+	packageDotPos := strings.LastIndex(qualifiedName, ".")
 	if packageDotPos < 0 || packageDotPos+1 >= len(qualifiedName) {
 		// qualifiedName ended with a "."
 		return "", false

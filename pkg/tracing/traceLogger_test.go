@@ -1,6 +1,10 @@
 package tracing
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestExtractFuncName(t *testing.T) {
 	for _, test := range []struct {
@@ -12,10 +16,10 @@ func TestExtractFuncName(t *testing.T) {
 		{"porter/", "", false},
 		{"porter/v.", "", false},
 		{"github.com/getporter/porter/tracing.StartSpan", "StartSpan", true},
+		{"get.porter.sh/porter/pkg/porter.(*Porter).ListInstallations", "ListInstallations", true},
 	} {
 		fn, ok := extractFuncName(test.input)
-		if fn != test.expected || ok != test.ok {
-			t.Errorf("failed %q, got %q %v, expected %q %v", test.input, fn, ok, test.expected, test.ok)
-		}
+		assert.Equal(t, test.expected, fn, "failed with input %q", test.input)
+		assert.Equal(t, test.ok, ok, "failed with input %q", test.input)
 	}
 }
