@@ -44,7 +44,7 @@ var _ io.Writer = unstructuredLogger{}
 // take lines from the docker output, and write them as info messages
 // This allows the docker library to use our logger like an io.Writer
 type unstructuredLogger struct {
-	logger tracing.ScopedLogger
+	logger tracing.TraceLogger
 }
 
 var newline = []byte("\n")
@@ -60,8 +60,7 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 }
 
 func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
-	log := tracing.LoggerFromContext(ctx)
-	ctx, log = log.StartSpan(attribute.String("image", manifest.Image))
+	ctx, log := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer log.EndSpan()
 
 	log.Info("Building invocation image")
@@ -192,7 +191,9 @@ func (d dockerToBuildx) DockerAPI(_ string) (dockerclient.APIClient, error) {
 }
 
 func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
+	defer log.EndSpan()
+
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return log.Error(errors.Wrap(err, "could not create new docker client"))
