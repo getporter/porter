@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
 
@@ -54,7 +55,7 @@ func NewInstallOptions() InstallOptions {
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
 func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
-	ctx, log := p.Log.StartSpan(ctx)
+	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
 	// Figure out which bundle/installation we are working with

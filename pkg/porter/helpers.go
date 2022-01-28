@@ -53,7 +53,7 @@ type TestPorter struct {
 	RootContext context.Context
 
 	// The root log span created by NewTestPorter
-	RootLog tracing.ScopedLogger
+	RootSpan tracing.TraceLogger
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -91,7 +91,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	}
 
 	// Start a tracing span for the test, so that we can capture logs
-	tp.RootContext, tp.RootLog = p.Log.StartSpanWithName(context.Background(), t.Name())
+	tp.RootContext, tp.RootSpan = p.StartRootSpan(context.Background(), t.Name())
 
 	return &tp
 }
@@ -99,7 +99,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 func (p *TestPorter) Teardown() error {
 	err := p.TestStore.Teardown()
 	p.TestConfig.TestContext.Teardown()
-	p.RootLog.EndSpan()
+	p.RootSpan.EndSpan()
 	return err
 }
 
