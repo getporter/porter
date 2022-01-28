@@ -1,6 +1,7 @@
 package claims
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
@@ -154,7 +155,7 @@ func TestClaimStore_Installations(t *testing.T) {
 	defer cp.Teardown()
 
 	t.Run("ListInstallations", func(t *testing.T) {
-		installations, err := cp.ListInstallations("dev", "", nil)
+		installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
 		require.NoError(t, err, "ListInstallations failed")
 
 		require.Len(t, installations, 3, "Expected 3 installations")
@@ -191,14 +192,14 @@ func TestClaimStore_DeleteInstallation(t *testing.T) {
 	cp := generateClaimData(t)
 	defer cp.Teardown()
 
-	installations, err := cp.ListInstallations("dev", "", nil)
+	installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 3, "expected 3 installations")
 
 	err = cp.RemoveInstallation("dev", "foo")
 	require.NoError(t, err, "RemoveInstallation failed")
 
-	installations, err = cp.ListInstallations("dev", "", nil)
+	installations, err = cp.ListInstallations(context.Background(), "dev", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 2, "expected foo to be deleted")
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/common"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
@@ -895,11 +896,11 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := cnab.ParseOCIReference(bundleRef.Repository() + "-installer")
-	if err != err {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository()+"-installer")
+	imageName, err := cnab.ParseOCIReference(bundleRef.Repository())
+	if err != nil {
+		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
 	}
-	imageRef, err := imageName.WithTag(dockerTag)
+	imageRef, err := imageName.WithTag(common.RandomString(bundleRef.Named.String()+dockerTag, 10))
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
 	}

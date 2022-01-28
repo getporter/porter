@@ -237,7 +237,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3", m.Image)
+		assert.Equal(t, "getporter/mybun:5lk7ox8Vpv", m.Image)
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
@@ -253,7 +253,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1_15", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1_15", m.Image)
+		assert.Equal(t, "getporter/mybun:Rz14DedlNy", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
@@ -269,7 +269,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.Reference)
-		assert.Equal(t, "localhost:5000/missing-invocation-image-installer:v0.1.0", m.Image)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:Dvx5QNB3tS", m.Image)
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
@@ -285,7 +285,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/mybun-installer:v1.2.3-beta.1", m.Image)
+		assert.Equal(t, "getporter/mybun:OqLKF5tefC", m.Image)
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
@@ -301,7 +301,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/myorg/mybun-installer:v1.2.3-beta.1", m.Image)
+		assert.Equal(t, "getporter/myorg/mybun:MspRMvSv6X", m.Image)
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/org/mybun-installer:v1.2.3", m.Image)
+		assert.Equal(t, "getporter/org/mybun:q4ZA2cHpvl", m.Image)
 	})
 }
 

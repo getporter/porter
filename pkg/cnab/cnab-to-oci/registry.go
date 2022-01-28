@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
@@ -83,7 +84,10 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 	return bundleRef, nil
 }
 
-func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry bool) (cnab.BundleReference, error) {
+func (r *Registry) PushBundle(ctx context.Context, bundleRef cnab.BundleReference, insecureRegistry bool) (cnab.BundleReference, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	var insecureRegistries []string
 	if insecureRegistry {
 		reg := bundleRef.Reference.Registry()
@@ -98,13 +102,13 @@ func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry b
 	}
 	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(bundleRef.RelocationMap))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
+		return cnab.BundleReference{}, log.Error(errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing"))
 	}
 	bundleRef.RelocationMap = rm
 
-	d, err := remotes.Push(context.Background(), &bundleRef.Definition.Bundle, rm, bundleRef.Reference.Named, resolver, true)
+	d, err := remotes.Push(ctx, &bundleRef.Definition.Bundle, rm, bundleRef.Reference.Named, resolver, true)
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrapf(err, "error pushing the bundle to %s", bundleRef.Reference)
+		return cnab.BundleReference{}, log.Error(errors.Wrapf(err, "error pushing the bundle to %s", bundleRef.Reference))
 	}
 	bundleRef.Digest = d.Digest
 
@@ -115,13 +119,14 @@ func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry b
 // PushInvocationImage pushes the invocation image from the Docker image cache to the specified location
 // the expected format of the invocationImage is REGISTRY/NAME:TAG.
 // Returns the image digest from the registry.
-func (r *Registry) PushInvocationImage(invocationImage string) (digest.Digest, error) {
+func (r *Registry) PushInvocationImage(ctx context.Context, invocationImage string) (digest.Digest, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	cli, err := r.getDockerClient()
 	if err != nil {
 		return "", err
 	}
-
-	ctx := context.Background()
 
 	ref, err := cnab.ParseOCIReference(invocationImage)
 	if err != nil {
@@ -195,9 +200,7 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 	return cli, nil
 }
 
-func (r *Registry) IsImageCached(invocationImage string) (bool, error) {
-	ctx := context.Background()
-
+func (r *Registry) IsImageCached(ctx context.Context, invocationImage string) (bool, error) {
 	cli, err := r.getDockerClient()
 	if err != nil {
 		return false, err

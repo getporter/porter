@@ -6,7 +6,7 @@
   "invocationImages": [
     {
       "imageType": "docker",
-      "image": "localhost:5000/mybuns-installer:v0.1.2"
+      "image": "localhost:5000/mybuns:Ek86gPsUVn"
     }
   ],
   "actions": {
