@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -349,12 +350,12 @@ func (p *Porter) printCredentialsExplainBlock(bun *PrintableBundle) error {
 }
 func (p *Porter) printCredentialsExplainTable(bun *PrintableBundle) error {
 	printCredRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			c, ok := v.(PrintableCredential)
 			if !ok {
 				return nil
 			}
-			return []interface{}{c.Name, c.Description, c.Required, c.ApplyTo}
+			return []string{c.Name, c.Description, strconv.FormatBool(c.Required), c.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Credentials, printCredRow, "Name", "Description", "Required", "Applies To")
 }
@@ -375,12 +376,12 @@ func (p *Porter) printParametersExplainBlock(bun *PrintableBundle) error {
 }
 func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 	printParamRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			p, ok := v.(PrintableParameter)
 			if !ok {
 				return nil
 			}
-			return []interface{}{p.Name, p.Description, p.Type, p.Default, p.Required, p.ApplyTo}
+			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), fmt.Sprintf("%v", p.Default), strconv.FormatBool(p.Required), p.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Parameters, printParamRow, "Name", "Description", "Type", "Default", "Required", "Applies To")
 }
@@ -402,12 +403,12 @@ func (p *Porter) printOutputsExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printOutputsExplainTable(bun *PrintableBundle) error {
 	printOutputRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			o, ok := v.(PrintableOutput)
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Name, o.Description, o.Type, o.ApplyTo}
+			return []string{o.Name, o.Description, fmt.Sprintf("%v", o.Type), o.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Name", "Description", "Type", "Applies To")
 }
@@ -429,12 +430,12 @@ func (p *Porter) printActionsExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 	printActionRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			a, ok := v.(PrintableAction)
 			if !ok {
 				return nil
 			}
-			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
+			return []string{a.Name, a.Description, strconv.FormatBool(a.Modifies), strconv.FormatBool(a.Stateless)}
 		}
 	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
 }
@@ -457,12 +458,12 @@ func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 	printDependencyRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			o, ok := v.(PrintableDependency)
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Alias, o.Reference}
+			return []string{o.Alias, o.Reference}
 		}
 	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Reference")
 }

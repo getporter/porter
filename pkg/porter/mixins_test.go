@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,11 +25,8 @@ func TestPorter_PrintMixins(t *testing.T) {
 	err := p.PrintMixins(opts)
 
 	require.Nil(t, err)
-	wantOutput := `Name   Version   Author
-exec   v1.0      Porter Authors
-`
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	assert.Equal(t, wantOutput, gotOutput)
+	test.CompareGoldenFile(t, "mixins/list-output.txt", gotOutput)
 }
 
 func TestPorter_InstallMixin(t *testing.T) {

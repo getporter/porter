@@ -83,37 +83,36 @@ func TestGenerateBadNameProvided(t *testing.T) {
 }
 
 type CredentialsListTest struct {
-	name         string
-	format       printer.Format
-	wantContains []string
-	errorMsg     string
+	name       string
+	format     printer.Format
+	wantOutput string
+	errorMsg   string
 }
 
 func TestCredentialsList_None(t *testing.T) {
 	testcases := []CredentialsListTest{
 		{
-			name:         "invalid format",
-			format:       "wingdings",
-			wantContains: []string{},
-			errorMsg:     "invalid format: wingdings",
+			name:     "invalid format",
+			format:   "wingdings",
+			errorMsg: "invalid format: wingdings",
 		},
 		{
-			name:         "json",
-			format:       printer.FormatJson,
-			wantContains: []string{"[]\n"},
-			errorMsg:     "",
+			name:       "json",
+			format:     printer.FormatJson,
+			wantOutput: "testdata/credentials/list-output.json",
+			errorMsg:   "",
 		},
 		{
-			name:         "yaml",
-			format:       printer.FormatYaml,
-			wantContains: []string{"[]\n"},
-			errorMsg:     "",
+			name:       "yaml",
+			format:     printer.FormatYaml,
+			wantOutput: "testdata/credentials/list-output.yaml",
+			errorMsg:   "",
 		},
 		{
-			name:         "plaintext",
-			format:       printer.FormatPlaintext,
-			wantContains: []string{"NAME   MODIFIED\n"},
-			errorMsg:     "",
+			name:       "plaintext",
+			format:     printer.FormatPlaintext,
+			wantOutput: "testdata/credentials/list-output.txt",
+			errorMsg:   "",
 		},
 	}
 
@@ -129,11 +128,8 @@ func TestCredentialsList_None(t *testing.T) {
 				require.Equal(t, err.Error(), tc.errorMsg)
 			} else {
 				require.NoError(t, err, "no error should have existed")
-			}
-
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			for _, contains := range tc.wantContains {
-				require.Contains(t, gotOutput, contains)
+				gotOutput := p.TestConfig.TestContext.GetOutput()
+				test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
 			}
 		})
 	}
@@ -142,28 +138,19 @@ func TestCredentialsList_None(t *testing.T) {
 func TestPorter_PrintCredentials(t *testing.T) {
 	testcases := []CredentialsListTest{
 		{
-			name:         "json",
-			format:       printer.FormatJson,
-			wantContains: []string{"\"namespace\": \"dev\",\n    \"name\": \"kool-kreds\""},
-			errorMsg:     "",
+			name:       "json",
+			format:     printer.FormatJson,
+			wantOutput: "testdata/credentials/show-output.json",
 		},
 		{
-			name:         "yaml",
-			format:       printer.FormatYaml,
-			wantContains: []string{"namespace: dev\n  name: kool-kreds"},
-			errorMsg:     "",
+			name:       "yaml",
+			format:     printer.FormatYaml,
+			wantOutput: "testdata/credentials/show-output.yaml",
 		},
 		{
-			name:         "plaintext",
-			format:       printer.FormatPlaintext,
-			wantContains: []string{"NAMESPACE   NAME         MODIFIED\ndev         kool-kreds   2019-06-24"},
-			errorMsg:     "",
-		},
-		{
-			name:         "error",
-			format:       printer.FormatPlaintext,
-			wantContains: []string{},
-			errorMsg:     "",
+			name:       "plaintext",
+			format:     printer.FormatPlaintext,
+			wantOutput: "testdata/credentials/show-output.txt",
 		},
 	}
 
@@ -181,9 +168,7 @@ func TestPorter_PrintCredentials(t *testing.T) {
 			require.NoError(t, err)
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
-			for _, contains := range tc.wantContains {
-				require.Contains(t, gotOutput, contains)
-			}
+			test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
 		})
 	}
 }

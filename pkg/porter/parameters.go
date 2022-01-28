@@ -64,12 +64,12 @@ func (p *Porter) PrintParameters(opts ListOptions) error {
 		}
 
 		printParamRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				cr, ok := v.(parameters.ParameterSet)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, params, printParamRow,
 			"NAMESPACE", "NAME", "MODIFIED")

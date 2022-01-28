@@ -8,6 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,10 +50,6 @@ func TestSearchOptions_Validate_PackageName(t *testing.T) {
 }
 
 func TestPorter_SearchPackages_Mixins(t *testing.T) {
-	// Fetch the full mixin list for comparison in test case(s)
-	fullList, err := fetchFullListBytes("mixin")
-	require.NoError(t, err)
-
 	testcases := []struct {
 		name       string
 		mixin      string
@@ -63,24 +60,17 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
 		name:       "no name provided",
 		mixin:      "",
 		format:     printer.FormatJson,
-		wantOutput: fmt.Sprintf("%s\n", string(fullList)),
+		wantOutput: "testdata/packages/search-no-query.txt",
 	}, {
-		name:   "mixin name single match",
-		mixin:  "az",
-		format: printer.FormatYaml,
-		wantOutput: `- name: az
-  author: Porter Authors
-  description: A mixin for using the az cli
-  url: https://cdn.porter.sh/mixins/atom.xml
-`,
+		name:       "mixin name single match",
+		mixin:      "az",
+		format:     printer.FormatYaml,
+		wantOutput: "testdata/packages/search-single-match.txt",
 	}, {
-		name:   "mixin name multiple match",
-		mixin:  "ku",
-		format: printer.FormatPlaintext,
-		wantOutput: `Name         Description                           Author           URL                                                                 URL Type
-kubernetes   A mixin for using the kubectl cli     Porter Authors   https://cdn.porter.sh/mixins/atom.xml                               Atom Feed
-kustomize    A mixin for using the kustomize cli   Don Stewart      https://github.com/donmstewart/porter-kustomize/releases/download   Download
-`,
+		name:       "mixin name multiple match",
+		mixin:      "ku",
+		format:     printer.FormatPlaintext,
+		wantOutput: "testdata/packages/search-multi-match.txt",
 	}, {
 		name:    "mixin name no match",
 		mixin:   "ottersay",
@@ -101,15 +91,14 @@ kustomize    A mixin for using the kustomize cli   Don Stewart      https://gith
 				Type: "mixin",
 			}
 
-			err = p.SearchPackages(opts)
+			err := p.SearchPackages(opts)
 			if tc.wantErr != "" {
 				require.EqualError(t, err, tc.wantErr)
 			} else {
 				require.NoError(t, err)
+				gotOutput := p.TestConfig.TestContext.GetOutput()
+				test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
 			}
-
-			gotOutput := p.TestConfig.TestContext.GetOutput()
-			require.Equal(t, tc.wantOutput, gotOutput)
 		})
 	}
 }
