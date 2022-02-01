@@ -236,7 +236,7 @@ func buildCredentialsCreateCommand(p *porter.Porter) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&opts.OutputType, "output", "yaml", "Credential set resource file format")
+	f.StringVar(&opts.OutputType, "output", "", "Credential set resource file format")
 
 	return cmd
 }
