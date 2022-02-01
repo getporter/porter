@@ -422,7 +422,7 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 		fileName = opts.FileName
 	}
 
-	fmt.Fprintln(p.Out, "creating porter credential set in the current directory")
+	fmt.Fprintln(p.Err, "creating porter credential set in the current directory")
 
 	if fileFormat == "json" {
 		err := p.CopyTemplate(p.Templates.GetCredentialSetJSON, fileName+".json")
