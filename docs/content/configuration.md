@@ -100,7 +100,7 @@ default-secrets-plugin = "kubernetes.secret"
 # Defines storage accounts
 [[storage]]
   # The storage account name
-  name = "cosmos"
+  name = "devdb"
 
   # The plugin used to access the storage account
   plugin = "mongodb"
@@ -334,7 +334,7 @@ output = "json"
 \--allow-docker-host-access controls whether the local Docker daemon or host should be made available to executing bundles.
 It is set with the PORTER_ALLOW_DOCKER_HOST_ACCESS environment variable.
 
-This flag is available for the following commands: install, upgrade], invoke, and uninstall.
+This flag is available for the following commands: install, upgrade, invoke, and uninstall.
 When this value is set to true, bundles are executed in a privileged container with the docker socket mounted.
 This allows you to use Docker from within your bundle, such as `docker push`, `docker-compose`, or docker-in-docker.
 
