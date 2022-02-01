@@ -102,7 +102,7 @@ func (m Magefile) Install() {
 
 	os.MkdirAll(filepath.Join(porterHome, "mixins", m.MixinName, "runtimes"), 0700)
 	mgx.Must(shx.Copy(filepath.Join(m.BinDir, m.MixinName+xplat.FileExt()), filepath.Join(porterHome, "mixins", m.MixinName)))
-	mgx.Must(shx.Copy(filepath.Join(m.BinDir, "runtimes", m.MixinName+"-runtime"+xplat.FileExt()), filepath.Join(porterHome, "mixins/runtimes")))
+	mgx.Must(shx.Copy(filepath.Join(m.BinDir, "runtimes", m.MixinName+"-runtime"+xplat.FileExt()), filepath.Join(porterHome, "mixins", m.MixinName, "runtimes")))
 }
 
 // Remove generated build files
