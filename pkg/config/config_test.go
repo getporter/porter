@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,7 +71,7 @@ func TestConfigExperimentalFlags(t *testing.T) {
 		defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
 		c := New()
-		require.NoError(t, c.LoadData(), "LoadData failed")
+		require.NoError(t, c.Load(context.Background(), nil), "Load failed")
 		assert.True(t, c.IsFeatureEnabled(experimental.FlagBuildDrivers))
 	})
 

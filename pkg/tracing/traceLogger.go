@@ -24,6 +24,9 @@ type TraceLogger interface {
 	// the specified name.
 	StartSpanWithName(ops string, attrs ...attribute.KeyValue) (context.Context, TraceLogger)
 
+	// SetAttributes applies additional key/value pairs to the current trace span.
+	SetAttributes(attrs ...attribute.KeyValue)
+
 	// EndSpan finishes the span and submits it to the otel endpoint.
 	EndSpan(opts ...trace.SpanEndOption)
 
@@ -45,10 +48,18 @@ type TraceLogger interface {
 	// Warnf formats a message and prints it at the warning level.
 	Warnf(format string, args ...interface{})
 
-	// Error logs a message at the error level, when the specified error is not nil.
+	// Error logs a message at the error level, when the specified error is not nil,
+	// and marks the current span as failed.
+	// Example: return log.Error(err)
+	// Only log it in the function that generated the error, not when bubbling
+	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
 
-	// Errorf formats an error message and logs it at the error level.
+	// Errorf formats an error message and logs it at the error level,
+	// and marks the current span as failed.
+	// Example: return log.Errorf("oops something happened")
+	// Only log it in the function that generated the error, not when bubbling
+	// it up the call stack.
 	Errorf(msg string, args ...interface{}) error
 }
 
@@ -98,6 +109,11 @@ func (l traceLogger) StartSpanWithName(op string, attrs ...attribute.KeyValue) (
 	childCtx, childSpan := l.tracer.Start(l.ctx, op)
 	childSpan.SetAttributes(attrs...)
 	return childCtx, newTraceLogger(childCtx, childSpan, l.logger, l.tracer)
+}
+
+// SetAttributes applies additional key/value pairs to the current trace span.
+func (l traceLogger) SetAttributes(attrs ...attribute.KeyValue) {
+	l.span.SetAttributes(attrs...)
 }
 
 // Debug logs a message at the debug level.

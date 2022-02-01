@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		}
 
 		cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-			return c.LoadData()
+			return c.Load(context.Background(), nil)
 		}
 		cmd.RunE = func(cmd *cobra.Command, args []string) error {
 			return nil
