@@ -435,7 +435,7 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 			return err
 		}
 	} else {
-		return errors.New(fmt.Sprintf("unknown file format: %s", fileFormat))
+		return errors.Errorf("unknown file format: %s", fileFormat)
 	}
 
 	return nil
