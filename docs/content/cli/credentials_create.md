@@ -28,7 +28,7 @@ porter credentials create [flags]
 
 ```
   -h, --help            help for create
-      --output string   Credential set resource file format (default "yaml")
+      --output string   Credential set resource file format
 ```
 
 ### Options inherited from parent commands

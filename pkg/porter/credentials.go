@@ -390,66 +390,58 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 		o.FileName = args[0]
 	}
 
-	if o.OutputType == "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
-		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+	if o.OutputType == "" {
+		o.OutputType = strings.Trim(filepath.Ext(o.FileName), ".")
 	}
 
-	if o.OutputType != "" && (strings.HasSuffix(o.FileName, ".json") || strings.HasSuffix(o.FileName, ".yaml")) {
-		if len(strings.Split(o.FileName, ".")) < 2 {
-			return errors.New("invalid fileName format")
-		}
-
-		if o.OutputType != strings.Split(o.FileName, ".")[1] {
-			return errors.New("fileName input and --output flag define different file format")
-		}
+	if o.OutputType == "" && o.FileName != "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
 	}
 
 	return nil
 }
 
 func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
-	var fileFormat string
-	if opts.OutputType != "" {
-		fileFormat = opts.OutputType
-	}
-
-	var fileName string
-	if strings.HasSuffix(opts.FileName, ".json") || strings.HasSuffix(opts.FileName, ".yaml") {
-		if len(strings.Split(opts.FileName, ".")) < 2 {
-			return errors.New("invalid fileName format")
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
 		}
 
-		fileFormat = strings.Split(opts.FileName, ".")[1]
-		fileName = strings.Split(opts.FileName, ".")[0]
-	} else {
-		fileName = opts.FileName
+		switch opts.OutputType {
+		case "json":
+			credentialSet, err := p.Templates.GetCredentialSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		case "yaml", "yml":
+			credentialSet, err := p.Templates.GetCredentialSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
 	}
 
 	fmt.Fprintln(p.Err, "creating porter credential set in the current directory")
 
-	if fileFormat == "json" {
-		err := p.CopyTemplate(p.Templates.GetCredentialSetJSON, fileName+".json")
-		if err != nil {
-			return err
-		}
-	} else if fileFormat == "yaml" {
-		err := p.CopyTemplate(p.Templates.GetCredentialSetYAML, fileName+".yaml")
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.Errorf("unknown file format: %s", fileFormat)
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetCredentialSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
 	}
-
-	return nil
 }
 
-// func (p *Porter) verifyFileFormat(fileName, format string) error {
-// 	switch format {
-// 	case "json":
-// 		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, fileName)
-// 	case "yaml", "yml":
-// 		return p.CopyTemplate(p.templates)
-
-// 	}
-// }
+func newUnsupportedFormatError(format string) error {
+	return errors.Errorf("unsupported format %s. Supported formats are: yaml and json.", format)
+}
