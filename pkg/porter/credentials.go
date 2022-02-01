@@ -390,7 +390,7 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 		o.FileName = args[0]
 	}
 
-	if o.OutputType == "" && o.FileName != "" {
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
 		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
 	}
 
