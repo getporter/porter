@@ -6,6 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,12 +58,11 @@ func Test_generateInternalManifest(t *testing.T) {
 			err = p.generateInternalManifest(tc.opts)
 			require.NoError(t, err)
 
-			want := p.TestConfig.TestContext.AddTestFile(
-				filepath.Join("testdata/generateManifest", tc.wantManifest), tc.wantManifest)
-
+			goldenFile := filepath.Join("testdata/generateManifest", tc.wantManifest)
+			p.TestConfig.TestContext.AddTestFile(goldenFile, tc.wantManifest)
 			got, err := p.FileSystem.ReadFile(build.LOCAL_MANIFEST)
 			require.NoError(t, err)
-			require.Equal(t, want, got)
+			test.CompareGoldenFile(t, goldenFile, string(got))
 		})
 	}
 }

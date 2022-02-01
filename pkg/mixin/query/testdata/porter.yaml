@@ -1,3 +1,4 @@
+schemaVersion: 1.0.0-alpha.1
 name: mybun
 version: 0.1.0
 registry: example.com
@@ -7,7 +8,6 @@ mixins:
   - az:
       extensions:
         - iot
-
 
 install:
   - exec:

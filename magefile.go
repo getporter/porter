@@ -59,8 +59,15 @@ func Build() {
 
 // Build the porter client and runtime
 func BuildPorter() {
-	mg.Deps(Tidy)
+	mg.Deps(Tidy, copySchema)
+
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+func copySchema() {
+	// Copy the porter manifest schema into our templates directory so the porter
+	// We can't use symbolic links because that doesn't work on windows
+	mgx.Must(shx.Copy("pkg/schema/manifest.schema.json", "pkg/templates/templates/schema.json"))
 }
 
 func Tidy() error {
@@ -85,6 +92,7 @@ func XBuildAll() {
 
 // Cross-compile porter
 func XBuildPorter() {
+	mg.Deps(copySchema)
 	releases.XBuildAll(PKG, "porter", "bin")
 }
 
@@ -183,6 +191,8 @@ func Test() {
 
 // Run unit tests and verify integration tests compile
 func TestUnit() {
+	mg.Deps(copySchema)
+
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
 	if mg.Verbose() {
@@ -197,6 +207,8 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
+	mg.Deps(copySchema)
+
 	mg.Deps(docker.RestartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
@@ -409,7 +421,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster)
+	mg.Deps(tests.EnsureTestCluster, copySchema)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")

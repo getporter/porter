@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var simpleManifestDigest = "77c38ff62b4d0c794d97344dc579b74384d77c9b9dd193aede257ba63d4bd6b1"
-
 func TestConfig_GenerateStamp(t *testing.T) {
 	// Do not run this test in parallel
 	// Still need to figure out what is introducing flakey-ness
@@ -27,7 +25,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	a := NewManifestConverter(c.Context, m, nil, nil)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
-	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
+	assert.NotEmpty(t, stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
 	assert.Equal(t, pkg.Version, stamp.Version)
 	assert.Equal(t, pkg.Commit, stamp.Commit)
@@ -45,7 +43,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 	bun := cnab.ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: map[string]interface{}{
-				"manifestDigest": simpleManifestDigest,
+				"manifestDigest": "somedigest",
 				"manifest":       "abc123",
 				"mixins": map[string]interface{}{
 					"exec": struct{}{},
@@ -56,7 +54,7 @@ func TestConfig_LoadStamp(t *testing.T) {
 
 	stamp, err := LoadStamp(bun)
 	require.NoError(t, err)
-	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
+	assert.Equal(t, "somedigest", stamp.ManifestDigest)
 	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
 	assert.Equal(t, "abc123", stamp.EncodedManifest)
 }
@@ -67,7 +65,7 @@ func TestConfig_LoadStamp_Invalid(t *testing.T) {
 	bun := cnab.ExtendedBundle{bundle.Bundle{
 		Custom: map[string]interface{}{
 			config.CustomPorterKey: []string{
-				simpleManifestDigest,
+				"somedigest",
 			},
 		},
 	}}
