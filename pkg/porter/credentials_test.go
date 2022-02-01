@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -404,7 +405,7 @@ func TestCredentialsCreateOptions_Validate(t *testing.T) {
 			name:       "no fileName defined",
 			args:       []string{},
 			outputType: "",
-			wantErr:    "file name is required",
+			wantErr:    "",
 		},
 		{
 			name:       "two positional arguments",
@@ -413,33 +414,27 @@ func TestCredentialsCreateOptions_Validate(t *testing.T) {
 			wantErr:    "only one positional argument may be specified",
 		},
 		{
-			name:       "no file format defined",
+			name:       "no file format defined from file extension or output flag",
 			args:       []string{"credential-set"},
 			outputType: "",
-			wantErr:    "resource file format should be defined by using FILENAME or --output flag",
+			wantErr:    "could not detect the file format from the file extension (.txt). Specify the format with --output.",
 		},
 		{
 			name:       "different file format",
 			args:       []string{"credential-set.json"},
 			outputType: "yaml",
-			wantErr:    "fileName input and --output flag define different file format",
-		},
-		{
-			name:       "different file format",
-			args:       []string{"credential-set.yaml"},
-			outputType: "json",
-			wantErr:    "fileName input and --output flag define different file format",
-		},
-		{
-			name:       "valid input: format defined by fileName argument",
-			args:       []string{"credential-set.yaml"},
-			outputType: "",
 			wantErr:    "",
 		},
 		{
-			name:       "valid input: format defined by --output flag",
-			args:       []string{"credential-set"},
+			name:       "format from output flag",
+			args:       []string{"creds"},
 			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "format from file extension",
+			args:       []string{"credential-set.yml"},
+			outputType: "",
 			wantErr:    "",
 		},
 	}
@@ -462,21 +457,55 @@ func TestCredentialsCreate(t *testing.T) {
 		name       string
 		fileName   string
 		outputType string
+		wantErr    string
 	}{
 		{
-			name:       "valid input: file format in file name",
-			fileName:   "fileName.json",
+			name:       "valid input: no input defined, will output yaml format to stdout",
+			fileName:   "",
 			outputType: "",
+			wantErr:    "",
 		},
 		{
-			name:       "valid input: file format in outputType",
+			name:       "valid input: output to stdout with format json",
+			fileName:   "",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from fileName",
+			fileName:   "fileName.json",
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from outputType",
 			fileName:   "fileName",
 			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: different file format from fileName and outputType",
+			fileName:   "fileName.yaml",
+			outputType: "json",
+			wantErr:    "",
 		},
 		{
 			name:       "valid input: same file format in fileName and outputType",
 			fileName:   "fileName.json",
 			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "invalid input: invalid file format from fileName",
+			fileName:   "fileName.txt",
+			outputType: "",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
+		},
+		{
+			name:       "invalid input: invalid file format from outputType",
+			fileName:   "fileName",
+			outputType: "txt",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
 		},
 	}
 
@@ -487,7 +516,11 @@ func TestCredentialsCreate(t *testing.T) {
 
 			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
 			err := p.CreateCredential(opts)
-			require.NoError(t, err, "no error should have existed")
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
 		})
 	}
 }

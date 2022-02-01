@@ -390,10 +390,6 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 		o.FileName = args[0]
 	}
 
-	if o.OutputType == "" {
-		o.OutputType = strings.Trim(filepath.Ext(o.FileName), ".")
-	}
-
 	if o.OutputType == "" && o.FileName != "" {
 		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
 	}
@@ -402,6 +398,10 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 }
 
 func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
 	if opts.FileName == "" {
 		if opts.OutputType == "" {
 			opts.OutputType = "yaml"
