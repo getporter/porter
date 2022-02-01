@@ -250,7 +250,7 @@ environment, make a change and test it.
 
 Here are the key steps, if you run into trouble, the tutorial has more details:
 
-1. Install Go version 1.16 or higher.
+1. Install Go version 1.17 or higher.
 1. Clone this repository with `git clone https://github.com/getporter/porter.git ~/go/src/get.porter.sh/porter`.
 1. Run `mage Build Install` from within the newly cloned repository.
 

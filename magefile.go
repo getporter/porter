@@ -1,3 +1,4 @@
+//go:build mage
 // +build mage
 
 // This is a magefile, and is a "makefile for go".
@@ -40,7 +41,7 @@ import (
 
 const (
 	PKG       = "get.porter.sh/porter"
-	GoVersion = ">=1.16"
+	GoVersion = ">=1.17"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}
