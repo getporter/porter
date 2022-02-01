@@ -2,6 +2,7 @@ package porter
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -385,10 +386,12 @@ func (o *CredentialCreateOptions) Validate(args []string) error {
 		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
 	}
 
-	o.FileName = args[0]
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
 
-	if o.OutputType == "" && !(strings.HasSuffix(o.FileName, ".json") || strings.HasSuffix(o.FileName, ".yaml")) {
-		return errors.New("resource file format should be defined by using FILENAME or --output flag")
+	if o.OutputType == "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
 	}
 
 	if o.OutputType != "" && (strings.HasSuffix(o.FileName, ".json") || strings.HasSuffix(o.FileName, ".yaml")) {
@@ -440,3 +443,13 @@ func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
 
 	return nil
 }
+
+// func (p *Porter) verifyFileFormat(fileName, format string) error {
+// 	switch format {
+// 	case "json":
+// 		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, fileName)
+// 	case "yaml", "yml":
+// 		return p.CopyTemplate(p.templates)
+
+// 	}
+// }
