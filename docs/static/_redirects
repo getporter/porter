@@ -7,6 +7,7 @@
 # Redirect source code links
 /:repo/src/*        https://github.com/getporter/:repo/blob/main/:splat
 /src/*              https://github.com/getporter/porter/blob/main/:splat
+/schema/v1/*        https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/:splat
 
 # Redirect 
 /twitter            https://twitter.com/get_porter

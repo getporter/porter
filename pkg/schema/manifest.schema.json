@@ -1,5 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://porter.sh/schema/v1/manifest.schema.json",
+  "title": "Porter manifest json schema",
+  "description": "Describes the format of the Porter manifest, porter.yaml. This does not include the schema of the mixins, use the porter schema command to generate a schema document that includes all installed mixins.",
   "type": "object",
   "definitions": {
     "applyTo": {
