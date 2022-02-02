@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,13 +24,9 @@ func TestPorter_PrintPlugins(t *testing.T) {
 		err := p.PrintPlugins(opts)
 
 		require.Nil(t, err)
-		expected := `Name      Version   Author
-plugin1   v1.0      Porter Authors
-plugin2   v1.0      Porter Authors
-unknown   v1.0      Porter Authors
-`
-		actual := p.TestConfig.TestContext.GetOutput()
-		assert.Equal(t, expected, actual)
+
+		got := p.TestConfig.TestContext.GetOutput()
+		test.CompareGoldenFile(t, "testdata/plugins/list-output.txt", got)
 	})
 
 	t.Run("yaml", func(t *testing.T) {

@@ -1,13 +1,14 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/storage"
@@ -16,7 +17,7 @@ import (
 )
 
 type dependencyExecutioner struct {
-	*context.Context
+	*portercontext.Context
 	porter *Porter
 
 	Manifest *manifest.Manifest
@@ -60,8 +61,8 @@ type queuedDependency struct {
 	cnabFileContents []byte
 }
 
-func (e *dependencyExecutioner) Prepare() error {
-	parentActionArgs, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
+func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
+	parentActionArgs, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
 		return err
 	}
@@ -82,14 +83,14 @@ func (e *dependencyExecutioner) Prepare() error {
 	return nil
 }
 
-func (e *dependencyExecutioner) Execute() error {
+func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 	if e.deps == nil {
 		return errors.New("Prepare must be called before Execute")
 	}
 
 	// executeDependency the requested action against all of the dependencies
 	for _, dep := range e.deps {
-		err := e.executeDependency(dep)
+		err := e.executeDependency(ctx, dep)
 		if err != nil {
 			return err
 		}
@@ -101,7 +102,7 @@ func (e *dependencyExecutioner) Execute() error {
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
 func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.ActionArguments, error) {
-	args, err := e.porter.BuildActionArgs(e.parentInstallation, e.parentAction)
+	args, err := e.porter.BuildActionArgs(context.TODO(), e.parentInstallation, e.parentAction)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
@@ -247,7 +248,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	return nil
 }
 
-func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
+func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queuedDependency) error {
 	// TODO(carolynvs): We should really switch up how the deperator works so that
 	// even the root bundle uses the execution engine here. This would set up how
 	// we want dependencies and mixins as bundles to work in the future.
@@ -292,7 +293,7 @@ func (e *dependencyExecutioner) executeDependency(dep *queuedDependency) error {
 
 	var executeErrs error
 	fmt.Fprintf(e.Out, "Executing dependency %s...\n", dep.Alias)
-	err = e.CNAB.Execute(depArgs)
+	err = e.CNAB.Execute(ctx, depArgs)
 	if err != nil {
 		executeErrs = multierror.Append(executeErrs, errors.Wrapf(err, "error executing dependency %s", dep.Alias))
 

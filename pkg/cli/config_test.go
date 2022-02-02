@@ -111,7 +111,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("build-driver from config", func(t *testing.T) {
 		os.Unsetenv("PORTER_BUILD_DRIVER")
-		defer os.Unsetenv("PORTER_EXPERIMENTAL")
+		defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
 		c := config.NewTestConfig(t)
 		c.SetHomeDir("/root/.porter")

@@ -9,7 +9,7 @@
   HUGO_VERSION = "0.78.1"
 
 [context.branch-deploy]
-  command = "make docs BASEURL=$DEPLOY_PRIME_URL/"
+  command = "make docs BASEURL=https://${BRANCH/\//-}.porter.sh/"
   
 [context.deploy-preview]
   command = "make docs BASEURL=$DEPLOY_PRIME_URL/"

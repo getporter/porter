@@ -1,18 +1,21 @@
 package buildkit
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/console"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 
 	"get.porter.sh/porter/pkg/build"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"github.com/containerd/console"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/driver"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
@@ -27,30 +30,54 @@ import (
 )
 
 type Builder struct {
-	*portercontext.Context
+	*config.Config
 }
 
-func NewBuilder(cxt *portercontext.Context) *Builder {
+func NewBuilder(cfg *config.Config) *Builder {
 	return &Builder{
-		Context: cxt,
+		Config: cfg,
 	}
 }
 
-func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
-	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
+var _ io.Writer = unstructuredLogger{}
+
+// take lines from the docker output, and write them as info messages
+// This allows the docker library to use our logger like an io.Writer
+type unstructuredLogger struct {
+	logger tracing.TraceLogger
+}
+
+var newline = []byte("\n")
+
+func (l unstructuredLogger) Write(p []byte) (n int, err error) {
+	if l.logger == nil {
+		return 0, nil
+	}
+
+	msg := string(bytes.TrimSuffix(p, newline))
+	l.logger.Info(msg)
+	return len(p), nil
+}
+
+func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
+	ctx, log := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
+	defer log.EndSpan()
+
+	log.Info("Building invocation image")
+
 	cli, err := command.NewDockerCli()
 	if err != nil {
-		return errors.Wrap(err, "could not create new docker client")
+		return log.Error(errors.Wrap(err, "could not create new docker client"))
 	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return errors.Wrapf(err, "error initializing docker client")
+		return log.Error(errors.Wrapf(err, "error initializing docker client"))
 	}
 
-	ctx := context.Background()
 	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), cli.ConfigFile(), nil, nil, "", nil, nil, b.Getwd())
 	if err != nil {
-		return errors.Wrapf(err, "error loading buildx driver")
+		return log.Error(errors.Wrapf(err, "error loading buildx driver"))
 	}
+
 	drivers := []buildx.DriverInfo{
 		{
 			Name:   "default",
@@ -74,12 +101,15 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	}
 
 	out := ioutil.Discard
-	if b.IsVerbose() {
-		out = b.Out
+	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
+		defer log.EndSpan()
+		out = unstructuredLogger{log}
 	}
+
 	dockerOut, err := getConsole(out)
 	if err != nil {
-		return errors.Wrap(err, "could not retrieve docker build output")
+		return log.Error(errors.Wrap(err, "could not retrieve docker build output"))
 	}
 	defer dockerOut.Close()
 
@@ -88,9 +118,9 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	printErr := printer.Wait()
 
 	if buildErr == nil {
-		return errors.Wrapf(printErr, "error with docker printer")
+		return log.Error(errors.Wrapf(printErr, "error with docker printer"))
 	}
-	return errors.Wrapf(buildErr, "error building docker image")
+	return log.Error(errors.Wrapf(buildErr, "error building docker image"))
 }
 
 var _ console.File = dockerConsole{}
@@ -160,17 +190,20 @@ func (d dockerToBuildx) DockerAPI(_ string) (dockerclient.APIClient, error) {
 	return dockerclient.NewClientWithOpts(clientOpts...)
 }
 
-func (b *Builder) TagInvocationImage(origTag, newTag string) error {
+func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
+	defer log.EndSpan()
+
 	cli, err := command.NewDockerCli()
 	if err != nil {
-		return errors.Wrap(err, "could not create new docker client")
+		return log.Error(errors.Wrap(err, "could not create new docker client"))
 	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return err
+		return log.Error(errors.Wrap(err, "could not initialize a new docker client"))
 	}
 
-	if err := cli.Client().ImageTag(context.Background(), origTag, newTag); err != nil {
-		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
+	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
+		return log.Error(errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag))
 	}
 	return nil
 }

@@ -56,3 +56,6 @@ and we will add you. **All** contributors belong here. 💯
 * [Jérémy Audiger](https://github.com/jaudiger)
 * [Om More](https://github.com/thisisommore)
 * [Joshua Bezaleel Abednego](https://github.com/joshuabezaleel)
+* [Avinash Upadhyaya](https://github.com/avinashupadhya99)
+* [Mahendra Bishnoi](https://github.com/mahendrabishnoi2)
+* [Yingrong Zhao](https://github.com/VinozzZ)

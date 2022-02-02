@@ -1,13 +1,15 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -82,6 +84,7 @@ type PrintableDependency struct {
 }
 
 type PrintableParameter struct {
+	param       *bundle.Parameter
 	Name        string      `json:"name" yaml:"name"`
 	Type        interface{} `json:"type" yaml:"type"`
 	Default     interface{} `json:"default" yaml:"default"`
@@ -127,13 +130,13 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
+func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error {
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(cxt)
+	err = o.bundleFileOptions.Validate(pctx)
 	if err != nil {
 		return err
 	}
@@ -151,8 +154,8 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 	return nil
 }
 
-func (p *Porter) Explain(o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
+func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -228,6 +231,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 	sort.Sort(SortPrintableCredential(pb.Credentials))
 
 	for p, v := range bun.Parameters {
+		v := v // Go closures are funny like that
 		if bun.IsInternalParameter(p) || bun.ParameterHasSource(p) {
 			continue
 		}
@@ -239,7 +243,7 @@ func generatePrintable(bun cnab.ExtendedBundle, action string) (*PrintableBundle
 		if def == nil {
 			return nil, fmt.Errorf("empty definition for %s", v.Definition)
 		}
-		pp := PrintableParameter{}
+		pp := PrintableParameter{param: &v}
 		pp.Name = p
 		pp.Type = bun.GetParameterType(def)
 		pp.Default = def.Default
@@ -348,12 +352,12 @@ func (p *Porter) printCredentialsExplainBlock(bun *PrintableBundle) error {
 }
 func (p *Porter) printCredentialsExplainTable(bun *PrintableBundle) error {
 	printCredRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			c, ok := v.(PrintableCredential)
 			if !ok {
 				return nil
 			}
-			return []interface{}{c.Name, c.Description, c.Required, c.ApplyTo}
+			return []string{c.Name, c.Description, strconv.FormatBool(c.Required), c.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Credentials, printCredRow, "Name", "Description", "Required", "Applies To")
 }
@@ -374,12 +378,12 @@ func (p *Porter) printParametersExplainBlock(bun *PrintableBundle) error {
 }
 func (p *Porter) printParametersExplainTable(bun *PrintableBundle) error {
 	printParamRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			p, ok := v.(PrintableParameter)
 			if !ok {
 				return nil
 			}
-			return []interface{}{p.Name, p.Description, p.Type, p.Default, p.Required, p.ApplyTo}
+			return []string{p.Name, p.Description, fmt.Sprintf("%v", p.Type), fmt.Sprintf("%v", p.Default), strconv.FormatBool(p.Required), p.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Parameters, printParamRow, "Name", "Description", "Type", "Default", "Required", "Applies To")
 }
@@ -401,12 +405,12 @@ func (p *Porter) printOutputsExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printOutputsExplainTable(bun *PrintableBundle) error {
 	printOutputRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			o, ok := v.(PrintableOutput)
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Name, o.Description, o.Type, o.ApplyTo}
+			return []string{o.Name, o.Description, fmt.Sprintf("%v", o.Type), o.ApplyTo}
 		}
 	return printer.PrintTable(p.Out, bun.Outputs, printOutputRow, "Name", "Description", "Type", "Applies To")
 }
@@ -428,12 +432,12 @@ func (p *Porter) printActionsExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printActionsExplainTable(bun *PrintableBundle) error {
 	printActionRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			a, ok := v.(PrintableAction)
 			if !ok {
 				return nil
 			}
-			return []interface{}{a.Name, a.Description, a.Modifies, a.Stateless}
+			return []string{a.Name, a.Description, strconv.FormatBool(a.Modifies), strconv.FormatBool(a.Stateless)}
 		}
 	return printer.PrintTable(p.Out, bun.Actions, printActionRow, "Name", "Description", "Modifies Installation", "Stateless")
 }
@@ -456,12 +460,12 @@ func (p *Porter) printDependenciesExplainBlock(bun *PrintableBundle) error {
 
 func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 	printDependencyRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			o, ok := v.(PrintableDependency)
 			if !ok {
 				return nil
 			}
-			return []interface{}{o.Alias, o.Reference}
+			return []string{o.Alias, o.Reference}
 		}
 	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Reference")
 }
@@ -483,7 +487,8 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 	// Bundle installation instruction
 	var requiredParameterFlags string
 	for _, parameter := range bun.Parameters {
-		if parameter.Required {
+		// Only include parameters required for install
+		if parameter.Required && shouldIncludeInExplainOutput(parameter.param, cnab.ActionInstall) {
 			requiredParameterFlags += parameter.Name + "=TODO "
 		}
 	}

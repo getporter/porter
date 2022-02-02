@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -57,7 +58,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(claims.Installation{}, opts)
+		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition)
@@ -72,7 +73,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
-		args, err := p.BuildActionArgs(claims.Installation{}, opts)
+		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		assert.NotEmpty(t, args.BundleReference.Definition, "BundlePath was not populated correctly")
@@ -110,7 +111,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		err := opts.Validate(nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		existingInstall := claims.Installation{Name: opts.Name}
-		args, err := p.BuildActionArgs(existingInstall, opts)
+		args, err := p.BuildActionArgs(context.TODO(), existingInstall, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
 
 		expectedParams := map[string]interface{}{

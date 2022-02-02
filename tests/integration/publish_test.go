@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 	err = buildOpts.Validate(p.Porter)
 	require.NoError(t, err)
 
-	err = p.Build(buildOpts)
+	err = p.Build(context.Background(), buildOpts)
 	require.NoError(t, err)
 
 	publishOpts := porter.PublishOptions{}
@@ -39,6 +40,6 @@ func TestPublish_BuildWithVersionOverride(t *testing.T) {
 
 	// Confirm that publish picks up the version override
 	// (Otherwise, image tagging and publish will fail)
-	err = p.Publish(publishOpts)
+	err = p.Publish(context.Background(), publishOpts)
 	require.NoError(p.T(), err, "publish of bundle failed")
 }

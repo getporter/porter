@@ -110,7 +110,7 @@ func (p *Porter) PrintInstallationRuns(opts RunListOptions) error {
 				}
 				return []string{a.ClaimID, a.Action, tp.Format(a.Started), tp.Format(a.Stopped), a.Status}
 			}
-		return printer.PrintTableSection(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
+		return printer.PrintTable(p.Out, displayRuns, row, "Run ID", "Action", "Started", "Stopped", "Status")
 	}
 
 	return nil

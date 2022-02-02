@@ -6,8 +6,8 @@
 name: porter-hello
 version: 0.1.0
 description: "An example Porter configuration"
-# TODO: update the registry to your own, e.g. myregistry
-registry: getporter
+# registry where the bundle is published to by default
+registry: "localhost:5000"
 
 # If you want to customize the Dockerfile in use, uncomment the line below and update the referenced file. 
 # See https://porter.sh/custom-dockerfile/

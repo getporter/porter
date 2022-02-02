@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
 	containerdRemotes "github.com/containerd/containerd/remotes"
 	"github.com/docker/cli/cli/command"
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/opencontainers/go-digest"
@@ -63,7 +65,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 
 	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull remote bundle")
+		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull bundle")
 	}
 
 	invocationImage := bun.InvocationImages[0]
@@ -90,7 +92,11 @@ func (r *Registry) PushBundle(bundleRef cnab.BundleReference, insecureRegistry b
 
 	resolver := r.createResolver(insecureRegistries)
 
-	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate())
+	// Initialize the relocation map if necessary
+	if bundleRef.RelocationMap == nil {
+		bundleRef.RelocationMap = make(relocation.ImageRelocationMap)
+	}
+	rm, err := remotes.FixupBundle(context.Background(), &bundleRef.Definition.Bundle, bundleRef.Reference.Named, resolver, remotes.WithEventCallback(r.displayEvent), remotes.WithAutoBundleUpdate(), remotes.WithRelocationMap(bundleRef.RelocationMap))
 	if err != nil {
 		return cnab.BundleReference{}, errors.Wrap(err, "error preparing the bundle with cnab-to-oci before pushing")
 	}
@@ -187,4 +193,26 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 		return nil, err
 	}
 	return cli, nil
+}
+
+func (r *Registry) IsImageCached(invocationImage string) (bool, error) {
+	ctx := context.Background()
+
+	cli, err := r.getDockerClient()
+	if err != nil {
+		return false, err
+	}
+
+	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: invocationImage})}
+
+	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
+	if err != nil {
+		return false, errors.Wrapf(err, "could not list images")
+	}
+
+	if len(imageSummaries) == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

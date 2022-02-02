@@ -15,17 +15,17 @@ import (
 	"strconv"
 	"strings"
 
+	"get.porter.sh/porter/mage"
+
 	"get.porter.sh/porter/mage/docker"
 	// mage:import
 	"get.porter.sh/porter/mage/tests"
 	// mage:import
 	_ "get.porter.sh/porter/mage/docs"
 
-	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/releases"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
-	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
@@ -41,7 +41,6 @@ import (
 const (
 	PKG       = "get.porter.sh/porter"
 	GoVersion = ">=1.16"
-	mixinsURL = "https://cdn.porter.sh/mixins/"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}
@@ -51,15 +50,20 @@ func CheckGoVersion() {
 	tools.EnforceGoVersion(GoVersion)
 }
 
-// Build the porter and the exec mixin
+// Builds all code artifacts in the repository
 func Build() {
-	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin)
+	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
 	mg.Deps(GetMixins)
 }
 
 // Build the porter client and runtime
 func BuildPorter() {
+	mg.Deps(Tidy)
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+func Tidy() error {
+	return shx.Run("go", "mod", "tidy")
 }
 
 // Build the exec mixin client and runtime
@@ -67,9 +71,15 @@ func BuildExecMixin() {
 	mgx.Must(releases.BuildAll(PKG, "exec", "bin/mixins/exec"))
 }
 
+// Build the porter agent
+func BuildAgent() {
+	// the agent is only used embedded in a docker container, so we only build for linux
+	releases.XBuild(PKG, "agent", "bin", "linux", "amd64")
+}
+
 // Cross-compile porter and the exec mixin
 func XBuildAll() {
-	mg.Deps(XBuildPorter, XBuildMixins)
+	mg.Deps(XBuildPorter, XBuildMixins, BuildAgent)
 }
 
 // Cross-compile porter
@@ -99,26 +109,13 @@ func EnsureMage() error {
 }
 
 func Debug() {
-	mage.LoadMetadata()
+	releases.LoadMetadata()
 }
 
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
 // that GOPATH/bin is in PATH.
 func ConfigureAgent() error {
-	err := EnsureMage()
-	if err != nil {
-		return err
-	}
-
-	// Instruct Azure DevOps to add GOPATH/bin to PATH
-	gobin := gopath.GetGopathBin()
-	err = os.MkdirAll(gobin, 0700)
-	if err != nil {
-		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
-	}
-	fmt.Printf("Adding %s to the PATH\n", gobin)
-	fmt.Printf("##vso[task.prependpath]%s\n", gobin)
-	return nil
+	return mage.ConfigureAgent()
 }
 
 // Install mixins used by tests and example bundles, if not already installed
@@ -185,7 +182,13 @@ func Test() {
 
 // Run unit tests and verify integration tests compile
 func TestUnit() {
-	must.RunV("go", "test", "./...")
+	// Only do verbose output of tests when called with `mage -v TestSmoke`
+	v := ""
+	if mg.Verbose() {
+		v = "-v"
+	}
+
+	must.Command("go", "test", v, "./...").CollapseArgs().RunV()
 
 	// Verify integration tests compile since we don't run them automatically on pull requests
 	must.Run("go", "test", "-run=non", "-tags=integration", "./...")
@@ -219,7 +222,7 @@ func getDualPublish() bool {
 }
 
 func BuildImages() {
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 	registry := getRegistry()
 
 	buildImages(registry, info)
@@ -228,7 +231,7 @@ func BuildImages() {
 	}
 }
 
-func buildImages(registry string, info mage.GitMetadata) {
+func buildImages(registry string, info releases.GitMetadata) {
 	var g errgroup.Group
 
 	g.Go(func() error {
@@ -245,7 +248,7 @@ func buildImages(registry string, info mage.GitMetadata) {
 
 		// porter-agent does a FROM porter so they can't go in parallel
 		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
-		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", "build/images/agent")
+		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".")
 		if err != nil {
 			return err
 		}
@@ -269,7 +272,7 @@ func buildImages(registry string, info mage.GitMetadata) {
 func PublishImages() {
 	mg.Deps(BuildImages)
 
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 
 	pushImagesTo(getRegistry(), info)
 	if getDualPublish() {
@@ -284,11 +287,11 @@ func LocalPorterAgentBuild() {
 	// Force the image to be pushed to the registry even though it's a local dev build.
 	os.Setenv("PORTER_FORCE_PUBLISH", "true")
 
-	mg.SerialDeps(XBuildPorter, PublishImages)
+	mg.SerialDeps(XBuildPorter, BuildAgent, PublishImages)
 }
 
 // Only push tagged versions, canary and latest
-func pushImagesTo(registry string, info mage.GitMetadata) {
+func pushImagesTo(registry string, info releases.GitMetadata) {
 	if info.IsTaggedRelease {
 		pushImages(registry, info.Version)
 	}
@@ -315,7 +318,7 @@ func pushImage(img string) {
 func PublishPorter() {
 	mg.Deps(tools.EnsureGitHubClient, releases.ConfigureGitBot)
 
-	info := mage.LoadMetadata()
+	info := releases.LoadMetadata()
 
 	// Copy install scripts into version directory
 	must.Command("./scripts/prep-install-scripts.sh").Env("VERSION=" + info.Version).RunV()

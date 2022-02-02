@@ -86,6 +86,24 @@ func (c *Config) LoadData() error {
 		return err
 	}
 
+	if c.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+		// Now that we have completely loaded our config, configure our final logging/tracing
+		c.Context.ConfigureLogging(context.LogConfiguration{
+			StructuredLogs:       true,
+			LogToFile:            c.Data.Logs.Enabled,
+			LogDirectory:         filepath.Join(c.porterHome, "logs"),
+			LogLevel:             c.Data.Logs.Level.Level(),
+			TelemetryEnabled:     c.Data.Telemetry.Enabled,
+			TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
+			TelemetryProtocol:    c.Data.Telemetry.Protocol,
+			TelemetryInsecure:    c.Data.Telemetry.Insecure,
+			TelemetryCertificate: c.Data.Telemetry.Certificate,
+			TelemetryCompression: c.Data.Telemetry.Compression,
+			TelemetryTimeout:     c.Data.Telemetry.Timeout,
+			TelemetryHeaders:     c.Data.Telemetry.Headers,
+		})
+	}
+
 	if c.Debug {
 		ns := "''"
 		if c.Data.Namespace != "" {
@@ -241,4 +259,14 @@ func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
 // Example: Config.SetExperimentalFlags(experimental.FlagBuildDrivers | ...)
 func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 	c.experimental = &flags
+}
+
+// GetBuildDriver determines the correct build driver to use, taking
+// into account experimental flags.
+// Use this instead of Config.Data.BuildDriver directly.
+func (c *Config) GetBuildDriver() string {
+	if c.IsFeatureEnabled(experimental.FlagBuildDrivers) {
+		return c.Data.BuildDriver
+	}
+	return BuildDriverDocker
 }

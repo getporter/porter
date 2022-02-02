@@ -316,6 +316,45 @@
             "description": "Flags to pass to the command",
             "type": "object"
           },
+          "ignoreError": {
+            "additionalProperties": false,
+            "description": "Ignore the command's errors under certain conditions",
+            "properties": {
+              "all": {
+                "description": "Ignore all errors",
+                "type": "boolean"
+              },
+              "exitCodes": {
+                "description": "Ignore errors when one of the following exit codes are returned",
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              "output": {
+                "additionalProperties": false,
+                "description": "Ignore errors when the command's stderr meets certain conditions",
+                "properties": {
+                  "contains": {
+                    "description": "Ignore errors when stderr contains any of the following strings",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "regex": {
+                    "description": "Ignore errors when stderr matches any of the following regular expressions",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "outputs": {
             "description": "List of outputs to capture from the command output",
             "items": {

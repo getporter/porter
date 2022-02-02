@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zapcore"
 )
 
 type TestContext struct {
@@ -39,20 +40,27 @@ func NewTestContext(t *testing.T) *TestContext {
 	out := &bytes.Buffer{}
 	aggOut := io.MultiWriter(out, test.Logger{T: t})
 
+	innerContext := New()
+	innerContext.traceServiceName = "testporter"
+	innerContext.correlationId = "0"
+	innerContext.timestampLogs = false
+	innerContext.Debug = true
+	innerContext.environ = getEnviron()
+	innerContext.FileSystem = aferox.NewAferox("/", afero.NewMemMapFs())
+	innerContext.In = &bytes.Buffer{}
+	innerContext.Out = aggOut
+	innerContext.Err = aggErr
+	innerContext.ConfigureLogging(LogConfiguration{
+		LogLevel: zapcore.DebugLevel,
+	})
+	innerContext.PlugInDebugContext = &PluginDebugContext{
+		DebuggerPort:           "2735",
+		RunPlugInInDebugger:    "",
+		PlugInWorkingDirectory: "",
+	}
+
 	c := &TestContext{
-		Context: &Context{
-			Debug:      true,
-			environ:    getEnviron(),
-			FileSystem: aferox.NewAferox("/", afero.NewMemMapFs()),
-			In:         &bytes.Buffer{},
-			Out:        aggOut,
-			Err:        aggErr,
-			PlugInDebugContext: &PluginDebugContext{
-				DebuggerPort:           "2735",
-				RunPlugInInDebugger:    "",
-				PlugInWorkingDirectory: "",
-			},
-		},
+		Context:     innerContext,
 		capturedOut: out,
 		capturedErr: err,
 		T:           t,
@@ -71,6 +79,8 @@ func NewTestCommand(c *Context) CommandBuilder {
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
 			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
+			fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, c.Getenv(test.ExpectedCommandExitCodeEnv)),
+			fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, c.Getenv(test.ExpectedCommandErrorEnv)),
 		}
 
 		return cmd

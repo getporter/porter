@@ -90,3 +90,9 @@ func getKindVersion() string {
 	}
 	return DefaultKindVersion
 }
+
+// Install the latest version of porter
+func EnsurePorter() {
+	err := pkg.DownloadToGopathBin("https://cdn.porter.sh/{{.VERSION}}/porter-{{.GOOS}}-{{.GOARCH}}{{.EXT}}", "porter", "latest")
+	mgx.Must(err)
+}

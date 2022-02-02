@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/build"
@@ -11,7 +12,7 @@ import (
 
 // ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
-func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) (cnab.BundleReference, error) {
+func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFileOptions) (cnab.BundleReference, error) {
 	if opts.File == "" {
 		return cnab.BundleReference{}, nil
 	}
@@ -28,7 +29,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(opts bundleFileOptions) (cnab.Bundl
 		opts.CNABFile = ""
 		buildOpts := BuildOptions{bundleFileOptions: opts}
 		buildOpts.Validate(p)
-		err := p.Build(buildOpts)
+		err := p.Build(ctx, buildOpts)
 		if err != nil {
 			return cnab.BundleReference{}, err
 		}
@@ -58,6 +59,21 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 		bun, err := cnab.LoadBundle(p.Context, opts.CNABFile)
 		if err != nil {
 			return false, errors.Wrapf(err, "could not marshal data from %s", opts.CNABFile)
+		}
+
+		// Check whether invocation images exist in host registry.
+		for _, invocationImage := range bun.InvocationImages {
+			isImageCached, err := p.Registry.IsImageCached(invocationImage.Image)
+			if err != nil {
+				return false, err
+			}
+
+			if !isImageCached {
+				if p.Debug {
+					fmt.Fprintln(p.Err, errors.New(fmt.Sprintf("Invocation image %s doesn't exist in the local image cache, will need to build first", invocationImage.Image)))
+				}
+				return false, nil
+			}
 		}
 
 		oldStamp, err := configadapter.LoadStamp(bun)

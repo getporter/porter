@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,14 +39,26 @@ func TestTemplates_GetDockerfile(t *testing.T) {
 	for _, driver := range testcases {
 		c := config.NewTestConfig(t)
 		c.Data.BuildDriver = driver
+		c.SetExperimentalFlags(experimental.FlagBuildDrivers)
 		tmpl := NewTemplates(c.Config)
 
 		gotTmpl, err := tmpl.GetDockerfile()
 		require.NoError(t, err)
 
-		wantTmpl, _ := ioutil.ReadFile(fmt.Sprintf("./templates/build/%s.Dockerfile", driver))
-		assert.Equal(t, wantTmpl, gotTmpl)
+		test.CompareGoldenFile(t, fmt.Sprintf("./templates/build/%s.Dockerfile", driver), string(gotTmpl))
 	}
+
+	t.Run("experimental flag required to use buildkit", func(t *testing.T) {
+		// Should use the docker template because the experimental feature isn't set
+		c := config.NewTestConfig(t)
+		c.Data.BuildDriver = "buildkit"
+		tmpl := NewTemplates(c.Config)
+
+		gotTmpl, err := tmpl.GetDockerfile()
+		require.NoError(t, err)
+
+		test.CompareGoldenFile(t, "./templates/build/docker.Dockerfile", string(gotTmpl))
+	})
 }
 
 func TestTemplates_GetCredentialSetJSON(t *testing.T) {

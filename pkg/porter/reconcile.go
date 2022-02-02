@@ -1,15 +1,18 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/google/go-cmp/cmp"
 	_ "github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type ReconcileOptions struct {
@@ -30,7 +33,8 @@ type ReconcileOptions struct {
 // is executed to bring them in sync.
 // This is only used for install/upgrade actions triggered by applying a file
 // to an installation. For uninstall or invoke, you should call those directly.
-func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
+func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Reconciling %s/%s installation\n", opts.Namespace, opts.Name)
 	}
@@ -56,10 +60,17 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 	}
 
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC
-	var actionOpts BundleAction = NewUpgradeOptions()
-	if !opts.Installation.Status.InstallationCompleted {
+	var actionOpts BundleAction
+	if opts.Installation.IsInstalled() {
+		if opts.Installation.Uninstalled {
+			actionOpts = NewUninstallOptions()
+		} else {
+			actionOpts = NewUpgradeOptions()
+		}
+	} else {
 		actionOpts = NewInstallOptions()
 	}
+
 	lifecycleOpts := actionOpts.GetOptions()
 	lifecycleOpts.Reference = ref.String()
 	lifecycleOpts.Name = opts.Name
@@ -69,7 +80,7 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
-	bundleRef, err := p.resolveBundleReference(actionOpts.GetOptions())
+	bundleRef, err := p.resolveBundleReference(ctx, actionOpts.GetOptions())
 	if err != nil {
 		return err
 	}
@@ -86,7 +97,7 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 	}
 
 	// Determine if the installation's desired state is out of sync with reality 🤯
-	inSync, err := p.IsInstallationInSync(opts.Installation, lastRun, actionOpts)
+	inSync, err := p.IsInstallationInSync(ctx, opts.Installation, lastRun, actionOpts)
 	if err != nil {
 		return err
 	}
@@ -100,7 +111,7 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 		}
 	}
 
-	fmt.Fprintf(p.Out, "The installation is out-of-sync, running the %s action...\n", actionOpts.GetAction())
+	log.Infof("The installation is out-of-sync, running the %s action...", actionOpts.GetAction())
 	if err := actionOpts.Validate(nil, p); err != nil {
 		return err
 	}
@@ -110,32 +121,68 @@ func (p *Porter) ReconcileInstallation(opts ReconcileOptions) error {
 		return nil
 	}
 
-	return p.ExecuteAction(opts.Installation, actionOpts)
+	return p.ExecuteAction(ctx, opts.Installation, actionOpts)
 }
 
 // IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
-func (p *Porter) IsInstallationInSync(i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
-	// Have we successfully completed the install action?
-	if !i.Status.InstallationCompleted || lastRun == nil {
-		fmt.Fprintln(p.Err, "Triggering because the installation has not completed successfully yet")
+func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	// Only print out info messages if we are triggering a bundle run. Otherwise, keep the explanations in debug output.
+
+	// Has it been uninstalled? If so, we don't ever reconcile it again
+	if i.IsUninstalled() {
+		log.Info("Ignoring because the installation is uninstalled")
+		return true, nil
+	}
+
+	// Should we uninstall it?
+	if i.Uninstalled {
+		// Only try to uninstall if it's been installed before
+		if i.IsInstalled() {
+			log.Info("Triggering because installation.uninstalled is true")
+			return false, nil
+		}
+
+		// Otherwise ignore this installation
+		log.Info("Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
+		return true, nil
+	} else {
+		// Should we install it?
+		if !i.IsInstalled() {
+			log.Info("Triggering because the installation has not completed successfully yet")
+			return false, nil
+		}
+	}
+
+	// We want to upgrade but we don't have values to compare against
+	// This shouldn't happen but check just in case
+	if lastRun == nil {
+		log.Info("Triggering because the last run for the installation wasn't recorded")
 		return false, nil
 	}
 
+	// Figure out if we need to upgrade
 	opts := action.GetOptions()
 
-	newRef, err := p.resolveBundleReference(opts)
+	newRef, err := p.resolveBundleReference(ctx, opts)
 	if err != nil {
 		return false, err
 	}
 
 	// Has the bundle definition changed?
 	if lastRun.BundleDigest != newRef.Digest.String() {
-		fmt.Fprintf(p.Err, "Triggering because the bundle definition has changed from %s(%s) to %s(%s)\n", lastRun.BundleReference, lastRun.BundleDigest, newRef.Reference, newRef.Digest)
+		log.Info("Triggering because the bundle definition has changed",
+			attribute.String("oldReference", lastRun.BundleReference),
+			attribute.String("oldDigest", lastRun.BundleDigest),
+			attribute.String("newReference", newRef.Reference.String()),
+			attribute.String("newDigest", newRef.Digest.String()))
 		return false, nil
 	}
 
-	// Has the bundle parameters changed?
+	// Have the bundle parameters changed?
 	if err := opts.LoadParameters(p); err != nil {
 		return false, err
 	}
@@ -187,7 +234,8 @@ func (p *Porter) IsInstallationInSync(i claims.Installation, lastRun *claims.Run
 
 	if !cmp.Equal(oldParams, newParams) {
 		diff := cmp.Diff(oldParams, newParams)
-		fmt.Fprintf(p.Err, "Triggering because the parameters have changed.\nDiff:\n%s\n", diff)
+		log.Info("Triggering because the parameters have changed",
+			attribute.String("diff", diff))
 		return false, nil
 	}
 
@@ -198,7 +246,8 @@ func (p *Porter) IsInstallationInSync(i claims.Installation, lastRun *claims.Run
 	sort.Strings(i.CredentialSets)
 	if !cmp.Equal(lastRun.CredentialSets, i.CredentialSets) {
 		diff := cmp.Diff(lastRun.CredentialSets, i.CredentialSets)
-		fmt.Fprintf(p.Err, "Triggering because the credential set names have changed.\nDiff:\n%s\n", diff)
+		log.Info("Triggering because the credential set names have changed",
+			attribute.String("diff", diff))
 		return false, nil
 	}
 	return true, nil

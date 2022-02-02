@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -63,12 +64,12 @@ func (p *Porter) PrintParameters(opts ListOptions) error {
 		}
 
 		printParamRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				cr, ok := v.(parameters.ParameterSet)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, params, printParamRow,
 			"NAMESPACE", "NAME", "MODIFIED")
@@ -112,8 +113,8 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 // GenerateParameters builds a new parameter set based on the given options. This can be either
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
-func (p *Porter) GenerateParameters(opts ParameterOptions) error {
-	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
+func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
 
 	if err != nil {
 		return err
