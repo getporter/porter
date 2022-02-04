@@ -2,7 +2,6 @@ package porter
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"get.porter.sh/porter/pkg/build"
@@ -69,8 +68,6 @@ func (o *BuildOptions) Validate(p *Porter) error {
 }
 
 func (o *BuildOptions) parseCustomInputs() error {
-	log.Println(o.Customs)
-
 	p, err := parameters.ParseVariableAssignments(o.Customs)
 	if err != nil {
 		return err
@@ -143,8 +140,6 @@ func (p *Porter) Build(opts BuildOptions) error {
 	}
 
 	builder := p.GetBuilder()
-
-	log.Printf("p.Manifest on build.go = %+v", p.Manifest)
 
 	return errors.Wrap(builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }

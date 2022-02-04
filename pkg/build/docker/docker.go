@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"reflect"
 
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -31,9 +32,19 @@ func NewBuilder(cxt *portercontext.Context) *Builder {
 }
 
 func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
-	log.Printf("p.Manifest on build/docker.go = %+v", manifest)
+	buildArgs := make(map[string]*string)
+	buildArgs["BUNDLE_DIR"] = &build.BUNDLE_DIR
 
-	a := "JOBEL"
+	for customArgKey, customArgValue := range manifest.Custom {
+		for reflect.TypeOf(customArgValue) != string {
+
+		}
+
+		customArgValueString := fmt.Sprint(customArgValue)
+		buildArgs[customArgKey] = &customArgValueString
+	}
+
+	log.Println(buildArgs)
 
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
@@ -42,10 +53,7 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 		Remove:         true,
 		Tags:           []string{manifest.Image},
 		Dockerfile:     filepath.ToSlash(build.DOCKER_FILE),
-		BuildArgs: map[string]*string{
-			"BUNDLE_DIR": &build.BUNDLE_DIR,
-			"JOBEL":      &a,
-		},
+		BuildArgs:      buildArgs,
 	}
 
 	excludes, err := clibuild.ReadDockerignore(b.Getwd())

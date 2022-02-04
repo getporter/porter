@@ -1,0 +1,20 @@
+name: porter-hello
+version: 0.1.0
+description: "A bundle with a custom action"
+registry: getporter
+
+custom:
+  customKey1: "customValue1"
+  customKey2:
+    nestedCustomKey2: "customValue2"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "custom arguments"
+      command: echo
+      arguments:
+        - "{{ bundle.custom.customKey1 }}"
+        - "{{ bundle.custom.customKey2.nestedCustomKey2 }}"

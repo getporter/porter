@@ -1,5 +1,3 @@
-// +build integration
-
 package porter
 
 import (
@@ -228,4 +226,29 @@ func TestBuildOptions_Defaults(t *testing.T) {
 		require.NoError(t, err, "Validate failed")
 		assert.Equal(t, config.BuildDriverDocker, opts.Driver)
 	})
+}
+
+func TestPorter_BuildWithCustomValues(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	configTpl, err := p.Templates.GetManifest()
+	require.Nil(t, err)
+	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+
+	err = p.LoadManifestFrom(config.Name)
+	require.NoError(t, err)
+
+	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1", "customKey2.nestedCustomKey2=editedCustomValue2"}}
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
+
+	err = p.Build(opts)
+	require.NoError(t, err)
+
+	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+
+	assert.Equal(t, len(bun.Custom), 2)
+	t.Log(bun.Custom)
+
 }

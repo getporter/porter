@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -38,8 +37,6 @@ func NewBuilder(cxt *portercontext.Context) *Builder {
 }
 
 func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
-	log.Printf("p.Manifest on buildx.go = %+v", manifest)
-
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	cli, err := command.NewDockerCli()
 	if err != nil {
@@ -61,6 +58,13 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 		},
 	}
 
+	buildArgs := make(map[string]string)
+	buildArgs["BUNDLE_DIR"] = build.BUNDLE_DIR
+
+	for customArgKey, customArgValue := range manifest.Custom {
+		buildArgs[customArgKey] = fmt.Sprint(customArgValue)
+	}
+
 	opts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -69,11 +73,8 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 				DockerfilePath: filepath.Join(b.Getwd(), build.DOCKER_FILE),
 				InStream:       b.In,
 			},
-			BuildArgs: map[string]string{
-				"BUNDLE_DIR": build.BUNDLE_DIR,
-				"JOBEL":      "JOBEL",
-			},
-			Session: []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)},
+			BuildArgs: buildArgs,
+			Session:   []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)},
 		},
 	}
 
