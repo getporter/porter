@@ -54,7 +54,7 @@ and executing the commands.
    If you are new to Git or GitHub, we recommend reading the [GitHub Guides].
    They will walk you through installing Git, forking a repository and
    submitting a pull request.
-* [Go](https://golang.org/doc/install) version 1.16 or higher
+* [Go](https://golang.org/doc/install) version 1.17 or higher
 * [Docker]
 * Make. You can install it with a package manager such as apt-get, or homebrew.
 * [Mage](#install-mage)
