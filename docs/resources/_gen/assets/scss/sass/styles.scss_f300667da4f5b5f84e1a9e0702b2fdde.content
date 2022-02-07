@@ -7252,12 +7252,9 @@ nav.home-nav {
   .blog-layout .main.blog .content-wrap article {
     padding: 0; }
     .blog-layout .main.blog .content-wrap article h2 {
-      padding-top: 4rem;
-      margin-bottom: 0;
       text-transform: capitalize;
       letter-spacing: 0.05em;
-      font-size: 2rem;
-      margin: 0 0 1rem; }
+      font-size: 2rem; }
     .blog-layout .main.blog .content-wrap article p.date {
       margin-top: 0;
       padding-top: 0;
@@ -8139,7 +8136,8 @@ body {
   .main .content-wrap h1 {
     text-transform: none;
     letter-spacing: 0.03em;
-    margin-top: 1em; }
+    margin-top: 1em;
+    scroll-margin-top: 1.6em; }
   .main .content-wrap article {
     padding: 2em 0 0;
     overflow: auto; }
@@ -8159,7 +8157,8 @@ body {
     letter-spacing: 0.25em;
     letter-spacing: 0.125em;
     margin: 0em 0 0.875em;
-    padding-top: 1em; }
+    padding-top: 1em;
+    scroll-margin-top: 2.5em; }
   .main .content-wrap h3 {
     color: #333333;
     font-family: "klinic-bold", "klinic bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -8249,12 +8248,14 @@ body {
     .main .content-wrap .header-link:hover {
       border-bottom: none;
       background-color: transparent; }
+  .main .content-wrap h1:hover,
   .main .content-wrap h2:hover,
   .main .content-wrap h3:hover,
   .main .content-wrap h4:hover,
   .main .content-wrap h5:hover,
   .main .content-wrap h6:hover {
     color: #277A9F; }
+    .main .content-wrap h1:hover .header-link,
     .main .content-wrap h2:hover .header-link,
     .main .content-wrap h3:hover .header-link,
     .main .content-wrap h4:hover .header-link,

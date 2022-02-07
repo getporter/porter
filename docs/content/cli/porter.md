@@ -40,6 +40,7 @@ porter [flags]
 * [porter archive](/cli/porter_archive/)	 - Archive a bundle from a reference
 * [porter build](/cli/porter_build/)	 - Build a bundle
 * [porter bundles](/cli/porter_bundles/)	 - Bundle commands
+* [porter completion](/cli/porter_completion/)	 - Generate completion script
 * [porter copy](/cli/porter_copy/)	 - Copy a bundle
 * [porter create](/cli/porter_create/)	 - Create a bundle
 * [porter credentials](/cli/porter_credentials/)	 - Credentials commands
