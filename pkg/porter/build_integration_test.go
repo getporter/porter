@@ -3,7 +3,6 @@
 package porter
 
 import (
-	"context"
 	"encoding/json"
 	"io/fs"
 	"os"
@@ -40,7 +39,7 @@ func TestPorter_Build(t *testing.T) {
 	opts := BuildOptions{}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.Build(context.Background(), opts)
+	err = p.Build(opts)
 	require.NoError(t, err)
 
 	// Check file permissions on .cnab contents
@@ -115,7 +114,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
-		err = p.Build(context.Background(), opts)
+		err = p.Build(opts)
 		require.Errorf(t, err, "Build should have been aborted with lint errors")
 		assert.Contains(t, err.Error(), "Lint errors were detected")
 	})
@@ -134,7 +133,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
-		err = p.Build(context.Background(), opts)
+		err = p.Build(opts)
 		require.NoError(t, err, "Build failed but should have not run lint")
 	})
 
@@ -229,25 +228,4 @@ func TestBuildOptions_Defaults(t *testing.T) {
 		require.NoError(t, err, "Validate failed")
 		assert.Equal(t, config.BuildDriverDocker, opts.Driver)
 	})
-}
-
-func TestPorter_BuildWithCustomValues(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-custom-values.yaml", config.Name)
-
-	err := p.LoadManifestFrom(config.Name)
-	require.NoError(t, err)
-
-	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
-	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
-
-	err = p.Build(opts)
-	require.NoError(t, err)
-
-	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
-	require.NoError(t, err)
-
-	assert.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
 }

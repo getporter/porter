@@ -1,13 +1,12 @@
 package porter
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
@@ -29,7 +28,7 @@ func TestGenerateNoName(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
 
 	creds, err := p.Credentials.GetCredentialSet("", "porter-hello")
@@ -55,7 +54,7 @@ func TestGenerateNameProvided(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(opts)
 	require.NoError(t, err, "no error should have existed")
 	creds, err := p.Credentials.GetCredentialSet(opts.Namespace, "kool-kred")
 	require.NoError(t, err, "expected credential to have been generated")
@@ -76,43 +75,44 @@ func TestGenerateBadNameProvided(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(opts)
 	require.Error(t, err, "name is invalid, we should have had an error")
 	_, err = p.Credentials.GetCredentialSet("", "this.isabadname")
 	require.Error(t, err, "expected credential to not exist")
 }
 
 type CredentialsListTest struct {
-	name       string
-	format     printer.Format
-	wantOutput string
-	errorMsg   string
+	name         string
+	format       printer.Format
+	wantContains []string
+	errorMsg     string
 }
 
 func TestCredentialsList_None(t *testing.T) {
 	testcases := []CredentialsListTest{
 		{
-			name:     "invalid format",
-			format:   "wingdings",
-			errorMsg: "invalid format: wingdings",
+			name:         "invalid format",
+			format:       "wingdings",
+			wantContains: []string{},
+			errorMsg:     "invalid format: wingdings",
 		},
 		{
-			name:       "json",
-			format:     printer.FormatJson,
-			wantOutput: "testdata/credentials/list-output.json",
-			errorMsg:   "",
+			name:         "json",
+			format:       printer.FormatJson,
+			wantContains: []string{"[]\n"},
+			errorMsg:     "",
 		},
 		{
-			name:       "yaml",
-			format:     printer.FormatYaml,
-			wantOutput: "testdata/credentials/list-output.yaml",
-			errorMsg:   "",
+			name:         "yaml",
+			format:       printer.FormatYaml,
+			wantContains: []string{"[]\n"},
+			errorMsg:     "",
 		},
 		{
-			name:       "plaintext",
-			format:     printer.FormatPlaintext,
-			wantOutput: "testdata/credentials/list-output.txt",
-			errorMsg:   "",
+			name:         "plaintext",
+			format:       printer.FormatPlaintext,
+			wantContains: []string{"NAME   MODIFIED\n"},
+			errorMsg:     "",
 		},
 	}
 
@@ -128,8 +128,11 @@ func TestCredentialsList_None(t *testing.T) {
 				require.Equal(t, err.Error(), tc.errorMsg)
 			} else {
 				require.NoError(t, err, "no error should have existed")
-				gotOutput := p.TestConfig.TestContext.GetOutput()
-				test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
+			}
+
+			gotOutput := p.TestConfig.TestContext.GetOutput()
+			for _, contains := range tc.wantContains {
+				require.Contains(t, gotOutput, contains)
 			}
 		})
 	}
@@ -138,19 +141,28 @@ func TestCredentialsList_None(t *testing.T) {
 func TestPorter_PrintCredentials(t *testing.T) {
 	testcases := []CredentialsListTest{
 		{
-			name:       "json",
-			format:     printer.FormatJson,
-			wantOutput: "testdata/credentials/show-output.json",
+			name:         "json",
+			format:       printer.FormatJson,
+			wantContains: []string{"\"namespace\": \"dev\",\n    \"name\": \"kool-kreds\""},
+			errorMsg:     "",
 		},
 		{
-			name:       "yaml",
-			format:     printer.FormatYaml,
-			wantOutput: "testdata/credentials/show-output.yaml",
+			name:         "yaml",
+			format:       printer.FormatYaml,
+			wantContains: []string{"namespace: dev\n  name: kool-kreds"},
+			errorMsg:     "",
 		},
 		{
-			name:       "plaintext",
-			format:     printer.FormatPlaintext,
-			wantOutput: "testdata/credentials/show-output.txt",
+			name:         "plaintext",
+			format:       printer.FormatPlaintext,
+			wantContains: []string{"NAMESPACE   NAME         MODIFIED\ndev         kool-kreds   2019-06-24"},
+			errorMsg:     "",
+		},
+		{
+			name:         "error",
+			format:       printer.FormatPlaintext,
+			wantContains: []string{},
+			errorMsg:     "",
 		},
 	}
 
@@ -168,7 +180,9 @@ func TestPorter_PrintCredentials(t *testing.T) {
 			require.NoError(t, err)
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
-			test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
+			for _, contains := range tc.wantContains {
+				require.Contains(t, gotOutput, contains)
+			}
 		})
 	}
 }
@@ -346,14 +360,14 @@ func TestCredentialsDelete(t *testing.T) {
 
 func TestApplyOptions_Validate(t *testing.T) {
 	t.Run("no file specified", func(t *testing.T) {
-		tc := portercontext.NewTestContext(t)
+		tc := context.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, nil)
 		require.EqualError(t, err, "a file argument is required")
 	})
 
 	t.Run("one file specified", func(t *testing.T) {
-		tc := portercontext.NewTestContext(t)
+		tc := context.NewTestContext(t)
 		tc.AddTestFileFromRoot("tests/testdata/creds/mybuns.yaml", "mybuns.yaml")
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
@@ -362,7 +376,7 @@ func TestApplyOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("missing file specified", func(t *testing.T) {
-		tc := portercontext.NewTestContext(t)
+		tc := context.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml"})
 		require.Error(t, err)
@@ -370,7 +384,7 @@ func TestApplyOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("two files specified", func(t *testing.T) {
-		tc := portercontext.NewTestContext(t)
+		tc := context.NewTestContext(t)
 		opts := ApplyOptions{}
 		err := opts.Validate(tc.Context, []string{"mybuns.yaml", "yourbuns.yaml"})
 		require.Error(t, err)

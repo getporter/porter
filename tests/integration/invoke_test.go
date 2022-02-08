@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +28,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
 	// Invoke the custom action
@@ -37,7 +36,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	invokeOpts.Action = "zombies"
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
-	err = p.InvokeBundle(context.Background(), invokeOpts)
+	err = p.InvokeBundle(invokeOpts)
 	require.NoError(t, err, "invoke should have succeeded")
 
 	gotOutput := p.TestConfig.TestContext.GetOutput()

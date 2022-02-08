@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ func TestArchive_ParentDirDoesNotExist(t *testing.T) {
 	err := opts.Validate([]string{"/path/to/file"}, p.Porter)
 	require.NoError(t, err, "expected no validation error to occur")
 
-	err = p.Archive(context.Background(), opts)
+	err = p.Archive(opts)
 	require.EqualError(t, err, "parent directory \"/path/to\" does not exist")
 }
 

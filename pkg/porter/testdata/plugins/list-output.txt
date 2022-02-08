@@ -1,6 +1,0 @@
-------------------------------------
-  Name     Version  Author          
-------------------------------------
-  plugin1  v1.0     Porter Authors  
-  plugin2  v1.0     Porter Authors  
-  unknown  v1.0     Porter Authors  

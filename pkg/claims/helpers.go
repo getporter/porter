@@ -54,8 +54,8 @@ func (p *TestClaimProvider) CreateInstallation(i Installation, transformations .
 }
 
 func (p *TestClaimProvider) SetMutableInstallationValues(i *Installation) {
-	i.Status.Created = now
-	i.Status.Modified = now
+	i.Created = now
+	i.Modified = now
 }
 
 // CreateRun creates a new claim and saves it.

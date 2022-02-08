@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
-	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
 	"github.com/pkg/errors"
 )
@@ -98,7 +96,7 @@ func (l DisplayInstallations) Swap(i, j int) {
 }
 
 func (l DisplayInstallations) Less(i, j int) bool {
-	return l[i].Status.Modified.Before(l[j].Status.Modified)
+	return l[i].Modified.Before(l[j].Modified)
 }
 
 type DisplayRun struct {
@@ -120,21 +118,20 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
+		// TODO(carolynvs): Add command to view all installation runs
+		//Status: run.GetStatus(),
 	}
 }
 
 // ListInstallations lists installed bundles.
-func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]claims.Installation, error) {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
-
+func (p *Porter) ListInstallations(opts ListOptions) ([]claims.Installation, error) {
 	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())
 	return installations, errors.Wrap(err, "could not list installations")
 }
 
 // PrintInstallations prints installed bundles.
-func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error {
-	installations, err := p.ListInstallations(ctx, opts)
+func (p *Porter) PrintInstallations(opts ListOptions) error {
+	installations, err := p.ListInstallations(opts)
 	if err != nil {
 		return err
 	}
@@ -158,12 +155,12 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 		}
 
 		row :=
-			func(v interface{}) []string {
+			func(v interface{}) []interface{} {
 				cl, ok := v.(DisplayInstallation)
 				if !ok {
 					return nil
 				}
-				return []string{cl.Namespace, cl.Name, tp.Format(cl.Status.Created), tp.Format(cl.Status.Modified), cl.Status.Action, cl.Status.ResultStatus}
+				return []interface{}{cl.Namespace, cl.Name, tp.Format(cl.Created), tp.Format(cl.Modified), cl.Status.Action, cl.Status.ResultStatus}
 			}
 		return printer.PrintTable(p.Out, displayInstallations, row,
 			"NAMESPACE", "NAME", "CREATED", "MODIFIED", "LAST ACTION", "LAST STATUS")

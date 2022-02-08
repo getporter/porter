@@ -1,22 +1,18 @@
 package buildkit
 
 import (
-	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
-	"get.porter.sh/porter/pkg/tracing"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/containerd/console"
 
 	"get.porter.sh/porter/pkg/build"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/containerd/console"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/driver"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
@@ -31,72 +27,35 @@ import (
 )
 
 type Builder struct {
-	*config.Config
+	*portercontext.Context
 }
 
-func NewBuilder(cfg *config.Config) *Builder {
+func NewBuilder(cxt *portercontext.Context) *Builder {
 	return &Builder{
-		Config: cfg,
+		Context: cxt,
 	}
 }
 
-var _ io.Writer = unstructuredLogger{}
-
-// take lines from the docker output, and write them as info messages
-// This allows the docker library to use our logger like an io.Writer
-type unstructuredLogger struct {
-	logger tracing.TraceLogger
-}
-
-var newline = []byte("\n")
-
-func (l unstructuredLogger) Write(p []byte) (n int, err error) {
-	if l.logger == nil {
-		return 0, nil
-	}
-
-	msg := string(bytes.TrimSuffix(p, newline))
-	l.logger.Info(msg)
-	return len(p), nil
-}
-
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
-	ctx, log := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
-	defer log.EndSpan()
-
-	log.Info("Building invocation image")
-
+func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
+	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	cli, err := command.NewDockerCli()
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not create new docker client"))
+		return errors.Wrap(err, "could not create new docker client")
 	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return log.Error(errors.Wrapf(err, "error initializing docker client"))
+		return errors.Wrapf(err, "error initializing docker client")
 	}
 
+	ctx := context.Background()
 	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), cli.ConfigFile(), nil, nil, "", nil, nil, b.Getwd())
 	if err != nil {
-		return log.Error(errors.Wrapf(err, "error loading buildx driver"))
+		return errors.Wrapf(err, "error loading buildx driver")
 	}
-
 	drivers := []buildx.DriverInfo{
 		{
 			Name:   "default",
 			Driver: d,
 		},
-	}
-
-	buildArgs := make(map[string]string)
-	buildArgs["BUNDLE_DIR"] = build.BUNDLE_DIR
-
-	convertedCustomInput := make(map[string]string)
-	convertedCustomInput, err = convertMap(manifest.Custom)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range convertedCustomInput {
-		buildArgs[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = v
 	}
 
 	opts := map[string]buildx.Options{
@@ -107,21 +66,20 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 				DockerfilePath: filepath.Join(b.Getwd(), build.DOCKER_FILE),
 				InStream:       b.In,
 			},
-			BuildArgs: buildArgs,
-			Session:   []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)},
+			BuildArgs: map[string]string{
+				"BUNDLE_DIR": build.BUNDLE_DIR,
+			},
+			Session: []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)},
 		},
 	}
 
 	out := ioutil.Discard
-	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
-		defer log.EndSpan()
-		out = unstructuredLogger{log}
+	if b.IsVerbose() {
+		out = b.Out
 	}
-
 	dockerOut, err := getConsole(out)
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not retrieve docker build output"))
+		return errors.Wrap(err, "could not retrieve docker build output")
 	}
 	defer dockerOut.Close()
 
@@ -130,9 +88,9 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	printErr := printer.Wait()
 
 	if buildErr == nil {
-		return log.Error(errors.Wrapf(printErr, "error with docker printer"))
+		return errors.Wrapf(printErr, "error with docker printer")
 	}
-	return log.Error(errors.Wrapf(buildErr, "error building docker image"))
+	return errors.Wrapf(buildErr, "error building docker image")
 }
 
 var _ console.File = dockerConsole{}
@@ -202,45 +160,17 @@ func (d dockerToBuildx) DockerAPI(_ string) (dockerclient.APIClient, error) {
 	return dockerclient.NewClientWithOpts(clientOpts...)
 }
 
-func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
-	ctx, log := tracing.StartSpan(ctx, attribute.String("source-tag", origTag), attribute.String("destination-tag", newTag))
-	defer log.EndSpan()
-
+func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 	cli, err := command.NewDockerCli()
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not create new docker client"))
+		return errors.Wrap(err, "could not create new docker client")
 	}
 	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
-		return log.Error(errors.Wrap(err, "could not initialize a new docker client"))
+		return err
 	}
 
-	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
-		return log.Error(errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag))
+	if err := cli.Client().ImageTag(context.Background(), origTag, newTag); err != nil {
+		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
 	}
 	return nil
-}
-
-func convertMap(mapInput map[string]interface{}) (map[string]string, error) {
-	out := make(map[string]string)
-	for key, value := range mapInput {
-		switch v := value.(type) {
-		case string:
-			out[key] = v
-		case map[string]interface{}:
-			tmp, err := convertMap(v)
-			if err != nil {
-				return nil, err
-			}
-			for innerKey, innerValue := range tmp {
-				out[key+"."+innerKey] = innerValue
-			}
-		case map[string]string:
-			for innerKey, innerValue := range v {
-				out[key+"."+innerKey] = innerValue
-			}
-		default:
-			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
-		}
-	}
-	return out, nil
 }

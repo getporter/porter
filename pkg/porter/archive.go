@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -42,13 +41,13 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 // Archive is a composite function that generates a CNAB thick bundle. It will pull the invocation image, and
 // any referenced images locally (if needed), export them to individual layers, generate a bundle.json and
 // then generate a gzipped tar archive containing the bundle.json and the images
-func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
+func (p *Porter) Archive(opts ArchiveOptions) error {
 	dir := filepath.Dir(opts.ArchiveFile)
 	if _, err := p.Config.FileSystem.Stat(dir); os.IsNotExist(err) {
 		return fmt.Errorf("parent directory %q does not exist", dir)
 	}
 
-	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}

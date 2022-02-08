@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -29,8 +28,8 @@ type PrintableImage struct {
 	Original string `json:"originalImage" yaml:"originalImage"`
 }
 
-func (p *Porter) Inspect(ctx context.Context, o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
+func (p *Porter) Inspect(o ExplainOpts) error {
+	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -115,12 +114,12 @@ func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error 
 
 func (p *Porter) printInvocationImageInspectTable(bun *InspectableBundle) error {
 	printInvocationImageRow :=
-		func(v interface{}) []string {
+		func(v interface{}) []interface{} {
 			ii, ok := v.(PrintableInvocationImage)
 			if !ok {
 				return nil
 			}
-			return []string{ii.Image, ii.ImageType, ii.Digest, ii.Original}
+			return []interface{}{ii.Image, ii.ImageType, ii.Digest, ii.Original}
 		}
 	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Type", "Digest", "Original Image")
 }
@@ -142,12 +141,12 @@ func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
 
 func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 	printImageRow :=
-		func(v interface{}) []string {
+		func(v interface{}) []interface{} {
 			pi, ok := v.(PrintableImage)
 			if !ok {
 				return nil
 			}
-			return []string{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
+			return []interface{}{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
 	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
 }

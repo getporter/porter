@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -64,13 +63,13 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 // When they are different and PORTER_UPDATE_TEST_FILES is true, the file is updated to match
 // the new test output.
 func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
+	wantSchema, err := ioutil.ReadFile(goldenFile)
+	require.NoError(t, err)
+
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
-		os.MkdirAll(filepath.Dir(goldenFile), 0700)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
 		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0600), "could not update golden file %s", goldenFile)
 	} else {
-		wantSchema, err := ioutil.ReadFile(goldenFile)
-		require.NoError(t, err)
 		assert.Equal(t, string(wantSchema), got, "The test output doesn't match the expected output in %s. If this was intentional, run mage updateTestfiles to fix the tests.", goldenFile)
 	}
 }

@@ -2,10 +2,8 @@ package printer
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
-	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,28 +11,24 @@ type testType struct {
 	A, B interface{}
 }
 
-func printTestType(r interface{}) []string {
-	row, ok := r.(testType)
-	if !ok {
-		panic("invalid row data passed to printTestType, should be testType")
-	}
-	return []string{fmt.Sprintf("%v", row.A), fmt.Sprintf("%v", row.B)}
-}
-
 func TestPrintTable(t *testing.T) {
 	v := []testType{
-		{A: "foo", B: "a really long bit of text that really should be wrapped nicely so that the entire table doesn't expand infinitely wide"},
+		{A: "foo", B: "bar"},
 		{A: "baz", B: "qux"},
 		{A: 123, B: true},
 	}
 
 	b := &bytes.Buffer{}
 
-	err := PrintTable(b, v, printTestType,
+	err := PrintTable(b, v, func(r interface{}) []interface{} {
+		row, ok := r.(testType)
+		require.True(t, ok)
+		return []interface{}{row.A, row.B}
+	},
 		"A", "B")
 
-	require.NoError(t, err)
-	test.CompareGoldenFile(t, "testdata/table-with-headers.txt", b.String())
+	require.Nil(t, err)
+	require.Equal(t, "A     B\nfoo   bar\nbaz   qux\n123   true\n", b.String())
 }
 
 func TestPrintTable_WithoutHeaders(t *testing.T) {
@@ -44,8 +38,12 @@ func TestPrintTable_WithoutHeaders(t *testing.T) {
 
 	b := &bytes.Buffer{}
 
-	err := PrintTable(b, v, printTestType)
+	err := PrintTable(b, v, func(r interface{}) []interface{} {
+		row, ok := r.(testType)
+		require.True(t, ok)
+		return []interface{}{row.A, row.B}
+	})
 
-	require.NoError(t, err)
-	test.CompareGoldenFile(t, "testdata/table-without-headers.txt", b.String())
+	require.Nil(t, err)
+	require.Equal(t, "foo   bar\n", b.String())
 }

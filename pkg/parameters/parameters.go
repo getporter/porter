@@ -24,6 +24,7 @@ const (
 func ParseVariableAssignments(params []string) (map[string]string, error) {
 	variables := make(map[string]string)
 	for _, p := range params {
+
 		parts := strings.SplitN(p, "=", 2)
 		if len(parts) < 2 {
 			return nil, fmt.Errorf("invalid parameter (%s), must be in name=value format", p)
@@ -33,7 +34,6 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 		if variable == "" {
 			return nil, fmt.Errorf("invalid parameter (%s), variable name is required", p)
 		}
-
 		value := strings.TrimSpace(parts[1])
 
 		variables[variable] = value

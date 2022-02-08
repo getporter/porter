@@ -2,7 +2,6 @@ package cnabprovider
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -11,13 +10,11 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
 	cnabaction "github.com/cnabio/cnab-go/action"
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 // Shared arguments for all CNAB actions
@@ -108,22 +105,19 @@ func (r *Runtime) AddRelocation(args ActionArguments) action.OperationConfigFunc
 	}
 }
 
-func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
-	ctx, log := tracing.StartSpan(ctx,
-		attribute.String("action", args.Action),
-		attribute.Bool("allowDockerHostAccess", args.AllowDockerHostAccess),
-		attribute.String("driver", args.Driver))
-	defer log.EndSpan()
-	args.BundleReference.AddToTrace(ctx)
-	args.Installation.AddToTrace(ctx)
-
+func (r *Runtime) Execute(args ActionArguments) error {
 	if args.Action == "" {
-		return log.Error(errors.New("action is required"))
+		return errors.New("action is required")
 	}
 
 	b, err := r.ProcessBundle(args.BundleReference.Definition)
 	if err != nil {
-		return log.Error(err)
+		return err
+	}
+
+	if r.Debug {
+		b.WriteTo(r.Err)
+		fmt.Fprintln(r.Err)
 	}
 
 	// Create a record for the run we are about to execute
@@ -139,18 +133,18 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {
-		return log.Error(errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, b.Name))
+		return errors.Wrapf(err, "invalid action '%s' specified for bundle %s", currentRun.Action, b.Name)
 	}
 
 	creds, err := r.loadCredentials(b, args)
 	if err != nil {
-		return log.Error(errors.Wrap(err, "could not load credentials"))
+		return errors.Wrap(err, "could not load credentials")
 	}
 
-	log.Debugf("Using runtime driver %s\n", args.Driver)
+	fmt.Fprintf(r.Err, "Using runtime driver %s\n", args.Driver)
 	driver, err := r.newDriver(args.Driver, args)
 	if err != nil {
-		return log.Error(errors.Wrap(err, "unable to instantiate driver"))
+		return errors.Wrap(err, "unable to instantiate driver")
 	}
 
 	a := cnabaction.New(driver)
@@ -159,7 +153,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	if currentRun.ShouldRecord() {
 		err = r.SaveRun(args.Installation, currentRun, cnab.StatusRunning)
 		if err != nil {
-			return log.Error(errors.Wrap(err, "could not save the pending action's status, the bundle was not executed"))
+			return errors.Wrap(err, "could not save the pending action's status, the bundle was not executed")
 		}
 	}
 
@@ -170,11 +164,11 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	if currentRun.ShouldRecord() {
 		if err != nil {
 			err = r.appendFailedResult(err, currentRun)
-			return log.Error(errors.Wrapf(err, "failed to record that %s for installation %s failed", args.Action, args.Installation.Name))
+			return errors.Wrapf(err, "failed to record that %s for installation %s failed", args.Action, args.Installation.Name)
 		}
 		return r.SaveOperationResult(opResult, args.Installation, currentRun, currentRun.NewResultFrom(result))
 	} else {
-		return log.Error(errors.Wrapf(err, "execution of %s for installation %s failed", args.Action, args.Installation.Name))
+		return errors.Wrapf(err, "execution of %s for installation %s failed", args.Action, args.Installation.Name)
 	}
 }
 

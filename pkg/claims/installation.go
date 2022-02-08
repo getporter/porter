@@ -1,8 +1,6 @@
 package claims
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,8 +10,6 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -34,8 +30,11 @@ type Installation struct {
 	// Namespace in which the installation is defined.
 	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
 
-	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
-	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
+	// Created timestamp of the installation.
+	Created time.Time `json:"created" yaml:"created" toml:"created"`
+
+	// Modified timestamp of the installation.
+	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
 
 	// Bundle specifies the bundle reference to use with the installation.
 	Bundle OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
@@ -75,14 +74,14 @@ func NewInstallation(namespace string, name string) Installation {
 		SchemaVersion: SchemaVersion,
 		Namespace:     namespace,
 		Name:          name,
-		Status: InstallationStatus{
-			Created:  now,
-			Modified: now,
-		},
+		Created:       now,
+		Modified:      now,
 	}
 }
 
 func (i Installation) ToCNAB() cnab.Installation {
+	// TODO(carolynvs): Remove installation status from the cnab struct
+	// in general look over what is actually needed to be specified on an installation doc. Does it need to be in the spec?
 	return cnab.Installation{
 		SchemaVersion:    CNABSchemaVersion(),
 		Name:             i.Name,
@@ -90,8 +89,8 @@ func (i Installation) ToCNAB() cnab.Installation {
 		BundleRepository: i.Bundle.Repository,
 		BundleVersion:    i.Bundle.Version,
 		BundleDigest:     i.Bundle.Digest,
-		Created:          i.Status.Created,
-		Modified:         i.Status.Modified,
+		Created:          i.Created,
+		Modified:         i.Modified,
 		Custom:           i.Custom,
 		Labels:           i.Labels,
 	}
@@ -118,9 +117,8 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 		i.Status.ResultStatus = result.Status
 	}
 
-	if !i.IsInstalled() && run.Action == cnab.ActionInstall && result.Status == cnab.StatusSucceeded {
-		now := time.Now()
-		i.Status.Installed = &now
+	if !i.Status.InstallationCompleted && run.Action == cnab.ActionInstall && result.Status == cnab.StatusSucceeded {
+		i.Status.InstallationCompleted = true
 	}
 }
 
@@ -128,7 +126,6 @@ func (i *Installation) ApplyResult(run Run, result Result) {
 // Only updates fields that users are allowed to modify.
 // For example, Name, Namespace and Status cannot be modified.
 func (i *Installation) Apply(input Installation) {
-	i.Uninstalled = input.Uninstalled
 	i.Bundle = input.Bundle
 	i.Parameters = input.Parameters
 	i.CredentialSets = input.CredentialSets
@@ -184,14 +181,6 @@ func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
 	return nil
 }
 
-func (i Installation) AddToTrace(ctx context.Context) {
-	span := trace.SpanFromContext(ctx)
-	doc, _ := json.Marshal(i)
-	span.SetAttributes(
-		attribute.String("installation", i.String()),
-		attribute.String("installationDefinition", string(doc)))
-}
-
 // InstallationStatus's purpose is to assist with making porter list be able to display everything
 // with a single database query. Do not replicate data available on Run and Result here.
 type InstallationStatus struct {
@@ -207,20 +196,10 @@ type InstallationStatus struct {
 	// ResultStatus is the status of the result that last informed the installation status.
 	ResultStatus string `json:"resultStatus" yaml:"resultStatus" toml:"resultStatus"`
 
-	// Created timestamp of the installation.
-	Created time.Time `json:"created" yaml:"created" toml:"created"`
-
-	// Modified timestamp of the installation.
-	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
-
-	// Installed indicates if the install action has successfully completed for this installation.
+	// InstallationCompleted indicates if the install action has successfully completed for this installation.
 	// Once that state is reached, Porter should not allow it to be reinstalled as a protection from installations
 	// being overwritten.
-	Installed *time.Time `json:"installed" yaml:"installed" toml:"installed"`
-
-	// Uninstalled indicates if the installation has successfully completed the uninstall action.
-	// Once that state is reached, Porter should not allow further stateful actions.
-	Uninstalled *time.Time `json:"uninstalled" yaml"uninstalled" toml:"uninstalled"`
+	InstallationCompleted bool `json:"installationCompleted" yaml:"installationCompleted" toml:"installationCompleted"`
 
 	// BundleReference of the bundle that last altered the installation state.
 	BundleReference string `json:"bundleReference" yaml:"bundleReference" toml:"bundleReference"`
@@ -230,16 +209,6 @@ type InstallationStatus struct {
 
 	// BundleDigest is the digest of the bundle that last altered the installation state.
 	BundleDigest string `json:"bundleDigest" yaml:"bundleDigest" toml:"bundleDigest"`
-}
-
-// IsInstalled checks if the installation is currently installed.
-func (i Installation) IsInstalled() bool {
-	return i.Status.Uninstalled == nil && i.Status.Installed != nil
-}
-
-// IsUninstalled checks if the installation has been uninstalled.
-func (i Installation) IsUninstalled() bool {
-	return i.Status.Uninstalled != nil
 }
 
 // OCIReferenceParts is our storage representation of cnab.OCIReference

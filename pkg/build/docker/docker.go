@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -30,21 +29,7 @@ func NewBuilder(cxt *portercontext.Context) *Builder {
 	}
 }
 
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
-	buildArgs := make(map[string]*string)
-	buildArgs["BUNDLE_DIR"] = &build.BUNDLE_DIR
-
-	convertedCustomInput := make(map[string]string)
-	convertedCustomInput, err := convertMap(manifest.Custom)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range convertedCustomInput {
-		v := v
-		buildArgs[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = &v
-	}
-
+func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
 		SuppressOutput: false,
@@ -52,7 +37,9 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		Remove:         true,
 		Tags:           []string{manifest.Image},
 		Dockerfile:     filepath.ToSlash(build.DOCKER_FILE),
-		BuildArgs:      buildArgs,
+		BuildArgs: map[string]*string{
+			"BUNDLE_DIR": &build.BUNDLE_DIR,
+		},
 	}
 
 	excludes, err := clibuild.ReadDockerignore(b.Getwd())
@@ -74,7 +61,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		return err
 	}
 
-	response, err := cli.Client().ImageBuild(ctx, tar, buildOptions)
+	response, err := cli.Client().ImageBuild(context.Background(), tar, buildOptions)
 	if err != nil {
 		return err
 	}
@@ -95,7 +82,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	return nil
 }
 
-func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return errors.Wrap(err, "could not create new docker client")
@@ -104,34 +91,8 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 		return err
 	}
 
-	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
+	if err := cli.Client().ImageTag(context.Background(), origTag, newTag); err != nil {
 		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
 	}
 	return nil
-}
-
-func convertMap(mapInput map[string]interface{}) (map[string]string, error) {
-	out := make(map[string]string)
-
-	for key, value := range mapInput {
-		switch v := value.(type) {
-		case string:
-			out[key] = v
-		case map[string]interface{}:
-			tmp, err := convertMap(v)
-			if err != nil {
-				return nil, err
-			}
-			for innerKey, innerValue := range tmp {
-				out[key+"."+innerKey] = innerValue
-			}
-		case map[string]string:
-			for innerKey, innerValue := range v {
-				out[key+"."+innerKey] = innerValue
-			}
-		default:
-			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
-		}
-	}
-	return out, nil
 }

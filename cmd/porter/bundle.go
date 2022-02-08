@@ -52,22 +52,18 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
-		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
-
-Porter uses the docker driver as the default build driver, an alternate driver may be supplied via --driver or the PORTER_BUILD_DRIVER environment variable.
-`,
+		Long:  "Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.",
 		Example: `  porter build
   porter build --name newbuns
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
-  porter build --custom test-mode=true --custom version=0.2.0
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Build(cmd.Context(), opts)
+			return p.Build(opts)
 		},
 	}
 
@@ -82,8 +78,6 @@ Porter uses the docker driver as the default build driver, an alternate driver m
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
-	f.StringSliceVar(&opts.Customs, "custom", nil,
-		"Define an individual key-value pair for custom section in the form of NAME=VALUE. May be specified multiple times.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
@@ -135,7 +129,7 @@ The first argument is the name of the installation to create. This defaults to t
 
 Once a bundle has been successfully installed, the install action cannot be repeated. This is a precaution to avoid accidentally overwriting an existing installation. If you need to re-run install, which is common when authoring a bundle, you can use the --force flag to by-pass this check.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
   porter bundle install MyAppFromReference --reference getporter/kubernetes:v0.1.0 --namespace dev
@@ -150,7 +144,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallBundle(cmd.Context(), opts)
+			return p.InstallBundle(opts)
 		},
 	}
 
@@ -176,11 +170,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 	f.BoolVar(&opts.NoLogs, "no-logs", false,
 		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
-
-	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
-	cmd.Flag("driver").Annotations = map[string][]string{
-		"viper-key": {"runtime-driver"},
-	}
 	return cmd
 }
 
@@ -193,7 +182,7 @@ func buildBundleUpgradeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to upgrade. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade --version 0.2.0
   porter bundle upgrade --reference getporter/kubernetes:v0.1.0
@@ -207,7 +196,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UpgradeBundle(cmd.Context(), opts)
+			return p.UpgradeBundle(opts)
 		},
 	}
 
@@ -234,10 +223,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
-	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
-	cmd.Flag("driver").Annotations = map[string][]string{
-		"viper-key": {"runtime-driver"},
-	}
 	return cmd
 }
 
@@ -250,7 +235,7 @@ func buildBundleInvokeCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name upon which to invoke the action. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle invoke --action ACTION
   porter bundle invoke --reference getporter/kubernetes:v0.1.0
@@ -264,7 +249,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InvokeBundle(cmd.Context(), opts)
+			return p.InvokeBundle(opts)
 		},
 	}
 
@@ -291,10 +276,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
-	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
-	cmd.Flag("driver").Annotations = map[string][]string{
-		"viper-key": {"runtime-driver"},
-	}
 	return cmd
 }
 
@@ -307,7 +288,7 @@ func buildBundleUninstallCommand(p *porter.Porter) *cobra.Command {
 
 The first argument is the installation name to uninstall. This defaults to the name of the bundle.
 
-Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
+Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
   porter bundle uninstall --reference getporter/kubernetes:v0.1.0
@@ -323,7 +304,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.UninstallBundle(cmd.Context(), opts)
+			return p.UninstallBundle(opts)
 		},
 	}
 
@@ -352,10 +333,6 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
 		"Do not persist the bundle execution logs")
 	addBundlePullFlags(f, &opts.BundlePullOptions)
 
-	// Allow configuring the --driver flag with runtime-driver, to avoid conflicts with other commands
-	cmd.Flag("driver").Annotations = map[string][]string{
-		"viper-key": {"runtime-driver"},
-	}
 	return cmd
 }
 
@@ -379,7 +356,7 @@ Note: if overrides for registry/tag/reference are provided, this command only re
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Publish(cmd.Context(), opts)
+			return p.Publish(opts)
 		},
 	}
 
@@ -411,7 +388,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Archive(cmd.Context(), opts)
+			return p.Archive(opts)
 		},
 	}
 

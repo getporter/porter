@@ -1,12 +1,9 @@
 package porter
 
 import (
-	"context"
-
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
 
@@ -54,29 +51,24 @@ func NewInstallOptions() InstallOptions {
 
 // InstallBundle accepts a set of pre-validated InstallOptions and uses
 // them to install a bundle.
-func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
-
+func (p *Porter) InstallBundle(opts InstallOptions) error {
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(opts.BundleActionOptions)
 	if err != nil {
-		return log.Error(err)
+		return err
 	}
 
 	i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err == nil {
 		// Validate that we are not overwriting an existing installation
-		if i.IsInstalled() && !opts.Force {
-			err = errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade. You can skip this check by using the --force flag.")
-			return log.Error(err)
+		if i.Status.InstallationCompleted && !opts.Force {
+			return errors.New("The installation has already been successfully installed and as a protection against accidentally overwriting existing installations, porter install cannot be repeated. Verify the installation name and namespace, and if correct, use porter upgrade. You can skip this check by using the --force flag.")
 		}
 	} else if errors.Is(err, storage.ErrNotFound{}) {
 		// Create the installation record
 		i = claims.NewInstallation(opts.Namespace, opts.Name)
 	} else {
-		err = errors.Wrapf(err, "could not retrieve the installation record")
-		return log.Error(err)
+		return errors.Wrapf(err, "could not retrieve the installation record")
 	}
 
 	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)
@@ -91,7 +83,7 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 	}
 
 	// Run install using the updated installation record
-	return p.ExecuteAction(ctx, i, opts)
+	return p.ExecuteAction(i, opts)
 }
 
 // Remember the parameters and credentials used with the bundle last.

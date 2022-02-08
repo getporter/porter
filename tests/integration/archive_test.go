@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -34,7 +33,7 @@ func TestArchive(t *testing.T) {
 	err := archive1Opts.Validate([]string{archiveFile1}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
-	err = p.Archive(context.Background(), archive1Opts)
+	err = p.Archive(archive1Opts)
 	require.NoError(p.T(), err, "archival of bundle failed")
 
 	info, err := p.FileSystem.Stat(archiveFile1)
@@ -53,7 +52,7 @@ func TestArchive(t *testing.T) {
 	err = archive1Opts.Validate([]string{archiveFile2}, p.Porter)
 	require.NoError(t, err, "Second validate failed")
 
-	err = p.Archive(context.Background(), archive2Opts)
+	err = p.Archive(archive2Opts)
 	require.NoError(t, err, "Second archive failed")
 
 	assert.Equal(p.T(), hash1, getHash(p, archiveFile2), "shasum of archive did not stay the same on the second call to archive")
@@ -68,7 +67,7 @@ func TestArchive(t *testing.T) {
 	err = publishFromArchiveOpts.Validate(p.Context)
 	require.NoError(p.T(), err, "validation of publish opts for bundle failed")
 
-	err = p.Publish(context.Background(), publishFromArchiveOpts)
+	err = p.Publish(publishFromArchiveOpts)
 	require.NoError(p.T(), err, "publish of bundle from archive failed")
 }
 

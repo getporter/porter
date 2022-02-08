@@ -1,19 +1,13 @@
 package main
 
 import (
-	"context"
 	_ "embed"
-	"fmt"
 	"os"
-	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var includeDocsCommand = false
@@ -22,67 +16,13 @@ var includeDocsCommand = false
 var usageText string
 
 func main() {
-	run := func() int {
-		p := porter.New()
+	p := porter.New()
+	defer p.Close()
 
-		rootCmd := buildRootCommandFrom(p)
-
-		// Trace the command that called porter, e.g. porter installation show
-		calledCommand, formattedCommand := getCalledCommand(rootCmd)
-		ctx, log := p.StartRootSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
-		defer func() {
-			// Capture panics and trace them
-			if panicErr := recover(); panicErr != nil {
-				log.Error(errors.New(fmt.Sprintf("%s", panicErr)), attribute.Bool("panic", true))
-				log.EndSpan()
-				p.Close()
-				os.Exit(1)
-			} else {
-				log.EndSpan()
-				p.Close()
-			}
-		}()
-
-		if err := rootCmd.ExecuteContext(ctx); err != nil {
-			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error at the root span as well
-			log.Error(err)
-			return 1
-		}
-		return 0
+	cmd := buildRootCommandFrom(p)
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
 	}
-
-	// Wrapping the main run logic in a function because os.Exit will not
-	// execute defer statements
-	os.Exit(run())
-}
-
-// Returns the porter command called, e.g. porter installation list
-// and also the fully formatted command as passed with arguments/flags.
-func getCalledCommand(cmd *cobra.Command) (string, string) {
-	// Ask cobra what sub-command was called, and walk up the tree to get the full command called.
-	var cmdChain []string
-	cmd, _, err := cmd.Find(os.Args[1:])
-	if err != nil {
-		cmdChain = append(cmdChain, "porter")
-	} else {
-		for cmd != nil {
-			cmdChain = append(cmdChain, cmd.Name())
-			cmd = cmd.Parent()
-		}
-	}
-	// reverse the command from [list installations porter] to porter installation list
-	var calledCommand strings.Builder
-	for i := len(cmdChain); i > 0; i-- {
-		calledCommand.WriteString(cmdChain[i-1])
-		calledCommand.WriteString(" ")
-	}
-	calledCommandStr := calledCommand.String()[0 : calledCommand.Len()-1]
-
-	// Also figure out the full command called, with args/flags.
-	formattedCommand := fmt.Sprintf("porter %s", strings.Join(os.Args[1:], " "))
-
-	return calledCommandStr, formattedCommand
 }
 
 func buildRootCommand() *cobra.Command {
@@ -117,17 +57,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 				return nil
 			default:
 				p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-				err := p.LoadData()
-				if err != nil {
-					return err
-				}
-
-				if p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-					// When structured logging is enabled, the error is printed
-					// to the console by the logger, we don't need to re-print it again.
-					cmd.Root().SilenceErrors = true
-				}
-				return nil
+				return p.LoadData()
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

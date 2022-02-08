@@ -14,7 +14,6 @@ import (
 	dockerconfig "github.com/docker/cli/cli/config"
 	cliflags "github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
 	"github.com/opencontainers/go-digest"
@@ -65,7 +64,7 @@ func (r *Registry) PullBundle(ref cnab.OCIReference, insecureRegistry bool) (cna
 
 	bun, reloMap, digest, err := remotes.Pull(context.Background(), ref.Named, r.createResolver(insecureRegistries))
 	if err != nil {
-		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull bundle")
+		return cnab.BundleReference{}, errors.Wrap(err, "unable to pull remote bundle")
 	}
 
 	invocationImage := bun.InvocationImages[0]
@@ -193,26 +192,4 @@ func (r *Registry) getDockerClient() (*command.DockerCli, error) {
 		return nil, err
 	}
 	return cli, nil
-}
-
-func (r *Registry) IsImageCached(invocationImage string) (bool, error) {
-	ctx := context.Background()
-
-	cli, err := r.getDockerClient()
-	if err != nil {
-		return false, err
-	}
-
-	imageListOpts := types.ImageListOptions{All: true, Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: invocationImage})}
-
-	imageSummaries, err := cli.Client().ImageList(ctx, imageListOpts)
-	if err != nil {
-		return false, errors.Wrapf(err, "could not list images")
-	}
-
-	if len(imageSummaries) == 0 {
-		return false, nil
-	}
-
-	return true, nil
 }

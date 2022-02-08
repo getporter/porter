@@ -49,7 +49,7 @@ Optional output formats include json and yaml.`,
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintInstallations(cmd.Context(), opts)
+			return p.PrintInstallations(opts)
 		},
 	}
 
@@ -118,7 +118,7 @@ You can use the show command to create the initial file:
 			return opts.Validate(p.Context, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallationApply(cmd.Context(), opts)
+			return p.InstallationApply(opts)
 		},
 	}
 

@@ -3,24 +3,12 @@ description: An example Porter configuration
 version: 0.1.0
 porterVersion: v0.30.0
 parameters:
-  - name: namespace
-    type: string
-    default: null
-    applyTo: upgrade
-    description: ""
-    required: false
   - name: region
     type: string
     default: mars
     applyTo: All Actions
     description: ""
     required: false
-  - name: seed
-    type: boolean
-    default: null
-    applyTo: All Actions
-    description: ""
-    required: true
 mixins:
   - helm
   - terraform

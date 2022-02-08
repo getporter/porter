@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -10,7 +9,6 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
 	"github.com/opencontainers/go-digest"
@@ -27,12 +25,6 @@ type BuildOptions struct {
 
 	// Driver to use when building the invocation image.
 	Driver string
-
-	// Customs is the unparsed list of NAME=VALUE custom inputs set on the command line.
-	Customs []string
-
-	// parsedCustoms is the parsed set of custom inputs from Customs.
-	parsedCustoms map[string]string
 }
 
 const BuildDriverDefault = config.BuildDriverDocker
@@ -60,23 +52,7 @@ func (o *BuildOptions) Validate(p *Porter) error {
 	// This would be less awkward if we didn't do an automatic build during publish
 	p.Data.BuildDriver = o.Driver
 
-	err := o.parseCustomInputs()
-	if err != nil {
-		return err
-	}
-
 	return o.bundleFileOptions.Validate(p.Context)
-}
-
-func (o *BuildOptions) parseCustomInputs() error {
-	p, err := parameters.ParseVariableAssignments(o.Customs)
-	if err != nil {
-		return err
-	}
-
-	o.parsedCustoms = p
-
-	return nil
 }
 
 func stringSliceContains(allowedValues []string, value string) bool {
@@ -88,7 +64,7 @@ func stringSliceContains(allowedValues []string, value string) bool {
 	return false
 }
 
-func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
+func (p *Porter) Build(opts BuildOptions) error {
 	opts.Apply(p.Context)
 
 	if p.Debug {
@@ -141,8 +117,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	builder := p.GetBuilder()
-
-	return errors.Wrap(builder.BuildInvocationImage(ctx, p.Manifest), "unable to build CNAB invocation image")
+	return errors.Wrap(builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {

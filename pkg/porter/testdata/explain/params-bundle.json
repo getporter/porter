@@ -21,12 +21,6 @@
     "region": {
       "default": "mars",
       "type": "string"
-    },
-    "seed": {
-      "type": "boolean"
-    },
-    "namespace": {
-      "type": "string"
     }
   },
   "description": "An example Porter configuration",
@@ -49,20 +43,6 @@
       "definition": "region",
       "destination": {
         "env": "REGION"
-      }
-    },
-    "seed": {
-      "definition": "seed",
-      "required": true,
-      "destination": {
-        "env": "SEED"
-      }
-    },
-    "namespace": {
-      "definition": "namespace",
-      "applyTo": ["upgrade"],
-      "destination": {
-        "env": "NAMESPACE"
       }
     }
   },

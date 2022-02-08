@@ -24,7 +24,7 @@ func buildBundleExplainCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Explain(cmd.Context(), opts)
+			return p.Explain(opts)
 		},
 	}
 	f := cmd.Flags()

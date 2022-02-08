@@ -2,10 +2,10 @@ package porter
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/test"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -40,9 +40,10 @@ func TestExplain_generateTable(t *testing.T) {
 
 	err = p.printBundleExplain(opts, pb)
 	assert.NoError(t, err)
-
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	test.CompareGoldenFile(t, "testdata/explain/expected-table-output.txt", gotOutput)
+	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output.txt")
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), gotOutput)
 }
 
 func TestExplain_generateJSON(t *testing.T) {

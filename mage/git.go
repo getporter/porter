@@ -1,4 +1,4 @@
-package releases
+package mage
 
 import (
 	"fmt"
@@ -14,10 +14,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	gitMetadata  GitMetadata
-	loadMetadata sync.Once
-)
+var gitMetadata GitMetadata
+var loadMetadata sync.Once
+var must = shx.CommandBuilder{StopOnError: true}
 
 type GitMetadata struct {
 	// Permalink is the version alias, e.g. latest, or canary
@@ -71,7 +70,7 @@ func getCommit() string {
 
 // Get a description of the commit, e.g. v0.30.1 (latest) or v0.30.1-32-gfe72ff73 (canary)
 func getVersion() string {
-	version, _ := shx.OutputS("git", "describe", "--tags", "--match=v*")
+	version, _ := must.OutputS("git", "describe", "--tags", "--match=v*")
 	if version != "" {
 		return version
 	}

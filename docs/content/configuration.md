@@ -8,7 +8,6 @@ description: Controlling Porter with its config file, environment variables and 
 * [Config File](#config-file)
 * [Experimental Feature Flags](#experimental-feature-flags)
   * [Build Drivers](#build-drivers)
-  * [Structured Logs](#structured-logs)
 
 Porter's configuration system has a precedence order:
 
@@ -156,60 +155,3 @@ build-driver = "buildkit"
 [uninstall]: /cli/porter_uninstall/
 [Docker library]: https://github.com/moby/moby
 [Docker with Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
-
-### Structured Logs
-
-The **structured-logs** experimental feature flag enables advanced [logging configuration](#logs)
-and exporting [telemetry](#telemetry) data.
-
-When this feature is enabled, the logs output to the console will contain additional information such as the log level, timestamp and optional context information.
-
-#### Logs
-
-Porter can be configured to [write a logfile for each command](/administrators/diagnostics/#logs).
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
-
-The following log settings are available:
-
-| Setting | Environment Variable | Description |
-| -------------- | -------------------- | ----------- |
-| logs.enabled | PORTER_LOGS_ENABLED | Specifies if a logfile should be written for each command. |
-| logs.level | PORTER_LOGS_LEVEL | Filters the logs to the specified level and higher. The log level controls both the logs written to file, and the logs output to the console when porter is run. Allowed values are: debug, info, warn, error. |
-
-#### Telemetry
-
-Porter supports the OpenTelemetry specification for exporting trace data.
-This feature requires the [structured-logs](#structured-logs) feature to be enabled.
-
-Porter automatically uses the standard [OpenTelemetry environment variables][otel] to configure the trace exporter.
-
-| Setting | Environment Variable | Description |
-| -------------- | -------------------- | ----------- |
-| telemetry.enabled | PORTER_TELEMETRY_ENABLED | Enables telemetry collection. Defaults to false. |
-| telemetry.protocol | OTEL_EXPORTER_OTLP_PROTOCOL<br/>PORTER_TELEMETRY_PROTOCOL | The protocol used to connect with the telemetry server. Either grpc or http/protobuf. Defaults to http/protobuf. |
-| telemetry.endpoint | OTEL_EXPORTER_OTLP_ENDPOINT<br/>PORTER_TELEMETRY_ENDPOINT | The endpoint where traces should be sent. Defaults 127.0.0.1:4317. |
-| telemetry.insecure | OTEL_EXPORTER_OTLP_INSECURE<br/>PORTER_TELEMETRY_INSECURE | If true, TLS is not used, which is useful for local development and self-signed certificates. |
-| telemetry.certificate | OTEL_EXPORTER_OTLP_CERTIFICATE<br/>PORTER_TELEMETRY_CERTIFICATE | Path to the PEM formatted certificate to use with the endpoint. |
-| telemetry.compression | OTEL_EXPORTER_OTLP_COMPRESSION<br/>PORTER_TELEMETRY_COMPRESSION | Supported values are: gzip. Defaults to no compression. |
-| telemetry.timeout | OTEL_EXPORTER_OTLP_TIMEOUT<br/>PORTER_TELEMETRY_TIMEOUT | A timeout to use with the telemetry server, in Go duration format. For example, 30s or 1m. |
-| telemetry.headers | OTEL_EXPORTER_OTLP_HEADERS<br/>PORTER_TELEMETRY_HEADERS | A map of key/value pairs that should be sent as headers to the telemetry server. |
-
-Below is a sample Porter configuration file that demonstrates how to set each of the telemetry settings:
-
-```toml
-experimental = ["structured-logs"]
-
-[telemetry]
-  enabled = true
-  protocol = "grpc"
-  endpoint = "127.0.0.1:4318"
-  insecure = true
-  certificate = "/home/me/some-cert.pem"
-  compression = "gzip"
-  timeout = "3s"
-  [telemetry.headers]
-    environment = "dev"
-    owner = "me"
-```
-
-[otel]: https://github.com/open-telemetry/opentelemetry-specification/blob/v1.8.0/specification/protocol/exporter.md

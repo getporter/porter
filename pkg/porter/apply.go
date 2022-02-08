@@ -1,17 +1,14 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/claims"
-	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
-	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 type ApplyOptions struct {
@@ -29,7 +26,7 @@ const ApplyDefaultFormat = printer.FormatPlaintext
 
 var ApplyAllowedFormats = printer.Formats{printer.FormatPlaintext, printer.FormatYaml, printer.FormatJson}
 
-func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error {
+func (o *ApplyOptions) Validate(cxt *context.Context, args []string) error {
 	switch len(args) {
 	case 0:
 		return errors.New("a file argument is required")
@@ -50,11 +47,10 @@ func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error
 	return nil
 }
 
-func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error {
-	ctx, log := tracing.StartSpan(ctx)
-	defer log.EndSpan()
-
-	log.Debugf("Reading input file %s", opts.File)
+func (p *Porter) InstallationApply(opts ApplyOptions) error {
+	if p.Debug {
+		fmt.Fprintf(p.Err, "Reading input file %s...\n", opts.File)
+	}
 
 	namespace, err := p.getNamespaceFromFile(opts)
 	if err != nil {
@@ -64,7 +60,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 	if p.Debug {
 		// ignoring any error here, printing debug info isn't critical
 		contents, _ := p.FileSystem.ReadFile(opts.File)
-		log.Debug("read input file", attribute.String("contents", string(contents)))
+		fmt.Fprintf(p.Err, "Input file contents:\n%s\n", contents)
 	}
 
 	var input claims.Installation
@@ -92,7 +88,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 				return err
 			}
 		}
-		log.Info("Created installation", attribute.String("installation", installation.String()))
+		fmt.Fprintf(p.Err, "Created %s installation\n", installation)
 	} else {
 		// Apply the specified changes to the installation
 		installation.Apply(input)
@@ -115,5 +111,5 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		Force:        opts.Force,
 		DryRun:       opts.DryRun,
 	}
-	return p.ReconcileInstallation(ctx, reconcileOpts)
+	return p.ReconcileInstallation(reconcileOpts)
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/mage"
 	"get.porter.sh/porter/mage/tools"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
@@ -18,14 +19,12 @@ import (
 var must = shx.CommandBuilder{StopOnError: true}
 
 const (
-	packagesRepo      = "bin/mixins/.packages"
-	ReleaseRepository = "PORTER_RELEASE_REPOSITORY"
-	PackagesRemote    = "PORTER_PACKAGES_REMOTE"
+	packagesRepo = "bin/mixins/.packages"
 )
 
 // Prepares bin directory for publishing a package
 func preparePackageForPublish(pkgType string, name string) {
-	info := LoadMetadata()
+	info := mage.LoadMetadata()
 
 	// Prepare the bin directory for generating a package feed
 	// We want the bin to contain either a version directory (v1.2.3) or a canary directory.
@@ -73,15 +72,17 @@ exec echo "$GITHUB_TOKEN"
 	pwd, _ := os.Getwd()
 	script := filepath.Join(pwd, askpass)
 
+	must.Command("git", "config", "user.name", "Porter Bot").In(dir).RunV()
+	must.Command("git", "config", "user.email", "bot@porter.sh").In(dir).RunV()
 	must.Command("git", "config", "core.askPass", script).In(dir).RunV()
 }
 
 func publishPackage(pkgType string, name string) {
 	mg.Deps(tools.EnsureGitHubClient, ConfigureGitBot)
 
-	info := LoadMetadata()
+	info := mage.LoadMetadata()
 
-	repo := os.Getenv(ReleaseRepository)
+	repo := os.Getenv("PORTER_RELEASE_REPOSITORY")
 	if repo == "" {
 		switch pkgType {
 		case "mixin":
@@ -123,7 +124,7 @@ func PublishPlugin(plugin string) {
 }
 
 func publishPackageFeed(pkgType string, name string) {
-	info := LoadMetadata()
+	info := mage.LoadMetadata()
 
 	if !(info.Permalink == "canary" || info.IsTaggedRelease) {
 		fmt.Println("Skipping publish package feed for permalink", info.Permalink)
@@ -134,7 +135,7 @@ func publishPackageFeed(pkgType string, name string) {
 	if _, err := os.Stat(packagesRepo); !os.IsNotExist(err) {
 		os.RemoveAll(packagesRepo)
 	}
-	remote := os.Getenv(PackagesRemote)
+	remote := os.Getenv("PORTER_PACKAGES_REMOTE")
 	if remote == "" {
 		remote = fmt.Sprintf("https://github.com/getporter/packages.git")
 	}
@@ -143,7 +144,7 @@ func publishPackageFeed(pkgType string, name string) {
 
 	generatePackageFeed(pkgType)
 
-	must.Command("git", "-c", "user.name='Porter Bot'", "-c", "user.email=bot@porter.sh", "commit", "--signoff", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, info.Version, pkgType)).
+	must.Command("git", "commit", "--signoff", "--author='Porter Bot<bot@porter.sh>'", "-am", fmt.Sprintf("Add %s@%s to %s feed", name, info.Version, pkgType)).
 		In(packagesRepo).RunV()
 	must.Command("git", "push").In(packagesRepo).RunV()
 }
@@ -161,15 +162,7 @@ func PublishPluginFeed(plugin string) {
 func generatePackageFeed(pkgType string) {
 	pkgDir := pkgType + "s"
 	feedFile := filepath.Join(packagesRepo, pkgDir, "atom.xml")
-
-	// Try to use a local copy of porter first, otherwise use the
-	// one installed in GOAPTH/bin
-	porterPath := "bin/porter"
-	if _, err := os.Stat(porterPath); err != nil {
-		porterPath = "porter"
-		tools.EnsurePorter()
-	}
-	must.RunV(porterPath, "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
+	must.RunV("bin/porter", "mixins", "feed", "generate", "-d", filepath.Join("bin", pkgDir), "-f", feedFile, "-t", "build/atom-template.xml")
 }
 
 // Generate a mixin feed from any mixin versions in bin/mixins.

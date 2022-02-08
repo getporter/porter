@@ -3,7 +3,6 @@
 package porter
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -26,7 +25,7 @@ func TestResolveBundleReference(t *testing.T) {
 
 		opts := &BundleActionOptions{}
 		require.NoError(t, opts.Validate(nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := p.resolveBundleReference(opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -44,7 +43,7 @@ func TestResolveBundleReference(t *testing.T) {
 		opts := &BundleActionOptions{}
 		opts.CNABFile = "bundle.json"
 		require.NoError(t, opts.Validate(nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := p.resolveBundleReference(opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -60,7 +59,7 @@ func TestResolveBundleReference(t *testing.T) {
 		opts := &BundleActionOptions{}
 		opts.Reference = "getporter/porter-hello:v0.1.1"
 		require.NoError(t, opts.Validate(nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := p.resolveBundleReference(opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
@@ -84,7 +83,7 @@ func TestResolveBundleReference(t *testing.T) {
 		opts.Name = "example"
 		opts.Namespace = "dev"
 		require.NoError(t, opts.Validate(nil, p.Porter))
-		ref, err := p.resolveBundleReference(context.Background(), opts)
+		ref, err := p.resolveBundleReference(opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)

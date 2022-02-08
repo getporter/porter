@@ -1,7 +1,6 @@
 package porter
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -76,7 +75,7 @@ func (o *PublishOptions) validateTag() error {
 
 // Publish is a composite function that publishes an invocation image, rewrites the porter manifest
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
-func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
+func (p *Porter) Publish(opts PublishOptions) error {
 	if opts.File != "" {
 		if err := p.LoadManifestFrom(opts.File); err != nil {
 			return err
@@ -84,13 +83,13 @@ func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
 	}
 
 	if opts.ArchiveFile == "" {
-		return p.publishFromFile(ctx, opts)
+		return p.publishFromFile(opts)
 	}
 	return p.publishFromArchive(opts)
 }
 
-func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error {
-	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.bundleFileOptions)
+func (p *Porter) publishFromFile(opts PublishOptions) error {
+	_, err := p.ensureLocalBundleIsUpToDate(opts.bundleFileOptions)
 	if err != nil {
 		return err
 	}
@@ -140,7 +139,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	if origInvImg != p.Manifest.Image {
 		// Tag it so that it will be known/found by Docker for publishing
 		builder := p.GetBuilder()
-		if err := builder.TagInvocationImage(ctx, origInvImg, p.Manifest.Image); err != nil {
+		if err := builder.TagInvocationImage(origInvImg, p.Manifest.Image); err != nil {
 			return err
 		}
 	}

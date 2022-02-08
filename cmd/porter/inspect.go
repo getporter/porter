@@ -26,7 +26,7 @@ like parameters, credentials, outputs and custom actions available.
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Inspect(cmd.Context(), opts)
+			return p.Inspect(opts)
 		},
 	}
 	f := cmd.Flags()

@@ -1,7 +1,6 @@
 package examples_test
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -25,7 +24,7 @@ func ExampleInstall() {
 	}
 
 	// porter install porter-hello --reference getporter/porter-hello:v0.1.1
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(installOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

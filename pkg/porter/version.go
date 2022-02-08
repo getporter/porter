@@ -36,12 +36,12 @@ type SystemDebugInfo struct {
 func (mixins Mixins) PrintMixinsTable() string {
 	buffer := &bytes.Buffer{}
 	printMixinRow :=
-		func(v interface{}) []string {
+		func(v interface{}) []interface{} {
 			m, ok := v.(mixin.Metadata)
 			if !ok {
 				return nil
 			}
-			return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+			return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 		}
 	err := printer.PrintTable(buffer, mixins, printMixinRow, "Name", "Version", "Author")
 	if err != nil {
@@ -102,6 +102,7 @@ os: {{.SysInfo.OS}}
 arch: {{.SysInfo.Arch}}
 {{if .Mixins}}
 Mixins
+-------
 {{.Mixins.PrintMixinsTable}}{{end}}
 `
 		tmpl, err := template.New("systemDebugInfo").Parse(plaintextTmpl)

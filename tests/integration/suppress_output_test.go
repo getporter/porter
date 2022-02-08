@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,7 +25,7 @@ func TestSuppressOutput(t *testing.T) {
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(installOpts)
 	require.NoError(t, err)
 
 	// Verify that the bundle output was captured (despite stdout/err of command being suppressed)
@@ -40,7 +39,7 @@ func TestSuppressOutput(t *testing.T) {
 	err = invokeOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InvokeBundle(context.Background(), invokeOpts)
+	err = p.InvokeBundle(invokeOpts)
 	require.NoError(t, err)
 
 	// Uninstall
@@ -48,7 +47,7 @@ func TestSuppressOutput(t *testing.T) {
 	err = uninstallOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.UninstallBundle(context.Background(), uninstallOpts)
+	err = p.UninstallBundle(uninstallOpts)
 	require.NoError(t, err)
 
 	gotCmdOutput := p.TestConfig.TestContext.GetOutput()

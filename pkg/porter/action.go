@@ -1,21 +1,23 @@
 package porter
 
 import (
-	"context"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/claims"
 )
 
 // ExecuteAction runs the specified action. Supported actions are: install, upgrade, invoke.
 // The uninstall action works in reverse so it's implemented separately.
-func (p *Porter) ExecuteAction(ctx context.Context, installation claims.Installation, action BundleAction) error {
+func (p *Porter) ExecuteAction(installation claims.Installation, action BundleAction) error {
+	actionOpts := action.GetOptions()
+
 	deperator := newDependencyExecutioner(p, installation, action)
-	err := deperator.Prepare(ctx)
+	err := deperator.Prepare()
 	if err != nil {
 		return err
 	}
 
-	err = deperator.Execute(ctx)
+	err = deperator.Execute()
 	if err != nil {
 		return err
 	}
@@ -25,5 +27,6 @@ func (p *Porter) ExecuteAction(ctx context.Context, installation claims.Installa
 		return err
 	}
 
-	return p.CNAB.Execute(ctx, actionArgs)
+	fmt.Fprintf(p.Out, "%s %s...\n", action.GetActionVerb(), actionOpts.Name)
+	return p.CNAB.Execute(actionArgs)
 }
