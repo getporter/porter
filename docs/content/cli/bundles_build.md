@@ -23,6 +23,7 @@ porter bundles build [flags]
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
+  porter build --custom version=0.2.0
 
 ```
 
@@ -30,6 +31,7 @@ porter bundles build [flags]
 
 ```
       --build-arg stringArray   Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.
+      --custom strings          Define an individual key-value pair for custom section in the form of NAME=VALUE. May be specified multiple times.
   -d, --dir string              Path to the build context directory where all bundle assets are located.
   -f, --file porter.yaml        Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                    help for build

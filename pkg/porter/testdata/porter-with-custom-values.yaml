@@ -1,0 +1,24 @@
+name: porter-hello
+version: 0.1.0
+description: "A bundle with a custom action"
+registry: getporter
+
+custom:
+  customKey1: "customValue1"
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "custom arguments"
+      command: echo
+      arguments:
+        - "{{ bundle.custom.customKey1 }}"
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World

@@ -265,3 +265,24 @@ func TestBuildOptions_Defaults(t *testing.T) {
 		assert.Equal(t, config.BuildDriverBuildkit, opts.Driver)
 	})
 }
+
+func TestPorter_BuildWithCustomValues(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-custom-values.yaml", config.Name)
+
+	err := p.LoadManifestFrom(config.Name)
+	require.NoError(t, err)
+
+	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
+	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
+
+	err = p.Build(context.Background(), opts)
+	require.NoError(t, err)
+
+	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
+	require.NoError(t, err)
+
+	assert.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
+}

@@ -1,12 +1,11 @@
-schemaVersion: 1.0.0-alpha.1
 name: porter-hello
-version: 1.0.0
+version: 0.1.0
 description: "An example Porter configuration"
-registry: "localhost:5000"
+registry: getporter
 custom:
-  key1: value1
+  key1: editedValue1
   key2:
-    nestedKey2: value2
+    nestedKey2: editedValue2
 mixins:
   - exec
 install:
