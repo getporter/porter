@@ -38,6 +38,10 @@ func Test_generateInternalManifest(t *testing.T) {
 		name:         "name and value set",
 		opts:         BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
 		wantManifest: "all-fields.yaml",
+	}, {
+		name:         "custom input set",
+		opts:         BuildOptions{Customs: []string{"key1=editedValue1", "key2.nestedKey2=editedValue2"}},
+		wantManifest: "custom-input.yaml",
 	}}
 
 	p := NewTestPorter(t)

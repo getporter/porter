@@ -1,3 +1,5 @@
+// +build integration
+
 package porter
 
 import (
@@ -232,14 +234,12 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	configTpl, err := p.Templates.GetManifest()
-	require.Nil(t, err)
-	p.TestConfig.TestContext.AddTestFileContents(configTpl, config.Name)
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-custom-values.yaml", config.Name)
 
-	err = p.LoadManifestFrom(config.Name)
+	err := p.LoadManifestFrom(config.Name)
 	require.NoError(t, err)
 
-	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1", "customKey2.nestedCustomKey2=editedCustomValue2"}}
+	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
 	err = p.Build(opts)
@@ -248,7 +248,5 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 	bun, err := p.CNAB.LoadBundle(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
 
-	assert.Equal(t, len(bun.Custom), 2)
-	t.Log(bun.Custom)
-
+	assert.Equal(t, bun.Custom["customKey1"], "editedCustomValue1")
 }

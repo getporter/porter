@@ -5,8 +5,6 @@ registry: getporter
 
 custom:
   customKey1: "customValue1"
-  customKey2:
-    nestedCustomKey2: "customValue2"
 
 mixins:
   - exec
@@ -17,4 +15,10 @@ install:
       command: echo
       arguments:
         - "{{ bundle.custom.customKey1 }}"
-        - "{{ bundle.custom.customKey2.nestedCustomKey2 }}"
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: bash
+      flags:
+        c: echo Goodbye World

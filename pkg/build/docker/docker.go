@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
-	"reflect"
+	"strings"
 
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
@@ -35,16 +34,16 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	buildArgs := make(map[string]*string)
 	buildArgs["BUNDLE_DIR"] = &build.BUNDLE_DIR
 
-	for customArgKey, customArgValue := range manifest.Custom {
-		for reflect.TypeOf(customArgValue) != string {
-
-		}
-
-		customArgValueString := fmt.Sprint(customArgValue)
-		buildArgs[customArgKey] = &customArgValueString
+	convertedCustomInput := make(map[string]string)
+	convertedCustomInput, err := convertMap(manifest.Custom)
+	if err != nil {
+		return err
 	}
 
-	log.Println(buildArgs)
+	for k, v := range convertedCustomInput {
+		v := v
+		buildArgs[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = &v
+	}
 
 	fmt.Fprintf(b.Out, "\nStarting Invocation Image Build (%s) =======> \n", manifest.Image)
 	buildOptions := types.ImageBuildOptions{
@@ -109,4 +108,30 @@ func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
 	}
 	return nil
+}
+
+func convertMap(mapInput map[string]interface{}) (map[string]string, error) {
+	out := make(map[string]string)
+
+	for key, value := range mapInput {
+		switch v := value.(type) {
+		case string:
+			out[key] = v
+		case map[string]interface{}:
+			tmp, err := convertMap(v)
+			if err != nil {
+				return nil, err
+			}
+			for innerKey, innerValue := range tmp {
+				out[key+"."+innerKey] = innerValue
+			}
+		case map[string]string:
+			for innerKey, innerValue := range v {
+				out[key+"."+innerKey] = innerValue
+			}
+		default:
+			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
+		}
+	}
+	return out, nil
 }

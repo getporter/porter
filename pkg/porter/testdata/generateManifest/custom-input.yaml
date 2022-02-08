@@ -1,11 +1,11 @@
-name: newname
-version: 1.0.0
+name: porter-hello
+version: 0.1.0
 description: "An example Porter configuration"
 registry: getporter
 custom:
-  key1: value1
+  key1: editedValue1
   key2:
-    nestedKey2: value2
+    nestedKey2: editedValue2
 mixins:
   - exec
 install:

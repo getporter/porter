@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/containerd/console"
 
@@ -61,8 +62,14 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	buildArgs := make(map[string]string)
 	buildArgs["BUNDLE_DIR"] = build.BUNDLE_DIR
 
-	for customArgKey, customArgValue := range manifest.Custom {
-		buildArgs[customArgKey] = fmt.Sprint(customArgValue)
+	convertedCustomInput := make(map[string]string)
+	convertedCustomInput, err = convertMap(manifest.Custom)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range convertedCustomInput {
+		buildArgs[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = v
 	}
 
 	opts := map[string]buildx.Options{
@@ -178,4 +185,29 @@ func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
 	}
 	return nil
+}
+
+func convertMap(mapInput map[string]interface{}) (map[string]string, error) {
+	out := make(map[string]string)
+	for key, value := range mapInput {
+		switch v := value.(type) {
+		case string:
+			out[key] = v
+		case map[string]interface{}:
+			tmp, err := convertMap(v)
+			if err != nil {
+				return nil, err
+			}
+			for innerKey, innerValue := range tmp {
+				out[key+"."+innerKey] = innerValue
+			}
+		case map[string]string:
+			for innerKey, innerValue := range v {
+				out[key+"."+innerKey] = innerValue
+			}
+		default:
+			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
+		}
+	}
+	return out, nil
 }
