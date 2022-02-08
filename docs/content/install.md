@@ -10,6 +10,7 @@ We have a few release types available for you to use:
 
 * [Latest](#latest)
 * [Canary](#canary)
+* [Prerelease](#prerelease)
 * [Older Version](#older-version)
 
 You can also install and manage [mixins](#mixins) and [plugins](#plugins) using
@@ -69,11 +70,77 @@ You will need to create a [PowerShell Profile][ps-link] if you do not have one.
 iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 ```
 
+# Prerelease
+
+We would love for you to try out our v1 prerelease and send us any feedback that you have!
+Keep in mind that prereleases are not suitable for production workloads. Data migrations will not be provided or supported for prereleases.
+Prereleases are intended for you to try out potential new features in Porter and provide feedback about the direction of the feature. They won't work with existing installations.
+
+You can try out different versions of Porter without impacting your current version of Porter by installing to a different location via a modified PORTER_HOME environment variable.
+
+If you are using the [Porter Operator](https://release-v1.porter.sh/operator/), then you must use the most recent v1 prerelease of Porter.
+The examples below use a hard-coded version of the prerelease and there may be a newer version available.
+Set VERSION to the most recent [v1 prerelease] version number.
+
+**MacOS**
+
+```bash
+export PORTER_HOME=~/.porterv1
+export VERSION="v1.0.0-alpha.9"
+curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```bash
+export PORTER_HOME=~/.porterv1
+export PATH=$PORTER_HOME:$PATH
+# Check that you are using the desired version of porter
+porter version
+```
+
+**Linux**
+
+```bash
+export PORTER_HOME=~/.porterv1
+export VERSION="v1.0.0-alpha.9"
+curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```bash
+export PORTER_HOME=~/.porterv1
+export PATH=$PORTER_HOME:$PATH
+# Check that you are using the desired version of porter
+porter version
+```
+
+**Windows**
+
+```powershell
+$PORTER_HOME="$env:USERPROFILE\.porterv1"
+$VERSION="v1.0.0-alpha.9"
+(New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
+.\install-porter.ps1 -PORTER_HOME $PORTER_HOME
+```
+
+After installing the prerelease, you can switch your current shell session to use the prerelease by setting the PORTER_HOME environment variable and prepending that location to your PATH environment variable.
+
+```powershell
+$env:PORTER_HOME="$env:USERPROFILE\.porterv1"
+$env:PATH+=";$env:PORTER_HOME"
+# Check that you are using the desired version of porter
+porter version
+```
+
 # Older Version
 
-Install an older version of porter, starting with `v0.18.1-beta.2`. This also
-installs the latest version of all the mixins. If you need a specific version of
-a mixin, use the `--version` flag when [installing the mixin](#mixins).
+Install an older version of porter, starting with `v0.18.1-beta.2`.
+Porter v1.0.0+ only installs porter and the [exec mixin].
+Older versions of Porter installed more mixins by default. 
+
+If you need a specific version of a mixin, use the `--version` flag when [installing the mixin](#mixins).
 
 See the porter [releases][releases] page for a list of older porter versions.
 Set `VERSION` to the version of Porter that you want to install.
@@ -100,8 +167,8 @@ iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 
 # Mixins
 
-We have a number of [mixins](/mixins) to help you get started, and stable mixins
-are installed by default.
+We have a number of [mixins](/mixins) to help you get started.
+Only the [exec mixin] is installed with Porter v1.0.0+, other mixins should be installed separately.
 
 You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
@@ -115,8 +182,7 @@ All of the Porter-authored mixins are published to `https://cdn.porter.sh/mixins
 
 # Plugins
 
-We are working on building out [plugins](/plugins) to extend Porter and the stable
-plugins are installed by default.
+We have a couple [plugins](/plugins) which extend Porter and integrate with other cloud providers and software.
 
 You can update an existing plugin, or install a new plugin using the `porter plugin
 install` command:
@@ -130,8 +196,6 @@ All of the Porter-authored plugins are published to `https://cdn.porter.sh/plugi
 
 
 [releases]: https://github.com/getporter/porter/releases
-
-
 
 # Install Script Parameters
 
@@ -241,3 +305,6 @@ delete    edit    generate    list    show
 ```
 
 > Note: Completion commands are available for Porter's built in commands and flags, future plans include dynamic completion for your project.
+
+[exec mixin]: /mixins/exec/
+[v1 prerelease]: https://github.com/getporter/porter/releases?q=v1.0.0&expanded=true
