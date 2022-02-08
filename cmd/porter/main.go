@@ -169,6 +169,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildPluginsCommands(p))
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
+	cmd.AddCommand(buildCompletionCommand(p))
 
 	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)

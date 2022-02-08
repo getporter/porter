@@ -55,6 +55,8 @@ and we will add you. **All** contributors belong here. 💯
 * [Ritesh Yadav](https://github.com/DARK-art108)
 * [Jérémy Audiger](https://github.com/jaudiger)
 * [Om More](https://github.com/thisisommore)
+* [Avinash Upadhyaya](https://github.com/avinashupadhya99)
+* [Mike Barkas](https://github.com/mikebarkas)
 * [Joshua Bezaleel Abednego](https://github.com/joshuabezaleel)
 * [Avinash Upadhyaya](https://github.com/avinashupadhya99)
 * [Mahendra Bishnoi](https://github.com/mahendrabishnoi2)
