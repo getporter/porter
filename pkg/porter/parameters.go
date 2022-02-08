@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -112,8 +113,8 @@ func (o *ParameterOptions) validateParamName(args []string) error {
 // GenerateParameters builds a new parameter set based on the given options. This can be either
 // a silent build, based on the opts.Silent flag, or interactive using a survey. Returns an
 // error if unable to generate parameters
-func (p *Porter) GenerateParameters(opts ParameterOptions) error {
-	bundleRef, err := p.resolveBundleReference(&opts.BundleActionOptions)
+func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &opts.BundleActionOptions)
 
 	if err != nil {
 		return err

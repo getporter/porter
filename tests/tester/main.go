@@ -106,7 +106,7 @@ func (t Tester) RunPorter(args ...string) (stdout string, combinedoutput string,
 	ran, _, err := cmd.Stdout(io.MultiWriter(stdoutBuf, output)).Stderr(io.MultiWriter(stderrBuf, output)).Exec()
 	if err != nil {
 		if ran {
-			err = errors.New(stderrBuf.String())
+			err = errors.Wrap(err, stderrBuf.String())
 		}
 		return stdoutBuf.String(), output.String(), err
 	}

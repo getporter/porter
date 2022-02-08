@@ -9,6 +9,9 @@ default-secrets = "red-team"
 experimental = ["build-drivers"]
 build-driver = "buildkit"
 
+[telemetry]
+  enabled = true
+
 [[storage]]
   name = "dev"
   plugin = "azure.blob"

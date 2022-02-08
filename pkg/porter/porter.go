@@ -114,6 +114,12 @@ func (p *Porter) Close() error {
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
+
+	err = p.Config.Close()
+	if err != nil {
+		bigErr = multierror.Append(bigErr, err)
+	}
+
 	return bigErr.ErrorOrNil()
 }
 
@@ -138,7 +144,7 @@ func (p *Porter) GetBuilder() build.Builder {
 	if p.builder == nil {
 		switch p.GetBuildDriver() {
 		case config.BuildDriverBuildkit:
-			p.builder = buildkit.NewBuilder(p.Context)
+			p.builder = buildkit.NewBuilder(p.Config)
 		default:
 			p.builder = docker.NewBuilder(p.Context)
 		}

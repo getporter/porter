@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestGenerateParameterSet(t *testing.T) {
 	err := opts.Validate(nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateParameters(opts)
+	err = p.GenerateParameters(context.Background(), opts)
 	require.NoError(t, err, "no error should have existed")
 	creds, err := p.Parameters.GetParameterSet(opts.Namespace, "kool-params")
 	require.NoError(t, err, "expected parameter to have been generated")

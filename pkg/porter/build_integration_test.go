@@ -3,6 +3,7 @@
 package porter
 
 import (
+	"context"
 	"encoding/json"
 	"io/fs"
 	"os"
@@ -39,7 +40,7 @@ func TestPorter_Build(t *testing.T) {
 	opts := BuildOptions{}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
 
-	err = p.Build(opts)
+	err = p.Build(context.Background(), opts)
 	require.NoError(t, err)
 
 	// Check file permissions on .cnab contents
@@ -114,7 +115,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
-		err = p.Build(opts)
+		err = p.Build(context.Background(), opts)
 		require.Errorf(t, err, "Build should have been aborted with lint errors")
 		assert.Contains(t, err.Error(), "Lint errors were detected")
 	})
@@ -133,7 +134,7 @@ func TestPorter_LintDuringBuild(t *testing.T) {
 		err = opts.Validate(p.Porter)
 		require.NoError(t, err)
 
-		err = p.Build(opts)
+		err = p.Build(context.Background(), opts)
 		require.NoError(t, err, "Build failed but should have not run lint")
 	})
 

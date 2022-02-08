@@ -30,7 +30,7 @@ func NewBuilder(cxt *portercontext.Context) *Builder {
 	}
 }
 
-func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
+func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
 	buildArgs := make(map[string]*string)
 	buildArgs["BUNDLE_DIR"] = &build.BUNDLE_DIR
 
@@ -74,7 +74,7 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 		return err
 	}
 
-	response, err := cli.Client().ImageBuild(context.Background(), tar, buildOptions)
+	response, err := cli.Client().ImageBuild(ctx, tar, buildOptions)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (b *Builder) BuildInvocationImage(manifest *manifest.Manifest) error {
 	return nil
 }
 
-func (b *Builder) TagInvocationImage(origTag, newTag string) error {
+func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return errors.Wrap(err, "could not create new docker client")
@@ -104,7 +104,7 @@ func (b *Builder) TagInvocationImage(origTag, newTag string) error {
 		return err
 	}
 
-	if err := cli.Client().ImageTag(context.Background(), origTag, newTag); err != nil {
+	if err := cli.Client().ImageTag(ctx, origTag, newTag); err != nil {
 		return errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag)
 	}
 	return nil

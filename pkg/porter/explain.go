@@ -1,13 +1,14 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -127,13 +128,13 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
+func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error {
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(cxt)
+	err = o.bundleFileOptions.Validate(pctx)
 	if err != nil {
 		return err
 	}
@@ -151,8 +152,8 @@ func (o *ExplainOpts) Validate(args []string, cxt *context.Context) error {
 	return nil
 }
 
-func (p *Porter) Explain(o ExplainOpts) error {
-	bundleRef, err := p.resolveBundleReference(&o.BundleActionOptions)
+func (p *Porter) Explain(ctx context.Context, o ExplainOpts) error {
+	bundleRef, err := p.resolveBundleReference(ctx, &o.BundleActionOptions)
 	if err != nil {
 		return err
 	}

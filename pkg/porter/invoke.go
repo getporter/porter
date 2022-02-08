@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -40,9 +41,9 @@ func (o InvokeOptions) Validate(args []string, p *Porter) error {
 
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses
 // them to upgrade a bundle.
-func (p *Porter) InvokeBundle(opts InvokeOptions) error {
+func (p *Porter) InvokeBundle(ctx context.Context, opts InvokeOptions) error {
 	// Figure out which bundle/installation we are working with
-	bundleRef, err := p.resolveBundleReference(opts.BundleActionOptions)
+	bundleRef, err := p.resolveBundleReference(ctx, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -66,5 +67,5 @@ func (p *Porter) InvokeBundle(opts InvokeOptions) error {
 	if err != nil {
 		return err
 	}
-	return p.ExecuteAction(installation, opts)
+	return p.ExecuteAction(ctx, installation, opts)
 }

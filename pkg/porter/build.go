@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -87,7 +88,7 @@ func stringSliceContains(allowedValues []string, value string) bool {
 	return false
 }
 
-func (p *Porter) Build(opts BuildOptions) error {
+func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	opts.Apply(p.Context)
 
 	if p.Debug {
@@ -141,7 +142,7 @@ func (p *Porter) Build(opts BuildOptions) error {
 
 	builder := p.GetBuilder()
 
-	return errors.Wrap(builder.BuildInvocationImage(p.Manifest), "unable to build CNAB invocation image")
+	return errors.Wrap(builder.BuildInvocationImage(ctx, p.Manifest), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
