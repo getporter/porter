@@ -161,17 +161,17 @@ func (p *Porter) Explain(o ExplainOpts) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to print bundle")
 	}
-	return p.printBundleExplain(o, pb)
+	return p.printBundleExplain(o, pb, bundleRef.Definition)
 }
 
-func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle) error {
+func (p *Porter) printBundleExplain(o ExplainOpts, pb *PrintableBundle, bun cnab.ExtendedBundle) error {
 	switch o.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(p.Out, pb)
 	case printer.FormatYaml:
 		return printer.PrintYaml(p.Out, pb)
 	case printer.FormatPlaintext:
-		return p.printBundleExplainTable(pb, o.Reference)
+		return p.printBundleExplainTable(pb, o.Reference, bun)
 	default:
 		return fmt.Errorf("invalid format: %s", o.Format)
 	}
@@ -312,7 +312,7 @@ func generateApplyToString(appliesTo []string) string {
 
 }
 
-func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference string) error {
+func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference string, extendedBundle cnab.ExtendedBundle) error {
 	fmt.Fprintf(p.Out, "Name: %s\n", bun.Name)
 	fmt.Fprintf(p.Out, "Description: %s\n", bun.Description)
 	fmt.Fprintf(p.Out, "Version: %s\n", bun.Version)
@@ -329,21 +329,13 @@ func (p *Porter) printBundleExplainTable(bun *PrintableBundle, bundleReference s
 
 	fmt.Fprintf(p.Out, "This bundle uses the following tools: %s.\n", strings.Join(bun.Mixins, ", "))
 
-	// Check whether the bundle requires docker mixin and warn for host access.
-	var requireDocker bool = false
-	for _, mixin := range bun.Mixins {
-		if mixin == "docker" {
-			requireDocker = true
-		}
-	}
-
-	if requireDocker {
+	if extendedBundle.SupportsDocker() {
 		fmt.Fprintln(p.Out, "") // force a blank line before this block
 		fmt.Fprintf(p.Out, "🚨 This bundle will grant docker access to the host, make sure the publisher of this bundle is trusted.")
 		fmt.Fprintln(p.Out, "") // force a blank line after this block
 	}
 
-	p.printInstallationInstructionBlock(bun, bundleReference)
+	p.printInstallationInstructionBlock(bun, bundleReference, extendedBundle)
 	return nil
 }
 
@@ -481,7 +473,7 @@ func (p *Porter) printDependenciesExplainTable(bun *PrintableBundle) error {
 	return printer.PrintTable(p.Out, bun.Dependencies, printDependencyRow, "Alias", "Reference")
 }
 
-func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleReference string) error {
+func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleReference string, extendedBundle cnab.ExtendedBundle) error {
 	fmt.Fprintln(p.Out)
 	fmt.Fprint(p.Out, "To install this bundle run the following command, passing --param KEY=VALUE for any parameters you want to customize:\n")
 
@@ -515,14 +507,7 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 	porterInstallCommand := fmt.Sprintf("porter install%s%s%s", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
 
 	// Check whether the bundle requires docker mixin and add flag for host access for install command.
-	var requireDocker bool = false
-	for _, mixin := range bun.Mixins {
-		if mixin == "docker" {
-			requireDocker = true
-		}
-	}
-
-	if requireDocker {
+	if extendedBundle.SupportsDocker() {
 		porterInstallCommand += " --allow-docker-host-access"
 	}
 

@@ -38,10 +38,33 @@ func TestExplain_generateTable(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output.txt")
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), gotOutput)
+}
+
+func TestExplain_generateTableRequireDocker(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/explain/bundle-docker.json", "bundle-docker.json")
+	b, err := p.CNAB.LoadBundle("bundle-docker.json")
+
+	pb, err := generatePrintable(b, "")
+	require.NoError(t, err)
+	opts := ExplainOpts{}
+	opts.RawFormat = "plaintext"
+
+	err = opts.Validate([]string{}, p.Context)
+	require.NoError(t, err)
+
+	err = p.printBundleExplain(opts, pb, b)
+	assert.NoError(t, err)
+	gotOutput := p.TestConfig.TestContext.GetOutput()
+	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output-docker.txt")
 	require.NoError(t, err)
 	assert.Equal(t, string(expected), gotOutput)
 }
@@ -61,7 +84,7 @@ func TestExplain_generateJSON(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	p.CompareGoldenFile("testdata/explain/expected-json-output.json", gotOutput)
@@ -83,7 +106,7 @@ func TestExplain_generateYAML(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 	p.CompareGoldenFile("testdata/explain/expected-yaml-output.yaml", gotOutput)
@@ -421,7 +444,7 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	err = opts.Validate([]string{}, p.Context)
 	require.NoError(t, err)
 
-	err = p.printBundleExplain(opts, pb)
+	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
 
