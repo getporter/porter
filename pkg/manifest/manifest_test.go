@@ -301,7 +301,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/myorg/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/myorg/mybun:MspRMvSv6X", m.Image)
+		assert.Equal(t, "getporter/myorg/mybun:c8addfbe58eea6cfbcc0ee56fc574fc5", m.Image)
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
