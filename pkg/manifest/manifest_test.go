@@ -237,7 +237,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/mybun:5lk7ox8Vpv", m.Image)
+		assert.Equal(t, "getporter/mybun:936fdc475d0c43243b99f9fa89aff0f0", m.Image)
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
@@ -253,7 +253,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1_15", m.Reference)
-		assert.Equal(t, "getporter/mybun:Rz14DedlNy", m.Image)
+		assert.Equal(t, "getporter/mybun:6adcfa1f194e8de7a4fbdd17e5c8e56a", m.Image)
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
@@ -269,7 +269,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "localhost:5000/missing-invocation-image:v0.1.0", m.Reference)
-		assert.Equal(t, "localhost:5000/missing-invocation-image:Dvx5QNB3tS", m.Image)
+		assert.Equal(t, "localhost:5000/missing-invocation-image:fea49a80fb6822ee71f71e2ce4a48a37", m.Image)
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
@@ -285,7 +285,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/mybun:v1.2.3-beta.1", m.Reference)
-		assert.Equal(t, "getporter/mybun:OqLKF5tefC", m.Image)
+		assert.Equal(t, "getporter/mybun:c09184d68c1de7907685812b949fa1f0", m.Image)
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestSetDefaults(t *testing.T) {
 		err = m.SetDefaults()
 		require.NoError(t, err)
 		assert.Equal(t, "getporter/org/mybun:v1.2.3", m.Reference)
-		assert.Equal(t, "getporter/org/mybun:q4ZA2cHpvl", m.Image)
+		assert.Equal(t, "getporter/org/mybun:bd6bd1d483a4b26d724706e9cae52534", m.Image)
 	})
 }
 

@@ -2,6 +2,8 @@ package porter
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -9,7 +11,6 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/common"
 	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
@@ -361,7 +362,9 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string, isInvocationI
 
 	// Use the image name with the bundle location to generate a randomized tag
 	imgName := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
-	imgTag := common.RandomString(imgName, 10)
+	nameHash := md5.Sum([]byte(imgName))
+
+	imgTag := hex.EncodeToString(nameHash[:])
 
 	if isInvocationImg {
 		imgName = bundleName.Name()

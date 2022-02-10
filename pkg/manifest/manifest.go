@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,7 +13,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/common"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
@@ -900,7 +901,9 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
 	}
-	imageRef, err := imageName.WithTag(common.RandomString(bundleRef.Named.String()+dockerTag, 10))
+	referenceHash := md5.Sum([]byte(bundleRef.Named.String()))
+	imgTag := hex.EncodeToString(referenceHash[:])
+	imageRef, err := imageName.WithTag(imgTag)
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
 	}

@@ -86,61 +86,61 @@ func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 	t.Run("has registry and org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("localhost:5000/myorg/apache-installer", "example.com/neworg/apache:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/neworg/apache:4wrU3pItI1", newInvImgName.String())
+		assert.Equal(t, "example.com/neworg/apache:3a7b06390b4421c38c57e5e44475f1ba", newInvImgName.String())
 	})
 
 	t.Run("has registry and org, bundle tag has subdomain", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("localhost:5000/myorg/apache-installer", "example.com/neworg/bundles/apache:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/neworg/bundles/apache:p5TxPqwxcm", newInvImgName.String())
+		assert.Equal(t, "example.com/neworg/bundles/apache:9d56a9aebe9641c667a34b04be1d259e", newInvImgName.String())
 	})
 
 	t.Run("has registry, org and subdomain, bundle tag has subdomain", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("localhost:5000/myorg/myimgs/apache-installer", "example.com/neworg/bundles/apache:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/neworg/bundles/apache:p5TxPqwxcm", newInvImgName.String())
+		assert.Equal(t, "example.com/neworg/bundles/apache:9d56a9aebe9641c667a34b04be1d259e", newInvImgName.String())
 	})
 
 	t.Run("has registry, no org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("localhost:5000/apache-installer", "example.com/neworg/apache:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/neworg/apache:4wrU3pItI1", newInvImgName.String())
+		assert.Equal(t, "example.com/neworg/apache:3a7b06390b4421c38c57e5e44475f1ba", newInvImgName.String())
 	})
 
 	t.Run("no registry, has org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("myorg/apache-installer", "example.com/anotherorg/apache:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/anotherorg/apache:5dPfLKr6mA", newInvImgName.String())
+		assert.Equal(t, "example.com/anotherorg/apache:d0bbfdcdda80ded171de26cc7bb55fe5", newInvImgName.String())
 	})
 
 	t.Run("org repeated in registry name", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("getporter/whalesayd", "getporter.azurecr.io/neworg/whalegap:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "getporter.azurecr.io/neworg/whalegap:W81sj53q3z", newInvImgName.String())
+		assert.Equal(t, "getporter.azurecr.io/neworg/whalegap:497b3e01ed1153e542a19df184607866", newInvImgName.String())
 	})
 
 	t.Run("org repeated in image name", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("getporter/getporter-hello-installer", "test.azurecr.io/neworg/hello:v0.1.0", true)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "test.azurecr.io/neworg/hello:qlJb9fGhmU", newInvImgName.String())
+		assert.Equal(t, "test.azurecr.io/neworg/hello:1876516fb3650bdaf1f6b764522b720e", newInvImgName.String())
 	})
 
 	t.Run("src has no org, dst has no org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("apache", "example.com/apache:v0.1.0", false)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/apache:9s7qc1q2Iu", newInvImgName.String())
+		assert.Equal(t, "example.com/apache:c85c90de79df5b0bbdb39cb06cecc53f", newInvImgName.String())
 	})
 
 	t.Run("src has no org, dst has org", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("apache", "example.com/neworg/apache:v0.1.0", false)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "example.com/neworg/apache:SJXwUSaWiF", newInvImgName.String())
+		assert.Equal(t, "example.com/neworg/apache:da232bb13d5b6ab0214f720968992e25", newInvImgName.String())
 	})
 
 	t.Run("src has registry, dst has no registry (implicit docker.io)", func(t *testing.T) {
 		newInvImgName, err := getNewImageNameFromBundleReference("oldregistry.com/apache", "neworg/apache:v0.1.0", false)
 		require.NoError(t, err, "getNewImageNameFromBundleReference failed")
-		assert.Equal(t, "docker.io/neworg/apache:AXEYc6PcYW", newInvImgName.String())
+		assert.Equal(t, "docker.io/neworg/apache:69772e4894006c2ebdee3e4ccd6ee718", newInvImgName.String())
 	})
 }
 
@@ -178,7 +178,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 	err = p.updateBundleWithNewImage(bun, newInvImgName, digest, 0)
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "myneworg/myinvimg:3tzH6idtmZ@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
+	require.Equal(t, "myneworg/myinvimg:2ebf8f866994ea333390db1ea281de90@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Image)
 	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.InvocationImages[0].Digest)
 
 	// update image
@@ -187,7 +187,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 	err = p.updateBundleWithNewImage(bun, newImgName, digest, "myimg")
 	require.NoError(t, err, "updating bundle with new image should not have failed")
-	require.Equal(t, "myneworg/myimg:qO6uZ3Skfz@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
+	require.Equal(t, "myneworg/myimg:e7834f03677bd970b2a458c84d0cdff0@sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Image)
 	require.Equal(t, "sha256:6b5a28ccbb76f12ce771a23757880c6083234255c5ba191fca1c5db1f71c1687", bun.Images["myimg"].Digest)
 }
 
