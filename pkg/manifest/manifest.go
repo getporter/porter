@@ -901,7 +901,7 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
 	}
-	referenceHash := md5.Sum([]byte(bundleRef.Named.String()))
+	referenceHash := md5.Sum([]byte(bundleRef.String()))
 	imgTag := hex.EncodeToString(referenceHash[:])
 	imageRef, err := imageName.WithTag(imgTag)
 	if err != nil {

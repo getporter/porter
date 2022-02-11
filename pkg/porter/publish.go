@@ -229,7 +229,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 	// Push updated images (renamed based on provided bundle tag) with same digests
 	// then update the bundle with new values (image name, digest)
 	for i, invImg := range bun.InvocationImages {
-		newImgName, err := getNewImageNameFromBundleReference(invImg.Image, opts.Reference, true)
+		newImgName, err := getNewImageNameFromBundleReference(invImg.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -245,7 +245,7 @@ func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) er
 		}
 	}
 	for name, img := range bun.Images {
-		newImgName, err := getNewImageNameFromBundleReference(img.Image, opts.Reference, false)
+		newImgName, err := getNewImageNameFromBundleReference(img.Image, opts.Reference)
 		if err != nil {
 			return err
 		}
@@ -349,7 +349,7 @@ func (p *Porter) updateBundleWithNewImage(bun cnab.ExtendedBundle, newImg image.
 
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
 // image (string) using the provided bundleTag to clean registry/org/etc.
-func getNewImageNameFromBundleReference(origImg, bundleTag string, isInvocationImg bool) (image.Name, error) {
+func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
 	origName, err := image.NewName(origImg)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", origImg)
@@ -360,15 +360,13 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string, isInvocationI
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
 	}
 
-	// Use the image name with the bundle location to generate a randomized tag
-	imgName := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
-	nameHash := md5.Sum([]byte(imgName))
-
+	// Use the original image name with the bundle location to generate a randomized tag
+	source := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
+	nameHash := md5.Sum([]byte(source))
 	imgTag := hex.EncodeToString(nameHash[:])
 
-	if isInvocationImg {
-		imgName = bundleName.Name()
-	}
+	// place the new image under the same repo as the bundle
+	imgName := bundleName.Name()
 	newImgName, err := image.NewName(imgName)
 	if err != nil {
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle %q into domain/path components", bundleName.Name())
