@@ -3,7 +3,6 @@ package cnabtooci
 import (
 	"context"
 	"fmt"
-
 	"strings"
 
 	"github.com/cnabio/cnab-go/bundle"
@@ -144,7 +143,6 @@ func (r *Registry) PushInvocationImage(invocationImage string) (string, error) {
 		return "", err
 	}
 	options := types.ImagePushOptions{
-		All:          true,
 		RegistryAuth: encodedAuth,
 	}
 
