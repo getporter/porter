@@ -19,10 +19,6 @@ replace (
 	// go.mod doesn't propogate replacements in the dependency graph so I'm copying this from github.com/moby/buildkit
 	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 
-	// expose-ast
-	// https://github.com/osteele/liquid/pull/59
-	github.com/osteele/liquid => github.com/carolynvs/liquid v1.2.5-0.20220131221838-2e107bef298f
-
 	// Fixes https://github.com/spf13/viper/issues/761
 	github.com/spf13/viper => github.com/getporter/viper v1.7.1-porter.2.0.20210514172839-3ea827168363
 )
@@ -59,7 +55,7 @@ require (
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/osteele/liquid v1.2.4
+	github.com/osteele/liquid v1.3.0
 	github.com/pelletier/go-toml v1.9.1
 	github.com/pivotal/image-relocation v0.0.0-20191111101224-e94aff6df06c
 	github.com/pkg/errors v0.9.1

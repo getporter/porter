@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"context"
+	"sort"
 	"strings"
 
 	"get.porter.sh/porter/pkg/tracing"
@@ -122,6 +123,8 @@ func listTemplateVariables(tmpl *liquid.Template) []string {
 	for v := range vars {
 		results = append(results, v)
 	}
+	sort.Strings(results)
+
 	return results
 }
 
