@@ -49,15 +49,18 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	}}
 
-	args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds", "/db-creds.json"}}, Action: "install"}
+	args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
 	gotValues, err := r.loadCredentials(b, args)
 	require.NoError(t, err, "loadCredentials failed")
 
 	wantValues := secrets.Set{
-		"password":    "mypassword",
-		"db-password": "topsecret",
+		"password": "mypassword",
 	}
 	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
+
+	args = ActionArguments{Installation: claims.Installation{CredentialSets: []string{"/db-creds.json"}}, Action: "install"}
+	_, err = r.loadCredentials(b, args)
+	require.Error(t, err, "loadCredentials should not load from a file")
 }
 
 func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {

@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -331,26 +333,23 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 	for _, name := range params {
 		var pset parameters.ParameterSet
 		var err error
-		// Try reading parameters from file ...
-		if pset, err = p.loadParameterFromFile(name); err != nil {
-			// ... otherwise treat as a named set and read from Porter's parameter store.
-			// Try to get the params in the local namespace first, fallback to the global creds
-			query := storage.FindOptions{
-				Sort: []string{"-namespace"},
-				Filter: bson.M{
-					"name": name,
-					"$or": []bson.M{
-						{"namespace": ""},
-						{"namespace": namespace},
-					},
+
+		if strings.Contains(name, string(filepath.Separator)) {
+			return nil, errors.Errorf("can't use file path %s as parameter set source", name)
+		}
+		// Try to get the params in the local namespace first, fallback to the global creds
+		query := storage.FindOptions{
+			Sort: []string{"-namespace"},
+			Filter: bson.M{
+				"name": name,
+				"$or": []bson.M{
+					{"namespace": ""},
+					{"namespace": namespace},
 				},
-			}
-			store := p.Parameters.GetDataStore()
-			err = store.FindOne(parameters.CollectionParameters, query, &pset)
+			},
 		}
-		if err != nil {
-			return nil, err
-		}
+		store := p.Parameters.GetDataStore()
+		err = store.FindOne(parameters.CollectionParameters, query, &pset)
 
 		// A parameter may correspond to a Porter-specific parameter type of 'file'
 		// If so, add value (filepath) directly to map and remove from pset

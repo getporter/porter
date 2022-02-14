@@ -26,7 +26,7 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 		var cset credentials.CredentialSet
 		var err error
 		if r.isPathy(name) {
-			cset, err = r.loadCredentialFromFile(name)
+			return nil, errors.Errorf("cannot use file path %s as credential set source", name)
 		} else {
 			// Try to get the creds in the local namespace first, fallback to the global creds
 			query := storage.FindOptions{
@@ -56,6 +56,7 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 			resolvedCredentials[k] = v
 		}
 	}
+
 	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
 }
 

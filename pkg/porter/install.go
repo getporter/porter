@@ -112,9 +112,6 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 	}
 	// Record the names of the parameter sets used
 	for _, ps := range opts.ParameterSets {
-		if isParameterSetFile, _ := p.FileSystem.Exists(ps); isParameterSetFile {
-			continue
-		}
 		for _, existing := range i.ParameterSets {
 			if existing == ps {
 				continue
@@ -122,11 +119,9 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 		}
 		i.ParameterSets = append(i.ParameterSets, ps)
 	}
+
 	// Record the names of the credential sets used
 	for _, cs := range opts.CredentialIdentifiers {
-		if isCredentialSetFile, _ := p.FileSystem.Exists(cs); isCredentialSetFile {
-			continue
-		}
 		for _, existing := range i.ParameterSets {
 			if existing == cs {
 				continue
@@ -134,5 +129,6 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 		}
 		i.CredentialSets = append(i.CredentialSets, cs)
 	}
+
 	return nil
 }
