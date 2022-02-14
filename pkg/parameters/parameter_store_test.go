@@ -25,8 +25,8 @@ func TestParameterStore_CRUD(t *testing.T) {
 				Value: "myparamvalue",
 			},
 		})
-	myParamSet.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
-	myParamSet.Modified = myParamSet.Created
+	myParamSet.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
+	myParamSet.Status.Modified = myParamSet.Status.Created
 
 	err = paramStore.InsertParameterSet(myParamSet)
 	require.NoError(t, err, "Insert should successfully save")

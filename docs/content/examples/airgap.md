@@ -109,7 +109,7 @@ Edit the filepath to the kubeconfig with a path to a valid kubeconfig file.
 ```yaml
 # mycluster-credentials.yaml
 schemaType: CredentialSet
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: mycluster
 credentials:
   - name: kubeconfig

@@ -36,8 +36,8 @@ func TestGenerateNoName(t *testing.T) {
 	creds, err := p.Credentials.GetCredentialSet("", "porter-hello")
 	require.NoError(t, err, "expected credential to have been generated")
 	var zero time.Time
-	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
-	assert.True(t, creds.Created.Equal(creds.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
+	assert.True(t, zero.Before(creds.Status.Created), "expected Credentials.Created to be set")
+	assert.True(t, creds.Status.Created.Equal(creds.Status.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
 }
 
 func TestGenerateNameProvided(t *testing.T) {

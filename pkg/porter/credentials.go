@@ -60,7 +60,7 @@ func (p *Porter) PrintCredentials(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, creds, printCredRow,
 			"NAMESPACE", "NAME", "MODIFIED")
@@ -131,8 +131,8 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		return errors.Wrap(err, "unable to generate credentials")
 	}
 
-	cs.Created = time.Now()
-	cs.Modified = cs.Created
+	cs.Status.Created = time.Now()
+	cs.Status.Modified = cs.Status.Created
 
 	err = p.Credentials.UpsertCredentialSet(cs)
 	return errors.Wrapf(err, "unable to save credentials")
@@ -185,7 +185,7 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrap(err, "credentials are invalid")
 	}
 
-	credSet.Modified = time.Now()
+	credSet.Status.Modified = time.Now()
 	err = p.Credentials.UpdateCredentialSet(credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save credentials")
@@ -250,8 +250,8 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		// First, print the CredentialSet metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", credSet.Namespace)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Modified))
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Status.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Status.Modified))
 
 		// Print labels, if any
 		if len(credSet.Labels) > 0 {
@@ -341,7 +341,7 @@ func (p *Porter) CredentialsApply(o ApplyOptions) error {
 	}
 
 	creds.Namespace = namespace
-	creds.Modified = time.Now()
+	creds.Status.Modified = time.Now()
 
 	err = p.Credentials.Validate(creds)
 	if err != nil {
