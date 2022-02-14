@@ -164,6 +164,9 @@ func (g *DockerfileGenerator) buildCNABSection() []string {
 		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
 		`RUN rm -fr $BUNDLE_DIR/.cnab`,
 		`COPY .cnab /cnab`,
+		`RUN chown -R nonroot.nonroot /cnab`,
+		// we are explicitly using the user id here because when the driver injects files into the container, it can't resolve a username, but it can use a uid
+		`USER 65532:65532`,
 	}
 }
 

@@ -843,7 +843,7 @@ specify a bundle with --file.
 
 Bundles define 1 or more credential(s) that are required to interact with a
 bundle. The bundle definition defines where the credential should be delivered
-to the bundle, i.e. at /root/.kube. A credential set, on the other hand,
+to the bundle, i.e. at /home/nonroot/.kube. A credential set, on the other hand,
 represents the source data that you wish to use when interacting with the
 bundle. These will typically be environment variables or files on your local
 file system.
@@ -869,7 +869,7 @@ credentials:
 ```yaml
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---
@@ -985,7 +985,7 @@ credentials:
 - name: SUBSCRIPTION_ID
   env: AZURE_SUBSCRIPTION_ID
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---

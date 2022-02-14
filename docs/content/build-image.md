@@ -282,7 +282,7 @@ registry: jeremyrickard
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 install:
 - helm3:

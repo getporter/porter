@@ -11,7 +11,7 @@ registry: "localhost:5000"
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: database-name

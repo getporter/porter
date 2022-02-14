@@ -128,6 +128,7 @@ func GetMixins() error {
 
 	mixins := []struct {
 		name    string
+		url     string
 		feed    string
 		version string
 	}{
@@ -152,7 +153,13 @@ func GetMixins() error {
 			if mixin.version == "" {
 				mixin.version = defaultMixinVersion
 			}
-			return porter("mixin", "install", mixin.name, "--version", mixin.version, "--feed-url", mixin.feed).Run()
+			var source string
+			if mixin.feed != "" {
+				source = "--feed-url=" + mixin.feed
+			} else {
+				source = "--url=" + mixin.url
+			}
+			return porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
 		})
 	}
 

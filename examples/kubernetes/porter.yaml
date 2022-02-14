@@ -4,7 +4,7 @@ mixins:
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 name: kubernetes 
 version: 0.1.0

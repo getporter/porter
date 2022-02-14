@@ -13,14 +13,14 @@ language `{{ bundle.credentials.github_token }}`, or directly access the
 environment variable or path where the credential is stored.
 
 In the example below, the bundle defines two credentials. A kubeconfig file,
-which once passed to the bundle is stored at /root/.kube/config, and a GitHub
+which once passed to the bundle is stored at /home/nonroot/.kube/config, and a GitHub
 token which once passed to the bundle is stored in the GITHUB_TOKEN environment
 variable.
 
 ```yaml
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 - name: token
   env: GITHUB_TOKEN
 ```

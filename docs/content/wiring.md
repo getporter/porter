@@ -55,12 +55,12 @@ You can also provide any other attributes, as specified by the CNAB [parameters]
 
 Porter also enables the use of file parameters in a bundle.
 
-For instance, a bundle might declare a parameter `mytar` of type `file`, to exist at `/root/mytar` in the execution environment:
+For instance, a bundle might declare a parameter `mytar` of type `file`, to exist at `/cnab/app/mytar` in the execution environment:
 
 ```yaml
 - name: mytar
   type: file
-  path: /root/mytar
+  path: /cnab/app/mytar
 ```
 
 which can be used in a step like `install`:
@@ -71,7 +71,7 @@ install:
       description: "Install"
       command: bash
       flags:
-        c: tar zxvf /root/mytar
+        c: tar zxvf /cnab/app/mytar
 ```
 
 The syntax to pass a parameter to porter is the same for both regular and file parameters:
@@ -143,7 +143,7 @@ To declare a file injection:
 ```yaml
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 To declare an environment variable injection:
@@ -303,7 +303,7 @@ mixins:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: database-name
@@ -356,7 +356,7 @@ dependencies:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: wordpress-name

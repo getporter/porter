@@ -20,7 +20,7 @@ dependencies:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: wordpress-name

@@ -35,7 +35,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("no flag", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -45,7 +45,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("debug flag", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug"})
@@ -57,8 +57,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 
 	t.Run("debug flag overrides config", func(t *testing.T) {
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
+		c.SetHomeDir("/home/myuser/.porter")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug=false"})
@@ -73,7 +73,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -87,7 +87,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG_PLUGINS")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -101,7 +101,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -115,8 +115,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_BUILD_DRIVER")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
+		c.SetHomeDir("/home/myuser/.porter")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -130,7 +130,7 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
+		c.SetHomeDir("/home/myuser/.porter")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -144,8 +144,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
+		c.SetHomeDir("/home/myuser/.porter")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		err := cmd.Execute()
@@ -159,8 +159,8 @@ func TestLoadHierarchicalConfig(t *testing.T) {
 		defer os.Unsetenv("PORTER_DEBUG")
 
 		c := config.NewTestConfig(t)
-		c.SetHomeDir("/root/.porter")
-		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/root/.porter/config.toml")
+		c.SetHomeDir("/home/myuser/.porter")
+		c.TestContext.AddTestFileFromRoot("pkg/config/testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 		cmd := buildCommand(c.Config)
 		cmd.SetArgs([]string{"--debug", "true"})

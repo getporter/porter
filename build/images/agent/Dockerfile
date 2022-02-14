@@ -8,4 +8,5 @@ VOLUME /porter-config
 ENV PORTER_HOME /app/.porter
 COPY --chown=65532:65532 bin/dev/agent-linux-amd64 /app/.porter/agent
 
+USER 65532:65532
 ENTRYPOINT ["/app/.porter/agent"]

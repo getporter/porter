@@ -17,4 +17,5 @@ WORKDIR /app
 COPY --from=builder --chown=65532:65532 /app/.porter /app/.porter
 ENV PATH "$PATH:/app/.porter"
 
+USER 65532:65532
 ENTRYPOINT ["/app/.porter/porter"]
