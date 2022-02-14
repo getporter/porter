@@ -361,7 +361,7 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	}
 
 	// Use the original image name with the bundle location to generate a randomized tag
-	source := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
+	source := path.Join(path.Dir(bundleName.Name()), origName.Name()) + ":" + bundleName.Tag()
 	nameHash := md5.Sum([]byte(source))
 	imgTag := hex.EncodeToString(nameHash[:])
 
