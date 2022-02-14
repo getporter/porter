@@ -33,6 +33,10 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
+	// EnvCORRELATION_ID is the name of the environment variable containing the
+	// id to correlate logs with a workflow.
+	EnvCorrelationID = "PORTER_CORRELATION_ID"
+
 	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
 	// It holds all the metadata that Porter includes that is specific to Porter about the bundle.
 	CustomPorterKey = "sh.porter"
@@ -103,6 +107,7 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 			LogToFile:            c.Data.Logs.Enabled,
 			LogDirectory:         filepath.Join(c.porterHome, "logs"),
 			LogLevel:             c.Data.Logs.Level.Level(),
+			LogCorrelationID:     c.Getenv(EnvCorrelationID),
 			TelemetryEnabled:     c.Data.Telemetry.Enabled,
 			TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
 			TelemetryProtocol:    c.Data.Telemetry.Protocol,
