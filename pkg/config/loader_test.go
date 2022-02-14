@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/osteele/liquid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,4 +64,13 @@ func TestData_Marshal(t *testing.T) {
 	assert.Equal(t, "red-team", teamSource.Name, "SecretsPlugins.Name was not loaded properly")
 	assert.Equal(t, "azure.keyvault", teamSource.PluginSubKey, "SecretsPlugins.PluginSubKey was not loaded properly")
 	assert.Equal(t, map[string]interface{}{"token": "topsecret-token", "vault": "teamsekrets"}, teamSource.Config, "SecretsPlugins.Config was not loaded properly")
+}
+
+func TestListTemplateVariables(t *testing.T) {
+	eng := liquid.NewEngine()
+	tmpl, err := eng.ParseString(`not a variable {{secrets.foo}} more non variable junk{{env.var}}{{env.var}}`)
+	require.NoError(t, err)
+
+	vars := listTemplateVariables(tmpl)
+	assert.Equal(t, []string{"env.var", "secrets.foo"}, vars)
 }
