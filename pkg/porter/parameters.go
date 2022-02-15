@@ -5,9 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -331,12 +329,7 @@ func validateParameterName(args []string) error {
 func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
 	for _, name := range params {
-		var pset parameters.ParameterSet
-		var err error
 
-		if strings.Contains(name, string(filepath.Separator)) {
-			return nil, errors.Errorf("can't use file path %s as parameter set source", name)
-		}
 		// Try to get the params in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
 			Sort: []string{"-namespace"},
@@ -349,7 +342,12 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 			},
 		}
 		store := p.Parameters.GetDataStore()
-		err = store.FindOne(parameters.CollectionParameters, query, &pset)
+
+		var pset parameters.ParameterSet
+		err := store.FindOne(parameters.CollectionParameters, query, &pset)
+		if err != nil {
+			return nil, err
+		}
 
 		// A parameter may correspond to a Porter-specific parameter type of 'file'
 		// If so, add value (filepath) directly to map and remove from pset

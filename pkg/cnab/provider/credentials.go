@@ -3,10 +3,8 @@ package cnabprovider
 import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -21,7 +19,6 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 	resolvedCredentials := secrets.Set{}
 	for _, name := range args.Installation.CredentialSets {
 		var cset credentials.CredentialSet
-		var err error
 		// Try to get the creds in the local namespace first, fallback to the global creds
 		query := storage.FindOptions{
 			Sort: []string{"-namespace"},
@@ -34,8 +31,7 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 			},
 		}
 		store := r.credentials.GetDataStore()
-		err = store.FindOne(credentials.CollectionCredentials, query, &cset)
-
+		err := store.FindOne(credentials.CollectionCredentials, query, &cset)
 		if err != nil {
 			return nil, err
 		}
@@ -51,10 +47,4 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 	}
 
 	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
-}
-
-func (r *Runtime) loadCredentialFromFile(path string) (credentials.CredentialSet, error) {
-	var cs credentials.CredentialSet
-	err := encoding.UnmarshalFile(r.FileSystem, path, &cs)
-	return cs, errors.Wrapf(err, "error loading credential set in %s", path)
 }
