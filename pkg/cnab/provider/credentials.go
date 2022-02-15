@@ -1,9 +1,6 @@
 package cnabprovider
 
 import (
-	"path/filepath"
-	"strings"
-
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/encoding"
@@ -25,23 +22,19 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 	for _, name := range args.Installation.CredentialSets {
 		var cset credentials.CredentialSet
 		var err error
-		if r.isPathy(name) {
-			return nil, errors.Errorf("cannot use file path %s as credential set source", name)
-		} else {
-			// Try to get the creds in the local namespace first, fallback to the global creds
-			query := storage.FindOptions{
-				Sort: []string{"-namespace"},
-				Filter: bson.M{
-					"name": name,
-					"$or": []bson.M{
-						{"namespace": ""},
-						{"namespace": args.Installation.Namespace},
-					},
+		// Try to get the creds in the local namespace first, fallback to the global creds
+		query := storage.FindOptions{
+			Sort: []string{"-namespace"},
+			Filter: bson.M{
+				"name": name,
+				"$or": []bson.M{
+					{"namespace": ""},
+					{"namespace": args.Installation.Namespace},
 				},
-			}
-			store := r.credentials.GetDataStore()
-			err = store.FindOne(credentials.CollectionCredentials, query, &cset)
+			},
 		}
+		store := r.credentials.GetDataStore()
+		err = store.FindOne(credentials.CollectionCredentials, query, &cset)
 
 		if err != nil {
 			return nil, err
@@ -58,11 +51,6 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 	}
 
 	return resolvedCredentials, credentials.Validate(resolvedCredentials, b.Credentials, args.Action)
-}
-
-// isPathy checks to see if a name looks like a path.
-func (r *Runtime) isPathy(name string) bool {
-	return strings.Contains(name, string(filepath.Separator))
 }
 
 func (r *Runtime) loadCredentialFromFile(path string) (credentials.CredentialSet, error) {
