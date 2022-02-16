@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -11,7 +12,9 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,10 +73,20 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 		"namespace=" + namespace,
 		"mysql#namespace=" + namespace,
 	}
-	// Add a supplemental parameter set to vet dep param resolution
-	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-for-dependencies.json")}
 
-	err := installOpts.Validate([]string{}, p.Porter)
+	// Add a supplemental parameter set to vet dep param resolution
+	testParamSets := parameters.NewParameterSet(namespace, "myparam", secrets.Strategy{
+		Name: "mysql#probe-timeout",
+		Source: secrets.Source{
+			Key:   secrets.SourceSecret,
+			Value: "2",
+		},
+	})
+
+	err := p.Parameters.UpsertParameterSet(testParamSets)
+	require.NoError(p.T(), err, "could not create a parameter set")
+
+	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
 
 	err = p.InstallBundle(context.Background(), installOpts)
