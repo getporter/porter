@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/docker/cli/cli/command"
 	clibuild "github.com/docker/cli/cli/command/image/build"
 	cliflags "github.com/docker/cli/cli/flags"
@@ -83,6 +84,9 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 }
 
 func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	cli, err := command.NewDockerCli()
 	if err != nil {
 		return errors.Wrap(err, "could not create new docker client")

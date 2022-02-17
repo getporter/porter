@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -63,7 +64,7 @@ func (p *Porter) CopyBundle(c *CopyOpts) error {
 	}
 
 	bunRef.Reference = destinationRef
-	_, err = p.Registry.PushBundle(bunRef, c.InsecureRegistry)
+	_, err = p.Registry.PushBundle(context.Background(), bunRef, c.InsecureRegistry)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy bundle to new location")
 	}

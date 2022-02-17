@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -112,7 +113,7 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	defer mgr.Teardown()
 	claimStore := claims.NewClaimStore(mgr)
 
-	_, err := claimStore.ListInstallations("", "", nil)
+	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 
 	credStore := credentials.NewCredentialStore(mgr, nil)
@@ -137,7 +138,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	require.NoError(t, err, "Save schema failed")
 
 	t.Run("list", func(t *testing.T) {
-		_, err = claimStore.ListInstallations("", "", nil)
+		_, err = claimStore.ListInstallations(context.Background(), "", "", nil)
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
@@ -162,7 +163,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	defer mgr.Teardown()
 	claimStore := claims.NewClaimStore(mgr)
 
-	names, err := claimStore.ListInstallations("", "", nil)
+	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Empty(t, names, "Expected an empty list of installations since porter home is new")
 }

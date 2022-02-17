@@ -2,6 +2,8 @@ package porter
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -10,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
 	"github.com/opencontainers/go-digest"
@@ -77,6 +80,9 @@ func (o *PublishOptions) validateTag() error {
 // Publish is a composite function that publishes an invocation image, rewrites the porter manifest
 // and then regenerates the bundle.json. Finally it publishes the manifest to an OCI registry.
 func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	if opts.File != "" {
 		if err := p.LoadManifestFrom(opts.File); err != nil {
 			return err
@@ -86,10 +92,13 @@ func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
 	if opts.ArchiveFile == "" {
 		return p.publishFromFile(ctx, opts)
 	}
-	return p.publishFromArchive(opts)
+	return p.publishFromArchive(ctx, opts)
 }
 
 func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	_, err := p.ensureLocalBundleIsUpToDate(ctx, opts.bundleFileOptions)
 	if err != nil {
 		return err
@@ -124,6 +133,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	if opts.Registry != "" {
 		p.Manifest.Registry = opts.Registry
 	}
+
 	// If either are non-empty, null out the reference on the manifest, as
 	// it needs to be rebuilt with new values
 	if opts.Tag != "" || opts.Registry != "" {
@@ -155,7 +165,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return errors.Wrapf(err, "invalid reference %s", p.Manifest.Reference)
 	}
 
-	bundleRef.Digest, err = p.Registry.PushInvocationImage(p.Manifest.Image)
+	bundleRef.Digest, err = p.Registry.PushInvocationImage(ctx, p.Manifest.Image)
 	if err != nil {
 		return errors.Wrapf(err, "unable to push CNAB invocation image %q", p.Manifest.Image)
 	}
@@ -165,7 +175,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		return err
 	}
 
-	bundleRef, err = p.Registry.PushBundle(bundleRef, opts.InsecureRegistry)
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
@@ -190,7 +200,10 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 // signature verification throughout the process.  Once we wish to preserve content digest and such verification,
 // this approach will need to be refactored, via preserving the original bundle and employing
 // a relocation mapping approach to associate the bundle's (old) images with the newly copied images.
-func (p *Porter) publishFromArchive(opts PublishOptions) error {
+func (p *Porter) publishFromArchive(ctx context.Context, opts PublishOptions) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	source := p.FileSystem.Abs(opts.ArchiveFile)
 	tmpDir, err := p.FileSystem.TempDir("", "porter")
 	if err != nil {
@@ -252,7 +265,7 @@ func (p *Porter) publishFromArchive(opts PublishOptions) error {
 		Reference:  opts.GetReference(),
 		Definition: bun,
 	}
-	bundleRef, err = p.Registry.PushBundle(bundleRef, opts.InsecureRegistry)
+	bundleRef, err = p.Registry.PushBundle(ctx, bundleRef, opts.InsecureRegistry)
 	if err != nil {
 		return err
 	}
@@ -335,7 +348,7 @@ func (p *Porter) updateBundleWithNewImage(bun cnab.ExtendedBundle, newImg image.
 }
 
 // getNewImageNameFromBundleReference derives a new image.Name object from the provided original
-// image (string) using the provided bundleTag to glean registry/org/etc.
+// image (string) using the provided bundleTag to clean registry/org/etc.
 func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, error) {
 	origName, err := image.NewName(origImg)
 	if err != nil {
@@ -347,15 +360,19 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle tag %q into domain/path components", bundleTag)
 	}
 
-	// Use the image name with the bundle location
-	newImg := path.Join(path.Dir(bundleName.Name()), path.Base(origName.Name()))
+	// Use the original image name with the bundle location to generate a randomized tag
+	source := path.Join(path.Dir(bundleName.Name()), origName.Name()) + ":" + bundleName.Tag()
+	nameHash := md5.Sum([]byte(source))
+	imgTag := hex.EncodeToString(nameHash[:])
 
-	newImgName, err := image.NewName(newImg)
+	// place the new image under the same repo as the bundle
+	imgName := bundleName.Name()
+	newImgName, err := image.NewName(imgName)
 	if err != nil {
-		return image.EmptyName, errors.Wrapf(err, "unable to parse image %q into domain/path components", newImg)
+		return image.EmptyName, errors.Wrapf(err, "unable to parse bundle %q into domain/path components", bundleName.Name())
 	}
 
-	return newImgName, nil
+	return newImgName.WithTag(imgTag)
 }
 
 func (p *Porter) rewriteBundleWithInvocationImageDigest(digest digest.Digest, manifestPath string) (cnab.ExtendedBundle, error) {

@@ -128,7 +128,7 @@ func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) ([]cla
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	installations, err := p.Claims.ListInstallations(opts.GetNamespace(), opts.Name, opts.ParseLabels())
+	installations, err := p.Claims.ListInstallations(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 	return installations, errors.Wrap(err, "could not list installations")
 }
 

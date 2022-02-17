@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -879,11 +881,13 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := cnab.ParseOCIReference(bundleRef.Repository() + "-installer")
-	if err != err {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository()+"-installer")
+	imageName, err := cnab.ParseOCIReference(bundleRef.Repository())
+	if err != nil {
+		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
 	}
-	imageRef, err := imageName.WithTag(dockerTag)
+	referenceHash := md5.Sum([]byte(bundleRef.String()))
+	imgTag := hex.EncodeToString(referenceHash[:])
+	imageRef, err := imageName.WithTag(imgTag)
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
 	}
