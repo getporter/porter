@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
@@ -49,4 +50,30 @@ func TestContext_LogToFile(t *testing.T) {
 
 	// Compare the human readable logs sent to stderr
 	c.CompareGoldenFile("testdata/expected-output.txt", c.GetError())
+}
+
+func TestContext_UserAgent(t *testing.T) {
+	t.Run("append versions when available", func(t *testing.T) {
+		pkg.Version = "v1.0.0"
+		pkg.Commit = "abc123"
+		c := NewTestContext(t)
+
+		require.Contains(t, c.UserAgent(), "porter/"+pkg.Version)
+	})
+
+	t.Run("append commit hash when version is not available", func(t *testing.T) {
+		pkg.Version = ""
+		pkg.Commit = "abc123"
+		c := NewTestContext(t)
+
+		require.Contains(t, c.UserAgent(), "porter/"+pkg.Commit)
+	})
+
+	t.Run("omit slash when neither version nor commit hash is available", func(t *testing.T) {
+		pkg.Version = ""
+		pkg.Commit = ""
+		c := NewTestContext(t)
+
+		require.Contains(t, c.UserAgent(), "porter")
+	})
 }
