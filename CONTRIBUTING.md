@@ -53,7 +53,7 @@ We have good first issues for new contributors and help wanted issues for our ot
   because they are not finished being designed or we aren't sure if we want the
   feature, etc.
 
-Maintainers will do our best regularly make new issues for you to solve and then
+Maintainers will do their best to regularly make new issues for you to solve and then
 help out as you work on them. 💖
 
 We have a [roadmap] that will give you a good idea of the
@@ -62,7 +62,7 @@ you would like to work on after you have tackled an issue or two to learn how to
 contribute to Porter. If you have a big idea for Porter, learn [how to propose
 a change to Porter][pep].
 
-Another great way to contribute is to create a mixin! You can start use the
+Another great way to contribute is to create a mixin! You can start using the
 [Porter Skeletor][skeletor] repository as a template to start, along with the
 [Mixin Developer Guide][mixin-dev-guide].
 
@@ -93,7 +93,7 @@ things where the motivation/problem is unambiguous.
 
 If there isn't an issue for your PR, please make an issue first and explain the
 problem or motivation for the change you are proposing. When the solution isn't
-straightforward, for example "Implement missing command X", then also outline
+straightforward, for example, "Implement missing command X", then also outline
 your proposed solution. Your PR will go smoother if the solution is agreed upon
 before you've spent a lot of time implementing it.
 
@@ -196,7 +196,7 @@ repository, you can amend your commit with the sign-off by running
    review, or ping in [slack][slack]. Sometimes we have busy days, sick days,
    weekends and vacations, so a little patience is appreciated! 🙇‍♀️
 1. The reviewer will leave feedback.
-    * `nits`: These are suggestions that you may decide incorporate into your pull
+    * `nits`: These are suggestions that you may decide to incorporate into your pull
       request or not without further comment.
     * It can help to put a 👍 on comments that you have implemented so that you
       can keep track.
@@ -234,7 +234,7 @@ kills contributor momentum.
 
 # Contribution Ladder
 
-Our [contribution ladder][ladder] defines the roles and responsibilities on this
+Our [contribution ladder][ladder] defines the roles and responsibilities for this
 project and how to participate with the goal of moving from a user to a
 maintainer.
 
