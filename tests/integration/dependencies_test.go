@@ -16,6 +16,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,22 +76,22 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	}
 
 	// Add a supplemental parameter set to vet dep param resolution
-	testParamSets := parameters.NewParameterSet(namespace, "myparam", secrets.Strategy{
+	installOpts.ParameterSets = []string{"myparam"}
+	testParamSets := parameters.NewParameterSet("", "myparam", secrets.Strategy{
 		Name: "mysql#probe-timeout",
 		Source: secrets.Source{
-			Key:   secrets.SourceSecret,
+			Key:   host.SourceValue,
 			Value: "2",
 		},
 	})
 
-	err := p.Parameters.UpsertParameterSet(testParamSets)
-	require.NoError(p.T(), err, "could not create a parameter set")
+	p.TestParameters.InsertParameterSet(testParamSets)
 
-	err = installOpts.Validate([]string{}, p.Porter)
+	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
 
 	err = p.InstallBundle(context.Background(), installOpts)
-	require.NoError(p.T(), err, "install of root bundle failed")
+	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	// Verify that the dependency claim is present
 	i, err := p.Claims.GetInstallation("", "wordpress-mysql")

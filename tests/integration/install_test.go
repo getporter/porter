@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -7,7 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +55,16 @@ func TestInstall_fileParam(t *testing.T) {
 
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"myfile=./myfile"}
-	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-with-file-param.json")}
+	installOpts.ParameterSets = []string{"myparam"}
+	testParamSets := parameters.NewParameterSet("", "myparam", secrets.Strategy{
+		Name: "myotherfile",
+		Source: secrets.Source{
+			Key:   host.SourcePath,
+			Value: "./myotherfile",
+		},
+	})
+
+	p.TestParameters.InsertParameterSet(testParamSets)
 
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
