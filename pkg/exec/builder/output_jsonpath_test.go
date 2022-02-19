@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"get.porter.sh/porter/pkg/context"
 )
 
 type TestStep struct {
@@ -16,6 +17,7 @@ type TestStep struct {
 	Flags            Flags
 	Outputs          []Output
 	WorkingDirectory string
+	EnvironmentVars  map[string]string
 }
 
 func (s TestStep) GetCommand() string {

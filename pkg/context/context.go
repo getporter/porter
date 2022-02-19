@@ -241,7 +241,9 @@ func (c *Context) Command(name string, arg ...string) *exec.Cmd {
 		Dir:  c.Getwd(),
 		Path: name,
 		Args: append([]string{name}, arg...),
+		Env:  c.Environ(),
 	}
+
 	if filepath.Base(name) == name {
 		if lp, ok := c.LookPath(name); ok {
 			cmd.Path = lp
