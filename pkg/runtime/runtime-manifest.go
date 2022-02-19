@@ -4,8 +4,10 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -110,15 +112,71 @@ func (m *RuntimeManifest) loadDependencyDefinitions() error {
 	return nil
 }
 
-func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) string {
+func (m *RuntimeManifest) resolveParameter(pd manifest.ParameterDefinition) (interface{}, error) {
+	paramType, _, err := pd.GetType()
+	if err != nil {
+		return nil, err
+	}
+
+	if paramType == "object" {
+		workingDirectory, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("workingDirectory = %+v\n", workingDirectory)
+
+		err = filepath.Walk(workingDirectory, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() && !strings.Contains(path, "docker") && !strings.Contains(path, "run") && !strings.Contains(path, "yaml") {
+				fileParam, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer fileParam.Close()
+
+				fileParamByte, err := ioutil.ReadAll(fileParam)
+				if err != nil {
+					return err
+				}
+
+				fmt.Printf("file = %+v, contents = %+v\n", fileParam.Name(), string(fileParamByte))
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		fileParam, err := os.Open(pd.Destination.Path)
+		if err != nil {
+			return nil, err
+		}
+		defer fileParam.Close()
+
+		fileParamByte, err := ioutil.ReadAll(fileParam)
+		if err != nil {
+			return nil, err
+		}
+
+		var paramValue interface{}
+		err = json.Unmarshal(fileParamByte, &paramValue)
+		if err != nil {
+			return nil, err
+		}
+
+		return paramValue, nil
+	}
 	if pd.Destination.EnvironmentVariable != "" {
-		return m.Getenv(pd.Destination.EnvironmentVariable)
+		return m.Getenv(pd.Destination.EnvironmentVariable), nil
 	}
 	if pd.Destination.Path != "" {
-		return pd.Destination.Path
+		return pd.Destination.Path, nil
 	}
 	envVar := manifest.ParamToEnvVar(pd.Name)
-	return m.Getenv(envVar)
+	return m.Getenv(envVar), nil
 }
 
 func (m *RuntimeManifest) resolveCredential(cd manifest.CredentialDefinition) (string, error) {
@@ -248,9 +306,12 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 		}
 
 		pe := param.Name
-		val := m.resolveParameter(param)
+		val, err := m.resolveParameter(param)
+		if err != nil {
+			return nil, err
+		}
 		if param.Sensitive {
-			m.setSensitiveValue(val)
+			m.setSensitiveValue(val.(string))
 		}
 		params[pe] = val
 	}
