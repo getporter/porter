@@ -48,8 +48,8 @@ func TestValidateUninstallCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "uninstall mybuns", ""},
-		{"invalid param", "uninstall mybuns --param A:B", "invalid parameter (A:B), must be in name=value format"},
+		{"no params", "uninstall mybuns --reference getporter/porter-hello:v0.1.1", ""},
+		{"invalid param", "uninstall mybuns --reference getporter/porter-hello:v0.1.1 --param A:B", "invalid parameter (A:B), must be in name=value format"},
 	}
 
 	for _, tc := range testcases {
@@ -78,8 +78,8 @@ func TestValidateInvokeCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no action", "invoke mybuns", "--action is required"},
-		{"action specified", "invoke mybuns --action status", ""},
+		{"no action", "invoke mybuns --reference getporter/porter-hello:v1.0.0", "--action is required"},
+		{"action specified", "invoke mybuns --action status --reference getporter/porter-hello:v1.0.0", ""},
 	}
 
 	for _, tc := range testcases {
@@ -162,6 +162,7 @@ func TestBuildValidate_Driver(t *testing.T) {
 			p := porter.NewTestPorter(t)
 			defer p.Teardown()
 
+			p.TestConfig.TestContext.AddTestFileFromRoot("/tests/testdata/mybuns/porter.yaml", "porter.yaml")
 			rootCmd := buildRootCommandFrom(p.Porter)
 
 			fullArgs := []string{"build", tc.args}

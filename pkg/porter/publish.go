@@ -49,10 +49,6 @@ func (o *PublishOptions) Validate(cxt *portercontext.Context) error {
 		if err != nil {
 			return err
 		}
-
-		if o.File == "" {
-			return errors.New("could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file")
-		}
 	}
 
 	if o.Reference != "" {

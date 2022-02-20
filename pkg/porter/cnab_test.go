@@ -17,7 +17,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := sharedOptions{}
-	err = opts.defaultBundleFiles(cxt.Context)
+	err = opts.defaultBundleFiles(cxt.Context, true)
 	require.NoError(t, err)
 
 	assert.Equal(t, "porter.yaml", opts.File)
@@ -32,7 +32,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 			File: "mybun/porter.yaml",
 		},
 	}
-	err := opts.defaultBundleFiles(cxt.Context)
+	err := opts.defaultBundleFiles(cxt.Context, true)
 	require.NoError(t, err)
 
 	assert.Equal(t, ".cnab/bundle.json", opts.CNABFile)
@@ -48,7 +48,7 @@ func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
 
 	opts := sharedOptions{}
 	opts.CNABFile = "mycnabfile.json"
-	err = opts.defaultBundleFiles(cxt.Context)
+	err = opts.defaultBundleFiles(cxt.Context, true)
 	require.NoError(t, err)
 
 	assert.Equal(t, "", opts.File)
@@ -106,6 +106,7 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
+	p.TestConfig.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", "porter.yaml")
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")

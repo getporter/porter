@@ -23,7 +23,7 @@ like parameters, credentials, outputs and custom actions available.
   porter bundle inspect --cnab-file some/bundle.json
 		  `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p.Context)
+			return opts.Validate(args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Inspect(cmd.Context(), opts)

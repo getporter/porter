@@ -26,12 +26,9 @@ func (o *LogsShowOptions) Validate(cxt *context.Context) error {
 	}
 
 	// Attempt to derive installation name from context
-	err := o.sharedOptions.defaultBundleFiles(cxt)
+	requireBundle := o.Name == "" && o.ClaimID == ""
+	err := o.sharedOptions.defaultBundleFiles(cxt, requireBundle)
 	if err != nil {
-		return err
-	}
-
-	if o.File == "" && o.Name == "" && o.ClaimID == "" {
 		return errors.New("either --installation or --run is required")
 	}
 

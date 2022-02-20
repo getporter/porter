@@ -37,7 +37,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 
 	// If not provided, attempt to derive installation name from context
 	if o.sharedOptions.Name == "" {
-		err := o.sharedOptions.defaultBundleFiles(cxt)
+		err := o.sharedOptions.defaultBundleFiles(cxt, true)
 		if err != nil {
 			return errors.New("installation name must be provided via [--installation|-i INSTALLATION]")
 		}
@@ -56,7 +56,8 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 	}
 
 	// Attempt to derive installation name from context
-	err = o.sharedOptions.defaultBundleFiles(cxt)
+	requireBundle := o.Name == ""
+	err = o.sharedOptions.defaultBundleFiles(cxt, requireBundle)
 	if err != nil {
 		return errors.Wrap(err, "installation name must be provided")
 	}

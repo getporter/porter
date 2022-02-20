@@ -23,7 +23,8 @@ func (so *RunListOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	err = so.sharedOptions.defaultBundleFiles(cxt)
+	requireBundle := so.Name == ""
+	err = so.sharedOptions.defaultBundleFiles(cxt, requireBundle)
 	if err != nil {
 		return err
 	}

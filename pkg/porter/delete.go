@@ -32,7 +32,8 @@ func (o *DeleteOptions) Validate(args []string, cxt *context.Context) error {
 		return err
 	}
 
-	return o.sharedOptions.defaultBundleFiles(cxt)
+	requireBundle := o.Name == ""
+	return o.sharedOptions.defaultBundleFiles(cxt, requireBundle)
 }
 
 // DeleteInstallation handles deletion of an installation

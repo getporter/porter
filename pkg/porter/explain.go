@@ -9,7 +9,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pkg/errors"
@@ -130,13 +129,13 @@ func (s SortPrintableAction) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (o *ExplainOpts) Validate(args []string, pctx *portercontext.Context) error {
+func (o *ExplainOpts) Validate(args []string, porter *Porter) error {
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
 	}
 
-	err = o.bundleFileOptions.Validate(pctx)
+	err = o.BundleActionOptions.Validate(args, porter)
 	if err != nil {
 		return err
 	}

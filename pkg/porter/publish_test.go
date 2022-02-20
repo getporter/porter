@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/pivotal/image-relocation/pkg/image"
 	"github.com/pkg/errors"
@@ -29,10 +30,10 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	opts := PublishOptions{}
 	err := opts.Validate(p.Context)
 	require.Error(t, err, "validation should have failed")
-	assert.EqualError(
+	tests.RequireErrorContains(
 		t,
 		err,
-		"could not find porter.yaml in the current directory, make sure you are in the right directory or specify the porter manifest with --file",
+		"No bundle specified",
 		"porter.yaml not present so should have failed validation",
 	)
 }

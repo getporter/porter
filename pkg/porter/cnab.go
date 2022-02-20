@@ -66,7 +66,7 @@ func (o *bundleFileOptions) Validate(cxt *portercontext.Context) error {
 		o.Dir = cxt.FileSystem.Abs(o.Dir)
 	}
 
-	err = o.defaultBundleFiles(cxt)
+	err = o.defaultBundleFiles(cxt, true)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,8 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 }
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
-func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
+// requireBundle indicates if an error should be returned if no bundle was found.
+func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context, requireBundle bool) error {
 	if o.File != "" { // --file
 		o.defaultCNABFile()
 	} else if o.CNABFile != "" { // --cnab-file
@@ -170,7 +171,7 @@ func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
 		if manifestExists {
 			o.File = config.Name
 			o.defaultCNABFile()
-		} else {
+		} else if requireBundle {
 			return errors.New("No bundle specified. Either --reference, --file or --cnab-file must be specified or porter must be run in a directory that contains a porter.yaml")
 		}
 	}

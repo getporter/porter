@@ -17,9 +17,10 @@ func TestExplain_validateBadFormat(t *testing.T) {
 	defer p.Teardown()
 
 	opts := ExplainOpts{}
+	opts.Reference = "getporter/porter-hello:v0.1.1"
 	opts.RawFormat = "vpml"
 
-	err := opts.Validate([]string{}, p.Context)
+	err := opts.Validate([]string{}, p.Porter)
 	assert.EqualError(t, err, "invalid format: vpml")
 }
 
@@ -33,9 +34,10 @@ func TestExplain_generateTable(t *testing.T) {
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
+	opts.CNABFile = "params-bundle.json"
 	opts.RawFormat = "plaintext"
 
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.printBundleExplain(opts, pb)
@@ -55,9 +57,10 @@ func TestExplain_generateJSON(t *testing.T) {
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
+	opts.CNABFile = "params-bundle.json"
 	opts.RawFormat = "json"
 
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.printBundleExplain(opts, pb)
@@ -77,9 +80,10 @@ func TestExplain_generateYAML(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := ExplainOpts{}
+	opts.CNABFile = "params-bundle.json"
 	opts.RawFormat = "yaml"
 
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.printBundleExplain(opts, pb)
@@ -415,9 +419,10 @@ func TestExplain_generateJSONForDependencies(t *testing.T) {
 	pb, err := generatePrintable(b, "")
 	require.NoError(t, err)
 	opts := ExplainOpts{}
+	opts.CNABFile = "dependencies-bundle.json"
 	opts.RawFormat = "json"
 
-	err = opts.Validate([]string{}, p.Context)
+	err = opts.Validate([]string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.printBundleExplain(opts, pb)
