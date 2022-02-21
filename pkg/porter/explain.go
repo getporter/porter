@@ -506,7 +506,8 @@ func (p *Porter) printInstallationInstructionBlock(bun *PrintableBundle, bundleR
 
 	porterInstallCommand := fmt.Sprintf("porter install%s%s%s", bundleReferenceFlag, requiredParameterFlags, credentialFlags)
 
-	// Check whether the bundle requires docker mixin and add flag for host access for install command.
+	// Check whether the bundle requires docker socket to be mounted into the bundle.
+	// Add flag for docker host access for install command if it requires to do so.
 	if extendedBundle.SupportsDocker() {
 		porterInstallCommand += " --allow-docker-host-access"
 	}
