@@ -46,7 +46,7 @@ func TestExplain_generateTable(t *testing.T) {
 	assert.Equal(t, string(expected), gotOutput)
 }
 
-func TestExplain_generateTableRequireDocker(t *testing.T) {
+func TestExplain_generateTableRequireDockerHostAccess(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
