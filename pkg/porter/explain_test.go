@@ -64,9 +64,7 @@ func TestExplain_generateTableRequireDocker(t *testing.T) {
 	err = p.printBundleExplain(opts, pb, b)
 	assert.NoError(t, err)
 	gotOutput := p.TestConfig.TestContext.GetOutput()
-	expected, err := ioutil.ReadFile("testdata/explain/expected-table-output-docker.txt")
-	require.NoError(t, err)
-	assert.Equal(t, string(expected), gotOutput)
+	p.CompareGoldenFile("testdata/explain/expected-table-output-docker.txt", gotOutput)
 }
 
 func TestExplain_generateJSON(t *testing.T) {
