@@ -270,7 +270,7 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	p.TestConfig.TestContext.AddTestFile("./testdata/porter-with-custom-values.yaml", config.Name)
+	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
 	err := p.LoadManifestFrom(config.Name)
 	require.NoError(t, err)
