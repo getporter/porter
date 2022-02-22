@@ -42,11 +42,9 @@ func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 		}
 	}
 
-	if opts.parsedCustoms != nil {
-		for k, v := range opts.parsedCustoms {
-			if err = e.SetValue("custom."+k, v); err != nil {
-				return err
-			}
+	for k, v := range opts.parsedCustoms {
+		if err = e.SetValue("custom."+k, v); err != nil {
+			return err
 		}
 	}
 
