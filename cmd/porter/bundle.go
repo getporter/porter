@@ -58,7 +58,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
-  porter build --custom version=0.2.0
+  porter build --custom version=0.2.0 --custom myapp.version=0.1.2
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
@@ -89,7 +89,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle's invocation image.")
 	f.StringSliceVar(&opts.Customs, "custom", nil,
-		"Define an individual key-value pair for custom section in the form of NAME=VALUE. May be specified multiple times.")
+		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
