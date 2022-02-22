@@ -75,3 +75,8 @@ func (e ProcessedExtensions) GetDocker() (dockerExt Docker, dockerRequired bool,
 
 	return dockerExt, extensionRequired, nil
 }
+
+// SupportsDocker checks if the bundle supports docker.
+func (b ExtendedBundle) SupportsDocker() bool {
+	return b.SupportsExtension(DockerExtensionKey)
+}

@@ -36,8 +36,7 @@ func (b ExtendedBundle) SupportsFileParameters() bool {
 		return true
 	}
 
-	// Porter has always supported this but didn't have the extension declared
-	// TODO(v1): Remove this logic in v1.0?
+	// Porter has always supported this but didn't have the extension declared.
 	return b.IsPorterBundle()
 }
 
