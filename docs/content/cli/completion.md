@@ -9,7 +9,8 @@ Generate completion script
 
 ### Synopsis
 
-Capture the output of the completion command to a file for your shell environment.
+Save the output of this command to a file and load the file into your shell.
+For additional details see: https://porter.sh/install#command-completion
 
 ```
 porter completion [bash|zsh|fish|powershell]
@@ -30,11 +31,17 @@ porter completion bash > /usr/local/etc/bash_completions.d/porter
 ### Options inherited from parent commands
 
 ```
-      --debug           Enable debug logging
-      --debug-plugins   Enable plugin debug logging
+      --debug                  Enable debug logging
+      --debug-plugins          Enable plugin debug logging
+      --experimental strings   Comma separated list of experimental features to enable. See https://porter.sh/configuration/#experimental-feature-flags for available feature flags.
 ```
 
 ### SEE ALSO
 
-* [porter](/cli/porter/)	 - I am porter 👩🏽‍✈️, the friendly neighborhood CNAB authoring tool
+* [porter](/cli/porter/)	 - With Porter you can package your application artifact, client tools, configuration and deployment logic together as a versioned bundle that you can distribute, and then install with a single command.
+
+Most commands require a Docker daemon, either local or remote.
+
+Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
+
 
