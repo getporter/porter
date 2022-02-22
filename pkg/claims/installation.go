@@ -82,21 +82,6 @@ func NewInstallation(namespace string, name string) Installation {
 	}
 }
 
-func (i Installation) ToCNAB() cnab.Installation {
-	return cnab.Installation{
-		SchemaVersion:    CNABSchemaVersion(),
-		Name:             i.Name,
-		Namespace:        i.Namespace,
-		BundleRepository: i.Bundle.Repository,
-		BundleVersion:    i.Bundle.Version,
-		BundleDigest:     i.Bundle.Digest,
-		Created:          i.Status.Created,
-		Modified:         i.Status.Modified,
-		Custom:           i.Custom,
-		Labels:           i.Labels,
-	}
-}
-
 // NewRun creates a run of the current bundle.
 func (i Installation) NewRun(action string) Run {
 	run := NewRun(i.Namespace, i.Name)

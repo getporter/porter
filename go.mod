@@ -3,9 +3,6 @@ module get.porter.sh/porter
 go 1.17
 
 replace (
-	// install-spec-wip
-	github.com/cnabio/cnab-go => github.com/carolynvs/cnab-go v0.20.2-0.20210805155536-9a543e0636f4
-
 	// return-copy-error
 	// See https://github.com/cnabio/cnab-to-oci/pull/113
 	github.com/cnabio/cnab-to-oci => github.com/getporter/cnab-to-oci v0.3.1-porter.1
@@ -30,13 +27,13 @@ require (
 	github.com/carolynvs/datetime-printer v0.2.0
 	github.com/carolynvs/magex v0.6.0
 	github.com/cbroglie/mustache v1.0.1
-	github.com/cnabio/cnab-go v0.21.0
+	github.com/cnabio/cnab-go v0.22.1-0.20220219202519-002f3523865a
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
 	github.com/containerd/console v1.0.2
 	github.com/containerd/containerd v1.5.3
 	github.com/docker/buildx v0.5.1
 	github.com/docker/cli v20.10.7+incompatible
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ghodss/yaml v1.0.0

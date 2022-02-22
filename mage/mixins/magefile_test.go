@@ -12,7 +12,7 @@ func TestInstall(t *testing.T) {
 	magefile := NewMagefile("github.com/mymixin/test-mixin", "testmixin", "testdata/bin/mixins/testmixin")
 
 	// Change the porter home to a safe place for the test to write to
-	require.NoError(t, os.Mkdir("testdata/porter_home", 0700))
+	require.NoError(t, os.MkdirAll("testdata/porter_home", 0700))
 	os.Setenv("PORTER_HOME", "testdata/porter_home")
 	defer os.Unsetenv("PORTER_HOME")
 

@@ -94,9 +94,8 @@ func TestResolveBundleReference(t *testing.T) {
 }
 
 func buildExampleBundle() bundle.Bundle {
-	bunV, _ := bundle.GetDefaultSchemaVersion()
 	bun := bundle.Bundle{
-		SchemaVersion:    bunV,
+		SchemaVersion:    bundle.GetDefaultSchemaVersion(),
 		InvocationImages: []bundle.InvocationImage{{BaseImage: bundle.BaseImage{Image: "example.com/foo:v1.0.0"}}},
 		Actions: map[string]bundle.Action{
 			"blah": {
