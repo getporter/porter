@@ -144,7 +144,7 @@ The Azure mixins are going to be full fledged tools that communicate with the
 Azure APIs, and provide an improved user experience. It all depends on how much
 time you want to invest, and what you are starting from.
 
-## Does the Porter has its own registry?
+## Does Porter have its own registry?
 
  No, Porter does not have a dedicated registry for hosting bundles. You can use any OCI registry, such as DockerHub, with Porter. We have compiled a [list of compatible registries](https://porter.sh/compatible-registries/) that have been tested with Porter.
 
@@ -161,7 +161,7 @@ Mixins provide the following features:
  
 You never have to use mixins, other than the built-in exec. You could write a custom dockerfile and then call a bash script. But most people find that working with mixins is easier.
 
-## What is the different between Porter and existing DevOps tools?
+## What is the difference between Porter and existing DevOps tools?
 
 Porter is never a replacement for an existing tool. Think of it as doing extra nice things on top of what those great tools already do!
  * Packages everything you use to deploy in a single artifact that can be easily distributed over registries and across air gapped networks.
