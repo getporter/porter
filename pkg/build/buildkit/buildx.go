@@ -117,7 +117,7 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	args["BUNDLE_DIR"] = build.BUNDLE_DIR
 
 	convertedCustomInput := make(map[string]string)
-	convertedCustomInput, err = convertMap(manifest.Custom)
+	convertedCustomInput, err = flattenMap(manifest.Custom)
 	if err != nil {
 		return err
 	}
@@ -209,14 +209,17 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 	return nil
 }
 
-func convertMap(mapInput map[string]interface{}) (map[string]string, error) {
+// flattenMap recursively walks through nested map and flattent it
+// to one-level map of key-value with string type.
+func flattenMap(mapInput map[string]interface{}) (map[string]string, error) {
 	out := make(map[string]string)
+
 	for key, value := range mapInput {
 		switch v := value.(type) {
 		case string:
 			out[key] = v
 		case map[string]interface{}:
-			tmp, err := convertMap(v)
+			tmp, err := flattenMap(v)
 			if err != nil {
 				return nil, err
 			}
