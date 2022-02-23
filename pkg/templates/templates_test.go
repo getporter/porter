@@ -68,7 +68,7 @@ func TestTemplates_GetCredentialSetJSON(t *testing.T) {
 	gotTmpl, err := tmpl.GetCredentialSetJSON()
 	require.NoError(t, err)
 
-	wantTmpl, err := ioutil.ReadFile("./templates/credentials/create/credential-set.schema.json")
+	wantTmpl, err := ioutil.ReadFile("./templates/credentials/create/credential-set.json")
 	require.NoError(t, err)
 	assert.Equal(t, wantTmpl, gotTmpl)
 }
