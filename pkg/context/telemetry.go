@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"log"
 	"time"
 
 	"get.porter.sh/porter/pkg"
@@ -27,7 +26,7 @@ func FromContext(ctx context.Context) (*Context, bool) {
 	return pc, ok
 }
 
-func (c *Context) configureTelemetry(logger *zap.Logger, cfg LogConfiguration) error {
+func (c *Context) configureTelemetry(ctx context.Context, logger *zap.Logger, cfg LogConfiguration) error {
 	// default to noop
 	c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
 	c.traceCloser = nil
@@ -41,9 +40,11 @@ func (c *Context) configureTelemetry(logger *zap.Logger, cfg LogConfiguration) e
 		return nil
 	}
 
-	exporter, err := otlptrace.New(context.TODO(), client)
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
-		log.Fatalf("creating OTLP trace exporter: %v", err)
+		return err
 	}
 
 	if c.traceServiceName == "" {

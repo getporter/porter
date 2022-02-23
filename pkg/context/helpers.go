@@ -2,6 +2,7 @@ package context
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,7 +51,7 @@ func NewTestContext(t *testing.T) *TestContext {
 	innerContext.In = &bytes.Buffer{}
 	innerContext.Out = aggOut
 	innerContext.Err = aggErr
-	innerContext.ConfigureLogging(LogConfiguration{
+	innerContext.ConfigureLogging(context.Background(), LogConfiguration{
 		LogLevel: zapcore.DebugLevel,
 	})
 	innerContext.PlugInDebugContext = &PluginDebugContext{

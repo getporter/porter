@@ -19,7 +19,8 @@ func buildVersionCommand(p *porter.Porter) *cobra.Command {
 		},
 	}
 	cmd.Annotations = map[string]string{
-		"group": "meta",
+		"group":    "meta",
+		skipConfig: "",
 	}
 
 	f := cmd.Flags()
