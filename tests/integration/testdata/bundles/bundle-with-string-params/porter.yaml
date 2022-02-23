@@ -1,0 +1,36 @@
+name: porter-hello
+version: 0.1.0
+description: "An example Porter configuration"
+registry: getporter
+
+mixins:
+  - exec
+
+parameters:
+  - name: name
+    description: Name for our hello bundle
+    type: string
+    default: porter-hello
+
+install:
+  - exec:
+      description: "Install Hello World"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "'{{ bundle.parameters.name }}'"
+
+upgrade:
+  - exec:
+      description: "World 2.0"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+
+uninstall:
+  - exec:
+      description: "Uninstall Hello World"
+      command: ./helpers.sh
+      arguments:
+        - uninstall
+

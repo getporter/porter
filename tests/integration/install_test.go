@@ -97,3 +97,26 @@ func TestInstall_withDockerignore(t *testing.T) {
 	// We should check this once https://github.com/cnabio/cnab-go/issues/78 is closed
 	require.EqualError(t, err, "1 error occurred:\n\t* container exit code: 1, message: <nil>\n\n")
 }
+
+func TestInstall_stringParam(t *testing.T) {
+	t.Parallel()
+
+	p := porter.NewTestPorter(t)
+	defer p.Teardown()
+	p.SetupIntegrationTest()
+	p.Debug = false
+
+	p.AddTestBundleDir("testdata/bundles/bundle-with-string-params", false)
+
+	installOpts := porter.NewInstallOptions()
+	installOpts.Params = []string{"name=Demo Time"}
+
+	err := installOpts.Validate([]string{}, p.Porter)
+	require.NoError(t, err)
+
+	err = p.InstallBundle(context.Background(), installOpts)
+	require.NoError(t, err)
+
+	output := p.TestConfig.TestContext.GetOutput()
+	require.Contains(t, output, "Hello, Demo Time", "expected action output to contain provided file contents")
+}
