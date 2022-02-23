@@ -128,39 +128,6 @@ Retrieve current user profile from GitHub
 }
 ```
 
-Sometimes it is easier to store the credential set in a file instead of having Porter configured with a storage plugin, for example on a test server.
-In that case, you can save the credential set to a file with the following command:
-
-```
-porter credentials show github --output json > github-creds.json
-```
-
-The contents of the file are shown below:
-
-```json
-{
-  "schemaVersion": "1.0.0",
-  "name": "github",
-  "namespace": "",
-  "created": "2021-06-29T09:44:32.16657-05:00",
-  "modified": "2021-06-29T09:44:32.16657-05:00",
-  "credentials": [
-    {
-      "name": "github-token",
-      "source": {
-        "env": "GITHUB_TOKEN"
-      }
-    }
-  ]
-}
-```
-
-Below is an example of specifying the credential set with a filepath:
-
-```
-porter install --cred ./github-creds.json
-```
-
 ## Cleanup
 
 To clean up the resources installed from this QuickStart, use the `porter uninstall` command. 
