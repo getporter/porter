@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
@@ -444,20 +443,4 @@ func (c *Context) SetSensitiveValues(vals []string) {
 		err.SetSensitiveValues(vals)
 		c.Err = err
 	}
-}
-
-// UserAgent returns a string that can be used as a user agent for porter.
-func (c *Context) UserAgent() string {
-	product := "porter"
-
-	if pkg.Commit == "" && pkg.Version == "" {
-		return product
-	}
-
-	v := pkg.Version
-	if len(v) == 0 {
-		v = pkg.Commit
-	}
-
-	return product + "/" + v
 }
