@@ -475,6 +475,8 @@ Here is a breakdown of all the supported fields on an image in this section of t
 * `labels`: Key/value pairs used to specify identifying attributes of the image.
 * `tag`: The tag of the image (only recommended when/if digest isn't known/available).
 
+When referencing an image, only fully qualified image reference is supported, e.g. library/hello-world instead of just hello-world.
+
 A last note on `digest`.  Taking the example of the library `nginx` Docker image, we can get the repository digest like so:
 
 ```console
