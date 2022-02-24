@@ -121,6 +121,7 @@ type LogConfiguration struct {
 	LogToFile            bool
 	LogDirectory         string
 	LogLevel             zapcore.Level
+	LogCorrelationID     string
 	StructuredLogs       bool
 	TelemetryEnabled     bool
 	TelemetryEndpoint    string
@@ -136,6 +137,10 @@ type LogConfiguration struct {
 func (c *Context) ConfigureLogging(cfg LogConfiguration) {
 	// Cleanup in case logging has been configured before
 	c.logLevel = cfg.LogLevel
+
+	if len(cfg.LogCorrelationID) > 0 {
+		c.correlationId = cfg.LogCorrelationID
+	}
 
 	encoding := c.makeLogEncoding()
 	consoleLogger := c.makeConsoleLogger(encoding, cfg.StructuredLogs)
