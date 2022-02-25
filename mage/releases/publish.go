@@ -1,7 +1,9 @@
 package releases
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -188,6 +190,18 @@ func GeneratePluginFeed() {
 func AddFilesToRelease(repo string, tag string, dir string) {
 	files := listFiles(dir)
 
+	checksumFiles := make([]string, len(files))
+	for i, file := range files {
+		cf, err := generateChecksumFile(file)
+		if err != nil {
+			mgx.Must(errors.Wrapf(err, "error generating checksum file for %s", file))
+		}
+		checksumFiles[i] = cf
+
+	}
+
+	files = append(files, checksumFiles...)
+
 	// Mark canary releases as a draft
 	draft := ""
 	if strings.HasPrefix(tag, "canary") {
@@ -217,4 +231,36 @@ func listFiles(dir string) []string {
 	}
 
 	return names
+}
+
+func generateChecksumFile(path string) (string, error) {
+	if filepath.Ext(path) == "sha256sum" {
+		return path, nil
+	}
+	data, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer data.Close()
+
+	f, err := os.Create(filepath.Join(path + ".sha256sum"))
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, data); err != nil {
+		return "", err
+	}
+	sum := hash.Sum(nil)
+
+	// write the checksum and file name to the checksum file so it can be
+	// verified by tools like `shasum`
+	_, err = f.WriteString(fmt.Sprintf("%x  %s", sum[:], filepath.Base(path)))
+	if err != nil {
+		return "", err
+	}
+
+	return f.Name(), nil
 }
