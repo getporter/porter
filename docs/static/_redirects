@@ -50,3 +50,6 @@
 /:version/porter-darwin-amd64           https://github.com/getporter/porter/releases/download/:version/porter-darwin-amd64 302
 /:version/porter-linux-amd64            https://github.com/getporter/porter/releases/download/:version/porter-linux-amd64 302
 /:version/porter-windows-amd64.exe      https://github.com/getporter/porter/releases/download/:version/porter-windows-amd64.exe 302
+
+# Redirect the schema json files
+/schema/:version/* https://raw.githubusercontent.com/getporter/porter/release/:version/pkg/schema/:splat
