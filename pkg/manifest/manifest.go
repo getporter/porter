@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -576,10 +578,6 @@ type RequiredDependency struct {
 	// in the format REGISTRY/NAME:TAG
 	Reference string `yaml:"reference"`
 
-	// Tag is a deprecated field.  It has been replaced by Reference.
-	// This should be removed prior to v1.0.0
-	Tag string `yaml:"tag"`
-
 	Versions         []string          `yaml:"versions"`
 	AllowPrereleases bool              `yaml:"prereleases"`
 	Parameters       map[string]string `yaml:"parameters,omitempty"`
@@ -588,18 +586,6 @@ type RequiredDependency struct {
 func (d *RequiredDependency) Validate(cxt *context.Context) error {
 	if d.Name == "" {
 		return errors.New("dependency name is required")
-	}
-
-	if d.Tag != "" {
-		fmt.Fprintf(cxt.Out, "WARNING: the tag field for dependency %q has been deprecated "+
-			"in favor of reference; please update the Porter manifest accordingly\n",
-			d.Name)
-		if d.Reference == "" {
-			d.Reference = d.Tag
-		} else {
-			fmt.Fprintf(cxt.Out, "WARNING: both tag (deprecated) and reference were provided for dependency %q; "+
-				"using the reference value %s\n", d.Name, d.Reference)
-		}
 	}
 
 	if d.Reference == "" {
@@ -895,11 +881,13 @@ func (m *Manifest) SetInvocationImageAndReference(ref string) error {
 		m.Reference = bundleRef.String()
 	}
 
-	imageName, err := cnab.ParseOCIReference(bundleRef.Repository() + "-installer")
-	if err != err {
-		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository()+"-installer")
+	imageName, err := cnab.ParseOCIReference(bundleRef.Repository())
+	if err != nil {
+		return errors.Wrapf(err, "could not set invocation image to %q", bundleRef.Repository())
 	}
-	imageRef, err := imageName.WithTag(dockerTag)
+	referenceHash := md5.Sum([]byte(bundleRef.String()))
+	imgTag := hex.EncodeToString(referenceHash[:])
+	imageRef, err := imageName.WithTag(imgTag)
 	if err != nil {
 		return errors.Wrapf(err, "could not set invocation image tag to %q", dockerTag)
 	}

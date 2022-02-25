@@ -71,7 +71,7 @@ func (p *Porter) PrintPackages(opts SearchOptions, list pkgmgmt.PackageList) err
 	switch opts.Format {
 	case printer.FormatPlaintext:
 		printMixinRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				m, ok := v.(pkgmgmt.PackageListing)
 				if !ok {
 					return nil
@@ -85,7 +85,7 @@ func (p *Porter) PrintPackages(opts SearchOptions, list pkgmgmt.PackageList) err
 				} else {
 					urlType = "Unknown"
 				}
-				return []interface{}{m.Name, m.Description, m.Author, m.URL, urlType}
+				return []string{m.Name, m.Description, m.Author, m.URL, urlType}
 			}
 		return printer.PrintTable(p.Out, list, printMixinRow, "Name", "Description", "Author", "URL", "URL Type")
 	case printer.FormatJson:

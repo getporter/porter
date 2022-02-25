@@ -2,9 +2,9 @@ package tests
 
 import (
 	"crypto/md5"
+	"fmt"
 	"os"
 	"path/filepath"
-	"fmt"
 	"regexp"
 	"testing"
 

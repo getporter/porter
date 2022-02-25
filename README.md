@@ -1,6 +1,6 @@
 <img align="right" src="docs/static/images/porter-docs-header.svg" width="300px" />
 
-[![Build Status](https://dev.azure.com/getporter/porter/_apis/build/status/porter-release?branchName=main)](https://dev.azure.com/getporter/porter/_build/latest?definitionId=2&branchName=main)
+[![Build Status](https://dev.azure.com/getporter/porter/_apis/build/status/porter-canary?branchName=main)](https://dev.azure.com/getporter/porter/_build/latest?definitionId=26&branchName=main)
 
 # Porter
 
@@ -78,9 +78,8 @@ the load and making it better every day! 🙇‍♀️
 
 # Do you use Porter?
 
-We want to know if you use Porter! Project priorities and funding are based on
-adoption. So if you are using Porter, [reply to this issue](https://github.com/getporter/porter/issues/1596),
-or if it needs to stay private, email [porter-maintainers@lists.cncf.io](mailto:porter-maintainers@lists.cncf.io).
+Take our [user survey](https://porter.sh/user-survey) and let us know if you are using Porter.
+Project funding is contingent upon knowing that we have active users!
 
 # Roadmap
 

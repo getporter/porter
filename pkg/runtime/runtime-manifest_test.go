@@ -128,7 +128,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 	pms, ok := s.Data["exec"].(map[string]interface{})
 	assert.True(t, ok)
 	cmd := pms["command"].(string)
-	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello-installer:v0.1.0\"", cmd)
+	assert.Equal(t, "echo \"name:porter-hello version:0.1.0 description:An example Porter configuration image:jeremyrickard/porter-hello:39a022ca907e26c3d8fffabd4bb8dbbc\"", cmd)
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
@@ -324,8 +324,8 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 		Dependencies: manifest.Dependencies{
 			RequiredDependencies: []*manifest.RequiredDependency{
 				{
-					Name: "mysql",
-					Tag:  "getporter/porter-mysql",
+					Name:      "mysql",
+					Reference: "getporter/porter-mysql",
 				},
 			},
 		},
@@ -581,19 +581,6 @@ func TestDependency_Validate(t *testing.T) {
 		wantError  string
 	}{
 		{
-			name: "tag (deprecated) supplied",
-			dep:  manifest.RequiredDependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7"},
-			wantOutput: `WARNING: the tag field for dependency "mysql" has been deprecated in favor of reference; please update the Porter manifest accordingly
-`,
-			wantError: "",
-		}, {
-			name: "tag (deprecated) and reference supplied",
-			dep:  manifest.RequiredDependency{Name: "mysql", Tag: "deislabs/azure-mysql:5.7", Reference: "getporter/azure-mysql:v5.8"},
-			wantOutput: `WARNING: the tag field for dependency "mysql" has been deprecated in favor of reference; please update the Porter manifest accordingly
-WARNING: both tag (deprecated) and reference were provided for dependency "mysql"; using the reference value getporter/azure-mysql:v5.8
-`,
-			wantError: "",
-		}, {
 			name:       "version in reference",
 			dep:        manifest.RequiredDependency{Name: "mysql", Reference: "deislabs/azure-mysql:5.7"},
 			wantOutput: "",

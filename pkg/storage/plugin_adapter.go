@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var _ Store = PluginAdapter{}
@@ -96,7 +97,15 @@ func (a PluginAdapter) FindOne(collection string, opts FindOptions, out interfac
 	}
 
 	if len(rawResults) == 0 {
-		return ErrNotFound{Collection: collection}
+		notFoundErr := ErrNotFound{Collection: collection}
+		filter, ok := opts.Filter.(primitive.M)
+		if !ok {
+			return notFoundErr
+		}
+		if name, ok := filter["name"]; ok {
+			notFoundErr.Item = fmt.Sprint(name)
+		}
+		return notFoundErr
 	}
 
 	err = a.unmarshal(rawResults[0], out)
@@ -225,6 +234,7 @@ func (a PluginAdapter) handleError(err error, collection string) error {
 // You can test for this error using errors.Is(err, storage.ErrNotFound{})
 type ErrNotFound struct {
 	Collection string
+	Item       string
 }
 
 func (e ErrNotFound) Error() string {
@@ -238,11 +248,12 @@ func (e ErrNotFound) Error() string {
 		docType = "Result"
 	case "output":
 		docType = "Output"
-	case "credentials":
-		docType = "Credential Set"
-	case "parameters":
-		docType = "Parameter Set"
+	case "credentials", "parameters":
+		if len(e.Item) > 0 {
+			docType = e.Item
+		}
 	}
+
 	return fmt.Sprintf("%s not found", docType)
 }
 

@@ -23,13 +23,18 @@ var usageText string
 
 func main() {
 	run := func() int {
+		ctx := context.Background()
 		p := porter.New()
+		if err := p.Connect(ctx); err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 
 		rootCmd := buildRootCommandFrom(p)
 
 		// Trace the command that called porter, e.g. porter installation show
 		calledCommand, formattedCommand := getCalledCommand(rootCmd)
-		ctx, log := p.Log.StartSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
+		ctx, log := p.StartRootSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
@@ -45,7 +50,7 @@ func main() {
 
 		if err := rootCmd.ExecuteContext(ctx); err != nil {
 			// Ideally we log all errors in the span that generated it,
-			// but as a failsafe, always log the error a the root span as well
+			// but as a failsafe, always log the error at the root span as well
 			log.Error(err)
 			return 1
 		}
@@ -116,8 +121,9 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			case "porter", "help", "version", "docs":
 				return nil
 			default:
+				// Reload configuration with the now parsed cli flags
 				p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-				err := p.LoadData()
+				err := p.Connect(cmd.Context())
 				if err != nil {
 					return err
 				}
@@ -163,6 +169,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 	cmd.AddCommand(buildPluginsCommands(p))
 	cmd.AddCommand(buildCredentialsCommands(p))
 	cmd.AddCommand(buildParametersCommands(p))
+	cmd.AddCommand(buildCompletionCommand(p))
 
 	for _, alias := range buildAliasCommands(p) {
 		cmd.AddCommand(alias)

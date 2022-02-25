@@ -102,19 +102,17 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 	assert.Equal(t, DefaultDriver, opts.Driver)
 }
 
-func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
+func TestSharedOptions_ParseParamSets(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
 	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
-	p.TestConfig.TestContext.AddTestFile("testdata/paramset.json", "/paramset.json")
 	p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 	opts := sharedOptions{
 		ParameterSets: []string{
 			"porter-hello",
-			"/paramset.json",
 		},
 	}
 
@@ -126,12 +124,11 @@ func TestSharedOptions_ParseParamSets_viaPathOrName(t *testing.T) {
 
 	wantParams := map[string]string{
 		"my-second-param": "VALUE2",
-		"foo":             "foo_value",
 	}
 	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }
 
-func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
+func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
@@ -151,12 +148,8 @@ func TestSharedOptions_ParseParamSets_FileType(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = opts.parseParamSets(p.Porter)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 
-	wantParams := map[string]string{
-		"my-file-param": "/local/path/to/my-file-param",
-	}
-	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }
 
 func TestSharedOptions_LoadParameters(t *testing.T) {

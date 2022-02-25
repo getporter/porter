@@ -34,7 +34,7 @@ type ReconcileOptions struct {
 // This is only used for install/upgrade actions triggered by applying a file
 // to an installation. For uninstall or invoke, you should call those directly.
 func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOptions) error {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx)
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Reconciling %s/%s installation\n", opts.Namespace, opts.Name)
 	}
@@ -60,10 +60,17 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	// Configure the bundle action that we should execute IF IT'S OUT OF SYNC
-	var actionOpts BundleAction = NewUpgradeOptions()
-	if !opts.Installation.Status.InstallationCompleted {
+	var actionOpts BundleAction
+	if opts.Installation.IsInstalled() {
+		if opts.Installation.Uninstalled {
+			actionOpts = NewUninstallOptions()
+		} else {
+			actionOpts = NewUpgradeOptions()
+		}
+	} else {
 		actionOpts = NewInstallOptions()
 	}
+
 	lifecycleOpts := actionOpts.GetOptions()
 	lifecycleOpts.Reference = ref.String()
 	lifecycleOpts.Name = opts.Name
@@ -120,14 +127,44 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 // IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
 func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
-	log := tracing.LoggerFromContext(ctx)
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
 
-	// Have we successfully completed the install action?
-	if !i.Status.InstallationCompleted || lastRun == nil {
-		log.Info("Triggering because the installation has not completed successfully yet")
+	// Only print out info messages if we are triggering a bundle run. Otherwise, keep the explanations in debug output.
+
+	// Has it been uninstalled? If so, we don't ever reconcile it again
+	if i.IsUninstalled() {
+		log.Info("Ignoring because the installation is uninstalled")
+		return true, nil
+	}
+
+	// Should we uninstall it?
+	if i.Uninstalled {
+		// Only try to uninstall if it's been installed before
+		if i.IsInstalled() {
+			log.Info("Triggering because installation.uninstalled is true")
+			return false, nil
+		}
+
+		// Otherwise ignore this installation
+		log.Info("Ignoring because installation.uninstalled is true but the installation doesn't exist yet")
+		return true, nil
+	} else {
+		// Should we install it?
+		if !i.IsInstalled() {
+			log.Info("Triggering because the installation has not completed successfully yet")
+			return false, nil
+		}
+	}
+
+	// We want to upgrade but we don't have values to compare against
+	// This shouldn't happen but check just in case
+	if lastRun == nil {
+		log.Info("Triggering because the last run for the installation wasn't recorded")
 		return false, nil
 	}
 
+	// Figure out if we need to upgrade
 	opts := action.GetOptions()
 
 	newRef, err := p.resolveBundleReference(ctx, opts)
@@ -145,7 +182,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 		return false, nil
 	}
 
-	// Has the bundle parameters changed?
+	// Have the bundle parameters changed?
 	if err := opts.LoadParameters(p); err != nil {
 		return false, err
 	}

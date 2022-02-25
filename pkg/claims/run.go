@@ -99,16 +99,15 @@ func (r Run) ShouldRecord() bool {
 // ToCNAB associated with the Run.
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
-		SchemaVersion:   CNABSchemaVersion(),
-		ID:              r.ID,
-		Namespace:       r.Namespace,
-		Installation:    r.Installation,
+		SchemaVersion: CNABSchemaVersion(),
+		ID:            r.ID,
+		// CNAB doesn't have the concept of namespace, so we smoosh them together to make a unique name
+		Installation:    r.Namespace + "/" + r.Installation,
 		Revision:        r.Revision,
 		Created:         r.Created,
 		Action:          r.Action,
 		Bundle:          r.Bundle,
 		BundleReference: r.BundleReference,
-		BundleDigest:    r.BundleDigest,
 		Parameters:      r.Parameters,
 		Custom:          r.Custom,
 	}

@@ -64,12 +64,12 @@ func (p *Porter) PrintParameters(opts ListOptions) error {
 		}
 
 		printParamRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				cr, ok := v.(parameters.ParameterSet)
 				if !ok {
 					return nil
 				}
-				return []interface{}{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
 			}
 		return printer.PrintTable(p.Out, params, printParamRow,
 			"NAMESPACE", "NAME", "MODIFIED")
@@ -329,25 +329,22 @@ func validateParameterName(args []string) error {
 func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
 	for _, name := range params {
-		var pset parameters.ParameterSet
-		var err error
-		// Try reading parameters from file ...
-		if pset, err = p.loadParameterFromFile(name); err != nil {
-			// ... otherwise treat as a named set and read from Porter's parameter store.
-			// Try to get the params in the local namespace first, fallback to the global creds
-			query := storage.FindOptions{
-				Sort: []string{"-namespace"},
-				Filter: bson.M{
-					"name": name,
-					"$or": []bson.M{
-						{"namespace": ""},
-						{"namespace": namespace},
-					},
+
+		// Try to get the params in the local namespace first, fallback to the global creds
+		query := storage.FindOptions{
+			Sort: []string{"-namespace"},
+			Filter: bson.M{
+				"name": name,
+				"$or": []bson.M{
+					{"namespace": ""},
+					{"namespace": namespace},
 				},
-			}
-			store := p.Parameters.GetDataStore()
-			err = store.FindOne(parameters.CollectionParameters, query, &pset)
+			},
 		}
+		store := p.Parameters.GetDataStore()
+
+		var pset parameters.ParameterSet
+		err := store.FindOne(parameters.CollectionParameters, query, &pset)
 		if err != nil {
 			return nil, err
 		}

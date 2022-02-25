@@ -1,7 +1,9 @@
 package porter
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
@@ -23,6 +25,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 )
 
 // Porter is the logic behind the porter client.
@@ -51,8 +54,6 @@ type Porter struct {
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
-	c.LoadData()
-
 	storagePlugin := pluginstore.NewStore(c)
 	storage := storage.NewPluginAdapter(storagePlugin)
 	return NewFor(c, storage)
@@ -82,18 +83,17 @@ func NewFor(c *config.Config, store storage.Store) *Porter {
 	}
 }
 
-func (p *Porter) Connect() error {
-	if p.Debug {
-		fmt.Fprintln(p.Err, "Porter.Connect()")
-	}
-
-	// Start up our plugins
-	// TODO(carolynvs): have each plugin store (storage and secrets) connect on demand by wrapping the underlying store like the manager does.
-	err := p.Secrets.Connect()
-	if err != nil {
-		return err
-	}
-	return p.Storage.Connect()
+func (p *Porter) Connect(ctx context.Context) error {
+	// Load the config file and replace any referenced secrets
+	return p.Config.Load(ctx, func(secret string) (string, error) {
+		value, err := p.Secrets.Resolve("secret", secret)
+		if err != nil {
+			if strings.Contains(err.Error(), "invalid value source: secret") {
+				return "", errors.New("No secret store account is configured")
+			}
+		}
+		return value, nil
+	})
 }
 
 // Close releases resources used by Porter before terminating the application.

@@ -72,7 +72,7 @@ func (p *Porter) UpgradeBundle(ctx context.Context, opts UpgradeOptions) error {
 	}
 
 	err = p.applyActionOptionsToInstallation(&i, opts.BundleActionOptions)
-	i.Modified = time.Now()
+	i.Status.Modified = time.Now()
 	err = i.Validate()
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@ package porter
 
 import (
 	"testing"
+	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/printer"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
 
 func TestPorter_ListInstallationRuns(t *testing.T) {
 	p := NewTestPorter(t)
@@ -80,7 +83,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 
 		installation.ApplyResult(installRun, result)
 		installation.ApplyResult(uninstallRun, result2)
-		installation.Status.InstallationCompleted = true
+		installation.Status.Installed = &now
 
 		require.NoError(t, p.TestClaims.UpdateInstallation(installation))
 

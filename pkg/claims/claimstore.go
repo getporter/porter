@@ -1,7 +1,10 @@
 package claims
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -55,7 +58,10 @@ func (s ClaimStore) Initialize() error {
 	return s.store.EnsureIndex(opts)
 }
 
-func (s ClaimStore) ListInstallations(namespace string, name string, labels map[string]string) ([]Installation, error) {
+func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
+	_, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	var out []Installation
 	findOpts := storage.FindOptions{
 		Sort:   []string{"namespace", "name"},

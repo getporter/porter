@@ -70,13 +70,6 @@ later using `porter installations show NAME --output json`.
 No, credentials must be passed to a bundle using credential sets.
 Credentials are sensitive values and should ideally be sourced from a secret store such as Hashicorp Vault or Azure Key Vault to limit their exposure.
 
-If circumstances prevent you from using credential sets stored by Porter, you can export a credential set to a file and pass the file to a bundle as demonstrated below.
-
-```
-porter credentials show NAME --output json > creds.json
-porter install --cred ./creds.json
-```
-
 ### Why can't the credential source be defined in porter.yaml?
 
 The source of a credential is specific to each installation of the bundle. An

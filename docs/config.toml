@@ -212,8 +212,8 @@ pygmentsStyle = "friendly"
         parent = "tasks-administrators"
       [[menu.main]]
         name = "Move a bundle across an airgap"
-        identifier = "archive-bundles"
-        url = "/archive-bundles/"
+        identifier = "administrators-airgap"
+        url = "/administrators/airgap/"
         weight = 6
         parent = "tasks-administrators"
       [[menu.main]]
