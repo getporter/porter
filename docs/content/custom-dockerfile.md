@@ -3,19 +3,19 @@ title: Custom Dockerfile
 description: Defining a custom Dockerfile for your Porter bundle
 ---
 
-Porter automatically generates a Dockerfile and uses it to build the invocation
-image for your bundle. By default, it copies all the files from the current
-directory into the bundle, and installs SSL certificates. Sometimes you may want
-to full control over your bundle's invocation image, for example to install
-additional software used by the bundle.
+Porter automatically generates a Dockerfile and uses it to build the invocation image for your bundle.
+It runs the container as a nonroot user, copies all the files from the current directory into the bundle, and installs SSL certificates.
+Sometimes you may want to full control over your bundle's invocation image, for example to install additional software used by the bundle.
 
-When you run `porter create` template Dockerfile is created for you
-in the current directory named **template.Dockerfile**:
+When you run `porter create` template Dockerfile is created for you in the current directory named **template.Dockerfile**:
 
 ```Dockerfile
 FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
+
+RUN groupadd nonroot -o -g 65532 &&\
+    useradd nonroot -m -u 65532 -g 65532 -o
 
 RUN apt-get update && apt-get install -y ca-certificates
 
@@ -34,20 +34,17 @@ RUN apt-get update && apt-get install -y ca-certificates
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
-
 ```
 
-Add the following line to your **porter.yaml** file to instruct porter to use
-the template, instead of generating one from scratch:
+Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
 
 ```yaml
 dockerfile: template.Dockerfile
 ```
 
-It is your responsibility to provide a suitable base image, for example one that
-has root ssl certificates installed. *You must use a base image that is
-debian-based, such as `debian` or `ubuntu` with apt installed.* Mixins assume
-that apt is available to install packages.
+It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed and defines the nonroot user with uid 65532. 
+*You must use a base image that is debian-based, such as `debian` or `ubuntu` with apt installed.*
+Mixins assume that apt is available to install packages.
 
 # Buildkit
 
@@ -61,6 +58,9 @@ Below is the template for builds with Buildkit:
 FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
+
+RUN groupadd nonroot -o -g 65532 &&\
+    useradd nonroot -m -u 65532 -g 65532 -o
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
@@ -85,15 +85,13 @@ COPY . $BUNDLE_DIR
 
 # Variables
 
-When using a Dockerfile template, you must manually copy any files you need in
-your bundle using COPY statements. A few conventions are followed by Porter to
-help with this task:
+When using a Dockerfile template, you must manually copy any files you need in your bundle using COPY statements.
+A few conventions are followed by Porter to help with this task:
 
 ## BUNDLE_DIR
 
-Your template must declare `ARG BUNDLE_DIR`, which is the path to the bundle
-directory inside the invocation image. You may then use this when copying files
-from the local filesystem:
+Your template must declare `ARG BUNDLE_DIR`, which is the path to the bundle directory inside the invocation image.
+You may then use this when copying files from the local filesystem:
 
 ```Dockerfile
 COPY . $BUNDLE_DIR
@@ -101,22 +99,17 @@ COPY . $BUNDLE_DIR
 
 ## PORTER_MIXINS
 
-The mixins used by your bundle generate Dockerfile lines that must be injected
-into the Dockerfile template. You can control where they are injected by placing
-a comment in your Dockerfile template:
+The mixins used by your bundle generate Dockerfile lines that must be injected into the Dockerfile template.
+You can control where they are injected by placing a comment in your Dockerfile template:
 
 ```Dockerfile
 # PORTER_MIXINS
 ```
 
-When that line is omitted, the mixins Dockerfile lines are appended to the end
-of the template.
+When that line is omitted, the mixins Dockerfile lines are appended to the end of the template.
 
-The location of this comment can significantly impact the time it takes to
-rebuild your bundle, due to image layers and caching. By default this line is
-placed before copying your local files into the bundle, so that you can iterate
-on your scripts and on the porter manifest without having to rebuild those
-layers of the invocation image.
+The location of this comment can significantly impact the time it takes to rebuild your bundle, due to image layers and caching.
+By default, this line is placed before copying your local files into the bundle, so that you can iterate on your scripts and on the porter manifest without having to rebuild those layers of the invocation image.
 
 [Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
 [experimental]: /configuration/#experimental-feature-flags
