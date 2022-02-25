@@ -129,6 +129,6 @@ parameters:
 
 \* The bundle section requires a repository and one of the following fields: digest, version, or tag.
 
-[cs-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/credential-set.schema.json
-[ps-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/parameter-set.schema.json
-[inst-schema]: https://raw.githubusercontent.com/getporter/porter/release/v1/pkg/schema/installation.schema.json
+[cs-schema]: https://porter.sh/schema/v1/credential-set.schema.json
+[ps-schema]: https://porter.sh/schema/v1/parameter-set.schema.json
+[inst-schema]: https://porter.sh/schema/v1/installation.schema.json
