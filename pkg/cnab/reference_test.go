@@ -20,6 +20,15 @@ func TestOCIReference(t *testing.T) {
 		ExpectedRegistry string
 	}{
 		{
+			Name:             "Tag and digest specified",
+			Ref:              MustParseOCIReference("carolynvs/whalesayd:v0.1.1@sha256:5cca9dfa8ba540a32537d586651d3918d6f39761cdf4457fbe32c58c36c1defc"),
+			ExpectedRegistry: "docker.io",
+			ExpectedRepo:     "carolynvs/whalesayd",
+			ExpectedTag:      "v0.1.1",
+			ExpectedDigest:   "sha256:5cca9dfa8ba540a32537d586651d3918d6f39761cdf4457fbe32c58c36c1defc",
+			ExpectedVersion:  "0.1.1",
+		},
+		{
 			Name:             "valid digested reference",
 			Ref:              MustParseOCIReference("jeremyrickard/porter-do-bundle@sha256:a808aa4e3508d7129742eefda938249574447cce5403dc12d4cbbfe7f4f31e58"),
 			ExpectedRegistry: "docker.io",
