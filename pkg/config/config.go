@@ -102,7 +102,7 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 
 	if c.IsFeatureEnabled(experimental.FlagStructuredLogs) {
 		// Now that we have completely loaded our config, configure our final logging/tracing
-		c.Context.ConfigureLogging(portercontext.LogConfiguration{
+		c.Context.ConfigureLogging(ctx, portercontext.LogConfiguration{
 			StructuredLogs:       true,
 			LogToFile:            c.Data.Logs.Enabled,
 			LogDirectory:         filepath.Join(c.porterHome, "logs"),

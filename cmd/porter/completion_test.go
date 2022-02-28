@@ -10,20 +10,17 @@ import (
 )
 
 func TestCompletion(t *testing.T) {
+	p := buildRootCommand()
 
-	t.Run("completion", func(t *testing.T) {
-		p := buildRootCommand()
+	// Capture the output of the command.
+	var out bytes.Buffer
+	p.SetOut(&out)
 
-		// Capture the output of the command.
-		var out bytes.Buffer
-		p.SetOut(&out)
+	// Run the initial completion command with a bash example.
+	os.Args = []string{"porter", "completion", "bash"}
 
-		// Run the initial completion command with a bash example.
-		os.Args = []string{"porter", "completion", "bash"}
-
-		err := p.Execute()
-		require.NoError(t, err)
-		// Test the output of the command contains a specific string for bash.
-		assert.Contains(t, out.String(), "bash completion for porter")
-	})
+	err := p.Execute()
+	require.NoError(t, err)
+	// Test the output of the command contains a specific string for bash.
+	assert.Contains(t, out.String(), "bash completion for porter")
 }

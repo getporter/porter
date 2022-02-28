@@ -21,20 +21,32 @@ var includeDocsCommand = false
 //go:embed helptext/usage.txt
 var usageText string
 
+// Indicates that config should not be loaded for this command.
+// This is used for commands like help and version which should never
+// fail, even with porter is misconfigured.
+const skipConfig string = "skipConfig"
+
 func main() {
 	run := func() int {
 		ctx := context.Background()
 		p := porter.New()
-		if err := p.Connect(ctx); err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
 
 		rootCmd := buildRootCommandFrom(p)
 
 		// Trace the command that called porter, e.g. porter installation show
-		calledCommand, formattedCommand := getCalledCommand(rootCmd)
-		ctx, log := p.StartRootSpan(context.Background(), calledCommand, attribute.String("command", formattedCommand))
+		cmd, commandName, formattedCommand := getCalledCommand(rootCmd)
+
+		// Only run init logic that could fail for commands that
+		// really need it, skip it for commands that should NEVER
+		// fail.
+		if !shouldSkipConfig(cmd) {
+			if err := p.Connect(ctx); err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+				os.Exit(1)
+			}
+		}
+
+		ctx, log := p.StartRootSpan(context.Background(), commandName, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
@@ -62,32 +74,42 @@ func main() {
 	os.Exit(run())
 }
 
+func shouldSkipConfig(cmd *cobra.Command) bool {
+	if cmd.Name() == "help" {
+		return true
+	}
+
+	_, skip := cmd.Annotations[skipConfig]
+	return skip
+}
+
 // Returns the porter command called, e.g. porter installation list
 // and also the fully formatted command as passed with arguments/flags.
-func getCalledCommand(cmd *cobra.Command) (string, string) {
+func getCalledCommand(cmd *cobra.Command) (*cobra.Command, string, string) {
 	// Ask cobra what sub-command was called, and walk up the tree to get the full command called.
 	var cmdChain []string
-	cmd, _, err := cmd.Find(os.Args[1:])
+	calledCommand, _, err := cmd.Find(os.Args[1:])
 	if err != nil {
 		cmdChain = append(cmdChain, "porter")
 	} else {
+		cmd := calledCommand
 		for cmd != nil {
 			cmdChain = append(cmdChain, cmd.Name())
 			cmd = cmd.Parent()
 		}
 	}
 	// reverse the command from [list installations porter] to porter installation list
-	var calledCommand strings.Builder
+	var calledCommandBuilder strings.Builder
 	for i := len(cmdChain); i > 0; i-- {
-		calledCommand.WriteString(cmdChain[i-1])
-		calledCommand.WriteString(" ")
+		calledCommandBuilder.WriteString(cmdChain[i-1])
+		calledCommandBuilder.WriteString(" ")
 	}
-	calledCommandStr := calledCommand.String()[0 : calledCommand.Len()-1]
+	calledCommandStr := calledCommandBuilder.String()[0 : calledCommandBuilder.Len()-1]
 
 	// Also figure out the full command called, with args/flags.
 	formattedCommand := fmt.Sprintf("porter %s", strings.Join(os.Args[1:], " "))
 
-	return calledCommandStr, formattedCommand
+	return calledCommand, calledCommandStr, formattedCommand
 }
 
 func buildRootCommand() *cobra.Command {
@@ -114,27 +136,23 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			p.Out = cmd.OutOrStdout()
 			p.Err = cmd.OutOrStderr()
 
-			// Only run init logic that could fail for commands that
-			// really need it, skip it for commands that should NEVER
-			// fail.
-			switch cmd.Name() {
-			case "porter", "help", "version", "docs":
-				return nil
-			default:
-				// Reload configuration with the now parsed cli flags
-				p.DataLoader = cli.LoadHierarchicalConfig(cmd)
-				err := p.Connect(cmd.Context())
-				if err != nil {
-					return err
-				}
-
-				if p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-					// When structured logging is enabled, the error is printed
-					// to the console by the logger, we don't need to re-print it again.
-					cmd.Root().SilenceErrors = true
-				}
+			if shouldSkipConfig(cmd) {
 				return nil
 			}
+
+			// Reload configuration with the now parsed cli flags
+			p.DataLoader = cli.LoadHierarchicalConfig(cmd)
+			err := p.Connect(cmd.Context())
+			if err != nil {
+				return err
+			}
+
+			if p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+				// When structured logging is enabled, the error is printed
+				// to the console by the logger, we don't need to re-print it again.
+				cmd.Root().SilenceErrors = true
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if printVersion {
@@ -148,6 +166,10 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			return cmd.Help()
 		},
 		SilenceUsage: true,
+	}
+
+	cmd.Annotations = map[string]string{
+		skipConfig: "",
 	}
 
 	// These flags are available for every command

@@ -90,7 +90,7 @@ func New() *Context {
 		timestampLogs: true,
 	}
 
-	c.ConfigureLogging(LogConfiguration{})
+	c.ConfigureLogging(context.Background(), LogConfiguration{})
 	c.defaultNewCommand()
 	c.PlugInDebugContext = NewPluginDebugContext(c)
 
@@ -134,7 +134,7 @@ type LogConfiguration struct {
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.
-func (c *Context) ConfigureLogging(cfg LogConfiguration) {
+func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	// Cleanup in case logging has been configured before
 	c.logLevel = cfg.LogLevel
 
@@ -163,7 +163,7 @@ func (c *Context) ConfigureLogging(cfg LogConfiguration) {
 	if cfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
 		if c.traceCloser == nil {
-			err = c.configureTelemetry(tmpLog, cfg)
+			err = c.configureTelemetry(ctx, tmpLog, cfg)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
 			}
