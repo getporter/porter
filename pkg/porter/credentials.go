@@ -3,6 +3,8 @@ package porter
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/credentials"
@@ -372,4 +374,75 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	}
 
 	return o.Namespace, nil
+}
+
+// CredentialCreateOptions represent options for Porter's credential create command
+type CredentialCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *CredentialCreateOptions) Validate(args []string) error {
+	if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
+
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
+		}
+
+		switch opts.OutputType {
+		case "json":
+			credentialSet, err := p.Templates.GetCredentialSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		case "yaml", "yml":
+			credentialSet, err := p.Templates.GetCredentialSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
+	}
+
+	fmt.Fprintln(p.Err, "creating porter credential set in the current directory")
+
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetCredentialSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
+	}
+}
+
+func newUnsupportedFormatError(format string) error {
+	return errors.Errorf("unsupported format %s. Supported formats are: yaml and json.", format)
 }

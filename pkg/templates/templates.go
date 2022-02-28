@@ -78,3 +78,13 @@ func (t *Templates) GetDockerfile() ([]byte, error) {
 	tmpl := fmt.Sprintf("templates/build/%s.Dockerfile", t.GetBuildDriver())
 	return t.fs.ReadFile(tmpl)
 }
+
+// GetCredentialSetJSON returns a credential-set.schema.json template file to define new credential set.
+func (t *Templates) GetCredentialSetJSON() ([]byte, error) {
+	return t.fs.ReadFile("templates/credentials/create/credential-set.json")
+}
+
+// GetCredentialSetYAML returns a credential-set.yaml template file to define new credential set.
+func (t *Templates) GetCredentialSetYAML() ([]byte, error) {
+	return t.fs.ReadFile("templates/credentials/create/credential-set.yaml")
+}
