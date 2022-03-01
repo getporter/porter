@@ -62,7 +62,10 @@ func (s Stamp) WriteManifest(cxt *portercontext.Context, path string) error {
 
 // MixinRecord contains information about a mixin used in a bundle
 // For now it is a placeholder for data that we would like to include in the future.
-type MixinRecord struct{}
+type MixinRecord struct {
+	// Version of the mixin used in the bundle.
+	Version string `json:"version"`
+}
 
 func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
@@ -75,9 +78,11 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
 	// Remember the mixins used in the bundle
-	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
-	for _, m := range c.Manifest.Mixins {
-		stamp.Mixins[m.Name] = MixinRecord{}
+	stamp.Mixins = make(map[string]MixinRecord, len(c.Mixins))
+	for _, m := range c.Mixins {
+		stamp.Mixins[m.Name] = MixinRecord{
+			Version: m.GetVersionInfo().Version,
+		}
 	}
 
 	digest, err := c.DigestManifest()
