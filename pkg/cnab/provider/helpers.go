@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,4 +70,11 @@ func (t *TestRuntime) Execute(ctx context.Context, args ActionArguments) error {
 		args.Driver = debugDriver
 	}
 	return t.Runtime.Execute(ctx, args)
+}
+
+func (t *TestRuntime) MockGetDockerGroupId() {
+	// mock retrieving the docker group id on linux
+	// This is only called on linux, and we just need to have it return something
+	// so that the test doesn't fail
+	t.Setenv(test.ExpectedCommandOutputEnv, "docker:x:103")
 }
