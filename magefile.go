@@ -243,9 +243,11 @@ func BuildImages() {
 func buildImages(registry string, info releases.GitMetadata) {
 	var g errgroup.Group
 
+	enableBuildKit := "DOCKER_BUILDKIT=1"
 	g.Go(func() error {
 		img := fmt.Sprintf("%s/porter:%s", registry, info.Version)
-		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".")
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
@@ -257,7 +259,8 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 		// porter-agent does a FROM porter so they can't go in parallel
 		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
-		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".")
+		err = shx.Command("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
@@ -267,7 +270,8 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 	g.Go(func() error {
 		img := fmt.Sprintf("%s/workshop:%s", registry, info.Version)
-		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".")
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
