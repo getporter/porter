@@ -1,6 +1,9 @@
 FROM alpine:3 as builder
 WORKDIR /app/.porter
 
+RUN mkdir runtimes && \
+    mkdir -p mixins/exec/runtimes
+
 # Only install porter and the exec mixin, everything else
 # must be mounted into the container
 COPY bin/dev/porter-linux-amd64 porter
