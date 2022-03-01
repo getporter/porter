@@ -6,7 +6,7 @@ FROM $REGISTRY/porter:$PORTER_VERSION
 VOLUME /porter-config
 
 ENV PORTER_HOME /app/.porter
-COPY --chown=65532:65532 bin/dev/agent-linux-amd64 /app/.porter/agent
+COPY --chown=65532:0 --chmod=770 bin/dev/agent-linux-amd64 /app/.porter/agent
 
-USER 65532:65532
+USER 65532
 ENTRYPOINT ["/app/.porter/agent"]

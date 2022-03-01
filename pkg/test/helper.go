@@ -17,7 +17,8 @@ const (
 	MockedCommandEnv           = "MOCK_COMMAND"
 	ExpectedCommandEnv         = "EXPECTED_COMMAND"
 	ExpectedCommandExitCodeEnv = "EXPECTED_COMMAND_EXIT_CODE"
-	ExpectedCommandErrorEnv    = "EXPECTED_COMMAND_ERROR"
+	ExpectedCommandErrorEnv    = "EXPECTED_COMMAND_STDERR"
+	ExpectedCommandOutputEnv   = "EXPECTED_COMMAND_STDOUT"
 )
 
 func TestMainWithMockedCommandHandlers(m *testing.M) {
@@ -43,6 +44,10 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 				fmt.Printf("GOT COMMAND : %q\n", gotCmd)
 				os.Exit(127)
 			}
+		}
+
+		if wantOutput, ok := os.LookupEnv(ExpectedCommandOutputEnv); ok {
+			fmt.Fprintln(os.Stdout, wantOutput)
 		}
 
 		if wantError, ok := os.LookupEnv(ExpectedCommandErrorEnv); ok {

@@ -4,7 +4,7 @@ description: Defining a custom Dockerfile for your Porter bundle
 ---
 
 Porter automatically generates a Dockerfile and uses it to build the invocation image for your bundle.
-It runs the container as a nonroot user, copies all the files from the current directory into the bundle, and installs SSL certificates.
+It runs the container as a non-root user with membership in the root group, copies all the files from the current directory into the bundle, and installs SSL certificates.
 Sometimes you may want to full control over your bundle's invocation image, for example to install additional software used by the bundle.
 
 When you run `porter create` template Dockerfile is created for you in the current directory named **template.Dockerfile**:
@@ -13,9 +13,6 @@ When you run `porter create` template Dockerfile is created for you in the curre
 FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
-
-RUN groupadd nonroot -o -g 65532 &&\
-    useradd nonroot -m -u 65532 -g 65532 -o
 
 RUN apt-get update && apt-get install -y ca-certificates
 
@@ -42,7 +39,7 @@ Add the following line to your **porter.yaml** file to instruct porter to use th
 dockerfile: template.Dockerfile
 ```
 
-It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed and defines the nonroot user with uid 65532. 
+It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed. 
 *You must use a base image that is debian-based, such as `debian` or `ubuntu` with apt installed.*
 Mixins assume that apt is available to install packages.
 
@@ -58,9 +55,6 @@ Below is the template for builds with Buildkit:
 FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
-
-RUN groupadd nonroot -o -g 65532 &&\
-    useradd nonroot -m -u 65532 -g 65532 -o
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \

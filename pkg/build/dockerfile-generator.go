@@ -164,9 +164,12 @@ func (g *DockerfileGenerator) buildCNABSection() []string {
 		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
 		`RUN rm -fr $BUNDLE_DIR/.cnab`,
 		`COPY .cnab /cnab`,
-		`RUN chown -R nonroot.nonroot /cnab`,
-		// we are explicitly using the user id here because when the driver injects files into the container, it can't resolve a username, but it can use a uid
-		`USER 65532:65532`,
+		// Ensure that regardless of the container's UID, the root group (default group for arbitrary users that do not exist in the container) has the same permissions as the owner
+		// See https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform#group_ownership_and_file_permission
+		`RUN chgrp -R 0 /cnab && chmod -R g=u /cnab`,
+		// default to running as the nonroot user that the porter agent uses.
+		// When running in kubernetes, if you specify a different UID, make sure to set fsGroup to the same UID, and runasGroup to 0
+		`USER 65532`,
 	}
 }
 

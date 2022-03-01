@@ -76,11 +76,21 @@ func NewTestCommand(c *Context) CommandBuilder {
 		testArgs := append([]string{command}, args...)
 		cmd := exec.Command(os.Args[0], testArgs...)
 		cmd.Dir = c.Getwd()
+
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, c.Getenv(test.ExpectedCommandExitCodeEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, c.Getenv(test.ExpectedCommandErrorEnv)),
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandExitCodeEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandOutputEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandOutputEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandErrorEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, val))
 		}
 
 		return cmd
