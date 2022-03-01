@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path"
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/tests"
@@ -42,7 +42,7 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
 	clientStats, err := p.FileSystem.Stat(clientPath)
 	require.NoError(t, err)
-	wantMode := os.FileMode(0700)
+	wantMode := pkg.FileModeExecutable
 	tests.AssertFilePermissionsEqual(t, clientPath, wantMode, clientStats.Mode())
 
 	runtimePath := "/home/myuser/.porter/packages/mypkg/runtimes/mypkg-runtime"

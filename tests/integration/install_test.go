@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/secrets"
@@ -96,7 +97,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	p.AddTestBundleDir("testdata/bundles/outputs-example", true)
 
 	// Create .dockerignore file which ignores the helpers script
-	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), 0600)
+	err := p.FileSystem.WriteFile(".dockerignore", []byte("helpers.sh"), pkg.FileModeWritable)
 	require.NoError(t, err)
 
 	opts := porter.NewInstallOptions()

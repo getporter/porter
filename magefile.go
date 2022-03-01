@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/mage"
+	"get.porter.sh/porter/pkg"
 
 	"get.porter.sh/porter/mage/docker"
 	// mage:import
@@ -386,7 +387,7 @@ func UseXBuildBinaries() error {
 		log.Printf("Copying %s to %s", src, dest)
 
 		destDir := filepath.Dir(dest)
-		os.MkdirAll(destDir, 0700)
+		os.MkdirAll(destDir, pkg.FileModeDirectory)
 
 		err := sh.Copy(dest, src)
 		if err != nil {
@@ -399,7 +400,7 @@ func UseXBuildBinaries() error {
 
 // Run `chmod +x -R bin`.
 func SetBinExecutable() error {
-	err := chmodRecursive("bin", 0700)
+	err := chmodRecursive("bin", pkg.FileModeExecutable)
 	return errors.Wrap(err, "could not set +x on the test bin")
 }
 
@@ -438,7 +439,7 @@ func Install() {
 	fmt.Println("installing Porter from bin to", porterHome)
 
 	// Copy porter binaries
-	mgx.Must(os.MkdirAll(porterHome, 0700))
+	mgx.Must(os.MkdirAll(porterHome, pkg.FileModeDirectory))
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -454,7 +455,7 @@ func Install() {
 		mixin := fi.Name()
 		srcDir := filepath.Join(mixinsDir, mixin)
 		destDir := filepath.Join(porterHome, "mixins", mixin)
-		mgx.Must(os.MkdirAll(destDir, 0700))
+		mgx.Must(os.MkdirAll(destDir, pkg.FileModeDirectory))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))

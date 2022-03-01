@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -70,9 +71,9 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 // the new test output.
 func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
-		os.MkdirAll(filepath.Dir(goldenFile), 0700)
+		os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
-		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0600), "could not update golden file %s", goldenFile)
+		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), pkg.FileModeWritable), "could not update golden file %s", goldenFile)
 	} else {
 		wantSchema, err := ioutil.ReadFile(goldenFile)
 		require.NoError(t, err)

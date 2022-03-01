@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
@@ -45,7 +46,7 @@ func (g *DockerfileGenerator) GenerateDockerFile() error {
 		fmt.Fprintln(g.Out, contents)
 	}
 
-	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), 0600)
+	err = g.FileSystem.WriteFile(DOCKER_FILE, []byte(contents), pkg.FileModeWritable)
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
@@ -206,12 +207,12 @@ func (g *DockerfileGenerator) PrepareFilesystem() error {
 		return err
 	}
 
-	err = g.FileSystem.MkdirAll(LOCAL_APP, 0700)
+	err = g.FileSystem.MkdirAll(LOCAL_APP, pkg.FileModeDirectory)
 	if err != nil {
 		return err
 	}
 
-	err = g.FileSystem.WriteFile(LOCAL_RUN, runTmpl, 0700)
+	err = g.FileSystem.WriteFile(LOCAL_RUN, runTmpl, pkg.FileModeExecutable)
 	if err != nil {
 		return errors.Wrapf(err, "failed to write %s", LOCAL_RUN)
 	}

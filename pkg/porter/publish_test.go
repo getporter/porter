@@ -3,6 +3,7 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/cnabio/cnab-go/bundle"
@@ -47,7 +48,7 @@ func TestPublish_Validate_ArchivePath(t *testing.T) {
 	err := opts.Validate(p.Context)
 	assert.EqualError(t, err, "unable to access --archive mybuns.tgz: open /mybuns.tgz: file does not exist")
 
-	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), 0600)
+	p.FileSystem.WriteFile("mybuns.tgz", []byte("mybuns"), pkg.FileModeWritable)
 	err = opts.Validate(p.Context)
 	assert.EqualError(t, err, "must provide a value for --reference of the form REGISTRY/bundle:tag")
 

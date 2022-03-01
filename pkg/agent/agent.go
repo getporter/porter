@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -93,7 +94,7 @@ func copyConfig(relPath string, configFile string, fi os.FileInfo, porterHome st
 	}
 	defer src.Close()
 
-	if err = os.MkdirAll(filepath.Dir(destFile), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(destFile), pkg.FileModeDirectory); err != nil {
 		return err
 	}
 	dest, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fi.Mode())

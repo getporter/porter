@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -157,9 +158,9 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 	if len(mode) == 0 {
 		ext := filepath.Ext(dest)
 		if ext == ".sh" || ext == "" {
-			perms = 0700
+			perms = pkg.FileModeExecutable
 		} else {
-			perms = 0600
+			perms = pkg.FileModeWritable
 		}
 	} else {
 		perms = mode[0]
@@ -174,7 +175,7 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 }
 
 func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
-	return c.FileSystem.WriteFile(dest, file, 0600)
+	return c.FileSystem.WriteFile(dest, file, pkg.FileModeWritable)
 }
 
 // Use this when the directory you are referencing is in a different directory than the test.
@@ -204,7 +205,7 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMo
 		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
 
 		if info.IsDir() {
-			return c.FileSystem.MkdirAll(dest, 0700)
+			return c.FileSystem.MkdirAll(dest, pkg.FileModeDirectory)
 		}
 
 		c.AddTestFile(path, dest, mode...)
@@ -241,7 +242,7 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		}
 	}
 
-	err = c.FileSystem.Chmod(newfile.Name(), 0700)
+	err = c.FileSystem.Chmod(newfile.Name(), pkg.FileModeExecutable)
 	if err != nil {
 		c.T.Fatal(err)
 	}

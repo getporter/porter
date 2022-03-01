@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
@@ -194,14 +195,14 @@ func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLo
 }
 
 func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (zapcore.Core, error) {
-	if err := c.FileSystem.MkdirAll(dir, 0700); err != nil {
+	if err := c.FileSystem.MkdirAll(dir, pkg.FileModeDirectory); err != nil {
 		return nil, err
 	}
 
 	// Write the logs to a file
 	logfile := filepath.Join(dir, c.correlationId+".json")
 	if c.logFile == nil { // We may have already opened this logfile, and we are just changing the log level
-		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, pkg.FileModeWritable)
 		if err != nil {
 			return zapcore.NewNopCore(), errors.Wrapf(err, "could not start log file at %s", logfile)
 		}
@@ -429,12 +430,12 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 		return err
 	}
 	if !exists {
-		if err := c.FileSystem.MkdirAll(MixinOutputsDir, 0700); err != nil {
+		if err := c.FileSystem.MkdirAll(MixinOutputsDir, pkg.FileModeDirectory); err != nil {
 			return errors.Wrap(err, "couldn't make output directory")
 		}
 	}
 
-	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, 0600)
+	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, pkg.FileModeWritable)
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams

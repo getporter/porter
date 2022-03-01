@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 )
 
@@ -59,7 +60,7 @@ func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
 	c.SetPorterPath(filepath.Join(homeDir, "porter"))
 
 	// Copy bin dir contents to the home directory
-	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir, 0700)
+	c.TestContext.AddTestDirectory(c.TestContext.FindBinDir(), homeDir, pkg.FileModeDirectory)
 
 	return testDir, homeDir
 }

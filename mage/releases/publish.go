@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/mage/tools"
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
@@ -68,7 +69,7 @@ func configureGitBotIn(dir string) {
 	contents := `#!/bin/sh
 exec echo "$GITHUB_TOKEN"
 `
-	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), 0700))
+	mgx.Must(ioutil.WriteFile(askpass, []byte(contents), pkg.FileModeExecutable))
 
 	pwd, _ := os.Getwd()
 	script := filepath.Join(pwd, askpass)

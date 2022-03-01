@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -154,7 +155,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 	t.Run("allow docker host access", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
-		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("allow-docker-host-access: true"), 0600)
+		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("allow-docker-host-access: true"), pkg.FileModeWritable)
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
@@ -166,7 +167,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 	t.Run("driver flag unset", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
-		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("runtime-driver: kubernetes"), 0600)
+		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("runtime-driver: kubernetes"), pkg.FileModeWritable)
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
@@ -177,7 +178,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 	t.Run("driver flag set", func(t *testing.T) {
 		p := NewTestPorter(t)
 		p.DataLoader = config.LoadFromEnvironment()
-		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("driver: kubernetes"), 0600)
+		p.FileSystem.WriteFile("/home/myuser/.porter/config.yaml", []byte("driver: kubernetes"), pkg.FileModeWritable)
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()

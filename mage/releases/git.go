@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/pkg/errors"
@@ -56,7 +57,7 @@ func LoadMetadata() GitMetadata {
 
 	// Save github action environment variables
 	if githubEnv, ok := os.LookupEnv("GITHUB_ENV"); ok {
-		err := ioutil.WriteFile(githubEnv, []byte("PERMALINK="+gitMetadata.Permalink), 0600)
+		err := ioutil.WriteFile(githubEnv, []byte("PERMALINK="+gitMetadata.Permalink), pkg.FileModeWritable)
 		mgx.Must(errors.Wrapf(err, "couldn't persist PERMALINK to a GitHub Actions environment variable"))
 	}
 

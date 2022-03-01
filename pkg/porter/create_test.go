@@ -1,9 +1,9 @@
 package porter
 
 import (
-	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/experimental"
 	"github.com/stretchr/testify/assert"
@@ -21,28 +21,28 @@ func TestCreate(t *testing.T) {
 
 	configFileStats, err := p.FileSystem.Stat("porter.yaml")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, "porter.yaml", os.FileMode(0600), configFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, "porter.yaml", pkg.FileModeWritable, configFileStats.Mode())
 
 	// Verify that helpers is present and executable
 	helperFileStats, err := p.FileSystem.Stat("helpers.sh")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, "helpers.sh", os.FileMode(0700), helperFileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, "helpers.sh", pkg.FileModeExecutable, helperFileStats.Mode())
 
 	dockerfileStats, err := p.FileSystem.Stat("template.Dockerfile")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, "template.Dockerfile", os.FileMode(0600), dockerfileStats.Mode())
+	tests.AssertFilePermissionsEqual(t, "template.Dockerfile", pkg.FileModeWritable, dockerfileStats.Mode())
 
 	readmeStats, err := p.FileSystem.Stat("README.md")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, "README.md", os.FileMode(0600), readmeStats.Mode())
+	tests.AssertFilePermissionsEqual(t, "README.md", pkg.FileModeWritable, readmeStats.Mode())
 
 	gitignoreStats, err := p.FileSystem.Stat(".gitignore")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, ".gitignore", os.FileMode(0600), gitignoreStats.Mode())
+	tests.AssertFilePermissionsEqual(t, ".gitignore", pkg.FileModeWritable, gitignoreStats.Mode())
 
 	dockerignoreStats, err := p.FileSystem.Stat(".dockerignore")
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, ".dockerignore", os.FileMode(0600), dockerignoreStats.Mode())
+	tests.AssertFilePermissionsEqual(t, ".dockerignore", pkg.FileModeWritable, dockerignoreStats.Mode())
 
 }
 

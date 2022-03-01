@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"github.com/carolynvs/aferox"
 	"github.com/cnabio/cnab-go/bundle"
@@ -59,7 +60,7 @@ func (p *Porter) Archive(ctx context.Context, opts ArchiveOptions) error {
 		return err
 	}
 
-	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, 0600)
+	dest, err := p.Config.FileSystem.OpenFile(opts.ArchiveFile, os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
 
 	exp := &exporter{
 		fs:                    p.Config.FileSystem,
@@ -98,7 +99,7 @@ func (ex *exporter) export() error {
 	}
 	defer ex.fs.RemoveAll(archiveDir)
 
-	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, 0600)
+	to, err := ex.fs.OpenFile(filepath.Join(archiveDir, "bundle.json"), os.O_RDWR|os.O_CREATE, pkg.FileModeWritable)
 	if err != nil {
 		return err
 	}
