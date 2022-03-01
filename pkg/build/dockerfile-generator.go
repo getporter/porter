@@ -58,21 +58,6 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 		return nil, err
 	}
 
-	mixinLines, err := g.buildMixinsSection()
-	if err != nil {
-		return nil, errors.Wrap(err, "error generating Dockefile content for mixins")
-	}
-
-	mixinsTokenIndex := g.getIndexOfPorterMixinsToken(lines)
-	if mixinsTokenIndex == -1 {
-		lines = append(lines, mixinLines...)
-	} else {
-		pretoken := make([]string, mixinsTokenIndex)
-		copy(pretoken, lines)
-		posttoken := lines[mixinsTokenIndex+1:]
-		lines = append(pretoken, append(mixinLines, posttoken...)...)
-	}
-
 	lines = append(lines, g.buildPorterSection()...)
 	lines = append(lines, g.buildCNABSection()...)
 	lines = append(lines, g.buildWORKDIRSection())
@@ -140,7 +125,8 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	if e != nil {
 		return nil, e
 	}
-	return lines, nil
+
+	return g.replaceTokens(lines)
 }
 
 func (g *DockerfileGenerator) buildPorterSection() []string {
@@ -199,6 +185,15 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 	return lines, nil
 }
 
+func (g *DockerfileGenerator) buildInitSection() []string {
+	return []string{
+		"ARG BUNDLE_DIR",
+		"ARG UID=65532",
+		// Create a non-root user that is in the root group with the specified id and a home directory
+		"RUN useradd nonroot -m -u ${UID} -g 0 -o",
+	}
+}
+
 func (g *DockerfileGenerator) PrepareFilesystem() error {
 	fmt.Fprintf(g.Out, "Copying porter runtime ===> \n")
 
@@ -248,11 +243,39 @@ func (g *DockerfileGenerator) copyMixin(mixin string) error {
 	return errors.Wrapf(err, "could not copy mixin directory contents for %s", mixin)
 }
 
-func (g *DockerfileGenerator) getIndexOfPorterMixinsToken(a []string) int {
-	for i, n := range a {
-		if INJECT_PORTER_MIXINS_TOKEN == strings.TrimSpace(n) {
-			return i
+func (g *DockerfileGenerator) getIndexOfToken(lines []string, token string) int {
+	for lineNumber, lineContent := range lines {
+		if token == strings.TrimSpace(lineContent) {
+			return lineNumber
 		}
 	}
 	return -1
+}
+
+// replaceTokens looks for lines like # PORTER_MIXINS and replaces them in the
+// template with the appropriate set of Dockerfile lines.
+func (g *DockerfileGenerator) replaceTokens(lines []string) ([]string, error) {
+	mixinLines, err := g.buildMixinsSection()
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating Dockerfile content for mixins")
+	}
+
+	replacements := map[string][]string{
+		INJECT_PORTER_INIT_TOKEN:   g.buildInitSection(),
+		INJECT_PORTER_MIXINS_TOKEN: mixinLines,
+	}
+
+	for token, replacementLines := range replacements {
+		tokenIndex := g.getIndexOfToken(lines, token)
+		if tokenIndex == -1 {
+			lines = append(lines, replacementLines...)
+		} else {
+			pretoken := make([]string, tokenIndex)
+			copy(pretoken, lines)
+			posttoken := lines[tokenIndex+1:]
+			lines = append(pretoken, append(mixinLines, posttoken...)...)
+		}
+	}
+
+	return lines, nil
 }

@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y ca-certificates
 
 
 COPY . $BUNDLE_DIR
+ARG BUNDLE_DIR
+ARG UID=65532
+RUN useradd nonroot -m -u ${UID} -g 0 -o
 RUN rm $BUNDLE_DIR/porter.yaml
 RUN rm -fr $BUNDLE_DIR/.cnab
 COPY .cnab /cnab

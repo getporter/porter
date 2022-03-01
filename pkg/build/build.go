@@ -35,6 +35,10 @@ var (
 
 	// INJECT_PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in Dockerfile.
 	INJECT_PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
+
+	// INJECT_PORTER_INIT_TOKEN controls where Porter's image initialization
+	// instructions are places in the Dockerfile.
+	INJECT_PORTER_INIT_TOKEN = "# PORTER_INIT"
 )
 
 type Builder interface {
