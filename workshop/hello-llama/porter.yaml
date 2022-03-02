@@ -17,18 +17,18 @@ install:
       command: ./helpers.sh
       arguments:
         - install
-        - "{{ bundle.parameters.name }}"
+        - "'{{ bundle.parameters.name }}'"
 
 upgrade:
   - exec:
       command: ./helpers.sh
       arguments:
         - upgrade
-        - "{{ bundle.parameters.name }}"
+        - "'{{ bundle.parameters.name }}'"
 
 uninstall:
   - exec:
       command: ./helpers.sh
       arguments:
         - uninstall
-        - "{{ bundle.parameters.name }}"
+        - "'{{ bundle.parameters.name }}'"
