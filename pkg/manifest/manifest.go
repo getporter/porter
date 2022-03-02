@@ -165,12 +165,12 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 
 func (m *Manifest) validateMetadata(cxt *context.Context) error {
 	if m.SchemaVersion != SupportedSchemaVersion {
-		specifiedVersion := m.SchemaVersion
-		if specifiedVersion == "" {
-			specifiedVersion = "(none)"
+		if m.SchemaVersion == "" {
+			fmt.Fprintf(cxt.Err, "WARNING: This bundle was built with an old version of Porter and doesn't declare a schema version. This may not work but we will give it a try. If you see errors, rebuild the bundle with the latest v1 release of Porter.")
+		} else {
+			return errors.Errorf("The bundle uses schema version %s when the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details.",
+				m.SchemaVersion, SupportedSchemaVersion)
 		}
-		return errors.Errorf("the bundle uses schema version %s when the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details.",
-			specifiedVersion, SupportedSchemaVersion)
 	}
 
 	if m.Name == "" {

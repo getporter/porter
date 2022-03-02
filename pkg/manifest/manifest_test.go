@@ -174,34 +174,43 @@ func TestManifest_Validate_Name(t *testing.T) {
 }
 
 func TestManifest_Validate_SchemaVersion(t *testing.T) {
-	cxt := context.New()
 
 	t.Run("schemaVersion matches", func(t *testing.T) {
-		m, err := ReadManifest(cxt, "testdata/porter.yaml")
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
 
-		err = m.Validate(cxt)
+		err = m.Validate(cxt.Context)
 		require.NoError(t, err)
 	})
 
 	t.Run("schemaVersion missing", func(t *testing.T) {
-		m, err := ReadManifest(cxt, "testdata/porter.yaml")
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
 
 		m.SchemaVersion = ""
 
-		err = m.Validate(cxt)
-		tests.RequireErrorContains(t, err, "the bundle uses schema version (none) when the supported schema version is 1.0.0-alpha.1")
+		err = m.Validate(cxt.Context)
+		// Check that a warning is printed
+		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
+		assert.Contains(t, cxt.GetError(), "WARNING: This bundle was built with an old version of Porter and doesn't declare a schema version")
 	})
 
 	t.Run("schemaVersion newer", func(t *testing.T) {
-		m, err := ReadManifest(cxt, "testdata/porter.yaml")
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
 
 		m.SchemaVersion = "2.0.0"
 
-		err = m.Validate(cxt)
-		tests.RequireErrorContains(t, err, "the bundle uses schema version 2.0.0 when the supported schema version is 1.0.0-alpha.1")
+		err = m.Validate(cxt.Context)
+		tests.RequireErrorContains(t, err, "The bundle uses schema version 2.0.0 when the supported schema version is 1.0.0-alpha.1")
 	})
 }
 
