@@ -77,13 +77,18 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	}
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
+	fmt.Printf("c.Mixins = %#v\n", c.Mixins)
+	fmt.Printf("c.Manifest.Mixins = %#v\n", c.Manifest.Mixins)
+
 	// Remember the mixins used in the bundle
 	stamp.Mixins = make(map[string]MixinRecord, len(c.Mixins))
+	fmt.Printf("c.Mixins = %#v\n", c.Mixins)
 	for _, m := range c.Mixins {
 		stamp.Mixins[m.Name] = MixinRecord{
 			Version: m.GetVersionInfo().Version,
 		}
 	}
+	fmt.Printf("stamp.Mixins = %#v\n", stamp.Mixins)
 
 	digest, err := c.DigestManifest()
 	if err != nil {

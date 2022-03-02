@@ -2,6 +2,7 @@ package configadapter
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -22,6 +23,8 @@ func TestConfig_GenerateStamp(t *testing.T) {
 
 	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
+
+	fmt.Printf("mixins on test = %#v", m.Mixins)
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
 	stamp, err := a.GenerateStamp()
