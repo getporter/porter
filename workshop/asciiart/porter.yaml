@@ -1,4 +1,3 @@
-schemaVersion: 1.0.0-alpha.10
 name: asciiart
 version: 0.1.0
 description: "A bundle that turns pictures into ascii art"

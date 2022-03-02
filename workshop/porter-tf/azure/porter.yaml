@@ -1,4 +1,3 @@
-schemaVersion: 1.0.0-alpha.10
 name: workshop-tf
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"

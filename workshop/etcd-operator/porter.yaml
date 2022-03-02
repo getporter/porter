@@ -1,4 +1,3 @@
-schemaVersion: 1.0.0-alpha.10
 name: etcd-operator
 version: 0.1.0
 description: "An etcd-operator bundle"
