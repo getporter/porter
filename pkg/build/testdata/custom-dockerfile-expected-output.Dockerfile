@@ -1,14 +1,16 @@
 FROM ubuntu:latest
+# stuff
 ARG BUNDLE_DIR
+ARG BUNDLE_UID=65532
+ARG BUNDLE_USER=nonroot
+ARG BUNDLE_GID=0
+RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o
 COPY mybin /cnab/app/
 
-ARG BUNDLE_DIR
-ARG UID=65532
-RUN useradd nonroot -m -u ${UID} -g 0 -o
-RUN rm $BUNDLE_DIR/porter.yaml
-RUN rm -fr $BUNDLE_DIR/.cnab
+RUN rm ${BUNDLE_DIR}/porter.yaml
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-RUN chgrp -R 0 /cnab && chmod -R g=u /cnab
-USER 65532
-WORKDIR $BUNDLE_DIR
+RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab
+USER ${BUNDLE_UID}
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]

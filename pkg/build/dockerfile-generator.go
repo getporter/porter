@@ -72,29 +72,6 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	return lines, nil
 }
 
-// ErrorMessage to be displayed when no ARG BUNDLE_DIR is in Dockerfile
-const ErrorMessage = `
-Dockerfile.tmpl must declare the build argument BUNDLE_DIR.
-Add the following line to the file and re-run porter build: ARG BUNDLE_DIR`
-
-func (g *DockerfileGenerator) readAndValidateDockerfile(s *bufio.Scanner) ([]string, error) {
-	hasBuildArg := false
-	buildArg := "ARG BUNDLE_DIR"
-	var lines []string
-	for s.Scan() {
-		if strings.TrimSpace(s.Text()) == buildArg {
-			hasBuildArg = true
-		}
-		lines = append(lines, s.Text())
-	}
-
-	if !hasBuildArg {
-		return nil, errors.New(ErrorMessage)
-	}
-
-	return lines, nil
-}
-
 func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	var reader io.Reader
 	if g.Manifest.Dockerfile != "" {
@@ -121,9 +98,9 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 		reader = bytes.NewReader(contents)
 	}
 	scanner := bufio.NewScanner(reader)
-	lines, e := g.readAndValidateDockerfile(scanner)
-	if e != nil {
-		return nil, e
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
 
 	return g.replaceTokens(lines)
@@ -139,7 +116,7 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 			return []string{
 				// Remove the user-provided Porter manifest as the canonical version
 				// will migrate via its location in .cnab
-				fmt.Sprintf(`RUN rm $BUNDLE_DIR/%s`, relManifestPath),
+				fmt.Sprintf(`RUN rm ${BUNDLE_DIR}/%s`, relManifestPath),
 			}
 		}
 	}
@@ -147,21 +124,27 @@ func (g *DockerfileGenerator) buildPorterSection() []string {
 }
 
 func (g *DockerfileGenerator) buildCNABSection() []string {
+	copyCNAB := "COPY .cnab /cnab"
+	if g.GetBuildDriver() == config.BuildDriverBuildkit {
+		copyCNAB = "COPY --link .cnab /cnab"
+	}
+
 	return []string{
 		// Putting RUN before COPY here as a workaround for https://github.com/moby/moby/issues/37965, back to back COPY statements in the same directory (e.g. /cnab) _may_ result in an error from Docker depending on unpredictable factors
-		`RUN rm -fr $BUNDLE_DIR/.cnab`,
-		`COPY .cnab /cnab`,
+		`RUN rm -fr ${BUNDLE_DIR}/.cnab`,
+		// Copy the non-user cnab files, like mixins and porter.yaml, from the local .cnab directory into the bundle
+		copyCNAB,
 		// Ensure that regardless of the container's UID, the root group (default group for arbitrary users that do not exist in the container) has the same permissions as the owner
 		// See https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform#group_ownership_and_file_permission
-		`RUN chgrp -R 0 /cnab && chmod -R g=u /cnab`,
+		`RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab`,
 		// default to running as the nonroot user that the porter agent uses.
 		// When running in kubernetes, if you specify a different UID, make sure to set fsGroup to the same UID, and runasGroup to 0
-		`USER 65532`,
+		`USER ${BUNDLE_UID}`,
 	}
 }
 
 func (g *DockerfileGenerator) buildWORKDIRSection() string {
-	return `WORKDIR $BUNDLE_DIR`
+	return `WORKDIR ${BUNDLE_DIR}`
 }
 
 func (g *DockerfileGenerator) buildCMDSection() string {
@@ -188,9 +171,11 @@ func (g *DockerfileGenerator) buildMixinsSection() ([]string, error) {
 func (g *DockerfileGenerator) buildInitSection() []string {
 	return []string{
 		"ARG BUNDLE_DIR",
-		"ARG UID=65532",
+		"ARG BUNDLE_UID=65532",
+		"ARG BUNDLE_USER=nonroot",
+		"ARG BUNDLE_GID=0",
 		// Create a non-root user that is in the root group with the specified id and a home directory
-		"RUN useradd nonroot -m -u ${UID} -g 0 -o",
+		"RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o",
 	}
 }
 
@@ -260,20 +245,39 @@ func (g *DockerfileGenerator) replaceTokens(lines []string) ([]string, error) {
 		return nil, errors.Wrap(err, "error generating Dockerfile content for mixins")
 	}
 
-	replacements := map[string][]string{
-		INJECT_PORTER_INIT_TOKEN:   g.buildInitSection(),
-		INJECT_PORTER_MIXINS_TOKEN: mixinLines,
+	fromToken := g.getIndexOfToken(lines, "FROM")
+
+	substitutions := map[string]struct {
+		lines        []string
+		defaultIndex int
+		replace      bool
+	}{
+		PORTER_INIT_TOKEN:   {lines: g.buildInitSection(), defaultIndex: fromToken, replace: true},
+		PORTER_MIXINS_TOKEN: {lines: mixinLines, defaultIndex: -1, replace: true},
 	}
 
-	for token, replacementLines := range replacements {
-		tokenIndex := g.getIndexOfToken(lines, token)
-		if tokenIndex == -1 {
-			lines = append(lines, replacementLines...)
+	for token, substitution := range substitutions {
+		index := g.getIndexOfToken(lines, token)
+
+		// If we can't find the token, use the default for that token
+		if index == -1 {
+			index = substitution.defaultIndex
+			substitution.replace = false
+		}
+
+		if index == -1 {
+			lines = append(lines, substitution.lines...)
 		} else {
-			pretoken := make([]string, tokenIndex)
-			copy(pretoken, lines)
-			posttoken := lines[tokenIndex+1:]
-			lines = append(pretoken, append(mixinLines, posttoken...)...)
+			prefix := make([]string, index)
+			copy(prefix, lines)
+
+			if substitution.replace {
+				// Do not keep the line at the insertion index, replace it with the new lines instead
+				index = index + 1
+			}
+
+			suffix := lines[index:]
+			lines = append(prefix, append(substitution.lines, suffix...)...)
 		}
 	}
 

@@ -78,11 +78,11 @@ COPY mybin /cnab/app/
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		_, err = g.buildDockerfile()
 
-		// We expect an error when ARG BUNDLE_DIR is not in Dockerfile
-		require.EqualError(t, err, ErrorMessage)
+		// We should inject initialization lines even when they didn't include the token
+		require.NoError(t, err)
 	})
 
-	t.Run("build from custom docker with ARG BUNDLE_DIR supplied", func(t *testing.T) {
+	t.Run("build from custom docker with PORTER_INIT supplied", func(t *testing.T) {
 		t.Parallel()
 
 		c := config.NewTestConfig(t)
@@ -97,7 +97,8 @@ COPY mybin /cnab/app/
 		// Use a custom dockerfile template
 		m.Dockerfile = "Dockerfile.template"
 		customFrom := `FROM ubuntu:latest
-ARG BUNDLE_DIR
+# stuff
+# PORTER_INIT
 COPY mybin /cnab/app/
 
 `
@@ -109,7 +110,6 @@ COPY mybin /cnab/app/
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 		gotlines, err := g.buildDockerfile()
 
-		// We expect no error when ARG BUNDLE_DIR is in Dockerfile
 		require.NoError(t, err)
 		test.CompareGoldenFile(t, "testdata/custom-dockerfile-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
 	})

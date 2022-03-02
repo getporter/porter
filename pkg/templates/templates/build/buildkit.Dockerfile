@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile-upstream:1.4.0-rc2
 FROM debian:stretch-slim
 
-ARG BUNDLE_DIR
+# PORTER_INIT
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
@@ -9,4 +9,4 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 
 # PORTER_MIXINS
 
-COPY . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}

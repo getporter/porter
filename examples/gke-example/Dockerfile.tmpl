@@ -3,4 +3,4 @@ FROM debian:stretch-slim
 ARG BUNDLE_DIR
 ENV GOOGLE_APPLICATION_CREDENTIALS=/home/nonroot/google-service-account.json
 
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}

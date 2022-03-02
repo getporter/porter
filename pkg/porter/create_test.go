@@ -59,5 +59,5 @@ func TestCreateWithBuildkit(t *testing.T) {
 	dockerfile, err := p.FileSystem.ReadFile("template.Dockerfile")
 	require.NoError(t, err, "could not read template dockerfile")
 
-	assert.Contains(t, string(dockerfile), "# syntax=docker/dockerfile:1.2")
+	assert.Contains(t, string(dockerfile), "# syntax=docker/dockerfile")
 }

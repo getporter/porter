@@ -90,11 +90,11 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Writing Dockerfile =======>
@@ -107,11 +107,11 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 
 Starting Invocation Image Build =======>
@@ -123,19 +123,19 @@ Step 2/9 : ARG BUNDLE_DIR
 Step 3/9 : RUN apt-get update && apt-get install -y ca-certificates
  ---> Using cache
  ---> afa85b98ed97
-Step 4/9 : COPY . $BUNDLE_DIR
+Step 4/9 : COPY . ${BUNDLE_DIR}
  ---> Using cache
  ---> e4057b41978c
-Step 5/9 : RUN rm -fr $BUNDLE_DIR/.cnab
+Step 5/9 : RUN rm -fr ${BUNDLE_DIR}/.cnab
  ---> Using cache
  ---> ee114d95bc2d
 Step 6/9 : COPY .cnab /cnab
  ---> Using cache
  ---> 1bb73c63ef65
-Step 7/9 : COPY porter.yaml $BUNDLE_DIR/porter.yaml
+Step 7/9 : COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
  ---> Using cache
  ---> 483c6b05a0b7
-Step 8/9 : WORKDIR $BUNDLE_DIR
+Step 8/9 : WORKDIR ${BUNDLE_DIR}
  ---> Using cache
  ---> 9d2497296f3b
 Step 9/9 : CMD ["/cnab/app/run"]
@@ -218,11 +218,11 @@ RUN apt-get update && apt-get install -y ca-certificates
 # exec mixin has no buildtime dependencies
 
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 
@@ -240,16 +240,16 @@ Step 2/9 : ARG BUNDLE_DIR
 Step 3/9 : RUN apt-get update && apt-get install -y ca-certificates
  ---> Using cache
  ---> d60d94e3f701
-Step 4/9 : COPY . $BUNDLE_DIR
+Step 4/9 : COPY . ${BUNDLE_DIR}
  ---> 79290bcf128f
-Step 5/9 : RUN rm -fr $BUNDLE_DIR/.cnab
+Step 5/9 : RUN rm -fr ${BUNDLE_DIR}/.cnab
  ---> Running in 7f12cd3f447d
  ---> 01b633a31bf8
 Step 6/9 : COPY .cnab /cnab
  ---> 25c0b1e5f70a
-Step 7/9 : COPY porter.yaml $BUNDLE_DIR/porter.yaml
+Step 7/9 : COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
  ---> dbb26cacf8d8
-Step 8/9 : WORKDIR $BUNDLE_DIR
+Step 8/9 : WORKDIR ${BUNDLE_DIR}
  ---> Running in b051cb2b6ddb
  ---> e10d6ab60595
 Step 9/9 : CMD ["/cnab/app/run"]
@@ -326,11 +326,11 @@ RUN apt-get update && \
  mv kubectl /usr/local/bin && \
  chmod a+x /usr/local/bin/kubectl
 
-COPY . $BUNDLE_DIR
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-COPY porter.yaml $BUNDLE_DIR/porter.yaml
-WORKDIR $BUNDLE_DIR
+COPY porter.yaml ${BUNDLE_DIR}/porter.yaml
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 

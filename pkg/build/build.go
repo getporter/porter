@@ -33,12 +33,13 @@ var (
 	// BUNDLE_DIR is the directory where the bundle is located in the CNAB execution environment.
 	BUNDLE_DIR = "/cnab/app"
 
-	// INJECT_PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in Dockerfile.
-	INJECT_PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
+	// PORTER_MIXINS_TOKEN can control where mixin instructions will be placed in
+	// Dockerfile.
+	PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
 
-	// INJECT_PORTER_INIT_TOKEN controls where Porter's image initialization
+	// PORTER_INIT_TOKEN controls where Porter's image initialization
 	// instructions are places in the Dockerfile.
-	INJECT_PORTER_INIT_TOKEN = "# PORTER_INIT"
+	PORTER_INIT_TOKEN = "# PORTER_INIT"
 )
 
 type Builder interface {

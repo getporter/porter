@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile-upstream:1.4.0-rc2
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -21,4 +21,4 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
-COPY --link . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}

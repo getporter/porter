@@ -1,9 +1,9 @@
 FROM debian:stretch-slim
 
-ARG BUNDLE_DIR
+# PORTER_INIT
 
 RUN apt-get update && apt-get install -y ca-certificates
 
 # PORTER_MIXINS
 
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}
