@@ -255,12 +255,34 @@ The installation is out-of-sync, running the upgrade action...
 Skipping bundle execution because --dry-run was specified
 ```
 
-## Cleanup
+## Uninstall
 
-To clean up the resources installed from this QuickStart, use the `porter uninstall` command.
+Installations have a field named **uninstalled** that control if the installation should be uninstalled.
+After a bundle has been installed, set uninstalled to true on the installation to uninstall it.
 
+Edit installation.yaml, set uninstalled to true, and then save the file.
+
+```yaml
+uninstalled: true
 ```
-porter uninstall desired-state
+
+The installation.yaml file should look like this:
+
+```yaml
+schemaVersion: 1.0.0
+name: desired-state
+uninstalled: true
+# remaining fields are not relevant to uninstalling
+```
+
+Now, apply the installation.yaml file to trigger an uninstall:
+
+```console
+$ porter installation apply installation.yaml
+Updated quickstart/desired-state installation
+Triggering because installation.uninstalled is true
+The installation is out-of-sync, running the uninstall action...
+# bundle output truncated for brevity
 ```
 
 ## Next Steps

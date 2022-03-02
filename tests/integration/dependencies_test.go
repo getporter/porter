@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -11,8 +12,11 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -70,14 +74,24 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 		"namespace=" + namespace,
 		"mysql#namespace=" + namespace,
 	}
+
 	// Add a supplemental parameter set to vet dep param resolution
-	installOpts.ParameterSets = []string{filepath.Join(p.TestDir, "testdata/parameter-set-for-dependencies.json")}
+	installOpts.ParameterSets = []string{"myparam"}
+	testParamSets := parameters.NewParameterSet("", "myparam", secrets.Strategy{
+		Name: "mysql#probe-timeout",
+		Source: secrets.Source{
+			Key:   host.SourceValue,
+			Value: "2",
+		},
+	})
+
+	p.TestParameters.InsertParameterSet(testParamSets)
 
 	err := installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err, "validation of install opts for root bundle failed")
 
 	err = p.InstallBundle(context.Background(), installOpts)
-	require.NoError(p.T(), err, "install of root bundle failed")
+	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	// Verify that the dependency claim is present
 	i, err := p.Claims.GetInstallation("", "wordpress-mysql")

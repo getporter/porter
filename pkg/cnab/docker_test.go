@@ -3,6 +3,7 @@ package cnab
 import (
 	"testing"
 
+	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,5 +48,22 @@ func TestProcessedExtensions_GetDockerExtension(t *testing.T) {
 		require.Error(t, err, "GetDocker should have failed")
 		assert.True(t, dockerRequired, "docker should be a required extension")
 		assert.Equal(t, Docker{}, dockerExt, "Docker config should default to empty")
+	})
+}
+
+func TestSupportsDocker(t *testing.T) {
+	t.Parallel()
+
+	t.Run("supported", func(t *testing.T) {
+		b := ExtendedBundle{bundle.Bundle{
+			RequiredExtensions: []string{DockerExtensionKey},
+		}}
+
+		assert.True(t, b.SupportsDocker())
+	})
+	t.Run("unsupported", func(t *testing.T) {
+		b := ExtendedBundle{bundle.Bundle{}}
+
+		assert.False(t, b.SupportsDocker())
 	})
 }

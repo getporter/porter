@@ -115,12 +115,12 @@ func (p *Porter) printInvocationImageInspectBlock(bun *InspectableBundle) error 
 
 func (p *Porter) printInvocationImageInspectTable(bun *InspectableBundle) error {
 	printInvocationImageRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			ii, ok := v.(PrintableInvocationImage)
 			if !ok {
 				return nil
 			}
-			return []interface{}{ii.Image, ii.ImageType, ii.Digest, ii.Original}
+			return []string{ii.Image, ii.ImageType, ii.Digest, ii.Original}
 		}
 	return printer.PrintTable(p.Out, bun.InvocationImages, printInvocationImageRow, "Image", "Type", "Digest", "Original Image")
 }
@@ -142,12 +142,12 @@ func (p *Porter) printImagesInspectBlock(bun *InspectableBundle) error {
 
 func (p *Porter) printImagesInspectTable(bun *InspectableBundle) error {
 	printImageRow :=
-		func(v interface{}) []interface{} {
+		func(v interface{}) []string {
 			pi, ok := v.(PrintableImage)
 			if !ok {
 				return nil
 			}
-			return []interface{}{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
+			return []string{pi.Name, pi.ImageType, pi.Image.Image, pi.Digest, pi.Original}
 		}
 	return printer.PrintTable(p.Out, bun.Images, printImageRow, "Name", "Type", "Image", "Digest", "Original Image")
 }

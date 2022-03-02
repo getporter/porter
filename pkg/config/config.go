@@ -1,13 +1,17 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -29,6 +33,10 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
+	// EnvCORRELATION_ID is the name of the environment variable containing the
+	// id to correlate logs with a workflow.
+	EnvCorrelationID = "PORTER_CORRELATION_ID"
+
 	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
 	// It holds all the metadata that Porter includes that is specific to Porter about the bundle.
 	CustomPorterKey = "sh.porter"
@@ -46,10 +54,12 @@ const (
 var getExecutable = os.Executable
 var evalSymlinks = filepath.EvalSymlinks
 
-type DataStoreLoaderFunc func(*Config) error
+// DataStoreLoaderFunc defines the Config.DataLoader function signature
+// used to load data into Config.DataStore.
+type DataStoreLoaderFunc func(context.Context, *Config, map[string]interface{}) error
 
 type Config struct {
-	*context.Context
+	*portercontext.Context
 	Data       Data
 	DataLoader DataStoreLoaderFunc
 
@@ -64,35 +74,40 @@ type Config struct {
 
 	// parsed feature flags
 	experimental *experimental.FeatureFlags
+
+	// list of variables used in the config file
+	// for example: secret.NAME, or env.NAME
+	templateVariables []string
 }
 
 // New Config initializes a default porter configuration.
 func New() *Config {
 	return &Config{
-		Context:    context.New(),
+		Context:    portercontext.New(),
 		Data:       DefaultDataStore(),
 		DataLoader: LoadFromEnvironment(),
 	}
 }
 
-// LoadData from the datastore in PORTER_HOME.
-// This defaults to reading the configuration file and environment variables.
-func (c *Config) LoadData() error {
+// loadData from the datastore defined in PORTER_HOME, and render the
+// config file using the specified template data.
+func (c *Config) loadData(ctx context.Context, templateData map[string]interface{}) error {
 	if c.DataLoader == nil {
 		c.DataLoader = LoadFromEnvironment()
 	}
 
-	if err := c.DataLoader(c); err != nil {
+	if err := c.DataLoader(ctx, c, templateData); err != nil {
 		return err
 	}
 
 	if c.IsFeatureEnabled(experimental.FlagStructuredLogs) {
 		// Now that we have completely loaded our config, configure our final logging/tracing
-		c.Context.ConfigureLogging(context.LogConfiguration{
+		c.Context.ConfigureLogging(portercontext.LogConfiguration{
 			StructuredLogs:       true,
 			LogToFile:            c.Data.Logs.Enabled,
 			LogDirectory:         filepath.Join(c.porterHome, "logs"),
 			LogLevel:             c.Data.Logs.Level.Level(),
+			LogCorrelationID:     c.Getenv(EnvCorrelationID),
 			TelemetryEnabled:     c.Data.Telemetry.Enabled,
 			TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
 			TelemetryProtocol:    c.Data.Telemetry.Protocol,
@@ -104,13 +119,6 @@ func (c *Config) LoadData() error {
 		})
 	}
 
-	if c.Debug {
-		ns := "''"
-		if c.Data.Namespace != "" {
-			ns = c.Data.Namespace
-		}
-		fmt.Fprintf(c.Err, "Using %s namespace from configuration\n", ns)
-	}
 	return nil
 }
 
@@ -205,7 +213,7 @@ func (c *Config) GetPorterPath() (string, error) {
 	return porterPath, nil
 }
 
-// GetBundlesDir locates the bundle cache from the porter home directory.
+// GetBundlesCache locates the bundle cache from the porter home directory.
 func (c *Config) GetBundlesCache() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
@@ -232,7 +240,7 @@ func (c *Config) GetPluginPath(plugin string) (string, error) {
 	return executablePath, nil
 }
 
-// GetArchiveLogs locates the output for Bundle Archive Operations.
+// GetBundleArchiveLogs locates the output for Bundle Archive Operations.
 func (c *Config) GetBundleArchiveLogs() (string, error) {
 	home, err := c.GetHomeDir()
 	if err != nil {
@@ -241,7 +249,7 @@ func (c *Config) GetBundleArchiveLogs() (string, error) {
 	return filepath.Join(home, "archives"), nil
 }
 
-// FeatureFlags indicates which experimental feature flags are enabled
+// GetFeatureFlags indicates which experimental feature flags are enabled
 func (c *Config) GetFeatureFlags() experimental.FeatureFlags {
 	if c.experimental == nil {
 		flags := experimental.ParseFlags(c.Data.ExperimentalFlags)
@@ -269,4 +277,87 @@ func (c *Config) GetBuildDriver() string {
 		return c.Data.BuildDriver
 	}
 	return BuildDriverDocker
+}
+
+// Load loads the configuration file, rendering any templating used in the config file
+// such as ${secret.NAME} or ${env.NAME}.
+// Pass nil for resolveSecret to skip resolving secrets.
+func (c *Config) Load(ctx context.Context, resolveSecret func(secretKey string) (string, error)) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if err := c.loadFirstPass(ctx); err != nil {
+		return err
+	}
+
+	if err := c.loadFinalPass(ctx, resolveSecret); err != nil {
+		return err
+	}
+
+	// Record some global configuration values that are relevant to most commands
+	log.SetAttributes(
+		attribute.String("porter.config.namespace", c.Data.Namespace),
+		attribute.String("porter.config.experimental", strings.Join(c.Data.ExperimentalFlags, ",")),
+	)
+
+	return nil
+}
+
+// our first pass only loads the config file while replacing
+// environment variables. Once we have that we can use the
+// config to connect to a secret store and do a second pass
+// over the config.
+func (c *Config) loadFirstPass(ctx context.Context) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	templateData := map[string]interface{}{
+		"env": c.EnvironMap(),
+	}
+	return c.loadData(ctx, templateData)
+}
+
+func (c *Config) loadFinalPass(ctx context.Context, resolveSecret func(secretKey string) (string, error)) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	// Don't do extra work if there aren't any secrets
+	if len(c.templateVariables) == 0 || resolveSecret == nil {
+		return nil
+	}
+
+	secrets := make(map[string]string, len(c.templateVariables))
+	for _, variable := range c.templateVariables {
+		err := func(variable string) error {
+			// Check if it's a secret variable, e.g. ${secret.NAME}
+			secretPrefix := "secret."
+			i := strings.Index(variable, secretPrefix)
+			if i == -1 {
+				return nil
+			}
+
+			secretKey := variable[len(secretPrefix):]
+
+			_, childLog := log.StartSpanWithName("resolveSecret", attribute.String("porter.config.secret.key", secretKey))
+			defer childLog.EndSpan()
+			secretValue, err := resolveSecret(secretKey)
+			if err != nil {
+				return childLog.Error(errors.Wrapf(err, "could not render config file because ${secret.%s} could not be resolved", secretKey))
+			}
+
+			secrets[secretKey] = secretValue
+			return nil
+		}(variable)
+		if err != nil {
+			return err
+		}
+	}
+
+	templateData := map[string]interface{}{
+		"env":    c.EnvironMap(),
+		"secret": secrets,
+	}
+
+	// reload configuration with secrets loaded
+	return c.loadData(ctx, templateData)
 }

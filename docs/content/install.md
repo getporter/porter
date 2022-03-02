@@ -72,17 +72,22 @@ iwr "https://cdn.porter.sh/canary/install-windows.ps1" -UseBasicParsing | iex
 
 # Prerelease
 
-We would love for you to try out [v1 prerelease] and send us any feedback that you have!
+We would love for you to try out our v1 prerelease and send us any feedback that you have!
 Keep in mind that prereleases are not suitable for production workloads. Data migrations will not be provided or supported for prereleases.
 Prereleases are intended for you to try out potential new features in Porter and provide feedback about the direction of the feature. They won't work with existing installations.
 
 You can try out different versions of Porter without impacting your current version of Porter by installing to a different location via a modified PORTER_HOME environment variable.
 
+If you are using the [Porter Operator](https://release-v1.porter.sh/operator/), then you must use the most recent v1 prerelease of Porter.
+
+The examples below use a hard-coded version of the prerelease and there may be a newer version available.
+Set VERSION to the most recent [v1 prerelease] version number.
+
 **MacOS**
 
 ```bash
 export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.5"
+export VERSION="v1.0.0-alpha.10"
 curl -L https://cdn.porter.sh/$VERSION/install-mac.sh | bash
 ```
 
@@ -99,7 +104,7 @@ porter version
 
 ```bash
 export PORTER_HOME=~/.porterv1
-export VERSION="v1.0.0-alpha.5"
+export VERSION="v1.0.0-alpha.10"
 curl -L https://cdn.porter.sh/$VERSION/install-linux.sh | bash
 ```
 
@@ -116,7 +121,7 @@ porter version
 
 ```powershell
 $PORTER_HOME="$env:USERPROFILE\.porterv1"
-$VERSION="v1.0.0-alpha.5"
+$VERSION="v1.0.0-alpha.10"
 (New-Object System.Net.WebClient).DownloadFile("https://cdn.porter.sh/$VERSION/install-windows.ps1", "install-porter.ps1")
 .\install-porter.ps1 -PORTER_HOME $PORTER_HOME
 ```
@@ -164,7 +169,7 @@ iwr "https://cdn.porter.sh/$VERSION/install-windows.ps1" -UseBasicParsing | iex
 # Mixins
 
 We have a number of [mixins](/mixins) to help you get started.
-Only the [exec mixin] is installed with Porter, other mixins should be installed separately.
+Only the [exec mixin] is installed with Porter v1.0.0+, other mixins should be installed separately.
 
 You can update an existing mixin, or install a new mixin using the `porter mixin
 install` command:
@@ -255,5 +260,52 @@ plugins/
   - PLUGIN/PERMALINK/PLUGIN-GOOS-GOARCH[FILE_EXT]
 ```
 
+# Command Completion
+
+Porter provides autocompletion support for Bash, Fish, Zsh, and PowerShell.
+
+> If you use Bash the completion script depends on Bash v4.1 or newer and bash-completion v2.
+
+> The default version for macOS is Bash v3.2 and bash-completion v1. The completion command will not work properly with these versions.
+> The Kubernetes project has detailed information for upgrading Bash and installing bash-completion [here].
+
+[here]: https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/#enable-shell-autocompletion
+
+### Initial Setup
+The initial setup is to generate a completion script file and have your shell environment source it when you start your shell.
+
+ The completion command will generate its output to standard out and you can capture the output into a file. This file should be put in a place where your shell reads completion files.
+
+An example for Bash:
+```bash
+porter completion bash > /usr/local/etc/bash_completion.d/porter
+```
+
+Once your completion script file is in place you will have to source it for your current shell or start a new shell session.
+
+
+### Completion Usage
+
+To list available commands for Porter, in your terminal run
+```console
+$ porter [tab][tab]
+```
+
+To find a specific command that starts with _bu_
+```console
+$ porter bu[tab][tab]
+
+build    bundles
+```
+Commands that have sub-commands will be displayed with completions as well
+
+```console
+$ porter credentials [tab][tab]
+
+delete    edit    generate    list    show
+```
+
+> Note: Completion commands are available for Porter's built in commands and flags, future plans include dynamic completion for your project.
+
 [exec mixin]: /mixins/exec/
-[v1 prerelease]: /tags/v1/
+[v1 prerelease]: https://github.com/getporter/porter/releases?q=v1.0.0&expanded=true

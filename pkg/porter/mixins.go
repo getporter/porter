@@ -35,12 +35,12 @@ func (p *Porter) PrintMixins(opts PrintMixinsOptions) error {
 	switch opts.Format {
 	case printer.FormatPlaintext:
 		printMixinRow :=
-			func(v interface{}) []interface{} {
+			func(v interface{}) []string {
 				m, ok := v.(mixin.Metadata)
 				if !ok {
 					return nil
 				}
-				return []interface{}{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
+				return []string{m.Name, m.VersionInfo.Version, m.VersionInfo.Author}
 			}
 		return printer.PrintTable(p.Out, mixins, printMixinRow, "Name", "Version", "Author")
 	case printer.FormatJson:

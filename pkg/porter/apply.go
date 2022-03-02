@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -50,7 +51,9 @@ func (o *ApplyOptions) Validate(cxt *portercontext.Context, args []string) error
 }
 
 func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error {
-	ctx, log := p.Log.StartSpan(ctx, "InstallationApply")
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	log.Debugf("Reading input file %s", opts.File)
 
 	namespace, err := p.getNamespaceFromFile(opts)

@@ -16,7 +16,7 @@ dependencies:
         - 1.x - 2
         - 2.1 - 3.x
     - name: dep-with-tag
-      tag: "getporter/dep-bun:v0.1.0"
+      reference: "getporter/dep-bun:v0.1.0"
 
 mixins:
   - exec

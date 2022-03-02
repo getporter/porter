@@ -3,21 +3,26 @@ package porter
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
 
 // ensureLocalBundleIsUpToDate ensures that the bundle is up to date with the porter manifest,
 // if it is out-of-date, performs a build of the bundle.
 func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFileOptions) (cnab.BundleReference, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
 	if opts.File == "" {
 		return cnab.BundleReference{}, nil
 	}
 
-	upToDate, err := p.IsBundleUpToDate(opts)
+	upToDate, err := p.IsBundleUpToDate(ctx, opts)
 	if err != nil {
 		fmt.Fprintln(p.Err, "warning", err)
 	}
@@ -46,7 +51,7 @@ func (p *Porter) ensureLocalBundleIsUpToDate(ctx context.Context, opts bundleFil
 }
 
 // IsBundleUpToDate checks the hash of the manifest against the hash in cnab/bundle.json.
-func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
+func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (bool, error) {
 	if opts.File == "" {
 		return false, errors.New("File is required")
 	}
@@ -63,7 +68,13 @@ func (p *Porter) IsBundleUpToDate(opts bundleFileOptions) (bool, error) {
 
 		// Check whether invocation images exist in host registry.
 		for _, invocationImage := range bun.InvocationImages {
-			isImageCached, err := p.Registry.IsImageCached(invocationImage.Image)
+			// if the invovationImage is built before using a random string tag,
+			// we should rebuild it with the new format
+			if strings.Contains(invocationImage.Image, "-installer") {
+				return false, nil
+			}
+
+			isImageCached, err := p.Registry.IsImageCached(ctx, invocationImage.Image)
 			if err != nil {
 				return false, err
 			}

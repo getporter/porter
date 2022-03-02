@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package agent
@@ -28,6 +29,7 @@ func TestExecute(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, run, "porter should have run")
 	gotStderr := stderrBuff.String()
+	assert.Contains(t, gotStderr, "porter version", "the agent should always print the porter CLI version")
 	assert.Contains(t, stdoutBuff.String(), "Usage:", "porter command output should be printed")
 
 	contents, err := os.ReadFile(filepath.Join(home, "config.toml"))

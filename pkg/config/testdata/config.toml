@@ -1,7 +1,7 @@
 debug = true
 debug-plugins = true
 
-default-storage-plugin = "azure.blob"
+default-storage-plugin = "mongodb-docker"
 default-storage = "dev"
 default-secrets-plugin = "azure.keyvault"
 default-secrets = "red-team"
@@ -14,14 +14,15 @@ build-driver = "buildkit"
 
 [[storage]]
   name = "dev"
-  plugin = "azure.blob"
+  plugin = "mongodb"
 
   [storage.config]
-    env = "DEV_AZURE_STORAGE_CONNECTION_STRING"
+    url = "${secret.connection-string}"
 
 [[secrets]]
   name = "red-team"
   plugin = "azure.keyvault"
 
   [secrets.config]
+    token = "${env.VAULT_TOKEN}"
     vault = "teamsekrets"

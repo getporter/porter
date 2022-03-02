@@ -276,7 +276,7 @@ func (o *sharedOptions) parseParamSets(p *Porter) error {
 	if len(o.ParameterSets) > 0 {
 		parsed, err := p.loadParameterSets(o.Namespace, o.ParameterSets)
 		if err != nil {
-			return errors.Wrapf(err, "unable to process provided parameter sets: %v", o.ParameterSets)
+			return errors.Wrap(err, "unable to process provided parameter sets")
 		}
 		o.parsedParamSets = parsed
 	}

@@ -1,3 +1,4 @@
+//go:build smoke
 // +build smoke
 
 package smoke
@@ -59,5 +60,5 @@ func TestCopy(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(inspectOutput), &inspectRaw))
 	images := inspectRaw["invocationImages"].([]interface{})
 	invocationImage := images[0].(map[string]interface{})
-	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("localhost:%s/mybuns-installer:v0.1.1", tempRegistryPort))
+	require.Contains(t, invocationImage["originalImage"].(string), fmt.Sprintf("localhost:%s/mybuns", tempRegistryPort))
 }

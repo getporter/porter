@@ -92,6 +92,7 @@ schemaType: Installation
 schemaVersion: 1.0.0
 name: myinstallation
 namespace: staging
+uninstalled: false
 labels:
   team: marketing
   customer: bigbucks
@@ -113,9 +114,10 @@ parameters:
 |---|---|---|
 | schemaType  | false  | The type of document. This isn't used by Porter but is included when Porter outputs the file, so that editors can determine the resource type. |
 | schemaVersion  | true  | The version of the Installation schema used in this file.  |
-| name  | true  | The name of the parameter set.  |
-| namespace  | false  | The namespace in which the parameter set is defined. Defaults to the empty (global) namespace.  |
-| labels  | false | A set of key-value pairs associated with the parameter set. |
+| name  | true  | The name of the installation.  |
+| namespace  | false  | The namespace in which the installation is defined. Defaults to the empty (global) namespace.  |
+| uninstalled | false | Specifies if the installation should be uninstalled. Defaults to false. |
+| labels  | false | A set of key-value pairs associated with the installation. |
 | bundle  | true | A reference to where the bundle is published |
 | bundle.repository | true | The repository where the bundle is published. | 
 | bundle.digest | false* | The bundle repository digest. |

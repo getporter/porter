@@ -1,22 +1,27 @@
 package config
 
 import (
-	"fmt"
+	"bytes"
+	"context"
+	"sort"
 	"strings"
 
+	"get.porter.sh/porter/pkg/tracing"
+	"github.com/osteele/liquid"
+	"github.com/osteele/liquid/render"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var _ DataStoreLoaderFunc = NoopDataLoader
 
 // NoopDataLoader skips loading the datastore.
-func NoopDataLoader(_ *Config) error {
+func NoopDataLoader(_ context.Context, _ *Config, _ map[string]interface{}) error {
 	return nil
 }
 
-// LoadHierarchicalConfig loads data with the following precedence:
-// * User set flag Flags (highest)
+// LoadFromEnvironment loads data with the following precedence:
 // * Environment variables where --flag is assumed to be PORTER_FLAG
 // * Config file
 // * Flag default (lowest)
@@ -40,8 +45,11 @@ func LoadFromEnvironment() DataStoreLoaderFunc {
 
 // LoadFromViper loads data from a configurable viper instance.
 func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
-	return func(cfg *Config) error {
+	return func(ctx context.Context, cfg *Config, templateData map[string]interface{}) error {
 		home, _ := cfg.GetHomeDir()
+
+		ctx, log := tracing.StartSpanWithName(ctx, "LoadFromViper", attribute.String("porter.PORTER_HOME", home))
+		defer log.EndSpan()
 
 		v := viper.New()
 		v.SetFs(cfg.FileSystem)
@@ -53,29 +61,82 @@ func LoadFromViper(viperCfg func(v *viper.Viper)) DataStoreLoaderFunc {
 		// Initialize empty config
 		err := v.SetDefaultsFrom(cfg.Data)
 		if err != nil {
-			return err
+			return log.Error(errors.Wrap(err, "error initializing configuration data"))
 		}
 
 		if viperCfg != nil {
 			viperCfg(v)
 		}
 
-		// Try to read config
+		// Find the config file
 		v.AddConfigPath(home)
-		if cfg.Debug {
-			fmt.Fprintln(cfg.Err, "detecting Porter config in", home)
-		}
 		err = v.ReadInConfig()
 		if err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-				return errors.Wrapf(err, "error reading config file at %q", v.ConfigFileUsed())
+				return log.Error(errors.Wrap(err, "error reading config file"))
 			}
 		}
 
-		if cfg.Debug {
-			fmt.Fprintln(cfg.Err, "loaded Porter config from", v.ConfigFileUsed())
+		cfgFile := v.ConfigFileUsed()
+		if cfgFile != "" {
+			log.SetAttributes(attribute.String("porter.PORTER_CONFIG", cfgFile))
+
+			cfgContents, err := cfg.FileSystem.ReadFile(cfgFile)
+			if err != nil {
+				return log.Error(errors.Wrap(err, "error reading config file template"))
+			}
+
+			// Render any template variables used in the config file
+			engine := liquid.NewEngine()
+			engine.Delims("${", "}", "${%", "%}")
+			tmpl, err := engine.ParseTemplate(cfgContents)
+			if err != nil {
+				return log.Error(errors.Wrapf(err, "error parsing config file as a liquid template:\n%s\n\n", cfgContents))
+			}
+
+			finalCfg, err := tmpl.Render(templateData)
+			if err != nil {
+				return log.Error(errors.Wrapf(err, "error rendering config file as a liquid template:\n%s\n\n", cfgContents))
+			}
+
+			// Remember what variables are used in the template
+			// we use this to resolve variables in the second pass over the config file
+			if len(cfg.templateVariables) == 0 {
+				cfg.templateVariables = listTemplateVariables(tmpl)
+			}
+
+			if err := v.ReadConfig(bytes.NewReader(finalCfg)); err != nil {
+				return log.Error(errors.Wrapf(err, "error loading configuration file"))
+			}
 		}
+
 		err = v.Unmarshal(&cfg.Data)
-		return errors.Wrapf(err, "error unmarshaling config at %q", v.ConfigFileUsed())
+		return log.Error(errors.Wrap(err, "error unmarshaling viper config as porter config"))
+	}
+}
+
+func listTemplateVariables(tmpl *liquid.Template) []string {
+	vars := map[string]struct{}{}
+	findTemplateVariables(tmpl.GetRoot(), vars)
+
+	results := make([]string, 0, len(vars))
+	for v := range vars {
+		results = append(results, v)
+	}
+	sort.Strings(results)
+
+	return results
+}
+
+// findTemplateVariables looks at the template's abstract syntax tree (AST)
+// and identifies which variables were used
+func findTemplateVariables(curNode render.Node, vars map[string]struct{}) {
+	switch v := curNode.(type) {
+	case *render.SeqNode:
+		for _, childNode := range v.Children {
+			findTemplateVariables(childNode, vars)
+		}
+	case *render.ObjectNode:
+		vars[v.Args] = struct{}{}
 	}
 }

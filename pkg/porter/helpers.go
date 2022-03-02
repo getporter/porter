@@ -23,6 +23,7 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,12 @@ type TestPorter struct {
 	// root of the repository
 	// Helps us avoid hard coding relative paths from test directories, which easily break when tests are moved
 	RepoRoot string
+
+	// The root test context created by NewTestPorter
+	RootContext context.Context
+
+	// The root log span created by NewTestPorter
+	RootSpan tracing.TraceLogger
 }
 
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
@@ -71,7 +78,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
 	p.Registry = testRegistry
 
-	return &TestPorter{
+	tp := TestPorter{
 		Porter:          p,
 		TestConfig:      tc,
 		TestStore:       testStore,
@@ -82,11 +89,17 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestRegistry:    testRegistry,
 		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
+
+	// Start a tracing span for the test, so that we can capture logs
+	tp.RootContext, tp.RootSpan = p.StartRootSpan(context.Background(), t.Name())
+
+	return &tp
 }
 
 func (p *TestPorter) Teardown() error {
 	err := p.TestStore.Teardown()
 	p.TestConfig.TestContext.Teardown()
+	p.RootSpan.EndSpan()
 	return err
 }
 

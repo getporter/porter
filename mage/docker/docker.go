@@ -19,6 +19,9 @@ import (
 const (
 	// Container name of the local registry
 	DefaultRegistryName = "registry"
+
+	// Name of the docker network shared by the local registry and KIND
+	DefaultNetworkName = "porter"
 )
 
 // Ensure the docker daemon is started and ready to accept connections.
@@ -75,6 +78,14 @@ func isDockerReady() (bool, error) {
 	return err == nil, nil
 }
 
+func EnsurePorterNetwork() error {
+	if NetworkExists(DefaultNetworkName) {
+		return nil
+	}
+
+	return shx.RunE("docker", "network", "create", DefaultNetworkName, "-d=bridge")
+}
+
 func NetworkExists(name string) bool {
 	err := shx.RunE("docker", "network", "inspect", name)
 	return err == nil
@@ -82,18 +93,21 @@ func NetworkExists(name string) bool {
 
 // Start a Docker registry to use with the tests.
 func StartDockerRegistry() error {
-	mg.SerialDeps(StartDocker)
-	if isContainerRunning(getRegistryName()) {
+	mg.SerialDeps(StartDocker, EnsurePorterNetwork)
+
+	// Check if we have the registry container on the proper network, if not recreate it
+	registryName := getRegistryName()
+	if isContainerRunning(registryName) && isOnDockerNetwork(registryName, DefaultNetworkName) {
 		return nil
 	}
 
-	err := RemoveContainer(getRegistryName())
+	err := RemoveContainer(registryName)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Starting local docker registry")
-	return shx.RunE("docker", "run", "-d", "-p", "0.0.0.0:5000:5000", "--name", getRegistryName(), "registry:2")
+	return shx.RunE("docker", "run", "-d", "-p", "0.0.0.0:5000:5000", "--network="+DefaultNetworkName, "--name", registryName, "registry:2")
 }
 
 // Stop the Docker registry used by the tests.
@@ -139,4 +153,10 @@ func getRegistryName() string {
 		return name
 	}
 	return DefaultRegistryName
+}
+
+func isOnDockerNetwork(container string, network string) bool {
+	networkId, _ := shx.OutputE("docker", "network", "inspect", network, "-f", "{{.Id}}")
+	networks, _ := shx.OutputE("docker", "inspect", container, "-f", "{{json .NetworkSettings.Networks}}")
+	return strings.Contains(networks, networkId)
 }
