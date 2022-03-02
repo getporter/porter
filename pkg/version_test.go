@@ -11,20 +11,20 @@ func TestUserAgent(t *testing.T) {
 		Version = "v1.0.0"
 		Commit = "abc123"
 
-		require.Contains(t, UserAgent(), "porter/"+Version)
+		require.Contains(t, UserAgent(), PORTER_USER_AGENT+"/"+Version)
 	})
 
 	t.Run("append commit hash when version is not available", func(t *testing.T) {
 		Version = ""
 		Commit = "abc123"
 
-		require.Contains(t, UserAgent(), "porter/"+Commit)
+		require.Contains(t, UserAgent(), PORTER_USER_AGENT+"/"+Commit)
 	})
 
 	t.Run("omit slash when neither version nor commit hash is available", func(t *testing.T) {
 		Version = ""
 		Commit = ""
 
-		require.Contains(t, UserAgent(), "porter")
+		require.Contains(t, UserAgent(), PORTER_USER_AGENT)
 	})
 }

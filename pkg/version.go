@@ -23,11 +23,14 @@ const (
 	// executable file, such as a script or binary. It ensures that both the user
 	// and the group have the same permissions.
 	FileModeExecutable os.FileMode = 0770
+
+	// PORTER_USER_AGENT is the value used in user-agent header for porter
+	PORTER_USER_AGENT = "getporter/porter"
 )
 
 // UserAgent returns a string that can be used as a user agent for porter.
 func UserAgent() string {
-	product := "porter"
+	product := PORTER_USER_AGENT
 
 	if Commit == "" && Version == "" {
 		return product
