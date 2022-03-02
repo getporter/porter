@@ -25,7 +25,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
 	github.com/carolynvs/datetime-printer v0.2.0
-	github.com/carolynvs/magex v0.6.0
+	github.com/carolynvs/magex v0.6.1
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.22.1-0.20220219202519-002f3523865a
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1.0.20210614060230-e4d2bd5441c8
