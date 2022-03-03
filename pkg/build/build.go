@@ -38,7 +38,7 @@ var (
 	PORTER_MIXINS_TOKEN = "# PORTER_MIXINS"
 
 	// PORTER_INIT_TOKEN controls where Porter's image initialization
-	// instructions are places in the Dockerfile.
+	// instructions are placed in the Dockerfile.
 	PORTER_INIT_TOKEN = "# PORTER_INIT"
 )
 
