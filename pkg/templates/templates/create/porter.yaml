@@ -44,7 +44,7 @@ uninstall:
 # See https://porter.sh/author-bundles/#credentials
 #credentials:
 #  - name: kubeconfig
-#    path: /root/.kube/config
+#    path: /home/nonroot/.kube/config
 #  - name: username
 #    env: USERNAME
 

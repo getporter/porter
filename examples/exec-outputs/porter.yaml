@@ -16,7 +16,7 @@ parameters:
       - get-users
       - test
       - uninstall
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
     source:
       output: kubeconfig
   - name: users.json
@@ -103,6 +103,6 @@ outputs:
       - get-users
   - name: kubeconfig
     type: file
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
     applyTo:
       - install

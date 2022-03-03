@@ -29,6 +29,8 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		// mock retrieving the docker group id on linux
+		r.MockGetDockerGroupId()
 		defer r.Teardown()
 
 		r.FileSystem.Create("/var/run/docker.sock")
@@ -46,6 +48,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
 		defer r.Teardown()
 
 		args := ActionArguments{
@@ -61,6 +64,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
 		defer r.Teardown()
 
 		args := ActionArguments{
@@ -75,6 +79,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
 		defer r.Teardown()
 
 		// Currently, toggling Privileged is the only config exposed to users
@@ -104,6 +109,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
+		r.MockGetDockerGroupId()
 		defer r.Teardown()
 
 		// Currently, toggling Privileged is the only config exposed to users

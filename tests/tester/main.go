@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
@@ -151,7 +152,7 @@ func (t *Tester) createPorterHome() error {
 	cfgD, err := ioutil.ReadFile(filepath.Join(t.RepoRoot, "tests/testdata/config/config.toml"))
 	require.NoError(t.T, err)
 	cfgD = bytes.Replace(cfgD, []byte("porter-test"), []byte(t.dbName), 1)
-	err = ioutil.WriteFile(filepath.Join(t.PorterHomeDir, "config.toml"), cfgD, 0700)
+	err = ioutil.WriteFile(filepath.Join(t.PorterHomeDir, "config.toml"), cfgD, pkg.FileModeWritable)
 	require.NoError(t.T, err, "could not copy config.toml into test PORTER_HOME")
 
 	return nil

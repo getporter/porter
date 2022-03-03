@@ -28,7 +28,7 @@ func (p *TestPackageManager) List() ([]string, error) {
 }
 
 func (p *TestPackageManager) GetPackageDir(name string) (string, error) {
-	return path.Join("/root/.porter", p.PkgType, name), nil
+	return path.Join("/home/myuser/.porter", p.PkgType, name), nil
 }
 
 func (p *TestPackageManager) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) {
@@ -68,7 +68,7 @@ type TestRunner struct {
 // NewTestRunner initializes a test runner, with the output buffered, and an in-memory file system.
 func NewTestRunner(t *testing.T, name string, pkgType string, runtime bool) *TestRunner {
 	c := context.NewTestContext(t)
-	pkgDir := fmt.Sprintf("/root/.porter/%s/%s", pkgType, name)
+	pkgDir := fmt.Sprintf("/home/myuser/.porter/%s/%s", pkgType, name)
 	r := &TestRunner{
 		Runner:      NewRunner(name, pkgDir, runtime),
 		TestContext: c,
@@ -76,8 +76,8 @@ func NewTestRunner(t *testing.T, name string, pkgType string, runtime bool) *Tes
 	r.Context = c.Context
 
 	// Setup Porter home
-	c.FileSystem.Create("/root/.porter/porter")
-	c.FileSystem.Create("/root/.porter/runtimes/porter-runtime")
+	c.FileSystem.Create("/home/myuser/.porter/porter")
+	c.FileSystem.Create("/home/myuser/.porter/runtimes/porter-runtime")
 	c.FileSystem.Create(path.Join(pkgDir, name))
 	c.FileSystem.Create(path.Join(pkgDir, "runtimes", name+"-runtime"))
 

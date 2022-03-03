@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/mage/releases"
 	"get.porter.sh/porter/mage/tools"
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
 	"github.com/magefile/mage/mg"
@@ -100,7 +101,7 @@ func (m Magefile) Install() {
 	}
 	fmt.Printf("Installing the %s mixin into %s\n", m.MixinName, porterHome)
 
-	os.MkdirAll(filepath.Join(porterHome, "mixins", m.MixinName, "runtimes"), 0700)
+	os.MkdirAll(filepath.Join(porterHome, "mixins", m.MixinName, "runtimes"), pkg.FileModeDirectory)
 	mgx.Must(shx.Copy(filepath.Join(m.BinDir, m.MixinName+xplat.FileExt()), filepath.Join(porterHome, "mixins", m.MixinName)))
 	mgx.Must(shx.Copy(filepath.Join(m.BinDir, "runtimes", m.MixinName+"-runtime"+xplat.FileExt()), filepath.Join(porterHome, "mixins", m.MixinName, "runtimes")))
 }

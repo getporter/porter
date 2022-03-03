@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,7 @@ func TestFilePathOutputs(t *testing.T) {
 	}
 
 	wantCfg := "abc123"
-	err := c.FileSystem.WriteFile("config.txt", []byte(wantCfg), 0600)
+	err := c.FileSystem.WriteFile("config.txt", []byte(wantCfg), pkg.FileModeWritable)
 	require.NoError(t, err, "could not write config.txt")
 
 	err = ProcessFileOutputs(c.Context, step)

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 func TestExecuteSingleStepAction(t *testing.T) {
 	c := context.NewTestContext(t)
 
-	err := c.FileSystem.WriteFile("config.txt", []byte("abc123"), 0600)
+	err := c.FileSystem.WriteFile("config.txt", []byte("abc123"), pkg.FileModeWritable)
 	require.NoError(t, err)
 
 	a := TestAction{

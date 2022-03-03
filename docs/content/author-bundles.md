@@ -183,19 +183,19 @@ porter install --param ./config.json
 
 Porter supports passing a file as a parameter to a bundle.
 
-For instance, a bundle might declare a parameter mytar of type file, located at /root/mytar when the bundle is run:
+For instance, a bundle might declare a parameter mytar of type file, located at /cnab/app/mytar when the bundle is run:
 
 ```yaml
 - name: mytar
   type: file
-  path: /root/mytar
+  path: /cnab/app/mytar
 
 install:
   - exec:
       description: "Install"
       command: bash
       flags:
-        c: tar zxvf /root/mytar
+        c: tar zxvf /cnab/app/mytar
 ```
 
 The syntax to pass a parameter to porter is the same for both regular and file parameters:
@@ -246,7 +246,7 @@ outputs:
     - upgrade
 - name: kubeconfig
   type: file
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 * `name`: The name of the output.
@@ -313,7 +313,7 @@ credentials:
   env: USERNAME
   required: false
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
   applyTo:
     - upgrade
     - uninstall

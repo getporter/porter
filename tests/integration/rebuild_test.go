@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/manifest"
 
 	"get.porter.sh/porter/pkg/config"
@@ -59,7 +60,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	m.Version = "0.2.0"
 	data, err := yaml.Marshal(m)
 	require.NoError(t, err)
-	err = p.FileSystem.WriteFile(config.Name, data, 0600)
+	err = p.FileSystem.WriteFile(config.Name, data, pkg.FileModeWritable)
 	require.NoError(t, err)
 
 	// Upgrade the bundle
@@ -123,7 +124,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	m.Version = "0.2.0"
 	data, err := yaml.Marshal(m)
 	require.NoError(t, err)
-	err = p.FileSystem.WriteFile(config.Name, data, 0600)
+	err = p.FileSystem.WriteFile(config.Name, data, pkg.FileModeWritable)
 	require.NoError(t, err)
 
 	// hack: simulate exactly what happens with the CLI where there is no persisted state between calls

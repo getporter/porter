@@ -44,7 +44,7 @@ outputs:
     sensitive: false
   - name: kubeconfig
     type: file
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 mixins:
   - exec

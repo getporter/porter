@@ -233,7 +233,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			bundle.Parameter{
 				Definition: "afile-parameter",
 				Destination: &bundle.Location{
-					Path: "/root/.kube/config",
+					Path: "/home/nonroot/.kube/config",
 				},
 				Required: true,
 			},
@@ -247,7 +247,7 @@ func TestManifestConverter_generateBundleParametersSchema(t *testing.T) {
 			bundle.Parameter{
 				Definition: "notype-file-parameter",
 				Destination: &bundle.Location{
-					Path: "/root/.porter/config.toml",
+					Path: "/home/myuser/.porter/config.toml",
 				},
 				Required: true,
 			},
@@ -427,7 +427,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 		},
 		"kubeconfig": {
 			Name: "kubeconfig",
-			Path: "/root/.kube/config",
+			Path: "/home/nonroot/.kube/config",
 			Schema: definition.Schema{
 				Type:        "file",
 				Description: "Description of kubeconfig",
@@ -438,7 +438,7 @@ func TestManifestConverter_generateBundleOutputs(t *testing.T) {
 		},
 		"notype-file": {
 			Name: "notype-file",
-			Path: "/root/.kube/config",
+			Path: "/home/nonroot/.kube/config",
 		},
 	}
 

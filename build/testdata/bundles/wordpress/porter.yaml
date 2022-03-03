@@ -21,7 +21,7 @@ dependencies:
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: wordpress-name
@@ -39,38 +39,16 @@ parameters:
   default: 'wordpress'
 
 install:
-  - helm3:
-      description: "Install Wordpress"
-      name: "{{ bundle.parameters.wordpress-name }}"
-      chart: bitnami/wordpress
-      version: "9.9.3"
-      namespace: "{{ bundle.parameters.namespace }}"
-      replace: true
-      set:
-        wordpressPassword: "{{ bundle.parameters.wordpress-password }}"
-        externalDatabase.host: "porter-ci-mysql.{{ bundle.parameters.namespace }}.svc.cluster.local"
-        externalDatabase.database: "wordpress"
-        externalDatabase.user: "wordpress"
-        externalDatabase.password: "{{ bundle.dependencies.mysql.outputs.mysql-password }}"
-        externalDatabase.port: 3306
-        mariadb.enabled: false
-        service.type: NodePort
-      outputs:
-        - name: wordpress-password
-          secret: "{{ bundle.parameters.wordpress-name }}"
-          key: wordpress-password
+  - exec:
+      command: ./helpers.sh
+      arguments:
+        - install
 
 upgrade:
-  - helm3:
-      description: "Upgrade Wordpress"
-      name: "{{ bundle.parameters.wordpress-name }}"
-      namespace: "{{ bundle.parameters.namespace }}"
-      chart: bitnami/wordpress
-      version: "9.9.3"
-      outputs:
-        - name: wordpress-password
-          secret: "{{ bundle.parameters.wordpress-name }}"
-          key: wordpress-password
+  - exec:
+      command: ./helpers.sh
+      arguments:
+        - install
 
 ping:
   - exec:
@@ -80,11 +58,10 @@ ping:
         - ping
 
 uninstall:
-  - helm3:
-      description: "Uninstall Wordpress"
-      purge: true
-      releases: 
-        - "{{ bundle.parameters.wordpress-name }}"
+  - exec:
+      command: echo
+      arguments:
+        - uninstalled
 
 outputs:
   - name: wordpress-password
@@ -95,3 +72,4 @@ outputs:
       - "install"
       - "upgrade"
     sensitive: true
+    path: /cnab/app/outputs/wordpress-password

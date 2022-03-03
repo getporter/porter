@@ -7,9 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"io/fs"
-	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
@@ -31,7 +31,7 @@ func TestPorter_Build(t *testing.T) {
 
 	// Create some junk in the previous .cnab directory, build should clean it up and not copy it into the bundle
 	junkDir := ".cnab/test/junk"
-	require.NoError(t, p.FileSystem.MkdirAll(junkDir, 0700), "could not create test junk files")
+	require.NoError(t, p.FileSystem.MkdirAll(junkDir, pkg.FileModeDirectory), "could not create test junk files")
 	junkExists, _ := p.FileSystem.DirExists(junkDir)
 	assert.True(t, junkExists, "failed to create junk files for the test")
 
@@ -47,15 +47,15 @@ func TestPorter_Build(t *testing.T) {
 	// Check file permissions on .cnab contents
 	bundleJSONStats, err := p.FileSystem.Stat(build.LOCAL_BUNDLE)
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, build.LOCAL_BUNDLE, os.FileMode(0600), bundleJSONStats.Mode())
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_BUNDLE, pkg.FileModeWritable, bundleJSONStats.Mode())
 
 	runStats, err := p.FileSystem.Stat(build.LOCAL_RUN)
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, build.LOCAL_RUN, os.FileMode(0700), runStats.Mode())
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_RUN, pkg.FileModeExecutable, runStats.Mode())
 
 	manifestStats, err := p.FileSystem.Stat(build.LOCAL_MANIFEST)
 	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, build.LOCAL_MANIFEST, os.FileMode(0600), manifestStats.Mode())
+	tests.AssertFilePermissionsEqual(t, build.LOCAL_MANIFEST, pkg.FileModeWritable, manifestStats.Mode())
 
 	err = p.FileSystem.Walk(build.LOCAL_MIXINS, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -65,7 +65,7 @@ func TestPorter_Build(t *testing.T) {
 			return nil
 		}
 
-		tests.AssertFilePermissionsEqual(t, path, os.FileMode(0700), runStats.Mode())
+		tests.AssertFilePermissionsEqual(t, path, pkg.FileModeExecutable, runStats.Mode())
 		return nil
 	})
 	require.NoError(t, err)

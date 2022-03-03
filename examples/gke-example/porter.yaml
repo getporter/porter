@@ -7,9 +7,9 @@ dockerfile: Dockerfile.tmpl
 
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 - name: google-service-account
-  path: /root/google-service-account.json
+  path: /home/nonroot/google-service-account.json
 
 mixins:
   - exec

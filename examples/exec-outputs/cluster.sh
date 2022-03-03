@@ -6,8 +6,8 @@ create-cluster() {
 echo "Creating the cluster..."
 # This pretends to create a kubernetes cluster
 # by generating a dummy kubeconfig file
-mkdir -p /root/.kube
-cat <<EOF >> /root/.kube/config
+mkdir -p /home/nonroot/.kube
+cat <<EOF >> /home/nonroot/.kube/config
 apiVersion: v1
 clusters:
 - cluster:
@@ -31,7 +31,7 @@ EOF
 }
 
 ensure-config() {
-    if [ ! -f "/root/.kube/config" ]; then
+    if [ ! -f "/home/nonroot/.kube/config" ]; then
       echo "kubeconfig not found"
       exit 1
     fi

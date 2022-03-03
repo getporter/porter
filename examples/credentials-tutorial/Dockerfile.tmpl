@@ -18,4 +18,4 @@ RUN apt-get update && apt-get install -y ca-certificates curl
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}

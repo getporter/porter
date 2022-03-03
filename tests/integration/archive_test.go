@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -7,9 +8,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"os"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,7 @@ func TestArchive(t *testing.T) {
 
 	info, err := p.FileSystem.Stat(archiveFile1)
 	require.NoError(p.T(), err)
-	tests.AssertFilePermissionsEqual(t, archiveFile1, os.FileMode(0600), info.Mode())
+	tests.AssertFilePermissionsEqual(t, archiveFile1, pkg.FileModeWritable, info.Mode())
 
 	hash1 := getHash(p, archiveFile1)
 

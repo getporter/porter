@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/aferox"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
@@ -26,7 +27,7 @@ func MarshalFile(fs aferox.Aferox, path string, in interface{}) error {
 	if err != nil {
 		return err
 	}
-	return fs.WriteFile(path, data, 0700)
+	return fs.WriteFile(path, data, pkg.FileModeWritable)
 }
 
 // MarshalYaml converts the input to yaml.

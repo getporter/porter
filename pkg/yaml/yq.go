@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
@@ -75,7 +76,7 @@ func (e *Editor) ReadFile(src string) error {
 }
 
 func (e *Editor) WriteFile(dest string) error {
-	destFile, err := e.context.FileSystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	destFile, err := e.context.FileSystem.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	if err != nil {
 		return errors.Wrapf(err, "could not open destination manifest location %s", config.Name)
 	}

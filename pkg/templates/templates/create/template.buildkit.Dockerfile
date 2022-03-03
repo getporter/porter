@@ -1,12 +1,4 @@
-# syntax=docker/dockerfile:1.2
-FROM debian:stretch-slim
-
-ARG BUNDLE_DIR
-
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y ca-certificates
-
+# syntax=docker/dockerfile-upstream:1.4.0-rc2
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -16,9 +8,17 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # Add the following line to porter.yaml to instruct Porter to use this template
 # dockerfile: template.Dockerfile
 
-# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
-# another location in this file. If you remove that line, the mixins generated content is appended to this file.
+# You can control where the mixin's Dockerfile lines are inserted into this file by moving the "# PORTER_*" tokens
+# another location in this file. If you remove a token, its content is appended to the end of the Dockerfile.
+FROM debian:stretch-slim
+
+# PORTER_INIT
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y ca-certificates
+
 # PORTER_MIXINS
 
-# Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+# Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
+COPY --link . ${BUNDLE_DIR}

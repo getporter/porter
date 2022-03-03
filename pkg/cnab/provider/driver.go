@@ -6,7 +6,6 @@ import (
 	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/driver/docker"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 )
 
@@ -68,26 +67,19 @@ func (r *Runtime) dockerDriverWithHostAccess(config cnab.Docker) (driver.Driver,
 	}
 
 	d := &docker.Driver{}
-	d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
 
-		// Equivalent of using: --privileged
-		// Required for DinD, or "Docker-in-Docker"
-		hostCfg.Privileged = config.Privileged
+	// Run the container with privileged access if necessary
+	if config.Privileged {
+		d.AddConfigurationOptions(func(cfg *container.Config, hostCfg *container.HostConfig) error {
+			// Equivalent of using: --privileged
+			// Required for DinD, or "Docker-in-Docker"
+			hostCfg.Privileged = true
+			return nil
+		})
+	}
 
-		// Equivalent of using: -v /var/run/docker.sock:/var/run/docker.sock
-		// Required for DooD, or "Docker-out-of-Docker"
-		dockerSockMount := mount.Mount{
-			Source:   "/var/run/docker.sock",
-			Target:   "/var/run/docker.sock",
-			Type:     "bind",
-			ReadOnly: false,
-		}
-		if hostCfg.Mounts == nil {
-			hostCfg.Mounts = []mount.Mount{}
-		}
-		hostCfg.Mounts = append(hostCfg.Mounts, dockerSockMount)
+	// Mount the docker socket
+	d.AddConfigurationOptions(r.mountDockerSocket)
 
-		return nil
-	})
 	return driver.Driver(d), nil
 }

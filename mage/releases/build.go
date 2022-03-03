@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"golang.org/x/sync/errgroup"
@@ -22,10 +23,10 @@ func getLDFLAGS(pkg string) string {
 	return fmt.Sprintf("-w -X %s/pkg.Version=%s -X %s/pkg.Commit=%s", pkg, info.Version, pkg, info.Commit)
 }
 
-func build(pkg, cmd, outPath, goos, goarch string) error {
-	ldflags := getLDFLAGS(pkg)
+func build(pkgName, cmd, outPath, goos, goarch string) error {
+	ldflags := getLDFLAGS(pkgName)
 
-	os.MkdirAll(filepath.Dir(outPath), 0700)
+	os.MkdirAll(filepath.Dir(outPath), pkg.FileModeDirectory)
 	outPath += fileExt(goos)
 	srcPath := "./cmd/" + cmd
 
