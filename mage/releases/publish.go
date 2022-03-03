@@ -192,11 +192,17 @@ func AddFilesToRelease(repo string, tag string, dir string) {
 
 	checksumFiles := make([]string, len(files))
 	for i, file := range files {
-		cf, err := generateChecksumFile(file)
-		if err != nil {
-			mgx.Must(errors.Wrapf(err, "error generating checksum file for %s", file))
+		checksumFile, added := AddChecksumExt(file)
+		if !added {
+			checksumFiles[i] = file
+			continue
 		}
-		checksumFiles[i] = cf
+
+		err := createChecksumFile(file, checksumFile)
+		if err != nil {
+			mgx.Must(errors.Wrapf(err, "failed to generate checksum file for asset %s", file))
+		}
+		checksumFiles[i] = checksumFile
 
 	}
 
@@ -233,34 +239,49 @@ func listFiles(dir string) []string {
 	return names
 }
 
-func generateChecksumFile(path string) (string, error) {
-	if filepath.Ext(path) == "sha256sum" {
-		return path, nil
+func AddChecksumExt(path string) (string, bool) {
+	if filepath.Ext(path) == ".sha256sum" {
+		return path, false
 	}
-	data, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer data.Close()
 
-	f, err := os.Create(filepath.Join(path + ".sha256sum"))
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
+	return path + ".sha256sum", true
+}
 
+func GenerateChecksum(data io.Reader, path string) (string, error) {
 	hash := sha256.New()
 	if _, err := io.Copy(hash, data); err != nil {
 		return "", err
 	}
 	sum := hash.Sum(nil)
 
+	return AppendDataPath(sum, path)
+}
+
+func AppendDataPath(data []byte, path string) (string, error) {
 	// write the checksum and file name to the checksum file so it can be
 	// verified by tools like `shasum`
-	_, err = f.WriteString(fmt.Sprintf("%x  %s", sum[:], filepath.Base(path)))
+	return fmt.Sprintf("%x  %s", data[:], filepath.Base(path)), nil
+}
+
+func createChecksumFile(contentPath string, checksumFile string) error {
+	data, err := os.Open(contentPath)
 	if err != nil {
-		return "", err
+		return err
+	}
+	defer data.Close()
+
+	sum, err := GenerateChecksum(data, contentPath)
+	if err != nil {
+		return err
 	}
 
-	return f.Name(), nil
+	f, err := os.Create(checksumFile)
+	if err != nil {
+		return err
+	}
+	if _, err := f.WriteString(sum); err != nil {
+		return err
+	}
+
+	return nil
 }
