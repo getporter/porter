@@ -1,9 +1,12 @@
 package releases
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddChecksumExt(t *testing.T) {
@@ -33,4 +36,15 @@ func TestAddChecksumExt(t *testing.T) {
 		})
 	}
 
+}
+
+func TestAppendDataPath(t *testing.T) {
+	data := make([]byte, 10)
+	_, err := rand.Read(data)
+	require.NoError(t, err)
+	dataPath := "test/random"
+	expected := hex.EncodeToString(data) + "  random"
+
+	output := AppendDataPath(data, dataPath)
+	require.Equal(t, expected, output)
 }

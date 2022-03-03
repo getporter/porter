@@ -2,6 +2,7 @@ package releases
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -254,13 +255,13 @@ func GenerateChecksum(data io.Reader, path string) (string, error) {
 	}
 	sum := hash.Sum(nil)
 
-	return AppendDataPath(sum, path)
+	return AppendDataPath(sum, path), nil
 }
 
-func AppendDataPath(data []byte, path string) (string, error) {
+func AppendDataPath(data []byte, path string) string {
 	// write the checksum and file name to the checksum file so it can be
 	// verified by tools like `shasum`
-	return fmt.Sprintf("%x  %s", data[:], filepath.Base(path)), nil
+	return hex.EncodeToString(data) + "  " + filepath.Base(path)
 }
 
 func createChecksumFile(contentPath string, checksumFile string) error {
