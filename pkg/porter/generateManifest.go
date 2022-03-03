@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ type metadataOpts struct {
 // designated by build.LOCAL_MANIFEST
 func (p *Porter) generateInternalManifest(opts BuildOptions) error {
 	// Create the local app dir if it does not already exist
-	err := p.FileSystem.MkdirAll(build.LOCAL_APP, 0700)
+	err := p.FileSystem.MkdirAll(build.LOCAL_APP, pkg.FileModeDirectory)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create directory %s", build.LOCAL_APP)
 	}

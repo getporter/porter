@@ -13,6 +13,7 @@ import (
 
 	"get.porter.sh/porter/mage/docker"
 	"get.porter.sh/porter/mage/tools"
+	porterpkg "get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/pkg"
 	"github.com/carolynvs/magex/shx"
@@ -62,7 +63,7 @@ func useCluster() bool {
 		}
 		os.Setenv("KUBECONFIG", currentKubeConfig)
 
-		err := ioutil.WriteFile(Kubeconfig, []byte(contents), 0600)
+		err := ioutil.WriteFile(Kubeconfig, []byte(contents), porterpkg.FileModeWritable)
 		mgx.Must(errors.Wrapf(err, "error writing %s", Kubeconfig))
 		return true
 	}
@@ -109,7 +110,7 @@ func CreateTestCluster() {
 		Address: ipAddress,
 	}
 	err = kindCfgTmpl.Execute(&kindCfgContents, kindCfgData)
-	err = ioutil.WriteFile("kind.config.yaml", kindCfgContents.Bytes(), 0600)
+	err = ioutil.WriteFile("kind.config.yaml", kindCfgContents.Bytes(), porterpkg.FileModeWritable)
 	mgx.Must(errors.Wrap(err, "could not write kind config file"))
 	defer os.Remove("kind.config.yaml")
 

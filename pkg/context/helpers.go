@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -77,11 +78,21 @@ func NewTestCommand(c *Context) CommandBuilder {
 		testArgs := append([]string{command}, args...)
 		cmd := exec.Command(os.Args[0], testArgs...)
 		cmd.Dir = c.Getwd()
+
 		cmd.Env = []string{
 			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, c.Getenv(test.ExpectedCommandExitCodeEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, c.Getenv(test.ExpectedCommandErrorEnv)),
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandExitCodeEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandOutputEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandOutputEnv, val))
+		}
+		if val, ok := c.LookupEnv(test.ExpectedCommandErrorEnv); ok {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, val))
 		}
 
 		return cmd
@@ -148,9 +159,9 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 	if len(mode) == 0 {
 		ext := filepath.Ext(dest)
 		if ext == ".sh" || ext == "" {
-			perms = 0700
+			perms = pkg.FileModeExecutable
 		} else {
-			perms = 0600
+			perms = pkg.FileModeWritable
 		}
 	} else {
 		perms = mode[0]
@@ -165,7 +176,7 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 }
 
 func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
-	return c.FileSystem.WriteFile(dest, file, 0600)
+	return c.FileSystem.WriteFile(dest, file, pkg.FileModeWritable)
 }
 
 // Use this when the directory you are referencing is in a different directory than the test.
@@ -195,7 +206,7 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMo
 		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
 
 		if info.IsDir() {
-			return c.FileSystem.MkdirAll(dest, 0700)
+			return c.FileSystem.MkdirAll(dest, pkg.FileModeDirectory)
 		}
 
 		c.AddTestFile(path, dest, mode...)
@@ -232,7 +243,7 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		}
 	}
 
-	err = c.FileSystem.Chmod(newfile.Name(), 0700)
+	err = c.FileSystem.Chmod(newfile.Name(), pkg.FileModeExecutable)
 	if err != nil {
 		c.T.Fatal(err)
 	}

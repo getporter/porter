@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path"
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/tests"
@@ -39,13 +39,13 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	err = p.Install(opts)
 	require.NoError(t, err)
 
-	clientPath := "/root/.porter/packages/mypkg/mypkg"
+	clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
 	clientStats, err := p.FileSystem.Stat(clientPath)
 	require.NoError(t, err)
-	wantMode := os.FileMode(0700)
+	wantMode := pkg.FileModeExecutable
 	tests.AssertFilePermissionsEqual(t, clientPath, wantMode, clientStats.Mode())
 
-	runtimePath := "/root/.porter/packages/mypkg/runtimes/mypkg-runtime"
+	runtimePath := "/home/myuser/.porter/packages/mypkg/runtimes/mypkg-runtime"
 	runtimeStats, _ := p.FileSystem.Stat(runtimePath)
 	require.NoError(t, err)
 	tests.AssertFilePermissionsEqual(t, runtimePath, wantMode, runtimeStats.Mode())
@@ -84,9 +84,9 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	err = p.Install(opts)
 	require.NoError(t, err)
 
-	clientExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/helm")
+	clientExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/helm/helm")
 	assert.True(t, clientExists)
-	runtimeExists, _ := p.FileSystem.Exists("/root/.porter/packages/helm/runtimes/helm-runtime")
+	runtimeExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/helm/runtimes/helm-runtime")
 	assert.True(t, runtimeExists)
 }
 
@@ -139,17 +139,17 @@ func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 	require.NoError(t, err, "Validate failed")
 
 	// ensure cache.json does not exist (yet)
-	cacheExists, _ := p.FileSystem.Exists("/root/.porter/packages/cache.json")
+	cacheExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/cache.json")
 	assert.False(t, cacheExists)
 
 	err = p.savePackageInfo(opts)
 	require.NoError(t, err)
 
 	// cache.json should have been created
-	cacheExists, _ = p.FileSystem.Exists("/root/.porter/packages/cache.json")
+	cacheExists, _ = p.FileSystem.Exists("/home/myuser/.porter/packages/cache.json")
 	assert.True(t, cacheExists)
 
-	cacheContentsB, err := p.FileSystem.ReadFile("/root/.porter/packages/cache.json")
+	cacheContentsB, err := p.FileSystem.ReadFile("/home/myuser/.porter/packages/cache.json")
 	require.NoError(t, err)
 
 	//read cache.json

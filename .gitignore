@@ -5,6 +5,7 @@
 .DS_Store
 /build/git_askpass.sh
 tests/smoke/mybuns/
+.env
 
 .cnab
 examples/**/Dockerfile

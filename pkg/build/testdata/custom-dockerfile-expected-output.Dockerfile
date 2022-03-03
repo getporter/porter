@@ -1,15 +1,12 @@
-FROM debian:stretch-slim
-
+FROM ubuntu:latest
+# stuff
 ARG BUNDLE_DIR
 ARG BUNDLE_UID=65532
 ARG BUNDLE_USER=nonroot
 ARG BUNDLE_GID=0
 RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o
+COPY mybin /cnab/app/
 
-RUN apt-get update && apt-get install -y ca-certificates
-
-
-COPY . ${BUNDLE_DIR}
 RUN rm ${BUNDLE_DIR}/porter.yaml
 RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab

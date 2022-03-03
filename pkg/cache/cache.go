@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
@@ -79,12 +80,12 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	}
 
 	cb.BundlePath = cb.BuildBundlePath()
-	err = c.FileSystem.MkdirAll(filepath.Dir(cb.BundlePath), 0700)
+	err = c.FileSystem.MkdirAll(filepath.Dir(cb.BundlePath), pkg.FileModeDirectory)
 	if err != nil {
 		return CachedBundle{}, errors.Wrap(err, "unable to create cache directory")
 	}
 
-	f, err := c.FileSystem.OpenFile(cb.BundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := c.FileSystem.OpenFile(cb.BundlePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	defer f.Close()
 	if err != nil {
 		return CachedBundle{}, errors.Wrapf(err, "error creating cnab/bundle.json for %s", cb.Reference)
@@ -108,7 +109,7 @@ func (c *Cache) StoreBundle(bundleRef cnab.BundleReference) (CachedBundle, error
 	// we wrote the bundle, now lets store a relocation mapping in cnab/ and return the path
 	if len(cb.RelocationMap) > 0 {
 		cb.RelocationFilePath = cb.BuildRelocationFilePath()
-		f, err = c.FileSystem.OpenFile(cb.RelocationFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		f, err = c.FileSystem.OpenFile(cb.RelocationFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 		defer f.Close()
 		if err != nil {
 			return CachedBundle{}, errors.Wrapf(err, "error creating cnab/relocation-mapping.json for %s", cb.Reference)

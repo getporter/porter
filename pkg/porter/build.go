@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
@@ -187,7 +188,7 @@ func (p *Porter) buildBundle(invocationImage string, digest digest.Digest) error
 }
 
 func (p Porter) writeBundle(b cnab.ExtendedBundle) error {
-	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := p.Config.FileSystem.OpenFile(build.LOCAL_BUNDLE, os.O_RDWR|os.O_CREATE|os.O_TRUNC, pkg.FileModeWritable)
 	defer f.Close()
 	if err != nil {
 		return errors.Wrapf(err, "error creating %s", build.LOCAL_BUNDLE)

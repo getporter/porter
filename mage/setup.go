@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"get.porter.sh/porter/mage/tools"
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/pkg/gopath"
 	"github.com/pkg/errors"
 )
@@ -19,7 +20,7 @@ func ConfigureAgent() error {
 
 	// Instruct Azure DevOps to add GOPATH/bin to PATH
 	gobin := gopath.GetGopathBin()
-	err = os.MkdirAll(gobin, 0700)
+	err = os.MkdirAll(gobin, pkg.FileModeDirectory)
 	if err != nil {
 		return errors.Wrapf(err, "could not mkdir -p %s", gobin)
 	}

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
@@ -166,7 +167,7 @@ func (feed *MixinFeed) Save(opts GenerateOptions) error {
 	tmplData["Updated"] = entries[0].Updated()
 
 	atomXml, err := mustache.Render(string(feedTmpl), tmplData)
-	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), 0600)
+	err = feed.FileSystem.WriteFile(opts.AtomFile, []byte(atomXml), pkg.FileModeWritable)
 	if err != nil {
 		return errors.Wrapf(err, "could not write feed to %s", opts.AtomFile)
 	}

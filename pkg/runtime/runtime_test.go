@@ -195,7 +195,7 @@ func TestPorterRuntime_ApplyStepOutputsToBundle_ApplyTo_True(t *testing.T) {
 }
 
 func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
-	const srcPath = "/root/.kube/config"
+	const srcPath = "/home/nonroot/.kube/config"
 	const outputName = "kubeconfig"
 
 	testcases := []struct {

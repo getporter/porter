@@ -5,7 +5,7 @@ registry: getporter
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 mixins:
   - exec

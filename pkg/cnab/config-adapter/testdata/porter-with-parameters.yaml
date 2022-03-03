@@ -48,9 +48,9 @@ parameters:
       }'
   - name: afile
     type: file
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
   - name: notype-file
-    path: /root/.porter/config.toml
+    path: /cnab/app/config.toml
   - name: notype-string
 
 mixins:

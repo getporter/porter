@@ -19,7 +19,7 @@ credentials:
 - name: CLIENT_SECRET
   env: AZURE_CLIENT_SECRET
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: mysql_user

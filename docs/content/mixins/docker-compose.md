@@ -112,7 +112,7 @@ The `path` output saves the content of the specified file path to an output.
 ```yaml
 outputs:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---

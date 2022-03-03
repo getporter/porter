@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -59,7 +60,7 @@ func (p *Porter) FixPermissions() error {
 			}
 
 			if info.IsDir() {
-				if err := p.FileSystem.Chmod(path, 0700); err != nil {
+				if err := p.FileSystem.Chmod(path, pkg.FileModeDirectory); err != nil {
 					bigErr = multierror.Append(bigErr, errors.Wrapf(err, "could not set permissions on directory %s to %o", path, mode))
 				}
 			} else {
@@ -75,14 +76,14 @@ func (p *Porter) FixPermissions() error {
 	var bigErr *multierror.Error
 	dataFiles := []string{p.ConfigFilePath, filepath.Join(home, "schema.json")}
 	for _, file := range dataFiles {
-		if err := fixFile(file, 0600); err != nil {
+		if err := fixFile(file, pkg.FileModeWritable); err != nil {
 			bigErr = multierror.Append(bigErr, err)
 		}
 	}
 
 	dataDirs := []string{"installations", "claims", "results", "outputs", "cache", "credentials", "parameters"}
 	for _, dir := range dataDirs {
-		if err := fixDir(filepath.Join(home, dir), 0600); err != nil {
+		if err := fixDir(filepath.Join(home, dir), pkg.FileModeWritable); err != nil {
 			bigErr = multierror.Append(bigErr, err)
 		}
 	}
@@ -90,14 +91,14 @@ func (p *Porter) FixPermissions() error {
 	porterPath, _ := p.GetPorterPath()
 	binFiles := []string{porterPath}
 	for _, file := range binFiles {
-		if err := fixFile(file, 0700); err != nil {
+		if err := fixFile(file, pkg.FileModeExecutable); err != nil {
 			bigErr = multierror.Append(bigErr, err)
 		}
 	}
 
 	binDirs := []string{"mixins", "plugins", "runtimes"}
 	for _, dir := range binDirs {
-		if err := fixDir(filepath.Join(home, dir), 0700); err != nil {
+		if err := fixDir(filepath.Join(home, dir), pkg.FileModeExecutable); err != nil {
 			bigErr = multierror.Append(bigErr, err)
 		}
 	}

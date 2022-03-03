@@ -18,7 +18,7 @@ zombies() {
 }
 
 dump-myfile() {
-  cat /root/myfile
+  cat /cnab/app/myfile
 }
 
 # Call the requested function and pass the arguments as-is
