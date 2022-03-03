@@ -72,6 +72,13 @@
             "type": "string"
           }
         },
+        "envs": {
+          "description": "Environment variables to add to the env of the command",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "suffix-arguments": {
           "description": "Positional arguments to pass to the command after any flags",
           "type": "array",
