@@ -360,6 +360,8 @@ func PublishPorter() {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
 		releases.AddFilesToRelease(repo, info.Version, porterVersionDir)
 		releases.AddFilesToRelease(repo, info.Version, execVersionDir)
+	} else {
+		fmt.Println("Skipping publish binaries for not tagged release", info.Version)
 	}
 }
 
