@@ -1,7 +1,5 @@
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: mybuns
-created: 2021-08-10T13:55:43.139903-05:00
-modified: 2021-08-10T13:55:56.109829-05:00
 parameters:
   - name: log_level
     source:

@@ -1,9 +1,7 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.0.1",
   "name": "kool-kreds",
   "namespace": "dev",
-  "created": "2019-06-24T16:07:57.415378-05:00",
-  "modified": "2019-06-24T16:07:57.415378-05:00",
   "credentials": [
     {
       "name": "kool-config",
@@ -29,5 +27,9 @@
         "value": "kool"
       }
     }
-  ]
+  ],
+  "status":{
+    "created": "2019-06-24T16:07:57.415378-05:00",
+    "modified": "2019-06-24T16:07:57.415378-05:00"
+  }
 }

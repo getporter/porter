@@ -10,11 +10,7 @@ import (
 const (
 	// SchemaVersion represents the version associated with the schema
 	// for parameter set documents.
-	SchemaVersion = schema.Version("1.0.0")
-
-	// PorterInternal is a string that can be used to designate a parameter
-	// as internal to Porter
-
+	SchemaVersion = schema.Version("1.0.1")
 )
 
 // ParseVariableAssignments converts a string array of variable assignments

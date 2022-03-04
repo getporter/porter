@@ -15,6 +15,12 @@ var _ storage.Document = ParameterSet{}
 // ParameterSet represents a collection of parameters and their
 // sources/strategies for value resolution
 type ParameterSet struct {
+	ParameterSetSpec `yaml:",inline"`
+	Status           ParameterSetStatus `json:"status" yaml:"status" toml:"status"`
+}
+
+// ParameterSetSpec represents the set of user-modifiable fields on a ParameterSet.
+type ParameterSetSpec struct {
 	// SchemaVersion is the version of the parameter-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -24,12 +30,6 @@ type ParameterSet struct {
 	// Name is the name of the parameter set.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
-	// Created timestamp of the parameter set.
-	Created time.Time `json:"created" yaml:"created" toml:"created"`
-
-	// Modified timestamp of the parameter set.
-	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
-
 	// Labels applied to the parameter set.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
@@ -37,16 +37,29 @@ type ParameterSet struct {
 	Parameters []secrets.Strategy `json:"parameters" yaml:"parameters" toml:"parameters"`
 }
 
+// ParameterSetStatus contains additional status metadata that has been set by Porter.
+type ParameterSetStatus struct {
+	// Created timestamp of the parameter set.
+	Created time.Time `json:"created" yaml:"created" toml:"created"`
+
+	// Modified timestamp of the parameter set.
+	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
+}
+
 // NewParameterSet creates a new ParameterSet with the required fields initialized.
 func NewParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
 	now := time.Now()
 	ps := ParameterSet{
-		SchemaVersion: SchemaVersion,
-		Namespace:     namespace,
-		Name:          name,
-		Created:       now,
-		Modified:      now,
-		Parameters:    params,
+		ParameterSetSpec: ParameterSetSpec{
+			SchemaVersion: SchemaVersion,
+			Namespace:     namespace,
+			Name:          name,
+			Parameters:    params,
+		},
+		Status: ParameterSetStatus{
+			Created:  now,
+			Modified: now,
+		},
 	}
 
 	return ps

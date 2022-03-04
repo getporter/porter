@@ -14,7 +14,7 @@ You can use this [json schema][cs-schema] to validate a credential set file.
 
 ```yaml
 schemaType: CredentialSet
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: mycreds
 namespace: staging
 labels:
@@ -50,7 +50,7 @@ You can use this [json schema][ps-schema] to validate a parameter set file.
 
 ```yaml
 schemaType: ParameterSet
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: myparams
 namespace: staging
 labels:

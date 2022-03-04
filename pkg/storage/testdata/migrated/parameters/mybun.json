@@ -1,8 +1,6 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.0.1",
   "name": "mybun",
-  "created": "2020-01-01T00:00:00Z",
-  "modified": "2020-01-01T00:00:00Z",
   "parameters": [
     {
       "name": "verbose",
@@ -16,5 +14,9 @@
         "secret": "mysql-password"
       }
     }
-  ]
+  ],
+  "status": {
+    "created": "2020-01-01T00:00:00Z",
+    "modified": "2020-01-01T00:00:00Z"
+  }
 }

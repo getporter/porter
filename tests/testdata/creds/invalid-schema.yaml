@@ -1,7 +1,5 @@
 schemaVersion: 0.38.5
 name: mybuns
-created: 2021-08-10T13:55:14.948449-05:00
-modified: 2021-08-10T13:55:14.948449-05:00
 credentials:
   - name: username
     source:

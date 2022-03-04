@@ -1,7 +1,5 @@
 {
   "name": "porter-hello",
-  "created": "1983-04-18T01:02:03.000000004Z",
-  "modified": "1983-04-18T01:02:03.000000004Z",
   "parameters": [
     {
       "name": "my-second-param",
@@ -9,5 +7,9 @@
         "secret": "PARAM2_SECRET"
       }
     }
-  ]
+  ],
+  "status": {
+    "created": "1983-04-18T01:02:03.000000004Z",
+    "modified": "1983-04-18T01:02:03.000000004Z"
+  }
 }

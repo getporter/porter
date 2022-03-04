@@ -37,7 +37,7 @@ Instead of creating the credential and parameter sets using the generate command
 Create a file named creds.yaml, paste the following definition into the file, and then save it.
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: github
 credentials:
   - name: github-token
@@ -48,7 +48,7 @@ credentials:
 Create a file named params.yaml, paste the following definition into the file, and then save it.
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: credentials-tutorial
 parameters:
   - name: user
@@ -151,7 +151,7 @@ The installation is out-of-sync, running the install action...
 Edit params.yaml, change the user parameter value from getporterbot to carolynvs, and then apply the file.
 
 ```yaml
-schemaVersion: 1.0.0
+schemaVersion: 1.0.1
 name: credentials-tutorial
 parameters:
   - name: user

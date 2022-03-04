@@ -23,9 +23,9 @@ func TestNewCredentialSet(t *testing.T) {
 
 	assert.Equal(t, "mycreds", cs.Name, "Name was not set")
 	assert.Equal(t, "dev", cs.Namespace, "Namespace was not set")
-	assert.NotEmpty(t, cs.Created, "Created was not set")
-	assert.NotEmpty(t, cs.Modified, "Modified was not set")
-	assert.Equal(t, cs.Created, cs.Modified, "Created and Modified should have the same timestamp")
+	assert.NotEmpty(t, cs.Status.Created, "Created was not set")
+	assert.NotEmpty(t, cs.Status.Modified, "Modified was not set")
+	assert.Equal(t, cs.Status.Created, cs.Status.Modified, "Created and Modified should have the same timestamp")
 	assert.Equal(t, SchemaVersion, cs.SchemaVersion, "SchemaVersion was not set")
 	assert.Len(t, cs.Credentials, 1, "Credentials should be initialized with 1 value")
 }
@@ -75,19 +75,23 @@ func TestMarshal(t *testing.T) {
 	now, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z07:00")
 
 	orig := CredentialSet{
-		SchemaVersion: "schemaVersion",
-		Namespace:     "namespace",
-		Name:          "name",
-		Created:       now,
-		Modified:      now,
-		Credentials: []secrets.Strategy{
-			{
-				Name: "cred1",
-				Source: secrets.Source{
-					Key:   "secret",
-					Value: "mysecret",
+		CredentialSetSpec: CredentialSetSpec{
+			SchemaVersion: "schemaVersion",
+			Namespace:     "namespace",
+			Name:          "name",
+			Credentials: []secrets.Strategy{
+				{
+					Name: "cred1",
+					Source: secrets.Source{
+						Key:   "secret",
+						Value: "mysecret",
+					},
 				},
 			},
+		},
+		Status: CredentialSetStatus{
+			Created:  now,
+			Modified: now,
 		},
 	}
 
@@ -107,12 +111,12 @@ func TestMarshal(t *testing.T) {
 
 func TestCredentialSet_String(t *testing.T) {
 	t.Run("global namespace", func(t *testing.T) {
-		cs := CredentialSet{Name: "mycreds"}
+		cs := CredentialSet{CredentialSetSpec: CredentialSetSpec{Name: "mycreds"}}
 		assert.Equal(t, "/mycreds", cs.String())
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
-		cs := CredentialSet{Namespace: "dev", Name: "mycreds"}
+		cs := CredentialSet{CredentialSetSpec: CredentialSetSpec{Namespace: "dev", Name: "mycreds"}}
 		assert.Equal(t, "dev/mycreds", cs.String())
 	})
 }

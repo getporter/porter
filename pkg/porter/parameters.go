@@ -69,7 +69,7 @@ func (p *Porter) PrintParameters(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, params, printParamRow,
 			"NAMESPACE", "NAME", "MODIFIED")
@@ -148,8 +148,8 @@ func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) 
 		return errors.Wrap(err, "unable to generate parameter set")
 	}
 
-	pset.Created = time.Now()
-	pset.Modified = pset.Created
+	pset.Status.Created = time.Now()
+	pset.Status.Modified = pset.Status.Created
 
 	err = p.Parameters.UpsertParameterSet(pset)
 	return errors.Wrapf(err, "unable to save parameter set")
@@ -201,7 +201,7 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 		return errors.Wrap(err, "parameter set is invalid")
 	}
 
-	paramSet.Modified = time.Now()
+	paramSet.Status.Modified = time.Now()
 	err = p.Parameters.UpdateParameterSet(paramSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save parameter set")
@@ -261,8 +261,8 @@ func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
 
 		// First, print the ParameterSet metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", paramSet.Name)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(paramSet.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(paramSet.Modified))
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(paramSet.Status.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(paramSet.Status.Modified))
 
 		// Print labels, if any
 		if len(paramSet.Labels) > 0 {
@@ -510,7 +510,7 @@ func (p *Porter) ParametersApply(o ApplyOptions) error {
 	}
 
 	params.Namespace = namespace
-	params.Modified = time.Now()
+	params.Status.Modified = time.Now()
 
 	err = p.Parameters.Validate(params)
 	if err != nil {
