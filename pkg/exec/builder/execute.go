@@ -7,8 +7,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
 	"github.com/pkg/errors"
+
+	"get.porter.sh/porter/pkg/context"
 )
 
 var DefaultFlagDashes = Dashes{
@@ -32,6 +33,10 @@ type ExecutableStep interface {
 	GetArguments() []string
 	GetFlags() Flags
 	GetWorkingDir() string
+}
+
+type HasEnvironmentVars interface {
+	GetEnvironmentVars() map[string]string
 }
 
 type HasOrderedArguments interface {
@@ -124,6 +129,13 @@ func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
 
 	// Append any final suffix arguments
 	args = append(args, suffixArgs...)
+
+	// Add env vars if defined
+	if stepWithEnvVars, ok := step.(HasEnvironmentVars); ok {
+		for k, v := range stepWithEnvVars.GetEnvironmentVars() {
+			cxt.Setenv(k, v)
+		}
+	}
 
 	cmd := cxt.NewCommand(step.GetCommand(), args...)
 

@@ -11,9 +11,10 @@ import (
 
 	"get.porter.sh/porter/pkg/test"
 
-	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	yaml "get.porter.sh/porter/pkg/yaml"
 )
 
 func TestAction_UnmarshalYAML(t *testing.T) {
@@ -34,6 +35,7 @@ func TestAction_UnmarshalYAML(t *testing.T) {
 	assert.Equal(t, builder.NewFlag("machine-type", "f1-micro"), step.Flags[0])
 	assert.Equal(t, builder.NewFlag("project", "porterci"), step.Flags[1])
 	assert.Equal(t, builder.NewFlag("zone", "us-central1-a"), step.Flags[2])
+	assert.Equal(t, step.EnvironmentVars, map[string]string{"SECRET": "super-secret"})
 	require.Len(t, step.Outputs, 1)
 	assert.Equal(t, Output{Name: "vms", JsonPath: "$[*].id"}, step.Outputs[0])
 }

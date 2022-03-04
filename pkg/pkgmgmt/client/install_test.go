@@ -7,15 +7,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/tests"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFileSystem_InstallFromUrl(t *testing.T) {
@@ -52,6 +54,10 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 }
 
 func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		t.Skip("skipping because there is no release for helm for darwin/arm64")
+	}
+
 	var testURL = ""
 	feed, err := ioutil.ReadFile("../feed/testdata/atom.xml")
 	require.NoError(t, err)

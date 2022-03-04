@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/test"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type TestAction struct {
@@ -156,4 +159,32 @@ func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
 	_, err := ExecuteStep(c.Context, step)
 	assert.Equal(t, fmt.Sprintln(wd), c.GetOutput())
 	require.NoError(t, err, "Execute Step failed")
+}
+
+func (s TestOrderedStep) GetEnvironmentVars() map[string]string {
+	return s.EnvironmentVars
+}
+
+func TestExecuteStep_WithEnvironmentVars(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip()
+	}
+
+	c := context.NewTestContext(t)
+	c.UseFilesystem()
+	step := TestOrderedStep{
+		TestStep: TestStep{
+			Command:         "env",
+			EnvironmentVars: map[string]string{"SOME_VAR_123": "foo"},
+		},
+	}
+
+	c.Setenv(test.ExpectedCommandEnv, "env")
+
+	_, err := ExecuteStep(c.Context, step)
+	require.NoError(t, err, "Execute Step failed")
+	containsEnv := strings.Contains(c.GetOutput(), "SOME_VAR_123=foo")
+	// use assert.True rather than assert.Contains so that the env vars are not all sent to the test output. There might
+	// be sensitive stuff in there.
+	assert.True(t, containsEnv, "Env did not contain the key/value we expected.")
 }

@@ -309,6 +309,13 @@
             "description": "The directory in which to execute the command",
             "type": "string"
           },
+          "envs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Environment variables to add to the env of the command",
+            "type": "object"
+          },
           "flags": {
             "additionalProperties": {
               "type": "string"

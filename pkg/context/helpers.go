@@ -13,13 +13,14 @@ import (
 	"strings"
 	"testing"
 
-	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
+
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/test"
 )
 
 type TestContext struct {
@@ -68,35 +69,32 @@ func NewTestContext(t *testing.T) *TestContext {
 		T:           t,
 	}
 
-	c.NewCommand = NewTestCommand(c.Context)
+	c.NewCommand = c.NewTestCommand
 
 	return c
 }
 
-func NewTestCommand(c *Context) CommandBuilder {
-	return func(command string, args ...string) *exec.Cmd {
-		testArgs := append([]string{command}, args...)
-		cmd := exec.Command(os.Args[0], testArgs...)
-		cmd.Dir = c.Getwd()
+func (c *TestContext) NewTestCommand(name string, args ...string) *exec.Cmd {
+	testArgs := append([]string{name}, args...)
+	cmd := exec.Command(os.Args[0], testArgs...)
+	cmd.Dir = c.Getwd()
 
-		cmd.Env = []string{
-			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-		}
-		if val, ok := c.LookupEnv(test.ExpectedCommandEnv); ok {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, val))
-		}
-		if val, ok := c.LookupEnv(test.ExpectedCommandExitCodeEnv); ok {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, val))
-		}
-		if val, ok := c.LookupEnv(test.ExpectedCommandOutputEnv); ok {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandOutputEnv, val))
-		}
-		if val, ok := c.LookupEnv(test.ExpectedCommandErrorEnv); ok {
-			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, val))
-		}
-
-		return cmd
+	cmd.Env = []string{
+		fmt.Sprintf("%s=true", test.MockedCommandEnv),
 	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandExitCodeEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandOutputEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandOutputEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandErrorEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, val))
+	}
+	return cmd
 }
 
 func (c *TestContext) GetTestDefinitionDirectory() string {
@@ -137,7 +135,7 @@ func (c *TestContext) Teardown() {
 	}
 }
 
-// Use this when the testfile you are referencing is in a different directory than the test.
+// AddTestFileFromRoot should be used when the testfile you are referencing is in a different directory than the test.
 func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
 	pathFromRoot := filepath.Join(c.FindRepoRoot(), src)
 	return c.AddTestFile(pathFromRoot, dest)
