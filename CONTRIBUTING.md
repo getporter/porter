@@ -19,6 +19,7 @@
 * [Code structure and practices](#code-structure-and-practices)
   * [What is the general code layout?](#what-is-the-general-code-layout)
   * [Logging](#logging)
+  * [Breaking Changes](#breaking-changes)
 * [Infrastructure](#infrastructure)
   * [CDN Setup](#cdn-setup)
   * [Releases](#releases)
@@ -573,6 +574,20 @@ stdout as well, then the resulting json schema would be unparsable. This is why
 we send regular command output to `Out` and debug information to `Err`. It
 allows us to then run the command and see the debug output separately, like so
 `porter schema --debug 2> err.log`.
+
+## Breaking Changes
+
+Some changes in Porter break our compatibility with previous versions of Porter.
+When that happens, we need to release that change a new major version number to indicate to users that it contains breaking changes.
+When you realize that you may need to make a breaking change, discuss it with a maintainer on the issue or pull request and we'll come up with a plan for how it should be released.
+Here are some examples of breaking changes:
+
+* The schema of porter.yaml changed.
+* The schema of Porter's [file formats](https://release-v1.porter.sh/reference/file-formats) changed.
+* The schema of Porter's [config file](https://release-v1.porter.sh/configuration/#config-file) changed.
+* Flags or behavior of a CLI command changed, such as removing a flag or adding a validation that can result in a hard error, preventing the command from running.
+
+All of Porter's documents have a schemaVersion field and when the schema of the document is changed, the version number should be incremented as well in the default set on new documents, the supported schema version constant in the code, and in the documentation for that document.
 
 # Infrastructure
 

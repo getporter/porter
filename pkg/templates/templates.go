@@ -67,7 +67,7 @@ func (t *Templates) GetRunScript() ([]byte, error) {
 }
 
 // GetSchema returns the template manifest schema for the porter manifest.
-// Note that it is incomplete and does not include the mixins' schemas.ß
+// Note that it is incomplete and does not include the mixins' schemas.
 func (t *Templates) GetSchema() ([]byte, error) {
 	return t.fs.ReadFile("templates/schema.json")
 }

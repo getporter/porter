@@ -64,7 +64,7 @@
               "type": "string"
             },
             "sensitive": {
-              "description": "Indicates where this output's value is sensitive and should not be logged.",
+              "description": "Indicates whether this output's value is sensitive and should not be logged.",
               "type": "boolean"
             },
             "path": {
@@ -107,7 +107,7 @@
               "type": "string"
             },
             "sensitive": {
-              "description": "Indicates where this parameter's value is sensitive and should not be logged.",
+              "description": "Indicates whether this parameter's value is sensitive and should not be logged.",
               "type": "boolean"
             },
             "source": {

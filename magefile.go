@@ -66,7 +66,7 @@ func BuildPorter() {
 }
 
 func copySchema() {
-	// Copy the porter manifest schema into our templates directory so the porter
+	// Copy the porter manifest schema into our templates directory with the other schema
 	// We can't use symbolic links because that doesn't work on windows
 	mgx.Must(shx.Copy("pkg/schema/manifest.schema.json", "pkg/templates/templates/schema.json"))
 }

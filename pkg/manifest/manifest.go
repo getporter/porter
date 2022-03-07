@@ -29,6 +29,7 @@ const (
 
 	// SupportedSchemaVersion is the Porter manifest (porter.yaml) schema
 	// version supported by this version of Porter.
+	// When the Manifest structure is changed, this field should be incremented.
 	SupportedSchemaVersion = "1.0.0-alpha.1"
 )
 
@@ -39,6 +40,7 @@ type Manifest struct {
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
 	TemplateVariables []string `yaml:"-"`
 
+	// SchemaVersion is a semver value that indicates which version of the porter.yaml schema is used in the file.
 	SchemaVersion string `yaml:"schemaVersion"`
 	Name          string `yaml:"name,omitempty"`
 	Description   string `yaml:"description,omitempty"`
