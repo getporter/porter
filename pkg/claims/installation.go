@@ -124,6 +124,9 @@ func (i *Installation) Apply(input Installation) {
 // Validate the installation document and report the first error.
 func (i *Installation) Validate() error {
 	if SchemaVersion != i.SchemaVersion {
+		if i.SchemaVersion == "" {
+			i.SchemaVersion = "(none)"
+		}
 		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", i.SchemaVersion, SchemaVersion)
 	}
 
