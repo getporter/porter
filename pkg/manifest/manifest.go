@@ -24,7 +24,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-const invalidStepErrorFormat = "validation of action \"%s\" failed"
+const (
+	invalidStepErrorFormat = "validation of action \"%s\" failed"
+
+	// SupportedSchemaVersion is the Porter manifest (porter.yaml) schema
+	// version supported by this version of Porter.
+	// When the Manifest structure is changed, this field should be incremented.
+	SupportedSchemaVersion = "1.0.0-alpha.1"
+)
 
 type Manifest struct {
 	// ManifestPath is location to the original, user-supplied manifest, such as the path on the filesystem or a url
@@ -33,9 +40,11 @@ type Manifest struct {
 	// TemplateVariables are the variables used in the templating, e.g. bundle.parameters.NAME, or bundle.outputs.NAME
 	TemplateVariables []string `yaml:"-"`
 
-	Name        string `yaml:"name,omitempty"`
-	Description string `yaml:"description,omitempty"`
-	Version     string `yaml:"version,omitempty"`
+	// SchemaVersion is a semver value that indicates which version of the porter.yaml schema is used in the file.
+	SchemaVersion string `yaml:"schemaVersion"`
+	Name          string `yaml:"name,omitempty"`
+	Description   string `yaml:"description,omitempty"`
+	Version       string `yaml:"version,omitempty"`
 
 	Maintainers []MaintainerDefinition `yaml:"maintainers,omitempty"`
 
@@ -157,6 +166,15 @@ func (m *Manifest) Validate(cxt *context.Context) error {
 }
 
 func (m *Manifest) validateMetadata(cxt *context.Context) error {
+	if m.SchemaVersion != SupportedSchemaVersion {
+		if m.SchemaVersion == "" {
+			fmt.Fprintf(cxt.Err, "WARNING: This bundle was built with an old version of Porter and doesn't declare a schema version. This may not work but we will give it a try. If you see errors, rebuild the bundle with the latest v1 release of Porter.")
+		} else {
+			return errors.Errorf("The bundle uses schema version %s when the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details.",
+				m.SchemaVersion, SupportedSchemaVersion)
+		}
+	}
+
 	if m.Name == "" {
 		return errors.New("bundle name must be set")
 	}
@@ -313,7 +331,7 @@ type ParameterDefinition struct {
 	definition.Schema `yaml:",inline"`
 
 	// IsState identifies if the parameter was generated from a state variable
-	IsState bool
+	IsState bool `yaml:"-"`
 }
 
 func (pd *ParameterDefinition) GetApplyTo() []string {
@@ -650,7 +668,7 @@ type OutputDefinition struct {
 	definition.Schema `yaml:",inline"`
 
 	// IsState identifies if the output was generated from a state variable
-	IsState bool
+	IsState bool `yaml:"-"`
 }
 
 // DeepCopy copies a ParameterDefinition and returns the copy

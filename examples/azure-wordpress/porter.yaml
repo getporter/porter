@@ -1,13 +1,14 @@
+schemaVersion: 1.0.0-alpha.1
+name: azure-wordpress
+version: 0.1.0
+registry: getporter
+
 mixins:
   - arm
   - helm3:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
- 
-name: azure-wordpress
-version: 0.1.0
-registry: getporter
 
 credentials:
 - name: SUBSCRIPTION_ID

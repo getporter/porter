@@ -1,3 +1,4 @@
+schemaVersion: 1.0.0-alpha.1
 name: exec-outputs
 version: 0.1.1
 description: "An example Porter bundle demonstrating exec mixin outputs"

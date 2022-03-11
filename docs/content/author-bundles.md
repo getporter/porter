@@ -10,7 +10,7 @@ The bundle is defined by its manifest, a porter.yaml file.
 The manifest supports variable substitution through [templates].
 You can [customize the Dockerfile](/custom-dockerfile/) used to build the bundle installer.
 
-The manifest is made up of multiple components:
+The manifest is made up of multiple components. See the [Manifest File Format] for a full list of available fields.
 
 * [Bundle Metadata](#bundle-metadata)
 * [Mixins](#mixins)
@@ -29,6 +29,7 @@ The manifest is made up of multiple components:
 We have full [examples](https://porter.sh/src/examples) of Porter manifests in the Porter repository.
 
 [templates]: /authors/templates/
+[Manifest File Format]: /reference/file-formats/#manifest
 
 ## Bundle Metadata
 
@@ -36,6 +37,7 @@ A lot of the metadata is defined by the [CNAB Spec](https://github.com/cnabio/cn
 although Porter does have extra fields that are specific to making Porter bundles.
 
 ```yaml
+schemaVersion: 1.0.0-alpha.1
 name: azure-wordpress
 description: Install Wordpress on Azure
 version: 0.1.0
@@ -48,6 +50,7 @@ maintainers:
   url: "https://example.com"
 ```
 
+* `schemaVersion`: The version of the schema used by this document.
 * `name`: The name of the bundle
 * `description`: A description of the bundle
 * `version`: The version of the bundle, uses [semver](https://semver.org). A leading v prefix may optionally be used.
@@ -553,6 +556,7 @@ be copied into the final bundle so that you can access them at runtime. The path
 
 ## See Also
 
+* [Manifest File Format](/reference/file-formats/#manifest)
 * [Using Mixins](/use-mixins/)
 * [Bundle Dependencies](/dependencies/)
 * [Parameters, Credentials, Outputs, and Images in Porter](/wiring/)
