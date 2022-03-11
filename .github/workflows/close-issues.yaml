@@ -4,16 +4,16 @@
 name: Close Completed Issues
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches:
       - release/*
 
 jobs:
-  closeIssueOnPrMergeTrigger:
+  closeIssue:
     runs-on: ubuntu-latest
     steps:
       - name: Closes issues related to a merged pull request.
-        uses: ldez/gha-mjolnir@v1.0.3
+        uses: docker://carolynvs/gha-mjolnir:v1.0.3-pullrequesttarget
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
