@@ -71,6 +71,9 @@ func (s ParameterSet) DefaultDocumentFilter() interface{} {
 
 func (s ParameterSet) Validate() error {
 	if SchemaVersion != s.SchemaVersion {
+		if s.SchemaVersion == "" {
+			s.SchemaVersion = "(none)"
+		}
 		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
 	}
 	return nil
