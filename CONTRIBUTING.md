@@ -578,7 +578,7 @@ allows us to then run the command and see the debug output separately, like so
 ## Breaking Changes
 
 Some changes in Porter break our compatibility with previous versions of Porter.
-When that happens, we need to release that change a new major version number to indicate to users that it contains breaking changes.
+When that happens, we need to release that change with a new major version number to indicate to users that it contains breaking changes.
 When you realize that you may need to make a breaking change, discuss it with a maintainer on the issue or pull request and we'll come up with a plan for how it should be released.
 Here are some examples of breaking changes:
 
