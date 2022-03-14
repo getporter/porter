@@ -10,7 +10,7 @@
   * [How to become an admin](#admin)
 ---
 
-Our ladder defines the roles and responsibilities on this project and how to
+Our ladder defines the roles and responsibilities for this project and how to
 participate with the goal of moving from a user to a maintainer. You will need
 to gain people's trust, demonstrate your competence and understanding, and meet
 the requirements of the role.

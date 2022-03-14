@@ -13,10 +13,10 @@ Thank you for reviewing pull requests for us! 💖
 Here are the values and etiquette that we follow to ensure a welcoming, inclusive
 project that doesn't burn out our authors or our reviewers. 😅
 
-* We ask that authors respect reviewers time. Check out the
+* We ask that authors respect reviewers' time. Check out the
   [Contributing Guide](CONTRIBUTING.md) and know that you can ask the
-  author to do their part to make _your_ part managable.
-* We ask that reviewers respect authors time. Please do your best to review
+  author to do their part to make _your_ part manageable.
+* We ask that reviewers respect authors' time. Please do your best to review
   a pull request in a reasonable amount of time once you have assigned it to
   yourself.
 * The definition of "reasonable amount of time" is 3 business days. The ask is
@@ -38,9 +38,9 @@ project that doesn't burn out our authors or our reviewers. 😅
    For example, it is missing an agreed upon solution, requires an explanation
    from the author, has a very large set of changes that are not easy to review,
    etc., ask the author to correct that up-front.
-1. When you provide feedback, make it clear if the change must be made in order
+1. When you provide feedback, make it clear if the change must be made
    for the pull request to be approved, or if it is just a suggestion. Mark
-   suggestions with **nit**, for example `nit: I prefer that the bikeshed be
+   suggestions with **nit**, for example, `nit: I prefer that the bikeshed be
    blue`.
 1. When the pull request is ready to merge, squash the commits they require
    tidying unless the author asked to do that themselves.
@@ -71,7 +71,7 @@ reviewers.
 ## Giving feedback
 
 * Be kind. Here is [good article][kind-reviews] with example code reviews and 
-  how to improve your feedback. Giving feedback of this caliber is an requirement 
+  how to improve your feedback. Giving feedback of this caliber is a requirement 
   of maintainers and those who cannot do so will have the maintainer role revoked.
 * Request changes for bugs and program correctness.
 * Request changes to be consistent with existing precedent in the codebase.
