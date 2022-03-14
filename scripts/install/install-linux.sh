@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -xeuo pipefail
+set -euo pipefail
 
 # Installs the porter CLI for a single user.
 # PORTER_HOME:      Location where Porter is installed (defaults to ~/.porter).
