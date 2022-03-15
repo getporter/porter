@@ -127,10 +127,6 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	err = p.FileSystem.WriteFile(config.Name, data, pkg.FileModeWritable)
 	require.NoError(t, err)
 
-	// hack: simulate exactly what happens with the CLI where there is no persisted state between calls
-	// TODO: consider refactoring where we store manifest to better match the cli
-	p.Manifest = nil
-
 	// Re-generate the credentials
 	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	require.NoError(t, err)

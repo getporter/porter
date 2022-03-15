@@ -180,7 +180,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation claims.Instal
 
 	// Resolve the final set of typed parameters, taking into account the user overrides, parameter sources
 	// and defaults
-	err = opts.LoadParameters(p)
+	err = opts.LoadParameters(p, bundleRef.Definition)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}

@@ -1,9 +1,13 @@
 namespace = "dev"
-debug = false
-debug-plugins = false
+debug = true
+debug-plugins = true
 default-storage = "testdb"
-experimental = ["build-drivers"]
+experimental = ["build-drivers", "structured-logs"]
 build-driver = "buildkit"
+
+[logs]
+  enabled = true
+  level = "debug"
 
 [[storage]]
   name = "testdb"

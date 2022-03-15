@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -19,7 +20,7 @@ func TestSuppressOutput(t *testing.T) {
 	p.SetupIntegrationTest()
 	p.Debug = false
 
-	p.AddTestBundleDir("testdata/bundles/suppressed-output-example", true)
+	bundleName := p.AddTestBundleDir("testdata/bundles/suppressed-output-example", true)
 
 	// Install (Output suppressed)
 	installOpts := porter.NewInstallOptions()
@@ -30,7 +31,7 @@ func TestSuppressOutput(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that the bundle output was captured (despite stdout/err of command being suppressed)
-	bundleOutput, err := p.ReadBundleOutput("greeting", p.Manifest.Name, "")
+	bundleOutput, err := p.ReadBundleOutput("greeting", bundleName, "")
 	require.NoError(t, err, "could not read config output")
 	require.Equal(t, "Hello World!", bundleOutput, "expected the bundle output to be populated correctly")
 

@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -23,17 +24,17 @@ func TestExecOutputs(t *testing.T) {
 	p.SetupIntegrationTest()
 
 	// Install a bundle with exec outputs
-	installExecOutputsBundle(p)
+	bundleName := installExecOutputsBundle(p)
 	defer CleanupCurrentBundle(p)
 
 	// Verify that its file output was captured
-	usersOutput, err := p.ReadBundleOutput("users.json", p.Manifest.Name, "")
+	usersOutput, err := p.ReadBundleOutput("users.json", bundleName, "")
 	require.NoError(t, err, "could not read users output")
 	assert.Equal(t, fmt.Sprintln(`{"users": ["sally"]}`), usersOutput, "expected the users output to be populated correctly")
 
 	// Verify that its bundle level file output was captured
 	opts := porter.OutputListOptions{}
-	opts.Name = p.Manifest.Name
+	opts.Name = bundleName
 	opts.Format = printer.FormatPlaintext
 	displayOutputs, err := p.ListBundleOutputs(&opts)
 	require.NoError(t, err, "ListBundleOutputs failed")
@@ -52,19 +53,19 @@ func TestExecOutputs(t *testing.T) {
 	invokeExecOutputsBundle(p, "get-users")
 
 	// Verify logs were captured as an output
-	logs, err := p.ReadBundleOutput(cnab.OutputInvocationImageLogs, p.Manifest.Name, "")
+	logs, err := p.ReadBundleOutput(cnab.OutputInvocationImageLogs, bundleName, "")
 	require.NoError(t, err, "ListBundleOutputs failed")
 	assert.Contains(t, logs, "executing get-users action from exec-outputs", "expected the logs to contain bundle output from the last action")
 
 	// Verify that its jsonPath output was captured
-	userOutput, err := p.ReadBundleOutput("user-names", p.Manifest.Name, "")
+	userOutput, err := p.ReadBundleOutput("user-names", bundleName, "")
 	require.NoError(t, err, "could not read user-names output")
 	assert.Equal(t, `["sally","wei"]`, userOutput, "expected the user-names output to be populated correctly")
 
 	invokeExecOutputsBundle(p, "test")
 
 	// Verify that its regex output was captured
-	testOutputs, err := p.ReadBundleOutput("failed-tests", p.Manifest.Name, "")
+	testOutputs, err := p.ReadBundleOutput("failed-tests", bundleName, "")
 	require.NoError(t, err, "could not read failed-tests output")
 	assert.Equal(t, "TestInstall\nTestUpgrade", testOutputs, "expected the failed-tests output to be populated correctly")
 }
@@ -79,17 +80,19 @@ func CleanupCurrentBundle(p *porter.TestPorter) {
 	assert.NoError(p.T(), err, "uninstall failed for current bundle")
 }
 
-func installExecOutputsBundle(p *porter.TestPorter) {
+func installExecOutputsBundle(p *porter.TestPorter) string {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	p.AddTestBundleDir(filepath.Join(p.RepoRoot, "examples/exec-outputs"), true)
+	bundleName := p.AddTestBundleDir(filepath.Join(p.RepoRoot, "examples/exec-outputs"), true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(p.T(), err)
+
+	return bundleName
 }
 
 func invokeExecOutputsBundle(p *porter.TestPorter, action string) {

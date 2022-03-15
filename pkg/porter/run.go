@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"github.com/pkg/errors"
 )
@@ -72,12 +73,12 @@ func (o *RunOptions) defaultDebug() error {
 }
 
 func (p *Porter) Run(opts RunOptions) error {
-	err := p.LoadManifestFrom(opts.File)
+	m, err := manifest.LoadManifestFrom(p.Context, opts.File)
 	if err != nil {
 		return err
 	}
 
-	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.Action, p.Manifest)
+	runtimeManifest := runtime.NewRuntimeManifest(p.Context, opts.Action, m)
 	r := runtime.NewPorterRuntime(p.Context, p.Mixins)
 	err = r.Execute(runtimeManifest)
 	if err == nil {
