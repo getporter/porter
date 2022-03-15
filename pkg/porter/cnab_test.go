@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -120,7 +121,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 		},
 	}
 
-	err := opts.Validate([]string{}, p.Porter)
+	err := opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
 	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
@@ -139,7 +140,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
 
-	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
 	require.NoError(t, err)
@@ -153,7 +154,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 		},
 	}
 
-	err = opts.Validate([]string{}, p.Porter)
+	err = opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
 	err = opts.parseParamSets(p.Porter, bun)
@@ -166,7 +167,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	defer p.Teardown()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
 	require.NoError(t, err)

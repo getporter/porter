@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
@@ -112,7 +113,7 @@ type sharedOptions struct {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *sharedOptions) Validate(args []string, p *Porter) error {
+func (o *sharedOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
@@ -123,7 +124,7 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 		return err
 	}
 
-	err = p.applyDefaultOptions(o)
+	err = p.applyDefaultOptions(ctx, o)
 	if err != nil {
 		return err
 	}

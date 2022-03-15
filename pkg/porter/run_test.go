@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -35,7 +36,7 @@ func TestPorter_Run(t *testing.T) {
 	err := opts.Validate()
 	require.NoError(t, err, "could not validate run options")
 
-	err = p.Run(opts)
+	err = p.Run(context.Background(), opts)
 	assert.NoError(t, err, "run failed")
 }
 

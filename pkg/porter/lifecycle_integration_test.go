@@ -26,7 +26,7 @@ func TestResolveBundleReference(t *testing.T) {
 		p.AddTestBundleDir(filepath.Join(p.RepoRoot, "tests/testdata/mybuns"), true)
 
 		opts := &BundleActionOptions{}
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
@@ -43,7 +43,7 @@ func TestResolveBundleReference(t *testing.T) {
 
 		opts := &BundleActionOptions{}
 		opts.CNABFile = "bundle.json"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
@@ -59,7 +59,7 @@ func TestResolveBundleReference(t *testing.T) {
 
 		opts := &BundleActionOptions{}
 		opts.Reference = "getporter/porter-hello:v0.1.1"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
@@ -83,7 +83,7 @@ func TestResolveBundleReference(t *testing.T) {
 		opts := &BundleActionOptions{}
 		opts.Name = "example"
 		opts.Namespace = "dev"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)

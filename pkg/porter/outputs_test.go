@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -118,7 +119,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 					Format: tc.format,
 				},
 			}
-			err := p.PrintBundleOutputs(opts)
+			err := p.PrintBundleOutputs(context.Background(), opts)
 			require.NoError(t, err, "could not print bundle outputs")
 
 			p.CompareGoldenFile(tc.expectedOutput, p.TestConfig.TestContext.GetOutput())

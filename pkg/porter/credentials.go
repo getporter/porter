@@ -83,13 +83,13 @@ func (o CredentialOptions) ParseLabels() map[string]string {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *CredentialOptions) Validate(args []string, p *Porter) error {
+func (o *CredentialOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	err := o.validateCredName(args)
 	if err != nil {
 		return err
 	}
 
-	return o.BundleActionOptions.Validate(args, p)
+	return o.BundleActionOptions.Validate(ctx, args, p)
 }
 
 func (o *CredentialOptions) validateCredName(args []string) error {

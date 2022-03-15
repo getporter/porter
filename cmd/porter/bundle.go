@@ -106,7 +106,7 @@ The lint command is run automatically when you build a bundle. The command is av
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintLintResults(opts)
+			return p.PrintLintResults(cmd.Context(), opts)
 		},
 	}
 
@@ -144,7 +144,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle install --label env=dev --label owner=myuser
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(cmd.Context(), opts)
@@ -201,7 +201,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UpgradeBundle(cmd.Context(), opts)
@@ -258,7 +258,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle invoke --action ACTION --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InvokeBundle(cmd.Context(), opts)
@@ -317,7 +317,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle uninstall --force-delete
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UninstallBundle(cmd.Context(), opts)
@@ -405,7 +405,7 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
   porter bundle archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Archive(cmd.Context(), opts)

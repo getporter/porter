@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -72,8 +73,8 @@ func (o *RunOptions) defaultDebug() error {
 	return nil
 }
 
-func (p *Porter) Run(opts RunOptions) error {
-	m, err := manifest.LoadManifestFrom(p.Context, opts.File)
+func (p *Porter) Run(ctx context.Context, opts RunOptions) error {
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
 		return err
 	}

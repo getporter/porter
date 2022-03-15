@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -13,7 +14,9 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
@@ -90,10 +93,10 @@ type Manifest struct {
 	Required []RequiredExtension `yaml:"required,omitempty"`
 }
 
-func (m *Manifest) Validate(cxt *portercontext.Context) error {
+func (m *Manifest) Validate(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
 	var result error
 
-	err := m.validateMetadata(cxt)
+	err := m.validateMetadata(cxt, strategy)
 	if err != nil {
 		return err
 	}
@@ -165,13 +168,12 @@ func (m *Manifest) Validate(cxt *portercontext.Context) error {
 	return result
 }
 
-func (m *Manifest) validateMetadata(cxt *portercontext.Context) error {
-	if m.SchemaVersion != SupportedSchemaVersion {
-		if m.SchemaVersion == "" {
-			fmt.Fprintf(cxt.Err, "WARNING: This bundle was built with an old version of Porter and doesn't declare a schema version. This may not work but we will give it a try. If you see errors, rebuild the bundle with the latest v1 release of Porter.")
+func (m *Manifest) validateMetadata(cxt *portercontext.Context, strategy schema.CheckStrategy) error {
+	if warnOnly, err := schema.ValidateSchemaVersion(strategy, SupportedSchemaVersion, m.SchemaVersion); err != nil {
+		if warnOnly {
+			fmt.Fprintln(cxt.Err, err)
 		} else {
-			return errors.Errorf("The bundle uses schema version %s when the supported schema version is %s. See https://release-v1.porter.sh/reference/file-formats/#supported-versions for more details.",
-				m.SchemaVersion, SupportedSchemaVersion)
+			return err
 		}
 	}
 
@@ -1038,14 +1040,16 @@ func scanManifestTemplating(data []byte) (templateScanResult, error) {
 	return result, nil
 }
 
-func LoadManifestFrom(cxt *portercontext.Context, file string) (*Manifest, error) {
-	m, err := ReadManifest(cxt, file)
+// LoadManifestFrom reads and validates the manifest at the specified location,
+// and returns a populated Manifest structure.
+func LoadManifestFrom(ctx context.Context, config *config.Config, file string) (*Manifest, error) {
+	m, err := ReadManifest(config.Context, file)
 	if err != nil {
 		return nil, err
 	}
 
-	err = m.Validate(cxt)
-	if err != nil {
+	strategy := config.GetSchemaCheckStrategy(ctx)
+	if err = m.Validate(config.Context, strategy); err != nil {
 		return nil, err
 	}
 

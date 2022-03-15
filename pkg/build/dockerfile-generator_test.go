@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -31,7 +32,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 			require.Nil(t, err)
 			c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-			m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+			m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 			require.NoError(t, err, "could not load manifest")
 
 			// ignore mixins in the unit tests
@@ -61,7 +62,7 @@ func TestPorter_buildCustomDockerfile(t *testing.T) {
 		require.Nil(t, err)
 		c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
 		// Use a custom dockerfile template
@@ -91,7 +92,7 @@ COPY mybin /cnab/app/
 		require.Nil(t, err)
 		c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
 		// Use a custom dockerfile template
@@ -124,7 +125,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// ignore mixins in the unit tests
@@ -159,7 +160,7 @@ func TestPorter_prepareDockerFilesystem(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	mp := mixin.NewTestMixinProvider()
@@ -192,7 +193,7 @@ func TestPorter_appendBuildInstructionsIfMixinTokenIsNotPresent(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	// Use a custom dockerfile template
@@ -221,7 +222,7 @@ func TestPorter_buildMixinsSection_mixinErr(t *testing.T) {
 	require.Nil(t, err)
 	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	m.Mixins = []manifest.MixinDeclaration{{Name: "exec"}}

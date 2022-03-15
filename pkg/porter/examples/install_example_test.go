@@ -19,7 +19,7 @@ func ExampleInstall() {
 	// Always call validate on the options before executing. There is defaulting
 	// logic in the Validate calls.
 	const installationName = "porter-hello"
-	err := installOpts.Validate([]string{installationName}, p)
+	err := installOpts.Validate(context.Background(), []string{installationName}, p)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func ExampleInstall() {
 		log.Fatal(err)
 	}
 
-	installation, _, err := p.GetInstallation(showOpts)
+	installation, _, err := p.GetInstallation(context.Background(), showOpts)
 	if err != nil {
 		log.Fatal(err)
 	}

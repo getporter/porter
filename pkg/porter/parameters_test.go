@@ -45,7 +45,7 @@ func TestGenerateParameterSet(t *testing.T) {
 	opts.Name = "kool-params"
 	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Porter)
+	err := opts.Validate(context.Background(), nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateParameters(context.Background(), opts)

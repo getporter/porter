@@ -85,7 +85,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
 
-	m, err := manifest.LoadManifestFrom(p.Context, build.LOCAL_MANIFEST)
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
-		if err := p.preLint(); err != nil {
+		if err := p.preLint(ctx); err != nil {
 			return err
 		}
 	}
@@ -124,7 +124,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	return errors.Wrap(builder.BuildInvocationImage(ctx, m), "unable to build CNAB invocation image")
 }
 
-func (p *Porter) preLint() error {
+func (p *Porter) preLint(ctx context.Context) error {
 	lintOpts := LintOptions{
 		contextOptions: NewContextOptions(p.Context),
 		PrintOptions:   printer.PrintOptions{},
@@ -135,7 +135,7 @@ func (p *Porter) preLint() error {
 		return err
 	}
 
-	results, err := p.Lint(lintOpts)
+	results, err := p.Lint(ctx, lintOpts)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -65,8 +66,8 @@ func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) 
 }
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
-func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return err
 	}
@@ -113,8 +114,8 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs claims.Outputs
 
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
-func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions) (DisplayValues, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +139,8 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, erro
 	return displayOutputs, nil
 }
 
-func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
-	outputs, err := p.ListBundleOutputs(&opts)
+func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions) error {
+	outputs, err := p.ListBundleOutputs(ctx, &opts)
 	if err != nil {
 		return err
 	}

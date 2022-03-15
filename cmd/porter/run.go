@@ -15,7 +15,7 @@ func buildRunCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.Run(opts)
+			return p.Run(cmd.Context(), opts)
 		},
 		Hidden: true, // Hide runtime commands from the helptext
 	}

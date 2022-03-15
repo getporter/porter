@@ -112,7 +112,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	log.Infof("The installation is out-of-sync, running the %s action...", actionOpts.GetAction())
-	if err := actionOpts.Validate(nil, p); err != nil {
+	if err := actionOpts.Validate(ctx, nil, p); err != nil {
 		return err
 	}
 
