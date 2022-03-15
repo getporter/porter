@@ -11,7 +11,6 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
-	"get.porter.sh/porter/pkg/manifest"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 )
@@ -166,12 +165,6 @@ func (c *Cache) cacheManifest(cb *CachedBundle) error {
 		if err != nil {
 			return errors.Wrapf(err, "error writing porter.yaml for %s", cb.Reference)
 		}
-
-		m, err := manifest.LoadManifestFrom(c.Context, cb.ManifestPath)
-		if err != nil {
-			return errors.Wrapf(err, "error reading porter.yaml for %s", cb.Reference)
-		}
-		cb.Manifest = m
 	}
 
 	return nil

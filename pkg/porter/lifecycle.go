@@ -234,9 +234,5 @@ func (p *Porter) prepullBundleByReference(opts *BundleActionOptions) (cache.Cach
 		opts.Name = cachedBundle.Definition.Name
 	}
 
-	if cachedBundle.Manifest != nil {
-		p.Manifest = cachedBundle.Manifest
-	}
-
 	return cachedBundle, nil
 }
