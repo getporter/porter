@@ -51,16 +51,17 @@ func TestSearchOptions_Validate_PackageName(t *testing.T) {
 
 func TestPorter_SearchPackages_Mixins(t *testing.T) {
 	testcases := []struct {
-		name       string
-		mixin      string
-		format     printer.Format
-		wantOutput string
-		wantErr    string
+		name               string
+		mixin              string
+		format             printer.Format
+		wantOutput         string
+		wantNonEmptyOutput bool
+		wantErr            string
 	}{{
-		name:       "no name provided",
-		mixin:      "",
-		format:     printer.FormatJson,
-		wantOutput: "testdata/packages/search-no-query.txt",
+		name:               "no name provided",
+		mixin:              "",
+		format:             printer.FormatJson,
+		wantNonEmptyOutput: true,
 	}, {
 		name:       "mixin name single match",
 		mixin:      "az",
@@ -97,7 +98,13 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				gotOutput := p.TestConfig.TestContext.GetOutput()
-				test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
+
+				// Only check that the output isn't empty, but don't try to match the exact contents because it changes
+				if tc.wantNonEmptyOutput {
+					assert.NotEmpty(t, gotOutput, "expected the output to not be empty")
+				} else {
+					test.CompareGoldenFile(t, tc.wantOutput, gotOutput)
+				}
 			}
 		})
 	}
