@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/Masterminds/semver/v3"
@@ -84,14 +85,15 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
 
-	if err := p.LoadManifestFrom(build.LOCAL_MANIFEST); err != nil {
+	m, err := manifest.LoadManifestFrom(p.Context, build.LOCAL_MANIFEST)
+	if err != nil {
 		return err
 	}
 
 	// Capture the path to the original, user-provided manifest.
 	// This value will be referenced elsewhere, for instance by
 	// the digest logic (to dictate auto-rebuild)
-	p.Manifest.ManifestPath = opts.File
+	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
 		if err := p.preLint(); err != nil {
@@ -105,11 +107,11 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	// bundle.json will *not* be correct until the image is actually pushed
 	// to a registry.  The bundle.json will need to be updated after publishing
 	// and provided just-in-time during bundle execution.
-	if err := p.buildBundle(p.Manifest.Image, ""); err != nil {
+	if err := p.buildBundle(m, ""); err != nil {
 		return errors.Wrap(err, "unable to build bundle")
 	}
 
-	generator := build.NewDockerfileGenerator(p.Config, p.Manifest, p.Templates, p.Mixins)
+	generator := build.NewDockerfileGenerator(p.Config, m, p.Templates, p.Mixins)
 
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
@@ -119,7 +121,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	builder := p.GetBuilder()
-	return errors.Wrap(builder.BuildInvocationImage(ctx, p.Manifest), "unable to build CNAB invocation image")
+	return errors.Wrap(builder.BuildInvocationImage(ctx, m), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint() error {
@@ -150,7 +152,7 @@ func (p *Porter) preLint() error {
 	return nil
 }
 
-func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
+func (p *Porter) getUsedMixins(m *manifest.Manifest) ([]mixin.Metadata, error) {
 	installedMixins, err := p.ListMixins()
 
 	if err != nil {
@@ -159,7 +161,7 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 
 	var usedMixins []mixin.Metadata
 	for _, installedMixin := range installedMixins {
-		for _, m := range p.Manifest.Mixins {
+		for _, m := range m.Mixins {
 			if installedMixin.Name == m.Name {
 				usedMixins = append(usedMixins, installedMixin)
 			}
@@ -169,16 +171,16 @@ func (p *Porter) getUsedMixins() ([]mixin.Metadata, error) {
 	return usedMixins, nil
 }
 
-func (p *Porter) buildBundle(invocationImage string, digest digest.Digest) error {
-	imageDigests := map[string]string{invocationImage: digest.String()}
+func (p *Porter) buildBundle(m *manifest.Manifest, digest digest.Digest) error {
+	imageDigests := map[string]string{m.Image: digest.String()}
 
-	mixins, err := p.getUsedMixins()
+	mixins, err := p.getUsedMixins(m)
 
 	if err != nil {
 		return err
 	}
 
-	converter := configadapter.NewManifestConverter(p.Context, p.Manifest, imageDigests, mixins)
+	converter := configadapter.NewManifestConverter(p.Context, m, imageDigests, mixins)
 	bun, err := converter.ToBundle()
 	if err != nil {
 		return err

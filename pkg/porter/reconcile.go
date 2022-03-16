@@ -183,7 +183,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	}
 
 	// Have the bundle parameters changed?
-	if err := opts.LoadParameters(p); err != nil {
+	if err := opts.LoadParameters(p, newRef.Definition); err != nil {
 		return false, err
 	}
 

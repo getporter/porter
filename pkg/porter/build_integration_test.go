@@ -14,6 +14,7 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
@@ -34,9 +35,6 @@ func TestPorter_Build(t *testing.T) {
 	require.NoError(t, p.FileSystem.MkdirAll(junkDir, pkg.FileModeDirectory), "could not create test junk files")
 	junkExists, _ := p.FileSystem.DirExists(junkDir)
 	assert.True(t, junkExists, "failed to create junk files for the test")
-
-	err = p.LoadManifestFrom(config.Name)
-	require.NoError(t, err)
 
 	opts := BuildOptions{}
 	require.NoError(t, opts.Validate(p.Porter), "Validate failed")
@@ -147,10 +145,10 @@ func TestPorter_paramRequired(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
-	err := p.LoadManifestFrom(config.Name)
+	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
 	require.NoError(t, err)
 
-	err = p.buildBundle("foo", "digest")
+	err = p.buildBundle(m, "digest")
 	require.NoError(t, err)
 
 	bundleBytes, err := p.FileSystem.ReadFile(build.LOCAL_BUNDLE)

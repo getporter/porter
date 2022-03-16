@@ -326,7 +326,7 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.Set, error) {
+func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
 	for _, name := range params {
 
@@ -351,10 +351,15 @@ func (p *Porter) loadParameterSets(namespace string, params []string) (secrets.S
 
 		// A parameter may correspond to a Porter-specific parameter type of 'file'
 		// If so, add value (filepath) directly to map and remove from pset
-		for _, paramDef := range p.Manifest.Parameters {
-			if paramDef.Type == "file" {
+		for paramName, paramDef := range bun.Parameters {
+			paramSchema, ok := bun.Definitions[paramDef.Definition]
+			if !ok {
+				return nil, fmt.Errorf("definition %s not defined in bundle", paramDef.Definition)
+			}
+
+			if bun.IsFileType(paramSchema) {
 				for i, param := range pset.Parameters {
-					if param.Name == paramDef.Name {
+					if param.Name == paramName {
 						// Pass through value (filepath) directly to resolvedParameters
 						resolvedParameters[param.Name] = param.Source.Value
 						// Eliminate this param from pset to prevent its resolution by

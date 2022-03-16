@@ -31,7 +31,6 @@ func TestResolveBundleReference(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, opts.Name)
 		require.NotEmpty(t, ref.Definition)
-		require.NotEmpty(t, p.Manifest)
 	})
 
 	t.Run("cnab file", func(t *testing.T) {

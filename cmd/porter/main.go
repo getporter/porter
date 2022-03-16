@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
@@ -50,7 +51,9 @@ func main() {
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
-				log.Error(errors.New(fmt.Sprintf("%s", panicErr)), attribute.Bool("panic", true))
+				log.Error(errors.New(fmt.Sprintf("%s", panicErr)),
+					attribute.Bool("panic", true),
+					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
 				p.Close()
 				os.Exit(1)

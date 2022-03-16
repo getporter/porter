@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
@@ -83,12 +84,6 @@ func (p *Porter) Publish(ctx context.Context, opts PublishOptions) error {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
-	if opts.File != "" {
-		if err := p.LoadManifestFrom(opts.File); err != nil {
-			return err
-		}
-	}
-
 	if opts.ArchiveFile == "" {
 		return p.publishFromFile(ctx, opts)
 	}
@@ -113,64 +108,72 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 	if err != nil {
 		return err
 	}
+
+	var m *manifest.Manifest
 	if canonicalExists {
-		err := p.LoadManifestFrom(canonicalManifest)
+		m, err = manifest.LoadManifestFrom(p.Context, canonicalManifest)
 		if err != nil {
 			return err
 		}
+
 		// We still want the user-provided manifest path to be tracked,
 		// not Porter's canonical manifest path, for digest matching/auto-rebuilds
-		p.Manifest.ManifestPath = opts.File
+		m.ManifestPath = opts.File
+	} else {
+		m, err = manifest.LoadManifestFrom(p.Context, opts.File)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Capture original invocation image name as it may be updated below
-	origInvImg := p.Manifest.Image
+	origInvImg := m.Image
 
 	// Check for tag and registry overrides optionally supplied on publish
 	if opts.Tag != "" {
-		p.Manifest.DockerTag = opts.Tag
+		m.DockerTag = opts.Tag
 	}
 	if opts.Registry != "" {
-		p.Manifest.Registry = opts.Registry
+		m.Registry = opts.Registry
 	}
 
 	// If either are non-empty, null out the reference on the manifest, as
 	// it needs to be rebuilt with new values
 	if opts.Tag != "" || opts.Registry != "" {
-		p.Manifest.Reference = ""
+		m.Reference = ""
 	}
 
 	// Update invocation image and reference with opts.Reference, which may be
 	// empty, which is fine - we still may need to pick up tag and/or registry
 	// overrides
-	if err := p.Manifest.SetInvocationImageAndReference(opts.Reference); err != nil {
+	if err := m.SetInvocationImageAndReference(opts.Reference); err != nil {
 		return errors.Wrap(err, "unable to set invocation image name and reference")
 	}
 
-	if origInvImg != p.Manifest.Image {
+	if origInvImg != m.Image {
 		// Tag it so that it will be known/found by Docker for publishing
 		builder := p.GetBuilder()
-		if err := builder.TagInvocationImage(ctx, origInvImg, p.Manifest.Image); err != nil {
+		if err := builder.TagInvocationImage(ctx, origInvImg, m.Image); err != nil {
 			return err
 		}
 	}
 
-	if p.Manifest.Reference == "" {
+	if m.Reference == "" {
 		return errors.New("porter.yaml is missing registry or reference values needed for publishing")
 	}
 
 	var bundleRef cnab.BundleReference
-	bundleRef.Reference, err = cnab.ParseOCIReference(p.Manifest.Reference)
+	bundleRef.Reference, err = cnab.ParseOCIReference(m.Reference)
 	if err != nil {
-		return errors.Wrapf(err, "invalid reference %s", p.Manifest.Reference)
+		return errors.Wrapf(err, "invalid reference %s", m.Reference)
 	}
 
-	bundleRef.Digest, err = p.Registry.PushInvocationImage(ctx, p.Manifest.Image)
+	bundleRef.Digest, err = p.Registry.PushInvocationImage(ctx, m.Image)
 	if err != nil {
-		return errors.Wrapf(err, "unable to push CNAB invocation image %q", p.Manifest.Image)
+		return errors.Wrapf(err, "unable to push CNAB invocation image %q", m.Image)
 	}
 
-	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(bundleRef.Digest, opts.File)
+	bundleRef.Definition, err = p.rewriteBundleWithInvocationImageDigest(m, bundleRef.Digest)
 	if err != nil {
 		return err
 	}
@@ -375,14 +378,15 @@ func getNewImageNameFromBundleReference(origImg, bundleTag string) (image.Name, 
 	return newImgName.WithTag(imgTag)
 }
 
-func (p *Porter) rewriteBundleWithInvocationImageDigest(digest digest.Digest, manifestPath string) (cnab.ExtendedBundle, error) {
-	taggedImage, err := p.rewriteImageWithDigest(p.Manifest.Image, digest.String())
+func (p *Porter) rewriteBundleWithInvocationImageDigest(m *manifest.Manifest, digest digest.Digest) (cnab.ExtendedBundle, error) {
+	taggedImage, err := p.rewriteImageWithDigest(m.Image, digest.String())
 	if err != nil {
 		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to update invocation image reference")
 	}
+	m.Image = taggedImage
 
 	fmt.Fprintln(p.Out, "\nRewriting CNAB bundle.json...")
-	err = p.buildBundle(taggedImage, digest)
+	err = p.buildBundle(m, digest)
 	if err != nil {
 		return cnab.ExtendedBundle{}, errors.Wrap(err, "unable to rewrite CNAB bundle.json with updated invocation image digest")
 	}
