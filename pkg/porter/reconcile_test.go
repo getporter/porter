@@ -6,7 +6,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	portercontext "get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

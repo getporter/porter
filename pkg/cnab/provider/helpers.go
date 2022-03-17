@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
-	portercontext "get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"

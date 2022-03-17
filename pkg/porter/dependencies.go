@@ -9,7 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/manifest"
-	portercontext "get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/hashicorp/go-multierror"
