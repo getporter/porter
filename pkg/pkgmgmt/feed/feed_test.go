@@ -3,13 +3,13 @@ package feed
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMixinFeed_Search_Latest(t *testing.T) {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	f := NewMixinFeed(tc.Context)
 
 	f.Index["helm"] = make(map[string]*MixinFileset)
@@ -45,7 +45,7 @@ func TestMixinFeed_Search_Latest(t *testing.T) {
 }
 
 func TestMixinFeed_Search_Canary(t *testing.T) {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	f := NewMixinFeed(tc.Context)
 
 	f.Index["helm"] = make(map[string]*MixinFileset)

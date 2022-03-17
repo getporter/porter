@@ -5,7 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestLogsShowOptions_Validate(t *testing.T) {
 
 	t.Run("installation specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.Name = "mybun"
 
@@ -22,7 +22,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("installation defaulted", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		c.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
 		opts := LogsShowOptions{}
@@ -33,7 +33,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("run specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.ClaimID = "abc123"
 
@@ -42,7 +42,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("both specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 		opts.Name = "mybun"
 		opts.ClaimID = "abc123"
@@ -53,7 +53,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 	})
 
 	t.Run("neither specified", func(t *testing.T) {
-		c := context.NewTestContext(t)
+		c := portercontext.NewTestContext(t)
 		opts := LogsShowOptions{}
 
 		err := opts.Validate(c.Context)

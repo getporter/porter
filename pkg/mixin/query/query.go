@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"

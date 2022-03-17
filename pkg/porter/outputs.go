@@ -6,7 +6,7 @@ import (
 
 	claims "get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -25,7 +25,7 @@ type OutputListOptions struct {
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputShowOptions as applicable
-func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	switch len(args) {
 	case 0:
 		return errors.New("an output name must be provided")
@@ -48,7 +48,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputListOptions as applicable
-func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
 	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {

@@ -20,7 +20,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 )
 
 // ErrNoContentDigest represents an error due to an image not having a

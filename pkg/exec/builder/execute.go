@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 var DefaultFlagDashes = Dashes{
@@ -55,7 +55,7 @@ type SuppressesOutput interface {
 // themselves, and possibly allow failed commands to either pass, or to improve
 // the displayed error message
 type HasErrorHandling interface {
-	HandleError(cxt *context.Context, err ExitError, stdout string, stderr string) error
+	HandleError(cxt *portercontext.Context, err ExitError, stdout string, stderr string) error
 }
 
 type ExitError interface {
@@ -66,7 +66,7 @@ type ExitError interface {
 // ExecuteSingleStepAction runs the command represented by an ExecutableAction, where only
 // a single step is allowed to be defined in the Action (which is what happens when Porter
 // executes steps one at a time).
-func ExecuteSingleStepAction(cxt *context.Context, action ExecutableAction) (string, error) {
+func ExecuteSingleStepAction(cxt *portercontext.Context, action ExecutableAction) (string, error) {
 	steps := action.GetSteps()
 	if len(steps) != 1 {
 		return "", errors.Errorf("expected a single step, but got %d", len(steps))
@@ -99,7 +99,7 @@ func ExecuteSingleStepAction(cxt *context.Context, action ExecutableAction) (str
 
 // ExecuteStep runs the command represented by an ExecutableStep, piping stdout/stderr
 // back to the context and returns the buffered output for subsequent processing.
-func ExecuteStep(cxt *context.Context, step ExecutableStep) (string, error) {
+func ExecuteStep(cxt *portercontext.Context, step ExecutableStep) (string, error) {
 	// Identify if any suffix arguments are defined
 	var suffixArgs []string
 	orderedArgs, ok := step.(HasOrderedArguments)

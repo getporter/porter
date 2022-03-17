@@ -6,9 +6,9 @@ import (
 	"os/exec"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/client"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 const (
@@ -56,7 +56,7 @@ func (c *PackageManager) GetSchema(name string) (string, error) {
 
 	// Copy the existing context and tweak to pipe the output differently
 	mixinSchema := &bytes.Buffer{}
-	var mixinContext context.Context
+	var mixinContext portercontext.Context
 	mixinContext = *c.Context
 	mixinContext.Out = mixinSchema
 	if !c.Debug {

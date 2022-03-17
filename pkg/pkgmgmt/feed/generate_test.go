@@ -9,12 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGenerate(t *testing.T) {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 
 	tc.FileSystem.Create("bin/v1.2.3/helm-darwin-amd64")
@@ -134,7 +134,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.NewTestContext(t)
+			ctx := portercontext.NewTestContext(t)
 			ctx.AddTestFile("testdata/atom-template.xml", "template.xml")
 
 			if tc.mixinName != "" {
@@ -160,7 +160,7 @@ func TestGenerate_RegexMatch(t *testing.T) {
 }
 
 func TestGenerate_ExistingFeed(t *testing.T) {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 
@@ -205,7 +205,7 @@ func TestGenerate_ExistingFeed(t *testing.T) {
 }
 
 func TestGenerate_RegenerateDoesNotCreateDuplicates(t *testing.T) {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	tc.AddTestFile("testdata/atom-template.xml", "template.xml")
 	tc.AddTestFile("testdata/atom-existing.xml", "atom.xml")
 

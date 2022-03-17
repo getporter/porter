@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/Masterminds/semver/v3"
 )
 
 type MixinFeed struct {
-	*context.Context
+	*portercontext.Context
 
 	// Index of mixin files
 	Index map[string]map[string]*MixinFileset
@@ -23,7 +23,7 @@ type MixinFeed struct {
 	Updated *time.Time
 }
 
-func NewMixinFeed(cxt *context.Context) *MixinFeed {
+func NewMixinFeed(cxt *portercontext.Context) *MixinFeed {
 	return &MixinFeed{
 		Index:   make(map[string]map[string]*MixinFileset),
 		Context: cxt,

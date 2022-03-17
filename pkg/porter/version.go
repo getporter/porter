@@ -7,10 +7,10 @@ import (
 	"text/template"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/porter/version"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -73,7 +73,7 @@ func getSystemInfo() *SystemInfo {
 	}
 }
 
-func (p *Porter) PrintDebugInfo(ctx *context.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
+func (p *Porter) PrintDebugInfo(ctx *portercontext.Context, opts VersionOpts, metadata pkgmgmt.Metadata) error {
 	opts.RawFormat = string(printer.FormatPlaintext)
 	sysInfo := getSystemInfo()
 	mixins, err := p.ListMixins()

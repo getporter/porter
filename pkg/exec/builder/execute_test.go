@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
 )
 
@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestExecuteSingleStepAction(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 
 	err := c.FileSystem.WriteFile("config.txt", []byte("abc123"), pkg.FileModeWritable)
 	require.NoError(t, err)
@@ -124,7 +124,7 @@ func (s TestOrderedStep) GetSuffixArguments() []string {
 }
 
 func TestExecuteStep_HasOrderedArguments(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	step := TestOrderedStep{
 		TestStep: TestStep{
 			Command:   "docker",
@@ -143,7 +143,7 @@ func TestExecuteStep_HasOrderedArguments(t *testing.T) {
 }
 
 func TestExecuteStep_SpecifiesCustomWorkingDirectory(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	c.UseFilesystem()
 	wd, _ := filepath.EvalSymlinks(os.TempDir())
 
@@ -170,7 +170,7 @@ func TestExecuteStep_WithEnvironmentVars(t *testing.T) {
 		t.Skip()
 	}
 
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	c.UseFilesystem()
 	step := TestOrderedStep{
 		TestStep: TestStep{

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ type TestClaimProvider struct {
 }
 
 func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
 	return NewTestClaimProviderFor(t, testStore)
 }

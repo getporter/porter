@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func (o TestRegexOutput) GetRegex() string {
 }
 
 func TestTestRegexOutputs(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 
 	step := TestStep{
 		Outputs: []Output{
@@ -40,7 +40,7 @@ logs`
 	err := ProcessRegexOutputs(c.Context, step, stdout)
 	require.NoError(t, err, "ProcessRegexOutputs should not return an error")
 
-	f := filepath.Join(context.MixinOutputsDir, "failed-test")
+	f := filepath.Join(portercontext.MixinOutputsDir, "failed-test")
 	gotOutput, err := c.FileSystem.ReadFile(f)
 	require.NoError(t, err, "could not read output file %s", f)
 

@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -126,7 +126,7 @@ type MixinsCreateOptions struct {
 	DirPath        string
 }
 
-func (o *MixinsCreateOptions) Validate(args []string, cxt *context.Context) error {
+func (o *MixinsCreateOptions) Validate(args []string, cxt *portercontext.Context) error {
 	if len(args) < 1 || args[0] == "" {
 		return errors.New("mixin name is required")
 	}

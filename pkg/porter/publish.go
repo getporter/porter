@@ -11,8 +11,8 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"

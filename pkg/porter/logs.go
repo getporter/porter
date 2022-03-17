@@ -3,7 +3,7 @@ package porter
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ func (o *LogsShowOptions) Installation() string {
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of LogsShowOptions as applicable
-func (o *LogsShowOptions) Validate(cxt *context.Context) error {
+func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 	if o.Name != "" && o.ClaimID != "" {
 		return errors.New("either --installation or --run should be specified, not both")
 	}

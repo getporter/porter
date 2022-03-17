@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 )
 
 var _ HasErrorHandling = IgnoreErrorHandler{}

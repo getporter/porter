@@ -1,7 +1,7 @@
 package mongodb
 
 import (
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -16,7 +16,7 @@ type PluginConfig struct {
 	Timeout int    `mapstructure:"timeout,omitempty"`
 }
 
-func NewPlugin(cxt *context.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
+func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
 	cfg := PluginConfig{
 		Timeout: 10,
 	}

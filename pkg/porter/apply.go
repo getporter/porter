@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/claims"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"

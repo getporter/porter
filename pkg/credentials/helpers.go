@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/portercontext"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
@@ -20,14 +20,14 @@ type TestCredentialProvider struct {
 	*CredentialStore
 
 	T           *testing.T
-	TestContext *context.TestContext
+	TestContext *portercontext.TestContext
 	// TestSecrets allows you to set up secrets for unit testing
 	TestSecrets *inmemorysecrets.Store
 	TestStorage storage.Store
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialProvider {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
 	return NewTestCredentialProviderFor(t, testStore)
 }
@@ -36,7 +36,7 @@ func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store) *TestCr
 	backingSecrets := inmemorysecrets.NewStore()
 	return &TestCredentialProvider{
 		T:           t,
-		TestContext: context.NewTestContext(t),
+		TestContext: portercontext.NewTestContext(t),
 		TestSecrets: backingSecrets,
 		TestStorage: testStore,
 		CredentialStore: &CredentialStore{

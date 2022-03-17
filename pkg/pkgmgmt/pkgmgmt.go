@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"path"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 // PackageManager handles searching, installing and communicating with packages.
@@ -17,7 +17,7 @@ type PackageManager interface {
 	Uninstall(UninstallOptions) error
 
 	// Run a command against the installed package.
-	Run(pkgContext *context.Context, name string, commandOpts CommandOptions) error
+	Run(pkgContext *portercontext.Context, name string, commandOpts CommandOptions) error
 }
 
 type PreRunHandler func(command string, cmd *exec.Cmd)

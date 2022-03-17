@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +16,7 @@ type OutputRegex interface {
 
 // ProcessJsonPathOutputs looks through the outputs for any that implement the OutputRegex,
 // applies the regular expression to the output buffer and extracts their output.
-func ProcessRegexOutputs(cxt *context.Context, step StepWithOutputs, stdout string) error {
+func ProcessRegexOutputs(cxt *portercontext.Context, step StepWithOutputs, stdout string) error {
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {

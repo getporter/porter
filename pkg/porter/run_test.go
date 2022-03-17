@@ -5,9 +5,9 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestPorter_Run(t *testing.T) {
 
 	// Mock the mixin test runner and verify that we are calling runtime mixins, e.g. exec-runtime and not exec
 	mp := p.Mixins.(*mixin.TestMixinProvider)
-	mp.RunAssertions = append(mp.RunAssertions, func(mixinCxt *context.Context, mixinName string, commandOpts pkgmgmt.CommandOptions) error {
+	mp.RunAssertions = append(mp.RunAssertions, func(mixinCxt *portercontext.Context, mixinName string, commandOpts pkgmgmt.CommandOptions) error {
 		assert.Equal(t, "exec", mixinName, "expected to call the exec mixin")
 		assert.True(t, commandOpts.Runtime, "the mixin command should be executed in runtime mode")
 		assert.Equal(t, "install", commandOpts.Command, "should have executed the mixin's install command")

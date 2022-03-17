@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	portercontext "get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"github.com/pkg/errors"
