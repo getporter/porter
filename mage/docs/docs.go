@@ -114,7 +114,7 @@ func prepareOperatorRepo() string {
 	_, err := os.Stat(cloneDestination)
 	if err == nil { // Already cloned
 		log.Println("Operator repository already cloned, updating")
-		must.Command("git", "fetch").Run()
+		must.Command("git", "fetch").In(cloneDestination).Run()
 		must.Command("git", "reset", "--hard", "FETCH_HEAD").In(cloneDestination).Run()
 		return cloneDestination
 	}
