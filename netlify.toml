@@ -9,7 +9,7 @@
   HUGO_VERSION = "0.78.1"
 
 [context.branch-deploy]
-  command = "BASEURL=https://${BRANCH/\//-}.porter.sh/ go run mage.go -v docs"
+  command = "BASEURL=https://${BRANCH/\//-}.porter.sh/ && go run mage.go -v docs"
   
 [context.deploy-preview]
-  command = "BASEURL=$DEPLOY_PRIME_URL/ go run mage.go -v docs"
+  command = "BASEURL=$DEPLOY_PRIME_URL/ && go run mage.go -v docs"
