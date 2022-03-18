@@ -20,6 +20,10 @@ var must = shx.CommandBuilder{StopOnError: true}
 const (
 	LocalOperatorRepositoryEnv = "PORTER_OPERATOR_REPOSITORY"
 	PreviewContainer           = "porter-docs"
+
+	// DefaultOperatorSourceDir is the directory where the Porter Operator docs
+	// are cloned when LocalOperatorRepositoryEnv was not specified.
+	DefaultOperatorSourceDir = "docs/sources/operator"
 )
 
 // Generate Porter's static website. Used by Netlify.
@@ -76,8 +80,9 @@ func DocsPreview() {
 // clone the other doc repos if they don't exist
 // use a local copy as defined in PORTER_OPERATOR_REPOSITORY if available
 func linkOperatorDocs() {
-	docsDest := "docs/content/operator"
-	err := os.RemoveAll(docsDest)
+	// Remove the old symlink in case the source has moved
+	operatorSymlink := "docs/content/operator"
+	err := os.RemoveAll(operatorSymlink)
 	if !os.IsNotExist(err) {
 		mgx.Must(err)
 	}
@@ -85,8 +90,8 @@ func linkOperatorDocs() {
 	repoPath := prepareOperatorRepo()
 	contentPath, _ := filepath.Abs("docs/content")
 	relPath, _ := filepath.Rel(contentPath, filepath.Join(repoPath, "docs/content"))
-	log.Println("ln -s", relPath, docsDest)
-	mgx.Must(os.Symlink(relPath, docsDest))
+	log.Println("ln -s", relPath, operatorSymlink)
+	mgx.Must(os.Symlink(relPath, operatorSymlink))
 }
 
 // returns the location of the docs repo
@@ -104,11 +109,12 @@ func prepareOperatorRepo() string {
 		}
 	}
 
-	// Clone the repo
-	cloneDestination, _ := filepath.Abs("docs/sources/operator")
+	// Clone the repo, and ensure it is up-to-date
+	cloneDestination, _ := filepath.Abs(DefaultOperatorSourceDir)
 	_, err := os.Stat(cloneDestination)
 	if err == nil { // Already cloned
-		log.Println("Operator repository already cloned, skipping")
+		log.Println("Operator repository already cloned, updating")
+		must.Command("git", "pull").In(cloneDestination).Run()
 		return cloneDestination
 	}
 	if !os.IsNotExist(err) {

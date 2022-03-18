@@ -1,5 +1,6 @@
 /docs/public/
 /docs/content/operator
+/docs/sources/
 /bin
 /porter
 .DS_Store
