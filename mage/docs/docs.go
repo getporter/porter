@@ -47,7 +47,7 @@ func removePreviewContainer() {
 // Preview the website documentation.
 func DocsPreview() {
 	mg.Deps(removePreviewContainer)
-	operatorRepo := prepareOperatorRepo()
+	operatorRepo := ensureOperatorRepository()
 	operatorDocs, err := filepath.Abs(filepath.Join(operatorRepo, "docs/content"))
 	mgx.Must(err)
 
@@ -87,42 +87,54 @@ func linkOperatorDocs() {
 		mgx.Must(err)
 	}
 
-	repoPath := prepareOperatorRepo()
+	repoPath := ensureOperatorRepository()
 	contentPath, _ := filepath.Abs("docs/content")
 	relPath, _ := filepath.Rel(contentPath, filepath.Join(repoPath, "docs/content"))
 	log.Println("ln -s", relPath, operatorSymlink)
 	mgx.Must(os.Symlink(relPath, operatorSymlink))
 }
 
-// returns the location of the docs repo
-func prepareOperatorRepo() string {
+// Ensures that we have an operator repository and returns its location
+func ensureOperatorRepository() string {
+	repoPath, err := ensureOperatorRepositoryIn(os.Getenv(LocalOperatorRepositoryEnv), DefaultOperatorSourceDir)
+	mgx.Must(err)
+	return repoPath
+}
+
+// Checks if the repository in localRepo exists and return it
+// otherwise clone the repository into defaultRepo, updating with the latest changes if already cloned.
+func ensureOperatorRepositoryIn(localRepo string, defaultRepo string) (string, error) {
 	// Check if we are using a local repo
-	if localRepo, ok := os.LookupEnv(LocalOperatorRepositoryEnv); ok {
-		if localRepo != "" {
-			if _, err := os.Stat(localRepo); err != nil {
-				log.Printf("%s %s does not exist, ignoring\n", LocalOperatorRepositoryEnv, localRepo)
-				os.Unsetenv(LocalOperatorRepositoryEnv)
-			}
+	if localRepo != "" {
+		if _, err := os.Stat(localRepo); err != nil {
+			log.Printf("%s %s does not exist, ignoring\n", LocalOperatorRepositoryEnv, localRepo)
+			os.Unsetenv(LocalOperatorRepositoryEnv)
 		} else {
 			log.Printf("Using operator repository at %s\n", localRepo)
-			return localRepo
+			return localRepo, nil
 		}
 	}
 
 	// Clone the repo, and ensure it is up-to-date
-	cloneDestination, _ := filepath.Abs(DefaultOperatorSourceDir)
-	_, err := os.Stat(cloneDestination)
-	if err == nil { // Already cloned
+	cloneDestination, _ := filepath.Abs(defaultRepo)
+	_, err := os.Stat(filepath.Join(cloneDestination, ".git"))
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
+	} else if err == nil {
 		log.Println("Operator repository already cloned, updating")
-		must.Command("git", "fetch").In(cloneDestination).Run()
-		must.Command("git", "reset", "--hard", "FETCH_HEAD").In(cloneDestination).Run()
-		return cloneDestination
-	}
-	if !os.IsNotExist(err) {
-		mgx.Must(err)
+		if err = shx.Command("git", "fetch").In(cloneDestination).Run(); err != nil {
+			return "", err
+		}
+		if err = shx.Command("git", "reset", "--hard", "FETCH_HEAD").In(cloneDestination).Run(); err != nil {
+			return "", err
+		}
+		return cloneDestination, nil
 	}
 
 	log.Println("Cloning operator repository")
-	must.Run("git", "clone", "https://github.com/getporter/operator.git", cloneDestination)
-	return cloneDestination
+	os.RemoveAll(cloneDestination) // if the path existed but wasn't a git repo, we want to remove it and start fresh
+	if err = shx.Run("git", "clone", "https://github.com/getporter/operator.git", cloneDestination); err != nil {
+		return "", err
+	}
+	return cloneDestination, nil
 }
