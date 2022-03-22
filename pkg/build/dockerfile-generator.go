@@ -247,17 +247,18 @@ func (g *DockerfileGenerator) replaceTokens(lines []string) ([]string, error) {
 
 	fromToken := g.getIndexOfToken(lines, "FROM")
 
-	substitutions := map[string]struct {
+	substitutions := []struct {
+		token        string
 		lines        []string
 		defaultIndex int
 		replace      bool
 	}{
-		PORTER_INIT_TOKEN:   {lines: g.buildInitSection(), defaultIndex: fromToken, replace: true},
-		PORTER_MIXINS_TOKEN: {lines: mixinLines, defaultIndex: -1, replace: true},
+		{token: PORTER_INIT_TOKEN, lines: g.buildInitSection(), defaultIndex: fromToken, replace: true},
+		{token: PORTER_MIXINS_TOKEN, lines: mixinLines, defaultIndex: -1, replace: true},
 	}
 
-	for token, substitution := range substitutions {
-		index := g.getIndexOfToken(lines, token)
+	for _, substitution := range substitutions {
+		index := g.getIndexOfToken(lines, substitution.token)
 
 		// If we can't find the token, use the default for that token
 		if index == -1 {
