@@ -304,8 +304,8 @@ github.com/cloudflare/cfssl v1.4.1 h1:vScfU2DrIUI9VPHBVeeAQ0q5A+9yshO1Gz+3QoUQiK
 github.com/cloudflare/cfssl v1.4.1/go.mod h1:KManx/OJPb5QY+y0+o/898AMcM128sF0bURvoVUSjTo=
 github.com/cloudflare/go-metrics v0.0.0-20151117154305-6a9aea36fb41/go.mod h1:eaZPlJWD+G9wseg1BuRXlHnjntPMrywMsyxf+LTOdP4=
 github.com/cloudflare/redoctober v0.0.0-20171127175943-746a508df14c/go.mod h1:6Se34jNoqrd8bTxrmJB2Bg2aoZ2CdSXonils9NsiNgo=
-github.com/cnabio/cnab-to-oci v0.3.2 h1:gzgeZIrDsk6gzGtLd3uBd/CvDrhqsrN8Y1cN/quXOI4=
-github.com/cnabio/cnab-to-oci v0.3.2/go.mod h1:j/cEuS9yJcUDcTU9xxrltaU49T/76L7J6Tg2FQFRXhs=
+github.com/cnabio/cnab-to-oci v0.3.3 h1:92sJJoOGWp4Dg9AErXPMHTFI6qYZuPMdL1PXU1WVyB4=
+github.com/cnabio/cnab-to-oci v0.3.3/go.mod h1:tp1FxK29rjLAP2v7tqzVmNI20B+2lCvEC7H3yUdIKD4=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
