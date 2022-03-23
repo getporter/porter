@@ -70,6 +70,9 @@ type MixinRecord struct {
 func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
 
+	fmt.Printf("c.Context = %#v\n", c.Context)
+	fmt.Printf("c.Manifest = %#v\n", c.Manifest)
+
 	// Remember the original porter.yaml, base64 encoded to avoid canonical json shenanigans
 	rawManifest, err := manifest.ReadManifestData(c.Context, c.Manifest.ManifestPath)
 	if err != nil {
