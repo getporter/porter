@@ -2,17 +2,15 @@ package releases
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"sort"
 	"strings"
 	"sync"
 
-	"get.porter.sh/porter/pkg"
+	"github.com/carolynvs/magex/ci"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -55,11 +53,9 @@ func LoadMetadata() GitMetadata {
 		log.Println("Commit:", gitMetadata.Commit)
 	})
 
-	// Save github action environment variables
-	if githubEnv, ok := os.LookupEnv("GITHUB_ENV"); ok {
-		err := ioutil.WriteFile(githubEnv, []byte("PERMALINK="+gitMetadata.Permalink), pkg.FileModeWritable)
-		mgx.Must(errors.Wrapf(err, "couldn't persist PERMALINK to a GitHub Actions environment variable"))
-	}
+	// Save the metadata as environment variables to use later in the CI pipeline
+	p, _ := ci.DetectBuildProvider()
+	mgx.Must(p.SetEnv("PERMALINK", gitMetadata.Permalink))
 
 	return gitMetadata
 }
