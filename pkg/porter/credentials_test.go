@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -35,8 +36,8 @@ func TestGenerateNoName(t *testing.T) {
 	creds, err := p.Credentials.GetCredentialSet("", "porter-hello")
 	require.NoError(t, err, "expected credential to have been generated")
 	var zero time.Time
-	assert.True(t, zero.Before(creds.Created), "expected Credentials.Created to be set")
-	assert.True(t, creds.Created.Equal(creds.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
+	assert.True(t, zero.Before(creds.Status.Created), "expected Credentials.Created to be set")
+	assert.True(t, creds.Status.Created.Equal(creds.Status.Modified), "expected Credentials.Created to be initialized to Credentials.Modified")
 }
 
 func TestGenerateNameProvided(t *testing.T) {
@@ -377,4 +378,135 @@ func TestApplyOptions_Validate(t *testing.T) {
 		require.Contains(t, err.Error(), "only one file argument may be specified")
 	})
 
+}
+
+func TestCredentialsCreateOptions_Validate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		args       []string
+		outputType string
+		wantErr    string
+	}{
+		{
+			name:       "no fileName defined",
+			args:       []string{},
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "two positional arguments",
+			args:       []string{"credential-set1", "credential-set2"},
+			outputType: "",
+			wantErr:    "only one positional argument may be specified",
+		},
+		{
+			name:       "no file format defined from file extension or output flag",
+			args:       []string{"credential-set"},
+			outputType: "",
+			wantErr:    "could not detect the file format from the file extension (.txt). Specify the format with --output.",
+		},
+		{
+			name:       "different file format",
+			args:       []string{"credential-set.json"},
+			outputType: "yaml",
+			wantErr:    "",
+		},
+		{
+			name:       "format from output flag",
+			args:       []string{"creds"},
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "format from file extension",
+			args:       []string{"credential-set.yml"},
+			outputType: "",
+			wantErr:    "",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := CredentialCreateOptions{OutputType: tc.outputType}
+			err := opts.Validate(tc.args)
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestCredentialsCreate(t *testing.T) {
+	testcases := []struct {
+		name       string
+		fileName   string
+		outputType string
+		wantErr    string
+	}{
+		{
+			name:       "valid input: no input defined, will output yaml format to stdout",
+			fileName:   "",
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: output to stdout with format json",
+			fileName:   "",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from fileName",
+			fileName:   "fileName.json",
+			outputType: "",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: file format from outputType",
+			fileName:   "fileName",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: different file format from fileName and outputType",
+			fileName:   "fileName.yaml",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "valid input: same file format in fileName and outputType",
+			fileName:   "fileName.json",
+			outputType: "json",
+			wantErr:    "",
+		},
+		{
+			name:       "invalid input: invalid file format from fileName",
+			fileName:   "fileName.txt",
+			outputType: "",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
+		},
+		{
+			name:       "invalid input: invalid file format from outputType",
+			fileName:   "fileName",
+			outputType: "txt",
+			wantErr:    fmt.Sprintf("unsupported format %s. Supported formats are: yaml and json.", "txt"),
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Teardown()
+
+			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
+			err := p.CreateCredential(opts)
+			if tc.wantErr == "" {
+				require.NoError(t, err, "no error should have existed")
+				return
+			}
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
 }

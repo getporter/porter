@@ -1,5 +1,6 @@
 # This is a test bundle that can be used as a dependency
 
+schemaVersion: 1.0.0-alpha.1
 name: mydb
 version: 0.1.0
 description: "A test bundle dependency"

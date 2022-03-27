@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"github.com/pkg/errors"
 )
@@ -46,9 +47,9 @@ func (p *Porter) CopyTemplate(getTemplate func() ([]byte, error), dest string) e
 		return err
 	}
 
-	var mode os.FileMode = 0600
+	var mode os.FileMode = pkg.FileModeWritable
 	if filepath.Ext(dest) == ".sh" {
-		mode = 0700
+		mode = pkg.FileModeExecutable
 	}
 
 	err = p.FileSystem.WriteFile(dest, tmpl, mode)

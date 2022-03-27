@@ -1,17 +1,18 @@
-mixins:
-- exec
-- helm3:
-    repositories:
-      bitnami:
-        url: "https://charts.bitnami.com/bitnami"
-
+schemaVersion: 1.0.0-alpha.1
 name: mysql
 version: 0.1.4
 registry: "localhost:5000"
 
+mixins:
+  - exec
+  - helm3:
+      repositories:
+        bitnami:
+          url: "https://charts.bitnami.com/bitnami"
+
 credentials:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 
 parameters:
 - name: database-name
@@ -34,25 +35,10 @@ parameters:
   default: 1
 
 install:
-- helm3:
-    description: "Install MySQL"
-    name: "{{ bundle.parameters.mysql-name }}"
-    chart: bitnami/mysql
-    version: 6.14.12
-    namespace: "{{ bundle.parameters.namespace }}"
-    replace: true
-    set:
-      db.name: "{{ bundle.parameters.database-name}}"
-      db.user: "{{ bundle.parameters.mysql-user }}"
-      primary.readinessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
-      primary.livenessProbe.timeout: "{{ bundle.parameters.probe-timeout}}"
-    outputs:
-    - name: mysql-root-password
-      secret: "{{ bundle.parameters.mysql-name }}"
-      key: mysql-root-password
-    - name: mysql-password
-      secret: "{{ bundle.parameters.mysql-name }}"
-      key: mysql-password
+- exec:
+    command: ./helpers.sh
+    arguments:
+      - install
 
 ping:
   - exec:
@@ -62,26 +48,16 @@ ping:
         - ping
 
 upgrade:
-  - helm3:
-      description: "Upgrade MySQL"
-      name: "{{ bundle.parameters.mysql-name }}"
-      namespace: "{{ bundle.parameters.namespace }}"
-      chart: bitnami/mysql
-      version: 6.14.12
-      outputs:
-      - name: mysql-root-password
-        secret: "{{ bundle.parameters.mysql-name }}"
-        key: mysql-root-password
-      - name: mysql-password
-        secret: "{{ bundle.parameters.mysql-name }}"
-        key: mysql-password
+  - exec:
+      command: ./helpers.sh
+      arguments:
+        - install
 
 uninstall:
-- helm3:
-    description: "Uninstall MySQL"
-    purge: true
-    releases:
-      - "{{ bundle.parameters.mysql-name }}"
+  - exec:
+      command: echo
+      arguments:
+        - uninstalled
 
 outputs:
   - name: mysql-password
@@ -92,6 +68,7 @@ outputs:
       - install
       - upgrade
     sensitive: true
+    path: /cnab/app/outputs/mysql-password
   - name: mysql-root-password
     description: "The mysql root user password"
     default: "default-root-password"
@@ -100,3 +77,4 @@ outputs:
       - install
       - upgrade
     sensitive: true
+    path: /cnab/app/outputs/mysql-root-password

@@ -15,12 +15,12 @@ func TestRunner_BuildCommand(t *testing.T) {
 		runnerCommand string
 		wantCommand   string
 	}{
-		{"build", "build", "/root/.porter/mixins/exec/exec build"},
-		{"install", "install", "/root/.porter/mixins/exec/exec install"},
-		{"upgrade", "upgrade", "/root/.porter/mixins/exec/exec upgrade"},
-		{"uninstall", "uninstall", "/root/.porter/mixins/exec/exec uninstall"},
-		{"invoke", "status", "/root/.porter/mixins/exec/exec invoke --action status"},
-		{"version", "version --output json", "/root/.porter/mixins/exec/exec version --output json"},
+		{"build", "build", "/home/myuser/.porter/mixins/exec/exec build"},
+		{"install", "install", "/home/myuser/.porter/mixins/exec/exec install"},
+		{"upgrade", "upgrade", "/home/myuser/.porter/mixins/exec/exec upgrade"},
+		{"uninstall", "uninstall", "/home/myuser/.porter/mixins/exec/exec uninstall"},
+		{"invoke", "status", "/home/myuser/.porter/mixins/exec/exec invoke --action status"},
+		{"version", "version --output json", "/home/myuser/.porter/mixins/exec/exec version --output json"},
 	}
 
 	for _, tc := range testcases {

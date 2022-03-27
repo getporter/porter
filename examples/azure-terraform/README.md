@@ -142,16 +142,16 @@ RUN apt-get update && apt-get install -y wget unzip && \
  wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
  unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin && \
  rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}
 RUN cd /cnab/app/terraform && terraform init -backend=false
 
 # exec mixin has no buildtime dependencies
 
-COPY . $BUNDLE_DIR
-RUN rm $BUNDLE_DIR/porter.yaml
-RUN rm -fr $BUNDLE_DIR/.cnab
+COPY . ${BUNDLE_DIR}
+RUN rm ${BUNDLE_DIR}/porter.yaml
+RUN rm -fr ${BUNDLE_DIR}/.cnab
 COPY .cnab /cnab
-WORKDIR $BUNDLE_DIR
+WORKDIR ${BUNDLE_DIR}
 CMD ["/cnab/app/run"]
 ```
 

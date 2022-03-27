@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +14,7 @@ import (
 func TestMixin_Execute(t *testing.T) {
 	m := NewTestMixin(t)
 
-	err := m.FileSystem.WriteFile("config.txt", []byte("abc123"), 0600)
+	err := m.FileSystem.WriteFile("config.txt", []byte("abc123"), pkg.FileModeWritable)
 	require.NoError(t, err)
 
 	stdin, err := ioutil.ReadFile("testdata/outputs.yaml")

@@ -1,7 +1,5 @@
 {
   "name": "mypset",
-  "created": "1983-04-18T01:02:03.000000004Z",
-  "modified": "1983-04-18T01:02:03.000000004Z",
   "parameters": [
     {
       "name": "my-file-param",
@@ -9,5 +7,9 @@
         "path": "/local/path/to/my-file-param"
       }
     }
-  ]
+  ],
+  "status": {
+    "created": "1983-04-18T01:02:03.000000004Z",
+    "modified": "1983-04-18T01:02:03.000000004Z"
+  }
 }

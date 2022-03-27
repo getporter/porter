@@ -6,4 +6,4 @@ RUN apt-get update && apt-get install -y ca-certificates python3 python3-pip
 RUN pip3 install sfctl
 
 # Copy any scripts and local bundle files into the bundle
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}

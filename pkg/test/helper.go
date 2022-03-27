@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,8 @@ const (
 	MockedCommandEnv           = "MOCK_COMMAND"
 	ExpectedCommandEnv         = "EXPECTED_COMMAND"
 	ExpectedCommandExitCodeEnv = "EXPECTED_COMMAND_EXIT_CODE"
-	ExpectedCommandErrorEnv    = "EXPECTED_COMMAND_ERROR"
+	ExpectedCommandErrorEnv    = "EXPECTED_COMMAND_STDERR"
+	ExpectedCommandOutputEnv   = "EXPECTED_COMMAND_STDOUT"
 )
 
 func TestMainWithMockedCommandHandlers(m *testing.M) {
@@ -45,6 +47,10 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 			}
 		}
 
+		if wantOutput, ok := os.LookupEnv(ExpectedCommandOutputEnv); ok {
+			fmt.Fprintln(os.Stdout, wantOutput)
+		}
+
 		if wantError, ok := os.LookupEnv(ExpectedCommandErrorEnv); ok {
 			fmt.Fprintln(os.Stderr, wantError)
 		}
@@ -65,9 +71,9 @@ func TestMainWithMockedCommandHandlers(m *testing.M) {
 // the new test output.
 func CompareGoldenFile(t *testing.T, goldenFile string, got string) {
 	if os.Getenv("PORTER_UPDATE_TEST_FILES") == "true" {
-		os.MkdirAll(filepath.Dir(goldenFile), 0700)
+		os.MkdirAll(filepath.Dir(goldenFile), pkg.FileModeDirectory)
 		t.Logf("Updated test file %s to match latest test output", goldenFile)
-		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), 0600), "could not update golden file %s", goldenFile)
+		require.NoError(t, ioutil.WriteFile(goldenFile, []byte(got), pkg.FileModeWritable), "could not update golden file %s", goldenFile)
 	} else {
 		wantSchema, err := ioutil.ReadFile(goldenFile)
 		require.NoError(t, err)

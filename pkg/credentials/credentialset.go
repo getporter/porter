@@ -14,13 +14,19 @@ import (
 const (
 	// SchemaVersion represents the version associated with the schema
 	// credential set documents.
-	SchemaVersion = schema.Version("1.0.0")
+	SchemaVersion = schema.Version("1.0.1")
 )
 
 var _ storage.Document = &CredentialSet{}
 
 // CredentialSet represents a collection of credentials
 type CredentialSet struct {
+	CredentialSetSpec `yaml:",inline"`
+	Status            CredentialSetStatus `json:"status" yaml:"status" toml:"status"`
+}
+
+// CredentialSetSpec represents the set of user-modifiable fields on a CredentialSet.
+type CredentialSetSpec struct {
 	// SchemaVersion is the version of the credential-set schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
@@ -30,12 +36,6 @@ type CredentialSet struct {
 	// Name of the credential set.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
-	// Created timestamp.
-	Created time.Time `json:"created" yaml:"created" toml:"created"`
-
-	// Modified timestamp.
-	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
-
 	// Labels applied to the credential set.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
@@ -43,16 +43,29 @@ type CredentialSet struct {
 	Credentials []secrets.Strategy `json:"credentials" yaml:"credentials" toml:"credentials"`
 }
 
+// CredentialSetStatus contains additional status metadata that has been set by Porter.
+type CredentialSetStatus struct {
+	// Created timestamp.
+	Created time.Time `json:"created" yaml:"created" toml:"created"`
+
+	// Modified timestamp.
+	Modified time.Time `json:"modified" yaml:"modified" toml:"modified"`
+}
+
 // NewCredentialSet creates a new CredentialSet with the required fields initialized.
 func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) CredentialSet {
 	now := time.Now()
 	cs := CredentialSet{
-		SchemaVersion: SchemaVersion,
-		Name:          name,
-		Namespace:     namespace,
-		Created:       now,
-		Modified:      now,
-		Credentials:   creds,
+		CredentialSetSpec: CredentialSetSpec{
+			SchemaVersion: SchemaVersion,
+			Name:          name,
+			Namespace:     namespace,
+			Credentials:   creds,
+		},
+		Status: CredentialSetStatus{
+			Created:  now,
+			Modified: now,
+		},
 	}
 
 	return cs
@@ -64,6 +77,9 @@ func (s CredentialSet) DefaultDocumentFilter() interface{} {
 
 func (s CredentialSet) Validate() error {
 	if SchemaVersion != s.SchemaVersion {
+		if s.SchemaVersion == "" {
+			s.SchemaVersion = "(none)"
+		}
 		return errors.Errorf("invalid schemaVersion provided: %s. This version of Porter is compatible with %s.", s.SchemaVersion, SchemaVersion)
 	}
 	return nil

@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/mage"
+	"get.porter.sh/porter/pkg"
 
 	"get.porter.sh/porter/mage/docker"
 	// mage:import
@@ -59,8 +60,15 @@ func Build() {
 
 // Build the porter client and runtime
 func BuildPorter() {
-	mg.Deps(Tidy)
+	mg.Deps(Tidy, copySchema)
+
 	mgx.Must(releases.BuildAll(PKG, "porter", "bin"))
+}
+
+func copySchema() {
+	// Copy the porter manifest schema into our templates directory with the other schema
+	// We can't use symbolic links because that doesn't work on windows
+	mgx.Must(shx.Copy("pkg/schema/manifest.schema.json", "pkg/templates/templates/schema.json"))
 }
 
 func Tidy() error {
@@ -85,6 +93,7 @@ func XBuildAll() {
 
 // Cross-compile porter
 func XBuildPorter() {
+	mg.Deps(copySchema)
 	releases.XBuildAll(PKG, "porter", "bin")
 }
 
@@ -128,6 +137,7 @@ func GetMixins() error {
 
 	mixins := []struct {
 		name    string
+		url     string
 		feed    string
 		version string
 	}{
@@ -152,7 +162,13 @@ func GetMixins() error {
 			if mixin.version == "" {
 				mixin.version = defaultMixinVersion
 			}
-			return porter("mixin", "install", mixin.name, "--version", mixin.version, "--feed-url", mixin.feed).Run()
+			var source string
+			if mixin.feed != "" {
+				source = "--feed-url=" + mixin.feed
+			} else {
+				source = "--url=" + mixin.url
+			}
+			return porter("mixin", "install", mixin.name, "--version", mixin.version, source).Run()
 		})
 	}
 
@@ -183,6 +199,8 @@ func Test() {
 
 // Run unit tests and verify integration tests compile
 func TestUnit() {
+	mg.Deps(copySchema)
+
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
 	v := ""
 	if mg.Verbose() {
@@ -197,6 +215,8 @@ func TestUnit() {
 
 // Run smoke tests to quickly check if Porter is broken
 func TestSmoke() error {
+	mg.Deps(copySchema)
+
 	mg.Deps(docker.RestartDockerRegistry)
 
 	// Only do verbose output of tests when called with `mage -v TestSmoke`
@@ -235,9 +255,11 @@ func BuildImages() {
 func buildImages(registry string, info releases.GitMetadata) {
 	var g errgroup.Group
 
+	enableBuildKit := "DOCKER_BUILDKIT=1"
 	g.Go(func() error {
 		img := fmt.Sprintf("%s/porter:%s", registry, info.Version)
-		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".")
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/client/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
@@ -249,7 +271,8 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 		// porter-agent does a FROM porter so they can't go in parallel
 		img = fmt.Sprintf("%s/porter-agent:%s", registry, info.Version)
-		err = shx.RunV("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".")
+		err = shx.Command("docker", "build", "-t", img, "--build-arg", "PORTER_VERSION="+info.Version, "--build-arg", "REGISTRY="+registry, "-f", "build/images/agent/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
@@ -259,7 +282,8 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 	g.Go(func() error {
 		img := fmt.Sprintf("%s/workshop:%s", registry, info.Version)
-		err := shx.RunV("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".")
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/images/workshop/Dockerfile", ".").
+			Env(enableBuildKit).RunV()
 		if err != nil {
 			return err
 		}
@@ -348,6 +372,8 @@ func PublishPorter() {
 		// Create GitHub release for the exact version (v1.2.3) and attach assets
 		releases.AddFilesToRelease(repo, info.Version, porterVersionDir)
 		releases.AddFilesToRelease(repo, info.Version, execVersionDir)
+	} else {
+		fmt.Println("Skipping publish binaries for not tagged release", info.Version)
 	}
 }
 
@@ -379,7 +405,7 @@ func UseXBuildBinaries() error {
 		log.Printf("Copying %s to %s", src, dest)
 
 		destDir := filepath.Dir(dest)
-		os.MkdirAll(destDir, 0700)
+		os.MkdirAll(destDir, pkg.FileModeDirectory)
 
 		err := sh.Copy(dest, src)
 		if err != nil {
@@ -392,7 +418,7 @@ func UseXBuildBinaries() error {
 
 // Run `chmod +x -R bin`.
 func SetBinExecutable() error {
-	err := chmodRecursive("bin", 0700)
+	err := chmodRecursive("bin", pkg.FileModeExecutable)
 	return errors.Wrap(err, "could not set +x on the test bin")
 }
 
@@ -409,7 +435,7 @@ func chmodRecursive(name string, mode os.FileMode) error {
 
 // Run integration tests (slow).
 func TestIntegration() {
-	mg.Deps(tests.EnsureTestCluster)
+	mg.Deps(tests.EnsureTestCluster, copySchema)
 
 	var run string
 	runTest := os.Getenv("PORTER_RUN_TEST")
@@ -431,7 +457,7 @@ func Install() {
 	fmt.Println("installing Porter from bin to", porterHome)
 
 	// Copy porter binaries
-	mgx.Must(os.MkdirAll(porterHome, 0700))
+	mgx.Must(os.MkdirAll(porterHome, pkg.FileModeDirectory))
 	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
@@ -447,7 +473,7 @@ func Install() {
 		mixin := fi.Name()
 		srcDir := filepath.Join(mixinsDir, mixin)
 		destDir := filepath.Join(porterHome, "mixins", mixin)
-		mgx.Must(os.MkdirAll(destDir, 0700))
+		mgx.Must(os.MkdirAll(destDir, pkg.FileModeDirectory))
 
 		// Copy the mixin client binary
 		mgx.Must(shx.Copy(filepath.Join(srcDir, mixin+xplat.FileExt()), destDir))

@@ -7,6 +7,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -172,6 +173,47 @@ func TestManifest_Validate_Name(t *testing.T) {
 	assert.EqualError(t, err, "bundle name must be set")
 }
 
+func TestManifest_Validate_SchemaVersion(t *testing.T) {
+
+	t.Run("schemaVersion matches", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		require.NoError(t, err)
+
+		err = m.Validate(cxt.Context)
+		require.NoError(t, err)
+	})
+
+	t.Run("schemaVersion missing", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		require.NoError(t, err)
+
+		m.SchemaVersion = ""
+
+		err = m.Validate(cxt.Context)
+		// Check that a warning is printed
+		// We aren't returning an error because we want to give it a chance to work first. Later we may turn this into a hard error after people have had time to migrate.
+		assert.Contains(t, cxt.GetError(), "WARNING: This bundle was built with an old version of Porter and doesn't declare a schema version")
+	})
+
+	t.Run("schemaVersion newer", func(t *testing.T) {
+		cxt := context.NewTestContext(t)
+		cxt.UseFilesystem()
+		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
+		require.NoError(t, err)
+
+		m.SchemaVersion = "2.0.0"
+
+		err = m.Validate(cxt.Context)
+		tests.RequireErrorContains(t, err, "The bundle uses schema version 2.0.0 when the supported schema version is 1.0.0-alpha.1")
+	})
+}
+
 func TestManifest_Validate_Dockerfile(t *testing.T) {
 	cxt := context.NewTestContext(t)
 
@@ -217,8 +259,9 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("no registry or reference provided", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:    "mybun",
-			Version: "1.2.3-beta.1",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.EqualError(t, err, "a registry or reference value must be provided")
@@ -227,9 +270,10 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			Reference: "getporter/mybun:v1.2.3",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Reference:     "getporter/mybun:v1.2.3",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
@@ -243,9 +287,10 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1+15",
-			Reference: "getporter/mybun",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1+15",
+			Reference:     "getporter/mybun",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
@@ -259,9 +304,10 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "0.1.0",
-			Reference: "localhost:5000/missing-invocation-image",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "0.1.0",
+			Reference:     "localhost:5000/missing-invocation-image",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
@@ -275,9 +321,10 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry provided, no reference", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:     "mybun",
-			Version:  "1.2.3-beta.1",
-			Registry: "getporter",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "getporter",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
@@ -291,9 +338,10 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:     "mybun",
-			Version:  "1.2.3-beta.1",
-			Registry: "getporter/myorg",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "getporter/myorg",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)
@@ -307,10 +355,11 @@ func TestSetDefaults(t *testing.T) {
 	t.Run("registry and reference provided", func(t *testing.T) {
 		cxt := context.NewTestContext(t)
 		m := Manifest{
-			Name:      "mybun",
-			Version:   "1.2.3-beta.1",
-			Registry:  "myregistry/myorg",
-			Reference: "getporter/org/mybun:v1.2.3",
+			SchemaVersion: SupportedSchemaVersion,
+			Name:          "mybun",
+			Version:       "1.2.3-beta.1",
+			Registry:      "myregistry/myorg",
+			Reference:     "getporter/org/mybun:v1.2.3",
 		}
 		err := m.validateMetadata(cxt.Context)
 		require.NoError(t, err)

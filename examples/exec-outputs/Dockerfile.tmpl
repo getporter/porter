@@ -19,4 +19,4 @@ RUN wget --no-check-certificate https://raw.githubusercontent.com/stedolan/jq/ma
     rm -f /tmp/jq-linux64
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+COPY . ${BUNDLE_DIR}

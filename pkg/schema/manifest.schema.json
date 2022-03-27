@@ -1,5 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://porter.sh/schema/v1/manifest.schema.json",
+  "title": "Porter manifest json schema",
+  "description": "Describes the format of the Porter manifest, porter.yaml. This does not include the schema of the mixins, use the porter schema command to generate a schema document that includes all installed mixins.",
   "type": "object",
   "definitions": {
     "applyTo": {
@@ -12,7 +15,9 @@
     "credential": {
       "description": "Credential defines a particular credential, and where it should be placed in the invocation image",
       "properties": {
-        "applyTo": { "$ref": "#/definitions/applyTo"},
+        "applyTo": {
+          "$ref": "#/definitions/applyTo"
+        },
         "description": {
           "description": "A user-friendly description of this credential",
           "type": "string"
@@ -42,13 +47,13 @@
     "output": {
       "description": "A value that is produced by running an invocation image",
       "allOf": [
-        { "$ref": "https://porter.sh/schema/json-schema.json"},
+        {
+          "$ref": "https://porter.sh/schema/json-schema.json"
+        },
         {
           "properties": {
-          "applyTo": { "$ref": "#/definitions/applyTo"},
-            "definition": {
-              "description": "The name of a definition that describes the schema structure of this output",
-              "type": "string"
+            "applyTo": {
+              "$ref": "#/definitions/applyTo"
             },
             "description": {
               "description": "A user-friendly description of this output",
@@ -59,8 +64,12 @@
               "type": "string"
             },
             "sensitive": {
-              "description": "Indicates where this output's value is sensitive and should not be logged.",
+              "description": "Indicates whether this output's value is sensitive and should not be logged.",
               "type": "boolean"
+            },
+            "path": {
+              "description": "The path to the location of the output",
+              "type": "string"
             }
           },
           "required": [
@@ -78,13 +87,11 @@
         },
         {
           "properties": {
-          "applyTo": { "$ref": "#/definitions/applyTo"},
-            "definition": {
-              "description": "The name of a definition that describes the schema structure of this parameter",
-              "type": "string"
+            "applyTo": {
+              "$ref": "#/definitions/applyTo"
             },
             "description": {
-              "description": "A user-friendly description of this output",
+              "description": "A user-friendly description of this parameter",
               "type": "string"
             },
             "env": {
@@ -100,7 +107,7 @@
               "type": "string"
             },
             "sensitive": {
-              "description": "Indicates where this parameter's value is sensitive and should not be logged.",
+              "description": "Indicates whether this parameter's value is sensitive and should not be logged.",
               "type": "boolean"
             },
             "source": {
@@ -118,7 +125,9 @@
                   "minLength": 1
                 }
               },
-          "required": ["output"],
+              "required": [
+                "output"
+              ],
               "additionalProperties": false
             }
           },
@@ -169,7 +178,7 @@
         }
       },
       "required": [
-        "name", 
+        "name",
         "reference"
       ],
       "type": "object"
@@ -199,28 +208,28 @@
         "description": {
           "description": "A user-friendly description of this image",
           "type": "string"
-        }, 
+        },
         "imageType": {
           "description": "The type of this image, i.e. docker",
           "type": "string"
-        }, 
+        },
         "repository": {
           "description": "The repository portion of the image reference, i.e. deislabs/coolapp",
           "type": "string"
         },
-        "digest" :{
+        "digest": {
           "description": "The content digest of the image, i.e. sha256:cafebabe...",
           "type": "string"
         },
-        "size" : {
+        "size": {
           "description": "The size of the image",
           "type": "integer"
         },
-        "mediaType" : {
+        "mediaType": {
           "description": "The media type of the image",
           "type": "string"
         },
-        "tag" : {
+        "tag": {
           "description": "The tag the image",
           "type": "string"
         },
@@ -242,15 +251,15 @@
       "description": "Bundle Maintainer",
       "properties": {
         "email": {
-          "description": "Email of the maintainer", 
+          "description": "Email of the maintainer",
           "type": "string"
         },
         "name": {
-          "description": "Name of the maintainer", 
+          "description": "Name of the maintainer",
           "type": "string"
         },
-        "url" : {
-          "description": "Url of the maintainer", 
+        "url": {
+          "description": "Url of the maintainer",
           "type": "string"
         }
       },
@@ -258,6 +267,15 @@
     }
   },
   "properties": {
+    "schemaType": {
+      "description": "The resource type of the current document.",
+      "type": "string",
+      "default": "Bundle"
+    },
+    "schemaVersion": {
+      "description": "The version of the schema used in this file",
+      "type": "string"
+    },
     "credentials": {
       "type": "array",
       "items": {
@@ -316,7 +334,7 @@
       }
     },
     "dependencies": {
-      "additionalProperties" : false,      
+      "additionalProperties": false,
       "description": "Dependent bundles that must be executed with the bundle",
       "properties": {
         "requires": {
@@ -327,7 +345,9 @@
           "type": "array"
         }
       },
-      "required": ["requires"],
+      "required": [
+        "requires"
+      ],
       "type": "object"
     },
     "required": {
@@ -335,7 +355,10 @@
       "type": "array",
       "items": [
         {
-          "type": ["string","object"],
+          "type": [
+            "string",
+            "object"
+          ],
           "properties": {
             "docker": {
               "$schema": "http://json-schema.org/draft-07/schema#",
@@ -376,11 +399,15 @@
     },
     "customActions": {
       "type": "object",
-      "additionalProperties": {"$ref": "#/definitions/customAction"}
+      "additionalProperties": {
+        "$ref": "#/definitions/customAction"
+      }
     },
     "images": {
       "type": "object",
-      "additionalProperties": {"$ref": "#/definitions/image"}
+      "additionalProperties": {
+        "$ref": "#/definitions/image"
+      }
     },
     "custom": {
       "description": "Custom bundle metadata",
@@ -401,5 +428,12 @@
       "anyOf": []
     }
   },
-  "required": ["name", "version", "mixins"]
+  "required": [
+    "schemaVersion",
+    "name",
+    "mixins",
+    "install",
+    "upgrade",
+    "uninstall"
+  ]
 }

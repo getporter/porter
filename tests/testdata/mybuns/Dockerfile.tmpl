@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile-upstream:1.4.0-rc2
 FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
@@ -13,4 +13,4 @@ ENV USERNAME=root
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-COPY . $BUNDLE_DIR
+COPY --link . ${BUNDLE_DIR}

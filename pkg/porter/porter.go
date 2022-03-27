@@ -14,7 +14,6 @@ import (
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
-	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
@@ -43,7 +42,6 @@ type Porter struct {
 	Claims      claims.Provider
 	Registry    cnabtooci.RegistryProvider
 	Templates   *templates.Templates
-	Manifest    *manifest.Manifest
 	Mixins      mixin.MixinProvider
 	Plugins     plugins.PluginProvider
 	CNAB        cnabprovider.CNABProvider
@@ -121,22 +119,6 @@ func (p *Porter) Close() error {
 	}
 
 	return bigErr.ErrorOrNil()
-}
-
-func (p *Porter) LoadManifest() error {
-	if p.Manifest != nil {
-		return nil
-	}
-	return p.LoadManifestFrom(config.Name)
-}
-
-func (p *Porter) LoadManifestFrom(file string) error {
-	m, err := manifest.LoadManifestFrom(p.Context, file)
-	if err != nil {
-		return err
-	}
-	p.Manifest = m
-	return nil
 }
 
 // NewBuilder creates a Builder based on the current configuration.

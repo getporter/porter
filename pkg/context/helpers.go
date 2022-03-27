@@ -2,6 +2,7 @@ package context
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,12 +13,14 @@ import (
 	"strings"
 	"testing"
 
-	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
+
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/test"
 )
 
 type TestContext struct {
@@ -50,7 +53,7 @@ func NewTestContext(t *testing.T) *TestContext {
 	innerContext.In = &bytes.Buffer{}
 	innerContext.Out = aggOut
 	innerContext.Err = aggErr
-	innerContext.ConfigureLogging(LogConfiguration{
+	innerContext.ConfigureLogging(context.Background(), LogConfiguration{
 		LogLevel: zapcore.DebugLevel,
 	})
 	innerContext.PlugInDebugContext = &PluginDebugContext{
@@ -66,25 +69,32 @@ func NewTestContext(t *testing.T) *TestContext {
 		T:           t,
 	}
 
-	c.NewCommand = NewTestCommand(c.Context)
+	c.NewCommand = c.NewTestCommand
 
 	return c
 }
 
-func NewTestCommand(c *Context) CommandBuilder {
-	return func(command string, args ...string) *exec.Cmd {
-		testArgs := append([]string{command}, args...)
-		cmd := exec.Command(os.Args[0], testArgs...)
-		cmd.Dir = c.Getwd()
-		cmd.Env = []string{
-			fmt.Sprintf("%s=true", test.MockedCommandEnv),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, c.Getenv(test.ExpectedCommandEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, c.Getenv(test.ExpectedCommandExitCodeEnv)),
-			fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, c.Getenv(test.ExpectedCommandErrorEnv)),
-		}
+func (c *TestContext) NewTestCommand(name string, args ...string) *exec.Cmd {
+	testArgs := append([]string{name}, args...)
+	cmd := exec.Command(os.Args[0], testArgs...)
+	cmd.Dir = c.Getwd()
 
-		return cmd
+	cmd.Env = []string{
+		fmt.Sprintf("%s=true", test.MockedCommandEnv),
 	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandExitCodeEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandExitCodeEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandOutputEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandOutputEnv, val))
+	}
+	if val, ok := c.LookupEnv(test.ExpectedCommandErrorEnv); ok {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", test.ExpectedCommandErrorEnv, val))
+	}
+	return cmd
 }
 
 func (c *TestContext) GetTestDefinitionDirectory() string {
@@ -125,7 +135,7 @@ func (c *TestContext) Teardown() {
 	}
 }
 
-// Use this when the testfile you are referencing is in a different directory than the test.
+// AddTestFileFromRoot should be used when the testfile you are referencing is in a different directory than the test.
 func (c *TestContext) AddTestFileFromRoot(src, dest string) []byte {
 	pathFromRoot := filepath.Join(c.FindRepoRoot(), src)
 	return c.AddTestFile(pathFromRoot, dest)
@@ -147,9 +157,9 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 	if len(mode) == 0 {
 		ext := filepath.Ext(dest)
 		if ext == ".sh" || ext == "" {
-			perms = 0700
+			perms = pkg.FileModeExecutable
 		} else {
-			perms = 0600
+			perms = pkg.FileModeWritable
 		}
 	} else {
 		perms = mode[0]
@@ -164,7 +174,7 @@ func (c *TestContext) AddTestFile(src, dest string, mode ...os.FileMode) []byte 
 }
 
 func (c *TestContext) AddTestFileContents(file []byte, dest string) error {
-	return c.FileSystem.WriteFile(dest, file, 0600)
+	return c.FileSystem.WriteFile(dest, file, pkg.FileModeWritable)
 }
 
 // Use this when the directory you are referencing is in a different directory than the test.
@@ -194,7 +204,7 @@ func (c *TestContext) AddTestDirectory(srcDir, destDir string, mode ...os.FileMo
 		dest := filepath.Join(destDir, strings.TrimPrefix(path, srcDir))
 
 		if info.IsDir() {
-			return c.FileSystem.MkdirAll(dest, 0700)
+			return c.FileSystem.MkdirAll(dest, pkg.FileModeDirectory)
 		}
 
 		c.AddTestFile(path, dest, mode...)
@@ -231,7 +241,7 @@ func (c *TestContext) AddTestDriver(src, name string) string {
 		}
 	}
 
-	err = c.FileSystem.Chmod(newfile.Name(), 0700)
+	err = c.FileSystem.Chmod(newfile.Name(), pkg.FileModeExecutable)
 	if err != nil {
 		c.T.Fatal(err)
 	}

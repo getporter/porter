@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
@@ -480,7 +481,7 @@ func (m *RuntimeManifest) Initialize() error {
 				return errors.Wrapf(err, "unable to decode parameter %s", paramName)
 			}
 
-			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, 0600)
+			err = m.FileSystem.WriteFile(param.Destination.Path, decoded, pkg.FileModeWritable)
 			if err != nil {
 				return errors.Wrapf(err, "unable to write decoded parameter %s", paramName)
 			}
@@ -492,7 +493,7 @@ func (m *RuntimeManifest) Initialize() error {
 
 func (m *RuntimeManifest) createOutputsDir() error {
 	// Ensure outputs directory exists
-	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, 0700); err != nil {
+	if err := m.FileSystem.MkdirAll(config.BundleOutputsDir, pkg.FileModeDirectory); err != nil {
 		return errors.Wrap(err, "unable to ensure CNAB outputs directory exists")
 	}
 	return nil

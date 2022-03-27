@@ -3,6 +3,8 @@ package porter
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/credentials"
@@ -58,7 +60,7 @@ func (p *Porter) PrintCredentials(opts ListOptions) error {
 				if !ok {
 					return nil
 				}
-				return []string{cr.Namespace, cr.Name, tp.Format(cr.Modified)}
+				return []string{cr.Namespace, cr.Name, tp.Format(cr.Status.Modified)}
 			}
 		return printer.PrintTable(p.Out, creds, printCredRow,
 			"NAMESPACE", "NAME", "MODIFIED")
@@ -129,8 +131,8 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 		return errors.Wrap(err, "unable to generate credentials")
 	}
 
-	cs.Created = time.Now()
-	cs.Modified = cs.Created
+	cs.Status.Created = time.Now()
+	cs.Status.Modified = cs.Status.Created
 
 	err = p.Credentials.UpsertCredentialSet(cs)
 	return errors.Wrapf(err, "unable to save credentials")
@@ -183,7 +185,7 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrap(err, "credentials are invalid")
 	}
 
-	credSet.Modified = time.Now()
+	credSet.Status.Modified = time.Now()
 	err = p.Credentials.UpdateCredentialSet(credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save credentials")
@@ -248,8 +250,8 @@ func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
 		// First, print the CredentialSet metadata
 		fmt.Fprintf(p.Out, "Name: %s\n", credSet.Name)
 		fmt.Fprintf(p.Out, "Namespace: %s\n", credSet.Namespace)
-		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Created))
-		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Modified))
+		fmt.Fprintf(p.Out, "Created: %s\n", tp.Format(credSet.Status.Created))
+		fmt.Fprintf(p.Out, "Modified: %s\n\n", tp.Format(credSet.Status.Modified))
 
 		// Print labels, if any
 		if len(credSet.Labels) > 0 {
@@ -339,7 +341,7 @@ func (p *Porter) CredentialsApply(o ApplyOptions) error {
 	}
 
 	creds.Namespace = namespace
-	creds.Modified = time.Now()
+	creds.Status.Modified = time.Now()
 
 	err = p.Credentials.Validate(creds)
 	if err != nil {
@@ -372,4 +374,75 @@ func (p *Porter) getNamespaceFromFile(o ApplyOptions) (string, error) {
 	}
 
 	return o.Namespace, nil
+}
+
+// CredentialCreateOptions represent options for Porter's credential create command
+type CredentialCreateOptions struct {
+	FileName   string
+	OutputType string
+}
+
+func (o *CredentialCreateOptions) Validate(args []string) error {
+	if len(args) > 1 {
+		return errors.Errorf("only one positional argument may be specified, fileName, but multiple were received: %s", args)
+	}
+
+	if len(args) > 0 {
+		o.FileName = args[0]
+	}
+
+	if o.OutputType == "" && o.FileName != "" && strings.Trim(filepath.Ext(o.FileName), ".") == "" {
+		return errors.New("could not detect the file format from the file extension (.txt). Specify the format with --output.")
+	}
+
+	return nil
+}
+
+func (p *Porter) CreateCredential(opts CredentialCreateOptions) error {
+	if opts.OutputType == "" {
+		opts.OutputType = strings.Trim(filepath.Ext(opts.FileName), ".")
+	}
+
+	if opts.FileName == "" {
+		if opts.OutputType == "" {
+			opts.OutputType = "yaml"
+		}
+
+		switch opts.OutputType {
+		case "json":
+			credentialSet, err := p.Templates.GetCredentialSetJSON()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		case "yaml", "yml":
+			credentialSet, err := p.Templates.GetCredentialSetYAML()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(p.Out, string(credentialSet))
+
+			return nil
+		default:
+			return newUnsupportedFormatError(opts.OutputType)
+		}
+
+	}
+
+	fmt.Fprintln(p.Err, "creating porter credential set in the current directory")
+
+	switch opts.OutputType {
+	case "json":
+		return p.CopyTemplate(p.Templates.GetCredentialSetJSON, opts.FileName)
+	case "yaml", "yml":
+		return p.CopyTemplate(p.Templates.GetCredentialSetYAML, opts.FileName)
+	default:
+		return newUnsupportedFormatError(opts.OutputType)
+	}
+}
+
+func newUnsupportedFormatError(format string) error {
+	return errors.Errorf("unsupported format %s. Supported formats are: yaml and json.", format)
 }

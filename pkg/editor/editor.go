@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/context"
 )
 
@@ -55,7 +56,7 @@ func (e *Editor) editorArgs(filename string) []string {
 // Run opens the editor, displaying the contents through a temporary file.
 // The content is returned once the editor closes.
 func (e *Editor) Run() ([]byte, error) {
-	tempFile, err := e.FileSystem.OpenFile(filepath.Join(os.TempDir(), e.tempFilename), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	tempFile, err := e.FileSystem.OpenFile(filepath.Join(os.TempDir(), e.tempFilename), os.O_RDWR|os.O_CREATE|os.O_EXCL, pkg.FileModeWritable)
 	if err != nil {
 		return nil, err
 	}

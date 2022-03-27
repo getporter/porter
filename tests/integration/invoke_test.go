@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -24,7 +25,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 
-	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
+	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate([]string{}, p.Porter)
@@ -44,7 +45,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Verify that the custom action was recorded properly
-	i, err := p.Claims.GetInstallation("", p.Manifest.Name)
+	i, err := p.Claims.GetInstallation("", bundleName)
 	require.NoError(t, err, "could not fetch installation")
 	c, err := p.Claims.GetLastRun(i.Namespace, i.Name)
 	require.NoError(t, err, "GetLastClaim failed")

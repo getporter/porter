@@ -4,7 +4,7 @@ variables: # these are really constants
 parameters:
   - name: goVersion
     type: string
-    default: "1.17.6"
+    default: "1.17.8"
   - name: registry
     type: string
     default: getporterci

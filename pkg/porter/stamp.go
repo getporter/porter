@@ -8,6 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
@@ -55,7 +56,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 	if opts.File == "" {
 		return false, errors.New("File is required")
 	}
-	err := p.LoadManifestFrom(opts.File)
+	m, err := manifest.LoadManifestFrom(p.Context, opts.File)
 	if err != nil {
 		return false, err
 	}
@@ -92,12 +93,12 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 			return false, errors.Wrapf(err, "could not load stamp from %s", opts.CNABFile)
 		}
 
-		mixins, err := p.getUsedMixins()
+		mixins, err := p.getUsedMixins(m)
 		if err != nil {
 			return false, errors.Wrapf(err, "error while listing used mixins")
 		}
 
-		converter := configadapter.NewManifestConverter(p.Context, p.Manifest, nil, mixins)
+		converter := configadapter.NewManifestConverter(p.Context, m, nil, mixins)
 		newDigest, err := converter.DigestManifest()
 		if err != nil {
 			if p.Debug {

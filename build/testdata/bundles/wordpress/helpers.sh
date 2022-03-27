@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+install() {
+  echo "topsecret-blog" >> /cnab/app/outputs/wordpress-password
+}
+
 ping() {
   echo ping
 }

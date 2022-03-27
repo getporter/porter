@@ -108,7 +108,7 @@ mixins:
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 parameters:
   - name: wordpress_name
@@ -216,7 +216,7 @@ mixins:
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 parameters:
   - name: database_name
@@ -268,7 +268,7 @@ dependencies:
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 install:
   - helm3:

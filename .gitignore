@@ -1,10 +1,12 @@
 /docs/public/
 /docs/content/operator
+/docs/sources/
 /bin
 /porter
 .DS_Store
 /build/git_askpass.sh
 tests/smoke/mybuns/
+.env
 
 .cnab
 examples/**/Dockerfile

@@ -1,10 +1,8 @@
 {
   "schemaType": "ParameterSet",
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.0.1",
   "namespace": "",
   "name": "mypset",
-  "created": "1983-04-18T01:02:03.000000004Z",
-  "modified": "1983-04-18T01:02:03.000000004Z",
   "parameters": [
     {
       "name": "foo",
@@ -12,5 +10,9 @@
         "secret": "foo_secret"
       }
     }
-  ]
+  ],
+  "status": {
+    "created": "1983-04-18T01:02:03.000000004Z",
+    "modified": "1983-04-18T01:02:03.000000004Z"
+  }
 }

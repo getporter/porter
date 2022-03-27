@@ -101,8 +101,8 @@ func TestTestParameterProvider_Load(t *testing.T) {
 					Value: "param_secret",
 				},
 			})
-		expected.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
-		expected.Modified = expected.Created
+		expected.Status.Created = time.Date(1983, time.April, 18, 1, 2, 3, 4, time.UTC)
+		expected.Status.Modified = expected.Status.Created
 
 		pset, err := p.Load("testdata/paramset.json")
 		require.NoError(t, err)

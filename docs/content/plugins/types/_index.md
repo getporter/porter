@@ -32,8 +32,8 @@ parameters](https://github.com/getporter/porter/issues/878) too. By default,
 credentials are resolved against the local host: environment variables, files,
 commands and hard-coded values.
 
-A secrets plugin can implement the [secrets.Store interface][secretstore] and
+A secrets plugin can implement the [plugins.SecretsProtocol interface][secretstore] and
 resolve credentials from remote and ideally more secure locations. For example,
 the [Azure plugin](/plugins/azure/) resolves secrets from Azure Key Vault.
 
-[secretstore]: https://github.com/cnabio/cnab-go/blob/8ae1722acdeaddc1e720803ca496920c5a4698a2/secrets/store.go#L4-L13
+[secretstore]: https://github.com/getporter/porter/blob/release/v1/pkg/secrets/plugins/secrets_protocol.go

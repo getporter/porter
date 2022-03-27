@@ -20,7 +20,6 @@ type dependencyExecutioner struct {
 	*portercontext.Context
 	porter *Porter
 
-	Manifest *manifest.Manifest
 	Resolver BundleResolver
 	CNAB     cnabprovider.CNABProvider
 	Claims   claims.Provider
@@ -45,7 +44,6 @@ func newDependencyExecutioner(p *Porter, installation claims.Installation, actio
 		parentAction:       action,
 		parentOpts:         action.GetOptions(),
 		Context:            p.Context,
-		Manifest:           p.Manifest,
 		Resolver:           resolver,
 		CNAB:               p.CNAB,
 		Claims:             p.Claims,
@@ -209,7 +207,18 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	//   - name: DEP
 	//     parameters:
 	//       PARAM: VALUE
-	for _, manifestDep := range e.Manifest.Dependencies.RequiredDependencies {
+	// TODO: When we redo dependencies, we need to remove this dependency on the bundle being a porter bundle with a manifest
+	// Yes, right now the way this works means this feature is Porter only
+	m := &manifest.Manifest{}
+	if e.parentOpts.File != "" {
+		var err error
+		m, err = manifest.LoadManifestFrom(e.Context, e.parentOpts.File)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, manifestDep := range m.Dependencies.RequiredDependencies {
 		if manifestDep.Name == dep.Alias {
 			for paramName, value := range manifestDep.Parameters {
 				// Make sure the parameter is defined in the bundle

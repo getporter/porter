@@ -47,10 +47,6 @@ test-integration:
 test-smoke:
 	go run mage.go -v TestSmoke
 
-.PHONY: docs
-docs:
-	go run mage.go -v docs
-
 publish: publish-bin publish-mixins publish-images
 
 publish-bin:

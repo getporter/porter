@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/carolynvs/aferox"
 	cnabclaims "github.com/cnabio/cnab-go/claim"
@@ -90,7 +91,7 @@ func New() *Context {
 		timestampLogs: true,
 	}
 
-	c.ConfigureLogging(LogConfiguration{})
+	c.ConfigureLogging(context.Background(), LogConfiguration{})
 	c.defaultNewCommand()
 	c.PlugInDebugContext = NewPluginDebugContext(c)
 
@@ -134,7 +135,7 @@ type LogConfiguration struct {
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.
-func (c *Context) ConfigureLogging(cfg LogConfiguration) {
+func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	// Cleanup in case logging has been configured before
 	c.logLevel = cfg.LogLevel
 
@@ -163,7 +164,7 @@ func (c *Context) ConfigureLogging(cfg LogConfiguration) {
 	if cfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
 		if c.traceCloser == nil {
-			err = c.configureTelemetry(tmpLog, cfg)
+			err = c.configureTelemetry(ctx, tmpLog, cfg)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
 			}
@@ -194,14 +195,14 @@ func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLo
 }
 
 func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (zapcore.Core, error) {
-	if err := c.FileSystem.MkdirAll(dir, 0700); err != nil {
+	if err := c.FileSystem.MkdirAll(dir, pkg.FileModeDirectory); err != nil {
 		return nil, err
 	}
 
 	// Write the logs to a file
 	logfile := filepath.Join(dir, c.correlationId+".json")
 	if c.logFile == nil { // We may have already opened this logfile, and we are just changing the log level
-		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		f, err := c.FileSystem.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, pkg.FileModeWritable)
 		if err != nil {
 			return zapcore.NewNopCore(), errors.Wrapf(err, "could not start log file at %s", logfile)
 		}
@@ -240,7 +241,9 @@ func (c *Context) Command(name string, arg ...string) *exec.Cmd {
 		Dir:  c.Getwd(),
 		Path: name,
 		Args: append([]string{name}, arg...),
+		Env:  c.Environ(),
 	}
+
 	if filepath.Base(name) == name {
 		if lp, ok := c.LookPath(name); ok {
 			cmd.Path = lp
@@ -429,12 +432,12 @@ func (c *Context) WriteMixinOutputToFile(filename string, bytes []byte) error {
 		return err
 	}
 	if !exists {
-		if err := c.FileSystem.MkdirAll(MixinOutputsDir, 0700); err != nil {
+		if err := c.FileSystem.MkdirAll(MixinOutputsDir, pkg.FileModeDirectory); err != nil {
 			return errors.Wrap(err, "couldn't make output directory")
 		}
 	}
 
-	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, 0600)
+	return c.FileSystem.WriteFile(filepath.Join(MixinOutputsDir, filename), bytes, pkg.FileModeWritable)
 }
 
 // SetSensitiveValues sets the sensitive values needing masking on output/err streams

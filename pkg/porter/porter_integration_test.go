@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
@@ -27,13 +28,13 @@ func TestPorter_FixPermissions(t *testing.T) {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
 			dir := filepath.Dir(tc)
-			require.NoError(t, os.MkdirAll(dir, 0700))
+			require.NoError(t, os.MkdirAll(dir, pkg.FileModeDirectory))
 			require.NoError(t, os.WriteFile(tc, []byte(""), 0750))
 
 			err := p.FixPermissions()
 			require.NoError(t, err)
 
-			tests.AssertDirectoryPermissionsEqual(t, dir, 0600)
+			tests.AssertDirectoryPermissionsEqual(t, dir, pkg.FileModeWritable)
 		})
 	}
 }

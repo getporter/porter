@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -57,13 +58,13 @@ func (o *LintOptions) validateFile(cxt *context.Context) error {
 func (p *Porter) Lint(opts LintOptions) (linter.Results, error) {
 	opts.Apply(p.Context)
 
-	err := p.LoadManifest()
+	manifest, err := manifest.LoadManifestFrom(p.Context, opts.File)
 	if err != nil {
 		return nil, err
 	}
 
 	l := linter.New(p.Context, p.Mixins)
-	return l.Lint(p.Manifest)
+	return l.Lint(manifest)
 }
 
 // PrintLintResults lints the manifest and prints the results to the attached output.

@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
@@ -239,7 +240,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *sharedOptions) LoadParameters(p *Porter) error {
+func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -251,7 +252,7 @@ func (o *sharedOptions) LoadParameters(p *Porter) error {
 		return err
 	}
 
-	err = o.parseParamSets(p)
+	err = o.parseParamSets(p, bun)
 	if err != nil {
 		return err
 	}
@@ -272,9 +273,9 @@ func (o *sharedOptions) parseParams() error {
 }
 
 // parseParamSets parses the variable assignments in ParameterSets.
-func (o *sharedOptions) parseParamSets(p *Porter) error {
+func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error {
 	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(o.Namespace, o.ParameterSets)
+		parsed, err := p.loadParameterSets(bun, o.Namespace, o.ParameterSets)
 		if err != nil {
 			return errors.Wrap(err, "unable to process provided parameter sets")
 		}

@@ -16,9 +16,9 @@ func TestConfig_OverrideWithEnvironmentVariable(t *testing.T) {
 	defer os.Unsetenv("PORTER_DEFAULT_STORAGE")
 
 	c := NewTestConfig(t)
-	c.SetHomeDir("/root/.porter")
+	c.SetHomeDir("/home/myuser/.porter")
 
-	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 	c.DataLoader = LoadFromEnvironment()
 	err := c.Load(context.Background(), nil)
@@ -34,9 +34,9 @@ func TestData_Marshal(t *testing.T) {
 	defer os.Unsetenv("VAULT_TOKEN")
 
 	c := NewTestConfig(t)
-	c.SetHomeDir("/root/.porter")
+	c.SetHomeDir("/home/myuser/.porter")
 
-	c.TestContext.AddTestFile("testdata/config.toml", "/root/.porter/config.toml")
+	c.TestContext.AddTestFile("testdata/config.toml", "/home/myuser/.porter/config.toml")
 
 	c.DataLoader = LoadFromEnvironment()
 	resolveTestSecrets := func(secretKey string) (string, error) {

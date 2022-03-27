@@ -36,7 +36,7 @@ The mixin will use `kubectl apply --dry-run` in order to perform a dry run for t
 
 ### Credentials
 
-The Kubernetes Mixin requires a kubeconfig file. The mixin will allow the user to specify where it is mounted at, but will assume it is provided at `/root/.kube/config` if not otherwise specified. The kubeconfig should have sufficient privileges to apply the resources included in the bundle.
+The Kubernetes Mixin requires a kubeconfig file. The mixin will allow the user to specify where it is mounted at, but will assume it is provided at `/home/nonroot/.kube/config` if not otherwise specified. The kubeconfig should have sufficient privileges to apply the resources included in the bundle.
 
 ### Install
 

@@ -1,3 +1,4 @@
+schemaVersion: 1.0.0-alpha.1
 name: mybun
 version: 0.1.0
 description: "An example Porter configuration"
@@ -5,7 +6,7 @@ registry: getporter
 
 credentials:
   - name: kubeconfig
-    path: /root/.kube/config
+    path: /home/nonroot/.kube/config
 
 mixins:
   - exec

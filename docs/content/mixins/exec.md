@@ -31,6 +31,8 @@ exec:
     - flag-value2
   suffix-arguments: # These arguments are specified after any flags are passed
   - suffix-arg1
+  envs: # Environment variables to be added to the command execution environment
+    FOO_KEY: foo-value
   suppress-output: false # Do not print the command output to the console
   ignoreError: # Conditions when execution should continue even if the command fails
     all: true # Ignore all errors 
@@ -164,7 +166,7 @@ The `path` output saves the content of the specified file path to an output.
 ```yaml
 outputs:
 - name: kubeconfig
-  path: /root/.kube/config
+  path: /home/nonroot/.kube/config
 ```
 
 ---

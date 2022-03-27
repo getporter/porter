@@ -3,9 +3,13 @@ package porter
 import (
 	"testing"
 
+	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/cnab"
+	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,7 +123,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	err := opts.Validate([]string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter)
+	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
@@ -132,8 +136,13 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", "porter.yaml")
+	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
+
+	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	require.NoError(t, err)
 
 	opts := sharedOptions{
 		ParameterSets: []string{
@@ -144,10 +153,10 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 		},
 	}
 
-	err := opts.Validate([]string{}, p.Porter)
+	err = opts.Validate([]string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter)
+	err = opts.parseParamSets(p.Porter, bun)
 	assert.Error(t, err)
 
 }
@@ -156,10 +165,16 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	opts := sharedOptions{}
-	opts.Params = []string{"A=1", "B=2"}
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	require.NoError(t, err)
 
-	err := opts.LoadParameters(p.Porter)
+	opts := sharedOptions{}
+	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
+
+	err = opts.LoadParameters(p.Porter, bun)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -274,7 +289,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				Dir: "path/to/bundle",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				return ctx.FileSystem.MkdirAll(opts.Dir, 0700)
+				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
 			wantFile:     config.Name,
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",
@@ -285,7 +300,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				return ctx.FileSystem.MkdirAll(opts.File, 0700)
+				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
 			wantCNABFile: build.LOCAL_BUNDLE,
@@ -297,11 +312,11 @@ func Test_bundleFileOptions(t *testing.T) {
 				File: "alternate/porter.yaml",
 			},
 			setup: func(ctx *context.Context, opts bundleFileOptions) error {
-				err := ctx.FileSystem.MkdirAll(opts.File, 0700)
+				err := ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 				if err != nil {
 					return err
 				}
-				return ctx.FileSystem.MkdirAll(opts.Dir, 0700)
+				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
 			wantCNABFile: "/path/to/bundle/.cnab/bundle.json",

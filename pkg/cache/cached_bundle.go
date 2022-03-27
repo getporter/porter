@@ -10,7 +10,6 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
-	"get.porter.sh/porter/pkg/manifest"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
@@ -26,11 +25,6 @@ type CachedBundle struct {
 
 	// BundlePath is the location of the bundle.json in the cache.
 	BundlePath string
-
-	// Manifest is the optional porter.yaml manifest. This is only populated
-	// when the bundle was a porter built bundle that had a manifest embedded in
-	// the custom metadata.
-	Manifest *manifest.Manifest
 
 	// ManifestPath is the optional location of the porter.yaml in the cache.
 	ManifestPath string
@@ -76,14 +70,6 @@ func (cb *CachedBundle) BuildMetadataPath() string {
 func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 	// Check that the bundle exists
 	cb.BundlePath = cb.BuildBundlePath()
-	bundleExists, err := cxt.FileSystem.Exists(cb.BuildMetadataPath())
-	if err != nil {
-		return false, errors.Wrapf(err, "unable to read bundle %s at %s", cb.Reference, cb.BuildMetadataPath())
-	}
-	if !bundleExists {
-		return false, nil
-	}
-
 	metaPath := cb.BuildMetadataPath()
 	metaExists, err := cxt.FileSystem.Exists(metaPath)
 	if err != nil {
@@ -139,14 +125,6 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 		}
 		cb.RelocationMap = reloMap
 	}
-
-	if cb.ManifestPath != "" {
-		m, err := manifest.LoadManifestFrom(cxt, cb.ManifestPath)
-		if err != nil {
-			return true, errors.Wrapf(err, "unable to read cached manifest at %s", cb.ManifestPath)
-		}
-		cb.Manifest = m
-	}
-
+	
 	return true, nil
 }
