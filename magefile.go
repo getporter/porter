@@ -230,16 +230,11 @@ func TestSmoke() error {
 }
 
 func getRegistry() string {
-	registry := os.Getenv("REGISTRY")
+	registry := os.Getenv("PORTER_REGISTRY")
 	if registry == "" {
-		registry = "getporterci"
+		registry = "localhost:5000"
 	}
 	return registry
-}
-
-func getDualPublish() bool {
-	dualPublish, _ := strconv.ParseBool(os.Getenv("DUAL_PUBLISH"))
-	return dualPublish
 }
 
 func BuildImages() {
@@ -247,9 +242,6 @@ func BuildImages() {
 	registry := getRegistry()
 
 	buildImages(registry, info)
-	if getDualPublish() {
-		buildImages("ghcr.io/getporter", info)
-	}
 }
 
 func buildImages(registry string, info releases.GitMetadata) {
@@ -300,9 +292,6 @@ func PublishImages() {
 	info := releases.LoadMetadata()
 
 	pushImagesTo(getRegistry(), info)
-	if getDualPublish() {
-		pushImagesTo("ghcr.io/getporter", info)
-	}
 }
 
 // Builds the porter-agent image and publishes it to a local test cluster with the Porter Operator.

@@ -1,7 +1,7 @@
 name: asciiart
 version: 0.1.0
 description: "A bundle that turns pictures into ascii art"
-registry: getporter
+registry: "localhost:5000"
 dockerfile: Dockerfile.tmpl
 
 mixins:

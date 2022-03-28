@@ -17,6 +17,5 @@ extends:
   parameters:
       skipTests: ${{ parameters.skipTests }}
       shouldPublish: ${{ parameters.shouldPublish }}
-      dualPublish: false
-      registry: docker.io/getporterci
+      registry: ghcr.io/getporter/test
       publishExamples: ${{ parameters.publishExamples }}

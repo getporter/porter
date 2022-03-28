@@ -1,8 +1,8 @@
 schemaVersion: 1.0.0-alpha.1
 name: whalegap
-version: 0.1.1
+version: 0.2.0
 description: "An example bundle that demonstrates how to sneak a whale-sized bundle through an airgap"
-registry: getporter
+registry: ghcr.io/getporter
 
 parameters:
   - name: release

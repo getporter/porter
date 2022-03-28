@@ -16,5 +16,4 @@ extends:
   parameters:
     skipTests: true
     shouldPublish: true
-    dualPublish: true
-    registry: docker.io/getporter
+    registry: ghcr.io/getporter

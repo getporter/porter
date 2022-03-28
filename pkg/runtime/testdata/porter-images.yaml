@@ -2,7 +2,7 @@ schemaVersion: 1.0.0-alpha.1
 name: some-test
 version: 0.3.11
 description: "Test some things"
-registry: getporter
+registry: "localhost:5000"
 
 images:
   something:

@@ -3,7 +3,7 @@ PKG = get.porter.sh/porter
 
 # --no-print-directory avoids verbose logging when invoking targets that utilize sub-makes
 MAKE_OPTS ?= --no-print-directory
-REGISTRY ?= getporterci
+PORTER_REGISTRY ?= localhost:5000
 
 CLIENT_PLATFORM = $(shell go env GOOS)
 CLIENT_ARCH = $(shell go env GOARCH)
@@ -97,7 +97,7 @@ publish-examples:
 ifndef BUNDLE
 	$(call all-bundles,$(EXAMPLES_DIR),publish-examples)
 else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(REGISTRY) --debug
+	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(PORTER_REGISTRY) --debug
 endif
 
 SCHEMA_VERSION     := cnab-core-1.0.1
