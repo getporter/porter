@@ -25,8 +25,8 @@ func TestLoadManifest(t *testing.T) {
 	require.Equal(t, m.Name, "hello", "manifest has incorrect name")
 	require.Equal(t, m.Description, "An example Porter configuration", "manifest has incorrect description")
 	require.Equal(t, m.Version, "0.1.0", "manifest has incorrect version")
-	require.Equal(t, m.Registry, "getporter", "manifest has incorrect registry")
-	require.Equal(t, m.Reference, "getporter/hello:v0.1.0", "manifest has incorrect reference")
+	require.Equal(t, m.Registry, "localhost:5000", "manifest has incorrect registry")
+	require.Equal(t, m.Reference, "localhost:5000/hello:v0.1.0", "manifest has incorrect reference")
 
 	require.Len(t, m.Maintainers, 4, "manifest has incorrect number of maintainers")
 

@@ -1,7 +1,7 @@
 name: workshop-tf
 version: 0.1.0
 description: "An example using Porter to build the from scratch bundle"
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
   - azure

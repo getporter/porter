@@ -2,7 +2,7 @@ schemaVersion: 1.0.0-alpha.1
 name: porter-hello
 description: "An example Porter configuration"
 version: 0.1.0
-registry: getporter
+registry: "localhost:5000"
 
 maintainers:
 - name: "John Doe"
