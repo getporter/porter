@@ -1,8 +1,20 @@
 schemaVersion: 1.0.0-alpha.1
 name: porter-hello
-version: 0.1.1
+version: 0.2.0
 description: "An example Porter configuration"
-registry: getporter
+reference: ghcr.io/getporter
+
+parameters:
+  - name: name
+    type: string
+    default: porter
+    path: /cnab/app/foo/name.txt
+    source:
+      output: name
+
+outputs:
+  - name: name
+    path: /cnab/app/foo/name.txt
 
 mixins:
   - exec
@@ -27,3 +39,4 @@ uninstall:
       command: ./helpers.sh
       arguments:
         - uninstall
+
