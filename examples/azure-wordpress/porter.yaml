@@ -1,7 +1,8 @@
 schemaVersion: 1.0.0-alpha.1
 name: azure-wordpress
-version: 0.1.0
-registry: getporter
+version: 0.2.0
+registry: ghcr.io/getporter
+
 
 mixins:
   - arm
@@ -9,7 +10,6 @@ mixins:
       repositories:
         bitnami:
           url: "https://charts.bitnami.com/bitnami"
-
 credentials:
 - name: SUBSCRIPTION_ID
   env: AZURE_SUBSCRIPTION_ID

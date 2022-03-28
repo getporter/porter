@@ -1,14 +1,16 @@
 schemaVersion: 1.0.0-alpha.1
 name: plugins-tutorial
-version: 0.1.0
-description: "Example of porter resolving credentials from a secrets store using
-a plugin. This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/."
-registry: getporter
+version: 0.2.0
+description: -| 
+  Example of porter resolving credentials from a secrets store using a plugin.
+  This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/.
+registry: ghcr.io/getporter
 
 credentials:
 - name: password
-  description: "Password for installing the world. We recommend getting this
-  from a secret store."
+  description: -| 
+    Password for installing the world. We recommend getting this
+    from a secret store.
   env: PASSWORD
   type: string
   applyTo:
