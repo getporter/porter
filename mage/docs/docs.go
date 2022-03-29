@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/mage/docker"
+	"get.porter.sh/magefiles/docker"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/magefile/mage/mg"
