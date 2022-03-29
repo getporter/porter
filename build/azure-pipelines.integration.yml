@@ -12,7 +12,7 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
-  GOVERSION: "1.17.8"
+  GOVERSION: "1.18"
 
 jobs:
   - job: integration_test
