@@ -41,7 +41,7 @@ import (
 
 const (
 	PKG       = "get.porter.sh/porter"
-	GoVersion = ">=1.17"
+	GoVersion = ">=1.18"
 )
 
 var must = shx.CommandBuilder{StopOnError: true}

@@ -4,7 +4,7 @@ variables: # these are really constants
 parameters:
   - name: goVersion
     type: string
-    default: "1.17.8"
+    default: "1.18"
   - name: registry
     type: string
     default: ghcr.io/getporter/test
