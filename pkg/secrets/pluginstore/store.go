@@ -55,6 +55,14 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 	return s.plugin.Resolve(keyName, keyValue)
 }
 
+func (s *Store) Create(keyName string, keyValue string, value string) error {
+	if err := s.Connect(); err != nil {
+		return err
+	}
+
+	return s.plugin.Create(keyName, keyValue, value)
+}
+
 func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	if key == host.PluginKey {
 		return host.NewPlugin(), nil

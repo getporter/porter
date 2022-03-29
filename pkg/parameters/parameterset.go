@@ -80,5 +80,9 @@ func (s ParameterSet) Validate() error {
 }
 
 func (s ParameterSet) String() string {
-	return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+	if s.Namespace != "" {
+		return fmt.Sprintf("%s/%s", s.Namespace, s.Name)
+	}
+
+	return s.Name
 }

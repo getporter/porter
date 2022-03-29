@@ -302,7 +302,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -322,7 +322,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -346,7 +346,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -370,7 +370,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -398,7 +398,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -422,7 +422,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		defer r.Teardown()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
-		r.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_set")
+		r.TestParameters.AddSecret("foo_secret", "foo_set")
 
 		r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 		b, err := cnab.LoadBundle(r.Context, "bundle.json")

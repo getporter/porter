@@ -76,7 +76,12 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Name = opts.Name
 	lifecycleOpts.Namespace = opts.Namespace
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
-	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
+
+	paramSetNames := make([]string, 0, len(opts.Installation.ParameterSets))
+	for _, pset := range opts.Installation.ParameterSets {
+		paramSetNames = append(paramSetNames, pset.Name)
+	}
+	lifecycleOpts.ParameterSets = paramSetNames
 	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
@@ -183,7 +188,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	}
 
 	// Have the bundle parameters changed?
-	if err := opts.LoadParameters(p, newRef.Definition); err != nil {
+	if err := opts.LoadParameters(p, opts.bundleRef.Definition, i); err != nil {
 		return false, err
 	}
 

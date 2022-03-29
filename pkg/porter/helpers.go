@@ -23,6 +23,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -61,8 +62,9 @@ type TestPorter struct {
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc.TestContext)
+	testSecrets := inmemorysecrets.NewStore()
 	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore)
-	testParameters := parameters.NewTestParameterProviderFor(t, testStore)
+	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
@@ -76,6 +78,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Claims = testClaims
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
+	p.Secrets = testSecrets
 	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
 	p.Registry = testRegistry
 

@@ -5,12 +5,15 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/pkg/errors"
 )
 
@@ -104,7 +107,7 @@ type sharedOptions struct {
 	parsedParams map[string]string
 
 	// parsedParamSets is the parsed set of parameter from ParameterSets
-	parsedParamSets map[string]string
+	parsedParamSets map[string]parameters.ParameterSet
 
 	// combinedParameters is parsedParams merged on top of parsedParamSets.
 	combinedParameters map[string]string
@@ -240,7 +243,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error {
+func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle, i claims.Installation) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -259,6 +262,9 @@ func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error
 
 	o.combinedParameters = o.combineParameters(p.Context)
 
+	// convert params to parameter sets
+	o.convertParamToSet(p, bun, i)
+
 	return nil
 }
 
@@ -268,7 +274,42 @@ func (o *sharedOptions) parseParams() error {
 	if err != nil {
 		return err
 	}
+
 	o.parsedParams = p
+	return nil
+}
+
+func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i claims.Installation) error {
+	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
+	for name, value := range o.parsedParams {
+		strategy := secrets.Strategy{
+			Name:   name,
+			Source: secrets.Source{Key: host.SourceValue, Value: value},
+			Value:  value,
+		}
+		if bun.IsSensitiveParameter(name) {
+			strategy.Source.Key = secrets.SourceSecret
+			strategy.Source.Value = i.ID + name
+			err := p.Secrets.Create(strategy.Source.Key, strategy.Source.Value, strategy.Value)
+			if err != nil {
+				return errors.Wrap(err, "failed to save sensitive param to secrete store")
+			}
+		}
+
+		strategies = append(strategies, strategy)
+	}
+
+	if len(strategies) == 0 {
+		return nil
+	}
+
+	pset := i.NewInternalParameterSet(strategies...)
+
+	if o.parsedParamSets == nil {
+		o.parsedParamSets = make(map[string]parameters.ParameterSet)
+	}
+	o.parsedParamSets[pset.Name] = pset
+
 	return nil
 }
 
@@ -291,8 +332,10 @@ func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error
 func (o *sharedOptions) combineParameters(c *portercontext.Context) map[string]string {
 	final := make(map[string]string)
 
-	for k, v := range o.parsedParamSets {
-		final[k] = v
+	for _, v := range o.parsedParamSets {
+		for _, param := range v.Parameters {
+			final[param.Name] = param.Value
+		}
 	}
 
 	for k, v := range o.parsedParams {

@@ -1,6 +1,7 @@
 schemaVersion: 1.0.1
 name: mybuns
 parameters:
-  - name: log_level
+  log_level:
+    name: log_level
     source:
       value: "11"

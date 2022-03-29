@@ -144,7 +144,9 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 	currentRun.ParameterSets = args.Installation.ParameterSets
-	sort.Strings(currentRun.ParameterSets)
+	sort.SliceStable(currentRun.ParameterSets, func(i, j int) bool {
+		return currentRun.ParameterSets[i].Name < currentRun.ParameterSets[j].Name
+	})
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {

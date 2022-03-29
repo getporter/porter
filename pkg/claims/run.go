@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
@@ -52,11 +53,11 @@ type Run struct {
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets is the list of parameter set names used during the run.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []parameters.ParameterSet `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Parameters is the full set of resolved parameters stored on the claim.
 	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
-	Parameters map[string]interface{} `json:"parameters" yaml:"parameters" toml:"parameters"`
+	Parameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB

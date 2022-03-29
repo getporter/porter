@@ -2,6 +2,7 @@ package porter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -56,6 +57,40 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 		if err != nil {
 			return claims.Installation{}, nil, err
 		}
+
+		bunRef, ok, err := installation.Bundle.GetBundleReference()
+		if err != nil {
+			return claims.Installation{}, nil, err
+		}
+		if !ok {
+
+			return claims.Installation{}, nil, errors.New("unable to get bundle reference")
+		}
+		bun, ok, err := p.Cache.FindBundle(bunRef)
+		if err != nil {
+			return claims.Installation{}, nil, err
+		}
+		if !ok {
+			return claims.Installation{}, nil, errors.New("unable to find bundle from cache")
+		}
+
+		resolved := make(map[string]interface{})
+		for _, pset := range run.ParameterSets {
+			params, err := p.Parameters.ResolveAll(pset)
+			if err != nil {
+				return claims.Installation{}, nil, err
+			}
+			for _, param := range params {
+				v, err := bun.Definition.ConvertParameterValue(param.Name, param.Value)
+				if err != nil {
+					return claims.Installation{}, nil, err
+				}
+				resolved[param.Name] = v
+
+			}
+		}
+
+		run.Parameters = resolved
 		return installation, &run, nil
 	}
 
@@ -119,22 +154,21 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			}
 		}
 
-		// Print parameters, if any
-		if len(displayInstallation.Parameters) > 0 {
-			fmt.Fprintln(p.Out)
-			fmt.Fprintln(p.Out, "Parameters:")
-
-			err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)
-			if err != nil {
-				return err
-			}
-		}
-
 		// Print parameter sets, if any
 		if len(displayInstallation.ParameterSets) > 0 {
-			fmt.Fprintln(p.Out)
-			fmt.Fprintln(p.Out, "Parameter Sets:")
 			for _, ps := range displayInstallation.ParameterSets {
+				if installation.IsInternalParameterSet(ps.Name) {
+					fmt.Fprintln(p.Out)
+					fmt.Fprintln(p.Out, "Parameters:")
+
+					err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)
+					if err != nil {
+						return err
+					}
+					continue
+				}
+				fmt.Fprintln(p.Out)
+				fmt.Fprintln(p.Out, "Parameter Sets:")
 				fmt.Fprintf(p.Out, "  - %s\n", ps)
 			}
 		}

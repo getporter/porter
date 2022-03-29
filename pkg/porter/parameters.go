@@ -326,8 +326,8 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
-	resolvedParameters := secrets.Set{}
+func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (map[string]parameters.ParameterSet, error) {
+	resolvedParameters := make(map[string]parameters.ParameterSet, len(params))
 	for _, name := range params {
 
 		// Try to get the params in the local namespace first, fallback to the global creds
@@ -361,7 +361,7 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 				for i, param := range pset.Parameters {
 					if param.Name == paramName {
 						// Pass through value (filepath) directly to resolvedParameters
-						resolvedParameters[param.Name] = param.Source.Value
+						resolvedParameters[param.Name] = pset
 						// Eliminate this param from pset to prevent its resolution by
 						// the cnab-go library, which doesn't support this parameter type
 						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]
@@ -376,9 +376,9 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 			return nil, err
 		}
 
-		for k, v := range rc {
-			resolvedParameters[k] = v
-		}
+		pset.Parameters = rc
+		resolvedParameters[pset.Name] = pset
+
 	}
 
 	return resolvedParameters, nil
@@ -572,7 +572,7 @@ func (p *Porter) resolveParameters(installation claims.Installation, bun cnab.Ex
 	for key, unconverted := range mergedParams {
 		param, ok := bun.Parameters[key]
 		if !ok {
-			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
+			return nil, fmt.Errorf("resolvedParameters:  %s not defined in bundle", key)
 		}
 
 		def, ok := bun.Definitions[param.Definition]
@@ -660,7 +660,7 @@ func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation c
 
 			param, ok := bun.Parameters[parameterName]
 			if !ok {
-				return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
+				return nil, fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName)
 			}
 
 			def, ok := bun.Definitions[param.Definition]

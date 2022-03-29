@@ -11,4 +11,6 @@ type SecretsProtocol interface {
 	// - keyName=key, keyValue=conn-string
 	// - keyName=path, keyValue=/tmp/connstring.txt
 	Resolve(keyName string, keyValue string) (string, error)
+
+	Create(keyName string, keyValue string, value string) error
 }

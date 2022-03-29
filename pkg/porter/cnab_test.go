@@ -2,15 +2,19 @@ package porter
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -111,8 +115,8 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	p.TestParameters.TestSecrets.AddSecret("foo_secret", "foo_value")
-	p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+	p.TestParameters.AddSecret("foo_secret", "foo_value")
+	p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
 	p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 	opts := sharedOptions{
@@ -127,10 +131,19 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
 	assert.NoError(t, err)
 
-	wantParams := map[string]string{
-		"my-second-param": "VALUE2",
+	wantParams := map[string]parameters.ParameterSet{
+		"porter-hello": parameters.NewParameterSet("", "porter-hello", secrets.Strategy{
+			Name:   "my-second-param",
+			Source: secrets.Source{Key: secrets.SourceSecret, Value: "PARAM2_SECRET"},
+			Value:  "VALUE2",
+		}),
 	}
-	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
+
+	assert.Len(t, opts.parsedParamSets, len(wantParams))
+	for name, param := range wantParams {
+		assert.NotNil(t, opts.parsedParamSets[name])
+		assert.True(t, reflect.DeepEqual(param.Parameters, opts.parsedParamSets[name].Parameters), "resolved unexpected parameter values")
+	}
 }
 
 func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
@@ -174,8 +187,9 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 
 	opts := sharedOptions{}
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
+	i := claims.NewInstallation("", bun.Name)
 
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(p.Porter, bun, i)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -207,8 +221,11 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 
 	t.Run("no override present, parameter set present", func(t *testing.T) {
 		opts := sharedOptions{
-			parsedParamSets: map[string]string{
-				"foo": "foo_via_paramset",
+			parsedParamSets: map[string]parameters.ParameterSet{
+				"foo": parameters.NewParameterSet("", "foo", secrets.Strategy{
+					Name:  "foo",
+					Value: "foo_via_paramset",
+				}),
 			},
 		}
 
@@ -222,8 +239,11 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 			parsedParams: map[string]string{
 				"foo": "foo_cli_override",
 			},
-			parsedParamSets: map[string]string{
-				"foo": "foo_via_paramset",
+			parsedParamSets: map[string]parameters.ParameterSet{
+				"foo": parameters.NewParameterSet("", "foo", secrets.Strategy{
+					Name:  "foo",
+					Value: "foo_via_paramset",
+				}),
 			},
 		}
 

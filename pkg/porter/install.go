@@ -99,35 +99,39 @@ func (p *Porter) InstallBundle(ctx context.Context, opts InstallOptions) error {
 // Users are expected to edit the installation record if they don't want that behavior.
 func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *BundleActionOptions) error {
 	// Record the parameters specified by the user, with flags taking precedence over parameter set values
-	err := opts.LoadParameters(p, opts.bundleRef.Definition)
+	err := opts.LoadParameters(p, opts.bundleRef.Definition, *i)
 	if err != nil {
 		return err
-	}
-	if i.Parameters == nil {
-		i.Parameters = make(map[string]interface{}, len(opts.parsedParams))
 	}
 	// Record the user-specified parameter values
 	for k, v := range opts.parsedParams {
 		i.Parameters[k] = v
 	}
 	// Record the names of the parameter sets used
-	for _, ps := range opts.ParameterSets {
-		for _, existing := range i.ParameterSets {
-			if existing == ps {
-				continue
+	for name, ps := range opts.parsedParamSets {
+		var existed bool
+		for idx, existing := range i.ParameterSets {
+			if i.IsInternalParameterSet(name) {
+				i.ParameterSets[idx] = ps
+			} else if existing.Name == name {
+				existed = true
+				break
 			}
 		}
-		i.ParameterSets = append(i.ParameterSets, ps)
+
+		if !existed {
+			i.ParameterSets = append(i.ParameterSets, ps)
+		}
 	}
 
 	// Record the names of the credential sets used
 	for _, cs := range opts.CredentialIdentifiers {
-		for _, existing := range i.ParameterSets {
+		for _, existing := range i.CredentialSets {
 			if existing == cs {
 				continue
 			}
+			i.CredentialSets = append(i.CredentialSets, cs)
 		}
-		i.CredentialSets = append(i.CredentialSets, cs)
 	}
 
 	return nil

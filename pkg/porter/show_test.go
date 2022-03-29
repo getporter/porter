@@ -6,9 +6,12 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
 
@@ -87,14 +90,35 @@ func TestPorter_ShowBundle(t *testing.T) {
 					"io.cnab/appVersion": "v1.2.3",
 				}
 				i.Parameters = map[string]interface{}{"logLevel": 3}
-				i.ParameterSets = []string{"dev-env"}
+				i.ParameterSets = []parameters.ParameterSet{
+					i.NewInternalParameterSet(secrets.Strategy{Name: "logLevel", Source: secrets.Source{Key: host.SourceValue, Value: "3"}}),
+					parameters.NewParameterSet("", "dev-env"),
+				}
 			})
+			p.TestParameters.TestSecrets.Create(host.SourceValue, "3", "3")
 			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
 				r.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3}
+
+				r.ParameterSets = []parameters.ParameterSet{
+					i.NewInternalParameterSet([]secrets.Strategy{
+						secrets.Strategy{
+							Name:   "logLevel",
+							Source: secrets.Source{Key: host.SourceValue, Value: "3"},
+						},
+						secrets.Strategy{
+							Name:   "token",
+							Source: secrets.Source{Key: host.SourceValue, Value: "top-secret"},
+						},
+					}...),
+					parameters.NewParameterSet("", "dev-env"),
+				}
 			})
+
+			p.TestParameters.TestSecrets.Create(host.SourceValue, "3", "3")
+			p.Secrets.Create(host.SourceValue, "top-secret", "top-secret")
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 			i.ApplyResult(run, result)
 			i.Status.Installed = &now

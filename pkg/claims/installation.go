@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cnabio/cnab-go/schema"
@@ -28,6 +30,7 @@ type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
+	ID string `json:"id" yaml:"id" toml:"id"`
 	// Name of the installation. Immutable.
 	Name string `json:"name" yaml:"name" toml:"name"`
 
@@ -49,13 +52,13 @@ type Installation struct {
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+	Parameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []parameters.ParameterSet `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Status of the installation.
 	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
@@ -73,8 +76,10 @@ func NewInstallation(namespace string, name string) Installation {
 	now := time.Now()
 	return Installation{
 		SchemaVersion: SchemaVersion,
+		ID:            cnab.NewULID(),
 		Namespace:     namespace,
 		Name:          name,
+		Parameters:    make(map[string]interface{}),
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -170,6 +175,19 @@ func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
 	}
 
 	return nil
+}
+
+// NewParameterSet creates a new ParameterSet with the required fields initialized.
+func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) parameters.ParameterSet {
+	return parameters.NewParameterSet(i.Namespace, internalParamName(i.ID), params...)
+}
+
+func (i Installation) IsInternalParameterSet(name string) bool {
+	return name == internalParamName(i.ID)
+}
+
+func internalParamName(id string) string {
+	return id + "-" + "porter-interal-param-set"
 }
 
 func (i Installation) AddToTrace(ctx context.Context) {
