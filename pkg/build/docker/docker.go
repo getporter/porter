@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/docker/cli/cli/command"
 	clibuild "github.com/docker/cli/cli/command/image/build"

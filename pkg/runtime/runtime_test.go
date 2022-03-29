@@ -7,8 +7,8 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestPorterRuntime_Execute_readMixinOutputs(t *testing.T) {
 	for _, testFile := range testFiles {
 		r.TestContext.AddTestFile(
 			fmt.Sprintf("testdata/outputs/%s.txt", testFile),
-			filepath.Join(context.MixinOutputsDir, testFile))
+			filepath.Join(portercontext.MixinOutputsDir, testFile))
 	}
 
 	gotOutputs, err := r.readMixinOutputs()
@@ -250,7 +250,7 @@ func TestRuntimeManifest_ApplyUnboundBundleOutputs_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := context.NewTestContext(t)
+			c := portercontext.NewTestContext(t)
 			m := &manifest.Manifest{
 				Name: "mybun",
 				Outputs: manifest.OutputDefinitions{

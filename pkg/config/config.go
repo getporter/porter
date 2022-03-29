@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"

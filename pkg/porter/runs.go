@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
@@ -16,7 +16,7 @@ type RunListOptions struct {
 }
 
 // Validate prepares for the list installation runs action and validates the args/options.
-func (so *RunListOptions) Validate(args []string, cxt *context.Context) error {
+func (so *RunListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
 	err := so.sharedOptions.validateInstallationName(args)
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestLoadManifest(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -69,7 +69,7 @@ func TestLoadManifest(t *testing.T) {
 }
 
 func TestLoadManifestWithDependencies(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter.yaml", config.Name)
 	cxt.AddTestDirectory("testdata/bundles", "bundles")
@@ -90,7 +90,7 @@ func TestLoadManifestWithDependencies(t *testing.T) {
 }
 
 func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter-with-deps.yaml", config.Name)
 	cxt.AddTestDirectory("testdata/bundles", "bundles")
@@ -111,7 +111,7 @@ func TestLoadManifestWithDependenciesInOrder(t *testing.T) {
 }
 
 func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -126,7 +126,7 @@ func TestAction_Validate_RequireMixinDeclaration(t *testing.T) {
 }
 
 func TestAction_Validate_RequireMixinData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -141,7 +141,7 @@ func TestAction_Validate_RequireMixinData(t *testing.T) {
 }
 
 func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -156,7 +156,7 @@ func TestAction_Validate_RequireSingleMixinData(t *testing.T) {
 }
 
 func TestManifest_Empty_Steps(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/empty-steps.yaml", config.Name)
 
@@ -165,7 +165,7 @@ func TestManifest_Empty_Steps(t *testing.T) {
 }
 
 func TestManifest_Validate_Name(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter-no-name.yaml", config.Name)
 
@@ -176,7 +176,7 @@ func TestManifest_Validate_Name(t *testing.T) {
 func TestManifest_Validate_SchemaVersion(t *testing.T) {
 
 	t.Run("schemaVersion matches", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		cxt.UseFilesystem()
 
 		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
@@ -187,7 +187,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 	})
 
 	t.Run("schemaVersion missing", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		cxt.UseFilesystem()
 
 		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
@@ -202,7 +202,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 	})
 
 	t.Run("schemaVersion newer", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		cxt.UseFilesystem()
 		m, err := ReadManifest(cxt.Context, "testdata/porter.yaml")
 		require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestManifest_Validate_SchemaVersion(t *testing.T) {
 }
 
 func TestManifest_Validate_Dockerfile(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 
@@ -230,7 +230,7 @@ func TestManifest_Validate_Dockerfile(t *testing.T) {
 }
 
 func TestReadManifest_URL(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	url := "https://raw.githubusercontent.com/getporter/porter/v0.27.1/pkg/manifest/testdata/simple.porter.yaml"
 	m, err := ReadManifest(cxt.Context, url)
 
@@ -239,7 +239,7 @@ func TestReadManifest_URL(t *testing.T) {
 }
 
 func TestReadManifest_Validate_InvalidURL(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	_, err := ReadManifest(cxt.Context, "http://fake-example-porter")
 
 	assert.Error(t, err)
@@ -247,7 +247,7 @@ func TestReadManifest_Validate_InvalidURL(t *testing.T) {
 }
 
 func TestReadManifest_File(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 
@@ -257,7 +257,7 @@ func TestReadManifest_File(t *testing.T) {
 
 func TestSetDefaults(t *testing.T) {
 	t.Run("no registry or reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -268,7 +268,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("bundle docker tag set on reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -285,7 +285,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("bundle docker tag not set on reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -302,7 +302,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("bundle reference includes registry with port", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -319,7 +319,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry provided, no reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -336,7 +336,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry provided with org, no reference", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -353,7 +353,7 @@ func TestSetDefaults(t *testing.T) {
 	})
 
 	t.Run("registry and reference provided", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		m := Manifest{
 			SchemaVersion: SupportedSchemaVersion,
 			Name:          "mybun",
@@ -375,14 +375,14 @@ func TestSetDefaults(t *testing.T) {
 }
 
 func TestReadManifest_Validate_MissingFile(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	_, err := ReadManifest(cxt.Context, "fake-porter.yaml")
 
 	assert.EqualError(t, err, "the specified porter configuration file fake-porter.yaml does not exist")
 }
 
 func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-config.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 
@@ -394,7 +394,7 @@ func TestMixinDeclaration_UnmarshalYAML(t *testing.T) {
 }
 
 func TestMixinDeclaration_UnmarshalYAML_Invalid(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/mixin-with-bad-config.yaml", config.Name)
 	_, err := ReadManifest(cxt.Context, config.Name)
 
@@ -409,7 +409,7 @@ func TestCredentialsDefinition_UnmarshalYAML(t *testing.T) {
 		}
 	}
 	t.Run("all credentials in the generated manifest file are required", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		cxt.AddTestFile("testdata/with-credentials.yaml", config.Name)
 		m, err := ReadManifest(cxt.Context, config.Name)
 		require.NoError(t, err)
@@ -585,7 +585,7 @@ func TestValidateImageMap(t *testing.T) {
 }
 
 func TestLoadManifestWithCustomData(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter-with-custom-metadata.yaml", config.Name)
 
@@ -631,7 +631,7 @@ func TestLoadManifestWithCustomData(t *testing.T) {
 }
 
 func TestLoadManifestWithRequiredExtensions(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/porter.yaml", config.Name)
 
@@ -655,7 +655,7 @@ func TestLoadManifestWithRequiredExtensions(t *testing.T) {
 }
 
 func TestReadManifest_WithTemplateVariables(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -664,7 +664,7 @@ func TestReadManifest_WithTemplateVariables(t *testing.T) {
 }
 
 func TestManifest_GetTemplatedOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -676,7 +676,7 @@ func TestManifest_GetTemplatedOutputs(t *testing.T) {
 }
 
 func TestManifest_GetTemplatedDependencyOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-with-templating.yaml", config.Name)
 	m, err := ReadManifest(cxt.Context, config.Name)
 	require.NoError(t, err, "ReadManifest failed")
@@ -709,7 +709,7 @@ func TestParamToEnvVar(t *testing.T) {
 }
 
 func TestParameterDefinition_UpdateApplyTo(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/simple.porter.yaml", config.Name)
 

@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
 type Runner struct {
-	*context.Context
+	*portercontext.Context
 	// pkgDir is the absolute path to where the package is installed
 	pkgDir string
 
@@ -22,7 +22,7 @@ type Runner struct {
 
 func NewRunner(pkgName, pkgDir string, runtime bool) *Runner {
 	return &Runner{
-		Context: context.New(),
+		Context: portercontext.New(),
 		pkgName: pkgName,
 		pkgDir:  pkgDir,
 		runtime: runtime,

@@ -10,8 +10,8 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -50,7 +50,7 @@ func (s Stamp) DecodeManifest() ([]byte, error) {
 	return resultB, nil
 }
 
-func (s Stamp) WriteManifest(cxt *context.Context, path string) error {
+func (s Stamp) WriteManifest(cxt *portercontext.Context, path string) error {
 	manifestB, err := s.DecodeManifest()
 	if err != nil {
 		return err

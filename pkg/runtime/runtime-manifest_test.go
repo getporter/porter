@@ -7,8 +7,8 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestResolveMapParam(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PERSON", "Ralpha")
 
 	m := &manifest.Manifest{
@@ -66,7 +66,7 @@ func TestResolveMapParam(t *testing.T) {
 }
 
 func TestResolvePathParam(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"person": {
@@ -107,7 +107,7 @@ func TestResolvePathParam(t *testing.T) {
 }
 
 func TestMetadataAvailableForTemplating(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
@@ -132,7 +132,7 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
@@ -163,7 +163,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{},
 	}
@@ -184,7 +184,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"name": {
@@ -209,7 +209,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 }
 
 func TestResolveArray(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PERSON", "Ralpha")
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
@@ -237,7 +237,7 @@ func TestResolveArray(t *testing.T) {
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
 	cxt.Setenv("REGULAR_PARAM", "regular param value")
 
@@ -280,7 +280,7 @@ func TestResolveSensitiveParameter(t *testing.T) {
 }
 
 func TestResolveCredential(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PASSWORD", "deliciou$dubonnet")
 
 	m := &manifest.Manifest{
@@ -316,7 +316,7 @@ func TestResolveCredential(t *testing.T) {
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
@@ -389,7 +389,7 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 }
 
 func TestResolveInMainDict(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
 
@@ -416,7 +416,7 @@ func TestResolveInMainDict(t *testing.T) {
 }
 
 func TestResolveSliceWithAMap(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/slice-test.yaml", config.Name)
 
@@ -454,7 +454,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 		},
 	}
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
 		Install: manifest.Steps{
@@ -469,7 +469,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Outputs: manifest.OutputDefinitions{
 			"username": {
@@ -511,7 +511,7 @@ func TestResolveSensitiveOutputs(t *testing.T) {
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 	}
@@ -534,7 +534,7 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 }
 
 func TestReadManifest_Validate_BundleOutput(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
 
@@ -565,7 +565,7 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 }
 
 func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", config.Name)
 
@@ -605,7 +605,7 @@ func TestDependency_Validate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cxt := context.NewTestContext(t)
+			cxt := portercontext.NewTestContext(t)
 
 			err := tc.dep.Validate(cxt.Context)
 
@@ -624,7 +624,7 @@ func TestDependency_Validate(t *testing.T) {
 }
 
 func TestManifest_ApplyStepOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
 
@@ -645,7 +645,7 @@ func makeBoolPtr(value bool) *bool {
 }
 
 func TestManifest_ResolveImageMap(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.AddTestFile("testdata/porter-images.yaml", config.Name)
 
 	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
@@ -683,7 +683,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
@@ -708,7 +708,7 @@ func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 
 func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
@@ -843,7 +843,7 @@ func TestResolveImageErrors(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedBundle(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -873,7 +873,7 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -903,7 +903,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithRelo(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -935,7 +935,7 @@ func TestResolveImageWithRelo(t *testing.T) {
 }
 
 func TestResolveImageRelocationNoMatch(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -966,7 +966,7 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 }
 
 func TestResolveStepEncoding(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	wantValue := `{"test":"value"}`
 	cxt.Setenv("TEST", wantValue)
@@ -993,7 +993,7 @@ func TestResolveStepEncoding(t *testing.T) {
 }
 
 func TestResolveInstallationName(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv(config.EnvInstallationName, "mybun")
 
 	m := &manifest.Manifest{}
@@ -1013,7 +1013,7 @@ func TestResolveInstallationName(t *testing.T) {
 }
 
 func TestResolveCustomMetadata(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Custom: map[string]interface{}{
 			"foo": "foobar",
@@ -1042,7 +1042,7 @@ func TestResolveCustomMetadata(t *testing.T) {
 }
 
 func TestResolveEnvironmentVariable(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{}
 	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
 

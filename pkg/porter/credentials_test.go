@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"

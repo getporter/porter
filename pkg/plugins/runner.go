@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -14,13 +14,13 @@ type CommandOptions struct {
 }
 
 type PluginRunner struct {
-	*context.Context
+	*portercontext.Context
 	pluginName string
 }
 
 func NewRunner(pluginName string) *PluginRunner {
 	return &PluginRunner{
-		Context:    context.New(),
+		Context:    portercontext.New(),
 		pluginName: pluginName,
 	}
 }

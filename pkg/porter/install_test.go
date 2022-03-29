@@ -3,7 +3,7 @@ package porter
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +47,7 @@ func TestInstallOptions_validateDriver(t *testing.T) {
 		{"invalid driver provided", "dbeug", "", "unsupported driver or driver not found in PATH: dbeug"},
 	}
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := InstallOptions{

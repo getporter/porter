@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/tests"
 	"github.com/carolynvs/magex/shx"
@@ -24,7 +24,7 @@ type Tester struct {
 	dbName string
 
 	// TestContext is a porter context for the filesystem.
-	TestContext *context.TestContext
+	TestContext *portercontext.TestContext
 
 	// TestDir is the temp directory created for the test.
 	TestDir string
@@ -48,7 +48,7 @@ func NewTest(t *testing.T) (Tester, error) {
 	pwd, _ := os.Getwd()
 	test := &Tester{T: t, originalPwd: pwd}
 
-	test.TestContext = context.NewTestContext(t)
+	test.TestContext = portercontext.NewTestContext(t)
 	test.TestContext.UseFilesystem()
 	test.RepoRoot = test.TestContext.FindRepoRoot()
 

@@ -3,15 +3,15 @@ package linter
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLinter_Lint(t *testing.T) {
 	t.Run("no results", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
 		l := New(cxt.Context, mixins)
 		m := &manifest.Manifest{
@@ -29,7 +29,7 @@ func TestLinter_Lint(t *testing.T) {
 	})
 
 	t.Run("has results", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
 		l := New(cxt.Context, mixins)
 		m := &manifest.Manifest{
@@ -54,7 +54,7 @@ func TestLinter_Lint(t *testing.T) {
 	})
 
 	t.Run("mixin doesn't support lint", func(t *testing.T) {
-		cxt := context.NewTestContext(t)
+		cxt := portercontext.NewTestContext(t)
 		mixins := mixin.NewTestMixinProvider()
 		l := New(cxt.Context, mixins)
 		m := &manifest.Manifest{

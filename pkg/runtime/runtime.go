@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
@@ -20,12 +20,12 @@ import (
 
 // PorterRuntime orchestrates executing a bundle and managing state.
 type PorterRuntime struct {
-	*context.Context
+	*portercontext.Context
 	mixins          pkgmgmt.PackageManager
 	RuntimeManifest *RuntimeManifest
 }
 
-func NewPorterRuntime(cxt *context.Context, mixins pkgmgmt.PackageManager) *PorterRuntime {
+func NewPorterRuntime(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *PorterRuntime {
 	return &PorterRuntime{
 		Context: cxt,
 		mixins:  mixins,
@@ -63,9 +63,9 @@ func (r *PorterRuntime) Execute(rm *RuntimeManifest) error {
 		return errors.Wrap(err, "unable to resolve bundle images")
 	}
 
-	err = r.FileSystem.MkdirAll(context.MixinOutputsDir, pkg.FileModeDirectory)
+	err = r.FileSystem.MkdirAll(portercontext.MixinOutputsDir, pkg.FileModeDirectory)
 	if err != nil {
-		return errors.Wrapf(err, "could not create outputs directory %s", context.MixinOutputsDir)
+		return errors.Wrapf(err, "could not create outputs directory %s", portercontext.MixinOutputsDir)
 	}
 
 	var bigErr *multierror.Error
@@ -168,16 +168,16 @@ func (r *PorterRuntime) shouldApplyOutput(output manifest.OutputDefinition) bool
 func (r *PorterRuntime) readMixinOutputs() (map[string]string, error) {
 	outputs := map[string]string{}
 
-	outfiles, err := r.FileSystem.ReadDir(context.MixinOutputsDir)
+	outfiles, err := r.FileSystem.ReadDir(portercontext.MixinOutputsDir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not list %s", context.MixinOutputsDir)
+		return nil, errors.Wrapf(err, "could not list %s", portercontext.MixinOutputsDir)
 	}
 
 	for _, outfile := range outfiles {
 		if outfile.IsDir() {
 			continue
 		}
-		outpath := filepath.Join(context.MixinOutputsDir, outfile.Name())
+		outpath := filepath.Join(portercontext.MixinOutputsDir, outfile.Name())
 		contents, err := r.FileSystem.ReadFile(outpath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not read output file %s", outpath)

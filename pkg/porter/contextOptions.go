@@ -1,17 +1,17 @@
 package porter
 
-import "get.porter.sh/porter/pkg/context"
+import "get.porter.sh/porter/pkg/portercontext"
 
 type contextOptions struct {
 	Verbose bool
 }
 
-func NewContextOptions(cxt *context.Context) contextOptions {
+func NewContextOptions(cxt *portercontext.Context) contextOptions {
 	return contextOptions{
 		Verbose: cxt.IsVerbose(),
 	}
 }
 
-func (o contextOptions) Apply(cxt *context.Context) {
+func (o contextOptions) Apply(cxt *portercontext.Context) {
 	cxt.SetVerbose(o.Verbose)
 }

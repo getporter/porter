@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/pkg/errors"
 )
@@ -17,7 +17,7 @@ type OutputJsonPath interface {
 
 // ProcessJsonPathOutputs evaluates the specified output buffer as JSON, looks through the outputs for
 // any that implement the OutputJsonPath and extracts their output.
-func ProcessJsonPathOutputs(cxt *context.Context, step StepWithOutputs, stdout string) error {
+func ProcessJsonPathOutputs(cxt *portercontext.Context, step StepWithOutputs, stdout string) error {
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {

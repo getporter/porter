@@ -3,17 +3,17 @@ package runtime
 import (
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 type TestPorterRuntime struct {
 	*PorterRuntime
-	TestContext *context.TestContext
+	TestContext *portercontext.TestContext
 }
 
 func NewTestPorterRuntime(t *testing.T) *TestPorterRuntime {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	mixins := mixin.NewTestMixinProvider()
 	pr := NewPorterRuntime(cxt.Context, mixins)
 

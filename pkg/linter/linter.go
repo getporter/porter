@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 )
@@ -140,11 +140,11 @@ func (r Results) HasError() bool {
 // Linter manages executing the lint command for all affected mixins and reporting
 // the results.
 type Linter struct {
-	*context.Context
+	*portercontext.Context
 	Mixins pkgmgmt.PackageManager
 }
 
-func New(cxt *context.Context, mixins pkgmgmt.PackageManager) *Linter {
+func New(cxt *portercontext.Context, mixins pkgmgmt.PackageManager) *Linter {
 	return &Linter{
 		Context: cxt,
 		Mixins:  mixins,

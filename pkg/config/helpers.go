@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 type TestConfig struct {
 	*Config
-	TestContext *context.TestContext
+	TestContext *portercontext.TestContext
 }
 
 // NewTestConfig initializes a configuration suitable for testing:
@@ -18,7 +18,7 @@ type TestConfig struct {
 // * in-memory file system,
 // * does not automatically load config from ambient environment.
 func NewTestConfig(t *testing.T) *TestConfig {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cfg := New()
 	cfg.Context = cxt.Context
 	cfg.DataLoader = NoopDataLoader

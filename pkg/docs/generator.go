@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -20,7 +20,7 @@ type DocsOptions struct {
 
 const DefaultDestination = "./docs/content/cli/"
 
-func (o *DocsOptions) Validate(cxt *context.Context) error {
+func (o *DocsOptions) Validate(cxt *portercontext.Context) error {
 	if o.Destination == "" {
 		o.Destination = DefaultDestination
 	}

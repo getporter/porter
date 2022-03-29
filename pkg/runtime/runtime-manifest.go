@@ -14,8 +14,8 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
@@ -30,7 +30,7 @@ const (
 )
 
 type RuntimeManifest struct {
-	*context.Context
+	*portercontext.Context
 	*manifest.Manifest
 
 	Action string
@@ -46,7 +46,7 @@ type RuntimeManifest struct {
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *context.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cxt *portercontext.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
 		Context:  cxt,
 		Action:   action,

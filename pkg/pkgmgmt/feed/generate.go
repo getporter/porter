@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cbroglie/mustache"
 	"github.com/pkg/errors"
@@ -20,7 +20,7 @@ type GenerateOptions struct {
 	TemplateFile    string
 }
 
-func (o *GenerateOptions) Validate(c *context.Context) error {
+func (o *GenerateOptions) Validate(c *portercontext.Context) error {
 	err := o.ValidateSearchDirectory(c)
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (o *GenerateOptions) Validate(c *context.Context) error {
 	return o.ValidateTemplateFile(c)
 }
 
-func (o *GenerateOptions) ValidateSearchDirectory(cxt *context.Context) error {
+func (o *GenerateOptions) ValidateSearchDirectory(cxt *portercontext.Context) error {
 	if o.SearchDirectory == "" {
 		o.SearchDirectory = cxt.Getwd()
 	}
@@ -41,7 +41,7 @@ func (o *GenerateOptions) ValidateSearchDirectory(cxt *context.Context) error {
 	return nil
 }
 
-func (o *GenerateOptions) ValidateTemplateFile(cxt *context.Context) error {
+func (o *GenerateOptions) ValidateTemplateFile(cxt *portercontext.Context) error {
 	if _, err := cxt.FileSystem.Stat(o.TemplateFile); err != nil {
 		return errors.Wrapf(err, "invalid --template %s", o.TemplateFile)
 	}

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/claim"
@@ -18,7 +18,7 @@ type ExtendedBundle struct {
 }
 
 // LoadBundle from the specified filepath.
-func LoadBundle(c *context.Context, bundleFile string) (ExtendedBundle, error) {
+func LoadBundle(c *portercontext.Context, bundleFile string) (ExtendedBundle, error) {
 	bunD, err := c.FileSystem.ReadFile(bundleFile)
 	if err != nil {
 		return ExtendedBundle{}, errors.Wrapf(err, "cannot read bundle at %s", bundleFile)

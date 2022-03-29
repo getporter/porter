@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 // Editor displays content to a user using an external text editor, like vi or notepad.
@@ -19,13 +19,13 @@ import (
 // that might be stored on a remote server. For example: the content could be retrieved
 // from the remote store, edited locally, then saved back.
 type Editor struct {
-	*context.Context
+	*portercontext.Context
 	contents     []byte
 	tempFilename string
 }
 
 // New returns a new Editor with the temp filename and contents provided.
-func New(context *context.Context, tempFilename string, contents []byte) *Editor {
+func New(context *portercontext.Context, tempFilename string, contents []byte) *Editor {
 	return &Editor{
 		Context:      context,
 		tempFilename: tempFilename,

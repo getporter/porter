@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -71,7 +71,7 @@ func (fs *FileSystem) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) 
 
 	// Copy the existing context and tweak to pipe the output differently
 	jsonB := &bytes.Buffer{}
-	var pkgContext context.Context
+	var pkgContext portercontext.Context
 	pkgContext = *fs.Context
 	pkgContext.Out = jsonB
 	if !fs.Debug {
@@ -94,7 +94,7 @@ func (fs *FileSystem) GetMetadata(name string) (pkgmgmt.PackageMetadata, error) 
 	return result, nil
 }
 
-func (fs *FileSystem) Run(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (fs *FileSystem) Run(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	pkgDir, err := fs.GetPackageDir(name)
 	if err != nil {
 		return err
