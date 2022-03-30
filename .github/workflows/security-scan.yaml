@@ -1,0 +1,44 @@
+name: Security Scan
+on: [push,pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Get all git history
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+          check-latest: true
+      - name: Set up Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
+      - name: Configure Agent
+        run: go run mage.go ConfigureAgent
+      - name: Build Porter
+        run: mage -v XBuildAll
+      - name: Build PorterAgent Image
+        run: mage -v BuildImages
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+      - name: Scan PorterAgent with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "localhost:5000/porter-agent:${{ env.VERSION }}"
+          format: sarif
+          output: trivy-results.sarif
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: trivy-results.sarif
