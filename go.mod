@@ -14,7 +14,7 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.1.1
+	get.porter.sh/magefiles v0.1.2
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
