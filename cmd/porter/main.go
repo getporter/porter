@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cli"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -149,12 +148,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			if err != nil {
 				return err
 			}
-
-			if p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-				// When structured logging is enabled, the error is printed
-				// to the console by the logger, we don't need to re-print it again.
-				cmd.Root().SilenceErrors = true
-			}
+			
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -168,7 +162,8 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			}
 			return cmd.Help()
 		},
-		SilenceUsage: true,
+		SilenceUsage:  true,
+		SilenceErrors: true, // Errors are printed by main
 	}
 
 	cmd.Annotations = map[string]string{
