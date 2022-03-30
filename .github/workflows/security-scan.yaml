@@ -20,12 +20,18 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
       - name: Configure Agent
         run: go run mage.go ConfigureAgent
       - name: Build Porter
         run: mage -v XBuildAll
       - name: Build PorterAgent Image
         run: mage -v BuildImages
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
       - name: Scan PorterAgent with Trivy
         uses: aquasecurity/trivy-action@master
         with:
