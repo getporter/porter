@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,6 +28,13 @@ func TestPorter_Run(t *testing.T) {
 	})
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/cnab/bundle.json")
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
+
+	// Change the schemaVersion to validate that the runtime ignores this field and runs regardless
+	e := yaml.NewEditor(p.Context)
+	require.NoError(t, e.ReadFile("porter.yaml"))
+	require.NoError(t, e.SetValue("schemaVersion", ""))
+	require.NoError(t, e.WriteFile("porter.yaml"))
+
 	p.FileSystem.Create("/home/nonroot/.kube/config")
 
 	opts := NewRunOptions(p.Config)
