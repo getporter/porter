@@ -292,10 +292,7 @@ func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 // into account experimental flags.
 // Use this instead of Config.Data.BuildDriver directly.
 func (c *Config) GetBuildDriver() string {
-	if c.IsFeatureEnabled(experimental.FlagBuildDrivers) {
-		return c.Data.BuildDriver
-	}
-	return BuildDriverDocker
+	return BuildDriverBuildkit
 }
 
 // Load loads the configuration file, rendering any templating used in the config file

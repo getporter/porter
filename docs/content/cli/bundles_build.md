@@ -32,14 +32,18 @@ porter bundles build [flags]
 ### Options
 
 ```
-  -d, --dir string         Path to the build context directory where all bundle assets are located.
-      --driver string      Experimental. Driver for building the invocation image. Allowed values are: docker, buildkit (default "docker")
-  -f, --file porter.yaml   Path to the Porter manifest. Defaults to porter.yaml in the current directory.
-  -h, --help               help for build
-      --name string        Override the bundle name
-      --no-lint            Do not run the linter
-  -v, --verbose            Enable verbose logging
-      --version string     Override the bundle version
+      --driver string        Experimental. Driver for building the invocation image. Allowed values are: buildkit (default "buildkit")
+      --build-arg stringArray   Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.
+  -d, --dir string              Path to the build context directory where all bundle assets are located.
+  -f, --file porter.yaml        Path to the Porter manifest. Defaults to porter.yaml in the current directory.
+  -h, --help                    help for build
+      --name string             Override the bundle name
+      --no-cache                Do not use cache when building the image.
+      --no-lint                 Do not run the linter
+      --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.
+      --ssh stringArray         SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
+  -v, --verbose                 Enable verbose logging
+      --version string          Override the bundle version
 ```
 
 ### Options inherited from parent commands

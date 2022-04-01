@@ -22,6 +22,7 @@ type BuildOptions struct {
 	bundleFileOptions
 	contextOptions
 	metadataOpts
+	build.BuildKitOptions
 
 	// NoLint indicates if lint should be run before build.
 	NoLint bool
@@ -30,9 +31,9 @@ type BuildOptions struct {
 	Driver string
 }
 
-const BuildDriverDefault = config.BuildDriverDocker
+const BuildDriverDefault = config.BuildDriverBuildkit
 
-var BuildDriverAllowedValues = []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
+var BuildDriverAllowedValues = []string{config.BuildDriverBuildkit}
 
 func (o *BuildOptions) Validate(p *Porter) error {
 	if o.Version != "" {
@@ -120,8 +121,8 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
 
-	builder := p.GetBuilder()
-	return errors.Wrap(builder.BuildInvocationImage(ctx, m), "unable to build CNAB invocation image")
+	builder := p.GetBuilder(ctx)
+	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildKitOptions), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint(ctx context.Context) error {

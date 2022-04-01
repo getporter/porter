@@ -81,7 +81,15 @@ Porter uses the docker driver as the default build driver, an alternate driver m
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
-
+	f.StringSliceVar(&opts.SSH, "ssh", nil,
+	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
+		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.")
+	f.StringArrayVar(&opts.SSH, "ssh", nil,
+		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
+	f.StringArrayVar(&opts.Secrets, "secret", nil,
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
+	f.BoolVar(&opts.NoCache, "no-cache", false,
+		"Do not use cache when building the image.")
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
@@ -232,7 +233,7 @@ func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
 
-func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
+func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildKitOptions) error {
 	return nil
 }
 
