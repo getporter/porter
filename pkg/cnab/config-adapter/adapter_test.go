@@ -800,7 +800,7 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 		}},
 		{
 			"help", bundle.Action{
-			Description: "Print an help message to the standard output",
+			Description: "Print a help message to the standard output",
 			Modifies:    false,
 			Stateless:   true,
 		}},

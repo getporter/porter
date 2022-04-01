@@ -16,10 +16,10 @@ const (
 	// CheckStrategyExact requires that resource schemaVersion values exactly match the supported schema version.
 	CheckStrategyExact CheckStrategy = "exact"
 
-	// CheckStrategyMinor requires that resource schemaVersion values match the MAJOR.MINOR of the supported schema version.
+	// CheckStrategyMinor requires that resource schemaVersion values match the MAJOR.MINOR portion of the supported schema version.
 	CheckStrategyMinor CheckStrategy = "minor"
 
-	// CheckStrategyMajor requires that resource schemaVersion values exactly MAJOR of the supported schema version.
+	// CheckStrategyMajor requires that resource schemaVersion values exactly match the MAJOR portion of the supported schema version.
 	CheckStrategyMajor CheckStrategy = "major"
 
 	// CheckStrategyNone ignores the resource schemaVersion. Errors will most likely ensue but have fun!

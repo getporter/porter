@@ -347,9 +347,9 @@ Therefore, it does not work with the Azure Cloud Shell driver.
 
 ### Schema Check
 The schema-check configuration file setting controls Porter's behavior when the schemaVersion of a resource does not match [Porter's supported version](/reference/file-formats/#supported-versions).
-By default, Porter requires that a resources schemaVersion field exactly matches the supported version.
+By default, Porter requires that a resource's schemaVersion field exactly matches the supported version.
 In some cases, such as when migrating to a new version of Porter, it may be helpful to use a less strict version comparison.
-Allows values are:
+Allowed values are:
 
 * exact - Default behavior. Require that the schemaVersion on the resource exactly match Porter's supported version.
   If it doesn't match, the command will fail.
