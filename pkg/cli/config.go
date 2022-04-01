@@ -67,7 +67,8 @@ func getViperValue(flags *pflag.FlagSet, f *pflag.Flag) interface{} {
 	var err error
 
 	// This is not an exhaustive list, if we need more types supported, it'll panic, and then we can add it.
-	switch f.Value.Type() {
+	flagType := f.Value.Type()
+	switch flagType {
 	case "int":
 		out, err = flags.GetInt(f.Name)
 	case "string":
@@ -76,12 +77,14 @@ func getViperValue(flags *pflag.FlagSet, f *pflag.Flag) interface{} {
 		out, err = flags.GetBool(f.Name)
 	case "stringSlice":
 		out, err = flags.GetStringSlice(f.Name)
+	case "stringArray":
+		out, err = flags.GetStringArray(f.Name)
 	default:
-		panic(errors.Errorf("unsupported type for conversion between flag %s and viper configuration: %T", f.Name, f.Value.Type()))
+		panic(errors.Errorf("unsupported type for conversion between flag %s and viper configuration: %T", f.Name, flagType))
 	}
 
 	if err != nil {
-		panic(errors.Wrapf(err, "error parsing config key %s as %T", f.Name, f.Value.Type()))
+		panic(errors.Wrapf(err, "error parsing config key %s as %T", f.Name, flagType))
 	}
 
 	return out
