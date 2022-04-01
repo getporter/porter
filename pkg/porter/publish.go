@@ -111,7 +111,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	var m *manifest.Manifest
 	if canonicalExists {
-		m, err = manifest.LoadManifestFrom(p.Context, canonicalManifest)
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, canonicalManifest)
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		// not Porter's canonical manifest path, for digest matching/auto-rebuilds
 		m.ManifestPath = opts.File
 	} else {
-		m, err = manifest.LoadManifestFrom(p.Context, opts.File)
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 		if err != nil {
 			return err
 		}

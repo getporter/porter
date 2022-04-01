@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"get.porter.sh/porter/pkg/schema"
+
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
@@ -120,6 +122,23 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 	}
 
 	return nil
+}
+
+func (c *Config) GetSchemaCheckStrategy(ctx context.Context) schema.CheckStrategy {
+	switch c.Data.SchemaCheck {
+	case string(schema.CheckStrategyMinor):
+		return schema.CheckStrategyMinor
+	case string(schema.CheckStrategyMajor):
+		return schema.CheckStrategyMajor
+	case string(schema.CheckStrategyNone):
+		return schema.CheckStrategyNone
+	case string(schema.CheckStrategyExact), "":
+		return schema.CheckStrategyExact
+	default:
+		log := tracing.LoggerFromContext(ctx)
+		log.Warnf("invalid schema-check value specified %q, defaulting to exact", c.Data.SchemaCheck)
+		return schema.CheckStrategyExact
+	}
 }
 
 func (c *Config) GetStorage(name string) (StoragePlugin, error) {

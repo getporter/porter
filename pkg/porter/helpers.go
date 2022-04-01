@@ -197,7 +197,7 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 	p.TestConfig.TestContext.AddTestDirectory(bundleDir, p.BundleDir)
 
 	testManifest := filepath.Join(p.BundleDir, config.Name)
-	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
+	m, err := manifest.LoadManifestFrom(p.RootContext, p.Config, testManifest)
 	require.NoError(p.T(), err)
 
 	if !generateUniqueName {

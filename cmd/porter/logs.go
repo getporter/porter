@@ -36,7 +36,7 @@ Either display the logs from a specific run of a bundle with --run, or use --ins
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowInstallationLogs(opts)
+			return p.ShowInstallationLogs(cmd.Context(), opts)
 		},
 	}
 

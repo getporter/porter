@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -73,7 +74,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 
 		var opts LogsShowOptions
 		opts.Name = "test"
-		err := p.ShowInstallationLogs(&opts)
+		err := p.ShowInstallationLogs(context.Background(), &opts)
 		require.Error(t, err, "ShowInstallationLogs should have failed")
 		assert.Contains(t, err.Error(), "no logs found")
 	})
@@ -94,7 +95,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 
 		var opts LogsShowOptions
 		opts.Name = "test"
-		err := p.ShowInstallationLogs(&opts)
+		err := p.ShowInstallationLogs(context.Background(), &opts)
 		require.NoError(t, err, "ShowInstallationLogs failed")
 
 		assert.Contains(t, p.TestConfig.TestContext.GetOutput(), testLogs)

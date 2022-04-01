@@ -28,7 +28,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	// Invoke the custom action
 	invokeOpts := porter.NewInvokeOptions()
 	invokeOpts.Action = "zombies"
-	err = invokeOpts.Validate([]string{}, p.Porter)
+	err = invokeOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InvokeBundle(context.Background(), invokeOpts)
 	require.NoError(t, err, "invoke should have succeeded")

@@ -16,6 +16,8 @@ import (
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/schema"
+	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
@@ -92,6 +94,40 @@ func TestPorter_Build(t *testing.T) {
 	assert.Equal(t, false, debugDef.Default)
 }
 
+func TestPorter_Build_ChecksManifestSchemaVersion(t *testing.T) {
+	testcases := []struct {
+		name          string
+		schemaVersion string
+		wantErr       string
+	}{
+		{name: "valid version", schemaVersion: manifest.SupportedSchemaVersion},
+		{name: "invalid version", schemaVersion: "", wantErr: schema.ErrInvalidSchemaVersion.Error()},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewTestPorter(t)
+			defer p.Teardown()
+
+			// Make a bundle with the specified schemaVersion
+			p.TestConfig.TestContext.AddTestDirectoryFromRoot("tests/testdata/mybuns", "/")
+			e := yaml.NewEditor(p.Context)
+			require.NoError(t, e.ReadFile("porter.yaml"))
+			require.NoError(t, e.SetValue("schemaVersion", tc.schemaVersion))
+			require.NoError(t, e.WriteFile("porter.yaml"))
+
+			opts := BuildOptions{}
+			opts.File = "porter.yaml"
+			err := p.Build(context.Background(), opts)
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, schema.ErrInvalidSchemaVersion)
+				tests.RequireErrorContains(t, err, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestPorter_LintDuringBuild(t *testing.T) {
 	lintResults := linter.Results{
 		{
@@ -145,7 +181,7 @@ func TestPorter_paramRequired(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/paramafest.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 
 	err = p.buildBundle(m, "digest")

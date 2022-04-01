@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -99,7 +100,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			i.Status.Installed = &now
 			require.NoError(t, p.TestClaims.UpdateInstallation(i))
 
-			err := p.ShowInstallation(opts)
+			err := p.ShowInstallation(context.Background(), opts)
 			require.NoError(t, err, "ShowInstallation failed")
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})

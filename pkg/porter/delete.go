@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -36,8 +37,8 @@ func (o *DeleteOptions) Validate(args []string, cxt *portercontext.Context) erro
 }
 
 // DeleteInstallation handles deletion of an installation
-func (p *Porter) DeleteInstallation(opts DeleteOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) error {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return err
 	}

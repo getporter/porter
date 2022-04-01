@@ -21,8 +21,8 @@ type InstallOptions struct {
 	Labels []string
 }
 
-func (o InstallOptions) Validate(args []string, p *Porter) error {
-	err := o.BundleActionOptions.Validate(args, p)
+func (o InstallOptions) Validate(ctx context.Context, args []string, p *Porter) error {
+	err := o.BundleActionOptions.Validate(ctx, args, p)
 	if err != nil {
 		return err
 	}

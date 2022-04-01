@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -107,12 +108,12 @@ func TestResolvePathParam(t *testing.T) {
 }
 
 func TestMetadataAvailableForTemplating(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
@@ -132,12 +133,12 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom failed")
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": {bundle.Bundle{
 			Name:        "Azure MySQL",
@@ -389,14 +390,14 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 }
 
 func TestResolveInMainDict(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -416,14 +417,14 @@ func TestResolveInMainDict(t *testing.T) {
 }
 
 func TestResolveSliceWithAMap(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/slice-test.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/slice-test.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -534,9 +535,9 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 }
 
 func TestReadManifest_Validate_BundleOutput(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
 
 	wantOutputs := manifest.OutputDefinitions{
 		"mysql-root-password": {
@@ -558,18 +559,18 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 		},
 	}
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	require.Equal(t, wantOutputs, m.Outputs)
 }
 
 func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", config.Name)
 
-	_, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	_, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.Error(t, err)
 }
 
@@ -624,14 +625,14 @@ func TestDependency_Validate(t *testing.T) {
 }
 
 func TestManifest_ApplyStepOutputs(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
@@ -645,13 +646,13 @@ func makeBoolPtr(value bool) *bool {
 }
 
 func TestManifest_ResolveImageMap(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.AddTestFile("testdata/porter-images.yaml", config.Name)
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-images.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)

@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -65,7 +66,7 @@ func TestDeleteInstallation(t *testing.T) {
 			opts.Name = "test"
 			opts.Force = tc.force
 
-			err = p.DeleteInstallation(opts)
+			err = p.DeleteInstallation(context.Background(), opts)
 			if tc.wantError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantError)

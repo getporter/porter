@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -39,8 +40,8 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, *claims.Run, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, *claims.Run, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return claims.Installation{}, nil, err
 	}
@@ -63,8 +64,8 @@ func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, *claims
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
-func (p *Porter) ShowInstallation(opts ShowOptions) error {
-	installation, run, err := p.GetInstallation(opts)
+func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
+	installation, run, err := p.GetInstallation(ctx, opts)
 	if err != nil {
 		return err
 	}

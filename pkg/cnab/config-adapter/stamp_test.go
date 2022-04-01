@@ -1,6 +1,7 @@
 package configadapter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -19,7 +20,7 @@ func TestConfig_GenerateStamp(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
@@ -132,7 +133,7 @@ func TestConfig_DigestManifest(t *testing.T) {
 		c := config.NewTestConfig(t)
 		c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-		m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+		m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 		require.NoError(t, err, "could not load manifest")
 
 		a := NewManifestConverter(c.Context, m, nil, nil)
@@ -161,7 +162,7 @@ func TestConfig_GenerateStamp_IncludeVersion(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/simple.porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(c.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Context, m, nil, nil)

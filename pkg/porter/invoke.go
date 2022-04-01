@@ -31,12 +31,12 @@ func (o InvokeOptions) GetActionVerb() string {
 	return "invoking"
 }
 
-func (o InvokeOptions) Validate(args []string, p *Porter) error {
+func (o InvokeOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	if o.Action == "" {
 		return errors.New("--action is required")
 	}
 
-	return o.BundleActionOptions.Validate(args, p)
+	return o.BundleActionOptions.Validate(ctx, args, p)
 }
 
 // InvokeBundle accepts a set of pre-validated InvokeOptions and uses

@@ -32,7 +32,7 @@ func TestArchive(t *testing.T) {
 	archive1Opts := porter.ArchiveOptions{}
 	archive1Opts.Reference = reference
 	archiveFile1 := "mybuns1.tgz"
-	err := archive1Opts.Validate([]string{archiveFile1}, p.Porter)
+	err := archive1Opts.Validate(context.Background(), []string{archiveFile1}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
 	err = p.Archive(context.Background(), archive1Opts)
@@ -48,10 +48,10 @@ func TestArchive(t *testing.T) {
 	archive2Opts := porter.ArchiveOptions{}
 	archive2Opts.Reference = reference
 	archiveFile2 := "mybuns2.tgz"
-	err = archive2Opts.Validate([]string{archiveFile2}, p.Porter)
+	err = archive2Opts.Validate(context.Background(), []string{archiveFile2}, p.Porter)
 	require.NoError(p.T(), err, "validation of archive opts for bundle failed")
 
-	err = archive1Opts.Validate([]string{archiveFile2}, p.Porter)
+	err = archive1Opts.Validate(context.Background(), []string{archiveFile2}, p.Porter)
 	require.NoError(t, err, "Second validate failed")
 
 	err = p.Archive(context.Background(), archive2Opts)

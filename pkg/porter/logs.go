@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -39,8 +40,8 @@ func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 }
 
 // ShowInstallationLogs shows logs for an installation, according to the provided options.
-func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
-	logs, ok, err := p.GetInstallationLogs(opts)
+func (p *Porter) ShowInstallationLogs(ctx context.Context, opts *LogsShowOptions) error {
+	logs, ok, err := p.GetInstallationLogs(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -54,8 +55,8 @@ func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
 }
 
 // GetInstallationLogs gets logs for an installation, according to the provided options
-func (p *Porter) GetInstallationLogs(opts *LogsShowOptions) (string, bool, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions) (string, bool, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return "", false, err
 	}

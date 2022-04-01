@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"sort"
 	"time"
 
@@ -45,8 +46,8 @@ func (l DisplayRuns) Less(i, j int) bool {
 	return l[i].Started.Before(l[j].Started)
 }
 
-func (p *Porter) ListInstallationRuns(opts RunListOptions) (DisplayRuns, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) (DisplayRuns, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +84,8 @@ func (p *Porter) ListInstallationRuns(opts RunListOptions) (DisplayRuns, error) 
 	return displayRuns, nil
 }
 
-func (p *Porter) PrintInstallationRuns(opts RunListOptions) error {
-	displayRuns, err := p.ListInstallationRuns(opts)
+func (p *Porter) PrintInstallationRuns(ctx context.Context, opts RunListOptions) error {
+	displayRuns, err := p.ListInstallationRuns(ctx, opts)
 	if err != nil {
 		return err
 	}
