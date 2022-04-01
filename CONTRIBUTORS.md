@@ -62,3 +62,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Mahendra Bishnoi](https://github.com/mahendrabishnoi2)
 * [Yingrong Zhao](https://github.com/VinozzZ)
 * [Saksham Sharma](https://github.com/sakkshm26)
+* [Jeremy Goss](https://github.com/Jemgoss)

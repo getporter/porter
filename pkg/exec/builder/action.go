@@ -84,7 +84,7 @@ func LoadAction(cxt *portercontext.Context, commandFile string, unmarshal func([
 	if cxt.Debug {
 		fmt.Fprintf(cxt.Err, "DEBUG Parsed Input:\n%#v\n", result)
 	}
-	return errors.Wrapf(err, "could unmarshal input:\n %s", string(contents))
+	return errors.Wrapf(err, "could not unmarshal input:\n %s", string(contents))
 }
 
 func readInputFromStdinOrFile(cxt *portercontext.Context, commandFile string) ([]byte, error) {
