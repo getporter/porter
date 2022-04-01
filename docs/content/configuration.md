@@ -185,49 +185,8 @@ feature by:
 
 ### Build Drivers
 
-The **build-drivers** experimental feature flag enables using a different
-driver to build OCI images used by the bundle, such as the installer.
-
-You can set your desired driver with either using `porter build --driver`,
-PORTER_BUILD_DRIVER environment variable, or in the configuration file with
-build-driver = "DRIVER".
-
-The default driver is docker, and the full list of available drivers
-is below:
-
-* **Docker**: Build an OCI image using the [Docker library], without buildkit support.
-  This requires access to a Docker daemon, either locally or remote.
-* **Buildkit**: Build an OCI image using [Docker with Buildkit].
-  With buildkit you can improve the performance of builds using caching, access
-  private resources during build, and more. 
-  This requires access to a Docker daemon, either locally or remote.
-
-Below are some examples of how to enable the build-drivers feature and specify an alternate
-driver:
-
-**Flags**
-```
-porter build --experimental build-drivers --driver buildkit
-```
-
-**Environment Variables**
-```
-export PORTER_EXPERIMENTAL=build-drivers
-export PORTER_BUILD_DRIVER=buildkit
-```
-
-**Configuration File**
-```toml
-experimental = ["build-drivers"]
-build-driver = "buildkit"
-```
-
-[install]: /cli/porter_install/
-[upgrade]: /cli/porter_upgrade/
-[invoke]: /cli/porter_invoke/
-[uninstall]: /cli/porter_uninstall/
-[Docker library]: https://github.com/moby/moby
-[Docker with Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
+The **build-drivers** experimental feature flag is no longer used.
+Build drivers are enabled by default and the only available driver is buildkit.
 
 ### Structured Logs
 

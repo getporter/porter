@@ -10,7 +10,7 @@ RUN useradd ${BUNDLE_USER} -m -u ${BUNDLE_UID} -g ${BUNDLE_GID} -o
 
 RUN rm ${BUNDLE_DIR}/porter.yaml
 RUN rm -fr ${BUNDLE_DIR}/.cnab
-COPY .cnab /cnab
+COPY --link .cnab /cnab
 RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab
 USER ${BUNDLE_UID}
 WORKDIR ${BUNDLE_DIR}

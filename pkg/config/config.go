@@ -283,7 +283,7 @@ func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
 }
 
 // SetExperimentalFlags programmatically, overriding Config.Data.ExperimentalFlags.
-// Example: Config.SetExperimentalFlags(experimental.FlagBuildDrivers | ...)
+// Example: Config.SetExperimentalFlags(experimental.FlagStructuredLogs | ...)
 func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 	c.experimental = &flags
 }

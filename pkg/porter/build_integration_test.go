@@ -210,7 +210,7 @@ func TestBuildOptions_Validate(t *testing.T) {
 	}{{
 		name:       "no opts",
 		opts:       BuildOptions{},
-		wantDriver: config.BuildDriverDocker,
+		wantDriver: config.BuildDriverBuildkit,
 	}, {
 		name:      "invalid version set - latest",
 		opts:      BuildOptions{metadataOpts: metadataOpts{Version: "latest"}},
@@ -225,9 +225,9 @@ func TestBuildOptions_Validate(t *testing.T) {
 		name: "valid name and value set",
 		opts: BuildOptions{metadataOpts: metadataOpts{Name: "newname", Version: "1.0.0"}},
 	}, {
-		name:       "valid driver: docker",
-		opts:       BuildOptions{Driver: config.BuildDriverDocker},
-		wantDriver: config.BuildDriverDocker,
+		name:      "deprecated driver: docker",
+		opts:      BuildOptions{Driver: config.BuildDriverDocker},
+		wantError: `invalid --driver value docker`,
 	}, {
 		name:       "valid driver: buildkit",
 		opts:       BuildOptions{Driver: config.BuildDriverBuildkit},
@@ -262,6 +262,6 @@ func TestBuildOptions_Defaults(t *testing.T) {
 		opts := BuildOptions{}
 		err := opts.Validate(p.Porter)
 		require.NoError(t, err, "Validate failed")
-		assert.Equal(t, config.BuildDriverDocker, opts.Driver)
+		assert.Equal(t, config.BuildDriverBuildkit, opts.Driver)
 	})
 }

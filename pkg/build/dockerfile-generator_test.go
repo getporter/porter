@@ -2,13 +2,11 @@ package build
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/templates"
@@ -20,34 +18,27 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	t.Parallel()
 
-	drivers := []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.Data.BuildDriver = config.BuildDriverBuildkit
+	tmpl := templates.NewTemplates(c.Config)
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-			c := config.NewTestConfig(t)
-			c.Data.BuildDriver = driver
-			c.SetExperimentalFlags(experimental.FlagBuildDrivers)
-			tmpl := templates.NewTemplates(c.Config)
-			configTpl, err := tmpl.GetManifest()
-			require.Nil(t, err)
-			c.TestContext.AddTestFileContents(configTpl, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
-			m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
-			require.NoError(t, err, "could not load manifest")
+	// ignore mixins in the unit tests
+	m.Mixins = []manifest.MixinDeclaration{}
 
-			// ignore mixins in the unit tests
-			m.Mixins = []manifest.MixinDeclaration{}
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	gotlines, err := g.buildDockerfile()
+	require.NoError(t, err)
+	gotDockerfile := strings.Join(gotlines, "\n")
 
-			mp := mixin.NewTestMixinProvider()
-			g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-			gotlines, err := g.buildDockerfile()
-			require.NoError(t, err)
-			gotDockerfile := strings.Join(gotlines, "\n")
-
-			wantDockerfilePath := fmt.Sprintf("testdata/%s.Dockerfile", driver)
-			test.CompareGoldenFile(t, wantDockerfilePath, gotDockerfile)
-		})
-	}
+	wantDockerfilePath := "testdata/buildkit.Dockerfile"
+	test.CompareGoldenFile(t, wantDockerfilePath, gotDockerfile)
 }
 
 func TestPorter_buildCustomDockerfile(t *testing.T) {
