@@ -158,13 +158,13 @@ pygmentsStyle = "friendly"
     parent = "tasks"
     [[menu.main]]
       name = "Create a bundle"
-      url = "/author-bundles"
-      identifier = "author-bundles-overview"
+      url = "/bundle/create"
+      identifier = "bundle-create"
       weight = 301
       parent = "tasks-authors"
     [[menu.main]]
       name = "Custom Dockerfile"
-      url = "/custom-dockerfile/"
+      url = "/bundle/custom-dockerfile/"
       identifier = "custom-dockerfile"
       weight = 302
       parent = "tasks-authors"

@@ -125,7 +125,7 @@ standard mechanism defined by the CNAB spec yet.
 
 When you create a new bundle, porter generates Dockerfile.tmpl file for you. In
 the porter.yaml you can specify `dockerfile: dockerfile.tmpl` to tell Porter
-that you want to use the template (see [Custom Dockerfile](/custom-dockerfile/)) and then you can customize
+that you want to use the template (see [Custom Dockerfile](/bundle/custom-dockerfile/)) and then you can customize
 it however you need. You're on the right track, from there you can use the exec
 mixin to call whatever you installed.
 
