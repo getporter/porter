@@ -26,8 +26,8 @@ const (
 	DefaultOperatorSourceDir = "docs/sources/operator"
 )
 
-// Generate Porter's static website. Used by Netlify.
-// Uses symlinks so it won't work on Windows.
+// Build the website in preparation for deploying to the production website on Netlify.
+// Uses symlinks so it won't work on Windows. Don't run locally, use DocsPreview instead.
 func Docs() {
 	// Remove the preview container because otherwise it holds a file open and we can't delete the volume mount created at docs/content/operator
 	mg.SerialDeps(removePreviewContainer, linkOperatorDocs)
@@ -44,7 +44,7 @@ func removePreviewContainer() {
 	docker.RemoveContainer(PreviewContainer)
 }
 
-// Preview the website documentation.
+// Preview the website locally using a Docker container.
 func DocsPreview() {
 	mg.Deps(removePreviewContainer)
 	operatorRepo := ensureOperatorRepository()
@@ -75,6 +75,32 @@ func DocsPreview() {
 	}
 
 	must.Run("open", "http://localhost:1313/docs/")
+}
+
+// Build a branch preview of the website.
+func DocsBranchPreview() {
+	setBranchBaseURL()
+	Docs()
+}
+
+func setBranchBaseURL() {
+	// Change the branch to a URL safe slug, e.g. release/v1 -> release-v1
+	escapedBranch := strings.ReplaceAll(os.Getenv("BRANCH"), "/", "-")
+	// Append a trailing / to the URL for use in Hugo
+	baseURL := fmt.Sprintf("https://%s.porter.sh/", escapedBranch)
+	os.Setenv("BASEURL", baseURL)
+}
+
+// Build a pull request preview of the website.
+func DocsPullRequestPreview() {
+	setPullRequestBaseURL()
+	Docs()
+}
+
+func setPullRequestBaseURL() {
+	// Append a trailing / to netlify preview domain name for use in Hugo
+	baseURL := fmt.Sprintf("%s/", os.Getenv("DEPLOY_PRIME_URL"))
+	os.Setenv("BASEURL", baseURL)
 }
 
 // clone the other doc repos if they don't exist
