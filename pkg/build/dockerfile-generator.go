@@ -3,6 +3,7 @@ package build
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -14,7 +15,15 @@ import (
 	"get.porter.sh/porter/pkg/mixin/query"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/templates"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
+)
+
+const (
+	// DefaultDockerfileSyntax is the default syntax for Dockerfiles used by Porter
+	// either when generating a Dockerfile from scratch, or when a template does
+	// not define a syntax
+	DefaultDockerfileSyntax = "docker/dockerfile-upstream:1.4.0"
 )
 
 type DockerfileGenerator struct {
@@ -33,8 +42,8 @@ func NewDockerfileGenerator(config *config.Config, m *manifest.Manifest, tmpl *t
 	}
 }
 
-func (g *DockerfileGenerator) GenerateDockerFile() error {
-	lines, err := g.buildDockerfile()
+func (g *DockerfileGenerator) GenerateDockerFile(ctx context.Context) error {
+	lines, err := g.buildDockerfile(ctx)
 	if err != nil {
 		return errors.Wrap(err, "error generating the Dockerfile")
 	}
@@ -50,10 +59,10 @@ func (g *DockerfileGenerator) GenerateDockerFile() error {
 	return errors.Wrap(err, "couldn't write the Dockerfile")
 }
 
-func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
+func (g *DockerfileGenerator) buildDockerfile(ctx context.Context) ([]string, error) {
 	fmt.Fprintf(g.Out, "\nGenerating Dockerfile =======>\n")
 
-	lines, err := g.getBaseDockerfile()
+	lines, err := g.getBaseDockerfile(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +81,9 @@ func (g *DockerfileGenerator) buildDockerfile() ([]string, error) {
 	return lines, nil
 }
 
-func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
+func (g *DockerfileGenerator) getBaseDockerfile(ctx context.Context) ([]string, error) {
+	log := tracing.LoggerFromContext(ctx)
+
 	var reader io.Reader
 	if g.Manifest.Dockerfile != "" {
 		exists, err := g.FileSystem.Exists(g.Manifest.Dockerfile)
@@ -89,7 +100,6 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 		}
 		defer file.Close()
 		reader = file
-
 	} else {
 		contents, err := g.Templates.GetDockerfile()
 		if err != nil {
@@ -99,8 +109,19 @@ func (g *DockerfileGenerator) getBaseDockerfile() ([]string, error) {
 	}
 	scanner := bufio.NewScanner(reader)
 	var lines []string
+	var syntaxFound bool
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		line := scanner.Text()
+		if !syntaxFound && strings.HasPrefix(line, "# syntax=") {
+			syntaxFound = true
+		}
+		lines = append(lines, line)
+	}
+
+	// If their template doesn't declare a syntax, use the default
+	if !syntaxFound {
+		log.Warnf("No syntax was declared in the template Dockerfile, using %s", DefaultDockerfileSyntax)
+		lines = append([]string{fmt.Sprintf("# syntax=%s", DefaultDockerfileSyntax)}, lines...)
 	}
 
 	return g.replaceTokens(lines)

@@ -117,7 +117,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
 	}
-	if err := generator.GenerateDockerFile(); err != nil {
+	if err := generator.GenerateDockerFile(ctx); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
 

@@ -33,7 +33,7 @@ func TestPorter_buildDockerfile(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	gotlines, err := g.buildDockerfile()
+	gotlines, err := g.buildDockerfile(context.Background())
 	require.NoError(t, err)
 	gotDockerfile := strings.Join(gotlines, "\n")
 
@@ -68,7 +68,7 @@ COPY mybin /cnab/app/
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-		_, err = g.buildDockerfile()
+		_, err = g.buildDockerfile(context.Background())
 
 		// We should inject initialization lines even when they didn't include the token
 		require.NoError(t, err)
@@ -100,7 +100,7 @@ COPY mybin /cnab/app/
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-		gotlines, err := g.buildDockerfile()
+		gotlines, err := g.buildDockerfile(context.Background())
 
 		require.NoError(t, err)
 		test.CompareGoldenFile(t, "testdata/custom-dockerfile-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
@@ -124,7 +124,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	err = g.GenerateDockerFile()
+	err = g.GenerateDockerFile(context.Background())
 	require.NoError(t, err)
 
 	wantDockerfilePath := ".cnab/Dockerfile"
@@ -198,7 +198,7 @@ COPY mybin /cnab/app/
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
-	gotlines, err := g.buildDockerfile()
+	gotlines, err := g.buildDockerfile(context.Background())
 	require.NoError(t, err)
 
 	test.CompareGoldenFile(t, "testdata/missing-mixins-token-expected-output.Dockerfile", strings.Join(gotlines, "\n"))

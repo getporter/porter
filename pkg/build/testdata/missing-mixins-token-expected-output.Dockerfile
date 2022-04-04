@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile-upstream:1.4.0
 FROM ubuntu:light
 ARG BUNDLE_DIR
 COPY mybin /cnab/app/
