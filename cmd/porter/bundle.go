@@ -86,7 +86,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
 		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
-		"Do not use cache when building the image.")
+		"Do not use the Docker cache when building the bundle's invocation image.")
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},

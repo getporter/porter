@@ -3,8 +3,10 @@ module get.porter.sh/porter
 go 1.18
 
 replace (
+	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
+
 	// See https://github.com/hashicorp/go-plugin/pull/127 and
 	// https://github.com/hashicorp/go-plugin/pull/163
 	// Also includes a branch we haven't PR'd yet: capture-yamux-logs
@@ -25,7 +27,6 @@ require (
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.23.1
 	github.com/cnabio/cnab-to-oci v0.3.3
-	github.com/containerd/console v1.0.3
 	github.com/containerd/containerd v1.6.1
 	github.com/docker/buildx v0.8.1
 	github.com/docker/cli v20.10.13+incompatible
@@ -91,6 +92,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.11.2 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect

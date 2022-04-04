@@ -233,7 +233,7 @@ func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
 
-func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildKitOptions) error {
+func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	return nil
 }
 

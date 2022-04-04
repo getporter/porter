@@ -22,7 +22,7 @@ type BuildOptions struct {
 	bundleFileOptions
 	contextOptions
 	metadataOpts
-	build.BuildKitOptions
+	build.BuildImageOptions
 
 	// NoLint indicates if lint should be run before build.
 	NoLint bool
@@ -122,7 +122,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	}
 
 	builder := p.GetBuilder(ctx)
-	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildKitOptions), "unable to build CNAB invocation image")
+	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions), "unable to build CNAB invocation image")
 }
 
 func (p *Porter) preLint(ctx context.Context) error {

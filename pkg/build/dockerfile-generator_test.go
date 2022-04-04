@@ -68,10 +68,11 @@ COPY mybin /cnab/app/
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-		_, err = g.buildDockerfile(context.Background())
+		gotlines, err := g.buildDockerfile(context.Background())
 
 		// We should inject initialization lines even when they didn't include the token
 		require.NoError(t, err)
+		test.CompareGoldenFile(t, "testdata/missing-args-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
 	})
 
 	t.Run("build from custom docker with PORTER_INIT supplied", func(t *testing.T) {
