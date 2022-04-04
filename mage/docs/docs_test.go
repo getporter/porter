@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/carolynvs/magex/shx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,4 +72,16 @@ func TestEnsureOperatorRepository(t *testing.T) {
 		require.NoError(t, err)
 		require.FileExists(t, readme)
 	})
+}
+
+func Test_setPullRequestBaseURL(t *testing.T) {
+	os.Setenv("DEPLOY_PRIME_URL", "https://preview--porter.netlify.app")
+	setPullRequestBaseURL()
+	assert.Equal(t, "https://preview--porter.netlify.app/", os.Getenv("BASEURL"))
+}
+
+func TestDocsBranchPreview(t *testing.T) {
+	os.Setenv("BRANCH", "release/v1")
+	setBranchBaseURL()
+	assert.Equal(t, "https://release-v1.porter.sh/", os.Getenv("BASEURL"))
 }
