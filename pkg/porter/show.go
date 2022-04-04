@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -52,27 +53,25 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 		return claims.Installation{}, nil, err
 	}
 
+	resolved := make(map[string]interface{})
+	for _, pset := range installation.ParameterSets {
+		params, err := p.Parameters.ResolveAll(pset)
+		if err != nil {
+			return claims.Installation{}, nil, err
+		}
+
+		for _, param := range params {
+			resolved[param.Name] = param.Value
+		}
+	}
+	installation.Parameters = resolved
+
 	if installation.Status.RunID != "" {
 		run, err := p.Claims.GetRun(installation.Status.RunID)
 		if err != nil {
 			return claims.Installation{}, nil, err
 		}
-
-		bunRef, ok, err := installation.Bundle.GetBundleReference()
-		if err != nil {
-			return claims.Installation{}, nil, err
-		}
-		if !ok {
-
-			return claims.Installation{}, nil, errors.New("unable to get bundle reference")
-		}
-		bun, ok, err := p.Cache.FindBundle(bunRef)
-		if err != nil {
-			return claims.Installation{}, nil, err
-		}
-		if !ok {
-			return claims.Installation{}, nil, errors.New("unable to find bundle from cache")
-		}
+		bun := cnab.ExtendedBundle{run.Bundle}
 
 		resolved := make(map[string]interface{})
 		for _, pset := range run.ParameterSets {
@@ -80,17 +79,23 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 			if err != nil {
 				return claims.Installation{}, nil, err
 			}
-			for _, param := range params {
-				v, err := bun.Definition.ConvertParameterValue(param.Name, param.Value)
-				if err != nil {
-					return claims.Installation{}, nil, err
-				}
-				resolved[param.Name] = v
 
+			for _, param := range params {
+				paramValue, err := bun.ConvertParameterValue(param.Name, param.Value)
+				if err != nil {
+					paramValue = param.Value
+				}
+
+				if _, ok := installation.Parameters[param.Name]; ok {
+					installation.Parameters[param.Name] = paramValue
+
+				}
+				resolved[param.Name] = paramValue
 			}
 		}
 
 		run.Parameters = resolved
+
 		return installation, &run, nil
 	}
 
@@ -154,23 +159,20 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			}
 		}
 
-		// Print parameter sets, if any
-		if len(displayInstallation.ParameterSets) > 0 {
-			for _, ps := range displayInstallation.ParameterSets {
-				if installation.IsInternalParameterSet(ps.Name) {
-					fmt.Fprintln(p.Out)
-					fmt.Fprintln(p.Out, "Parameters:")
+		if len(displayInstallation.Parameters) > 0 {
+			fmt.Fprintln(p.Out, "Parameters:")
 
-					err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)
-					if err != nil {
-						return err
-					}
-					continue
-				}
-				fmt.Fprintln(p.Out)
-				fmt.Fprintln(p.Out, "Parameter Sets:")
-				fmt.Fprintf(p.Out, "  - %s\n", ps)
+			err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)
+			if err != nil {
+				return err
 			}
+
+		}
+		// Print parameter sets, if any
+		for _, ps := range displayInstallation.ParameterSets {
+			fmt.Fprintln(p.Out)
+			fmt.Fprintln(p.Out, "Parameter Sets:")
+			fmt.Fprintf(p.Out, "  - %s\n", ps)
 		}
 
 		// Print credential sets, if any

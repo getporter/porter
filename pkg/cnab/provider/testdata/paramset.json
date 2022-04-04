@@ -2,12 +2,12 @@
   "name": "myparameterset",
   "created": "1983-04-18T01:02:03.000000004Z",
   "modified": "1983-04-18T01:02:03.000000004Z",
-  "parameters": {
-   "foo": {
+  "parameters": [
+    {
       "name": "foo",
       "source": {
         "secret": "foo_secret"
       }
     }
-  }
+  ]
 }

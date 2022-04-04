@@ -64,6 +64,7 @@ type DisplayInstallation struct {
 	SchemaType                  string `json:"schemaType" yaml:"schemaType"`
 	claims.Installation         `yaml:",inline"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
+	Parameters                  map[string]interface{} `json:"parameters" yaml:parameters`
 }
 
 type DisplayInstallationMetadata struct {
@@ -71,9 +72,25 @@ type DisplayInstallationMetadata struct {
 }
 
 func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
+	internalPsetIdx := -1
+	for i, pset := range installation.ParameterSets {
+		if installation.IsInternalParameterSet(pset.Name) {
+			internalPsetIdx = i
+			break
+		}
+	}
+
+	if internalPsetIdx != -1 {
+
+		installation.ParameterSets[internalPsetIdx] = installation.ParameterSets[len(installation.ParameterSets)-1]
+		installation.ParameterSets = installation.ParameterSets[:len(installation.ParameterSets)-1]
+
+	}
+
 	di := DisplayInstallation{
 		SchemaType:   "Installation",
 		Installation: installation,
+		Parameters:   installation.Parameters,
 	}
 
 	// This is unset when we are just listing installations

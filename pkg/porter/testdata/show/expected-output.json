@@ -1,6 +1,7 @@
 {
   "schemaType": "Installation",
   "schemaVersion": "1.0.0",
+  "id": "01FZVC5AVP8Z7A78CSCP1EJ604",
   "name": "mywordpress",
   "namespace": "dev",
   "bundle": {
@@ -11,11 +12,17 @@
     "io.cnab/app": "wordpress",
     "io.cnab/appVersion": "v1.2.3"
   },
-  "parameters": {
-    "logLevel": 3
-  },
   "parameterSets": [
-    "dev-env"
+    {
+      "schemaVersion": "1.0.1",
+      "namespace": "",
+      "name": "dev-env",
+      "parameters": null,
+      "status": {
+        "created": "2022-04-04T19:14:28.485713195-04:00",
+        "modified": "2022-04-04T19:14:28.485713195-04:00"
+      }
+    }
   ],
   "status": {
     "runId": "1",
@@ -45,5 +52,8 @@
         "value": "top-secret"
       }
     ]
+  },
+  "parameters": {
+    "logLevel": 3
   }
 }

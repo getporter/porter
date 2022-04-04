@@ -10,7 +10,6 @@ Bundle:
 Labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3
-
 Parameters:
 ---------------------------------
   Name      Type     Value       
