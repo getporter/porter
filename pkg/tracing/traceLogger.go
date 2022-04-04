@@ -63,6 +63,7 @@ type TraceLogger interface {
 	// it up the call stack.
 	Errorf(msg string, args ...interface{}) error
 
+	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
 }
 
@@ -79,6 +80,7 @@ type traceLogger struct {
 	tracer trace.Tracer
 }
 
+// ShouldLog returns if the current log level includes the specified level.
 func (l traceLogger) ShouldLog(level zapcore.Level) bool {
 	return l.logger.Core().Enabled(level)
 }
