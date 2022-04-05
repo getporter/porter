@@ -71,21 +71,7 @@ type DisplayInstallationMetadata struct {
 	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
 }
 
-func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
-	internalPsetIdx := -1
-	for i, pset := range installation.ParameterSets {
-		if installation.IsInternalParameterSet(pset.Name) {
-			internalPsetIdx = i
-			break
-		}
-	}
-
-	if internalPsetIdx != -1 {
-
-		installation.ParameterSets[internalPsetIdx] = installation.ParameterSets[len(installation.ParameterSets)-1]
-		installation.ParameterSets = installation.ParameterSets[:len(installation.ParameterSets)-1]
-
-	}
+func NewDisplayInstallation(installation claims.Installation, run claims.Run) DisplayInstallation {
 
 	di := DisplayInstallation{
 		SchemaType:   "Installation",
@@ -93,8 +79,10 @@ func NewDisplayInstallation(installation claims.Installation, run *claims.Run) D
 		Parameters:   installation.Parameters,
 	}
 
+	di.Installation.RemoveInternalParameterSet()
+
 	// This is unset when we are just listing installations
-	if run != nil {
+	if len(run.Parameters) > 0 {
 		bun := cnab.ExtendedBundle{run.Bundle}
 		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.Parameters)
 	}
@@ -158,7 +146,7 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, nil))
+		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, claims.Run{}))
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 

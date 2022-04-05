@@ -77,7 +77,7 @@ func NewFor(c *config.Config, store storage.Store) *Porter {
 		Templates:   templates.NewTemplates(c),
 		Mixins:      mixin.NewPackageManager(c),
 		Plugins:     plugins.NewPackageManager(c),
-		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage),
+		CNAB:        cnabprovider.NewRuntime(c, claimStorage, credStorage, secretStorage),
 	}
 }
 

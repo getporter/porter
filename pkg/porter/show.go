@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
-	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -42,64 +41,23 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, *claims.Run, error) {
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, claims.Run, error) {
 	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
-		return claims.Installation{}, nil, err
+		return claims.Installation{}, claims.Run{}, err
 	}
 
 	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
-		return claims.Installation{}, nil, err
+		return claims.Installation{}, claims.Run{}, err
 	}
 
-	resolved := make(map[string]interface{})
-	for _, pset := range installation.ParameterSets {
-		params, err := p.Parameters.ResolveAll(pset)
-		if err != nil {
-			return claims.Installation{}, nil, err
-		}
-
-		for _, param := range params {
-			resolved[param.Name] = param.Value
-		}
-	}
-	installation.Parameters = resolved
-
-	if installation.Status.RunID != "" {
-		run, err := p.Claims.GetRun(installation.Status.RunID)
-		if err != nil {
-			return claims.Installation{}, nil, err
-		}
-		bun := cnab.ExtendedBundle{run.Bundle}
-
-		resolved := make(map[string]interface{})
-		for _, pset := range run.ParameterSets {
-			params, err := p.Parameters.ResolveAll(pset)
-			if err != nil {
-				return claims.Installation{}, nil, err
-			}
-
-			for _, param := range params {
-				paramValue, err := bun.ConvertParameterValue(param.Name, param.Value)
-				if err != nil {
-					paramValue = param.Value
-				}
-
-				if _, ok := installation.Parameters[param.Name]; ok {
-					installation.Parameters[param.Name] = paramValue
-
-				}
-				resolved[param.Name] = paramValue
-			}
-		}
-
-		run.Parameters = resolved
-
-		return installation, &run, nil
+	resolvedInstallation, resolvedRun, err := installation.ResolveSensitiveData(p.Parameters, p.Claims)
+	if err != nil {
+		return claims.Installation{}, claims.Run{}, err
 	}
 
-	return installation, nil, nil
+	return resolvedInstallation, resolvedRun, nil
 }
 
 // ShowInstallation shows a bundle installation, along with any

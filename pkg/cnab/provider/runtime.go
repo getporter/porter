@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/pkg/errors"
 )
 
@@ -15,15 +16,17 @@ type Runtime struct {
 	*config.Config
 	credentials credentials.Provider
 	parameters  parameters.Provider
+	secrets     secrets.Store
 	claims      claims.Provider
 	Extensions  cnab.ProcessedExtensions
 }
 
-func NewRuntime(c *config.Config, claims claims.Provider, credentials credentials.Provider) *Runtime {
+func NewRuntime(c *config.Config, claims claims.Provider, credentials credentials.Provider, secrets secrets.Store) *Runtime {
 	return &Runtime{
 		Config:      c,
 		claims:      claims,
 		credentials: credentials,
+		secrets:     secrets,
 		Extensions:  cnab.ProcessedExtensions{},
 	}
 }

@@ -131,6 +131,11 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 	}
 
 	bun := cnab.ExtendedBundle{c.Bundle}
+	outputs, err = outputs.Resolve(p.Secrets, bun)
+	if err != nil {
+		return nil, err
+	}
+
 	displayOutputs := NewDisplayValuesFromOutputs(bun, outputs)
 	if err != nil {
 		return nil, err
@@ -160,6 +165,12 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 // ReadBundleOutput reads a bundle output from an installation
 func (p *Porter) ReadBundleOutput(outputName, installation, namespace string) (string, error) {
 	o, err := p.Claims.GetLastOutput(namespace, installation, outputName)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: resolve secrets
+	o, err = o.Resolve(p.Secrets)
 	if err != nil {
 		return "", err
 	}

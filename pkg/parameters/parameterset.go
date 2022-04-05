@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
@@ -85,4 +86,23 @@ func (s ParameterSet) String() string {
 	}
 
 	return s.Name
+}
+
+func (s ParameterSet) Resolve(resolver Provider, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
+	params, err := resolver.ResolveAll(s)
+	if err != nil {
+		return nil, err
+	}
+
+	resolved := make(map[string]interface{})
+	for _, param := range params {
+		paramValue, err := bun.ConvertParameterValue(param.Name, param.Value)
+		if err != nil {
+			paramValue = param.Value
+		}
+
+		resolved[param.Name] = paramValue
+
+	}
+	return resolved, nil
 }

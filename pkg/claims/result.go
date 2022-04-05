@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/driver"
 	"github.com/cnabio/cnab-go/schema"
 )
 
@@ -65,4 +68,33 @@ func (r Result) NewOutput(name string, data []byte) Output {
 		ResultID:      r.ID,
 		Value:         data,
 	}
+}
+
+func (r Result) NewSensitiveOutput(name string) Output {
+	return Output{
+		SchemaVersion: SchemaVersion,
+		Name:          name,
+		Namespace:     r.Namespace,
+		Installation:  r.Installation,
+		RunID:         r.RunID,
+		ResultID:      r.ID,
+		Value:         []byte(r.ID + name),
+	}
+}
+
+func (r Result) FilterSensitiveOutputs(result driver.OperationResult, bun bundle.Bundle, store secrets.Store) []Output {
+	o := make([]Output, 0, len(result.Outputs))
+	for name, value := range result.Outputs {
+		sensitive, err := bun.IsOutputSensitive(name)
+		if err != nil || !sensitive {
+			o = append(o, r.NewOutput(name, []byte(value)))
+			continue
+		}
+
+		ot := r.NewSensitiveOutput(name)
+		o = append(o, ot)
+		store.Create(secrets.SourceSecret, string(ot.Value), value)
+	}
+
+	return o
 }

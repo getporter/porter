@@ -4,9 +4,11 @@ import (
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/pkg/errors"
 )
 
 var _ storage.Document = Output{}
@@ -35,6 +37,16 @@ func (o Output) GetSchema(b cnab.ExtendedBundle) (definition.Schema, bool) {
 	}
 
 	return definition.Schema{}, false
+}
+
+func (o Output) Resolve(store secrets.Store) (Output, error) {
+	resolved, err := store.Resolve(secrets.SourceSecret, string(o.Value))
+	if err != nil {
+		return o, err
+	}
+
+	o.Value = []byte(resolved)
+	return o, nil
 }
 
 type Outputs struct {
@@ -74,6 +86,28 @@ func (o Outputs) GetByIndex(i int) (Output, bool) {
 	}
 
 	return o.vals[i], true
+}
+
+func (o Outputs) Resolve(store secrets.Store, bun cnab.ExtendedBundle) (Outputs, error) {
+	for name, idx := range o.keys {
+		sensitive, err := bun.IsOutputSensitive(name)
+		if err != nil || !sensitive {
+			continue
+		}
+
+		output, ok := o.GetByIndex(idx)
+		if !ok {
+			continue
+		}
+
+		resolved, err := output.Resolve(store)
+		if err != nil {
+			return o, errors.WithMessagef(err, "failed to resolve output %q", output.Name)
+		}
+		o.vals[idx] = resolved
+	}
+
+	return o, nil
 }
 
 func (o Outputs) Len() int {

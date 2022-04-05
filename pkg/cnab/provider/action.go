@@ -143,6 +143,25 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.Parameters = args.Params
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
+
+	pset := args.Installation.InternalParameterSet()
+	if pset != nil {
+		bun := cnab.ExtendedBundle{currentRun.Bundle}
+
+		for i, param := range pset.Parameters {
+			if !bun.IsSensitiveParameter(param.Name) {
+				continue
+			}
+			param.Source.Key = secrets.SourceSecret
+			param.Source.Value = currentRun.ID + param.Name
+			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
+			if err != nil {
+				return errors.Wrap(err, "failed to save sensitive param to secrete store")
+			}
+			pset.Parameters[i] = param
+		}
+	}
+
 	currentRun.ParameterSets = args.Installation.ParameterSets
 	sort.SliceStable(currentRun.ParameterSets, func(i, j int) bool {
 		return currentRun.ParameterSets[i].Name < currentRun.ParameterSets[j].Name
@@ -232,8 +251,8 @@ func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installat
 		bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error updating installation record for %s\n%#v", installation, installation))
 	}
 
-	for outputName, outputValue := range opResult.Outputs {
-		output := result.NewOutput(outputName, []byte(outputValue))
+	outputs := result.FilterSensitiveOutputs(opResult, run.Bundle, r.secrets)
+	for _, output := range outputs {
 		err = r.claims.InsertOutput(output)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))

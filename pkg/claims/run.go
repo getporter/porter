@@ -139,3 +139,15 @@ func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 		Custom:         cnabResult.Custom,
 	}
 }
+
+func (r Run) ResolveSensitiveData(resolver parameters.Provider) Run {
+	bun := cnab.ExtendedBundle{r.Bundle}
+
+	resolved := make(map[string]interface{})
+	for _, pset := range r.ParameterSets {
+		pset.Resolve(resolver, bun)
+	}
+
+	r.Parameters = resolved
+	return r
+}

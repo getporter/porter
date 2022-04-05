@@ -79,7 +79,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	p.Credentials = testCredentials
 	p.Parameters = testParameters
 	p.Secrets = testSecrets
-	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
+	p.CNAB = cnabprovider.NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
 	p.Registry = testRegistry
 
 	tp := TestPorter{

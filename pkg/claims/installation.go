@@ -163,6 +163,55 @@ func (i *Installation) SetLabel(key string, value string) {
 	i.Labels[key] = value
 }
 
+func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store Provider) (Installation, Run, error) {
+	resolved := make(map[string]interface{})
+	for _, pset := range i.ParameterSets {
+		params, err := resolver.ResolveAll(pset)
+		if err != nil {
+			return i, Run{}, err
+		}
+
+		for _, param := range params {
+			resolved[param.Name] = param.Value
+		}
+	}
+	i.Parameters = resolved
+
+	if i.Status.RunID != "" {
+		run, err := store.GetRun(i.Status.RunID)
+		if err != nil {
+			return i, Run{}, err
+		}
+		run = run.ResolveSensitiveData(resolver)
+
+		for name, value := range run.Parameters {
+			if _, ok := i.Parameters[name]; ok {
+				i.Parameters[name] = value
+			}
+		}
+
+		return i, run, nil
+	}
+
+	return i, Run{}, nil
+}
+
+func (i *Installation) RemoveInternalParameterSet() {
+	internalPsetIdx := -1
+	for idx, pset := range i.ParameterSets {
+		if i.IsInternalParameterSet(pset.Name) {
+			internalPsetIdx = idx
+			break
+		}
+	}
+
+	if internalPsetIdx != -1 {
+		i.ParameterSets[internalPsetIdx] = i.ParameterSets[len(i.ParameterSets)-1]
+		i.ParameterSets = i.ParameterSets[:len(i.ParameterSets)-1]
+
+	}
+}
+
 // ConvertParameterValues converts each parameter from an unknown type to
 // the type specified for that parameter on the bundle.
 func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
@@ -177,9 +226,19 @@ func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
 	return nil
 }
 
-// NewParameterSet creates a new ParameterSet with the required fields initialized.
+// NewInternalParameterSet creates a new ParameterSet that's used to store
+// parameter overrides with the required fields initialized.
 func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) parameters.ParameterSet {
 	return parameters.NewParameterSet(i.Namespace, internalParamName(i.ID), params...)
+}
+
+func (i Installation) InternalParameterSet() *parameters.ParameterSet {
+	for _, pset := range i.ParameterSets {
+		if i.IsInternalParameterSet(pset.Name) {
+			return &pset
+		}
+	}
+	return nil
 }
 
 func (i Installation) IsInternalParameterSet(name string) bool {
