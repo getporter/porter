@@ -47,6 +47,7 @@ The installation variable contains data related to the execution of the bundle.
 | Variable | Description |
 |----------|--------------|
 | installation.name | The name of the installation. |
+| installation.namespace | The namespace of the installation. |
 
 In the example below, we install a helm chart and set the release name to the installation name of the bundle:
 
@@ -56,6 +57,17 @@ install:
     description: Install myapp
     name: "{{ installation.name }}"
     chart: charts/myapp
+```
+
+In the next example, we install some kubernetes resources using the namespace of the bundle:
+
+```yaml
+install:
+  kubernetes:
+    description: Install myapp
+    namespace: "{{ installation.namespace }}"
+    manifests:
+      - manifests
 ```
 
 ### bundle

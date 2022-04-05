@@ -52,6 +52,7 @@ func (r *Runtime) ApplyConfig(args ActionArguments) action.OperationConfigs {
 	return action.OperationConfigs{
 		r.SetOutput(),
 		r.AddFiles(args),
+		r.AddEnvironment(args),
 		r.AddRelocation(args),
 	}
 }
@@ -80,6 +81,14 @@ func (r *Runtime) AddFiles(args ActionArguments) action.OperationConfigFunc {
 			op.Files[config.ClaimFilepath] = string(claimBytes)
 		}
 
+		return nil
+	}
+}
+
+func (r *Runtime) AddEnvironment(args ActionArguments) action.OperationConfigFunc {
+	return func(op *driver.Operation) error {
+		op.Environment[config.EnvPorterInstallationNamespace] = args.Installation.Namespace
+		op.Environment[config.EnvPorterInstallationName] = args.Installation.Name
 		return nil
 	}
 }

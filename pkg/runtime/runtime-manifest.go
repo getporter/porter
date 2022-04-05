@@ -88,8 +88,12 @@ func (m *RuntimeManifest) loadBundle() error {
 	return nil
 }
 
+func (m *RuntimeManifest) GetInstallationNamespace() string {
+	return m.Getenv(config.EnvPorterInstallationNamespace)
+}
+
 func (m *RuntimeManifest) GetInstallationName() string {
-	return m.Getenv(config.EnvInstallationName)
+	return m.Getenv(config.EnvPorterInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
@@ -225,6 +229,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	inst := make(map[string]interface{})
 	data["installation"] = inst
+	inst["namespace"] = m.GetInstallationNamespace()
 	inst["name"] = m.GetInstallationName()
 
 	bun := make(map[string]interface{})
