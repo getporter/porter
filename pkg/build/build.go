@@ -44,8 +44,23 @@ var (
 
 type Builder interface {
 	// BuildInvocationImage using the bundle in the build context directory
-	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error
+	BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts BuildImageOptions) error
 
 	// TagInvocationImage using the origTag and newTag values supplied
 	TagInvocationImage(ctx context.Context, origTag, newTag string) error
+}
+
+// BuildImageOptions represents some flags exposed by docker.
+type BuildImageOptions struct {
+	// SSH is the set of docker build --ssh flags specified.
+	SSH []string
+
+	// Secrets is the set of docker build --secret flags specified.
+	Secrets []string
+
+	// BuildArgs is the set of docker build --build-arg specified.
+	BuildArgs []string
+
+	// NoCache is the docker build --no-cache flag specified.
+	NoCache bool
 }

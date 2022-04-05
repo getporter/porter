@@ -7,26 +7,29 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
-	"get.porter.sh/porter/pkg/tracing"
-	"go.opentelemetry.io/otel/attribute"
+	"strings"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
-	"github.com/containerd/console"
+	"get.porter.sh/porter/pkg/tracing"
 	buildx "github.com/docker/buildx/build"
 	"github.com/docker/buildx/driver"
 	_ "github.com/docker/buildx/driver/docker" // Register the docker driver with buildkit
+	"github.com/docker/buildx/store/storeutil"
+	"github.com/docker/buildx/util/buildflags"
+	"github.com/docker/buildx/util/confutil"
 	"github.com/docker/buildx/util/progress"
 	"github.com/docker/cli/cli/command"
+	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/context/docker"
 	cliflags "github.com/docker/cli/cli/flags"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Builder struct {
@@ -59,7 +62,7 @@ func (l unstructuredLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
+func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	ctx, log := tracing.StartSpan(ctx, attribute.String("image", manifest.Image))
 	defer log.EndSpan()
 
@@ -69,11 +72,18 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	if err != nil {
 		return log.Error(errors.Wrap(err, "could not create new docker client"))
 	}
-	if err := cli.Initialize(cliflags.NewClientOptions()); err != nil {
+	cliOpts := cliflags.NewClientOptions()
+	cliOpts.ConfigDir = cliconfig.Dir()
+	if err = cli.Initialize(cliOpts); err != nil {
 		return log.Error(errors.Wrapf(err, "error initializing docker client"))
 	}
 
-	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), cli.ConfigFile(), nil, nil, "", nil, nil, b.Getwd())
+	imageopt, err := storeutil.GetImageConfig(cli, nil)
+	if err != nil {
+		return err
+	}
+
+	d, err := driver.GetDriver(ctx, "porter-driver", nil, cli.Client(), imageopt.Auth, nil, nil, nil, nil, nil, b.Getwd())
 	if err != nil {
 		return log.Error(errors.Wrapf(err, "error loading buildx driver"))
 	}
@@ -82,10 +92,31 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 		{
 			Name:   "default",
 			Driver: d,
+			// Use any proxies specified in the docker config file
+			ProxyConfig: storeutil.GetProxyConfig(cli),
+			// Use stored logins from the docker config to pull from private repositories
+			ImageOpt: imageopt,
 		},
 	}
 
-	opts := map[string]buildx.Options{
+	session := []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)}
+	ssh, err := buildflags.ParseSSHSpecs(opts.SSH)
+	if err != nil {
+		return errors.Wrap(err, "error parsing the --ssh flags")
+	}
+	session = append(session, ssh)
+
+	secrets, err := buildflags.ParseSecretSpecs(opts.Secrets)
+	if err != nil {
+		return errors.Wrap(err, "error parsing the --secret flags")
+	}
+	session = append(session, secrets)
+
+	args := make(map[string]string, len(opts.BuildArgs)+1)
+	parseBuildArgs(opts.BuildArgs, args)
+	args["BUNDLE_DIR"] = build.BUNDLE_DIR
+
+	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
 			Inputs: buildx.Inputs{
@@ -93,28 +124,24 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 				DockerfilePath: filepath.Join(b.Getwd(), build.DOCKER_FILE),
 				InStream:       b.In,
 			},
-			BuildArgs: map[string]string{
-				"BUNDLE_DIR": build.BUNDLE_DIR,
-			},
-			Session: []session.Attachable{authprovider.NewDockerAuthProvider(b.Err)},
+			BuildArgs: args,
+			Session:   session,
+			NoCache:   opts.NoCache,
 		},
 	}
 
 	out := ioutil.Discard
+	mode := progress.PrinterModeQuiet
 	if b.IsVerbose() || b.Config.IsFeatureEnabled(experimental.FlagStructuredLogs) {
+		mode = progress.PrinterModeAuto // Auto writes to stderr regardless of what you pass in
+
 		ctx, log = log.StartSpanWithName("buildkit", attribute.String("source", "porter.build.buildkit"))
 		defer log.EndSpan()
 		out = unstructuredLogger{log}
 	}
 
-	dockerOut, err := getConsole(out)
-	if err != nil {
-		return log.Error(errors.Wrap(err, "could not retrieve docker build output"))
-	}
-	defer dockerOut.Close()
-
-	printer := progress.NewPrinter(ctx, dockerOut, "auto")
-	_, buildErr := buildx.Build(ctx, drivers, opts, dockerToBuildx{cli}, cli.ConfigFile(), printer)
+	printer := progress.NewPrinter(ctx, out, os.Stderr, mode)
+	_, buildErr := buildx.Build(ctx, drivers, buildxOpts, dockerToBuildx{cli}, confutil.ConfigDir(cli), printer)
 	printErr := printer.Wait()
 
 	if buildErr == nil {
@@ -123,54 +150,18 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	return log.Error(errors.Wrapf(buildErr, "error building docker image"))
 }
 
-var _ console.File = dockerConsole{}
+func parseBuildArgs(unparsed []string, parsed map[string]string) {
+	for _, arg := range unparsed {
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) < 2 {
+			// docker ignores --build-arg with only one part, so we will too
+			continue
+		}
 
-// Wraps io.Writer since docker wants to send output to a *os.File
-type dockerConsole struct {
-	out io.Writer
-	f   *os.File
-}
-
-func getConsole(out io.Writer) (dockerConsole, error) {
-	f, ok := out.(*os.File)
-	if ok {
-		return dockerConsole{
-			f:   f,
-			out: out,
-		}, nil
+		name := parts[0]
+		value := parts[1]
+		parsed[name] = value
 	}
-
-	f, err := ioutil.TempFile("", "porter-output-dockerConsole")
-	if err != nil {
-		return dockerConsole{}, err
-	}
-
-	return dockerConsole{
-		f:   f,
-		out: io.MultiWriter(out, f),
-	}, nil
-}
-
-func (r dockerConsole) Read(p []byte) (n int, err error) {
-	return r.f.Read(p)
-}
-
-func (r dockerConsole) Write(p []byte) (n int, err error) {
-	return r.out.Write(p)
-}
-
-func (r dockerConsole) Close() error {
-	r.f.Close()
-	os.Remove(r.f.Name())
-	return nil
-}
-
-func (r dockerConsole) Fd() uintptr {
-	return r.f.Fd()
-}
-
-func (r dockerConsole) Name() string {
-	return r.f.Name()
 }
 
 // Adapts between Docker CLI and Buildx

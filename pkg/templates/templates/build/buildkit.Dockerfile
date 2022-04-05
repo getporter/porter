@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile-upstream:1.4.0-rc2
+# syntax=docker/dockerfile-upstream:1.4.0
 FROM debian:stretch-slim
 
 # PORTER_INIT

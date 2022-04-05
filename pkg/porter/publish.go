@@ -152,7 +152,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	if origInvImg != m.Image {
 		// Tag it so that it will be known/found by Docker for publishing
-		builder := p.GetBuilder()
+		builder := p.GetBuilder(ctx)
 		if err := builder.TagInvocationImage(ctx, origInvImg, m.Image); err != nil {
 			return err
 		}

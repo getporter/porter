@@ -7,7 +7,6 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/build/buildkit"
-	"get.porter.sh/porter/pkg/build/docker"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	cnabtooci "get.porter.sh/porter/pkg/cnab/cnab-to-oci"
@@ -23,6 +22,7 @@ import (
 	"get.porter.sh/porter/pkg/storage/migrations"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
@@ -121,15 +121,21 @@ func (p *Porter) Close() error {
 	return bigErr.ErrorOrNil()
 }
 
-// NewBuilder creates a Builder based on the current configuration.
-func (p *Porter) GetBuilder() build.Builder {
+// GetBuilder creates a Builder based on the current configuration.
+func (p *Porter) GetBuilder(ctx context.Context) build.Builder {
+	log := tracing.LoggerFromContext(ctx)
+
 	if p.builder == nil {
-		switch p.GetBuildDriver() {
+		driver := p.GetBuildDriver()
+		switch driver {
 		case config.BuildDriverBuildkit:
-			p.builder = buildkit.NewBuilder(p.Config)
+			// supported, yay!
+		case config.BuildDriverDocker:
+			log.Warn("The docker build driver is no longer supported. Using buildkit instead.")
 		default:
-			p.builder = docker.NewBuilder(p.Context)
+			log.Warnf("Unsupported build driver: %s. Using buildkit instead.", driver)
 		}
+		p.builder = buildkit.NewBuilder(p.Config)
 	}
 	return p.builder
 }

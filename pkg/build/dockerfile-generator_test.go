@@ -2,13 +2,11 @@ package build
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/templates"
@@ -20,34 +18,27 @@ import (
 func TestPorter_buildDockerfile(t *testing.T) {
 	t.Parallel()
 
-	drivers := []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
-	for _, driver := range drivers {
-		t.Run(driver, func(t *testing.T) {
+	c := config.NewTestConfig(t)
+	c.Data.BuildDriver = config.BuildDriverBuildkit
+	tmpl := templates.NewTemplates(c.Config)
+	configTpl, err := tmpl.GetManifest()
+	require.Nil(t, err)
+	c.TestContext.AddTestFileContents(configTpl, config.Name)
 
-			c := config.NewTestConfig(t)
-			c.Data.BuildDriver = driver
-			c.SetExperimentalFlags(experimental.FlagBuildDrivers)
-			tmpl := templates.NewTemplates(c.Config)
-			configTpl, err := tmpl.GetManifest()
-			require.Nil(t, err)
-			c.TestContext.AddTestFileContents(configTpl, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
+	require.NoError(t, err, "could not load manifest")
 
-			m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
-			require.NoError(t, err, "could not load manifest")
+	// ignore mixins in the unit tests
+	m.Mixins = []manifest.MixinDeclaration{}
 
-			// ignore mixins in the unit tests
-			m.Mixins = []manifest.MixinDeclaration{}
+	mp := mixin.NewTestMixinProvider()
+	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
+	gotlines, err := g.buildDockerfile(context.Background())
+	require.NoError(t, err)
+	gotDockerfile := strings.Join(gotlines, "\n")
 
-			mp := mixin.NewTestMixinProvider()
-			g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-			gotlines, err := g.buildDockerfile()
-			require.NoError(t, err)
-			gotDockerfile := strings.Join(gotlines, "\n")
-
-			wantDockerfilePath := fmt.Sprintf("testdata/%s.Dockerfile", driver)
-			test.CompareGoldenFile(t, wantDockerfilePath, gotDockerfile)
-		})
-	}
+	wantDockerfilePath := "testdata/buildkit.Dockerfile"
+	test.CompareGoldenFile(t, wantDockerfilePath, gotDockerfile)
 }
 
 func TestPorter_buildCustomDockerfile(t *testing.T) {
@@ -77,10 +68,11 @@ COPY mybin /cnab/app/
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-		_, err = g.buildDockerfile()
+		gotlines, err := g.buildDockerfile(context.Background())
 
 		// We should inject initialization lines even when they didn't include the token
 		require.NoError(t, err)
+		test.CompareGoldenFile(t, "testdata/missing-args-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
 	})
 
 	t.Run("build from custom docker with PORTER_INIT supplied", func(t *testing.T) {
@@ -109,7 +101,7 @@ COPY mybin /cnab/app/
 		m.Mixins = []manifest.MixinDeclaration{}
 		mp := mixin.NewTestMixinProvider()
 		g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-		gotlines, err := g.buildDockerfile()
+		gotlines, err := g.buildDockerfile(context.Background())
 
 		require.NoError(t, err)
 		test.CompareGoldenFile(t, "testdata/custom-dockerfile-expected-output.Dockerfile", strings.Join(gotlines, "\n"))
@@ -133,7 +125,7 @@ func TestPorter_generateDockerfile(t *testing.T) {
 
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
-	err = g.GenerateDockerFile()
+	err = g.GenerateDockerFile(context.Background())
 	require.NoError(t, err)
 
 	wantDockerfilePath := ".cnab/Dockerfile"
@@ -207,7 +199,7 @@ COPY mybin /cnab/app/
 	mp := mixin.NewTestMixinProvider()
 	g := NewDockerfileGenerator(c.Config, m, tmpl, mp)
 
-	gotlines, err := g.buildDockerfile()
+	gotlines, err := g.buildDockerfile(context.Background())
 	require.NoError(t, err)
 
 	test.CompareGoldenFile(t, "testdata/missing-mixins-token-expected-output.Dockerfile", strings.Join(gotlines, "\n"))

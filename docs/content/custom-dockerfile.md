@@ -10,48 +10,7 @@ Sometimes you may want to full control over your bundle's invocation image, for 
 When you run porter create, a template Dockerfile is created for you in the current directory named **template.Dockerfile**:
 
 ```Dockerfile
-# This is a template Dockerfile for the bundle's invocation image
-# You can customize it to use different base images, install tools and copy configuration files.
-#
-# Porter will use it as a template and append lines to it for the mixins
-# and to set the CMD appropriately for the CNAB specification.
-#
-# Add the following line to porter.yaml to instruct Porter to use this template
-# dockerfile: template.Dockerfile
-
-# You can control where the mixin's Dockerfile lines are inserted into this file by moving the "# PORTER_*" tokens
-# another location in this file. If you remove a token, its content is appended to the end of the Dockerfile.
-FROM debian:stretch-slim
-
-# PORTER_INIT
-
-RUN apt-get update && apt-get install -y ca-certificates
-
-# PORTER_MIXINS
-
-# Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
-COPY . ${BUNDLE_DIR}
-```
-
-Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
-
-```yaml
-dockerfile: template.Dockerfile
-```
-
-It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed. 
-*You must use a base image that is debian-based, such as debian or ubuntu with apt installed.*
-Mixins assume that apt is available to install packages.
-
-# Buildkit
-
-You can use [Buildkit] in your Dockerfile by enabling the [experimental] feature
-for [build-drivers], and then specifying buildkit as the driver.
-
-Below is the template for builds with Buildkit:
-
-```Dockerfile
-# syntax=docker/dockerfile-upstream:1.4.0-rc2
+# syntax=docker/dockerfile-upstream:1.4.0
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -76,6 +35,27 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 # Use the BUNDLE_DIR build argument to copy files into the bundle's working directory
 COPY --link . ${BUNDLE_DIR}
 ```
+
+Add the following line to your **porter.yaml** file to instruct porter to use the template, instead of generating one from scratch:
+
+```yaml
+dockerfile: template.Dockerfile
+```
+
+It is your responsibility to provide a suitable base image, for example one that has root ssl certificates installed. 
+*You must use a base image that is debian-based, such as debian or ubuntu with apt installed.*
+Mixins assume that apt is available to install packages.
+
+# Buildkit
+
+Porter automatically builds with Docker [buildkit] enabled.
+The following docker flags are supported on the [porter build] command: \--ssh, \--secret, \--build-arg.
+With these you can take advantage of Docker's support for using SSH connections, mounting secrets, and specifying custom build arguments.
+
+By default, Porter uses the [1.4.0 dockerfile syntax](https://docs.docker.com/engine/reference/builder/#syntax), but you can modify this line to use new versions as they are released.
+
+[buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
+[porter build]: /cli/porter_build/
 
 # Special Comments 
 Porter uses comments as placeholders to inject lines into your Dockerfile that all Porter bundles require.
@@ -129,14 +109,6 @@ The **BUNDLE_GID** argument declared in the [PORTER_INIT](#porter_init) section 
 Below is an example of how to copy a file into a directory outside [BUNDLE_DIR](#bundle_dir) and set the permissions so that the bundle can access them when it is run:
 
 ```Dockerfile
-COPY myapp /myapp
-RUN chgrp -R ${BUNDLE_GID} /myapp && chmod -R g=u /myapp
-```
-
-If you are using buildkit, you can use the following syntax to copy and set permissions in a single line:
-
-```Dockerfile
-# syntax=docker/dockerfile-upstream:1.4.0-rc2
 COPY --chown=${BUNDLE_UID}:${BUNDLE_GID} --chmod=770 myapp /myapp
 ```
 

@@ -1,0 +1,28 @@
+schemaVersion: 1.0.0-alpha.1
+
+name: private-assets
+version: 0.1.0
+description: "Example bundle that contains private assets and prints it when run"
+registry: ghcr.io/getporter/examples/
+dockerfile: template.Dockerfile
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      command: cat
+      arguments:
+        - /secret
+
+upgrade:
+  - exec:
+      command: cat
+      arguments:
+        - /secret
+
+uninstall:
+  - exec:
+      command: cat
+      arguments:
+        - /secret

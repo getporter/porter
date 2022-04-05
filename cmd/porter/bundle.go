@@ -52,10 +52,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
-		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
-
-Porter uses the docker driver as the default build driver, an alternate driver may be supplied via --driver or the PORTER_BUILD_DRIVER environment variable.
-`,
+		Long:  `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.`,
 		Example: `  porter build
   porter build --name newbuns
   porter build --version 0.1.0
@@ -80,8 +77,16 @@ Porter uses the docker driver as the default build driver, an alternate driver m
 	f.StringVarP(&opts.Dir, "dir", "d", "",
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
-		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
-
+		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
+	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
+	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
+		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.")
+	f.StringArrayVar(&opts.SSH, "ssh", nil,
+		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
+	f.StringArrayVar(&opts.Secrets, "secret", nil,
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
+	f.BoolVar(&opts.NoCache, "no-cache", false,
+		"Do not use the Docker cache when building the bundle's invocation image.")
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},
