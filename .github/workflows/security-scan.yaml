@@ -1,5 +1,12 @@
 name: Security Scan
-on: [push,pull_request]
+on:
+  # always do a security scan when a change is merged
+  push: {}
+  # Only do a security scan on a PR when there are non-doc changes to save time
+  pull_request_target:
+    paths-ignore:
+      - 'docs/**'
+
 jobs:
   scan:
     runs-on: ubuntu-latest
