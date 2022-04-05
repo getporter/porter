@@ -993,9 +993,10 @@ func TestResolveStepEncoding(t *testing.T) {
 	assert.Equal(t, flags["c"], wantValue)
 }
 
-func TestResolveInstallationName(t *testing.T) {
+func TestResolveInstallation(t *testing.T) {
 	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv(config.EnvInstallationName, "mybun")
+	cxt.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
+	cxt.Setenv(config.EnvPorterInstallationName, "mybun")
 
 	m := &manifest.Manifest{}
 	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
@@ -1003,6 +1004,7 @@ func TestResolveInstallationName(t *testing.T) {
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "Do a helm release",
+			"ns":          "{{ installation.namespace }}",
 			"release":     "{{ installation.name }}",
 		},
 	}
@@ -1010,29 +1012,8 @@ func TestResolveInstallationName(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.NoError(t, err, "ResolveStep failed")
 
+	assert.Equal(t, "mynamespace", s.Data["ns"], "installation.namespace was not rendered")
 	assert.Equal(t, "mybun", s.Data["release"], "installation.name was not rendered")
-}
-
-func TestResolveInstallationNamespace(t *testing.T) {
-	cxt := portercontext.NewTestContext(t)
-	cxt.Setenv(config.EnvInstallationName, "mynamespace/mybun")
-
-	m := &manifest.Manifest{}
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
-
-	s := &manifest.Step{
-		Data: map[string]interface{}{
-			"description":       "K8s step",
-			"resourcenamespace": "{{ installation.namespace }}",
-			"resourcename":      "{{ installation.name }}",
-		},
-	}
-
-	err := rm.ResolveStep(s)
-	require.NoError(t, err, "ResolveStep failed")
-
-	assert.Equal(t, "mynamespace", s.Data["resourcenamespace"], "installation.namespace was not rendered")
-	assert.Equal(t, "mybun", s.Data["resourcename"], "installation.name was not rendered")
 }
 
 func TestResolveCustomMetadata(t *testing.T) {

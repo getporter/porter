@@ -89,19 +89,11 @@ func (m *RuntimeManifest) loadBundle() error {
 }
 
 func (m *RuntimeManifest) GetInstallationNamespace() string {
-	before, _, found := strings.Cut(m.Getenv(config.EnvInstallationName), "/")
-	if found {
-		return before
-	}
-	return ""
+	return m.Getenv(config.EnvPorterInstallationNamespace)
 }
 
 func (m *RuntimeManifest) GetInstallationName() string {
-	before, after, found := strings.Cut(m.Getenv(config.EnvInstallationName), "/")
-	if found {
-		return after
-	}
-	return before
+	return m.Getenv(config.EnvPorterInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {

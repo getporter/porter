@@ -35,7 +35,7 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	// EnvCORRELATION_ID is the name of the environment variable containing the
+	// EnvCorrelationID is the name of the environment variable containing the
 	// id to correlate logs with a workflow.
 	EnvCorrelationID = "PORTER_CORRELATION_ID"
 
@@ -49,6 +49,14 @@ const (
 
 	// ClaimFilepath is the filepath to the claim.json inside of an invocation image
 	ClaimFilepath = "/cnab/claim.json"
+
+	// EnvPorterInstallationNamespace is the name of the environment variable which is injected into the
+	// invocation image, containing the namespace of the installation.
+	EnvPorterInstallationNamespace = "PORTER_INSTALLATION_NAMESPACE"
+
+	// EnvPorterInstallationName is the name of the environment variable which is injected into the
+	// invocation image, containing the name of the installation.
+	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
