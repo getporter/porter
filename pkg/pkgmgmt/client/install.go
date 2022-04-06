@@ -88,13 +88,26 @@ type packages struct {
 }
 
 func (fs *FileSystem) InstallFromURL(ctx context.Context, opts pkgmgmt.InstallOptions) error {
+	return fs.installFromURLFor(ctx, opts, runtime.GOOS, runtime.GOARCH)
+}
+
+func (fs *FileSystem) installFromURLFor(ctx context.Context, opts pkgmgmt.InstallOptions, os string, arch string) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	clientUrl := opts.GetParsedURL()
-	clientUrl.Path = path.Join(clientUrl.Path, opts.Version, fmt.Sprintf("%s-%s-%s%s", opts.Name, runtime.GOOS, runtime.GOARCH, pkgmgmt.FileExt))
+	clientUrl.Path = path.Join(clientUrl.Path, opts.Version, fmt.Sprintf("%s-%s-%s%s", opts.Name, os, arch, pkgmgmt.FileExt))
 
 	runtimeUrl := opts.GetParsedURL()
 	runtimeUrl.Path = path.Join(runtimeUrl.Path, opts.Version, fmt.Sprintf("%s-linux-amd64", opts.Name))
 
-	return fs.downloadPackage(ctx, opts.Name, clientUrl, runtimeUrl)
+	err := fs.downloadPackage(ctx, opts.Name, clientUrl, runtimeUrl)
+	if err != nil && os == "darwin" && arch == "arm64" {
+		// Until we have full support for M1 chipsets, rely on rossetta functionality in macos and use the amd64 binary
+		log.Debugf("%s @ %s did not publish a download for darwin/amd64, falling back to darwin/amd64", opts.Name, opts.Version)
+		return fs.installFromURLFor(ctx, opts, "darwin", "amd64")
+	}
+
+	return err
 }
 
 func (fs *FileSystem) InstallFromFeedURL(ctx context.Context, opts pkgmgmt.InstallOptions) error {
@@ -174,7 +187,9 @@ func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath st
 		return log.Errorf("error downloading %s: %w", url.String(), err)
 	}
 	if resp.StatusCode != 200 {
-		return log.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
+		err := fmt.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
+		log.Debugf(err.Error()) // Only debug log this since higher up on the stack we may handle this error
+		return err
 	}
 	defer resp.Body.Close()
 

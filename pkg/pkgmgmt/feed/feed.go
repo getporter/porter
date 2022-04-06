@@ -82,6 +82,13 @@ func (f *MixinFileset) FindDownloadURL(ctx context.Context, os string, arch stri
 			return file.URL
 		}
 	}
+
+	// Until we have full support for M1 chipsets, rely on rossetta functionality in macos and use the amd64 binary
+	if os == "darwin" && arch == "arm64" {
+		log.Debugf("%s @ %s did not publish a download for darwin/amd64, falling back to darwin/amd64", f.Mixin, f.Version)
+		return f.FindDownloadURL(ctx, "darwin", "amd64")
+	}
+
 	return nil
 }
 

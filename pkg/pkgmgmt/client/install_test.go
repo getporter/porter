@@ -12,46 +12,70 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/tests"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFileSystem_InstallFromUrl(t *testing.T) {
-	// serve out a fake package
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a random package\n")
-	}))
-	defer ts.Close()
-
-	c := config.NewTestConfig(t)
-	p := NewFileSystem(c.Config, "packages")
-
-	opts := pkgmgmt.InstallOptions{
-		PackageType: "mixin",
-		Version:     "latest",
-		URL:         ts.URL,
+	testcases := []struct {
+		name         string
+		os           string
+		arch         string
+		responseCode map[string]int
+		wantError    string
+	}{
+		{name: "darwin/arm64 fallback to amd64", os: "darwin", arch: "arm64", responseCode: map[string]int{"arm64": 404}},
+		{name: "darwin/arm64 binary exists", os: "darwin", arch: "arm64"},
+		{name: "non-darwin arm64 no special handling", os: "myos", arch: "arm64", responseCode: map[string]int{"arm64": 404}, wantError: "404 Not Found"},
 	}
-	err := opts.Validate([]string{"mypkg"})
-	require.NoError(t, err, "Validate failed")
 
-	err = p.Install(context.Background(), opts)
-	require.NoError(t, err)
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// serve out a fake package
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				for term, code := range tc.responseCode {
+					if strings.Contains(r.RequestURI, term) {
+						w.WriteHeader(code)
+						break
+					}
+				}
+				fmt.Fprintf(w, "#!/usr/bin/env bash\necho i am a random package\n")
+			}))
+			defer ts.Close()
 
-	clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
-	clientStats, err := p.FileSystem.Stat(clientPath)
-	require.NoError(t, err)
-	wantMode := pkg.FileModeExecutable
-	tests.AssertFilePermissionsEqual(t, clientPath, wantMode, clientStats.Mode())
+			c := config.NewTestConfig(t)
+			p := NewFileSystem(c.Config, "packages")
 
-	runtimePath := "/home/myuser/.porter/packages/mypkg/runtimes/mypkg-runtime"
-	runtimeStats, _ := p.FileSystem.Stat(runtimePath)
-	require.NoError(t, err)
-	tests.AssertFilePermissionsEqual(t, runtimePath, wantMode, runtimeStats.Mode())
+			opts := pkgmgmt.InstallOptions{
+				PackageType: "mixin",
+				Version:     "latest",
+				URL:         ts.URL,
+			}
+			err := opts.Validate([]string{"mypkg"})
+			require.NoError(t, err, "Validate failed")
+
+			err = p.installFromURLFor(context.Background(), opts, tc.os, tc.arch)
+			if tc.wantError != "" {
+				tests.RequireErrorContains(t, err, tc.wantError)
+			} else {
+				require.NoError(t, err)
+				clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
+				clientStats, err := p.FileSystem.Stat(clientPath)
+				require.NoError(t, err)
+				wantMode := pkg.FileModeExecutable
+				tests.AssertFilePermissionsEqual(t, clientPath, wantMode, clientStats.Mode())
+
+				runtimePath := "/home/myuser/.porter/packages/mypkg/runtimes/mypkg-runtime"
+				runtimeStats, _ := p.FileSystem.Stat(runtimePath)
+				require.NoError(t, err)
+				tests.AssertFilePermissionsEqual(t, runtimePath, wantMode, runtimeStats.Mode())
+			}
+		})
+	}
 }
 
 func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
