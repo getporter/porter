@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,45 +14,47 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
 )
 
 const PackageCacheJSON string = "cache.json"
 
-func (fs *FileSystem) Install(opts pkgmgmt.InstallOptions) error {
+func (fs *FileSystem) Install(ctx context.Context, opts pkgmgmt.InstallOptions) error {
 	var err error
 	if opts.FeedURL != "" {
-		err = fs.InstallFromFeedURL(opts)
+		err = fs.InstallFromFeedURL(ctx, opts)
 	} else {
-		err = fs.InstallFromURL(opts)
+		err = fs.InstallFromURL(ctx, opts)
 	}
 	if err != nil {
 		return err
 	}
-	return fs.savePackageInfo(opts)
+	return fs.savePackageInfo(ctx, opts)
 }
 
-func (fs *FileSystem) savePackageInfo(opts pkgmgmt.InstallOptions) error {
+func (fs *FileSystem) savePackageInfo(ctx context.Context, opts pkgmgmt.InstallOptions) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	parentDir, _ := fs.GetPackagesDir()
 	cacheJSONPath := filepath.Join(parentDir, "/", PackageCacheJSON)
 	exists, _ := fs.FileSystem.Exists(cacheJSONPath)
 	if !exists {
 		_, err := fs.FileSystem.Create(cacheJSONPath)
 		if err != nil {
-			return errors.Wrapf(err, "error creating %s package cache.json", fs.PackageType)
+			return log.Errorf("error creating %s package cache.json: %w", fs.PackageType, err)
 		}
 	}
 
 	cacheContentsB, err := fs.FileSystem.ReadFile(cacheJSONPath)
 	if err != nil {
-		return errors.Wrapf(err, "error reading package %s cache.json", fs.PackageType)
+		return log.Errorf("error reading package %s cache.json: %w", fs.PackageType, err)
 	}
 
 	pkgDataJSON := &packages{}
 	if len(cacheContentsB) > 0 {
 		err = json.Unmarshal(cacheContentsB, &pkgDataJSON)
 		if err != nil {
-			return errors.Wrapf(err, "error unmarshalling from %s package cache.json", fs.PackageType)
+			return log.Errorf("error unmarshalling from %s package cache.json: %w", fs.PackageType, err)
 		}
 	}
 	//if a package exists, skip.
@@ -64,12 +67,12 @@ func (fs *FileSystem) savePackageInfo(opts pkgmgmt.InstallOptions) error {
 	pkgDataJSON.Packages = updatedPkgList
 	updatedPkgInfo, err := json.MarshalIndent(&pkgDataJSON, "", "  ")
 	if err != nil {
-		return errors.Wrapf(err, "error marshalling to %s package cache.json", fs.PackageType)
+		return log.Errorf("error marshalling to %s package cache.json: %w", fs.PackageType, err)
 	}
 	err = fs.FileSystem.WriteFile(cacheJSONPath, updatedPkgInfo, pkg.FileModeWritable)
 
 	if err != nil {
-		return errors.Wrapf(err, "error adding package info to %s cache.json", fs.PackageType)
+		return log.Errorf("error adding package info to %s cache.json: %w", fs.PackageType, err)
 	}
 	return nil
 }
@@ -84,26 +87,28 @@ type packages struct {
 	Packages []PackageInfo `json:"packages"`
 }
 
-func (fs *FileSystem) InstallFromURL(opts pkgmgmt.InstallOptions) error {
+func (fs *FileSystem) InstallFromURL(ctx context.Context, opts pkgmgmt.InstallOptions) error {
 	clientUrl := opts.GetParsedURL()
 	clientUrl.Path = path.Join(clientUrl.Path, opts.Version, fmt.Sprintf("%s-%s-%s%s", opts.Name, runtime.GOOS, runtime.GOARCH, pkgmgmt.FileExt))
 
 	runtimeUrl := opts.GetParsedURL()
 	runtimeUrl.Path = path.Join(runtimeUrl.Path, opts.Version, fmt.Sprintf("%s-linux-amd64", opts.Name))
 
-	return fs.downloadPackage(opts.Name, clientUrl, runtimeUrl)
+	return fs.downloadPackage(ctx, opts.Name, clientUrl, runtimeUrl)
 }
 
-func (fs *FileSystem) InstallFromFeedURL(opts pkgmgmt.InstallOptions) error {
+func (fs *FileSystem) InstallFromFeedURL(ctx context.Context, opts pkgmgmt.InstallOptions) error {
+	log := tracing.LoggerFromContext(ctx)
+
 	feedUrl := opts.GetParsedFeedURL()
 	tmpDir, err := fs.FileSystem.TempDir("", "porter")
 	if err != nil {
-		return errors.Wrap(err, "error creating temp directory")
+		return log.Errorf("error creating temp directory: %w", err)
 	}
 	defer fs.FileSystem.RemoveAll(tmpDir)
 	feedPath := filepath.Join(tmpDir, "atom.xml")
 
-	err = fs.downloadFile(feedUrl, feedPath, false)
+	err = fs.downloadFile(ctx, feedUrl, feedPath, false)
 	if err != nil {
 		return err
 	}
@@ -116,23 +121,23 @@ func (fs *FileSystem) InstallFromFeedURL(opts pkgmgmt.InstallOptions) error {
 
 	result := searchFeed.Search(opts.Name, opts.Version)
 	if result == nil {
-		return errors.Errorf("the feed at %s does not contain an entry for %s @ %s", opts.FeedURL, opts.Name, opts.Version)
+		return log.Errorf("the feed at %s does not contain an entry for %s @ %s", opts.FeedURL, opts.Name, opts.Version)
 	}
 
-	clientUrl := result.FindDownloadURL(runtime.GOOS, runtime.GOARCH)
+	clientUrl := result.FindDownloadURL(ctx, runtime.GOOS, runtime.GOARCH)
 	if clientUrl == nil {
-		return errors.Errorf("%s @ %s did not publish a download for %s/%s", opts.Name, opts.Version, runtime.GOOS, runtime.GOARCH)
+		return log.Errorf("%s @ %s did not publish a download for %s/%s", opts.Name, opts.Version, runtime.GOOS, runtime.GOARCH)
 	}
 
-	runtimeUrl := result.FindDownloadURL("linux", "amd64")
+	runtimeUrl := result.FindDownloadURL(ctx, "linux", "amd64")
 	if runtimeUrl == nil {
-		return errors.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version)
+		return log.Errorf("%s @ %s did not publish a download for linux/amd64", opts.Name, opts.Version)
 	}
 
-	return fs.downloadPackage(opts.Name, *clientUrl, *runtimeUrl)
+	return fs.downloadPackage(ctx, opts.Name, *clientUrl, *runtimeUrl)
 }
 
-func (fs *FileSystem) downloadPackage(name string, clientUrl url.URL, runtimeUrl url.URL) error {
+func (fs *FileSystem) downloadPackage(ctx context.Context, name string, clientUrl url.URL, runtimeUrl url.URL) error {
 	parentDir, err := fs.GetPackagesDir()
 	if err != nil {
 		return err
@@ -140,13 +145,13 @@ func (fs *FileSystem) downloadPackage(name string, clientUrl url.URL, runtimeUrl
 	pkgDir := filepath.Join(parentDir, name)
 
 	clientPath := fs.BuildClientPath(pkgDir, name)
-	err = fs.downloadFile(clientUrl, clientPath, true)
+	err = fs.downloadFile(ctx, clientUrl, clientPath, true)
 	if err != nil {
 		return err
 	}
 
 	runtimePath := filepath.Join(pkgDir, "runtimes", name+"-runtime")
-	err = fs.downloadFile(runtimeUrl, runtimePath, true)
+	err = fs.downloadFile(ctx, runtimeUrl, runtimePath, true)
 	if err != nil {
 		fs.FileSystem.RemoveAll(pkgDir) // If the runtime download fails, cleanup the package so it's not half installed
 		return err
@@ -155,22 +160,21 @@ func (fs *FileSystem) downloadPackage(name string, clientUrl url.URL, runtimeUrl
 	return nil
 }
 
-func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool) error {
-	if fs.Debug {
-		fmt.Fprintf(fs.Err, "Downloading %s to %s\n", url.String(), destPath)
-	}
+func (fs *FileSystem) downloadFile(ctx context.Context, url url.URL, destPath string, executable bool) error {
+	log := tracing.LoggerFromContext(ctx)
+	log.Debugf("Downloading %s to %s\n", url.String(), destPath)
 
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
-		return errors.Wrapf(err, "error creating web request to %s", url.String())
+		return log.Errorf("error creating web request to %s: %w", url.String(), err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "error downloading %s", url.String())
+		return log.Errorf("error downloading %s: %w", url.String(), err)
 	}
 	if resp.StatusCode != 200 {
-		return errors.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
+		return log.Errorf("bad status returned when downloading %s (%d) %s", url.String(), resp.StatusCode, resp.Status)
 	}
 	defer resp.Body.Close()
 
@@ -178,14 +182,14 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 	parentDir := filepath.Dir(destPath)
 	parentDirExists, err := fs.FileSystem.DirExists(parentDir)
 	if err != nil {
-		return errors.Wrapf(err, "unable to check if directory exists %s", parentDir)
+		return log.Errorf("unable to check if directory exists %s: %w", parentDir, err)
 	}
 
 	cleanup := func() {}
 	if !parentDirExists {
 		err = fs.FileSystem.MkdirAll(parentDir, pkg.FileModeDirectory)
 		if err != nil {
-			errors.Wrapf(err, "unable to create parent directory %s", parentDir)
+			return log.Errorf("unable to create parent directory %s: %w", parentDir, err)
 		}
 		cleanup = func() {
 			fs.FileSystem.RemoveAll(parentDir) // If we can't download the file, don't leave traces of it
@@ -195,7 +199,7 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 	destFile, err := fs.FileSystem.Create(destPath)
 	if err != nil {
 		cleanup()
-		return errors.Wrapf(err, "could not create the file at %s", destPath)
+		return log.Errorf("could not create the file at %s: %w", destPath, err)
 	}
 	defer destFile.Close()
 
@@ -203,14 +207,14 @@ func (fs *FileSystem) downloadFile(url url.URL, destPath string, executable bool
 		err = fs.FileSystem.Chmod(destPath, pkg.FileModeExecutable)
 		if err != nil {
 			cleanup()
-			return errors.Wrapf(err, "could not set the file as executable at %s", destPath)
+			return log.Errorf("could not set the file as executable at %s: %w", destPath, err)
 		}
 	}
 
 	_, err = io.Copy(destFile, resp.Body)
 	if err != nil {
 		cleanup()
-		return errors.Wrapf(err, "error writing the file to %s", destPath)
+		return log.Errorf("error writing the file to %s: %w", destPath, err)
 	}
 	return nil
 }

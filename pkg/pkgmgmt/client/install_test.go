@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -38,7 +39,7 @@ func TestFileSystem_InstallFromUrl(t *testing.T) {
 	err := opts.Validate([]string{"mypkg"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.Install(opts)
+	err = p.Install(context.Background(), opts)
 	require.NoError(t, err)
 
 	clientPath := "/home/myuser/.porter/packages/mypkg/mypkg"
@@ -87,7 +88,7 @@ func TestFileSystem_InstallFromFeedUrl(t *testing.T) {
 	err = opts.Validate([]string{"helm"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.Install(opts)
+	err = p.Install(context.Background(), opts)
 	require.NoError(t, err)
 
 	clientExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/helm/helm")
@@ -121,7 +122,7 @@ func TestFileSystem_Install_RollbackMissingRuntime(t *testing.T) {
 	err := opts.Validate([]string{"mypkg"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.Install(opts)
+	err = p.Install(context.Background(), opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "bad status returned when downloading")
 
@@ -148,7 +149,7 @@ func TestFileSystem_Install_PackageInfoSavedWhenNoFileExists(t *testing.T) {
 	cacheExists, _ := p.FileSystem.Exists("/home/myuser/.porter/packages/cache.json")
 	assert.False(t, cacheExists)
 
-	err = p.savePackageInfo(opts)
+	err = p.savePackageInfo(context.Background(), opts)
 	require.NoError(t, err)
 
 	// cache.json should have been created

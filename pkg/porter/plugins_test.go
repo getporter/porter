@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -220,7 +221,7 @@ func TestPorter_InstallPlugin(t *testing.T) {
 	err := opts.Validate([]string{"plugin1"})
 	require.NoError(t, err, "Validate failed")
 
-	err = p.InstallPlugin(opts)
+	err = p.InstallPlugin(context.Background(), opts)
 	require.NoError(t, err, "InstallPlugin failed")
 
 	wantOutput := "installed plugin1 plugin v1.0 (abc123)\n"

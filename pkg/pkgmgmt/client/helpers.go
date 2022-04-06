@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"testing"
@@ -40,7 +41,7 @@ func (p *TestPackageManager) GetMetadata(name string) (pkgmgmt.PackageMetadata, 
 	return nil, fmt.Errorf("%s %s not installed", p.PkgType, name)
 }
 
-func (p *TestPackageManager) Install(o pkgmgmt.InstallOptions) error {
+func (p *TestPackageManager) Install(ctx context.Context, opts pkgmgmt.InstallOptions) error {
 	// do nothing
 	return nil
 }

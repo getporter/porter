@@ -1,6 +1,7 @@
 package pkgmgmt
 
 import (
+	"context"
 	"net/url"
 	"os/exec"
 	"path"
@@ -13,7 +14,7 @@ type PackageManager interface {
 	List() ([]string, error)
 	GetPackageDir(name string) (string, error)
 	GetMetadata(name string) (PackageMetadata, error)
-	Install(InstallOptions) error
+	Install(ctx context.Context, opts InstallOptions) error
 	Uninstall(UninstallOptions) error
 
 	// Run a command against the installed package.

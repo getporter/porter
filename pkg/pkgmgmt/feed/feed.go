@@ -1,10 +1,13 @@
 package feed
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
+
+	"get.porter.sh/porter/pkg/tracing"
 
 	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/Masterminds/semver/v3"
@@ -70,7 +73,9 @@ type MixinFileset struct {
 	Files   []*MixinFile
 }
 
-func (f *MixinFileset) FindDownloadURL(os string, arch string) *url.URL {
+func (f *MixinFileset) FindDownloadURL(ctx context.Context, os string, arch string) *url.URL {
+	log := tracing.LoggerFromContext(ctx)
+
 	match := fmt.Sprintf("%s-%s-%s", f.Mixin, os, arch)
 	for _, file := range f.Files {
 		if strings.Contains(file.URL.Path, match) {
