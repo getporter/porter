@@ -34,7 +34,7 @@ porter build [flags]
   -f, --file porter.yaml        Path to the Porter manifest. Defaults to porter.yaml in the current directory.
   -h, --help                    help for build
       --name string             Override the bundle name
-      --no-cache                Do not use cache when building the image.
+      --no-cache                Do not use the Docker cache when building the bundle's invocation image.
       --no-lint                 Do not run the linter
       --secret stringArray      Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.
       --ssh stringArray         SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.
