@@ -18,12 +18,12 @@ replace (
 )
 
 require (
-	get.porter.sh/magefiles v0.1.2
+	get.porter.sh/magefiles v0.1.3
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/carolynvs/aferox v0.3.0
 	github.com/carolynvs/datetime-printer v0.2.0
-	github.com/carolynvs/magex v0.7.0
+	github.com/carolynvs/magex v0.7.2
 	github.com/cbroglie/mustache v1.0.1
 	github.com/cnabio/cnab-go v0.23.1
 	github.com/cnabio/cnab-to-oci v0.3.3
