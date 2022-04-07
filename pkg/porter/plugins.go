@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -150,8 +151,8 @@ func (p *Porter) GetPlugin(name string) (*plugins.Metadata, error) {
 	return plugin, nil
 }
 
-func (p *Porter) InstallPlugin(opts plugins.InstallOptions) error {
-	err := p.Plugins.Install(opts.InstallOptions)
+func (p *Porter) InstallPlugin(ctx context.Context, opts plugins.InstallOptions) error {
+	err := p.Plugins.Install(ctx, opts.InstallOptions)
 	if err != nil {
 		return err
 	}

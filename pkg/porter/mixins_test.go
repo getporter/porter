@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestPorter_InstallMixin(t *testing.T) {
 	opts.Name = "exec"
 	opts.URL = "https://example.com"
 
-	err := p.InstallMixin(opts)
+	err := p.InstallMixin(context.Background(), opts)
 
 	require.NoError(t, err)
 
