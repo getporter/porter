@@ -103,13 +103,14 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 				},
 			}
 
-			i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
-			c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) { r.Bundle = b })
+			extB := cnab.ExtendedBundle{b}
+			i := p.CreateInstallation(claims.NewInstallation("", "test"), extB)
+			c := p.CreateRun(i.NewRun(cnab.ActionInstall), extB)
 			r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
-			p.TestClaims.CreateOutput(r.NewOutput("foo", []byte("foo-output")))
-			p.TestClaims.CreateOutput(r.NewOutput("bar", []byte("bar-output")))
-			p.TestClaims.CreateOutput(r.NewOutput("longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf")))
-			p.TestClaims.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")))
+			p.CreateOutput(r.NewOutput("foo", []byte("foo-output")), extB)
+			p.CreateOutput(r.NewOutput("bar", []byte("bar-output")), extB)
+			p.CreateOutput(r.NewOutput("longfoo", []byte("DFo6Wc2jDhmA7Yt4PbHyh8RO4vVG7leOzK412gf2TXNPJhuCUs1rB29nkJJd4ICimZGpyWpMGalSvDxf")), extB)
+			p.CreateOutput(r.NewOutput("porter-state", []byte("porter-state.tgz contents")), extB)
 
 			opts := OutputListOptions{
 				sharedOptions: sharedOptions{

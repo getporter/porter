@@ -39,6 +39,14 @@ func (o Output) GetSchema(b cnab.ExtendedBundle) (definition.Schema, bool) {
 	return definition.Schema{}, false
 }
 
+// FormatSensitive transforms an output value to a secret key that can be used
+// to store/retrieve the sensitive output value from a secret store.
+// It returns the transformed output.
+func (o Output) FormatSensitive() Output {
+	o.Value = []byte(o.RunID + o.Name)
+	return o
+}
+
 func (o Output) Resolve(store secrets.Store) (Output, error) {
 	resolved, err := store.Resolve(secrets.SourceSecret, string(o.Value))
 	if err != nil {

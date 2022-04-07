@@ -2,6 +2,7 @@ package parameters
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -10,6 +11,8 @@ import (
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
+
+const INTERNAL_PARAMETERER_SET = "internal-parameter-set"
 
 var _ storage.Document = ParameterSet{}
 
@@ -64,6 +67,15 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	}
 
 	return ps
+}
+
+// NewParameterSet creates a new ParameterSet with the required fields initialized.
+func NewInternalParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
+	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
+}
+
+func (s ParameterSet) IsInternalParameterSet() bool {
+	return strings.Contains(s.Name, INTERNAL_PARAMETERER_SET)
 }
 
 func (s ParameterSet) DefaultDocumentFilter() interface{} {

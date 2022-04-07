@@ -23,11 +23,13 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,6 +42,7 @@ type TestPorter struct {
 	TestParameters  *parameters.TestParameterProvider
 	TestCache       *cache.TestCache
 	TestRegistry    *cnabtooci.TestRegistry
+	TestSecrets     secrets.Store
 
 	// original directory where the test was being executed
 	TestDir string
@@ -86,6 +89,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		Porter:          p,
 		TestConfig:      tc,
 		TestStore:       testStore,
+		TestSecrets:     testSecrets,
 		TestClaims:      testClaims,
 		TestCredentials: testCredentials,
 		TestParameters:  testParameters,
@@ -227,6 +231,60 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 // the new test output.
 func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 	p.TestConfig.TestContext.CompareGoldenFile(goldenFile, got)
+}
+
+// CreateInstallation saves an installation record into claim store and store
+// sensitive parameters into secret store.
+func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.ExtendedBundle) claims.Installation {
+	return p.TestClaims.CreateInstallation(i, func(i *claims.Installation) {
+		strategies := make([]secrets.Strategy, 0, len(i.Parameters))
+		for name, value := range i.Parameters {
+			value, err := bun.WriteParameterToString(name, value)
+			require.NoError(p.T(), err)
+			strategy := secrets.Strategy{
+				Name:   name,
+				Source: secrets.Source{Key: host.SourceValue, Value: value},
+				Value:  value,
+			}
+			if bun.IsSensitiveParameter(name) {
+				encodedStrategy := i.EncodeSensitiveParameter(strategy)
+				err := p.TestSecrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
+				if err != nil {
+					require.NoError(p.T(), err)
+				}
+			}
+
+			strategies = append(strategies, strategy)
+
+		}
+		i.ParameterSets = append(i.ParameterSets, i.NewInternalParameterSet(strategies...))
+	})
+}
+
+func (p *TestPorter) CreateRun(r claims.Run, bun cnab.ExtendedBundle) claims.Run {
+	return p.TestClaims.CreateRun(r, func(r *claims.Run) {
+		r.Bundle = bun.Bundle
+
+		internalPset, _ := r.EncodeInternalParameterSet()
+		for _, param := range internalPset.Parameters {
+			err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
+			require.NoError(p.T(), err)
+		}
+	})
+
+}
+func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
+	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
+		sensitive, err := bun.IsOutputSensitive(o.Name)
+		if err != nil || !sensitive {
+			return
+		}
+
+		ot := o.FormatSensitive()
+		err = p.TestSecrets.Create(secrets.SourceSecret, string(ot.Value), string(o.Value))
+		require.NoError(p.T(), err)
+		o.Value = ot.Value
+	})
 }
 
 type TestBuildProvider struct {

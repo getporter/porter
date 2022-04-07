@@ -288,9 +288,8 @@ func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i 
 			Value:  value,
 		}
 		if bun.IsSensitiveParameter(name) {
-			strategy.Source.Key = secrets.SourceSecret
-			strategy.Source.Value = i.ID + name
-			err := p.Secrets.Create(strategy.Source.Key, strategy.Source.Value, strategy.Value)
+			encodedStrategy := i.EncodeSensitiveParameter(strategy)
+			err := p.Secrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
 			if err != nil {
 				return errors.Wrap(err, "failed to save sensitive param to secrete store")
 			}

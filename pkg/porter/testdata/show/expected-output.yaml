@@ -9,14 +9,6 @@ bundle:
 labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3
-parameterSets:
-  - schemaVersion: 1.0.1
-    namespace: ""
-    name: dev-env
-    parameters: []
-    status:
-      created: 2022-04-04T19:14:28.525676883-04:00
-      modified: 2022-04-04T19:14:28.525676883-04:00
 status:
   runId: "1"
   action: upgrade
@@ -41,3 +33,5 @@ _calculated:
       value: top-secret
 parameters:
   logLevel: 3
+parametersets:
+  - dev-env

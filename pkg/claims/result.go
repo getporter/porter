@@ -70,30 +70,19 @@ func (r Result) NewOutput(name string, data []byte) Output {
 	}
 }
 
-func (r Result) NewSensitiveOutput(name string) Output {
-	return Output{
-		SchemaVersion: SchemaVersion,
-		Name:          name,
-		Namespace:     r.Namespace,
-		Installation:  r.Installation,
-		RunID:         r.RunID,
-		ResultID:      r.ID,
-		Value:         []byte(r.ID + name),
-	}
-}
-
 func (r Result) FilterSensitiveOutputs(result driver.OperationResult, bun bundle.Bundle, store secrets.Store) []Output {
 	o := make([]Output, 0, len(result.Outputs))
 	for name, value := range result.Outputs {
 		sensitive, err := bun.IsOutputSensitive(name)
+		ot := r.NewOutput(name, []byte(value))
 		if err != nil || !sensitive {
-			o = append(o, r.NewOutput(name, []byte(value)))
+			o = append(o, ot)
 			continue
 		}
 
-		ot := r.NewSensitiveOutput(name)
+		ot = ot.FormatSensitive()
 		o = append(o, ot)
-		store.Create(secrets.SourceSecret, string(ot.Value), value)
+		store.Create(secrets.SourceSecret, string(ot.Value), string(value))
 	}
 
 	return o

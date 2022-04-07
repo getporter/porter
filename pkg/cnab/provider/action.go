@@ -144,25 +144,16 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 
-	pset := args.Installation.InternalParameterSet()
-	if pset != nil {
-		bun := cnab.ExtendedBundle{currentRun.Bundle}
+	currentRun.ParameterSets = args.Installation.ParameterSets
+	internalPset, _ := currentRun.EncodeInternalParameterSet()
 
-		for i, param := range pset.Parameters {
-			if !bun.IsSensitiveParameter(param.Name) {
-				continue
-			}
-			param.Source.Key = secrets.SourceSecret
-			param.Source.Value = currentRun.ID + param.Name
-			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
-			if err != nil {
-				return errors.Wrap(err, "failed to save sensitive param to secrete store")
-			}
-			pset.Parameters[i] = param
+	for _, param := range internalPset.Parameters {
+		err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
+		if err != nil {
+			return errors.Wrap(err, "failed to save sensitive param to secrete store")
 		}
 	}
 
-	currentRun.ParameterSets = args.Installation.ParameterSets
 	sort.SliceStable(currentRun.ParameterSets, func(i, j int) bool {
 		return currentRun.ParameterSets[i].Name < currentRun.ParameterSets[j].Name
 	})

@@ -65,6 +65,7 @@ type DisplayInstallation struct {
 	claims.Installation         `yaml:",inline"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
 	Parameters                  map[string]interface{} `json:"parameters" yaml:parameters`
+	ParameterSets               []string               `json:"parameterSets", yaml:parameterSets`
 }
 
 type DisplayInstallationMetadata struct {
@@ -81,6 +82,10 @@ func NewDisplayInstallation(installation claims.Installation, run claims.Run) Di
 
 	di.Installation.RemoveInternalParameterSet()
 
+	for _, pset := range di.Installation.ParameterSets {
+		di.ParameterSets = append(di.ParameterSets, pset.Name)
+	}
+	di.Installation.ParameterSets = nil
 	// This is unset when we are just listing installations
 	if len(run.Parameters) > 0 {
 		bun := cnab.ExtendedBundle{run.Bundle}

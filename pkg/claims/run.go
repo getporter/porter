@@ -5,6 +5,7 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
@@ -140,14 +141,52 @@ func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 	}
 }
 
-func (r Run) ResolveSensitiveData(resolver parameters.Provider) Run {
+// EncodeInternalParameterSet encodes sensitive data in internal parameter sets
+// so it will be associated with the current run record.
+// It returns the encoded parameter set and a boolean value indicating whether
+// the operation is successful. The boolean value is set to false when no
+// internal parameter can be found.
+func (r *Run) EncodeInternalParameterSet() (parameters.ParameterSet, bool) {
+	for i, pset := range r.ParameterSets {
+		if !pset.IsInternalParameterSet() {
+			continue
+		}
+
+		bun := cnab.ExtendedBundle{r.Bundle}
+
+		for i, param := range pset.Parameters {
+			if !bun.IsSensitiveParameter(param.Name) {
+				continue
+			}
+			param.Source.Key = secrets.SourceSecret
+			param.Source.Value = r.ID + param.Name
+			pset.Parameters[i] = param
+		}
+
+		r.ParameterSets[i] = pset
+		return pset, true
+	}
+
+	return parameters.ParameterSet{}, false
+
+}
+
+// ResolveSensitiveData resolves sensitive value on a run record.
+// Currently, it's resolving sensitive parameter values.
+func (r Run) ResolveSensitiveData(resolver parameters.Provider) (Run, error) {
 	bun := cnab.ExtendedBundle{r.Bundle}
 
 	resolved := make(map[string]interface{})
 	for _, pset := range r.ParameterSets {
-		pset.Resolve(resolver, bun)
+		params, err := pset.Resolve(resolver, bun)
+		if err != nil {
+			return r, err
+		}
+		for key, value := range params {
+			resolved[key] = value
+		}
 	}
 
 	r.Parameters = resolved
-	return r
+	return r, nil
 }

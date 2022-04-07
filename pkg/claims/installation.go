@@ -163,6 +163,15 @@ func (i *Installation) SetLabel(key string, value string) {
 	i.Labels[key] = value
 }
 
+// EncodeSensitiveParameter encodes parameters that contains sensitive data so
+// it can be associated with the current installation record.
+func (i Installation) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
+	param.Source.Key = secrets.SourceSecret
+	param.Source.Value = i.ID + param.Name
+	return param
+
+}
+
 func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store Provider) (Installation, Run, error) {
 	resolved := make(map[string]interface{})
 	for _, pset := range i.ParameterSets {
@@ -182,7 +191,10 @@ func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store P
 		if err != nil {
 			return i, Run{}, err
 		}
-		run = run.ResolveSensitiveData(resolver)
+		run, err = run.ResolveSensitiveData(resolver)
+		if err != nil {
+			return i, Run{}, err
+		}
 
 		for name, value := range run.Parameters {
 			if _, ok := i.Parameters[name]; ok {
@@ -199,7 +211,7 @@ func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store P
 func (i *Installation) RemoveInternalParameterSet() {
 	internalPsetIdx := -1
 	for idx, pset := range i.ParameterSets {
-		if i.IsInternalParameterSet(pset.Name) {
+		if pset.IsInternalParameterSet() {
 			internalPsetIdx = idx
 			break
 		}
@@ -229,24 +241,7 @@ func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
 // NewInternalParameterSet creates a new ParameterSet that's used to store
 // parameter overrides with the required fields initialized.
 func (i Installation) NewInternalParameterSet(params ...secrets.Strategy) parameters.ParameterSet {
-	return parameters.NewParameterSet(i.Namespace, internalParamName(i.ID), params...)
-}
-
-func (i Installation) InternalParameterSet() *parameters.ParameterSet {
-	for _, pset := range i.ParameterSets {
-		if i.IsInternalParameterSet(pset.Name) {
-			return &pset
-		}
-	}
-	return nil
-}
-
-func (i Installation) IsInternalParameterSet(name string) bool {
-	return name == internalParamName(i.ID)
-}
-
-func internalParamName(id string) string {
-	return id + "-" + "porter-interal-param-set"
+	return parameters.NewInternalParameterSet(i.Namespace, i.ID, params...)
 }
 
 func (i Installation) AddToTrace(ctx context.Context) {

@@ -112,7 +112,7 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 		var existed bool
 		for idx, existing := range i.ParameterSets {
 			// if it's the generated internal parameter set, override it
-			if i.IsInternalParameterSet(name) && existing.Name == name {
+			if ps.IsInternalParameterSet() && existing.Name == name {
 				i.ParameterSets[idx] = ps
 			}
 

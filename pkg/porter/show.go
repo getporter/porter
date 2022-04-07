@@ -2,7 +2,6 @@ package porter
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"time"
