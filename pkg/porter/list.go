@@ -9,6 +9,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -64,8 +65,6 @@ type DisplayInstallation struct {
 	SchemaType                  string `json:"schemaType" yaml:"schemaType"`
 	claims.Installation         `yaml:",inline"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
-	Parameters                  map[string]interface{} `json:"parameters" yaml:parameters`
-	ParameterSets               []string               `json:"parameterSets", yaml:parameterSets`
 }
 
 type DisplayInstallationMetadata struct {
@@ -77,15 +76,15 @@ func NewDisplayInstallation(installation claims.Installation, run claims.Run) Di
 	di := DisplayInstallation{
 		SchemaType:   "Installation",
 		Installation: installation,
-		Parameters:   installation.Parameters,
 	}
 
 	di.Installation.RemoveInternalParameterSet()
 
+	displayPsets := make([]parameters.ParameterSet, 0, len(di.Installation.ParameterSets))
 	for _, pset := range di.Installation.ParameterSets {
-		di.ParameterSets = append(di.ParameterSets, pset.Name)
+		displayPsets = append(displayPsets, parameters.NewParameterSet("", pset.Name))
 	}
-	di.Installation.ParameterSets = nil
+	di.Installation.ParameterSets = displayPsets
 	// This is unset when we are just listing installations
 	if len(run.Parameters) > 0 {
 		bun := cnab.ExtendedBundle{run.Bundle}

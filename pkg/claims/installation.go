@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -52,7 +53,7 @@ type Installation struct {
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
@@ -124,6 +125,19 @@ func (i *Installation) Apply(input Installation) {
 	i.CredentialSets = input.CredentialSets
 	i.ParameterSets = input.ParameterSets
 	i.Labels = input.Labels
+}
+
+func (i *Installation) MarshalJSON() ([]byte, error) {
+	return i.marshal(encoding.Json)
+}
+
+func (i *Installation) MarshalYAML() ([]byte, error) {
+	return i.marshal(encoding.Yaml)
+}
+
+func (i Installation) marshal(format string) (data []byte, err error) {
+	i.Parameters = make(map[string]interface{})
+	return encoding.Marshal(format, i)
 }
 
 // Validate the installation document and report the first error.
