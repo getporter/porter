@@ -135,7 +135,7 @@ func (i *Installation) MarshalYAML() ([]byte, error) {
 	return i.marshal(encoding.Yaml)
 }
 
-func (i Installation) marshal(format string) (data []byte, err error) {
+func (i *Installation) marshal(format string) (data []byte, err error) {
 	i.Parameters = make(map[string]interface{})
 	return encoding.Marshal(format, i)
 }

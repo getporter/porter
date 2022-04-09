@@ -148,9 +148,11 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	internalPset, _ := currentRun.EncodeInternalParameterSet()
 
 	for _, param := range internalPset.Parameters {
-		err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
-		if err != nil {
-			return errors.Wrap(err, "failed to save sensitive param to secrete store")
+		if param.Source.Key == secrets.SourceSecret {
+			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
+			if err != nil {
+				return errors.Wrap(err, "failed to save sensitive param to secrete store")
+			}
 		}
 	}
 

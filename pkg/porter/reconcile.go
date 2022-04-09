@@ -49,6 +49,10 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	if !neverRun {
 		lastRun = &r
 	}
+	r, err = r.ResolveSensitiveData(p.Parameters)
+	if err != nil {
+		return err
+	}
 
 	ref, ok, err := opts.Installation.Bundle.GetBundleReference()
 	if err != nil {
@@ -102,7 +106,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 
 	// Determine if the installation's desired state is out of sync with reality 🤯
-	inSync, err := p.IsInstallationInSync(ctx, opts.Installation, lastRun, actionOpts)
+	inSync, err := p.IsInstallationInSync(ctx, &opts.Installation, lastRun, actionOpts)
 	if err != nil {
 		return err
 	}
@@ -131,7 +135,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 // IsInstallationInSync determines if the desired state of the installation matches
 // the state of the installation the last time it was modified.
-func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
+func (p *Porter) IsInstallationInSync(ctx context.Context, i *claims.Installation, lastRun *claims.Run, action BundleAction) (bool, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
@@ -188,7 +192,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	}
 
 	// Have the bundle parameters changed?
-	if err := opts.LoadParameters(p, opts.bundleRef.Definition, i); err != nil {
+	if err := p.applyActionOptionsToInstallation(i, opts); err != nil {
 		return false, err
 	}
 
@@ -197,7 +201,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
 	b := newRef.Definition
-	resolvedParams, err := p.resolveParameters(i, b, action.GetAction(), opts.combinedParameters)
+	resolvedParams, err := p.resolveParameters(*i, b, action.GetAction(), opts.combinedParameters)
 	if err != nil {
 		return false, err
 	}
