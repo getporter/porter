@@ -26,7 +26,7 @@ The manifest is made up of multiple components. See the [Manifest File Format] f
 * [Required](#required)
 * [Generated Files](#generated-files)
 
-We have full [examples](https://porter.sh/src/examples) of Porter manifests in the Porter repository.
+We have full [examples](https://github.com/getporter/example-bundles) of Porter manifests in the Porter repository.
 
 [templates]: /authors/templates/
 [Manifest File Format]: /reference/file-formats/#manifest

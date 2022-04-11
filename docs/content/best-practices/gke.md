@@ -8,7 +8,7 @@ service account configured.
 
 See the [GKE example][example] for a full working example bundle.
 
-[example]: https://porter.sh/src/examples/gke-example
+[example]: /example-bundles/src/gke-example
 
 1. [Generate a kubeconfig](#generate-a-kubeconfig).
 1. [Create a service account](#create-a-service-account).

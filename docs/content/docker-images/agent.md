@@ -24,7 +24,7 @@ This set of manifests performs the follow actions:
 Run the following command to run the porter-hello bundle on a cluster to try it out.
 
 ```
-kubectl apply -f https://porter.sh/src/examples/porter-agent-manifest.yaml 
+kubectl apply -f https://raw.githubusercontent.com/getporter/porter/a059a9668934dff475f9d9633781d2f32512581d/examples/porter-agent-manifest.yaml
 ```
 
 <script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/porter-agent-manifest.yaml"></script>

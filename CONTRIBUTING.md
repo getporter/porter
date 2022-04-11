@@ -472,7 +472,7 @@ Next run a Porter command to generate some trace data, such as `porter list`.
 Then go to the Jaeger website to see your data: http://localhost:16686.
 On the Jaeger dashboard, select "porter" from the service drop down, and click "Find Traces".
 
-[otel-jaeger bundle]: https://github.com/getporter/example-bundles/tree/main/otel-jaeger
+[otel-jaeger bundle]: https://getporter.org/example-bundles/src/otel-jaeger
 
 ## Command Documentation
 

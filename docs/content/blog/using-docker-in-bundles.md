@@ -50,7 +50,7 @@ Writing a bundle that uses Docker has a few steps:
 Here's the [full working example whalesay bundle][whalesay-bundle] for you to
 follow along with.
 
-[whalesay-bundle]: /src/examples/docker/
+[whalesay-bundle]: /example-bundles/src/docker/
 
 ### Require Docker
 
@@ -96,7 +96,7 @@ install:
 
 This blog post focuses on just the docker mixin, but here is a [full
 working example for how to use Docker Compose in a
-bundle](/src/examples/compose/).
+bundle](/example-bundles/src/compose/).
 
 ### Use Docker
 

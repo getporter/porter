@@ -4,7 +4,7 @@ description: "Learn how to install a bundle"
 weight: 0
 ---
 
-Source: https://porter.sh/src/examples/hello
+Source: https://getporter.org/example-bundles/src/hello
 
 The hello world bundle, [getporter/porter-hello], is the most simple bundle possible.
 It prints a message to the console when various actions are performed.

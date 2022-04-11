@@ -6,7 +6,7 @@ weight: 10
 
 The [getporter/whalegap] bundle demonstrates how to create a bundle for airgapped, or disconnected, environments. 
 
-Source: https://porter.sh/src/examples/airgap
+Source: https://getporter.org/example-bundles/src/airgap
 
 The whalegap bundle distributes the [whalesay app], which is deployed with Helm to a Kubernetes cluster.
 This application serves an endpoint that draws the cowsay CLI output as a whale.
@@ -36,7 +36,7 @@ The bundle must declare any additional images required for installation in order
 Here's the [full example bundle][whalegap] for you to
 follow along with.
 
-[whalegap]: /src/examples/airgap/
+[whalegap]: /example-bundles/src/airgap/
 
 ### Declare Images
 

@@ -6,7 +6,7 @@ weight: 20
 
 <img src="/images/porter-with-docker.png" width="250px" align="right"/>
 
-Source: https://porter.sh/src/examples/docker
+Source: https://getporter.org/example-bundles/src/docker
 
 The [getporter/whalesay] bundle demonstrates how to use Docker inside a bundle!
 
@@ -48,7 +48,7 @@ Writing a bundle that uses Docker has a few steps:
 Here's the [full working example whalesay bundle][whalesay-bundle] for you to
 follow along with.
 
-[whalesay-bundle]: /src/examples/docker/
+[whalesay-bundle]: /example-bundles/src/docker/
 
 ### Require Docker
 
