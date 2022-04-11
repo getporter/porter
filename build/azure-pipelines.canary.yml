@@ -14,14 +14,10 @@ parameters:
   - name: skipTests
     type: boolean
     default: false
-  - name: publishExamples
-    type: boolean
-    default: false
 
 extends:
   template: azure-pipelines.release-template.yml
   parameters:
     skipTests: ${{parameters.skipTests}}
     shouldPublish: ${{parameters.shouldPublish}}
-    publishExamples: ${{parameters.publishExamples}}
     registry: ghcr.io/getporter
