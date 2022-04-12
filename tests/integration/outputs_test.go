@@ -6,7 +6,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -84,7 +83,7 @@ func installExecOutputsBundle(p *porter.TestPorter) string {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	bundleName := p.AddTestBundleDir(filepath.Join(p.RepoRoot, "examples/exec-outputs"), true)
+	bundleName := p.AddTestBundleDir("testdata/bundles/exec-outputs", true)
 
 	installOpts := porter.NewInstallOptions()
 	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
