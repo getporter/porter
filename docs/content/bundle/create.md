@@ -4,7 +4,7 @@ description: Create a bundle with Porter
 ---
 
 Let's walk through how to create and customize your very own Porter bundle.
-A bundle both includes both the tools and the scripts or logic necessary to automate the deployment.
+A bundle includes both the tools and the scripts or logic necessary to automate the deployment.
 When writing a bundle, it is best if you have already figured out the commands necessary to perform the deployment first, and then use Porter to package that into a bundle.
 Learning Porter while also figuring out how to deploy a particular application can be difficult.
 
