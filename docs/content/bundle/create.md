@@ -113,7 +113,7 @@ You can always use the exec mixin when there isn't an existing mixin, or the mix
 
 🙏🏼 Please, [do not embed bash commands] directly in the porter.yaml file because it is much more difficult to get the escaping and quotes correct than putting the bash in a separate file.
 
-Bundles actions should be [idempotent], meaning an action can be repeated without causing errors, and it should have the same effect each time.
+Bundles actions should be idempotent, meaning an action can be repeated without causing errors, and it should have the same effect each time.
 A user of your bundle should be able to re-run install/upgrade/uninstall multiple times in a row, perhaps because the bundle failed half-way through when run the first time.
 Make sure that your commands gracefully handle resources already existing in the install and upgrade actions, and handles already deleted resources in the uninstall action.
 Some mixins, like the exec mixin, have [built-in support for error handling][ignore-errors] and ignoring errors in certain circumstances.
@@ -147,9 +147,9 @@ The [porter publish] command by default pushes the bundle to the registry define
 
 ## Use the Published Bundle
 
-Once your bundle is published, people can use it by setting the `--reference` flag on relevant porter commands to the bundle's reference.
+Once your bundle is published, people can use it by setting the \--reference flag on relevant porter commands to the bundle's reference.
 The name, registry, and version fields are used to generate the bundle's default publish location when porter publish is run.
-By default the bundle is published to REGISTRY/BUNDLE_NAME:vBUNDLE_VERSION.
+By default, the bundle is published to REGISTRY/BUNDLE_NAME:vBUNDLE_VERSION.
 The destination may be changed by specifying  \--registry, \--reference, or \--tag during [publish](/cli/porter_publish/).
 The publish command prints our the full bundle reference when it completes.
 
@@ -186,6 +186,7 @@ Now that you know how to create a bundle, here are some more detailed topics on 
 [local-registry]: https://docs.docker.com/registry/deploying/#run-a-local-registry
 [porter create]: /cli/porter_create/
 [porter build]: /cli/porter_build/
+[porter publish]: /cli/porter_publish/
 [porter install]: /cli/porter_install/
 [porter mixins search]: /cli/porter_mixins_search/
 [porter explain]: /cli/porter_explain/
