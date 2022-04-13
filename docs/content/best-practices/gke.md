@@ -6,9 +6,9 @@ description: How to connect to a GKE cluster inside a Porter bundle.
 GKE cluster authentication requires more than just a kubeconfig, it also needs a
 service account configured.
 
-See the [GKE example][example] for a full working example bundle.
+See [ghcr.io/getporter/examples/gke][example] for a full working example bundle.
 
-[example]: /example-bundles/src/gke-example
+[example]: /examples/src/gke
 
 1. [Generate a kubeconfig](#generate-a-kubeconfig).
 1. [Create a service account](#create-a-service-account).

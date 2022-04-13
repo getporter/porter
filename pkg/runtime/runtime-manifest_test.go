@@ -748,10 +748,10 @@ func TestResolveImage(t *testing.T) {
 		},
 		{
 			name:      "tagged reference",
-			reference: "getporter/porter-hello:v0.1.10",
+			reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Tag:        "v0.1.10",
+				Repository: "ghcr.io/getporter/examples/porter-hello",
+				Tag:        "v0.2.0",
 			},
 		},
 		{
@@ -781,10 +781,10 @@ func TestResolveImage(t *testing.T) {
 		{
 
 			name:      "tagged and digested",
-			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Tag:        "v0.1.0",
+				Repository: "ghcr.io/getporter/examples/porter-hello",
+				Tag:        "v0.2.0",
 				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},

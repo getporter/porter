@@ -193,7 +193,7 @@ install:
     command: ./install-world.sh
 ```
 
-[exec-outputs]: /example-bundles/src/exec-outputs/
+[exec-outputs]: /examples/src/exec-outputs/
 
 ### FAQ
 

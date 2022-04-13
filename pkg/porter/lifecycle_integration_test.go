@@ -58,7 +58,7 @@ func TestResolveBundleReference(t *testing.T) {
 		p.SetupIntegrationTest()
 
 		opts := &BundleActionOptions{}
-		opts.Reference = "getporter/porter-hello:v0.1.1"
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		ref, err := p.resolveBundleReference(context.Background(), opts)
 		require.NoError(t, err)

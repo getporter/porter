@@ -18,8 +18,8 @@ porter archive FILENAME --reference PUBLISHED_BUNDLE [flags]
 ### Examples
 
 ```
-  porter archive mybun.tgz --reference getporter/porter-hello:v0.1.0
-  porter archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
+  porter archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
 
 ```
 

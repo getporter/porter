@@ -42,4 +42,4 @@ See [Telemetry Settings][telemetry] for all the supported configuration settings
 [Log Settings]: /configuration/#logs
 [structured-logs]: /configuration/#structured-logs
 [OpenTelemetry]: https://opentelemetry.io
-[otel-jaeger bundle]: /example-bundles/src/otel-jaeger
+[otel-jaeger bundle]: /examples/src/otel-jaeger

@@ -135,7 +135,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
 
 1. So far we have been working inside the "developer iteration loop", where you can edit the bundle on your local filesystem and deploy it to your developer environment to test it.
     Once the bundle is stable, the next step is to publish it to an OCI registry so that others can install your bundle using its reference.
-    All of the porter commands accept a flag, \--reference, for example `porter install --reference getporter/porter-hello:v0.1.1` so that you do not need to distribute the bundle files themselves.
+    All of the porter commands accept a flag, \--reference, for example `porter install --reference ghcr.io/getporter/examples/porter-hello:v0.2` so that you do not need to distribute the bundle files themselves.
 
 1. When you are ready to share your bundle with others, select which OCI registry where you will host the bundle, for example, `ghcr.io/getporter` or on Docker Hub under your username `carolynvs`.
     Edit your porter.yaml and set the registry field to the destination registry.
@@ -144,7 +144,7 @@ We will use the [docker-compose mixin] to migrate an existing Docker App to Port
     name: my-docker-app
     version: 0.1.0
     description: My amazing docker app
-    registry: ghcr.io/getporter
+    registry: carolynvs
     ```
   
 1. Publish your bundle to the destination registry with `porter publish`.

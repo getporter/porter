@@ -75,7 +75,7 @@ install:
     - generate-users
 ```
 
-[exec-outputs]: /example-bundles/src/exec-outputs/
+[exec-outputs]: /examples/src/exec-outputs/
 
 ## Quoting, Escaping, Bash and YAML
 

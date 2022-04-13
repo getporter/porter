@@ -23,8 +23,8 @@ porter inspect [flags]
 
 ```
   porter inspect
-  porter inspect --reference getporter/porter-hello:v0.1.0
-  porter inspect --reference localhost:5000/getporter/porter-hello:v0.1.0 --insecure-registry --force
+  porter inspect --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter inspect --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --insecure-registry --force
   porter inspect --file another/porter.yaml
   porter inspect --cnab-file some/bundle.json
 		  

@@ -320,10 +320,10 @@ labels:
   team: marketing
   customer: bigbucks
 bundle:
-  repository: getporter/porter-hello
+  repository: ghcr.io/getporter/examples/porter-hello
   # One of the following fields must be specified: digest, version, or tag
-  digest: sha256:ace0eda3e3be35a979cec764a3321b4c7d0b9e4bb3094d20d3ff6782961a8d54
-  version: 0.1.1
+  digest: sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384
+  version: 0.2.0
   tag: latest
 parameterSets:
   - myparams

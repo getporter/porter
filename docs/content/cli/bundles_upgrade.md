@@ -24,8 +24,8 @@ porter bundles upgrade [INSTALLATION] [flags]
 
 ```
   porter bundle upgrade --version 0.2.0
-  porter bundle upgrade --reference getporter/kubernetes:v0.1.0
-  porter bundle upgrade --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes

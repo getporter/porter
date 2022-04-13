@@ -403,7 +403,7 @@ exclude: true
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://getporter.org/example-bundles/src/azure-wordpress
+  https://getporter.org/examples/src/azure-wordpress
 ]
 
 ---

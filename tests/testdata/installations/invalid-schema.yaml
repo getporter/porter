@@ -2,5 +2,5 @@ schemaVersion: 0.38.5
 name: invalid-schema
 namespace: dev
 bundle:
-  repository: getporter/porter-hello
-  version: 0.1.1
+  repository: ghcrio/getporter/examples/porter-hello
+  version: 0.2.0
