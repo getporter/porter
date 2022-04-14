@@ -145,28 +145,9 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	if err != nil {
 		return err
 	}
+	currentRun.EncodeParameterOverrides()
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
-
-	currentRun.EncodeInternalParameterSet()
-
-	for _, param := range currentRun.ParameterOverrides.Parameters {
-		if param.Source.Key == secrets.SourceSecret {
-			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
-			if err != nil {
-				return errors.Wrap(err, "failed to save sensitive param to secrete store")
-			}
-		}
-	}
-
-	for _, param := range currentRun.Parameters.Parameters {
-		if param.Source.Key == secrets.SourceSecret {
-			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
-			if err != nil {
-				return errors.Wrap(err, "failed to save sensitive param to secrete store")
-			}
-		}
-	}
 
 	currentRun.ParameterSets = args.Installation.ParameterSets
 	sort.Strings(currentRun.ParameterSets)

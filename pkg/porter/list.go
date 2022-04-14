@@ -135,6 +135,8 @@ func NewDisplayInstallation(installation claims.Installation, run claims.Run) Di
 	return di
 }
 
+// ConvertToInstallationClaim transforms the data from DisplayInstallation into
+// a Installation record.
 func (d DisplayInstallation) ConvertToInstallationClaim() (claims.Installation, error) {
 	i := claims.Installation{
 		SchemaVersion:  d.SchemaVersion,
@@ -164,6 +166,7 @@ func (d DisplayInstallation) ConvertToInstallationClaim() (claims.Installation, 
 
 }
 
+// ConvertParamToSet converts a Parameters into a internal ParameterSet.
 func (d DisplayInstallation) ConvertParamToSet(i claims.Installation) (parameters.ParameterSet, error) {
 	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
 	for name, value := range d.Parameters {

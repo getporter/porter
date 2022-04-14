@@ -51,8 +51,7 @@ func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
-		// if no key specified, return the source value
-		if param.Source.Key == "" {
+		if param.Source.Key == DEFAULT_STRATEGY {
 			resolvedParams[param.Name] = param.Source.Value
 			continue
 		}
@@ -68,7 +67,7 @@ func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
 }
 
 func (s ParameterStore) Validate(params ParameterSet) error {
-	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
+	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand, DEFAULT_STRATEGY}
 	var errors error
 
 	for _, cs := range params.Parameters {

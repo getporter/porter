@@ -61,6 +61,10 @@ type Run struct {
 	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
 	ResolvedParameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
 
+	// Parameters is the full set of parameters that's being used during the
+	// current run.
+	// This includes internal parameters, parameter sources, values from parameter sets, etc.
+	// Any sensitive data will be sannitized before saving to the database.
 	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
@@ -86,6 +90,8 @@ func NewRun(namespace string, installation string) Run {
 	}
 }
 
+// PopulateParameters populates the Parameters field with provided parameters.
+// It also saves any sensitive value into the provided secret store.
 func (r *Run) PopulateParameters(params map[string]interface{}, store secrets.Store) error {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	bun := cnab.ExtendedBundle{r.Bundle}
@@ -96,11 +102,9 @@ func (r *Run) PopulateParameters(params map[string]interface{}, store secrets.St
 			return err
 
 		}
-		strategy := secrets.Strategy{
-			Name:   name,
-			Source: secrets.Source{Value: stringVal},
-			Value:  stringVal,
-		}
+
+		strategy := parameters.DefaultStrategy(name, stringVal)
+
 		if bun.IsSensitiveParameter(name) {
 			encodedStrategy := r.EncodeSensitiveParameter(strategy)
 			err := store.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
@@ -184,10 +188,7 @@ func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 
 // EncodeInternalParameterSet encodes sensitive data in internal parameter sets
 // so it will be associated with the current run record.
-// It returns the encoded parameter set and a boolean value indicating whether
-// the operation is successful. The boolean value is set to false when no
-// internal parameter can be found.
-func (r *Run) EncodeInternalParameterSet() {
+func (r *Run) EncodeParameterOverrides() {
 
 	bun := cnab.ExtendedBundle{r.Bundle}
 
@@ -195,28 +196,22 @@ func (r *Run) EncodeInternalParameterSet() {
 		if !bun.IsSensitiveParameter(param.Name) {
 			continue
 		}
-
 		r.ParameterOverrides.Parameters[i] = r.EncodeSensitiveParameter(param)
-	}
-
-	for i, param := range r.Parameters.Parameters {
-		if !bun.IsSensitiveParameter(param.Name) {
-			continue
-		}
-		r.Parameters.Parameters[i] = r.EncodeSensitiveParameter(param)
 	}
 
 }
 
+// EncodeSensitiveParameter returns a new parameter that has the run ID
+// associated with the strategy.
 func (r Run) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
 	param.Source.Key = secrets.SourceSecret
 	param.Source.Value = r.ID + param.Name
 	return param
 }
 
-// ResolveSensitiveData resolves sensitive value on a run record.
+// Resolve resolves reference values on a run record.
 // Currently, it's resolving sensitive parameter values.
-func (r Run) ResolveSensitiveData(resolver parameters.Provider) (Run, error) {
+func (r Run) Resolve(resolver parameters.Provider) (Run, error) {
 	bun := cnab.ExtendedBundle{r.Bundle}
 
 	parameterOverrides, err := r.ParameterOverrides.Resolve(resolver, bun)

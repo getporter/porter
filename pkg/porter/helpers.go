@@ -238,11 +238,7 @@ func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.Extended
 	return p.TestClaims.CreateInstallation(i, func(i *claims.Installation) {
 		strategies := make([]secrets.Strategy, 0, len(i.Parameters.Parameters))
 		for _, param := range i.Parameters.Parameters {
-			strategy := secrets.Strategy{
-				Name:   param.Name,
-				Source: secrets.Source{Value: param.Value},
-				Value:  param.Value,
-			}
+			strategy := parameters.DefaultStrategy(param.Name, param.Value)
 			if bun.IsSensitiveParameter(param.Name) {
 				encodedStrategy := i.EncodeSensitiveParameter(strategy)
 				err := p.TestSecrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
@@ -262,7 +258,7 @@ func (p *TestPorter) CreateRun(r claims.Run, bun cnab.ExtendedBundle) claims.Run
 	return p.TestClaims.CreateRun(r, func(r *claims.Run) {
 		r.Bundle = bun.Bundle
 
-		r.EncodeInternalParameterSet()
+		r.EncodeParameterOverrides()
 		for _, param := range r.ParameterOverrides.Parameters {
 			if bun.IsSensitiveParameter(param.Name) {
 				err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)

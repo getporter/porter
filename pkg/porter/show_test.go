@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
@@ -113,13 +114,13 @@ func TestPorter_ShowBundle(t *testing.T) {
 				r.ResolvedParameters = map[string]interface{}{"token": "top-secret", "logLevel": 3, "secretString": "foo"}
 				r.ParameterOverrides = i.NewInternalParameterSet(
 					[]secrets.Strategy{
-						{Name: "token", Source: secrets.Source{Value: "top-secret"}, Value: "top-secret"},
+						parameters.DefaultStrategy("token", "top-secret"),
 						{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
-						{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
+						parameters.DefaultStrategy("logLevel", "3"),
 					}...)
 
 				r.ParameterSets = []string{"dev-env"}
-				r.EncodeInternalParameterSet()
+				r.EncodeParameterOverrides()
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters

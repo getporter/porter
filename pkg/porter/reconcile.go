@@ -49,7 +49,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	if !neverRun {
 		lastRun = &r
 	}
-	r, err = r.ResolveSensitiveData(p.Parameters)
+	r, err = r.Resolve(p.Parameters)
 	if err != nil {
 		return err
 	}

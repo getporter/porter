@@ -50,21 +50,22 @@ type Installation struct {
 	// Labels applied to the installation.
 	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
 
-	// Parameters specified by the user through overrides.
-	// Does not include defaults, or values resolved from parameter sources.
-
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
 	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
+	// Parameters specified by the user through overrides.
+	// Does not include defaults, or values resolved from parameter sources.
 	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
-
-	typedParameters map[string]interface{}
 
 	// Status of the installation.
 	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
+
+	// typedParameters includes all user specified parameter overrides in its
+	// defined typed form.
+	typedParameters map[string]interface{}
 }
 
 func (i Installation) String() string {
@@ -176,8 +177,9 @@ func (i Installation) EncodeSensitiveParameter(param secrets.Strategy) secrets.S
 
 }
 
-func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store Provider) (Installation, Run, error) {
-
+// Resolve retrieves all value on an installation record based on the reference
+// data and assign them onto the installation instance.
+func (i Installation) Resolve(resolver parameters.Provider, store Provider) (Installation, Run, error) {
 	params, err := resolver.ResolveAll(i.Parameters)
 	if err != nil {
 		return i, Run{}, err
@@ -195,7 +197,7 @@ func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store P
 		if err != nil {
 			return i, Run{}, err
 		}
-		run, err = run.ResolveSensitiveData(resolver)
+		run, err = run.Resolve(resolver)
 		if err != nil {
 			return i, Run{}, err
 		}

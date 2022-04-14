@@ -52,7 +52,7 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 		return claims.Installation{}, claims.Run{}, err
 	}
 
-	resolvedInstallation, resolvedRun, err := installation.ResolveSensitiveData(p.Parameters, p.Claims)
+	resolvedInstallation, resolvedRun, err := installation.Resolve(p.Parameters, p.Claims)
 	if err != nil {
 		return claims.Installation{}, claims.Run{}, err
 	}

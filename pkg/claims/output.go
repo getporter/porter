@@ -98,13 +98,14 @@ func (o Outputs) GetByIndex(i int) (Output, bool) {
 
 func (o Outputs) Resolve(store secrets.Store, bun cnab.ExtendedBundle) (Outputs, error) {
 	for name, idx := range o.keys {
-		sensitive, err := bun.IsOutputSensitive(name)
-		if err != nil || !sensitive {
+		output, ok := o.GetByIndex(idx)
+		if !ok {
 			continue
 		}
 
-		output, ok := o.GetByIndex(idx)
-		if !ok {
+		sensitive, err := bun.IsOutputSensitive(name)
+		if err != nil || !sensitive {
+			o.vals[idx] = output
 			continue
 		}
 
