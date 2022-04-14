@@ -440,7 +440,7 @@ class: center, middle
 # An Example: Azure MySQL + Wordpress
 
 .center[
-  https://porter.sh/src/examples/azure-wordpress
+  https://getporter.org/examples/src/azure-wordpress
 ]
 
 ---

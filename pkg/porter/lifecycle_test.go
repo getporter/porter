@@ -159,7 +159,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
-		opts.Reference = "getporter/porter-hello:v0.1.1"
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.True(t, opts.AllowDockerHostAccess)
 	})
@@ -171,7 +171,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
-		opts.Reference = "getporter/porter-hello:v0.1.1"
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.Equal(t, "kubernetes", opts.Driver)
 	})
@@ -183,7 +183,7 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 
 		opts := NewInstallOptions()
 		opts.Driver = "docker"
-		opts.Reference = "getporter/porter-hello:v0.1.1"
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.Equal(t, "docker", opts.Driver)
 	})

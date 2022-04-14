@@ -18,13 +18,13 @@ This set of manifests performs the follow actions:
 1. Create a role named porter-agent-role with sufficient permissions to run Porter.
 1. Create a service account named porter-agent and add it to the porter-agent-role.
 1. Create a persistent volume claim named porter-hello-shared that Porter uses to share data with the bundle's pod.
-1. Create a pod named porter-hello-3591 that executes the install action for the getporter/porter-hello:v0.1.1 bundle using the `kubernetes` driver.
+1. Create a pod named porter-hello-3591 that executes the install action for the ghcr.io/getporter/examples/porter-hello:v0.2.0 bundle using the `kubernetes` driver.
    The kubernetes driver executes the bundle in a pod on a Kubernetes cluster.
 
 Run the following command to run the porter-hello bundle on a cluster to try it out.
 
 ```
-kubectl apply -f https://porter.sh/src/examples/porter-agent-manifest.yaml 
+kubectl apply -f https://raw.githubusercontent.com/getporter/porter/a059a9668934dff475f9d9633781d2f32512581d/examples/porter-agent-manifest.yaml
 ```
 
 <script src="https://gist-it.appspot.com/https://github.com/getporter/porter/blob/main/examples/porter-agent-manifest.yaml"></script>

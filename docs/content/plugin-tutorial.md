@@ -215,11 +215,11 @@ If you had previously installed bundles before, you won't see them anymore
 because porter is using the plugin to list bundles from the storage account. So
 let's install another bundle and have it saved to the cloud.
 
-We will use the `getporter/plugins-tutorial:v0.1.0` bundle, let's use `porter
+We will use the `ghcr.io/getporter/examples/plugins-tutorial:v0.2.0` bundle, let's use `porter
 explain` to see what credentials are necessary.
 
 ```console
-$ porter explain getporter/plugins-tutorial:v0.1.0
+$ porter explain --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Name: plugins-tutorial
 Description: Example of porter resolving credentials from a secrets store using a plugin. 
 This bundle is a companion for the plugin tutorial at https://porter.sh/plugins/tutorial/.
@@ -236,7 +236,7 @@ the credential "password" and type `password` for the secret that will be used
 to set the credential "password". 
 
 ```console
-$ porter credentials generate
+$ porter credentials generate --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0
 Generating new credential plugins-tutorial from bundle plugins-tutorial
 ==> 1 credentials required for bundle plugins-tutorial
 ? How would you like to set credential "password"  [Use arrows to move, space to select, type to filter]
@@ -253,7 +253,7 @@ Porter is using the Azure plugin to inject the password credential from Azure
 Key Vault into the bundle during install.
 
 ```console
-$ porter install -t getporter/plugins-tutorial:v0.1.0 -c plugins-tutorial
+$ porter install --reference ghcr.io/getporter/examples/plugins-tutorial:v0.2.0 -c plugins-tutorial
 installing plugins-tutorial...
 executing install action from plugins-tutorial (installation: plugins-tutorial)
 Install World

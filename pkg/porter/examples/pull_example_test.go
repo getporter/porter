@@ -13,7 +13,7 @@ func ExamplePullBundle() {
 
 	// Specify which bundle to pull and any additional flags such as --force (repull) or --insecure-registry
 	pullOpts := porter.BundlePullOptions{}
-	pullOpts.Reference = "getporter/porter-hello:v0.1.1"
+	pullOpts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
 	// This doesn't have a validate function, otherwise we would call it now
 
 	// Pull a bundle to Porter's cache, ~/.porter/cache

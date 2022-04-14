@@ -74,64 +74,6 @@ define all-bundles
 	done
 endef
 
-EXAMPLES_DIR := examples
-
-.PHONY: lint-examples
-lint-examples:
-ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),lint-examples)
-else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) lint
-endif
-
-.PHONY: build-examples
-build-examples:
-ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),build-examples)
-else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) build --debug
-endif
-
-.PHONY: publish-examples
-publish-examples:
-ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),publish-examples)
-else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && $(LOCAL_PORTER) publish --registry $(PORTER_REGISTRY) --debug
-endif
-
-SCHEMA_VERSION     := cnab-core-1.0.1
-BUNDLE_SCHEMA      := bundle.schema.json
-DEFINITIONS_SCHEMA := definitions.schema.json
-
-define fetch-schema
-	@curl -L --fail --silent --show-error -o /tmp/$(1) \
-		https://cnab.io/schema/$(SCHEMA_VERSION)/$(1)
-endef
-
-fetch-schemas: fetch-bundle-schema fetch-definitions-schema
-
-fetch-bundle-schema:
-	$(call fetch-schema,$(BUNDLE_SCHEMA))
-
-fetch-definitions-schema:
-	$(call fetch-schema,$(DEFINITIONS_SCHEMA))
-
-HAS_AJV := $(shell command -v ajv)
-ajv:
-ifndef HAS_AJV
-	npm install -g ajv-cli@3.3.0
-endif
-
-.PHONY: validate-bundle
-validate-examples: fetch-schemas ajv
-ifndef BUNDLE
-	$(call all-bundles,$(EXAMPLES_DIR),validate-examples)
-else
-	cd $(EXAMPLES_DIR)/$(BUNDLE) && \
-		ajv test -s /tmp/$(BUNDLE_SCHEMA) -r /tmp/$(DEFINITIONS_SCHEMA) -d .cnab/bundle.json --valid
-endif
-
 install:
 	go run mage.go install
 

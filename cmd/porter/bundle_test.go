@@ -17,8 +17,8 @@ func TestValidateInstallCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "install -r getporter/porter-hello:v0.1.1", ""},
-		{"invalid param", "install --param A:B -r getporter/porter-hello:v0.1.1", "invalid parameter (A:B), must be in name=value format"},
+		{"no args", "install -r ghcr.io/getporter/examples/porter-hello:v0.2.0", ""},
+		{"invalid param", "install --param A:B -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "invalid parameter (A:B), must be in name=value format"},
 	}
 
 	for _, tc := range testcases {

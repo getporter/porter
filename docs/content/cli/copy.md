@@ -23,8 +23,8 @@ porter copy [flags]
 
 ```
   porter copy
-  porter copy --source getporter/porter-hello:v0.1.0 --destination portersh
-  porter copy --source getporter/porter-hello:v0.1.0 --destination portersh --insecure-registry
+  porter copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh
+  porter copy --source ghcr.io/getporter/examples/porter-hello:v0.2.0 --destination portersh --insecure-registry
 		  
 ```
 

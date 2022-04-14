@@ -1,7 +1,0 @@
-name: spring-music
-home: https://github.com/cloudfoundry-samples/spring-music
-version: 1.0
-description: Spring Music sample app for CNAB bundle demo
-maintainers: 
-  - name: chzbrgr71
-    email: brianisrunning@gmail.com

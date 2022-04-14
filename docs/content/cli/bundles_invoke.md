@@ -24,8 +24,8 @@ porter bundles invoke [INSTALLATION] --action ACTION [flags]
 
 ```
   porter bundle invoke --action ACTION
-  porter bundle invoke --reference getporter/kubernetes:v0.1.0
-  porter bundle invoke --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes

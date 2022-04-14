@@ -13,11 +13,6 @@ pool:
 variables:
   GOVERSION: "1.18"
 
-parameters:
-  - name: buildExamples
-    type: boolean
-    default: false
-
 stages:
   - stage: Setup
     jobs:
@@ -77,27 +72,6 @@ stages:
             displayName: "Configure Agent"
           - bash: mage TestUnit
             displayName: "Unit Test"
-      - job: validate_examples
-        displayName: "Validate Examples"
-        dependsOn: build
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Native Porter Binaries"
-            inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - task: GoTool@0
-            displayName: "Set Go Version"
-            inputs:
-              version: "$(GOVERSION)"
-          - script: go run mage.go SetBinExecutable
-            displayName: "Setup Bin"
-          - bash: make lint-examples
-            displayName: "Lint Examples"
-          - bash: make build-examples
-            displayName: "Build Examples"
-            condition: ${{parameters.buildExamples}}
       - job: build_docker
         dependsOn: xbuild
         steps:
