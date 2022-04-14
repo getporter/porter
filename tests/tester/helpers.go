@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
@@ -46,23 +47,27 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 	t.RequirePorter("publish", "--reference", ref)
 }
 
-func (t Tester) ShowInstallation(namespace string, name string) (claims.Installation, error) {
+func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {
 	stdout, _, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
 	if err != nil {
-		return claims.Installation{}, err
+		return porter.DisplayInstallation{}, err
 	}
 
-	var installation claims.Installation
+	var di porter.DisplayInstallation
 
-	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installation))
-	return installation, nil
+	require.NoError(t.T, json.Unmarshal([]byte(stdout), &di))
+
+	return di, nil
 }
 
 func (t Tester) RequireInstallationExists(namespace string, name string) claims.Installation {
-	installation, err := t.ShowInstallation(namespace, name)
+	di, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
-	require.Equal(t.T, name, installation.Name, "incorrect installation name")
-	require.Equal(t.T, namespace, installation.Namespace, "incorrect installation namespace")
+	require.Equal(t.T, name, di.Name, "incorrect installation name")
+	require.Equal(t.T, namespace, di.Namespace, "incorrect installation namespace")
+	installation, err := di.ConvertToInstallationClaim()
+	require.NoError(t.T, err)
+
 	return installation
 }
 

@@ -51,7 +51,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		}
 		run := claims.Run{
 			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: map[string]interface{}{
+			ResolvedParameters: map[string]interface{}{
 				"my-second-param": "spring-music-demo",
 			},
 		}
@@ -94,7 +94,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 			},
 		}
 		run := claims.Run{
-			Parameters: map[string]interface{}{
+			ResolvedParameters: map[string]interface{}{
 				"my-second-param": "newvalue",
 			},
 		}
@@ -120,7 +120,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		run := claims.Run{
 			CredentialSets: []string{"oldcreds"},
 			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: map[string]interface{}{
+			ResolvedParameters: map[string]interface{}{
 				"my-second-param": "spring-music-demo",
 			},
 		}

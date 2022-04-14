@@ -9,6 +9,7 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/pkg/errors"
 )
 
 var _ storage.Document = Run{}
@@ -48,7 +49,7 @@ type Run struct {
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides parameters.ParameterSet `json:"parameterOverrides" yaml:"parameterOverrides", toml:"parameterOverrides"`
+	ParameterOverrides parameters.ParameterSet `json:"parameterOverrides, omitempty" yaml:"parameterOverrides, omitempty", toml:"parameterOverrides, omitempty"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
@@ -58,7 +59,9 @@ type Run struct {
 
 	// Parameters is the full set of resolved parameters stored on the claim.
 	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
-	Parameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
+	ResolvedParameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
+
+	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove custom and populate it in ToCNAB
@@ -72,14 +75,51 @@ func (r Run) DefaultDocumentFilter() interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion: SchemaVersion,
-		ID:            cnab.NewULID(),
-		Revision:      cnab.NewULID(),
-		Created:       time.Now(),
-		Namespace:     namespace,
-		Installation:  installation,
-		Parameters:    make(map[string]interface{}),
+		SchemaVersion:      SchemaVersion,
+		ID:                 cnab.NewULID(),
+		Revision:           cnab.NewULID(),
+		Created:            time.Now(),
+		Namespace:          namespace,
+		Installation:       installation,
+		ResolvedParameters: make(map[string]interface{}),
+		Parameters:         parameters.NewInternalParameterSet(namespace, installation),
 	}
+}
+
+func (r *Run) PopulateParameters(params map[string]interface{}, store secrets.Store) error {
+	strategies := make([]secrets.Strategy, 0, len(params))
+	bun := cnab.ExtendedBundle{r.Bundle}
+	for name, value := range params {
+
+		stringVal, err := bun.WriteParameterToString(name, value)
+		if err != nil {
+			return err
+
+		}
+		strategy := secrets.Strategy{
+			Name:   name,
+			Source: secrets.Source{Value: stringVal},
+			Value:  stringVal,
+		}
+		if bun.IsSensitiveParameter(name) {
+			encodedStrategy := r.EncodeSensitiveParameter(strategy)
+			err := store.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
+			if err != nil {
+				return errors.Wrap(err, "failed to save sensitive param to secrete store")
+			}
+			strategy = encodedStrategy
+		}
+
+		strategies = append(strategies, strategy)
+	}
+
+	if len(strategies) == 0 {
+		return nil
+	}
+
+	r.Parameters.Parameters = strategies
+	return nil
+
 }
 
 // ShouldRecord the current run in the Installation history.
@@ -102,16 +142,16 @@ func (r Run) ShouldRecord() bool {
 // ToCNAB associated with the Run.
 func (r Run) ToCNAB() cnab.Claim {
 	return cnab.Claim{
-		SchemaVersion: CNABSchemaVersion(),
-		ID:            r.ID,
 		// CNAB doesn't have the concept of namespace, so we smoosh them together to make a unique name
+		SchemaVersion:   CNABSchemaVersion(),
+		ID:              r.ID,
 		Installation:    r.Namespace + "/" + r.Installation,
 		Revision:        r.Revision,
 		Created:         r.Created,
 		Action:          r.Action,
 		Bundle:          r.Bundle,
 		BundleReference: r.BundleReference,
-		Parameters:      r.Parameters,
+		Parameters:      r.ResolvedParameters,
 		Custom:          r.Custom,
 	}
 }
@@ -155,12 +195,23 @@ func (r *Run) EncodeInternalParameterSet() {
 		if !bun.IsSensitiveParameter(param.Name) {
 			continue
 		}
-		param.Source.Key = secrets.SourceSecret
-		param.Source.Value = r.ID + param.Name
 
-		r.ParameterOverrides.Parameters[i] = param
+		r.ParameterOverrides.Parameters[i] = r.EncodeSensitiveParameter(param)
 	}
 
+	for i, param := range r.Parameters.Parameters {
+		if !bun.IsSensitiveParameter(param.Name) {
+			continue
+		}
+		r.Parameters.Parameters[i] = r.EncodeSensitiveParameter(param)
+	}
+
+}
+
+func (r Run) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
+	param.Source.Key = secrets.SourceSecret
+	param.Source.Value = r.ID + param.Name
+	return param
 }
 
 // ResolveSensitiveData resolves sensitive value on a run record.
@@ -168,15 +219,22 @@ func (r *Run) EncodeInternalParameterSet() {
 func (r Run) ResolveSensitiveData(resolver parameters.Provider) (Run, error) {
 	bun := cnab.ExtendedBundle{r.Bundle}
 
-	params, err := r.ParameterOverrides.Resolve(resolver, bun)
+	parameterOverrides, err := r.ParameterOverrides.Resolve(resolver, bun)
 	if err != nil {
 		return r, err
 	}
-	if r.Parameters == nil {
-		r.Parameters = make(map[string]interface{})
+	params, err := r.Parameters.Resolve(resolver, bun)
+	if err != nil {
+		return r, err
+	}
+	if r.ResolvedParameters == nil {
+		r.ResolvedParameters = make(map[string]interface{})
 	}
 	for key, value := range params {
-		r.Parameters[key] = value
+		r.ResolvedParameters[key] = value
+	}
+	for key, value := range parameterOverrides {
+		r.ResolvedParameters[key] = value
 	}
 
 	return r, nil

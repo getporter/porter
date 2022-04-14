@@ -110,7 +110,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
-				r.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3, "secretString": "foo"}
+				r.ResolvedParameters = map[string]interface{}{"token": "top-secret", "logLevel": 3, "secretString": "foo"}
 				r.ParameterOverrides = i.NewInternalParameterSet(
 					[]secrets.Strategy{
 						{Name: "token", Source: secrets.Source{Value: "top-secret"}, Value: "top-secret"},

@@ -140,13 +140,26 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.Bundle = b.Bundle
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
-	currentRun.Parameters = args.Params
+	currentRun.ResolvedParameters = args.Params
+	err = currentRun.PopulateParameters(currentRun.ResolvedParameters, r.secrets)
+	if err != nil {
+		return err
+	}
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 
 	currentRun.EncodeInternalParameterSet()
 
 	for _, param := range currentRun.ParameterOverrides.Parameters {
+		if param.Source.Key == secrets.SourceSecret {
+			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
+			if err != nil {
+				return errors.Wrap(err, "failed to save sensitive param to secrete store")
+			}
+		}
+	}
+
+	for _, param := range currentRun.Parameters.Parameters {
 		if param.Source.Key == secrets.SourceSecret {
 			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
 			if err != nil {

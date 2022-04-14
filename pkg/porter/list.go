@@ -128,8 +128,8 @@ func NewDisplayInstallation(installation claims.Installation, run claims.Run) Di
 	}
 
 	// This is unset when we are just listing installations
-	if len(run.Parameters) > 0 {
-		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.Parameters)
+	if len(run.ResolvedParameters) > 0 {
+		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.ResolvedParameters)
 	}
 
 	return di
@@ -220,7 +220,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 	return DisplayRun{
 		ClaimID:    run.ID,
 		Action:     run.Action,
-		Parameters: run.Parameters,
+		Parameters: run.ResolvedParameters,
 		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,

@@ -224,7 +224,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i *claims.Installatio
 		return compParams, nil
 	}
 
-	oldParams, err := prepParametersForComparison(lastRun.Parameters)
+	oldParams, err := prepParametersForComparison(lastRun.ResolvedParameters)
 	if err != nil {
 		return false, errors.Wrapf(err, "error prepping previous parameters for comparision")
 	}
