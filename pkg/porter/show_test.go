@@ -7,12 +7,10 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
 
@@ -74,6 +72,9 @@ func TestPorter_ShowBundle(t *testing.T) {
 					"token": {
 						Definition: "foo",
 					},
+					"secretString": {
+						Definition: "secretString",
+					},
 				},
 				Outputs: map[string]bundle.Output{
 					"foo": {
@@ -85,6 +86,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 					},
 				},
 			}
+
 			i := p.TestClaims.CreateInstallation(newInstallation("01FZVC5AVP8Z7A78CSCP1EJ604", "dev", "mywordpress", tm, tm), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
@@ -93,36 +95,47 @@ func TestPorter_ShowBundle(t *testing.T) {
 					"io.cnab/app":        "wordpress",
 					"io.cnab/appVersion": "v1.2.3",
 				}
-				i.Parameters = map[string]interface{}{"logLevel": 3}
-				i.ParameterSets = []parameters.ParameterSet{
-					i.NewInternalParameterSet(secrets.Strategy{Name: "logLevel", Source: secrets.Source{Key: host.SourceValue, Value: "3"}}),
-					parameters.NewParameterSet("", "dev-env"),
+				params := []secrets.Strategy{
+					{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
 				}
+				secretStringParam := secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"}
+				encodedStrategy := i.EncodeSensitiveParameter(secretStringParam)
+				params = append(params, encodedStrategy)
+				i.Parameters = i.NewInternalParameterSet(params...)
+
+				i.ParameterSets = []string{"dev-env"}
 			})
-			p.TestParameters.TestSecrets.Create(host.SourceValue, "3", "3")
+
 			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
-				r.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3}
+				r.Parameters = map[string]interface{}{"token": "top-secret", "logLevel": 3, "secretString": "foo"}
+				r.ParameterOverrides = i.NewInternalParameterSet(
+					[]secrets.Strategy{
+						{Name: "token", Source: secrets.Source{Value: "top-secret"}, Value: "top-secret"},
+						{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
+						{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
+					}...)
 
-				r.ParameterSets = []parameters.ParameterSet{
-					i.NewInternalParameterSet([]secrets.Strategy{
-						secrets.Strategy{
-							Name:   "logLevel",
-							Source: secrets.Source{Key: host.SourceValue, Value: "3"},
-						},
-						secrets.Strategy{
-							Name:   "token",
-							Source: secrets.Source{Key: host.SourceValue, Value: "top-secret"},
-						},
-					}...),
-					parameters.NewParameterSet("", "dev-env"),
-				}
+				r.ParameterSets = []string{"dev-env"}
+				r.EncodeInternalParameterSet()
 			})
 
-			p.TestParameters.TestSecrets.Create(host.SourceValue, "3", "3")
-			p.Secrets.Create(host.SourceValue, "top-secret", "top-secret")
+			i.Parameters.Parameters = run.ParameterOverrides.Parameters
+			err = p.TestClaims.UpsertInstallation(i)
+			require.NoError(t, err)
+
+			bun := cnab.ExtendedBundle{b}
+			for _, param := range run.ParameterOverrides.Parameters {
+				if bun.IsSensitiveParameter(param.Name) {
+					err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
+					if err != nil {
+						require.NoError(t, err)
+					}
+				}
+			}
+
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 			i.ApplyResult(run, result)
 			i.Status.Installed = &now
@@ -141,7 +154,6 @@ func newInstallation(id string, namespace string, name string, created, modified
 		ID:            id,
 		Namespace:     namespace,
 		Name:          name,
-		Parameters:    make(map[string]interface{}),
 		Status: claims.InstallationStatus{
 			Created:  created,
 			Modified: modified,

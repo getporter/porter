@@ -53,6 +53,7 @@ func (t Tester) ShowInstallation(namespace string, name string) (claims.Installa
 	}
 
 	var installation claims.Installation
+
 	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installation))
 	return installation, nil
 }

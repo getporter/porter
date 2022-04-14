@@ -2,7 +2,6 @@ package porter
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -12,9 +11,7 @@ import (
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,19 +128,10 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
 	assert.NoError(t, err)
 
-	wantParams := map[string]parameters.ParameterSet{
-		"porter-hello": parameters.NewParameterSet("", "porter-hello", secrets.Strategy{
-			Name:   "my-second-param",
-			Source: secrets.Source{Key: secrets.SourceSecret, Value: "PARAM2_SECRET"},
-			Value:  "VALUE2",
-		}),
+	wantParams := map[string]string{
+		"my-second-param": "VALUE2",
 	}
-
-	assert.Len(t, opts.parsedParamSets, len(wantParams))
-	for name, param := range wantParams {
-		assert.NotNil(t, opts.parsedParamSets[name])
-		assert.True(t, reflect.DeepEqual(param.Parameters, opts.parsedParamSets[name].Parameters), "resolved unexpected parameter values")
-	}
+	assert.Equal(t, wantParams, opts.parsedParamSets, "resolved unexpected parameter values")
 }
 
 func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
@@ -221,11 +209,8 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 
 	t.Run("no override present, parameter set present", func(t *testing.T) {
 		opts := sharedOptions{
-			parsedParamSets: map[string]parameters.ParameterSet{
-				"foo": parameters.NewParameterSet("", "foo", secrets.Strategy{
-					Name:  "foo",
-					Value: "foo_via_paramset",
-				}),
+			parsedParamSets: map[string]string{
+				"foo": "foo_via_paramset",
 			},
 		}
 
@@ -239,11 +224,8 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 			parsedParams: map[string]string{
 				"foo": "foo_cli_override",
 			},
-			parsedParamSets: map[string]parameters.ParameterSet{
-				"foo": parameters.NewParameterSet("", "foo", secrets.Strategy{
-					Name:  "foo",
-					Value: "foo_via_paramset",
-				}),
+			parsedParamSets: map[string]string{
+				"foo": "foo_via_paramset",
 			},
 		}
 

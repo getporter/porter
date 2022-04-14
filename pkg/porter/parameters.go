@@ -326,8 +326,8 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (map[string]parameters.ParameterSet, error) {
-	resolvedParameters := make(map[string]parameters.ParameterSet, len(params))
+func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
+	resolvedParameters := secrets.Set{}
 	for _, name := range params {
 
 		// Try to get the params in the local namespace first, fallback to the global creds
@@ -361,7 +361,7 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 				for i, param := range pset.Parameters {
 					if param.Name == paramName {
 						// Pass through value (filepath) directly to resolvedParameters
-						resolvedParameters[param.Name] = pset
+						resolvedParameters[param.Name] = param.Source.Value
 						// Eliminate this param from pset to prevent its resolution by
 						// the cnab-go library, which doesn't support this parameter type
 						pset.Parameters[i] = pset.Parameters[len(pset.Parameters)-1]
@@ -376,9 +376,9 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 			return nil, err
 		}
 
-		pset.Parameters = rc
-		resolvedParameters[pset.Name] = pset
-
+		for k, v := range rc {
+			resolvedParameters[k] = v
+		}
 	}
 
 	return resolvedParameters, nil

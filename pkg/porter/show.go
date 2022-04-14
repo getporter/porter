@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
@@ -55,6 +56,8 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 	if err != nil {
 		return claims.Installation{}, claims.Run{}, err
 	}
+
+	resolvedInstallation.ConvertParameterValues(cnab.ExtendedBundle{resolvedRun.Bundle})
 
 	return resolvedInstallation, resolvedRun, nil
 }

@@ -86,30 +86,14 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		paramStore.AddSecret("param1", "param1_value")
 		paramStore.AddSecret("param2", "param2_value")
 
-		expected := []secrets.Strategy{
-			secrets.Strategy{
-				Name: "param1",
-				Source: secrets.Source{
-					Key:   "secret",
-					Value: "param1",
-				},
-				Value: "param1_value",
-			},
-			secrets.Strategy{
-				Name: "param2",
-				Source: secrets.Source{
-					Key:   "secret",
-					Value: "param2",
-				},
-				Value: "param2_value",
-			},
+		expected := secrets.Set{
+			"param1": "param1_value",
+			"param2": "param2_value",
 		}
 
 		resolved, err := paramStore.ResolveAll(testParameterSet)
 		require.NoError(t, err)
-		for _, res := range resolved {
-			require.Contains(t, expected, res)
-		}
+		require.Equal(t, expected, resolved)
 	})
 
 	t.Run("resolve params failure", func(t *testing.T) {
@@ -119,29 +103,14 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		// Purposefully only adding one secret
 		paramStore.AddSecret("param1", "param1_value")
 
-		expected := []secrets.Strategy{
-			secrets.Strategy{
-				Name: "param1",
-				Source: secrets.Source{
-					Key:   "secret",
-					Value: "param1",
-				},
-				Value: "param1_value",
-			},
-			secrets.Strategy{
-				Name: "param2",
-				Source: secrets.Source{
-					Key:   "secret",
-					Value: "param2",
-				},
-			},
+		expected := secrets.Set{
+			"param1": "param1_value",
+			"param2": "",
 		}
 
 		resolved, err := paramStore.ResolveAll(testParameterSet)
 		require.EqualError(t, err, "1 error occurred:\n\t* unable to resolve parameter myparamset.param2 from secret param2: secret not found\n\n")
-		for _, res := range resolved {
-			require.Contains(t, expected, res)
-		}
+		require.Equal(t, expected, resolved)
 	})
 }
 

@@ -81,30 +81,28 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	lifecycleOpts.Namespace = opts.Namespace
 	lifecycleOpts.CredentialIdentifiers = opts.Installation.CredentialSets
 
-	paramSetNames := make([]string, 0, len(opts.Installation.ParameterSets))
-	for _, pset := range opts.Installation.ParameterSets {
-		paramSetNames = append(paramSetNames, pset.Name)
-	}
-	lifecycleOpts.ParameterSets = paramSetNames
-	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters))
+	lifecycleOpts.ParameterSets = opts.Installation.ParameterSets
+	lifecycleOpts.Params = make([]string, 0, len(opts.Installation.Parameters.Parameters))
 
 	// Write out the parameters as string values. Not efficient but reusing ExecuteAction would need more refactoring otherwise
-	bundleRef, err := p.resolveBundleReference(ctx, actionOpts.GetOptions())
+	_, err = p.resolveBundleReference(ctx, lifecycleOpts)
 	if err != nil {
 		return err
-	}
-	err = opts.Installation.ConvertParameterValues(bundleRef.Definition)
-	if err != nil {
-		return err
-	}
-	for param, value := range opts.Installation.Parameters {
-		stringValue, err := bundleRef.Definition.WriteParameterToString(param, value)
-		if err != nil {
-			return err
-		}
-		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param, stringValue))
 	}
 
+	for _, param := range opts.Installation.Parameters.Parameters {
+		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param.Name, param.Value))
+	}
+
+	if err := p.applyActionOptionsToInstallation(&opts.Installation, lifecycleOpts); err != nil {
+		return err
+	}
+
+	if !opts.DryRun {
+		if err = p.Claims.UpsertInstallation(opts.Installation); err != nil {
+			return err
+		}
+	}
 	// Determine if the installation's desired state is out of sync with reality 🤯
 	inSync, err := p.IsInstallationInSync(ctx, &opts.Installation, lastRun, actionOpts)
 	if err != nil {
@@ -189,11 +187,6 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i *claims.Installatio
 			attribute.String("newReference", newRef.Reference.String()),
 			attribute.String("newDigest", newRef.Digest.String()))
 		return false, nil
-	}
-
-	// Have the bundle parameters changed?
-	if err := p.applyActionOptionsToInstallation(i, opts); err != nil {
-		return false, err
 	}
 
 	// Get a set of parameters ready for comparison to another set of parameters

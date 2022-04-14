@@ -29,7 +29,6 @@ import (
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
 
@@ -237,16 +236,14 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 // sensitive parameters into secret store.
 func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.ExtendedBundle) claims.Installation {
 	return p.TestClaims.CreateInstallation(i, func(i *claims.Installation) {
-		strategies := make([]secrets.Strategy, 0, len(i.Parameters))
-		for name, value := range i.Parameters {
-			value, err := bun.WriteParameterToString(name, value)
-			require.NoError(p.T(), err)
+		strategies := make([]secrets.Strategy, 0, len(i.Parameters.Parameters))
+		for _, param := range i.Parameters.Parameters {
 			strategy := secrets.Strategy{
-				Name:   name,
-				Source: secrets.Source{Key: host.SourceValue, Value: value},
-				Value:  value,
+				Name:   param.Name,
+				Source: secrets.Source{Value: param.Value},
+				Value:  param.Value,
 			}
-			if bun.IsSensitiveParameter(name) {
+			if bun.IsSensitiveParameter(param.Name) {
 				encodedStrategy := i.EncodeSensitiveParameter(strategy)
 				err := p.TestSecrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
 				if err != nil {
@@ -257,7 +254,7 @@ func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.Extended
 			strategies = append(strategies, strategy)
 
 		}
-		i.ParameterSets = append(i.ParameterSets, i.NewInternalParameterSet(strategies...))
+		i.Parameters.Parameters = strategies
 	})
 }
 
@@ -265,10 +262,12 @@ func (p *TestPorter) CreateRun(r claims.Run, bun cnab.ExtendedBundle) claims.Run
 	return p.TestClaims.CreateRun(r, func(r *claims.Run) {
 		r.Bundle = bun.Bundle
 
-		internalPset, _ := r.EncodeInternalParameterSet()
-		for _, param := range internalPset.Parameters {
-			err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
-			require.NoError(p.T(), err)
+		r.EncodeInternalParameterSet()
+		for _, param := range r.ParameterOverrides.Parameters {
+			if bun.IsSensitiveParameter(param.Name) {
+				err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
+				require.NoError(p.T(), err)
+			}
 		}
 	})
 

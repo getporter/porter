@@ -48,13 +48,13 @@ type Run struct {
 
 	// ParameterOverrides are the key/value parameter overrides (taking precedence over
 	// parameters specified in a parameter set) specified during the run.
-	ParameterOverrides map[string]interface{} `json:"parameterOverrides" yaml:"parameterOverrides", toml:"parameterOverrides"`
+	ParameterOverrides parameters.ParameterSet `json:"parameterOverrides" yaml:"parameterOverrides", toml:"parameterOverrides"`
 
 	// CredentialSets is a list of the credential set names used during the run.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets is the list of parameter set names used during the run.
-	ParameterSets []parameters.ParameterSet `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Parameters is the full set of resolved parameters stored on the claim.
 	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
@@ -78,6 +78,7 @@ func NewRun(namespace string, installation string) Run {
 		Created:       time.Now(),
 		Namespace:     namespace,
 		Installation:  installation,
+		Parameters:    make(map[string]interface{}),
 	}
 }
 
@@ -146,28 +147,19 @@ func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 // It returns the encoded parameter set and a boolean value indicating whether
 // the operation is successful. The boolean value is set to false when no
 // internal parameter can be found.
-func (r *Run) EncodeInternalParameterSet() (parameters.ParameterSet, bool) {
-	for i, pset := range r.ParameterSets {
-		if !pset.IsInternalParameterSet() {
+func (r *Run) EncodeInternalParameterSet() {
+
+	bun := cnab.ExtendedBundle{r.Bundle}
+
+	for i, param := range r.ParameterOverrides.Parameters {
+		if !bun.IsSensitiveParameter(param.Name) {
 			continue
 		}
+		param.Source.Key = secrets.SourceSecret
+		param.Source.Value = r.ID + param.Name
 
-		bun := cnab.ExtendedBundle{r.Bundle}
-
-		for i, param := range pset.Parameters {
-			if !bun.IsSensitiveParameter(param.Name) {
-				continue
-			}
-			param.Source.Key = secrets.SourceSecret
-			param.Source.Value = r.ID + param.Name
-			pset.Parameters[i] = param
-		}
-
-		r.ParameterSets[i] = pset
-		return pset, true
+		r.ParameterOverrides.Parameters[i] = param
 	}
-
-	return parameters.ParameterSet{}, false
 
 }
 
@@ -176,17 +168,16 @@ func (r *Run) EncodeInternalParameterSet() (parameters.ParameterSet, bool) {
 func (r Run) ResolveSensitiveData(resolver parameters.Provider) (Run, error) {
 	bun := cnab.ExtendedBundle{r.Bundle}
 
-	resolved := make(map[string]interface{})
-	for _, pset := range r.ParameterSets {
-		params, err := pset.Resolve(resolver, bun)
-		if err != nil {
-			return r, err
-		}
-		for key, value := range params {
-			resolved[key] = value
-		}
+	params, err := r.ParameterOverrides.Resolve(resolver, bun)
+	if err != nil {
+		return r, err
+	}
+	if r.Parameters == nil {
+		r.Parameters = make(map[string]interface{})
+	}
+	for key, value := range params {
+		r.Parameters[key] = value
 	}
 
-	r.Parameters = resolved
 	return r, nil
 }

@@ -144,10 +144,9 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 
-	currentRun.ParameterSets = args.Installation.ParameterSets
-	internalPset, _ := currentRun.EncodeInternalParameterSet()
+	currentRun.EncodeInternalParameterSet()
 
-	for _, param := range internalPset.Parameters {
+	for _, param := range currentRun.ParameterOverrides.Parameters {
 		if param.Source.Key == secrets.SourceSecret {
 			err := r.secrets.Create(param.Source.Key, param.Source.Value, param.Value)
 			if err != nil {
@@ -156,9 +155,8 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 		}
 	}
 
-	sort.SliceStable(currentRun.ParameterSets, func(i, j int) bool {
-		return currentRun.ParameterSets[i].Name < currentRun.ParameterSets[j].Name
-	})
+	currentRun.ParameterSets = args.Installation.ParameterSets
+	sort.Strings(currentRun.ParameterSets)
 
 	// Validate the action
 	if _, err := b.GetAction(currentRun.Action); err != nil {
@@ -206,6 +204,8 @@ func (r *Runtime) SaveRun(installation claims.Installation, run claims.Run, stat
 	if r.Debug {
 		fmt.Fprintf(r.Err, "saving action %s for %s installation with status %s\n", run.Action, installation, status)
 	}
+
+	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
 	err := r.claims.UpsertInstallation(installation)
 	if err != nil {
 		return errors.Wrap(err, "error saving the installation record before executing the bundle")

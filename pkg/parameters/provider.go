@@ -10,7 +10,7 @@ type Provider interface {
 	GetDataStore() storage.Store
 
 	// ResolveAll parameter values in the parameter set.
-	ResolveAll(params ParameterSet) ([]secrets.Strategy, error)
+	ResolveAll(params ParameterSet) (secrets.Set, error)
 
 	// Validate the parameter set is defined properly.
 	Validate(params ParameterSet) error

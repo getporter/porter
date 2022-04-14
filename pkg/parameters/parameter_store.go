@@ -46,18 +46,22 @@ func (s ParameterStore) GetDataStore() storage.Store {
 	return s.Documents
 }
 
-func (s ParameterStore) ResolveAll(params ParameterSet) ([]secrets.Strategy, error) {
-	resolvedParams := make([]secrets.Strategy, 0, len(params.Parameters))
+func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
+	resolvedParams := make(secrets.Set)
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
+		// if no key specified, return the source value
+		if param.Source.Key == "" {
+			resolvedParams[param.Name] = param.Source.Value
+			continue
+		}
 		value, err := s.Secrets.Resolve(param.Source.Key, param.Source.Value)
 		if err != nil {
 			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve parameter %s.%s from %s %s", params.Name, param.Name, param.Source.Key, param.Source.Value))
 		}
 
-		param.Value = value
-		resolvedParams = append(resolvedParams, param)
+		resolvedParams[param.Name] = value
 	}
 
 	return resolvedParams, resolveErrors

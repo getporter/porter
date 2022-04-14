@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
@@ -53,13 +52,16 @@ type Installation struct {
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []parameters.ParameterSet `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+
+	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+
+	typedParameters map[string]interface{}
 
 	// Status of the installation.
 	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
@@ -80,7 +82,7 @@ func NewInstallation(namespace string, name string) Installation {
 		ID:            cnab.NewULID(),
 		Namespace:     namespace,
 		Name:          name,
-		Parameters:    make(map[string]interface{}),
+		Parameters:    parameters.NewInternalParameterSet(namespace, name),
 		Status: InstallationStatus{
 			Created:  now,
 			Modified: now,
@@ -92,6 +94,7 @@ func NewInstallation(namespace string, name string) Installation {
 func (i Installation) NewRun(action string) Run {
 	run := NewRun(i.Namespace, i.Name)
 	run.Action = action
+	run.ParameterOverrides = i.Parameters
 	return run
 }
 
@@ -125,19 +128,6 @@ func (i *Installation) Apply(input Installation) {
 	i.CredentialSets = input.CredentialSets
 	i.ParameterSets = input.ParameterSets
 	i.Labels = input.Labels
-}
-
-func (i *Installation) MarshalJSON() ([]byte, error) {
-	return i.marshal(encoding.Json)
-}
-
-func (i *Installation) MarshalYAML() ([]byte, error) {
-	return i.marshal(encoding.Yaml)
-}
-
-func (i *Installation) marshal(format string) (data []byte, err error) {
-	i.Parameters = make(map[string]interface{})
-	return encoding.Marshal(format, i)
 }
 
 // Validate the installation document and report the first error.
@@ -187,18 +177,18 @@ func (i Installation) EncodeSensitiveParameter(param secrets.Strategy) secrets.S
 }
 
 func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store Provider) (Installation, Run, error) {
-	resolved := make(map[string]interface{})
-	for _, pset := range i.ParameterSets {
-		params, err := resolver.ResolveAll(pset)
-		if err != nil {
-			return i, Run{}, err
-		}
 
-		for _, param := range params {
-			resolved[param.Name] = param.Value
+	params, err := resolver.ResolveAll(i.Parameters)
+	if err != nil {
+		return i, Run{}, err
+	}
+
+	for idx, param := range i.Parameters.Parameters {
+		if v, ok := params[param.Name]; ok {
+			param.Value = v
+			i.Parameters.Parameters[idx] = param
 		}
 	}
-	i.Parameters = resolved
 
 	if i.Status.RunID != "" {
 		run, err := store.GetRun(i.Status.RunID)
@@ -210,46 +200,30 @@ func (i Installation) ResolveSensitiveData(resolver parameters.Provider, store P
 			return i, Run{}, err
 		}
 
-		for name, value := range run.Parameters {
-			if _, ok := i.Parameters[name]; ok {
-				i.Parameters[name] = value
-			}
-		}
-
 		return i, run, nil
 	}
 
 	return i, Run{}, nil
 }
 
-func (i *Installation) RemoveInternalParameterSet() {
-	internalPsetIdx := -1
-	for idx, pset := range i.ParameterSets {
-		if pset.IsInternalParameterSet() {
-			internalPsetIdx = idx
-			break
-		}
+// ConvertParameterValues converts each parameter from an unknown type to
+// the type specified for that parameter on the bundle.
+func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) {
+	if i.typedParameters == nil {
+		i.typedParameters = make(map[string]interface{})
 	}
+	for _, param := range i.Parameters.Parameters {
+		typedValue, err := b.ConvertParameterValue(param.Name, param.Value)
+		if err != nil {
+			typedValue = param.Value
+		}
 
-	if internalPsetIdx != -1 {
-		i.ParameterSets[internalPsetIdx] = i.ParameterSets[len(i.ParameterSets)-1]
-		i.ParameterSets = i.ParameterSets[:len(i.ParameterSets)-1]
-
+		i.typedParameters[param.Name] = typedValue
 	}
 }
 
-// ConvertParameterValues converts each parameter from an unknown type to
-// the type specified for that parameter on the bundle.
-func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) error {
-	for paramName, rawParamValue := range i.Parameters {
-		typedValue, err := b.ConvertParameterValue(paramName, rawParamValue)
-		if err != nil {
-			return err
-		}
-		i.Parameters[paramName] = typedValue
-	}
-
-	return nil
+func (i Installation) TypedParameters() map[string]interface{} {
+	return i.typedParameters
 }
 
 // NewInternalParameterSet creates a new ParameterSet that's used to store

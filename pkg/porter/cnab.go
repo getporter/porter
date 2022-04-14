@@ -13,7 +13,6 @@ import (
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/pkg/errors"
 )
 
@@ -107,7 +106,7 @@ type sharedOptions struct {
 	parsedParams map[string]string
 
 	// parsedParamSets is the parsed set of parameter from ParameterSets
-	parsedParamSets map[string]parameters.ParameterSet
+	parsedParamSets map[string]string
 
 	// combinedParameters is parsedParams merged on top of parsedParamSets.
 	combinedParameters map[string]string
@@ -262,9 +261,6 @@ func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle, i cla
 
 	o.combinedParameters = o.combineParameters(p.Context)
 
-	// convert params to parameter sets
-	o.convertParamToSet(p, bun, i)
-
 	return nil
 }
 
@@ -279,12 +275,12 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
-func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i claims.Installation) error {
+func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
 		strategy := secrets.Strategy{
 			Name:   name,
-			Source: secrets.Source{Key: host.SourceValue, Value: value},
+			Source: secrets.Source{Value: value},
 			Value:  value,
 		}
 		if bun.IsSensitiveParameter(name) {
@@ -293,6 +289,7 @@ func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i 
 			if err != nil {
 				return errors.Wrap(err, "failed to save sensitive param to secrete store")
 			}
+			strategy = encodedStrategy
 		}
 
 		strategies = append(strategies, strategy)
@@ -302,12 +299,7 @@ func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i 
 		return nil
 	}
 
-	pset := i.NewInternalParameterSet(strategies...)
-
-	if o.parsedParamSets == nil {
-		o.parsedParamSets = make(map[string]parameters.ParameterSet)
-	}
-	o.parsedParamSets[pset.Name] = pset
+	i.Parameters = i.NewInternalParameterSet(strategies...)
 
 	return nil
 }
@@ -331,10 +323,8 @@ func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error
 func (o *sharedOptions) combineParameters(c *portercontext.Context) map[string]string {
 	final := make(map[string]string)
 
-	for _, v := range o.parsedParamSets {
-		for _, param := range v.Parameters {
-			final[param.Name] = param.Value
-		}
+	for k, v := range o.parsedParamSets {
+		final[k] = v
 	}
 
 	for k, v := range o.parsedParams {

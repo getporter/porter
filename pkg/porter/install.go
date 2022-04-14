@@ -104,34 +104,36 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 		return err
 	}
 	// Record the user-specified parameter values
-	for k, v := range opts.parsedParams {
-		i.Parameters[k] = v
+	err = opts.convertParamToSet(p, opts.bundleRef.Definition, i)
+	if err != nil {
+		return err
 	}
+
 	// Record the names of the parameter sets used
-	for name, ps := range opts.parsedParamSets {
+	i.ParameterSets = append(i.ParameterSets, Unique(i.ParameterSets, opts.ParameterSets...)...)
+
+	// Record the names of the credential sets used
+	i.CredentialSets = append(i.CredentialSets, Unique(i.CredentialSets, opts.CredentialIdentifiers...)...)
+
+	return nil
+}
+
+func Unique(existings []string, n ...string) []string {
+	var u []string
+	for _, cs := range n {
 		var existed bool
-		for idx, existing := range i.ParameterSets {
-			i.ParameterSets[idx] = ps
-			if existing.Name == name {
+
+		for _, e := range existings {
+			if e == cs {
 				existed = true
 				break
 			}
 		}
 
 		if !existed {
-			i.ParameterSets = append(i.ParameterSets, ps)
+			u = append(u, cs)
 		}
 	}
 
-	// Record the names of the credential sets used
-	for _, cs := range opts.CredentialIdentifiers {
-		for _, existing := range i.CredentialSets {
-			if existing == cs {
-				continue
-			}
-			i.CredentialSets = append(i.CredentialSets, cs)
-		}
-	}
-
-	return nil
+	return u
 }

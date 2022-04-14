@@ -107,13 +107,13 @@ func (s ParameterSet) Resolve(resolver Provider, bun cnab.ExtendedBundle) (map[s
 	}
 
 	resolved := make(map[string]interface{})
-	for _, param := range params {
-		paramValue, err := bun.ConvertParameterValue(param.Name, param.Value)
+	for name, value := range params {
+		paramValue, err := bun.ConvertParameterValue(name, value)
 		if err != nil {
-			paramValue = param.Value
+			paramValue = value
 		}
 
-		resolved[param.Name] = paramValue
+		resolved[name] = paramValue
 
 	}
 	return resolved, nil

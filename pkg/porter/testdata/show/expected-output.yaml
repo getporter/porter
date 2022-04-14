@@ -9,6 +9,12 @@ bundle:
 labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3
+parameterSets:
+  - dev-env
+parameters:
+  logLevel: 3
+  secretString: foo
+  token: top-secret
 status:
   runId: "1"
   action: upgrade
@@ -27,11 +33,11 @@ _calculated:
       type: integer
       sensitive: false
       value: 3
+    - name: secretString
+      type: string
+      sensitive: true
+      value: foo
     - name: token
       type: unknown
       sensitive: false
       value: top-secret
-parameters:
-  logLevel: 3
-parametersets:
-  - dev-env

@@ -10,4 +10,4 @@ bundle:
 credentialSets:
   - mybuns
 parameterSets:
-  - name: mybuns
+  - mybuns
