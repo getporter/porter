@@ -3,6 +3,7 @@ package pluggable
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"get.porter.sh/porter/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
 
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/plugins"
@@ -43,51 +47,45 @@ func NewPluginLoader(c *config.Config, createInternalPlugin InternalPluginHandle
 // Load a plugin, returning the plugin's interface which the caller must then cast to
 // the typed interface, a cleanup function to stop the plugin when finished communicating with it,
 // and an error if the plugin could not be loaded.
-func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), error) {
-	err := l.selectPlugin(pluginType)
+func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (interface{}, func(), error) {
+	ctx, span := tracing.StartSpan(ctx,
+		attribute.String("plugin-interface", pluginType.Interface),
+		attribute.String("plugin-protocol-version", fmt.Sprintf("%v", pluginType.ProtocolVersion)))
+	defer span.EndSpan()
+
+	err := l.selectPlugin(ctx, pluginType)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	l.SelectedPluginKey.Interface = pluginType.Interface
 
-	if l.DebugPlugins {
-		fmt.Fprintf(l.Err, "Resolved %s plugin to %s\n", pluginType.Interface, l.SelectedPluginKey)
-		if l.SelectedPluginConfig != nil {
-			fmt.Fprintf(l.Err, "Resolved plugin config: \n %#v\n", l.SelectedPluginConfig)
-		}
-	}
-
 	var pluginCommand *exec.Cmd
 	if l.SelectedPluginKey.IsInternal {
-		plugin, err := l.createInternalPlugin(l.SelectedPluginKey.String(), l.SelectedPluginConfig)
+		span.Debug("Selected plugin is internal")
+
+		intPlugin, err := l.createInternalPlugin(l.SelectedPluginKey.String(), l.SelectedPluginConfig)
 		if err != nil {
-			return nil, func() {}, err
+			return nil, func() {}, span.Error(err)
 		}
 
-		return plugin, func() { plugin.Close() }, plugin.Connect()
+		return intPlugin, func() { intPlugin.Close(ctx) }, intPlugin.Connect(ctx)
 	}
 
 	pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, span.Error(err)
 	}
+	span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
 	pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
 
 	configReader, err := l.readPluginConfig()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, span.Error(err)
 	}
 
 	pluginCommand.Stdin = configReader
-
-	// Explicitly set PORTER_HOME for the plugin
-	pluginCommand.Env = l.Environ()
-
-	if l.DebugPlugins {
-		fmt.Fprintln(l.Err, strings.Join(pluginCommand.Args, " "))
-	}
 
 	pluginOutput := bytes.NewBufferString("")
 	logger := hclog.New(&hclog.LoggerOptions{
@@ -97,11 +95,8 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 		JSONFormat: true,
 	})
 
-	if l.DebugPlugins {
-		logger.SetLevel(hclog.Info)
-
-		go l.logPluginMessages(pluginOutput)
-	}
+	pluginCtx, pluginLogger := l.NewRootLogger(ctx, l.SelectedPluginKey.String(), "RunPlugin")
+	go l.logPluginMessages(pluginCtx, pluginOutput)
 
 	pluginTypes := map[string]plugin.Plugin{
 		pluginType.Interface: pluginType.Plugin,
@@ -121,42 +116,46 @@ func (l *PluginLoader) Load(pluginType PluginTypeConfig) (interface{}, func(), e
 	})
 	cleanup := func() {
 		client.Kill()
+		pluginLogger.Close()
 	}
 
 	// Connect via RPC
+	span.Debug("Connecting to plugin", attribute.String("plugin-command", strings.Join(pluginCommand.Args, " ")))
 	rpcClient, err := client.Client()
 	if err != nil {
 		cleanup()
 		if stderr := errbuf.String(); stderr != "" {
 			err = errors.Wrap(errors.New(stderr), err.Error())
 		}
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
+		return nil, nil, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 
-	cleanup, err = l.setUpDebugger(client, cleanup)
+	cleanup, err = l.setUpDebugger(ctx, client, cleanup)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not set up debugger for plugin")
+		return nil, nil, span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
 	}
 
 	// Request the plugin
 	raw, err := rpcClient.Dispense(pluginType.Interface)
 	if err != nil {
 		cleanup()
-		return nil, nil, errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey)
+		return nil, nil, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 
 	return raw, cleanup, nil
 }
 
-func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (func(), error) {
+func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client, cleanup func()) (func(), error) {
+	log := tracing.LoggerFromContext(ctx)
+
 	debugContext := l.Context.PlugInDebugContext
 	if len(debugContext.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger)) {
 		if !isDelveInstalled() {
-			return cleanup, errors.New("Delve needs to be installed to debug plugins")
+			return cleanup, log.Errorf("Delve needs to be installed to debug plugins")
 		}
 		listen := fmt.Sprintf("--listen=127.0.0.1:%s", debugContext.DebuggerPort)
 		if len(debugContext.PlugInWorkingDirectory) == 0 {
-			return cleanup, errors.New("Plugin Working Directory is required for debugging")
+			return cleanup, log.Errorf("Plugin Working Directory is required for debugging")
 		}
 		wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
 		pid := client.ReattachConfig().Pid
@@ -166,7 +165,7 @@ func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (fun
 
 		err := dlvCmd.Start()
 		if err != nil {
-			return cleanup, errors.Wrap(err, "Error starting dlv")
+			return cleanup, log.Errorf("Error starting dlv: %w", err)
 		}
 		dlvCmdTerminated := make(chan error)
 		go func() {
@@ -180,7 +179,7 @@ func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (fun
 
 		select {
 		case err = <-dlvCmdTerminated:
-			return cleanup, errors.Wrap(err, "dlv exited unexpectedly")
+			return cleanup, log.Errorf("dlv exited unexpectedly: %w", err)
 		default:
 		}
 
@@ -200,7 +199,9 @@ func (l *PluginLoader) setUpDebugger(client *plugin.Client, cleanup func()) (fun
 	return cleanup, nil
 }
 
-func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
+func (l *PluginLoader) logPluginMessages(ctx context.Context, pluginOutput io.Reader) {
+	log := tracing.LoggerFromContext(ctx)
+
 	r := bufio.NewReader(pluginOutput)
 	for {
 		line, err := r.ReadString('\n')
@@ -214,17 +215,33 @@ func (l *PluginLoader) logPluginMessages(pluginOutput io.Reader) {
 		var pluginLog map[string]interface{}
 		err = json.Unmarshal([]byte(line), &pluginLog)
 		if err != nil {
-			// plaintext log
-			fmt.Fprintln(l.Err, line)
-		} else {
-			// print just the message from the json log
-			fmt.Fprintln(l.Err, pluginLog["@message"])
+			log.Error(err)
+			continue
+		}
+
+		msg, ok := pluginLog["@message"].(string)
+		if !ok {
+			continue
+		}
+
+		switch pluginLog["@level"] {
+		case hclog.Error:
+			log.Errorf(msg)
+		case hclog.Warn:
+			log.Warn(msg)
+		case hclog.Info:
+			log.Info(msg)
+		default:
+			log.Debug(msg)
 		}
 	}
 }
 
 // selectPlugin picks the plugin to use and loads its configuration.
-func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
+func (l *PluginLoader) selectPlugin(ctx context.Context, cfg PluginTypeConfig) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	l.SelectedPluginKey = nil
 	l.SelectedPluginConfig = nil
 
@@ -232,22 +249,31 @@ func (l *PluginLoader) selectPlugin(cfg PluginTypeConfig) error {
 
 	defaultStore := cfg.GetDefaultPluggable(l.Config)
 	if defaultStore != "" {
+		span.SetAttributes(attribute.String("default-plugin", defaultStore))
+
 		is, err := cfg.GetPluggable(l.Config, defaultStore)
 		if err != nil {
-			return err
+			return span.Error(err)
 		}
+
 		pluginKey = is.GetPluginSubKey()
 		l.SelectedPluginConfig = is.GetConfig()
+		if l.SelectedPluginConfig == nil {
+			span.Debug("No plugin config defined")
+		}
 	}
 
 	// If there isn't a specific plugin configured for this plugin type, fall back to the default plugin for this type
 	if pluginKey == "" {
+		span.Debug("Selected default plugin", attribute.String("plugin-key", pluginKey))
 		pluginKey = cfg.GetDefaultPlugin(l.Config)
+	} else {
+		span.Debug("Selected configured plugin", attribute.String("plugin-key", pluginKey))
 	}
 
 	key, err := plugins.ParsePluginKey(pluginKey)
 	if err != nil {
-		return err
+		return span.Error(err)
 	}
 	l.SelectedPluginKey = &key
 

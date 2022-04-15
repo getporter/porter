@@ -31,7 +31,7 @@ func TestExtractFuncName(t *testing.T) {
 func TestTraceLogger_ShouldLog(t *testing.T) {
 	logger := zaptest.NewLogger(t, zaptest.Level(zap.WarnLevel))
 	tracer := trace.NewNoopTracerProvider().Tracer("noop")
-	l := newTraceLogger(context.Background(), nil, logger, tracer)
+	l := newTraceLogger(context.Background(), nil, logger, NewTracer(tracer, nil))
 
 	assert.True(t, l.ShouldLog(zap.ErrorLevel))
 	assert.True(t, l.ShouldLog(zap.WarnLevel))

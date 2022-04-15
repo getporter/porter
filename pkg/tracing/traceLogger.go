@@ -65,6 +65,9 @@ type TraceLogger interface {
 
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
+
+	// Close releases any resources used.
+	Close()
 }
 
 var _ TraceLogger = traceLogger{}
@@ -77,7 +80,14 @@ type traceLogger struct {
 	ctx    context.Context
 	span   trace.Span
 	logger *zap.Logger
-	tracer trace.Tracer
+	tracer Tracer
+}
+
+// Close releases the resources held by the tracer.
+func (l traceLogger) Close() {
+	if err := l.tracer.Close(context.Background()); err != nil {
+		l.Error(fmt.Errorf("error closing the Tracer: %w", err))
+	}
 }
 
 // ShouldLog returns if the current log level includes the specified level.
@@ -86,12 +96,12 @@ func (l traceLogger) ShouldLog(level zapcore.Level) bool {
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context
-func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer trace.Tracer) (context.Context, TraceLogger) {
+func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) (context.Context, TraceLogger) {
 	childCtx := context.WithValue(ctx, contextKeyTraceLogger, traceLoggerContext{logger, tracer})
 	return childCtx, newTraceLogger(childCtx, span, logger, tracer)
 }
 
-func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer trace.Tracer) TraceLogger {
+func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) TraceLogger {
 	l := traceLogger{
 		ctx:    ctx,
 		span:   span,

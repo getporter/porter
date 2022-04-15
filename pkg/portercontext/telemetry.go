@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"time"
 
+	"get.porter.sh/porter/pkg/tracing"
+
 	"get.porter.sh/porter/pkg"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -26,37 +28,49 @@ func FromContext(ctx context.Context) (*Context, bool) {
 	return pc, ok
 }
 
-func (c *Context) configureTelemetry(ctx context.Context, logger *zap.Logger, cfg LogConfiguration) error {
-	// default to noop
-	c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
-	c.traceCloser = nil
+func (c *Context) configureTelemetry(ctx context.Context, serviceName string, logger *zap.Logger, cfg LogConfiguration) error {
+	tracer := createNoopTracer()
+	c.tracer = &tracer
 
-	client, err := c.createTraceClient(cfg)
+	tracer, err := c.createTracer(ctx, serviceName, logger, cfg)
 	if err != nil {
 		return err
 	}
+
+	c.tracer = &tracer
+	return nil
+}
+
+func createNoopTracer() tracing.Tracer {
+	tracer := trace.NewNoopTracerProvider().Tracer("noop")
+	cleanup := func(_ context.Context) error { return nil }
+	return tracing.NewTracer(tracer, cleanup)
+}
+
+func (c *Context) createTracer(ctx context.Context, serviceName string, logger *zap.Logger, cfg LogConfiguration) (tracing.Tracer, error) {
+	client, err := c.createTraceClient(cfg)
+	if err != nil {
+		return tracing.Tracer{}, err
+	}
 	if client == nil {
 		logger.Debug("telemetry disabled")
-		return nil
+		return createNoopTracer(), nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
-		return err
+		return tracing.Tracer{}, err
 	}
 
-	if c.traceServiceName == "" {
-		c.traceServiceName = "porter"
-	}
 	serviceVersion := pkg.Version
 	if serviceVersion == "" {
 		serviceVersion = "dev"
 	}
 	r := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(c.traceServiceName),
+		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(serviceVersion),
 	)
 
@@ -65,9 +79,11 @@ func (c *Context) configureTelemetry(ctx context.Context, logger *zap.Logger, cf
 		sdktrace.WithResource(r),
 	)
 
-	c.tracer = provider.Tracer("") // empty tracer name defaults to the underlying trace implementor
-	c.traceCloser = provider
-	return nil
+	tracer := provider.Tracer("") // empty tracer name defaults to the underlying trace implementor
+	cleanup := func(ctx context.Context) error {
+		return provider.Shutdown(ctx)
+	}
+	return tracing.NewTracer(tracer, cleanup), nil
 }
 
 // createTraceClient from the Porter configuration

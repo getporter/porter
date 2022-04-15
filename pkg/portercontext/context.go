@@ -20,8 +20,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -53,24 +51,20 @@ type Context struct {
 	// Helps correlate logs with a workflow.
 	correlationId string
 
-	// logLevel filters the messages written to the console and logfile
-	logLevel zapcore.Level
-	logFile  afero.File
+	// logCfg is the logger configuration used.
+	logCfg LogConfiguration
+
+	// logFile is the open file where we are sending logs.
+	logFile afero.File
 
 	// indicates if log timestamps should be printed to the console
 	timestampLogs bool
 
 	// handles sending tracing data to an otel collector
-	tracer trace.Tracer
+	tracer *tracing.Tracer
 
 	// handles send log data to the console/logfile
 	logger *zap.Logger
-
-	// cleans up resources associated with the tracer when porter completes
-	traceCloser *sdktrace.TracerProvider
-
-	// the service name sent to the otel collector when we send tracing data
-	traceServiceName string
 }
 
 // New creates a new context in the specified directory.
@@ -103,7 +97,21 @@ func New() *Context {
 func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
 	childCtx, span := c.tracer.Start(ctx, op)
 	span.SetAttributes(attrs...)
-	return tracing.NewRootLogger(childCtx, span, c.logger, c.tracer)
+	return tracing.NewRootLogger(childCtx, span, c.logger, *c.tracer)
+}
+
+// NewRootLogger creates a new TraceLogger that identifies with a separate component from porter, such as a plugin or mixin.
+func (c *Context) NewRootLogger(ctx context.Context, serviceName string, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
+	tracer, err := c.createTracer(ctx, serviceName, c.logger, c.logCfg)
+	if err != nil {
+		c.logger.Error(fmt.Sprintf("could not create tracer for %s", serviceName))
+		tracer = createNoopTracer()
+	}
+
+	ctx, span := tracer.Start(ctx, op)
+	span.SetAttributes(attrs...)
+	ctx, rootLogger := tracing.NewRootLogger(ctx, span, c.logger, tracer)
+	return ctx, rootLogger
 }
 
 func (c *Context) makeLogEncoding() zapcore.EncoderConfig {
@@ -137,7 +145,7 @@ type LogConfiguration struct {
 // ConfigureLogging applies different configuration to our logging and tracing.
 func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	// Cleanup in case logging has been configured before
-	c.logLevel = cfg.LogLevel
+	c.logCfg.LogLevel = cfg.LogLevel
 
 	if len(cfg.LogCorrelationID) > 0 {
 		c.correlationId = cfg.LogCorrelationID
@@ -163,14 +171,15 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 
 	if cfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
-		if c.traceCloser == nil {
-			err = c.configureTelemetry(ctx, tmpLog, cfg)
+		if c.tracer == nil {
+			err = c.configureTelemetry(ctx, "porter", tmpLog, cfg)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
 			}
 		}
 	} else {
-		c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
+		tracer := createNoopTracer()
+		c.tracer = &tracer
 	}
 
 	c.logger = tmpLog
@@ -191,7 +200,7 @@ func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLo
 		encoding.LevelKey = ""
 	}
 	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
-	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logLevel)
+	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logCfg.LogLevel)
 }
 
 func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (zapcore.Core, error) {
@@ -211,22 +220,24 @@ func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (
 
 	// Split logs to the console and file
 	fileEncoder := zapcore.NewJSONEncoder(encoding)
-	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logLevel), nil
+	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logCfg.LogLevel), nil
 }
 
 func (c *Context) Close() error {
-	c.closeLogger()
-	if c.traceCloser != nil {
-		c.traceCloser.Shutdown(context.TODO())
-	}
-	return nil
-}
-
-func (c *Context) closeLogger() {
 	if c.logFile != nil {
 		c.logFile.Close()
 		c.logFile = nil
 	}
+
+	if c.tracer != nil {
+		if err := c.tracer.Close(context.TODO()); err != nil {
+			return err
+		}
+
+		c.tracer = nil
+	}
+
+	return nil
 }
 
 func (c *Context) defaultNewCommand() {
