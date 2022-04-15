@@ -4,11 +4,9 @@ import (
 	"sort"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 var _ storage.Document = Output{}
@@ -20,6 +18,7 @@ type Output struct {
 	Installation  string         `json:"installation" yaml:"installation" toml:"installation"`
 	RunID         string         `json:"runId" yaml:"runId" toml:"runId"`
 	ResultID      string         `json:"resultId" yaml:"resultId" toml:"resultId"`
+	Key           string         `json:"key" yaml:"key" toml:"key"`
 	Value         []byte         `json:"value" yaml:"value" toml:"value"`
 }
 
@@ -37,24 +36,6 @@ func (o Output) GetSchema(b cnab.ExtendedBundle) (definition.Schema, bool) {
 	}
 
 	return definition.Schema{}, false
-}
-
-// FormatSensitive transforms an output value to a secret key that can be used
-// to store/retrieve the sensitive output value from a secret store.
-// It returns the transformed output.
-func (o Output) FormatSensitive() Output {
-	o.Value = []byte(o.RunID + o.Name)
-	return o
-}
-
-func (o Output) Resolve(store secrets.Store) (Output, error) {
-	resolved, err := store.Resolve(secrets.SourceSecret, string(o.Value))
-	if err != nil {
-		return o, err
-	}
-
-	o.Value = []byte(resolved)
-	return o, nil
 }
 
 type Outputs struct {
@@ -96,27 +77,8 @@ func (o Outputs) GetByIndex(i int) (Output, bool) {
 	return o.vals[i], true
 }
 
-func (o Outputs) Resolve(store secrets.Store, bun cnab.ExtendedBundle) (Outputs, error) {
-	for name, idx := range o.keys {
-		output, ok := o.GetByIndex(idx)
-		if !ok {
-			continue
-		}
-
-		sensitive, err := bun.IsOutputSensitive(name)
-		if err != nil || !sensitive {
-			o.vals[idx] = output
-			continue
-		}
-
-		resolved, err := output.Resolve(store)
-		if err != nil {
-			return o, errors.WithMessagef(err, "failed to resolve output %q", output.Name)
-		}
-		o.vals[idx] = resolved
-	}
-
-	return o, nil
+func (o Outputs) Value() []Output {
+	return o.vals
 }
 
 func (o Outputs) Len() int {

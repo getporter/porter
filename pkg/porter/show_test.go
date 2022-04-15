@@ -88,6 +88,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 				},
 			}
 
+			bun := cnab.ExtendedBundle{b}
 			i := p.TestClaims.CreateInstallation(newInstallation("01FZVC5AVP8Z7A78CSCP1EJ604", "dev", "mywordpress", tm, tm), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
@@ -98,44 +99,43 @@ func TestPorter_ShowBundle(t *testing.T) {
 				}
 				params := []secrets.Strategy{
 					{Name: "logLevel", Source: secrets.Source{Value: "3"}, Value: "3"},
+					secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
 				}
-				secretStringParam := secrets.Strategy{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"}
-				encodedStrategy := i.EncodeSensitiveParameter(secretStringParam)
-				params = append(params, encodedStrategy)
 				i.Parameters = i.NewInternalParameterSet(params...)
 
 				i.ParameterSets = []string{"dev-env"}
+
+				i.Parameters.Parameters, err = p.Sanitizer.Parameters(i.Parameters.Parameters, bun, i.ID)
+				require.NoError(t, err)
 			})
 
 			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
 				r.Bundle = b
 				r.BundleReference = tc.ref
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
-				r.ResolvedParameters = map[string]interface{}{"token": "top-secret", "logLevel": 3, "secretString": "foo"}
+
 				r.ParameterOverrides = i.NewInternalParameterSet(
+					parameters.DefaultStrategy("logLevel", "3"),
+					parameters.DefaultStrategy("secretString", "foo"),
+				)
+
+				r.Parameters = i.NewInternalParameterSet(
 					[]secrets.Strategy{
-						parameters.DefaultStrategy("token", "top-secret"),
-						{Name: "secretString", Source: secrets.Source{Key: "secretString", Value: "foo"}, Value: "foo"},
 						parameters.DefaultStrategy("logLevel", "3"),
+						parameters.DefaultStrategy("token", "top-secret"),
+						parameters.DefaultStrategy("secretString", "foo"),
 					}...)
 
 				r.ParameterSets = []string{"dev-env"}
-				r.EncodeParameterOverrides()
+				r.ParameterOverrides.Parameters, err = p.Sanitizer.Parameters(r.ParameterOverrides.Parameters, bun, r.ID)
+				require.NoError(t, err)
+				r.Parameters.Parameters, err = p.Sanitizer.Parameters(r.Parameters.Parameters, bun, r.ID)
+				require.NoError(t, err)
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
 			err = p.TestClaims.UpsertInstallation(i)
 			require.NoError(t, err)
-
-			bun := cnab.ExtendedBundle{b}
-			for _, param := range run.ParameterOverrides.Parameters {
-				if bun.IsSensitiveParameter(param.Name) {
-					err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
-					if err != nil {
-						require.NoError(t, err)
-					}
-				}
-			}
 
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 			i.ApplyResult(run, result)

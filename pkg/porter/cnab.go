@@ -278,17 +278,12 @@ func (o *sharedOptions) parseParams() error {
 func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
-		strategy := parameters.DefaultStrategy(name, value)
-		if bun.IsSensitiveParameter(name) {
-			encodedStrategy := i.EncodeSensitiveParameter(strategy)
-			err := p.Secrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
-			if err != nil {
-				return errors.Wrap(err, "failed to save sensitive param to secrete store")
-			}
-			strategy = encodedStrategy
-		}
+		strategies = append(strategies, parameters.DefaultStrategy(name, value))
+	}
 
-		strategies = append(strategies, strategy)
+	strategies, err := p.Sanitizer.Parameters(strategies, bun, i.ID)
+	if err != nil {
+		return err
 	}
 
 	if len(strategies) == 0 {

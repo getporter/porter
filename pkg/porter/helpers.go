@@ -23,6 +23,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
@@ -42,6 +43,7 @@ type TestPorter struct {
 	TestCache       *cache.TestCache
 	TestRegistry    *cnabtooci.TestRegistry
 	TestSecrets     secrets.Store
+	TestSanitizer   *sanitizer.Service
 
 	// original directory where the test was being executed
 	TestDir string
@@ -71,7 +73,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	testClaims := claims.NewTestClaimProviderFor(t, testStore)
 	testRegistry := cnabtooci.NewTestRegistry()
 
-	p := NewFor(tc.Config, testStore)
+	p := NewFor(tc.Config, testStore, testSecrets)
 	p.Config = tc.Config
 	p.Mixins = mixin.NewTestMixinProvider()
 	p.Plugins = plugins.NewTestPluginProvider()
@@ -94,6 +96,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 		TestParameters:  testParameters,
 		TestCache:       testCache,
 		TestRegistry:    testRegistry,
+		TestSanitizer:   sanitizer.NewService(testParameters, testSecrets),
 		RepoRoot:        tc.TestContext.FindRepoRoot(),
 	}
 
@@ -114,7 +117,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	t := p.TestConfig.TestContext.T
 
 	// Undo changes above to make a unit test friendly Porter, so we hit the host
-	p.Porter = NewFor(p.Config, p.TestStore)
+	p.Porter = NewFor(p.Config, p.TestStore, p.TestSecrets)
 
 	// Run the test in a temp directory
 	testDir, _ := p.TestConfig.SetupIntegrationTest()
@@ -237,48 +240,30 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.ExtendedBundle) claims.Installation {
 	return p.TestClaims.CreateInstallation(i, func(i *claims.Installation) {
 		strategies := make([]secrets.Strategy, 0, len(i.Parameters.Parameters))
-		for _, param := range i.Parameters.Parameters {
-			strategy := parameters.DefaultStrategy(param.Name, param.Value)
-			if bun.IsSensitiveParameter(param.Name) {
-				encodedStrategy := i.EncodeSensitiveParameter(strategy)
-				err := p.TestSecrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
-				if err != nil {
-					require.NoError(p.T(), err)
-				}
-			}
+		strategies, err := p.Sanitizer.Parameters(i.Parameters.Parameters, bun, i.ID)
+		require.NoError(p.T(), err)
 
-			strategies = append(strategies, strategy)
-
-		}
 		i.Parameters.Parameters = strategies
 	})
 }
 
 func (p *TestPorter) CreateRun(r claims.Run, bun cnab.ExtendedBundle) claims.Run {
 	return p.TestClaims.CreateRun(r, func(r *claims.Run) {
-		r.Bundle = bun.Bundle
+		strategies := make([]secrets.Strategy, 0, len(r.Parameters.Parameters))
+		strategies, err := p.TestSanitizer.Parameters(r.Parameters.Parameters, bun, r.ID)
+		require.NoError(p.T(), err)
 
-		r.EncodeParameterOverrides()
-		for _, param := range r.ParameterOverrides.Parameters {
-			if bun.IsSensitiveParameter(param.Name) {
-				err := p.TestSecrets.Create(param.Source.Key, param.Source.Value, param.Value)
-				require.NoError(p.T(), err)
-			}
-		}
+		r.Bundle = bun.Bundle
+		r.Parameters.Parameters = strategies
 	})
 
 }
+
 func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
 	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
-		sensitive, err := bun.IsOutputSensitive(o.Name)
-		if err != nil || !sensitive {
-			return
-		}
-
-		ot := o.FormatSensitive()
-		err = p.TestSecrets.Create(secrets.SourceSecret, string(ot.Value), string(o.Value))
+		output, err := p.TestSanitizer.Output(*o, bun)
 		require.NoError(p.T(), err)
-		o.Value = ot.Value
+		*o = output
 	})
 }
 

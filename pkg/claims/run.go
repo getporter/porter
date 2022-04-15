@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
-	"github.com/pkg/errors"
 )
 
 var _ storage.Document = Run{}
@@ -57,10 +56,6 @@ type Run struct {
 	// ParameterSets is the list of parameter set names used during the run.
 	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
-	// Parameters is the full set of resolved parameters stored on the claim.
-	// This includes internal parameters, resolved parameter sources, values resolved from parameter sets, etc.
-	ResolvedParameters map[string]interface{} `json:"-" yaml:"-" toml:"-"`
-
 	// Parameters is the full set of parameters that's being used during the
 	// current run.
 	// This includes internal parameters, parameter sources, values from parameter sets, etc.
@@ -79,51 +74,14 @@ func (r Run) DefaultDocumentFilter() interface{} {
 // NewRun creates a run with default values initialized.
 func NewRun(namespace string, installation string) Run {
 	return Run{
-		SchemaVersion:      SchemaVersion,
-		ID:                 cnab.NewULID(),
-		Revision:           cnab.NewULID(),
-		Created:            time.Now(),
-		Namespace:          namespace,
-		Installation:       installation,
-		ResolvedParameters: make(map[string]interface{}),
-		Parameters:         parameters.NewInternalParameterSet(namespace, installation),
+		SchemaVersion: SchemaVersion,
+		ID:            cnab.NewULID(),
+		Revision:      cnab.NewULID(),
+		Created:       time.Now(),
+		Namespace:     namespace,
+		Installation:  installation,
+		Parameters:    parameters.NewInternalParameterSet(namespace, installation),
 	}
-}
-
-// PopulateParameters populates the Parameters field with provided parameters.
-// It also saves any sensitive value into the provided secret store.
-func (r *Run) PopulateParameters(params map[string]interface{}, store secrets.Store) error {
-	strategies := make([]secrets.Strategy, 0, len(params))
-	bun := cnab.ExtendedBundle{r.Bundle}
-	for name, value := range params {
-
-		stringVal, err := bun.WriteParameterToString(name, value)
-		if err != nil {
-			return err
-
-		}
-
-		strategy := parameters.DefaultStrategy(name, stringVal)
-
-		if bun.IsSensitiveParameter(name) {
-			encodedStrategy := r.EncodeSensitiveParameter(strategy)
-			err := store.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
-			if err != nil {
-				return errors.Wrap(err, "failed to save sensitive param to secrete store")
-			}
-			strategy = encodedStrategy
-		}
-
-		strategies = append(strategies, strategy)
-	}
-
-	if len(strategies) == 0 {
-		return nil
-	}
-
-	r.Parameters.Parameters = strategies
-	return nil
-
 }
 
 // ShouldRecord the current run in the Installation history.
@@ -155,9 +113,29 @@ func (r Run) ToCNAB() cnab.Claim {
 		Action:          r.Action,
 		Bundle:          r.Bundle,
 		BundleReference: r.BundleReference,
-		Parameters:      r.ResolvedParameters,
+		Parameters:      r.TypedParameterValues(),
 		Custom:          r.Custom,
 	}
+}
+
+// TypedParameterValues returns parameters values that have been converted to
+// its typed value based on its bundle definition.
+func (r Run) TypedParameterValues() map[string]interface{} {
+	bun := cnab.ExtendedBundle{r.Bundle}
+	value := make(map[string]interface{})
+
+	for _, param := range r.Parameters.Parameters {
+		v, err := bun.ConvertParameterValue(param.Name, param.Value)
+		if err != nil {
+			value[param.Name] = param.Value
+			continue
+		}
+
+		value[param.Name] = v
+	}
+
+	return value
+
 }
 
 // NewRun creates a result for the current Run.
@@ -207,30 +185,4 @@ func (r Run) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
 	param.Source.Key = secrets.SourceSecret
 	param.Source.Value = r.ID + param.Name
 	return param
-}
-
-// Resolve resolves reference values on a run record.
-// Currently, it's resolving sensitive parameter values.
-func (r Run) Resolve(resolver parameters.Provider) (Run, error) {
-	bun := cnab.ExtendedBundle{r.Bundle}
-
-	parameterOverrides, err := r.ParameterOverrides.Resolve(resolver, bun)
-	if err != nil {
-		return r, err
-	}
-	params, err := r.Parameters.Resolve(resolver, bun)
-	if err != nil {
-		return r, err
-	}
-	if r.ResolvedParameters == nil {
-		r.ResolvedParameters = make(map[string]interface{})
-	}
-	for key, value := range params {
-		r.ResolvedParameters[key] = value
-	}
-	for key, value := range parameterOverrides {
-		r.ResolvedParameters[key] = value
-	}
-
-	return r, nil
 }

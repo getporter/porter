@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -48,10 +49,6 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 	}
 	if !neverRun {
 		lastRun = &r
-	}
-	r, err = r.Resolve(p.Parameters)
-	if err != nil {
-		return err
 	}
 
 	ref, ok, err := opts.Installation.Bundle.GetBundleReference()
@@ -224,9 +221,14 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i *claims.Installatio
 		return compParams, nil
 	}
 
-	oldParams, err := prepParametersForComparison(lastRun.ResolvedParameters)
+	lastRunParams, err := p.Sanitizer.ResolveParameterSet(lastRun.Parameters, cnab.ExtendedBundle{lastRun.Bundle})
 	if err != nil {
-		return false, errors.Wrapf(err, "error prepping previous parameters for comparision")
+		return false, err
+	}
+
+	oldParams, err := prepParametersForComparison(lastRunParams)
+	if err != nil {
+		return false, errors.Wrapf(err, "error prepping old parameters for comparision")
 	}
 
 	newParams, err := prepParametersForComparison(resolvedParams)

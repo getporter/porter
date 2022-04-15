@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
-	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
@@ -107,9 +106,7 @@ type DisplayInstallationMetadata struct {
 	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
 }
 
-func NewDisplayInstallation(installation claims.Installation, run claims.Run) DisplayInstallation {
-
-	bun := cnab.ExtendedBundle{run.Bundle}
+func NewDisplayInstallation(installation claims.Installation) DisplayInstallation {
 
 	di := DisplayInstallation{
 		SchemaType:     "Installation",
@@ -123,13 +120,7 @@ func NewDisplayInstallation(installation claims.Installation, run claims.Run) Di
 		Labels:         installation.Labels,
 		CredentialSets: installation.CredentialSets,
 		ParameterSets:  installation.ParameterSets,
-		Parameters:     installation.TypedParameters(),
 		Status:         installation.Status,
-	}
-
-	// This is unset when we are just listing installations
-	if len(run.ResolvedParameters) > 0 {
-		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.ResolvedParameters)
 	}
 
 	return di
@@ -223,7 +214,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 	return DisplayRun{
 		ClaimID:    run.ID,
 		Action:     run.Action,
-		Parameters: run.ResolvedParameters,
+		Parameters: run.TypedParameterValues(),
 		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
@@ -248,7 +239,7 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, claims.Run{}))
+		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation))
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 

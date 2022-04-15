@@ -23,7 +23,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 		i, err := cp.GetInstallation("", "wordpress")
 		require.NoError(t, err, "ReadInstallation failed")
 
-		di := NewDisplayInstallation(i, claims.Run{})
+		di := NewDisplayInstallation(i)
 
 		require.Equal(t, di.Name, i.Name, "invalid installation name")
 		require.Equal(t, di.Status.Created, i.Status.Created, "invalid created time")
@@ -41,7 +41,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 		i, err := cp.GetInstallation("", "wordpress")
 		require.NoError(t, err, "GetInst failed")
 
-		di := NewDisplayInstallation(i, claims.Run{})
+		di := NewDisplayInstallation(i)
 
 		require.Equal(t, di.Name, i.Name, "invalid installation name")
 		require.Equal(t, i.Status.Created, di.Status.Created, "invalid created time")

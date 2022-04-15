@@ -659,7 +659,8 @@ func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation c
 			}
 
 			if sensitive, _ := bun.IsOutputSensitive(output.Name); sensitive {
-				resolved, err := output.Resolve(p.Secrets)
+
+				resolved, err := p.Sanitizer.ResolveOutput(output)
 				if err != nil {
 					return nil, errors.Wrapf(err, "could not set parameters %s from output %s of %s", parameterName, outputName, installation)
 				}

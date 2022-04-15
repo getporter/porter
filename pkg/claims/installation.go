@@ -28,44 +28,42 @@ var _ storage.Document = Installation{}
 
 type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+	SchemaVersion schema.Version `json:"schemaVersion" `
 
-	ID string `json:"id" yaml:"id" toml:"id"`
+	// ID is the unique identifire for an installation record.
+	ID string `json:"id"`
+
 	// Name of the installation. Immutable.
-	Name string `json:"name" yaml:"name" toml:"name"`
+	Name string `json:"name"`
 
 	// Namespace in which the installation is defined.
-	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
+	Namespace string `json:"namespace"`
 
 	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
-	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
+	Uninstalled bool `json:"uninstalled,omitempty"`
 
 	// Bundle specifies the bundle reference to use with the installation.
-	Bundle OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
+	Bundle OCIReferenceParts `json:"bundle"`
 
 	// Custom extension data applicable to a given runtime.
 	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
-	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
+	Custom interface{} `json:"custom,omitempty"`
 
 	// Labels applied to the installation.
-	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 
 	// CredentialSets that should be included when the bundle is reconciled.
-	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
+	CredentialSets []string `json:"credentialSets,omitempty"`
 
 	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+	ParameterSets []string `json:"parameterSets,omitempty"`
 
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
-	Parameters parameters.ParameterSet `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+	Parameters parameters.ParameterSet `json:"parameters,omitempty"`
 
 	// Status of the installation.
-	Status InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
-
-	// typedParameters includes all user specified parameter overrides in its
-	// defined typed form.
-	typedParameters map[string]interface{}
+	Status InstallationStatus `json:"status,omitempty"`
 }
 
 func (i Installation) String() string {
@@ -166,66 +164,6 @@ func (i *Installation) SetLabel(key string, value string) {
 		i.Labels = make(map[string]string, 1)
 	}
 	i.Labels[key] = value
-}
-
-// EncodeSensitiveParameter encodes parameters that contains sensitive data so
-// it can be associated with the current installation record.
-func (i Installation) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
-	param.Source.Key = secrets.SourceSecret
-	param.Source.Value = i.ID + param.Name
-	return param
-
-}
-
-// Resolve retrieves all value on an installation record based on the reference
-// data and assign them onto the installation instance.
-func (i Installation) Resolve(resolver parameters.Provider, store Provider) (Installation, Run, error) {
-	params, err := resolver.ResolveAll(i.Parameters)
-	if err != nil {
-		return i, Run{}, err
-	}
-
-	for idx, param := range i.Parameters.Parameters {
-		if v, ok := params[param.Name]; ok {
-			param.Value = v
-			i.Parameters.Parameters[idx] = param
-		}
-	}
-
-	if i.Status.RunID != "" {
-		run, err := store.GetRun(i.Status.RunID)
-		if err != nil {
-			return i, Run{}, err
-		}
-		run, err = run.Resolve(resolver)
-		if err != nil {
-			return i, Run{}, err
-		}
-
-		return i, run, nil
-	}
-
-	return i, Run{}, nil
-}
-
-// ConvertParameterValues converts each parameter from an unknown type to
-// the type specified for that parameter on the bundle.
-func (i *Installation) ConvertParameterValues(b cnab.ExtendedBundle) {
-	if i.typedParameters == nil {
-		i.typedParameters = make(map[string]interface{})
-	}
-	for _, param := range i.Parameters.Parameters {
-		typedValue, err := b.ConvertParameterValue(param.Name, param.Value)
-		if err != nil {
-			typedValue = param.Value
-		}
-
-		i.typedParameters[param.Name] = typedValue
-	}
-}
-
-func (i Installation) TypedParameters() map[string]interface{} {
-	return i.typedParameters
 }
 
 // NewInternalParameterSet creates a new ParameterSet that's used to store

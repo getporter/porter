@@ -41,36 +41,33 @@ func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, claims.Run, error) {
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, error) {
 	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
+		return claims.Installation{}, err
 	}
 
 	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
 	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
+		return claims.Installation{}, err
 	}
 
-	resolvedInstallation, resolvedRun, err := installation.Resolve(p.Parameters, p.Claims)
-	if err != nil {
-		return claims.Installation{}, claims.Run{}, err
-	}
+	return installation, nil
 
-	resolvedInstallation.ConvertParameterValues(cnab.ExtendedBundle{resolvedRun.Bundle})
-
-	return resolvedInstallation, resolvedRun, nil
 }
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
 func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
-	installation, run, err := p.GetInstallation(ctx, opts)
+	installation, err := p.GetInstallation(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	displayInstallation := NewDisplayInstallation(installation, run)
+	displayInstallation, err := p.generateDisplayInstallation(installation)
+	if err != nil {
+		return err
+	}
 
 	switch opts.Format {
 	case printer.FormatJson:
@@ -159,4 +156,29 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 	default:
 		return fmt.Errorf("invalid format: %s", opts.Format)
 	}
+}
+
+func (p *Porter) generateDisplayInstallation(installation claims.Installation) (DisplayInstallation, error) {
+	run, err := p.Claims.GetRun(installation.Status.RunID)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+
+	bun := cnab.ExtendedBundle{run.Bundle}
+	installParams, err := p.Sanitizer.ResolveParameterSet(installation.Parameters, bun)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+	runParams, err := p.Sanitizer.ResolveParameterSet(run.Parameters, bun)
+	if err != nil {
+		return DisplayInstallation{}, err
+	}
+
+	displayInstallation := NewDisplayInstallation(installation)
+	displayInstallation.Parameters = installParams
+
+	displayInstallation.ResolvedParameters = NewDisplayValuesFromParameters(bun, runParams)
+
+	return displayInstallation, nil
+
 }

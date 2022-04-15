@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
@@ -44,7 +45,7 @@ func NewTestRuntime(t *testing.T) *TestRuntime {
 
 func NewTestRuntimeFor(tc *config.TestConfig, testClaims *claims.TestClaimProvider, testCredentials *credentials.TestCredentialProvider, testParameters *parameters.TestParameterProvider, testSecrets secrets.Store) *TestRuntime {
 	return &TestRuntime{
-		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testSecrets),
+		Runtime:         NewRuntime(tc.Config, testClaims, testCredentials, testSecrets, sanitizer.NewService(testParameters, testSecrets)),
 		TestStorage:     storage.TestStore{},
 		TestClaims:      testClaims,
 		TestCredentials: testCredentials,
