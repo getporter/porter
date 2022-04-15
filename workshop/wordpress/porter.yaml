@@ -1,6 +1,6 @@
 name: workshop-wordpress
 version: 0.1.0
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
 - helm3:

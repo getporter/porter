@@ -2,14 +2,15 @@ package porter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
@@ -75,8 +76,8 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
-	err := p.Mixins.Install(opts.InstallOptions)
+func (p *Porter) InstallMixin(ctx context.Context, opts mixin.InstallOptions) error {
+	err := p.Mixins.Install(ctx, opts.InstallOptions)
 	if err != nil {
 		return err
 	}
@@ -126,7 +127,7 @@ type MixinsCreateOptions struct {
 	DirPath        string
 }
 
-func (o *MixinsCreateOptions) Validate(args []string, cxt *context.Context) error {
+func (o *MixinsCreateOptions) Validate(args []string, cxt *portercontext.Context) error {
 	if len(args) < 1 || args[0] == "" {
 		return errors.New("mixin name is required")
 	}

@@ -1,12 +1,13 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/linter"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -24,7 +25,7 @@ var (
 	LintDefaultFormats = printer.FormatPlaintext
 )
 
-func (o *LintOptions) Validate(cxt *context.Context) error {
+func (o *LintOptions) Validate(cxt *portercontext.Context) error {
 	err := o.PrintOptions.Validate(LintDefaultFormats, LintAllowFormats)
 	if err != nil {
 		return err
@@ -33,7 +34,7 @@ func (o *LintOptions) Validate(cxt *context.Context) error {
 	return o.validateFile(cxt)
 }
 
-func (o *LintOptions) validateFile(cxt *context.Context) error {
+func (o *LintOptions) validateFile(cxt *portercontext.Context) error {
 	if o.File == "" {
 		manifestExists, err := cxt.FileSystem.Exists(config.Name)
 		if err != nil {
@@ -55,10 +56,10 @@ func (o *LintOptions) validateFile(cxt *context.Context) error {
 
 // Lint porter.yaml for any problems and report the results.
 // This calls the mixins to analyze their sections of the manifest.
-func (p *Porter) Lint(opts LintOptions) (linter.Results, error) {
+func (p *Porter) Lint(ctx context.Context, opts LintOptions) (linter.Results, error) {
 	opts.Apply(p.Context)
 
-	manifest, err := manifest.LoadManifestFrom(p.Context, opts.File)
+	manifest, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +69,8 @@ func (p *Porter) Lint(opts LintOptions) (linter.Results, error) {
 }
 
 // PrintLintResults lints the manifest and prints the results to the attached output.
-func (p *Porter) PrintLintResults(opts LintOptions) error {
-	results, err := p.Lint(opts)
+func (p *Porter) PrintLintResults(ctx context.Context, opts LintOptions) error {
+	results, err := p.Lint(ctx, opts)
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ type ArchiveOptions struct {
 }
 
 // Validate performs validation on the publish options
-func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
+func (o *ArchiveOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	if len(args) < 1 || args[0] == "" {
 		return errors.New("destination file is required")
 	}
@@ -37,7 +37,7 @@ func (o *ArchiveOptions) Validate(args []string, p *Porter) error {
 	if o.Reference == "" {
 		return errors.New("must provide a value for --reference of the form REGISTRY/bundle:tag")
 	}
-	return o.BundleActionOptions.Validate(args, p)
+	return o.BundleActionOptions.Validate(ctx, args, p)
 }
 
 // Archive is a composite function that generates a CNAB thick bundle. It will pull the invocation image, and

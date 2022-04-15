@@ -14,7 +14,7 @@ func TestArchive_ParentDirDoesNotExist(t *testing.T) {
 	opts := ArchiveOptions{}
 	opts.Reference = "myreg/mybuns:v0.1.0"
 
-	err := opts.Validate([]string{"/path/to/file"}, p.Porter)
+	err := opts.Validate(context.Background(), []string{"/path/to/file"}, p.Porter)
 	require.NoError(t, err, "expected no validation error to occur")
 
 	err = p.Archive(context.Background(), opts)
@@ -42,7 +42,7 @@ func TestArchive_Validate(t *testing.T) {
 			opts := ArchiveOptions{}
 			opts.Reference = tc.reference
 
-			err := opts.Validate(tc.args, p.Porter)
+			err := opts.Validate(context.Background(), tc.args, p.Porter)
 			if tc.wantError != "" {
 				require.EqualError(t, err, tc.wantError)
 			} else {

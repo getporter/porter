@@ -1,14 +1,15 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -18,7 +19,7 @@ import (
 )
 
 func TestResolveMapParam(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PERSON", "Ralpha")
 
 	m := &manifest.Manifest{
@@ -66,7 +67,7 @@ func TestResolveMapParam(t *testing.T) {
 }
 
 func TestResolvePathParam(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"person": {
@@ -107,12 +108,12 @@ func TestResolvePathParam(t *testing.T) {
 }
 
 func TestMetadataAvailableForTemplating(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	c.TestContext.AddTestFile("testdata/metadata-substitution.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom")
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	before, _ := yaml.Marshal(m.Install[0])
 	t.Logf("Before:\n %s", before)
@@ -132,12 +133,12 @@ func TestMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	cxt.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/dep-metadata-substitution.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "LoadManifestFrom failed")
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	rm.bundles = map[string]cnab.ExtendedBundle{
 		"mysql": {bundle.Bundle{
 			Name:        "Azure MySQL",
@@ -163,7 +164,7 @@ func TestDependencyMetadataAvailableForTemplating(t *testing.T) {
 }
 
 func TestResolveMapParamUnknown(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{},
 	}
@@ -184,7 +185,7 @@ func TestResolveMapParamUnknown(t *testing.T) {
 }
 
 func TestResolveArrayUnknown(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
 			"name": {
@@ -209,7 +210,7 @@ func TestResolveArrayUnknown(t *testing.T) {
 }
 
 func TestResolveArray(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PERSON", "Ralpha")
 	m := &manifest.Manifest{
 		Parameters: manifest.ParameterDefinitions{
@@ -237,7 +238,7 @@ func TestResolveArray(t *testing.T) {
 }
 
 func TestResolveSensitiveParameter(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("SENSITIVE_PARAM", "deliciou$dubonnet")
 	cxt.Setenv("REGULAR_PARAM", "regular param value")
 
@@ -280,7 +281,7 @@ func TestResolveSensitiveParameter(t *testing.T) {
 }
 
 func TestResolveCredential(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PASSWORD", "deliciou$dubonnet")
 
 	m := &manifest.Manifest{
@@ -316,7 +317,7 @@ func TestResolveCredential(t *testing.T) {
 }
 
 func TestResolveStep_DependencyOutput(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	cxt.Setenv("PORTER_MYSQL_PASSWORD_DEP_OUTPUT", "password")
 	cxt.Setenv("PORTER_MYSQL_ROOT_PASSWORD_DEP_OUTPUT", "mysql-password")
 
@@ -389,14 +390,14 @@ func TestResolveStep_DependencyOutput(t *testing.T) {
 }
 
 func TestResolveInMainDict(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/param-test-in-block.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -416,14 +417,14 @@ func TestResolveInMainDict(t *testing.T) {
 }
 
 func TestResolveSliceWithAMap(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/slice-test.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/slice-test.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	installStep := rm.Install[0]
 
@@ -454,7 +455,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 		},
 	}
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Mixins: []manifest.MixinDeclaration{{Name: "helm"}},
 		Install: manifest.Steps{
@@ -469,7 +470,7 @@ func TestResolveMissingStepOutputs(t *testing.T) {
 }
 
 func TestResolveSensitiveOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Outputs: manifest.OutputDefinitions{
 			"username": {
@@ -511,7 +512,7 @@ func TestResolveSensitiveOutputs(t *testing.T) {
 }
 
 func TestManifest_ResolveBundleName(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 	}
@@ -534,9 +535,9 @@ func TestManifest_ResolveBundleName(t *testing.T) {
 }
 
 func TestReadManifest_Validate_BundleOutput(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs.yaml", config.Name)
 
 	wantOutputs := manifest.OutputDefinitions{
 		"mysql-root-password": {
@@ -558,18 +559,18 @@ func TestReadManifest_Validate_BundleOutput(t *testing.T) {
 		},
 	}
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	require.Equal(t, wantOutputs, m.Outputs)
 }
 
 func TestReadManifest_Validate_BundleOutput_Error(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", config.Name)
+	c.TestContext.AddTestFile("testdata/outputs/bundle-outputs-error.yaml", config.Name)
 
-	_, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	_, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.Error(t, err)
 }
 
@@ -605,7 +606,7 @@ func TestDependency_Validate(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cxt := context.NewTestContext(t)
+			cxt := portercontext.NewTestContext(t)
 
 			err := tc.dep.Validate(cxt.Context)
 
@@ -624,14 +625,14 @@ func TestDependency_Validate(t *testing.T) {
 }
 
 func TestManifest_ApplyStepOutputs(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	c := config.NewTestConfig(t)
 
-	cxt.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
+	c.TestContext.AddTestFileFromRoot("pkg/manifest/testdata/porter-with-templating.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 
 	err = rm.ApplyStepOutputs(map[string]string{"name": "world"})
 	require.NoError(t, err)
@@ -645,13 +646,13 @@ func makeBoolPtr(value bool) *bool {
 }
 
 func TestManifest_ResolveImageMap(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	cxt.AddTestFile("testdata/porter-images.yaml", config.Name)
+	c := config.NewTestConfig(t)
+	c.TestContext.AddTestFile("testdata/porter-images.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(cxt.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
+	rm := NewRuntimeManifest(c.Context, cnab.ActionInstall, m)
 	expectedImage, ok := m.ImageMap["something"]
 	require.True(t, ok, "couldn't get expected image")
 	expectedRef := fmt.Sprintf("%s@%s", expectedImage.Repository, expectedImage.Digest)
@@ -683,7 +684,7 @@ func TestManifest_ResolveImageMap(t *testing.T) {
 
 func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
@@ -708,7 +709,7 @@ func TestManifest_ResolveImageMapMissingKey(t *testing.T) {
 
 func TestManifest_ResolveImageMapMissingImage(t *testing.T) {
 
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Name: "mybundle",
 		ImageMap: map[string]manifest.MappedImage{
@@ -747,10 +748,10 @@ func TestResolveImage(t *testing.T) {
 		},
 		{
 			name:      "tagged reference",
-			reference: "getporter/porter-hello:v0.1.10",
+			reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Tag:        "v0.1.10",
+				Repository: "ghcr.io/getporter/examples/porter-hello",
+				Tag:        "v0.2.0",
 			},
 		},
 		{
@@ -780,10 +781,10 @@ func TestResolveImage(t *testing.T) {
 		{
 
 			name:      "tagged and digested",
-			reference: "getporter/porter-hello:v0.1.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
+			reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0@sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			want: manifest.MappedImage{
-				Repository: "getporter/porter-hello",
-				Tag:        "v0.1.0",
+				Repository: "ghcr.io/getporter/examples/porter-hello",
+				Tag:        "v0.2.0",
 				Digest:     "sha256:8b06c3da72dc9fa7002b9bc1f73a7421b4287c9cf0d3b08633287473707f9a63",
 			},
 		},
@@ -843,7 +844,7 @@ func TestResolveImageErrors(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedBundle(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -873,7 +874,7 @@ func TestResolveImageWithUpdatedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -903,7 +904,7 @@ func TestResolveImageWithUpdatedMismatchedBundle(t *testing.T) {
 }
 
 func TestResolveImageWithRelo(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -935,7 +936,7 @@ func TestResolveImageWithRelo(t *testing.T) {
 }
 
 func TestResolveImageRelocationNoMatch(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		ImageMap: map[string]manifest.MappedImage{
 			"machine": manifest.MappedImage{
@@ -966,7 +967,7 @@ func TestResolveImageRelocationNoMatch(t *testing.T) {
 }
 
 func TestResolveStepEncoding(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	wantValue := `{"test":"value"}`
 	cxt.Setenv("TEST", wantValue)
@@ -992,9 +993,10 @@ func TestResolveStepEncoding(t *testing.T) {
 	assert.Equal(t, flags["c"], wantValue)
 }
 
-func TestResolveInstallationName(t *testing.T) {
-	cxt := context.NewTestContext(t)
-	cxt.Setenv(config.EnvInstallationName, "mybun")
+func TestResolveInstallation(t *testing.T) {
+	cxt := portercontext.NewTestContext(t)
+	cxt.Setenv(config.EnvPorterInstallationNamespace, "mynamespace")
+	cxt.Setenv(config.EnvPorterInstallationName, "mybun")
 
 	m := &manifest.Manifest{}
 	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
@@ -1002,6 +1004,7 @@ func TestResolveInstallationName(t *testing.T) {
 	s := &manifest.Step{
 		Data: map[string]interface{}{
 			"description": "Do a helm release",
+			"ns":          "{{ installation.namespace }}",
 			"release":     "{{ installation.name }}",
 		},
 	}
@@ -1009,11 +1012,12 @@ func TestResolveInstallationName(t *testing.T) {
 	err := rm.ResolveStep(s)
 	require.NoError(t, err, "ResolveStep failed")
 
+	assert.Equal(t, "mynamespace", s.Data["ns"], "installation.namespace was not rendered")
 	assert.Equal(t, "mybun", s.Data["release"], "installation.name was not rendered")
 }
 
 func TestResolveCustomMetadata(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{
 		Custom: map[string]interface{}{
 			"foo": "foobar",
@@ -1042,7 +1046,7 @@ func TestResolveCustomMetadata(t *testing.T) {
 }
 
 func TestResolveEnvironmentVariable(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 	m := &manifest.Manifest{}
 	rm := NewRuntimeManifest(cxt.Context, cnab.ActionInstall, m)
 

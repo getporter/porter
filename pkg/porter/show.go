@@ -1,12 +1,13 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	dtprinter "github.com/carolynvs/datetime-printer"
 )
@@ -23,7 +24,7 @@ type ShowOptions struct {
 }
 
 // Validate prepares for a show bundle action and validates the args/options.
-func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
+func (so *ShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
 	err := so.sharedOptions.validateInstallationName(args)
 	if err != nil {
@@ -39,8 +40,8 @@ func (so *ShowOptions) Validate(args []string, cxt *context.Context) error {
 }
 
 // GetInstallation retrieves information about an installation, including its most recent run.
-func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, *claims.Run, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.Installation, *claims.Run, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return claims.Installation{}, nil, err
 	}
@@ -63,8 +64,8 @@ func (p *Porter) GetInstallation(opts ShowOptions) (claims.Installation, *claims
 
 // ShowInstallation shows a bundle installation, along with any
 // associated outputs
-func (p *Porter) ShowInstallation(opts ShowOptions) error {
-	installation, run, err := p.GetInstallation(opts)
+func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
+	installation, run, err := p.GetInstallation(ctx, opts)
 	if err != nil {
 		return err
 	}

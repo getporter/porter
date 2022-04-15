@@ -3,8 +3,8 @@ package version
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 )
 
@@ -35,7 +35,7 @@ func (o *Options) Validate() error {
 
 // PrintVersion prints the version based on the version flags using the binary's metadata.
 // Suitable for any mixin or plugin to use to implement its version command.
-func PrintVersion(cxt *context.Context, opts Options, metadata pkgmgmt.PackageMetadata) error {
+func PrintVersion(cxt *portercontext.Context, opts Options, metadata pkgmgmt.PackageMetadata) error {
 	switch opts.Format {
 	case printer.FormatJson:
 		return printer.PrintJson(cxt.Out, metadata)

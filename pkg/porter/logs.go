@@ -1,9 +1,10 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +21,7 @@ func (o *LogsShowOptions) Installation() string {
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of LogsShowOptions as applicable
-func (o *LogsShowOptions) Validate(cxt *context.Context) error {
+func (o *LogsShowOptions) Validate(cxt *portercontext.Context) error {
 	if o.Name != "" && o.ClaimID != "" {
 		return errors.New("either --installation or --run should be specified, not both")
 	}
@@ -39,8 +40,8 @@ func (o *LogsShowOptions) Validate(cxt *context.Context) error {
 }
 
 // ShowInstallationLogs shows logs for an installation, according to the provided options.
-func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
-	logs, ok, err := p.GetInstallationLogs(opts)
+func (p *Porter) ShowInstallationLogs(ctx context.Context, opts *LogsShowOptions) error {
+	logs, ok, err := p.GetInstallationLogs(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -54,8 +55,8 @@ func (p *Porter) ShowInstallationLogs(opts *LogsShowOptions) error {
 }
 
 // GetInstallationLogs gets logs for an installation, according to the provided options
-func (p *Porter) GetInstallationLogs(opts *LogsShowOptions) (string, bool, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions) (string, bool, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return "", false, err
 	}

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/credentials"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
@@ -27,7 +27,7 @@ func TestGenerateNoName(t *testing.T) {
 		Silent: true,
 	}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Porter)
+	err := opts.Validate(context.Background(), nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(context.Background(), opts)
@@ -53,7 +53,7 @@ func TestGenerateNameProvided(t *testing.T) {
 	opts.Name = "kool-kred"
 	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Porter)
+	err := opts.Validate(context.Background(), nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(context.Background(), opts)
@@ -74,7 +74,7 @@ func TestGenerateBadNameProvided(t *testing.T) {
 	}
 	opts.Name = "this.isabadname"
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(nil, p.Porter)
+	err := opts.Validate(context.Background(), nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
 	err = p.GenerateCredentials(context.Background(), opts)

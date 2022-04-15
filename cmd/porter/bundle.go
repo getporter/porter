@@ -52,10 +52,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
 		Short: "Build a bundle",
-		Long: `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.
-
-Porter uses the docker driver as the default build driver, an alternate driver may be supplied via --driver or the PORTER_BUILD_DRIVER environment variable.
-`,
+		Long:  `Builds the bundle in the current directory by generating a Dockerfile and a CNAB bundle.json, and then building the invocation image.`,
 		Example: `  porter build
   porter build --name newbuns
   porter build --version 0.1.0
@@ -80,8 +77,16 @@ Porter uses the docker driver as the default build driver, an alternate driver m
 	f.StringVarP(&opts.Dir, "dir", "d", "",
 		"Path to the build context directory where all bundle assets are located.")
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
-		fmt.Sprintf("Experimental. Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
-
+		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
+	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
+	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
+		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.")
+	f.StringArrayVar(&opts.SSH, "ssh", nil,
+		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
+	f.StringArrayVar(&opts.Secrets, "secret", nil,
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
+	f.BoolVar(&opts.NoCache, "no-cache", false,
+		"Do not use the Docker cache when building the bundle's invocation image.")
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},
@@ -106,7 +111,7 @@ The lint command is run automatically when you build a bundle. The command is av
 			return opts.Validate(p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintLintResults(opts)
+			return p.PrintLintResults(cmd.Context(), opts)
 		},
 	}
 
@@ -135,8 +140,8 @@ Once a bundle has been successfully installed, the install action cannot be repe
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle install
-  porter bundle install MyAppFromReference --reference getporter/kubernetes:v0.1.0 --namespace dev
-  porter bundle install --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
+  porter bundle install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle install MyAppInDev --file myapp/bundle.json
   porter bundle install --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle install --cred azure --cred kubernetes
@@ -144,7 +149,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle install --label env=dev --label owner=myuser
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InstallBundle(cmd.Context(), opts)
@@ -193,15 +198,15 @@ The first argument is the installation name to upgrade. This defaults to the nam
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle upgrade --version 0.2.0
-  porter bundle upgrade --reference getporter/kubernetes:v0.1.0
-  porter bundle upgrade --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle upgrade --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter bundle upgrade --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle upgrade MyAppInDev --file myapp/bundle.json
   porter bundle upgrade --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle upgrade --cred azure --cred kubernetes
   porter bundle upgrade --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UpgradeBundle(cmd.Context(), opts)
@@ -250,15 +255,15 @@ The first argument is the installation name upon which to invoke the action. Thi
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle invoke --action ACTION
-  porter bundle invoke --reference getporter/kubernetes:v0.1.0
-  porter bundle invoke --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle invoke --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter bundle invoke --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle invoke --action ACTION MyAppInDev --file myapp/bundle.json
   porter bundle invoke --action ACTION  --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle invoke --action ACTION --cred azure --cred kubernetes
   porter bundle invoke --action ACTION --driver debug
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.InvokeBundle(cmd.Context(), opts)
@@ -307,8 +312,8 @@ The first argument is the installation name to uninstall. This defaults to the n
 Porter uses the Docker driver as the default runtime for executing a bundle's invocation image, but an alternate driver may be supplied via '--driver/-d'' or the PORTER_RUNTIME_DRIVER environment variable.
 For example, the 'debug' driver may be specified, which simply logs the info given to it and then exits.`,
 		Example: `  porter bundle uninstall
-  porter bundle uninstall --reference getporter/kubernetes:v0.1.0
-  porter bundle uninstall --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter bundle uninstall --reference ghcr.io/getporter/examples/kubernetes:v0.2.0
+  porter bundle uninstall --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter bundle uninstall MyAppInDev --file myapp/bundle.json
   porter bundle uninstall --parameter-set azure --param test-mode=true --param header-color=blue
   porter bundle uninstall --cred azure --cred kubernetes
@@ -317,7 +322,7 @@ For example, the 'debug' driver may be specified, which simply logs the info giv
   porter bundle uninstall --force-delete
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UninstallBundle(cmd.Context(), opts)
@@ -401,11 +406,11 @@ func buildBundleArchiveCommand(p *porter.Porter) *cobra.Command {
 		Use:   "archive FILENAME --reference PUBLISHED_BUNDLE",
 		Short: "Archive a bundle from a reference",
 		Long:  "Archives a bundle by generating a gzipped tar archive containing the bundle, invocation image and any referenced images.",
-		Example: `  porter bundle archive mybun.tgz --reference getporter/porter-hello:v0.1.0
-  porter bundle archive mybun.tgz --reference localhost:5000/getporter/porter-hello:v0.1.0 --force
+		Example: `  porter bundle archive mybun.tgz --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
+  porter bundle archive mybun.tgz --reference localhost:5000/ghcr.io/getporter/examples/porter-hello:v0.2.0 --force
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.Archive(cmd.Context(), opts)

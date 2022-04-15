@@ -92,7 +92,7 @@ func TestExperimentalFlags(t *testing.T) {
 		cmd := buildRootCommandFrom(p.Porter)
 		cmd.SetArgs([]string{"install"})
 		cmd.Execute()
-		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+		assert.False(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
 	})
 
 	t.Run("flag set", func(t *testing.T) {
@@ -100,14 +100,14 @@ func TestExperimentalFlags(t *testing.T) {
 		defer p.Teardown()
 
 		cmd := buildRootCommandFrom(p.Porter)
-		cmd.SetArgs([]string{"install", "--experimental", experimental.BuildDrivers})
+		cmd.SetArgs([]string{"install", "--experimental", experimental.StructuredLogs})
 		cmd.Execute()
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
 	})
 
 	t.Run("flag unset, env set", func(t *testing.T) {
-		os.Setenv(expEnvVar, experimental.BuildDrivers)
+		os.Setenv(expEnvVar, experimental.StructuredLogs)
 		defer os.Unsetenv(expEnvVar)
 
 		p := porter.NewTestPorter(t)
@@ -117,6 +117,6 @@ func TestExperimentalFlags(t *testing.T) {
 		cmd.SetArgs([]string{"install"})
 		cmd.Execute()
 
-		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagBuildDrivers))
+		assert.True(t, p.Config.IsFeatureEnabled(experimental.FlagStructuredLogs))
 	})
 }

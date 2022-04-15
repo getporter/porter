@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -31,7 +32,7 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 
 	// Install a bundle without building first
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	assert.NoError(t, err, "install should have succeeded")
@@ -49,7 +50,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	err := p.Create()
 	require.NoError(t, err)
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err)
@@ -65,7 +66,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 
 	// Upgrade the bundle
 	upgradeOpts := porter.NewUpgradeOptions()
-	err = upgradeOpts.Validate([]string{}, p.Porter)
+	err = upgradeOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(context.Background(), upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
@@ -91,7 +92,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate([]string{}, p.Porter)
+	err := credentialOptions.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	assert.NoError(t, err)
@@ -113,7 +114,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 
 	credentialOptions := porter.CredentialOptions{}
 	credentialOptions.Silent = true
-	err := credentialOptions.Validate([]string{}, p.Porter)
+	err := credentialOptions.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.GenerateCredentials(context.Background(), credentialOptions)
 	require.NoError(t, err)

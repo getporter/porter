@@ -63,3 +63,4 @@ and we will add you. **All** contributors belong here. 💯
 * [Yingrong Zhao](https://github.com/VinozzZ)
 * [Chioma Onyekpere](https://github.com/Simpcyclassy)
 * [Saksham Sharma](https://github.com/sakkshm26)
+* [Jeremy Goss](https://github.com/Jemgoss)

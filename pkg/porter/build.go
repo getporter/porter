@@ -22,6 +22,7 @@ type BuildOptions struct {
 	bundleFileOptions
 	contextOptions
 	metadataOpts
+	build.BuildImageOptions
 
 	// NoLint indicates if lint should be run before build.
 	NoLint bool
@@ -30,9 +31,9 @@ type BuildOptions struct {
 	Driver string
 }
 
-const BuildDriverDefault = config.BuildDriverDocker
+const BuildDriverDefault = config.BuildDriverBuildkit
 
-var BuildDriverAllowedValues = []string{config.BuildDriverDocker, config.BuildDriverBuildkit}
+var BuildDriverAllowedValues = []string{config.BuildDriverBuildkit}
 
 func (o *BuildOptions) Validate(p *Porter) error {
 	if o.Version != "" {
@@ -85,7 +86,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 		return errors.Wrap(err, "unable to generate manifest")
 	}
 
-	m, err := manifest.LoadManifestFrom(p.Context, build.LOCAL_MANIFEST)
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, build.LOCAL_MANIFEST)
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	m.ManifestPath = opts.File
 
 	if !opts.NoLint {
-		if err := p.preLint(); err != nil {
+		if err := p.preLint(ctx); err != nil {
 			return err
 		}
 	}
@@ -116,15 +117,15 @@ func (p *Porter) Build(ctx context.Context, opts BuildOptions) error {
 	if err := generator.PrepareFilesystem(); err != nil {
 		return fmt.Errorf("unable to copy run script, runtimes or mixins: %s", err)
 	}
-	if err := generator.GenerateDockerFile(); err != nil {
+	if err := generator.GenerateDockerFile(ctx); err != nil {
 		return fmt.Errorf("unable to generate Dockerfile: %s", err)
 	}
 
-	builder := p.GetBuilder()
-	return errors.Wrap(builder.BuildInvocationImage(ctx, m), "unable to build CNAB invocation image")
+	builder := p.GetBuilder(ctx)
+	return errors.Wrap(builder.BuildInvocationImage(ctx, m, opts.BuildImageOptions), "unable to build CNAB invocation image")
 }
 
-func (p *Porter) preLint() error {
+func (p *Porter) preLint(ctx context.Context) error {
 	lintOpts := LintOptions{
 		contextOptions: NewContextOptions(p.Context),
 		PrintOptions:   printer.PrintOptions{},
@@ -135,7 +136,7 @@ func (p *Porter) preLint() error {
 		return err
 	}
 
-	results, err := p.Lint(lintOpts)
+	results, err := p.Lint(ctx, lintOpts)
 	if err != nil {
 		return err
 	}

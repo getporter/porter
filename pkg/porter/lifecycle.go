@@ -29,7 +29,7 @@ type BundleAction interface {
 	GetOptions() *BundleActionOptions
 
 	// Validate the action before it is executed.
-	Validate(args []string, p *Porter) error
+	Validate(ctx context.Context, args []string, p *Porter) error
 }
 
 type BundleActionOptions struct {
@@ -41,7 +41,7 @@ type BundleActionOptions struct {
 	bundleRef *cnab.BundleReference
 }
 
-func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
+func (o *BundleActionOptions) Validate(ctx context.Context, args []string, porter *Porter) error {
 	var err error
 
 	if o.Reference != "" {
@@ -67,7 +67,7 @@ func (o *BundleActionOptions) Validate(args []string, porter *Porter) error {
 	}
 	o.AllowDockerHostAccess = porter.Config.Data.AllowDockerHostAccess
 
-	err = o.sharedOptions.Validate(args, porter)
+	err = o.sharedOptions.Validate(ctx, args, porter)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"

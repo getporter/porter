@@ -8,7 +8,7 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/mikefarah/yq/v3/pkg/yqlib"
 	"github.com/pkg/errors"
 	"gopkg.in/op/go-logging.v1"
@@ -22,12 +22,12 @@ var (
 
 // Editor can modify the yaml in a Porter manifest.
 type Editor struct {
-	context *context.Context
+	context *portercontext.Context
 	yq      yqlib.YqLib
 	node    *yaml.Node
 }
 
-func NewEditor(cxt *context.Context) *Editor {
+func NewEditor(cxt *portercontext.Context) *Editor {
 	e := &Editor{
 		context: cxt,
 	}

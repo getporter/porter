@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
@@ -8,9 +9,8 @@ import (
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -113,7 +113,7 @@ type sharedOptions struct {
 // Validate prepares for an action and validates the options.
 // For example, relative paths are converted to full paths and then checked that
 // they exist and are accessible.
-func (o *sharedOptions) Validate(args []string, p *Porter) error {
+func (o *sharedOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	err := o.validateInstallationName(args)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (o *sharedOptions) Validate(args []string, p *Porter) error {
 		return err
 	}
 
-	err = p.applyDefaultOptions(o)
+	err = p.applyDefaultOptions(ctx, o)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (o *sharedOptions) validateInstallationName(args []string) error {
 }
 
 // defaultBundleFiles defaults the porter manifest and the bundle.json files.
-func (o *bundleFileOptions) defaultBundleFiles(cxt *context.Context) error {
+func (o *bundleFileOptions) defaultBundleFiles(cxt *portercontext.Context) error {
 	if o.File != "" { // --file
 		o.defaultCNABFile()
 	} else if o.CNABFile != "" { // --cnab-file
@@ -186,7 +186,7 @@ func (o *bundleFileOptions) defaultCNABFile() {
 	}
 }
 
-func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {
+func (o *bundleFileOptions) validateBundleFiles(cxt *portercontext.Context) error {
 	if o.File != "" && o.CNABFile != "" {
 		return errors.New("cannot specify both --file and --cnab-file")
 	}
@@ -204,7 +204,7 @@ func (o *bundleFileOptions) validateBundleFiles(cxt *context.Context) error {
 	return nil
 }
 
-func (o *bundleFileOptions) validateFile(cxt *context.Context) error {
+func (o *bundleFileOptions) validateFile(cxt *portercontext.Context) error {
 	if o.File == "" {
 		return nil
 	}
@@ -218,7 +218,7 @@ func (o *bundleFileOptions) validateFile(cxt *context.Context) error {
 }
 
 // validateCNABFile converts the bundle file path to an absolute filepath and verifies that it exists.
-func (o *bundleFileOptions) validateCNABFile(cxt *context.Context) error {
+func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 	if o.CNABFile == "" {
 		return nil
 	}
@@ -288,7 +288,7 @@ func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error
 // The params set on the command line take precedence over the params set in
 // parameter set files
 // Anything set multiple times, is decided by "last one set wins"
-func (o *sharedOptions) combineParameters(c *context.Context) map[string]string {
+func (o *sharedOptions) combineParameters(c *portercontext.Context) map[string]string {
 	final := make(map[string]string)
 
 	for k, v := range o.parsedParamSets {
@@ -317,7 +317,7 @@ func (o *sharedOptions) defaultDriver() {
 }
 
 // validateDriver validates that the provided driver is supported by Porter
-func (o *sharedOptions) validateDriver(cxt *context.Context) error {
+func (o *sharedOptions) validateDriver(cxt *portercontext.Context) error {
 	_, err := drivers.LookupDriver(cxt, o.Driver)
 	return err
 }

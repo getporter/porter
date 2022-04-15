@@ -24,6 +24,11 @@ Below are schema versions for each of the file formats, and the corresponding Po
 | ParameterSet  | 1.0.1          | v1.0.0-alpha.1+  |
 | Installation  | 1.0.0          | v1.0.0-alpha.1+  |
 
+Sometimes you may want to work with a different version of a resource than what is supported by Porter, especially when migrating from one version of Porter to another.
+The [schema-check] configuration setting allows you to change how Porter behaves when the schemaVersion of a resource doesn't match Porter's supported version.
+
+[schema-check]: /configuration/#schema-check
+
 ## Manifest
 
 The manifest is the porter.yaml file used to build a bundle.
@@ -315,10 +320,10 @@ labels:
   team: marketing
   customer: bigbucks
 bundle:
-  repository: getporter/porter-hello
+  repository: ghcr.io/getporter/examples/porter-hello
   # One of the following fields must be specified: digest, version, or tag
-  digest: sha256:ace0eda3e3be35a979cec764a3321b4c7d0b9e4bb3094d20d3ff6782961a8d54
-  version: 0.1.1
+  digest: sha256:276b44be3f478b4c8d1f99c1925386d45a878a853f22436ece5589f32e9df384
+  version: 0.2.0
   tag: latest
 parameterSets:
   - myparams

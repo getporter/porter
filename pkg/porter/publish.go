@@ -11,8 +11,8 @@ import (
 
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cnab"
-	portercontext "get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/bundle/loader"
 	"github.com/cnabio/cnab-go/packager"
@@ -111,7 +111,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	var m *manifest.Manifest
 	if canonicalExists {
-		m, err = manifest.LoadManifestFrom(p.Context, canonicalManifest)
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, canonicalManifest)
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 		// not Porter's canonical manifest path, for digest matching/auto-rebuilds
 		m.ManifestPath = opts.File
 	} else {
-		m, err = manifest.LoadManifestFrom(p.Context, opts.File)
+		m, err = manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func (p *Porter) publishFromFile(ctx context.Context, opts PublishOptions) error
 
 	if origInvImg != m.Image {
 		// Tag it so that it will be known/found by Docker for publishing
-		builder := p.GetBuilder()
+		builder := p.GetBuilder(ctx)
 		if err := builder.TagInvocationImage(ctx, origInvImg, m.Image); err != nil {
 			return err
 		}

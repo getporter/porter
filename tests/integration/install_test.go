@@ -36,7 +36,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	p.AddTestBundleDir("testdata/bundles/bundle-with-custom-action", true)
 
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 
 	// Install the bundle, assert no error occurs due to Porter home as relative path
@@ -67,7 +67,7 @@ func TestInstall_fileParam(t *testing.T) {
 
 	p.TestParameters.InsertParameterSet(testParamSets)
 
-	err := installOpts.Validate([]string{}, p.Porter)
+	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.InstallBundle(context.Background(), installOpts)
@@ -101,7 +101,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := porter.NewInstallOptions()
-	err = opts.Validate([]string{}, p.Porter)
+	err = opts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 
 	// Verify Porter uses the .dockerignore file (no helpers script added to installer image)

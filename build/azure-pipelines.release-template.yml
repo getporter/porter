@@ -4,26 +4,19 @@ variables: # these are really constants
 parameters:
   - name: goVersion
     type: string
-    default: "1.17.8"
+    default: "1.18"
   - name: registry
     type: string
-    default: getporterci
+    default: ghcr.io/getporter/test
     values:
-      - docker.io/getporter
-      - docker.io/getporterci
       - ghcr.io/getporter
+      - ghcr.io/getporter/test
   - name: shouldPublish
     type: boolean
     default: false
-  - name: dualPublish # Publish to the registry parameter and to ghcr.io while we migrate to GHCR
-    type: boolean
-    default: true
   - name: skipTests
     type: boolean
     default: false
-  - name: publishExamples
-    type: boolean
-    default: true
 
 stages:
   - stage: Validate
@@ -177,52 +170,10 @@ stages:
           - script: go run mage.go ConfigureAgent UseXBuildBinaries
             displayName: "Setup Bin"
           - task: Docker@1
-            displayName: Docker Hub Login
+            displayName: Docker Login
             inputs:
               containerRegistryType: Container Registry
               dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
               command: login
-          - script: REGISTRY=${{parameters.registry}} mage PublishImages
+          - script: PORTER_REGISTRY=${{parameters.registry}} mage PublishImages
             displayName: "Publish Docker Images to ${{parameters.registry}}"
-          - task: Docker@1 # Support publishing to our old registry on Docker Hub and to our new location on GHCR while we migrate
-            displayName: GHCR Login
-            condition: ${{parameters.dualPublish}}
-            inputs:
-              containerRegistryType: Container Registry
-              dockerRegistryEndpoint: ghcr.io/getporter
-              command: login
-          - script: REGISTRY=ghcr.io/getporter mage PublishImages
-            displayName: "Publish Docker Images to ghcr.io/getporter"
-            condition: ${{parameters.dualPublish}}
-
-      - job: publish_example_bundles
-        displayName: "Publish Example Bundles"
-        condition: and(succeeded(), ${{ parameters.publishExamples }})
-        pool:
-          vmImage: ${{variables.vmImage}}
-        steps:
-          - task: GoTool@0
-            displayName: "Set Go Version"
-            inputs:
-              version: ${{parameters.goVersion}}
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Native Porter Binaries"
-            inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - script: go run mage.go ConfigureAgent SetBinExecutable
-            displayName: "Setup Bin"
-          - bash: |
-              set -e
-              sudo make ajv
-              make build-examples validate-examples
-            displayName: "Build Example Bundles"
-          - task: Docker@1
-            displayName: Docker Login
-            inputs:
-              containerRegistryType: Container Registry
-              dockerRegistryEndpoint: getporter-registry
-              command: login
-          - script: REGISTRY=${{parameters.registry}} make publish-examples
-            displayName: "Publish Example Bundles"

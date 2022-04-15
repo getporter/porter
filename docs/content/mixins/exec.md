@@ -193,7 +193,7 @@ install:
     command: ./install-world.sh
 ```
 
-[exec-outputs]: https://porter.sh/src/examples/exec-outputs/
+[exec-outputs]: /examples/src/exec-outputs/
 
 ### FAQ
 

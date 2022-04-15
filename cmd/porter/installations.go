@@ -84,7 +84,7 @@ Optional output formats include json and yaml.
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowInstallation(opts)
+			return p.ShowInstallation(cmd.Context(), opts)
 		},
 	}
 
@@ -147,7 +147,7 @@ func buildInstallationDeleteCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.DeleteInstallation(opts)
+			return p.DeleteInstallation(cmd.Context(), opts)
 		},
 	}
 
@@ -189,7 +189,7 @@ func buildInstallationRunsListCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args, p.Context)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintInstallationRuns(opts)
+			return p.PrintInstallationRuns(cmd.Context(), opts)
 		},
 	}
 

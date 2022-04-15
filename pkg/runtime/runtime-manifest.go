@@ -14,8 +14,8 @@ import (
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/cbroglie/mustache"
 	"github.com/cnabio/cnab-go/bundle"
@@ -30,7 +30,7 @@ const (
 )
 
 type RuntimeManifest struct {
-	*context.Context
+	*portercontext.Context
 	*manifest.Manifest
 
 	Action string
@@ -46,7 +46,7 @@ type RuntimeManifest struct {
 	sensitiveValues []string
 }
 
-func NewRuntimeManifest(cxt *context.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
+func NewRuntimeManifest(cxt *portercontext.Context, action string, manifest *manifest.Manifest) *RuntimeManifest {
 	return &RuntimeManifest{
 		Context:  cxt,
 		Action:   action,
@@ -88,8 +88,12 @@ func (m *RuntimeManifest) loadBundle() error {
 	return nil
 }
 
+func (m *RuntimeManifest) GetInstallationNamespace() string {
+	return m.Getenv(config.EnvPorterInstallationNamespace)
+}
+
 func (m *RuntimeManifest) GetInstallationName() string {
-	return m.Getenv(config.EnvInstallationName)
+	return m.Getenv(config.EnvPorterInstallationName)
 }
 
 func (m *RuntimeManifest) loadDependencyDefinitions() error {
@@ -225,6 +229,7 @@ func (m *RuntimeManifest) buildSourceData() (map[string]interface{}, error) {
 
 	inst := make(map[string]interface{})
 	data["installation"] = inst
+	inst["namespace"] = m.GetInstallationNamespace()
 	inst["name"] = m.GetInstallationName()
 
 	bun := make(map[string]interface{})
@@ -504,11 +509,15 @@ func (m *RuntimeManifest) createOutputsDir() error {
 func (m *RuntimeManifest) unpackStateBag() error {
 	_, err := m.FileSystem.Open(statePath)
 	if os.IsNotExist(err) || len(m.StateBag) == 0 {
-		fmt.Fprintln(m.Out, "No existing bundle state to unpack")
+		if m.Debug {
+			fmt.Fprintln(m.Err, "No existing bundle state to unpack")
+		}
 		return nil
 	}
 
-	fmt.Fprintln(m.Out, "Unpacking bundle state...")
+	if m.Debug {
+		fmt.Fprintln(m.Err, "Unpacking bundle state...")
+	}
 	// Unpack the state file and copy its contents to where the bundle expects them
 	// state var name -> path in bundle
 	stateFiles := make(map[string]string, len(m.StateBag))
@@ -519,7 +528,9 @@ func (m *RuntimeManifest) unpackStateBag() error {
 	unpackStateFile := func(tr *tar.Reader, header *tar.Header) error {
 		name := strings.TrimPrefix(header.Name, "porter-state/")
 		dest := stateFiles[name]
-		fmt.Fprintln(m.Out, "  -", name, "->", dest)
+		if m.Debug {
+			fmt.Fprintln(m.Err, "  -", name, "->", dest)
+		}
 
 		f, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 		if err != nil {
@@ -577,14 +588,19 @@ func (m *RuntimeManifest) Finalize() error {
 
 // Pack each state variable into /porter/state/tgz.
 func (m *RuntimeManifest) packStateBag() error {
-	fmt.Fprintln(m.Out, "Packing bundle state...")
+	if m.Debug {
+		fmt.Fprintln(m.Err, "Packing bundle state...")
+	}
+
 	packStateFile := func(tw *tar.Writer, s manifest.StateVariable) error {
 		fi, err := m.FileSystem.Stat(s.Path)
 		if os.IsNotExist(err) {
 			return nil
 		}
 
-		fmt.Fprintln(m.Out, "  -", s.Path)
+		if m.Debug {
+			fmt.Fprintln(m.Err, "  -", s.Path)
+		}
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
 			return errors.Wrapf(err, "error creating tar header for state variable %s from path %s", s.Name, s.Path)
@@ -632,8 +648,10 @@ func (m *RuntimeManifest) packStateBag() error {
 // and if they can be bound, i.e. they grab a file from the bundle's filesystem,
 // apply the output.
 func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
-	if len(m.Outputs) > 0 {
-		fmt.Fprintln(m.Out, "Collecting bundle outputs...")
+	if len(m.bundle.Outputs) > 0 {
+		if m.Debug {
+			fmt.Fprintln(m.Err, "Collecting bundle outputs...")
+		}
 	}
 
 	var bigErr *multierror.Error
@@ -651,7 +669,9 @@ func (m *RuntimeManifest) applyUnboundBundleOutputs() error {
 		}
 
 		// Print the output that we've collected
-		fmt.Fprintln(m.Out, "  -", name)
+		if m.Debug {
+			fmt.Fprintln(m.Err, "  -", name)
+		}
 		if _, hasOutput := outputs[name]; !hasOutput {
 			// Use the path as originally defined in the manifest
 			// TODO(carolynvs): When we switch to driving everything completely

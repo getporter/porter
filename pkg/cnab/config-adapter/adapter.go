@@ -7,9 +7,9 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 )
@@ -18,14 +18,14 @@ const SchemaVersion = "v1.0.0"
 
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
-	*context.Context
+	*portercontext.Context
 	Manifest     *manifest.Manifest
 	ImageDigests map[string]string
 	Mixins       []mixin.Metadata
 }
 
 func NewManifestConverter(
-	cxt *context.Context,
+	cxt *portercontext.Context,
 	manifest *manifest.Manifest,
 	imageDigests map[string]string,
 	mixins []mixin.Metadata,

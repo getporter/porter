@@ -30,7 +30,7 @@ func TestInstallFromTagIgnoresCurrentBundle(t *testing.T) {
 	installOpts := NewInstallOptions()
 	installOpts.Reference = "mybun:1.0"
 
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 
 	assert.Empty(t, installOpts.File, "The install should ignore the bundle in the current directory because we are installing from a tag")
@@ -43,7 +43,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		opts := NewInstallOptions()
 		opts.Name = "mybuns"
 
-		err := opts.Validate(nil, p.Porter)
+		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.Error(t, err, "Validate should fail")
 		assert.Contains(t, err.Error(), "No bundle specified")
 	})
@@ -57,7 +57,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", ".cnab/bundle.json")
 
-		err := opts.Validate(nil, p.Porter)
+		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
@@ -72,7 +72,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		opts.CNABFile = "/bundle.json"
 		p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
-		err := opts.Validate(nil, p.Porter)
+		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		args, err := p.BuildActionArgs(context.TODO(), claims.Installation{}, opts)
 		require.NoError(t, err, "BuildActionArgs failed")
@@ -109,7 +109,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 		p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
 		p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
-		err := opts.Validate(nil, p.Porter)
+		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 		existingInstall := claims.Installation{Name: opts.Name}
 		args, err := p.BuildActionArgs(context.TODO(), existingInstall, opts)
@@ -146,7 +146,7 @@ func TestManifestIgnoredWithTag(t *testing.T) {
 		// So, had to use root manifest file also for error simuation purpose
 		p.TestConfig.TestContext.AddTestFileContents([]byte(""), config.Name)
 
-		err := opts.Validate(nil, p.Porter)
+		err := opts.Validate(context.Background(), nil, p.Porter)
 		require.NoError(t, err, "Validate failed")
 	})
 }
@@ -159,8 +159,8 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
-		opts.Reference = "getporter/porter-hello:v0.1.1"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.True(t, opts.AllowDockerHostAccess)
 	})
 
@@ -171,8 +171,8 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 		require.NoError(t, p.Connect(context.Background()))
 
 		opts := NewInstallOptions()
-		opts.Reference = "getporter/porter-hello:v0.1.1"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.Equal(t, "kubernetes", opts.Driver)
 	})
 	t.Run("driver flag set", func(t *testing.T) {
@@ -183,8 +183,8 @@ func TestBundleActionOptions_Validate(t *testing.T) {
 
 		opts := NewInstallOptions()
 		opts.Driver = "docker"
-		opts.Reference = "getporter/porter-hello:v0.1.1"
-		require.NoError(t, opts.Validate(nil, p.Porter))
+		opts.Reference = "ghcr.io/getporter/examples/porter-hello:v0.2.0"
+		require.NoError(t, opts.Validate(context.Background(), nil, p.Porter))
 		assert.Equal(t, "docker", opts.Driver)
 	})
 }

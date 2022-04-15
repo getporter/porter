@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
-	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/runtime"
 	"get.porter.sh/porter/pkg/storage"
@@ -17,7 +17,7 @@ import (
 )
 
 type dependencyExecutioner struct {
-	*portercontext.Context
+	*config.Config
 	porter *Porter
 
 	Resolver BundleResolver
@@ -43,7 +43,7 @@ func newDependencyExecutioner(p *Porter, installation claims.Installation, actio
 		parentInstallation: installation,
 		parentAction:       action,
 		parentOpts:         action.GetOptions(),
-		Context:            p.Context,
+		Config:             p.Config,
 		Resolver:           resolver,
 		CNAB:               p.CNAB,
 		Claims:             p.Claims,
@@ -72,7 +72,7 @@ func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
 	}
 
 	for _, dep := range e.deps {
-		err := e.prepareDependency(dep)
+		err := e.prepareDependency(ctx, dep)
 		if err != nil {
 			return err
 		}
@@ -167,7 +167,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 	return nil
 }
 
-func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
+func (e *dependencyExecutioner) prepareDependency(ctx context.Context, dep *queuedDependency) error {
 	// Pull the dependency
 	var err error
 	pullOpts := BundlePullOptions{
@@ -212,7 +212,7 @@ func (e *dependencyExecutioner) prepareDependency(dep *queuedDependency) error {
 	m := &manifest.Manifest{}
 	if e.parentOpts.File != "" {
 		var err error
-		m, err = manifest.LoadManifestFrom(e.Context, e.parentOpts.File)
+		m, err = manifest.LoadManifestFrom(ctx, e.Config, e.parentOpts.File)
 		if err != nil {
 			return err
 		}

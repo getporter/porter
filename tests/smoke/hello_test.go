@@ -1,3 +1,4 @@
+//go:build smoke
 // +build smoke
 
 package smoke

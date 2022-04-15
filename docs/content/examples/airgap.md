@@ -4,9 +4,9 @@ description: "Learn how deploy in a disconnected or airgapped environments with 
 weight: 10
 ---
 
-The [getporter/whalegap] bundle demonstrates how to create a bundle for airgapped, or disconnected, environments. 
+The [ghcr.io/getporter/examples/whalegap] bundle demonstrates how to create a bundle for airgapped, or disconnected, environments. 
 
-Source: https://porter.sh/src/examples/airgap
+Source: https://getporter.org/examples/src/airgap
 
 The whalegap bundle distributes the [whalesay app], which is deployed with Helm to a Kubernetes cluster.
 This application serves an endpoint that draws the cowsay CLI output as a whale.
@@ -36,7 +36,7 @@ The bundle must declare any additional images required for installation in order
 Here's the [full example bundle][whalegap] for you to
 follow along with.
 
-[whalegap]: /src/examples/airgap/
+[whalegap]: /examples/src/airgap/
 
 ### Declare Images
 
@@ -90,7 +90,7 @@ If you _really_ want to practice an airgapped deployment, set up a [local KinD c
 
 1. Use the archive command to create a tgz file of the bundle, which includes all images referenced in the porter.yaml file.
     ```console
-     porter archive whalegap.tgz --reference getporter/whalegap:v0.1.1
+     porter archive whalegap.tgz --reference ghcr.io/getporter/examples/whalegap:v0.2.0
     ```
 2. If you have a disconnected network to test with, copy whalegap.tgz over to it now.
    For this example, we will do the best we can without a real airgap, and check what was deployed to verify it didn't access the original location of the images.
@@ -158,12 +158,12 @@ Containers:
     Image ID:       docker.io/YOURNAME/whalegap@sha256:8b92b7269f59e3ed824e811a1ff1ee64f0d44c0218efefada57a4bebc2d7ef6f
 ```
 
-From the output of kubectl describe, you can see that the image deployed was not the original image referenced in the bundle getporter/whalesayd, and instead it references a new location _inside_ the relocated bundle repository.
+From the output of kubectl describe, you can see that the image deployed was not the original image referenced in the bundle, carolynvs/whalesayd, and instead it references a new location _inside_ the relocated bundle repository.
 All referenced images are published into the same repository as the bundle, and they are only available using their digest, not the original image name.
 
 ## Next Steps
 
 * [Understand how Porter publishes archived bundles to a registry](/archive-bundles/)
 
-[getporter/whalegap]: https://hub.docker.com/r/getporter/whalegap
+[ghcr.io/getporter/examples/whalegap]: https://github.com/orgs/getporter/packages/container/package/examples%2Fwhalegap
 [whalesay app]: https://github.com/carolynvs/whalesayd

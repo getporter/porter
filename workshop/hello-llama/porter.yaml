@@ -1,7 +1,7 @@
 name: hello-llama
 version: 0.1.1
 description: "An example Porter bundle with parameters"
-registry: "localhost:5000"
+registry: getporter
 
 mixins:
   - exec

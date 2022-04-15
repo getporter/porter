@@ -4,14 +4,14 @@ import (
 	_ "embed"
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
 //go:embed templates/atom-template.xml
 var feedTemplate []byte
 
-func CreateTemplate(cxt *context.Context) error {
+func CreateTemplate(cxt *portercontext.Context) error {
 	templateFile := "atom-template.xml"
 	err := cxt.FileSystem.WriteFile(templateFile, feedTemplate, 0644)
 	if err != nil {

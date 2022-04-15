@@ -8,8 +8,8 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/pkg/errors"
 )
@@ -67,7 +67,7 @@ func (cb *CachedBundle) BuildMetadataPath() string {
 }
 
 // Load starts from the bundle tag, and hydrates the cached bundle from the cache.
-func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
+func (cb *CachedBundle) Load(cxt *portercontext.Context) (bool, error) {
 	// Check that the bundle exists
 	cb.BundlePath = cb.BuildBundlePath()
 	metaPath := cb.BuildMetadataPath()
@@ -125,6 +125,6 @@ func (cb *CachedBundle) Load(cxt *context.Context) (bool, error) {
 		}
 		cb.RelocationMap = reloMap
 	}
-	
+
 	return true, nil
 }

@@ -1,11 +1,12 @@
 package pkgmgmt
 
 import (
+	"context"
 	"net/url"
 	"os/exec"
 	"path"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 // PackageManager handles searching, installing and communicating with packages.
@@ -13,11 +14,11 @@ type PackageManager interface {
 	List() ([]string, error)
 	GetPackageDir(name string) (string, error)
 	GetMetadata(name string) (PackageMetadata, error)
-	Install(InstallOptions) error
+	Install(ctx context.Context, opts InstallOptions) error
 	Uninstall(UninstallOptions) error
 
 	// Run a command against the installed package.
-	Run(pkgContext *context.Context, name string, commandOpts CommandOptions) error
+	Run(pkgContext *portercontext.Context, name string, commandOpts CommandOptions) error
 }
 
 type PreRunHandler func(command string, cmd *exec.Cmd)

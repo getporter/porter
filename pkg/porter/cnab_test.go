@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg"
@@ -8,14 +9,14 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSharedOptions_defaultBundleFiles(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	_, err := cxt.FileSystem.Create("porter.yaml")
 	require.NoError(t, err)
@@ -29,7 +30,7 @@ func TestSharedOptions_defaultBundleFiles(t *testing.T) {
 }
 
 func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	opts := sharedOptions{
 		bundleFileOptions: bundleFileOptions{
@@ -43,7 +44,7 @@ func TestSharedOptions_defaultBundleFiles_AltManifest(t *testing.T) {
 }
 
 func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	// Add existing porter manifest; ensure it isn't processed when cnab-file is spec'd
 	_, err := cxt.FileSystem.Create("porter.yaml")
@@ -60,7 +61,7 @@ func TestSharedOptions_defaultBundleFiles_CNABFile(t *testing.T) {
 }
 
 func TestSharedOptions_validateBundleJson(t *testing.T) {
-	cxt := context.NewTestContext(t)
+	cxt := portercontext.NewTestContext(t)
 
 	cxt.FileSystem.Create("mybun1/bundle.json")
 	cxt.FileSystem.Create("bundle1.json")
@@ -120,7 +121,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 		},
 	}
 
-	err := opts.Validate([]string{}, p.Porter)
+	err := opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
 	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
@@ -139,7 +140,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
 
-	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
 	require.NoError(t, err)
@@ -153,7 +154,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 		},
 	}
 
-	err = opts.Validate([]string{}, p.Porter)
+	err = opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
 	err = opts.parseParamSets(p.Porter, bun)
@@ -166,7 +167,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	defer p.Teardown()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
-	m, err := manifest.LoadManifestFrom(p.Context, config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
 	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
 	require.NoError(t, err)
@@ -181,7 +182,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 }
 
 func TestSharedOptions_CombineParameters(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	c.Debug = false
 
 	t.Run("no override present, no parameter set present", func(t *testing.T) {
@@ -233,7 +234,7 @@ func TestSharedOptions_CombineParameters(t *testing.T) {
 
 	t.Run("debug on", func(t *testing.T) {
 		var opts sharedOptions
-		debugContext := context.NewTestContext(t)
+		debugContext := portercontext.NewTestContext(t)
 		debugContext.Debug = true
 		params := opts.combineParameters(debugContext.Context)
 		require.Equal(t, "true", params["porter-debug"], "porter-debug should be set to true when p.Debug is true")
@@ -244,7 +245,7 @@ func Test_bundleFileOptions(t *testing.T) {
 	testcases := []struct {
 		name         string
 		opts         bundleFileOptions
-		setup        func(*context.Context, bundleFileOptions) error
+		setup        func(*portercontext.Context, bundleFileOptions) error
 		wantFile     string
 		wantCNABFile string
 		wantError    string
@@ -252,7 +253,7 @@ func Test_bundleFileOptions(t *testing.T) {
 		{
 			name:         "no opts",
 			opts:         bundleFileOptions{},
-			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     config.Name,
 			wantCNABFile: build.LOCAL_BUNDLE,
 			wantError:    "",
@@ -261,7 +262,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				ReferenceSet: true,
 			},
-			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    "",
@@ -270,7 +271,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
-			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    `"path/to/bundle" is not a valid directory: open /path/to/bundle: file does not exist`,
@@ -279,7 +280,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				File: "alternate/porter.yaml",
 			},
-			setup:        func(ctx *context.Context, opts bundleFileOptions) error { return nil },
+			setup:        func(ctx *portercontext.Context, opts bundleFileOptions) error { return nil },
 			wantFile:     "",
 			wantCNABFile: "",
 			wantError:    "unable to access --file alternate/porter.yaml: open /alternate/porter.yaml: file does not exist",
@@ -288,7 +289,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				Dir: "path/to/bundle",
 			},
-			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.Dir, pkg.FileModeDirectory)
 			},
 			wantFile:     config.Name,
@@ -299,7 +300,7 @@ func Test_bundleFileOptions(t *testing.T) {
 			opts: bundleFileOptions{
 				File: "alternate/porter.yaml",
 			},
-			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
 				return ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 			},
 			wantFile:     "/alternate/porter.yaml",
@@ -311,7 +312,7 @@ func Test_bundleFileOptions(t *testing.T) {
 				Dir:  "path/to/bundle",
 				File: "alternate/porter.yaml",
 			},
-			setup: func(ctx *context.Context, opts bundleFileOptions) error {
+			setup: func(ctx *portercontext.Context, opts bundleFileOptions) error {
 				err := ctx.FileSystem.MkdirAll(opts.File, pkg.FileModeDirectory)
 				if err != nil {
 					return err
@@ -325,7 +326,7 @@ func Test_bundleFileOptions(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cxt := context.NewTestContext(t)
+			cxt := portercontext.NewTestContext(t)
 
 			// Create default local manifest
 			_, err := cxt.FileSystem.Create(config.Name)

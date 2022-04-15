@@ -4,10 +4,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/experimental"
-	"github.com/stretchr/testify/assert"
-
 	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/require"
 )
@@ -44,20 +40,4 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	tests.AssertFilePermissionsEqual(t, ".dockerignore", pkg.FileModeWritable, dockerignoreStats.Mode())
 
-}
-
-func TestCreateWithBuildkit(t *testing.T) {
-	p := NewTestPorter(t)
-	defer p.Teardown()
-
-	p.SetExperimentalFlags(experimental.FlagBuildDrivers)
-	p.Data.BuildDriver = config.BuildDriverBuildkit
-
-	err := p.Create()
-	require.NoError(t, err)
-
-	dockerfile, err := p.FileSystem.ReadFile("template.Dockerfile")
-	require.NoError(t, err, "could not read template dockerfile")
-
-	assert.Contains(t, string(dockerfile), "# syntax=docker/dockerfile")
 }

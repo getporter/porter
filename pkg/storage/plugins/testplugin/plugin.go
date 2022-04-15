@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
@@ -20,11 +20,11 @@ var (
 type TestStoragePlugin struct {
 	*mongodb.Store
 
-	tc       *context.TestContext
+	tc       *portercontext.TestContext
 	database string
 }
 
-func NewTestStoragePlugin(tc *context.TestContext) *TestStoragePlugin {
+func NewTestStoragePlugin(tc *portercontext.TestContext) *TestStoragePlugin {
 	p := &TestStoragePlugin{tc: tc}
 
 	// This is extra insurance that when we are running tests in the debugger

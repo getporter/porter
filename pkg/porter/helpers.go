@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
@@ -197,7 +198,7 @@ func (p *TestPorter) AddTestBundleDir(bundleDir string, generateUniqueName bool)
 	p.TestConfig.TestContext.AddTestDirectory(bundleDir, p.BundleDir)
 
 	testManifest := filepath.Join(p.BundleDir, config.Name)
-	m, err := manifest.LoadManifestFrom(p.Context, testManifest)
+	m, err := manifest.LoadManifestFrom(p.RootContext, p.Config, testManifest)
 	require.NoError(p.T(), err)
 
 	if !generateUniqueName {
@@ -232,7 +233,7 @@ func NewTestBuildProvider() *TestBuildProvider {
 	return &TestBuildProvider{}
 }
 
-func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest) error {
+func (t *TestBuildProvider) BuildInvocationImage(ctx context.Context, manifest *manifest.Manifest, opts build.BuildImageOptions) error {
 	return nil
 }
 

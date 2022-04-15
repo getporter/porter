@@ -16,17 +16,16 @@ import (
 	"strconv"
 	"strings"
 
-	"get.porter.sh/porter/mage"
-	"get.porter.sh/porter/pkg"
-
-	"get.porter.sh/porter/mage/docker"
+	"get.porter.sh/magefiles/ci"
 	// mage:import
-	"get.porter.sh/porter/mage/tests"
+	"get.porter.sh/magefiles/tests"
 	// mage:import
 	_ "get.porter.sh/porter/mage/docs"
 
-	"get.porter.sh/porter/mage/releases"
-	"get.porter.sh/porter/mage/tools"
+	"get.porter.sh/magefiles/docker"
+	"get.porter.sh/magefiles/releases"
+	"get.porter.sh/magefiles/tools"
+	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
@@ -125,7 +124,7 @@ func Debug() {
 // ConfigureAgent sets up an Azure DevOps agent with EnsureMage and ensures
 // that GOPATH/bin is in PATH.
 func ConfigureAgent() error {
-	return mage.ConfigureAgent()
+	return ci.ConfigureAgent()
 }
 
 // Install mixins used by tests and example bundles, if not already installed
@@ -230,16 +229,11 @@ func TestSmoke() error {
 }
 
 func getRegistry() string {
-	registry := os.Getenv("REGISTRY")
+	registry := os.Getenv("PORTER_REGISTRY")
 	if registry == "" {
-		registry = "getporterci"
+		registry = "localhost:5000"
 	}
 	return registry
-}
-
-func getDualPublish() bool {
-	dualPublish, _ := strconv.ParseBool(os.Getenv("DUAL_PUBLISH"))
-	return dualPublish
 }
 
 func BuildImages() {
@@ -247,9 +241,6 @@ func BuildImages() {
 	registry := getRegistry()
 
 	buildImages(registry, info)
-	if getDualPublish() {
-		buildImages("ghcr.io/getporter", info)
-	}
 }
 
 func buildImages(registry string, info releases.GitMetadata) {
@@ -300,9 +291,6 @@ func PublishImages() {
 	info := releases.LoadMetadata()
 
 	pushImagesTo(getRegistry(), info)
-	if getDualPublish() {
-		pushImagesTo("ghcr.io/getporter", info)
-	}
 }
 
 // Builds the porter-agent image and publishes it to a local test cluster with the Porter Operator.

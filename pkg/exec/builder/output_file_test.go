@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ func (o TestFileOutput) GetFilePath() string {
 }
 
 func TestFilePathOutputs(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 
 	step := TestStep{
 		Outputs: []Output{
@@ -39,7 +39,7 @@ func TestFilePathOutputs(t *testing.T) {
 	err = ProcessFileOutputs(c.Context, step)
 	require.NoError(t, err, "ProcessFileOutputs should not return an error")
 
-	f := filepath.Join(context.MixinOutputsDir, "config")
+	f := filepath.Join(portercontext.MixinOutputsDir, "config")
 	gotOutput, err := c.FileSystem.ReadFile(f)
 	require.NoError(t, err, "could not read output file %s", f)
 

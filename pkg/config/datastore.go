@@ -1,7 +1,11 @@
 package config
 
 const (
-	BuildDriverDocker   = "docker"
+	// BuildDriverDocker is no longer supported.
+	BuildDriverDocker = "docker"
+
+	// BuildDriverBuildkit is the configuration value for specifying BuildKit as
+	// the build driver.
 	BuildDriverBuildkit = "buildkit"
 )
 
@@ -55,12 +59,17 @@ type Data struct {
 
 	// Telemetry are settings related to Porter's tracing with open telemetry.
 	Telemetry TelemetryConfig `mapstructure:"telemetry"`
+
+	// SchemaCheck specifies how strict Porter should be when comparing the
+	// schemaVersion field on a resource with the supported schemaVersion.
+	// Supported values are: exact, minor, major, none.
+	SchemaCheck string `mapstructure:"schema-check"`
 }
 
 // DefaultDataStore used when no config file is found.
 func DefaultDataStore() Data {
 	return Data{
-		BuildDriver:          BuildDriverDocker,
+		BuildDriver:          BuildDriverBuildkit,
 		DefaultStoragePlugin: "mongodb-docker",
 		DefaultSecretsPlugin: "host",
 		Logs:                 LogConfig{Level: "info"},

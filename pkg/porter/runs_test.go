@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 			Namespace: "",
 			Name:      installationName1,
 		}}
-		results, err := p.ListInstallationRuns(opts)
+		results, err := p.ListInstallationRuns(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})
@@ -53,7 +54,7 @@ func TestPorter_ListInstallationRuns(t *testing.T) {
 			Namespace: "dev",
 			Name:      installationName2,
 		}}
-		results, err := p.ListInstallationRuns(opts)
+		results, err := p.ListInstallationRuns(context.Background(), opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 	})
@@ -93,7 +94,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 		}, PrintOptions: printer.PrintOptions{Format: tc.format},
 		}
 
-		err := p.PrintInstallationRuns(opts)
+		err := p.PrintInstallationRuns(context.Background(), opts)
 		require.NoError(t, err)
 
 		p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())

@@ -106,7 +106,7 @@ will then provide it to the bundle in the correct location. `,
   porter parameter generate myparamset --cnab-file myapp/bundle.json
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return opts.Validate(args, p)
+			return opts.Validate(cmd.Context(), args, p)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.GenerateParameters(cmd.Context(), opts)

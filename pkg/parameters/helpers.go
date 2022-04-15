@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/encoding"
+	"get.porter.sh/porter/pkg/portercontext"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
@@ -26,7 +26,7 @@ type TestParameterProvider struct {
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
-	tc := context.NewTestContext(t)
+	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
 	return NewTestParameterProviderFor(t, testStore)
 }

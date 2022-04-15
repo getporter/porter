@@ -1,12 +1,13 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
 	claims "get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"github.com/pkg/errors"
 )
@@ -25,7 +26,7 @@ type OutputListOptions struct {
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputShowOptions as applicable
-func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputShowOptions) Validate(args []string, cxt *portercontext.Context) error {
 	switch len(args) {
 	case 0:
 		return errors.New("an output name must be provided")
@@ -48,7 +49,7 @@ func (o *OutputShowOptions) Validate(args []string, cxt *context.Context) error 
 
 // Validate validates the provided args, using the provided context,
 // setting attributes of OutputListOptions as applicable
-func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error {
+func (o *OutputListOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
 	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {
@@ -65,8 +66,8 @@ func (o *OutputListOptions) Validate(args []string, cxt *context.Context) error 
 }
 
 // ShowBundleOutput shows a bundle output value, according to the provided options
-func (p *Porter) ShowBundleOutput(opts *OutputShowOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) error {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return err
 	}
@@ -113,8 +114,8 @@ func NewDisplayValuesFromOutputs(bun cnab.ExtendedBundle, outputs claims.Outputs
 
 // ListBundleOutputs lists the outputs for a given bundle according to the
 // provided display format
-func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, error) {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions) (DisplayValues, error) {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +139,8 @@ func (p *Porter) ListBundleOutputs(opts *OutputListOptions) (DisplayValues, erro
 	return displayOutputs, nil
 }
 
-func (p *Porter) PrintBundleOutputs(opts OutputListOptions) error {
-	outputs, err := p.ListBundleOutputs(&opts)
+func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions) error {
+	outputs, err := p.ListBundleOutputs(ctx, &opts)
 	if err != nil {
 		return err
 	}

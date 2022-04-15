@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/yaml"
 	"github.com/pkg/errors"
 )
@@ -74,7 +74,7 @@ func unmarshalActionMap(actionMap map[string][]interface{}, builder BuildableAct
 //		 err := yaml.Unmarshal(contents, &action)
 //		 return &action, err
 //	 })
-func LoadAction(cxt *context.Context, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
+func LoadAction(cxt *portercontext.Context, commandFile string, unmarshal func([]byte) (interface{}, error)) error {
 	contents, err := readInputFromStdinOrFile(cxt, commandFile)
 	if err != nil {
 		return err
@@ -84,10 +84,10 @@ func LoadAction(cxt *context.Context, commandFile string, unmarshal func([]byte)
 	if cxt.Debug {
 		fmt.Fprintf(cxt.Err, "DEBUG Parsed Input:\n%#v\n", result)
 	}
-	return errors.Wrapf(err, "could unmarshal input:\n %s", string(contents))
+	return errors.Wrapf(err, "could not unmarshal input:\n %s", string(contents))
 }
 
-func readInputFromStdinOrFile(cxt *context.Context, commandFile string) ([]byte, error) {
+func readInputFromStdinOrFile(cxt *portercontext.Context, commandFile string) ([]byte, error) {
 	var b []byte
 	var err error
 	if commandFile == "" {

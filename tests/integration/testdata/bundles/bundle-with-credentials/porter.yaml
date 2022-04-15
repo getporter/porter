@@ -2,7 +2,7 @@ schemaVersion: 1.0.0-alpha.1
 name: mybun
 version: 0.1.0
 description: "An example Porter configuration"
-registry: getporter
+registry: "localhost:5000"
 
 credentials:
   - name: kubeconfig

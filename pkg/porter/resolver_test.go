@@ -64,7 +64,7 @@ func TestBundleResolver_Resolve_CacheHit(t *testing.T) {
 		return cnab.BundleReference{Reference: ref}, nil
 	}
 
-	opts := BundlePullOptions{Reference: "getporter/porter-hello:v0.1.1"}
+	opts := BundlePullOptions{Reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0"}
 	resolver.Resolve(opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")
@@ -92,7 +92,7 @@ func TestBundleResolver_Resolve_CacheMiss(t *testing.T) {
 		return cnab.BundleReference{Reference: ref}, nil
 	}
 
-	opts := BundlePullOptions{Reference: "getporter/porter-hello:v0.1.1"}
+	opts := BundlePullOptions{Reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0"}
 	resolver.Resolve(opts)
 
 	assert.True(t, cacheSearched, "The cache should be searched when force is not specified")

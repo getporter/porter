@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 )
 
@@ -13,7 +13,7 @@ type TestStore struct {
 }
 
 // NewTestStore creates a store suitable for unit tests.
-func NewTestStore(tc *context.TestContext) TestStore {
+func NewTestStore(tc *portercontext.TestContext) TestStore {
 	testPlugin := testplugin.NewTestStoragePlugin(tc)
 	return TestStore{
 		PluginAdapter: NewPluginAdapter(testPlugin),

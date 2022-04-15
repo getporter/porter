@@ -6,7 +6,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
@@ -36,7 +35,7 @@ func TestExecOutputs(t *testing.T) {
 	opts := porter.OutputListOptions{}
 	opts.Name = bundleName
 	opts.Format = printer.FormatPlaintext
-	displayOutputs, err := p.ListBundleOutputs(&opts)
+	displayOutputs, err := p.ListBundleOutputs(context.Background(), &opts)
 	require.NoError(t, err, "ListBundleOutputs failed")
 	var kubeconfigOutput *porter.DisplayValue
 	for _, do := range displayOutputs {
@@ -73,7 +72,7 @@ func TestExecOutputs(t *testing.T) {
 func CleanupCurrentBundle(p *porter.TestPorter) {
 	// Uninstall the bundle
 	uninstallOpts := porter.NewUninstallOptions()
-	err := uninstallOpts.Validate([]string{}, p.Porter)
+	err := uninstallOpts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(p.T(), err, "validation of uninstall opts failed for current bundle")
 
 	err = p.UninstallBundle(context.Background(), uninstallOpts)
@@ -84,10 +83,10 @@ func installExecOutputsBundle(p *porter.TestPorter) string {
 	err := p.Create()
 	require.NoError(p.T(), err)
 
-	bundleName := p.AddTestBundleDir(filepath.Join(p.RepoRoot, "examples/exec-outputs"), true)
+	bundleName := p.AddTestBundleDir("testdata/bundles/exec-outputs", true)
 
 	installOpts := porter.NewInstallOptions()
-	err = installOpts.Validate([]string{}, p.Porter)
+	err = installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(p.T(), err)
@@ -98,7 +97,7 @@ func installExecOutputsBundle(p *porter.TestPorter) string {
 func invokeExecOutputsBundle(p *porter.TestPorter, action string) {
 	statusOpts := porter.NewInvokeOptions()
 	statusOpts.Action = action
-	err := statusOpts.Validate([]string{}, p.Porter)
+	err := statusOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(p.T(), err)
 	err = p.InvokeBundle(context.Background(), statusOpts)
 	require.NoError(p.T(), err, "invoke %s should have succeeded", action)
@@ -117,7 +116,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Install the bundle
 	// A step-level output will be used during this action
 	installOpts := porter.NewInstallOptions()
-	err := installOpts.Validate([]string{}, p.Porter)
+	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.InstallBundle(context.Background(), installOpts)
 	require.NoError(t, err, "install should have succeeded")
@@ -125,7 +124,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Upgrade the bundle
 	// A bundle-level output will be produced during this action
 	upgradeOpts := porter.NewUpgradeOptions()
-	err = upgradeOpts.Validate([]string{}, p.Porter)
+	err = upgradeOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UpgradeBundle(context.Background(), upgradeOpts)
 	require.NoError(t, err, "upgrade should have succeeded")
@@ -133,7 +132,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	// Uninstall the bundle
 	// A bundle-level output will be used during this action
 	uninstallOpts := porter.NewUninstallOptions()
-	err = uninstallOpts.Validate([]string{}, p.Porter)
+	err = uninstallOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 	err = p.UninstallBundle(context.Background(), uninstallOpts)
 	require.NoError(t, err, "uninstall should have succeeded")

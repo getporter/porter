@@ -1,10 +1,11 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +26,7 @@ type DeleteOptions struct {
 }
 
 // Validate prepares for an installation delete action and validates the args/options.
-func (o *DeleteOptions) Validate(args []string, cxt *context.Context) error {
+func (o *DeleteOptions) Validate(args []string, cxt *portercontext.Context) error {
 	// Ensure only one argument exists (installation name) if args length non-zero
 	err := o.sharedOptions.validateInstallationName(args)
 	if err != nil {
@@ -36,8 +37,8 @@ func (o *DeleteOptions) Validate(args []string, cxt *context.Context) error {
 }
 
 // DeleteInstallation handles deletion of an installation
-func (p *Porter) DeleteInstallation(opts DeleteOptions) error {
-	err := p.applyDefaultOptions(&opts.sharedOptions)
+func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) error {
+	err := p.applyDefaultOptions(ctx, &opts.sharedOptions)
 	if err != nil {
 		return err
 	}

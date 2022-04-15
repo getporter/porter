@@ -50,7 +50,7 @@ Writing a bundle that uses Docker has a few steps:
 Here's the [full working example whalesay bundle][whalesay-bundle] for you to
 follow along with.
 
-[whalesay-bundle]: /src/examples/docker/
+[whalesay-bundle]: /examples/src/docker/
 
 ### Require Docker
 
@@ -96,7 +96,7 @@ install:
 
 This blog post focuses on just the docker mixin, but here is a [full
 working example for how to use Docker Compose in a
-bundle](/src/examples/compose/).
+bundle](/examples/src/compose/).
 
 ### Use Docker
 
@@ -106,10 +106,10 @@ in my bundle:
 **porter.yaml**
 
 ```yaml
-name: whalesay
-version: 0.1.2
+name: examples/whalesay
+version: 0.2.0
 description: "An example bundle that uses docker through the magic of whalespeak"
-registry: getporter
+registry: ghcr.io/getporter
 
 required:
   - docker
@@ -162,7 +162,7 @@ uninstall:
           - Goodbye World
 ```
 
-After I test the bundle and verify that it's ready for release, I use `porter publish` to push the new image `getporter/whalesay:v0.1.2` to the registry.
+After I test the bundle and verify that it's ready for release, I use `porter publish` to push the new image `ghcr.io/getporter/examples/whalesay:v0.2.0` to the registry.
 
 ## Run that bundle
 
@@ -176,7 +176,7 @@ and should only be given to trusted containers, or in this case trusted bundles.
 Let the whales speak!
 
 ```console
-$ porter install --reference getporter/whalesay:v0.1.2 --allow-docker-host-access
+$ porter install --reference ghcr.io/getporter/examples/whalesay:v0.2.0 --allow-docker-host-access
 installing whalesay...
 executing install action from whalesay (bundle instance: whalesay)
 Install Hello World

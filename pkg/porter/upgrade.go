@@ -24,7 +24,7 @@ func NewUpgradeOptions() UpgradeOptions {
 	return UpgradeOptions{BundleActionOptions: &BundleActionOptions{}}
 }
 
-func (o UpgradeOptions) Validate(args []string, p *Porter) error {
+func (o UpgradeOptions) Validate(ctx context.Context, args []string, p *Porter) error {
 	if o.Version != "" && o.Reference != "" {
 		return errors.New("either --version or --reference may be set, but not both")
 	}
@@ -37,7 +37,7 @@ func (o UpgradeOptions) Validate(args []string, p *Porter) error {
 		o.Version = v.String()
 	}
 
-	return o.BundleActionOptions.Validate(args, p)
+	return o.BundleActionOptions.Validate(ctx, args, p)
 }
 
 func (o UpgradeOptions) GetAction() string {

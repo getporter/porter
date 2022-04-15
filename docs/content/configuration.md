@@ -185,49 +185,8 @@ feature by:
 
 ### Build Drivers
 
-The **build-drivers** experimental feature flag enables using a different
-driver to build OCI images used by the bundle, such as the installer.
-
-You can set your desired driver with either using `porter build --driver`,
-PORTER_BUILD_DRIVER environment variable, or in the configuration file with
-build-driver = "DRIVER".
-
-The default driver is docker, and the full list of available drivers
-is below:
-
-* **Docker**: Build an OCI image using the [Docker library], without buildkit support.
-  This requires access to a Docker daemon, either locally or remote.
-* **Buildkit**: Build an OCI image using [Docker with Buildkit].
-  With buildkit you can improve the performance of builds using caching, access
-  private resources during build, and more. 
-  This requires access to a Docker daemon, either locally or remote.
-
-Below are some examples of how to enable the build-drivers feature and specify an alternate
-driver:
-
-**Flags**
-```
-porter build --experimental build-drivers --driver buildkit
-```
-
-**Environment Variables**
-```
-export PORTER_EXPERIMENTAL=build-drivers
-export PORTER_BUILD_DRIVER=buildkit
-```
-
-**Configuration File**
-```toml
-experimental = ["build-drivers"]
-build-driver = "buildkit"
-```
-
-[install]: /cli/porter_install/
-[upgrade]: /cli/porter_upgrade/
-[invoke]: /cli/porter_invoke/
-[uninstall]: /cli/porter_uninstall/
-[Docker library]: https://github.com/moby/moby
-[Docker with Buildkit]: https://docs.docker.com/develop/develop-images/build_enhancements/
+The **build-drivers** experimental feature flag is no longer used.
+Build drivers are enabled by default and the only available driver is buildkit.
 
 ### Structured Logs
 
@@ -343,3 +302,22 @@ You should trust any bundles that you execute with this setting enabled as it gi
 
 ⚠️️ This configuration setting is only available when you are in an environment that provides access to the local docker daemon.
 Therefore, it does not work with the Azure Cloud Shell driver.
+
+
+### Schema Check
+The schema-check configuration file setting controls Porter's behavior when the schemaVersion of a resource does not match [Porter's supported version](/reference/file-formats/#supported-versions).
+By default, Porter requires that a resource's schemaVersion field exactly matches the supported version.
+In some cases, such as when migrating to a new version of Porter, it may be helpful to use a less strict version comparison.
+Allowed values are:
+
+* exact - Default behavior. Require that the schemaVersion on the resource exactly match Porter's supported version.
+  If it doesn't match, the command will fail.
+* minor - Require that the MAJOR.MINOR portion of the schemaVersion on the resource match Porter's supported version.
+  For example, a bundle with a schemaVersion of 1.2.3 would work even though the supported version is 1.2.5.
+* major - Require that the MAJOR portion of the schemaVersion on the resource match Porter's supported version.
+  For example, a bundle with a schemaVersion of 1.2.3 would work even though the supported version is 1.3.0.
+* none - Only print a warning when the schemaVersion does not exactly match the supported version.
+
+Porter can only guarantee correct parsing of the file when the schemaVersion exactly matches.
+Depending on what has changed between schema versions, you can make a judgement call on if those changes are relevant to your situation.
+

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 type TestStep struct {
@@ -78,7 +78,7 @@ func TestJsonPathOutputs(t *testing.T) {
 	for _, tc := range testcases {
 
 		t.Run(tc.name, func(t *testing.T) {
-			c := context.NewTestContext(t)
+			c := portercontext.NewTestContext(t)
 
 			step := TestStep{
 				Outputs: []Output{
@@ -89,7 +89,7 @@ func TestJsonPathOutputs(t *testing.T) {
 			err = ProcessJsonPathOutputs(c.Context, step, string(stdout))
 			require.NoError(t, err, "ProcessJsonPathOutputs should not return an error")
 
-			f := filepath.Join(context.MixinOutputsDir, tc.name)
+			f := filepath.Join(portercontext.MixinOutputsDir, tc.name)
 			gotOutput, err := c.FileSystem.ReadFile(f)
 			require.NoError(t, err, "could not read output file %s", f)
 
@@ -100,7 +100,7 @@ func TestJsonPathOutputs(t *testing.T) {
 }
 
 func TestJsonPathOutputs_DebugPrintsDocument(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	c.Debug = true
 	step := TestStep{
 		Outputs: []Output{
@@ -118,7 +118,7 @@ func TestJsonPathOutputs_DebugPrintsDocument(t *testing.T) {
 }
 
 func TestJsonPathOutputs_NoOutput(t *testing.T) {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 
 	step := TestStep{
 		Outputs: []Output{

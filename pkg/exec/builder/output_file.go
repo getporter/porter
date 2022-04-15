@@ -3,7 +3,7 @@ package builder
 import (
 	"fmt"
 
-	"get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/pkg/errors"
 )
 
@@ -13,7 +13,7 @@ type OutputFile interface {
 }
 
 // ProcessFileOutputs makes the contents of a file specified by any OutputFile interface available as an output.
-func ProcessFileOutputs(cxt *context.Context, step StepWithOutputs) error {
+func ProcessFileOutputs(cxt *portercontext.Context, step StepWithOutputs) error {
 	outputs := step.GetOutputs()
 
 	if len(outputs) == 0 {

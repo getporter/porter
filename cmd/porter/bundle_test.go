@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +17,8 @@ func TestValidateInstallCommand(t *testing.T) {
 		args      string
 		wantError string
 	}{
-		{"no args", "install -r getporter/porter-hello:v0.1.1", ""},
-		{"invalid param", "install --param A:B -r getporter/porter-hello:v0.1.1", "invalid parameter (A:B), must be in name=value format"},
+		{"no args", "install -r ghcr.io/getporter/examples/porter-hello:v0.2.0", ""},
+		{"invalid param", "install --param A:B -r ghcr.io/getporter/examples/porter-hello:v0.2.0", "invalid parameter (A:B), must be in name=value format"},
 	}
 
 	for _, tc := range testcases {
@@ -135,8 +134,6 @@ func TestValidateInstallationListCommand(t *testing.T) {
 
 func TestBuildValidate_Driver(t *testing.T) {
 	// Do not run in parallel
-	os.Setenv("PORTER_EXPERIMENTAL", experimental.BuildDrivers)
-	defer os.Unsetenv("PORTER_EXPERIMENTAL")
 
 	testcases := []struct {
 		name         string
@@ -145,7 +142,7 @@ func TestBuildValidate_Driver(t *testing.T) {
 		wantDriver   string
 		wantError    string
 	}{
-		{name: "no flag", wantDriver: "docker"},
+		{name: "no flag", wantDriver: "buildkit"},
 		{name: "invalid flag", args: "--driver=missing-driver", wantError: "invalid --driver value missing-driver"},
 		{name: "valid flag", args: "--driver=buildkit", wantDriver: "buildkit"},
 		{name: "invalid config", args: "", configDriver: "invalid-driver", wantError: "invalid --driver value invalid-driver"},

@@ -114,7 +114,7 @@ By default plugins are downloaded from the official Porter plugin feed at https:
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallPlugin(opts)
+			return p.InstallPlugin(cmd.Context(), opts)
 		},
 	}
 

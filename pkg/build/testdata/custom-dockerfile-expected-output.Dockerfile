@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile-upstream:1.4.0
 FROM ubuntu:latest
 # stuff
 ARG BUNDLE_DIR
@@ -9,7 +10,7 @@ COPY mybin /cnab/app/
 
 RUN rm ${BUNDLE_DIR}/porter.yaml
 RUN rm -fr ${BUNDLE_DIR}/.cnab
-COPY .cnab /cnab
+COPY --link .cnab /cnab
 RUN chgrp -R ${BUNDLE_GID} /cnab && chmod -R g=u /cnab
 USER ${BUNDLE_UID}
 WORKDIR ${BUNDLE_DIR}

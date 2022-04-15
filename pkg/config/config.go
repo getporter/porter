@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	portercontext "get.porter.sh/porter/pkg/context"
+	"get.porter.sh/porter/pkg/schema"
+
 	"get.porter.sh/porter/pkg/experimental"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
@@ -33,7 +35,7 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	// EnvCORRELATION_ID is the name of the environment variable containing the
+	// EnvCorrelationID is the name of the environment variable containing the
 	// id to correlate logs with a workflow.
 	EnvCorrelationID = "PORTER_CORRELATION_ID"
 
@@ -47,6 +49,14 @@ const (
 
 	// ClaimFilepath is the filepath to the claim.json inside of an invocation image
 	ClaimFilepath = "/cnab/claim.json"
+
+	// EnvPorterInstallationNamespace is the name of the environment variable which is injected into the
+	// invocation image, containing the namespace of the installation.
+	EnvPorterInstallationNamespace = "PORTER_INSTALLATION_NAMESPACE"
+
+	// EnvPorterInstallationName is the name of the environment variable which is injected into the
+	// invocation image, containing the name of the installation.
+	EnvPorterInstallationName = "PORTER_INSTALLATION_NAME"
 )
 
 // These are functions that afero doesn't support, so this lets us stub them out for tests to set the
@@ -120,6 +130,23 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 	}
 
 	return nil
+}
+
+func (c *Config) GetSchemaCheckStrategy(ctx context.Context) schema.CheckStrategy {
+	switch c.Data.SchemaCheck {
+	case string(schema.CheckStrategyMinor):
+		return schema.CheckStrategyMinor
+	case string(schema.CheckStrategyMajor):
+		return schema.CheckStrategyMajor
+	case string(schema.CheckStrategyNone):
+		return schema.CheckStrategyNone
+	case string(schema.CheckStrategyExact), "":
+		return schema.CheckStrategyExact
+	default:
+		log := tracing.LoggerFromContext(ctx)
+		log.Warnf("invalid schema-check value specified %q, defaulting to exact", c.Data.SchemaCheck)
+		return schema.CheckStrategyExact
+	}
 }
 
 func (c *Config) GetStorage(name string) (StoragePlugin, error) {
@@ -264,7 +291,7 @@ func (c *Config) IsFeatureEnabled(flag experimental.FeatureFlags) bool {
 }
 
 // SetExperimentalFlags programmatically, overriding Config.Data.ExperimentalFlags.
-// Example: Config.SetExperimentalFlags(experimental.FlagBuildDrivers | ...)
+// Example: Config.SetExperimentalFlags(experimental.FlagStructuredLogs | ...)
 func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 	c.experimental = &flags
 }
@@ -273,10 +300,7 @@ func (c *Config) SetExperimentalFlags(flags experimental.FeatureFlags) {
 // into account experimental flags.
 // Use this instead of Config.Data.BuildDriver directly.
 func (c *Config) GetBuildDriver() string {
-	if c.IsFeatureEnabled(experimental.FlagBuildDrivers) {
-		return c.Data.BuildDriver
-	}
-	return BuildDriverDocker
+	return BuildDriverBuildkit
 }
 
 // Load loads the configuration file, rendering any templating used in the config file

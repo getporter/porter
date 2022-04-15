@@ -12,6 +12,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // TraceLogger how porter emits traces and logs to any configured listeners.
@@ -61,6 +62,9 @@ type TraceLogger interface {
 	// Only log it in the function that generated the error, not when bubbling
 	// it up the call stack.
 	Errorf(msg string, args ...interface{}) error
+
+	// ShouldLog returns if the current log level includes the specified level.
+	ShouldLog(level zapcore.Level) bool
 }
 
 var _ TraceLogger = traceLogger{}
@@ -74,6 +78,11 @@ type traceLogger struct {
 	span   trace.Span
 	logger *zap.Logger
 	tracer trace.Tracer
+}
+
+// ShouldLog returns if the current log level includes the specified level.
+func (l traceLogger) ShouldLog(level zapcore.Level) bool {
+	return l.logger.Core().Enabled(level)
 }
 
 // NewRootLogger creates a new TraceLogger and stores in on the context

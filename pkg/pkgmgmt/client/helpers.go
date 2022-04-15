@@ -1,12 +1,13 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"testing"
 
-	"get.porter.sh/porter/pkg/context"
 	"get.porter.sh/porter/pkg/pkgmgmt"
+	"get.porter.sh/porter/pkg/portercontext"
 )
 
 var _ pkgmgmt.PackageManager = &TestPackageManager{}
@@ -16,7 +17,7 @@ var _ pkgmgmt.PackageManager = &TestPackageManager{}
 type TestPackageManager struct {
 	PkgType       string
 	Packages      []pkgmgmt.PackageMetadata
-	RunAssertions []func(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error
+	RunAssertions []func(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error
 }
 
 func (p *TestPackageManager) List() ([]string, error) {
@@ -40,7 +41,7 @@ func (p *TestPackageManager) GetMetadata(name string) (pkgmgmt.PackageMetadata, 
 	return nil, fmt.Errorf("%s %s not installed", p.PkgType, name)
 }
 
-func (p *TestPackageManager) Install(o pkgmgmt.InstallOptions) error {
+func (p *TestPackageManager) Install(ctx context.Context, opts pkgmgmt.InstallOptions) error {
 	// do nothing
 	return nil
 }
@@ -50,7 +51,7 @@ func (p *TestPackageManager) Uninstall(o pkgmgmt.UninstallOptions) error {
 	return nil
 }
 
-func (p *TestPackageManager) Run(pkgContext *context.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
+func (p *TestPackageManager) Run(pkgContext *portercontext.Context, name string, commandOpts pkgmgmt.CommandOptions) error {
 	for _, assert := range p.RunAssertions {
 		err := assert(pkgContext, name, commandOpts)
 		if err != nil {
@@ -62,12 +63,12 @@ func (p *TestPackageManager) Run(pkgContext *context.Context, name string, comma
 
 type TestRunner struct {
 	*Runner
-	TestContext *context.TestContext
+	TestContext *portercontext.TestContext
 }
 
 // NewTestRunner initializes a test runner, with the output buffered, and an in-memory file system.
 func NewTestRunner(t *testing.T, name string, pkgType string, runtime bool) *TestRunner {
-	c := context.NewTestContext(t)
+	c := portercontext.NewTestContext(t)
 	pkgDir := fmt.Sprintf("/home/myuser/.porter/%s/%s", pkgType, name)
 	r := &TestRunner{
 		Runner:      NewRunner(name, pkgDir, runtime),

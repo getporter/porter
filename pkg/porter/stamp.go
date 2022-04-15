@@ -56,7 +56,7 @@ func (p *Porter) IsBundleUpToDate(ctx context.Context, opts bundleFileOptions) (
 	if opts.File == "" {
 		return false, errors.New("File is required")
 	}
-	m, err := manifest.LoadManifestFrom(p.Context, opts.File)
+	m, err := manifest.LoadManifestFrom(ctx, p.Config, opts.File)
 	if err != nil {
 		return false, err
 	}

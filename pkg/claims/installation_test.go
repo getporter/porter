@@ -26,10 +26,10 @@ func TestOCIReferenceParts_GetBundleReference(t *testing.T) {
 		wantErr string
 	}{
 		{name: "repo missing", wantRef: ""},
-		{name: "incomplete reference", repo: "getporter/porter-hello", wantErr: "Invalid bundle reference"},
-		{name: "version specified", repo: "getporter/porter-hello", version: "v0.1.1", wantRef: "getporter/porter-hello:v0.1.1"},
-		{name: "digest specified", repo: "getporter/porter-hello", digest: "sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062", wantRef: "getporter/porter-hello@sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062"},
-		{name: "tag specified", repo: "getporter/porter-hello", tag: "latest", wantRef: "getporter/porter-hello:latest"},
+		{name: "incomplete reference", repo: "ghcr.io/getporter/examples/porter-hello", wantErr: "Invalid bundle reference"},
+		{name: "version specified", repo: "ghcr.io/getporter/examples/porter-hello", version: "v0.2.0", wantRef: "ghcr.io/getporter/examples/porter-hello:v0.2.0"},
+		{name: "digest specified", repo: "ghcr.io/getporter/examples/porter-hello", digest: "sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062", wantRef: "ghcr.io/getporter/examples/porter-hello@sha256:a881bbc015bade9f11d95a4244888d8e7fa8800f843b43c74cc07c7b7276b062"},
+		{name: "tag specified", repo: "ghcr.io/getporter/examples/porter-hello", tag: "latest", wantRef: "ghcr.io/getporter/examples/porter-hello:latest"},
 	}
 
 	for _, tc := range testcases {
