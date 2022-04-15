@@ -36,6 +36,11 @@ func NewClaimStore(datastore storage.Store) ClaimStore {
 }
 
 func (s ClaimStore) Initialize(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	span.Debug("Initializing installation collection indices")
+
 	opts := storage.EnsureIndexOptions{
 		Indices: []storage.Index{
 			// query installations by a namespace (list) or namespace + name (get)
@@ -55,7 +60,8 @@ func (s ClaimStore) Initialize(ctx context.Context) error {
 		},
 	}
 
-	return s.store.EnsureIndex(ctx, opts)
+	err := s.store.EnsureIndex(ctx, opts)
+	return span.Error(err)
 }
 
 func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
@@ -201,24 +207,24 @@ func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, instal
 		LastOutput Output `json:"lastOutput"`
 	}
 	opts := storage.AggregateOptions{
-		Pipeline: []bson.M{
+		Pipeline: []bson.D{
 			// List outputs by installation
-			{"$match": bson.M{
+			{{"$match", bson.M{
 				"namespace":    namespace,
 				"installation": installation,
-			}},
+			}}},
 			// Reverse sort them (newest on top)
-			{"$sort": bson.M{
-				"namespace":    1,
-				"installation": 1,
-				"name":         1,
-				"resultId":     -1,
-			}},
+			{{"$sort", bson.D{
+				{"namespace", 1},
+				{"installation", 1},
+				{"name", 1},
+				{"resultId", -1},
+			}}},
 			// Group them by output name and select the last value for each output
-			{"$group": bson.M{
-				"_id":        "$name",
-				"lastOutput": bson.M{"$first": "$$ROOT"},
-			}},
+			{{"$group", bson.D{
+				{"_id", "$name"},
+				{"lastOutput", bson.M{"$first": "$$ROOT"}},
+			}}},
 		},
 	}
 	err := s.store.Aggregate(ctx, CollectionOutputs, opts, &groupedOutputs)

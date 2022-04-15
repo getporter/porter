@@ -99,8 +99,8 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.ActionArguments, error) {
-	args, err := e.porter.BuildActionArgs(context.TODO(), e.parentInstallation, e.parentAction)
+func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) (cnabprovider.ActionArguments, error) {
+	args, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}

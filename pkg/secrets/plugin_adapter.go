@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"context"
+	"io"
 
 	"get.porter.sh/porter/pkg/secrets/plugins"
 )
@@ -11,27 +12,25 @@ var _ Store = PluginAdapter{}
 // PluginAdapter converts between the low-level plugins.SecretsProtocol and
 // the secrets.Store interface.
 type PluginAdapter struct {
-	plugin plugins.SecretsPlugin
+	plugin plugins.SecretsProtocol
 }
 
 // NewPluginAdapter wraps the specified storage plugin.
-func NewPluginAdapter(plugin plugins.SecretsPlugin) PluginAdapter {
+func NewPluginAdapter(plugin plugins.SecretsProtocol) PluginAdapter {
 	return PluginAdapter{plugin: plugin}
 }
 
-func (a PluginAdapter) Connect(ctx context.Context) error {
-	return a.plugin.Connect(ctx)
-}
-
-func (a PluginAdapter) Close(ctx context.Context) error {
-	return a.plugin.Close(ctx)
+func (a PluginAdapter) Close() error {
+	if closer, ok := a.plugin.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
 }
 
 func (a PluginAdapter) Resolve(ctx context.Context, keyName string, keyValue string) (string, error) {
-	err := a.Connect(ctx)
-	if err != nil {
-		return "", err
-	}
+	return a.plugin.Resolve(ctx, keyName, keyValue)
+}
 
-	return a.plugin.Resolve(keyName, keyValue)
+func (a PluginAdapter) Create(ctx context.Context, keyName string, keyValue string, value string) error {
+	return a.plugin.Create(ctx, keyName, keyValue, value)
 }

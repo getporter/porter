@@ -1,6 +1,8 @@
 package storage
 
-import "github.com/cnabio/cnab-go/schema"
+import (
+	"github.com/cnabio/cnab-go/schema"
+)
 
 var _ Document = Schema{}
 
@@ -29,6 +31,6 @@ func NewSchema(installations schema.Version, creds schema.Version, params schema
 	}
 }
 
-func (s Schema) DefaultDocumentFilter() interface{} {
+func (s Schema) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"_id": "schema"}
 }

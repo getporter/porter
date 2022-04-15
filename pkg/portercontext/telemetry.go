@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -20,43 +23,58 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func FromContext(ctx context.Context) (*Context, bool) {
-	val := ctx.Value("porter.context")
-	pc, ok := val.(*Context)
-	return pc, ok
-}
+func (c *Context) configureTelemetry(ctx context.Context, serviceName string, logger *zap.Logger) error {
+	if serviceName == "" {
+		serviceName = "porter"
+	}
 
-func (c *Context) configureTelemetry(ctx context.Context, logger *zap.Logger, cfg LogConfiguration) error {
-	// default to noop
-	c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
-	c.traceCloser = nil
+	c.tracer = createNoopTracer()
 
-	client, err := c.createTraceClient(cfg)
+	tracer, ok, err := c.createTracer(ctx, serviceName, logger)
 	if err != nil {
 		return err
 	}
+
+	// Only assign the tracer if one was configured (i.e. not noop)
+	if ok {
+		c.tracer = tracer
+		c.tracerInitalized = true
+	}
+	return nil
+}
+
+func createNoopTracer() tracing.Tracer {
+	tracer := trace.NewNoopTracerProvider().Tracer("noop")
+	cleanup := func(_ context.Context) error { return nil }
+	t := tracing.NewTracer(tracer, cleanup)
+	t.IsNoOp = true
+	return t
+}
+
+func (c *Context) createTracer(ctx context.Context, serviceName string, logger *zap.Logger) (tracing.Tracer, bool, error) {
+	client, err := c.createTraceClient(c.logCfg)
+	if err != nil {
+		return tracing.Tracer{}, false, err
+	}
 	if client == nil {
 		logger.Debug("telemetry disabled")
-		return nil
+		return createNoopTracer(), false, nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
-		return err
+		return tracing.Tracer{}, false, err
 	}
 
-	if c.traceServiceName == "" {
-		c.traceServiceName = "porter"
-	}
 	serviceVersion := pkg.Version
 	if serviceVersion == "" {
 		serviceVersion = "dev"
 	}
 	r := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(c.traceServiceName),
+		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(serviceVersion),
 	)
 
@@ -64,10 +82,13 @@ func (c *Context) configureTelemetry(ctx context.Context, logger *zap.Logger, cf
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(r),
 	)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
-	c.tracer = provider.Tracer("") // empty tracer name defaults to the underlying trace implementor
-	c.traceCloser = provider
-	return nil
+	tracer := provider.Tracer("") // empty tracer name defaults to the underlying trace implementor
+	cleanup := func(ctx context.Context) error {
+		return provider.Shutdown(ctx)
+	}
+	return tracing.NewTracer(tracer, cleanup), true, nil
 }
 
 // createTraceClient from the Porter configuration

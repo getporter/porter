@@ -104,7 +104,7 @@ func (p *Porter) applyActionOptionsToInstallation(ctx context.Context, i *claims
 		return err
 	}
 	// Record the user-specified parameter values
-	err = opts.populateInternalParameterSet(p, opts.bundleRef.Definition, i)
+	err = opts.populateInternalParameterSet(ctx, p, opts.bundleRef.Definition, i)
 	if err != nil {
 		return err
 	}

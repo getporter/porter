@@ -25,7 +25,6 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -65,7 +64,7 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc.TestContext)
+	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
@@ -107,8 +106,8 @@ func NewTestPorter(t *testing.T) *TestPorter {
 }
 
 func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown(context.Background())
-	p.TestConfig.TestContext.Teardown()
+	err := p.TestStore.Teardown()
+	p.TestConfig.Teardown()
 	p.RootSpan.EndSpan()
 	return err
 }
@@ -239,7 +238,7 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 // sensitive parameters into secret store.
 func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
 	strategies := make([]secrets.Strategy, 0, len(raw))
-	strategies, err := p.Sanitizer.CleanParameters(raw, bun, recordID)
+	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
 	require.NoError(p.T(), err)
 
 	return strategies
@@ -247,7 +246,7 @@ func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string,
 
 func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
 	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
-		output, err := p.TestSanitizer.CleanOutput(*o, bun)
+		output, err := p.TestSanitizer.CleanOutput(context.Background(), *o, bun)
 		require.NoError(p.T(), err)
 		*o = output
 	})

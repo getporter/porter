@@ -99,7 +99,7 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 		i.Status.ResultStatus = cnab.StatusRunning
 	})
 
-	i, err := cp.GetInstallation("", "wordpress")
+	i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 	require.NoError(t, err, "ReadInstallation failed")
 
 	di := NewDisplayInstallation(i)

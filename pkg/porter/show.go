@@ -64,7 +64,7 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 		return err
 	}
 
-	displayInstallation, err := p.generateDisplayInstallation(installation)
+	displayInstallation, err := p.generateDisplayInstallation(ctx, installation)
 	if err != nil {
 		return err
 	}
@@ -163,18 +163,18 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 	}
 }
 
-func (p *Porter) generateDisplayInstallation(installation claims.Installation) (DisplayInstallation, error) {
-	run, err := p.Claims.GetRun(installation.Status.RunID)
+func (p *Porter) generateDisplayInstallation(ctx context.Context, installation claims.Installation) (DisplayInstallation, error) {
+	run, err := p.Claims.GetRun(ctx, installation.Status.RunID)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
 
 	bun := cnab.ExtendedBundle{run.Bundle}
-	installParams, err := p.Sanitizer.RestoreParameterSet(installation.Parameters, bun)
+	installParams, err := p.Sanitizer.RestoreParameterSet(ctx, installation.Parameters, bun)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
-	runParams, err := p.Sanitizer.RestoreParameterSet(run.Parameters, bun)
+	runParams, err := p.Sanitizer.RestoreParameterSet(ctx, run.Parameters, bun)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}

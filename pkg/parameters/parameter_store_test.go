@@ -14,7 +14,8 @@ func TestParameterStore_CRUD(t *testing.T) {
 	paramStore := NewTestParameterProvider(t)
 	defer paramStore.Teardown()
 
-	params, err := paramStore.ListParameterSets(context.Background(), "dev", "", nil)
+	ctx := context.Background()
+	params, err := paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
@@ -29,34 +30,34 @@ func TestParameterStore_CRUD(t *testing.T) {
 	myParamSet.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
 	myParamSet.Status.Modified = myParamSet.Status.Created
 
-	err = paramStore.InsertParameterSet(context.Background(), myParamSet)
+	err = paramStore.InsertParameterSet(ctx, myParamSet)
 	require.NoError(t, err, "Insert should successfully save")
 
-	params, err = paramStore.ListParameterSets(context.Background(), "dev", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet.Name, params[0].Name, "expected to retrieve myparams")
 
-	params, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 0, "expected no global parameter sets")
 
-	params, err = paramStore.ListParameterSets(context.Background(), "*", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "*", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set defined in all namespaces")
 
-	pset, err := paramStore.GetParameterSet(context.Background(), myParamSet.Namespace, myParamSet.Name)
+	pset, err := paramStore.GetParameterSet(ctx, myParamSet.Namespace, myParamSet.Name)
 	require.NoError(t, err)
 	require.Equal(t, myParamSet, pset, "Get should return the saved parameter set")
 
-	err = paramStore.RemoveParameterSet(context.Background(), myParamSet.Namespace, myParamSet.Name)
+	err = paramStore.RemoveParameterSet(ctx, myParamSet.Namespace, myParamSet.Name)
 	require.NoError(t, err, "Remove should successfully delete the parameter set")
 
-	params, err = paramStore.ListParameterSets(context.Background(), "dev", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 
-	pset, err = paramStore.GetParameterSet(context.Background(), "", myParamSet.Name)
+	pset, err = paramStore.GetParameterSet(ctx, "", myParamSet.Name)
 	require.ErrorIs(t, err, storage.ErrNotFound{})
 
 }

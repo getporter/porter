@@ -43,8 +43,8 @@ func TestBindRuntimeDriverConfiguration(t *testing.T) {
 	tests.RequireErrorContains(t, err, "unsupported driver", "uninstall does not have --driver wired properly")
 
 	test.PrepareTestBundle() // apply tries to pull the bundle before the driver flag is validated
-	_, _, err = test.RunPorter("installation", "apply", "mybuns.yaml")
-	tests.RequireErrorContains(t, err, "unsupported driver", "apply does not have --driver wired properly")
+	_, output, _ := test.RunPorter("installation", "apply", "mybuns.yaml")
+	tests.RequireOutputContains(t, output, "unsupported driver", "apply does not have --driver wired properly")
 }
 
 // Validate that we can use PORTER_BUILD_DRIVER with

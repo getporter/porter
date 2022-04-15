@@ -275,13 +275,13 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
-func (o *sharedOptions) populateInternalParameterSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+func (o *sharedOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
 		strategies = append(strategies, parameters.ValueStrategy(name, value))
 	}
 
-	strategies, err := p.Sanitizer.CleanParameters(strategies, bun, i.ID)
+	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)
 	if err != nil {
 		return err
 	}

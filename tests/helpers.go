@@ -65,8 +65,8 @@ func GenerateDatabaseName(testName string) string {
 
 // This is the same as require.Contains but it prints the output string without
 // newlines escaped so that it's easier to read.
-func RequireOutputContains(t *testing.T, output string, substring string) {
-	ok := assert.Contains(t, output, substring)
+func RequireOutputContains(t *testing.T, output string, substring string, msgAndArgs ...interface{}) {
+	ok := assert.Contains(t, output, substring, msgAndArgs...)
 	if !ok {
 		t.Errorf("%s\ndoes not contain\n%s", output, substring)
 		t.FailNow()

@@ -1,13 +1,22 @@
 package mongodb
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
+	"get.porter.sh/porter/pkg/storage/pluginstore"
+	"github.com/hashicorp/go-plugin"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 const PluginKey = plugins.PluginInterface + ".porter.mongodb"
+
+var _ plugins.StorageProtocol = Plugin{}
+
+type Plugin struct {
+	*Store
+}
 
 // PluginConfig are the configuration settings that can be defined for the
 // mongodb plugin in porter.yaml
@@ -16,13 +25,14 @@ type PluginConfig struct {
 	Timeout int    `mapstructure:"timeout,omitempty"`
 }
 
-func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
+func NewPlugin(c *portercontext.Context, rawCfg interface{}) plugin.Plugin {
 	cfg := PluginConfig{
 		Timeout: 10,
 	}
-	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
-		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)
+	if err := mapstructure.Decode(rawCfg, &cfg); err != nil {
+		panic(fmt.Errorf("error reading plugin configuration: %w", err))
 	}
 
-	return NewStore(cxt, cfg), nil
+	impl := NewStore(c, cfg)
+	return pluginstore.NewPlugin(c, impl)
 }

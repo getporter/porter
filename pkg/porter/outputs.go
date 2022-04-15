@@ -125,7 +125,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	resolved, err := p.Sanitizer.RestoreOutputs(outputs)
+	resolved, err := p.Sanitizer.RestoreOutputs(ctx, outputs)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation,
 		return "", err
 	}
 
-	o, err = p.Sanitizer.RestoreOutput(o)
+	o, err = p.Sanitizer.RestoreOutput(ctx, o)
 	if err != nil {
 		return "", err
 	}

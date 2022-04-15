@@ -18,6 +18,6 @@ func NewTestSecretsProvider() TestSecretsProvider {
 	}
 }
 
-func (s TestSecretsProvider) AddSecret(key string, value string) {
-	s.secrets.AddSecret(key, value)
+func (s TestSecretsProvider) Teardown() error {
+	return s.Close()
 }

@@ -34,10 +34,6 @@ const (
 	// EnvDEBUG is a custom porter parameter that signals that --debug flag has been passed through from the client to the runtime.
 	EnvDEBUG = "PORTER_DEBUG"
 
-	// EnvCorrelationID is the name of the environment variable containing the
-	// id to correlate logs with a workflow.
-	EnvCorrelationID = "PORTER_CORRELATION_ID"
-
 	// CustomPorterKey is the key in the bundle.json custom section that contains the Porter stamp
 	// It holds all the metadata that Porter includes that is specific to Porter about the bundle.
 	CustomPorterKey = "sh.porter"
@@ -98,6 +94,24 @@ func New() *Config {
 	}
 }
 
+func (c *Config) NewLogConfiguration() portercontext.LogConfiguration {
+	return portercontext.LogConfiguration{
+		StructuredLogs:       c.IsFeatureEnabled(experimental.FlagStructuredLogs),
+		LogToFile:            c.Data.Logs.Enabled,
+		LogDirectory:         filepath.Join(c.porterHome, "logs"),
+		LogLevel:             c.Data.Logs.Level.Level(),
+		TelemetryEnabled:     c.Data.Telemetry.Enabled,
+		TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
+		TelemetryProtocol:    c.Data.Telemetry.Protocol,
+		TelemetryInsecure:    c.Data.Telemetry.Insecure,
+		TelemetryCertificate: c.Data.Telemetry.Certificate,
+		TelemetryCompression: c.Data.Telemetry.Compression,
+		TelemetryTimeout:     c.Data.Telemetry.Timeout,
+		TelemetryHeaders:     c.Data.Telemetry.Headers,
+		TelemtryServiceName:  "porter",
+	}
+}
+
 // loadData from the datastore defined in PORTER_HOME, and render the
 // config file using the specified template data.
 func (c *Config) loadData(ctx context.Context, templateData map[string]interface{}) error {
@@ -111,21 +125,7 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 
 	if c.IsFeatureEnabled(experimental.FlagStructuredLogs) {
 		// Now that we have completely loaded our config, configure our final logging/tracing
-		c.Context.ConfigureLogging(ctx, portercontext.LogConfiguration{
-			StructuredLogs:       true,
-			LogToFile:            c.Data.Logs.Enabled,
-			LogDirectory:         filepath.Join(c.porterHome, "logs"),
-			LogLevel:             c.Data.Logs.Level.Level(),
-			LogCorrelationID:     c.Getenv(EnvCorrelationID),
-			TelemetryEnabled:     c.Data.Telemetry.Enabled,
-			TelemetryEndpoint:    c.Data.Telemetry.Endpoint,
-			TelemetryProtocol:    c.Data.Telemetry.Protocol,
-			TelemetryInsecure:    c.Data.Telemetry.Insecure,
-			TelemetryCertificate: c.Data.Telemetry.Certificate,
-			TelemetryCompression: c.Data.Telemetry.Compression,
-			TelemetryTimeout:     c.Data.Telemetry.Timeout,
-			TelemetryHeaders:     c.Data.Telemetry.Headers,
-		})
+		c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
 	}
 
 	return nil

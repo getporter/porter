@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
@@ -27,7 +27,7 @@ type TestParameterProvider struct {
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestParameterProviderFor(t, testStore, testSecrets)
@@ -45,17 +45,9 @@ func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecr
 	}
 }
 
-type hasTeardown interface {
-	Teardown() error
-}
-
 func (p TestParameterProvider) Teardown() error {
-	// sometimes we are testing with a mock that needs to be released at the end of the test
-	if ts, ok := p.TestDocuments.(hasTeardown); ok {
-		return ts.Teardown()
-	} else {
-		return p.TestDocuments.Close(context.Background())
-	}
+	p.TestSecrets.Teardown()
+	return p.TestDocuments.Close()
 }
 
 // Load a ParameterSet from a test file at a given path.
@@ -94,5 +86,5 @@ func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
 }
 
 func (p TestParameterProvider) AddSecret(key string, value string) {
-	p.TestSecrets.Create(secrets.SourceSecret, key, value)
+	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
 }

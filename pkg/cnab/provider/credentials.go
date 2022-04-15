@@ -7,10 +7,14 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if len(args.Installation.CredentialSets) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}

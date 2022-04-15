@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -34,13 +35,19 @@ func NewCredentialStore(storage storage.Store, secrets secrets.Store) *Credentia
 
 // Initialize the underlying storage with any additional schema changes, such as indexes.
 func (s CredentialStore) Initialize(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	span.Debug("Initializing credentials collection indices")
+
 	indices := storage.EnsureIndexOptions{
 		Indices: []storage.Index{
 			// query credentials by namespace + name
 			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	return s.Documents.EnsureIndex(ctx, indices)
+	err := s.Documents.EnsureIndex(ctx, indices)
+	return span.Error(err)
 }
 
 func (s CredentialStore) GetDataStore() storage.Store {

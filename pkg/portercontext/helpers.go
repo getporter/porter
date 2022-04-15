@@ -43,7 +43,6 @@ func NewTestContext(t *testing.T) *TestContext {
 	aggOut := io.MultiWriter(out, test.Logger{T: t})
 
 	innerContext := New()
-	innerContext.traceServiceName = "testporter"
 	innerContext.correlationId = "0"
 	innerContext.timestampLogs = false
 	innerContext.Debug = true

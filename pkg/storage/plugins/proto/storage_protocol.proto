@@ -1,0 +1,96 @@
+syntax = "proto3";
+package plugins;
+import "google/protobuf/struct.proto";
+
+option go_package = "get.porter.sh/porter/pkg/storage/plugins/proto";
+
+message EnsureIndexRequest {
+  repeated Index Indices = 1;
+}
+
+message Index {
+  string Collection = 1;
+  repeated google.protobuf.Struct Keys = 2;
+  bool Unique = 3;
+}
+
+message AggregateRequest {
+  string Collection = 1;
+  repeated Stage Pipeline = 2;
+}
+
+message Stage {
+  repeated google.protobuf.Struct Steps = 1;
+}
+
+message CountRequest {
+  string Collection = 1;
+  google.protobuf.Struct Filter = 2;
+}
+
+message FindRequest {
+  string Collection = 1;
+  repeated google.protobuf.Struct Sort = 2;
+  int64 Skip = 3;
+  int64 Limit = 4;
+  repeated google.protobuf.Struct Select = 5;
+  google.protobuf.Struct Filter = 6;
+  repeated google.protobuf.Struct Group = 7;
+}
+
+message InsertRequest {
+  string Collection = 1;
+  repeated google.protobuf.Struct Documents = 2;
+}
+
+message PatchRequest {
+  string Collection = 1;
+  google.protobuf.Struct QueryDocument = 2;
+  repeated google.protobuf.Struct Transformation = 3;
+}
+
+message RemoveRequest {
+  string Collection = 1;
+  google.protobuf.Struct Filter = 2;
+  bool All = 3;
+}
+
+message UpdateRequest {
+  string Collection = 1;
+  google.protobuf.Struct Filter = 2;
+  bool Upsert = 3;
+  google.protobuf.Struct Document = 4;
+}
+
+message EnsureIndexResponse {}
+
+message AggregateResponse {
+  repeated bytes Results = 1;
+}
+
+message CountResponse {
+  int64 Count = 1;
+}
+
+message FindResponse {
+ repeated bytes Results = 1;
+}
+
+message InsertResponse {}
+
+message PatchResponse {}
+
+message RemoveResponse {}
+
+message UpdateResponse {}
+
+service StorageProtocol {
+  rpc EnsureIndex(EnsureIndexRequest) returns (EnsureIndexResponse);
+  rpc Aggregate(AggregateRequest) returns (AggregateResponse);
+  rpc Count(CountRequest) returns (CountResponse);
+  rpc Find(FindRequest) returns (FindResponse);
+  rpc Insert(InsertRequest) returns (InsertResponse);
+  rpc Patch(PatchRequest) returns (PatchResponse);
+  rpc Remove(RemoveRequest) returns (RemoveResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+}

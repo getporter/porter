@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -34,13 +35,18 @@ func NewParameterStore(storage storage.Store, secrets secrets.Store) *ParameterS
 
 // Initialize the backend storage with any necessary schema changes, such as indexes.
 func (s ParameterStore) Initialize(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	span.Debug("Initializing parameter collection indices")
 	indices := storage.EnsureIndexOptions{
 		Indices: []storage.Index{
 			// query parameters by namespace + name
 			{Collection: CollectionParameters, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	return s.Documents.EnsureIndex(ctx, indices)
+	err := s.Documents.EnsureIndex(ctx, indices)
+	return span.Error(err)
 }
 
 func (s ParameterStore) GetDataStore() storage.Store {

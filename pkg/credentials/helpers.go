@@ -2,10 +2,12 @@ package credentials
 
 import (
 	"context"
+	"io"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
@@ -28,7 +30,7 @@ type TestCredentialProvider struct {
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestCredentialProviderFor(t, testStore, testSecrets)
@@ -47,17 +49,12 @@ func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store, testSec
 	}
 }
 
-type hasTeardown interface {
-	Teardown() error
-}
-
 func (p TestCredentialProvider) Teardown() error {
 	// sometimes we are testing with a mock that needs to be released at the end of the test
-	if ts, ok := p.TestStorage.(hasTeardown); ok {
-		return ts.Teardown()
-	} else {
-		return p.TestStorage.Close(context.Background())
+	if closer, ok := p.TestStorage.(io.Closer); ok {
+		return closer.Close()
 	}
+	return nil
 }
 
 // Load a CredentialSet from a test file at a given path.
@@ -96,5 +93,5 @@ func (p TestCredentialProvider) AddTestCredentialsDirectory(dir string) {
 }
 
 func (p TestCredentialProvider) AddSecret(key string, value string) {
-	p.TestSecrets.Create(secrets.SourceSecret, key, value)
+	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
 }

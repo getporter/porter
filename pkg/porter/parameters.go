@@ -659,7 +659,7 @@ func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedB
 
 			if output.Key != "" {
 
-				resolved, err := p.Sanitizer.RestoreOutput(output)
+				resolved, err := p.Sanitizer.RestoreOutput(ctx, output)
 				if err != nil {
 					return nil, errors.Wrapf(err, "could not resolve %s's output %s", installation, outputName)
 				}

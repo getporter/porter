@@ -13,6 +13,7 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/storage"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -59,25 +60,30 @@ func NewManager(c *config.Config, storage storage.Store) *Manager {
 	return mgr
 }
 
+// Connect initializes storage manager for use.
+// The manager itself is responsible for ensuring it was called.
+// Close is called automatically when the manager is used by Porter.
 func (m *Manager) Connect(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	if !m.initialized {
-		if err := m.store.Connect(ctx); err != nil {
-			return err
-		}
+		span.Debug("Checking database schema")
 
 		if err := m.loadSchema(ctx); err != nil {
 			return err
 		}
 
 		if !m.allowOutOfDateSchema && m.MigrationRequired() {
-			m.Close(ctx)
-			return errors.New(`The schema of Porter's data is in an older format than supported by this version of Porter. 
+			m.Close()
+			return span.Error(errors.New(`The schema of Porter's data is in an older format than supported by this version of Porter. 
 Refer to https://porter.sh/storage-migrate for more information and instructions to back up your data. 
 Once your data has been backed up, run the following command to perform the migration:
 
     porter storage migrate
-`)
+`))
 		}
+
 		m.initialized = true
 
 		cs := claims.NewClaimStore(m.store)
@@ -102,8 +108,8 @@ Once your data has been backed up, run the following command to perform the migr
 	return nil
 }
 
-func (m *Manager) Close(ctx context.Context) error {
-	m.store.Close(ctx)
+func (m *Manager) Close() error {
+	m.store.Close()
 	m.initialized = false
 	return nil
 }
@@ -227,7 +233,7 @@ func (m *Manager) Migrate(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer m.Close(ctx)
+	defer m.Close()
 
 	home, err := m.GetHomeDir()
 	if err != nil {

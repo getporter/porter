@@ -71,7 +71,7 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	return cs
 }
 
-func (s CredentialSet) DefaultDocumentFilter() interface{} {
+func (s CredentialSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 

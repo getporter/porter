@@ -68,7 +68,7 @@ func NewTest(t *testing.T) (Tester, error) {
 	os.Setenv("PORTER_HOME", test.PorterHomeDir)
 	os.Setenv("PATH", test.PorterHomeDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	return *test, test.startMongo()
+	return *test, test.startMongo(context.Background())
 }
 
 // CurrentNamespace configured in config.toml
@@ -76,15 +76,15 @@ func (t Tester) CurrentNamespace() string {
 	return "dev"
 }
 
-func (t Tester) startMongo() error {
-	conn, err := mongodb_docker.EnsureMongoIsRunning(t.TestContext.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 10)
-	defer conn.Close(context.Background())
+func (t Tester) startMongo(ctx context.Context) error {
+	conn, err := mongodb_docker.EnsureMongoIsRunning(ctx, t.TestContext.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 10)
+	defer conn.Close(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Start with a fresh database
-	err = conn.RemoveDatabase()
+	err = conn.RemoveDatabase(ctx)
 	return err
 }
 

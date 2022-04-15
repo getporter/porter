@@ -363,6 +363,8 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
+	ctx := context.Background()
+
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
 	require.NoError(t, err)
@@ -376,12 +378,12 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	opts := sharedOptions{}
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun)
 	require.NoError(t, err)
 
 	i := claims.NewInstallation("", bun.Name)
 
-	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
 	require.Len(t, i.Parameters.Parameters, 2)
@@ -401,9 +403,9 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	// as well
 	opts.combinedParameters = nil
 	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun)
 	require.NoError(t, err)
-	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
 	require.Len(t, i.Parameters.Parameters, 0)

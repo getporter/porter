@@ -36,6 +36,15 @@ func main() {
 		// Trace the command that called porter, e.g. porter installation show
 		cmd, commandName, formattedCommand := getCalledCommand(rootCmd)
 
+		// When running an internal plugin, switch how we log to be compatible
+		// with the hashicorp go-plugin framework
+		if commandName == "porter plugins run" {
+			p.PluginMode = true
+			if len(os.Args) > 3 {
+				p.PluginKey = os.Args[3]
+			}
+		}
+
 		// Only run init logic that could fail for commands that
 		// really need it, skip it for commands that should NEVER
 		// fail.
@@ -46,7 +55,7 @@ func main() {
 			}
 		}
 
-		ctx, log := p.StartRootSpan(context.Background(), commandName, attribute.String("command", formattedCommand))
+		ctx, log := p.StartRootSpan(ctx, commandName, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
@@ -54,11 +63,12 @@ func main() {
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
-				p.Close(ctx)
+				p.Close()
 				os.Exit(1)
 			} else {
 				log.EndSpan()
-				p.Close(ctx)
+				log.Close()
+				p.Close()
 			}
 		}()
 

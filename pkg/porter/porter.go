@@ -21,7 +21,7 @@ import (
 	secretsplugin "get.porter.sh/porter/pkg/secrets/pluginstore"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/storage/migrations"
-	"get.porter.sh/porter/pkg/storage/pluginstore"
+	storageplugin "get.porter.sh/porter/pkg/storage/pluginstore"
 	"get.porter.sh/porter/pkg/templates"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-multierror"
@@ -54,9 +54,8 @@ type Porter struct {
 // New porter client, initialized with useful defaults.
 func New() *Porter {
 	c := config.New()
-	storagePlugin := pluginstore.NewStore(c)
-	storage := storage.NewPluginAdapter(storagePlugin)
-	secretStorage := secretsplugin.NewStore(c)
+	storage := storage.NewPluginAdapter(storageplugin.NewStore(c))
+	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	return NewFor(c, storage, secretStorage)
 }
 
@@ -64,7 +63,6 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
-	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	claimStorage := claims.NewClaimStore(storageManager)
 	credStorage := credentials.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := parameters.NewParameterStore(storageManager, secretStorage)
@@ -86,6 +84,8 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	}
 }
 
+// Connect initializes Porter for use and must be called before other Porter methods.
+// It is the responsibility of the caller to also call Close when done with Porter.
 func (p *Porter) Connect(ctx context.Context) error {
 	// Load the config file and replace any referenced secrets
 	return p.Config.Load(ctx, func(secret string) (string, error) {
@@ -100,7 +100,7 @@ func (p *Porter) Connect(ctx context.Context) error {
 }
 
 // Close releases resources used by Porter before terminating the application.
-func (p *Porter) Close(ctx context.Context) error {
+func (p *Porter) Close() error {
 	if p.Debug {
 		fmt.Fprintln(p.Err, "Closing plugins")
 	}
@@ -108,12 +108,12 @@ func (p *Porter) Close(ctx context.Context) error {
 	// Shutdown our plugins
 	var bigErr *multierror.Error
 
-	err := p.Secrets.Close(ctx)
+	err := p.Secrets.Close()
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
-	err = p.Storage.Close(ctx)
+	err = p.Storage.Close()
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}

@@ -1,6 +1,8 @@
 package sanitizer
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
@@ -28,7 +30,7 @@ func NewService(parameterstore parameters.Provider, secretstore secrets.Store) *
 // transform the raw value into secret strategies.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
+func (s *Service) CleanRawParameters(ctx context.Context, params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for name, value := range params {
 		stringVal, err := bun.WriteParameterToString(name, value)
@@ -39,7 +41,7 @@ func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.Ext
 		strategies = append(strategies, strategy)
 	}
 
-	strategies, err := s.CleanParameters(strategies, bun, id)
+	strategies, err := s.CleanParameters(ctx, strategies, bun, id)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +54,7 @@ func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.Ext
 // sanitized value after saving sensitive datat to secrets store.
 // The id argument is used to associate the reference key with the corresponding
 // run or installation record in porter's database.
-func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
+func (s *Service) CleanParameters(ctx context.Context, params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for _, param := range params {
 		if param.Source.Key == secrets.SourceSecret {
@@ -62,7 +64,7 @@ func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBu
 		strategy := parameters.ValueStrategy(param.Name, param.Value)
 		if bun.IsSensitiveParameter(param.Name) {
 			cleaned := sanitizedParam(strategy, id)
-			err := s.secrets.Create(cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
+			err := s.secrets.Create(ctx, cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to save sensitive param to secrete store")
 			}
@@ -102,8 +104,8 @@ func sanitizedParam(param secrets.Strategy, id string) secrets.Strategy {
 }
 
 // RestoreParameterSet resolves the raw parameter data from a secrets store.
-func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
-	params, err := s.parameter.ResolveAll(pset)
+func (s *Service) RestoreParameterSet(ctx context.Context, pset parameters.ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
+	params, err := s.parameter.ResolveAll(ctx, pset)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +127,7 @@ func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 // CleanOutput clears data that's defined as sensitive on the bundle definition
 // by storing the raw data into a secret store and store it's reference key onto
 // the output record.
-func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
+func (s *Service) CleanOutput(ctx context.Context, output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
 	// Skip outputs not defined in the bundle, e.g. io.cnab.outputs.invocationImageLogs
 	_, ok := output.GetSchema(bun)
 	if !ok {
@@ -145,7 +147,7 @@ func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (cl
 
 	secretOt := sanitizedOutput(output)
 
-	err = s.secrets.Create(secrets.SourceSecret, secretOt.Key, string(output.Value))
+	err = s.secrets.Create(ctx, secrets.SourceSecret, secretOt.Key, string(output.Value))
 	if err != nil {
 		return secretOt, err
 	}
@@ -162,10 +164,10 @@ func sanitizedOutput(output claims.Output) claims.Output {
 
 // RestoreOutputs retrieves all raw output value and return the restored outputs
 // record.
-func (s *Service) RestoreOutputs(o claims.Outputs) (claims.Outputs, error) {
+func (s *Service) RestoreOutputs(ctx context.Context, o claims.Outputs) (claims.Outputs, error) {
 	resolved := make([]claims.Output, 0, o.Len())
 	for _, ot := range o.Value() {
-		r, err := s.RestoreOutput(ot)
+		r, err := s.RestoreOutput(ctx, ot)
 		if err != nil {
 			return o, errors.WithMessagef(err, "failed to resolve output %q using key %q", ot.Name, ot.Key)
 		}
@@ -177,11 +179,11 @@ func (s *Service) RestoreOutputs(o claims.Outputs) (claims.Outputs, error) {
 
 // RestoreOutput retrieves the raw output value and return the restored output
 // record.
-func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
+func (s *Service) RestoreOutput(ctx context.Context, output claims.Output) (claims.Output, error) {
 	if output.Key == "" {
 		return output, nil
 	}
-	resolved, err := s.secrets.Resolve(secrets.SourceSecret, string(output.Key))
+	resolved, err := s.secrets.Resolve(ctx, secrets.SourceSecret, string(output.Key))
 	if err != nil {
 		return output, err
 	}

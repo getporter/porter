@@ -128,7 +128,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
-			err := p.TestClaims.UpsertInstallation(i)
+			err := p.TestClaims.UpsertInstallation(context.Background(), i)
 			require.NoError(t, err)
 
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
@@ -137,7 +137,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			ctx := context.Background()
 			require.NoError(t, p.TestClaims.UpdateInstallation(ctx, i))
 
-			err := p.ShowInstallation(ctx, opts)
+			err = p.ShowInstallation(ctx, opts)
 			require.NoError(t, err, "ShowInstallation failed")
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})

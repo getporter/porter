@@ -27,16 +27,17 @@ func TestSensitiveData(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{sensitiveParamName + "=" + sensitiveParamValue, "name=porter-test"}
 
-	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
+	ctx := context.Background()
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
-	i, err := p.Claims.GetInstallation(installOpts.Namespace, installOpts.Name)
+	i, err := p.Claims.GetInstallation(ctx, installOpts.Namespace, installOpts.Name)
 	require.NoError(t, err)
 
-	run, err := p.Claims.GetRun(i.Status.RunID)
+	run, err := p.Claims.GetRun(ctx, i.Status.RunID)
 	require.NoError(t, err)
 
 	for _, param := range i.Parameters.Parameters {
@@ -56,7 +57,7 @@ func TestSensitiveData(t *testing.T) {
 		}
 	}
 
-	outputs, err := p.Claims.GetLastOutputs("", bundleName)
+	outputs, err := p.Claims.GetLastOutputs(ctx, "", bundleName)
 	require.NoError(t, err, "GetLastOutput failed")
 	mylogs, ok := outputs.GetByName("mylogs")
 	require.True(t, ok, "expected mylogs output to be persisted")

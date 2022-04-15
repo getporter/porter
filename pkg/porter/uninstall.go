@@ -94,7 +94,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return err
 	}
 
-	actionArgs, err := deperator.PrepareRootActionArguments()
+	actionArgs, err := deperator.PrepareRootActionArguments(ctx)
 	if err != nil {
 		return err
 	}

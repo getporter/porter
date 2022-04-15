@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +28,7 @@ type TestClaimProvider struct {
 }
 
 func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	return NewTestClaimProviderFor(t, testStore)
 }
@@ -42,7 +42,7 @@ func NewTestClaimProviderFor(t *testing.T, testStore storage.TestStore) *TestCla
 }
 
 func (p *TestClaimProvider) Teardown() error {
-	return p.TestStore.Teardown(context.Background())
+	return p.TestStore.Teardown()
 }
 
 // CreateInstallation creates a new test installation and saves it.
