@@ -1,7 +1,7 @@
 name: hello-llama
 version: 0.1.1
 description: "An example Porter bundle with parameters"
-registry: getporter
+registry: "localhost:5000"
 
 mixins:
   - exec
@@ -17,18 +17,18 @@ install:
       command: ./helpers.sh
       arguments:
         - install
-        - "'{{ bundle.parameters.name }}'"
+        - "{{ bundle.parameters.name }}"
 
 upgrade:
   - exec:
       command: ./helpers.sh
       arguments:
         - upgrade
-        - "'{{ bundle.parameters.name }}'"
+        - "{{ bundle.parameters.name }}"
 
 uninstall:
   - exec:
       command: ./helpers.sh
       arguments:
         - uninstall
-        - "'{{ bundle.parameters.name }}'"
+        - "{{ bundle.parameters.name }}"
