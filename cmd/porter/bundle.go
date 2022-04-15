@@ -79,7 +79,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.StringVar(&opts.Driver, "driver", porter.BuildDriverDefault,
 		fmt.Sprintf("Driver for building the invocation image. Allowed values are: %s", strings.Join(porter.BuildDriverAllowedValues, ", ")))
 	f.MarkHidden("driver") // Hide the driver flag since there aren't any choices to make right now
-	f.StringArrayVar(&opts.BuildArgs, "build-arg", nil,
+	f.StringSliceVarP(&opts.BuildArgs, "build-arg", "b", nil,
 		"Set build arguments in the template Dockerfile (format: NAME=VALUE). May be specified multiple times.")
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
