@@ -446,7 +446,7 @@ func Install() {
 
 	// Copy porter binaries
 	mgx.Must(os.MkdirAll(porterHome, pkg.FileModeDirectory))
-	mgx.Must(shx.Copy(filepath.Join("bin", "porter"+xplat.FileExt()), porterHome))
+	mgx.Must(shx.Copy(filepath.Join("bin", "porter*"), porterHome))
 	mgx.Must(shx.Copy(filepath.Join("bin", "runtimes"), porterHome, shx.CopyRecursive))
 
 	// Copy mixin binaries

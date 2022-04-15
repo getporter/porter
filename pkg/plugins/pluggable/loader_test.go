@@ -12,7 +12,7 @@ import (
 
 func TestPluginLoader_SelectPlugin(t *testing.T) {
 	c := config.NewTestConfig(t)
-	l := NewPluginLoader(c.Config, func(string, interface{}) (plugins.Plugin, error) {
+	l := NewPluginLoader(c.Config, func(ctx context.Context, key string, config interface{}) (protocol plugins.Plugin, err error) {
 		return nil, nil
 	})
 

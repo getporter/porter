@@ -51,12 +51,12 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	}
 }
 
-func CreateInternalPlugin(ctx *portercontext.Context, key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
+func CreateInternalPlugin(ctx context.Context, c *portercontext.Context, key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	switch key {
 	case mongodb_docker.PluginKey:
-		return mongodb_docker.NewPlugin(ctx, pluginConfig)
+		return mongodb_docker.NewPlugin(ctx, c, pluginConfig)
 	case mongodb.PluginKey:
-		return mongodb.NewPlugin(ctx, pluginConfig)
+		return mongodb.NewPlugin(ctx, c, pluginConfig)
 	default:
 		return nil, errors.Errorf("unsupported internal storage plugin specified %s", key)
 	}
@@ -69,8 +69,8 @@ func (s *Store) Connect(ctx context.Context) error {
 
 	pluginType := NewStoragePluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, func(key string, config interface{}) (porterplugins.Plugin, error) {
-		return CreateInternalPlugin(s.Context, key, config)
+	l := pluggable.NewPluginLoader(s.Config, func(ctx context.Context, key string, config interface{}) (porterplugins.Plugin, error) {
+		return CreateInternalPlugin(ctx, s.Context, key, config)
 	})
 	raw, cleanup, err := l.Load(ctx, pluginType)
 	if err != nil {

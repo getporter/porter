@@ -50,7 +50,7 @@ func (s *TestStoragePlugin) Setup(ctx context.Context) error {
 	err := s.useDevDatabase(ctx)
 	if err != nil {
 		// Didn't find a dev mongo instance, so let's run one just for this test
-		return s.runTestDatabase()
+		return s.runTestDatabase(ctx)
 	}
 
 	return s.Store.RemoveDatabase() // Start with a fresh test database
@@ -61,7 +61,7 @@ func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 		URL:     fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
 		Timeout: 10,
 	}
-	devMongo := mongodb.NewStore(s.tc.Context, cfg)
+	devMongo := mongodb.NewStore(ctx, s.tc.Context, cfg)
 	err := devMongo.Connect(ctx)
 	if err != nil {
 		return err
@@ -76,8 +76,8 @@ func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 	return nil
 }
 
-func (s *TestStoragePlugin) runTestDatabase() error {
-	testMongo, err := mongodb_docker.EnsureMongoIsRunning(s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database, 10)
+func (s *TestStoragePlugin) runTestDatabase(ctx context.Context) error {
+	testMongo, err := mongodb_docker.EnsureMongoIsRunning(ctx, s.tc.Context, "porter-test-mongodb-plugin", "27017", "", s.database, 10)
 	if err != nil {
 		return err
 	}

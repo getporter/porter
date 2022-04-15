@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"get.porter.sh/porter/pkg/tracing"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
@@ -25,6 +27,8 @@ var (
 type Store struct {
 	*portercontext.Context
 
+	ctx      context.Context // yeah I know...
+	log      tracing.TraceLogger
 	url      string
 	database string
 	client   *mongo.Client
@@ -32,13 +36,18 @@ type Store struct {
 }
 
 // NewStore creates a new storage engine that uses MongoDB.
-func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
+func NewStore(ctx context.Context, c *portercontext.Context, cfg PluginConfig) *Store {
 	timeout := cfg.Timeout
 	if timeout <= 0 {
 		timeout = 10 // default to 10 seconds
 	}
+
+	ctx, log := c.NewRootLogger(context.Background(), "porter.storage.mongodb", "RunPlugin")
+
 	return &Store{
 		Context: c,
+		ctx:     ctx,
+		log:     log,
 		url:     cfg.URL,
 		timeout: time.Duration(timeout) * time.Second,
 	}
@@ -51,7 +60,7 @@ func (s *Store) Connect(ctx context.Context) error {
 
 	connStr, err := connstring.ParseAndValidate(s.url)
 	if err != nil {
-		return errors.Wrapf(err, "invalid mongodb connection string %s", s.url)
+		return s.log.Error(errors.Wrapf(err, "invalid mongodb connection string %s", s.url))
 	}
 
 	if connStr.Database == "" {
@@ -60,16 +69,14 @@ func (s *Store) Connect(ctx context.Context) error {
 		s.database = strings.TrimSuffix(connStr.Database, "/")
 	}
 
-	if s.Debug {
-		fmt.Fprintf(s.Err, "Connecting to mongo database %s at %s\n", s.database, connStr.Hosts)
-	}
+	s.log.Debugf("Connecting to mongo database %s at %s\n", s.database, connStr.Hosts)
 
 	cxt, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
 	client, err := mongo.Connect(cxt, options.Client().ApplyURI(s.url))
 	if err != nil {
-		return err
+		return s.log.Errorf("error connecting to mongo: %w", err)
 	}
 
 	s.client = client
@@ -77,6 +84,8 @@ func (s *Store) Connect(ctx context.Context) error {
 }
 
 func (s *Store) Close(ctx context.Context) error {
+	s.log.EndSpan()
+	s.log.Close()
 	if s.client != nil {
 		cxt, cancel := context.WithTimeout(ctx, s.timeout)
 		defer cancel()
@@ -84,6 +93,7 @@ func (s *Store) Close(ctx context.Context) error {
 		s.client.Disconnect(cxt)
 		s.client = nil
 	}
+
 	return nil
 }
 

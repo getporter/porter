@@ -61,7 +61,10 @@ type Context struct {
 	timestampLogs bool
 
 	// handles sending tracing data to an otel collector
-	tracer *tracing.Tracer
+	tracer tracing.Tracer
+
+	// indicates if we have created a real tracer yet (instead of noop)
+	tracerInitalized bool
 
 	// handles send log data to the console/logfile
 	logger *zap.Logger
@@ -97,12 +100,12 @@ func New() *Context {
 func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
 	childCtx, span := c.tracer.Start(ctx, op)
 	span.SetAttributes(attrs...)
-	return tracing.NewRootLogger(childCtx, span, c.logger, *c.tracer)
+	return tracing.NewRootLogger(childCtx, span, c.logger, c.tracer)
 }
 
 // NewRootLogger creates a new TraceLogger that identifies with a separate component from porter, such as a plugin or mixin.
 func (c *Context) NewRootLogger(ctx context.Context, serviceName string, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
-	tracer, err := c.createTracer(ctx, serviceName, c.logger, c.logCfg)
+	tracer, _, err := c.createTracer(ctx, serviceName, c.logger, c.logCfg)
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("could not create tracer for %s", serviceName))
 		tracer = createNoopTracer()
@@ -145,7 +148,7 @@ type LogConfiguration struct {
 // ConfigureLogging applies different configuration to our logging and tracing.
 func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	// Cleanup in case logging has been configured before
-	c.logCfg.LogLevel = cfg.LogLevel
+	c.logCfg = cfg
 
 	if len(cfg.LogCorrelationID) > 0 {
 		c.correlationId = cfg.LogCorrelationID
@@ -171,7 +174,7 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 
 	if cfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
-		if c.tracer == nil {
+		if !c.tracerInitalized {
 			err = c.configureTelemetry(ctx, "porter", tmpLog, cfg)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
@@ -179,7 +182,7 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 		}
 	} else {
 		tracer := createNoopTracer()
-		c.tracer = &tracer
+		c.tracer = tracer
 	}
 
 	c.logger = tmpLog
@@ -229,12 +232,8 @@ func (c *Context) Close() error {
 		c.logFile = nil
 	}
 
-	if c.tracer != nil {
-		if err := c.tracer.Close(context.TODO()); err != nil {
-			return err
-		}
-
-		c.tracer = nil
+	if err := c.tracer.Close(context.TODO()); err != nil {
+		return err
 	}
 
 	return nil

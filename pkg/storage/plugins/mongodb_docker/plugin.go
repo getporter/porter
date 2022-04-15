@@ -1,6 +1,8 @@
 package mongodb_docker
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/mitchellh/mapstructure"
@@ -20,7 +22,7 @@ type PluginConfig struct {
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin
-func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
+func NewPlugin(ctx context.Context, c *portercontext.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",
@@ -30,5 +32,5 @@ func NewPlugin(cxt *portercontext.Context, pluginConfig interface{}) (plugins.St
 		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)
 	}
 
-	return NewStore(cxt, cfg), nil
+	return NewStore(ctx, c, cfg), nil
 }

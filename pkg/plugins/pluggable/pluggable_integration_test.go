@@ -52,7 +52,7 @@ func TestPlugins_CatchStderr(t *testing.T) {
 			},
 		}}
 
-		createInternalPlugin := func(string, interface{}) (plugins.Plugin, error) {
+		createInternalPlugin := func(context.Context, string, interface{}) (plugins.Plugin, error) {
 			return nil, nil
 		}
 		ll := NewPluginLoader(c.Config, createInternalPlugin)

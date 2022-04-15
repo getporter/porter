@@ -25,6 +25,6 @@ func (p Plugin) Close(context.Context) error {
 }
 
 // NewPlugin creates an instance of the internal plugin secrets.porter.host
-func NewPlugin() Plugin {
+func NewPlugin(ctx context.Context) Plugin {
 	return Plugin{SecretStore: &host.SecretStore{}}
 }

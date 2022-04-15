@@ -57,9 +57,9 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 	return s.plugin.Resolve(keyName, keyValue)
 }
 
-func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
+func createInternalPlugin(ctx context.Context, key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	if key == host.PluginKey {
-		return host.NewPlugin(), nil
+		return host.NewPlugin(ctx), nil
 	}
 
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)

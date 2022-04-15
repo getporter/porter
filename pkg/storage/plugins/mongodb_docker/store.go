@@ -25,9 +25,9 @@ type Store struct {
 	config PluginConfig
 }
 
-func NewStore(cxt *portercontext.Context, cfg PluginConfig) *Store {
+func NewStore(ctx context.Context, c *portercontext.Context, cfg PluginConfig) *Store {
 	return &Store{
-		context: cxt,
+		context: c,
 		config:  cfg,
 	}
 }
@@ -41,7 +41,7 @@ func (s *Store) Connect(ctx context.Context) error {
 	container := "porter-mongodb-docker-plugin"
 	dataVol := container + "-data"
 
-	conn, err := EnsureMongoIsRunning(s.context, container, s.config.Port, dataVol, s.config.Database, s.config.Timeout)
+	conn, err := EnsureMongoIsRunning(ctx, s.context, container, s.config.Port, dataVol, s.config.Database, s.config.Timeout)
 	if err != nil {
 		return err
 	}
@@ -64,9 +64,7 @@ func (s *Store) Close(ctx context.Context) error {
 	return nil
 }
 
-func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {
-	ctx := context.TODO()
-
+func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {
 	if dataVol != "" {
 		err := exec.Command("docker", "volume", "inspect", dataVol).Run()
 		if err != nil {
@@ -156,7 +154,7 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 		case <-timeout.Done():
 			return nil, errors.New("timeout waiting for local mongodb daemon to be ready")
 		default:
-			conn := mongodb.NewStore(c, mongoPluginCfg)
+			conn := mongodb.NewStore(ctx, c, mongoPluginCfg)
 			err := conn.Connect(ctx)
 			if err == nil {
 				return conn, nil

@@ -35,7 +35,7 @@ type PluginLoader struct {
 	createInternalPlugin InternalPluginHandler
 }
 
-type InternalPluginHandler func(key string, config interface{}) (protocol plugins.Plugin, err error)
+type InternalPluginHandler func(ctx context.Context, key string, config interface{}) (protocol plugins.Plugin, err error)
 
 func NewPluginLoader(c *config.Config, createInternalPlugin InternalPluginHandler) *PluginLoader {
 	return &PluginLoader{
@@ -64,7 +64,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 	if l.SelectedPluginKey.IsInternal {
 		span.Debug("Selected plugin is internal")
 
-		intPlugin, err := l.createInternalPlugin(l.SelectedPluginKey.String(), l.SelectedPluginConfig)
+		intPlugin, err := l.createInternalPlugin(ctx, l.SelectedPluginKey.String(), l.SelectedPluginConfig)
 		if err != nil {
 			return nil, func() {}, span.Error(err)
 		}
@@ -116,6 +116,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 	})
 	cleanup := func() {
 		client.Kill()
+		pluginLogger.EndSpan()
 		pluginLogger.Close()
 	}
 
