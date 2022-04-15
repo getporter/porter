@@ -1,6 +1,8 @@
 package feed
 
 import (
+	"context"
+	"net/url"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -70,4 +72,48 @@ func TestMixinFeed_Search_Canary(t *testing.T) {
 	result = f.Search("helm", "v2-canary")
 	require.NotNil(t, result)
 	assert.Equal(t, "v2-canary", result.Version)
+}
+
+func TestMixinFileset_FindDownloadURL(t *testing.T) {
+	t.Run("darwin/arm64 fallback to amd64", func(t *testing.T) {
+		link, _ := url.Parse("https://example.com/mymixin-darwin-amd64")
+
+		fs := MixinFileset{
+			Mixin: "mymixin",
+			Files: []*MixinFile{
+				{URL: link},
+			},
+		}
+
+		result := fs.FindDownloadURL(context.Background(), "darwin", "arm64")
+		assert.Contains(t, result.String(), "amd64", "When an arm64 binary is not available for mac, fallback to using an amd64")
+	})
+
+	t.Run("darwin/arm64 binary exists", func(t *testing.T) {
+		link, _ := url.Parse("https://example.com/mymixin-darwin-arm64")
+
+		fs := MixinFileset{
+			Mixin: "mymixin",
+			Files: []*MixinFile{
+				{URL: link},
+			},
+		}
+
+		result := fs.FindDownloadURL(context.Background(), "darwin", "arm64")
+		assert.Contains(t, result.String(), "arm64", "When an arm64 binary is available, use it")
+	})
+
+	t.Run("non-darwin arm64 no special handling", func(t *testing.T) {
+		link, _ := url.Parse("https://example.com/mymixin-myos-amd64")
+
+		fs := MixinFileset{
+			Mixin: "mymixin",
+			Files: []*MixinFile{
+				{URL: link},
+			},
+		}
+
+		result := fs.FindDownloadURL(context.Background(), "myos", "arm64")
+		assert.Nil(t, result)
+	})
 }

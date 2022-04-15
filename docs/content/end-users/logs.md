@@ -51,7 +51,7 @@ ID** uniquely identifies a run, or execution of a bundle.
 ```console
 $ porter show whalegap
 Name: whalegap
-Bundle: getporter/whalegap
+Bundle: ghcr.io/getporter/examples/whalegap
 Version: 0.1.0
 Created: 2021-01-27
 Modified: 2021-03-09

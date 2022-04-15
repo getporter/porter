@@ -26,8 +26,8 @@ porter install [INSTALLATION] [flags]
 
 ```
   porter install
-  porter install MyAppFromReference --reference getporter/kubernetes:v0.1.0 --namespace dev
-  porter install --reference localhost:5000/getporter/kubernetes:v0.1.0 --insecure-registry --force
+  porter install MyAppFromReference --reference ghcr.io/getporter/examples/kubernetes:v0.2.0 --namespace dev
+  porter install --reference localhost:5000/ghcr.io/getporter/examples/kubernetes:v0.2.0 --insecure-registry --force
   porter install MyAppInDev --file myapp/bundle.json
   porter install --parameter-set azure --param test-mode=true --param header-color=blue
   porter install --cred azure --cred kubernetes

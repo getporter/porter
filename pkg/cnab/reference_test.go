@@ -78,8 +78,8 @@ func TestParseOCIReference(t *testing.T) {
 		WantDigest digest.Digest
 		WantErr    string
 	}{
-		{Name: "version", Reference: "getporter/porter-hello:v0.1.0", WantRepo: "getporter/porter-hello", WantTag: "v0.1.0"},
-		{Name: "digest", Reference: "getporter/porter-hello@sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9", WantRepo: "getporter/porter-hello", WantDigest: "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"},
+		{Name: "version", Reference: "ghcr.io/getporter/examples/porter-hello:v0.2.0", WantRepo: "ghcr.io/getporter/examples/porter-hello", WantTag: "v0.2.0"},
+		{Name: "digest", Reference: "ghcr.io/getporter/examples/porter-hello@sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9", WantRepo: "ghcr.io/getporter/examples/porter-hello", WantDigest: "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"},
 		{Name: "invalid", Reference: "@v1", WantErr: "invalid reference format"},
 	}
 
@@ -100,18 +100,18 @@ func TestParseOCIReference(t *testing.T) {
 }
 
 func TestOCIReference_MarshalJSON(t *testing.T) {
-	r := MustParseOCIReference("getporter/porter-hello:v0.1.1")
+	r := MustParseOCIReference("ghcr.io/getporter/examples/porter-hello:v0.2.0")
 	data, err := json.Marshal(r)
 	require.NoError(t, err)
-	assert.Equal(t, `"getporter/porter-hello:v0.1.1"`, string(data))
+	assert.Equal(t, `"ghcr.io/getporter/examples/porter-hello:v0.2.0"`, string(data))
 }
 
 func TestOCIReference_UnmarshalJSON(t *testing.T) {
-	ref := `"getporter/porter-hello:v0.1.1"`
+	ref := `"ghcr.io/getporter/examples/porter-hello:v0.2.0"`
 	var r OCIReference
 	err := json.Unmarshal([]byte(ref), &r)
 	require.NoError(t, err)
-	assert.Equal(t, "getporter/porter-hello:v0.1.1", r.String())
+	assert.Equal(t, "ghcr.io/getporter/examples/porter-hello:v0.2.0", r.String())
 }
 
 func TestOCIReference_WithVersion(t *testing.T) {

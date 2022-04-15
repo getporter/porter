@@ -53,8 +53,8 @@ contrib.go.opencensus.io/exporter/stackdriver v0.12.1/go.mod h1:iwB6wGarfphGGe/e
 contrib.go.opencensus.io/integrations/ocsql v0.1.4/go.mod h1:8DsSdjz3F+APR+0z0WkU1aRorQCFfRxvqjUUPMbF3fE=
 contrib.go.opencensus.io/resource v0.1.1/go.mod h1:F361eGI91LCmW1I/Saf+rX0+OFcigGlFvXwEGEnkRLA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-get.porter.sh/magefiles v0.1.2 h1:9AybljWeUDGKhMwwHYa8wnvtZ1VDPv5i3uHZTwnIysI=
-get.porter.sh/magefiles v0.1.2/go.mod h1:wtCIGWp79ARl8Agt1JE4Wchtb0Pn9fea/7LbkOnFbEc=
+get.porter.sh/magefiles v0.1.3 h1:91Y7vFDHGmMBbRfHQqEcIlqpp/RfDCMhyHGVusTYlmE=
+get.porter.sh/magefiles v0.1.3/go.mod h1:Whw/DSX8dcgn7dUPb6csbY6PtuTy1wujwFR2G6ONf20=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 git.apache.org/thrift.git v0.12.0/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/AdaLogics/go-fuzz-headers v0.0.0-20210715213245-6c3934b029d8/go.mod h1:CzsSbkDixRphAF5hS6wbMKq0eI6ccJRb7/A0M6JBnwg=
@@ -276,8 +276,8 @@ github.com/carolynvs/aferox v0.3.0 h1:CMT50zX88amTMbFfFIWSTKRVRaOw6sejUMbbKiCD4z
 github.com/carolynvs/aferox v0.3.0/go.mod h1:eb7CHGIO33CCZS//xtnblvPZbuuZMv0p1VbhiSwZnH4=
 github.com/carolynvs/datetime-printer v0.2.0 h1:Td3FU4YGzx0OogCMhCmLBTUTDPQcq0xlgCeMhAKZmMc=
 github.com/carolynvs/datetime-printer v0.2.0/go.mod h1:p9W8ZUhmQUOVD5kiDuGXwRG65/nTkZWlLylY7s+Qw2k=
-github.com/carolynvs/magex v0.7.0 h1:z5PaWogvA/kOHMYueXqlQBobXt32N/a7kZXPvK9V728=
-github.com/carolynvs/magex v0.7.0/go.mod h1:vZB3BkRfkd5ZMtkxJkCGbdFyWGoZiuNPKhx6uEQARmY=
+github.com/carolynvs/magex v0.7.2 h1:6IpoxUorSDOXtZmd72ExPCzQBxkeUj09JwJfnzf+9y8=
+github.com/carolynvs/magex v0.7.2/go.mod h1:vZB3BkRfkd5ZMtkxJkCGbdFyWGoZiuNPKhx6uEQARmY=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e/go.mod h1:oDpT4efm8tSYHXV5tHSdRvBet/b/QzxZ+XyyPehvm3A=
 github.com/cbroglie/mustache v1.0.1 h1:ivMg8MguXq/rrz2eu3tw6g3b16+PQhoTn6EZAhst2mw=

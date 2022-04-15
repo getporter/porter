@@ -17,9 +17,6 @@ parameters:
   - name: skipTests
     type: boolean
     default: false
-  - name: publishExamples
-    type: boolean
-    default: true
 
 stages:
   - stage: Validate
@@ -180,35 +177,3 @@ stages:
               command: login
           - script: PORTER_REGISTRY=${{parameters.registry}} mage PublishImages
             displayName: "Publish Docker Images to ${{parameters.registry}}"
-
-      - job: publish_example_bundles
-        displayName: "Publish Example Bundles"
-        condition: and(succeeded(), ${{ parameters.publishExamples }})
-        pool:
-          vmImage: ${{variables.vmImage}}
-        steps:
-          - task: GoTool@0
-            displayName: "Set Go Version"
-            inputs:
-              version: ${{parameters.goVersion}}
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Native Porter Binaries"
-            inputs:
-              source: current
-              artifact: build-bin
-              path: bin
-          - script: go run mage.go ConfigureAgent SetBinExecutable
-            displayName: "Setup Bin"
-          - bash: |
-              set -e
-              sudo make ajv
-              make build-examples validate-examples
-            displayName: "Build Example Bundles"
-          - task: Docker@1
-            displayName: Docker Login
-            inputs:
-              containerRegistryType: Container Registry
-              dockerRegistryEndpoint: ${{parameters.registry}} # Log in with the saved credentials for the destination registry
-              command: login
-          - script: PORTER_REGISTRY=${{parameters.registry}} make publish-examples
-            displayName: "Publish Example Bundles"

@@ -64,7 +64,7 @@ mysql   getporter/mysql:v0.1.3
 For this quickstart we are going to use the hello world bundle which is a bit simpler:
 
 ```console
-$ porter explain --reference getporter/porter-hello:v0.1.0
+$ porter explain --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 Name: HELLO
 Description: An example Porter configuration
 Version: 0.1.0
@@ -75,10 +75,10 @@ Version: 0.1.0
 To install a bundle, you use the `porter install` command. 
 
 ```
-porter install porter-hello --reference getporter/porter-hello:v0.1.0
+porter install porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 ```
 
-In this example, you are installing the v0.1.0 version of the getporter/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
+In this example, you are installing the v0.1.0 version of the ghcr.io/getporter/examples/porter-hello bundle from its location in the default registry (Docker Hub) and setting the installation name to porter-hello.
 
 ## List Bundle Installations
 
@@ -99,8 +99,8 @@ To see information about an installation, use the `porter show` command with the
 ```console
 $ porter show porter-hello
 Name: hello
-Bundle: getporter/porter-hello
-Version: 0.1.1
+Bundle: ghcr.io/getporter/examples/porter-hello
+Version: 0.2.0
 Created: 2021-05-24
 Modified: 2021-05-24
 
@@ -120,7 +120,7 @@ Most bundles are written such that a specific version of the bundle corresponds 
 So to upgrade the application to a new version you need to specify a newer version of the bundle.
 
 ```console
-$ porter upgrade porter-hello --reference getporter/porter-hello:v0.1.1
+$ porter upgrade porter-hello --reference ghcr.io/getporter/examples/porter-hello:v0.2.0
 upgrading porter-hello...
 executing upgrade action from porter-hello (installation: porter-hello)
 Upgrade Hello World

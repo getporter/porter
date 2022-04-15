@@ -2,6 +2,7 @@ package porter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -75,8 +76,8 @@ func (p *Porter) ListMixins() ([]mixin.Metadata, error) {
 	return mixins, nil
 }
 
-func (p *Porter) InstallMixin(opts mixin.InstallOptions) error {
-	err := p.Mixins.Install(opts.InstallOptions)
+func (p *Porter) InstallMixin(ctx context.Context, opts mixin.InstallOptions) error {
+	err := p.Mixins.Install(ctx, opts.InstallOptions)
 	if err != nil {
 		return err
 	}

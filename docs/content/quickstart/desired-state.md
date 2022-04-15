@@ -12,23 +12,29 @@ This QuickStart walks you through how to manage credential sets, parameter sets 
 ## Explain the bundle
 
 First, let's look at the bundle used in this QuickStart.
-In the previous QuickStart, we used the 0.1.0 version of the bundle which only had a credential defined.
-Now we will use the 0.2.0 version which has both a parameter and a credential.
 
 ```console
-$ porter explain --reference getporter/credentials-tutorial:v0.2.0
-Name: credentials-tutorial
+$ porter explain --reference ghcr.io/getporter/examples/credentials-tutorial:v0.3.0
+Name: examples/credentials-tutorial
 Description: An example Porter bundle with credentials. Uses your GitHub token to retrieve your public user profile from GitHub.
-Version: 0.2.0
-Porter Version: v0.38.6
+Version: 0.3.0
+Porter Version: v1.0.0-alpha.19
 
 Credentials:
-Name           Description                                                                                                   Required   Applies To
-github-token   A GitHub Personal Access Token. Generate one at https://github.com/settings/tokens. No scopes are required.   true       install,upgrade
+--------------------------------------------------------------------------------
+  Name          Description                          Required  Applies To
+--------------------------------------------------------------------------------
+  github-token  A GitHub Personal Access             true      install,upgrade
+                Token. Generate one at
+                https://github.com/settings/tokens.
+                No scopes are required.
 
 Parameters:
-Name   Description                                        Type     Default   Required   Applies To
-user   A GitHub username. Defaults to the current user.   string             false      install,upgrade
+------------------------------------------------------------------------------------
+  Name  Description                     Type    Default  Required  Applies To
+------------------------------------------------------------------------------------
+  user  A GitHub username. Defaults to  string           false     install,upgrade
+        the current user.
 ```
 
 ## Define Credential and Parameter Sets
@@ -107,7 +113,7 @@ schemaVersion: 1.0.0
 name: desired-state
 bundle:
   repository: getporter/credentials-tutorial
-  version: 0.2.0
+  version: 0.3.0
 parameterSets:
   - credentials-tutorial
 credentialSets:
@@ -199,7 +205,7 @@ schemaVersion: 1.0.0
 name: desired-state
 bundle:
   repository: getporter/credentials-tutorial
-  version: 0.2.0
+  version: 0.3.0
 parameterSets:
   - credentials-tutorial
 credentialSets:

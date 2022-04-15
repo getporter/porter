@@ -94,7 +94,7 @@ By default mixins are downloaded from the official Porter mixin feed at https://
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.InstallMixin(opts)
+			return p.InstallMixin(cmd.Context(), opts)
 		},
 	}
 

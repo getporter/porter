@@ -66,10 +66,10 @@ $ docker run -it --rm \
     -v $HOME/.porter/claims:/app/.porter/claims \
     -v $HOME/.porter/results:/app/.porter/results \
     -v $HOME/.porter/outputs:/app/.porter/outputs \
-    getporter/porter install -t getporter/porter-hello:0.1.0
+    ghcr.io/getporter/porter install -r ghcr.io/getporter/examples/porter-hello:0.2.0
 
 installing hello...
-executing install action from hello (installation: hello)
+executing install action from examples/porter-hello (installation: hello)
 Install Hello World
 Hello World
 execution completed successfully!
