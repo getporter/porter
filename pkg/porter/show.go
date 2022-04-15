@@ -46,13 +46,13 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 		return claims.Installation{}, nil, err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return claims.Installation{}, nil, err
 	}
 
 	if installation.Status.RunID != "" {
-		run, err := p.Claims.GetRun(installation.Status.RunID)
+		run, err := p.Claims.GetRun(ctx, installation.Status.RunID)
 		if err != nil {
 			return claims.Installation{}, nil, err
 		}

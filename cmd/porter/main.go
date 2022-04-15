@@ -54,11 +54,11 @@ func main() {
 					attribute.Bool("panic", true),
 					attribute.String("stackTrace", string(debug.Stack())))
 				log.EndSpan()
-				p.Close()
+				p.Close(ctx)
 				os.Exit(1)
 			} else {
 				log.EndSpan()
-				p.Close()
+				p.Close(ctx)
 			}
 		}()
 
@@ -148,7 +148,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			if err != nil {
 				return err
 			}
-			
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

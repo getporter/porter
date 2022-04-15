@@ -35,7 +35,7 @@ func NewClaimStore(datastore storage.Store) ClaimStore {
 	}
 }
 
-func (s ClaimStore) Initialize() error {
+func (s ClaimStore) Initialize(ctx context.Context) error {
 	opts := storage.EnsureIndexOptions{
 		Indices: []storage.Index{
 			// query installations by a namespace (list) or namespace + name (get)
@@ -55,7 +55,7 @@ func (s ClaimStore) Initialize() error {
 		},
 	}
 
-	return s.store.EnsureIndex(opts)
+	return s.store.EnsureIndex(ctx, opts)
 }
 
 func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, name string, labels map[string]string) ([]Installation, error) {
@@ -68,11 +68,11 @@ func (s ClaimStore) ListInstallations(ctx context.Context, namespace string, nam
 		Filter: storage.CreateListFiler(namespace, name, labels),
 	}
 
-	err := s.store.Find(CollectionInstallations, findOpts, &out)
+	err := s.store.Find(ctx, CollectionInstallations, findOpts, &out)
 	return out, err
 }
 
-func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[string][]Result, error) {
+func (s ClaimStore) ListRuns(ctx context.Context, namespace string, installation string) ([]Run, map[string][]Result, error) {
 	var runs []Run
 	var err error
 	var results []Result
@@ -84,12 +84,12 @@ func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[
 			"installation": installation,
 		},
 	}
-	err = s.store.Find(CollectionRuns, opts, &runs)
+	err = s.store.Find(ctx, CollectionRuns, opts, &runs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = s.store.Find(CollectionResults, opts, &results)
+	err = s.store.Find(ctx, CollectionResults, opts, &results)
 	if err != nil {
 		return runs, nil, err
 	}
@@ -109,7 +109,7 @@ func (s ClaimStore) ListRuns(namespace string, installation string) ([]Run, map[
 	return runs, resultsMap, err
 }
 
-func (s ClaimStore) ListResults(runID string) ([]Result, error) {
+func (s ClaimStore) ListResults(ctx context.Context, runID string) ([]Result, error) {
 	var out []Result
 	opts := storage.FindOptions{
 		Sort: []string{"_id"},
@@ -117,11 +117,11 @@ func (s ClaimStore) ListResults(runID string) ([]Result, error) {
 			"runId": runID,
 		},
 	}
-	err := s.store.Find(CollectionResults, opts, &out)
+	err := s.store.Find(ctx, CollectionResults, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) ListOutputs(resultID string) ([]Output, error) {
+func (s ClaimStore) ListOutputs(ctx context.Context, resultID string) ([]Output, error) {
 	var out []Output
 	opts := storage.FindOptions{
 		Sort: []string{"resultId", "name"},
@@ -129,11 +129,11 @@ func (s ClaimStore) ListOutputs(resultID string) ([]Output, error) {
 			"resultId": resultID,
 		},
 	}
-	err := s.store.Find(CollectionOutputs, opts, &out)
+	err := s.store.Find(ctx, CollectionOutputs, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetInstallation(namespace string, name string) (Installation, error) {
+func (s ClaimStore) GetInstallation(ctx context.Context, namespace string, name string) (Installation, error) {
 	var out Installation
 	opts := storage.FindOptions{
 		Filter: bson.M{
@@ -141,25 +141,25 @@ func (s ClaimStore) GetInstallation(namespace string, name string) (Installation
 			"name":      name,
 		},
 	}
-	err := s.store.FindOne(CollectionInstallations, opts, &out)
+	err := s.store.FindOne(ctx, CollectionInstallations, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetRun(id string) (Run, error) {
+func (s ClaimStore) GetRun(ctx context.Context, id string) (Run, error) {
 	var out Run
 	opts := storage.GetOptions{ID: id}
-	err := s.store.Get(CollectionRuns, opts, &out)
+	err := s.store.Get(ctx, CollectionRuns, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetResult(id string) (Result, error) {
+func (s ClaimStore) GetResult(ctx context.Context, id string) (Result, error) {
 	var out Result
 	opts := storage.GetOptions{ID: id}
-	err := s.store.Get(CollectionResults, opts, &out)
+	err := s.store.Get(ctx, CollectionResults, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetLastRun(namespace string, installation string) (Run, error) {
+func (s ClaimStore) GetLastRun(ctx context.Context, namespace string, installation string) (Run, error) {
 	var out []Run
 	opts := storage.FindOptions{
 		Sort:  []string{"-_id"},
@@ -169,7 +169,7 @@ func (s ClaimStore) GetLastRun(namespace string, installation string) (Run, erro
 			"installation": installation,
 		},
 	}
-	err := s.store.Find(CollectionRuns, opts, &out)
+	err := s.store.Find(ctx, CollectionRuns, opts, &out)
 	if err != nil {
 		return Run{}, err
 	}
@@ -179,7 +179,7 @@ func (s ClaimStore) GetLastRun(namespace string, installation string) (Run, erro
 	return out[0], err
 }
 
-func (s ClaimStore) GetLastOutput(namespace string, installation string, name string) (Output, error) {
+func (s ClaimStore) GetLastOutput(ctx context.Context, namespace string, installation string, name string) (Output, error) {
 	var out Output
 	opts := storage.FindOptions{
 		Sort:  []string{"-_id"},
@@ -190,11 +190,11 @@ func (s ClaimStore) GetLastOutput(namespace string, installation string, name st
 			"name":         name,
 		},
 	}
-	err := s.store.FindOne(CollectionOutputs, opts, &out)
+	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
 	return out, err
 }
 
-func (s ClaimStore) GetLastOutputs(namespace string, installation string) (Outputs, error) {
+func (s ClaimStore) GetLastOutputs(ctx context.Context, namespace string, installation string) (Outputs, error) {
 	var groupedOutputs []struct {
 		ID         string `json:"_id"`
 		LastOutput Output `json:"lastOutput"`
@@ -220,7 +220,7 @@ func (s ClaimStore) GetLastOutputs(namespace string, installation string) (Outpu
 			}},
 		},
 	}
-	err := s.store.Aggregate(CollectionOutputs, opts, &groupedOutputs)
+	err := s.store.Aggregate(ctx, CollectionOutputs, opts, &groupedOutputs)
 
 	lastOutputs := make([]Output, len(groupedOutputs))
 	for i, groupedOutput := range groupedOutputs {
@@ -230,7 +230,7 @@ func (s ClaimStore) GetLastOutputs(namespace string, installation string) (Outpu
 	return NewOutputs(lastOutputs), err
 }
 
-func (s ClaimStore) GetLogs(runID string) (string, bool, error) {
+func (s ClaimStore) GetLogs(ctx context.Context, runID string) (string, bool, error) {
 	var out Output
 	opts := storage.FindOptions{
 		Sort: []string{"resultId"}, // get logs from the last result for a run
@@ -240,14 +240,14 @@ func (s ClaimStore) GetLogs(runID string) (string, bool, error) {
 		},
 		Limit: 1,
 	}
-	err := s.store.FindOne(CollectionOutputs, opts, &out)
+	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		return "", false, nil
 	}
 	return string(out.Value), err == nil, err
 }
 
-func (s ClaimStore) GetLastLogs(namespace string, installation string) (string, bool, error) {
+func (s ClaimStore) GetLastLogs(ctx context.Context, namespace string, installation string) (string, bool, error) {
 	var out Output
 	opts := storage.FindOptions{
 		Sort: []string{"-resultId"}, // get logs from the last result for a run
@@ -258,76 +258,76 @@ func (s ClaimStore) GetLastLogs(namespace string, installation string) (string, 
 		},
 		Limit: 1,
 	}
-	err := s.store.FindOne(CollectionOutputs, opts, &out)
+	err := s.store.FindOne(ctx, CollectionOutputs, opts, &out)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		return "", false, nil
 	}
 	return string(out.Value), err == nil, err
 }
 
-func (s ClaimStore) InsertInstallation(installation Installation) error {
+func (s ClaimStore) InsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = SchemaVersion
 	opts := storage.InsertOptions{
 		Documents: []interface{}{installation},
 	}
-	return s.store.Insert(CollectionInstallations, opts)
+	return s.store.Insert(ctx, CollectionInstallations, opts)
 }
 
-func (s ClaimStore) InsertRun(run Run) error {
+func (s ClaimStore) InsertRun(ctx context.Context, run Run) error {
 	opts := storage.InsertOptions{
 		Documents: []interface{}{run},
 	}
-	return s.store.Insert(CollectionRuns, opts)
+	return s.store.Insert(ctx, CollectionRuns, opts)
 }
 
-func (s ClaimStore) InsertResult(result Result) error {
+func (s ClaimStore) InsertResult(ctx context.Context, result Result) error {
 	opts := storage.InsertOptions{
 		Documents: []interface{}{result},
 	}
-	return s.store.Insert(CollectionResults, opts)
+	return s.store.Insert(ctx, CollectionResults, opts)
 }
 
-func (s ClaimStore) InsertOutput(output Output) error {
+func (s ClaimStore) InsertOutput(ctx context.Context, output Output) error {
 	opts := storage.InsertOptions{
 		Documents: []interface{}{output},
 	}
-	return s.store.Insert(CollectionOutputs, opts)
+	return s.store.Insert(ctx, CollectionOutputs, opts)
 }
 
-func (s ClaimStore) UpdateInstallation(installation Installation) error {
+func (s ClaimStore) UpdateInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: installation,
 	}
-	return s.store.Update(CollectionInstallations, opts)
+	return s.store.Update(ctx, CollectionInstallations, opts)
 }
 
-func (s ClaimStore) UpsertRun(run Run) error {
+func (s ClaimStore) UpsertRun(ctx context.Context, run Run) error {
 	opts := storage.UpdateOptions{
 		Upsert:   true,
 		Document: run,
 	}
-	return s.store.Update(CollectionRuns, opts)
+	return s.store.Update(ctx, CollectionRuns, opts)
 }
 
-func (s ClaimStore) UpsertInstallation(installation Installation) error {
+func (s ClaimStore) UpsertInstallation(ctx context.Context, installation Installation) error {
 	installation.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Upsert:   true,
 		Document: installation,
 	}
-	return s.store.Update(CollectionInstallations, opts)
+	return s.store.Update(ctx, CollectionInstallations, opts)
 }
 
 // RemoveInstallation and all associated data.
-func (s ClaimStore) RemoveInstallation(namespace string, name string) error {
+func (s ClaimStore) RemoveInstallation(ctx context.Context, namespace string, name string) error {
 	removeInstallation := storage.RemoveOptions{
 		Filter: bson.M{
 			"namespace": namespace,
 			"name":      name,
 		},
 	}
-	err := s.store.Remove(CollectionInstallations, removeInstallation)
+	err := s.store.Remove(ctx, CollectionInstallations, removeInstallation)
 	if err != nil {
 		return err
 	}
@@ -342,19 +342,19 @@ func (s ClaimStore) RemoveInstallation(namespace string, name string) error {
 	}
 
 	// Delete runs
-	err = s.store.Remove(CollectionRuns, removeChildDocs)
+	err = s.store.Remove(ctx, CollectionRuns, removeChildDocs)
 	if err != nil {
 		return err
 	}
 
 	// Delete results
-	err = s.store.Remove(CollectionResults, removeChildDocs)
+	err = s.store.Remove(ctx, CollectionResults, removeChildDocs)
 	if err != nil {
 		return err
 	}
 
 	// Delete outputs
-	err = s.store.Remove(CollectionOutputs, removeChildDocs)
+	err = s.store.Remove(ctx, CollectionOutputs, removeChildDocs)
 	if err != nil {
 		return err
 	}

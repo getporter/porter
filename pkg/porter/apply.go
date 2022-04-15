@@ -77,7 +77,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		return errors.Wrap(err, "invalid installation")
 	}
 
-	installation, err := p.Claims.GetInstallation(input.Namespace, input.Name)
+	installation, err := p.Claims.GetInstallation(ctx, input.Namespace, input.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
 			return errors.Wrapf(err, "could not query for an existing installation document for %s", input)
@@ -88,7 +88,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		installation.Apply(input)
 
 		if !opts.DryRun {
-			if err = p.Claims.InsertInstallation(installation); err != nil {
+			if err = p.Claims.InsertInstallation(ctx, installation); err != nil {
 				return err
 			}
 		}
@@ -101,7 +101,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		}
 
 		if !opts.DryRun {
-			if err := p.Claims.UpdateInstallation(installation); err != nil {
+			if err := p.Claims.UpdateInstallation(ctx, installation); err != nil {
 				return err
 			}
 		}

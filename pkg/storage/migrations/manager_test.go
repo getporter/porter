@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg/secrets"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
@@ -22,10 +24,10 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Teardown()
 
-		err := m.store.Update(CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+		err := m.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 		require.NoError(t, err, "Save schema failed")
 
-		err = m.loadSchema()
+		err = m.loadSchema(context.Background())
 		require.NoError(t, err, "LoadSchema failed")
 		assert.NotEmpty(t, m.schema, "Schema should be populated with the file's data")
 	})
@@ -35,7 +37,7 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Teardown()
 
-		err := m.loadSchema()
+		err := m.loadSchema(context.Background())
 		require.NoError(t, err, "LoadSchema failed")
 		assert.NotEmpty(t, m.schema, "Schema should be initialized automatically when PORTER_HOME is empty")
 	})
@@ -45,10 +47,10 @@ func TestManager_LoadSchema(t *testing.T) {
 		m := NewTestManager(c)
 		defer m.Teardown()
 
-		err := m.store.Insert(claims.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{claims.Installation{Name: "abc123"}}})
+		err := m.store.Insert(context.Background(), claims.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{claims.Installation{Name: "abc123"}}})
 		require.NoError(t, err)
 
-		err = m.loadSchema()
+		err = m.loadSchema(context.Background())
 		require.NoError(t, err, "LoadSchema failed")
 		assert.Empty(t, m.schema, "Schema should be empty because none was loaded")
 	})
@@ -117,11 +119,11 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	require.NoError(t, err, "ListInstallations failed")
 
 	credStore := credentials.NewCredentialStore(mgr, nil)
-	_, err = credStore.ListCredentialSets("", "", nil)
+	_, err = credStore.ListCredentialSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List credentials failed")
 
 	paramStore := parameters.NewParameterStore(mgr, nil)
-	_, err = paramStore.ListParameterSets("", "", nil)
+	_, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List credentials failed")
 }
 
@@ -134,7 +136,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	claimStore := claims.NewClaimStore(mgr)
 
 	schema := storage.NewSchema("needs-migration", "", "")
-	err := mgr.store.Update(CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
 	t.Run("list", func(t *testing.T) {
@@ -144,7 +146,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 	})
 
 	t.Run("read", func(t *testing.T) {
-		_, err = claimStore.GetInstallation("", "mybun")
+		_, err = claimStore.GetInstallation(context.Background(), "", "mybun")
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
@@ -171,21 +173,22 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
+	testSecrets := secrets.NewTestSecretsProvider()
 	defer mgr.Teardown()
-	credStore := credentials.NewTestCredentialProviderFor(t, mgr)
+	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
 	schema := storage.NewSchema("", "needs-migration", "")
-	err := mgr.store.Update(CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
 	t.Run("list", func(t *testing.T) {
-		_, err = credStore.ListCredentialSets("", "", nil)
+		_, err = credStore.ListCredentialSets(context.Background(), "", "", nil)
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
 
 	t.Run("read", func(t *testing.T) {
-		_, err = credStore.GetCredentialSet("", "mybun")
+		_, err = credStore.GetCredentialSet(context.Background(), "", "mybun")
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
@@ -199,9 +202,10 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
-	credStore := credentials.NewTestCredentialProviderFor(t, mgr)
+	testSecrets := secrets.NewTestSecretsProvider()
+	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
-	names, err := credStore.ListCredentialSets("", "", nil)
+	names, err := credStore.ListCredentialSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of credentials since porter home is new")
 }
@@ -210,20 +214,21 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	defer mgr.Teardown()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr)
+	testSecrets := secrets.NewTestSecretsProvider()
+	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
 
 	schema := storage.NewSchema("", "", "needs-migration")
-	err := mgr.store.Update(CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
+	err := mgr.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 	require.NoError(t, err, "Save schema failed")
 
 	t.Run("list", func(t *testing.T) {
-		_, err = paramStore.ListParameterSets("", "", nil)
+		_, err = paramStore.ListParameterSets(context.Background(), "", "", nil)
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
 
 	t.Run("read", func(t *testing.T) {
-		_, err = paramStore.GetParameterSet("", "mybun")
+		_, err = paramStore.GetParameterSet(context.Background(), "", "mybun")
 		require.Error(t, err, "Operation should halt because a migration is required")
 		assert.Contains(t, err.Error(), "The schema of Porter's data is in an older format than supported by this version of Porter")
 	})
@@ -237,9 +242,10 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr)
+	testSecrets := secrets.NewTestSecretsProvider()
+	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
 
-	names, err := paramStore.ListParameterSets("", "", nil)
+	names, err := paramStore.ListParameterSets(context.Background(), "", "", nil)
 	require.NoError(t, err, "List failed")
 	assert.Empty(t, names, "Expected an empty list of parameters since porter home is new")
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg/secrets"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -31,9 +33,10 @@ type TestRuntime struct {
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
 	testStorage := storage.NewTestStore(tc.TestContext)
+	testSecrets := secrets.NewTestSecretsProvider()
 	testClaims := claims.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
-	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage)
-	testParameters := parameters.NewTestParameterProviderFor(tc.TestContext.T, testStorage)
+	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
+	testParameters := parameters.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
 
 	return NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters)
 }

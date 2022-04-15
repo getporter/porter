@@ -32,7 +32,7 @@ func NewStore(cxt *portercontext.Context, cfg PluginConfig) *Store {
 	}
 }
 
-func (s *Store) Connect() error {
+func (s *Store) Connect(ctx context.Context) error {
 	if s.StorageProtocol != nil {
 		return nil
 	}
@@ -50,13 +50,13 @@ func (s *Store) Connect() error {
 	return nil
 }
 
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	// leave the container running for performance purposes
 	//exec.Command("docker", "rm", "-f", "porter-mongodb-docker-plugin")
 
 	// close the connection to the mongodb running in the container
 	if conn, ok := s.StorageProtocol.(*mongodb.Store); ok {
-		return conn.Close()
+		return conn.Close(ctx)
 	}
 
 	s.StorageProtocol = nil
@@ -65,6 +65,8 @@ func (s *Store) Close() error {
 }
 
 func EnsureMongoIsRunning(c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {
+	ctx := context.TODO()
+
 	if dataVol != "" {
 		err := exec.Command("docker", "volume", "inspect", dataVol).Run()
 		if err != nil {
@@ -147,7 +149,7 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 		URL:     fmt.Sprintf("mongodb://localhost:%s/%s?connect=direct", port, dbName),
 		Timeout: timeoutSeconds,
 	}
-	timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	for {
 		select {
@@ -155,7 +157,7 @@ func EnsureMongoIsRunning(c *portercontext.Context, container string, port strin
 			return nil, errors.New("timeout waiting for local mongodb daemon to be ready")
 		default:
 			conn := mongodb.NewStore(c, mongoPluginCfg)
-			err := conn.Connect()
+			err := conn.Connect(ctx)
 			if err == nil {
 				return conn, nil
 			} else if c.Debug {

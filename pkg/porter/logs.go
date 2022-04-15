@@ -63,8 +63,8 @@ func (p *Porter) GetInstallationLogs(ctx context.Context, opts *LogsShowOptions)
 	installation := opts.sharedOptions.Name
 
 	if opts.ClaimID != "" {
-		return p.Claims.GetLogs(opts.ClaimID)
+		return p.Claims.GetLogs(ctx, opts.ClaimID)
 	}
 
-	return p.Claims.GetLastLogs(opts.Namespace, installation)
+	return p.Claims.GetLastLogs(ctx, opts.Namespace, installation)
 }

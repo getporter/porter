@@ -51,6 +51,7 @@ func TestInstall_fileParam(t *testing.T) {
 	defer p.Teardown()
 	p.SetupIntegrationTest()
 	p.Debug = false
+	ctx := context.Background()
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-file-params", false)
 
@@ -65,7 +66,7 @@ func TestInstall_fileParam(t *testing.T) {
 		},
 	})
 
-	p.TestParameters.InsertParameterSet(testParamSets)
+	p.TestParameters.InsertParameterSet(ctx, testParamSets)
 
 	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
@@ -76,7 +77,7 @@ func TestInstall_fileParam(t *testing.T) {
 	output := p.TestConfig.TestContext.GetOutput()
 	require.Contains(t, output, "Hello World!", "expected action output to contain provided file contents")
 
-	outputs, err := p.Claims.GetLastOutputs("", bundleName)
+	outputs, err := p.Claims.GetLastOutputs(ctx, "", bundleName)
 	require.NoError(t, err, "GetLastOutput failed")
 	myfile, ok := outputs.GetByName("myfile")
 	require.True(t, ok, "expected myfile output to be persisted")

@@ -43,7 +43,7 @@ You can use the generate and show commands to create the initial file:
 			return opts.Validate(p.Context, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.CredentialsApply(opts)
+			return p.CredentialsApply(cmd.Context(), opts)
 		},
 	}
 
@@ -66,7 +66,7 @@ func buildCredentialsEditCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.EditCredential(opts)
+			return p.EditCredential(cmd.Context(), opts)
 		},
 	}
 
@@ -148,7 +148,7 @@ The results may also be filtered by associated labels and the namespace in which
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.PrintCredentials(opts)
+			return p.PrintCredentials(cmd.Context(), opts)
 		},
 	}
 
@@ -178,8 +178,8 @@ func buildCredentialsDeleteCommand(p *porter.Porter) *cobra.Command {
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			return opts.Validate(args)
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return p.DeleteCredential(opts)
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return p.DeleteCredential(cmd.Context(), opts)
 		},
 	}
 
@@ -203,7 +203,7 @@ func buildCredentialsShowCommand(p *porter.Porter) *cobra.Command {
 			return opts.Validate(args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.ShowCredential(opts)
+			return p.ShowCredential(cmd.Context(), opts)
 		},
 	}
 

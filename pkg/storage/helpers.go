@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 )
@@ -21,6 +23,6 @@ func NewTestStore(tc *portercontext.TestContext) TestStore {
 	}
 }
 
-func (s TestStore) Teardown() error {
+func (s TestStore) Teardown(ctx context.Context) error {
 	return s.testPlugin.Teardown()
 }

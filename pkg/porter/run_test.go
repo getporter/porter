@@ -50,7 +50,7 @@ func TestPorter_Run(t *testing.T) {
 
 func TestPorter_defaultDebugToOff(t *testing.T) {
 	p := New() // Don't use the test porter, it has debug on by default
-	defer p.Close()
+	defer p.Close(context.Background())
 
 	opts := NewRunOptions(p.Config)
 
@@ -61,7 +61,7 @@ func TestPorter_defaultDebugToOff(t *testing.T) {
 
 func TestPorter_defaultDebugUsesEnvVar(t *testing.T) {
 	p := New() // Don't use the test porter, it has debug on by default
-	defer p.Close()
+	defer p.Close(context.Background())
 
 	p.Setenv(config.EnvDEBUG, "true")
 

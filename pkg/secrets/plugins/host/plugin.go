@@ -1,6 +1,8 @@
 package host
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -14,11 +16,11 @@ type Plugin struct {
 	*host.SecretStore
 }
 
-func (p Plugin) Connect() error {
+func (p Plugin) Connect(context.Context) error {
 	return nil
 }
 
-func (p Plugin) Close() error {
+func (p Plugin) Close(context.Context) error {
 	return nil
 }
 

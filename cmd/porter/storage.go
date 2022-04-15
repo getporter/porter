@@ -31,7 +31,7 @@ func buildStorageMigrateCommand(p *porter.Porter) *cobra.Command {
 
 Always back up Porter's data before performing a migration. Instructions for backing up are at https://porter.sh/storage-migrate.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return p.MigrateStorage()
+			return p.MigrateStorage(cmd.Context())
 		},
 	}
 }

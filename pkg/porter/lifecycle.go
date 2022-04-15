@@ -121,7 +121,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 		}
 		bundleRef = cnab.BundleReference{Definition: bun}
 	} else if opts.Name != "" { // Return the bundle associated with the installation
-		i, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+		i, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 		if err != nil {
 			return cnab.BundleReference{}, errors.Wrapf(err, "installation %s/%s not found", opts.Namespace, opts.Name)
 		}
@@ -134,7 +134,7 @@ func (p *Porter) resolveBundleReference(ctx context.Context, opts *BundleActionO
 				return cnab.BundleReference{}, err
 			}
 		} else { // The bundle was installed from source
-			lastRun, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+			lastRun, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 			if err != nil {
 				return cnab.BundleReference{}, errors.Wrap(err, "could not load the bundle definition from the installation's last run")
 			}
@@ -180,7 +180,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation claims.Instal
 
 	// Resolve the final set of typed parameters, taking into account the user overrides, parameter sources
 	// and defaults
-	err = opts.LoadParameters(p, bundleRef.Definition)
+	err = opts.LoadParameters(ctx, p, bundleRef.Definition)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
@@ -197,7 +197,7 @@ func (p *Porter) BuildActionArgs(ctx context.Context, installation claims.Instal
 		}
 		params[k] = v
 	}
-	resolvedParams, err := p.resolveParameters(installation, bundleRef.Definition, action.GetAction(), params)
+	resolvedParams, err := p.resolveParameters(ctx, installation, bundleRef.Definition, action.GetAction(), params)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}

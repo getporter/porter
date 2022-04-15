@@ -20,7 +20,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 			i.Status.ResultStatus = cnab.StatusRunning
 		})
 
-		i, err := cp.GetInstallation("", "wordpress")
+		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "ReadInstallation failed")
 
 		di := NewDisplayInstallation(i, nil)
@@ -38,7 +38,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 
 		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"))
 
-		i, err := cp.GetInstallation("", "wordpress")
+		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "GetInst failed")
 
 		di := NewDisplayInstallation(i, nil)

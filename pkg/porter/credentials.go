@@ -31,13 +31,13 @@ type CredentialEditOptions struct {
 }
 
 // ListCredentials lists saved credential sets.
-func (p *Porter) ListCredentials(opts ListOptions) ([]credentials.CredentialSet, error) {
-	return p.Credentials.ListCredentialSets(opts.GetNamespace(), opts.Name, opts.ParseLabels())
+func (p *Porter) ListCredentials(ctx context.Context, opts ListOptions) ([]credentials.CredentialSet, error) {
+	return p.Credentials.ListCredentialSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 }
 
 // PrintCredentials prints saved credential sets.
-func (p *Porter) PrintCredentials(opts ListOptions) error {
-	creds, err := p.ListCredentials(opts)
+func (p *Porter) PrintCredentials(ctx context.Context, opts ListOptions) error {
+	creds, err := p.ListCredentials(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (p *Porter) GenerateCredentials(ctx context.Context, opts CredentialOptions
 	cs.Status.Created = time.Now()
 	cs.Status.Modified = cs.Status.Created
 
-	err = p.Credentials.UpsertCredentialSet(cs)
+	err = p.Credentials.UpsertCredentialSet(ctx, cs)
 	return errors.Wrapf(err, "unable to save credentials")
 }
 
@@ -157,8 +157,8 @@ func (o *CredentialEditOptions) Validate(args []string) error {
 }
 
 // EditCredential edits the credentials of the provided name.
-func (p *Porter) EditCredential(opts CredentialEditOptions) error {
-	credSet, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
+func (p *Porter) EditCredential(ctx context.Context, opts CredentialEditOptions) error {
+	credSet, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -180,13 +180,13 @@ func (p *Porter) EditCredential(opts CredentialEditOptions) error {
 		return errors.Wrap(err, "unable to process credentials")
 	}
 
-	err = p.Credentials.Validate(credSet)
+	err = p.Credentials.Validate(ctx, credSet)
 	if err != nil {
 		return errors.Wrap(err, "credentials are invalid")
 	}
 
 	credSet.Status.Modified = time.Now()
-	err = p.Credentials.UpdateCredentialSet(credSet)
+	err = p.Credentials.UpdateCredentialSet(ctx, credSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save credentials")
 	}
@@ -202,8 +202,8 @@ type DisplayCredentialSet struct {
 
 // ShowCredential shows the credential set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
-func (p *Porter) ShowCredential(opts CredentialShowOptions) error {
-	cs, err := p.Credentials.GetCredentialSet(opts.Namespace, opts.Name)
+func (p *Porter) ShowCredential(ctx context.Context, opts CredentialShowOptions) error {
+	cs, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -283,8 +283,8 @@ type CredentialDeleteOptions struct {
 
 // DeleteCredential deletes the credential set corresponding to the provided
 // names.
-func (p *Porter) DeleteCredential(opts CredentialDeleteOptions) error {
-	err := p.Credentials.RemoveCredentialSet(opts.Namespace, opts.Name)
+func (p *Porter) DeleteCredential(ctx context.Context, opts CredentialDeleteOptions) error {
+	err := p.Credentials.RemoveCredentialSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		if p.Debug {
 			fmt.Fprintln(p.Err, err)
@@ -314,7 +314,7 @@ func validateCredentialName(args []string) error {
 	}
 }
 
-func (p *Porter) CredentialsApply(o ApplyOptions) error {
+func (p *Porter) CredentialsApply(ctx context.Context, o ApplyOptions) error {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
 	}
@@ -343,12 +343,12 @@ func (p *Porter) CredentialsApply(o ApplyOptions) error {
 	creds.Namespace = namespace
 	creds.Status.Modified = time.Now()
 
-	err = p.Credentials.Validate(creds)
+	err = p.Credentials.Validate(ctx, creds)
 	if err != nil {
 		return errors.Wrap(err, "credential set is invalid")
 	}
 
-	err = p.Credentials.UpsertCredentialSet(creds)
+	err = p.Credentials.UpsertCredentialSet(ctx, creds)
 	if err != nil {
 		return err
 	}

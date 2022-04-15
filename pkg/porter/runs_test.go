@@ -74,6 +74,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 	for _, tc := range outputTestcases {
 		p := NewTestPorter(t)
 		defer p.Teardown()
+		ctx := context.Background()
 
 		installation := p.TestClaims.CreateInstallation(claims.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)
 
@@ -86,7 +87,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 		installation.ApplyResult(uninstallRun, result2)
 		installation.Status.Installed = &now
 
-		require.NoError(t, p.TestClaims.UpdateInstallation(installation))
+		require.NoError(t, p.TestClaims.UpdateInstallation(ctx, installation))
 
 		opts := RunListOptions{sharedOptions: sharedOptions{
 			Namespace: "staging",

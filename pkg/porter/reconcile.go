@@ -41,7 +41,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	// Get the last run of the installation, if available
 	var lastRun *claims.Run
-	r, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	r, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
 		return err
@@ -183,7 +183,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	}
 
 	// Have the bundle parameters changed?
-	if err := opts.LoadParameters(p, newRef.Definition); err != nil {
+	if err := opts.LoadParameters(ctx, p, newRef.Definition); err != nil {
 		return false, err
 	}
 
@@ -192,7 +192,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
 	b := newRef.Definition
-	resolvedParams, err := p.resolveParameters(i, b, action.GetAction(), opts.combinedParameters)
+	resolvedParams, err := p.resolveParameters(ctx, i, b, action.GetAction(), opts.combinedParameters)
 	if err != nil {
 		return false, err
 	}

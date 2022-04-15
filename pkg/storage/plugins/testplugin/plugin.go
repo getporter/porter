@@ -1,6 +1,7 @@
 package testplugin
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 
@@ -38,7 +39,7 @@ func NewTestStoragePlugin(tc *portercontext.TestContext) *TestStoragePlugin {
 }
 
 // Setup runs mongodb on an alternate Port
-func (s *TestStoragePlugin) Setup() error {
+func (s *TestStoragePlugin) Setup(ctx context.Context) error {
 	if s.Store != nil {
 		return nil
 	}
@@ -46,7 +47,7 @@ func (s *TestStoragePlugin) Setup() error {
 	s.database = tests.GenerateDatabaseName(s.tc.T.Name())
 
 	// Try to connect to a dev instance of mongo, otherwise run a one off mongo instance
-	err := s.useDevDatabase()
+	err := s.useDevDatabase(ctx)
 	if err != nil {
 		// Didn't find a dev mongo instance, so let's run one just for this test
 		return s.runTestDatabase()
@@ -55,13 +56,13 @@ func (s *TestStoragePlugin) Setup() error {
 	return s.Store.RemoveDatabase() // Start with a fresh test database
 }
 
-func (s *TestStoragePlugin) useDevDatabase() error {
+func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 	cfg := mongodb.PluginConfig{
 		URL:     fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
 		Timeout: 10,
 	}
 	devMongo := mongodb.NewStore(s.tc.Context, cfg)
-	err := devMongo.Connect()
+	err := devMongo.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -88,19 +89,22 @@ func (s *TestStoragePlugin) runTestDatabase() error {
 func (s *TestStoragePlugin) Teardown() error {
 	if s.Store != nil {
 		s.Store.RemoveDatabase()
-		return s.Close()
+		return s.Close(context.TODO())
 	}
 	return nil
 }
 
 // Connect sets up the test mongo instance if necessary.
-func (s *TestStoragePlugin) Connect() error {
-	return s.Setup()
+func (s *TestStoragePlugin) Connect(ctx context.Context) error {
+	return s.Setup(ctx)
 }
 
 // Close the connection to the database.
-func (s *TestStoragePlugin) Close() error {
-	err := s.Store.Close()
-	s.Store = nil
-	return err
+func (s *TestStoragePlugin) Close(ctx context.Context) error {
+	if s.Store != nil {
+		err := s.Store.Close(ctx)
+		s.Store = nil
+		return err
+	}
+	return nil
 }

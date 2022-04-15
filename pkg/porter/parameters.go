@@ -40,13 +40,13 @@ type ParameterEditOptions struct {
 }
 
 // ListParameters lists saved parameter sets.
-func (p *Porter) ListParameters(opts ListOptions) ([]parameters.ParameterSet, error) {
-	return p.Parameters.ListParameterSets(opts.GetNamespace(), opts.Name, opts.ParseLabels())
+func (p *Porter) ListParameters(ctx context.Context, opts ListOptions) ([]parameters.ParameterSet, error) {
+	return p.Parameters.ListParameterSets(ctx, opts.GetNamespace(), opts.Name, opts.ParseLabels())
 }
 
 // PrintParameters prints saved parameter sets.
-func (p *Porter) PrintParameters(opts ListOptions) error {
-	params, err := p.ListParameters(opts)
+func (p *Porter) PrintParameters(ctx context.Context, opts ListOptions) error {
+	params, err := p.ListParameters(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (p *Porter) GenerateParameters(ctx context.Context, opts ParameterOptions) 
 	pset.Status.Created = time.Now()
 	pset.Status.Modified = pset.Status.Created
 
-	err = p.Parameters.UpsertParameterSet(pset)
+	err = p.Parameters.UpsertParameterSet(ctx, pset)
 	return errors.Wrapf(err, "unable to save parameter set")
 }
 
@@ -174,8 +174,8 @@ func (o *ParameterEditOptions) Validate(args []string) error {
 }
 
 // EditParameter edits the parameters of the provided name.
-func (p *Porter) EditParameter(opts ParameterEditOptions) error {
-	paramSet, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
+func (p *Porter) EditParameter(ctx context.Context, opts ParameterEditOptions) error {
+	paramSet, err := p.Parameters.GetParameterSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -196,13 +196,13 @@ func (p *Porter) EditParameter(opts ParameterEditOptions) error {
 		return errors.Wrap(err, "unable to process parameter set")
 	}
 
-	err = p.Parameters.Validate(paramSet)
+	err = p.Parameters.Validate(ctx, paramSet)
 	if err != nil {
 		return errors.Wrap(err, "parameter set is invalid")
 	}
 
 	paramSet.Status.Modified = time.Now()
-	err = p.Parameters.UpdateParameterSet(paramSet)
+	err = p.Parameters.UpdateParameterSet(ctx, paramSet)
 	if err != nil {
 		return errors.Wrap(err, "unable to save parameter set")
 	}
@@ -218,8 +218,8 @@ type DisplayParameterSet struct {
 
 // ShowParameter shows the parameter set corresponding to the provided name, using
 // the provided printer.PrintOptions for display.
-func (p *Porter) ShowParameter(opts ParameterShowOptions) error {
-	ps, err := p.Parameters.GetParameterSet(opts.Namespace, opts.Name)
+func (p *Porter) ShowParameter(ctx context.Context, opts ParameterShowOptions) error {
+	ps, err := p.Parameters.GetParameterSet(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return err
 	}
@@ -294,8 +294,8 @@ type ParameterDeleteOptions struct {
 
 // DeleteParameter deletes the parameter set corresponding to the provided
 // names.
-func (p *Porter) DeleteParameter(opts ParameterDeleteOptions) error {
-	err := p.Parameters.RemoveParameterSet(opts.Namespace, opts.Name)
+func (p *Porter) DeleteParameter(ctx context.Context, opts ParameterDeleteOptions) error {
+	err := p.Parameters.RemoveParameterSet(ctx, opts.Namespace, opts.Name)
 	if errors.Is(err, storage.ErrNotFound{}) {
 		if p.Debug {
 			fmt.Fprintln(p.Err, err)
@@ -326,7 +326,7 @@ func validateParameterName(args []string) error {
 }
 
 // loadParameterSets loads parameter values per their parameter set strategies
-func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
+func (p *Porter) loadParameterSets(ctx context.Context, bun cnab.ExtendedBundle, namespace string, params []string) (secrets.Set, error) {
 	resolvedParameters := secrets.Set{}
 	for _, name := range params {
 
@@ -344,7 +344,7 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 		store := p.Parameters.GetDataStore()
 
 		var pset parameters.ParameterSet
-		err := store.FindOne(parameters.CollectionParameters, query, &pset)
+		err := store.FindOne(ctx, parameters.CollectionParameters, query, &pset)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +371,7 @@ func (p *Porter) loadParameterSets(bun cnab.ExtendedBundle, namespace string, pa
 			}
 		}
 
-		rc, err := p.Parameters.ResolveAll(pset)
+		rc, err := p.Parameters.ResolveAll(ctx, pset)
 		if err != nil {
 			return nil, err
 		}
@@ -488,7 +488,7 @@ func (p *Porter) printDisplayValuesTable(values []DisplayValue) error {
 	return nil
 }
 
-func (p *Porter) ParametersApply(o ApplyOptions) error {
+func (p *Porter) ParametersApply(ctx context.Context, o ApplyOptions) error {
 	if p.Debug {
 		fmt.Fprintf(p.Err, "Reading input file %s...\n", o.File)
 	}
@@ -517,12 +517,12 @@ func (p *Porter) ParametersApply(o ApplyOptions) error {
 	params.Namespace = namespace
 	params.Status.Modified = time.Now()
 
-	err = p.Parameters.Validate(params)
+	err = p.Parameters.Validate(ctx, params)
 	if err != nil {
 		return errors.Wrap(err, "parameter set is invalid")
 	}
 
-	err = p.Parameters.UpsertParameterSet(params)
+	err = p.Parameters.UpsertParameterSet(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -534,9 +534,9 @@ func (p *Porter) ParametersApply(o ApplyOptions) error {
 // resolveParameters accepts a set of parameter assignments and combines them
 // with parameter sources and default parameter values to create a full set
 // of parameters.
-func (p *Porter) resolveParameters(installation claims.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
+func (p *Porter) resolveParameters(ctx context.Context, installation claims.Installation, bun cnab.ExtendedBundle, action string, params map[string]string) (map[string]interface{}, error) {
 	mergedParams := make(secrets.Set, len(params))
-	paramSources, err := p.resolveParameterSources(bun, installation)
+	paramSources, err := p.resolveParameterSources(ctx, bun, installation)
 	if err != nil {
 		return nil, err
 	}
@@ -610,7 +610,7 @@ func (p *Porter) getUnconvertedValueFromRaw(b cnab.ExtendedBundle, def *definiti
 	return rawValue, nil
 }
 
-func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation claims.Installation) (secrets.Set, error) {
+func (p *Porter) resolveParameterSources(ctx context.Context, bun cnab.ExtendedBundle, installation claims.Installation) (secrets.Set, error) {
 	if !bun.HasParameterSources() {
 		if p.Debug {
 			fmt.Fprintln(p.Err, "No parameter sources defined, skipping")
@@ -645,7 +645,7 @@ func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation c
 				outputName = source.OutputName
 			}
 
-			output, err := p.Claims.GetLastOutput(installation.Namespace, installationName, outputName)
+			output, err := p.Claims.GetLastOutput(ctx, installation.Namespace, installationName, outputName)
 			if err != nil {
 				// When we can't find the output, skip it and let the parameter be set another way
 				if errors.Is(err, storage.ErrNotFound{}) {

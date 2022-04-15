@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -29,16 +30,16 @@ func NewPluginAdapter(plugin plugins.StoragePlugin) PluginAdapter {
 	return PluginAdapter{plugin: plugin}
 }
 
-func (a PluginAdapter) Connect() error {
-	return a.plugin.Connect()
+func (a PluginAdapter) Connect(ctx context.Context) error {
+	return a.plugin.Connect(ctx)
 }
 
-func (a PluginAdapter) Close() error {
-	return a.plugin.Close()
+func (a PluginAdapter) Close(ctx context.Context) error {
+	return a.plugin.Close(ctx)
 }
 
-func (a PluginAdapter) Aggregate(collection string, opts AggregateOptions, out interface{}) error {
-	err := a.Connect()
+func (a PluginAdapter) Aggregate(ctx context.Context, collection string, opts AggregateOptions, out interface{}) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -51,8 +52,8 @@ func (a PluginAdapter) Aggregate(collection string, opts AggregateOptions, out i
 	return a.unmarshalSlice(rawResults, out)
 }
 
-func (a PluginAdapter) EnsureIndex(opts EnsureIndexOptions) error {
-	err := a.Connect()
+func (a PluginAdapter) EnsureIndex(ctx context.Context, opts EnsureIndexOptions) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -60,8 +61,8 @@ func (a PluginAdapter) EnsureIndex(opts EnsureIndexOptions) error {
 	return a.plugin.EnsureIndex(opts.ToPluginOptions())
 }
 
-func (a PluginAdapter) Count(collection string, opts CountOptions) (int64, error) {
-	err := a.Connect()
+func (a PluginAdapter) Count(ctx context.Context, collection string, opts CountOptions) (int64, error) {
+	err := a.Connect(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -69,8 +70,8 @@ func (a PluginAdapter) Count(collection string, opts CountOptions) (int64, error
 	return a.plugin.Count(opts.ToPluginOptions(collection))
 }
 
-func (a PluginAdapter) Find(collection string, opts FindOptions, out interface{}) error {
-	err := a.Connect()
+func (a PluginAdapter) Find(ctx context.Context, collection string, opts FindOptions, out interface{}) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -85,8 +86,8 @@ func (a PluginAdapter) Find(collection string, opts FindOptions, out interface{}
 
 // FindOne queries a collection and returns the first result, returning
 // ErrNotFound when no results are returned.
-func (a PluginAdapter) FindOne(collection string, opts FindOptions, out interface{}) error {
-	err := a.Connect()
+func (a PluginAdapter) FindOne(ctx context.Context, collection string, opts FindOptions, out interface{}) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -166,13 +167,13 @@ func (a PluginAdapter) unmarshal(bsonResult bson.Raw, out interface{}) error {
 	return errors.Wrapf(err, "could not unmarshal slice onto type %T", out)
 }
 
-func (a PluginAdapter) Get(collection string, opts GetOptions, out interface{}) error {
+func (a PluginAdapter) Get(ctx context.Context, collection string, opts GetOptions, out interface{}) error {
 	findOpts := opts.ToPluginOptions()
-	return a.FindOne(collection, findOpts, out)
+	return a.FindOne(ctx, collection, findOpts, out)
 }
 
-func (a PluginAdapter) Insert(collection string, opts InsertOptions) error {
-	err := a.Connect()
+func (a PluginAdapter) Insert(ctx context.Context, collection string, opts InsertOptions) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -185,8 +186,8 @@ func (a PluginAdapter) Insert(collection string, opts InsertOptions) error {
 	return a.plugin.Insert(pluginOpts)
 }
 
-func (a PluginAdapter) Patch(collection string, opts PatchOptions) error {
-	err := a.Connect()
+func (a PluginAdapter) Patch(ctx context.Context, collection string, opts PatchOptions) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -195,8 +196,8 @@ func (a PluginAdapter) Patch(collection string, opts PatchOptions) error {
 	return a.handleError(err, collection)
 }
 
-func (a PluginAdapter) Remove(collection string, opts RemoveOptions) error {
-	err := a.Connect()
+func (a PluginAdapter) Remove(ctx context.Context, collection string, opts RemoveOptions) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}
@@ -205,8 +206,8 @@ func (a PluginAdapter) Remove(collection string, opts RemoveOptions) error {
 	return a.handleError(err, collection)
 }
 
-func (a PluginAdapter) Update(collection string, opts UpdateOptions) error {
-	err := a.Connect()
+func (a PluginAdapter) Update(ctx context.Context, collection string, opts UpdateOptions) error {
+	err := a.Connect(ctx)
 	if err != nil {
 		return err
 	}

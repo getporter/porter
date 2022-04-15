@@ -124,7 +124,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	err := opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
+	err = opts.parseParamSets(context.Background(), p.Porter, cnab.ExtendedBundle{})
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
@@ -157,7 +157,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	err = opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter, bun)
+	err = opts.parseParamSets(context.Background(), p.Porter, bun)
 	assert.Error(t, err)
 
 }
@@ -175,7 +175,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	opts := sharedOptions{}
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
 
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(context.Background(), p.Porter, bun)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)

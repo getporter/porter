@@ -20,6 +20,7 @@ func TestInvokeCustomAction(t *testing.T) {
 	defer p.Teardown()
 	p.SetupIntegrationTest()
 	p.Debug = false
+	ctx := context.Background()
 
 	// Install a bundle with a custom action defined
 	err := p.Create()
@@ -45,9 +46,9 @@ func TestInvokeCustomAction(t *testing.T) {
 	assert.Contains(t, gotOutput, "oh noes my brains", "invoke should have printed a cry for halp")
 
 	// Verify that the custom action was recorded properly
-	i, err := p.Claims.GetInstallation("", bundleName)
+	i, err := p.Claims.GetInstallation(ctx, "", bundleName)
 	require.NoError(t, err, "could not fetch installation")
-	c, err := p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err := p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(t, err, "GetLastClaim failed")
 	assert.Equal(t, "zombies", c.Action, "the custom action wasn't recorded in the installation")
 }
