@@ -12,14 +12,13 @@
     "io.cnab/app": "wordpress",
     "io.cnab/appVersion": "v1.2.3"
   },
+  "parameters": {
+    "logLevel": 3,
+    "secretString": "foo"
+  },
   "parameterSets": [
     "dev-env"
   ],
-  "parameters": {
-    "logLevel": 3,
-    "secretString": "foo",
-    "token": "top-secret"
-  },
   "status": {
     "runId": "1",
     "action": "upgrade",

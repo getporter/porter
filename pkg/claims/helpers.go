@@ -15,6 +15,8 @@ var (
 
 	// A fixed now timestamp that we can use for comparisons in tests
 	now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
+
+	installationID = "01FZVC5AVP8Z7A78CSCP1EJ604"
 )
 
 type TestClaimProvider struct {
@@ -54,6 +56,7 @@ func (p *TestClaimProvider) CreateInstallation(i Installation, transformations .
 }
 
 func (p *TestClaimProvider) SetMutableInstallationValues(i *Installation) {
+	i.ID = installationID
 	i.Status.Created = now
 	i.Status.Modified = now
 }

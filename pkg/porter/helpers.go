@@ -237,31 +237,17 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 
 // CreateInstallation saves an installation record into claim store and store
 // sensitive parameters into secret store.
-func (p *TestPorter) CreateInstallation(i claims.Installation, bun cnab.ExtendedBundle) claims.Installation {
-	return p.TestClaims.CreateInstallation(i, func(i *claims.Installation) {
-		strategies := make([]secrets.Strategy, 0, len(i.Parameters.Parameters))
-		strategies, err := p.Sanitizer.Parameters(i.Parameters.Parameters, bun, i.ID)
-		require.NoError(p.T(), err)
+func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
+	strategies := make([]secrets.Strategy, 0, len(raw))
+	strategies, err := p.Sanitizer.CleanParameters(raw, bun, recordID)
+	require.NoError(p.T(), err)
 
-		i.Parameters.Parameters = strategies
-	})
-}
-
-func (p *TestPorter) CreateRun(r claims.Run, bun cnab.ExtendedBundle) claims.Run {
-	return p.TestClaims.CreateRun(r, func(r *claims.Run) {
-		strategies := make([]secrets.Strategy, 0, len(r.Parameters.Parameters))
-		strategies, err := p.TestSanitizer.Parameters(r.Parameters.Parameters, bun, r.ID)
-		require.NoError(p.T(), err)
-
-		r.Bundle = bun.Bundle
-		r.Parameters.Parameters = strategies
-	})
-
+	return strategies
 }
 
 func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
 	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
-		output, err := p.TestSanitizer.Output(*o, bun)
+		output, err := p.TestSanitizer.CleanOutput(*o, bun)
 		require.NoError(p.T(), err)
 		*o = output
 	})

@@ -13,7 +13,8 @@ const (
 	// for parameter set documents.
 	SchemaVersion = schema.Version("1.0.1")
 
-	//
+	// DEFAULT_STRATEGY is used when a data does not need to be stored in a
+	// secret store and can be stored in plain value in porter's storage.
 	DEFAULT_STRATEGY = "default-strategy"
 )
 

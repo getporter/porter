@@ -18,9 +18,6 @@ import (
 func TestPorter_ShowBundle(t *testing.T) {
 	t.Parallel()
 
-	tm, err := time.Parse(time.RFC3339, "2022-04-04T18:47:07.38292073-04:00")
-	require.NoError(t, err)
-
 	ref := "getporter/wordpress:v0.1.0"
 	testcases := []struct {
 		name       string
@@ -89,7 +86,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			}
 
 			bun := cnab.ExtendedBundle{b}
-			i := p.TestClaims.CreateInstallation(newInstallation("01FZVC5AVP8Z7A78CSCP1EJ604", "dev", "mywordpress", tm, tm), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
+			i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "mywordpress"), p.TestClaims.SetMutableInstallationValues, func(i *claims.Installation) {
 				if tc.ref != "" {
 					i.TrackBundle(cnab.MustParseOCIReference(tc.ref))
 				}
@@ -105,8 +102,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 
 				i.ParameterSets = []string{"dev-env"}
 
-				i.Parameters.Parameters, err = p.Sanitizer.Parameters(i.Parameters.Parameters, bun, i.ID)
-				require.NoError(t, err)
+				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, bun)
 			})
 
 			run := p.TestClaims.CreateRun(i.NewRun(cnab.ActionUpgrade), p.TestClaims.SetMutableRunValues, func(r *claims.Run) {
@@ -127,14 +123,12 @@ func TestPorter_ShowBundle(t *testing.T) {
 					}...)
 
 				r.ParameterSets = []string{"dev-env"}
-				r.ParameterOverrides.Parameters, err = p.Sanitizer.Parameters(r.ParameterOverrides.Parameters, bun, r.ID)
-				require.NoError(t, err)
-				r.Parameters.Parameters, err = p.Sanitizer.Parameters(r.Parameters.Parameters, bun, r.ID)
-				require.NoError(t, err)
+				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, bun)
+				r.Parameters.Parameters = p.SanitizeParameters(r.Parameters.Parameters, r.ID, bun)
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
-			err = p.TestClaims.UpsertInstallation(i)
+			err := p.TestClaims.UpsertInstallation(i)
 			require.NoError(t, err)
 
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
@@ -142,7 +136,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 			i.Status.Installed = &now
 			require.NoError(t, p.TestClaims.UpdateInstallation(i))
 
-			err := p.ShowInstallation(context.Background(), opts)
+			err = p.ShowInstallation(context.Background(), opts)
 			require.NoError(t, err, "ShowInstallation failed")
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})

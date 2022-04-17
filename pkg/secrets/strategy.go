@@ -64,6 +64,9 @@ type Source struct {
 }
 
 func (s Source) MarshalRaw() interface{} {
+	if s.Key == "" {
+		return nil
+	}
 	return map[string]interface{}{s.Key: s.Value}
 }
 

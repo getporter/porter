@@ -2,13 +2,13 @@ package porter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets"
@@ -64,7 +64,8 @@ func parseLabels(raw []string) map[string]string {
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType    string         `json:"schemaType" yaml:"schemaType"`
+	SchemaType string `json:"schemaType" yaml:"schemaType" toml:"schemaType"`
+
 	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
 
 	ID string `json:"id" yaml:"id" toml:"id"`
@@ -90,12 +91,12 @@ type DisplayInstallation struct {
 	// CredentialSets that should be included when the bundle is reconciled.
 	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
 
-	// ParameterSets that should be included when the bundle is reconciled.
-	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
-
 	// Parameters specified by the user through overrides.
 	// Does not include defaults, or values resolved from parameter sources.
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+
+	// ParameterSets that should be included when the bundle is reconciled.
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
 
 	// Status of the installation.
 	Status                      claims.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
@@ -128,7 +129,7 @@ func NewDisplayInstallation(installation claims.Installation) DisplayInstallatio
 
 // ConvertToInstallationClaim transforms the data from DisplayInstallation into
 // a Installation record.
-func (d DisplayInstallation) ConvertToInstallationClaim() (claims.Installation, error) {
+func (d DisplayInstallation) ConvertToInstallation() (claims.Installation, error) {
 	i := claims.Installation{
 		SchemaVersion:  d.SchemaVersion,
 		ID:             d.ID,
@@ -161,18 +162,10 @@ func (d DisplayInstallation) ConvertToInstallationClaim() (claims.Installation, 
 func (d DisplayInstallation) ConvertParamToSet(i claims.Installation) (parameters.ParameterSet, error) {
 	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
 	for name, value := range d.Parameters {
-		var stringVal string
-		if val, ok := value.(string); ok {
-			stringVal = val
-
-		}
-
-		contents, err := json.Marshal(value)
+		stringVal, err := cnab.WriteParameterToString(name, value)
 		if err != nil {
-			return parameters.ParameterSet{}, errors.Wrapf(err, "could not marshal the value for parameter %s to a json string: %#v", name, value)
+			return parameters.ParameterSet{}, err
 		}
-		stringVal = string(contents)
-
 		strategy := secrets.Strategy{
 			Name:  name,
 			Value: stringVal,

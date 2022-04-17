@@ -131,7 +131,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 	}
 
 	bun := cnab.ExtendedBundle{c.Bundle}
-	resolved, err := p.Sanitizer.ResolveOutputs(outputs, bun)
+	resolved, err := p.Sanitizer.RestoreOutputs(outputs, bun)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (p *Porter) ReadBundleOutput(outputName, installation, namespace string) (s
 		return "", err
 	}
 
-	o, err = p.Sanitizer.ResolveOutput(o)
+	o, err = p.Sanitizer.RestoreOutput(o)
 	if err != nil {
 		return "", err
 	}

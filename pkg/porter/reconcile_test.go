@@ -21,7 +21,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Uninstalled: true,
 		}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
@@ -34,7 +34,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{}
+		i := claims.Installation{}
 		insync, err := p.IsInstallationInSync(p.RootContext, i, nil, NewInstallOptions())
 		require.NoError(t, err)
 		assert.False(t, insync)
@@ -45,7 +45,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Status: claims.InstallationStatus{
 				Installed: &now,
 			},
@@ -66,7 +66,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Status: claims.InstallationStatus{
 				Installed:    &now,
 				BundleDigest: "olddigest",
@@ -87,7 +87,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Status: claims.InstallationStatus{
 				Installed: &now,
 			},
@@ -108,7 +108,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			CredentialSets: []string{"newcreds"},
 			Status: claims.InstallationStatus{
 				Installed: &now,
@@ -132,7 +132,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Uninstalled: true, // trigger uninstall
 			Status: claims.InstallationStatus{
 				Installed: &now,
@@ -148,7 +148,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		p := NewTestPorter(t)
 		defer p.Teardown()
 
-		i := &claims.Installation{
+		i := claims.Installation{
 			Uninstalled: false,
 			Status: claims.InstallationStatus{
 				Installed:   &now,

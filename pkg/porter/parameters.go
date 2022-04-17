@@ -572,7 +572,7 @@ func (p *Porter) resolveParameters(installation claims.Installation, bun cnab.Ex
 	for key, unconverted := range mergedParams {
 		param, ok := bun.Parameters[key]
 		if !ok {
-			return nil, fmt.Errorf("resolvedParameters:  %s not defined in bundle", key)
+			return nil, fmt.Errorf("parameter %s not defined in bundle", key)
 		}
 
 		def, ok := bun.Definitions[param.Definition]
@@ -658,11 +658,11 @@ func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation c
 				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
 			}
 
-			if sensitive, _ := bun.IsOutputSensitive(output.Name); sensitive {
+			if output.Key != "" {
 
-				resolved, err := p.Sanitizer.ResolveOutput(output)
+				resolved, err := p.Sanitizer.RestoreOutput(output)
 				if err != nil {
-					return nil, errors.Wrapf(err, "could not set parameters %s from output %s of %s", parameterName, outputName, installation)
+					return nil, errors.Wrapf(err, "could not resolve %s's output %s", installation, outputName)
 				}
 				output = resolved
 			}

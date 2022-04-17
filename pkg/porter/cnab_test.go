@@ -6,7 +6,6 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
-	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
@@ -175,9 +174,8 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 
 	opts := sharedOptions{}
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
-	i := claims.NewInstallation("", bun.Name)
 
-	err = opts.LoadParameters(p.Porter, bun, i)
+	err = opts.LoadParameters(p.Porter, bun)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)

@@ -23,9 +23,9 @@ func NewService(parameterstore parameters.Provider, secretstore secrets.Store) *
 	}
 }
 
-// RawParameters clears out sensitive data in raw parameter values before
+// CleanRawParameters clears out sensitive data in raw parameter values before
 // transform the raw value into secret strategies.
-func (s *Service) RawParameters(params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
+func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for name, value := range params {
 		stringVal, err := bun.WriteParameterToString(name, value)
@@ -36,7 +36,7 @@ func (s *Service) RawParameters(params map[string]interface{}, bun cnab.Extended
 		strategies = append(strategies, strategy)
 	}
 
-	strategies, err := s.Parameters(strategies, bun, id)
+	strategies, err := s.CleanParameters(strategies, bun, id)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,9 @@ func (s *Service) RawParameters(params map[string]interface{}, bun cnab.Extended
 
 }
 
-// Parameters clears out sensitive data in strategized parameter data and return
+// CleanParameters clears out sensitive data in strategized parameter data and return
 // sanitized value after saving sensitive datat to secrets store.
-func (s *Service) Parameters(params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
+func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for _, param := range params {
 
@@ -72,7 +72,8 @@ func (s *Service) Parameters(params []secrets.Strategy, bun cnab.ExtendedBundle,
 
 }
 
-func (s *Service) ResolveParameterSet(pset parameters.ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
+// RestoreParameterSet resolves the raw parameter data from a secrets store.
+func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
 	params, err := s.parameter.ResolveAll(pset)
 	if err != nil {
 		return nil, err
@@ -92,7 +93,10 @@ func (s *Service) ResolveParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 
 }
 
-func (s *Service) Output(output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
+// CleanOutput clears data that's defined as sensitive on the bundle definition
+// by storing the raw data into a secret store and store it's reference key onto
+// the output record.
+func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
 	sensitive, err := bun.IsOutputSensitive(output.Name)
 	if err != nil || !sensitive {
 		return output, err
@@ -115,7 +119,9 @@ func encodeOutput(output claims.Output) claims.Output {
 
 }
 
-func (s *Service) ResolveOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (claims.Outputs, error) {
+// RestoreOutputs retrieves all raw output value and return the restored outputs
+// record.
+func (s *Service) RestoreOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (claims.Outputs, error) {
 	resolved := make([]claims.Output, 0, o.Len())
 	for _, ot := range o.Value() {
 		sensitive, err := bun.IsOutputSensitive(ot.Name)
@@ -124,7 +130,7 @@ func (s *Service) ResolveOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (cla
 			continue
 		}
 
-		r, err := s.ResolveOutput(ot)
+		r, err := s.RestoreOutput(ot)
 		if err != nil {
 			return o, errors.WithMessagef(err, "failed to resolve output %q using key %q", ot.Name, ot.Key)
 		}
@@ -134,7 +140,9 @@ func (s *Service) ResolveOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (cla
 	return claims.NewOutputs(resolved), nil
 }
 
-func (s *Service) ResolveOutput(output claims.Output) (claims.Output, error) {
+// RestoreOutput retrieves the raw output value and return the restored output
+// record.
+func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
 	resolved, err := s.secrets.Resolve(secrets.SourceSecret, string(output.Key))
 	if err != nil {
 		return output, err

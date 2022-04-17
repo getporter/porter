@@ -242,7 +242,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle, i claims.Installation) error {
+func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -275,18 +275,21 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
-func (o *sharedOptions) convertParamToSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+func (o *sharedOptions) populateInternalParameterSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
 		strategies = append(strategies, parameters.DefaultStrategy(name, value))
 	}
 
-	strategies, err := p.Sanitizer.Parameters(strategies, bun, i.ID)
+	strategies, err := p.Sanitizer.CleanParameters(strategies, bun, i.ID)
 	if err != nil {
 		return err
 	}
 
 	if len(strategies) == 0 {
+		// if no override is specified, clear out the old parameters on the
+		// installation record
+		i.Parameters.Parameters = nil
 		return nil
 	}
 

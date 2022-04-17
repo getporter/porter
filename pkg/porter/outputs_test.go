@@ -104,8 +104,13 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 			}
 
 			extB := cnab.ExtendedBundle{b}
-			i := p.CreateInstallation(claims.NewInstallation("", "test"), extB)
-			c := p.CreateRun(i.NewRun(cnab.ActionInstall), extB)
+			i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"), func(i *claims.Installation) {
+				i.Parameters.Parameters = p.SanitizeParameters(i.Parameters.Parameters, i.ID, extB)
+			})
+			c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) {
+				r.Bundle = b
+				r.ParameterOverrides.Parameters = p.SanitizeParameters(r.ParameterOverrides.Parameters, r.ID, extB)
+			})
 			r := p.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 			p.CreateOutput(r.NewOutput("foo", []byte("foo-output")), extB)
 			p.CreateOutput(r.NewOutput("bar", []byte("bar-output")), extB)

@@ -65,7 +65,7 @@ func (t Tester) RequireInstallationExists(namespace string, name string) claims.
 	require.NoError(t.T, err)
 	require.Equal(t.T, name, di.Name, "incorrect installation name")
 	require.Equal(t.T, namespace, di.Namespace, "incorrect installation namespace")
-	installation, err := di.ConvertToInstallationClaim()
+	installation, err := di.ConvertToInstallation()
 	require.NoError(t.T, err)
 
 	return installation

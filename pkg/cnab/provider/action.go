@@ -141,7 +141,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 
-	currentRun.Parameters.Parameters, err = r.sanitizer.RawParameters(args.Params, cnab.ExtendedBundle{b.Bundle}, currentRun.ID)
+	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(args.Params, cnab.ExtendedBundle{b.Bundle}, currentRun.ID)
 	if err != nil {
 		return err
 	}
@@ -200,6 +200,8 @@ func (r *Runtime) SaveRun(installation claims.Installation, run claims.Run, stat
 		fmt.Fprintf(r.Err, "saving action %s for %s installation with status %s\n", run.Action, installation, status)
 	}
 
+	// update installation record to use run id ecoded parameters instead of
+	// installation id
 	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
 	err := r.claims.UpsertInstallation(installation)
 	if err != nil {
@@ -241,7 +243,7 @@ func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installat
 
 	for outputName, outputValue := range opResult.Outputs {
 		output := result.NewOutput(outputName, []byte(outputValue))
-		output, err = r.sanitizer.Output(output, cnab.ExtendedBundle{run.Bundle})
+		output, err = r.sanitizer.CleanOutput(output, cnab.ExtendedBundle{run.Bundle})
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
 		}

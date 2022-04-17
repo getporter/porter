@@ -125,11 +125,14 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			}
 
 		}
+
 		// Print parameter sets, if any
-		for _, ps := range displayInstallation.ParameterSets {
+		if len(displayInstallation.ParameterSets) > 0 {
 			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Parameter Sets:")
-			fmt.Fprintf(p.Out, "  - %s\n", ps)
+			for _, ps := range displayInstallation.ParameterSets {
+				fmt.Fprintf(p.Out, "  - %s\n", ps)
+			}
 		}
 
 		// Print credential sets, if any
@@ -165,11 +168,11 @@ func (p *Porter) generateDisplayInstallation(installation claims.Installation) (
 	}
 
 	bun := cnab.ExtendedBundle{run.Bundle}
-	installParams, err := p.Sanitizer.ResolveParameterSet(installation.Parameters, bun)
+	installParams, err := p.Sanitizer.RestoreParameterSet(installation.Parameters, bun)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}
-	runParams, err := p.Sanitizer.ResolveParameterSet(run.Parameters, bun)
+	runParams, err := p.Sanitizer.RestoreParameterSet(run.Parameters, bun)
 	if err != nil {
 		return DisplayInstallation{}, err
 	}

@@ -9,12 +9,11 @@ bundle:
 labels:
   io.cnab/app: wordpress
   io.cnab/appVersion: v1.2.3
-parameterSets:
-  - dev-env
 parameters:
   logLevel: 3
   secretString: foo
-  token: top-secret
+parameterSets:
+  - dev-env
 status:
   runId: "1"
   action: upgrade

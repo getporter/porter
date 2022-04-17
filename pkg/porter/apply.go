@@ -72,7 +72,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		return errors.Wrapf(err, "unable to parse %s as an installation document", opts.File)
 	}
 	input.Namespace = namespace
-	inputInstallation, err := input.ConvertToInstallationClaim()
+	inputInstallation, err := input.ConvertToInstallation()
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 	installation, err := p.Claims.GetInstallation(inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
-			return errors.Wrapf(err, "could not query for an existing installation document for %s", inputInstallation.Name)
+			return errors.Wrapf(err, "could not query for an existing installation document for %s", inputInstallation)
 		}
 
 		// Create a new installation
