@@ -61,6 +61,6 @@ and we will add you. **All** contributors belong here. 💯
 * [Avinash Upadhyaya](https://github.com/avinashupadhya99)
 * [Mahendra Bishnoi](https://github.com/mahendrabishnoi2)
 * [Yingrong Zhao](https://github.com/VinozzZ)
-* [Chioma Onyekpere](https://github.com/Simpcyclassy)
 * [Saksham Sharma](https://github.com/sakkshm26)
 * [Jeremy Goss](https://github.com/Jemgoss)
+* [Chioma Onyekpere](https://github.com/Simpcyclassy)

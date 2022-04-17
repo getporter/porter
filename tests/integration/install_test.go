@@ -125,7 +125,7 @@ func TestInstall_stringParam(t *testing.T) {
 	installOpts := porter.NewInstallOptions()
 	installOpts.Params = []string{"name=Demo Time"}
 
-	err := installOpts.Validate([]string{}, p.Porter)
+	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
 
 	err = p.InstallBundle(context.Background(), installOpts)
