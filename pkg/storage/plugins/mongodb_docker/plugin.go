@@ -22,7 +22,7 @@ type PluginConfig struct {
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin
-func NewPlugin(ctx context.Context, c *portercontext.Context, pluginConfig interface{}) (plugins.StoragePlugin, error) {
+func NewPlugin(ctx context.Context, c *portercontext.Context, pluginConfig interface{}) (plugins.StorageProtocol, error) {
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",

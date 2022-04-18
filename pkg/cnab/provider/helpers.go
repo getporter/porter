@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg/storage"
+
 	"get.porter.sh/porter/pkg/secrets"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -12,7 +14,6 @@ import (
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,7 @@ type TestRuntime struct {
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
-	testStorage := storage.NewTestStore(tc.TestContext)
+	testStorage := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testClaims := claims.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
 	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)

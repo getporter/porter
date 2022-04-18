@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ plugins.StoragePlugin = &Store{}
+var _ plugins.StorageProtocol = &Store{}
 
 // Store is a storage plugin for porter suitable for running on machines
 // that have not configured proper storage, i.e. a mongo database.
@@ -56,7 +56,7 @@ func (s *Store) Close(ctx context.Context) error {
 
 	// close the connection to the mongodb running in the container
 	if conn, ok := s.StorageProtocol.(*mongodb.Store); ok {
-		return conn.Close(ctx)
+		return conn.Close()
 	}
 
 	s.StorageProtocol = nil
@@ -154,8 +154,8 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		case <-timeout.Done():
 			return nil, errors.New("timeout waiting for local mongodb daemon to be ready")
 		default:
-			conn := mongodb.NewStore(ctx, c, mongoPluginCfg)
-			err := conn.Connect(ctx)
+			conn := mongodb.NewStore(c, mongoPluginCfg)
+			err := conn.Connect()
 			if err == nil {
 				return conn, nil
 			} else if c.Debug {

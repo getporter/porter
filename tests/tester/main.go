@@ -78,7 +78,7 @@ func (t Tester) CurrentNamespace() string {
 
 func (t Tester) startMongo(ctx context.Context) error {
 	conn, err := mongodb_docker.EnsureMongoIsRunning(ctx, t.TestContext.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 10)
-	defer conn.Close(ctx)
+	defer conn.Close()
 	if err != nil {
 		return err
 	}

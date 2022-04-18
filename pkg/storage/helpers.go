@@ -1,28 +1,28 @@
 package storage
 
 import (
-	"context"
-
-	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
+	"get.porter.sh/porter/pkg/storage/pluginstore"
 )
 
 var _ Store = TestStore{}
 
 type TestStore struct {
-	PluginAdapter
 	testPlugin *testplugin.TestStoragePlugin
+	PluginAdapter
 }
 
-// NewTestStore creates a store suitable for unit tests.
-func NewTestStore(tc *portercontext.TestContext) TestStore {
-	testPlugin := testplugin.NewTestStoragePlugin(tc)
+func NewTestStore(tc *config.TestConfig) TestStore {
+	testPlugin := testplugin.NewTestStoragePlugin(tc.TestContext)
+	store := pluginstore.NewStore(tc.Config)
+	store.SetPlugin(testPlugin)
 	return TestStore{
-		PluginAdapter: NewPluginAdapter(tc.Context, testPlugin),
 		testPlugin:    testPlugin,
+		PluginAdapter: NewPluginAdapter(store),
 	}
 }
 
-func (s TestStore) Teardown(ctx context.Context) error {
+func (s TestStore) Teardown() error {
 	return s.testPlugin.Teardown()
 }

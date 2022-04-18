@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/config"
-	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/stretchr/testify/require"
 )
@@ -52,10 +51,7 @@ func TestPlugins_CatchStderr(t *testing.T) {
 			},
 		}}
 
-		createInternalPlugin := func(context.Context, string, interface{}) (plugins.Plugin, error) {
-			return nil, nil
-		}
-		ll := NewPluginLoader(c.Config, createInternalPlugin)
+		ll := NewPluginLoader(c.Config)
 		conn, err := ll.Load(context.Background(), cfg)
 		conn.Close()
 		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 

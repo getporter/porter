@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"get.porter.sh/porter/pkg/secrets"
-
 	"get.porter.sh/porter/pkg/build"
 	"get.porter.sh/porter/pkg/cache"
 	"get.porter.sh/porter/pkg/claims"
@@ -25,6 +23,7 @@ import (
 	"get.porter.sh/porter/pkg/mixin"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -62,7 +61,7 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc.TestContext)
+	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
@@ -101,8 +100,8 @@ func NewTestPorter(t *testing.T) *TestPorter {
 }
 
 func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown(context.Background())
-	p.TestConfig.TestContext.Teardown()
+	err := p.TestStore.Teardown()
+	p.TestConfig.Teardown()
 	p.RootSpan.EndSpan()
 	return err
 }

@@ -31,18 +31,11 @@ type PluginLoader struct {
 
 	SelectedPluginKey    *plugins.PluginKey
 	SelectedPluginConfig interface{}
-
-	// called for internal plugins (starts with porter.*) to create an instance of
-	// the plugin without going through a separate binary.
-	createInternalPlugin InternalPluginHandler
 }
 
-type InternalPluginHandler func(ctx context.Context, key string, config interface{}) (protocol plugins.Plugin, err error)
-
-func NewPluginLoader(c *config.Config, createInternalPlugin InternalPluginHandler) *PluginLoader {
+func NewPluginLoader(c *config.Config) *PluginLoader {
 	return &PluginLoader{
-		Config:               c,
-		createInternalPlugin: createInternalPlugin,
+		Config: c,
 	}
 }
 
@@ -87,35 +80,26 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 	}
 
 	l.SelectedPluginKey.Interface = pluginType.Interface
+	span.SetAttributes(attribute.String("plugin-key", l.SelectedPluginKey.String()))
 
 	var pluginCommand *exec.Cmd
 	if l.SelectedPluginKey.IsInternal {
-		span.Debug("Selected plugin is internal")
+		porterPath, err := l.GetPorterPath()
+		if err != nil {
+			return PluginConnection{}, errors.Wrap(err, "could not determine the path to the porter client")
+		}
 
-		intPlugin, err := l.createInternalPlugin(ctx, l.SelectedPluginKey.String(), l.SelectedPluginConfig)
+		pluginCommand = l.NewCommand(porterPath, "plugin", "run", l.SelectedPluginKey.String())
+	} else {
+		pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
 		if err != nil {
 			return PluginConnection{}, span.Error(err)
 		}
+		span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
-		// Return a closed channel since there will be no logs from internal plugins
-		emptyLogs := make(chan PluginLogEntry, 0)
-		close(emptyLogs)
-
-		return PluginConnection{
-				Client:  intPlugin,
-				cleanup: func() { intPlugin.Close(ctx) },
-				Logs:    emptyLogs,
-			},
-			intPlugin.Connect(ctx)
+		pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
 	}
-
-	pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
-	if err != nil {
-		return PluginConnection{}, span.Error(err)
-	}
-	span.SetAttributes(attribute.String("plugin-path", pluginPath))
-
-	pluginCommand = l.NewCommand(pluginPath, "run", l.SelectedPluginKey.String())
+	span.SetAttributes(attribute.String("plugin-path", pluginCommand.Path))
 
 	configReader, err := l.readPluginConfig()
 	if err != nil {
@@ -195,11 +179,11 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 	debugContext := l.Context.PlugInDebugContext
 	if len(debugContext.RunPlugInInDebugger) > 0 && strings.ToLower(l.SelectedPluginKey.String()) == strings.TrimSpace(strings.ToLower(debugContext.RunPlugInInDebugger)) {
 		if !isDelveInstalled() {
-			return cleanup, log.Errorf("Delve needs to be installed to debug plugins")
+			return cleanup, log.Error(errors.New("Delve needs to be installed to debug plugins"))
 		}
 		listen := fmt.Sprintf("--listen=127.0.0.1:%s", debugContext.DebuggerPort)
 		if len(debugContext.PlugInWorkingDirectory) == 0 {
-			return cleanup, log.Errorf("Plugin Working Directory is required for debugging")
+			return cleanup, log.Error(errors.New("Plugin Working Directory is required for debugging"))
 		}
 		wd := fmt.Sprintf("--wd=%s", debugContext.PlugInWorkingDirectory)
 		pid := client.ReattachConfig().Pid
@@ -209,7 +193,7 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 
 		err := dlvCmd.Start()
 		if err != nil {
-			return cleanup, log.Errorf("Error starting dlv: %w", err)
+			return cleanup, log.Error(fmt.Errorf("Error starting dlv: %w", err))
 		}
 		dlvCmdTerminated := make(chan error)
 		go func() {
@@ -223,7 +207,7 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 
 		select {
 		case err = <-dlvCmdTerminated:
-			return cleanup, log.Errorf("dlv exited unexpectedly: %w", err)
+			return cleanup, log.Error(fmt.Errorf("dlv exited unexpectedly: %w", err))
 		default:
 		}
 

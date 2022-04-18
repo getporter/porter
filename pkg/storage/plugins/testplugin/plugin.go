@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ plugins.StoragePlugin = &TestStoragePlugin{}
+	_ plugins.StorageProtocol = &TestStoragePlugin{}
 )
 
 // TestStoragePlugin is a test helper that implements a storage plugin backed by a
@@ -61,8 +61,8 @@ func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 		URL:     fmt.Sprintf("mongodb://localhost:27017/%s?connect=direct", s.database),
 		Timeout: 10,
 	}
-	devMongo := mongodb.NewStore(ctx, s.tc.Context, cfg)
-	err := devMongo.Connect(ctx)
+	devMongo := mongodb.NewStore(s.tc.Context, cfg)
+	err := devMongo.Connect()
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (s *TestStoragePlugin) Connect(ctx context.Context) error {
 // Close the connection to the database.
 func (s *TestStoragePlugin) Close(ctx context.Context) error {
 	if s.Store != nil {
-		err := s.Store.Close(ctx)
+		err := s.Store.Close()
 		s.Store = nil
 		return err
 	}

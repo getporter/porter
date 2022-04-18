@@ -56,13 +56,6 @@ type TraceLogger interface {
 	// it up the call stack.
 	Error(err error, attrs ...attribute.KeyValue) error
 
-	// Errorf formats an error message and logs it at the error level,
-	// and marks the current span as failed.
-	// Example: return log.Errorf("oops something happened")
-	// Only log it in the function that generated the error, not when bubbling
-	// it up the call stack.
-	Errorf(msg string, args ...interface{}) error
-
 	// ShouldLog returns if the current log level includes the specified level.
 	ShouldLog(level zapcore.Level) bool
 
@@ -199,11 +192,6 @@ func (l traceLogger) Error(err error, attrs ...attribute.KeyValue) error {
 	l.span.SetStatus(codes.Error, err.Error())
 
 	return err
-}
-
-// Errorf formats an error message and logs it at the error level.
-func (l traceLogger) Errorf(msg string, args ...interface{}) error {
-	return l.Error(errors.Errorf(msg, args...))
 }
 
 // appends logs to a otel span as events

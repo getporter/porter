@@ -2,13 +2,19 @@ package porter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/secrets/plugins/host"
+	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
@@ -177,4 +183,80 @@ func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
 	fmt.Fprintf(p.Out, "Uninstalled %s plugin", opts.Name)
 
 	return nil
+}
+
+type RunInternalPluginOpts struct {
+	Key               string
+	selectedPlugin    plugin.Plugin
+	selectedInterface string
+}
+
+func (o *RunInternalPluginOpts) Validate(c *portercontext.Context, args []string) error {
+	if len(args) == 0 {
+		return errors.New("The positional argument KEY was not specified")
+	}
+	if len(args) > 1 {
+		return errors.New("Multiple positional arguments were specified but only one, KEY is expected")
+	}
+
+	o.Key = args[0]
+
+	pluginCfg, err := o.parsePluginConfig(c)
+	if err != nil {
+		return err
+	}
+
+	availableImplementations := getInternalPlugins(c, pluginCfg)
+	makePlugin, ok := availableImplementations[o.Key]
+	if !ok {
+		return errors.Errorf("invalid plugin key specified: %q", o.Key)
+	}
+	p, err := makePlugin()
+	if err != nil {
+		return fmt.Errorf("could not create an instance of the requested internal plugin %s: %w", o.Key, err)
+	}
+	o.selectedPlugin = p
+
+	parts := strings.Split(o.Key, ".")
+	o.selectedInterface = parts[0]
+
+	return nil
+}
+
+func (o *RunInternalPluginOpts) parsePluginConfig(c *portercontext.Context) (interface{}, error) {
+	pluginCfg := map[string]interface{}{}
+	if err := json.NewDecoder(c.In).Decode(&pluginCfg); err != nil {
+		return nil, fmt.Errorf("error parsing plugin configuration from stdin as json: %w", err)
+	}
+	return pluginCfg, nil
+}
+
+func (p *Porter) RunInternalPlugins(args []string) {
+	// We are not following the normal CLI pattern here because
+	// if we write to stdout without the hclog, it will cause the plugin framework to blow up
+	var opts RunInternalPluginOpts
+	err := opts.Validate(p.Context, args)
+	if err != nil {
+		logger := hclog.New(&hclog.LoggerOptions{
+			Name:       "porter",
+			Output:     p.Err,
+			Level:      hclog.Debug,
+			JSONFormat: true,
+		})
+		logger.Error(err.Error())
+		return
+	}
+
+	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
+}
+
+func getInternalPlugins(c *portercontext.Context, pluginCfg interface{}) map[string]func() (plugin.Plugin, error) {
+	return map[string]func() (plugin.Plugin, error){
+		host.PluginKey: func() (plugin.Plugin, error) {
+			return host.NewPlugin(), nil
+		},
+		mongodb.PluginKey: func() (plugin.Plugin, error) {
+			return mongodb.NewPlugin(c, pluginCfg)
+		},
+	}
 }

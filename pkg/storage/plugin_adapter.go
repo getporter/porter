@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"get.porter.sh/porter/pkg/portercontext"
-
-	"get.porter.sh/porter/pkg/tracing"
-
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,18 +22,13 @@ var _ Store = PluginAdapter{}
 // ResultType on plugin.ResultOptions so that you can just cast the result to
 // the specified type safely.
 type PluginAdapter struct {
-	plugin  plugins.StoragePlugin
-	tracer  tracing.Tracer
-	context *portercontext.Context
+	plugin plugins.StoragePlugin
 }
 
 // NewPluginAdapter wraps the specified storage plugin.
-func NewPluginAdapter(c *portercontext.Context, plugin plugins.StoragePlugin) PluginAdapter {
-	tracer, _ := c.NewTracer(context.TODO(), "storage.plugin")
+func NewPluginAdapter(plugin plugins.StoragePlugin) PluginAdapter {
 	return PluginAdapter{
-		context: c,
-		plugin:  plugin,
-		tracer:  tracer,
+		plugin: plugin,
 	}
 }
 
@@ -55,7 +46,7 @@ func (a PluginAdapter) Aggregate(ctx context.Context, collection string, opts Ag
 		return err
 	}
 
-	rawResults, err := a.plugin.Aggregate(opts.ToPluginOptions(collection))
+	rawResults, err := a.plugin.Aggregate(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
 		return err
 	}
@@ -69,7 +60,7 @@ func (a PluginAdapter) EnsureIndex(ctx context.Context, opts EnsureIndexOptions)
 		return err
 	}
 
-	return a.plugin.EnsureIndex(opts.ToPluginOptions())
+	return a.plugin.EnsureIndex(ctx, opts.ToPluginOptions())
 }
 
 func (a PluginAdapter) Count(ctx context.Context, collection string, opts CountOptions) (int64, error) {
@@ -78,7 +69,7 @@ func (a PluginAdapter) Count(ctx context.Context, collection string, opts CountO
 		return 0, err
 	}
 
-	return a.plugin.Count(opts.ToPluginOptions(collection))
+	return a.plugin.Count(ctx, opts.ToPluginOptions(collection))
 }
 
 func (a PluginAdapter) Find(ctx context.Context, collection string, opts FindOptions, out interface{}) error {
@@ -87,10 +78,7 @@ func (a PluginAdapter) Find(ctx context.Context, collection string, opts FindOpt
 		return err
 	}
 
-	ctx, span := a.context.StartRootSpanFor(ctx, "Find", a.tracer)
-	defer span.EndSpan()
-
-	rawResults, err := a.plugin.Find(opts.ToPluginOptions(collection))
+	rawResults, err := a.plugin.Find(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
 		return err
 	}
@@ -106,7 +94,7 @@ func (a PluginAdapter) FindOne(ctx context.Context, collection string, opts Find
 		return err
 	}
 
-	rawResults, err := a.plugin.Find(opts.ToPluginOptions(collection))
+	rawResults, err := a.plugin.Find(ctx, opts.ToPluginOptions(collection))
 	if err != nil {
 		return err
 	}
@@ -197,7 +185,7 @@ func (a PluginAdapter) Insert(ctx context.Context, collection string, opts Inser
 		return err
 	}
 
-	return a.plugin.Insert(pluginOpts)
+	return a.plugin.Insert(ctx, pluginOpts)
 }
 
 func (a PluginAdapter) Patch(ctx context.Context, collection string, opts PatchOptions) error {
@@ -206,7 +194,7 @@ func (a PluginAdapter) Patch(ctx context.Context, collection string, opts PatchO
 		return err
 	}
 
-	err = a.plugin.Patch(opts.ToPluginOptions(collection))
+	err = a.plugin.Patch(ctx, opts.ToPluginOptions(collection))
 	return a.handleError(err, collection)
 }
 
@@ -216,7 +204,7 @@ func (a PluginAdapter) Remove(ctx context.Context, collection string, opts Remov
 		return err
 	}
 
-	err = a.plugin.Remove(opts.ToPluginOptions(collection))
+	err = a.plugin.Remove(ctx, opts.ToPluginOptions(collection))
 	return a.handleError(err, collection)
 }
 
@@ -231,7 +219,7 @@ func (a PluginAdapter) Update(ctx context.Context, collection string, opts Updat
 		return err
 	}
 
-	err = a.plugin.Update(pluginOpts)
+	err = a.plugin.Update(ctx, pluginOpts)
 	return a.handleError(err, collection)
 }
 

@@ -109,7 +109,7 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.TestContext.Teardown()
+	defer config.Teardown()
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
@@ -159,7 +159,7 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.TestContext.Teardown()
+	defer config.Teardown()
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
@@ -198,7 +198,7 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.TestContext.Teardown()
+	defer config.Teardown()
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
@@ -238,7 +238,7 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.TestContext.Teardown()
+	defer config.Teardown()
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()

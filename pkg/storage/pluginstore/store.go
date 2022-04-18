@@ -3,18 +3,14 @@ package pluginstore
 import (
 	"context"
 
-	"go.uber.org/zap/zapcore"
+	"get.porter.sh/porter/pkg/storage/plugins"
 
 	"get.porter.sh/porter/pkg/config"
-	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
-	"get.porter.sh/porter/pkg/portercontext"
-	"get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
-	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap/zapcore"
 )
 
 var _ plugins.StoragePlugin = &Store{}
@@ -55,28 +51,19 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	}
 }
 
-func CreateInternalPlugin(ctx context.Context, c *portercontext.Context, key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
-	switch key {
-	case mongodb_docker.PluginKey:
-		return mongodb_docker.NewPlugin(ctx, c, pluginConfig)
-	case mongodb.PluginKey:
-		return mongodb.NewPlugin(ctx, c, pluginConfig)
-	default:
-		return nil, errors.Errorf("unsupported internal storage plugin specified %s", key)
-	}
+// SetPlugin is used for unit testing only.
+func (s *Store) SetPlugin(value plugins.StorageProtocol) {
+	s.plugin = value
 }
 
 func (s *Store) Connect(ctx context.Context) error {
-	s.plugin.SetCommandContext(ctx)
 	if s.plugin != nil {
 		return nil
 	}
 
 	pluginType := NewStoragePluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, func(ctx context.Context, key string, config interface{}) (porterplugins.Plugin, error) {
-		return CreateInternalPlugin(ctx, s.Context, key, config)
-	})
+	l := pluggable.NewPluginLoader(s.Config)
 	conn, err := l.Load(ctx, pluginType)
 	if err != nil {
 		return errors.Wrapf(err, "could not load %s plugin", pluginType.Interface)
@@ -144,7 +131,7 @@ func (s *Store) attachLogs(span tracing.TraceLogger) {
 		case evt := <-s.conn.Logs:
 			switch evt.Level {
 			case zapcore.ErrorLevel:
-				span.Errorf(evt.Message)
+				span.Error(errors.New(evt.Message))
 			case zapcore.WarnLevel:
 				span.Warn(evt.Message)
 			case zapcore.InfoLevel:

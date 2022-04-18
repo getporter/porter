@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
+
 	"get.porter.sh/porter/pkg/secrets"
 
 	"get.porter.sh/porter/pkg/encoding"
@@ -29,7 +31,7 @@ type TestCredentialProvider struct {
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestCredentialProviderFor(t, testStore, testSecrets)
