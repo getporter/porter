@@ -99,7 +99,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
 	c, err := p.Claims.GetLastRun("", i.Name)
 	require.NoError(p.T(), err, "GetLastRun failed")
-	resolvedParameters, err := p.Sanitizer.ResolveParameterSet(c.Parameters, cnab.ExtendedBundle{c.Bundle})
+	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(c.Parameters, cnab.ExtendedBundle{c.Bundle})
 	require.NoError(p.T(), err, "Resolve run failed")
 	assert.Equal(p.T(), "porter-ci-mysql", resolvedParameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
 	assert.Equal(p.T(), float64(2), resolvedParameters["probe-timeout"], "the dependency param value for 'probe-timeout' is incorrect")
