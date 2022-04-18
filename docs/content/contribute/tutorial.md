@@ -394,6 +394,8 @@ Hello Carolyn!
 That verifies your change but let's also run the [unit tests] and [end-to-end] tests
 to make sure there aren't any regressions.
 
+> In MacOS Monterey, port 5000 is already in use blocking `mage testSmoke` from running properly. To free port 5000, uncheck `AirPlay Receiver` in Sharing under System Preferences.
+
 ```
 make test-unit
 mage testSmoke
