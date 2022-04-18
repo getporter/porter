@@ -6,33 +6,25 @@ import (
 	"strings"
 	"time"
 
-	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/portercontext"
-	storageplugins "get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/tracing"
+	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
-	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
-	_               plugins.Plugin                 = &Store{}
-	_               storageplugins.StorageProtocol = &Store{}
-	ErrNotConnected                                = errors.New("cannot execute command against the mongodb plugin because the session is closed (or was never connected)")
+	_               plugins.StorageProtocol = &Store{}
+	ErrNotConnected                         = errors.New("cannot execute command against the mongodb plugin because the session is closed (or was never connected)")
 )
 
 // Store implements the Porter plugin.StoragePlugin interface for mongodb.
 type Store struct {
 	*portercontext.Context
 
-	cmdCtx   context.Context
-	tracer   tracing.Tracer
 	url      string
 	database string
 	client   *mongo.Client
@@ -40,31 +32,26 @@ type Store struct {
 }
 
 // NewStore creates a new storage engine that uses MongoDB.
-func NewStore(ctx context.Context, c *portercontext.Context, cfg PluginConfig) *Store {
+func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	timeout := cfg.Timeout
 	if timeout <= 0 {
 		timeout = 10 // default to 10 seconds
 	}
-
 	return &Store{
 		Context: c,
-		tracer:  c.NewTracer(ctx, "porter.storage.mongodb"),
 		url:     cfg.URL,
 		timeout: time.Duration(timeout) * time.Second,
 	}
 }
 
-func (s *Store) Connect(ctx context.Context) error {
+func (s *Store) Connect() error {
 	if s.client != nil {
 		return nil
 	}
 
-	ctx, span := tracing.StartSpanForComponent(ctx, s.tracer)
-	defer span.EndSpan()
-
 	connStr, err := connstring.ParseAndValidate(s.url)
 	if err != nil {
-		return span.Error(errors.Wrapf(err, "invalid mongodb connection string %s", s.url))
+		return errors.Wrapf(err, "invalid mongodb connection string %s", s.url)
 	}
 
 	if connStr.Database == "" {
@@ -73,70 +60,54 @@ func (s *Store) Connect(ctx context.Context) error {
 		s.database = strings.TrimSuffix(connStr.Database, "/")
 	}
 
-	span.Infof("Connecting to mongo database %s at %s", s.database, connStr.Hosts)
-
-	// Trace commands executed
-	cmdMonitor := &event.CommandMonitor{
-		Started: func(ctx context.Context, evt *event.CommandStartedEvent) {
-			log := tracing.LoggerFromContext(ctx)
-			log.Warn(evt.CommandName, attribute.String("database", evt.DatabaseName), attribute.String("command", evt.Command.String()))
-		},
+	if s.Debug {
+		fmt.Fprintf(s.Err, "Connecting to mongo database %s at %s\n", s.database, connStr.Hosts)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.url).SetMonitor(cmdMonitor))
+
+	client, err := mongo.Connect(cxt, options.Client().ApplyURI(s.url))
 	if err != nil {
-		return span.Errorf("error connecting to mongo: %w", err)
+		return err
 	}
 
 	s.client = client
 	return nil
 }
 
-func (s *Store) Close(ctx context.Context) error {
-	ctx, span := tracing.StartSpanForComponent(ctx, s.tracer)
-	span.Debug("Closing plugin")
-	span.EndSpan()
-	s.tracer.Close(ctx)
-
+func (s *Store) Close() error {
 	if s.client != nil {
-		ctx, cancel := context.WithTimeout(ctx, s.timeout)
+		cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 		defer cancel()
 
-		s.client.Disconnect(ctx)
+		s.client.Disconnect(cxt)
 		s.client = nil
 	}
-
 	return nil
 }
 
 // Ping the connected session to check if everything is okay.
 func (s *Store) Ping() error {
-	ctx, span := tracing.StartSpanForComponent(ctx, s.tracer)
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	err := s.client.Ping(ctx, readpref.Primary())
-	return span.Error(err)
+	return s.client.Ping(cxt, readpref.Primary())
 }
 
-func (s *Store) Aggregate(opts storageplugins.AggregateOptions) ([]bson.Raw, error) {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	// TODO(carolynvs): wrap each call with session.refresh  on error and a single retry
 	c := s.getCollection(opts.Collection)
-	cur, err := c.Aggregate(ctx, opts.Pipeline)
+	cur, err := c.Aggregate(cxt, opts.Pipeline)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []bson.Raw
-	for cur.Next(ctx) {
+	for cur.Next(cxt) {
 		results = append(results, cur.Current)
 	}
 	return results, err
@@ -144,7 +115,10 @@ func (s *Store) Aggregate(opts storageplugins.AggregateOptions) ([]bson.Raw, err
 
 // EnsureIndexes makes sure that the specified indexes exist and are
 // defined appropriately.
-func (s *Store) EnsureIndex(opts storageplugins.EnsureIndexOptions) error {
+func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
 	indices := make(map[string][]mongo.IndexModel, len(opts.Indices))
 	for _, index := range opts.Indices {
 		model := mongo.IndexModel{
@@ -162,61 +136,44 @@ func (s *Store) EnsureIndex(opts storageplugins.EnsureIndexOptions) error {
 		indices[index.Collection] = c
 	}
 
-	var g errgroup.Group
 	for collectionName, models := range indices {
-		g.Go(func() error {
-			ctx, span := s.log.StartSpanWithName("CreateIndices", attribute.String("collection", collectionName))
-			defer span.EndSpan()
-			ctx, cancel := context.WithTimeout(ctx, s.timeout)
-			defer cancel()
-
-			c := s.getCollection(collectionName)
-			_, err := c.Indexes().CreateMany(ctx, models)
+		c := s.getCollection(collectionName)
+		if _, err := c.Indexes().CreateMany(cxt, models); err != nil {
 			return err
-		})
+		}
 	}
 
-	return g.Wait()
+	return nil
 }
 
-func (s *Store) Count(opts storageplugins.CountOptions) (int64, error) {
-	ctx, span := s.log.StartSpan()
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
-	return c.CountDocuments(ctx, opts.Filter)
+	return c.CountDocuments(cxt, opts.Filter)
 }
 
-func (s *Store) Find(opts storageplugins.FindOptions) ([]bson.Raw, error) {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection), makeFilterAttr(opts.Filter))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
 	findOpts := s.buildFindOptions(opts)
-	span.SetAttributes(attribute.String("query", fmt.Sprintf("%v", opts.Filter)))
-
-	cur, err := c.Find(ctx, opts.Filter, findOpts)
+	cur, err := c.Find(cxt, opts.Filter, findOpts)
 	if err != nil {
-		return nil, span.Error(errors.Wrapf(err, "find failed:\n%#v\n%#v", opts.Filter, findOpts))
+		return nil, errors.Wrapf(err, "find failed:\n%#v\n%#v", opts.Filter, findOpts)
 	}
 
 	var results []bson.Raw
-	for cur.Next(ctx) {
+	for cur.Next(cxt) {
 		results = append(results, cur.Current)
 	}
 
 	return results, nil
 }
 
-func makeFilterAttr(value interface{}) attribute.KeyValue {
-	return attribute.String("filter", fmt.Sprintf("%v", value))
-}
-
-func (s *Store) buildFindOptions(opts storageplugins.FindOptions) *options.FindOptions {
+func (s *Store) buildFindOptions(opts plugins.FindOptions) *options.FindOptions {
 	query := options.Find()
 
 	if opts.Select != nil {
@@ -238,51 +195,43 @@ func (s *Store) buildFindOptions(opts storageplugins.FindOptions) *options.FindO
 	return query
 }
 
-func (s *Store) Insert(opts storageplugins.InsertOptions) error {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Insert(opts plugins.InsertOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
-	_, err := c.InsertMany(ctx, opts.Documents)
+	_, err := c.InsertMany(cxt, opts.Documents)
 	return err
 }
 
-func (s *Store) Patch(opts storageplugins.PatchOptions) error {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Patch(opts plugins.PatchOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
-	_, err := c.UpdateOne(ctx, opts.QueryDocument, opts.Transformation)
+	_, err := c.UpdateOne(cxt, opts.QueryDocument, opts.Transformation)
 	return err
 }
 
-func (s *Store) Remove(opts storageplugins.RemoveOptions) error {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection), makeFilterAttr(opts.Filter), attribute.Bool("all", opts.All))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Remove(opts plugins.RemoveOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
 	if opts.All {
-		_, err := c.DeleteMany(ctx, opts.Filter)
+		_, err := c.DeleteMany(cxt, opts.Filter)
 		return err
 	}
-	_, err := c.DeleteOne(ctx, opts.Filter)
+	_, err := c.DeleteOne(cxt, opts.Filter)
 	return err
 }
 
-func (s *Store) Update(opts storageplugins.UpdateOptions) error {
-	ctx, span := s.log.StartSpan(attribute.String("collection", opts.Collection), makeFilterAttr(opts.Filter))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+func (s *Store) Update(opts plugins.UpdateOptions) error {
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
-	_, err := c.ReplaceOne(ctx, opts.Filter, opts.Document, &options.ReplaceOptions{Upsert: &opts.Upsert})
+	_, err := c.ReplaceOne(cxt, opts.Filter, opts.Document, &options.ReplaceOptions{Upsert: &opts.Upsert})
 	return err
 }
 
@@ -292,11 +241,9 @@ func (s *Store) getCollection(collection string) *mongo.Collection {
 
 // RemoveDatabase removes the current database.
 func (s *Store) RemoveDatabase() error {
-	ctx, span := s.log.StartSpan(attribute.String("database", s.database))
-	defer span.EndSpan()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	span.Debugf("Dropping database %s!", s.database)
-	return s.client.Database(s.database).Drop(ctx)
+	fmt.Fprintf(s.Err, "Dropping database %s!\n", s.database)
+	return s.client.Database(s.database).Drop(cxt)
 }

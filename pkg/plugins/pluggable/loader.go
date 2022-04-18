@@ -145,10 +145,11 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (P
 			MagicCookieKey:   plugins.HandshakeConfig.MagicCookieKey,
 			MagicCookieValue: plugins.HandshakeConfig.MagicCookieValue,
 		},
-		Plugins: pluginTypes,
-		Cmd:     pluginCommand,
-		Logger:  logger,
-		Stderr:  &errbuf,
+		AllowedProtocols: []plugin.Protocol{plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
+		Plugins:          pluginTypes,
+		Cmd:              pluginCommand,
+		Logger:           logger,
+		Stderr:           &errbuf,
 	})
 	cleanup := func() {
 		client.Kill()

@@ -1,7 +1,6 @@
 package mongodb
 
 import (
-	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/portercontext"
@@ -9,19 +8,18 @@ import (
 )
 
 func TestParseDatabase(t *testing.T) {
-	ctx := context.Background()
 	tc := portercontext.NewTestContext(t)
 	t.Run("db specified", func(t *testing.T) {
-		mongo := NewStore(ctx, tc.Context, PluginConfig{URL: "mongodb://localhost:27017/test/"})
-		mongo.Connect(context.Background())
-		defer mongo.Close(context.Background())
+		mongo := NewStore(tc.Context, PluginConfig{URL: "mongodb://localhost:27017/test/"})
+		mongo.Connect()
+		defer mongo.Close()
 		assert.Equal(t, "test", mongo.database)
 	})
 
 	t.Run("default db", func(t *testing.T) {
-		mongo := NewStore(ctx, tc.Context, PluginConfig{URL: "mongodb://localhost:27017"})
-		mongo.Connect(context.Background())
-		defer mongo.Close(context.Background())
+		mongo := NewStore(tc.Context, PluginConfig{URL: "mongodb://localhost:27017"})
+		mongo.Connect()
+		defer mongo.Close()
 		assert.Equal(t, "porter", mongo.database)
 	})
 }
