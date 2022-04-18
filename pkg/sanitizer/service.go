@@ -1,6 +1,8 @@
 package sanitizer
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
@@ -83,6 +85,7 @@ func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 	for name, value := range params {
 		paramValue, err := bun.ConvertParameterValue(name, value)
 		if err != nil {
+			fmt.Println("error converting", name)
 			paramValue = value
 		}
 
@@ -121,15 +124,9 @@ func encodeOutput(output claims.Output) claims.Output {
 
 // RestoreOutputs retrieves all raw output value and return the restored outputs
 // record.
-func (s *Service) RestoreOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (claims.Outputs, error) {
+func (s *Service) RestoreOutputs(o claims.Outputs) (claims.Outputs, error) {
 	resolved := make([]claims.Output, 0, o.Len())
 	for _, ot := range o.Value() {
-		sensitive, err := bun.IsOutputSensitive(ot.Name)
-		if err != nil || !sensitive {
-			resolved = append(resolved, ot)
-			continue
-		}
-
 		r, err := s.RestoreOutput(ot)
 		if err != nil {
 			return o, errors.WithMessagef(err, "failed to resolve output %q using key %q", ot.Name, ot.Key)
@@ -143,6 +140,9 @@ func (s *Service) RestoreOutputs(o claims.Outputs, bun cnab.ExtendedBundle) (cla
 // RestoreOutput retrieves the raw output value and return the restored output
 // record.
 func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
+	if output.Key == "" {
+		return output, nil
+	}
 	resolved, err := s.secrets.Resolve(secrets.SourceSecret, string(output.Key))
 	if err != nil {
 		return output, err

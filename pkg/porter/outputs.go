@@ -120,21 +120,22 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
-	if err != nil {
-		return nil, err
-	}
-
 	outputs, err := p.Claims.GetLastOutputs(opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	bun := cnab.ExtendedBundle{c.Bundle}
-	resolved, err := p.Sanitizer.RestoreOutputs(outputs, bun)
+	resolved, err := p.Sanitizer.RestoreOutputs(outputs)
 	if err != nil {
 		return nil, err
 	}
+
+	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	bun := cnab.ExtendedBundle{c.Bundle}
 
 	displayOutputs := NewDisplayValuesFromOutputs(bun, resolved)
 	if err != nil {
