@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap/zapcore"
+
 	"get.porter.sh/porter/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -44,10 +46,36 @@ func NewPluginLoader(c *config.Config, createInternalPlugin InternalPluginHandle
 	}
 }
 
+// PluginConnection represents a connection to a running plugin.
+type PluginConnection struct {
+	// Key is the fully-qualified plugin key.
+	// For example, porter.storage.mongodb
+	Key string
+
+	// Client should be cast to the plugin protocol interface.
+	Client interface{}
+
+	// Logs are the logs emitted by the plugin
+	Logs chan PluginLogEntry
+
+	cleanup func()
+}
+
+// Close releases the resources held by the plugin connection.
+func (c PluginConnection) Close() {
+	if c.Logs != nil {
+		close(c.Logs)
+	}
+	if c.cleanup != nil {
+		c.cleanup()
+		c.cleanup = nil
+	}
+}
+
 // Load a plugin, returning the plugin's interface which the caller must then cast to
 // the typed interface, a cleanup function to stop the plugin when finished communicating with it,
 // and an error if the plugin could not be loaded.
-func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (interface{}, func(), error) {
+func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (PluginConnection, error) {
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("plugin-interface", pluginType.Interface),
 		attribute.String("plugin-protocol-version", fmt.Sprintf("%v", pluginType.ProtocolVersion)))
@@ -55,7 +83,7 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 
 	err := l.selectPlugin(ctx, pluginType)
 	if err != nil {
-		return nil, nil, err
+		return PluginConnection{}, err
 	}
 
 	l.SelectedPluginKey.Interface = pluginType.Interface
@@ -66,15 +94,24 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 
 		intPlugin, err := l.createInternalPlugin(ctx, l.SelectedPluginKey.String(), l.SelectedPluginConfig)
 		if err != nil {
-			return nil, func() {}, span.Error(err)
+			return PluginConnection{}, span.Error(err)
 		}
 
-		return intPlugin, func() { intPlugin.Close(ctx) }, intPlugin.Connect(ctx)
+		// Return a closed channel since there will be no logs from internal plugins
+		emptyLogs := make(chan PluginLogEntry, 0)
+		close(emptyLogs)
+
+		return PluginConnection{
+				Client:  intPlugin,
+				cleanup: func() { intPlugin.Close(ctx) },
+				Logs:    emptyLogs,
+			},
+			intPlugin.Connect(ctx)
 	}
 
 	pluginPath, err := l.GetPluginPath(l.SelectedPluginKey.Binary)
 	if err != nil {
-		return nil, nil, span.Error(err)
+		return PluginConnection{}, span.Error(err)
 	}
 	span.SetAttributes(attribute.String("plugin-path", pluginPath))
 
@@ -82,21 +119,20 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 
 	configReader, err := l.readPluginConfig()
 	if err != nil {
-		return nil, nil, span.Error(err)
+		return PluginConnection{}, span.Error(err)
 	}
 
 	pluginCommand.Stdin = configReader
 
-	pluginOutput := bytes.NewBufferString("")
+	logsReader, logsWriter := io.Pipe()
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       "porter",
-		Output:     pluginOutput,
+		Output:     logsWriter,
 		Level:      hclog.Debug,
 		JSONFormat: true,
 	})
-
-	pluginCtx, pluginLogger := l.NewRootLogger(ctx, l.SelectedPluginKey.String(), "RunPlugin")
-	go l.logPluginMessages(pluginCtx, pluginOutput)
+	logs := make(chan PluginLogEntry, 5)
+	go l.logPluginMessages(logs, logsReader)
 
 	pluginTypes := map[string]plugin.Plugin{
 		pluginType.Interface: pluginType.Plugin,
@@ -116,8 +152,8 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 	})
 	cleanup := func() {
 		client.Kill()
-		pluginLogger.EndSpan()
-		pluginLogger.Close()
+		logsWriter.Close()
+		logsReader.Close()
 	}
 
 	// Connect via RPC
@@ -128,22 +164,28 @@ func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (i
 		if stderr := errbuf.String(); stderr != "" {
 			err = errors.Wrap(errors.New(stderr), err.Error())
 		}
-		return nil, nil, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
+		return PluginConnection{}, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 
 	cleanup, err = l.setUpDebugger(ctx, client, cleanup)
 	if err != nil {
-		return nil, nil, span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
+		cleanup()
+		return PluginConnection{}, span.Error(errors.Wrap(err, "could not set up debugger for plugin"))
 	}
 
 	// Request the plugin
 	raw, err := rpcClient.Dispense(pluginType.Interface)
 	if err != nil {
 		cleanup()
-		return nil, nil, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
+		return PluginConnection{}, span.Error(errors.Wrapf(err, "could not connect to the %s plugin", l.SelectedPluginKey))
 	}
 
-	return raw, cleanup, nil
+	return PluginConnection{
+		Key:     l.SelectedPluginKey.String(),
+		Client:  raw,
+		cleanup: cleanup,
+		Logs:    logs,
+	}, nil
 }
 
 func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client, cleanup func()) (func(), error) {
@@ -200,9 +242,19 @@ func (l *PluginLoader) setUpDebugger(ctx context.Context, client *plugin.Client,
 	return cleanup, nil
 }
 
-func (l *PluginLoader) logPluginMessages(ctx context.Context, pluginOutput io.Reader) {
-	log := tracing.LoggerFromContext(ctx)
+// PluginLogEntry is a log message from a plugin
+type PluginLogEntry struct {
+	// Message is the contents of the log message
+	Message string
+	// Level of the log message
+	Level zapcore.Level
+}
 
+func (l PluginLogEntry) String() string {
+	return l.Message
+}
+
+func (l *PluginLoader) logPluginMessages(logs chan PluginLogEntry, pluginOutput io.Reader) {
 	r := bufio.NewReader(pluginOutput)
 	for {
 		line, err := r.ReadString('\n')
@@ -216,7 +268,6 @@ func (l *PluginLoader) logPluginMessages(ctx context.Context, pluginOutput io.Re
 		var pluginLog map[string]interface{}
 		err = json.Unmarshal([]byte(line), &pluginLog)
 		if err != nil {
-			log.Error(err)
 			continue
 		}
 
@@ -224,16 +275,23 @@ func (l *PluginLoader) logPluginMessages(ctx context.Context, pluginOutput io.Re
 		if !ok {
 			continue
 		}
+		entry := PluginLogEntry{Message: msg}
 
 		switch pluginLog["@level"] {
 		case hclog.Error:
-			log.Errorf(msg)
+			entry.Level = zapcore.ErrorLevel
 		case hclog.Warn:
-			log.Warn(msg)
+			entry.Level = zapcore.WarnLevel
 		case hclog.Info:
-			log.Info(msg)
+			entry.Level = zapcore.InfoLevel
 		default:
-			log.Debug(msg)
+			entry.Level = zapcore.DebugLevel
+		}
+
+		select {
+		case logs <- entry:
+		default:
+			// drop the log entry instead of blocking if no one is reading them
 		}
 	}
 }

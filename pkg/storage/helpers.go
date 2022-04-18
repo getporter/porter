@@ -18,7 +18,7 @@ type TestStore struct {
 func NewTestStore(tc *portercontext.TestContext) TestStore {
 	testPlugin := testplugin.NewTestStoragePlugin(tc)
 	return TestStore{
-		PluginAdapter: NewPluginAdapter(testPlugin),
+		PluginAdapter: NewPluginAdapter(tc.Context, testPlugin),
 		testPlugin:    testPlugin,
 	}
 }

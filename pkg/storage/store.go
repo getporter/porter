@@ -1,15 +1,14 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	"get.porter.sh/porter/pkg/plugins"
+)
 
 // Store is an interface for managing Porter documents.
 type Store interface {
-	// Connect establishes a connection to the storage backend.
-	// Safe to call multiple times, the existing connection is reused.
-	Connect(ctx context.Context) error
-
-	// Close the connection to the storage backend.
-	Close(ctx context.Context) error
+	plugins.Plugin
 
 	// Aggregate executes a pipeline and returns the results.
 	Aggregate(ctx context.Context, collection string, opts AggregateOptions, out interface{}) error

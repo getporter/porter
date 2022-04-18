@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"get.porter.sh/porter/pkg/portercontext"
+
+	"get.porter.sh/porter/pkg/tracing"
+
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,12 +26,19 @@ var _ Store = PluginAdapter{}
 // ResultType on plugin.ResultOptions so that you can just cast the result to
 // the specified type safely.
 type PluginAdapter struct {
-	plugin plugins.StoragePlugin
+	plugin  plugins.StoragePlugin
+	tracer  tracing.Tracer
+	context *portercontext.Context
 }
 
 // NewPluginAdapter wraps the specified storage plugin.
-func NewPluginAdapter(plugin plugins.StoragePlugin) PluginAdapter {
-	return PluginAdapter{plugin: plugin}
+func NewPluginAdapter(c *portercontext.Context, plugin plugins.StoragePlugin) PluginAdapter {
+	tracer, _ := c.NewTracer(context.TODO(), "storage.plugin")
+	return PluginAdapter{
+		context: c,
+		plugin:  plugin,
+		tracer:  tracer,
+	}
 }
 
 func (a PluginAdapter) Connect(ctx context.Context) error {
@@ -75,6 +86,9 @@ func (a PluginAdapter) Find(ctx context.Context, collection string, opts FindOpt
 	if err != nil {
 		return err
 	}
+
+	ctx, span := a.context.StartRootSpanFor(ctx, "Find", a.tracer)
+	defer span.EndSpan()
 
 	rawResults, err := a.plugin.Find(opts.ToPluginOptions(collection))
 	if err != nil {

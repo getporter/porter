@@ -21,8 +21,8 @@ var _ plugins.SecretsPlugin = &Store{}
 // Connects just-in-time, but you must call Close to release resources.
 type Store struct {
 	*config.Config
-	plugin  plugins.SecretsProtocol
-	cleanup func()
+	plugin plugins.SecretsProtocol
+	conn   pluggable.PluginConnection
 }
 
 func NewStore(c *config.Config) *Store {
@@ -73,26 +73,24 @@ func (s *Store) Connect(ctx context.Context) error {
 	pluginType := NewSecretsPluginConfig()
 
 	l := pluggable.NewPluginLoader(s.Config, createInternalPlugin)
-	raw, cleanup, err := l.Load(ctx, pluginType)
+	conn, err := l.Load(ctx, pluginType)
 	if err != nil {
 		return err
 	}
-	s.cleanup = cleanup
+	s.conn = conn
 
-	store, ok := raw.(plugins.SecretsProtocol)
+	store, ok := conn.Client.(plugins.SecretsProtocol)
 	if !ok {
-		cleanup()
+		conn.Close()
 		return errors.Errorf("the interface exposed by the %s plugin was not plugins.SecretsProtocol", l.SelectedPluginKey)
 	}
-
 	s.plugin = store
+
 	return nil
 }
 
 func (s *Store) Close(ctx context.Context) error {
-	if s.cleanup != nil {
-		s.cleanup()
-	}
+	s.conn.Close()
 	s.plugin = nil
 	return nil
 }

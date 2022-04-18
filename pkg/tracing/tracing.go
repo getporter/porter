@@ -23,7 +23,7 @@ type traceLoggerContext struct {
 
 // LoggerFromContext retrieves a logger from the specified context.
 // When the context is missing a logger/tracer, no-op implementations are provided.
-func LoggerFromContext(ctx context.Context) TraceLogger {
+func LoggerFromContext(ctx context.Context) traceLogger {
 	span := trace.SpanFromContext(ctx)
 
 	var logger *zap.Logger
@@ -45,6 +45,14 @@ func LoggerFromContext(ctx context.Context) TraceLogger {
 func StartSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
 	log := LoggerFromContext(ctx)
 	return log.StartSpan(attrs...)
+}
+
+func StartSpanForComponent(ctx context.Context, tracer Tracer, attrs ...attribute.KeyValue) (context.Context, TraceLogger) {
+	log := LoggerFromContext(ctx)
+	ctx, span := tracer.Start(ctx, callerFunc())
+
+	l := newTraceLogger(ctx, span, log.logger, tracer)
+	return ctx, l
 }
 
 // StartSpanWithName retrieves a logger from the current context and starts a span with

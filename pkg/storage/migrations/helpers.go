@@ -16,7 +16,7 @@ func NewTestManager(c *config.TestConfig) *TestManager {
 	testPlugin := testplugin.NewTestStoragePlugin(c.TestContext)
 	return &TestManager{
 		testPlugin: testPlugin,
-		Manager:    NewManager(c.Config, storage.NewPluginAdapter(testPlugin)),
+		Manager:    NewManager(c.Config, storage.NewPluginAdapter(c.Context, testPlugin)),
 	}
 }
 

@@ -104,17 +104,21 @@ func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribu
 }
 
 // NewRootLogger creates a new TraceLogger that identifies with a separate component from porter, such as a plugin or mixin.
-func (c *Context) NewRootLogger(ctx context.Context, serviceName string, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
+func (c *Context) NewTracer(ctx context.Context, serviceName string) tracing.Tracer {
 	tracer, _, err := c.createTracer(ctx, serviceName, c.logger, c.logCfg)
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("could not create tracer for %s", serviceName))
 		tracer = createNoopTracer()
 	}
+	return tracer
+}
 
-	ctx, span := tracer.Start(ctx, op)
+// StartRootSpan creates the root tracing span for the porter application.
+// This should only be done once.
+func (c *Context) StartRootSpanFor(ctx context.Context, op string, tracer tracing.Tracer, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
+	childCtx, span := tracer.Start(ctx, op)
 	span.SetAttributes(attrs...)
-	ctx, rootLogger := tracing.NewRootLogger(ctx, span, c.logger, tracer)
-	return ctx, rootLogger
+	return tracing.NewRootLogger(childCtx, span, c.logger, c.tracer)
 }
 
 func (c *Context) makeLogEncoding() zapcore.EncoderConfig {

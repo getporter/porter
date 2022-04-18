@@ -101,7 +101,7 @@ func NewRootLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tra
 	return childCtx, newTraceLogger(childCtx, span, logger, tracer)
 }
 
-func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) TraceLogger {
+func newTraceLogger(ctx context.Context, span trace.Span, logger *zap.Logger, tracer Tracer) traceLogger {
 	l := traceLogger{
 		ctx:    ctx,
 		span:   span,

@@ -53,7 +53,7 @@ type Porter struct {
 func New() *Porter {
 	c := config.New()
 	storagePlugin := pluginstore.NewStore(c)
-	storage := storage.NewPluginAdapter(storagePlugin)
+	storage := storage.NewPluginAdapter(c.Context, storagePlugin)
 	return NewFor(c, storage)
 }
 
