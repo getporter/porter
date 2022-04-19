@@ -25,19 +25,19 @@ func (Plugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return &Client{client: c}, nil
 }
 
-var _ plugin.GRPCPlugin = &GPlugin{}
+var _ plugin.GRPCPlugin = &GPluginx{}
 
 // GPlugin is the gRPC implementation of the storage plugin.
-type GPlugin struct {
+type GPluginx struct {
 	plugin.Plugin
 	Impl plugins.StorageProtocol
 }
 
-func (p *GPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
+func (p *GPluginx) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	proto.RegisterStorageProtocolServer(s, &GServer{Impl: p.Impl})
 	return nil
 }
 
-func (p *GPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *GPluginx) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
 	return &GClient{client: proto.NewStorageProtocolClient(c)}, nil
 }

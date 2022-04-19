@@ -37,7 +37,7 @@ func NewStore(c *config.Config) *Store {
 func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: plugins.PluginInterface,
-		Plugin:    &GPlugin{},
+		Plugin:    &Plugin{},
 		GetDefaultPluggable: func(c *config.Config) string {
 			return c.Data.DefaultStorage
 		},
@@ -70,6 +70,7 @@ func (s *Store) Connect(ctx context.Context) error {
 		conn.Close()
 		return errors.Errorf("the interface exposed by the %s plugin was not plugins.StorageProtocol", l.SelectedPluginKey)
 	}
+
 	s.plugin = store
 	s.tracer = s.NewTracer(ctx, conn.Key)
 

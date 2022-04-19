@@ -29,7 +29,7 @@ func NewPlugin(c *portercontext.Context, pluginConfig interface{}) plugin.Plugin
 	}
 	mapstructure.Decode(pluginConfig, &cfg)
 
-	return &pluginstore.GPlugin{
+	return &pluginstore.Plugin{
 		Impl: NewStore(c, cfg),
 	}
 }

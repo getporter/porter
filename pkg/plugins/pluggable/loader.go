@@ -240,10 +240,19 @@ func (l PluginLogEntry) String() string {
 }
 
 func (l *PluginLoader) logPluginMessages(logs chan PluginLogEntry, pluginOutput io.Reader) {
+	logfile, err := os.OpenFile("/tmp/plugin-logs.txt", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer logfile.Close()
+
 	r := bufio.NewReader(pluginOutput)
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				return
+			}
 			continue
 		}
 		if line == "" {
@@ -273,7 +282,7 @@ func (l *PluginLoader) logPluginMessages(logs chan PluginLogEntry, pluginOutput 
 			entry.Level = zapcore.DebugLevel
 		}
 
-		fmt.Println(msg)
+		logfile.WriteString(msg + "\n")
 		/*select {
 		case logs <- entry:
 		default:

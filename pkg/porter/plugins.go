@@ -255,7 +255,7 @@ func getInternalPlugins(c *portercontext.Context, pluginCfg interface{}) map[int
 		// v2 Storage plugins
 		2: {
 			//mongodb.PluginKey:        mongodb.NewPlugin(c, pluginCfg),
-			mongodb_docker.PluginKey: mongodb_docker.NewPlugin(c, pluginCfg),
+			"storage.porter.mongodb-docker": mongodb_docker.NewPlugin(c, pluginCfg),
 		},
 	}
 }
