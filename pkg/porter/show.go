@@ -116,7 +116,9 @@ func (p *Porter) ShowInstallation(ctx context.Context, opts ShowOptions) error {
 			}
 		}
 
+		// Print parameters, if any
 		if len(displayInstallation.Parameters) > 0 {
+			fmt.Fprintln(p.Out)
 			fmt.Fprintln(p.Out, "Parameters:")
 
 			err = p.printDisplayValuesTable(displayInstallation.ResolvedParameters)

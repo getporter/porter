@@ -51,10 +51,6 @@ func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
 	var resolveErrors error
 
 	for _, param := range params.Parameters {
-		if param.Source.Key == DEFAULT_STRATEGY {
-			resolvedParams[param.Name] = param.Source.Value
-			continue
-		}
 		value, err := s.Secrets.Resolve(param.Source.Key, param.Source.Value)
 		if err != nil {
 			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve parameter %s.%s from %s %s", params.Name, param.Name, param.Source.Key, param.Source.Value))

@@ -78,7 +78,7 @@ func TestSanitizer_Output(t *testing.T) {
 	expectedSensitiveOutput := claims.Output{
 		Name:  sensitiveOutputName,
 		Key:   recordID + sensitiveOutputName,
-		Value: []byte{},
+		Value: nil,
 		RunID: recordID,
 	}
 
