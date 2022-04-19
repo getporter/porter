@@ -1,6 +1,8 @@
 package host
 
 import (
+	"errors"
+
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"github.com/cnabio/cnab-go/secrets/host"
@@ -20,6 +22,10 @@ func (p Plugin) Connect() error {
 
 func (p Plugin) Close() error {
 	return nil
+}
+
+func (p Plugin) Create(keyName string, keyValue string, value string) error {
+	return errors.New("not implemented")
 }
 
 // NewPlugin creates an instance of the internal plugin secrets.porter.host

@@ -3,8 +3,6 @@ module get.porter.sh/porter
 go 1.18
 
 replace (
-	// TODO: remove before merging
-	github.com/cnabio/cnab-go v0.23.1 => github.com/vinozzz/cnab-go v0.23.2-0.20220408154326-6a3da71c53b6
 	// a dependency of buildx (github.com/tonistiigi/fsutil) relies on an untagged version of Docker on the master branch
 	github.com/docker/cli => github.com/docker/cli v20.10.3-0.20220226190722-8667ccd1124c+incompatible
 	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20220121014307-40bb9831756f+incompatible
