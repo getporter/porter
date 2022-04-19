@@ -67,7 +67,7 @@ func (s ParameterStore) ResolveAll(params ParameterSet) (secrets.Set, error) {
 }
 
 func (s ParameterStore) Validate(params ParameterSet) error {
-	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand, DEFAULT_STRATEGY}
+	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
 	for _, cs := range params.Parameters {

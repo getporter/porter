@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
@@ -141,12 +142,13 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 
-	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(args.Params, cnab.ExtendedBundle{b.Bundle}, currentRun.ID)
+	extb := cnab.ExtendedBundle{b.Bundle}
+	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(args.Params, extb, currentRun.ID)
 	if err != nil {
 		return err
 	}
 
-	currentRun.EncodeParameterOverrides()
+	currentRun.ParameterOverrides = sanitizer.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
 

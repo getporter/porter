@@ -111,15 +111,15 @@ func TestPorter_ShowBundle(t *testing.T) {
 				r.BundleDigest = "sha256:88d68ef0bdb9cedc6da3a8e341a33e5d2f8bb19d0cf7ec3f1060d3f9eb73cae9"
 
 				r.ParameterOverrides = i.NewInternalParameterSet(
-					parameters.DefaultStrategy("logLevel", "3"),
-					parameters.DefaultStrategy("secretString", "foo"),
+					parameters.ValueStrategy("logLevel", "3"),
+					parameters.ValueStrategy("secretString", "foo"),
 				)
 
 				r.Parameters = i.NewInternalParameterSet(
 					[]secrets.Strategy{
-						parameters.DefaultStrategy("logLevel", "3"),
-						parameters.DefaultStrategy("token", "top-secret"),
-						parameters.DefaultStrategy("secretString", "foo"),
+						parameters.ValueStrategy("logLevel", "3"),
+						parameters.ValueStrategy("token", "top-secret"),
+						parameters.ValueStrategy("secretString", "foo"),
 					}...)
 
 				r.ParameterSets = []string{"dev-env"}

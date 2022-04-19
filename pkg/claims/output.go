@@ -18,8 +18,10 @@ type Output struct {
 	Installation  string         `json:"installation" yaml:"installation" toml:"installation"`
 	RunID         string         `json:"runId" yaml:"runId" toml:"runId"`
 	ResultID      string         `json:"resultId" yaml:"resultId" toml:"resultId"`
-	Key           string         `json:"key" yaml:"key" toml:"key"`
-	Value         []byte         `json:"value" yaml:"value" toml:"value"`
+
+	// Key holds the secret key to retrieve a sensitive output value
+	Key   string `json:"key" yaml:"key" toml:"key"`
+	Value []byte `json:"value" yaml:"value" toml:"value"`
 }
 
 func (o Output) DefaultDocumentFilter() interface{} {
@@ -77,6 +79,7 @@ func (o Outputs) GetByIndex(i int) (Output, bool) {
 	return o.vals[i], true
 }
 
+// Value returns a list of outputs.
 func (o Outputs) Value() []Output {
 	return o.vals
 }

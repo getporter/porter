@@ -6,16 +6,13 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/schema"
+	"github.com/cnabio/cnab-go/secrets/host"
 )
 
 const (
 	// SchemaVersion represents the version associated with the schema
 	// for parameter set documents.
 	SchemaVersion = schema.Version("1.0.1")
-
-	// DEFAULT_STRATEGY is used when a data does not need to be stored in a
-	// secret store and can be stored in plain value in porter's storage.
-	DEFAULT_STRATEGY = "default-strategy"
 )
 
 // ParseVariableAssignments converts a string array of variable assignments
@@ -43,11 +40,11 @@ func ParseVariableAssignments(params []string) (map[string]string, error) {
 	return variables, nil
 }
 
-// DefaultStrategy is the strategy used to store non-sensitive parameters
-func DefaultStrategy(name string, value string) secrets.Strategy {
+// ValueStrategy is the strategy used to store non-sensitive parameters
+func ValueStrategy(name string, value string) secrets.Strategy {
 	return secrets.Strategy{
 		Name:   name,
-		Source: secrets.Source{Key: DEFAULT_STRATEGY, Value: value},
+		Source: secrets.Source{Key: host.SourceValue, Value: value},
 		Value:  value,
 	}
 }

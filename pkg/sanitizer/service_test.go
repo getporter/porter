@@ -12,6 +12,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +28,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 	sensitiveParamName := "my-second-param"
 	sensitiveParamKey := recordID + sensitiveParamName
 	expected := []secrets.Strategy{
-		{Name: "my-first-param", Source: secrets.Source{Key: parameters.DEFAULT_STRATEGY, Value: "1"}, Value: "1"},
+		{Name: "my-first-param", Source: secrets.Source{Key: host.SourceValue, Value: "1"}, Value: "1"},
 		{Name: sensitiveParamName, Source: secrets.Source{Key: secrets.SourceSecret, Value: sensitiveParamKey}, Value: "2"},
 	}
 	sort.SliceStable(expected, func(i, j int) bool {

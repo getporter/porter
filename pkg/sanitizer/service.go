@@ -1,8 +1,6 @@
 package sanitizer
 
 import (
-	"fmt"
-
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
@@ -27,6 +25,8 @@ func NewService(parameterstore parameters.Provider, secretstore secrets.Store) *
 
 // CleanRawParameters clears out sensitive data in raw parameter values before
 // transform the raw value into secret strategies.
+// The id argument is used to associate the reference key with the corresponding
+// run or installation record in porter's database.
 func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for name, value := range params {
@@ -34,7 +34,7 @@ func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.Ext
 		if err != nil {
 			return nil, err
 		}
-		strategy := parameters.DefaultStrategy(name, stringVal)
+		strategy := parameters.ValueStrategy(name, stringVal)
 		strategies = append(strategies, strategy)
 	}
 
@@ -49,18 +49,19 @@ func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.Ext
 
 // CleanParameters clears out sensitive data in strategized parameter data and return
 // sanitized value after saving sensitive datat to secrets store.
+// The id argument is used to associate the reference key with the corresponding
+// run or installation record in porter's database.
 func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for _, param := range params {
-
-		strategy := parameters.DefaultStrategy(param.Name, param.Value)
+		strategy := parameters.ValueStrategy(param.Name, param.Value)
 		if bun.IsSensitiveParameter(param.Name) {
-			encodedStrategy := encodeSecretParam(strategy, id)
-			err := s.secrets.Create(encodedStrategy.Source.Key, encodedStrategy.Source.Value, encodedStrategy.Value)
+			cleaned := sanitizedParam(strategy, id)
+			err := s.secrets.Create(cleaned.Source.Key, cleaned.Source.Value, cleaned.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to save sensitive param to secrete store")
 			}
-			strategy = encodedStrategy
+			strategy = cleaned
 		}
 
 		strategies = append(strategies, strategy)
@@ -74,6 +75,27 @@ func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBu
 
 }
 
+// LinkSensitiveParametersToSecrets creates a reference key for sensitive data
+// and replace the sensitive value with the reference key.
+// The id argument is used to associate the reference key with the corresponding
+// run or installation record in porter's database.
+func LinkSensitiveParametersToSecrets(pset parameters.ParameterSet, bun cnab.ExtendedBundle, id string) parameters.ParameterSet {
+	for i, param := range pset.Parameters {
+		if !bun.IsSensitiveParameter(param.Name) {
+			continue
+		}
+		pset.Parameters[i] = sanitizedParam(param, id)
+	}
+
+	return pset
+}
+
+func sanitizedParam(param secrets.Strategy, id string) secrets.Strategy {
+	param.Source.Key = secrets.SourceSecret
+	param.Source.Value = id + param.Name
+	return param
+}
+
 // RestoreParameterSet resolves the raw parameter data from a secrets store.
 func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.ExtendedBundle) (map[string]interface{}, error) {
 	params, err := s.parameter.ResolveAll(pset)
@@ -85,7 +107,6 @@ func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 	for name, value := range params {
 		paramValue, err := bun.ConvertParameterValue(name, value)
 		if err != nil {
-			fmt.Println("error converting", name)
 			paramValue = value
 		}
 
@@ -101,11 +122,17 @@ func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 // the output record.
 func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
 	sensitive, err := bun.IsOutputSensitive(output.Name)
-	if err != nil || !sensitive {
+	if err != nil {
+		output.Value = nil
 		return output, err
 	}
 
-	secretOt := encodeOutput(output)
+	if !sensitive {
+		return output, nil
+
+	}
+
+	secretOt := sanitizedOutput(output)
 
 	err = s.secrets.Create(secrets.SourceSecret, secretOt.Key, string(output.Value))
 	if err != nil {
@@ -115,9 +142,9 @@ func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (cl
 	return secretOt, nil
 }
 
-func encodeOutput(output claims.Output) claims.Output {
+func sanitizedOutput(output claims.Output) claims.Output {
 	output.Key = output.RunID + output.Name
-	output.Value = []byte{}
+	output.Value = nil
 	return output
 
 }
@@ -150,10 +177,4 @@ func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
 
 	output.Value = []byte(resolved)
 	return output, nil
-}
-
-func encodeSecretParam(param secrets.Strategy, id string) secrets.Strategy {
-	param.Source.Key = secrets.SourceSecret
-	param.Source.Value = id + param.Name
-	return param
 }

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
+	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"github.com/pkg/errors"
 )
 
@@ -63,12 +65,16 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 		s.Secrets[keyName] = make(map[string]string, 1)
 	}
 
-	value, ok := s.Secrets[keyName][keyValue]
-	if !ok {
-		return "", errors.New("secret not found")
+	if keyName == secrets.SourceSecret {
+		value, ok := s.Secrets[keyName][keyValue]
+		if !ok {
+			return "", errors.New("secret not found")
+		}
+
+		return value, nil
 	}
 
-	return value, nil
+	return host.NewPlugin().Resolve(keyName, keyValue)
 }
 
 func (s *Store) Create(keyName string, keyValue string, value string) error {

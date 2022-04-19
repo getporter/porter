@@ -2,7 +2,6 @@ package parameters
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"get.porter.sh/porter/pkg/secrets"
@@ -68,13 +67,9 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	return ps
 }
 
-// NewParameterSet creates a new ParameterSet with the required fields initialized.
+// NewInternalParameterSet creates a new internal ParameterSet with the required fields initialized.
 func NewInternalParameterSet(namespace string, name string, params ...secrets.Strategy) ParameterSet {
 	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
-}
-
-func (s ParameterSet) IsInternalParameterSet() bool {
-	return strings.Contains(s.Name, INTERNAL_PARAMETERER_SET)
 }
 
 func (s ParameterSet) DefaultDocumentFilter() interface{} {

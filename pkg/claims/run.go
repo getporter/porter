@@ -5,7 +5,6 @@ import (
 
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
-	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/schema"
@@ -162,27 +161,4 @@ func (r Run) NewResultFrom(cnabResult cnab.Result) Result {
 		OutputMetadata: cnabResult.OutputMetadata,
 		Custom:         cnabResult.Custom,
 	}
-}
-
-// EncodeInternalParameterSet encodes sensitive data in internal parameter sets
-// so it will be associated with the current run record.
-func (r *Run) EncodeParameterOverrides() {
-
-	bun := cnab.ExtendedBundle{r.Bundle}
-
-	for i, param := range r.ParameterOverrides.Parameters {
-		if !bun.IsSensitiveParameter(param.Name) {
-			continue
-		}
-		r.ParameterOverrides.Parameters[i] = r.EncodeSensitiveParameter(param)
-	}
-
-}
-
-// EncodeSensitiveParameter returns a new parameter that has the run ID
-// associated with the strategy.
-func (r Run) EncodeSensitiveParameter(param secrets.Strategy) secrets.Strategy {
-	param.Source.Key = secrets.SourceSecret
-	param.Source.Value = r.ID + param.Name
-	return param
 }

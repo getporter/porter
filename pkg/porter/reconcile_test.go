@@ -52,7 +52,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		}
 		run := claims.Run{
 			// Use the default values from the bundle.json so that we don't trigger reconciliation
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.DefaultStrategy("my-second-param", "spring-music-demo")),
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -93,7 +93,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 			},
 		}
 		run := claims.Run{
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.DefaultStrategy("my-second-param", "newvalue")),
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "newvalue")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
@@ -117,7 +117,7 @@ func TestPorter_IsInstallationInSync(t *testing.T) {
 		run := claims.Run{
 			CredentialSets: []string{"oldcreds"},
 			// Use the default values from the bundle.json so they don't trigger the reconciliation
-			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.DefaultStrategy("my-second-param", "spring-music-demo")),
+			Parameters: parameters.NewInternalParameterSet(i.Namespace, i.Name, parameters.ValueStrategy("my-second-param", "spring-music-demo")),
 		}
 		upgradeOpts := NewUpgradeOptions()
 		upgradeOpts.bundleRef = &cnab.BundleReference{Definition: bun}
