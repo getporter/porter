@@ -25,7 +25,7 @@ type Store struct {
 	config PluginConfig
 }
 
-func NewStore(ctx context.Context, c *portercontext.Context, cfg PluginConfig) *Store {
+func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	return &Store{
 		context: c,
 		config:  cfg,
@@ -56,7 +56,7 @@ func (s *Store) Close(ctx context.Context) error {
 
 	// close the connection to the mongodb running in the container
 	if conn, ok := s.StorageProtocol.(*mongodb.Store); ok {
-		return conn.Close()
+		return conn.Close(ctx)
 	}
 
 	s.StorageProtocol = nil
@@ -155,7 +155,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 			return nil, errors.New("timeout waiting for local mongodb daemon to be ready")
 		default:
 			conn := mongodb.NewStore(c, mongoPluginCfg)
-			err := conn.Connect()
+			err := conn.Connect(ctx)
 			if err == nil {
 				return conn, nil
 			} else if c.Debug {

@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
+
+	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
 
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
-	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/olekukonko/tablewriter"
@@ -186,9 +188,7 @@ func (p *Porter) UninstallPlugin(opts pkgmgmt.UninstallOptions) error {
 }
 
 type RunInternalPluginOpts struct {
-	Key               string
-	selectedPlugin    plugin.Plugin
-	selectedInterface string
+	Key string
 }
 
 func (o *RunInternalPluginOpts) Validate(c *portercontext.Context, args []string) error {
@@ -201,37 +201,22 @@ func (o *RunInternalPluginOpts) Validate(c *portercontext.Context, args []string
 
 	o.Key = args[0]
 
-	pluginCfg, err := o.parsePluginConfig(c)
-	if err != nil {
-		return err
-	}
-
-	availableImplementations := getInternalPlugins(c, pluginCfg)
-	makePlugin, ok := availableImplementations[o.Key]
-	if !ok {
-		return errors.Errorf("invalid plugin key specified: %q", o.Key)
-	}
-	p, err := makePlugin()
-	if err != nil {
-		return fmt.Errorf("could not create an instance of the requested internal plugin %s: %w", o.Key, err)
-	}
-	o.selectedPlugin = p
-
-	parts := strings.Split(o.Key, ".")
-	o.selectedInterface = parts[0]
-
 	return nil
 }
 
 func (o *RunInternalPluginOpts) parsePluginConfig(c *portercontext.Context) (interface{}, error) {
 	pluginCfg := map[string]interface{}{}
 	if err := json.NewDecoder(c.In).Decode(&pluginCfg); err != nil {
+		if err == io.EOF {
+			// No plugin config was specified
+			return pluginCfg, nil
+		}
 		return nil, fmt.Errorf("error parsing plugin configuration from stdin as json: %w", err)
 	}
 	return pluginCfg, nil
 }
 
-func (p *Porter) RunInternalPlugins(args []string) {
+func (p *Porter) RunInternalPlugins(args []string) error {
 	// We are not following the normal CLI pattern here because
 	// if we write to stdout without the hclog, it will cause the plugin framework to blow up
 	var opts RunInternalPluginOpts
@@ -244,19 +229,33 @@ func (p *Porter) RunInternalPlugins(args []string) {
 			JSONFormat: true,
 		})
 		logger.Error(err.Error())
-		return
+		return err
 	}
 
-	plugins.Serve(opts.selectedInterface, opts.selectedPlugin)
+	pluginCfg, err := opts.parsePluginConfig(p.Context)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := pluginCfg.(map[string]interface{}); !ok {
+		return fmt.Errorf("invalid plugin configuration, should be a document")
+	}
+
+	availableImplementations := getInternalPlugins(p.Context, pluginCfg)
+	plugins.ServeMany(availableImplementations)
+	return nil
 }
 
-func getInternalPlugins(c *portercontext.Context, pluginCfg interface{}) map[string]func() (plugin.Plugin, error) {
-	return map[string]func() (plugin.Plugin, error){
-		host.PluginKey: func() (plugin.Plugin, error) {
-			return host.NewPlugin(), nil
+func getInternalPlugins(c *portercontext.Context, pluginCfg interface{}) map[int]plugin.PluginSet {
+	return map[int]plugin.PluginSet{
+		// v1 Secrets plugins
+		1: {
+			host.PluginKey: host.NewPlugin(),
 		},
-		mongodb.PluginKey: func() (plugin.Plugin, error) {
-			return mongodb.NewPlugin(c, pluginCfg)
+		// v2 Storage plugins
+		2: {
+			//mongodb.PluginKey:        mongodb.NewPlugin(c, pluginCfg),
+			mongodb_docker.PluginKey: mongodb_docker.NewPlugin(c, pluginCfg),
 		},
 	}
 }

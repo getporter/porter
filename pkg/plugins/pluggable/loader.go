@@ -273,11 +273,12 @@ func (l *PluginLoader) logPluginMessages(logs chan PluginLogEntry, pluginOutput 
 			entry.Level = zapcore.DebugLevel
 		}
 
-		select {
+		fmt.Println(msg)
+		/*select {
 		case logs <- entry:
 		default:
 			// drop the log entry instead of blocking if no one is reading them
-		}
+		}*/
 	}
 }
 

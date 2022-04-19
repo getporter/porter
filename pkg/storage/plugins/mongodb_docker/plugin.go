@@ -1,12 +1,11 @@
 package mongodb_docker
 
 import (
-	"context"
-
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
+	"get.porter.sh/porter/pkg/storage/pluginstore"
+	"github.com/hashicorp/go-plugin"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 // PluginKey is the identifier of the internal mongodb run in docker plugin.
@@ -22,15 +21,15 @@ type PluginConfig struct {
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin
-func NewPlugin(ctx context.Context, c *portercontext.Context, pluginConfig interface{}) (plugins.StorageProtocol, error) {
+func NewPlugin(c *portercontext.Context, pluginConfig interface{}) plugin.Plugin {
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",
 		Timeout:  10,
 	}
-	if err := mapstructure.Decode(pluginConfig, &cfg); err != nil {
-		return nil, errors.Wrapf(err, "error decoding %s plugin config from %#v", PluginKey, pluginConfig)
-	}
+	mapstructure.Decode(pluginConfig, &cfg)
 
-	return NewStore(ctx, c, cfg), nil
+	return &pluginstore.GPlugin{
+		Impl: NewStore(c, cfg),
+	}
 }

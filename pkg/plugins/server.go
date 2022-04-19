@@ -5,14 +5,20 @@ import (
 )
 
 // Serve a single named plugin.
-func Serve(interfaceName string, pluginImplementation plugin.Plugin) {
-	ServeMany(map[string]plugin.Plugin{interfaceName: pluginImplementation})
+func Serve(interfaceName string, pluginImplementation plugin.Plugin, protocolVersion int) {
+	plugins := map[int]plugin.PluginSet{
+		protocolVersion: {
+			interfaceName: pluginImplementation,
+		},
+	}
+	ServeMany(plugins)
 }
 
 // Serve many plugins that the client will select by named interface.
-func ServeMany(pluginMap map[string]plugin.Plugin) {
+func ServeMany(pluginMap map[int]plugin.PluginSet) {
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: HandshakeConfig,
-		Plugins:         pluginMap,
+		HandshakeConfig:  HandshakeConfig,
+		VersionedPlugins: pluginMap,
+		GRPCServer:       plugin.DefaultGRPCServer,
 	})
 }

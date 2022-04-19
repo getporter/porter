@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+var _ plugins.StorageProtocol = &GClient{}
+
 // GClient is a gRPC implementation of the storage client.
 type GClient struct {
 	client proto.StorageProtocolClient
@@ -200,7 +202,7 @@ func (m *GServer) EnsureIndex(ctx context.Context, request *proto.EnsureIndexReq
 		}
 	}
 
-	err := m.Impl.EnsureIndex(opts)
+	err := m.Impl.EnsureIndex(ctx, opts)
 	return &proto.EnsureIndexResponse{}, err
 }
 
@@ -210,7 +212,7 @@ func (m *GServer) Aggregate(ctx context.Context, request *proto.AggregateRequest
 		Pipeline:   convertToBsonMList(request.Pipeline),
 	}
 
-	results, err := m.Impl.Aggregate(opts)
+	results, err := m.Impl.Aggregate(ctx, opts)
 	resp := &proto.AggregateResponse{Results: make([][]byte, len(results))}
 	for i := range results {
 		resp.Results[i] = results[i]
@@ -223,7 +225,7 @@ func (m *GServer) Count(ctx context.Context, req *proto.CountRequest) (*proto.Co
 		Collection: req.Collection,
 		Filter:     convertToBsonM(req.Filter),
 	}
-	count, err := m.Impl.Count(opts)
+	count, err := m.Impl.Count(ctx, opts)
 	return &proto.CountResponse{Count: count}, err
 }
 
@@ -238,7 +240,7 @@ func (m *GServer) Find(ctx context.Context, request *proto.FindRequest) (*proto.
 		Group:      convertToBsonD(request.Group),
 	}
 
-	results, err := m.Impl.Find(opts)
+	results, err := m.Impl.Find(ctx, opts)
 	resp := &proto.FindResponse{Results: make([][]byte, len(results))}
 	for i := range results {
 		resp.Results[i] = results[i]
@@ -252,7 +254,7 @@ func (m *GServer) Insert(ctx context.Context, request *proto.InsertRequest) (*pr
 		Documents:  convertToBsonMList(request.Documents),
 	}
 
-	err := m.Impl.Insert(opts)
+	err := m.Impl.Insert(ctx, opts)
 	return &proto.InsertResponse{}, err
 }
 
@@ -263,7 +265,7 @@ func (m *GServer) Patch(ctx context.Context, request *proto.PatchRequest) (*prot
 		Transformation: convertToBsonD(request.Transformation),
 	}
 
-	err := m.Impl.Patch(opts)
+	err := m.Impl.Patch(ctx, opts)
 	return &proto.PatchResponse{}, err
 }
 
@@ -274,7 +276,7 @@ func (m *GServer) Remove(ctx context.Context, request *proto.RemoveRequest) (*pr
 		All:        request.All,
 	}
 
-	err := m.Impl.Remove(opts)
+	err := m.Impl.Remove(ctx, opts)
 	return &proto.RemoveResponse{}, err
 }
 
@@ -286,7 +288,7 @@ func (m *GServer) Update(ctx context.Context, request *proto.UpdateRequest) (*pr
 		Document:   convertToBsonM(request.Document),
 	}
 
-	err := m.Impl.Update(opts)
+	err := m.Impl.Update(ctx, opts)
 	return &proto.UpdateResponse{}, err
 }
 

@@ -37,7 +37,7 @@ func NewStore(c *config.Config) *Store {
 func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	return pluggable.PluginTypeConfig{
 		Interface: plugins.PluginInterface,
-		Plugin:    &Plugin{},
+		Plugin:    &GPlugin{},
 		GetDefaultPluggable: func(c *config.Config) string {
 			return c.Data.DefaultStorage
 		},
@@ -87,7 +87,7 @@ func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions
 		return err
 	}
 
-	return s.plugin.EnsureIndex(opts)
+	return s.plugin.EnsureIndex(ctx, opts)
 }
 
 func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
@@ -95,7 +95,7 @@ func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([
 		return nil, err
 	}
 
-	return s.plugin.Aggregate(opts)
+	return s.plugin.Aggregate(ctx, opts)
 }
 
 func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
@@ -103,7 +103,7 @@ func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, er
 		return 0, err
 	}
 
-	return s.plugin.Count(opts)
+	return s.plugin.Count(ctx, opts)
 }
 
 func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
@@ -115,7 +115,7 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 		return nil, err
 	}
 
-	return s.plugin.Find(opts)
+	return s.plugin.Find(ctx, opts)
 }
 
 // try to associate logs from the plugin with a particular operation
@@ -146,7 +146,7 @@ func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
 		return err
 	}
 
-	return s.plugin.Insert(opts)
+	return s.plugin.Insert(ctx, opts)
 }
 
 func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
@@ -154,7 +154,7 @@ func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
 		return err
 	}
 
-	return s.plugin.Patch(opts)
+	return s.plugin.Patch(ctx, opts)
 }
 
 func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
@@ -162,7 +162,7 @@ func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
 		return err
 	}
 
-	return s.plugin.Remove(opts)
+	return s.plugin.Remove(ctx, opts)
 }
 
 func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
@@ -170,5 +170,5 @@ func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
 		return err
 	}
 
-	return s.plugin.Update(opts)
+	return s.plugin.Update(ctx, opts)
 }

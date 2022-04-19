@@ -55,7 +55,7 @@ func (s *TestStoragePlugin) Setup(ctx context.Context) error {
 		return s.runTestDatabase(ctx)
 	}
 
-	return s.store.RemoveDatabase() // Start with a fresh test database
+	return s.store.RemoveDatabase(ctx) // Start with a fresh test database
 }
 
 func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
@@ -64,12 +64,12 @@ func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 		Timeout: 10,
 	}
 	devMongo := mongodb.NewStore(s.tc.Context, cfg)
-	err := devMongo.Connect()
+	err := devMongo.Connect(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = devMongo.Ping()
+	err = devMongo.Ping(ctx)
 	if err != nil {
 		return err
 	}
@@ -89,9 +89,10 @@ func (s *TestStoragePlugin) runTestDatabase(ctx context.Context) error {
 
 // Teardown stops the test mongo instance and cleans up any temporary files.
 func (s *TestStoragePlugin) Teardown() error {
+	ctx := context.TODO()
 	if s.store != nil {
-		s.store.RemoveDatabase()
-		return s.Close(context.TODO())
+		s.store.RemoveDatabase(ctx)
+		return s.Close(ctx)
 	}
 	return nil
 }
@@ -104,7 +105,7 @@ func (s *TestStoragePlugin) Connect(ctx context.Context) error {
 // Close the connection to the database.
 func (s *TestStoragePlugin) Close(ctx context.Context) error {
 	if s.store != nil {
-		err := s.store.Close()
+		err := s.store.Close(ctx)
 		s.store = nil
 		return err
 	}
@@ -112,33 +113,33 @@ func (s *TestStoragePlugin) Close(ctx context.Context) error {
 }
 
 func (s *TestStoragePlugin) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
-	return s.store.EnsureIndex(opts)
+	return s.store.EnsureIndex(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
-	return s.store.Aggregate(opts)
+	return s.store.Aggregate(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
-	return s.store.Count(opts)
+	return s.store.Count(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
-	return s.store.Find(opts)
+	return s.store.Find(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Insert(ctx context.Context, opts plugins.InsertOptions) error {
-	return s.store.Insert(opts)
+	return s.store.Insert(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Patch(ctx context.Context, opts plugins.PatchOptions) error {
-	return s.store.Patch(opts)
+	return s.store.Patch(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
-	return s.store.Remove(opts)
+	return s.store.Remove(ctx, opts)
 }
 
 func (s *TestStoragePlugin) Update(ctx context.Context, opts plugins.UpdateOptions) error {
-	return s.store.Update(opts)
+	return s.store.Update(ctx, opts)
 }
