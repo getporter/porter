@@ -3,6 +3,8 @@ package claims
 import (
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
@@ -63,8 +65,8 @@ type Run struct {
 	Custom interface{} `json:"custom" yaml:"custom", toml:"custom"`
 }
 
-func (r Run) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"_id": r.ID}
+func (r Run) DefaultDocumentFilter() bson.M {
+	return bson.M{"_id": r.ID}
 }
 
 // NewRun creates a run with default values initialized.

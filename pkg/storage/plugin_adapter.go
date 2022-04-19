@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var _ Store = PluginAdapter{}
@@ -101,11 +100,7 @@ func (a PluginAdapter) FindOne(ctx context.Context, collection string, opts Find
 
 	if len(rawResults) == 0 {
 		notFoundErr := ErrNotFound{Collection: collection}
-		filter, ok := opts.Filter.(primitive.M)
-		if !ok {
-			return notFoundErr
-		}
-		if name, ok := filter["name"]; ok {
+		if name, ok := opts.Filter["name"]; ok {
 			notFoundErr.Item = fmt.Sprint(name)
 		}
 		return notFoundErr

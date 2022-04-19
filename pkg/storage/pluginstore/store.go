@@ -51,11 +51,6 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	}
 }
 
-// SetPlugin is used for unit testing only.
-func (s *Store) SetPlugin(value plugins.StorageProtocol) {
-	s.plugin = value
-}
-
 func (s *Store) Connect(ctx context.Context) error {
 	if s.plugin != nil {
 		return nil

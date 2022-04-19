@@ -13,7 +13,7 @@ import (
 type AggregateOptions struct {
 	// Pipeline document to aggregate, filter, and shape the results.
 	// See https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline/
-	Pipeline interface{}
+	Pipeline []bson.M
 }
 
 func (o AggregateOptions) ToPluginOptions(collection string) plugins.AggregateOptions {
@@ -44,7 +44,7 @@ type Index struct {
 
 // Convert from a simplified sort specifier like []{"-key"}
 // to a mongodb sort document like []{{Key: "key", Value: -1}}
-func convertSortKeys(values []string) interface{} {
+func convertSortKeys(values []string) bson.D {
 	if len(values) == 0 {
 		return nil
 	}
@@ -84,7 +84,7 @@ func (o EnsureIndexOptions) ToPluginOptions() plugins.EnsureIndexOptions {
 type CountOptions struct {
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 }
 
 func (o CountOptions) ToPluginOptions(collection string) plugins.CountOptions {
@@ -112,11 +112,11 @@ type FindOptions struct {
 
 	// Filter specifies a filter the results.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// Select is a projection document. The entire document is returned by default.
 	// See https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/
-	Select interface{}
+	Select bson.D
 }
 
 func (o FindOptions) ToPluginOptions(collection string) plugins.FindOptions {
@@ -147,11 +147,11 @@ type GetOptions struct {
 
 // ToPluginOptions converts from the convenience method Get to FindOne.
 func (o GetOptions) ToPluginOptions() FindOptions {
-	var filter interface{}
+	var filter bson.M
 	if o.ID != "" {
-		filter = map[string]interface{}{"_id": o.ID}
+		filter = bson.M{"_id": o.ID}
 	} else if o.Name != "" {
-		filter = map[string]interface{}{"namespace": o.Namespace, "name": o.Name}
+		filter = bson.M{"namespace": o.Namespace, "name": o.Name}
 	}
 
 	return FindOptions{
@@ -166,7 +166,7 @@ type InsertOptions struct {
 }
 
 func (o InsertOptions) ToPluginOptions(collection string) (plugins.InsertOptions, error) {
-	var docs []interface{}
+	var docs []bson.M
 	err := convertToRawJsonDocument(o.Documents, &docs)
 	if err != nil {
 		return plugins.InsertOptions{}, nil
@@ -182,11 +182,11 @@ func (o InsertOptions) ToPluginOptions(collection string) (plugins.InsertOptions
 type PatchOptions struct {
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	QueryDocument interface{}
+	QueryDocument bson.M
 
 	// Transformation is set of instructions to modify matching
 	// documents.
-	Transformation interface{}
+	Transformation bson.D
 }
 
 func (o PatchOptions) ToPluginOptions(collection string) plugins.PatchOptions {
@@ -201,7 +201,7 @@ func (o PatchOptions) ToPluginOptions(collection string) plugins.PatchOptions {
 type RemoveOptions struct {
 	// Filter is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// All matching documents should be removed. Defaults to false, which only
 	// removes the first matching document.
@@ -238,7 +238,7 @@ func (o RemoveOptions) ToPluginOptions(collection string) plugins.RemoveOptions 
 type UpdateOptions struct {
 	// Filter is a query filter document. Defaults to filtering by the document id.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// Upsert indicates that the document should be inserted if not found
 	Upsert bool
@@ -255,7 +255,7 @@ func (o UpdateOptions) ToPluginOptions(collection string) (plugins.UpdateOptions
 		}
 	}
 
-	var doc map[string]interface{}
+	var doc bson.M
 	err := convertToRawJsonDocument(o.Document, &doc)
 	if err != nil {
 		return plugins.UpdateOptions{}, nil
@@ -272,8 +272,8 @@ func (o UpdateOptions) ToPluginOptions(collection string) (plugins.UpdateOptions
 // Document represents a stored Porter document with
 // accessor methods to make persistence more straightforward.
 type Document interface {
-	// DefaultDocumentFilter is the default filter to match the curent document.
-	DefaultDocumentFilter() interface{}
+	// DefaultDocumentFilter is the default filter to match the current document.
+	DefaultDocumentFilter() bson.M
 }
 
 // converts a set of typed documents to a raw representation using maps

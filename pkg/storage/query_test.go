@@ -24,8 +24,8 @@ func (t TestDocument) MarshalJSON() ([]byte, error) {
 	return json.Marshal(raw)
 }
 
-func (t TestDocument) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"name": t.SomeName}
+func (t TestDocument) DefaultDocumentFilter() bson.M {
+	return bson.M{"name": t.SomeName}
 }
 
 func TestInsertOptions_ToPluginOptions(t *testing.T) {
@@ -40,9 +40,9 @@ func TestInsertOptions_ToPluginOptions(t *testing.T) {
 	gotOpts, err := opts.ToPluginOptions("mydocs")
 	require.NoError(t, err)
 
-	wantRawDocs := []interface{}{
-		map[string]interface{}{"_id": "aid", "name": "a"},
-		map[string]interface{}{"_id": "bid", "name": "b"},
+	wantRawDocs := []bson.M{
+		{"_id": "aid", "name": "a"},
+		{"_id": "bid", "name": "b"},
 	}
 	require.Equal(t, wantRawDocs, gotOpts.Documents)
 }
@@ -58,7 +58,7 @@ func TestUpdateOptions_ToPluginOptions(t *testing.T) {
 	gotOpts, err := opts.ToPluginOptions("mydocs")
 	require.NoError(t, err)
 
-	wantRawDoc := map[string]interface{}{"_id": "aid", "name": "a"}
+	wantRawDoc := bson.M{"_id": "aid", "name": "a"}
 	require.Equal(t, wantRawDoc, gotOpts.Document)
 }
 

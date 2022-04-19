@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/Masterminds/semver/v3"
@@ -65,8 +67,8 @@ func (i Installation) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
 }
 
-func (i Installation) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"namespace": i.Namespace, "name": i.Name}
+func (i Installation) DefaultDocumentFilter() bson.M {
+	return bson.M{"namespace": i.Namespace, "name": i.Name}
 }
 
 func NewInstallation(namespace string, name string) Installation {

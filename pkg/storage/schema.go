@@ -1,6 +1,9 @@
 package storage
 
-import "github.com/cnabio/cnab-go/schema"
+import (
+	"github.com/cnabio/cnab-go/schema"
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 var _ Document = Schema{}
 
@@ -29,6 +32,6 @@ func NewSchema(installations schema.Version, creds schema.Version, params schema
 	}
 }
 
-func (s Schema) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"_id": "schema"}
+func (s Schema) DefaultDocumentFilter() bson.M {
+	return bson.M{"_id": "schema"}
 }

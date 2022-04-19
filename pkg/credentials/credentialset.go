@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle"
@@ -71,8 +73,8 @@ func NewCredentialSet(namespace string, name string, creds ...secrets.Strategy) 
 	return cs
 }
 
-func (s CredentialSet) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
+func (s CredentialSet) DefaultDocumentFilter() bson.M {
+	return bson.M{"namespace": s.Namespace, "name": s.Name}
 }
 
 func (s CredentialSet) Validate() error {

@@ -3,6 +3,8 @@ package claims
 import (
 	"sort"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/bundle/definition"
@@ -21,8 +23,8 @@ type Output struct {
 	Value         []byte         `json:"value" yaml:"value" toml:"value"`
 }
 
-func (o Output) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"resultId": o.ResultID, "name": o.Name}
+func (o Output) DefaultDocumentFilter() bson.M {
+	return bson.M{"resultId": o.ResultID, "name": o.Name}
 }
 
 // GetSchema returns the schema for the output from the specified bundle, or

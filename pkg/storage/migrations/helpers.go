@@ -8,13 +8,14 @@ import (
 type TestManager struct {
 	*Manager
 
-	testStore *storage.TestStore
+	testStore storage.TestStore
 }
 
 func NewTestManager(c *config.TestConfig) *TestManager {
 	testStore := storage.NewTestStore(c)
 	return &TestManager{
-		Manager: NewManager(c.Config, testStore),
+		testStore: testStore,
+		Manager:   NewManager(c.Config, testStore),
 	}
 }
 

@@ -3,6 +3,8 @@ package claims
 import (
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
@@ -43,8 +45,8 @@ type Result struct {
 	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
 }
 
-func (r Result) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"_id": r.ID}
+func (r Result) DefaultDocumentFilter() bson.M {
+	return bson.M{"_id": r.ID}
 }
 
 func NewResult() Result {

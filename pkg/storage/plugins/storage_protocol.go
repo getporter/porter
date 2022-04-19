@@ -49,7 +49,7 @@ type Index struct {
 
 	// Keys describes the fields and their sort order.
 	// Example: {"namespace": 1, "name": 1}
-	Keys interface{}
+	Keys bson.D
 
 	// Unique specifies if the index should enforce that the indexed fields for each document are unique.
 	Unique bool
@@ -63,7 +63,7 @@ type AggregateOptions struct {
 
 	// Pipeline document to aggregate, filter, and shape the results.
 	// See https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline/
-	Pipeline interface{}
+	Pipeline []bson.M
 }
 
 // CountOptions is the set of options available to the StorageProtocol.Count
@@ -74,7 +74,7 @@ type CountOptions struct {
 
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 }
 
 // FindOptions is the set of options available to the StorageProtocol.Find
@@ -84,7 +84,7 @@ type FindOptions struct {
 	Collection string
 
 	// Sort is a list of field names by which the results should be sorted.
-	Sort interface{}
+	Sort bson.D
 
 	// Skip is the number of results to skip past and exclude from the results.
 	Skip int64
@@ -94,15 +94,15 @@ type FindOptions struct {
 
 	// Select is a projection document
 	// See https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/
-	Select interface{}
+	Select bson.D
 
 	// Filter specifies how to filter the results.
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// Group specifies how to group the results.
 	// See https://docs.mongodb.com/manual/reference/operator/aggregation/group/
-	Group interface{}
+	Group bson.D
 }
 
 // InsertOptions is the set of options for the StorageProtocol.Insert operation.
@@ -111,7 +111,7 @@ type InsertOptions struct {
 	Collection string
 
 	// Documents is a set of documents to insert.
-	Documents []interface{}
+	Documents []bson.M
 }
 
 // PatchOptions is the set of options for the StorageProtocol.Patch operation.
@@ -121,11 +121,11 @@ type PatchOptions struct {
 
 	// Query is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	QueryDocument interface{}
+	QueryDocument bson.M
 
 	// Transformation is set of instructions to modify matching
 	// documents.
-	Transformation interface{}
+	Transformation bson.D
 }
 
 // RemoveOptions is the set of options for the StorageProtocol.Remove operation.
@@ -135,7 +135,7 @@ type RemoveOptions struct {
 
 	// Filter is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// All matching documents should be removed. Defaults to false, which only
 	// removes the first matching document.
@@ -149,11 +149,11 @@ type UpdateOptions struct {
 
 	// Filter is a query filter document
 	// See https://docs.mongodb.com/manual/core/document/#std-label-document-query-filter
-	Filter interface{}
+	Filter bson.M
 
 	// Upsert indicates that the document should be inserted if not found
 	Upsert bool
 
 	// Document is the replacement document.
-	Document interface{}
+	Document bson.M
 }

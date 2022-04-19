@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"runtime"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
@@ -13,13 +15,13 @@ import (
 )
 
 var (
-	_ plugins.StorageProtocol = &TestStoragePlugin{}
+	_ plugins.StoragePlugin = &TestStoragePlugin{}
 )
 
 // TestStoragePlugin is a test helper that implements a storage plugin backed by a
 // mongodb instance that saves data to a temporary directory.
 type TestStoragePlugin struct {
-	*mongodb.Store
+	store *mongodb.Store
 
 	tc       *portercontext.TestContext
 	database string
@@ -40,7 +42,7 @@ func NewTestStoragePlugin(tc *portercontext.TestContext) *TestStoragePlugin {
 
 // Setup runs mongodb on an alternate Port
 func (s *TestStoragePlugin) Setup(ctx context.Context) error {
-	if s.Store != nil {
+	if s.store != nil {
 		return nil
 	}
 
@@ -53,7 +55,7 @@ func (s *TestStoragePlugin) Setup(ctx context.Context) error {
 		return s.runTestDatabase(ctx)
 	}
 
-	return s.Store.RemoveDatabase() // Start with a fresh test database
+	return s.store.RemoveDatabase() // Start with a fresh test database
 }
 
 func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
@@ -72,7 +74,7 @@ func (s *TestStoragePlugin) useDevDatabase(ctx context.Context) error {
 		return err
 	}
 
-	s.Store = devMongo
+	s.store = devMongo
 	return nil
 }
 
@@ -81,14 +83,14 @@ func (s *TestStoragePlugin) runTestDatabase(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.Store = testMongo
+	s.store = testMongo
 	return nil
 }
 
 // Teardown stops the test mongo instance and cleans up any temporary files.
 func (s *TestStoragePlugin) Teardown() error {
-	if s.Store != nil {
-		s.Store.RemoveDatabase()
+	if s.store != nil {
+		s.store.RemoveDatabase()
 		return s.Close(context.TODO())
 	}
 	return nil
@@ -101,10 +103,42 @@ func (s *TestStoragePlugin) Connect(ctx context.Context) error {
 
 // Close the connection to the database.
 func (s *TestStoragePlugin) Close(ctx context.Context) error {
-	if s.Store != nil {
-		err := s.Store.Close()
-		s.Store = nil
+	if s.store != nil {
+		err := s.store.Close()
+		s.store = nil
 		return err
 	}
 	return nil
+}
+
+func (s *TestStoragePlugin) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
+	return s.store.EnsureIndex(opts)
+}
+
+func (s *TestStoragePlugin) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
+	return s.store.Aggregate(opts)
+}
+
+func (s *TestStoragePlugin) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
+	return s.store.Count(opts)
+}
+
+func (s *TestStoragePlugin) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
+	return s.store.Find(opts)
+}
+
+func (s *TestStoragePlugin) Insert(ctx context.Context, opts plugins.InsertOptions) error {
+	return s.store.Insert(opts)
+}
+
+func (s *TestStoragePlugin) Patch(ctx context.Context, opts plugins.PatchOptions) error {
+	return s.store.Patch(opts)
+}
+
+func (s *TestStoragePlugin) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
+	return s.store.Remove(opts)
+}
+
+func (s *TestStoragePlugin) Update(ctx context.Context, opts plugins.UpdateOptions) error {
+	return s.store.Update(opts)
 }

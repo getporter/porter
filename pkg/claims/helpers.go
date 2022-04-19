@@ -29,6 +29,7 @@ type TestClaimProvider struct {
 
 func NewTestClaimProvider(t *testing.T) *TestClaimProvider {
 	tc := config.NewTestConfig(t)
+	//tc.TestContext.UseFilesystem()
 	testStore := storage.NewTestStore(tc)
 	return NewTestClaimProviderFor(t, testStore)
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/cnabio/cnab-go/schema"
@@ -65,8 +67,8 @@ func NewParameterSet(namespace string, name string, params ...secrets.Strategy) 
 	return ps
 }
 
-func (s ParameterSet) DefaultDocumentFilter() interface{} {
-	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
+func (s ParameterSet) DefaultDocumentFilter() bson.M {
+	return bson.M{"namespace": s.Namespace, "name": s.Name}
 }
 
 func (s ParameterSet) Validate() error {

@@ -2,19 +2,26 @@ syntax = "proto3";
 package plugins;
 import "google/protobuf/struct.proto";
 
+option go_package = "get.porter.sh/porter/pkg/storage/plugins/proto";
+
 message EnsureIndexRequest {
   repeated Index Indices = 1;
 }
 
 message Index {
   string Collection = 1;
-  google.protobuf.Struct Keys = 2;
+  repeated KeyValue Keys = 2;
   bool Unique = 3;
+}
+
+message KeyValue {
+  string key = 1;
+  google.protobuf.Value value = 2;
 }
 
 message AggregateRequest {
   string Collection = 1;
-  google.protobuf.Struct Pipeline = 2;
+  repeated google.protobuf.Struct Pipeline = 2;
 }
 
 message CountRequest {
@@ -24,23 +31,23 @@ message CountRequest {
 
 message FindRequest {
   string Collection = 1;
-  google.protobuf.Struct Sort = 2;
+  repeated KeyValue Sort = 2;
   int64 Skip = 3;
   int64 Limit = 4;
-  google.protobuf.Struct Select = 5;
+  repeated KeyValue Select = 5;
   google.protobuf.Struct Filter = 6;
-  google.protobuf.Struct Group = 7;
+  repeated KeyValue Group = 7;
 }
 
 message InsertRequest {
   string Collection = 1;
   repeated google.protobuf.Struct Documents = 2;
 }
-  
+
 message PatchRequest {
   string Collection = 1;
   google.protobuf.Struct QueryDocument = 2;
-  google.protobuf.Struct Transformation = 3;
+  repeated KeyValue Transformation = 3;
 }
 
 message RemoveRequest {
@@ -56,12 +63,10 @@ message UpdateRequest {
   google.protobuf.Struct Document = 4;
 }
 
-message Empty {}
-
 message EnsureIndexResponse {}
 
 message AggregateResponse {
-  bytes Results = 1;
+  repeated bytes Results = 1;
 }
 
 message CountResponse {
@@ -69,7 +74,7 @@ message CountResponse {
 }
 
 message FindResponse {
-  bytes Results = 1;
+ repeated bytes Results = 1;
 }
 
 message InsertResponse {}
@@ -88,5 +93,5 @@ service StorageProtocol {
   rpc Insert(InsertRequest) returns (InsertResponse);
   rpc Patch(PatchRequest) returns (PatchResponse);
   rpc Remove(RemoveRequest) returns (RemoveResponse);
-  rpc Update(UpdateRequest) returns (Empty);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
 }

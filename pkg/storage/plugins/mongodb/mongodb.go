@@ -200,7 +200,12 @@ func (s *Store) Insert(opts plugins.InsertOptions) error {
 	defer cancel()
 
 	c := s.getCollection(opts.Collection)
-	_, err := c.InsertMany(cxt, opts.Documents)
+
+	docs := make([]interface{}, len(opts.Documents))
+	for i, doc := range opts.Documents {
+		docs[i] = doc
+	}
+	_, err := c.InsertMany(cxt, docs)
 	return err
 }
 
