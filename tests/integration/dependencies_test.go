@@ -69,6 +69,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 
 	namespace = p.RandomString(10)
 	installOpts := porter.NewInstallOptions()
+	installOpts.Namespace = namespace
 	installOpts.CredentialIdentifiers = []string{"ci"}
 	installOpts.Params = []string{
 		"wordpress-password=mypassword",
@@ -78,7 +79,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 
 	// Add a supplemental parameter set to vet dep param resolution
 	installOpts.ParameterSets = []string{"myparam"}
-	testParamSets := parameters.NewParameterSet("", "myparam", secrets.Strategy{
+	testParamSets := parameters.NewParameterSet(namespace, "myparam", secrets.Strategy{
 		Name: "mysql#probe-timeout",
 		Source: secrets.Source{
 			Key:   host.SourceValue,
@@ -95,10 +96,10 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	require.NoError(p.T(), err, "install of root bundle failed namespace %s", namespace)
 
 	// Verify that the dependency claim is present
-	i, err := p.Claims.GetInstallation("", "wordpress-mysql")
+	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch installation status for the dependency")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being installed successfully")
-	c, err := p.Claims.GetLastRun("", i.Name)
+	c, err := p.Claims.GetLastRun(ctx, namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastRun failed")
 	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(c.Parameters, cnab.ExtendedBundle{c.Bundle})
 	require.NoError(p.T(), err, "Resolve run failed")
@@ -108,7 +109,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	// TODO(carolynvs): compare with last parameters set on the installation once we start tracking that
 
 	// Verify that the bundle claim is present
-	i, err = p.Claims.GetInstallation("", "wordpress")
+	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being installed successfully")
 
@@ -119,6 +120,7 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	ctx := context.Background()
 
 	uninstallOptions := porter.NewUninstallOptions()
+	uninstallOptions.Namespace = namespace
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Delete = true
 	err := uninstallOptions.Validate(ctx, []string{}, p.Porter)
@@ -128,12 +130,12 @@ func cleanupWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency installation is deleted
-	i, err := p.Claims.GetInstallation("", "wordpress-mysql")
+	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.ErrorIs(p.T(), err, storage.ErrNotFound{})
 	require.Equal(p.T(), claims.Installation{}, i)
 
 	// Verify that the root installation is deleted
-	i, err = p.Claims.GetInstallation("", "wordpress")
+	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.ErrorIs(p.T(), err, storage.ErrNotFound{})
 	require.Equal(p.T(), claims.Installation{}, i)
 }
@@ -142,6 +144,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	ctx := context.Background()
 
 	upgradeOpts := porter.NewUpgradeOptions()
+	upgradeOpts.Namespace = namespace
 	upgradeOpts.CredentialIdentifiers = []string{"ci"}
 	upgradeOpts.Params = []string{
 		"wordpress-password=mypassword",
@@ -155,17 +158,17 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "upgrade of root bundle failed")
 
 	// Verify that the dependency claim is upgraded
-	i, err := p.Claims.GetInstallation("", "wordpress-mysql")
+	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	c, err := p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err := p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUpgrade, c.Action, "the dependency wasn't recorded as being upgraded")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being upgraded successfully")
 
 	// Verify that the bundle claim is upgraded
-	i, err = p.Claims.GetInstallation("", "wordpress")
+	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	c, err = p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err = p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUpgrade, c.Action, "the root bundle wasn't recorded as being upgraded")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being upgraded successfully")
@@ -174,6 +177,7 @@ func upgradeWordpressBundle(p *porter.TestPorter, namespace string) {
 func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	ctx := context.Background()
 	invokeOpts := porter.NewInvokeOptions()
+	invokeOpts.Namespace = namespace
 	invokeOpts.Action = "ping"
 	invokeOpts.CredentialIdentifiers = []string{"ci"}
 	invokeOpts.Params = []string{
@@ -187,17 +191,17 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "invoke of root bundle failed")
 
 	// Verify that the dependency claim is invoked
-	i, err := p.Claims.GetInstallation("", "wordpress-mysql")
+	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch claim for the dependency")
-	c, err := p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err := p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), "ping", c.Action, "the dependency wasn't recorded as being invoked")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being invoked successfully")
 
 	// Verify that the bundle claim is invoked
-	i, err = p.Claims.GetInstallation("", "wordpress")
+	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch claim for the root bundle")
-	c, err = p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err = p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), "ping", c.Action, "the root bundle wasn't recorded as being invoked")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being invoked successfully")
@@ -206,6 +210,7 @@ func invokeWordpressBundle(p *porter.TestPorter, namespace string) {
 func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	ctx := context.Background()
 	uninstallOptions := porter.NewUninstallOptions()
+	uninstallOptions.Namespace = namespace
 	uninstallOptions.CredentialIdentifiers = []string{"ci"}
 	uninstallOptions.Params = []string{
 		"namespace=" + namespace,
@@ -218,17 +223,17 @@ func uninstallWordpressBundle(p *porter.TestPorter, namespace string) {
 	require.NoError(p.T(), err, "uninstall of root bundle failed")
 
 	// Verify that the dependency claim is uninstalled
-	i, err := p.Claims.GetInstallation("", "wordpress-mysql")
+	i, err := p.Claims.GetInstallation(ctx, namespace, "wordpress-mysql")
 	require.NoError(p.T(), err, "could not fetch installation for the dependency")
-	c, err := p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err := p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUninstall, c.Action, "the dependency wasn't recorded as being uninstalled")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the dependency wasn't recorded as being uninstalled successfully")
 
 	// Verify that the bundle claim is uninstalled
-	i, err = p.Claims.GetInstallation("", "wordpress")
+	i, err = p.Claims.GetInstallation(ctx, namespace, "wordpress")
 	require.NoError(p.T(), err, "could not fetch installation for the root bundle")
-	c, err = p.Claims.GetLastRun(i.Namespace, i.Name)
+	c, err = p.Claims.GetLastRun(ctx, i.Namespace, i.Name)
 	require.NoError(p.T(), err, "GetLastClaim failed")
 	assert.Equal(p.T(), cnab.ActionUninstall, c.Action, "the root bundle wasn't recorded as being uninstalled")
 	assert.Equal(p.T(), cnab.StatusSucceeded, i.Status.ResultStatus, "the root bundle wasn't recorded as being uninstalled successfully")
