@@ -64,6 +64,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 	cache := cache.New(c)
 
 	storageManager := migrations.NewManager(c, store)
+	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(c))
 	claimStorage := claims.NewClaimStore(storageManager)
 	credStorage := credentials.NewCredentialStore(storageManager, secretStorage)
 	paramStorage := parameters.NewParameterStore(storageManager, secretStorage)
