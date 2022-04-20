@@ -1,6 +1,8 @@
 package sanitizer
 
 import (
+	"fmt"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
@@ -121,6 +123,12 @@ func (s *Service) RestoreParameterSet(pset parameters.ParameterSet, bun cnab.Ext
 // by storing the raw data into a secret store and store it's reference key onto
 // the output record.
 func (s *Service) CleanOutput(output claims.Output, bun cnab.ExtendedBundle) (claims.Output, error) {
+	// Skip outputs not defined in the bundle, e.g. io.cnab.outputs.invocationImageLogs
+	_, ok := output.GetSchema(bun)
+	if !ok {
+		return output, nil
+	}
+
 	sensitive, err := bun.IsOutputSensitive(output.Name)
 	if err != nil {
 		output.Value = nil
@@ -167,6 +175,7 @@ func (s *Service) RestoreOutputs(o claims.Outputs) (claims.Outputs, error) {
 // RestoreOutput retrieves the raw output value and return the restored output
 // record.
 func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
+	fmt.Println("====", output.Name, output.Key)
 	if output.Key == "" {
 		return output, nil
 	}

@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
+	filesystemsecret "get.porter.sh/porter/pkg/secrets/plugins/file-system"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"github.com/pkg/errors"
 )
@@ -66,6 +67,10 @@ func (s *Store) Create(keyName string, keyValue string, value string) error {
 func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	if key == host.PluginKey {
 		return host.NewPlugin(), nil
+	}
+
+	if key == filesystemsecret.PluginKey {
+		return filesystemsecret.NewPlugin(), nil
 	}
 
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)

@@ -143,6 +143,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
 
 	extb := cnab.ExtendedBundle{b.Bundle}
+	fmt.Fprintln(r.Err, "params", args.Params)
 	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(args.Params, extb, currentRun.ID)
 	if err != nil {
 		return err

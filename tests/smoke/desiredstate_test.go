@@ -99,7 +99,7 @@ func TestDesiredState(t *testing.T) {
 
 	displayInstallation, err := test.ShowInstallation("operator", "mybuns")
 	require.NoError(t, err)
-	require.Equal(t, float64(3), installation.Parameters["log_level"])
+	require.Equal(t, float64(3), displayInstallation.Parameters["log_level"])
 
 	// Switch credentials and trigger an upgrade
 	test.EditYaml("mybuns.yaml", func(yq *yaml.Editor) error {
