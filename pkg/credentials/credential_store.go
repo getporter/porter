@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -32,14 +33,14 @@ func NewCredentialStore(storage storage.Store, secrets secrets.Store) *Credentia
 }
 
 // Initialize the underlying storage with any additional schema changes, such as indexes.
-func (s CredentialStore) Initialize() error {
+func (s CredentialStore) Initialize(ctx context.Context) error {
 	indices := storage.EnsureIndexOptions{
 		Indices: []storage.Index{
 			// query credentials by namespace + name
 			{Collection: CollectionCredentials, Keys: []string{"namespace", "name"}, Unique: true},
 		},
 	}
-	return s.Documents.EnsureIndex(indices)
+	return s.Documents.EnsureIndex(ctx, indices)
 }
 
 func (s CredentialStore) GetDataStore() storage.Store {
@@ -50,12 +51,12 @@ func (s CredentialStore) GetDataStore() storage.Store {
 	Secrets
 */
 
-func (s CredentialStore) ResolveAll(creds CredentialSet) (secrets.Set, error) {
+func (s CredentialStore) ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error) {
 	resolvedCreds := make(secrets.Set)
 	var resolveErrors error
 
 	for _, cred := range creds.Credentials {
-		value, err := s.Secrets.Resolve(cred.Source.Key, cred.Source.Value)
+		value, err := s.Secrets.Resolve(ctx, cred.Source.Key, cred.Source.Value)
 		if err != nil {
 			resolveErrors = multierror.Append(resolveErrors, errors.Wrapf(err, "unable to resolve credential %s.%s from %s %s", creds.Name, cred.Name, cred.Source.Key, cred.Source.Value))
 		}
@@ -66,7 +67,7 @@ func (s CredentialStore) ResolveAll(creds CredentialSet) (secrets.Set, error) {
 	return resolvedCreds, resolveErrors
 }
 
-func (s CredentialStore) Validate(creds CredentialSet) error {
+func (s CredentialStore) Validate(ctx context.Context, creds CredentialSet) error {
 	validSources := []string{secrets.SourceSecret, host.SourceValue, host.SourceEnv, host.SourcePath, host.SourceCommand}
 	var errors error
 
@@ -94,24 +95,24 @@ func (s CredentialStore) Validate(creds CredentialSet) error {
   Document Storage
 */
 
-func (s CredentialStore) InsertCredentialSet(creds CredentialSet) error {
+func (s CredentialStore) InsertCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = SchemaVersion
 	opts := storage.InsertOptions{
 		Documents: []interface{}{creds},
 	}
-	return s.Documents.Insert(CollectionCredentials, opts)
+	return s.Documents.Insert(ctx, CollectionCredentials, opts)
 }
 
-func (s CredentialStore) ListCredentialSets(namespace string, name string, labels map[string]string) ([]CredentialSet, error) {
+func (s CredentialStore) ListCredentialSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]CredentialSet, error) {
 	var out []CredentialSet
 	opts := storage.FindOptions{
 		Filter: storage.CreateListFiler(namespace, name, labels),
 	}
-	err := s.Documents.Find(CollectionCredentials, opts, &out)
+	err := s.Documents.Find(ctx, CollectionCredentials, opts, &out)
 	return out, err
 }
 
-func (s CredentialStore) GetCredentialSet(namespace string, name string) (CredentialSet, error) {
+func (s CredentialStore) GetCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error) {
 	var out CredentialSet
 	opts := storage.FindOptions{
 		Filter: map[string]interface{}{
@@ -119,31 +120,31 @@ func (s CredentialStore) GetCredentialSet(namespace string, name string) (Creden
 			"name":      name,
 		},
 	}
-	err := s.Documents.FindOne(CollectionCredentials, opts, &out)
+	err := s.Documents.FindOne(ctx, CollectionCredentials, opts, &out)
 	return out, err
 }
 
-func (s CredentialStore) UpdateCredentialSet(creds CredentialSet) error {
+func (s CredentialStore) UpdateCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: creds,
 	}
-	return s.Documents.Update(CollectionCredentials, opts)
+	return s.Documents.Update(ctx, CollectionCredentials, opts)
 }
 
-func (s CredentialStore) UpsertCredentialSet(creds CredentialSet) error {
+func (s CredentialStore) UpsertCredentialSet(ctx context.Context, creds CredentialSet) error {
 	creds.SchemaVersion = SchemaVersion
 	opts := storage.UpdateOptions{
 		Document: creds,
 		Upsert:   true,
 	}
-	return s.Documents.Update(CollectionCredentials, opts)
+	return s.Documents.Update(ctx, CollectionCredentials, opts)
 }
 
-func (s CredentialStore) RemoveCredentialSet(namespace string, name string) error {
+func (s CredentialStore) RemoveCredentialSet(ctx context.Context, namespace string, name string) error {
 	opts := storage.RemoveOptions{
 		Namespace: namespace,
 		Name:      name,
 	}
-	return s.Documents.Remove(CollectionCredentials, opts)
+	return s.Documents.Remove(ctx, CollectionCredentials, opts)
 }

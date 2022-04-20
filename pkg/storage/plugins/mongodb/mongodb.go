@@ -44,7 +44,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 	}
 }
 
-func (s *Store) Connect() error {
+func (s *Store) Connect(ctx context.Context) error {
 	if s.client != nil {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (s *Store) Connect() error {
 		fmt.Fprintf(s.Err, "Connecting to mongo database %s at %s\n", s.database, connStr.Hosts)
 	}
 
-	cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+	cxt, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
 	client, err := mongo.Connect(cxt, options.Client().ApplyURI(s.url))
@@ -76,9 +76,9 @@ func (s *Store) Connect() error {
 	return nil
 }
 
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	if s.client != nil {
-		cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
+		cxt, cancel := context.WithTimeout(ctx, s.timeout)
 		defer cancel()
 
 		s.client.Disconnect(cxt)

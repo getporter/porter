@@ -9,9 +9,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/manifest"
-
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/porter"
 	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"

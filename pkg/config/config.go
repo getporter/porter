@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"get.porter.sh/porter/pkg/schema"
-
 	"get.porter.sh/porter/pkg/experimental"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/schema"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"

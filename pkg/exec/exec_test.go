@@ -8,13 +8,10 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/exec/builder"
-
 	"get.porter.sh/porter/pkg/test"
-
+	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	yaml "get.porter.sh/porter/pkg/yaml"
 )
 
 func TestAction_UnmarshalYAML(t *testing.T) {

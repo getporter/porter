@@ -24,14 +24,15 @@ func TestClaimMigration_List(t *testing.T) {
 	p := porter.NewTestPorter(t)
 	defer p.Teardown()
 	p.SetupIntegrationTest()
+	ctx := context.Background()
 
 	schema := storage.NewSchema("abc123", "", "")
-	p.TestStore.Insert(migrations.CollectionConfig, storage.InsertOptions{Documents: []interface{}{schema}})
+	p.TestStore.Insert(ctx, migrations.CollectionConfig, storage.InsertOptions{Documents: []interface{}{schema}})
 
-	err := p.MigrateStorage()
+	err := p.MigrateStorage(ctx)
 	require.NoError(t, err, "MigrateStorage failed")
 
-	installations, err := p.ListInstallations(context.Background(), porter.ListOptions{})
+	installations, err := p.ListInstallations(ctx, porter.ListOptions{})
 	require.NoError(t, err, "could not list installations")
 	require.Len(t, installations, 1, "expected one installation")
 	assert.Equal(t, "mybun", installations[0].Name, "unexpected list of installation names")

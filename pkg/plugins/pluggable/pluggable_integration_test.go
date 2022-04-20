@@ -4,6 +4,7 @@
 package pluggable
 
 import (
+	"context"
 	"os/exec"
 	"path"
 	"testing"
@@ -55,7 +56,7 @@ func TestPlugins_CatchStderr(t *testing.T) {
 			return nil, nil
 		}
 		ll := NewPluginLoader(c.Config, createInternalPlugin)
-		_, _, err = ll.Load(cfg)
+		_, _, err = ll.Load(context.Background(), cfg)
 		require.EqualError(t, err, `could not connect to the secrets.testplugin.vault plugin: Unrecognized remote plugin message: 
 
 This usually means that the plugin is either invalid or simply

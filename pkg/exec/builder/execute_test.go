@@ -8,12 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestAction struct {

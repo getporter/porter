@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -8,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -23,26 +23,26 @@ type TestCredentialProvider struct {
 	T           *testing.T
 	TestContext *portercontext.TestContext
 	// TestSecrets allows you to set up secrets for unit testing
-	TestSecrets *inmemorysecrets.Store
+	TestSecrets secrets.TestSecretsProvider
 	TestStorage storage.Store
 }
 
 func NewTestCredentialProvider(t *testing.T) *TestCredentialProvider {
 	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
-	return NewTestCredentialProviderFor(t, testStore)
+	testSecrets := secrets.NewTestSecretsProvider()
+	return NewTestCredentialProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store) *TestCredentialProvider {
-	backingSecrets := inmemorysecrets.NewStore()
+func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.TestSecretsProvider) *TestCredentialProvider {
 	return &TestCredentialProvider{
 		T:           t,
 		TestContext: portercontext.NewTestContext(t),
-		TestSecrets: backingSecrets,
+		TestSecrets: testSecrets,
 		TestStorage: testStore,
 		CredentialStore: &CredentialStore{
 			Documents: testStore,
-			Secrets:   backingSecrets,
+			Secrets:   testSecrets,
 		},
 	}
 }
@@ -56,7 +56,7 @@ func (p TestCredentialProvider) Teardown() error {
 	if ts, ok := p.TestStorage.(hasTeardown); ok {
 		return ts.Teardown()
 	} else {
-		return p.TestStorage.Close()
+		return p.TestStorage.Close(context.Background())
 	}
 }
 
@@ -77,7 +77,7 @@ func (p TestCredentialProvider) AddTestCredentials(path string) {
 		p.T.Fatal(errors.Wrapf(err, "could not read test credentials from %s", path))
 	}
 
-	err = p.CredentialStore.InsertCredentialSet(cs)
+	err = p.CredentialStore.InsertCredentialSet(context.Background(), cs)
 	if err != nil {
 		p.T.Fatal(errors.Wrap(err, "could not load test credentials into in memory credential storage"))
 	}

@@ -20,6 +20,7 @@ import (
 func TestGenerateNoName(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
+	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
@@ -27,13 +28,13 @@ func TestGenerateNoName(t *testing.T) {
 		Silent: true,
 	}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(context.Background(), nil, p.Porter)
+	err := opts.Validate(ctx, nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(ctx, opts)
 	require.NoError(t, err, "no error should have existed")
 
-	creds, err := p.Credentials.GetCredentialSet("", "porter-hello")
+	creds, err := p.Credentials.GetCredentialSet(ctx, "", "porter-hello")
 	require.NoError(t, err, "expected credential to have been generated")
 	var zero time.Time
 	assert.True(t, zero.Before(creds.Status.Created), "expected Credentials.Created to be set")
@@ -43,6 +44,7 @@ func TestGenerateNoName(t *testing.T) {
 func TestGenerateNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
+	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
@@ -53,12 +55,12 @@ func TestGenerateNameProvided(t *testing.T) {
 	opts.Name = "kool-kred"
 	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(context.Background(), nil, p.Porter)
+	err := opts.Validate(ctx, nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(ctx, opts)
 	require.NoError(t, err, "no error should have existed")
-	creds, err := p.Credentials.GetCredentialSet(opts.Namespace, "kool-kred")
+	creds, err := p.Credentials.GetCredentialSet(ctx, opts.Namespace, "kool-kred")
 	require.NoError(t, err, "expected credential to have been generated")
 	assert.Equal(t, map[string]string{"env": "dev"}, creds.Labels)
 }
@@ -66,6 +68,7 @@ func TestGenerateNameProvided(t *testing.T) {
 func TestGenerateBadNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
+	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
@@ -74,12 +77,12 @@ func TestGenerateBadNameProvided(t *testing.T) {
 	}
 	opts.Name = "this.isabadname"
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(context.Background(), nil, p.Porter)
+	err := opts.Validate(ctx, nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateCredentials(context.Background(), opts)
+	err = p.GenerateCredentials(ctx, opts)
 	require.Error(t, err, "name is invalid, we should have had an error")
-	_, err = p.Credentials.GetCredentialSet("", "this.isabadname")
+	_, err = p.Credentials.GetCredentialSet(ctx, "", "this.isabadname")
 	require.Error(t, err, "expected credential to not exist")
 }
 
@@ -91,6 +94,8 @@ type CredentialsListTest struct {
 }
 
 func TestCredentialsList_None(t *testing.T) {
+	ctx := context.Background()
+
 	testcases := []CredentialsListTest{
 		{
 			name:     "invalid format",
@@ -124,7 +129,7 @@ func TestCredentialsList_None(t *testing.T) {
 
 			listOpts := ListOptions{}
 			listOpts.Format = tc.format
-			err := p.PrintCredentials(listOpts)
+			err := p.PrintCredentials(ctx, listOpts)
 			if tc.errorMsg != "" {
 				require.Equal(t, err.Error(), tc.errorMsg)
 			} else {
@@ -137,6 +142,8 @@ func TestCredentialsList_None(t *testing.T) {
 }
 
 func TestPorter_PrintCredentials(t *testing.T) {
+	ctx := context.Background()
+
 	testcases := []CredentialsListTest{
 		{
 			name:       "json",
@@ -165,7 +172,7 @@ func TestPorter_PrintCredentials(t *testing.T) {
 			listOpts := ListOptions{}
 			listOpts.Namespace = "dev"
 			listOpts.Format = tc.format
-			err := p.PrintCredentials(listOpts)
+			err := p.PrintCredentials(ctx, listOpts)
 			require.NoError(t, err)
 
 			gotOutput := p.TestConfig.TestContext.GetOutput()
@@ -179,35 +186,36 @@ func TestPorter_ListCredentials(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
 
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("", "shared-mysql"))
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("dev", "carolyn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("dev", "vaughn-wordpress"))
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "staging-wordpress"))
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "iat-wordpress"))
-	p.TestCredentials.InsertCredentialSet(credentials.NewCredentialSet("test", "shared-mysql"))
+	ctx := context.Background()
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("", "shared-mysql"))
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("dev", "carolyn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("dev", "vaughn-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "staging-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "iat-wordpress"))
+	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
-		results, err := p.ListCredentials(opts)
+		results, err := p.ListCredentials(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 6)
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: "dev"}
-		results, err := p.ListCredentials(opts)
+		results, err := p.ListCredentials(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 
 		opts = ListOptions{Namespace: "test"}
-		results, err = p.ListCredentials(opts)
+		results, err = p.ListCredentials(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 3)
 	})
 
 	t.Run("global namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: ""}
-		results, err := p.ListCredentials(opts)
+		results, err := p.ListCredentials(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})
@@ -224,7 +232,7 @@ func TestShowCredential_NotFound(t *testing.T) {
 		Name: "non-existent-cred",
 	}
 
-	err := p.ShowCredential(opts)
+	err := p.ShowCredential(context.Background(), opts)
 	assert.ErrorIs(t, err, storage.ErrNotFound{})
 }
 
@@ -268,7 +276,7 @@ func TestShowCredential_Found(t *testing.T) {
 
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
-			err := p.ShowCredential(opts)
+			err := p.ShowCredential(context.Background(), opts)
 			require.NoError(t, err, "an error should not have occurred")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)
@@ -296,7 +304,7 @@ func TestCredentialsEdit(t *testing.T) {
 	opts := CredentialEditOptions{Namespace: "dev", Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
-	err := p.EditCredential(opts)
+	err := p.EditCredential(context.Background(), opts)
 	require.NoError(t, err, "no error should have existed")
 }
 
@@ -310,11 +318,13 @@ func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 	opts := CredentialEditOptions{Namespace: "dev", Name: "kool-kreds"}
 
 	p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
-	err := p.EditCredential(opts)
+	err := p.EditCredential(context.Background(), opts)
 	require.NoError(t, err, "no error should have existed")
 }
 
 func TestCredentialsDelete(t *testing.T) {
+	ctx := context.Background()
+
 	testcases := []struct {
 		name       string
 		credName   string
@@ -336,10 +346,10 @@ func TestCredentialsDelete(t *testing.T) {
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
 			opts := CredentialDeleteOptions{Namespace: "dev", Name: tc.credName}
-			err := p.DeleteCredential(opts)
+			err := p.DeleteCredential(ctx, opts)
 			require.NoError(t, err, "no error should have existed")
 
-			_, err = p.TestCredentials.GetCredentialSet("", tc.credName)
+			_, err = p.TestCredentials.GetCredentialSet(ctx, "", tc.credName)
 			assert.ErrorIs(t, err, storage.ErrNotFound{})
 		})
 	}

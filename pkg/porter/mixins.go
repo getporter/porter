@@ -10,12 +10,11 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/mixin"
-	"get.porter.sh/porter/pkg/portercontext"
-	"github.com/pkg/errors"
-
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/pkgmgmt/feed"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/pkg/errors"
 )
 
 const (

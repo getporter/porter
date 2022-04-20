@@ -43,7 +43,7 @@ func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) err
 		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read status for installation %s", opts.Name)
 	}
@@ -53,5 +53,5 @@ func (p *Porter) DeleteInstallation(ctx context.Context, opts DeleteOptions) err
 	}
 
 	fmt.Fprintf(p.Out, installationDeleteTmpl, opts.Name)
-	return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
+	return p.Claims.RemoveInstallation(ctx, opts.Namespace, opts.Name)
 }

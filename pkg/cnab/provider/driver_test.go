@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg/cnab"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/cnabio/cnab-go/driver/docker"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 

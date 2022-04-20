@@ -72,7 +72,7 @@ func (p *Porter) ShowBundleOutput(ctx context.Context, opts *OutputShowOptions) 
 		return err
 	}
 
-	output, err := p.ReadBundleOutput(opts.Output, opts.Name, opts.Namespace)
+	output, err := p.ReadBundleOutput(ctx, opts.Output, opts.Name, opts.Namespace)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read output '%s' for installation '%s/%s'", opts.Output, opts.Namespace, opts.Name)
 	}
@@ -120,7 +120,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	outputs, err := p.Claims.GetLastOutputs(opts.Namespace, opts.Name)
+	outputs, err := p.Claims.GetLastOutputs(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	c, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +164,8 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 }
 
 // ReadBundleOutput reads a bundle output from an installation
-func (p *Porter) ReadBundleOutput(outputName, installation, namespace string) (string, error) {
-	o, err := p.Claims.GetLastOutput(namespace, installation, outputName)
+func (p *Porter) ReadBundleOutput(ctx context.Context, outputName, installation, namespace string) (string, error) {
+	o, err := p.Claims.GetLastOutput(ctx, namespace, installation, outputName)
 	if err != nil {
 		return "", err
 	}

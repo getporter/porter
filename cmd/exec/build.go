@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"get.porter.sh/porter/pkg/exec"
-
 	"github.com/spf13/cobra"
 )
 

@@ -24,7 +24,7 @@ func TestManifestConverter(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config,	config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
@@ -55,7 +55,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config,	config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
@@ -800,10 +800,10 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 		}},
 		{
 			"help", bundle.Action{
-			Description: "Print a help message to the standard output",
-			Modifies:    false,
-			Stateless:   true,
-		}},
+				Description: "Print a help message to the standard output",
+				Modifies:    false,
+				Stateless:   true,
+			}},
 		{"log", bundle.Action{
 			Description: "Print logs of the installed system to the standard output",
 			Modifies:    false,

@@ -66,8 +66,8 @@ type TestPorter struct {
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc.TestContext)
-	testSecrets := inmemorysecrets.NewStore()
-	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore)
+	testSecrets := secrets.NewTestSecretsProvider()
+	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProviderFor(t, testStore)
@@ -107,7 +107,7 @@ func NewTestPorter(t *testing.T) *TestPorter {
 }
 
 func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown()
+	err := p.TestStore.Teardown(context.Background())
 	p.TestConfig.TestContext.Teardown()
 	p.RootSpan.EndSpan()
 	return err
@@ -125,7 +125,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Write out a storage schema so that we don't trigger a migration check
-	err := p.Storage.WriteSchema()
+	err := p.Storage.WriteSchema(context.Background())
 	require.NoError(t, err, "failed to set the storage schema")
 
 	// Load test credentials, with KUBECONFIG replaced properly
@@ -138,7 +138,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	var testCreds credentials.CredentialSet
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
-	err = p.Credentials.UpsertCredentialSet(testCreds)
+	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
 	require.NoError(t, err, "could not save test credentials")
 }
 

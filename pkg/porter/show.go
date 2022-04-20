@@ -47,7 +47,7 @@ func (p *Porter) GetInstallation(ctx context.Context, opts ShowOptions) (claims.
 		return claims.Installation{}, err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return claims.Installation{}, err
 	}

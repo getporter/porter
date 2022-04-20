@@ -78,12 +78,12 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(opts.Namespace, opts.Name)
+	installation, err := p.Claims.GetInstallation(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return errors.Wrapf(err, "could not find installation %s/%s", opts.Namespace, opts.Name)
 	}
 
-	err = p.applyActionOptionsToInstallation(&installation, opts.BundleActionOptions)
+	err = p.applyActionOptionsToInstallation(ctx, &installation, opts.BundleActionOptions)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (p *Porter) UninstallBundle(ctx context.Context, opts UninstallOptions) err
 
 	if opts.shouldDelete() {
 		log.Info("deleting installation records")
-		return p.Claims.RemoveInstallation(opts.Namespace, opts.Name)
+		return p.Claims.RemoveInstallation(ctx, opts.Namespace, opts.Name)
 	}
 	return nil
 }

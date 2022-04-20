@@ -13,14 +13,13 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
-
-	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/test"
 )
 
 type TestContext struct {

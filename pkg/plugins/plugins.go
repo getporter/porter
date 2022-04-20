@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -12,11 +13,11 @@ import (
 type Plugin interface {
 	// Connect establishes a connection to the plugin.
 	// Safe to call multiple times, the existing connection is reused.
-	Connect() error
+	Connect(ctx context.Context) error
 
 	// Close the connection to the plugin.
 	// Safe to call multiple times.
-	Close() error
+	Close(ctx context.Context) error
 }
 
 // HandshakeConfig is common handshake config between Porter and its plugins.

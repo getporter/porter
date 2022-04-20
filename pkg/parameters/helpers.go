@@ -1,6 +1,7 @@
 package parameters
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -8,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -22,19 +22,18 @@ type TestParameterProvider struct {
 
 	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
-	TestSecrets   secrets.Store
+	TestSecrets   secrets.TestSecretsProvider
 	TestDocuments storage.Store
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
 	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
-	testSecrets := inmemorysecrets.NewStore()
-
+	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestParameterProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.Store) *TestParameterProvider {
+func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.TestSecretsProvider) *TestParameterProvider {
 	return &TestParameterProvider{
 		T:             t,
 		TestDocuments: testStore,
@@ -55,7 +54,7 @@ func (p TestParameterProvider) Teardown() error {
 	if ts, ok := p.TestDocuments.(hasTeardown); ok {
 		return ts.Teardown()
 	} else {
-		return p.TestDocuments.Close()
+		return p.TestDocuments.Close(context.Background())
 	}
 }
 
@@ -76,7 +75,7 @@ func (p TestParameterProvider) AddTestParameters(path string) {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
 	}
 
-	err = p.ParameterStore.InsertParameterSet(ps)
+	err = p.ParameterStore.InsertParameterSet(context.Background(), ps)
 	if err != nil {
 		p.T.Fatal(errors.Wrap(err, "could not load test parameters"))
 	}

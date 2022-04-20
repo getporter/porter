@@ -1,6 +1,8 @@
 package credentials
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/storage"
 )
@@ -8,12 +10,12 @@ import (
 // Provider is Porter's interface for managing and resolving credentials.
 type Provider interface {
 	GetDataStore() storage.Store
-	ResolveAll(creds CredentialSet) (secrets.Set, error)
-	Validate(creds CredentialSet) error
-	InsertCredentialSet(creds CredentialSet) error
-	ListCredentialSets(namespace string, name string, labels map[string]string) ([]CredentialSet, error)
-	GetCredentialSet(namespace string, name string) (CredentialSet, error)
-	UpdateCredentialSet(creds CredentialSet) error
-	RemoveCredentialSet(namespace string, name string) error
-	UpsertCredentialSet(creds CredentialSet) error
+	ResolveAll(ctx context.Context, creds CredentialSet) (secrets.Set, error)
+	Validate(ctx context.Context, creds CredentialSet) error
+	InsertCredentialSet(ctx context.Context, creds CredentialSet) error
+	ListCredentialSets(ctx context.Context, namespace string, name string, labels map[string]string) ([]CredentialSet, error)
+	GetCredentialSet(ctx context.Context, namespace string, name string) (CredentialSet, error)
+	UpdateCredentialSet(ctx context.Context, creds CredentialSet) error
+	RemoveCredentialSet(ctx context.Context, namespace string, name string) error
+	UpsertCredentialSet(ctx context.Context, creds CredentialSet) error
 }

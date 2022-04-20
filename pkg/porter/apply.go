@@ -77,7 +77,7 @@ func (p *Porter) InstallationApply(ctx context.Context, opts ApplyOptions) error
 		return err
 	}
 
-	installation, err := p.Claims.GetInstallation(inputInstallation.Namespace, inputInstallation.Name)
+	installation, err := p.Claims.GetInstallation(ctx, inputInstallation.Namespace, inputInstallation.Name)
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound{}) {
 			return errors.Wrapf(err, "could not query for an existing installation document for %s", inputInstallation)

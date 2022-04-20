@@ -1,9 +1,12 @@
 package pluginstore
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/config"
 	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
@@ -48,26 +51,28 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 	}
 }
 
-func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
+func CreateInternalPlugin(ctx *portercontext.Context, key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	switch key {
 	case mongodb_docker.PluginKey:
-		return mongodb_docker.NewPlugin(s.Context, pluginConfig)
+		return mongodb_docker.NewPlugin(ctx, pluginConfig)
 	case mongodb.PluginKey:
-		return mongodb.NewPlugin(s.Context, pluginConfig)
+		return mongodb.NewPlugin(ctx, pluginConfig)
 	default:
 		return nil, errors.Errorf("unsupported internal storage plugin specified %s", key)
 	}
 }
 
-func (s *Store) Connect() error {
+func (s *Store) Connect(ctx context.Context) error {
 	if s.plugin != nil {
 		return nil
 	}
 
 	pluginType := NewStoragePluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, s.createInternalPlugin)
-	raw, cleanup, err := l.Load(pluginType)
+	l := pluggable.NewPluginLoader(s.Config, func(key string, config interface{}) (porterplugins.Plugin, error) {
+		return CreateInternalPlugin(s.Context, key, config)
+	})
+	raw, cleanup, err := l.Load(ctx, pluginType)
 	if err != nil {
 		return errors.Wrapf(err, "could not load %s plugin", pluginType.Interface)
 	}
@@ -83,7 +88,7 @@ func (s *Store) Connect() error {
 	return nil
 }
 
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	if s.cleanup != nil {
 		s.cleanup()
 	}
@@ -92,7 +97,7 @@ func (s *Store) Close() error {
 }
 
 func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return err
 	}
 
@@ -100,7 +105,7 @@ func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
 }
 
 func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +113,7 @@ func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
 }
 
 func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return 0, err
 	}
 
@@ -116,7 +121,7 @@ func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
 }
 
 func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return nil, err
 	}
 
@@ -124,7 +129,7 @@ func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
 }
 
 func (s *Store) Insert(opts plugins.InsertOptions) error {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return err
 	}
 
@@ -132,7 +137,7 @@ func (s *Store) Insert(opts plugins.InsertOptions) error {
 }
 
 func (s *Store) Patch(opts plugins.PatchOptions) error {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return err
 	}
 
@@ -140,7 +145,7 @@ func (s *Store) Patch(opts plugins.PatchOptions) error {
 }
 
 func (s *Store) Remove(opts plugins.RemoveOptions) error {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return err
 	}
 
@@ -148,7 +153,7 @@ func (s *Store) Remove(opts plugins.RemoveOptions) error {
 }
 
 func (s *Store) Update(opts plugins.UpdateOptions) error {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.TODO()); err != nil {
 		return err
 	}
 

@@ -5,13 +5,11 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/yaml"
-
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/tests"
-
 	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

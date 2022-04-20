@@ -88,7 +88,7 @@ func NewFor(c *config.Config, store storage.Store, secretStorage secrets.Store) 
 func (p *Porter) Connect(ctx context.Context) error {
 	// Load the config file and replace any referenced secrets
 	return p.Config.Load(ctx, func(secret string) (string, error) {
-		value, err := p.Secrets.Resolve("secret", secret)
+		value, err := p.Secrets.Resolve(ctx, "secret", secret)
 		if err != nil {
 			if strings.Contains(err.Error(), "invalid value source: secret") {
 				return "", errors.New("No secret store account is configured")
@@ -99,7 +99,7 @@ func (p *Porter) Connect(ctx context.Context) error {
 }
 
 // Close releases resources used by Porter before terminating the application.
-func (p *Porter) Close() error {
+func (p *Porter) Close(ctx context.Context) error {
 	if p.Debug {
 		fmt.Fprintln(p.Err, "Closing plugins")
 	}
@@ -107,12 +107,12 @@ func (p *Porter) Close() error {
 	// Shutdown our plugins
 	var bigErr *multierror.Error
 
-	err := p.Secrets.Close()
+	err := p.Secrets.Close(ctx)
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
 
-	err = p.Storage.Close()
+	err = p.Storage.Close(ctx)
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}

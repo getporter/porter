@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -36,7 +37,7 @@ func NewStore() *Store {
 	return s
 }
 
-func (s *Store) Connect() error {
+func (s *Store) Connect(context.Context) error {
 	// Keep track of Connect calls for test asserts later
 	count, err := s.GetConnectCount()
 	if err != nil {
@@ -48,7 +49,7 @@ func (s *Store) Connect() error {
 	return nil
 }
 
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	// Keep track of Close calls for test asserts later
 	count, err := s.GetCloseCount()
 	if err != nil {

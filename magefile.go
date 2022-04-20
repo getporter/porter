@@ -17,14 +17,11 @@ import (
 	"strings"
 
 	"get.porter.sh/magefiles/ci"
-	// mage:import
-	"get.porter.sh/magefiles/tests"
-	// mage:import
-	_ "get.porter.sh/porter/mage/docs"
-
 	"get.porter.sh/magefiles/docker"
 	"get.porter.sh/magefiles/releases"
+	"get.porter.sh/magefiles/tests"
 	"get.porter.sh/magefiles/tools"
+	_ "get.porter.sh/porter/mage/docs"
 	"get.porter.sh/porter/pkg"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/PaesslerAG/jsonpath"
-
 	"github.com/pkg/errors"
 )
 

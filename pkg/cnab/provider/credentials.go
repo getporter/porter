@@ -1,6 +1,8 @@
 package cnabprovider
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/secrets"
@@ -8,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
+func (r *Runtime) loadCredentials(ctx context.Context, b cnab.ExtendedBundle, args ActionArguments) (secrets.Set, error) {
 	if len(args.Installation.CredentialSets) == 0 {
 		return nil, credentials.Validate(nil, b.Credentials, args.Action)
 	}
@@ -31,12 +33,12 @@ func (r *Runtime) loadCredentials(b cnab.ExtendedBundle, args ActionArguments) (
 			},
 		}
 		store := r.credentials.GetDataStore()
-		err := store.FindOne(credentials.CollectionCredentials, query, &cset)
+		err := store.FindOne(ctx, credentials.CollectionCredentials, query, &cset)
 		if err != nil {
 			return nil, err
 		}
 
-		rc, err := r.credentials.ResolveAll(cset)
+		rc, err := r.credentials.ResolveAll(ctx, cset)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,8 @@
 package pluginstore
 
 import (
+	"context"
+
 	"get.porter.sh/porter/pkg/config"
 	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
@@ -49,7 +51,7 @@ func NewSecretsPluginConfig() pluggable.PluginTypeConfig {
 }
 
 func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
-	if err := s.Connect(); err != nil {
+	if err := s.Connect(context.Background()); err != nil {
 		return "", err
 	}
 
@@ -90,7 +92,7 @@ func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (port
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)
 }
 
-func (s *Store) Connect() error {
+func (s *Store) Connect(ctx context.Context) error {
 	if s.plugin != nil {
 		return nil
 	}
@@ -98,7 +100,7 @@ func (s *Store) Connect() error {
 	pluginType := NewSecretsPluginConfig()
 
 	l := pluggable.NewPluginLoader(s.Config, s.createInternalPlugin)
-	raw, cleanup, err := l.Load(pluginType)
+	raw, cleanup, err := l.Load(ctx, pluginType)
 	if err != nil {
 		return err
 	}
@@ -114,7 +116,7 @@ func (s *Store) Connect() error {
 	return nil
 }
 
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	if s.cleanup != nil {
 		s.cleanup()
 	}

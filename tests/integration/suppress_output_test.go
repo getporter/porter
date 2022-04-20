@@ -7,9 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSuppressOutput(t *testing.T) {
@@ -19,37 +18,38 @@ func TestSuppressOutput(t *testing.T) {
 	defer p.Teardown()
 	p.SetupIntegrationTest()
 	p.Debug = false
+	ctx := context.Background()
 
 	bundleName := p.AddTestBundleDir("testdata/bundles/suppressed-output-example", true)
 
 	// Install (Output suppressed)
 	installOpts := porter.NewInstallOptions()
-	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
+	err := installOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InstallBundle(context.Background(), installOpts)
+	err = p.InstallBundle(ctx, installOpts)
 	require.NoError(t, err)
 
 	// Verify that the bundle output was captured (despite stdout/err of command being suppressed)
-	bundleOutput, err := p.ReadBundleOutput("greeting", bundleName, "")
+	bundleOutput, err := p.ReadBundleOutput(ctx, "greeting", bundleName, "")
 	require.NoError(t, err, "could not read config output")
 	require.Equal(t, "Hello World!", bundleOutput, "expected the bundle output to be populated correctly")
 
 	// Invoke - Log Error (Output suppressed)
 	invokeOpts := porter.NewInvokeOptions()
 	invokeOpts.Action = "log-error"
-	err = invokeOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = invokeOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.InvokeBundle(context.Background(), invokeOpts)
+	err = p.InvokeBundle(ctx, invokeOpts)
 	require.NoError(t, err)
 
 	// Uninstall
 	uninstallOpts := porter.NewUninstallOptions()
-	err = uninstallOpts.Validate(context.Background(), []string{}, p.Porter)
+	err = uninstallOpts.Validate(ctx, []string{}, p.Porter)
 	require.NoError(t, err)
 
-	err = p.UninstallBundle(context.Background(), uninstallOpts)
+	err = p.UninstallBundle(ctx, uninstallOpts)
 	require.NoError(t, err)
 
 	gotCmdOutput := p.TestConfig.TestContext.GetOutput()

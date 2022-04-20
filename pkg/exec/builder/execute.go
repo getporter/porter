@@ -7,9 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"get.porter.sh/porter/pkg/portercontext"
+	"github.com/pkg/errors"
 )
 
 var DefaultFlagDashes = Dashes{

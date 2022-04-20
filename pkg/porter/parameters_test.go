@@ -45,12 +45,14 @@ func TestGenerateParameterSet(t *testing.T) {
 	opts.Name = "kool-params"
 	opts.Labels = []string{"env=dev"}
 	opts.CNABFile = "/bundle.json"
-	err := opts.Validate(context.Background(), nil, p.Porter)
+	ctx := context.Background()
+
+	err := opts.Validate(ctx, nil, p.Porter)
 	require.NoError(t, err, "Validate failed")
 
-	err = p.GenerateParameters(context.Background(), opts)
+	err = p.GenerateParameters(ctx, opts)
 	require.NoError(t, err, "no error should have existed")
-	creds, err := p.Parameters.GetParameterSet(opts.Namespace, "kool-params")
+	creds, err := p.Parameters.GetParameterSet(ctx, opts.Namespace, "kool-params")
 	require.NoError(t, err, "expected parameter to have been generated")
 	assert.Equal(t, map[string]string{"env": "dev"}, creds.Labels)
 }
@@ -58,36 +60,36 @@ func TestGenerateParameterSet(t *testing.T) {
 func TestPorter_ListParameters(t *testing.T) {
 	p := NewTestPorter(t)
 	defer p.Teardown()
-
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("", "shared-mysql"))
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("dev", "carolyn-wordpress"))
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("dev", "vaughn-wordpress"))
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "staging-wordpress"))
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "iat-wordpress"))
-	p.TestParameters.InsertParameterSet(parameters.NewParameterSet("test", "shared-mysql"))
+	ctx := context.Background()
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("", "shared-mysql"))
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("dev", "carolyn-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("dev", "vaughn-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "staging-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "iat-wordpress"))
+	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("test", "shared-mysql"))
 
 	t.Run("all-namespaces", func(t *testing.T) {
 		opts := ListOptions{AllNamespaces: true}
-		results, err := p.ListParameters(opts)
+		results, err := p.ListParameters(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 6)
 	})
 
 	t.Run("local namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: "dev"}
-		results, err := p.ListParameters(opts)
+		results, err := p.ListParameters(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 2)
 
 		opts = ListOptions{Namespace: "test"}
-		results, err = p.ListParameters(opts)
+		results, err = p.ListParameters(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 3)
 	})
 
 	t.Run("global namespace", func(t *testing.T) {
 		opts := ListOptions{Namespace: ""}
-		results, err := p.ListParameters(opts)
+		results, err := p.ListParameters(ctx, opts)
 		require.NoError(t, err)
 		assert.Len(t, results, 1)
 	})
@@ -108,7 +110,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	}
 
 	i := claims.Installation{}
-	_, err := r.resolveParameters(i, b, "action", overrides)
+	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "parameter foo not defined in bundle")
 }
 
@@ -131,7 +133,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	}
 
 	i := claims.Installation{}
-	_, err := r.resolveParameters(i, b, "action", overrides)
+	_, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.EqualError(t, err, "definition foo not defined in bundle")
 }
 
@@ -184,7 +186,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 	}
 
 	i := claims.Installation{}
-	params, err := r.resolveParameters(i, b, "action", overrides)
+	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
 	require.Equal(t, "FOO", params["foo"], "expected param 'foo' to be updated")
@@ -216,7 +218,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	}}
 
 	i := claims.Installation{}
-	params, err := r.resolveParameters(i, b, "action", nil)
+	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of the bundle default, as it does not apply")
@@ -246,7 +248,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	}}
 
 	i := claims.Installation{}
-	params, err := r.resolveParameters(i, b, "action", nil)
+	params, err := r.resolveParameters(context.Background(), i, b, "action", nil)
 	require.NoError(t, err)
 
 	require.Equal(t, nil, params["foo"], "expected param 'foo' to be nil, regardless of claim value, as it does not apply")
@@ -286,7 +288,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	}
 
 	i := claims.Installation{}
-	params, err := r.resolveParameters(i, b, "action", overrides)
+	params, err := r.resolveParameters(context.Background(), i, b, "action", overrides)
 	require.NoError(t, err)
 
 	require.Equal(t, "SGVsbG8gV29ybGQh", params["foo"], "expected param 'foo' to be the base64-encoded file contents")
@@ -309,7 +311,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		require.NoError(t, err, "ProcessBundle failed")
 
 		i := claims.Installation{Name: "mybun"}
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, nil)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_default", params["foo"],
 			"expected param 'foo' to have default value")
@@ -333,7 +335,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		}
 
 		i := claims.Installation{Name: "mybun"}
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have override value")
@@ -357,7 +359,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, nil)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_source", params["foo"],
 			"expected param 'foo' to have parameter source value")
@@ -385,7 +387,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("foo", []byte("foo_source")))
 
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have parameter override value")
@@ -409,7 +411,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		cr := r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 		r.TestClaims.CreateOutput(cr.NewOutput("connstr", []byte("connstr value")))
 
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, nil)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "connstr value", params["connstr"],
 			"expected param 'connstr' to have parameter value from the untyped dependency output")
@@ -439,7 +441,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		r.TestClaims.CreateOutput(cr.NewOutput("baz", []byte("baz_source")))
 
 		overrides := map[string]string{"foo": "foo_override"}
-		params, err := r.resolveParameters(i, b, cnab.ActionUpgrade, overrides)
+		params, err := r.resolveParameters(context.Background(), i, b, cnab.ActionUpgrade, overrides)
 		require.NoError(t, err)
 		assert.Equal(t, "foo_override", params["foo"],
 			"expected param 'foo' to have parameter override value")
@@ -578,7 +580,7 @@ func Test_Paramapalooza(t *testing.T) {
 						overrides["my-param"] = "my-param-value"
 					}
 
-					resolvedParams, err := r.resolveParameters(i, bun, action, overrides)
+					resolvedParams, err := r.resolveParameters(context.Background(), i, bun, action, overrides)
 					if tc.ExpectedErr != "" {
 						require.EqualError(t, err, tc.ExpectedErr)
 					} else {
@@ -611,7 +613,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	cr = r.TestClaims.CreateResult(c.NewResult(cnab.StatusSucceeded))
 	r.TestClaims.CreateOutput(cr.NewOutput("bar", []byte("bar value")))
 
-	got, err := r.resolveParameterSources(bun, i)
+	got, err := r.resolveParameterSources(context.Background(), bun, i)
 	require.NoError(t, err, "resolveParameterSources failed")
 
 	want := secrets.Set{
@@ -632,7 +634,7 @@ func TestShowParameters_NotFound(t *testing.T) {
 		Name: "non-existent-param",
 	}
 
-	err := p.ShowParameter(opts)
+	err := p.ShowParameter(context.Background(), opts)
 	assert.ErrorIs(t, err, storage.ErrNotFound{})
 }
 
@@ -675,7 +677,7 @@ func TestShowParameters_Found(t *testing.T) {
 
 			p.TestParameters.AddTestParameters("testdata/paramset.json")
 
-			err := p.ShowParameter(opts)
+			err := p.ShowParameter(context.Background(), opts)
 			require.NoError(t, err, "an error should not have occurred")
 			gotOutput := p.TestConfig.TestContext.GetOutput()
 			test.CompareGoldenFile(t, tc.expectedOutputFile, gotOutput)

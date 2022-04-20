@@ -4,9 +4,8 @@ import (
 	"path"
 	"testing"
 
-	"get.porter.sh/porter/pkg/pkgmgmt"
-
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/stretchr/testify/assert"
 )
 
