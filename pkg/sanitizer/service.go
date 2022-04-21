@@ -1,8 +1,6 @@
 package sanitizer
 
 import (
-	"fmt"
-
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/parameters"
@@ -56,6 +54,10 @@ func (s *Service) CleanRawParameters(params map[string]interface{}, bun cnab.Ext
 func (s *Service) CleanParameters(params []secrets.Strategy, bun cnab.ExtendedBundle, id string) ([]secrets.Strategy, error) {
 	strategies := make([]secrets.Strategy, 0, len(params))
 	for _, param := range params {
+		if param.Source.Key == secrets.SourceSecret {
+			strategies = append(strategies, param)
+			continue
+		}
 		strategy := parameters.ValueStrategy(param.Name, param.Value)
 		if bun.IsSensitiveParameter(param.Name) {
 			cleaned := sanitizedParam(strategy, id)
@@ -175,7 +177,6 @@ func (s *Service) RestoreOutputs(o claims.Outputs) (claims.Outputs, error) {
 // RestoreOutput retrieves the raw output value and return the restored output
 // record.
 func (s *Service) RestoreOutput(output claims.Output) (claims.Output, error) {
-	fmt.Println("====", output.Name, output.Key)
 	if output.Key == "" {
 		return output, nil
 	}

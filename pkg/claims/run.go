@@ -129,6 +129,14 @@ func (r Run) TypedParameterValues() map[string]interface{} {
 			value[param.Name] = param.Value
 			continue
 		}
+		def, ok := bun.Definitions[param.Name]
+		if !ok {
+			value[param.Name] = v
+			continue
+		}
+		if bun.IsFileType(def) && v == "" {
+			v = nil
+		}
 
 		value[param.Name] = v
 	}
