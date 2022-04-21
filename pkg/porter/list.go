@@ -232,7 +232,11 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation))
+		di, err := p.generateDisplayInstallation(installation)
+		if err != nil {
+			return err
+		}
+		displayInstallations = append(displayInstallations, di)
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 

@@ -26,12 +26,12 @@ func TestHelloBundle(t *testing.T) {
 	test.Chdir(test.TestDir)
 
 	// Run a stateless action before we install and make sure nothing is persisted
-	_, output := test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns")
+	_, output := test.RequirePorter("invoke", testdata.MyBuns, "--action=dry-run", "--reference", testdata.MyBunsRef, "-c=mybuns", "--param", "password=supersecret")
 	t.Log(output)
 	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
 	// Install the bundle and verify the correct output is printed
-	_, output = test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns")
+	_, output = test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--label", "test=true", "-p=mybuns", "-c=mybuns", "--param", "password=supersecret")
 	require.Contains(t, output, "Hello, *******")
 
 	// Should not see the mybuns installation in the global namespace
@@ -46,7 +46,7 @@ func TestHelloBundle(t *testing.T) {
 
 	// Run a no-op action to check the status and check that the run was persisted
 	// Also checks that we are processing file parameters properly, when templated and read from the filesystem
-	_, output = test.RequirePorter("invoke", testdata.MyBuns, "--action=status", "-c=mybuns", "--param", "cfg=./buncfg.json")
+	_, output = test.RequirePorter("invoke", testdata.MyBuns, "--action=status", "-c=mybuns", "--param", "cfg=./buncfg.json", "--param", "password=supersecret")
 	require.Contains(t, output, `{"color": "blue"}`, "templated file parameter was not decoded properly")
 	require.Contains(t, output, `is a unicorn`, "state file parameter was not decoded properly")
 
@@ -56,7 +56,7 @@ func TestHelloBundle(t *testing.T) {
 	// TODO(carolynvs): check that status shows up as a run
 
 	// Install in the test namespace, and do not persist the logs
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--no-logs")
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--no-logs", "--param", "password=supersecret")
 	_, _, err = test.RunPorter("installation", "logs", "show", "--namespace=test", "-i=mybuns")
 	require.Error(t, err, "expected log retrieval to fail")
 	require.Contains(t, err.Error(), "no logs found")
@@ -66,49 +66,54 @@ func TestHelloBundle(t *testing.T) {
 	installations, err := test.ListInstallations(false, "test", "", nil)
 	require.NoError(t, err)
 	require.Len(t, installations, 1, "expected one installation in the test namespace")
+	test.RequireInstallationNoSensitiveData(installations[0])
 
 	// Search by name
 	installations, err = test.ListInstallations(true, "", testdata.MyBuns, nil)
 	require.NoError(t, err)
 	require.Len(t, installations, 2, "expected two installations named mybuns")
+	for _, ins := range installations {
+		test.RequireInstallationNoSensitiveData(ins)
+	}
 
 	// Search by label
 	installations, err = test.ListInstallations(true, "", "", []string{"test=true"})
 	require.NoError(t, err)
 	require.Len(t, installations, 1, "expected one installations labeled with test=true")
+	test.RequireInstallationNoSensitiveData(installations[0])
 
 	// Validate that we can't accidentally overwrite an installation
-	_, _, err = test.RunPorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns")
+	_, _, err = test.RunPorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--param", "password=supersecret")
 	tests.RequireErrorContains(t, err, "The installation has already been successfully installed")
 
 	// We should be able to repeat install with --force
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force")
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force", "--param", "password=supersecret")
 
 	// Upgrade our installation
-	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns", "--param", "password=supersecret")
 
 	// Uninstall and remove the installation
-	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns")
+	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns", "--param", "password=supersecret")
 	test.RequirePorter("installation", "delete", testdata.MyBuns, "--namespace", test.CurrentNamespace())
 	test.RequireInstallationNotFound(test.CurrentNamespace(), testdata.MyBuns)
 
 	// Let's test some negatives!
 
 	// Cannot perform a modifying or stateful action without an installation
-	_, _, err = test.RunPorter("upgrade", "missing", "--reference", testdata.MyBunsRef)
+	_, _, err = test.RunPorter("upgrade", "missing", "--reference", testdata.MyBunsRef, "--param", "password=supersecret")
 	test.RequireNotFoundReturned(err)
 
-	_, _, err = test.RunPorter("uninstall", "missing", "--reference", testdata.MyBunsRef)
+	_, _, err = test.RunPorter("uninstall", "missing", "--reference", testdata.MyBunsRef, "--param", "password=supersecret")
 	test.RequireNotFoundReturned(err)
 
-	_, _, err = test.RunPorter("invoke", "--action=boom", "missing", "--reference", testdata.MyBunsRef)
+	_, _, err = test.RunPorter("invoke", "--action=boom", "missing", "--reference", testdata.MyBunsRef, "--param", "password=supersecret")
 	test.RequireNotFoundReturned(err)
 
-	_, _, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", testdata.MyBunsRef)
+	_, _, err = test.RunPorter("invoke", "--action=status", "missing", "--reference", testdata.MyBunsRef, "--param", "password=supersecret")
 	test.RequireNotFoundReturned(err)
 
 	// Test that outputs are collected when a bundle fails
-	_, _, err = test.RunPorter("install", "fail-with-outputs", "--reference", testdata.MyBunsRef, "-c=mybuns", "-p=mybuns", "--param", "chaos_monkey=true")
+	_, _, err = test.RunPorter("install", "fail-with-outputs", "--reference", testdata.MyBunsRef, "-c=mybuns", "-p=mybuns", "--param", "chaos_monkey=true", "--param", "password=supersecret")
 	require.Error(t, err, "the chaos monkey should have failed the installation")
 	myLogs, _ := test.RequirePorter("installation", "outputs", "show", "mylogs", "-i=fail-with-outputs")
 	require.Contains(t, myLogs, "Hello, porterci")

@@ -81,7 +81,7 @@ func (t Tester) RequireNotFoundReturned(err error) {
 	require.Contains(t.T, err.Error(), "not found")
 }
 
-func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
+func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]porter.DisplayInstallation, error) {
 	args := []string{
 		"list",
 		"--output=json",
@@ -101,7 +101,7 @@ func (t Tester) ListInstallations(allNamespaces bool, namespace string, name str
 		return nil, err
 	}
 
-	var installations []claims.Installation
+	var installations []porter.DisplayInstallation
 	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installations))
 	return installations, nil
 }
