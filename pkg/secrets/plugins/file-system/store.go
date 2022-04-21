@@ -18,7 +18,6 @@ var _ plugins.SecretsPlugin = &Store{}
 const SECRET_FOLDER = "secrets"
 
 type Config struct {
-	// default to `$PORTER_HOME/secrets/`
 	PathPrefix string `json:"path_prefix"`
 	secretDir  string
 }
@@ -44,17 +43,25 @@ func NewStore(cfg Config, logger hclog.Logger) *Store {
 
 // Connect implements the Connect method on the secret plugins' interface.
 func (s *Store) Connect() error {
-	if s.config.PathPrefix == "" {
-		userHome, err := os.UserHomeDir()
+	var err error
+	porterHomeDir := os.Getenv("PORTER_HOME")
+	if porterHomeDir == "" {
+		porterHomeDir, err = os.UserHomeDir()
 		if err != nil {
 			return errors.Wrap(err, "could not get user home directory")
 		}
-		s.config.PathPrefix = filepath.Join(userHome, ".porter")
+		porterHomeDir = filepath.Join(porterHomeDir, ".porter")
 	}
 
-	secretDir := filepath.Join(s.config.PathPrefix, SECRET_FOLDER)
+	pathPrefix := s.config.PathPrefix
+	if pathPrefix == "" {
+		pathPrefix = SECRET_FOLDER
 
-	if err := os.Mkdir(secretDir, os.ModePerm); err != nil && !errors.Is(err, os.ErrExist) {
+	}
+
+	secretDir := filepath.Join(porterHomeDir, pathPrefix)
+
+	if err := os.MkdirAll(secretDir, os.ModePerm); err != nil && !errors.Is(err, os.ErrExist) {
 		return err
 	}
 	s.config.secretDir = secretDir

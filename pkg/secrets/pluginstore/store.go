@@ -1,6 +1,8 @@
 package pluginstore
 
 import (
+	"encoding/json"
+
 	"get.porter.sh/porter/pkg/config"
 	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
@@ -70,7 +72,17 @@ func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.P
 	}
 
 	if key == filesystemsecret.PluginKey {
-		return filesystemsecret.NewPlugin(), nil
+		data, err := json.Marshal(pluginConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		var cfg filesystemsecret.Config
+		err = json.Unmarshal(data, &cfg)
+		if err != nil {
+			return nil, err
+		}
+		return filesystemsecret.NewPlugin(cfg), nil
 	}
 
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)

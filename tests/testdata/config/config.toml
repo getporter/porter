@@ -2,9 +2,13 @@ namespace = "dev"
 debug = true
 debug-plugins = true
 default-storage = "testdb"
-default-secrets-plugin = "file-system"
 experimental = ["build-drivers", "structured-logs"]
 build-driver = "buildkit"
+default-secrets = "porter-secrets"
+
+[secrets]
+name = "porter-secrets"
+plugin = "porter.file-system"
 
 [logs]
   enabled = true

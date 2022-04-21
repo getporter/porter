@@ -17,15 +17,13 @@ type Plugin struct {
 	secrets.Store
 }
 
-func NewPlugin() Plugin {
+func NewPlugin(cfg Config) Plugin {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       PluginKey,
 		Output:     os.Stderr,
 		Level:      hclog.Debug,
 		JSONFormat: true,
 	})
-
-	cfg := Config{}
 
 	return Plugin{
 		Store: NewStore(cfg, logger),
