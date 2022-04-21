@@ -69,8 +69,6 @@ func TestDesiredState(t *testing.T) {
 	installation := test.RequireInstallationExists("operator", "mybuns")
 	require.Equal(t, "succeeded", installation.Status.ResultStatus)
 
-	_, err = test.ShowInstallation("operator", "mybuns")
-	require.NoError(t, err)
 	// Repeat the apply command, there should be no changes detected. Using dry run because we just want to know if it _would_ be re-executed.
 	_, output, err = test.RunPorter("installation", "apply", "mybuns.yaml", "--namespace", "operator", "--dry-run")
 	require.NoError(t, err)

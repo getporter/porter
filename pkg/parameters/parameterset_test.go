@@ -30,7 +30,7 @@ func TestNewParameterSet(t *testing.T) {
 func TestParameterSet_String(t *testing.T) {
 	t.Run("global namespace", func(t *testing.T) {
 		ps := ParameterSet{ParameterSetSpec: ParameterSetSpec{Name: "myparams"}}
-		assert.Equal(t, "myparams", ps.String())
+		assert.Equal(t, "/myparams", ps.String())
 	})
 
 	t.Run("local namespace", func(t *testing.T) {

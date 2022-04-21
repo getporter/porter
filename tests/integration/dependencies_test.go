@@ -102,7 +102,7 @@ func installWordpressBundle(p *porter.TestPorter) (namespace string) {
 	resolvedParameters, err := p.Sanitizer.RestoreParameterSet(c.Parameters, cnab.ExtendedBundle{c.Bundle})
 	require.NoError(p.T(), err, "Resolve run failed")
 	assert.Equal(p.T(), "porter-ci-mysql", resolvedParameters["mysql-name"], "the dependency param value for 'mysql-name' is incorrect")
-	assert.Equal(p.T(), float64(2), resolvedParameters["probe-timeout"], "the dependency param value for 'probe-timeout' is incorrect")
+	assert.Equal(p.T(), 2, resolvedParameters["probe-timeout"], "the dependency param value for 'probe-timeout' is incorrect")
 
 	// TODO(carolynvs): compare with last parameters set on the installation once we start tracking that
 

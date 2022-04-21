@@ -1,7 +1,7 @@
 package host
 
 import (
-	"errors"
+	"fmt"
 
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
@@ -25,7 +25,7 @@ func (p Plugin) Close() error {
 }
 
 func (p Plugin) Create(keyName string, keyValue string, value string) error {
-	return errors.New("not implemented")
+	return fmt.Errorf("the %s plugin does not support saving secrets. Please configure a secret plugin", PluginKey)
 }
 
 // NewPlugin creates an instance of the internal plugin secrets.porter.host
