@@ -5,8 +5,12 @@ import (
 	"time"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRun_NewResultFrom(t *testing.T) {
@@ -82,5 +86,71 @@ func TestRun_ShouldRecord(t *testing.T) {
 		r := Run{Bundle: b, Action: "missing"}
 		assert.True(t, r.ShouldRecord())
 	})
+
+}
+
+func TestRun_TypedParameterValues(t *testing.T) {
+	sensitive := true
+	bun := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "integer",
+				WriteOnly: &sensitive,
+			},
+			"baz": &definition.Schema{
+				Type: "string",
+			},
+			"porter-state": &definition.Schema{
+				Type:            "string",
+				ContentEncoding: "base64",
+				Comment:         cnab.PorterInternal,
+			},
+		},
+		Parameters: map[string]bundle.Parameter{
+			"foo": {
+				Definition: "foo",
+			},
+			"baz": {
+				Definition: "baz",
+			},
+			"name": {
+				Definition: "name",
+			},
+			"porter-state": {
+				Definition: "porter-state",
+			},
+		},
+		RequiredExtensions: []string{
+			cnab.FileParameterExtensionKey,
+		},
+	}
+
+	run := NewRun("dev", "mybuns")
+	run.Bundle = bun
+	run.Parameters = parameters.NewParameterSet(run.Namespace, run.Bundle.Name)
+	params := []secrets.Strategy{
+		parameters.ValueStrategy("baz", "baz-test"),
+		parameters.ValueStrategy("name", "porter-test"),
+		parameters.ValueStrategy("porter-state", ""),
+		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "supersecret"},
+	}
+
+	run.Parameters.Parameters = params
+	typed := run.TypedParameterValues()
+	require.Equal(t, len(params), len(typed))
+
+	for _, param := range params {
+		v, ok := typed[param.Name]
+		require.True(t, ok)
+		if param.Name == "porter-state" {
+			require.Nil(t, v)
+			continue
+		}
+
+		stringVal, err := cnab.WriteParameterToString(param.Name, v)
+		require.NoError(t, err)
+
+		require.Equal(t, stringVal, v)
+	}
 
 }

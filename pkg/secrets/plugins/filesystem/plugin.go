@@ -5,10 +5,12 @@ import (
 
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
+	"github.com/carolynvs/aferox"
 	"github.com/hashicorp/go-hclog"
+	"github.com/spf13/afero"
 )
 
-const PluginKey = secrets.PluginInterface + ".porter.file-system"
+const PluginKey = secrets.PluginInterface + ".porter.filesystem"
 
 var _ plugins.SecretsPlugin = &Plugin{}
 
@@ -17,17 +19,21 @@ type Plugin struct {
 	secrets.Store
 }
 
-func NewPlugin(cfg Config) Plugin {
+func NewPlugin(cfg Config) (Plugin, error) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       PluginKey,
 		Output:     os.Stderr,
-		Level:      hclog.Debug,
+		Level:      hclog.Info,
 		JSONFormat: true,
 	})
+	_, err := cfg.SetSecretDir()
+	if err != nil {
+		return Plugin{}, err
+	}
 
 	return Plugin{
-		Store: NewStore(cfg, logger),
-	}
+		Store: NewStore(cfg, logger, aferox.NewAferox(cfg.secretDir, afero.NewOsFs())),
+	}, nil
 
 }
 

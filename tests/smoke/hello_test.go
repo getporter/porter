@@ -56,10 +56,13 @@ func TestHelloBundle(t *testing.T) {
 	// TODO(carolynvs): check that status shows up as a run
 
 	// Install in the test namespace, and do not persist the logs
-	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--no-logs", "--param", "password=supersecret")
+	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "-p=mybuns", "--no-logs", "--param", "password=supersecret")
 	_, _, err = test.RunPorter("installation", "logs", "show", "--namespace=test", "-i=mybuns")
 	require.Error(t, err, "expected log retrieval to fail")
 	require.Contains(t, err.Error(), "no logs found")
+	displayInstallation, err := test.ShowInstallation("test", testdata.MyBuns)
+	require.NoError(t, err)
+	require.Len(t, displayInstallation.ParameterSets, 1)
 
 	// Let's try out list filtering!
 	// Search by namespace
@@ -85,7 +88,14 @@ func TestHelloBundle(t *testing.T) {
 	test.RequirePorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--force", "--param", "password=supersecret")
 
 	// Upgrade our installation
-	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns", "--param", "password=supersecret")
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns", "--param", "password=supersecret")
+	test.RequirePorter("upgrade", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-p=mybuns", "-c=mybuns", "--param", "password=supersecret")
+	// no duplicate in credential set or parameter set on the installation
+	// record
+	displayInstallation, err = test.ShowInstallation(test.CurrentNamespace(), testdata.MyBuns)
+	require.NoError(t, err)
+	require.Len(t, displayInstallation.ParameterSets, 1)
+	require.Len(t, displayInstallation.CredentialSets, 1)
 
 	// Uninstall and remove the installation
 	test.RequirePorter("uninstall", testdata.MyBuns, "--namespace", test.CurrentNamespace(), "-c=mybuns", "--param", "password=supersecret")

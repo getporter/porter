@@ -8,7 +8,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
-	filesystemsecret "get.porter.sh/porter/pkg/secrets/plugins/file-system"
+	filesystemsecret "get.porter.sh/porter/pkg/secrets/plugins/filesystem"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"github.com/pkg/errors"
 )
@@ -63,10 +63,15 @@ func (s *Store) Create(keyName string, keyValue string, value string) error {
 		return err
 	}
 
-	return s.plugin.Create(keyName, keyValue, value)
+	err := s.plugin.Create(keyName, keyValue, value)
+	if errors.Is(err, plugins.ErrNotImplemented) {
+		return errors.Wrapf(err, "edit your porter config file and set default-storage-plugin to \"filesystem\" to use the insecure filesystem plugin. Do not use this plugin for production data.")
+	}
+
+	return err
 }
 
-func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
+func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	if key == host.PluginKey {
 		return host.NewPlugin(), nil
 	}
@@ -77,12 +82,17 @@ func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.P
 			return nil, err
 		}
 
-		var cfg filesystemsecret.Config
+		homeDir, err := s.GetHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		cfg := filesystemsecret.NewConfig(s.DebugPlugins, homeDir)
 		err = json.Unmarshal(data, &cfg)
 		if err != nil {
 			return nil, err
 		}
-		return filesystemsecret.NewPlugin(cfg), nil
+
+		return filesystemsecret.NewPlugin(cfg)
 	}
 
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)
@@ -95,7 +105,7 @@ func (s *Store) Connect() error {
 
 	pluginType := NewSecretsPluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, createInternalPlugin)
+	l := pluggable.NewPluginLoader(s.Config, s.createInternalPlugin)
 	raw, cleanup, err := l.Load(pluginType)
 	if err != nil {
 		return err
