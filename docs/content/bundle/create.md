@@ -151,7 +151,7 @@ Once your bundle is published, people can use it by setting the \--reference fla
 The name, registry, and version fields are used to generate the bundle's default publish location when porter publish is run.
 By default, the bundle is published to REGISTRY/BUNDLE_NAME:vBUNDLE_VERSION.
 The destination may be changed by specifying  \--registry, \--reference, or \--tag during [publish](/cli/porter_publish/).
-The publish command prints our the full bundle reference when it completes.
+The publish command prints out the full bundle reference when it completes.
 
 For example, the following porter.yaml file would result in the bundle being published to ghcr.io/getporter/porter-hello:v0.3.0.
 Note that even if you did not specify the bundle version with a v prefix, in the example below the version is `0.3.0`, by default Porter will use a v prefix in the tag of the bundle reference.
