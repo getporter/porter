@@ -1,6 +1,8 @@
 ---
 title: Custom Dockerfile
 description: Defining a custom Dockerfile for your Porter bundle
+aliases:
+- /custom-dockerfile/
 ---
 
 Porter automatically generates a Dockerfile and uses it to build the invocation image for your bundle.

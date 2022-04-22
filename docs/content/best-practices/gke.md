@@ -31,7 +31,7 @@ See [ghcr.io/getporter/examples/gke][example] for a full working example bundle.
     recommended over using a parameter. Using parameters to define environment
     variables is a hack provided only for the purpose of this example.
 
-    * Add the following line to your [Custom Dockerfile](/custom-dockerfile):
+    * Add the following line to your [Custom Dockerfile](/bundle/custom-dockerfile):
 
         ```
         ENV GOOGLE_APPLICATION_CREDENTIALS=/home/nonroot/google-service-account.json

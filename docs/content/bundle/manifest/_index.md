@@ -1,14 +1,17 @@
 ---
-title: Author Bundles
-description: Create a Bundle with Porter
+title: Porter Manifest
+description: Anatomy of the Porter manifest, porter.yaml
+layout: single
 aliases:
 - /authoring-bundles/
+- /author-bundles/
 ---
 
-Use the [porter create](/cli/porter_create) command to scaffold a new bundle in the current directory.
-The bundle is defined by its manifest, a porter.yaml file.
+A Porter bundle is defined by a Porter manifest file named porter.yaml.
+The manifest defines metadata about the bundle, such as its name or what parameters it accepts, and it also defines actions that the bundle can execute, like install, upgrade and uninstall along with any custom actions.
+
 The manifest supports variable substitution through [templates].
-You can [customize the Dockerfile](/custom-dockerfile/) used to build the bundle installer.
+You can [customize the Dockerfile](/bundle/custom-dockerfile/) used to build the bundle installer.
 
 The manifest is made up of multiple components. See the [Manifest File Format] for a full list of available fields.
 
@@ -62,7 +65,7 @@ maintainers:
   
    When the version is used to default the tag, and it contains a plus sign (+), the plus sign is replaced with an underscore because while + is a valid semver delimiter for the build metadata, it is not an allowed character in a tag.
 * `dockerfile`: OPTIONAL. The relative path to a Dockerfile to use as a template during `porter build`. 
-    See [Custom Dockerfile](/custom-dockerfile/) for details on how to use a custom Dockerfile.
+    See [Custom Dockerfile](/bundle/custom-dockerfile/) for details on how to use a custom Dockerfile.
 * `custom`: OPTIONAL. A map of [custom bundle metadata](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions).
 * `maintainers`: OPTIONAL. A map of bundle maintainers. Per maintainer, `name`, `email`, and `url` can be specified. Every field is optional.
 
