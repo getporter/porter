@@ -6,11 +6,14 @@ import (
 
 	"get.porter.sh/porter/pkg"
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	configadapter "get.porter.sh/porter/pkg/cnab/config-adapter"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
+	"github.com/cnabio/cnab-go/secrets/host"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -354,4 +357,52 @@ func Test_bundleFileOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
+	p := NewTestPorter(t)
+	defer p.Teardown()
+
+	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
+	require.NoError(t, err)
+
+	sensitiveParamValue := "2"
+	nonsensitiveParamValue := "1"
+	opts := sharedOptions{}
+	opts.Params = []string{"my-first-param=" + nonsensitiveParamValue, "my-second-param=" + sensitiveParamValue}
+
+	err = opts.LoadParameters(p.Porter, bun)
+	require.NoError(t, err)
+
+	i := claims.NewInstallation("", bun.Name)
+
+	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	require.NoError(t, err)
+
+	require.Len(t, i.Parameters.Parameters, 2)
+
+	// there should be no sensitive value on installation record
+	for _, param := range i.Parameters.Parameters {
+		if bun.IsSensitiveParameter(param.Name) {
+			require.Equal(t, param.Source.Key, secrets.SourceSecret)
+			require.NotEqual(t, param.Source.Value, sensitiveParamValue)
+			continue
+		}
+		require.Equal(t, param.Source.Key, host.SourceValue)
+		require.Equal(t, param.Source.Value, nonsensitiveParamValue)
+	}
+
+	// if no parameter override specified, installation record should be updated
+	// as well
+	opts.combinedParameters = nil
+	opts.Params = make([]string, 0)
+	err = opts.LoadParameters(p.Porter, bun)
+	require.NoError(t, err)
+	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	require.NoError(t, err)
+
+	require.Len(t, i.Parameters.Parameters, 0)
 }

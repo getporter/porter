@@ -38,6 +38,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: result
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true
 
 state:
   - name: magic_file
@@ -84,6 +89,10 @@ install:
       arguments:
         - chaos_monkey
         - "{{ bundle.parameters.chaos_monkey }}"
+      outputs:
+        - name: result
+          regex: "(.*)"
+
 
 dry-run:
   - exec:
@@ -131,6 +140,9 @@ upgrade:
       arguments:
         - chaos_monkey
         - "{{ bundle.parameters.chaos_monkey }}"
+      outputs:
+        - name: result
+          regex: "(.*)"
 
 uninstall:
   - exec:

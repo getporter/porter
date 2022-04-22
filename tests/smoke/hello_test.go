@@ -66,21 +66,16 @@ func TestHelloBundle(t *testing.T) {
 	installations, err := test.ListInstallations(false, "test", "", nil)
 	require.NoError(t, err)
 	require.Len(t, installations, 1, "expected one installation in the test namespace")
-	test.RequireInstallationNoSensitiveData(installations[0])
 
 	// Search by name
 	installations, err = test.ListInstallations(true, "", testdata.MyBuns, nil)
 	require.NoError(t, err)
 	require.Len(t, installations, 2, "expected two installations named mybuns")
-	for _, ins := range installations {
-		test.RequireInstallationNoSensitiveData(ins)
-	}
 
 	// Search by label
 	installations, err = test.ListInstallations(true, "", "", []string{"test=true"})
 	require.NoError(t, err)
 	require.Len(t, installations, 1, "expected one installations labeled with test=true")
-	test.RequireInstallationNoSensitiveData(installations[0])
 
 	// Validate that we can't accidentally overwrite an installation
 	_, _, err = test.RunPorter("install", testdata.MyBuns, "--reference", testdata.MyBunsRef, "--namespace=test", "-c=mybuns", "--param", "password=supersecret")
