@@ -48,7 +48,7 @@ With a GitOps workflow, you define the desired state of your applications and in
 
 ## Next Steps
 
-* [Install a bundle using imperative commands with the](/quickstart/)
+* [Install a bundle using imperative commands with the Porter CLI](/quickstart/)
 * [Define an installation in a file and manage it using desired state](/quickstart/desired-state/)
 * [Reference: File Formats](/reference/file-formats/)
 
