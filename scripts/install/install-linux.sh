@@ -19,7 +19,7 @@ mkdir -p $PORTER_HOME/runtimes
 
 curl -fsSLo $PORTER_HOME/porter $PORTER_MIRROR/$PORTER_PERMALINK/porter-linux-amd64
 chmod +x $PORTER_HOME/porter
-cp $PORTER_HOME/porter $PORTER_HOME/runtimes/porter-runtime
+ln -s $PORTER_HOME/porter $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
 
 $PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK
