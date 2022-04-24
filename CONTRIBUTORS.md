@@ -59,4 +59,5 @@ and we will add you. **All** contributors belong here. 💯
 * [Mike Barkas](https://github.com/mikebarkas)
 * [Saksham Sharma](https://github.com/sakkshm26)
 * [Quentin Petraroia](https://github.com/qpetraroia)
+* [Tamir Kamara](https://github.com/tamirkamara)
 
