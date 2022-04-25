@@ -1,10 +1,10 @@
 package filesystem
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
@@ -12,21 +12,18 @@ import (
 	cnabsecrets "github.com/cnabio/cnab-go/secrets"
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
-	"github.com/spf13/afero"
 )
 
 var _ plugins.SecretsPlugin = &Store{}
 
 const (
-	SECRET_FOLDER              = "porter-secrets"
-	FileModeSensitiveDirectory = 0700
-	FileModeSensitiveWritable  = 0600
-	FileModeSensitiveReadable  = 0400
+	SECRET_FOLDER                          = "secrets"
+	FileModeSensitiveDirectory os.FileMode = 0700
+	FileModeSensitiveWritable  os.FileMode = 0600
 )
 
 // Config contains information needed for creatina a new store.
 type Config struct {
-	PathPrefix    string `json:"path_prefix"`
 	secretDir     string
 	debugLog      bool
 	porterHomeDir string
@@ -50,16 +47,14 @@ func (c *Config) SetSecretDir() (string, error) {
 	var err error
 	porterHomeDir := c.porterHomeDir
 	if porterHomeDir == "" {
-		porterHomeDir, err = os.UserHomeDir()
+		porterCfg := config.New()
+		porterHomeDir, err = porterCfg.GetHomeDir()
 		if err != nil {
 			return "", errors.Wrap(err, "could not get user home directory")
 		}
-		porterHomeDir = filepath.Join(porterHomeDir, ".porter")
 	}
 
-	pathPrefix := filepath.Join(c.PathPrefix, SECRET_FOLDER)
-
-	c.secretDir = filepath.Join(porterHomeDir, pathPrefix)
+	c.secretDir = filepath.Join(porterHomeDir, SECRET_FOLDER)
 	return c.secretDir, nil
 }
 
@@ -115,13 +110,8 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 		return s.hostStore.Resolve(keyName, keyValue)
 	}
 
-	f, err := s.OpenSecretFile(keyValue, os.O_RDONLY, FileModeSensitiveReadable)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to resolve key: %s", keyName)
-	}
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
+	path := filepath.Join(s.config.secretDir, keyValue)
+	data, err := s.storage.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +125,9 @@ func (s *Store) Create(keyName string, keyValue string, value string) error {
 	if keyName != secrets.SourceSecret {
 		return errors.New("invalid key name: " + keyName)
 	}
-	f, err := s.OpenSecretFile(keyValue, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FileModeSensitiveWritable)
+
+	path := filepath.Join(s.config.secretDir, keyValue)
+	f, err := s.storage.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FileModeSensitiveWritable)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create key: %s", keyName)
 	}
@@ -143,14 +135,4 @@ func (s *Store) Create(keyName string, keyValue string, value string) error {
 
 	_, err = f.WriteString(value)
 	return err
-}
-
-// OpenSecretFile returns a file handler with configured permission.
-func (s *Store) OpenSecretFile(name string, flag int, mod os.FileMode) (afero.File, error) {
-	fileInfo, err := s.storage.OpenFile(filepath.Join(s.config.secretDir, name), flag, mod)
-	if err != nil {
-		return nil, err
-	}
-
-	return fileInfo, nil
 }

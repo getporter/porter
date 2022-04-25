@@ -7,7 +7,6 @@ import (
 	"context"
 	"testing"
 
-	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,11 +20,12 @@ func TestSensitiveData(t *testing.T) {
 	p.SetupIntegrationTest()
 	p.Debug = false
 
-	bundleName := p.AddTestBundleDir("testdata//bundles/bundle-with-sensitive-data", true)
+	bundleName := p.AddTestBundleDir("testdata/bundles/bundle-with-sensitive-data", true)
 
+	sensitiveParamName := "password"
 	sensitiveParamValue := "secretpassword"
 	installOpts := porter.NewInstallOptions()
-	installOpts.Params = []string{"password=" + sensitiveParamValue, "name=porter-test"}
+	installOpts.Params = []string{sensitiveParamName + "=" + sensitiveParamValue, "name=porter-test"}
 
 	err := installOpts.Validate(context.Background(), []string{}, p.Porter)
 	require.NoError(t, err)
@@ -39,21 +39,19 @@ func TestSensitiveData(t *testing.T) {
 	run, err := p.Claims.GetRun(i.Status.RunID)
 	require.NoError(t, err)
 
-	bun := cnab.ExtendedBundle{run.Bundle}
-
 	for _, param := range i.Parameters.Parameters {
-		if bun.IsSensitiveParameter(param.Name) {
+		if param.Name == sensitiveParamName {
 			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
 		}
 	}
 
 	for _, param := range run.ParameterOverrides.Parameters {
-		if bun.IsSensitiveParameter(param.Name) {
+		if param.Name == sensitiveParamName {
 			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
 		}
 	}
 	for _, param := range run.Parameters.Parameters {
-		if bun.IsSensitiveParameter(param.Name) {
+		if param.Name == sensitiveParamName {
 			assert.NotContains(t, param.Source.Value, sensitiveParamValue)
 		}
 	}

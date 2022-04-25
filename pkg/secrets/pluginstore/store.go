@@ -1,8 +1,6 @@
 package pluginstore
 
 import (
-	"encoding/json"
-
 	"get.porter.sh/porter/pkg/config"
 	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
@@ -65,7 +63,10 @@ func (s *Store) Create(keyName string, keyValue string, value string) error {
 
 	err := s.plugin.Create(keyName, keyValue, value)
 	if errors.Is(err, plugins.ErrNotImplemented) {
-		return errors.Wrapf(err, "edit your porter config file and set default-storage-plugin to \"filesystem\" to use the insecure filesystem plugin. Do not use this plugin for production data.")
+		//TODO: add the doc page link once it exists
+		return errors.Wrapf(err, `The current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin.
+		
+If you are just testing out Porter, and are not working with production secrets, you can edit your config file and set default-storage-plugin to "filesystem" to use the insecure filesystem plugin. Do not use the filesystem plugin for production data.`)
 	}
 
 	return err
@@ -77,20 +78,11 @@ func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (port
 	}
 
 	if key == filesystemsecret.PluginKey {
-		data, err := json.Marshal(pluginConfig)
-		if err != nil {
-			return nil, err
-		}
-
 		homeDir, err := s.GetHomeDir()
 		if err != nil {
 			return nil, err
 		}
 		cfg := filesystemsecret.NewConfig(s.DebugPlugins, homeDir)
-		err = json.Unmarshal(data, &cfg)
-		if err != nil {
-			return nil, err
-		}
 
 		return filesystemsecret.NewPlugin(cfg)
 	}

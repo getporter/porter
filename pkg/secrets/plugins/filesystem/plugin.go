@@ -14,7 +14,7 @@ const PluginKey = secrets.PluginInterface + ".porter.filesystem"
 
 var _ plugins.SecretsPlugin = &Plugin{}
 
-// Plugin is the plugin wrapper for accessing secrets from Azure Key Vault.
+// Plugin is the plugin wrapper for accessing secrets from a local filesystem.
 type Plugin struct {
 	secrets.Store
 }

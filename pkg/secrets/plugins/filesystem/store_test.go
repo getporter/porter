@@ -23,6 +23,7 @@ func TestFileSystem_Permission(t *testing.T) {
 	secretDir, err := cfg.SetSecretDir()
 	require.NoError(t, err)
 	testStore := filesystem.NewStore(cfg, hclog.NewNullLogger(), ctx.FileSystem)
+	defer testStore.Close()
 
 	err = testStore.Connect()
 	require.NoError(t, err)
@@ -47,22 +48,11 @@ func TestFileSystem_Config_SetSecretDir(t *testing.T) {
 	home, err := c.GetHomeDir()
 	require.NoError(t, err)
 
-	t.Run("default config", func(t *testing.T) {
-		cfg := filesystem.NewConfig(c.TestContext.DebugPlugins, home)
-		secretDir, err := cfg.SetSecretDir()
-		require.NoError(t, err)
-		require.True(t, cfg.Valid())
-		require.Equal(t, filepath.Join(home, filesystem.SECRET_FOLDER), secretDir)
-	})
-
-	t.Run("custom config", func(t *testing.T) {
-		cfg := filesystem.NewConfig(c.TestContext.DebugPlugins, home)
-		cfg.PathPrefix = "custom-path"
-		secretDir, err := cfg.SetSecretDir()
-		require.NoError(t, err)
-		require.True(t, cfg.Valid())
-		require.Equal(t, filepath.Join(home, cfg.PathPrefix, filesystem.SECRET_FOLDER), secretDir)
-	})
+	cfg := filesystem.NewConfig(c.TestContext.DebugPlugins, home)
+	secretDir, err := cfg.SetSecretDir()
+	require.NoError(t, err)
+	require.True(t, cfg.Valid())
+	require.Equal(t, filepath.Join(home, filesystem.SECRET_FOLDER), secretDir)
 }
 
 func TestFileSystem_DataOperation(t *testing.T) {
@@ -76,6 +66,7 @@ func TestFileSystem_DataOperation(t *testing.T) {
 	_, err := cfg.SetSecretDir()
 	require.NoError(t, err)
 	testStore := filesystem.NewStore(cfg, hclog.NewNullLogger(), ctx.FileSystem)
+	defer testStore.Close()
 
 	err = testStore.Connect()
 	require.NoError(t, err)

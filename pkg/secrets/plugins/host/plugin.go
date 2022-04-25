@@ -24,7 +24,7 @@ func (p Plugin) Close() error {
 }
 
 func (p Plugin) Create(keyName string, keyValue string, value string) error {
-	return errors.Wrapf(plugins.ErrNotImplemented, "host plugin Create method")
+	return errors.Wrapf(plugins.ErrNotImplemented, "The default secrets plugin, %s, does not support persisting secrets", PluginKey)
 }
 
 // NewPlugin creates an instance of the internal plugin secrets.porter.host

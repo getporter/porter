@@ -8,7 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Service for sanitizing sensitive data.
+// Service identifies sensitive data in a database record, and replaces it with
+// a reference to a secret created by the service in an external secret store.
 type Service struct {
 	parameter parameters.Provider
 	secrets   secrets.Store
