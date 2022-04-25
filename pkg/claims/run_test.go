@@ -132,25 +132,24 @@ func TestRun_TypedParameterValues(t *testing.T) {
 		parameters.ValueStrategy("baz", "baz-test"),
 		parameters.ValueStrategy("name", "porter-test"),
 		parameters.ValueStrategy("porter-state", ""),
-		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "supersecret"},
+		{Name: "foo", Source: secrets.Source{Key: secrets.SourceSecret, Value: "runID"}, Value: "5"},
+	}
+
+	expected := map[string]interface{}{
+		"baz":          "baz-test",
+		"name":         "porter-test",
+		"porter-state": nil,
+		"foo":          5,
 	}
 
 	run.Parameters.Parameters = params
 	typed := run.TypedParameterValues()
 	require.Equal(t, len(params), len(typed))
+	require.Equal(t, len(expected), len(typed))
 
-	for _, param := range params {
-		v, ok := typed[param.Name]
+	for name, value := range typed {
+		v, ok := expected[name]
 		require.True(t, ok)
-		if param.Name == "porter-state" {
-			require.Nil(t, v)
-			continue
-		}
-
-		stringVal, err := cnab.WriteParameterToString(param.Name, v)
-		require.NoError(t, err)
-
-		require.Equal(t, stringVal, v)
+		require.Equal(t, v, value)
 	}
-
 }

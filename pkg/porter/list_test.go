@@ -2,7 +2,6 @@ package porter
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -121,8 +120,8 @@ func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 
 	require.Equal(t, i.Custom, convertedInstallation.Custom, "invalid installation custom")
 
-	require.True(t, reflect.DeepEqual(convertedInstallation.CredentialSets, i.CredentialSets), "invalid credential set")
-	require.True(t, reflect.DeepEqual(convertedInstallation.ParameterSets, i.ParameterSets), "invalid parameter set")
+	require.Equal(t, convertedInstallation.CredentialSets, i.CredentialSets, "invalid credential set")
+	require.Equal(t, convertedInstallation.ParameterSets, i.ParameterSets, "invalid parameter set")
 
 	require.Equal(t, i.Parameters.String(), convertedInstallation.Parameters.String(), "invalid parameters name")
 	require.Equal(t, len(i.Parameters.Parameters), len(convertedInstallation.Parameters.Parameters))

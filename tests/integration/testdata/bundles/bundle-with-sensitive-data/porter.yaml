@@ -1,9 +1,8 @@
 schemaVersion: 1.0.0-alpha.1
 name: mybuns
 version: 0.1.2
-description: "A very thorough test bundle"
+description: "A test bundle for sensitive data"
 registry: localhost:5000
-dockerfile: Dockerfile.tmpl
 
 parameters:
   - name: name
@@ -23,7 +22,6 @@ outputs:
   - name: result
     applyTo:
       - install
-      - upgrade
     sensitive: true
 
 mixins:
@@ -58,15 +56,6 @@ upgrade:
         - upgrade
       outputs:
         - name: mylogs
-          regex: "(.*)"
-  - exec:
-      description: "using password to open the secret door"
-      command: ./helpers.sh
-      arguments:
-        - open_door
-        - "{{ bundle.parameters.chaos_monkey }}"
-      outputs:
-        - name: result
           regex: "(.*)"
 
 uninstall:

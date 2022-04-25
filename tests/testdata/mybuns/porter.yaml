@@ -22,6 +22,7 @@ parameters:
   - name: password
     description: "The super secret data"
     type: string
+    default: "defautl-secret"
     sensitive: true
   - name: chaos_monkey
     description: "Set to true to make the bundle fail"

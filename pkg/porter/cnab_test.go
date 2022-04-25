@@ -369,10 +369,12 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	bun, err := configadapter.ConvertToTestBundle(p.Context, m)
 	require.NoError(t, err)
 
+	sensitiveParamName := "my-second-param"
 	sensitiveParamValue := "2"
+	nonsensitiveParamName := "my-first-param"
 	nonsensitiveParamValue := "1"
 	opts := sharedOptions{}
-	opts.Params = []string{"my-first-param=" + nonsensitiveParamValue, "my-second-param=" + sensitiveParamValue}
+	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
 	err = opts.LoadParameters(p.Porter, bun)
 	require.NoError(t, err)
@@ -386,7 +388,7 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 
 	// there should be no sensitive value on installation record
 	for _, param := range i.Parameters.Parameters {
-		if bun.IsSensitiveParameter(param.Name) {
+		if param.Name == sensitiveParamName {
 			require.Equal(t, param.Source.Key, secrets.SourceSecret)
 			require.NotEqual(t, param.Source.Value, sensitiveParamValue)
 			continue

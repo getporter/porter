@@ -60,15 +60,13 @@ func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayI
 	return di, nil
 }
 
-func (t Tester) RequireInstallationExists(namespace string, name string) claims.Installation {
+func (t Tester) RequireInstallationExists(namespace string, name string) porter.DisplayInstallation {
 	di, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
 	require.Equal(t.T, name, di.Name, "incorrect installation name")
 	require.Equal(t.T, namespace, di.Namespace, "incorrect installation namespace")
-	installation, err := di.ConvertToInstallation()
-	require.NoError(t.T, err)
 
-	return installation
+	return di
 }
 
 func (t Tester) RequireInstallationNotFound(namespace string, name string) {
