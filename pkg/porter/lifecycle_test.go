@@ -106,7 +106,7 @@ func TestPorter_BuildActionArgs(t *testing.T) {
 				AllowDockerHostAccess: true,
 			},
 		}
-		p.TestParameters.TestSecrets.AddSecret("PARAM2_SECRET", "VALUE2")
+		p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
 		p.TestParameters.AddTestParameters("testdata/paramset2.json")
 
 		err := opts.Validate(context.Background(), nil, p.Porter)

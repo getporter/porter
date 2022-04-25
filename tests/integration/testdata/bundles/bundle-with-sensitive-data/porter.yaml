@@ -1,0 +1,66 @@
+schemaVersion: 1.0.0-alpha.1
+name: mybuns
+version: 0.1.2
+description: "A test bundle for sensitive data"
+registry: localhost:5000
+
+parameters:
+  - name: name
+    description: "author name"
+    type: string
+    default: "porter"
+  - name: password
+    description: "The super secret data"
+    type: string
+    sensitive: true
+
+outputs:
+  - name: mylogs
+    applyTo:
+      - install
+      - upgrade
+  - name: result
+    applyTo:
+      - install
+    sensitive: true
+
+mixins:
+  - exec
+
+install:
+  - exec:
+      description: "install"
+      command: ./helpers.sh
+      arguments:
+        - install
+        - "{{ bundle.parameters.name }}"
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
+  - exec:
+      description: "using password to open the secret door"
+      command: ./helpers.sh
+      arguments:
+        - open_door
+        - "{{ bundle.parameters.password }}"
+      outputs:
+        - name: result
+          regex: "(.*)"
+
+
+upgrade:
+  - exec:
+      description: "upgrade"
+      command: ./helpers.sh
+      arguments:
+        - upgrade
+      outputs:
+        - name: mylogs
+          regex: "(.*)"
+
+uninstall:
+  - exec:
+      description: "uninstall"
+      command: ./helpers.sh
+      arguments:
+        - uninstall

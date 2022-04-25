@@ -5,12 +5,14 @@ import (
 	"path/filepath"
 
 	"get.porter.sh/porter/pkg/build"
+	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/cnab/drivers"
 	cnabprovider "get.porter.sh/porter/pkg/cnab/provider"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	"github.com/pkg/errors"
 )
 
@@ -268,7 +270,31 @@ func (o *sharedOptions) parseParams() error {
 	if err != nil {
 		return err
 	}
+
 	o.parsedParams = p
+	return nil
+}
+
+func (o *sharedOptions) populateInternalParameterSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
+	for name, value := range o.parsedParams {
+		strategies = append(strategies, parameters.ValueStrategy(name, value))
+	}
+
+	strategies, err := p.Sanitizer.CleanParameters(strategies, bun, i.ID)
+	if err != nil {
+		return err
+	}
+
+	if len(strategies) == 0 {
+		// if no override is specified, clear out the old parameters on the
+		// installation record
+		i.Parameters.Parameters = nil
+		return nil
+	}
+
+	i.Parameters = i.NewInternalParameterSet(strategies...)
+
 	return nil
 }
 

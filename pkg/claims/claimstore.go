@@ -135,6 +135,7 @@ func (s ClaimStore) ListOutputs(resultID string) ([]Output, error) {
 
 func (s ClaimStore) GetInstallation(namespace string, name string) (Installation, error) {
 	var out Installation
+
 	opts := storage.FindOptions{
 		Filter: bson.M{
 			"namespace": namespace,

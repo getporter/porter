@@ -6,6 +6,7 @@ import (
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
+	filesystemsecret "get.porter.sh/porter/pkg/secrets/plugins/filesystem"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
 	"github.com/pkg/errors"
 )
@@ -55,9 +56,35 @@ func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
 	return s.plugin.Resolve(keyName, keyValue)
 }
 
-func createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
+func (s *Store) Create(keyName string, keyValue string, value string) error {
+	if err := s.Connect(); err != nil {
+		return err
+	}
+
+	err := s.plugin.Create(keyName, keyValue, value)
+	if errors.Is(err, plugins.ErrNotImplemented) {
+		//TODO: add the doc page link once it exists
+		return errors.Wrapf(err, `The current secrets plugin does not support persisting secrets. You need to edit your porter configuration file and configure a different secrets plugin.
+		
+If you are just testing out Porter, and are not working with production secrets, you can edit your config file and set default-storage-plugin to "filesystem" to use the insecure filesystem plugin. Do not use the filesystem plugin for production data.`)
+	}
+
+	return err
+}
+
+func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
 	if key == host.PluginKey {
 		return host.NewPlugin(), nil
+	}
+
+	if key == filesystemsecret.PluginKey {
+		homeDir, err := s.GetHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		cfg := filesystemsecret.NewConfig(s.DebugPlugins, homeDir)
+
+		return filesystemsecret.NewPlugin(cfg)
 	}
 
 	return nil, errors.Errorf("unsupported internal secrets plugin specified %s", key)
@@ -70,7 +97,7 @@ func (s *Store) Connect() error {
 
 	pluginType := NewSecretsPluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, createInternalPlugin)
+	l := pluggable.NewPluginLoader(s.Config, s.createInternalPlugin)
 	raw, cleanup, err := l.Load(pluginType)
 	if err != nil {
 		return err

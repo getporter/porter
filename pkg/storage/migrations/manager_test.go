@@ -8,7 +8,9 @@ import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/credentials"
 	"get.porter.sh/porter/pkg/parameters"
+	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
+
 	"github.com/cnabio/cnab-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -210,7 +212,8 @@ func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	defer mgr.Teardown()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr)
+	testSecret := inmemorysecrets.NewStore()
+	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecret)
 
 	schema := storage.NewSchema("", "", "needs-migration")
 	err := mgr.store.Update(CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
@@ -237,7 +240,8 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 
 	mgr := NewTestManager(config)
 	defer mgr.Teardown()
-	paramStore := parameters.NewTestParameterProviderFor(t, mgr)
+	testSecret := inmemorysecrets.NewStore()
+	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecret)
 
 	names, err := paramStore.ListParameterSets("", "", nil)
 	require.NoError(t, err, "List failed")

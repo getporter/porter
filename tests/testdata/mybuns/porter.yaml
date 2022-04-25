@@ -19,6 +19,11 @@ parameters:
     minimum: 1
     maximum: 11
     default: 5
+  - name: password
+    description: "The super secret data"
+    type: string
+    default: "defautl-secret"
+    sensitive: true
   - name: chaos_monkey
     description: "Set to true to make the bundle fail"
     type: boolean
@@ -34,6 +39,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: result
+    applyTo:
+      - install
+      - upgrade
+    sensitive: true
 
 state:
   - name: magic_file
@@ -65,7 +75,7 @@ install:
       command: ./helpers.sh
       arguments:
         - makeMagic
-        - "'{{ bundle.credentials.username }} is a unicorn'"
+        - "'{{ bundle.credentials.username }} is a unicorn with {{ bundle.parameters.password }} secret.'"
   - exec:
       description: "install"
       command: ./helpers.sh
@@ -80,6 +90,10 @@ install:
       arguments:
         - chaos_monkey
         - "{{ bundle.parameters.chaos_monkey }}"
+      outputs:
+        - name: result
+          regex: "(.*)"
+
 
 dry-run:
   - exec:
@@ -127,6 +141,9 @@ upgrade:
       arguments:
         - chaos_monkey
         - "{{ bundle.parameters.chaos_monkey }}"
+      outputs:
+        - name: result
+          regex: "(.*)"
 
 uninstall:
   - exec:

@@ -83,8 +83,8 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
 		defer paramStore.Teardown()
 
-		paramStore.TestSecrets.AddSecret("param1", "param1_value")
-		paramStore.TestSecrets.AddSecret("param2", "param2_value")
+		paramStore.AddSecret("param1", "param1_value")
+		paramStore.AddSecret("param2", "param2_value")
 
 		expected := secrets.Set{
 			"param1": "param1_value",
@@ -101,7 +101,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 		defer paramStore.Teardown()
 
 		// Purposefully only adding one secret
-		paramStore.TestSecrets.AddSecret("param1", "param1_value")
+		paramStore.AddSecret("param1", "param1_value")
 
 		expected := secrets.Set{
 			"param1": "param1_value",

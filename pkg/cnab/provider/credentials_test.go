@@ -18,8 +18,8 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	r := NewTestRuntime(t)
 	defer r.Teardown()
 
-	r.TestCredentials.TestSecrets.AddSecret("password", "mypassword")
-	r.TestCredentials.TestSecrets.AddSecret("db-password", "topsecret")
+	r.TestCredentials.AddSecret("password", "mypassword")
+	r.TestCredentials.AddSecret("db-password", "topsecret")
 
 	r.TestConfig.TestContext.AddTestFile("testdata/db-creds.json", "/db-creds.json")
 
@@ -123,7 +123,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 		r := NewTestRuntime(t)
 		defer r.Teardown()
 
-		r.TestCredentials.TestSecrets.AddSecret("password", "mypassword")
+		r.TestCredentials.AddSecret("password", "mypassword")
 
 		cs1 := credentials.NewCredentialSet("", "mycreds", secrets.Strategy{
 			Name: "password",

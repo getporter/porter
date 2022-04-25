@@ -120,18 +120,24 @@ func (p *Porter) ListBundleOutputs(ctx context.Context, opts *OutputListOptions)
 		return nil, err
 	}
 
-	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
-	if err != nil {
-		return nil, err
-	}
-
 	outputs, err := p.Claims.GetLastOutputs(opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}
 
+	resolved, err := p.Sanitizer.RestoreOutputs(outputs)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	bun := cnab.ExtendedBundle{c.Bundle}
-	displayOutputs := NewDisplayValuesFromOutputs(bun, outputs)
+
+	displayOutputs := NewDisplayValuesFromOutputs(bun, resolved)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +166,11 @@ func (p *Porter) PrintBundleOutputs(ctx context.Context, opts OutputListOptions)
 // ReadBundleOutput reads a bundle output from an installation
 func (p *Porter) ReadBundleOutput(outputName, installation, namespace string) (string, error) {
 	o, err := p.Claims.GetLastOutput(namespace, installation, outputName)
+	if err != nil {
+		return "", err
+	}
+
+	o, err = p.Sanitizer.RestoreOutput(o)
 	if err != nil {
 		return "", err
 	}

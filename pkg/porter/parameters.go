@@ -658,9 +658,18 @@ func (p *Porter) resolveParameterSources(bun cnab.ExtendedBundle, installation c
 				return nil, errors.Wrapf(err, "could not set parameter %s from output %s of %s", parameterName, outputName, installation)
 			}
 
+			if output.Key != "" {
+
+				resolved, err := p.Sanitizer.RestoreOutput(output)
+				if err != nil {
+					return nil, errors.Wrapf(err, "could not resolve %s's output %s", installation, outputName)
+				}
+				output = resolved
+			}
+
 			param, ok := bun.Parameters[parameterName]
 			if !ok {
-				return nil, fmt.Errorf("parameter %s not defined in bundle", parameterName)
+				return nil, fmt.Errorf("resolveParameterSources:  %s not defined in bundle", parameterName)
 			}
 
 			def, ok := bun.Definitions[param.Definition]

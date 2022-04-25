@@ -103,32 +103,35 @@ func (p *Porter) applyActionOptionsToInstallation(i *claims.Installation, opts *
 	if err != nil {
 		return err
 	}
-	if i.Parameters == nil {
-		i.Parameters = make(map[string]interface{}, len(opts.parsedParams))
-	}
 	// Record the user-specified parameter values
-	for k, v := range opts.parsedParams {
-		i.Parameters[k] = v
+	err = opts.populateInternalParameterSet(p, opts.bundleRef.Definition, i)
+	if err != nil {
+		return err
 	}
+
 	// Record the names of the parameter sets used
-	for _, ps := range opts.ParameterSets {
-		for _, existing := range i.ParameterSets {
-			if existing == ps {
-				continue
-			}
-		}
-		i.ParameterSets = append(i.ParameterSets, ps)
-	}
+	i.ParameterSets = append(i.ParameterSets, Unique(i.ParameterSets, opts.ParameterSets...)...)
 
 	// Record the names of the credential sets used
-	for _, cs := range opts.CredentialIdentifiers {
-		for _, existing := range i.ParameterSets {
-			if existing == cs {
-				continue
-			}
-		}
-		i.CredentialSets = append(i.CredentialSets, cs)
-	}
+	i.CredentialSets = append(i.CredentialSets, Unique(i.CredentialSets, opts.CredentialIdentifiers...)...)
 
 	return nil
+}
+
+func Unique(existings []string, n ...string) []string {
+	var u []string
+	old := make(map[string]struct{})
+
+	for _, e := range existings {
+		old[e] = struct{}{}
+	}
+
+	for _, cs := range n {
+		if _, ok := old[cs]; ok {
+			continue
+		}
+		u = append(u, cs)
+	}
+
+	return u
 }

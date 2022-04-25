@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/claims"
+	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/yaml"
 	"get.porter.sh/porter/tests"
 	"get.porter.sh/porter/tests/testdata"
@@ -46,23 +47,26 @@ func (t Tester) MakeTestBundle(name string, ref string) {
 	t.RequirePorter("publish", "--reference", ref)
 }
 
-func (t Tester) ShowInstallation(namespace string, name string) (claims.Installation, error) {
+func (t Tester) ShowInstallation(namespace string, name string) (porter.DisplayInstallation, error) {
 	stdout, _, err := t.RunPorter("show", name, "--namespace", namespace, "--output=json")
 	if err != nil {
-		return claims.Installation{}, err
+		return porter.DisplayInstallation{}, err
 	}
 
-	var installation claims.Installation
-	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installation))
-	return installation, nil
+	var di porter.DisplayInstallation
+
+	require.NoError(t.T, json.Unmarshal([]byte(stdout), &di))
+
+	return di, nil
 }
 
-func (t Tester) RequireInstallationExists(namespace string, name string) claims.Installation {
-	installation, err := t.ShowInstallation(namespace, name)
+func (t Tester) RequireInstallationExists(namespace string, name string) porter.DisplayInstallation {
+	di, err := t.ShowInstallation(namespace, name)
 	require.NoError(t.T, err)
-	require.Equal(t.T, name, installation.Name, "incorrect installation name")
-	require.Equal(t.T, namespace, installation.Namespace, "incorrect installation namespace")
-	return installation
+	require.Equal(t.T, name, di.Name, "incorrect installation name")
+	require.Equal(t.T, namespace, di.Namespace, "incorrect installation namespace")
+
+	return di
 }
 
 func (t Tester) RequireInstallationNotFound(namespace string, name string) {
@@ -75,7 +79,7 @@ func (t Tester) RequireNotFoundReturned(err error) {
 	require.Contains(t.T, err.Error(), "not found")
 }
 
-func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]claims.Installation, error) {
+func (t Tester) ListInstallations(allNamespaces bool, namespace string, name string, labels []string) ([]porter.DisplayInstallation, error) {
 	args := []string{
 		"list",
 		"--output=json",
@@ -95,7 +99,7 @@ func (t Tester) ListInstallations(allNamespaces bool, namespace string, name str
 		return nil, err
 	}
 
-	var installations []claims.Installation
+	var installations []porter.DisplayInstallation
 	require.NoError(t.T, json.Unmarshal([]byte(stdout), &installations))
 	return installations, nil
 }

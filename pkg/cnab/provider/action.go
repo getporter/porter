@@ -10,6 +10,7 @@ import (
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-go/action"
@@ -140,9 +141,17 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 	currentRun.Bundle = b.Bundle
 	currentRun.BundleReference = args.BundleReference.Reference.String()
 	currentRun.BundleDigest = args.BundleReference.Digest.String()
-	currentRun.Parameters = args.Params
+
+	extb := cnab.ExtendedBundle{b.Bundle}
+	currentRun.Parameters.Parameters, err = r.sanitizer.CleanRawParameters(args.Params, extb, currentRun.ID)
+	if err != nil {
+		return err
+	}
+
+	currentRun.ParameterOverrides = sanitizer.LinkSensitiveParametersToSecrets(currentRun.ParameterOverrides, extb, currentRun.ID)
 	currentRun.CredentialSets = args.Installation.CredentialSets
 	sort.Strings(currentRun.CredentialSets)
+
 	currentRun.ParameterSets = args.Installation.ParameterSets
 	sort.Strings(currentRun.ParameterSets)
 
@@ -192,6 +201,10 @@ func (r *Runtime) SaveRun(installation claims.Installation, run claims.Run, stat
 	if r.Debug {
 		fmt.Fprintf(r.Err, "saving action %s for %s installation with status %s\n", run.Action, installation, status)
 	}
+
+	// update installation record to use run id ecoded parameters instead of
+	// installation id
+	installation.Parameters.Parameters = run.ParameterOverrides.Parameters
 	err := r.claims.UpsertInstallation(installation)
 	if err != nil {
 		return errors.Wrap(err, "error saving the installation record before executing the bundle")
@@ -232,6 +245,10 @@ func (r *Runtime) SaveOperationResult(opResult driver.OperationResult, installat
 
 	for outputName, outputValue := range opResult.Outputs {
 		output := result.NewOutput(outputName, []byte(outputValue))
+		output, err = r.sanitizer.CleanOutput(output, cnab.ExtendedBundle{run.Bundle})
+		if err != nil {
+			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error sanitizing sensitive %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))
+		}
 		err = r.claims.InsertOutput(output)
 		if err != nil {
 			bigerr = multierror.Append(bigerr, errors.Wrapf(err, "error adding %s output for %s run of installation %s\n%#v", output.Name, run.Action, installation, output))

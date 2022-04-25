@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
@@ -92,4 +93,8 @@ func (p TestCredentialProvider) AddTestCredentialsDirectory(dir string) {
 		path := filepath.Join(dir, fi.Name())
 		p.AddTestCredentials(path)
 	}
+}
+
+func (p TestCredentialProvider) AddSecret(key string, value string) {
+	p.TestSecrets.Create(secrets.SourceSecret, key, value)
 }

@@ -9,9 +9,12 @@ import (
 
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/parameters"
 	"get.porter.sh/porter/pkg/printer"
+	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/tracing"
 	dtprinter "github.com/carolynvs/datetime-printer"
+	"github.com/cnabio/cnab-go/schema"
 	"github.com/pkg/errors"
 )
 
@@ -61,8 +64,42 @@ func parseLabels(raw []string) map[string]string {
 // originating from its claims, results and outputs records
 type DisplayInstallation struct {
 	// SchemaType helps when we export the definition so editors can detect the type of document, it's not used by porter.
-	SchemaType                  string `json:"schemaType" yaml:"schemaType"`
-	claims.Installation         `yaml:",inline"`
+	SchemaType string `json:"schemaType" yaml:"schemaType" toml:"schemaType"`
+
+	SchemaVersion schema.Version `json:"schemaVersion" yaml:"schemaVersion" toml:"schemaVersion"`
+
+	ID string `json:"id" yaml:"id" toml:"id"`
+	// Name of the installation. Immutable.
+	Name string `json:"name" yaml:"name" toml:"name"`
+
+	// Namespace in which the installation is defined.
+	Namespace string `json:"namespace" yaml:"namespace" toml:"namespace"`
+
+	// Uninstalled specifies if the installation isn't used anymore and should be uninstalled.
+	Uninstalled bool `json:"uninstalled,omitempty" yaml:"uninstalled,omitempty" toml:"uninstalled,omitempty"`
+
+	// Bundle specifies the bundle reference to use with the installation.
+	Bundle claims.OCIReferenceParts `json:"bundle" yaml:"bundle" toml:"bundle"`
+
+	// Custom extension data applicable to a given runtime.
+	// TODO(carolynvs): remove and populate in ToCNAB when we firm up the spec
+	Custom interface{} `json:"custom,omitempty" yaml:"custom,omitempty" toml:"custom,omitempty"`
+
+	// Labels applied to the installation.
+	Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" toml:"labels,omitempty"`
+
+	// CredentialSets that should be included when the bundle is reconciled.
+	CredentialSets []string `json:"credentialSets,omitempty" yaml:"credentialSets,omitempty" toml:"credentialSets,omitempty"`
+
+	// Parameters specified by the user through overrides.
+	// Does not include defaults, or values resolved from parameter sources.
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty" toml:"parameters,omitempty"`
+
+	// ParameterSets that should be included when the bundle is reconciled.
+	ParameterSets []string `json:"parameterSets,omitempty" yaml:"parameterSets,omitempty" toml:"parameterSets,omitempty"`
+
+	// Status of the installation.
+	Status                      claims.InstallationStatus `json:"status,omitempty" yaml:"status,omitempty" toml:"status,omitempty"`
 	DisplayInstallationMetadata `json:"_calculated" yaml:"_calculated"`
 }
 
@@ -70,19 +107,73 @@ type DisplayInstallationMetadata struct {
 	ResolvedParameters DisplayValues `json:"resolvedParameters", yaml:"resolvedParameters"`
 }
 
-func NewDisplayInstallation(installation claims.Installation, run *claims.Run) DisplayInstallation {
-	di := DisplayInstallation{
-		SchemaType:   "Installation",
-		Installation: installation,
-	}
+func NewDisplayInstallation(installation claims.Installation) DisplayInstallation {
 
-	// This is unset when we are just listing installations
-	if run != nil {
-		bun := cnab.ExtendedBundle{run.Bundle}
-		di.ResolvedParameters = NewDisplayValuesFromParameters(bun, run.Parameters)
+	di := DisplayInstallation{
+		SchemaType:     "Installation",
+		SchemaVersion:  installation.SchemaVersion,
+		ID:             installation.ID,
+		Name:           installation.Name,
+		Namespace:      installation.Namespace,
+		Uninstalled:    installation.Uninstalled,
+		Bundle:         installation.Bundle,
+		Custom:         installation.Custom,
+		Labels:         installation.Labels,
+		CredentialSets: installation.CredentialSets,
+		ParameterSets:  installation.ParameterSets,
+		Status:         installation.Status,
 	}
 
 	return di
+}
+
+// ConvertToInstallationClaim transforms the data from DisplayInstallation into
+// a Installation record.
+func (d DisplayInstallation) ConvertToInstallation() (claims.Installation, error) {
+	i := claims.Installation{
+		SchemaVersion:  d.SchemaVersion,
+		ID:             d.ID,
+		Name:           d.Name,
+		Namespace:      d.Namespace,
+		Uninstalled:    d.Uninstalled,
+		Bundle:         d.Bundle,
+		Custom:         d.Custom,
+		Labels:         d.Labels,
+		CredentialSets: d.CredentialSets,
+		ParameterSets:  d.ParameterSets,
+		Status:         d.Status,
+	}
+
+	var err error
+	i.Parameters, err = d.ConvertParamToSet(i)
+	if err != nil {
+		return claims.Installation{}, err
+	}
+
+	if err := i.Validate(); err != nil {
+		return claims.Installation{}, errors.Wrap(err, "invalid installation")
+	}
+
+	return i, nil
+
+}
+
+// ConvertParamToSet converts a Parameters into a internal ParameterSet.
+func (d DisplayInstallation) ConvertParamToSet(i claims.Installation) (parameters.ParameterSet, error) {
+	strategies := make([]secrets.Strategy, 0, len(d.Parameters))
+	for name, value := range d.Parameters {
+		stringVal, err := cnab.WriteParameterToString(name, value)
+		if err != nil {
+			return parameters.ParameterSet{}, err
+		}
+		strategy := secrets.Strategy{
+			Name:  name,
+			Value: stringVal,
+		}
+		strategies = append(strategies, strategy)
+	}
+
+	return parameters.NewInternalParameterSet(d.Namespace, d.Name, strategies...), nil
 }
 
 // TODO(carolynvs): be consistent with sorting results from list, either keep the default sort by name
@@ -116,7 +207,7 @@ func NewDisplayRun(run claims.Run) DisplayRun {
 	return DisplayRun{
 		ClaimID:    run.ID,
 		Action:     run.Action,
-		Parameters: run.Parameters,
+		Parameters: run.TypedParameterValues(),
 		Started:    run.Created,
 		Bundle:     run.BundleReference,
 		Version:    run.Bundle.Version,
@@ -141,7 +232,11 @@ func (p *Porter) PrintInstallations(ctx context.Context, opts ListOptions) error
 
 	var displayInstallations DisplayInstallations
 	for _, installation := range installations {
-		displayInstallations = append(displayInstallations, NewDisplayInstallation(installation, nil))
+		di, err := p.generateDisplayInstallation(installation)
+		if err != nil {
+			return err
+		}
+		displayInstallations = append(displayInstallations, di)
 	}
 	sort.Sort(sort.Reverse(displayInstallations))
 

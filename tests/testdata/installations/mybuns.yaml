@@ -7,6 +7,8 @@ labels:
 bundle:
   repository: localhost:5000/mybuns
   version: v0.1.2
+parameters:
+  password: "supersecret"
 credentialSets:
   - mybuns
 parameterSets:

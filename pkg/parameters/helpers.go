@@ -7,6 +7,7 @@ import (
 
 	"get.porter.sh/porter/pkg/encoding"
 	"get.porter.sh/porter/pkg/portercontext"
+	"get.porter.sh/porter/pkg/secrets"
 	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
@@ -21,18 +22,19 @@ type TestParameterProvider struct {
 
 	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
-	TestSecrets   *inmemorysecrets.Store
+	TestSecrets   secrets.Store
 	TestDocuments storage.Store
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
 	tc := portercontext.NewTestContext(t)
 	testStore := storage.NewTestStore(tc)
-	return NewTestParameterProviderFor(t, testStore)
+	testSecrets := inmemorysecrets.NewStore()
+
+	return NewTestParameterProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestParameterProviderFor(t *testing.T, testStore storage.Store) *TestParameterProvider {
-	testSecrets := inmemorysecrets.NewStore()
+func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.Store) *TestParameterProvider {
 	return &TestParameterProvider{
 		T:             t,
 		TestDocuments: testStore,
@@ -90,4 +92,8 @@ func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
 		path := filepath.Join(dir, fi.Name())
 		p.AddTestParameters(path)
 	}
+}
+
+func (p TestParameterProvider) AddSecret(key string, value string) {
+	p.TestSecrets.Create(secrets.SourceSecret, key, value)
 }
