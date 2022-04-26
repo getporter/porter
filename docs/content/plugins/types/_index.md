@@ -31,7 +31,9 @@ credentials and parameters. By default, secrets are resolved against the
 localhost: environment variables, files, commands and hard-coded values.
 
 During bundle execution, any parameters or bundle outputs that contains
-sensitive data are stored into a secret store that's configured by the user.
+sensitive data are stored into a secret store that is configured by the user.
+Credentials are never persisted, either to Porter's database or secret store,
+and are always retrieved just-in-time before the bundle is run.
 
 A secrets plugin can implement the [plugins.SecretsProtocol interface][secretstore] and
 resolve credentials from remote and ideally more secure locations. For example,
