@@ -9,10 +9,14 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var simpleManifestDigest = "e8406ec0b1abd3f92d55d597fcc307e9a19af2f83317b30c8728421c58ada456"
 
 func TestConfig_GenerateStamp(t *testing.T) {
 	// Do not run this test in parallel
@@ -26,11 +30,15 @@ func TestConfig_GenerateStamp(t *testing.T) {
 
 	fmt.Printf("mixins on test = %#v", m.Mixins)
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	installedMixins := []mixin.Metadata{
+		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	}
+
+	a := NewManifestConverter(c.Context, m, nil, installedMixins)
 	stamp, err := a.GenerateStamp()
 	require.NoError(t, err, "DigestManifest failed")
-	assert.NotEmpty(t, stamp.ManifestDigest)
-	assert.Equal(t, map[string]MixinRecord{"exec": {}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
+	assert.Equal(t, simpleManifestDigest, stamp.ManifestDigest)
+	assert.Equal(t, map[string]MixinRecord{"exec": {Version: "v1.2.3"}}, stamp.Mixins, "Stamp.Mixins was not populated properly")
 	assert.Equal(t, pkg.Version, stamp.Version)
 	assert.Equal(t, pkg.Commit, stamp.Commit)
 

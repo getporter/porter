@@ -19,9 +19,9 @@ const SchemaVersion = "v1.0.0"
 // ManifestConverter converts from a porter manifest to a CNAB bundle definition.
 type ManifestConverter struct {
 	*portercontext.Context
-	Manifest     *manifest.Manifest
-	ImageDigests map[string]string
-	Mixins       []mixin.Metadata
+	Manifest        *manifest.Manifest
+	ImageDigests    map[string]string
+	InstalledMixins []mixin.Metadata
 }
 
 func NewManifestConverter(
@@ -31,10 +31,10 @@ func NewManifestConverter(
 	mixins []mixin.Metadata,
 ) *ManifestConverter {
 	return &ManifestConverter{
-		Context:      cxt,
-		Manifest:     manifest,
-		ImageDigests: imageDigests,
-		Mixins:       mixins,
+		Context:         cxt,
+		Manifest:        manifest,
+		ImageDigests:    imageDigests,
+		InstalledMixins: mixins,
 	}
 }
 

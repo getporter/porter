@@ -70,9 +70,6 @@ type MixinRecord struct {
 func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
 
-	fmt.Printf("c.Context = %#v\n", c.Context)
-	fmt.Printf("c.Manifest = %#v\n", c.Manifest)
-
 	// Remember the original porter.yaml, base64 encoded to avoid canonical json shenanigans
 	rawManifest, err := manifest.ReadManifestData(c.Context, c.Manifest.ManifestPath)
 	if err != nil {
@@ -80,18 +77,17 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	}
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
-	fmt.Printf("c.Mixins = %#v\n", c.Mixins)
-	fmt.Printf("c.Manifest.Mixins = %#v\n", c.Manifest.Mixins)
-
-	// Remember the mixins used in the bundle
-	stamp.Mixins = make(map[string]MixinRecord, len(c.Mixins))
-	fmt.Printf("c.Mixins = %#v\n", c.Mixins)
-	for _, m := range c.Mixins {
-		stamp.Mixins[m.Name] = MixinRecord{
-			Version: m.GetVersionInfo().Version,
+	// Compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
+	stamp.Mixins = make(map[string]MixinRecord, len(c.InstalledMixins))
+	for _, usedMixin := range c.Manifest.Mixins {
+		for _, installedMixin := range c.InstalledMixins {
+			if usedMixin.Name == installedMixin.Name {
+				stamp.Mixins[usedMixin.Name] = MixinRecord{
+					Version: installedMixin.GetVersionInfo().Version,
+				}
+			}
 		}
 	}
-	fmt.Printf("stamp.Mixins = %#v\n", stamp.Mixins)
 
 	digest, err := c.DigestManifest()
 	if err != nil {
@@ -122,7 +118,7 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	v := pkg.Version
 	data = append(data, v...)
 
-	for _, m := range c.Mixins {
+	for _, m := range c.InstalledMixins {
 		data = append(append(data, m.Name...), m.Version...)
 	}
 
