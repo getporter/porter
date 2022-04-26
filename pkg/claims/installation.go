@@ -21,14 +21,14 @@ import (
 const (
 	// SchemaVersion represents the version associated with the schema
 	// for all installation documents: installations, runs, results and outputs.
-	SchemaVersion = schema.Version("1.0.0")
+	SchemaVersion = schema.Version("1.0.1")
 )
 
 var _ storage.Document = Installation{}
 
 type Installation struct {
 	// SchemaVersion is the version of the installation state schema.
-	SchemaVersion schema.Version `json:"schemaVersion" `
+	SchemaVersion schema.Version `json:"schemaVersion"`
 
 	// ID is the unique identifire for an installation record.
 	ID string `json:"id"`
