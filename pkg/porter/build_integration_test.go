@@ -272,7 +272,10 @@ func TestPorter_BuildWithCustomValues(t *testing.T) {
 
 	p.TestConfig.TestContext.AddTestFile("./testdata/porter.yaml", config.Name)
 
-	err := p.LoadManifestFrom(config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
+	require.NoError(t, err)
+
+	err = p.buildBundle(m, "digest")
 	require.NoError(t, err)
 
 	opts := BuildOptions{Customs: []string{"customKey1=editedCustomValue1"}}
