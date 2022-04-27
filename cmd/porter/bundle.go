@@ -85,7 +85,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
-		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are assessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle's invocation image.")
 	f.StringArrayVar(&opts.Customs, "custom", nil,
