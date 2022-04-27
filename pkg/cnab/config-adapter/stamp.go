@@ -77,15 +77,11 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	}
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
-	// Compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
-	stamp.Mixins = make(map[string]MixinRecord, len(c.InstalledMixins))
-	for _, usedMixin := range c.Manifest.Mixins {
-		for _, installedMixin := range c.InstalledMixins {
-			if usedMixin.Name == installedMixin.Name {
-				stamp.Mixins[usedMixin.Name] = MixinRecord{
-					Version: installedMixin.GetVersionInfo().Version,
-				}
-			}
+	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
+	usedMixinsVersion := c.getUsedMixinsVersion()
+	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
+		stamp.Mixins[usedMixinName] = MixinRecord{
+			Version: usedMixinVersion,
 		}
 	}
 
@@ -118,8 +114,9 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	v := pkg.Version
 	data = append(data, v...)
 
-	for _, m := range c.InstalledMixins {
-		data = append(append(data, m.Name...), m.Version...)
+	usedMixinsVersion := c.getUsedMixinsVersion()
+	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
+		data = append(append(data, usedMixinName...), usedMixinVersion...)
 	}
 
 	digest := sha256.Sum256(data)
@@ -145,4 +142,19 @@ func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
 	}
 
 	return stamp, nil
+}
+
+// getUsedMixinsVersion compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
+func (c *ManifestConverter) getUsedMixinsVersion() map[string]string {
+	usedMixinsVersion := make(map[string]string)
+
+	for _, usedMixin := range c.Manifest.Mixins {
+		for _, installedMixin := range c.InstalledMixins {
+			if usedMixin.Name == installedMixin.Name {
+				usedMixinsVersion[usedMixin.Name] = installedMixin.GetVersionInfo().Version
+			}
+		}
+	}
+
+	return usedMixinsVersion
 }
