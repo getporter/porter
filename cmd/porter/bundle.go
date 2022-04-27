@@ -88,7 +88,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle's invocation image.")
-	f.StringSliceVar(&opts.Customs, "custom", nil,
+	f.StringArrayVar(&opts.Customs, "custom", nil,
 		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times.")
 
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
