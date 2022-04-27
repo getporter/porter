@@ -76,11 +76,18 @@ func (t Tester) CurrentNamespace() string {
 }
 
 func (t Tester) startMongo() error {
-	conn, err := mongodb_docker.EnsureMongoIsRunning(t.TestContext.Context, "porter-smoke-test-mongodb-plugin", "27017", "", t.dbName, 10)
-	defer conn.Close()
+	conn, err := mongodb_docker.EnsureMongoIsRunning(
+		t.TestContext.Context,
+		"porter-smoke-test-mongodb-plugin",
+		"27017",
+		"",
+		t.dbName,
+		10,
+	)
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
 	// Start with a fresh database
 	err = conn.RemoveDatabase()
