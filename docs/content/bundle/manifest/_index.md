@@ -173,11 +173,11 @@ parameters:
       debug: true
 ```
 
-A user can pass a different value to the bundle using the --param flag which accepts either a file path or a string value:
+A user can pass a different value to the bundle using the \--param flag which accepts either a file path or a string value:
 
 ```
-porter install --param '{"logLevel":2}'
-porter install --param ./config.json
+porter install --param 'config={"logLevel":2}'
+porter install --param config=./config.json
 ```
 
 ### File Parameters
