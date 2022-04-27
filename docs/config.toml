@@ -72,8 +72,8 @@ pygmentsStyle = "friendly"
       parent = "quickstart"
     [[menu.main]]
       name = "Configuration"
-      url = "/quickstart/configurations/"
-      identifier = "quickstart-configurations"
+      url = "/quickstart/configuration/"
+      identifier = "quickstart-configuration"
       weight = 4
       parent = "quickstart"
     [[menu.main]]
