@@ -11,6 +11,8 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/manifest"
+	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/pkgmgmt"
 	"github.com/cnabio/cnab-go/bundle"
 	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/pkg/errors"
@@ -24,10 +26,14 @@ func TestManifestConverter(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config,	config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
-	a := NewManifestConverter(c.Context, m, nil, nil)
+	installedMixins := []mixin.Metadata{
+		{Name: "exec", VersionInfo: pkgmgmt.VersionInfo{Version: "v1.2.3"}},
+	}
+
+	a := NewManifestConverter(c.Context, m, nil, installedMixins)
 
 	bun, err := a.ToBundle()
 	require.NoError(t, err, "ToBundle failed")
@@ -55,7 +61,7 @@ func TestManifestConverter_ToBundle(t *testing.T) {
 	c := config.NewTestConfig(t)
 	c.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 
-	m, err := manifest.LoadManifestFrom(context.Background(), c.Config,	config.Name)
+	m, err := manifest.LoadManifestFrom(context.Background(), c.Config, config.Name)
 	require.NoError(t, err, "could not load manifest")
 
 	a := NewManifestConverter(c.Context, m, nil, nil)
@@ -800,10 +806,10 @@ func TestManifestConverter_generateDefaultAction(t *testing.T) {
 		}},
 		{
 			"help", bundle.Action{
-			Description: "Print a help message to the standard output",
-			Modifies:    false,
-			Stateless:   true,
-		}},
+				Description: "Print a help message to the standard output",
+				Modifies:    false,
+				Stateless:   true,
+			}},
 		{"log", bundle.Action{
 			Description: "Print logs of the installed system to the standard output",
 			Modifies:    false,
