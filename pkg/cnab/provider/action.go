@@ -49,7 +49,7 @@ type ActionArguments struct {
 	PersistLogs bool
 }
 
-func (r *Runtime) ApplyConfig(args ActionArguments, ctx context.Context) cnabaction.OperationConfigs {
+func (r *Runtime) ApplyConfig(ctx context.Context, args ActionArguments) cnabaction.OperationConfigs {
 	return action.OperationConfigs{
 		r.SetOutput(),
 		r.AddFiles(ctx, args),
@@ -169,7 +169,7 @@ func (r *Runtime) Execute(ctx context.Context, args ActionArguments) error {
 
 	r.printDebugInfo(b, creds, args.Params)
 
-	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(args, ctx)...)
+	opResult, result, err := a.Run(currentRun.ToCNAB(), creds.ToCNAB(), r.ApplyConfig(ctx, args)...)
 
 	if currentRun.ShouldRecord() {
 		if err != nil {
