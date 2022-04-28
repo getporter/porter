@@ -71,10 +71,16 @@ pygmentsStyle = "friendly"
       weight = 3
       parent = "quickstart"
     [[menu.main]]
+      name = "Configuration"
+      url = "/quickstart/configuration/"
+      identifier = "quickstart-configuration"
+      weight = 4
+      parent = "quickstart"
+    [[menu.main]]
       name = "Desired State"
       url = "/quickstart/desired-state/"
       identifier = "quickstart-desired-state"
-      weight = 4
+      weight = 5
       parent = "quickstart"
   [[menu.main]]
     name = "Examples"
