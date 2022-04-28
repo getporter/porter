@@ -500,6 +500,7 @@ data.
 
 ```yaml
 custom:
+  custom-config: "custom-value"
   some-custom-config:
     item: "value"
   more-custom-config:
@@ -510,6 +511,12 @@ custom:
 You can access custom data at runtime using the `bundle.custom.KEY.SUBKEY` templating.
 For example, `{{ bundle.custom.more-custom-config.enabled}}` allows you to
 access nested values from the custom section.
+
+Multiple custom values that were defined in the manifest can also be injected with new values during build time using the \--custom values tied to the `porter build` command. Currently only supports string values. You can use dot notation to specify a nested field:
+
+```
+porter build --custom custom-config=new-custom-value --custom some-custom-config.item=edited-value
+```
 
 See the [Custom Extensions](https://github.com/cnabio/cnab-spec/blob/master/101-bundle-json.md#custom-extensions)
 section of the CNAB Specification for more details.

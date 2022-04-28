@@ -116,6 +116,16 @@ func (b *Builder) BuildInvocationImage(ctx context.Context, manifest *manifest.M
 	parseBuildArgs(opts.BuildArgs, args)
 	args["BUNDLE_DIR"] = build.BUNDLE_DIR
 
+	convertedCustomInput := make(map[string]string)
+	convertedCustomInput, err = flattenMap(manifest.Custom)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range convertedCustomInput {
+		args[strings.ToUpper(strings.Replace(k, ".", "_", -1))] = v
+	}
+
 	buildxOpts := map[string]buildx.Options{
 		"default": {
 			Tags: []string{manifest.Image},
@@ -197,4 +207,32 @@ func (b *Builder) TagInvocationImage(ctx context.Context, origTag, newTag string
 		return log.Error(errors.Wrapf(err, "could not tag image %s with value %s", origTag, newTag))
 	}
 	return nil
+}
+
+// flattenMap recursively walks through nested map and flattent it
+// to one-level map of key-value with string type.
+func flattenMap(mapInput map[string]interface{}) (map[string]string, error) {
+	out := make(map[string]string)
+
+	for key, value := range mapInput {
+		switch v := value.(type) {
+		case string:
+			out[key] = v
+		case map[string]interface{}:
+			tmp, err := flattenMap(v)
+			if err != nil {
+				return nil, err
+			}
+			for innerKey, innerValue := range tmp {
+				out[key+"."+innerKey] = innerValue
+			}
+		case map[string]string:
+			for innerKey, innerValue := range v {
+				out[key+"."+innerKey] = innerValue
+			}
+		default:
+			return nil, errors.Errorf("Unknown type %#v: %t", v, v)
+		}
+	}
+	return out, nil
 }

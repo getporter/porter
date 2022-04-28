@@ -58,6 +58,7 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
   porter build --version 0.1.0
   porter build --file path/to/porter.yaml
   porter build --dir path/to/build/context
+  porter build --custom version=0.2.0 --custom myapp.version=0.1.2
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Validate(p)
@@ -84,9 +85,12 @@ func buildBundleBuildCommand(p *porter.Porter) *cobra.Command {
 	f.StringArrayVar(&opts.SSH, "ssh", nil,
 		"SSH agent socket or keys to expose to the build (format: default|<id>[=<socket>|<key>[,<key>]]). May be specified multiple times.")
 	f.StringArrayVar(&opts.Secrets, "secret", nil,
-		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). May be specified multiple times.")
+		"Secret file to expose to the build (format: id=mysecret,src=/local/secret). Custom values are assessible as build arguments in the template Dockerfile and in the manifest using template variables. May be specified multiple times.")
 	f.BoolVar(&opts.NoCache, "no-cache", false,
 		"Do not use the Docker cache when building the bundle's invocation image.")
+	f.StringArrayVar(&opts.Customs, "custom", nil,
+		"Define an individual key-value pair for the custom section in the form of NAME=VALUE. Use dot notation to specify a nested custom field. May be specified multiple times.")
+
 	// Allow configuring the --driver flag with build-driver, to avoid conflicts with other commands
 	cmd.Flag("driver").Annotations = map[string][]string{
 		"viper-key": {"build-driver"},

@@ -4,6 +4,9 @@ version: 0.1.0
 description: "A bundle with a custom action"
 registry: "localhost:5000"
 
+custom:
+  customKey1: "customValue1"
+
 credentials:
   - name: my-first-cred
     env: MY_FIRST_CRED
@@ -51,10 +54,10 @@ mixins:
 
 install:
   - exec:
-      description: "Install Hello World"
-      command: bash
-      flags:
-        c: echo Hello World
+      description: "Install Hello World with custom arguments"
+      command: echo
+      arguments:
+        - "{{ bundle.custom.customKey1 }}"
 
 upgrade:
   - exec:
