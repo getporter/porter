@@ -42,7 +42,7 @@ func Test_generateInternalManifest(t *testing.T) {
 	}}
 
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {

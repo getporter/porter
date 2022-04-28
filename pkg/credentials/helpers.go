@@ -49,7 +49,7 @@ func NewTestCredentialProviderFor(t *testing.T, testStore storage.Store, testSec
 	}
 }
 
-func (p TestCredentialProvider) Teardown() error {
+func (p TestCredentialProvider) Close() error {
 	// sometimes we are testing with a mock that needs to be released at the end of the test
 	if closer, ok := p.TestStorage.(io.Closer); ok {
 		return closer.Close()

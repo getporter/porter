@@ -15,7 +15,7 @@ import (
 func TestPorter_PrintPlugins(t *testing.T) {
 	t.Run("plaintext", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
@@ -32,7 +32,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 
 	t.Run("yaml", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
@@ -75,7 +75,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 
 	t.Run("json", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := PrintPluginsOptions{
 			PrintOptions: printer.PrintOptions{
@@ -135,7 +135,7 @@ func TestPorter_PrintPlugins(t *testing.T) {
 func TestPorter_ShowPlugin(t *testing.T) {
 	t.Run("plaintext", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatPlaintext
@@ -159,7 +159,7 @@ Author: Porter Authors
 
 	t.Run("yaml", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatYaml
@@ -183,7 +183,7 @@ implementations:
 
 	t.Run("json", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		opts := ShowPluginOptions{Name: "plugin1"}
 		opts.Format = printer.FormatJson
@@ -214,7 +214,7 @@ implementations:
 
 func TestPorter_InstallPlugin(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := plugins.InstallOptions{}
 	opts.URL = "https://example.com"
@@ -231,7 +231,7 @@ func TestPorter_InstallPlugin(t *testing.T) {
 
 func TestPorter_UninstallPlugin(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := pkgmgmt.UninstallOptions{}
 	err := opts.Validate([]string{"plugin1"})

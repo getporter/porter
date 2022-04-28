@@ -19,8 +19,8 @@ func NewTestManager(c *config.TestConfig) *TestManager {
 	}
 }
 
-func (m *TestManager) Teardown() error {
-	return m.testStore.Teardown()
+func (m *TestManager) Close() error {
+	return m.testStore.Close()
 }
 
 // SetSchema allows tests to pre-emptively set the schema document.

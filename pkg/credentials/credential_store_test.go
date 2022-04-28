@@ -17,7 +17,7 @@ func TestCredentialStorage_CRUD(t *testing.T) {
 			Value: "dbPassword"}})
 
 	cp := NewTestCredentialProvider(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	require.NoError(t, cp.InsertCredentialSet(context.Background(), cs))
 

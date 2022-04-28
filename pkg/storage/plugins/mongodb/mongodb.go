@@ -83,9 +83,9 @@ func (s *Store) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) Close(ctx context.Context) error {
+func (s *Store) Close() error {
 	if s.client != nil {
-		cxt, cancel := context.WithTimeout(ctx, s.timeout)
+		cxt, cancel := context.WithTimeout(context.Background(), s.timeout)
 		defer cancel()
 
 		s.client.Disconnect(cxt)

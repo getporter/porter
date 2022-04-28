@@ -14,7 +14,7 @@ import (
 func TestNewDisplayInstallation(t *testing.T) {
 	t.Run("installation has been installed", func(t *testing.T) {
 		cp := claims.NewTestClaimProvider(t)
-		defer cp.Teardown()
+		defer cp.Close()
 
 		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
 			i.Status.Action = cnab.ActionUpgrade
@@ -35,7 +35,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 
 	t.Run("installation has not been installed", func(t *testing.T) {
 		cp := claims.NewTestClaimProvider(t)
-		defer cp.Teardown()
+		defer cp.Close()
 
 		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"))
 
@@ -54,7 +54,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 
 func TestPorter_ListInstallations(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestClaims.CreateInstallation(claims.NewInstallation("", "shared-mysql"))
 	p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "carolyn-wordpress"))
@@ -92,7 +92,7 @@ func TestPorter_ListInstallations(t *testing.T) {
 
 func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	cp := claims.NewTestClaimProvider(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
 		i.Status.Action = cnab.ActionUpgrade

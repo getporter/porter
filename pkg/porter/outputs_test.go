@@ -24,7 +24,7 @@ func TestPorter_printOutputsTable(t *testing.T) {
 	require.NoError(t, err)
 
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	want := `---------------------------------------------------------------------------------
   Name     Type    Value                                                         
@@ -64,7 +64,7 @@ func TestPorter_PrintBundleOutputs(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			// Create test claim
 			writeOnly := true

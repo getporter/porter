@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/go-multierror"
+
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
@@ -78,12 +80,13 @@ func (s *TestStoragePlugin) runTestDatabase(ctx context.Context) error {
 }
 
 // Close removes the test database and closes the connection.
-func (s *TestStoragePlugin) Close(ctx context.Context) error {
+func (s *TestStoragePlugin) Close() error {
 	if s.store != nil {
-		s.store.RemoveDatabase(ctx)
-		err := s.store.Close(ctx)
+		var bigErr *multierror.Error
+		bigErr = multierror.Append(bigErr, s.store.RemoveDatabase(context.Background()))
+		bigErr = multierror.Append(bigErr, s.store.Close())
 		s.store = nil
-		return err
+		return bigErr.ErrorOrNil()
 	}
 	return nil
 }

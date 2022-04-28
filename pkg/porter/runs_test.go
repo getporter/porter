@@ -16,7 +16,7 @@ var now = time.Date(2020, time.April, 18, 1, 2, 3, 4, time.UTC)
 
 func TestPorter_ListInstallationRuns(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	installationName1 := "shared-mysql"
 	run1 := claims.NewRun("", installationName1)
@@ -72,7 +72,7 @@ func TestPorter_PrintInstallationRunsOutput(t *testing.T) {
 
 	for _, tc := range outputTestcases {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 		ctx := context.Background()
 
 		installation := p.TestClaims.CreateInstallation(claims.NewInstallation("staging", "shared-k8s"), p.TestClaims.SetMutableInstallationValues)

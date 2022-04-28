@@ -34,7 +34,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := ShowOptions{
 				sharedOptions: sharedOptions{

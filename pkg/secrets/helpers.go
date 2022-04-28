@@ -18,6 +18,6 @@ func NewTestSecretsProvider() TestSecretsProvider {
 	}
 }
 
-func (s TestSecretsProvider) Teardown() error {
-	return s.Close()
+func (s TestSecretsProvider) Close() error {
+	return nil
 }

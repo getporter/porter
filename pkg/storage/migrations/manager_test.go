@@ -21,7 +21,7 @@ func TestManager_LoadSchema(t *testing.T) {
 
 		c := config.NewTestConfig(t)
 		m := NewTestManager(c)
-		defer m.Teardown()
+		defer m.Close()
 
 		err := m.store.Update(context.Background(), CollectionConfig, storage.UpdateOptions{Document: schema, Upsert: true})
 		require.NoError(t, err, "Save schema failed")
@@ -34,7 +34,7 @@ func TestManager_LoadSchema(t *testing.T) {
 	t.Run("missing schema, empty home", func(t *testing.T) {
 		c := config.NewTestConfig(t)
 		m := NewTestManager(c)
-		defer m.Teardown()
+		defer m.Close()
 
 		err := m.loadSchema(context.Background())
 		require.NoError(t, err, "LoadSchema failed")
@@ -44,7 +44,7 @@ func TestManager_LoadSchema(t *testing.T) {
 	t.Run("missing schema, existing home data", func(t *testing.T) {
 		c := config.NewTestConfig(t)
 		m := NewTestManager(c)
-		defer m.Teardown()
+		defer m.Close()
 
 		err := m.store.Insert(context.Background(), claims.CollectionInstallations, storage.InsertOptions{Documents: []interface{}{claims.Installation{Name: "abc123"}}})
 		require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestManager_ShouldMigrateCredentials(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			c := config.NewTestConfig(t)
 			m := NewTestManager(c)
-			defer m.Teardown()
+			defer m.Close()
 
 			m.schema = storage.Schema{
 				Credentials: schema.Version(tc.credentialsVersion),
@@ -96,7 +96,7 @@ func TestManager_ShouldMigrateClaims(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			c := config.NewTestConfig(t)
 			m := NewTestManager(c)
-			defer m.Teardown()
+			defer m.Close()
 
 			m.schema = storage.NewSchema(schema.Version(tc.claimVersion), "", "")
 			assert.Equal(t, tc.wantMigrate, m.ShouldMigrateClaims())
@@ -108,10 +108,10 @@ func TestManager_NoMigrationEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.Teardown()
+	defer config.Close()
 
 	mgr := NewTestManager(config)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	claimStore := claims.NewClaimStore(mgr)
 
 	_, err := claimStore.ListInstallations(context.Background(), "", "", nil)
@@ -131,7 +131,7 @@ func TestClaimStorage_HaltOnMigrationRequired(t *testing.T) {
 
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	claimStore := claims.NewClaimStore(mgr)
 
 	schema := storage.NewSchema("needs-migration", "", "")
@@ -158,10 +158,10 @@ func TestClaimStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.Teardown()
+	defer config.Close()
 
 	mgr := NewTestManager(config)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	claimStore := claims.NewClaimStore(mgr)
 
 	names, err := claimStore.ListInstallations(context.Background(), "", "", nil)
@@ -173,7 +173,7 @@ func TestCredentialStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
 	testSecrets := secrets.NewTestSecretsProvider()
-	defer mgr.Teardown()
+	defer mgr.Close()
 	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
 	schema := storage.NewSchema("", "needs-migration", "")
@@ -197,10 +197,10 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.Teardown()
+	defer config.Close()
 
 	mgr := NewTestManager(config)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
 	credStore := credentials.NewTestCredentialProviderFor(t, mgr, testSecrets)
 
@@ -212,7 +212,7 @@ func TestCredentialStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 func TestParameterStorage_HaltOnMigrationRequired(t *testing.T) {
 	tc := config.NewTestConfig(t)
 	mgr := NewTestManager(tc)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
 	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
 
@@ -237,10 +237,10 @@ func TestParameterStorage_NoMigrationRequiredForEmptyHome(t *testing.T) {
 	config := config.NewTestConfig(t)
 	_, home := config.TestContext.UseFilesystem()
 	config.SetHomeDir(home)
-	defer config.Teardown()
+	defer config.Close()
 
 	mgr := NewTestManager(config)
-	defer mgr.Teardown()
+	defer mgr.Close()
 	testSecrets := secrets.NewTestSecretsProvider()
 	paramStore := parameters.NewTestParameterProviderFor(t, mgr, testSecrets)
 

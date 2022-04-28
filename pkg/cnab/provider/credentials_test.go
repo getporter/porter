@@ -17,7 +17,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	r.TestCredentials.AddSecret("password", "mypassword")
 	r.TestCredentials.AddSecret("db-password", "topsecret")
@@ -83,7 +83,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("missing required credential does not apply", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "status"}
 		b := getBundle(true)
@@ -97,7 +97,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("optional credential missing", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "install"}
 		b := getBundle(false)
@@ -111,7 +111,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("required credential missing", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "install"}
 		b := getBundle(true)
@@ -122,7 +122,7 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("credential resolved", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestCredentials.AddSecret("password", "mypassword")
 

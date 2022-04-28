@@ -21,7 +21,7 @@ func TestInstall_relativePathPorterHome(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest() // This creates a temp porter home directory
 	p.Debug = false
 
@@ -48,7 +48,7 @@ func TestInstall_fileParam(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 	ctx := context.Background()
@@ -91,7 +91,7 @@ func TestInstall_withDockerignore(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 

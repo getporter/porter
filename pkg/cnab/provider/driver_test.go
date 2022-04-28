@@ -16,7 +16,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		driver, err := r.newDriver(DriverNameDocker, ActionArguments{})
 
@@ -30,7 +30,7 @@ func TestNewDriver_Docker(t *testing.T) {
 		r := NewTestRuntime(t)
 		// mock retrieving the docker group id on linux
 		r.MockGetDockerGroupId()
-		defer r.Teardown()
+		defer r.Close()
 
 		r.FileSystem.Create("/var/run/docker.sock")
 		args := ActionArguments{
@@ -48,7 +48,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		r := NewTestRuntime(t)
 		r.MockGetDockerGroupId()
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -64,7 +64,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		r := NewTestRuntime(t)
 		r.MockGetDockerGroupId()
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{
 			AllowDockerHostAccess: true,
@@ -79,7 +79,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		r := NewTestRuntime(t)
 		r.MockGetDockerGroupId()
-		defer r.Teardown()
+		defer r.Close()
 
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply no override, so expect Privileged to be false
@@ -109,7 +109,7 @@ func TestNewDriver_Docker(t *testing.T) {
 
 		r := NewTestRuntime(t)
 		r.MockGetDockerGroupId()
-		defer r.Teardown()
+		defer r.Close()
 
 		// Currently, toggling Privileged is the only config exposed to users
 		// Here we supply an override, so expect Privileged to be set to the override

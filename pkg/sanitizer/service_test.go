@@ -24,7 +24,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 
 	ctx := context.Background()
 	r := porter.NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
@@ -67,7 +67,7 @@ func TestSanitizer_Output(t *testing.T) {
 
 	ctx := context.Background()
 	r := porter.NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveOutputName := "my-first-output"

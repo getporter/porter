@@ -20,7 +20,7 @@ func TestDesiredState(t *testing.T) {
 	// I am always using require, so that we stop immediately upon an error
 	// A long test is hard to debug when it fails in the middle and keeps going
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	test.PrepareTestBundle()

@@ -21,7 +21,7 @@ func TestResolveBundleReference(t *testing.T) {
 		t.Parallel()
 
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		p.AddTestBundleDir(filepath.Join(p.RepoRoot, "tests/testdata/mybuns"), true)
 
@@ -37,7 +37,7 @@ func TestResolveBundleReference(t *testing.T) {
 		t.Parallel()
 
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		p.AddTestFile(filepath.Join(p.RepoRoot, "build/testdata/bundles/mysql/.cnab/bundle.json"), "bundle.json")
 
@@ -54,7 +54,7 @@ func TestResolveBundleReference(t *testing.T) {
 		t.Parallel()
 
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 		p.SetupIntegrationTest()
 
 		opts := &BundleActionOptions{}
@@ -72,7 +72,7 @@ func TestResolveBundleReference(t *testing.T) {
 		t.Parallel()
 
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "example"))
 		p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall), func(r *claims.Run) {

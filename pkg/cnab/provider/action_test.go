@@ -18,7 +18,7 @@ func TestAddRelocation(t *testing.T) {
 	require.NoError(t, err)
 
 	d := NewTestRuntime(t)
-	defer d.Teardown()
+	defer d.Close()
 
 	var args ActionArguments
 	require.NoError(t, json.Unmarshal(data, &args.BundleReference.RelocationMap))

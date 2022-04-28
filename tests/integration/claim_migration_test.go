@@ -22,7 +22,7 @@ func TestClaimMigration_List(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	ctx := context.Background()
 

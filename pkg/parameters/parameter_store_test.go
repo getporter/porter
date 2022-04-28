@@ -12,7 +12,7 @@ import (
 
 func TestParameterStore_CRUD(t *testing.T) {
 	paramStore := NewTestParameterProvider(t)
-	defer paramStore.Teardown()
+	defer paramStore.Close()
 
 	ctx := context.Background()
 	params, err := paramStore.ListParameterSets(ctx, "dev", "", nil)
@@ -83,7 +83,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 
 	t.Run("resolve params success", func(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
-		defer paramStore.Teardown()
+		defer paramStore.Close()
 
 		paramStore.AddSecret("param1", "param1_value")
 		paramStore.AddSecret("param2", "param2_value")
@@ -100,7 +100,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 
 	t.Run("resolve params failure", func(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
-		defer paramStore.Teardown()
+		defer paramStore.Close()
 
 		// Purposefully only adding one secret
 		paramStore.AddSecret("param1", "param1_value")

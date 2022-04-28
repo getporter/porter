@@ -82,7 +82,7 @@ func TestPorter_SearchPackages_Mixins(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{
@@ -145,7 +145,7 @@ func TestPorter_SearchPackages_Plugins(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := SearchOptions{
 				PrintOptions: printer.PrintOptions{

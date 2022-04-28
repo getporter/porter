@@ -16,7 +16,7 @@ func TestUninstall_DeleteInstallation(t *testing.T) {
 	t.Parallel()
 
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 	test.PrepareTestBundle()
 

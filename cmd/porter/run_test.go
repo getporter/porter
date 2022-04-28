@@ -11,7 +11,7 @@ import (
 
 func TestRun_Validate(t *testing.T) {
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func TestRun_Validate(t *testing.T) {
 
 func TestRun_ValidateCustomAction(t *testing.T) {
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	configTpl, err := p.Templates.GetManifest()
 	require.NoError(t, err)

@@ -152,7 +152,7 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 
 func TestClaimStore_Installations(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	t.Run("ListInstallations", func(t *testing.T) {
 		installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
@@ -190,7 +190,7 @@ func TestClaimStore_Installations(t *testing.T) {
 
 func TestClaimStore_DeleteInstallation(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
@@ -265,7 +265,7 @@ func TestClaimStore_Run(t *testing.T) {
 
 func TestClaimStore_Results(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	barRuns, resultsMap, err := cp.ListRuns(context.Background(), "dev", "bar")
 	require.NoError(t, err, "ListRuns failed")
@@ -300,7 +300,7 @@ func TestClaimStore_Results(t *testing.T) {
 
 func TestClaimStore_Outputs(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	fooRuns, _, err := cp.ListRuns(context.Background(), "dev", "foo")
 	require.NoError(t, err, "ListRuns failed")

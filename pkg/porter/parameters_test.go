@@ -34,7 +34,7 @@ func TestDisplayValuesSort(t *testing.T) {
 
 func TestGenerateParameterSet(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
 
@@ -59,7 +59,7 @@ func TestGenerateParameterSet(t *testing.T) {
 
 func TestPorter_ListParameters(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	ctx := context.Background()
 	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("", "shared-mysql"))
 	p.TestParameters.InsertParameterSet(ctx, parameters.NewParameterSet("dev", "carolyn-wordpress"))
@@ -99,7 +99,7 @@ func Test_loadParameters_paramNotDefined(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{},
@@ -118,7 +118,7 @@ func Test_loadParameters_definitionNotDefined(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
 		Parameters: map[string]bundle.Parameter{
@@ -141,7 +141,7 @@ func Test_loadParameters_applyTo(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	// Here we set default values, but expect nil/empty
 	// values for parameters that do not apply to a given action
@@ -198,7 +198,7 @@ func Test_loadParameters_applyToBundleDefaults(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -228,7 +228,7 @@ func Test_loadParameters_requiredButDoesNotApply(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
 		Definitions: definition.Definitions{
@@ -258,7 +258,7 @@ func Test_loadParameters_fileParameter(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	r.TestConfig.TestContext.AddTestFile("testdata/file-param", "/path/to/file")
 
@@ -301,7 +301,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -321,7 +321,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -345,7 +345,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -369,7 +369,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -397,7 +397,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -421,7 +421,7 @@ func Test_loadParameters_ParameterSourcePrecedence(t *testing.T) {
 		t.Parallel()
 
 		r := NewTestPorter(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestParameters.AddTestParameters("testdata/paramset.json")
 		r.TestParameters.AddSecret("foo_secret", "foo_set")
@@ -527,7 +527,7 @@ func Test_Paramapalooza(t *testing.T) {
 					tc := tc
 
 					r := NewTestPorter(t)
-					defer r.Teardown()
+					defer r.Close()
 
 					bun := cnab.ExtendedBundle{bundle.Bundle{
 						Name:          "mybuns",
@@ -597,7 +597,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	r.TestConfig.TestContext.AddTestFile("testdata/bundle-with-param-sources.json", "bundle.json")
 	bun, err := cnab.LoadBundle(r.Context, "bundle.json")
@@ -625,7 +625,7 @@ func TestRuntime_ResolveParameterSources(t *testing.T) {
 
 func TestShowParameters_NotFound(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := ParameterShowOptions{
 		PrintOptions: printer.PrintOptions{
@@ -666,7 +666,7 @@ func TestShowParameters_Found(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := ParameterShowOptions{
 				PrintOptions: printer.PrintOptions{

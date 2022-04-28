@@ -19,7 +19,7 @@ import (
 
 func TestGenerateNoName(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
@@ -43,7 +43,7 @@ func TestGenerateNoName(t *testing.T) {
 
 func TestGenerateNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
@@ -67,7 +67,7 @@ func TestGenerateNameProvided(t *testing.T) {
 
 func TestGenerateBadNameProvided(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/bundle.json", "/bundle.json")
@@ -125,7 +125,7 @@ func TestCredentialsList_None(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			listOpts := ListOptions{}
 			listOpts.Format = tc.format
@@ -165,7 +165,7 @@ func TestPorter_PrintCredentials(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
@@ -184,7 +184,7 @@ func TestPorter_PrintCredentials(t *testing.T) {
 // Test filtering
 func TestPorter_ListCredentials(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	ctx := context.Background()
 	p.TestCredentials.InsertCredentialSet(ctx, credentials.NewCredentialSet("", "shared-mysql"))
@@ -223,7 +223,7 @@ func TestPorter_ListCredentials(t *testing.T) {
 
 func TestShowCredential_NotFound(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := CredentialShowOptions{
 		PrintOptions: printer.PrintOptions{
@@ -264,7 +264,7 @@ func TestShowCredential_Found(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := CredentialShowOptions{
 				PrintOptions: printer.PrintOptions{
@@ -295,7 +295,7 @@ func TestShowCredential_PreserveCase(t *testing.T) {
 
 func TestCredentialsEdit(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.Setenv("SHELL", "bash")
 	p.Setenv("EDITOR", "vi")
@@ -310,7 +310,7 @@ func TestCredentialsEdit(t *testing.T) {
 
 func TestCredentialsEditEditorPathWithArgument(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.Setenv("SHELL", "something")
 	p.Setenv("EDITOR", "C:\\Program Files\\Visual Studio Code\\code.exe --wait")
@@ -341,7 +341,7 @@ func TestCredentialsDelete(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			p.TestCredentials.AddTestCredentialsDirectory("testdata/test-creds")
 
@@ -508,7 +508,7 @@ func TestCredentialsCreate(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := CredentialCreateOptions{FileName: tc.fileName, OutputType: tc.outputType}
 			err := p.CreateCredential(opts)

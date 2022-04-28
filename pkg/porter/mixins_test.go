@@ -15,7 +15,7 @@ import (
 
 func TestPorter_PrintMixins(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := PrintMixinsOptions{
 		PrintOptions: printer.PrintOptions{
@@ -31,7 +31,7 @@ func TestPorter_PrintMixins(t *testing.T) {
 
 func TestPorter_InstallMixin(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := mixin.InstallOptions{}
 	opts.Name = "exec"
@@ -48,7 +48,7 @@ func TestPorter_InstallMixin(t *testing.T) {
 
 func TestPorter_UninstallMixin(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := pkgmgmt.UninstallOptions{}
 	err := opts.Validate([]string{"exec"})

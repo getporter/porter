@@ -66,7 +66,7 @@ func TestLogsShowOptions_Validate(t *testing.T) {
 func TestPorter_ShowInstallationLogs(t *testing.T) {
 	t.Run("no logs found", func(t *testing.T) {
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
 		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))
@@ -83,7 +83,7 @@ func TestPorter_ShowInstallationLogs(t *testing.T) {
 		const testLogs = "some mighty fine logs"
 
 		p := NewTestPorter(t)
-		defer p.Teardown()
+		defer p.Close()
 
 		i := p.TestClaims.CreateInstallation(claims.NewInstallation("", "test"))
 		c := p.TestClaims.CreateRun(i.NewRun(cnab.ActionInstall))

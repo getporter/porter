@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -52,11 +54,14 @@ func NewTestRuntimeFor(tc *config.TestConfig, testClaims *claims.TestClaimProvid
 	}
 }
 
-func (t *TestRuntime) Teardown() error {
-	t.TestClaims.Teardown()
-	t.TestCredentials.Teardown()
-	t.TestParameters.Teardown()
-	return nil
+func (t *TestRuntime) Close() error {
+	var bigErr *multierror.Error
+
+	bigErr = multierror.Append(bigErr, t.TestClaims.Close())
+	bigErr = multierror.Append(bigErr, t.TestCredentials.Close())
+	bigErr = multierror.Append(bigErr, t.TestParameters.Close())
+
+	return bigErr.ErrorOrNil()
 }
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error) {

@@ -16,7 +16,7 @@ import (
 
 func TestPorter_Run(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	// Mock the mixin test runner and verify that we are calling runtime mixins, e.g. exec-runtime and not exec
 	mp := p.Mixins.(*mixin.TestMixinProvider)

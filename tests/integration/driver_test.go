@@ -19,7 +19,7 @@ import (
 // porter commands and have that set the --driver flag.
 func TestBindRuntimeDriverConfiguration(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	require.NoError(t, shx.Copy(filepath.Join(test.RepoRoot, "tests/testdata/installations/mybuns.yaml"), test.TestDir))
@@ -51,7 +51,7 @@ func TestBindRuntimeDriverConfiguration(t *testing.T) {
 // porter build and have that set the --driver flag.
 func TestBindBuildDriverConfiguration(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err, "test setup failed")
 
 	// Set the driver to something that will fail validation so we know it was picked up

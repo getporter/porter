@@ -22,7 +22,7 @@ var _ plugins.StorageProtocol = &Store{}
 // that have not configured proper storage, i.e. a mongo database.
 // It runs mongodb in a docker container and stores its data in a docker volume.
 type Store struct {
-	plugins.StorageProtocol
+	*mongodb.Store
 	context *portercontext.Context
 
 	config PluginConfig
@@ -36,7 +36,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 
 	// This is extra insurance that the db connection is closed
 	runtime.SetFinalizer(s, func(s *Store) {
-		s.Close(context.Background())
+		s.Close()
 	})
 
 	return s
@@ -46,7 +46,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 // The plugin itself is responsible for ensuring it was called.
 // Close is called automatically when the plugin is used by Porter.
 func (s *Store) Connect(ctx context.Context) error {
-	if s.StorageProtocol != nil {
+	if s.Store != nil {
 		return nil
 	}
 
@@ -59,22 +59,18 @@ func (s *Store) Connect(ctx context.Context) error {
 		return err
 	}
 
-	s.StorageProtocol = conn
+	s.Store = conn
 	return nil
 }
 
-func (s *Store) Close(ctx context.Context) error {
-	// leave the container running for performance purposes
-	//exec.Command("docker", "rm", "-f", "porter-mongodb-docker-plugin")
-
-	// close the connection to the mongodb running in the container
-	if conn, ok := s.StorageProtocol.(*mongodb.Store); ok {
-		return conn.Close(ctx)
+func (s *Store) Close() error {
+	if s.Store == nil {
+		return nil
 	}
 
-	s.StorageProtocol = nil
-
-	return nil
+	err := s.Store.Close()
+	s.Store = nil
+	return err
 }
 
 // EnsureIndex makes sure that the specified index exists as specified.
@@ -84,7 +80,7 @@ func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions
 		return err
 	}
 
-	return s.StorageProtocol.EnsureIndex(ctx, opts)
+	return s.Store.EnsureIndex(ctx, opts)
 }
 
 func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
@@ -92,7 +88,7 @@ func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([
 		return nil, err
 	}
 
-	return s.StorageProtocol.Aggregate(ctx, opts)
+	return s.Store.Aggregate(ctx, opts)
 }
 
 func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
@@ -100,7 +96,7 @@ func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, er
 		return 0, err
 	}
 
-	return s.StorageProtocol.Count(ctx, opts)
+	return s.Store.Count(ctx, opts)
 }
 
 func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
@@ -108,7 +104,7 @@ func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw,
 		return nil, err
 	}
 
-	return s.StorageProtocol.Find(ctx, opts)
+	return s.Store.Find(ctx, opts)
 }
 
 func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
@@ -116,7 +112,7 @@ func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
 		return err
 	}
 
-	return s.StorageProtocol.Insert(ctx, opts)
+	return s.Store.Insert(ctx, opts)
 }
 
 func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
@@ -124,7 +120,7 @@ func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
 		return err
 	}
 
-	return s.StorageProtocol.Patch(ctx, opts)
+	return s.Store.Patch(ctx, opts)
 }
 
 func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
@@ -132,7 +128,7 @@ func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
 		return err
 	}
 
-	return s.StorageProtocol.Remove(ctx, opts)
+	return s.Store.Remove(ctx, opts)
 }
 
 func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
@@ -140,7 +136,7 @@ func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
 		return err
 	}
 
-	return s.StorageProtocol.Update(ctx, opts)
+	return s.Store.Update(ctx, opts)
 }
 
 func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, container string, port string, dataVol string, dbName string, timeoutSeconds int) (*mongodb.Store, error) {

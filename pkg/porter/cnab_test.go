@@ -112,7 +112,7 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestParameters.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
@@ -138,7 +138,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
@@ -167,7 +167,7 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 
 func TestSharedOptions_LoadParameters(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
@@ -361,7 +361,7 @@ func Test_bundleFileOptions(t *testing.T) {
 
 func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	ctx := context.Background()
 

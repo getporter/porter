@@ -43,7 +43,7 @@ type Tester struct {
 
 // NewTest sets up for a smoke test.
 //
-// Always defer Tester.Teardown(), even when an error is returned.
+// Always defer Tester.Close(), even when an error is returned.
 func NewTest(t *testing.T) (Tester, error) {
 	var err error
 	pwd, _ := os.Getwd()
@@ -129,7 +129,7 @@ func (t Tester) buildPorterCommand(args ...string) shx.PreparedCommand {
 		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 
-func (t Tester) Teardown() {
+func (t Tester) Close() {
 	t.T.Log("Removing temp test PORTER_HOME")
 	os.RemoveAll(t.PorterHomeDir)
 

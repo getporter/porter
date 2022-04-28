@@ -41,8 +41,8 @@ func NewTestClaimProviderFor(t *testing.T, testStore storage.TestStore) *TestCla
 	}
 }
 
-func (p *TestClaimProvider) Teardown() error {
-	return p.TestStore.Teardown()
+func (p *TestClaimProvider) Close() error {
+	return p.TestStore.Close()
 }
 
 // CreateInstallation creates a new test installation and saves it.

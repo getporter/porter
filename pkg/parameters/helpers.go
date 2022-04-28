@@ -45,8 +45,8 @@ func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecr
 	}
 }
 
-func (p TestParameterProvider) Teardown() error {
-	p.TestSecrets.Teardown()
+func (p TestParameterProvider) Close() error {
+	p.TestSecrets.Close()
 	return p.TestDocuments.Close()
 }
 

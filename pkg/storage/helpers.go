@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"context"
-
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 )
@@ -22,6 +20,6 @@ func NewTestStore(tc *config.TestConfig) TestStore {
 	}
 }
 
-func (s TestStore) Teardown() error {
-	return s.testPlugin.Close(context.Background())
+func (s TestStore) Close() error {
+	return s.testPlugin.Close()
 }

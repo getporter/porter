@@ -13,7 +13,7 @@ import (
 
 func TestFileSystem_Permission(t *testing.T) {
 	c := config.NewTestConfig(t)
-	defer c.Teardown()
+	defer c.Close()
 
 	testStore := filesystem.NewStore(c.Config)
 	defer testStore.Close()
@@ -47,7 +47,7 @@ func TestFileSystem_SetSecretDir(t *testing.T) {
 
 func TestFileSystem_DataOperation(t *testing.T) {
 	c := config.NewTestConfig(t)
-	defer c.Teardown()
+	defer c.Close()
 
 	testStore := filesystem.NewStore(c.Config)
 	defer testStore.Close()

@@ -16,7 +16,7 @@ import (
 func TestPorter_FixPermissions(t *testing.T) {
 	p := NewTestPorter(t)
 	p.SetupIntegrationTest()
-	defer p.Teardown()
+	defer p.Close()
 
 	home, _ := p.GetHomeDir()
 	p.ConfigFilePath = filepath.Join(home, "config.toml")

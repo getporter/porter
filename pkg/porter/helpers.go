@@ -105,9 +105,9 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	return &tp
 }
 
-func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown()
-	p.TestConfig.Teardown()
+func (p *TestPorter) Close() error {
+	err := p.TestStore.Close()
+	p.TestConfig.Close()
 	p.RootSpan.EndSpan()
 	return err
 }

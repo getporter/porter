@@ -15,7 +15,7 @@ import (
 
 func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 	opts := PublishOptions{}
@@ -25,7 +25,7 @@ func TestPublish_Validate_PorterYamlExists(t *testing.T) {
 
 func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := PublishOptions{}
 	err := opts.Validate(p.Context)
@@ -40,7 +40,7 @@ func TestPublish_Validate_PorterYamlDoesNotExist(t *testing.T) {
 
 func TestPublish_Validate_ArchivePath(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	opts := PublishOptions{
 		ArchiveFile: "mybuns.tgz",
@@ -147,7 +147,7 @@ func TestPublish_getNewImageNameFromBundleReference(t *testing.T) {
 
 func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	bun := cnab.ExtendedBundle{bundle.Bundle{
 		Name: "mybuns",
@@ -194,7 +194,7 @@ func TestPublish_UpdateBundleWithNewImage(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	bundleRef := cnab.BundleReference{
 		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
@@ -230,7 +230,7 @@ func TestPublish_RefreshCachedBundle(t *testing.T) {
 
 func TestPublish_RefreshCachedBundle_OnlyWarning(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	bundleRef := cnab.BundleReference{
 		Reference:  cnab.MustParseOCIReference("myreg/mybuns"),
