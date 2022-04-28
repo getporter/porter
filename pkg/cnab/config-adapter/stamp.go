@@ -62,7 +62,10 @@ func (s Stamp) WriteManifest(cxt *portercontext.Context, path string) error {
 
 // MixinRecord contains information about a mixin used in a bundle
 // For now it is a placeholder for data that we would like to include in the future.
-type MixinRecord struct{}
+type MixinRecord struct {
+	// Version of the mixin used in the bundle.
+	Version string `json:"version"`
+}
 
 func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	stamp := Stamp{}
@@ -74,10 +77,12 @@ func (c *ManifestConverter) GenerateStamp() (Stamp, error) {
 	}
 	stamp.EncodedManifest = base64.StdEncoding.EncodeToString(rawManifest)
 
-	// Remember the mixins used in the bundle
 	stamp.Mixins = make(map[string]MixinRecord, len(c.Manifest.Mixins))
-	for _, m := range c.Manifest.Mixins {
-		stamp.Mixins[m.Name] = MixinRecord{}
+	usedMixinsVersion := c.getUsedMixinsVersion()
+	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
+		stamp.Mixins[usedMixinName] = MixinRecord{
+			Version: usedMixinVersion,
+		}
 	}
 
 	digest, err := c.DigestManifest()
@@ -109,8 +114,9 @@ func (c *ManifestConverter) DigestManifest() (string, error) {
 	v := pkg.Version
 	data = append(data, v...)
 
-	for _, m := range c.Mixins {
-		data = append(append(data, m.Name...), m.Version...)
+	usedMixinsVersion := c.getUsedMixinsVersion()
+	for usedMixinName, usedMixinVersion := range usedMixinsVersion {
+		data = append(append(data, usedMixinName...), usedMixinVersion...)
 	}
 
 	digest := sha256.Sum256(data)
@@ -136,4 +142,19 @@ func LoadStamp(bun cnab.ExtendedBundle) (Stamp, error) {
 	}
 
 	return stamp, nil
+}
+
+// getUsedMixinsVersion compare the mixins defined in the manifest and the ones installed and then retrieve the mixin's version info
+func (c *ManifestConverter) getUsedMixinsVersion() map[string]string {
+	usedMixinsVersion := make(map[string]string)
+
+	for _, usedMixin := range c.Manifest.Mixins {
+		for _, installedMixin := range c.InstalledMixins {
+			if usedMixin.Name == installedMixin.Name {
+				usedMixinsVersion[usedMixin.Name] = installedMixin.GetVersionInfo().Version
+			}
+		}
+	}
+
+	return usedMixinsVersion
 }
