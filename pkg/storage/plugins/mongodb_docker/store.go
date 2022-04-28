@@ -222,19 +222,19 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 		Timeout: timeoutSeconds,
 	}
 	timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	tick := time.NewTicker(50 * time.Millisecond)
+
 	defer cancel()
 	for {
 		select {
 		case <-timeout.Done():
 			return nil, span.Error(errors.New("timeout waiting for local mongodb daemon to be ready"))
-		default:
+		case <-tick.C:
 			conn := mongodb.NewStore(c, mongoPluginCfg)
 			err := conn.Connect(ctx)
 			if err == nil {
 				return conn, nil
 			}
-
-			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }
