@@ -123,10 +123,8 @@ func (c *Config) loadData(ctx context.Context, templateData map[string]interface
 		return err
 	}
 
-	if c.IsFeatureEnabled(experimental.FlagStructuredLogs) {
-		// Now that we have completely loaded our config, configure our final logging/tracing
-		c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
-	}
+	// Now that we have completely loaded our config, configure our final logging/tracing
+	c.Context.ConfigureLogging(ctx, c.NewLogConfiguration())
 
 	return nil
 }

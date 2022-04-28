@@ -12,6 +12,8 @@ type TracerCleanup func(ctx context.Context) error
 // so that its cleanup function can be moved around with it.
 type Tracer struct {
 	trace.Tracer
+
+	// IsNoOp indicates that this tracer is a no-op, it doesn't do anything
 	IsNoOp  bool
 	cleanup TracerCleanup
 }

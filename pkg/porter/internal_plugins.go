@@ -29,7 +29,7 @@ func (o *RunInternalPluginOpts) ApplyArgs(args []string) error {
 		return errors.New("The positional argument KEY was not specified")
 	}
 	if len(args) > 1 {
-		return errors.New("Multiple positional arguments were specified but only one, KEY is expected")
+		return errors.New("Multiple positional arguments were specified but only one KEY is expected")
 	}
 
 	o.Key = args[0]
@@ -133,14 +133,14 @@ func getInternalPlugins() map[string]InternalPlugin {
 			Interface:       storageplugins.PluginInterface,
 			ProtocolVersion: storageplugins.PluginProtocolVersion,
 			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
-				return mongodb.NewPlugin(c.Context, pluginCfg), nil
+				return mongodb.NewPlugin(c.Context, pluginCfg)
 			},
 		},
 		mongodb_docker.PluginKey: {
 			Interface:       storageplugins.PluginInterface,
 			ProtocolVersion: storageplugins.PluginProtocolVersion,
 			Create: func(c *config.Config, pluginCfg interface{}) (plugin.Plugin, error) {
-				return mongodb_docker.NewPlugin(c.Context, pluginCfg), nil
+				return mongodb_docker.NewPlugin(c.Context, pluginCfg)
 			},
 		},
 	}

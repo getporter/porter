@@ -25,14 +25,14 @@ type PluginConfig struct {
 	Timeout int    `mapstructure:"timeout,omitempty"`
 }
 
-func NewPlugin(c *portercontext.Context, rawCfg interface{}) plugin.Plugin {
+func NewPlugin(c *portercontext.Context, rawCfg interface{}) (plugin.Plugin, error) {
 	cfg := PluginConfig{
 		Timeout: 10,
 	}
 	if err := mapstructure.Decode(rawCfg, &cfg); err != nil {
-		panic(fmt.Errorf("error reading plugin configuration: %w", err))
+		return nil, fmt.Errorf("error reading plugin configuration: %w", err)
 	}
 
 	impl := NewStore(c, cfg)
-	return pluginstore.NewPlugin(c, impl)
+	return pluginstore.NewPlugin(c, impl), nil
 }

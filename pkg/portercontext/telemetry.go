@@ -30,13 +30,13 @@ func (c *Context) configureTelemetry(ctx context.Context, serviceName string, lo
 
 	c.tracer = createNoopTracer()
 
-	tracer, ok, err := c.createTracer(ctx, serviceName, logger)
+	tracer, err := c.createTracer(ctx, serviceName, logger)
 	if err != nil {
 		return err
 	}
 
 	// Only assign the tracer if one was configured (i.e. not noop)
-	if ok {
+	if tracer.IsNoOp {
 		c.tracer = tracer
 		c.tracerInitalized = true
 	}
@@ -51,21 +51,21 @@ func createNoopTracer() tracing.Tracer {
 	return t
 }
 
-func (c *Context) createTracer(ctx context.Context, serviceName string, logger *zap.Logger) (tracing.Tracer, bool, error) {
+func (c *Context) createTracer(ctx context.Context, serviceName string, logger *zap.Logger) (tracing.Tracer, error) {
 	client, err := c.createTraceClient(c.logCfg)
 	if err != nil {
-		return tracing.Tracer{}, false, err
+		return tracing.Tracer{}, err
 	}
 	if client == nil {
 		logger.Debug("telemetry disabled")
-		return createNoopTracer(), false, nil
+		return createNoopTracer(), nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	exporter, err := otlptrace.New(ctx, client)
 	if err != nil {
-		return tracing.Tracer{}, false, err
+		return tracing.Tracer{}, err
 	}
 
 	serviceVersion := pkg.Version
@@ -88,7 +88,7 @@ func (c *Context) createTracer(ctx context.Context, serviceName string, logger *
 	cleanup := func(ctx context.Context) error {
 		return provider.Shutdown(ctx)
 	}
-	return tracing.NewTracer(tracer, cleanup), true, nil
+	return tracing.NewTracer(tracer, cleanup), nil
 }
 
 // createTraceClient from the Porter configuration

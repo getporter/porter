@@ -52,10 +52,8 @@ func RequireErrorContains(t *testing.T, err error, substring string, msgAndArgs 
 
 // GenerateDatabaseName comes up with a valid mongodb database name from a Go test name.
 func GenerateDatabaseName(testName string) string {
-	reg, err := regexp.Compile(`[^a-zA-Z0-9_]+`)
-	if err != nil {
-		panic(err)
-	}
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+
 	safeTestName := reg.ReplaceAllString(testName, "_")
 	if len(safeTestName) > 50 {
 		safeTestName = fmt.Sprintf("%x", md5.Sum([]byte(safeTestName)))

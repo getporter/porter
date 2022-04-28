@@ -23,16 +23,16 @@ type PluginConfig struct {
 }
 
 // NewPlugin creates an instance of the storage.porter.mongodb-docker plugin
-func NewPlugin(c *portercontext.Context, rawCfg interface{}) plugin.Plugin {
+func NewPlugin(c *portercontext.Context, rawCfg interface{}) (plugin.Plugin, error) {
 	cfg := PluginConfig{
 		Port:     "27018",
 		Database: "porter",
 		Timeout:  10,
 	}
 	if err := mapstructure.Decode(rawCfg, &cfg); err != nil {
-		panic(fmt.Errorf("error reading plugin configuration: %w", err))
+		return nil, fmt.Errorf("error reading plugin configuration: %w", err)
 	}
 
 	store := NewStore(c, cfg)
-	return pluginstore.NewPlugin(c, store)
+	return pluginstore.NewPlugin(c, store), nil
 }

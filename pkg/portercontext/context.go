@@ -73,11 +73,11 @@ type Context struct {
 	// handles send log data to the console/logfile
 	logger *zap.Logger
 
-	// PluginMode indicates that Porter is running as an internal plugin
-	PluginMode bool
+	// IsInternalPlugin indicates that Porter is running as an internal plugin
+	IsInternalPlugin bool
 
-	// PluginKey is the current plugin that Porter is running as, e.g. storage.porter.mongodb
-	PluginKey string
+	// InternalPluginKey is the current plugin that Porter is running as, e.g. storage.porter.mongodb
+	InternalPluginKey string
 }
 
 // New creates a new context in the specified directory.
@@ -155,9 +155,9 @@ func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
 	c.logCfg = cfg
 
 	var baseLogger zapcore.Core
-	if c.PluginMode == true {
-		c.logCfg.TelemtryServiceName = c.PluginKey
-		baseLogger = c.makePluginLogger(c.PluginKey, cfg)
+	if c.IsInternalPlugin == true {
+		c.logCfg.TelemtryServiceName = c.InternalPluginKey
+		baseLogger = c.makePluginLogger(c.InternalPluginKey, cfg)
 	} else {
 		baseLogger = c.makeConsoleLogger()
 	}

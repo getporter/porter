@@ -234,7 +234,7 @@ func EnsureMongoIsRunning(ctx context.Context, c *portercontext.Context, contain
 				return conn, nil
 			}
 
-			time.Sleep(time.Second)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }

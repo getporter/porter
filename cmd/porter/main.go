@@ -39,9 +39,9 @@ func main() {
 		// When running an internal plugin, switch how we log to be compatible
 		// with the hashicorp go-plugin framework
 		if commandName == "porter plugins run" {
-			p.PluginMode = true
+			p.IsInternalPlugin = true
 			if len(os.Args) > 3 {
-				p.PluginKey = os.Args[3]
+				p.InternalPluginKey = os.Args[3]
 			}
 		}
 
