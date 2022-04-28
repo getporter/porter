@@ -27,8 +27,8 @@ func TestConvertFloatToInt(t *testing.T) {
 
 	wantDest := map[string]interface{}{
 		"a": map[string]interface{}{
-			"b": 1,
-			"c": []interface{}{1, -1}},
+			"b": int64(1),
+			"c": []interface{}{int64(1), int64(-1)}},
 		"d": []interface{}{map[string]interface{}{
 			"e": "cat"},
 		},
@@ -53,10 +53,10 @@ func TestConvertBsonM(t *testing.T) {
 
 	wantDest := bson.M{
 		"a": map[string]interface{}{ // right now we only convert the top level to the expected bson type. Mongo doesn't care if farther down we use primitives
-			"b": 1,
+			"b": int64(1),
 			"c": []interface{}{
-				1,
-				-1,
+				int64(1),
+				int64(-1),
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func TestConvertBsonD(t *testing.T) {
 
 	wantDest := bson.D{
 		{"a", "1"},
-		{"b", []interface{}{map[string]interface{}{"c": 1}}},
+		{"b", []interface{}{map[string]interface{}{"c": int64(1)}}},
 	}
 	require.Equal(t, wantDest, dest)
 }

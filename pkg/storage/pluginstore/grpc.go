@@ -279,11 +279,9 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 			raw[k] = ConvertBsonToPrimitives(v)
 		}
 		return raw
+	default:
+		return src
 	}
-
-	// Hope and pray we aren't sending something that protobuf doesn't like
-	// If we do, add another case above to handle that type
-	return src
 }
 
 // ConvertFloatToInt works around a weirdness in how numbers are represented
@@ -293,7 +291,7 @@ func ConvertBsonToPrimitives(src interface{}) interface{} {
 func ConvertFloatToInt(src interface{}) interface{} {
 	switch tv := src.(type) {
 	case float64:
-		intVal := int(tv)
+		intVal := int64(tv)
 		if tv == float64(intVal) {
 			return intVal
 		}

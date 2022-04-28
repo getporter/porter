@@ -11,20 +11,18 @@ import (
 	"get.porter.sh/porter/pkg/storage/plugins/proto"
 	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 	"get.porter.sh/porter/pkg/storage/pluginstore"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// TODO: test helpers in grpc.go
-func TestNewStructList(t *testing.T) {
-	t.Skip()
-}
-
-func TestGRPCTelemetry(t *testing.T) {
+func TestRoundTripDataOverGRPC(t *testing.T) {
+	// Just check that we can round trip data through our storage grpc service
 	c := portercontext.NewTestContext(t)
 	store := testplugin.NewTestStoragePlugin(c)
+	ctx := context.Background()
 
 	server := pluginstore.NewServer(c.Context, store)
 	addr := fmt.Sprintf("localhost:")
@@ -40,28 +38,32 @@ func TestGRPCTelemetry(t *testing.T) {
 	defer conn.Close()
 	client := pluginstore.NewClient(proto.NewStorageProtocolClient(conn))
 
-	opts := plugins.EnsureIndexOptions{Indices: []plugins.Index{
-		{Collection: "foo", Keys: bson.D{{"name", 1}}}}}
-	err = client.EnsureIndex(context.Background(), opts)
+	// Add an index to support filtering
+	const collection = "things"
+	err = client.EnsureIndex(ctx, plugins.EnsureIndexOptions{Indices: []plugins.Index{
+		{Collection: collection, Keys: bson.D{{"namespace", 1}, {"name", 1}}},
+	}})
 	require.NoError(t, err)
-}
 
-/*
-1. Finish tracing in mongo plugin
-2. ensure we are tracing which plugin is running, including version
-3. check that all functions trace (e.g. find, ensure index)
-4. look for todo comments
-5. check for unnecessary changes to our contracts/files
-6. add grpc tests to make sure data goes around properly?
-7. add otel test with mock tracer?
-8. add logger for plugin that emits hclog
-9. emit the correlation id for the traces emitted in a plugin before it handles  message
-10. how will net/rpc work? do we keep it? (less to test if we don't)
-11. update existing plugins to use grpc, telemetry
-12. do secrets
-make sure that the secrets plugins for azure and hashicorp are updated
-fork mchora's helm3
-remove net/rpc
-look for context.TODO()
-make sure code gen for protobuf is happening, and tools automatically installed
-*/
+	thing1 := bson.M{"name": "Thing1", "namespace": "dev"}
+	err = client.Insert(ctx, plugins.InsertOptions{
+		Collection: collection,
+		Documents: []bson.M{
+			thing1,
+			{"name": "Thing2", "namespace": "staging"},
+		},
+	})
+	require.NoError(t, err)
+
+	results, err := client.Find(ctx, plugins.FindOptions{
+		Collection: collection,
+		Filter:     bson.M{"namespace": "dev"},
+		Select:     bson.D{{"name", 1}, {"namespace", 1}, {"_id", 0}},
+	})
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+
+	var gotThing1 bson.M
+	require.NoError(t, bson.Unmarshal(results[0], &gotThing1))
+	assert.Equal(t, thing1, gotThing1)
+}

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -72,15 +71,4 @@ func TestFindOptions_ToPluginOptions(t *testing.T) {
 		{"_id", -1},
 		{"name", 1}}
 	require.Equal(t, wantSortDoc, po.Sort)
-}
-
-func TestFoo(t *testing.T) {
-	x := bson.D{
-		{Key: "foo", Value: "bar"},
-		{Key: "a", Value: "b"},
-	}
-
-	result, err := bson.Marshal(x)
-	require.NoError(t, err)
-	fmt.Println(string(result))
 }
