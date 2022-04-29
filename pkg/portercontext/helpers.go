@@ -13,14 +13,13 @@ import (
 	"strings"
 	"testing"
 
+	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/test"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zapcore"
-
-	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/test"
 )
 
 type TestContext struct {
@@ -44,7 +43,6 @@ func NewTestContext(t *testing.T) *TestContext {
 	aggOut := io.MultiWriter(out, test.Logger{T: t})
 
 	innerContext := New()
-	innerContext.traceServiceName = "testporter"
 	innerContext.correlationId = "0"
 	innerContext.timestampLogs = false
 	innerContext.Debug = true
@@ -129,7 +127,7 @@ func (c *TestContext) AddCleanupDir(dir string) {
 	c.cleanupDirs = append(c.cleanupDirs, dir)
 }
 
-func (c *TestContext) Teardown() {
+func (c *TestContext) Close() {
 	for _, dir := range c.cleanupDirs {
 		c.FileSystem.RemoveAll(dir)
 	}

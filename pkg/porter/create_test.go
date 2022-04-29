@@ -10,7 +10,7 @@ import (
 
 func TestCreate(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	err := p.Create()
 	require.NoError(t, err)

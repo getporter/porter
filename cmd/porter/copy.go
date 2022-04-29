@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/spf13/cobra"
 )
 
 func buildBundleCopyCommand(p *porter.Porter) *cobra.Command {

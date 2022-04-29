@@ -24,7 +24,7 @@ type Output struct {
 	Value []byte `json:"value" yaml:"value" toml:"value"`
 }
 
-func (o Output) DefaultDocumentFilter() interface{} {
+func (o Output) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"resultId": o.ResultID, "name": o.Name}
 }
 

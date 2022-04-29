@@ -54,7 +54,7 @@ func (p *Porter) ListInstallationRuns(ctx context.Context, opts RunListOptions) 
 
 	var displayRuns DisplayRuns
 
-	runs, runResults, err := p.Claims.ListRuns(opts.Namespace, opts.Name)
+	runs, runResults, err := p.Claims.ListRuns(ctx, opts.Namespace, opts.Name)
 	if err != nil {
 		return nil, err
 	}

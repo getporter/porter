@@ -22,6 +22,7 @@ func buildPluginsCommands(p *porter.Porter) *cobra.Command {
 	cmd.AddCommand(buildPluginShowCommand(p))
 	cmd.AddCommand(BuildPluginInstallCommand(p))
 	cmd.AddCommand(BuildPluginUninstallCommand(p))
+	cmd.AddCommand(buildPluginRunCommand(p))
 
 	return cmd
 }
@@ -143,6 +144,21 @@ func BuildPluginUninstallCommand(p *porter.Porter) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return p.UninstallPlugin(opts)
 		},
+	}
+
+	return cmd
+}
+
+func buildPluginRunCommand(p *porter.Porter) *cobra.Command {
+	var opts porter.RunInternalPluginOpts
+	cmd := &cobra.Command{
+		Use:   "run PLUGIN_KEY",
+		Short: "Serve internal plugins",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.ApplyArgs(args)
+			return p.RunInternalPlugins(cmd.Context(), opts)
+		},
+		Hidden: true, // This should ALWAYS be hidden, it is not a user-facing command
 	}
 
 	return cmd

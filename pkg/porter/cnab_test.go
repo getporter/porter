@@ -112,7 +112,7 @@ func TestSharedOptions_defaultDriver(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestParameters.AddSecret("foo_secret", "foo_value")
 	p.TestParameters.AddSecret("PARAM2_SECRET", "VALUE2")
@@ -127,7 +127,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 	err := opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter, cnab.ExtendedBundle{})
+	err = opts.parseParamSets(context.Background(), p.Porter, cnab.ExtendedBundle{})
 	assert.NoError(t, err)
 
 	wantParams := map[string]string{
@@ -138,7 +138,7 @@ func TestSharedOptions_ParseParamSets(t *testing.T) {
 
 func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter-with-file-param.yaml", config.Name)
 	p.TestConfig.TestContext.AddTestFile("testdata/paramset-with-file-param.json", "/paramset.json")
@@ -160,14 +160,14 @@ func TestSharedOptions_ParseParamSets_Failed(t *testing.T) {
 	err = opts.Validate(context.Background(), []string{}, p.Porter)
 	assert.NoError(t, err)
 
-	err = opts.parseParamSets(p.Porter, bun)
+	err = opts.parseParamSets(context.Background(), p.Porter, bun)
 	assert.Error(t, err)
 
 }
 
 func TestSharedOptions_LoadParameters(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
@@ -178,7 +178,7 @@ func TestSharedOptions_LoadParameters(t *testing.T) {
 	opts := sharedOptions{}
 	opts.Params = []string{"my-first-param=1", "my-second-param=2"}
 
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(context.Background(), p.Porter, bun)
 	require.NoError(t, err)
 
 	assert.Len(t, opts.Params, 2)
@@ -361,7 +361,9 @@ func Test_bundleFileOptions(t *testing.T) {
 
 func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
+
+	ctx := context.Background()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", config.Name)
 	m, err := manifest.LoadManifestFrom(context.Background(), p.Config, config.Name)
@@ -376,12 +378,12 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	opts := sharedOptions{}
 	opts.Params = []string{nonsensitiveParamName + "=" + nonsensitiveParamValue, sensitiveParamName + "=" + sensitiveParamValue}
 
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun)
 	require.NoError(t, err)
 
 	i := claims.NewInstallation("", bun.Name)
 
-	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
 	require.Len(t, i.Parameters.Parameters, 2)
@@ -401,9 +403,9 @@ func TestSharedOptions_populateInternalParameterSet(t *testing.T) {
 	// as well
 	opts.combinedParameters = nil
 	opts.Params = make([]string, 0)
-	err = opts.LoadParameters(p.Porter, bun)
+	err = opts.LoadParameters(ctx, p.Porter, bun)
 	require.NoError(t, err)
-	err = opts.populateInternalParameterSet(p.Porter, bun, &i)
+	err = opts.populateInternalParameterSet(ctx, p.Porter, bun, &i)
 	require.NoError(t, err)
 
 	require.Len(t, i.Parameters.Parameters, 0)

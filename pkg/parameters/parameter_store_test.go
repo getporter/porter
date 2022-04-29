@@ -1,6 +1,7 @@
 package parameters
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -11,9 +12,10 @@ import (
 
 func TestParameterStore_CRUD(t *testing.T) {
 	paramStore := NewTestParameterProvider(t)
-	defer paramStore.Teardown()
+	defer paramStore.Close()
 
-	params, err := paramStore.ListParameterSets("dev", "", nil)
+	ctx := context.Background()
+	params, err := paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "Find should return no entries")
 
@@ -28,34 +30,34 @@ func TestParameterStore_CRUD(t *testing.T) {
 	myParamSet.Status.Created = time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC)
 	myParamSet.Status.Modified = myParamSet.Status.Created
 
-	err = paramStore.InsertParameterSet(myParamSet)
+	err = paramStore.InsertParameterSet(ctx, myParamSet)
 	require.NoError(t, err, "Insert should successfully save")
 
-	params, err = paramStore.ListParameterSets("dev", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set")
 	require.Equal(t, myParamSet.Name, params[0].Name, "expected to retrieve myparams")
 
-	params, err = paramStore.ListParameterSets("", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 0, "expected no global parameter sets")
 
-	params, err = paramStore.ListParameterSets("*", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "*", "", nil)
 	require.NoError(t, err)
 	require.Len(t, params, 1, "expected 1 parameter set defined in all namespaces")
 
-	pset, err := paramStore.GetParameterSet(myParamSet.Namespace, myParamSet.Name)
+	pset, err := paramStore.GetParameterSet(ctx, myParamSet.Namespace, myParamSet.Name)
 	require.NoError(t, err)
 	require.Equal(t, myParamSet, pset, "Get should return the saved parameter set")
 
-	err = paramStore.RemoveParameterSet(myParamSet.Namespace, myParamSet.Name)
+	err = paramStore.RemoveParameterSet(ctx, myParamSet.Namespace, myParamSet.Name)
 	require.NoError(t, err, "Remove should successfully delete the parameter set")
 
-	params, err = paramStore.ListParameterSets("dev", "", nil)
+	params, err = paramStore.ListParameterSets(ctx, "dev", "", nil)
 	require.NoError(t, err)
 	require.Empty(t, params, "List should return no entries")
 
-	pset, err = paramStore.GetParameterSet("", myParamSet.Name)
+	pset, err = paramStore.GetParameterSet(ctx, "", myParamSet.Name)
 	require.ErrorIs(t, err, storage.ErrNotFound{})
 
 }
@@ -81,7 +83,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 
 	t.Run("resolve params success", func(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
-		defer paramStore.Teardown()
+		defer paramStore.Close()
 
 		paramStore.AddSecret("param1", "param1_value")
 		paramStore.AddSecret("param2", "param2_value")
@@ -91,14 +93,14 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 			"param2": "param2_value",
 		}
 
-		resolved, err := paramStore.ResolveAll(testParameterSet)
+		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
 		require.NoError(t, err)
 		require.Equal(t, expected, resolved)
 	})
 
 	t.Run("resolve params failure", func(t *testing.T) {
 		paramStore := NewTestParameterProvider(t)
-		defer paramStore.Teardown()
+		defer paramStore.Close()
 
 		// Purposefully only adding one secret
 		paramStore.AddSecret("param1", "param1_value")
@@ -108,7 +110,7 @@ func TestParameterStorage_ResolveAll(t *testing.T) {
 			"param2": "",
 		}
 
-		resolved, err := paramStore.ResolveAll(testParameterSet)
+		resolved, err := paramStore.ResolveAll(context.Background(), testParameterSet)
 		require.EqualError(t, err, "1 error occurred:\n\t* unable to resolve parameter myparamset.param2 from secret param2: secret not found\n\n")
 		require.Equal(t, expected, resolved)
 	})
@@ -150,7 +152,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 				},
 			})
 
-		err := s.Validate(testParameterSet)
+		err := s.Validate(context.Background(), testParameterSet)
 		require.NoError(t, err, "Validate did not return errors")
 	})
 
@@ -170,7 +172,7 @@ func TestParameterStorage_Validate(t *testing.T) {
 				},
 			})
 
-		err := s.Validate(testParameterSet)
+		err := s.Validate(context.Background(), testParameterSet)
 		require.Error(t, err, "Validate returned errors")
 	})
 }

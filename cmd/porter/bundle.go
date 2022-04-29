@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"get.porter.sh/porter/pkg/porter"
+	"github.com/spf13/cobra"
 )
 
 func buildBundleCommands(p *porter.Porter) *cobra.Command {

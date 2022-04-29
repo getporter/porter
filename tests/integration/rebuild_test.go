@@ -9,9 +9,8 @@ import (
 	"testing"
 
 	"get.porter.sh/porter/pkg"
-	"get.porter.sh/porter/pkg/manifest"
-
 	"get.porter.sh/porter/pkg/config"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/porter"
 	yaml "get.porter.sh/porter/pkg/yaml"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestRebuild_InstallNewBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 
@@ -42,7 +41,7 @@ func TestRebuild_UpgradeModifiedBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 
@@ -83,7 +82,7 @@ func TestRebuild_GenerateCredentialsNewBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 
@@ -105,7 +104,7 @@ func TestRebuild_GenerateCredentialsExistingBundle(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 

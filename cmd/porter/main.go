@@ -36,6 +36,15 @@ func main() {
 		// Trace the command that called porter, e.g. porter installation show
 		cmd, commandName, formattedCommand := getCalledCommand(rootCmd)
 
+		// When running an internal plugin, switch how we log to be compatible
+		// with the hashicorp go-plugin framework
+		if commandName == "porter plugins run" {
+			p.IsInternalPlugin = true
+			if len(os.Args) > 3 {
+				p.InternalPluginKey = os.Args[3]
+			}
+		}
+
 		// Only run init logic that could fail for commands that
 		// really need it, skip it for commands that should NEVER
 		// fail.
@@ -46,7 +55,7 @@ func main() {
 			}
 		}
 
-		ctx, log := p.StartRootSpan(context.Background(), commandName, attribute.String("command", formattedCommand))
+		ctx, log := p.StartRootSpan(ctx, commandName, attribute.String("command", formattedCommand))
 		defer func() {
 			// Capture panics and trace them
 			if panicErr := recover(); panicErr != nil {
@@ -58,6 +67,7 @@ func main() {
 				os.Exit(1)
 			} else {
 				log.EndSpan()
+				log.Close()
 				p.Close()
 			}
 		}()
@@ -148,7 +158,7 @@ Try our QuickStart https://porter.sh/quickstart to learn how to use Porter.
 			if err != nil {
 				return err
 			}
-			
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

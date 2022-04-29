@@ -37,7 +37,7 @@ func LoggerFromContext(ctx context.Context) TraceLogger {
 		tracer = trace.NewNoopTracerProvider().Tracer("noop")
 	}
 
-	return newTraceLogger(ctx, span, logger, tracer)
+	return newTraceLogger(ctx, span, logger, NewTracer(tracer, nil))
 }
 
 // StartSpan retrieves a logger from the current context and starts a new span

@@ -72,7 +72,7 @@ func NewInternalParameterSet(namespace string, name string, params ...secrets.St
 	return NewParameterSet(namespace, INTERNAL_PARAMETERER_SET+"-"+name, params...)
 }
 
-func (s ParameterSet) DefaultDocumentFilter() interface{} {
+func (s ParameterSet) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": s.Namespace, "name": s.Name}
 }
 

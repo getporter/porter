@@ -20,8 +20,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/attribute"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,6 +27,10 @@ import (
 const (
 	// MixinOutputsDir represents the directory where mixin output files are written/read
 	MixinOutputsDir = "/cnab/app/porter/outputs"
+
+	// EnvCorrelationID is the name of the environment variable containing the
+	// id to correlate logs with a workflow.
+	EnvCorrelationID = "PORTER_CORRELATION_ID"
 )
 
 type CommandBuilder func(name string, arg ...string) *exec.Cmd
@@ -53,24 +55,29 @@ type Context struct {
 	// Helps correlate logs with a workflow.
 	correlationId string
 
-	// logLevel filters the messages written to the console and logfile
-	logLevel zapcore.Level
-	logFile  afero.File
+	// logCfg is the logger configuration used.
+	logCfg LogConfiguration
+
+	// logFile is the open file where we are sending logs.
+	logFile afero.File
 
 	// indicates if log timestamps should be printed to the console
 	timestampLogs bool
 
 	// handles sending tracing data to an otel collector
-	tracer trace.Tracer
+	tracer tracing.Tracer
+
+	// indicates if we have created a real tracer yet (instead of noop)
+	tracerInitalized bool
 
 	// handles send log data to the console/logfile
 	logger *zap.Logger
 
-	// cleans up resources associated with the tracer when porter completes
-	traceCloser *sdktrace.TracerProvider
+	// IsInternalPlugin indicates that Porter is running as an internal plugin
+	IsInternalPlugin bool
 
-	// the service name sent to the otel collector when we send tracing data
-	traceServiceName string
+	// InternalPluginKey is the current plugin that Porter is running as, e.g. storage.porter.mongodb
+	InternalPluginKey string
 }
 
 // New creates a new context in the specified directory.
@@ -81,15 +88,23 @@ func New() *Context {
 	// tests to override it.
 	pwd, _ := os.Getwd()
 
+	correlationId := os.Getenv(EnvCorrelationID)
+	if correlationId == "" {
+		correlationId = cnabclaims.MustNewULID() // not using cnab package because that creates a cycle
+	}
+
 	c := &Context{
 		environ:       getEnviron(),
 		FileSystem:    aferox.NewAferox(pwd, afero.NewOsFs()),
 		In:            os.Stdin,
 		Out:           NewCensoredWriter(os.Stdout),
 		Err:           NewCensoredWriter(os.Stderr),
-		correlationId: cnabclaims.MustNewULID(), // not using cnab package because that creates a cycle
+		correlationId: correlationId,
 		timestampLogs: true,
 	}
+
+	// Make the correlation id available for the plugins to use
+	c.Setenv(EnvCorrelationID, correlationId)
 
 	c.ConfigureLogging(context.Background(), LogConfiguration{})
 	c.defaultNewCommand()
@@ -102,6 +117,7 @@ func New() *Context {
 // This should only be done once.
 func (c *Context) StartRootSpan(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, tracing.TraceLogger) {
 	childCtx, span := c.tracer.Start(ctx, op)
+	attrs = append(attrs, attribute.String("correlation-id", c.correlationId))
 	span.SetAttributes(attrs...)
 	return tracing.NewRootLogger(childCtx, span, c.logger, c.tracer)
 }
@@ -122,7 +138,6 @@ type LogConfiguration struct {
 	LogToFile            bool
 	LogDirectory         string
 	LogLevel             zapcore.Level
-	LogCorrelationID     string
 	StructuredLogs       bool
 	TelemetryEnabled     bool
 	TelemetryEndpoint    string
@@ -132,51 +147,60 @@ type LogConfiguration struct {
 	TelemetryCompression string
 	TelemetryTimeout     string
 	TelemetryHeaders     map[string]string
+	TelemtryServiceName  string
 }
 
 // ConfigureLogging applies different configuration to our logging and tracing.
 func (c *Context) ConfigureLogging(ctx context.Context, cfg LogConfiguration) {
-	// Cleanup in case logging has been configured before
-	c.logLevel = cfg.LogLevel
+	c.logCfg = cfg
 
-	if len(cfg.LogCorrelationID) > 0 {
-		c.correlationId = cfg.LogCorrelationID
+	var baseLogger zapcore.Core
+	if c.IsInternalPlugin == true {
+		c.logCfg.TelemtryServiceName = c.InternalPluginKey
+		baseLogger = c.makePluginLogger(c.InternalPluginKey, cfg)
+	} else {
+		baseLogger = c.makeConsoleLogger()
 	}
 
-	encoding := c.makeLogEncoding()
-	consoleLogger := c.makeConsoleLogger(encoding, cfg.StructuredLogs)
+	c.configureLoggingWith(ctx, baseLogger)
+}
 
+// ConfigureLogging applies different configuration to our logging and tracing.
+func (c *Context) configureLoggingWith(ctx context.Context, baseLogger zapcore.Core) {
 	// make a temporary logger that we can use until we've completely initialized the full logger
-	tmpLog := zap.New(consoleLogger)
+	tmpLog := zap.New(baseLogger)
 
 	var err error
 	fileLogger := zapcore.NewNopCore()
-	if cfg.LogToFile {
-		fileLogger, err = c.configureFileLog(encoding, cfg.LogDirectory)
+	if c.logCfg.LogToFile {
+		fileLogger, err = c.configureFileLog(c.logCfg.LogDirectory)
 		if err != nil {
 			tmpLog.Error(errors.Wrap(err, "could not configure a file logger").Error())
 		} else {
 			tmpLog.Debug("Writing logs to " + c.logFile.Name())
 		}
 	}
-	tmpLog = zap.New(zapcore.NewTee(consoleLogger, fileLogger))
+	tmpLog = zap.New(zapcore.NewTee(baseLogger, fileLogger))
 
-	if cfg.TelemetryEnabled {
+	if c.logCfg.TelemetryEnabled {
 		// Only initialize the tracer once per command
-		if c.traceCloser == nil {
-			err = c.configureTelemetry(ctx, tmpLog, cfg)
+		if !c.tracerInitalized {
+			err = c.configureTelemetry(ctx, c.logCfg.TelemtryServiceName, tmpLog)
 			if err != nil {
 				tmpLog.Error(errors.Wrap(err, "could not configure a tracer").Error())
 			}
 		}
 	} else {
-		c.tracer = trace.NewNoopTracerProvider().Tracer("noop")
+		tracer := createNoopTracer()
+		c.tracer = tracer
 	}
 
 	c.logger = tmpLog
 }
 
-func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLogs bool) zapcore.Core {
+func (c *Context) makeConsoleLogger() zapcore.Core {
+	encoding := c.makeLogEncoding()
+
 	stderr := c.Err
 	if f, ok := stderr.(*os.File); ok {
 		if isatty.IsTerminal(f.Fd()) {
@@ -186,15 +210,15 @@ func (c *Context) makeConsoleLogger(encoding zapcore.EncoderConfig, structuredLo
 	}
 
 	// if structured-logs feature isn't enabled, keep the logs looking like they do now, with just the message printed
-	if !structuredLogs {
+	if !c.logCfg.StructuredLogs {
 		encoding.TimeKey = ""
 		encoding.LevelKey = ""
 	}
 	consoleEncoder := zapcore.NewConsoleEncoder(encoding)
-	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logLevel)
+	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(stderr), c.logCfg.LogLevel)
 }
 
-func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (zapcore.Core, error) {
+func (c *Context) configureFileLog(dir string) (zapcore.Core, error) {
 	if err := c.FileSystem.MkdirAll(dir, pkg.FileModeDirectory); err != nil {
 		return nil, err
 	}
@@ -210,23 +234,21 @@ func (c *Context) configureFileLog(encoding zapcore.EncoderConfig, dir string) (
 	}
 
 	// Split logs to the console and file
-	fileEncoder := zapcore.NewJSONEncoder(encoding)
-	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logLevel), nil
+	fileEncoder := zapcore.NewJSONEncoder(c.makeLogEncoding())
+	return zapcore.NewCore(fileEncoder, zapcore.AddSync(c.logFile), c.logCfg.LogLevel), nil
 }
 
 func (c *Context) Close() error {
-	c.closeLogger()
-	if c.traceCloser != nil {
-		c.traceCloser.Shutdown(context.TODO())
-	}
-	return nil
-}
-
-func (c *Context) closeLogger() {
 	if c.logFile != nil {
 		c.logFile.Close()
 		c.logFile = nil
 	}
+
+	if err := c.tracer.Close(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Context) defaultNewCommand() {

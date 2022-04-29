@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
+
 	"get.porter.sh/porter/pkg/claims"
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/config"
@@ -12,10 +14,8 @@ import (
 	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/test"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,10 +34,10 @@ type TestRuntime struct {
 
 func NewTestRuntime(t *testing.T) *TestRuntime {
 	tc := config.NewTestConfig(t)
-	testStorage := storage.NewTestStore(tc.TestContext)
-	testSecrets := inmemorysecrets.NewStore()
+	testStorage := storage.NewTestStore(tc)
+	testSecrets := secrets.NewTestSecretsProvider()
 	testClaims := claims.NewTestClaimProviderFor(tc.TestContext.T, testStorage)
-	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage)
+	testCredentials := credentials.NewTestCredentialProviderFor(tc.TestContext.T, testStorage, testSecrets)
 	testParameters := parameters.NewTestParameterProviderFor(tc.TestContext.T, testStorage, testSecrets)
 
 	return NewTestRuntimeFor(tc, testClaims, testCredentials, testParameters, testSecrets)
@@ -54,11 +54,14 @@ func NewTestRuntimeFor(tc *config.TestConfig, testClaims *claims.TestClaimProvid
 	}
 }
 
-func (t *TestRuntime) Teardown() error {
-	t.TestClaims.Teardown()
-	t.TestCredentials.Teardown()
-	t.TestParameters.Teardown()
-	return nil
+func (t *TestRuntime) Close() error {
+	var bigErr *multierror.Error
+
+	bigErr = multierror.Append(bigErr, t.TestClaims.Close())
+	bigErr = multierror.Append(bigErr, t.TestCredentials.Close())
+	bigErr = multierror.Append(bigErr, t.TestParameters.Close())
+
+	return bigErr.ErrorOrNil()
 }
 
 func (t *TestRuntime) LoadBundle(bundleFile string) (cnab.ExtendedBundle, error) {

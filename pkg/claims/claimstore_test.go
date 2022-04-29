@@ -124,7 +124,7 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 
 	// Record the status of the foo installation
 	foo.ApplyResult(run, result)
-	require.NoError(t, cp.UpdateInstallation(foo))
+	require.NoError(t, cp.UpdateInstallation(context.Background(), foo))
 
 	// Create the bar installation data
 	bar := cp.CreateInstallation(NewInstallation("dev", "bar"))
@@ -134,7 +134,7 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 
 	// Record the status of the bar installation
 	bar.ApplyResult(run, result)
-	require.NoError(t, cp.UpdateInstallation(bar))
+	require.NoError(t, cp.UpdateInstallation(context.Background(), bar))
 
 	// Create the baz installation data
 	baz := cp.CreateInstallation(NewInstallation("dev", "baz"))
@@ -145,14 +145,14 @@ func generateClaimData(t *testing.T) *TestClaimProvider {
 
 	// Record the status of the baz installation
 	baz.ApplyResult(run, result)
-	require.NoError(t, cp.UpdateInstallation(baz))
+	require.NoError(t, cp.UpdateInstallation(context.Background(), baz))
 
 	return cp
 }
 
 func TestClaimStore_Installations(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	t.Run("ListInstallations", func(t *testing.T) {
 		installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
@@ -174,7 +174,7 @@ func TestClaimStore_Installations(t *testing.T) {
 	})
 
 	t.Run("GetInstallation", func(t *testing.T) {
-		foo, err := cp.GetInstallation("dev", "foo")
+		foo, err := cp.GetInstallation(context.Background(), "dev", "foo")
 		require.NoError(t, err, "GetInstallation failed")
 
 		assert.Equal(t, "foo", foo.Name)
@@ -182,7 +182,7 @@ func TestClaimStore_Installations(t *testing.T) {
 	})
 
 	t.Run("GetInstallation - not found", func(t *testing.T) {
-		_, err := cp.GetInstallation("", "missing")
+		_, err := cp.GetInstallation(context.Background(), "", "missing")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 
@@ -190,20 +190,20 @@ func TestClaimStore_Installations(t *testing.T) {
 
 func TestClaimStore_DeleteInstallation(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	installations, err := cp.ListInstallations(context.Background(), "dev", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 3, "expected 3 installations")
 
-	err = cp.RemoveInstallation("dev", "foo")
+	err = cp.RemoveInstallation(context.Background(), "dev", "foo")
 	require.NoError(t, err, "RemoveInstallation failed")
 
 	installations, err = cp.ListInstallations(context.Background(), "dev", "", nil)
 	require.NoError(t, err, "ListInstallations failed")
 	assert.Len(t, installations, 2, "expected foo to be deleted")
 
-	_, err = cp.GetLastRun("dev", "foo")
+	_, err = cp.GetLastRun(context.Background(), "dev", "foo")
 	require.ErrorIs(t, err, storage.ErrNotFound{})
 }
 
@@ -211,7 +211,7 @@ func TestClaimStore_Run(t *testing.T) {
 	cp := generateClaimData(t)
 
 	t.Run("ListRuns", func(t *testing.T) {
-		runs, resultsMap, err := cp.ListRuns("dev", "foo")
+		runs, resultsMap, err := cp.ListRuns(context.Background(), "dev", "foo")
 		require.NoError(t, err, "Failed to read claims: %s", err)
 
 		require.Len(t, runs, 4, "Expected 4 runs")
@@ -224,20 +224,20 @@ func TestClaimStore_Run(t *testing.T) {
 
 	t.Run("ListRuns - bundle not yet run", func(t *testing.T) {
 		// It's now possible for someone to create an installation and not immediately have any runs.
-		runs, resultsMap, err := cp.ListRuns("dev", "missing")
+		runs, resultsMap, err := cp.ListRuns(context.Background(), "dev", "missing")
 		require.NoError(t, err)
 		assert.Empty(t, runs)
 		assert.Empty(t, resultsMap)
 	})
 
 	t.Run("GetRun", func(t *testing.T) {
-		runs, _, err := cp.ListRuns("dev", "foo")
+		runs, _, err := cp.ListRuns(context.Background(), "dev", "foo")
 		require.NoError(t, err, "ListRuns failed")
 
 		assert.NotEmpty(t, runs, "no claims were found")
 		runID := runs[0].ID
 
-		c, err := cp.GetRun(runID)
+		c, err := cp.GetRun(context.Background(), runID)
 		require.NoError(t, err, "GetRun failed")
 
 		assert.Equal(t, "foo", c.Installation)
@@ -245,12 +245,12 @@ func TestClaimStore_Run(t *testing.T) {
 	})
 
 	t.Run("GetRun - invalid claim", func(t *testing.T) {
-		_, err := cp.GetRun("missing")
+		_, err := cp.GetRun(context.Background(), "missing")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 
 	t.Run("GetLastRun", func(t *testing.T) {
-		c, err := cp.GetLastRun("dev", "bar")
+		c, err := cp.GetLastRun(context.Background(), "dev", "bar")
 		require.NoError(t, err, "GetLastRun failed")
 
 		assert.Equal(t, "bar", c.Installation)
@@ -258,72 +258,72 @@ func TestClaimStore_Run(t *testing.T) {
 	})
 
 	t.Run("GetLastRun - invalid installation", func(t *testing.T) {
-		_, err := cp.GetLastRun("dev", "missing")
+		_, err := cp.GetLastRun(context.Background(), "dev", "missing")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 }
 
 func TestClaimStore_Results(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
-	barRuns, resultsMap, err := cp.ListRuns("dev", "bar")
+	barRuns, resultsMap, err := cp.ListRuns(context.Background(), "dev", "bar")
 	require.NoError(t, err, "ListRuns failed")
 	require.Len(t, barRuns, 1, "expected 1 claim")
 	require.Len(t, resultsMap, 1, "expected 1 claim")
 	runID := barRuns[0].ID // this claim has multiple results
 
 	t.Run("ListResults", func(t *testing.T) {
-		results, err := cp.ListResults(runID)
+		results, err := cp.ListResults(context.Background(), runID)
 		require.NoError(t, err, "ListResults failed")
 		assert.Len(t, results, 2, "expected 2 results")
 		assert.Len(t, resultsMap[runID], 2, "expected 2 results for runID in results map")
 	})
 
 	t.Run("GetResult", func(t *testing.T) {
-		results, err := cp.ListResults(runID)
+		results, err := cp.ListResults(context.Background(), runID)
 		require.NoError(t, err, "ListResults failed")
 
 		resultID := results[0].ID
 
-		r, err := cp.GetResult(resultID)
+		r, err := cp.GetResult(context.Background(), resultID)
 		require.NoError(t, err, "GetResult failed")
 
 		assert.Equal(t, cnab.StatusRunning, r.Status)
 	})
 
 	t.Run("ReadResult - invalid result", func(t *testing.T) {
-		_, err := cp.GetResult("missing")
+		_, err := cp.GetResult(context.Background(), "missing")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 	})
 }
 
 func TestClaimStore_Outputs(t *testing.T) {
 	cp := generateClaimData(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
-	fooRuns, _, err := cp.ListRuns("dev", "foo")
+	fooRuns, _, err := cp.ListRuns(context.Background(), "dev", "foo")
 	require.NoError(t, err, "ListRuns failed")
 	require.NotEmpty(t, fooRuns, "expected foo to have a run")
 	foo := fooRuns[1]
-	fooResults, err := cp.ListResults(foo.ID) // Use foo's upgrade claim that has two outputs
+	fooResults, err := cp.ListResults(context.Background(), foo.ID) // Use foo's upgrade claim that has two outputs
 	require.NoError(t, err, "ListResults failed")
 	require.NotEmpty(t, fooResults, "expected foo to have a result")
 	fooResult := fooResults[0]
 	resultID := fooResult.ID // this result has an output
 
-	barRuns, _, err := cp.ListRuns("dev", "bar")
+	barRuns, _, err := cp.ListRuns(context.Background(), "dev", "bar")
 	require.NoError(t, err, "ReadAllClaims failed")
 	require.Len(t, barRuns, 1, "expected bar to have a run")
 	barRun := barRuns[0]
-	barResults, err := cp.ListResults(barRun.ID)
+	barResults, err := cp.ListResults(context.Background(), barRun.ID)
 	require.NoError(t, err, "ReadAllResults failed")
 	require.NotEmpty(t, barResults, "expected bar to have a result")
 	barResult := barResults[0]
 	resultIDWithoutOutputs := barResult.ID
 
 	t.Run("ListOutputs", func(t *testing.T) {
-		outputs, err := cp.ListOutputs(resultID)
+		outputs, err := cp.ListOutputs(context.Background(), resultID)
 		require.NoError(t, err, "ListResults failed")
 		assert.Len(t, outputs, 4, "expected 2 outputs")
 
@@ -334,13 +334,13 @@ func TestClaimStore_Outputs(t *testing.T) {
 	})
 
 	t.Run("ListOutputs - no outputs", func(t *testing.T) {
-		outputs, err := cp.ListResults(resultIDWithoutOutputs)
+		outputs, err := cp.ListResults(context.Background(), resultIDWithoutOutputs)
 		require.NoError(t, err, "listing outputs for a result that doesn't have any should not result in an error")
 		assert.Empty(t, outputs)
 	})
 
 	t.Run("GetLastOutputs", func(t *testing.T) {
-		outputs, err := cp.GetLastOutputs("dev", "foo")
+		outputs, err := cp.GetLastOutputs(context.Background(), "dev", "foo")
 
 		require.NoError(t, err, "GetLastOutputs failed")
 		assert.Equal(t, 4, outputs.Len(), "wrong number of outputs identified")
@@ -355,13 +355,13 @@ func TestClaimStore_Outputs(t *testing.T) {
 	})
 
 	t.Run("ReadLastOutputs - invalid installation", func(t *testing.T) {
-		outputs, err := cp.GetLastOutputs("dev", "missing")
+		outputs, err := cp.GetLastOutputs(context.Background(), "dev", "missing")
 		require.NoError(t, err)
 		assert.Equal(t, outputs.Len(), 0)
 	})
 
 	t.Run("GetLastOutput", func(t *testing.T) {
-		o, err := cp.GetLastOutput("dev", "foo", "output1")
+		o, err := cp.GetLastOutput(context.Background(), "dev", "foo", "output1")
 
 		require.NoError(t, err, "GetLastOutputs failed")
 		assert.Equal(t, "upgrade output1", string(o.Value), "did not find the most recent value for output1")
@@ -369,13 +369,13 @@ func TestClaimStore_Outputs(t *testing.T) {
 	})
 
 	t.Run("GetLastOutput - invalid installation", func(t *testing.T) {
-		o, err := cp.GetLastOutput("dev", "missing", "output1")
+		o, err := cp.GetLastOutput(context.Background(), "dev", "missing", "output1")
 		require.ErrorIs(t, err, storage.ErrNotFound{})
 		assert.Empty(t, o)
 	})
 
 	t.Run("GetLastLogs", func(t *testing.T) {
-		logs, hasLogs, err := cp.GetLastLogs("dev", "foo")
+		logs, hasLogs, err := cp.GetLastLogs(context.Background(), "dev", "foo")
 
 		require.NoError(t, err, "GetLastLogs failed")
 		assert.True(t, hasLogs, "expected logs to be found")

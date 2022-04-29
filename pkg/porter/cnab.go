@@ -242,7 +242,7 @@ func (o *bundleFileOptions) validateCNABFile(cxt *portercontext.Context) error {
 
 // LoadParameters validates and resolves the parameters and sets. It must be
 // called after porter has loaded the bundle definition.
-func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error {
+func (o *sharedOptions) LoadParameters(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
 	// This is called in multiple code paths, so exit early if
 	// we have already loaded the parameters into combinedParameters
 	if o.combinedParameters != nil {
@@ -254,7 +254,7 @@ func (o *sharedOptions) LoadParameters(p *Porter, bun cnab.ExtendedBundle) error
 		return err
 	}
 
-	err = o.parseParamSets(p, bun)
+	err = o.parseParamSets(ctx, p, bun)
 	if err != nil {
 		return err
 	}
@@ -275,13 +275,13 @@ func (o *sharedOptions) parseParams() error {
 	return nil
 }
 
-func (o *sharedOptions) populateInternalParameterSet(p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
+func (o *sharedOptions) populateInternalParameterSet(ctx context.Context, p *Porter, bun cnab.ExtendedBundle, i *claims.Installation) error {
 	strategies := make([]secrets.Strategy, 0, len(o.parsedParams))
 	for name, value := range o.parsedParams {
 		strategies = append(strategies, parameters.ValueStrategy(name, value))
 	}
 
-	strategies, err := p.Sanitizer.CleanParameters(strategies, bun, i.ID)
+	strategies, err := p.Sanitizer.CleanParameters(ctx, strategies, bun, i.ID)
 	if err != nil {
 		return err
 	}
@@ -299,9 +299,9 @@ func (o *sharedOptions) populateInternalParameterSet(p *Porter, bun cnab.Extende
 }
 
 // parseParamSets parses the variable assignments in ParameterSets.
-func (o *sharedOptions) parseParamSets(p *Porter, bun cnab.ExtendedBundle) error {
+func (o *sharedOptions) parseParamSets(ctx context.Context, p *Porter, bun cnab.ExtendedBundle) error {
 	if len(o.ParameterSets) > 0 {
-		parsed, err := p.loadParameterSets(bun, o.Namespace, o.ParameterSets)
+		parsed, err := p.loadParameterSets(ctx, bun, o.Namespace, o.ParameterSets)
 		if err != nil {
 			return errors.Wrap(err, "unable to process provided parameter sets")
 		}

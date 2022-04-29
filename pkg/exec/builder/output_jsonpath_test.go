@@ -5,10 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"get.porter.sh/porter/pkg/portercontext"
 )
 
 type TestStep struct {

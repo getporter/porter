@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"get.porter.sh/porter/pkg"
 	"go/build"
 	"io/ioutil"
 	"log"
@@ -16,16 +17,18 @@ import (
 	"strconv"
 	"strings"
 
-	"get.porter.sh/magefiles/ci"
-	// mage:import
-	"get.porter.sh/magefiles/tests"
-	// mage:import
-	_ "get.porter.sh/porter/mage/docs"
+	"get.porter.sh/porter/mage/setup"
 
+	"get.porter.sh/magefiles/ci"
 	"get.porter.sh/magefiles/docker"
 	"get.porter.sh/magefiles/releases"
+
+	// mage:import
+	"get.porter.sh/magefiles/tests"
 	"get.porter.sh/magefiles/tools"
-	"get.porter.sh/porter/pkg"
+
+	// mage:import
+	_ "get.porter.sh/porter/mage/docs"
 	"github.com/carolynvs/magex/mgx"
 	"github.com/carolynvs/magex/shx"
 	"github.com/carolynvs/magex/xplat"
@@ -53,7 +56,7 @@ func CheckGoVersion() {
 
 // Builds all code artifacts in the repository
 func Build() {
-	mg.SerialDeps(BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
+	mg.SerialDeps(setup.EnsureProtobufTools, BuildPorter, DocsGen, BuildExecMixin, BuildAgent)
 	mg.Deps(GetMixins)
 }
 

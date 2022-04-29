@@ -1,6 +1,8 @@
 package filesystem
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -8,13 +10,11 @@ import (
 	"get.porter.sh/porter/pkg/secrets"
 	"get.porter.sh/porter/pkg/secrets/plugins"
 	"get.porter.sh/porter/pkg/secrets/plugins/host"
-	"github.com/carolynvs/aferox"
-	cnabsecrets "github.com/cnabio/cnab-go/secrets"
-	"github.com/hashicorp/go-hclog"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/pkg/errors"
 )
 
-var _ plugins.SecretsPlugin = &Store{}
+var _ plugins.SecretsProtocol = &Store{}
 
 const (
 	SECRET_FOLDER                          = "secrets"
@@ -22,80 +22,56 @@ const (
 	FileModeSensitiveWritable  os.FileMode = 0600
 )
 
-// Config contains information needed for creatina a new store.
-type Config struct {
-	secretDir     string
-	debugLog      bool
-	porterHomeDir string
-}
-
-// NewConfig returns a new instance of Config.
-func NewConfig(debug bool, porterHomeDir string) Config {
-	return Config{
-		debugLog:      debug,
-		porterHomeDir: porterHomeDir,
-	}
-}
-
-// Valid checks if the configuration has been properly set.
-func (c Config) Valid() bool {
-	return c.secretDir != ""
-}
-
-// SetSecretDir configures the directory path for storing secrets.
-func (c *Config) SetSecretDir() (string, error) {
-	var err error
-	porterHomeDir := c.porterHomeDir
-	if porterHomeDir == "" {
-		porterCfg := config.New()
-		porterHomeDir, err = porterCfg.GetHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "could not get user home directory")
-		}
-	}
-
-	c.secretDir = filepath.Join(porterHomeDir, SECRET_FOLDER)
-	return c.secretDir, nil
-}
-
 // Store implements an file system secrets store for testing and local
 // development.
 type Store struct {
-	config    Config
-	logger    hclog.Logger
-	hostStore cnabsecrets.Store
-	storage   aferox.Aferox
+	config    *config.Config
+	secretDir string
+	hostStore plugins.SecretsProtocol
 }
 
 // NewStore returns a new instance of the filesystem secret store.
-func NewStore(cfg Config, logger hclog.Logger, storage aferox.Aferox) *Store {
-	if cfg.debugLog {
-		logger.SetLevel(hclog.Debug)
-	}
-
+func NewStore(c *config.Config) *Store {
 	s := &Store{
-		config:    cfg,
-		logger:    logger,
-		hostStore: host.NewPlugin(),
-		storage:   storage,
+		config:    c,
+		hostStore: host.NewStore(),
 	}
 
 	return s
 }
 
-// Connect implements the Connect method on the secret plugins' interface.
-func (s *Store) Connect() error {
-	if !s.config.Valid() {
-		return errors.New("invalid filesystem configuration")
+// Connect initializes the plugin for use.
+// The plugin itself is responsible for ensuring it was called.
+// Close is called automatically when the plugin is used by Porter.
+func (s *Store) Connect(ctx context.Context) error {
+	if s.secretDir != "" {
+		return nil
 	}
 
-	if err := s.storage.MkdirAll(s.config.secretDir, FileModeSensitiveDirectory); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if _, err := s.SetSecretDir(); err != nil {
+		return log.Error(err)
 	}
 
-	s.logger.Debug("storing secrets in %s", s.config.secretDir)
+	if err := s.config.FileSystem.MkdirAll(s.secretDir, FileModeSensitiveDirectory); err != nil && !errors.Is(err, os.ErrExist) {
+		return log.Error(err)
+	}
 
+	log.Debugf("storing secrets in %s", s.secretDir)
 	return nil
+}
+
+// SetSecretDir configures the directory path for storing secrets.
+func (s *Store) SetSecretDir() (string, error) {
+	porterHomeDir, err := s.config.GetHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not get user home directory: %w", err)
+	}
+
+	s.secretDir = filepath.Join(porterHomeDir, SECRET_FOLDER)
+	return s.secretDir, nil
 }
 
 // Close implements the Close method on the secret plugins' interface.
@@ -104,35 +80,53 @@ func (s *Store) Close() error {
 }
 
 // Resolve implements the Resolve method on the secret plugins' interface.
-func (s *Store) Resolve(keyName string, keyValue string) (string, error) {
-	// check if the keyName is secret
-	if keyName != secrets.SourceSecret {
-		return s.hostStore.Resolve(keyName, keyValue)
+func (s *Store) Resolve(ctx context.Context, keyName string, keyValue string) (string, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return "", err
 	}
 
-	path := filepath.Join(s.config.secretDir, keyValue)
-	data, err := s.storage.ReadFile(path)
+	// check if the keyName is secret
+	if keyName != secrets.SourceSecret {
+		value, err := s.hostStore.Resolve(ctx, keyName, keyValue)
+		return value, log.Error(err)
+	}
+
+	path := filepath.Join(s.secretDir, keyValue)
+	data, err := s.config.FileSystem.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", log.Error(fmt.Errorf("error reading secret from filesystem: %w", err))
 	}
 
 	return string(data), nil
 }
 
 // Create implements the Create method on the secret plugins' interface.
-func (s *Store) Create(keyName string, keyValue string, value string) error {
-	// check if the keyName is secret
-	if keyName != secrets.SourceSecret {
-		return errors.New("invalid key name: " + keyName)
+func (s *Store) Create(ctx context.Context, keyName string, keyValue string, value string) error {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
+		return err
 	}
 
-	path := filepath.Join(s.config.secretDir, keyValue)
-	f, err := s.storage.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FileModeSensitiveWritable)
+	// check if the keyName is secret
+	if keyName != secrets.SourceSecret {
+		return log.Error(errors.New("invalid key name: " + keyName))
+	}
+
+	path := filepath.Join(s.secretDir, keyValue)
+	f, err := s.config.FileSystem.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, FileModeSensitiveWritable)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create key: %s", keyName)
+		return log.Error(fmt.Errorf("failed to create key: %s: %w", keyName, err))
 	}
 	defer f.Close()
 
 	_, err = f.WriteString(value)
-	return err
+	if err != nil {
+		return log.Error(fmt.Errorf("error writing secret to filesystem: %w", err))
+	}
+	return nil
 }

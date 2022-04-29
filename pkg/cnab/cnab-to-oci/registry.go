@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"get.porter.sh/porter/pkg/cnab"
+	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/tracing"
 	"github.com/cnabio/cnab-to-oci/relocation"
 	"github.com/cnabio/cnab-to-oci/remotes"
@@ -19,8 +20,6 @@ import (
 	"github.com/docker/docker/pkg/term"
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
-
-	"get.porter.sh/porter/pkg/portercontext"
 )
 
 // ErrNoContentDigest represents an error due to an image not having a

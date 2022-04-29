@@ -5,13 +5,11 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"get.porter.sh/porter/pkg/yaml"
-
-	"get.porter.sh/porter/pkg/manifest"
-	"get.porter.sh/porter/tests"
-
 	"get.porter.sh/porter/pkg/linter"
+	"get.porter.sh/porter/pkg/manifest"
 	"get.porter.sh/porter/pkg/mixin"
+	"get.porter.sh/porter/pkg/yaml"
+	"get.porter.sh/porter/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +26,7 @@ func TestPorter_Lint_ChecksManifestSchemaVersion(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			// Make a bundle with the specified schemaVersion
 			p.TestConfig.TestContext.AddTestFileFromRoot("tests/testdata/mybuns/porter.yaml", "porter.yaml")
@@ -49,7 +47,7 @@ func TestPorter_Lint_ChecksManifestSchemaVersion(t *testing.T) {
 
 func TestPorter_Lint(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 
@@ -102,7 +100,7 @@ exec:
 	for _, tc := range testcases {
 		t.Run(tc.format, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			p.TestConfig.TestContext.AddTestFile("testdata/porter.yaml", "porter.yaml")
 

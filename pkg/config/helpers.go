@@ -64,3 +64,7 @@ func (c *TestConfig) SetupIntegrationTest() (testDir string, homeDir string) {
 
 	return testDir, homeDir
 }
+
+func (c *TestConfig) Close() {
+	c.TestContext.Close()
+}

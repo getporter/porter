@@ -1,14 +1,14 @@
 package parameters
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/encoding"
-	"get.porter.sh/porter/pkg/portercontext"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/carolynvs/aferox"
 	"github.com/pkg/errors"
@@ -22,19 +22,18 @@ type TestParameterProvider struct {
 
 	T *testing.T
 	// TestSecrets allows you to set up secrets for unit testing
-	TestSecrets   secrets.Store
+	TestSecrets   secrets.TestSecretsProvider
 	TestDocuments storage.Store
 }
 
 func NewTestParameterProvider(t *testing.T) *TestParameterProvider {
-	tc := portercontext.NewTestContext(t)
+	tc := config.NewTestConfig(t)
 	testStore := storage.NewTestStore(tc)
-	testSecrets := inmemorysecrets.NewStore()
-
+	testSecrets := secrets.NewTestSecretsProvider()
 	return NewTestParameterProviderFor(t, testStore, testSecrets)
 }
 
-func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.Store) *TestParameterProvider {
+func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecrets secrets.TestSecretsProvider) *TestParameterProvider {
 	return &TestParameterProvider{
 		T:             t,
 		TestDocuments: testStore,
@@ -46,17 +45,9 @@ func NewTestParameterProviderFor(t *testing.T, testStore storage.Store, testSecr
 	}
 }
 
-type hasTeardown interface {
-	Teardown() error
-}
-
-func (p TestParameterProvider) Teardown() error {
-	// sometimes we are testing with a mock that needs to be released at the end of the test
-	if ts, ok := p.TestDocuments.(hasTeardown); ok {
-		return ts.Teardown()
-	} else {
-		return p.TestDocuments.Close()
-	}
+func (p TestParameterProvider) Close() error {
+	p.TestSecrets.Close()
+	return p.TestDocuments.Close()
 }
 
 // Load a ParameterSet from a test file at a given path.
@@ -76,7 +67,7 @@ func (p TestParameterProvider) AddTestParameters(path string) {
 		p.T.Fatal(errors.Wrapf(err, "could not read test parameters from %s", path))
 	}
 
-	err = p.ParameterStore.InsertParameterSet(ps)
+	err = p.ParameterStore.InsertParameterSet(context.Background(), ps)
 	if err != nil {
 		p.T.Fatal(errors.Wrap(err, "could not load test parameters"))
 	}
@@ -95,5 +86,5 @@ func (p TestParameterProvider) AddTestParametersDirectory(dir string) {
 }
 
 func (p TestParameterProvider) AddSecret(key string, value string) {
-	p.TestSecrets.Create(secrets.SourceSecret, key, value)
+	p.TestSecrets.Create(context.Background(), secrets.SourceSecret, key, value)
 }

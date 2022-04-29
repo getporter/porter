@@ -1,6 +1,7 @@
 package cnabprovider
 
 import (
+	"context"
 	"testing"
 
 	"get.porter.sh/porter/pkg/claims"
@@ -16,7 +17,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	t.Parallel()
 
 	r := NewTestRuntime(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	r.TestCredentials.AddSecret("password", "mypassword")
 	r.TestCredentials.AddSecret("db-password", "topsecret")
@@ -31,7 +32,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 		},
 	})
 
-	err := r.credentials.InsertCredentialSet(cs1)
+	err := r.credentials.InsertCredentialSet(context.Background(), cs1)
 	require.NoError(t, err, "Save credential set failed")
 
 	b := cnab.ExtendedBundle{bundle.Bundle{
@@ -50,7 +51,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	}}
 
 	args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
-	gotValues, err := r.loadCredentials(b, args)
+	gotValues, err := r.loadCredentials(context.Background(), b, args)
 	require.NoError(t, err, "loadCredentials failed")
 
 	wantValues := secrets.Set{
@@ -59,7 +60,7 @@ func TestRuntime_loadCredentials(t *testing.T) {
 	assert.Equal(t, wantValues, gotValues, "resolved unexpected credential values")
 
 	args = ActionArguments{Installation: claims.Installation{CredentialSets: []string{"/db-creds.json"}}, Action: "install"}
-	_, err = r.loadCredentials(b, args)
+	_, err = r.loadCredentials(context.Background(), b, args)
 	require.Error(t, err, "loadCredentials should not load from a file")
 }
 
@@ -82,11 +83,11 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("missing required credential does not apply", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "status"}
 		b := getBundle(true)
-		gotValues, err := r.loadCredentials(b, args)
+		gotValues, err := r.loadCredentials(context.Background(), b, args)
 		require.NoError(t, err, "loadCredentials failed")
 
 		var wantValues secrets.Set
@@ -96,11 +97,11 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("optional credential missing", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "install"}
 		b := getBundle(false)
-		gotValues, err := r.loadCredentials(b, args)
+		gotValues, err := r.loadCredentials(context.Background(), b, args)
 		require.NoError(t, err, "loadCredentials failed")
 
 		var wantValues secrets.Set
@@ -110,18 +111,18 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 	t.Run("required credential missing", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		args := ActionArguments{Action: "install"}
 		b := getBundle(true)
-		_, err := r.loadCredentials(b, args)
+		_, err := r.loadCredentials(context.Background(), b, args)
 		require.Error(t, err, "expected the credential to be required")
 	})
 
 	t.Run("credential resolved", func(t *testing.T) {
 		t.Parallel()
 		r := NewTestRuntime(t)
-		defer r.Teardown()
+		defer r.Close()
 
 		r.TestCredentials.AddSecret("password", "mypassword")
 
@@ -133,12 +134,12 @@ func TestRuntime_loadCredentials_WithApplyTo(t *testing.T) {
 			},
 		})
 
-		err := r.credentials.InsertCredentialSet(cs1)
+		err := r.credentials.InsertCredentialSet(context.Background(), cs1)
 		require.NoError(t, err, "Save credential set failed")
 
 		b := getBundle(true)
 		args := ActionArguments{Installation: claims.Installation{CredentialSets: []string{"mycreds"}}, Action: "install"}
-		gotValues, err := r.loadCredentials(b, args)
+		gotValues, err := r.loadCredentials(context.Background(), b, args)
 		require.NoError(t, err, "loadCredentials failed")
 		assert.Equal(t, secrets.Set{"password": "mypassword"}, gotValues)
 	})

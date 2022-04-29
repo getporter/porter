@@ -25,7 +25,6 @@ import (
 	"get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/sanitizer"
 	"get.porter.sh/porter/pkg/secrets"
-	inmemorysecrets "get.porter.sh/porter/pkg/secrets/plugins/in-memory"
 	"get.porter.sh/porter/pkg/storage"
 	"get.porter.sh/porter/pkg/tracing"
 	"get.porter.sh/porter/pkg/yaml"
@@ -65,9 +64,9 @@ type TestPorter struct {
 // NewTestPorter initializes a porter test client, with the output buffered, and an in-memory file system.
 func NewTestPorter(t *testing.T) *TestPorter {
 	tc := config.NewTestConfig(t)
-	testStore := storage.NewTestStore(tc.TestContext)
-	testSecrets := inmemorysecrets.NewStore()
-	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore)
+	testStore := storage.NewTestStore(tc)
+	testSecrets := secrets.NewTestSecretsProvider()
+	testCredentials := credentials.NewTestCredentialProviderFor(t, testStore, testSecrets)
 	testParameters := parameters.NewTestParameterProviderFor(t, testStore, testSecrets)
 	testCache := cache.NewTestCache(cache.New(tc.Config))
 	testClaims := claims.NewTestClaimProviderFor(t, testStore)
@@ -106,9 +105,9 @@ func NewTestPorter(t *testing.T) *TestPorter {
 	return &tp
 }
 
-func (p *TestPorter) Teardown() error {
-	err := p.TestStore.Teardown()
-	p.TestConfig.TestContext.Teardown()
+func (p *TestPorter) Close() error {
+	err := p.TestStore.Close()
+	p.TestConfig.Close()
 	p.RootSpan.EndSpan()
 	return err
 }
@@ -125,7 +124,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	p.CreateBundleDir()
 
 	// Write out a storage schema so that we don't trigger a migration check
-	err := p.Storage.WriteSchema()
+	err := p.Storage.WriteSchema(context.Background())
 	require.NoError(t, err, "failed to set the storage schema")
 
 	// Load test credentials, with KUBECONFIG replaced properly
@@ -138,7 +137,7 @@ func (p *TestPorter) SetupIntegrationTest() {
 	var testCreds credentials.CredentialSet
 	err = encoding.UnmarshalYaml(ciCredsB, &testCreds)
 	require.NoError(t, err, "could not unmarshal test credentials %s", ciCredsPath)
-	err = p.Credentials.UpsertCredentialSet(testCreds)
+	err = p.Credentials.UpsertCredentialSet(context.Background(), testCreds)
 	require.NoError(t, err, "could not save test credentials")
 }
 
@@ -239,7 +238,7 @@ func (p *TestPorter) CompareGoldenFile(goldenFile string, got string) {
 // sensitive parameters into secret store.
 func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string, bun cnab.ExtendedBundle) []secrets.Strategy {
 	strategies := make([]secrets.Strategy, 0, len(raw))
-	strategies, err := p.Sanitizer.CleanParameters(raw, bun, recordID)
+	strategies, err := p.Sanitizer.CleanParameters(context.Background(), raw, bun, recordID)
 	require.NoError(p.T(), err)
 
 	return strategies
@@ -247,7 +246,7 @@ func (p *TestPorter) SanitizeParameters(raw []secrets.Strategy, recordID string,
 
 func (p *TestPorter) CreateOutput(o claims.Output, bun cnab.ExtendedBundle) claims.Output {
 	return p.TestClaims.CreateOutput(o, func(o *claims.Output) {
-		output, err := p.TestSanitizer.CleanOutput(*o, bun)
+		output, err := p.TestSanitizer.CleanOutput(context.Background(), *o, bun)
 		require.NoError(p.T(), err)
 		*o = output
 	})

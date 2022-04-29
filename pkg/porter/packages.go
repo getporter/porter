@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"get.porter.sh/porter/pkg/pkgmgmt"
 	"get.porter.sh/porter/pkg/printer"
+	"github.com/pkg/errors"
 )
 
 // SearchOptions are options for searching packages

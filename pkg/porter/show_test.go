@@ -34,7 +34,7 @@ func TestPorter_ShowBundle(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewTestPorter(t)
-			defer p.Teardown()
+			defer p.Close()
 
 			opts := ShowOptions{
 				sharedOptions: sharedOptions{
@@ -128,15 +128,16 @@ func TestPorter_ShowBundle(t *testing.T) {
 			})
 
 			i.Parameters.Parameters = run.ParameterOverrides.Parameters
-			err := p.TestClaims.UpsertInstallation(i)
+			err := p.TestClaims.UpsertInstallation(context.Background(), i)
 			require.NoError(t, err)
 
 			result := p.TestClaims.CreateResult(run.NewResult(cnab.StatusSucceeded), p.TestClaims.SetMutableResultValues)
 			i.ApplyResult(run, result)
 			i.Status.Installed = &now
-			require.NoError(t, p.TestClaims.UpdateInstallation(i))
+			ctx := context.Background()
+			require.NoError(t, p.TestClaims.UpdateInstallation(ctx, i))
 
-			err = p.ShowInstallation(context.Background(), opts)
+			err = p.ShowInstallation(ctx, opts)
 			require.NoError(t, err, "ShowInstallation failed")
 			p.CompareGoldenFile(tc.outputFile, p.TestConfig.TestContext.GetOutput())
 		})

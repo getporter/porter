@@ -66,7 +66,7 @@ func (e *dependencyExecutioner) Prepare(ctx context.Context) error {
 	}
 	e.parentArgs = parentActionArgs
 
-	err = e.identifyDependencies()
+	err = e.identifyDependencies(ctx)
 	if err != nil {
 		return err
 	}
@@ -99,8 +99,8 @@ func (e *dependencyExecutioner) Execute(ctx context.Context) error {
 
 // PrepareRootActionArguments uses information about the dependencies of a bundle to prepare
 // the execution of the root operation.
-func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.ActionArguments, error) {
-	args, err := e.porter.BuildActionArgs(context.TODO(), e.parentInstallation, e.parentAction)
+func (e *dependencyExecutioner) PrepareRootActionArguments(ctx context.Context) (cnabprovider.ActionArguments, error) {
+	args, err := e.porter.BuildActionArgs(ctx, e.parentInstallation, e.parentAction)
 	if err != nil {
 		return cnabprovider.ActionArguments{}, err
 	}
@@ -120,7 +120,7 @@ func (e *dependencyExecutioner) PrepareRootActionArguments() (cnabprovider.Actio
 	return args, nil
 }
 
-func (e *dependencyExecutioner) identifyDependencies() error {
+func (e *dependencyExecutioner) identifyDependencies(ctx context.Context) error {
 	// Load parent CNAB bundle definition
 	var bun cnab.ExtendedBundle
 	if e.parentOpts.CNABFile != "" {
@@ -137,7 +137,7 @@ func (e *dependencyExecutioner) identifyDependencies() error {
 
 		bun = cachedBundle.Definition
 	} else if e.parentOpts.Name != "" {
-		c, err := e.Claims.GetLastRun(e.parentOpts.Namespace, e.parentOpts.Name)
+		c, err := e.Claims.GetLastRun(ctx, e.parentOpts.Namespace, e.parentOpts.Name)
 		if err != nil {
 			return err
 		}
@@ -263,14 +263,14 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// we want dependencies and mixins as bundles to work in the future.
 
 	depName := cnab.BuildPrerequisiteInstallationName(e.parentOpts.Name, dep.Alias)
-	depInstallation, err := e.Claims.GetInstallation(e.parentOpts.Namespace, depName)
+	depInstallation, err := e.Claims.GetInstallation(ctx, e.parentOpts.Namespace, depName)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
 			depInstallation = claims.NewInstallation(e.parentOpts.Namespace, depName)
 			depInstallation.SetLabel("sh.porter.parentInstallation", e.parentArgs.Installation.String())
 			// For now, assume it's okay to give the dependency the same credentials as the parent
 			depInstallation.CredentialSets = e.parentInstallation.CredentialSets
-			if err = e.Claims.InsertInstallation(depInstallation); err != nil {
+			if err = e.Claims.InsertInstallation(ctx, depInstallation); err != nil {
 				return err
 			}
 		} else {
@@ -278,7 +278,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 		}
 	}
 
-	resolvedParameters, err := e.porter.resolveParameters(depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
+	resolvedParameters, err := e.porter.resolveParameters(ctx, depInstallation, dep.BundleReference.Definition, e.parentArgs.Action, dep.Parameters)
 	if err != nil {
 		return errors.Wrapf(err, "error resolving parameters for dependency %s", dep.Alias)
 	}
@@ -318,7 +318,7 @@ func (e *dependencyExecutioner) executeDependency(ctx context.Context, dep *queu
 	// will resolve to false and thus be a no-op
 	if uninstallOpts.shouldDelete() {
 		fmt.Fprintf(e.Out, installationDeleteTmpl, depArgs.Installation)
-		return e.Claims.RemoveInstallation(depArgs.Installation.Namespace, depArgs.Installation.Name)
+		return e.Claims.RemoveInstallation(ctx, depArgs.Installation.Namespace, depArgs.Installation.Name)
 	}
 	return nil
 }

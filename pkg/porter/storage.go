@@ -1,6 +1,7 @@
 package porter
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -11,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Porter) MigrateStorage() error {
-	logfilePath, err := p.Storage.Migrate()
+func (p *Porter) MigrateStorage(ctx context.Context) error {
+	logfilePath, err := p.Storage.Migrate(ctx)
 
 	fmt.Fprintf(p.Out, "\nSaved migration logs to %s\n", logfilePath)
 

@@ -70,7 +70,7 @@ func (i Installation) String() string {
 	return fmt.Sprintf("%s/%s", i.Namespace, i.Name)
 }
 
-func (i Installation) DefaultDocumentFilter() interface{} {
+func (i Installation) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"namespace": i.Namespace, "name": i.Name}
 }
 

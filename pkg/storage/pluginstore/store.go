@@ -1,17 +1,17 @@
 package pluginstore
 
 import (
+	"context"
+	"fmt"
+
 	"get.porter.sh/porter/pkg/config"
-	porterplugins "get.porter.sh/porter/pkg/plugins"
 	"get.porter.sh/porter/pkg/plugins/pluggable"
 	"get.porter.sh/porter/pkg/storage/plugins"
-	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
-	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
-	"github.com/pkg/errors"
+	"get.porter.sh/porter/pkg/tracing"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var _ plugins.StoragePlugin = &Store{}
+var _ plugins.StorageProtocol = &Store{}
 
 // Store is a plugin-backed source of storage. It resolves the appropriate
 // plugin based on Porter's config and implements the plugins.StorageProtocol interface
@@ -20,8 +20,8 @@ var _ plugins.StoragePlugin = &Store{}
 // Connects just-in-time, but you must call Close to release resources.
 type Store struct {
 	*config.Config
-	plugin  plugins.StorageProtocol
-	cleanup func()
+	plugin plugins.StorageProtocol
+	conn   pluggable.PluginConnection
 }
 
 func NewStore(c *config.Config) *Store {
@@ -44,113 +44,146 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 		GetDefaultPlugin: func(c *config.Config) string {
 			return c.Data.DefaultStoragePlugin
 		},
-		ProtocolVersion: 2,
+		ProtocolVersion: plugins.PluginProtocolVersion,
 	}
 }
 
-func (s *Store) createInternalPlugin(key string, pluginConfig interface{}) (porterplugins.Plugin, error) {
-	switch key {
-	case mongodb_docker.PluginKey:
-		return mongodb_docker.NewPlugin(s.Context, pluginConfig)
-	case mongodb.PluginKey:
-		return mongodb.NewPlugin(s.Context, pluginConfig)
-	default:
-		return nil, errors.Errorf("unsupported internal storage plugin specified %s", key)
-	}
-}
-
-func (s *Store) Connect() error {
+// Connect initializes the plugin for use.
+// The plugin itself is responsible for ensuring it was called.
+// Close is called automatically when the plugin is used by Porter.
+func (s *Store) Connect(ctx context.Context) error {
 	if s.plugin != nil {
 		return nil
 	}
 
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
 	pluginType := NewStoragePluginConfig()
 
-	l := pluggable.NewPluginLoader(s.Config, s.createInternalPlugin)
-	raw, cleanup, err := l.Load(pluginType)
+	l := pluggable.NewPluginLoader(s.Config)
+	conn, err := l.Load(ctx, pluginType)
 	if err != nil {
-		return errors.Wrapf(err, "could not load %s plugin", pluginType.Interface)
+		return span.Error(fmt.Errorf("could not load %s plugin: %w", pluginType.Interface, err))
 	}
-	s.cleanup = cleanup
+	s.conn = conn
 
-	store, ok := raw.(plugins.StorageProtocol)
+	store, ok := conn.Client.(plugins.StorageProtocol)
 	if !ok {
-		cleanup()
-		return errors.Errorf("the interface exposed by the %s plugin was not plugins.StorageProtocol", l.SelectedPluginKey)
+		conn.Close()
+		return span.Error(fmt.Errorf("the interface exposed by the %s plugin was not plugins.StorageProtocol", l.SelectedPluginKey))
 	}
 
 	s.plugin = store
+
 	return nil
 }
 
-func (s *Store) Close() error {
-	if s.cleanup != nil {
-		s.cleanup()
-	}
+func (s *Store) Close(ctx context.Context) error {
+	s.conn.Close()
 	s.plugin = nil
 	return nil
 }
 
-func (s *Store) EnsureIndex(opts plugins.EnsureIndexOptions) error {
-	if err := s.Connect(); err != nil {
+func (s *Store) EnsureIndex(ctx context.Context, opts plugins.EnsureIndexOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return err
 	}
 
-	return s.plugin.EnsureIndex(opts)
+	err := s.plugin.EnsureIndex(ctx, opts)
+	return span.Error(err)
 }
 
-func (s *Store) Aggregate(opts plugins.AggregateOptions) ([]bson.Raw, error) {
-	if err := s.Connect(); err != nil {
+func (s *Store) Aggregate(ctx context.Context, opts plugins.AggregateOptions) ([]bson.Raw, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
 
-	return s.plugin.Aggregate(opts)
+	results, err := s.plugin.Aggregate(ctx, opts)
+	if err != nil {
+		return nil, span.Error(err)
+	}
+
+	return results, nil
 }
 
-func (s *Store) Count(opts plugins.CountOptions) (int64, error) {
-	if err := s.Connect(); err != nil {
+func (s *Store) Count(ctx context.Context, opts plugins.CountOptions) (int64, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return 0, err
 	}
 
-	return s.plugin.Count(opts)
+	count, err := s.plugin.Count(ctx, opts)
+	if err != nil {
+		return 0, span.Error(err)
+	}
+	return count, nil
 }
 
-func (s *Store) Find(opts plugins.FindOptions) ([]bson.Raw, error) {
-	if err := s.Connect(); err != nil {
+func (s *Store) Find(ctx context.Context, opts plugins.FindOptions) ([]bson.Raw, error) {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return nil, err
 	}
 
-	return s.plugin.Find(opts)
+	results, err := s.plugin.Find(ctx, opts)
+	return results, span.Error(err)
 }
 
-func (s *Store) Insert(opts plugins.InsertOptions) error {
-	if err := s.Connect(); err != nil {
+func (s *Store) Insert(ctx context.Context, opts plugins.InsertOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return err
 	}
 
-	return s.plugin.Insert(opts)
+	err := s.plugin.Insert(ctx, opts)
+	return span.Error(err)
 }
 
-func (s *Store) Patch(opts plugins.PatchOptions) error {
-	if err := s.Connect(); err != nil {
+func (s *Store) Patch(ctx context.Context, opts plugins.PatchOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return err
 	}
 
-	return s.plugin.Patch(opts)
+	err := s.plugin.Patch(ctx, opts)
+	return span.Error(err)
 }
 
-func (s *Store) Remove(opts plugins.RemoveOptions) error {
-	if err := s.Connect(); err != nil {
+func (s *Store) Remove(ctx context.Context, opts plugins.RemoveOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return err
 	}
 
-	return s.plugin.Remove(opts)
+	err := s.plugin.Remove(ctx, opts)
+	return span.Error(err)
 }
 
-func (s *Store) Update(opts plugins.UpdateOptions) error {
-	if err := s.Connect(); err != nil {
+func (s *Store) Update(ctx context.Context, opts plugins.UpdateOptions) error {
+	ctx, span := tracing.StartSpan(ctx)
+	defer span.EndSpan()
+
+	if err := s.Connect(ctx); err != nil {
 		return err
 	}
 
-	return s.plugin.Update(opts)
+	err := s.plugin.Update(ctx, opts)
+	return span.Error(err)
 }

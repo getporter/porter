@@ -20,7 +20,7 @@ func (p *Porter) ExecuteAction(ctx context.Context, installation claims.Installa
 		return err
 	}
 
-	actionArgs, err := deperator.PrepareRootActionArguments()
+	actionArgs, err := deperator.PrepareRootActionArguments(ctx)
 	if err != nil {
 		return err
 	}

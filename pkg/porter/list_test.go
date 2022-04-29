@@ -14,14 +14,14 @@ import (
 func TestNewDisplayInstallation(t *testing.T) {
 	t.Run("installation has been installed", func(t *testing.T) {
 		cp := claims.NewTestClaimProvider(t)
-		defer cp.Teardown()
+		defer cp.Close()
 
 		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
 			i.Status.Action = cnab.ActionUpgrade
 			i.Status.ResultStatus = cnab.StatusRunning
 		})
 
-		i, err := cp.GetInstallation("", "wordpress")
+		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "ReadInstallation failed")
 
 		di := NewDisplayInstallation(i)
@@ -35,11 +35,11 @@ func TestNewDisplayInstallation(t *testing.T) {
 
 	t.Run("installation has not been installed", func(t *testing.T) {
 		cp := claims.NewTestClaimProvider(t)
-		defer cp.Teardown()
+		defer cp.Close()
 
 		i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"))
 
-		i, err := cp.GetInstallation("", "wordpress")
+		i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 		require.NoError(t, err, "GetInst failed")
 
 		di := NewDisplayInstallation(i)
@@ -54,7 +54,7 @@ func TestNewDisplayInstallation(t *testing.T) {
 
 func TestPorter_ListInstallations(t *testing.T) {
 	p := NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 
 	p.TestClaims.CreateInstallation(claims.NewInstallation("", "shared-mysql"))
 	p.TestClaims.CreateInstallation(claims.NewInstallation("dev", "carolyn-wordpress"))
@@ -92,14 +92,14 @@ func TestPorter_ListInstallations(t *testing.T) {
 
 func TestDisplayInstallation_ConvertToInstallation(t *testing.T) {
 	cp := claims.NewTestClaimProvider(t)
-	defer cp.Teardown()
+	defer cp.Close()
 
 	i := cp.CreateInstallation(claims.NewInstallation("", "wordpress"), func(i *claims.Installation) {
 		i.Status.Action = cnab.ActionUpgrade
 		i.Status.ResultStatus = cnab.StatusRunning
 	})
 
-	i, err := cp.GetInstallation("", "wordpress")
+	i, err := cp.GetInstallation(context.Background(), "", "wordpress")
 	require.NoError(t, err, "ReadInstallation failed")
 
 	di := NewDisplayInstallation(i)

@@ -19,15 +19,16 @@ func TestExecOutputs(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
+	ctx := context.Background()
 
 	// Install a bundle with exec outputs
 	bundleName := installExecOutputsBundle(p)
 	defer CleanupCurrentBundle(p)
 
 	// Verify that its file output was captured
-	usersOutput, err := p.ReadBundleOutput("users.json", bundleName, "")
+	usersOutput, err := p.ReadBundleOutput(ctx, "users.json", bundleName, "")
 	require.NoError(t, err, "could not read users output")
 	assert.Equal(t, fmt.Sprintln(`{"users": ["sally"]}`), usersOutput, "expected the users output to be populated correctly")
 
@@ -52,19 +53,19 @@ func TestExecOutputs(t *testing.T) {
 	invokeExecOutputsBundle(p, "get-users")
 
 	// Verify logs were captured as an output
-	logs, err := p.ReadBundleOutput(cnab.OutputInvocationImageLogs, bundleName, "")
+	logs, err := p.ReadBundleOutput(ctx, cnab.OutputInvocationImageLogs, bundleName, "")
 	require.NoError(t, err, "ListBundleOutputs failed")
 	assert.Contains(t, logs, "executing get-users action from exec-outputs", "expected the logs to contain bundle output from the last action")
 
 	// Verify that its jsonPath output was captured
-	userOutput, err := p.ReadBundleOutput("user-names", bundleName, "")
+	userOutput, err := p.ReadBundleOutput(ctx, "user-names", bundleName, "")
 	require.NoError(t, err, "could not read user-names output")
 	assert.Equal(t, `["sally","wei"]`, userOutput, "expected the user-names output to be populated correctly")
 
 	invokeExecOutputsBundle(p, "test")
 
 	// Verify that its regex output was captured
-	testOutputs, err := p.ReadBundleOutput("failed-tests", bundleName, "")
+	testOutputs, err := p.ReadBundleOutput(ctx, "failed-tests", bundleName, "")
 	require.NoError(t, err, "could not read failed-tests output")
 	assert.Equal(t, "TestInstall\nTestUpgrade", testOutputs, "expected the failed-tests output to be populated correctly")
 }
@@ -107,7 +108,7 @@ func TestStepLevelAndBundleLevelOutputs(t *testing.T) {
 	t.Parallel()
 
 	p := porter.NewTestPorter(t)
-	defer p.Teardown()
+	defer p.Close()
 	p.SetupIntegrationTest()
 	p.Debug = false
 

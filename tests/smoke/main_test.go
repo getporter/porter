@@ -13,7 +13,7 @@ import (
 // Make sure the porter binary that we are using is okay
 func TestPorterBinary(t *testing.T) {
 	test, err := tester.NewTest(t)
-	defer test.Teardown()
+	defer test.Close()
 	require.NoError(t, err)
 
 	test.RequirePorter("help")

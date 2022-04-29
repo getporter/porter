@@ -42,7 +42,7 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 
 	// Get the last run of the installation, if available
 	var lastRun *claims.Run
-	r, err := p.Claims.GetLastRun(opts.Namespace, opts.Name)
+	r, err := p.Claims.GetLastRun(ctx, opts.Namespace, opts.Name)
 	neverRun := errors.Is(err, storage.ErrNotFound{})
 	if err != nil && !neverRun {
 		return err
@@ -91,15 +91,16 @@ func (p *Porter) ReconcileInstallation(ctx context.Context, opts ReconcileOption
 		lifecycleOpts.Params = append(lifecycleOpts.Params, fmt.Sprintf("%s=%s", param.Name, param.Value))
 	}
 
-	if err := p.applyActionOptionsToInstallation(&opts.Installation, lifecycleOpts); err != nil {
+	if err := p.applyActionOptionsToInstallation(ctx, &opts.Installation, lifecycleOpts); err != nil {
 		return err
 	}
 
 	if !opts.DryRun {
-		if err = p.Claims.UpsertInstallation(opts.Installation); err != nil {
+		if err = p.Claims.UpsertInstallation(ctx, opts.Installation); err != nil {
 			return err
 		}
 	}
+
 	// Determine if the installation's desired state is out of sync with reality 🤯
 	inSync, err := p.IsInstallationInSync(ctx, opts.Installation, lastRun, actionOpts)
 	if err != nil {
@@ -191,7 +192,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 	// removing internal parameters (e.g. porter-debug, porter-state) and making
 	// sure that the types are correct, etc.
 	b := newRef.Definition
-	resolvedParams, err := p.resolveParameters(i, b, action.GetAction(), opts.combinedParameters)
+	resolvedParams, err := p.resolveParameters(ctx, i, b, action.GetAction(), opts.combinedParameters)
 	if err != nil {
 		return false, err
 	}
@@ -221,7 +222,7 @@ func (p *Porter) IsInstallationInSync(ctx context.Context, i claims.Installation
 		return compParams, nil
 	}
 
-	lastRunParams, err := p.Sanitizer.RestoreParameterSet(lastRun.Parameters, cnab.ExtendedBundle{lastRun.Bundle})
+	lastRunParams, err := p.Sanitizer.RestoreParameterSet(ctx, lastRun.Parameters, cnab.ExtendedBundle{lastRun.Bundle})
 	if err != nil {
 		return false, err
 	}

@@ -4,12 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"get.porter.sh/porter/pkg/printer"
-
-	"get.porter.sh/porter/pkg/porter/version"
-	"github.com/stretchr/testify/require"
-
 	"get.porter.sh/porter/pkg"
+	"get.porter.sh/porter/pkg/porter/version"
+	"get.porter.sh/porter/pkg/printer"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrintVersion(t *testing.T) {

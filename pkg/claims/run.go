@@ -66,7 +66,7 @@ type Run struct {
 	Custom interface{} `json:"custom" yaml:"custom", toml:"custom"`
 }
 
-func (r Run) DefaultDocumentFilter() interface{} {
+func (r Run) DefaultDocumentFilter() map[string]interface{} {
 	return map[string]interface{}{"_id": r.ID}
 }
 

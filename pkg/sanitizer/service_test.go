@@ -1,6 +1,7 @@
 package sanitizer_test
 
 import (
+	"context"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -17,12 +18,13 @@ import (
 )
 
 func TestSanitizer_Parameters(t *testing.T) {
-	cxt := portercontext.New()
-	bun, err := cnab.LoadBundle(cxt, filepath.Join("../porter/testdata/bundle.json"))
+	c := portercontext.New()
+	bun, err := cnab.LoadBundle(c, filepath.Join("../porter/testdata/bundle.json"))
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	r := porter.NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveParamName := "my-second-param"
@@ -39,7 +41,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 		"my-first-param":   1,
 		sensitiveParamName: "2",
 	}
-	result, err := r.TestSanitizer.CleanRawParameters(rawParams, bun, recordID)
+	result, err := r.TestSanitizer.CleanRawParameters(ctx, rawParams, bun, recordID)
 	require.NoError(t, err)
 	require.Equal(t, len(expected), len(result))
 	sort.SliceStable(result, func(i, j int) bool {
@@ -49,7 +51,7 @@ func TestSanitizer_Parameters(t *testing.T) {
 	require.Truef(t, reflect.DeepEqual(result, expected), "expected: %v, got: %v", expected, result)
 
 	pset := parameters.NewParameterSet("", "dev", result...)
-	resolved, err := r.TestSanitizer.RestoreParameterSet(pset, bun)
+	resolved, err := r.TestSanitizer.RestoreParameterSet(ctx, pset, bun)
 	require.NoError(t, err)
 
 	require.Equal(t, len(rawParams), len(resolved))
@@ -59,12 +61,13 @@ func TestSanitizer_Parameters(t *testing.T) {
 }
 
 func TestSanitizer_Output(t *testing.T) {
-	cxt := portercontext.New()
-	bun, err := cnab.LoadBundle(cxt, filepath.Join("../porter/testdata/bundle.json"))
+	c := portercontext.New()
+	bun, err := cnab.LoadBundle(c, filepath.Join("../porter/testdata/bundle.json"))
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	r := porter.NewTestPorter(t)
-	defer r.Teardown()
+	defer r.Close()
 
 	recordID := "01FZVC5AVP8Z7A78CSCP1EJ604"
 	sensitiveOutputName := "my-first-output"
@@ -89,11 +92,11 @@ func TestSanitizer_Output(t *testing.T) {
 		RunID: recordID,
 	}
 
-	plainResult, err := r.TestSanitizer.CleanOutput(plainOutput, bun)
+	plainResult, err := r.TestSanitizer.CleanOutput(ctx, plainOutput, bun)
 	require.NoError(t, err)
 	require.Equal(t, plainOutput, plainResult)
 
-	sensitiveResult, err := r.TestSanitizer.CleanOutput(sensitiveOutput, bun)
+	sensitiveResult, err := r.TestSanitizer.CleanOutput(ctx, sensitiveOutput, bun)
 	require.NoError(t, err)
 	require.Equal(t, expectedSensitiveOutput, sensitiveResult)
 
@@ -101,7 +104,7 @@ func TestSanitizer_Output(t *testing.T) {
 		plainOutput,
 		{Name: sensitiveOutputName, Key: expectedSensitiveOutput.Key, Value: sensitiveOutput.Value, RunID: recordID},
 	})
-	resolved, err := r.TestSanitizer.RestoreOutputs(claims.NewOutputs([]claims.Output{sensitiveResult, plainOutput}))
+	resolved, err := r.TestSanitizer.RestoreOutputs(ctx, claims.NewOutputs([]claims.Output{sensitiveResult, plainOutput}))
 	require.NoError(t, err)
 	sort.Sort(resolved)
 	sort.Sort(expectedOutputs)

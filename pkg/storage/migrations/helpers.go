@@ -3,25 +3,24 @@ package migrations
 import (
 	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/storage"
-	"get.porter.sh/porter/pkg/storage/plugins/testplugin"
 )
 
 type TestManager struct {
 	*Manager
 
-	testPlugin *testplugin.TestStoragePlugin
+	testStore storage.TestStore
 }
 
 func NewTestManager(c *config.TestConfig) *TestManager {
-	testPlugin := testplugin.NewTestStoragePlugin(c.TestContext)
+	testStore := storage.NewTestStore(c)
 	return &TestManager{
-		testPlugin: testPlugin,
-		Manager:    NewManager(c.Config, storage.NewPluginAdapter(testPlugin)),
+		testStore: testStore,
+		Manager:   NewManager(c.Config, testStore),
 	}
 }
 
-func (m *TestManager) Teardown() error {
-	return m.testPlugin.Teardown()
+func (m *TestManager) Close() error {
+	return m.testStore.Close()
 }
 
 // SetSchema allows tests to pre-emptively set the schema document.

@@ -2,6 +2,7 @@ package tester
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"os"
@@ -42,7 +43,7 @@ type Tester struct {
 
 // NewTest sets up for a smoke test.
 //
-// Always defer Tester.Teardown(), even when an error is returned.
+// Always defer Tester.Close(), even when an error is returned.
 func NewTest(t *testing.T) (Tester, error) {
 	var err error
 	pwd, _ := os.Getwd()
@@ -67,7 +68,7 @@ func NewTest(t *testing.T) (Tester, error) {
 	os.Setenv("PORTER_HOME", test.PorterHomeDir)
 	os.Setenv("PATH", test.PorterHomeDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	return *test, test.startMongo()
+	return *test, test.startMongo(context.Background())
 }
 
 // CurrentNamespace configured in config.toml
@@ -75,8 +76,8 @@ func (t Tester) CurrentNamespace() string {
 	return "dev"
 }
 
-func (t Tester) startMongo() error {
-	conn, err := mongodb_docker.EnsureMongoIsRunning(
+func (t Tester) startMongo(ctx context.Context) error {
+	conn, err := mongodb_docker.EnsureMongoIsRunning(ctx,
 		t.TestContext.Context,
 		"porter-smoke-test-mongodb-plugin",
 		"27017",
@@ -90,7 +91,7 @@ func (t Tester) startMongo() error {
 	defer conn.Close()
 
 	// Start with a fresh database
-	err = conn.RemoveDatabase()
+	err = conn.RemoveDatabase(ctx)
 	return err
 }
 
@@ -128,7 +129,7 @@ func (t Tester) buildPorterCommand(args ...string) shx.PreparedCommand {
 		Env("PORTER_HOME=" + t.PorterHomeDir)
 }
 
-func (t Tester) Teardown() {
+func (t Tester) Close() {
 	t.T.Log("Removing temp test PORTER_HOME")
 	os.RemoveAll(t.PorterHomeDir)
 
